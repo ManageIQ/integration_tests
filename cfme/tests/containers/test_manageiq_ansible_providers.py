@@ -1,17 +1,13 @@
 import pytest
-from cfme.containers.provider import ContainersProvider
-from cfme.utils import testgen
-from cfme.utils.ansible import setup_ansible_script, run_ansible, get_yml_value, \
-    fetch_miq_ansible_module, create_tmp_directory, remove_tmp_files
+
+from cfme.containers.provider import ContainersProvider, refresh_and_navigate
+from cfme.utils.ansible import (setup_ansible_script, run_ansible, get_yml_value,
+    fetch_miq_ansible_module, create_tmp_directory, remove_tmp_files)
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
 
-pytestmark = [
-    pytest.mark.uncollectif(lambda provider: current_version() < "5.7")]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
-
+pytestmark = [pytest.mark.provider([ContainersProvider], scope='function')]
 
 providers_values_to_update = {
     'provider_api_hostname': 'something_different.redhat.com'
@@ -72,12 +68,13 @@ def test_manageiq_ansible_update_provider(ansible_providers, provider, soft_asse
     setup_ansible_script(provider, script_type='providers',
                          values_to_update=providers_values_to_update, script=script_name)
     run_ansible(script_name)
+
+    def check():
+        view = refresh_and_navigate(provider, 'Details')
+        return (get_yml_value(script_name, 'provider_api_hostname') in
+                view.entities.properties.get_text_of('Host Name'))
     soft_assert(
-        wait_for(
-            lambda: get_yml_value(script_name, 'provider_api_hostname') in
-            provider.summary.properties.host_name.text_value,
-            num_sec=180, delay=10,
-            fail_func=provider.browser.refresh,
+        wait_for(check, num_sec=180, delay=10,
             message='Provider was not updated successfully',
             silent_failure=True)
     )

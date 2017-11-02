@@ -41,7 +41,7 @@ from widgetastic_patternfly import (
     Accordion as PFAccordion, BootstrapSwitch, BootstrapTreeview,
     BootstrapSelect, Button, CheckableBootstrapTreeview,
     CandidateNotFound, Dropdown, Input, FlashMessages,
-    NavDropdown, VerticalNavigation, Tab)
+    VerticalNavigation, Tab)
 
 from cfme.exceptions import ItemNotFound, ManyEntitiesFound
 
@@ -972,6 +972,46 @@ class SummaryTable(VanillaTable):
 
     def read(self):
         return {field: self.get_text_of(field) for field in self.fields}
+
+
+class NestedSummaryTable(SummaryTable):
+    HEADER_IN_ROWS = './tbody/tr[1]/td'
+    HEADERS = './tbody/tr[1]/td/strong'
+
+    def __init__(self, parent, title, *args, **kwargs):
+        SummaryTable.__init__(self, parent, title, *args, **kwargs)
+
+    def _all_rows(self):
+        for row_pos in range(1, len(self.browser.elements(self.ROWS, parent=self))):
+            yield self.Row(self, row_pos)
+
+    def read(self):
+        return [{key: col.text for key, col in row} for row in self]
+
+
+class StatusBox(Widget, ClickableMixin):
+    card = Text(ParametrizedLocator('.//div[@pf-aggregate-status-card and (normalize-space'
+                                    '(.//h2/a/span[contains(@class, '
+                                    '"card-pf-aggregate-status-count")]/following::'
+                                    'text())={@name|quote} or normalize-space(.//span'
+                                    '[contains(@class, "card-pf-aggregate-status-title")]'
+                                    '/text())={@name|quote})]'))
+
+    def __init__(self, parent, name, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.name = name
+
+    def click(self, *args, **kwargs):
+        self.card.click(*args, **kwargs)
+
+    @property
+    def value(self):
+        text = self.card.read()
+        match = re.search(r'\d+', text)
+        return int(match.group())
+
+    def read(self):
+        return {self.name: self.value}
 
 
 class Accordion(PFAccordion):
@@ -2059,7 +2099,7 @@ class Search(View):
     """ Represents search_text control
     # TODO Add advanced search
     """
-    search_text = Input(name="search_text")
+    search_text = Input(id="search_text")
     search_btn = Text("//div[@id='searchbox']//div[contains(@class, 'form-group')]"
                       "/*[self::a or (self::button and @type='submit')]")
     clear_btn = Text(".//*[@id='searchbox']//div[contains(@class, 'clear')"

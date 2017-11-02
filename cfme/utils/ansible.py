@@ -4,8 +4,10 @@ from shutil import copy, copyfile, rmtree
 from subprocess import check_output, CalledProcessError, STDOUT
 import sys
 from fauxfactory import gen_alphanumeric
+
 from cfme.utils import conf
 from cfme.utils.providers import providers_data
+from cfme.utils.appliance import current_appliance
 
 
 from git import Repo
@@ -308,11 +310,9 @@ def reply_status(reply):
         return 'No Change', message_status, ok_status
 
 
-def config_formatter():
-    if "https://" in conf.env.get("base_url", None):
-        return conf.env.get("base_url", None)
-    else:
-        return "https://" + conf.env.get("base_url", None)
+def config_formatter(appliance=None):
+    appliance = appliance or current_appliance()
+    return appliance.url
 
 
 def remove_tmp_files():

@@ -1,17 +1,16 @@
 import pytest
+
 from cfme.containers.provider import ContainersProvider
 from cfme.configure.access_control import User
-from cfme.utils import testgen
-from cfme.utils.ansible import setup_ansible_script, run_ansible, \
-    fetch_miq_ansible_module, create_tmp_directory, remove_tmp_files
+from cfme.utils.ansible import (setup_ansible_script, run_ansible,
+    fetch_miq_ansible_module, create_tmp_directory, remove_tmp_files)
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.version import current_version
 
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda: current_version() < "5.7"),
-    pytest.mark.usefixtures('setup_provider')]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='module')
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.provider([ContainersProvider], scope='module')
+]
 
 
 users_values_to_create = {

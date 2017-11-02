@@ -11,9 +11,7 @@ import pytest
 from cfme.containers.provider import ContainersProvider
 from cfme.intelligence.chargeback import assignments, rates
 from cfme.intelligence.reports.reports import CustomReport
-from cfme.fixtures import pytest_selenium as sel
 
-from cfme.utils import testgen
 from cfme.utils.log import logger
 from cfme.utils.units import CHARGEBACK_HEADER_NAMES, parse_number
 
@@ -33,9 +31,9 @@ pytestmark = [
     pytest.mark.parametrize('obj_type', obj_types, scope='module'),
     pytest.mark.parametrize('rate_type', rate_types, scope='module'),
     pytest.mark.parametrize('interval', intervals, scope='module'),
-    pytest.mark.long_running_env
+    pytest.mark.long_running_env,
+    pytest.mark.provider([ContainersProvider], scope='module')
 ]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='module')
 
 # We cannot calculate the accurate value because the prices in the reports
 # appears in a lower precision (floored). Hence we're using this accuracy coefficient:
@@ -213,12 +211,6 @@ def abstract_test_chargeback_cost(
         :py:class:`ComputeRate` compute_rate: The compute rate object.
         :var soft_assert: soft_assert fixture.
     """
-    if sel.is_displayed_text("No records found for this report"):
-        pytest.skip('No records found in the report. probably the setup didn\'t '
-                    'manage to collect enough metrics for the current rate. '
-                    'rate={}; interval={}'
-                    .format(compute_rate.description, interval))
-
     report_headers = CHARGEBACK_HEADER_NAMES[rate_key]
 
     found_something_to_test = False

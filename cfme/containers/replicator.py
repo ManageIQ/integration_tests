@@ -1,32 +1,31 @@
 # -*- coding: utf-8 -*-
 import random
 import itertools
-from functools import partial
 from cached_property import cached_property
 
 from wrapanapi.containers.replicator import Replicator as ApiReplicator
 
-from cfme.common import SummaryMixin, Taggable
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb, match_location,\
-    PagedTable, CheckboxTable
-from cfme.containers.provider import details_page, Labelable,\
-    ContainerObjectAllBaseView
+from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
+    ContainerObjectDetailsBaseView, click_row)
 from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
-    navigate_to
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 from navmazing import NavigateToAttribute, NavigateToSibling
 
 
-list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
-
-match_page = partial(match_location, controller='container_replicators', title='Replicators')
+class ReplicatorAllView(ContainerObjectAllBaseView):
+    SUMMARY_TEXT = "Replicators"
 
 
-class Replicator(Taggable, Labelable, SummaryMixin, Navigatable):
+class ReplicatorDetailsView(ContainerObjectDetailsBaseView):
+    pass
+
+
+class Replicator(WidgetasticTaggable, Labelable, Navigatable):
 
     PLURAL = 'Replicators'
+    all_view = ReplicatorAllView
+    details_view = ReplicatorDetailsView
 
     def __init__(self, name, project_name, provider, appliance=None):
         self.name = name
@@ -38,25 +37,6 @@ class Replicator(Taggable, Labelable, SummaryMixin, Navigatable):
     def mgmt(self):
         return ApiReplicator(self.provider.mgmt, self.name, self.project_name)
 
-    def load_details(self, refresh=False):
-        navigate_to(self, 'Details')
-        if refresh:
-            tb.refresh()
-
-    def click_element(self, *ident):
-        self.load_details(refresh=True)
-        return sel.click(details_page.infoblock.element(*ident))
-
-    def get_detail(self, *ident):
-        """ Gets details from the details infoblock
-
-        Args:
-            *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
-        Returns: A string representing the contents of the InfoBlock's value.
-        """
-        self.load_details(refresh=True)
-        return details_page.infoblock.text(*ident)
-
     @classmethod
     def get_random_instances(cls, provider, count=1, appliance=None):
         """Generating random instances."""
@@ -64,10 +44,6 @@ class Replicator(Taggable, Labelable, SummaryMixin, Navigatable):
         random.shuffle(rc_list)
         return [cls(obj.name, obj.project_name, provider, appliance=appliance)
                 for obj in itertools.islice(rc_list, count)]
-
-
-class ReplicatorAllView(ContainerObjectAllBaseView):
-    TITLE_TEXT = "Replicators"
 
 
 @navigator.register(Replicator, 'All')
@@ -80,20 +56,26 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        tb.select("List View")
-        from cfme.web_ui import paginator
-        paginator.check_all()
-        paginator.uncheck_all()
+        self.view.toolbar.view_selector.select("List View")
+        if self.view.paginator.is_displayed:
+            self.view.paginator.check_all()
+            self.view.paginator.uncheck_all()
 
 
 @navigator.register(Replicator, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = ReplicatorDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def am_i_here(self):
-        return match_page(summary='{} (Summary)'.format(self.obj.name))
+    def step(self):
+        click_row(self.prerequisite_view,
+                  name=self.obj.name, project_name=self.obj.project_name)
+
+
+@navigator.register(Replicator, 'EditTags')
+class ImageRegistryEditTags(CFMENavigateStep):
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        tb.select('List View')
-        sel.click(paged_tbl.find_row_by_cell_on_all_pages({'Name': self.obj.name,
-                                                           'Project Name': self.obj.project_name}))
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

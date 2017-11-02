@@ -5,7 +5,7 @@ from collections import namedtuple
 import pytest
 import fauxfactory
 
-from cfme.containers.provider import ContainersProvider
+from cfme.containers.provider import ContainersProvider, refresh_and_navigate
 from cfme.containers.pod import Pod
 from cfme.containers.service import Service
 from cfme.containers.replicator import Replicator
@@ -14,7 +14,6 @@ from cfme.containers.project import Project
 from cfme.containers.route import Route
 from cfme.containers.template import Template
 
-from cfme.utils import testgen
 from cfme.utils.wait import wait_for
 from cfme.utils.log import logger
 from cfme.utils.blockers import BZ
@@ -22,17 +21,17 @@ from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider_modscope'),
-    pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='module')
+    pytest.mark.tier(1),
+    pytest.mark.provider([ContainersProvider], scope='module')]
 
 # TODO Add Node back into the list when other classes are updated to use WT views and widgets.
 TEST_OBJECTS = (Image, Pod, Service, Route, Template, Replicator, Project)
 
 
 def check_labels_in_ui(instance, name, expected_value):
-    if hasattr(instance.summary, 'labels') and \
-            hasattr(instance.summary.labels, name.lower()):
-        return getattr(instance.summary.labels, name.lower()).text_value == str(expected_value)
+    view = refresh_and_navigate(instance, 'Details')
+    if view.entities.labels.is_displayed:
+        return view.entities.labels.get_text_of(name) == str(expected_value)
     return False
 
 
@@ -78,7 +77,6 @@ def test_labels_create(provider, soft_assert, random_labels):
                 wait_for(
                     lambda: check_labels_in_ui(instance, label_name, label_value),
                     num_sec=120, delay=10,
-                    fail_func=instance.summary.reload,
                     message='Verifying label ({} = {}) for {} {} exists'
                             .format(label_name, label_value,
                                     instance.__class__.__name__, instance.name),
@@ -112,7 +110,6 @@ def test_labels_remove(provider, soft_assert, random_labels):
                 wait_for(
                     lambda: not check_labels_in_ui(instance, label_name, label_value),
                     num_sec=180, delay=10,
-                    fail_func=instance.summary.reload,
                     message='Verifying label ({} = {}) for {} {} removed'
                             .format(label_name, label_value,
                                     instance.__class__.__name__, instance.name),

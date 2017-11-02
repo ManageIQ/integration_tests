@@ -1,15 +1,14 @@
 import pytest
 import re
 from cfme.containers.provider import ContainersProvider
-from cfme.utils import testgen
 from cfme.utils.version import current_version
 
 
 pytestmark = [
     pytest.mark.uncollectif(lambda provider: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+    pytest.mark.tier(1),
+    pytest.mark.provider([ContainersProvider], scope='function')]
 
 
 @pytest.mark.polarion('CMP-10205')

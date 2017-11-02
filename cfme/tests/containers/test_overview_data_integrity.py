@@ -7,17 +7,15 @@ from cfme.containers.service import Service
 from cfme.containers.project import Project
 from cfme.containers.route import Route
 from cfme.containers.overview import ContainersOverview
-from cfme.web_ui import StatusBox
 
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate(
-    [ContainersProvider], scope='function')
+    pytest.mark.tier(1),
+    pytest.mark.provider([ContainersProvider], scope='function')
+]
 
 
 DataSet = namedtuple('DataSet', ['object', 'name'])
@@ -60,11 +58,11 @@ def test_containers_overview_data_integrity(appliance, soft_assert):
             # of providers
             # ...
     """
-    navigate_to(ContainersOverview, 'All')
+    view = navigate_to(ContainersOverview, 'All')
     api_values = get_api_object_counts(appliance)
 
     for cls in tested_objects:
-        statusbox_value = StatusBox(cls.PLURAL.split(' ')[-1]).value()
+        statusbox_value = getattr(view, cls.PLURAL.split(' ')[-1].lower()).value
         soft_assert(
             api_values[cls] == statusbox_value,
             'There is a mismatch between API and UI values: {}: {} (API) != {} (UI)'.format(

@@ -31,6 +31,7 @@ class ProviderDetailsToolBar(View):
     reload = Button(title='Reload Current Display')
     policy = Dropdown(text='Policy')
     authentication = Dropdown(text='Authentication')
+    download = Button(title='Download summary in PDF format')
 
     view_selector = View.nested(DetailsToolBarViewSelector)
 
@@ -58,6 +59,7 @@ class ProviderDetailsView(BaseLoggedInPage):
         relationships = SummaryTable(title="Relationships")
         overview = SummaryTable(title="Overview")
         smart_management = SummaryTable(title="Smart Management")
+        custom_attributes = SummaryTable(title='Custom Attributes')
 
     @entities.register('Dashboard View')
     class ProviderDetailsDashboardView(View):
@@ -276,13 +278,18 @@ class ContainersProvidersView(ProvidersView):
     """
      represents Main view displaying all Containers providers
     """
+    SUMMARY_TEXT = 'Containers Providers'
     table = Table(locator="//div[@id='list_grid']//table")
+
+    @property
+    def paginator(self):
+        return self.entities.paginator
 
     @property
     def is_displayed(self):
         return (super(ContainersProvidersView, self).is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'] and
-                self.entities.title.text == 'Containers Providers')
+                self.entities.title.text == self.SUMMARY_TEXT)
 
 
 class InfraProvidersView(ProvidersView):
@@ -462,7 +469,7 @@ class ContainersProviderEditView(ProviderEditView):
     def is_displayed(self):
         return (super(ProviderEditView, self).is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'] and
-                self.title.text == 'Edit Containers Provider')
+                'Edit Containers Provider' in self.title.text)
 
 
 class MiddlewareProviderEditView(ProviderEditView):

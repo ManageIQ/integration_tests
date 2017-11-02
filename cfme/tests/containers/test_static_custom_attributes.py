@@ -6,17 +6,14 @@ import pytest
 
 from manageiq_client.api import APIException
 
-from cfme.utils.version import current_version
-from cfme.utils import testgen
-from cfme.containers.provider import ContainersProvider
+from cfme.containers.provider import ContainersProvider, refresh_and_navigate
 from cfme.containers.provider.openshift import CustomAttribute
 
 pytestmark = [
-    pytest.mark.uncollectif(
-        lambda: current_version() < "5.7"),
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.tier(2)]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+    pytest.mark.tier(2),
+    pytest.mark.provider([ContainersProvider], scope='function')
+]
 
 
 def get_random_string(length):
@@ -26,11 +23,14 @@ def get_random_string(length):
 
 
 ATTRIBUTES_DATASET = [
-    CustomAttribute('exp_date', '2017-01-02', 'Date'),
-    CustomAttribute('sales_force_acount', 'ADF231VRWQ1', None),
-    CustomAttribute('expected_num_of_nodes', '2', None)
+    CustomAttribute('exp date', '2017-01-02', 'Date'),
+    CustomAttribute('sales force acount', 'ADF231VRWQ1', None),
+    CustomAttribute('expected num of nodes', '2', None)
 ]
 VALUE_UPDATES = ['2018-07-12', 'ADF231VRWQ1', '1']
+
+
+# TODO: Fixturize tests
 
 
 @pytest.mark.polarion('CMP-10281')
@@ -44,10 +44,11 @@ def test_add_static_custom_attributes(provider):
     """
 
     provider.add_custom_attributes(*ATTRIBUTES_DATASET)
-    custom_attr_ui = provider.summary.custom_attributes.items()
+    view = refresh_and_navigate(provider, 'Details')
+    custom_attr_ui = view.entities.custom_attributes.read()
     for attr in ATTRIBUTES_DATASET:
         assert attr.name in custom_attr_ui
-        assert custom_attr_ui[attr.name].text_value == attr.value
+        assert custom_attr_ui[attr.name] == attr.value
 
 
 @pytest.mark.polarion('CMP-10286')
@@ -66,10 +67,11 @@ def test_edit_static_custom_attributes(provider):
     for ii, value in enumerate(VALUE_UPDATES):
         edited_attribs[ii].value = value
     provider.edit_custom_attributes(*edited_attribs)
-    custom_attr_ui = provider.summary.custom_attributes.items()
+    view = refresh_and_navigate(provider, 'Details')
+    custom_attr_ui = view.entities.custom_attributes.read()
     for attr in ATTRIBUTES_DATASET:
         assert attr.name in custom_attr_ui
-        assert custom_attr_ui[attr.name].text_value == attr.value
+        assert custom_attr_ui[attr.name] == attr.value
 
 
 @pytest.mark.polarion('CMP-10285')
@@ -84,9 +86,10 @@ def test_delete_static_custom_attributes(provider):
     """
 
     provider.delete_custom_attributes(*ATTRIBUTES_DATASET)
-    if hasattr(provider.summary, 'custom_attributes'):
+    view = refresh_and_navigate(provider, 'Details')
+    if view.entities.custom_attributes.is_displayed:
         for attr in ATTRIBUTES_DATASET:
-            assert attr.name not in provider.summary.custom_attributes
+            assert attr.name not in view.entities.custom_attributes
 
 
 @pytest.mark.polarion('CMP-10303')
@@ -105,9 +108,9 @@ def test_add_attribute_with_empty_name(provider):
         )
         pytest.fail('You have added custom attribute with empty name'
                     'and didn\'t get an error!')
-
-    if hasattr(provider.summary, 'custom_attributes'):
-        assert "" not in provider.summary.custom_attributes
+    view = refresh_and_navigate(provider, 'Details')
+    if view.entities.custom_attributes.is_displayed:
+        assert "" not in view.entities.custom_attributes.read()
 
 
 @pytest.mark.polarion('CMP-10404')
@@ -119,9 +122,9 @@ def test_add_date_attr_with_wrong_value(provider):
         pytest.fail('You have added custom attribute of type'
                     '{} with value of {} and didn\'t get an error!'
                     .format(ca.field_type, ca.value))
-
-    if hasattr(provider.summary, 'custom_attributes'):
-        assert 'nondate' not in provider.summary.custom_attributes
+    view = refresh_and_navigate(provider, 'Details')
+    if view.entities.custom_attributes.is_displayed:
+        assert 'nondate' not in view.entities.custom_attributes.read()
 
 
 @pytest.mark.polarion('CMP-10405')
@@ -167,8 +170,8 @@ def test_add_already_exist_attribute(provider):
 def test_very_long_name_with_special_characters(provider):
     ca = CustomAttribute(get_random_string(1000), 'very_long_name', None)
     provider.add_custom_attributes(ca)
-    provider.summary.reload()
-    assert ca.name in provider.summary.custom_attributes.raw_keys
+    view = refresh_and_navigate(provider, 'Details')
+    assert ca.name in view.entities.custom_attributes.read()
     provider.delete_custom_attributes(ca)
 
 
@@ -176,6 +179,6 @@ def test_very_long_name_with_special_characters(provider):
 def test_very_long_value_with_special_characters(provider):
     ca = CustomAttribute('very_long_value', get_random_string(1000), None)
     provider.add_custom_attributes(ca)
-    provider.summary.reload()
-    assert ca.value == provider.summary.custom_attributes.very_long_value.value
+    view = refresh_and_navigate(provider, 'Details')
+    assert ca.value == view.entities.custom_attributes.read().get('very_long_value')
     provider.delete_custom_attributes(ca)

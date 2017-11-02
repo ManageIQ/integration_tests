@@ -1,6 +1,5 @@
 import pytest
 
-from cfme.web_ui import PagedTable, toolbar as tb
 from cfme.containers.pod import Pod
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
 from cfme.containers.service import Service
@@ -12,14 +11,13 @@ from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.route import Route
 
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.log import logger
-from cfme.utils import testgen
 
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+    pytest.mark.tier(1),
+    pytest.mark.provider([ContainersProvider], scope='function')
+]
 
 
 # The polarion markers below are used to mark the test item
@@ -99,20 +97,11 @@ TEST_ITEMS = [
                          ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
 def test_tables_fields(provider, test_item, soft_assert):
 
-    navigate_to(test_item.obj, 'All')
-    tb.select('List View')
-    # NOTE: We must re-instantiate here table
-    # in order to prevent StaleElementException or UsingSharedTables
-    # TODO: Switch to widgetastic
-    paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
-    for row in paged_tbl.rows():
-        cell = row[2]  # We're using indexing since it could be either 'name' or 'host'
-        if cell:
-            name = cell.text
-        else:
-            logger.error('Could not find NAME header on {}s list...'
-                         .format(test_item.obj.__name__))
-            continue
+    view = navigate_to(test_item.obj, 'All')
+    view.toolbar.view_selector.select('List View')
+    for row in view.table.rows():
+        name_field = getattr(row, 'name', getattr(row, 'host', None))
+        name = name_field.text
         for field in test_item.fields_to_verify:
 
             try:

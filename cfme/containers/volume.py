@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from functools import partial
 import random
 import itertools
 from cached_property import cached_property
@@ -7,27 +6,26 @@ from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 from wrapanapi.containers.volume import Volume as ApiVolume
 
-from cfme.common import SummaryMixin, Taggable
-from cfme.containers.provider import navigate_and_get_rows,\
-    ContainerObjectAllBaseView
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb, match_location, InfoBlock,\
-    PagedTable, CheckboxTable
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.containers.provider import (ContainerObjectAllBaseView,
+                                      ContainerObjectDetailsBaseView, click_row)
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from cfme.utils.appliance import Navigatable
 
 
-list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
+class VolumeAllView(ContainerObjectAllBaseView):
+    SUMMARY_TEXT = "Persistent Volumes"
 
 
-match_page = partial(match_location, controller='container_volume',
-                     title='Volumes')
+class VolumeDetailsView(ContainerObjectDetailsBaseView):
+    SUMMARY_TEXT = "Persistent Volumes"
 
 
-class Volume(Taggable, SummaryMixin, Navigatable):
+class Volume(WidgetasticTaggable, Navigatable):
 
     PLURAL = 'Volumes'
+    all_view = VolumeAllView
+    details_view = VolumeDetailsView
 
     def __init__(self, name, provider, appliance=None):
         self.name = name
@@ -38,33 +36,13 @@ class Volume(Taggable, SummaryMixin, Navigatable):
     def mgmt(self):
         return ApiVolume(self.provider.mgmt, self.name)
 
-    # TODO: remove load_details and dynamic usage from cfme.common.Summary when nav is more complete
-    def load_details(self, refresh=False):
-        navigate_to(self, 'Details')
-        if refresh:
-            tb.refresh()
-
-    def get_detail(self, *ident):
-        """ Gets details from the details infoblock
-        Args:
-            *ident: Table name and Key name, e.g. "Relationships", "Volumes"
-        Returns: A string representing the contents of the summary's value.
-        """
-        navigate_to(self, 'Details')
-        return InfoBlock.text(*ident)
-
     @classmethod
     def get_random_instances(cls, provider, count=1, appliance=None):
         """Generating random instances."""
-        rows = navigate_and_get_rows(provider, cls, count=count, silent_failure=True)
-        rows = filter(lambda r: r.provider == provider.name, rows)
-        random.shuffle(rows)
-        return [cls(row.name, row.provider, appliance=appliance)
-                for row in itertools.islice(rows, count)]
-
-
-class VolumeAllView(ContainerObjectAllBaseView):
-    TITLE_TEXT = "Persistent Volumes"
+        volumes = provider.mgmt.list_volume()
+        random.shuffle(volumes)
+        return [cls(vol.name, provider, appliance=appliance)
+                for vol in itertools.islice(volumes, count)]
 
 
 @navigator.register(Volume, 'All')
@@ -76,19 +54,26 @@ class All(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Volumes')
 
     def resetter(self):
-        from cfme.web_ui import paginator
-        tb.select('Grid View')
-        paginator.check_all()
-        paginator.uncheck_all()
+        # Reset view and selection
+        self.view.toolbar.view_selector.select("List View")
+        if self.view.paginator.is_displayed:
+            self.view.paginator.check_all()
+            self.view.paginator.uncheck_all()
 
 
 @navigator.register(Volume, 'Details')
 class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
-
-    def am_i_here(self):
-        return match_page(summary='{} (Summary)'.format(self.obj.name))
+    VIEW = VolumeDetailsView
 
     def step(self):
-        tb.select('List View')
-        sel.click(paged_tbl.find_row_by_cell_on_all_pages({'Name': self.obj.name}))
+        click_row(self.prerequisite_view, name=self.obj.name)
+
+
+@navigator.register(Volume, 'EditTags')
+class ImageRegistryEditTags(CFMENavigateStep):
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

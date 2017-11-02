@@ -1,35 +1,40 @@
 # -*- coding: utf-8 -*-
-from functools import partial
 import random
 import itertools
 from cached_property import cached_property
 
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_patternfly import Dropdown
 from wrapanapi.containers.image import Image as ApiImage
 
-from cfme.common import SummaryMixin, Taggable, PolicyProfileAssignable
-from cfme.containers.provider import Labelable, navigate_and_get_rows,\
-    ContainerObjectAllBaseView
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb, CheckboxTable, match_location, InfoBlock,\
-    flash, PagedTable
+from cfme.common import (WidgetasticTaggable, PolicyProfileAssignable,
+                         TagPageView)
+from cfme.containers.provider import (Labelable, navigate_and_get_rows,
+    ContainerObjectAllBaseView, ContainerObjectDetailsBaseView, click_row,
+    LoadDetailsMixin, refresh_and_navigate, ContainerObjectDetailsEntities)
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.appliance import Navigatable
 from cfme.configure import tasks
 from cfme.utils.wait import wait_for, TimedOutError
-
-list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
-
-
-match_page = partial(match_location, controller='container_image',
-                     title='Images')
+from widgetastic_manageiq import SummaryTable
+from widgetastic.widget import View
 
 
-class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssignable):
+class ImageAllView(ContainerObjectAllBaseView):
+    SUMMARY_TEXT = "Container Images"
+
+
+class ImageDetailsView(ContainerObjectDetailsBaseView):
+    @View.nested
+    class entities(ContainerObjectDetailsEntities):  # noqa
+        configuration = SummaryTable(title='Compliance')
+        compliance = SummaryTable(title='Compliance')
+
+
+class Image(WidgetasticTaggable, Labelable, Navigatable, LoadDetailsMixin, PolicyProfileAssignable):
 
     PLURAL = 'Container Images'
+    all_view = ImageAllView
+    details_view = ImageDetailsView
 
     def __init__(self, name, image_id, provider, appliance=None):
         self.name = name
@@ -41,21 +46,6 @@ class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssigna
     def mgmt(self):
         return ApiImage(self.provider.mgmt, self.name, self.sha256)
 
-    # TODO: remove load_details and dynamic usage from cfme.common.Summary when nav is more complete
-    def load_details(self, refresh=False):
-        navigate_to(self, 'Details')
-        if refresh:
-            tb.refresh()
-
-    def get_detail(self, *ident):
-        """ Gets details from the details infoblock
-        Args:
-            *ident: Table name and Key name, e.g. "Relationships", "Images"
-        Returns: A string representing the contents of the summary's value.
-        """
-        navigate_to(self, 'Details')
-        return InfoBlock.text(*ident)
-
     @cached_property
     def sha256(self):
         return self.id.split('@')[-1]
@@ -63,10 +53,10 @@ class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssigna
     def perform_smartstate_analysis(self, wait_for_finish=False, timeout='7M'):
         """Performing SmartState Analysis on this Image
         """
-        navigate_to(self, 'Details')
-        tb.select('Configuration', 'Perform SmartState Analysis', invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_message_contain('Analysis successfully initiated')
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
+        # TODO: Modify accordingly once there is FlashMessages.assert_massage_contains()
+        assert filter(lambda m: 'Analysis successfully initiated' in m.text, view.flash.messages)
         if wait_for_finish:
             try:
                 tasks.wait_analysis_finished('Container image analysis',
@@ -90,17 +80,14 @@ class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssigna
 
     def check_compliance(self, wait_for_finish=True, timeout=240):
         """Initiates compliance check and waits for it to finish."""
-        navigate_to(self, 'Details')
+        view = navigate_to(self, 'Details')
         original_state = self.compliance_status
-        tb.select('Policy',
-                  "Check Compliance of Last Known Configuration",
-                  invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_no_errors()
+        view.toolbar.policy.item_select("Check Compliance of Last Known Configuration",
+                                        handle_alert=True)
+        view.flash.assert_no_error()
         if wait_for_finish:
             wait_for(
-                lambda: self.compliance_status != original_state,
-                num_sec=timeout, delay=5, fail_func=sel.refresh,
+                lambda: self.compliance_status != original_state, num_sec=timeout, delay=5,
                 message='compliance state of {} still matches {}'
                         .format(self.name, original_state)
             )
@@ -108,8 +95,8 @@ class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssigna
 
     @property
     def compliance_status(self):
-        self.summary.reload()
-        return self.summary.compliance.status.value.strip()
+        view = refresh_and_navigate(self, 'Details')
+        return view.entities.compliance.read().get('Status').strip()
 
     @property
     def compliant(self):
@@ -129,11 +116,6 @@ class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssigna
             raise ValueError("{} is not a known state for compliance".format(text))
 
 
-class ImageAllView(ContainerObjectAllBaseView):
-    TITLE_TEXT = "Container Images"
-    configuration = Dropdown('Configuration')
-
-
 @navigator.register(Image, 'All')
 class All(CFMENavigateStep):
     VIEW = ImageAllView
@@ -143,20 +125,26 @@ class All(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Container Images')
 
     def resetter(self):
-        from cfme.web_ui import paginator
-        tb.select('Grid View')
-        paginator.check_all()
-        paginator.uncheck_all()
+        # Reset view and selection
+        self.view.toolbar.view_selector.select("List View")
+        self.view.paginator.check_all()
+        self.view.paginator.uncheck_all()
 
 
 @navigator.register(Image, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = ImageDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def am_i_here(self):
-        return match_page(summary='{} (Summary)'.format(self.obj.name))
+    def step(self):
+        click_row(self.prerequisite_view,
+            provider=self.obj.provider.name, id=self.obj.id)
+
+
+@navigator.register(Image, 'EditTags')
+class ImageRegistryEditTags(CFMENavigateStep):
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        tb.select('List View')
-        sel.click(paged_tbl.find_row_by_cell_on_all_pages({'Provider': self.obj.provider.name,
-                                                           'Id': self.obj.id}))
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

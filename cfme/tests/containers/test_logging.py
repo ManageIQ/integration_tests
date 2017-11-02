@@ -1,6 +1,5 @@
 import pytest
 
-from cfme.utils import testgen
 from cfme.utils.version import current_version
 from cfme.utils.appliance.implementations.ui import navigate_to
 
@@ -10,8 +9,8 @@ NUM_OF_DEFAULT_LOG_ROUTES = 2
 pytestmark = [
     pytest.mark.uncollectif(lambda provider: current_version() < "5.8"),
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+    pytest.mark.tier(1),
+    pytest.mark.provider([ContainersProvider], scope='function')]
 
 
 TEST_ITEMS = [
@@ -48,12 +47,12 @@ def get_ose_logging_url(logging_routes):
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
                          ids=[ContainersTestItem.get_pretty_id(ti) for ti in TEST_ITEMS])
-def test_external_logging_activated(provider, test_item):
+def test_external_logging_activated(provider, appliance, test_item):
 
     if test_item.obj is ContainersProvider:
         obj_inst = provider
     else:
-        obj_inst = test_item.obj.get_random_instances(provider, count=1).pop()
+        obj_inst = test_item.obj.get_random_instances(provider, 1, appliance).pop()
 
     view = navigate_to(obj_inst, 'Details')
     assert view.monitor.item_enabled('External Logging'), (

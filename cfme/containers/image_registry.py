@@ -1,32 +1,30 @@
 # -*- coding: utf-8 -*-
-from functools import partial
 import random
 from cached_property import cached_property
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 from wrapanapi.containers.image_registry import ImageRegistry as ApiImageRegistry
 
-from cfme.common import SummaryMixin, Taggable
-from cfme.containers.provider import pol_btn, navigate_and_get_rows,\
-    ContainerObjectAllBaseView
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import CheckboxTable, toolbar as tb, match_location,\
-    PagedTable
+from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.containers.provider import (navigate_and_get_rows, ContainerObjectAllBaseView,
+                                      ContainerObjectDetailsBaseView, click_row)
 from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 
 
-list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
+class ImageRegistryAllView(ContainerObjectAllBaseView):
+    SUMMARY_TEXT = "Image Registries"
 
 
-match_page = partial(match_location, controller='container_image_registry',
-                     title='Image Registries')
+class ImageRegistryDetailsView(ContainerObjectDetailsBaseView):
+    pass
 
 
-class ImageRegistry(Taggable, SummaryMixin, Navigatable):
+class ImageRegistry(WidgetasticTaggable, Navigatable):
 
     PLURAL = 'Image Registries'
+    all_view = ImageRegistryAllView
+    details_view = ImageRegistryDetailsView
 
     def __init__(self, host, provider, appliance=None):
         self.host = host
@@ -36,11 +34,6 @@ class ImageRegistry(Taggable, SummaryMixin, Navigatable):
     @cached_property
     def mgmt(self):
         return ApiImageRegistry(self.provider.mgmt, self.name, self.host, None)
-
-    def load_details(self, refresh=False):
-        navigate_to(self, 'Details')
-        if refresh:
-            tb.refresh()
 
     @property
     def name(self):
@@ -55,10 +48,6 @@ class ImageRegistry(Taggable, SummaryMixin, Navigatable):
                 for row in ir_rows_list]
 
 
-class ImageRegistryAllView(ContainerObjectAllBaseView):
-    TITLE_TEXT = "Image Registries"
-
-
 @navigator.register(ImageRegistry, 'All')
 class ImageRegistryAll(CFMENavigateStep):
     VIEW = ImageRegistryAllView
@@ -68,29 +57,26 @@ class ImageRegistryAll(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Image Registries')
 
     def resetter(self):
-        from cfme.web_ui import paginator
-        tb.select('List View')
-        if paginator.page_controls_exist():
-            paginator.check_all()
-            paginator.uncheck_all()
+        # Reset view and selection
+        self.view.toolbar.view_selector.select("List View")
+        if self.view.paginator.is_displayed:
+            self.view.paginator.check_all()
+            self.view.paginator.uncheck_all()
 
 
 @navigator.register(ImageRegistry, 'Details')
 class ImageRegistryDetails(CFMENavigateStep):
+    VIEW = ImageRegistryDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def am_i_here(self):
-        return match_page(summary='{} (Summary)'.format(self.obj.host))
-
     def step(self):
-        tb.select('List View')
-        sel.click(paged_tbl.find_row_by_cell_on_all_pages(
-            {'Host': self.obj.host}))
+        click_row(self.prerequisite_view, host=self.obj.host)
 
 
 @navigator.register(ImageRegistry, 'EditTags')
 class ImageRegistryEditTags(CFMENavigateStep):
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        pol_btn('Edit Tags')
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

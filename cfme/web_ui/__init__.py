@@ -2669,27 +2669,3 @@ def match_location(controller=None, title=None, summary=None):
                       (sel.is_displayed('//h3[normalize-space(.) = {}]'.format(quote(summary)))))
 
     return all(result)
-
-
-class StatusBox(object):
-    """ Status box as seen in containers overview page
-
-    Status box modelling.
-
-    Args:
-        name: The name of the status box as it appears in CFME, e.g. 'Nodes'
-
-    Returns: A StatusBox instance.
-
-    """
-    def __init__(self, name):
-        self.name = name
-
-    def value(self):
-        if "_" in self.name:
-            self.name = self.name.split('_', 1)[-1]
-        elem_text = sel.text(
-            "//span[contains(@class,'card-pf-aggregate-status-count')]"
-            "/../../../../../div[contains(@status, 'objectStatus.{}')]".format(self.name.lower()))
-        match = re.search(r'\d+', elem_text)
-        return int(match.group())

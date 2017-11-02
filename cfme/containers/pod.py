@@ -1,33 +1,37 @@
 # -*- coding: utf-8 -*-
-from functools import partial
 import random
 import itertools
 from cached_property import cached_property
 
-from wrapanapi.containers.pod import Pod as ApiPod
-
-from cfme.common import SummaryMixin, Taggable
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb, match_location,\
-    PagedTable, CheckboxTable
-from cfme.containers.provider import details_page, Labelable,\
-    ContainerObjectAllBaseView
-from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
-    navigate_to
 from navmazing import NavigateToAttribute, NavigateToSibling
+from wrapanapi.containers.pod import Pod as ApiPod
+from widgetastic_manageiq import NestedSummaryTable, SummaryTable
+from widgetastic.widget import View
+
+from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
+    ContainerObjectDetailsBaseView, click_row, ContainerObjectDetailsEntities)
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
-list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
+class PodAllView(ContainerObjectAllBaseView):
+    SUMMARY_TEXT = "Pods"
 
 
-match_page = partial(match_location, controller='container_group', title='Pods')
+class PodDetailsView(ContainerObjectDetailsBaseView):
+    @View.nested
+    class entities(ContainerObjectDetailsEntities):  # noqa
+        volumes = NestedSummaryTable(title='Volumes')
+        conditions = NestedSummaryTable(title='Conditions')
+        container_statuses_summary = SummaryTable(title='Container Statuses Summary')
 
 
-class Pod(Taggable, Labelable, SummaryMixin, Navigatable):
+class Pod(WidgetasticTaggable, Labelable, Navigatable):
 
     PLURAL = 'Pods'
+    all_view = PodAllView
+    details_view = PodDetailsView
 
     def __init__(self, name, project_name, provider, appliance=None):
         self.name = name
@@ -39,25 +43,6 @@ class Pod(Taggable, Labelable, SummaryMixin, Navigatable):
     def mgmt(self):
         return ApiPod(self.provider.mgmt, self.name, self.project_name)
 
-    def load_details(self, refresh=False):
-        navigate_to(self, 'Details')
-        if refresh:
-            tb.refresh()
-
-    def click_element(self, *ident):
-        self.load_details(refresh=True)
-        return sel.click(details_page.infoblock.element(*ident))
-
-    def get_detail(self, *ident):
-        """ Gets details from the details infoblock
-
-        Args:
-            *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
-        Returns: A string representing the contents of the InfoBlock's value.
-        """
-        self.load_details(refresh=True)
-        return details_page.infoblock.text(*ident)
-
     @classmethod
     def get_random_instances(cls, provider, count=1, appliance=None):
         """Generating random instances."""
@@ -65,10 +50,6 @@ class Pod(Taggable, Labelable, SummaryMixin, Navigatable):
         random.shuffle(pod_list)
         return [cls(obj.name, obj.project_name, provider, appliance=appliance)
                 for obj in itertools.islice(pod_list, count)]
-
-
-class PodAllView(ContainerObjectAllBaseView):
-    TITLE_TEXT = "Pods"
 
 
 @navigator.register(Pod, 'All')
@@ -80,21 +61,26 @@ class All(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Pods')
 
     def resetter(self):
-        from cfme.web_ui import paginator
         # Reset view and selection
-        tb.select("List View")
-        paginator.check_all()
-        paginator.uncheck_all()
+        self.view.toolbar.view_selector.select("List View")
+        self.view.paginator.check_all()
+        self.view.paginator.uncheck_all()
 
 
 @navigator.register(Pod, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = PodDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def am_i_here(self):
-        return match_page(summary='{} (Summary)'.format(self.obj.name))
+    def step(self):
+        click_row(self.prerequisite_view,
+                  name=self.obj.name, project_name=self.obj.project_name)
+
+
+@navigator.register(Pod, 'EditTags')
+class ImageRegistryEditTags(CFMENavigateStep):
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        tb.select('List View')
-        sel.click(paged_tbl.find_row_by_cell_on_all_pages({'Name': self.obj.name,
-                                                           'Project Name': self.obj.project_name}))
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

@@ -1,6 +1,5 @@
 import pytest
-from cfme.utils import testgen
-from cfme.web_ui import toolbar
+
 from cfme.containers.replicator import Replicator
 from cfme.containers.route import Route
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
@@ -9,8 +8,9 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+    pytest.mark.tier(1),
+    pytest.mark.provider([ContainersProvider], scope='function')
+]
 
 
 # The polarion markers below are used to mark the test item
@@ -30,7 +30,7 @@ TEST_ITEMS = [
 def test_tables_sort(test_item, soft_assert):
 
     current_view = navigate_to(test_item.obj, 'All')
-    toolbar.select('List View')
+    current_view.toolbar.view_selector.select('List View')
 
     for col, header_text in enumerate(current_view.table.headers):
 
