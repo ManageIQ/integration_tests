@@ -396,10 +396,12 @@ class DockerBot(object):
                 else:
                     self.args['pytest'] = "py.test -v --use-provider default -m smoke"
         else:
-            sprout_appliances = 1
+            self.pr_metadata = {'sprouts': 1}
+
         if self.args['pr']:
             self.base_branch = self.get_base_branch(self.args['pr']) or self.base_branch
-        if self.args['sprout']:
+        if self.args['sprout'] and False:
+
             self.args['pytest'] += ' --use-sprout --sprout-appliances {}'.format(sprout_appliances)
             self.args['pytest'] += ' --sprout-group {}'.format(self.args['sprout_stream'])
             self.args['pytest'] += ' --sprout-desc {}'.format(self.args['sprout_description'])
@@ -430,6 +432,17 @@ class DockerBot(object):
                             'ARTIFACTOR_DIR': self.args['artifactor_dir'],
                             'CFME_TESTS_KEY': self.enc_key(),
                             'YAYCL_CRYPT_KEY': self.enc_key()}
+        if self.args['sprout']:
+            sprout_appliances = self.pr_metadata.get('sprouts', 1)
+            self.env_details.update(
+                USE_SPROUT="yes",
+                SPROUT_APPLIANCES=str(sprout_appliances),
+                SPROUT_GROUP=self.args['sprout_stream'],
+                SPROUT_DESC=self.args['sprout_description']
+            )
+        else:
+            self.env_details.update(USE_SPROUT="no")
+
         print("  SERVER IP: {}".format(self.args['server_ip']))
         if self.args['use_wharf']:
             self.env_details['WHARF'] = self.args['wharf']
@@ -531,7 +544,7 @@ if __name__ == "__main__":
                              default=None)
     interaction.add_argument('--nowait',
                              help="No waiting for the container, just fire-and-forget",
-                             default=None)
+                             default=None, action="store_true")
 
     appliance = parser.add_argument_group('Appliance Options')
     appliance.add_argument('--appliance-name',

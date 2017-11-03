@@ -50,6 +50,7 @@ do_or_die () {
     while [ "$ret_val" -ne "0" ]; do
         if [ "$try" -lt "$max_retry" ]; then
             let try+=1;
+            log "$cmd"
             log "Running the command - try $try of $max_retry..."
             eval "$cmd"
             let ret_val="$?";
@@ -168,7 +169,9 @@ if [ -n "$PROVIDER" ]; then
     log "#*"
 fi
 export APPLIANCE=${APPLIANCE-"None"}
-log $APPLIANCE
+log "appliance: $APPLIANCE"
+export USE_SPROUT=${USE_SPROUT-"no"}
+log "use_sprout: $USE_SPROUT"
 
 # Now fill out the env yaml with ALL THE THINGS
 cat > $CFME_REPO_DIR/conf/env.local.yaml <<EOF
@@ -216,7 +219,16 @@ run_n_log "find $CFME_REPO_DIR -name \"*.pyc\" -exec rm -rf {} \;"
 
 set +e
 
+if [ "$USE_SPROUT" = "yes" ];
+then
+    miq sprout checkout --populate-yaml  2>&1 >> $ARTIFACTOR_DIR/setup.txt &
+    sleep 5
+    do_or_die "(date && grep -q appliances: conf/env.local.yaml)>> $ARTIFACTOR_DIR/setup.txt" 5 60
+else
+    log "no sprout used"
+fi
 # Finally, run the py.test
 log "$PYTEST"
+
 run_n_log "$PYTEST"
 RES=$?
