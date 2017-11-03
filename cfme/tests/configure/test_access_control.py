@@ -330,7 +330,7 @@ def test_group_crud_with_tag(a_provider, category, tag, group_collection):
 def test_group_duplicate_name(group_collection):
     """ Verify that two groups can't have the same name """
     role = 'EvmRole-approver'
-    group_description = 'grp' + fauxfactory.gen_alphanumeric()
+    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role)
 
     with pytest.raises(RBACOperationBlocked):
