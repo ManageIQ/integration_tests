@@ -3,23 +3,31 @@ import random
 from random import sample
 from traceback import format_exc
 
-
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_patternfly import (SelectorDropdown, Dropdown, BootstrapSelect,
-                                    Input, Button, Tab, FlashMessages)
+
+from widgetastic_patternfly import (
+    SelectorDropdown, Dropdown, BootstrapSelect, Input, Button, Tab, FlashMessages
+)
+from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Text, View, TextInput
+from widgetastic_manageiq import (
+    SummaryTable, BreadCrumb, Accordion, ManageIQTree
+)
+from widgetastic.exceptions import RowNotFound
+
 from wrapanapi.utils import eval_strings
 
-
-from cfme.base.login import BaseLoggedInPage
-from cfme.common.provider import BaseProvider, DefaultEndpoint, DefaultEndpointForm
-
 from cfme import exceptions
-from cfme.common.provider_views import BeforeFillMixin,\
-    ContainersProviderAddView, ContainersProvidersView,\
-    ContainersProviderEditView, ProvidersView, ProviderDetailsView,\
-    ProviderSideBar, ProviderDetailsToolBar
 from cfme.base.credential import TokenCredential
+from cfme.base.login import BaseLoggedInPage
+from cfme.common import TagPageView
+from cfme.common.provider import BaseProvider, DefaultEndpoint, DefaultEndpointForm
+from cfme.common.provider_views import (
+    BeforeFillMixin, ContainerProviderAddView, ContainerProvidersView,
+    ContainerProviderEditView, ContainerProviderEditViewUpdated, ProvidersView,
+    ContainerProviderAddViewUpdated, ProviderSideBar,
+    ProviderDetailsToolBar, ContainerProviderDetailsView
+)
 from cfme.utils import version
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -28,10 +36,6 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import SummaryTable, BreadCrumb, Accordion,\
-    ManageIQTree
-from widgetastic.exceptions import RowNotFound
-from cfme.common import TagPageView
 
 
 class ContainersProviderDefaultEndpoint(DefaultEndpoint):
@@ -43,7 +47,6 @@ class ContainersProviderDefaultEndpoint(DefaultEndpoint):
         out = {
             'hostname': self.hostname,
             'password': self.token,
-            'confirm_password': self.token,
             'api_port': self.api_port
         }
         if version.current_version() >= '5.8':
@@ -51,6 +54,9 @@ class ContainersProviderDefaultEndpoint(DefaultEndpoint):
             if self.sec_protocol.lower() == 'ssl trusting custom ca' and \
                     hasattr(self, 'get_ca_cert'):
                 out['trusted_ca_certificates'] = self.get_ca_cert()
+        if version.current_version() < '5.9':
+            out['confirm_password'] = self.token
+
         return out
 
 
@@ -70,10 +76,27 @@ class ContainersProviderEndpointsForm(View):
     class hawkular(Tab, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Hawkular'
         sec_protocol = BootstrapSelect(id='hawkular_security_protocol')
+        TAB_NAME = VersionPick({
+            Version.lowest(): 'Hawkular',
+            '5.9': 'Metrics'
+        })
+        sec_protocol = VersionPick({
+            Version.lowest(): BootstrapSelect(id='hawkular_security_protocol'),
+            '5.9': BootstrapSelect(id='metrics_security_protocol')
+        })
         # trusted_ca_certificates appears only in 5.8
-        trusted_ca_certificates = TextInput('hawkular_tls_ca_certs')
-        hostname = Input('hawkular_hostname')
-        api_port = Input('hawkular_api_port')
+        trusted_ca_certificates = VersionPick({
+            Version.lowest(): TextInput('hawkular_tls_ca_certs'),
+            '5.9': TextInput('metrics_tls_ca_certs')
+        })
+        hostname = VersionPick({
+            Version.lowest(): Input('hawkular_hostname'),
+            '5.9': Input('metrics_hostname')
+        })
+        api_port = VersionPick({
+            Version.lowest(): Input('hawkular_api_port'),
+            '5.9': Input('metrics_api_port')
+        })
         validate = Button('Validate')
 
 
@@ -116,16 +139,12 @@ class LoggingableView(View):
         return logging_url
 
 
-class ContainersProviderDetailsView(ProviderDetailsView, LoggingableView):
-    pass
-
-
 class ContainersProvider(BaseProvider, Pretty):
     PLURAL = 'Providers'
     provider_types = {}
     in_version = ('5.5', version.LATEST)
     category = "container"
-    pretty_attrs = ['name', 'key', 'zone']
+    pretty_attrs = ['name', 'key', 'zone', 'metrics_type']
     STATS_TO_MATCH = [
         'num_project',
         'num_service',
@@ -142,14 +161,15 @@ class ContainersProvider(BaseProvider, Pretty):
     quad_name = None
     db_types = ["ContainerManager"]
     endpoints_form = ContainersProviderEndpointsForm
-    all_view = ContainersProvidersView
-    details_view = ContainersProviderDetailsView
+    all_view = ContainerProvidersView
+    details_view = ContainerProviderDetailsView
 
     def __init__(
             self,
             name=None,
             key=None,
             zone=None,
+            metrics_type=None,
             endpoints=None,
             provider_data=None,
             appliance=None):
@@ -159,6 +179,7 @@ class ContainersProvider(BaseProvider, Pretty):
         self.zone = zone
         self.endpoints = endpoints
         self.provider_data = provider_data
+        self.metrics_type = (metrics_type if self.appliance.version >= '5.9' else None)
 
     @property
     def view_value_mapping(self):
@@ -166,6 +187,7 @@ class ContainersProvider(BaseProvider, Pretty):
             'name': self.name,
             'prov_type': self.type,
             'zone': self.zone,
+            'metrics_type': self.metrics_type
         }
 
     @variable(alias='db')
@@ -273,7 +295,7 @@ class ContainersProvider(BaseProvider, Pretty):
 
 @navigator.register(ContainersProvider, 'All')
 class All(CFMENavigateStep):
-    VIEW = ContainersProvidersView
+    VIEW = ContainerProvidersView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
@@ -288,16 +310,29 @@ class All(CFMENavigateStep):
 
 @navigator.register(ContainersProvider, 'Add')
 class Add(CFMENavigateStep):
-    VIEW = ContainersProviderAddView
+
+    def container_provider_view_class(self):
+        return VersionPick({
+            Version.lowest(): ContainerProviderAddView,
+            '5.9': ContainerProviderAddViewUpdated
+        })
+
+    @property
+    def VIEW(self):  # noqa
+        return self.container_provider_view_class().pick(self.obj.appliance.version)
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.toolbar.configuration.item_select('Add Existing Containers Provider')
+        self.prerequisite_view.toolbar.configuration.item_select(
+            VersionPick({
+                Version.lowest(): 'Add Existing Containers Provider',
+                '5.9': 'Add a new Containers Provider'
+            }).pick(self.obj.appliance.version))
 
 
 @navigator.register(ContainersProvider, 'Details')
 class Details(CFMENavigateStep):
-    VIEW = ContainersProviderDetailsView
+    VIEW = ContainerProviderDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -310,12 +345,20 @@ class Details(CFMENavigateStep):
 
 @navigator.register(ContainersProvider, 'Edit')
 class Edit(CFMENavigateStep):
-    VIEW = ContainersProviderEditView
+
+    def container_provider_edit_view_class(self):
+        return VersionPick({
+            Version.lowest(): ContainerProviderEditView,
+            '5.9': ContainerProviderEditViewUpdated
+        })
+
+    @property
+    def VIEW(self):  # noqa
+        return self.container_provider_edit_view_class().pick(self.obj.appliance.version)
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(self.obj.name,
-                                                   surf_pages=True).check()
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).check()
         self.prerequisite_view.toolbar.configuration.item_select(
             'Edit Selected Containers Provider')
 

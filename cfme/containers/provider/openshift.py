@@ -1,14 +1,17 @@
 from cached_property import cached_property
+from os import path
+
+from wrapanapi.containers.providers.openshift import Openshift
 
 from . import ContainersProvider
-from cfme.utils.varmeth import variable
-from cfme.utils.path import data_path
-from os import path
-from wrapanapi.containers.providers.openshift import Openshift
-from cfme.utils.ocp_cli import OcpCli
-from cfme.containers.provider import ContainersProviderDefaultEndpoint,\
-    ContainersProviderEndpointsForm
+
+from cfme.containers.provider import (
+    ContainersProviderDefaultEndpoint, ContainersProviderEndpointsForm
+)
 from cfme.common.provider import DefaultEndpoint
+from cfme.utils.ocp_cli import OcpCli
+from cfme.utils.path import data_path
+from cfme.utils.varmeth import variable
 from cfme.utils.version import current_version
 
 
@@ -60,10 +63,10 @@ class OpenshiftProvider(ContainersProvider):
     db_types = ["Openshift::ContainerManager"]
     endpoints_form = ContainersProviderEndpointsForm
 
-    def __init__(self, name=None, key=None, zone=None,
+    def __init__(self, name=None, key=None, zone=None, metrics_type=None,
                  provider_data=None, endpoints=None, appliance=None):
         super(OpenshiftProvider, self).__init__(
-            name=name, key=key, zone=zone, provider_data=provider_data,
+            name=name, key=key, zone=zone, metrics_type=metrics_type, provider_data=provider_data,
             endpoints=endpoints, appliance=appliance)
 
     @cached_property
@@ -76,11 +79,19 @@ class OpenshiftProvider(ContainersProvider):
 
     @property
     def view_value_mapping(self):
-        return {
+
+        mapping = {
             'name': self.name,
-            'prov_type': 'OpenShift Container Platform',
             'zone': self.zone,
+            'metrics_type': self.metrics_type
         }
+
+        mapping['prov_type'] = (
+            'OpenShift Container Platform'
+            if self.appliance.is_downstream
+            else 'OpenShift')
+
+        return mapping
 
     @variable(alias='db')
     def num_route(self):
@@ -109,16 +120,19 @@ class OpenshiftProvider(ContainersProvider):
                 endpoints[endp] = OpenshiftDefaultEndpoint(**prov_config['endpoints'][endp])
             elif HawkularEndpoint.name == endp:
                 endpoints[endp] = HawkularEndpoint(**prov_config['endpoints'][endp])
+            # TODO Add Prometheus and logic for having to select or the other based on metrcis_type
             else:
                 raise Exception('Unsupported endpoint type "{}".'.format(endp))
 
         return cls(
-            name=prov_config['name'],
+            name=prov_config.get('name'),
             key=prov_key,
-            zone=prov_config['server_zone'],
+            zone=prov_config.get('server_zone'),
+            metrics_type=prov_config.get('metrics_type'),
             endpoints=endpoints,
             provider_data=prov_config,
-            appliance=appliance)
+            appliance=appliance
+        )
 
     def custom_attributes(self):
         """returns custom attributes"""

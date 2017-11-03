@@ -8,7 +8,7 @@ from cfme.containers.overview import ContainersOverviewView
 from cfme.containers.node import NodeAllView
 from cfme.containers.pod import PodAllView
 from cfme.containers.service import ServiceAllView
-from cfme.containers.provider import ContainersProvider, ContainersProvidersView
+from cfme.containers.provider import ContainersProvider, ContainerProvidersView
 from cfme.containers.project import ProjectAllView
 from cfme.containers.image_registry import ImageRegistryAllView
 from cfme.containers.template import TemplateAllView
@@ -29,7 +29,7 @@ pytestmark = [
 DataSet = namedtuple('DataSet', ['obj_view', 'page_name'])
 data_sets = (
     DataSet(ContainersOverviewView, 'Compute / Containers / Overview'),
-    DataSet(ContainersProvidersView, 'Compute / Containers / Providers'),
+    DataSet(ContainerProvidersView, 'Compute / Containers / Providers'),
     DataSet(NodeAllView, 'Compute / Containers / Container Nodes'),
     DataSet(PodAllView, 'Compute / Containers / Pods'),
     DataSet(ServiceAllView, 'Compute / Containers / Container Services'),

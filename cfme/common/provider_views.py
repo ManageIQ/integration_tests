@@ -114,6 +114,16 @@ class MiddlewareProviderDetailsView(ProviderDetailsView):
                 self.navigation.currently_selected == ['Middleware', 'Providers'])
 
 
+class ContainerProviderDetailsView(ProviderDetailsView):
+    """
+     Container Details page
+    """
+    @property
+    def is_displayed(self):
+        return (super(ContainerProviderDetailsView, self).is_displayed and
+                self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'])
+
+
 class ProviderTimelinesView(TimelinesView, BaseLoggedInPage):
     """
      represents Timelines page
@@ -274,7 +284,7 @@ class ProvidersView(BaseLoggedInPage):
     including_entities = View.include(ProviderEntitiesView, use_parent=True)
 
 
-class ContainersProvidersView(ProvidersView):
+class ContainerProvidersView(ProvidersView):
     """
      represents Main view displaying all Containers providers
     """
@@ -287,7 +297,7 @@ class ContainersProvidersView(ProvidersView):
 
     @property
     def is_displayed(self):
-        return (super(ContainersProvidersView, self).is_displayed and
+        return (super(ContainerProvidersView, self).is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'] and
                 self.entities.title.text == self.SUMMARY_TEXT)
 
@@ -393,9 +403,9 @@ class CloudProviderAddView(ProviderAddView):
                 self.title.text == 'Add New Cloud Provider')
 
 
-class ContainersProviderAddView(ProviderAddView):
+class ContainerProviderAddView(ProviderAddView):
     """
-     represents Containers Provider Add View
+     represents Container Provider Add View
     """
     prov_type = BootstrapSelect(id='ems_type')
 
@@ -404,6 +414,15 @@ class ContainersProviderAddView(ProviderAddView):
         return (super(ProviderAddView, self).is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'] and
                 self.title.text == 'Add New Containers Provider')
+
+
+class ContainerProviderAddViewUpdated(ContainerProviderAddView):
+    """
+     Additional widgets for builds 5.9 and up
+    """
+
+    metrics_type = BootstrapSelect(id='metrics_selection')
+    alerts_type = BootstrapSelect(id='alerts_selection')
 
 
 class MiddlewareProviderAddView(ProviderAddView):
@@ -461,15 +480,24 @@ class CloudProviderEditView(ProviderEditView):
                 self.title.text == 'Edit Cloud Provider')
 
 
-class ContainersProviderEditView(ProviderEditView):
+class ContainerProviderEditView(ProviderEditView):
     """
-     represents Containers Provider Edit View
+     represents Container Provider Edit View
     """
     @property
     def is_displayed(self):
         return (super(ProviderEditView, self).is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'] and
                 'Edit Containers Provider' in self.title.text)
+
+
+class ContainerProviderEditViewUpdated(ContainerProviderEditView):
+    """
+     Additional widgets for builds 5.9 and up
+    """
+
+    metrics_type = BootstrapSelect(id='metrics_selection')
+    alerts_type = BootstrapSelect(id='alerts_selection')
 
 
 class MiddlewareProviderEditView(ProviderEditView):

@@ -7,7 +7,7 @@ import pytest
 from cfme.containers.provider import ContainersProvider
 from cfme.exceptions import FlashMessageException
 from cfme.utils.version import current_version
-from cfme.common.provider_views import ContainersProvidersView
+from cfme.common.provider_views import ContainerProvidersView
 
 
 pytestmark = [
@@ -68,7 +68,7 @@ def test_add_provider_naming_conventions(provider, appliance, soft_assert):
         new_provider.endpoints['default'].sec_protocol = 'SSL'
         try:
             new_provider.setup()
-            view = appliance.browser.create_view(ContainersProvidersView)
+            view = appliance.browser.create_view(ContainerProvidersView)
             view.flash.assert_success_message(
                 'Containers Providers "' + provider_name + '" was saved')
         except FlashMessageException:
@@ -120,7 +120,7 @@ def test_add_hawkular_provider_ssl(provider, appliance, test_item, soft_assert):
     new_provider.endpoints['hawkular'].sec_protocol = test_item.hawkular_sec_protocol
     try:
         new_provider.setup()
-        view = appliance.browser.create_view(ContainersProvidersView)
+        view = appliance.browser.create_view(ContainerProvidersView)
         view.flash.assert_success_message(
             'Containers Providers "' + provider.name + '" was saved')
     except FlashMessageException:
