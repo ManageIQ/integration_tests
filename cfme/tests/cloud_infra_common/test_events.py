@@ -5,6 +5,7 @@ import pytest
 
 from cfme.common.vm import VM
 from cfme.control.explorer.policies import VMControlPolicy
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
@@ -34,6 +35,9 @@ def vm_crud(provider, setup_provider_modscope, small_template_modscope):
 
 
 @pytest.mark.uncollectif(BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576')
+@pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider) and
+                         BZ(1509020, forced_streams=['5.8', '5.9']).blocks,
+                         'BZ 1509020')
 @pytest.mark.meta(blockers=[1238371], automates=[1238371])
 def test_vm_create(request, appliance, vm_crud, provider, register_event):
     """ Test whether vm_create_complete event is emitted.
