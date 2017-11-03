@@ -21,13 +21,13 @@ pytestmark = [
 AttributeToVerify = namedtuple('AttributeToVerify', ['table', 'attr', 'verifier'])
 
 TESTED_ATTRIBUTES__openscap_off = (
-    AttributeToVerify('configuration', 'openscap_results', bool),
-    AttributeToVerify('configuration', 'openscap_html', lambda val: val == 'Available'),
-    AttributeToVerify('configuration', 'last_scan', dateparser.parse)
+    AttributeToVerify('configuration', 'OpenSCAP Results', bool),
+    AttributeToVerify('configuration', 'OpenSCAP HTML', lambda val: val == 'Available'),
+    AttributeToVerify('configuration', 'Last scan', dateparser.parse)
 )
 TESTED_ATTRIBUTES__openscap_on = TESTED_ATTRIBUTES__openscap_off + (
-    AttributeToVerify('compliance', 'status', lambda val: val.lower() != 'never verified'),
-    AttributeToVerify('compliance', 'history', lambda val: val == 'Available')
+    AttributeToVerify('compliance', 'Status', lambda val: val.lower() != 'never verified'),
+    AttributeToVerify('compliance', 'History', lambda val: val == 'Available')
 )
 
 TEST_ITEMS = (
@@ -89,9 +89,9 @@ def test_containers_smartstate_analysis(provider, test_item, soft_assert,
     for tbl, attr, verifier in test_item.tested_attr:
 
         table = getattr(view.entities, tbl)
-        table_data = table.read()
+        table_data = {k.lower(): v for k, v in table.read().items()}
 
-        if not soft_assert(attr in table_data,
+        if not soft_assert(attr.lower() in table_data,
                 '{} table has missing attribute \'{}\''.format(tbl, attr)):
             continue
         provider.refresh_provider_relationships()
