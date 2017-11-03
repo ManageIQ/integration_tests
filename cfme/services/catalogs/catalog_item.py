@@ -105,8 +105,12 @@ class EditCatalogItemView(BasicInfoForm):
 
     @property
     def is_displayed(self):
-        return self.in_explorer and self.catalog_items.is_opened and \
-            self.title.text == "Editing Service Catalog Item {}".format(self.context['object'].name)
+        return (
+            self.in_explorer and
+            self.catalog_items.is_opened and
+            self.title.text == 'Editing Service Catalog Item "{}"'
+                .format(self.context['object'].name)
+        )
 
 
 class AddButtonGroupView(ButtonGroupForm):
