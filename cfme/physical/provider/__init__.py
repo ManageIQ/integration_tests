@@ -2,6 +2,9 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import Fillable
 
 from cfme.base.ui import Server
+from navmazing import NavigateToObject, NavigateToSibling
+
+from cfme.base.ui import BaseLoggedInPage
 from cfme.common.provider import BaseProvider
 from cfme.common.provider_views import PhysicalProviderAddView, PhysicalProvidersView
 from cfme.utils.appliance import Navigatable
