@@ -49,6 +49,9 @@ def testing_vm(request, vm_name, setup_provider, provider, provisioning):
 
 @pytest.fixture(scope="function")
 def retire_extend_button(request):
+    """
+    Add an automate button that will extend the vm retirement date
+    """
     grp_name = "grp_{}".format(fauxfactory.gen_alphanumeric())
     grp = ButtonGroup(
         text=grp_name,
@@ -105,14 +108,19 @@ def test_vm_retire_extend(request, testing_vm, soft_assert, retire_extend_button
         soft_assert(set_date == retirement_date.strftime(pick(VM.RETIRE_DATE_FMT)),
                     "The retirement date '{}' did not match expected date '{}'"
                     .format(set_date, retirement_date.strftime(pick(VM.RETIRE_DATE_FMT))))
-    # current_retirement_date = testing_vm.retirement_date
 
-    # Now run the extend stuff
+    # Create the vm_retire_extend button and click on it
     retire_extend_button()
 
-    # dajo - 20140920 - this fails because its not turning the calendar to the next month?
-    # wait_for(
-    #     lambda: testing_vm.retirement_date >= current_retirement_date + timedelta(days=14),
-    #     num_sec=60,
-    #     message="extend the retirement date by 14 days"
-    # )
+    # CFME automate vm_retire_extend method defaults to extending the date by 14 days
+    extend_duration_days = 14
+    extended_retirement_date = retirement_date + timedelta(days=extend_duration_days)
+
+    # Check that the WebUI updates with the correct date
+    wait_for(
+        lambda: testing_vm.retirement_date >= extended_retirement_date.strftime(
+            pick(VM.RETIRE_DATE_FMT)),
+        num_sec=60,
+        message="Check for extension of the VM retirement date by {} days".format(
+            extend_duration_days)
+    )
