@@ -76,6 +76,8 @@ setup(
             'alerts = cfme.control.explorer.alerts:AlertCollection',
             'alert_profiles = cfme.control.explorer.alert_profiles:AlertProfileCollection',
             'conditions = cfme.control.explorer.conditions:ConditionCollection',
+            ('diagnostic_workers = '
+                'cfme.configure.configuration.diagnostics_settings:DiagnosticWorkersCollection'),
             'policies = cfme.control.explorer.policies:PolicyCollection',
             'policy_profiles = cfme.control.explorer.policy_profiles:PolicyProfileCollection',
             'ansible_credentials = cfme.ansible.credentials:CredentialsCollection',
