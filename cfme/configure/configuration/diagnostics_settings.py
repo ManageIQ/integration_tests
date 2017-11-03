@@ -51,11 +51,16 @@ class DiagnosticWorker(BaseEntity):
     def reload_worker(self, pid=None):
         """ Reload workers
 
+            Args:
+                pid: worker PID, can be passed as a single value or a list of pids
+
             Returns: Workers pid(list)
         """
         if not pid:
             pid = self.get_all_worker_pids()
-        view = self.create_view(DiagnosticServerWorkersView)
+        elif not isinstance(pid, (list, set)):
+            pid = list(pid)
+        view = navigate_to(self.parent, 'AllDiagnosticWorkers')
         # Initiate the restart
         for pid_item in pid:
             view.workers_table.row(pid=pid_item).click()
