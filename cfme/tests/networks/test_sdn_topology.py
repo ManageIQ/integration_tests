@@ -2,7 +2,6 @@ import pytest
 from random import choice
 
 from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.fixtures.pytest_selenium import is_displayed_text
 from cfme.networks.topology import Topology
 from cfme.utils import testgen
 from cfme.utils.wait import wait_for
@@ -10,19 +9,6 @@ from cfme.utils.wait import wait_for
 
 pytest_generate_tests = testgen.generate(classes=[EC2Provider], scope='module')
 pytestmark = pytest.mark.usefixtures('setup_provider')
-
-
-@pytest.mark.tier(1)
-def test_sdn_topology_names(provider, appliance):
-    ''' Test network topology names
-    Recommendation: Run test with maximed browser to be sure everything is visible
-    '''
-    topology_object = Topology(appliance)
-    topology_object.refresh()
-    for show_names_state in (True, False):
-        topology_object.display_names.enable(show_names_state)
-        for elem in topology_object.elements:
-            assert is_displayed_text(elem.name) == show_names_state
 
 
 def test_topology_search(provider, appliance):
