@@ -1722,7 +1722,10 @@ class IPAppliance(object):
         yaml = self.get_yaml_config()
         yaml['server']['role'] = ','.join([role for role, boolean in roles.iteritems() if boolean])
         self.set_yaml_config(yaml)
-        wait_for(lambda: self.server_roles == roles, num_sec=300, delay=15)
+        timeout = 600 if 'embedded_ansible' in roles else 300
+        wait_for(lambda: self.server_roles == roles, num_sec=timeout, delay=15)
+        if 'embedded_ansible' in roles:
+            self.wait_for_embedded_ansible()
 
     def enable_embedded_ansible_role(self):
         """Enables embbeded ansible role
