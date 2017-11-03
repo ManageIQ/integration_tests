@@ -78,7 +78,6 @@ def new_snapshot(test_vm, has_name=True, memory=False):
 @pytest.mark.uncollectif(lambda provider:
                          (provider.one_of(RHEVMProvider) and provider.version < 4) or
                          current_version() < '5.8', 'Must be RHEVM provider version >= 4')
-@pytest.mark.rhv3
 def test_memory_checkbox(small_test_vm, provider, soft_assert):
     # Make sure the VM is powered on
     small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_ON, cancel=False)
@@ -104,7 +103,6 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
 
 @pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
                          'Must be RHEVM provider version >= 4')
-@pytest.mark.rhv1
 def test_snapshot_crud(small_test_vm, provider):
     """Tests snapshot crud
 
