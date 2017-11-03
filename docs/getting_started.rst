@@ -49,6 +49,20 @@ Obtaining what you need (Project Setup)
   aware that you will also have to add your appliance to the ``env.yaml`` in either the
   ``base_url``(deprecated) section, or in the newer ``appliances`` list.
 
+* You will also need to run the configuration script against the appliance that you intend to test
+  if you didn't get it from sprout. All external usage of this framework will be non-sprout unless
+  you have specifically set up a sprout instance.
+
+    * You need to create an instance of an appliance and the invoke ``configure``. There are other
+      options please refer to the documentation for more help.
+
+      .. code-block:: python
+
+        from cfme.utils.appliance import IPAppliance
+
+        app = IPAppliance('10.x.x.x')
+        app.configure()
+
 Appliances in containers
 ------------------------
 If the target appliance you will be testing is a container, you might like to consult
