@@ -12,13 +12,11 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 # ============================ Diagnostic Server Workers ===========================
 
 class DiagnosticServerWorkersToolbar(View):
-
     configuration = Dropdown('Configuration')
     reload_button = Button(id='refresh_workers')
 
 
 class DiagnosticServerWorkersView(ServerDiagnosticsView):
-
     toolbar = View.nested(DiagnosticServerWorkersToolbar)
     workers_table = Table('//div[@id="diagnostics_workers"]//table')
 
@@ -46,7 +44,9 @@ class DiagnosticWorker(BaseEntity):
     def get_all_worker_pids(self):
         """ Returns a list of pids for worker """
         view = navigate_to(self.parent, 'AllDiagnosticWorkers')
-        return {row.pid.text for row in view.workers_table.rows() if self.name in row.name.text}
+        return (
+            {row.pid.text for row in view.workers_table.rows() if self.name in row.name.text}
+        )
 
     def reload_worker(self, pid=None):
         """ Reload workers
