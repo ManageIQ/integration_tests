@@ -8,7 +8,6 @@ from cfme.base.credential import Credential
 from cfme.common.provider_views import (MiddlewareProviderAddView,
                                     MiddlewareProvidersView,
                                     MiddlewareProviderDetailsView)
-from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware.provider import MiddlewareProvider
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.utils import error
@@ -91,8 +90,7 @@ def test_provider_add_with_bad_port(provider):
     provider.endpoints['default'].api_port = 8888
     with error.expected('Credential validation was not successful: Unable to connect to {}:8888'
                         .format(provider.hostname)):
-        with sel.ajax_timeout(120):
-            provider.create(validate_credentials=True)
+        provider.create(validate_credentials=True)
 
 
 def test_provider_add_with_bad_hostname(provider):
@@ -101,8 +99,7 @@ def test_provider_add_with_bad_hostname(provider):
     with error.expected(
             'Credential validation was not successful: Unable to connect to incorrect:{}'
             .format(provider.port)):
-        with sel.ajax_timeout(120):
-            provider.create(validate_credentials=True)
+        provider.create(validate_credentials=True)
 
 
 @pytest.mark.usefixtures('has_no_middleware_providers')
@@ -147,8 +144,7 @@ def test_hawkular_crud(provider):
     """Test provider add with good credentials.
 
     """
-    with sel.ajax_timeout(120):
-        provider.create(cancel=False, validate_credentials=True)
+    provider.create(cancel=False, validate_credentials=True)
     # UI validation, checks whether data provided from Hawkular provider matches data in UI
     provider.validate_stats(ui=True)
     # DB validation, checks whether data provided from Hawkular provider matches data in DB
