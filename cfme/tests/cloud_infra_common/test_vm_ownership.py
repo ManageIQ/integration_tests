@@ -58,7 +58,7 @@ def role_user_or_group_owned(appliance):
 def group_user_or_group_owned(appliance, role_user_or_group_owned):
     group_collection = appliance.collections.rbac_groups
     group = group_collection.create(
-        description='group_user_or_group_owned_' + fauxfactory.gen_alphanumeric(),
+        description='group_user_or_group_owned_{}'.format(fauxfactory.gen_alphanumeric()),
         role=role_user_or_group_owned.name)
     yield group
     appliance.server.login_admin()
