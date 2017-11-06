@@ -1604,6 +1604,14 @@ class JSPaginationPane(View, ReportDataControllerMixin):
         else:
             return
 
+    @property
+    def min_item(self):
+        return self._invoke_cmd('pagination_range')['start']
+
+    @property
+    def max_item(self):
+        return self._invoke_cmd('pagination_range')['end']
+
     def find_row_on_pages(self, table, *args, **kwargs):
         """Find first row matching filters provided by kwargs on the given table widget
 
@@ -1757,6 +1765,14 @@ class NonJSPaginationPane(View):
     @property
     def items_amount(self):
         return self.paginator.page_info()[2]
+
+    @property
+    def min_item(self):
+        return self.paginator.page_info()[0]
+
+    @property
+    def max_item(self):
+        return self.paginator.page_info()[1]
 
     def find_row_on_pages(self, table, *args, **kwargs):
         """Find first row matching filters provided by kwargs on the given table widget

@@ -92,8 +92,9 @@ def test_cloud_grid_page_per_item(request, page, set_grid, appliance):
     limit = visual.grid_view_limit
     view = navigate_to(page, 'All')
     view.toolbar.view_selector.select('Grid View')
-    min_item, max_item, item_amt = view.paginator.paginator.page_info()
-    if view.paginator.items_amount is not None and int(view.paginator.items_amount) >= int(limit):
+    max_item = view.paginator.max_item
+    item_amt = view.paginator.items_amount
+    if item_amt is not None and int(item_amt) >= int(limit):
         assert int(max_item) == int(limit), "Gridview Failed for page {}!".format(page)
     assert int(max_item) <= int(item_amt)
 
@@ -111,8 +112,9 @@ def test_cloud_tile_page_per_item(request, page, set_tile, appliance):
     limit = visual.tile_view_limit
     view = navigate_to(page, 'All')
     view.toolbar.view_selector.select('Tile View')
-    min_item, max_item, item_amt = view.paginator.paginator.page_info()
-    if view.paginator.items_amount is not None and int(view.paginator.items_amount) >= int(limit):
+    max_item = view.paginator.max_item
+    item_amt = view.paginator.items_amount
+    if item_amt is not None and int(item_amt) >= int(limit):
         assert int(max_item) == int(limit), "Tileview Failed for page {}!".format(page)
     assert int(max_item) <= int(item_amt)
 
@@ -130,8 +132,9 @@ def test_cloud_list_page_per_item(request, page, set_list, appliance):
     limit = visual.list_view_limit
     view = navigate_to(page, 'All')
     view.toolbar.view_selector.select('List View')
-    min_item, max_item, item_amt = view.paginator.paginator.page_info()
-    if view.paginator.items_amount is not None and int(view.paginator.items_amount) >= int(limit):
+    max_item = view.paginator.max_item
+    item_amt = view.paginator.items_amount
+    if item_amt is not None and int(item_amt) >= int(limit):
         assert int(max_item) == int(limit), "Listview Failed for page {}!".format(page)
     assert int(max_item) <= int(item_amt)
 
