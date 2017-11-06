@@ -3,6 +3,7 @@ import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text
 from widgetastic.utils import Fillable
+from widgetastic_manageiq import PaginationPane
 from widgetastic_patternfly import CandidateNotFound
 from cached_property import cached_property
 
@@ -16,6 +17,7 @@ from .dialog_tab import TabCollection
 
 class DialogsView(AutomateCustomizationView):
     title = Text("#explorer_title_text")
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
