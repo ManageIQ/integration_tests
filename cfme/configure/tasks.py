@@ -200,12 +200,14 @@ class TasksView(BaseLoggedInPage):
 
         @View.nested
         class myothertasks(Tab):  # noqa
-            TAB_NAME = VersionPick({'5.9': 'My Tasks', Version.lowest(): 'My Other UI Tasks'})
+            TAB_NAME = VersionPick({'5.9': 'My Tasks',
+                                    Version.lowest(): 'My Other UI Tasks'})
             table = Table(table_loc)
 
         @View.nested
         class alltasks(Tab):  # noqa
-            TAB_NAME = "All VM and Container Analysis Tasks"
+            TAB_NAME = VersionPick({'5.9': 'All Tasks',
+                                    Version.lowest(): "All VM and Container Analysis Tasks"})
             table = Table(table_loc)
 
         @View.nested
