@@ -139,7 +139,7 @@ def test_quadicon_terminate_cancel(provider, testing_instance, verify_vm_running
     soft_assert('currentstate-on' in testing_instance.find_quadicon().data['state'])
 
 
-def test_quadicon_terminate(provider, testing_instance, verify_vm_running, soft_assert):
+def test_quadicon_terminate(appliance, provider, testing_instance, verify_vm_running, soft_assert):
     """ Tests terminate instance
 
     Metadata:
@@ -148,7 +148,11 @@ def test_quadicon_terminate(provider, testing_instance, verify_vm_running, soft_
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE, from_details=False)
     logger.info("Terminate initiated")
-    flash.assert_message_contain('Vm Destroy initiated')
+    msg = ('Terminate initiated for 1 VM and Instance from the {} Database'
+           .format(appliance.product_name)
+           if appliance.version >= '5.9'
+           else 'Vm Destroy initiated')
+    flash.assert_success_message(msg)
     terminated_states = (testing_instance.STATE_TERMINATED, testing_instance.STATE_ARCHIVED,
                          testing_instance.STATE_UNKNOWN)
     soft_assert(testing_instance.wait_for_instance_state_change(desired_state=terminated_states,
