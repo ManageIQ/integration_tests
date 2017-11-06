@@ -1719,12 +1719,13 @@ class IPAppliance(object):
         if self.server_roles == roles:
             self.log.debug(' Roles already match, returning...')
             return
+        ansible = roles.get('embedded_ansible', False)
         yaml = self.get_yaml_config()
         yaml['server']['role'] = ','.join([role for role, boolean in roles.iteritems() if boolean])
         self.set_yaml_config(yaml)
-        timeout = 600 if 'embedded_ansible' in roles else 300
+        timeout = 600 if ansible else 300
         wait_for(lambda: self.server_roles == roles, num_sec=timeout, delay=15)
-        if 'embedded_ansible' in roles:
+        if ansible:
             self.wait_for_embedded_ansible()
 
     def enable_embedded_ansible_role(self):
