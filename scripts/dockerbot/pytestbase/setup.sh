@@ -219,14 +219,27 @@ run_n_log "find $CFME_REPO_DIR -name \"*.pyc\" -exec rm -rf {} \;"
 
 set +e
 
+
+
+
 if [ "$USE_SPROUT" = "yes" ];
 then
+    log "invoking complete collectonly with dummy instance before test"
+    run_n_log "py.test --collectonly --dummy-appliance --dummy-appliance-version $SPROUT_GROUP --use-provider complete"
+
+
+
     miq sprout checkout --populate-yaml  2>&1 >> $ARTIFACTOR_DIR/setup.txt &
     sleep 5
     do_or_die "(date && grep -q appliances: conf/env.local.yaml)>> $ARTIFACTOR_DIR/setup.txt" 5 60
 else
     log "no sprout used"
+    log "invoking complete collectonly with given appliance instance before test"
+    run_n_log "py.test --collectonly --use-provider complete"
 fi
+
+
+
 # Finally, run the py.test
 log "$PYTEST"
 

@@ -2629,7 +2629,7 @@ class DummyAppliance(object):
     """a dummy with minimal attribute set"""
     address = '0.0.0.0'
     browser_steal = False
-    version = Version('5.8.0')
+    version = attr.ib(default=Version('5.8.0'), convert=Version)
     is_downstream = True
     is_pod = False
     build = 'missing :)'
