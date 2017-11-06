@@ -42,7 +42,7 @@ def a_provider(request):
 
 
 def new_credential():
-    return Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret='redhat')
+    return Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret='redhat')
 
 
 def new_user(group):
@@ -51,7 +51,7 @@ def new_user(group):
     uppercase_username_bug = bug(1487199)
 
     user = User(
-        name='user' + fauxfactory.gen_alphanumeric(),
+        name='user{}'.format(fauxfactory.gen_alphanumeric()),
         credential=new_credential(),
         email='xyz@redhat.com',
         group=group,
@@ -67,7 +67,7 @@ def new_user(group):
 
 def new_role():
     return Role(
-        name='rol' + fauxfactory.gen_alphanumeric(),
+        name='rol{}'.format(fauxfactory.gen_alphanumeric()),
         vm_restriction='None')
 
 
@@ -97,7 +97,7 @@ def test_user_crud(group_collection):
     user = new_user(group)
     user.create()
     with update(user):
-        user.name = user.name + "edited"
+        user.name = "{}edited".format(user.name)
     copied_user = user.copy()
     copied_user.delete()
     user.delete()
@@ -153,7 +153,7 @@ def test_userid_required_error_validation(group_collection):
     group = group_collection.instantiate(description=group_name)
 
     user = User(
-        name='user' + fauxfactory.gen_alphanumeric(),
+        name='user{}'.format(fauxfactory.gen_alphanumeric()),
         credential=Credential(principal='', secret='redhat'),
         email='xyz@redhat.com',
         group=group)
@@ -171,8 +171,9 @@ def test_user_password_required_error_validation(group_collection):
     group = group_collection.instantiate(description=group_name)
 
     user = User(
-        name='user' + fauxfactory.gen_alphanumeric(),
-        credential=Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret=None),
+        name='user{}'.format(fauxfactory.gen_alphanumeric()),
+        credential=Credential(
+            principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret=None),
         email='xyz@redhat.com',
         group=group)
 
@@ -189,7 +190,7 @@ def test_user_password_required_error_validation(group_collection):
 @pytest.mark.tier(3)
 def test_user_group_error_validation():
     user = User(
-        name='user' + fauxfactory.gen_alphanumeric(),
+        name='user{}'.format(fauxfactory.gen_alphanumeric()),
         credential=new_credential(),
         email='xyz@redhat.com',
         group='')
@@ -203,7 +204,7 @@ def test_user_email_error_validation(group_collection):
     group = group_collection.instantiate(description=group_name)
 
     user = User(
-        name='user' + fauxfactory.gen_alphanumeric(),
+        name='user{}'.format(fauxfactory.gen_alphanumeric()),
         credential=new_credential(),
         email='xyzdhat.com',
         group=group)
@@ -293,9 +294,10 @@ def test_tagvis_user(user_restricted, check_item_visibility):
 # Group test cases
 def test_group_crud(group_collection):
     role = 'EvmRole-administrator'
-    group = group_collection.create(description='grp' + fauxfactory.gen_alphanumeric(), role=role)
+    group = group_collection.create(
+        description='grp{}'.format(fauxfactory.gen_alphanumeric()), role=role)
     with update(group):
-        group.description = group.description + "edited"
+        group.description = "{}edited".format(group.description)
     group.delete()
 
 
@@ -345,7 +347,7 @@ def test_group_duplicate_name(group_collection):
 @pytest.mark.tier(2)
 def test_group_edit_tag(group_collection):
     role = 'EvmRole-approver'
-    group_description = 'grp' + fauxfactory.gen_alphanumeric()
+    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role)
 
     group.edit_tags("Cost Center *", "Cost Center 001")
@@ -356,7 +358,7 @@ def test_group_edit_tag(group_collection):
 @pytest.mark.tier(2)
 def test_group_remove_tag(group_collection):
     role = 'EvmRole-approver'
-    group_description = 'grp' + fauxfactory.gen_alphanumeric()
+    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role)
 
     navigate_to(group, 'Edit')
@@ -397,7 +399,7 @@ def test_delete_group_with_assigned_user(group_collection):
     """Test that CFME prevents deletion of a group that has users assigned
     """
     role = 'EvmRole-approver'
-    group_description = 'grp' + fauxfactory.gen_alphanumeric()
+    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role)
     user = new_user(group=group)
     user.create()
@@ -431,7 +433,7 @@ def test_edit_sequence_usergroups(request, group_collection):
         * Verify the changed sequence
     """
     role_name = 'EvmRole-approver'
-    group_description = 'grp' + fauxfactory.gen_alphanumeric()
+    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role_name)
     request.addfinalizer(group.delete)
 
@@ -459,7 +461,7 @@ def test_role_crud():
     role = new_role()
     role.create()
     with update(role):
-        role.name = role.name + "edited"
+        role.name = "{}edited".format(role.name)
     copied_role = role.copy()
     copied_role.delete()
     role.delete()
@@ -523,7 +525,7 @@ def test_edit_default_roles():
 def test_delete_roles_with_assigned_group(group_collection):
     role = new_role()
     role.create()
-    group_description = 'grp' + fauxfactory.gen_alphanumeric()
+    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group_collection.create(description=group_description, role=role.name)
 
     with pytest.raises(RBACOperationBlocked):
@@ -535,7 +537,7 @@ def test_assign_user_to_new_group(group_collection):
     role = new_role()  # call function to get role
     role.create()
 
-    group_description = 'grp' + fauxfactory.gen_alphanumeric()
+    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role.name)
 
     user = new_user(group=group)
@@ -561,7 +563,7 @@ def _test_vm_provision():
 def _test_vm_removal():
     logger.info("Testing for VM removal permission")
     vm_name = vms.get_first_vm()
-    logger.debug("VM " + vm_name + " selected")
+    logger.debug("VM {} selected".format(vm_name))
     vms.remove(vm_name, cancel=True)
 
 
@@ -591,7 +593,7 @@ def test_permission_edit(appliance, request, product_features, action):
                 product_features=[(['Everything'], False)] +  # role_features
                                  [(k, True) for k in product_features])
     role.create()
-    group_description = 'grp' + fauxfactory.gen_alphanumeric()
+    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection(appliance).create(description=group_description, role=role.name)
     user = new_user(group=group)
     user.create()
@@ -669,7 +671,7 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions):
     # create a user and role
     role = role()  # call function to get role
     role.create()
-    group_description = 'grp' + fauxfactory.gen_alphanumeric()
+    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection(appliance).create(description=group_description, role=role.name)
     user = new_user(group=group)
     user.create()
@@ -839,7 +841,7 @@ def test_superadmin_tenant_crud(request, appliance):
     """
     tenant_collection = appliance.collections.tenants
     tenant = tenant_collection.create(
-        name='tenant1' + fauxfactory.gen_alphanumeric(),
+        name='tenant1{}'.format(fauxfactory.gen_alphanumeric()),
         description='tenant1 description',
         parent=tenant_collection.get_root_tenant()
     )
@@ -850,9 +852,9 @@ def test_superadmin_tenant_crud(request, appliance):
             tenant.delete()
 
     with update(tenant):
-        tenant.description = tenant.description + "edited"
+        tenant.description = "{}edited".format(tenant.description)
     with update(tenant):
-        tenant.name = tenant.name + "edited"
+        tenant.name = "{}edited".format(tenant.name)
     tenant.delete()
 
 
@@ -875,12 +877,12 @@ def test_superadmin_tenant_project_crud(request, appliance):
     tenant_collection = appliance.collections.tenants
     project_collection = appliance.collections.projects
     tenant = tenant_collection.create(
-        name='tenant1' + fauxfactory.gen_alphanumeric(),
+        name='tenant1{}'.format(fauxfactory.gen_alphanumeric()),
         description='tenant1 description',
         parent=tenant_collection.get_root_tenant())
 
     project = project_collection.create(
-        name='project1' + fauxfactory.gen_alphanumeric(),
+        name='project1{}'.format(fauxfactory.gen_alphanumeric()),
         description='project1 description',
         parent=project_collection.get_root_tenant())
 
@@ -891,9 +893,9 @@ def test_superadmin_tenant_project_crud(request, appliance):
                 item.delete()
 
     with update(project):
-        project.description = project.description + "edited"
+        project.description = "{}edited".format(project.description)
     with update(project):
-        project.name = project.name + "edited"
+        project.name = "{}edited".format(project.name)
     project.delete()
     tenant.delete()
 
@@ -933,9 +935,9 @@ def test_superadmin_child_tenant_crud(request, appliance, number_of_childrens):
 
     tenant_update = tenant.parent_tenant
     with update(tenant_update):
-        tenant_update.description = tenant_update.description + "edited"
+        tenant_update.description = "{}edited".format(tenant_update.description)
     with update(tenant_update):
-        tenant_update.name = tenant_update.name + "edited"
+        tenant_update.name = "{}edited".format(tenant_update.name)
 
 
 def tenant_unique_tenant_project_name_on_parent_level(request, object_type):

@@ -838,8 +838,6 @@ class GroupCollection(BaseCollection):
                 not having appropriate permissions OR delete is not allowed
                 for currently selected user
         """
-        group = None
-
         if self.appliance.version < "5.8":
             flash_blocked_msg = ("Description has already been taken")
         else:
