@@ -20,6 +20,7 @@ from cfme.utils.rest import assert_response
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for, wait_for_decorator
 from fixtures.provider import setup_one_or_skip
+from fixtures.pytest_store import store
 
 
 pytestmark = [test_requirements.rest]
@@ -675,6 +676,9 @@ class TestBulkQueryRESTAPI(object):
         assert data0 == response[0]._data and data1 == response[1]._data
 
 
+@pytest.mark.skipif(
+    store.current_appliance.version >= '5.9',
+    reason='arbitration_settings were removed in versions >= 5.9')
 class TestArbitrationSettingsRESTAPI(object):
     @pytest.fixture(scope='function')
     def arbitration_settings(self, request, appliance):
@@ -750,6 +754,9 @@ class TestArbitrationSettingsRESTAPI(object):
                     edited[i].display_name == new[i]['display_name'])
 
 
+@pytest.mark.skipif(
+    store.current_appliance.version >= '5.9',
+    reason='arbitration_rules were removed in versions >= 5.9')
 class TestArbitrationRulesRESTAPI(object):
     @pytest.fixture(scope='function')
     def arbitration_rules(self, request, appliance):
