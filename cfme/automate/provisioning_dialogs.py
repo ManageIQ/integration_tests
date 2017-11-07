@@ -23,7 +23,7 @@ class ProvDiagAllToolbar(View):
 class ProvDiagAllEntities(View):
     """All entities view - no view selector, not using BaseEntitiesView"""
     title = Text('#explorer_title_text')
-    table = Table("//div[@id='records_div']//table")
+    table = Table("//div[@id='records_div']//table|//div[@class='miq-data-table']//table")
     paginator = PaginationPane()
 
 
