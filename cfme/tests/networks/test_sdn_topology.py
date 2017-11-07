@@ -49,11 +49,11 @@ def test_topology_toggle_display(provider, appliance):
             for elem in topology_object.elements:
                 vis_terms = {True: 'Visible', False: 'Hidden'}
                 assert elem.type != legend.name.rstrip('s') and elem.is_hidden != state, \
-                       'Element is {} but should be {} since "{}"\
-                        display is currently {}'.format(vis_terms[not state],
-                                                        vis_terms[state],
-                                                        legend.name,
-                                                        {True: 'on', False: 'off'}[state])
+                    'Element is {} but should be {} since "{}" \
+                     display is currently {}'.format(vis_terms[not state],
+                                                     vis_terms[state],
+                                                     legend.name,
+                                                     {True: 'on', False: 'off'}[state])
 
     provider.delete_if_exists(cancel=False)
     provider.wait_for_delete()
