@@ -2,10 +2,11 @@ import pytest
 
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils import conf, version
+from cfme.utils.conf import cfme_data
+from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
 from cfme.utils.testgen import parametrize
 from cfme.utils.wait import wait_for
-from cfme.utils.log import logger
-from cfme.utils.conf import cfme_data
 
 REG_METHODS = ('rhsm', 'sat6')
 
@@ -188,6 +189,7 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
     )
 
 
+@pytest.mark.meta(blockers=[BZ(1500878, forced_streams=['5.9', 'upstream'])])
 def test_rh_updates(appliance_preupdate, appliance):
     """ Tests whether the update button in the webui functions correctly """
 

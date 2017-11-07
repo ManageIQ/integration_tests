@@ -60,7 +60,7 @@ def test_black_console_set_hostname(appliance):
 
 
 @pytest.mark.parametrize('timezone', tzs, ids=[tz.name for tz in tzs])
-def test_black_console_set_timezone(request, timezone, temp_appliance_preconfig_modscope):
+def test_black_console_set_timezone(timezone, temp_appliance_preconfig_modscope):
     """'ap' launch appliance_console, '' clear info screen, '2/5' set timezone, 'opt' select
     region, 'timezone' selects zone, 'y' confirm slection, '' finish."""
     opt = '2' if temp_appliance_preconfig_modscope.version >= "5.8" else '5'
@@ -83,7 +83,7 @@ def test_black_console_internal_db(app_creds, temp_appliance_unconfig_funcscope)
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-def test_black_console_internal_db_reset(app_creds, temp_appliance_preconfig_funcscope):
+def test_black_console_internal_db_reset(temp_appliance_preconfig_funcscope):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '4' reset db, 'y'
     confirm db reset, '1' db region number + wait 360 secs, '' continue"""
 
@@ -143,33 +143,33 @@ def test_black_console_external_db_create(app_creds, dedicated_db_appliance,
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-def test_black_console_extend_storage(fqdn_appliance):
+def test_black_console_extend_storage(extend_appliance):
     """'ap' launches appliance_console, '' clears info screen, '10/13' extend storage, '1' select
     disk, 'y' confirm configuration and '' complete."""
 
-    opt = '10' if fqdn_appliance.version >= "5.8" else '13'
+    opt = '10' if extend_appliance.version >= "5.8" else '13'
     command_set = ('ap', '', opt, '1', 'y', '')
-    fqdn_appliance.appliance_console.run_commands(command_set)
+    extend_appliance.appliance_console.run_commands(command_set)
 
-    def is_storage_extended(fqdn_appliance):
-        assert fqdn_appliance.ssh_client.run_command("df -h | grep /var/www/miq_tmp")
-    wait_for(is_storage_extended, func_args=[fqdn_appliance])
+    def is_storage_extended(extend_appliance):
+        assert extend_appliance.ssh_client.run_command("df -h | grep /var/www/miq_tmp")
+    wait_for(is_storage_extended, func_args=[extend_appliance])
 
 
 @pytest.mark.skip('No IPA servers currently available')
-def test_black_console_ipa(ipa_creds, fqdn_appliance):
+def test_black_console_ipa(ipa_creds, ipa_appliance):
     """'ap' launches appliance_console, '' clears info screen, '11/14' setup IPA, 'y' confirm setup
     + wait 40 secs and '' finish."""
 
-    opt = '11' if fqdn_appliance.version >= "5.8" else '14'
+    opt = '11' if ipa_appliance.version >= "5.8" else '14'
     command_set = ('ap', '', opt, ipa_creds['hostname'], ipa_creds['domain'], '',
         ipa_creds['username'], ipa_creds['password'], TimedCommand('y', 40), '')
-    fqdn_appliance.appliance_console.run_commands(command_set)
+    ipa_appliance.appliance_console.run_commands(command_set)
 
-    def is_sssd_running(fqdn_appliance):
-        assert fqdn_appliance.ssh_client.run_command("systemctl status sssd | grep running")
-    wait_for(is_sssd_running, func_args=[fqdn_appliance])
-    return_code, output = fqdn_appliance.ssh_client.run_command(
+    def is_sssd_running(ipa_appliance):
+        assert ipa_appliance.ssh_client.run_command("systemctl status sssd | grep running")
+    wait_for(is_sssd_running, func_args=[ipa_appliance])
+    return_code, output = ipa_appliance.ssh_client.run_command(
         "cat /etc/ipa/default.conf | grep 'enable_ra = True'")
     assert return_code == 0
 
