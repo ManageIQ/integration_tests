@@ -8,6 +8,10 @@ Example usage:
 
     ``scripts/ipappliance.py action_name --args '[1,2,3]' --kwargs '{"a": 1}' 1.2.3.4 2.3.4.5``
 
+    ``scripts/ipappliance.py configure 10.20.30.40``
+
+    ``scripts/ipappliance.py db.is_internal 10.20.30.40``
+
 ``--args`` and ``--kwargs`` are optional.
 
 Returns the resulting value of the call written to the stdout, one line per appliance.
@@ -46,13 +50,26 @@ def log_callback(s):
 def call_appliance(ip_address, action, args, kwargs):
     # Given a provider class, find the named method and call it with
     # *args. This could possibly be generalized for other CLI tools.
-    appliance = IPAppliance(ip_address)
+    target_obj = IPAppliance(ip_address)
+
+    # Iterate over non-callables, such as appliance.db
+    try:
+        while '.' in action:
+            target_obj = getattr(target_obj, action.split('.', 1)[0])
+            if not callable(target_obj):
+                action = action.split('.', 1)[1]
+            else:
+                raise AttributeError
+    except AttributeError:
+        raise Exception('Property "{}" not found for object "{}"'.format(action, target_obj))
 
     try:
-        call = getattr(appliance, action)
+        call = getattr(target_obj, action)
     except AttributeError:
         raise Exception('Action "{}" not found'.format(action))
-    if isinstance(getattr(type(appliance), action), property):
+
+    # The final obj may or may not be a callable
+    if not callable(call):
         return call
     else:
         try:
