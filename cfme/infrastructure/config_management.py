@@ -5,7 +5,7 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Checkbox, TextInput, Text, View
 from widgetastic_manageiq import (
     Accordion, BaseEntitiesView, Button, ItemsToolBarViewSelector, ManageIQTree, SummaryTable,
-    Table)
+    Table, Version, VersionPick)
 from widgetastic_patternfly import BootstrapSelect, Dropdown, FlashMessages, Tab
 
 from cfme.base.credential import Credential as BaseCredential
@@ -90,8 +90,10 @@ class ConfigManagementAddForm(View):
     url = TextInput('url')
     ssl = Checkbox('verify_ssl')
 
-    username = TextInput('log_userid')
-    password = TextInput('log_password')
+    username = VersionPick({Version.lowest(): TextInput('log_userid'),
+                            '5.9': TextInput('default_userid')})
+    password = VersionPick({Version.lowest(): TextInput('log_password'),
+                          '5.9': TextInput('default_password')})
     confirm_password = TextInput('log_verify')
 
     validate = Button('Validate')
