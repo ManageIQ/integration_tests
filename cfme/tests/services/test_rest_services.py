@@ -1223,6 +1223,9 @@ class TestServiceRequests(object):
         request.addfinalizer(new_service.action.delete)
 
 
+@pytest.mark.skipif(
+    store.current_appliance.version >= '5.9',
+    reason='blueprints were removed in versions >= 5.9')
 class TestBlueprintsRESTAPI(object):
     @pytest.fixture(scope="function")
     def blueprints(self, request, appliance):
