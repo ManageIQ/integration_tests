@@ -15,14 +15,15 @@ from cfme.utils.version import current_version
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.wait import wait_for
 
-
+# Note that the tests are being collected for 5.8 only.
+# They can be collected for 5.7 and 5.9 once testing is done on those versions.
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('uses_infra_providers'),
     test_requirements.ssui,
     pytest.mark.long_running,
     pytest.mark.uncollectif(lambda: current_version() < '5.8'),
-    pytest.mark.ignore_stream("upstream")
+    pytest.mark.ignore_stream("upstream", "5.9")
 ]
 
 
@@ -219,3 +220,7 @@ def test_denied_requests(appliance, context):
         appliance.server.login()
         dashboard = Dashboard(appliance)
         dashboard.denied_requests()
+
+
+def test_nan():
+    logger.info('IN TEST_NAN')
