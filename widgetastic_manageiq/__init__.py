@@ -2724,6 +2724,8 @@ class JSBaseEntity(View, ReportDataControllerMixin):
     """ represents Entity, no matter what state it is in.
         It is implemented using ManageIQ JS API
     """
+    QUADRANT = './/div[@class="flobj {pos}72"]/*[self::p or self::img or self::div]'
+
     def __init__(self, parent, name, logger=None):
         View.__init__(self, parent, logger=logger)
         self.name = name
@@ -2750,11 +2752,7 @@ class JSBaseEntity(View, ReportDataControllerMixin):
         data = self._invoke_cmd('get_item', self.name)['item']
         cells = data.pop('cells')
         data.update(cells)
-        data_dict = {str(key).replace(' ', '_').lower(): value for key, value in data.items()}
-        # TODO Remove this horrible hack once the data getter allows creds access
-        if 'quadicon' in data_dict:
-            data_dict['creds'] = 'checkmark' if 'checkmark' in data_dict['quadicon'] else 'x'
-        return data_dict
+        return {str(key).replace(' ', '_').lower(): value for key, value in data.items()}
 
     def read(self):
         return self.is_checked

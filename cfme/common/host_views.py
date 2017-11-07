@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from lxml.html import document_fromstring
 from widgetastic.utils import (
     Parameter,
     ParametrizedLocator,
@@ -80,13 +81,26 @@ class NonJSHostEntity(NonJSBaseEntity):
     tile_entity = HostTileIconEntity
 
 
+class JSHostEntity(JSBaseEntity):
+    @property
+    def data(self):
+        data_dict = super(JSHostEntity, self).data
+        if 'quadicon' in data_dict and data_dict['quadicon']:
+            quad_data = document_fromstring(data_dict['quadicon'])
+            data_dict['no_vm'] = int(quad_data.xpath(self.QUADRANT.format(pos="a"))[0].text)
+            data_dict['state'] = quad_data.xpath(self.QUADRANT.format(pos="b"))[0].get('style')
+            data_dict['vendor'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get('alt')
+            data_dict['creds'] = quad_data.xpath(self.QUADRANT.format(pos="d"))[0].get('alt')
+        return data_dict
+
+
 def HostEntity():  # noqa
     """ Temporary wrapper for Host Entity during transition to JS based Entity
 
     """
     return VersionPick({
         Version.lowest(): NonJSHostEntity,
-        '5.9': JSBaseEntity,
+        '5.9': JSHostEntity,
     })
 
 
