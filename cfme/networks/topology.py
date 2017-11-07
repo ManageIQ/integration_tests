@@ -6,7 +6,7 @@ from navmazing import NavigateToAttribute
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.networks.topology_view import TopologyView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from wait_for import wait_for
+from cfme.utils.wait import wait_for
 
 
 @attr.s
@@ -32,7 +32,7 @@ class TopologyLegendCollection(BaseCollection):
     """Collection object for legends in topology"""
     ENTITY = TopologyLegend
 
-    def all(self, topology):
+    def filter(self, topology):
         final_legends = []
         legends = topology.browser.elements(topology.view.LEGENDS)
         for element in legends:
@@ -62,7 +62,8 @@ class TopologyElement(BaseEntity):
     element = attr.ib()
     obj = attr.ib()
 
-    def refresh(self):
+    def instantiate(self, *args, **kwargs):
+        super(TopologyElement, self).instantiate(*args, **kwargs)
         if self.element is None:
             raise ValueError('Element should not be None')
         element_data = re.search('Name: (.*) Type: (.*) Status: (.*)', self.element.text)
@@ -117,7 +118,7 @@ class TopologyElementCollection(BaseCollection):
     """Collection object for elements in topology"""
     ENTITY = TopologyElement
 
-    def all(self, obj):
+    def filter(self, obj):
         elements = obj.browser.elements(obj.view.ELEMENTS)
         elem_objs = [self.instantiate(element, obj) for element in elements]
         for elem in elem_objs:
@@ -129,7 +130,8 @@ class TopologyElementCollection(BaseCollection):
 class TopologyLine(BaseEntity):
     element = attr.ib()
 
-    def refresh(self):
+    def instantiate(self, *args, **kwargs):
+        super(TopologyLine, super).instantiate(*args, **kwargs)
         if self.element is None:
             raise ValueError('Element should not be None')
         self.connection = self.element.get_attribute('class')
@@ -148,7 +150,7 @@ class TopologyLineCollection(BaseCollection):
     """Collection object for lines in topology"""
     ENTITY = TopologyLine
 
-    def all(self, topology):
+    def filter(self, topology):
         lines = topology.browser.elements(topology.view.LINES)
         lines_objs = [self.instantiate(element=line) for line in lines]
         for line in lines_objs:
@@ -169,7 +171,8 @@ class Topology(BaseEntity):
     display_names = attr.ib(default=None)
     view = attr.ib(default=None)
 
-    def refresh(self):
+    def instantiate(self, *args, **kwargs):
+        super(Topology, self).instantiate(*args, **kwargs)
         self.elements_col = TopologyElementCollection(self)
         self.lines_col = TopologyLineCollection(self)
         self.legends_col = TopologyLegendCollection(self)
@@ -180,21 +183,22 @@ class Topology(BaseEntity):
 
     def reload_elements_and_lines(self):
         self.elements_obj = []
-        self.lines_obj = self.lines_col.all(self)
-        found_elements = self.elements_col.all(self)
+        self.lines_obj = self.lines_col.filter(self)
+        found_elements = self.elements_col.filter(self)
 
         if found_elements:
             self.element_ref = found_elements[-1]
-            wait_for(lambda: self.movement_stopped(), delay=2, num_sec=30)
-            self.elements_obj = self.elements_col.all(self)
+            wait_for(lambda: self.movement_stopped, delay=2, num_sec=30)
+            self.elements_obj = self.elements_col.filter(self)
 
     def reload_legends(self):
-        self.legends_obj = self.legends_col.all(self)
+        self.legends_obj = self.legends_col.filter(self)
         element = self.browser.element(self.view.DISPLAY_NAME)
         self.display_names = TopologyDisplayNames(self.appliance, element)
 
+    @property
     def movement_stopped(self):
-        element = self.elements_col.all(self)[-1]
+        element = self.elements_col.filter(self)[-1]
         if element.x == self.element_ref.x and element.y == self.element_ref.y:
             return True
         self.element_ref = element

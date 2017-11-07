@@ -20,21 +20,20 @@ def test_topology_search(provider, appliance):
     wait_for(lambda: len(topology_object.elements) > 0,
              fail_func=topology_object.reload_elements_and_lines, delay=3, timeout=60.0)
     elements = topology_object.elements
-    if not elements:
-        raise Exception('No elements to test topology')
+    assert elements, 'No elements to test topology'
+
     element_to_search = choice(elements)
     search_term = element_to_search.name[:len(element_to_search.name) / 2]
     topology_object.view.toolbar.search_box.search(text=search_term)
 
     for element in topology_object.elements:
         if search_term in element.name:
-            if element.is_hidden:
-                raise Exception('Element should be visible. search: "{}", element found: "{}"'
-                                .format(search_term, element.name))
+            assert not element.is_hidden, 'Element should be visible.\
+                                           search: "{}", found: "{}"'.format(search_term,
+                                                                             element.name)
         else:
-            if not element.is_hidden:
-                raise Exception('Element should be hidden. search: "{}", element found: "{}"'
-                                .format(search_term, element.name))
+            assert element.is_hidden, 'Element should not be visible.\
+                                       search: "{}", found: "{}"'.format(search_term, element.name)
 
     topology_object.view.toolbar.search_box.clear_search()
 
@@ -48,15 +47,13 @@ def test_topology_toggle_display(provider, appliance):
             legend.set_active(state)
             topology_object.reload_elements_and_lines()
             for elem in topology_object.elements:
-                if elem.type == legend.name.rstrip('s'):
-                    if elem.is_hidden == state:
-                        vis_terms = {True: 'Visible', False: 'Hidden'}
-                        raise Exception(
-                            'Element is {} but should be {} since "{}" display is currently {}'
-                            .format(
-                                vis_terms[not state], vis_terms[state],
-                                legend.name, {True: 'on', False: 'off'}[state]
-                            )
-                        )
+                vis_terms = {True: 'Visible', False: 'Hidden'}
+                assert elem.type != legend.name.rstrip('s') and elem.is_hidden != state, \
+                       'Element is {} but should be {} since "{}"\
+                        display is currently {}'.format(vis_terms[not state],
+                                                        vis_terms[state],
+                                                        legend.name,
+                                                        {True: 'on', False: 'off'}[state])
+
     provider.delete_if_exists(cancel=False)
     provider.wait_for_delete()
