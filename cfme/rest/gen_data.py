@@ -582,7 +582,9 @@ def orchestration_templates(request, rest_api, num=2):
         data.append({
             'name': 'test_{}'.format(uniq),
             'description': 'Test Template {}'.format(uniq),
-            'type': 'ManageIQ::Providers::Amazon::CloudManager::OrchestrationTemplate',
+            'type': version.pick({
+                version.LOWEST: 'OrchestrationTemplateCfn',
+                '5.9': 'ManageIQ::Providers::Amazon::CloudManager::OrchestrationTemplate'}),
             'orderable': False,
             'draft': False,
             'content': TEMPLATE_TORSO.replace('CloudFormation', uniq)})
