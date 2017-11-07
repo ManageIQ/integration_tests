@@ -238,7 +238,8 @@ else
     run_n_log "py.test --collectonly --use-provider complete"
 fi
 
-
+log "smoke testing"
+run_n_log "py.test -m smoke"
 
 # Finally, run the py.test
 log "$PYTEST"
