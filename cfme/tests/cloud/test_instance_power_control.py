@@ -148,10 +148,8 @@ def test_quadicon_terminate(appliance, provider, testing_instance, verify_vm_run
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE, from_details=False)
     logger.info("Terminate initiated")
-    msg = ('Terminate initiated for 1 VM and Instance from the {} Database'
-           .format(appliance.product_name)
-           if appliance.version >= '5.9'
-           else 'Vm Destroy initiated')
+    msg_part = "Terminate initiated" if appliance.version >= '5.9' else "Vm Destroy initiated"
+    msg = "{} for 1 VM and Instance from the {} Database".format(msg_part, appliance.product_name)
     flash.assert_success_message(msg)
     terminated_states = (testing_instance.STATE_TERMINATED, testing_instance.STATE_ARCHIVED,
                          testing_instance.STATE_UNKNOWN)
