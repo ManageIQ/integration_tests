@@ -40,16 +40,16 @@ def main():
 def upgrade_appliance(appliance_ip, cfme_only, update_to):
     """Upgrades an appliance"""
     if appliance_ip:
-        print 'Connecting to {}'.format(appliance_ip)
+        print('Connecting to {}'.format(appliance_ip))
     else:
-        print 'Fetching appliance from env.local.yaml'
+        print('Fetching appliance from env.local.yaml')
     app = get_appliance(appliance_ip)
     update_url = 'update_url_{}'.format(update_to)
-    print 'Extending appliance partitions'
+    print('Extending appliance partitions')
     app.db.extend_partition()
     urls = process_url(cfme_data['basic_info'][update_url])
     output = build_file(urls)
-    print 'Adding update repo to appliance'
+    print('Adding update repo to appliance')
     with tempfile.NamedTemporaryFile('w') as f:
         f.write(output)
         f.flush()
@@ -60,28 +60,27 @@ def upgrade_appliance(appliance_ip, cfme_only, update_to):
     cfme = '-y'
     if cfme_only:
         cfme = 'cfme -y'
-    print 'Stopping EVM'
+    print('Stopping EVM')
     app.evmserverd.stop()
-    with app.ssh_client as ssh:
-        print 'Running yum update'
-        rc, out = ssh.run_command('yum update {}'.format(cfme), timeout=3600)
-        assert rc == 0, "update failed {}".format(out)
-        print 'Running database migration'
-        rc, out = ssh.run_rake_command("db:migrate", timeout=300)
-        assert rc == 0, "Failed to migrate new database: {}".format(out)
-        rc, out = ssh.run_rake_command("evm:automate:reset", timeout=300)
-        assert rc == 0, "Failed to reset automate: {}".format(out)
-        rc, out = ssh.run_rake_command(
-            'db:migrate:status 2>/dev/null | grep "^\s*down"', timeout=30)
-        assert rc != 0, "Migration failed; migrations in 'down' state found: {}".format(out)
-        print 'Restarting postgres service'
-        rc, out = ssh.run_command('systemctl restart rh-postgresql{}-postgresql'.format(ver))
-        assert rc == 0, "Failed to restart postgres: {}".format(out)
-    print 'Starting EVM'
+    print('Running yum update')
+    rc, out = app.ssh_client.run_command('yum update {}'.format(cfme), timeout=3600)
+    assert rc == 0, "update failed {}".format(out)
+    print('Running database migration')
+    rc, out = app.ssh_client.run_rake_command("db:migrate", timeout=300)
+    assert rc == 0, "Failed to migrate new database: {}".format(out)
+    rc, out = app.ssh_client.run_rake_command("evm:automate:reset", timeout=300)
+    assert rc == 0, "Failed to reset automate: {}".format(out)
+    rc, out = app.ssh_client.run_rake_command(
+        'db:migrate:status 2>/dev/null | grep "^\s*down"', timeout=30)
+    assert rc != 0, "Migration failed; migrations in 'down' state found: {}".format(out)
+    print('Restarting postgres service')
+    rc, out = app.ssh_client.run_command('systemctl restart rh-postgresql{}-postgresql'.format(ver))
+    assert rc == 0, "Failed to restart postgres: {}".format(out)
+    print('Starting EVM')
     app.start_evm_service()
-    print 'Waiting for webui'
+    print('Waiting for webui')
     app.wait_for_web_ui()
-    print 'Appliance upgrade completed'
+    print('Appliance upgrade completed')
 
 
 @main.command('reboot', help='Reboots the appliance')
