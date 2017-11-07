@@ -30,7 +30,7 @@ class AnalysisProfileEntities(View):
     """Main content on the analysis profiles configuration page, title and table"""
     title = Text('//div[@id="main-content"]//h1[@id="explorer_title"]'
                  '/span[@id="explorer_title_text"]')
-    table = Table('//div[@id="records_div"]//table')
+    table = Table('//div[@id="records_div"]//table|//div[@class="miq-data-table"]//table')
 
 
 class AnalysisProfileDetailsEntities(View):
