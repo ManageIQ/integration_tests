@@ -9,6 +9,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme import test_requirements
 from cfme.utils import testgen
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.conf import cfme_data
 
@@ -107,6 +108,7 @@ def catalog_item(provider, vm_name, dialog, catalog, provisioning, setup_pxe_ser
 
 
 @pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
+@pytest.mark.meta(blockers=[BZ(1446409, forced_streams=['5.8', '5.9', 'upstream'])])
 def test_pxe_servicecatalog(appliance, setup_provider, provider, catalog_item, request):
     """Tests RHEV PXE service catalog
 
