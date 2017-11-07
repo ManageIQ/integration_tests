@@ -66,6 +66,7 @@ class DetailsServiceCatalogsView(OrderForm):
 
     notification = Notification()
     add_to_shopping_cart = Button('Add to Shopping Cart')
+    shopping_cart = Text('.//li/a[@title="Shopping cart"]')
 
     @property
     def is_displayed(self):
@@ -74,17 +75,18 @@ class DetailsServiceCatalogsView(OrderForm):
             self.title.text == self.context['object'].name)
 
 
-class DuplicateShoppingCartItemView(OrderForm):
-    title = Text(locator='//h4[@id="myModalLabel"]')
+class ShoppingCartView(DetailsServiceCatalogsView):
+    title = Text(locator='//h4[@class="modal-title"]')
 
-    cancel_button = Button('Cancel')
-    add_to_shopping_cart = Button('Add to Shopping Cart')
+    close = Button('Close')
+    clear = Button('Clear')
+    order = Button('Order')
 
     @property
     def is_displayed(self):
         return (
             self.in_service_catalogs and
-            self.title.text == "Duplicate Shopping Cart Item"
+            self.title.text == "Shopping Cart"
         )
 
 
@@ -103,15 +105,23 @@ def add_to_shopping_cart(self):
         view.fill(self.ansible_dialog_values)
     view.add_to_shopping_cart.click()
     view.flash.assert_no_error()
-    duplicateview = self.create_view(DuplicateShoppingCartItemView)
-    if duplicateview.is_displayed:
-        duplicateview.add_to_shopping_cart.click()
     view = self.create_view(DetailsServiceCatalogsView)
-    # There is a pop up that stays for 10 secs and blocks opening up the drawer
-    # Only way to remove is to wait for 10 secs.
     # TODO - remove sleep when BZ 1496233 is fixed
     time.sleep(10)
     assert view.notification.assert_message("Item added to shopping cart")
+
+
+@ServiceCatalogs.order.external_implementation_for(ViaSSUI)
+def order(self):
+    view = navigate_to(self, 'ShoppingCart')
+    wait_for(
+        lambda: view.is_displayed, delay=5, num_sec=300,
+        message="waiting for view to be displayed"
+    )
+    view.order.click()
+    # TODO - remove sleep when BZ 1496233 is fixed
+    time.sleep(10)
+    assert view.notification.assert_message("Shopping cart successfully ordered")
 
 
 @navigator.register(ServiceCatalogs, 'All')
@@ -132,3 +142,12 @@ class Details(SSUINavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.service.click_at(self.obj.name)
+
+
+@navigator.register(ServiceCatalogs, 'ShoppingCart')
+class ShoppingCart(SSUINavigateStep):
+    VIEW = ShoppingCartView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.shopping_cart.click()

@@ -21,8 +21,7 @@ pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers'),
     test_requirements.ssui,
     pytest.mark.long_running,
-    pytest.mark.uncollectif(lambda: current_version() < '5.8'),
-    pytest.mark.ignore_stream("upstream")
+    pytest.mark.ignore_stream("upstream", "5.9")
 ]
 
 
@@ -131,44 +130,45 @@ def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_total_services(appliance, setup_provider, context, order_catalog_item_in_ops_ui):
-    """Tests total services displayed on dashboard."""
+    """Tests total services count displayed on dashboard."""
 
     with appliance.context.use(context):
         appliance.server.login()
         dashboard = Dashboard(appliance)
-        assert dashboard.total_services() == dashboard.num_of_rows()
+        assert dashboard.total_services() == dashboard.results()
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_current_service(appliance, context):
-    """Tests current services displayed on dashboard."""
+    """Tests current services count displayed on dashboard."""
 
     with appliance.context.use(context):
         appliance.server.login()
         dashboard = Dashboard(appliance)
-        assert dashboard.current_services() == dashboard.num_of_rows()
+        assert dashboard.current_services() == dashboard.results()
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_retiring_soon(appliance, context):
-    """Tests retiring soon services displayed on dashboard."""
+    """Tests retiring soon(int displayed) service count on dashboard."""
 
     with appliance.context.use(context):
         appliance.server.login()
         dashboard = Dashboard(appliance)
-        assert dashboard.retiring_soon() == dashboard.num_of_rows()
+        assert dashboard.retiring_soon() == dashboard.results()
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_retired_service(appliance, context):
-    """Tests retired services displayed on dashboard."""
+    """Tests count of retired services(int) displayed on dashboard."""
 
     with appliance.context.use(context):
         appliance.server.login()
         dashboard = Dashboard(appliance)
-        assert dashboard.retired_services() == dashboard.num_of_rows()
+        assert dashboard.retired_services() == dashboard.results()
 
 
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_monthly_charges(appliance, setup_provider, context, order_catalog_item_in_ops_ui,
         run_service_chargeback_report):

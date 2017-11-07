@@ -15,7 +15,8 @@ from wait_for import wait_for
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     test_requirements.ssui,
-    pytest.mark.long_running
+    pytest.mark.long_running,
+    pytest.mark.ignore_stream("upstream", "5.9")
 ]
 
 
@@ -40,7 +41,6 @@ def configure_websocket(appliance):
     logger.info('Disabling the websocket role to avoid intrusive popups')
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_myservice_crud(appliance, setup_provider, context, order_catalog_item_in_ops_ui):
     """Test Myservice crud in SSUI."""
@@ -48,9 +48,11 @@ def test_myservice_crud(appliance, setup_provider, context, order_catalog_item_i
     with appliance.context.use(context):
         appliance.server.login()
         my_service = MyService(appliance, service_name)
-        my_service.set_ownership("Administrator", "EvmGroup-administrator")
+        my_service.set_ownership("Administrator", "EvmGroup-approver")
         my_service.update({'description': '{}_edited'.format(service_name)})
-        my_service.edit_tags("Cost Center", "Cost Center 001")
+        # No tag management in 5.7
+        if appliance.version > "5.8":
+            my_service.edit_tags("Cost Center", "Cost Center 001")
         my_service.delete()
 
 
