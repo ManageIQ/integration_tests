@@ -15,6 +15,7 @@ from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.blockers import BZ
 
 from . import AutomateExplorerView, check_tree_path
 from .common import Copiable, CopyViewBase
@@ -256,9 +257,10 @@ class ClassCollection(BaseCollection):
         else:
             add_page.add_button.click()
             add_page.flash.assert_no_error()
-            add_page.flash.assert_message(
-                'Automate Class "/{}/{}" was added'.format(
-                    '/'.join(self.tree_path[1:]), name))
+            if not BZ(1428424, forced_streams=['5.9']).blocks:
+                add_page.flash.assert_message(
+                    'Automate Class "/{}/{}" was added'.format(
+                        '/'.join(self.tree_path[1:]), name))
             return self.instantiate(name=name, display_name=display_name, description=description)
 
     def delete(self, *classes):
