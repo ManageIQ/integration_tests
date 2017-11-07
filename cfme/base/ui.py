@@ -824,6 +824,35 @@ class Timelines(CFMENavigateStep):
 
 
 # ######################## REGION NAVS ################################
+class CompanyCategories(Tab):
+    TAB_NAME = "My Company Categories"
+
+
+class CompanyTags(Tab):
+    TAB_NAME = "My Company Tags"
+
+
+class ImportTags(Tab):
+    TAB_NAME = "Import Tags"
+
+
+class MapTags(Tab):
+    TAB_NAME = "Map Tags"
+
+
+class ImportVariable(Tab):
+    TAB_NAME = "Import Variables"
+
+
+class TagsView(Tab):
+    TAB_NAME = "Tags"
+
+    company_categories = View.nested(CompanyCategories)
+    company_tags = View.nested(CompanyTags)
+    import_tags = View.nested(ImportTags)
+    map_tags = View.nested(MapTags)
+    imports = View.nested(ImportVariable)
+
 
 class RegionView(ConfigurationView):
     @View.nested
@@ -831,19 +860,11 @@ class RegionView(ConfigurationView):
         TAB_NAME = "Details"
 
     @View.nested
-    class canducollection(Tab):  # noqa
+    class candu_collection(Tab):  # noqa
         TAB_NAME = "C & U Collection"
 
     @View.nested
-    class companycategories(Tab):  # noqa
-        TAB_NAME = "My Company Categories"
-
-    @View.nested
-    class companytags(Tab):  # noqa
-        TAB_NAME = "My Company Tags"
-
-    @View.nested
-    class redhatupdates(Tab):  # noqa
+    class redhat_updates(Tab):  # noqa
         TAB_NAME = "Red Hat Updates"
 
     @View.nested
@@ -851,16 +872,16 @@ class RegionView(ConfigurationView):
         TAB_NAME = "Import"
 
     @View.nested
-    class importtags(Tab):  # noqa
-        TAB_NAME = "Import Tags"
-
-    @View.nested
-    class maptags(Tab):  # noqa
-        TAB_NAME = "Map Tags"
-
-    @View.nested
     class replication(Tab):  # noqa
         TAB_NAME = "Replication"
+
+    company_categories = View.nested(CompanyCategories)
+    company_tags = View.nested(CompanyTags)
+    import_tags = View.nested(ImportTags)
+    map_tags = View.nested(MapTags)
+
+    # available starting from 5.9 version, not available in 5.7, 5.8
+    tags = View.nested(TagsView)
 
     @property
     def is_displayed(self):

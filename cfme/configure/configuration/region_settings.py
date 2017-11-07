@@ -11,6 +11,7 @@ from cfme.base.ui import RegionView
 from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 
@@ -26,7 +27,7 @@ class CompanyCategoriesAllView(RegionView):
     @property
     def is_displayed(self):
         return (
-            self.companycategories.is_active() and
+            self.company_categories.is_active() and
             self.table.is_displayed
         )
 
@@ -45,7 +46,7 @@ class CompanyCategoriesAddView(CompanyCategoriesAllView):
     @property
     def is_displayed(self):
         return (
-            self.companycategories.is_active() and
+            self.company_categories.is_active() and
             self.name.is_displayed
         )
 
@@ -58,7 +59,7 @@ class CompanyCategoriesEditView(CompanyCategoriesAddView):
     @property
     def is_displayed(self):
         return (
-            self.companycategories.is_active() and
+            self.company_categories.is_active() and
             self.name.is_displayed and
             self.save_button.is_displayed
         )
@@ -118,7 +119,8 @@ class Category(Pretty, Navigatable, Updateable):
             flash_message = 'Category "{}" was added'.format(self.display_name)
 
         view = self.create_view(CompanyCategoriesAllView)
-        view.flash.assert_success_message(flash_message)
+        if not BZ(1510473, forced_streams=['5.9']).blocks:
+            view.flash.assert_success_message(flash_message)
 
     def update(self, updates, cancel=False):
         """ Update category method
@@ -136,7 +138,8 @@ class Category(Pretty, Navigatable, Updateable):
             flash_message = 'Category "{}" was saved'.format(self.name)
 
         view = self.create_view(CompanyCategoriesAllView)
-        view.flash.assert_success_message(flash_message)
+        if not BZ(1510473, forced_streams=['5.9']).blocks:
+            view.flash.assert_success_message(flash_message)
 
     def delete(self, cancel=True):
         """ Delete existing category
@@ -150,7 +153,9 @@ class Category(Pretty, Navigatable, Updateable):
         row.actions.click()
         view.browser.handle_alert(cancel=cancel)
         if not cancel:
-            view.flash.assert_success_message('Category "{}": Delete successful'.format(self.name))
+            if not BZ(1510473, forced_streams=['5.9']).blocks:
+                view.flash.assert_success_message(
+                    'Category "{}": Delete successful'.format(self.name))
 
 
 @navigator.register(Category, 'All')
@@ -159,7 +164,10 @@ class CategoryAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
     def step(self):
-        self.prerequisite_view.companycategories.select()
+        if self.obj.appliance.version < '5.9':
+            self.prerequisite_view.company_categories.select()
+        else:
+            self.prerequisite_view.tags.company_categories.select()
 
 
 @navigator.register(Category, 'Add')
@@ -193,7 +201,7 @@ class CompanyTagsAllView(RegionView):
     @property
     def is_displayed(self):
         return (
-            self.companycategories.is_active() and
+            self.company_categories.is_active() and
             self.table.is_displayed
         )
 
@@ -206,7 +214,7 @@ class CompanyTagsAddView(CompanyTagsAllView):
     @property
     def is_displayed(self):
         return (
-            self.companycategories.is_active() and
+            self.company_categories.is_active() and
             self.tag_name.is_displayed
         )
 
@@ -266,7 +274,10 @@ class TagsAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
     def step(self):
-        self.prerequisite_view.companytags.select()
+        if self.obj.appliance.version < '5.9':
+            self.prerequisite_view.company_tags.select()
+        else:
+            self.prerequisite_view.tags.company_tags.select()
         self.view.fill({'category_dropdown': self.obj.category.display_name})
 
 
@@ -298,7 +309,7 @@ class MapTagsAllView(RegionView):
     @property
     def is_displayed(self):
         return (
-            self.maptags.is_active() and
+            self.map_tags.is_active() and
             self.table.is_displayed
         )
 
@@ -315,7 +326,7 @@ class MapTagsAddView(RegionView):
     @property
     def is_displayed(self):
         return (
-            self.maptags.is_active() and
+            self.map_tags.is_active() and
             self.resource_entity.is_displayed
         )
 
@@ -369,7 +380,8 @@ class MapTags(Navigatable, Pretty, Updateable):
             flash_message = 'Container Label Tag Mapping "{}" was added'.format(self.label)
 
         view = self.create_view(MapTagsAllView)
-        view.flash.assert_success_message(flash_message)
+        if not BZ(1510473, forced_streams=['5.9']).blocks:
+            view.flash.assert_success_message(flash_message)
 
     def update(self, updates, cancel=False):
         """ Update tag map method
@@ -396,7 +408,8 @@ class MapTags(Navigatable, Pretty, Updateable):
             flash_message = 'Container Label Tag Mapping "{}" was saved'.format(self.label)
 
         view = self.create_view(MapTagsAllView, override=updates)
-        view.flash.assert_success_message(flash_message)
+        if not BZ(1510473, forced_streams=['5.9']).blocks:
+            view.flash.assert_success_message(flash_message)
 
     def delete(self, cancel=False):
         """ Delete existing user
@@ -412,8 +425,9 @@ class MapTags(Navigatable, Pretty, Updateable):
 
         if not cancel:
             view = self.create_view(MapTagsAllView)
-            view.flash.assert_success_message(
-                'Container Label Tag Mapping "{}": Delete successful'.format(self.label))
+            if not BZ(1510473, forced_streams=['5.9']).blocks:
+                view.flash.assert_success_message(
+                    'Container Label Tag Mapping "{}": Delete successful'.format(self.label))
 
 
 @navigator.register(MapTags, 'All')
@@ -422,7 +436,10 @@ class MapTagsAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
     def step(self):
-        self.prerequisite_view.maptags.select()
+        if self.obj.appliance.version < '5.9':
+            self.prerequisite_view.map_tags.select()
+        else:
+            self.prerequisite_view.tags.map_tags.select()
 
 
 @navigator.register(MapTags, 'Add')
@@ -461,7 +478,7 @@ class RedHatUpdatesView(RegionView):
     @property
     def is_displayed(self):
         return (
-            self.redhatupdates.is_active() and
+            self.redhat_updates.is_active() and
             self.edit_registration.is_displayed and
             self.title.text == 'Red Hat Software Updates'
         )
@@ -494,7 +511,7 @@ class RedHatUpdatesEditView(RegionView):
     @property
     def is_displayed(self):
         return (
-            self.redhatupdates.is_active() and
+            self.redhat_updates.is_active() and
             self.validate_button.is_displayed and
             self.title.text == 'Red Hat Software Updates'
         )
@@ -774,7 +791,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
     def step(self):
-        self.prerequisite_view.redhatupdates.select()
+        self.prerequisite_view.redhat_updates.select()
 
 
 @navigator.register(RedHatUpdates)
@@ -800,7 +817,7 @@ class CANDUCollectionView(RegionView):
     @property
     def is_displayed(self):
         return (
-            self.canducollection.is_active() and
+            self.candu_collection.is_active() and
             self.all_clusters_cb.is_displayed
         )
 
@@ -852,4 +869,4 @@ class CANDUCollectionDetails(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
     def step(self):
-        self.prerequisite_view.canducollection.select()
+        self.prerequisite_view.candu_collection.select()
