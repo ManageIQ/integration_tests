@@ -10,6 +10,7 @@ from widgetastic_patternfly import BootstrapSelect, Button, CandidateNotFound
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.timeutil import parsetime
 
 from . import AutomateExplorerView, check_tree_path
@@ -232,7 +233,7 @@ class MethodCollection(BaseCollection):
             }.items()
             if v is not None}
         add_page.fill(fill_dict)
-        if validate:
+        if validate and not BZ(1499881, forced_streams=['5.9']).blocks:
             add_page.validate_button.click()
             add_page.flash.assert_no_error()
             add_page.flash.assert_message('Data validated successfully')
