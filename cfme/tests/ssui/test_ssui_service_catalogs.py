@@ -26,7 +26,7 @@ pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
 def test_service_catalog_crud(appliance, setup_provider, context, order_catalog_item_in_ops_ui):
     """Tests Service Catalog in SSUI."""
 
-    service_name = order_catalog_item_in_ops_ui
+    service_name = order_catalog_item_in_ops_ui.name
     with appliance.context.use(context):
         appliance.server.login()
         service = ServiceCatalogs(appliance, name=service_name)
