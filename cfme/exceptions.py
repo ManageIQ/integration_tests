@@ -13,6 +13,16 @@ class CFMEException(Exception):
     pass
 
 
+class BugException(CFMEException):
+    """Raised by methods inside the framework that are broken due to a bug"""
+    def __init__(self, bug_no, operation):
+        self.bug_no = bug_no
+        self.operation = operation
+
+    def __str__(self):
+        return "Bug {} blocks the operation [{}]".format(self.bug_no, self.operation)
+
+
 class ConsoleNotSupported(CFMEException):
     """Raised by functions in :py:mod:`cfme.configure.configuration` when an invalid
     console type is given"""

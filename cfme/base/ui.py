@@ -29,6 +29,8 @@ from . import Server, Region, Zone, ZoneCollection
 from cfme.utils import conf
 from cfme.utils.log import logger
 
+from cfme.exceptions import BugException
+from cfme.utils.blockers import BZ
 
 @Server.address.external_implementation_for(ViaUI)
 def address(self):
@@ -1283,6 +1285,10 @@ def delete(self, cancel=False):
 @ZoneCollection.create.external_implementation_for(ViaUI)
 def create(self, name=None, description=None, smartproxy_ip=None, ntp_servers=None,
            max_scans=None, user=None, cancel=False):
+
+    if BZ(1509452).blocks:
+        raise BugException(1509452, 'creating zones')
+
     add_page = navigate_to(self, 'Add')
     if not ntp_servers:
         ntp_servers = []
