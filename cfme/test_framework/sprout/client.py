@@ -122,3 +122,6 @@ class SproutClient(object):
 
     def destroy_pool(self, pool_id):
         self.call_method('destroy_pool', id=pool_id)
+
+    def all_availiable_versions(self):
+        return self.call_method('available_cfme_versions')

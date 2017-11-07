@@ -2624,12 +2624,17 @@ def load_appliances(appliance_list, global_kwargs):
     return result
 
 
+def _version_for_version_or_stream(version):
+    
+    return Version(Version)
+
+
 @attr.s
 class DummyAppliance(object):
     """a dummy with minimal attribute set"""
     address = '0.0.0.0'
     browser_steal = False
-    version = attr.ib(default=Version('5.8.0'), convert=Version)
+    version = attr.ib(default=Version('5.8.0'), convert=_version_for_version_or_stream)
     is_downstream = True
     is_pod = False
     build = 'missing :)'
