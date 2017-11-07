@@ -143,6 +143,10 @@ class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
+        if self.obj.appliance.version > '5.9':
+            raise NotImplementedError(
+                'Service Catalogs have moved to a new UI in UI 5.9 which is not modeled'
+            )
         self.prerequisite_view.configuration.item_select('Add a new Dialog')
 
 
