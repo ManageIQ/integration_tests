@@ -2625,12 +2625,16 @@ def load_appliances(appliance_list, global_kwargs):
 
 
 def _version_for_version_or_stream(version_or_stream, sprout_client=None):
+    if version_or_stream is attr.NOTHING:
+        return attr.fields(DummyAppliance).version.default
+    if isinstance(version_or_stream, Version):
+        return version_or_stream
+
+    assert isinstance(version_or_stream, six.string_types), version_or_stream
 
     from cfme.test_framework.sprout.client import SproutClient
     sprout_client = SproutClient.from_config() if sprout_client is None else sprout_client
-    if isinstance(version_or_stream, Version):
-        return version_or_stream
-    assert isinstance(version_or_stream, six.string_types)
+
     if version_or_stream[0].isdigit():  # presume streams start with non-number
         return Version(version_or_stream)
     for version_str in sprout_client.available_cfme_versions():
