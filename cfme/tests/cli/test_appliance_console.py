@@ -143,17 +143,17 @@ def test_black_console_external_db_create(app_creds, dedicated_db_appliance,
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-def test_black_console_extend_storage(extend_appliance):
+def test_black_console_extend_storage(appliance_with_disk):
     """'ap' launches appliance_console, '' clears info screen, '10/13' extend storage, '1' select
     disk, 'y' confirm configuration and '' complete."""
 
-    opt = '10' if extend_appliance.version >= "5.8" else '13'
+    opt = '10' if appliance_with_disk.version >= "5.8" else '13'
     command_set = ('ap', '', opt, '1', 'y', '')
-    extend_appliance.appliance_console.run_commands(command_set)
+    appliance_with_disk.appliance_console.run_commands(command_set)
 
-    def is_storage_extended(extend_appliance):
-        assert extend_appliance.ssh_client.run_command("df -h | grep /var/www/miq_tmp")
-    wait_for(is_storage_extended, func_args=[extend_appliance])
+    def is_storage_extended(appliance_with_disk):
+        assert appliance_with_disk.ssh_client.run_command("df -h | grep /var/www/miq_tmp")
+    wait_for(is_storage_extended, func_args=[appliance_with_disk])
 
 
 @pytest.mark.skip('No IPA servers currently available')

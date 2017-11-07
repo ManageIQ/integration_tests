@@ -60,7 +60,7 @@ def fqdn_appliance(appliance, preconfigured):
 
 
 @pytest.yield_fixture(scope="function")
-def extend_appliance():
+def appliance_with_disk():
     return fqdn_appliance(preconfigured=False)
 
 
