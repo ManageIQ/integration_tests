@@ -8,7 +8,7 @@ class BaseLoggedInPage(View):
     """
     CSRF_TOKEN = '//meta[@name="csrf-token"]'
     flash = FlashMessages('.//div[starts-with(@class, "flash_text_div") or @id="flash_text_div"]')
-    help = NavDropdown('.//li[./a[@id="dropdownMenu1"]]')
+    help = NavDropdown('.//li[./a[@id="dropdownMenu1"]]|.//li[./a[@id="help-menu"]]')
     settings = NavDropdown('.//li[./a[@id="dropdownMenu2"]]')
     navigation = VerticalNavigation('#maintab')
 
