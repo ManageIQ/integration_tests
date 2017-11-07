@@ -14,7 +14,6 @@ from cfme.containers.image_registry import ImageRegistryAllView
 from cfme.containers.template import TemplateAllView
 from cfme.containers.replicator import ReplicatorAllView
 from cfme.containers.route import RouteAllView
-from cfme.containers.volume import VolumeAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.version import current_version
 
@@ -38,7 +37,9 @@ data_sets = (
     DataSet(TemplateAllView, 'Compute / Containers / Container Templates'),
     DataSet(ReplicatorAllView, 'Compute / Containers / Replicators'),
     DataSet(RouteAllView, 'Compute / Containers / Routes'),
-    DataSet(VolumeAllView, 'Compute / Containers / Volumes'),
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1510376
+    # from cfme.containers.volume import VolumeAllView
+    #  DataSet(VolumeAllView, 'Compute / Containers / Volumes'),
     # https://bugzilla.redhat.com/show_bug.cgi?id=1466350
     # from cfme.containers.container import ContainerAllView
     # DataSet(ContainerAllView, 'Compute / Containers / Containers')
