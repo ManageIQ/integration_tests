@@ -823,6 +823,30 @@ class Timelines(CFMENavigateStep):
 
 # ######################## REGION NAVS ################################
 
+class TagsView(Tab):
+    TAB_NAME = "Tags"
+
+    @View.nested
+    class companycategories(Tab):  # noqa
+        TAB_NAME = "My Company Categories"
+
+    @View.nested
+    class companytags(Tab):  # noqa
+        TAB_NAME = "My Company Tags"
+
+    @View.nested
+    class importtags(Tab):  # noqa
+        TAB_NAME = "Import Tags"
+
+    @View.nested
+    class maptags(Tab):  # noqa
+        TAB_NAME = "Map Tags"
+
+    @View.nested
+    class imports(Tab):  # noqa
+        TAB_NAME = "Import"
+
+
 class RegionView(ConfigurationView):
     @View.nested
     class details(Tab):  # noqa
@@ -859,6 +883,9 @@ class RegionView(ConfigurationView):
     @View.nested
     class replication(Tab):  # noqa
         TAB_NAME = "Replication"
+
+    # available starting from 5.9 version
+    tags = View.nested(TagsView)
 
     @property
     def is_displayed(self):

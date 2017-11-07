@@ -11,6 +11,7 @@ from cfme.base.ui import RegionView
 from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 
@@ -118,7 +119,8 @@ class Category(Pretty, Navigatable, Updateable):
             flash_message = 'Category "{}" was added'.format(self.display_name)
 
         view = self.create_view(CompanyCategoriesAllView)
-        view.flash.assert_success_message(flash_message)
+        if not BZ(1510473, forced_streams=['5.9']).blocks:
+            view.flash.assert_success_message(flash_message)
 
     def update(self, updates, cancel=False):
         """ Update category method
@@ -136,7 +138,8 @@ class Category(Pretty, Navigatable, Updateable):
             flash_message = 'Category "{}" was saved'.format(self.name)
 
         view = self.create_view(CompanyCategoriesAllView)
-        view.flash.assert_success_message(flash_message)
+        if not BZ(1510473, forced_streams=['5.9']).blocks:
+            view.flash.assert_success_message(flash_message)
 
     def delete(self, cancel=True):
         """ Delete existing category
@@ -150,7 +153,9 @@ class Category(Pretty, Navigatable, Updateable):
         row.actions.click()
         view.browser.handle_alert(cancel=cancel)
         if not cancel:
-            view.flash.assert_success_message('Category "{}": Delete successful'.format(self.name))
+            if not BZ(1510473, forced_streams=['5.9']).blocks:
+                view.flash.assert_success_message(
+                    'Category "{}": Delete successful'.format(self.name))
 
 
 @navigator.register(Category, 'All')
@@ -159,7 +164,10 @@ class CategoryAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
     def step(self):
-        self.prerequisite_view.companycategories.select()
+        if self.obj.appliance.version < '5.9':
+            self.prerequisite_view.companycategories.select()
+        else:
+            self.prerequisite_view.tags.companycategories.select()
 
 
 @navigator.register(Category, 'Add')
@@ -266,7 +274,10 @@ class TagsAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
     def step(self):
-        self.prerequisite_view.companytags.select()
+        if self.obj.appliance.version < '5.9':
+            self.prerequisite_view.companytags.select()
+        else:
+            self.prerequisite_view.tags.companytags.select()
         self.view.fill({'category_dropdown': self.obj.category.display_name})
 
 
@@ -369,7 +380,8 @@ class MapTags(Navigatable, Pretty, Updateable):
             flash_message = 'Container Label Tag Mapping "{}" was added'.format(self.label)
 
         view = self.create_view(MapTagsAllView)
-        view.flash.assert_success_message(flash_message)
+        if not BZ(1510473, forced_streams=['5.9']).blocks:
+            view.flash.assert_success_message(flash_message)
 
     def update(self, updates, cancel=False):
         """ Update tag map method
@@ -396,7 +408,8 @@ class MapTags(Navigatable, Pretty, Updateable):
             flash_message = 'Container Label Tag Mapping "{}" was saved'.format(self.label)
 
         view = self.create_view(MapTagsAllView, override=updates)
-        view.flash.assert_success_message(flash_message)
+        if not BZ(1510473, forced_streams=['5.9']).blocks:
+            view.flash.assert_success_message(flash_message)
 
     def delete(self, cancel=False):
         """ Delete existing user
@@ -412,8 +425,9 @@ class MapTags(Navigatable, Pretty, Updateable):
 
         if not cancel:
             view = self.create_view(MapTagsAllView)
-            view.flash.assert_success_message(
-                'Container Label Tag Mapping "{}": Delete successful'.format(self.label))
+            if not BZ(1510473, forced_streams=['5.9']).blocks:
+                view.flash.assert_success_message(
+                    'Container Label Tag Mapping "{}": Delete successful'.format(self.label))
 
 
 @navigator.register(MapTags, 'All')
@@ -422,7 +436,10 @@ class MapTagsAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
     def step(self):
-        self.prerequisite_view.maptags.select()
+        if self.obj.appliance.version < '5.9':
+            self.prerequisite_view.maptags.select()
+        else:
+            self.prerequisite_view.tags.maptags.select()
 
 
 @navigator.register(MapTags, 'Add')
