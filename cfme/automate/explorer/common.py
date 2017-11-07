@@ -6,6 +6,8 @@ from widgetastic_patternfly import BootstrapSelect, Button
 
 from cfme.utils.appliance.implementations.ui import navigate_to
 
+from cfme.utils.blockers import BZ
+
 
 class CopyViewBase(View):
     title = Text('#explorer_title_text')
@@ -41,8 +43,9 @@ class Copiable(object):
             copy_page.copy_button.click()
             # Attention! Now we should be on a different page but the flash message is the same!
             copy_page.flash.assert_no_error()
-            copy_page.flash.assert_message(
-                'Copy selected Automate {} was saved'.format(type(self).__name__))
+            if not BZ(1510463, forced_streams=['5.9']).blocks:
+                copy_page.flash.assert_message(
+                    'Copy selected Automate {} was saved'.format(type(self).__name__))
         else:
             copy_page.cancel_button.click()
             # Attention! Now we should be on a different page but the flash message is the same!
