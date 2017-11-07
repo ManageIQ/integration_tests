@@ -178,7 +178,8 @@ def pytest_runtest_protocol(item):
         if str(session_ver) not in session_build:
             session_build = "{}-{}".format(str(session_ver), session_build)
         try:
-            proc = subprocess.Popen(['git', 'describe'], stdout=subprocess.PIPE)
+            proc = subprocess.Popen(['git', 'describe', '--tags'],
+                                    stdout=subprocess.PIPE)
             proc.wait()
             session_fw_version = proc.stdout.read().strip()
         except:
