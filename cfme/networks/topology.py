@@ -11,6 +11,9 @@ from cfme.utils.wait import wait_for
 
 @attr.s
 class TopologyLegend(BaseEntity):
+    """ Class representing Topology Legend
+        Consists of Browser element and its name
+    """
     element = attr.ib()
     legend_name = attr.ib()
 
@@ -43,6 +46,9 @@ class TopologyLegendCollection(BaseCollection):
 
 @attr.s
 class TopologyDisplayNames(BaseEntity):
+    """ Class representing Displaying buttons of legends
+        Consists of Browser element
+    """
     element = attr.ib()
 
     @property
@@ -59,6 +65,9 @@ class TopologyDisplayNames(BaseEntity):
 
 @attr.s
 class TopologyElement(BaseEntity):
+    """ Class representing Topology Element
+        Consists of Browser element and its parent Topology
+    """
     element = attr.ib()
     obj = attr.ib()
 
@@ -128,6 +137,9 @@ class TopologyElementCollection(BaseCollection):
 
 @attr.s
 class TopologyLine(BaseEntity):
+    """ Class representing line connecting 2 nodes in Topology
+        Consists of Browser element
+    """
     element = attr.ib()
 
     def instantiate(self, *args, **kwargs):
