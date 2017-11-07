@@ -9,6 +9,7 @@ from manageiq_client.api import ManageIQClient as MiqApi
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.rest.gen_data import (
+    TEMPLATE_TORSO,
     _creating_skeleton,
     blueprints as _blueprints,
     copy_role,
@@ -1482,6 +1483,28 @@ class TestOrchestrationTemplatesRESTAPI(object):
             with error.expected("content must be unique"):
                 appliance.rest_api.collections.orchestration_templates.action.copy(*new)
             assert_response(appliance, http_status=400)
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.9')
+    @pytest.mark.meta(blockers=[BZ(1510215, forced_streams=['5.9', 'upstream'])])
+    def test_invalid_template_type(self, appliance):
+        """Tests that template creation fails gracefully when invalid type is specified.
+
+        Metadata:
+            test_flag: rest
+        """
+        uniq = fauxfactory.gen_alphanumeric(5)
+        payload = {
+            'name': 'test_{}'.format(uniq),
+            'description': 'Test Template {}'.format(uniq),
+            'type': 'OrchestrationTemplateCfn',
+            'orderable': False,
+            'draft': False,
+            'content': TEMPLATE_TORSO.replace('CloudFormation', uniq)
+        }
+        with error.expected('Api::BadRequestError'):
+            appliance.rest_api.collections.orchestration_templates.action.create(payload)
+        assert_response(appliance, http_status=400)
 
 
 class TestServiceOrderCart(object):

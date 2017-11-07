@@ -15,7 +15,7 @@ from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
 
 
-_TEMPLATE_TORSO = """{
+TEMPLATE_TORSO = """{
   "AWSTemplateFormatVersion" : "2010-09-09",
   "Description" : "AWS CloudFormation Sample Template Rails_Single_Instance.",
 
@@ -582,10 +582,12 @@ def orchestration_templates(request, rest_api, num=2):
         data.append({
             'name': 'test_{}'.format(uniq),
             'description': 'Test Template {}'.format(uniq),
-            'type': 'OrchestrationTemplateCfn',
+            'type': version.pick({
+                version.LOWEST: 'OrchestrationTemplateCfn',
+                '5.9': 'ManageIQ::Providers::Amazon::CloudManager::OrchestrationTemplate'}),
             'orderable': False,
             'draft': False,
-            'content': _TEMPLATE_TORSO.replace('CloudFormation', uniq)})
+            'content': TEMPLATE_TORSO.replace('CloudFormation', uniq)})
 
     return _creating_skeleton(request, rest_api, 'orchestration_templates', data)
 
