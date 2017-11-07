@@ -27,7 +27,7 @@ class CompanyCategoriesAllView(RegionView):
     @property
     def is_displayed(self):
         return (
-            self.companycategories.is_active() and
+            self.company_categories.is_active() and
             self.table.is_displayed
         )
 
@@ -46,7 +46,7 @@ class CompanyCategoriesAddView(CompanyCategoriesAllView):
     @property
     def is_displayed(self):
         return (
-            self.companycategories.is_active() and
+            self.company_categories.is_active() and
             self.name.is_displayed
         )
 
@@ -59,7 +59,7 @@ class CompanyCategoriesEditView(CompanyCategoriesAddView):
     @property
     def is_displayed(self):
         return (
-            self.companycategories.is_active() and
+            self.company_categories.is_active() and
             self.name.is_displayed and
             self.save_button.is_displayed
         )
@@ -165,9 +165,9 @@ class CategoryAll(CFMENavigateStep):
 
     def step(self):
         if self.obj.appliance.version < '5.9':
-            self.prerequisite_view.companycategories.select()
+            self.prerequisite_view.company_categories.select()
         else:
-            self.prerequisite_view.tags.companycategories.select()
+            self.prerequisite_view.tags.company_categories.select()
 
 
 @navigator.register(Category, 'Add')
@@ -201,7 +201,7 @@ class CompanyTagsAllView(RegionView):
     @property
     def is_displayed(self):
         return (
-            self.companycategories.is_active() and
+            self.company_categories.is_active() and
             self.table.is_displayed
         )
 
@@ -214,7 +214,7 @@ class CompanyTagsAddView(CompanyTagsAllView):
     @property
     def is_displayed(self):
         return (
-            self.companycategories.is_active() and
+            self.company_categories.is_active() and
             self.tag_name.is_displayed
         )
 
@@ -275,9 +275,9 @@ class TagsAll(CFMENavigateStep):
 
     def step(self):
         if self.obj.appliance.version < '5.9':
-            self.prerequisite_view.companytags.select()
+            self.prerequisite_view.company_tags.select()
         else:
-            self.prerequisite_view.tags.companytags.select()
+            self.prerequisite_view.tags.company_tags.select()
         self.view.fill({'category_dropdown': self.obj.category.display_name})
 
 
@@ -309,7 +309,7 @@ class MapTagsAllView(RegionView):
     @property
     def is_displayed(self):
         return (
-            self.maptags.is_active() and
+            self.map_tags.is_active() and
             self.table.is_displayed
         )
 
@@ -326,7 +326,7 @@ class MapTagsAddView(RegionView):
     @property
     def is_displayed(self):
         return (
-            self.maptags.is_active() and
+            self.map_tags.is_active() and
             self.resource_entity.is_displayed
         )
 
@@ -437,9 +437,9 @@ class MapTagsAll(CFMENavigateStep):
 
     def step(self):
         if self.obj.appliance.version < '5.9':
-            self.prerequisite_view.maptags.select()
+            self.prerequisite_view.map_tags.select()
         else:
-            self.prerequisite_view.tags.maptags.select()
+            self.prerequisite_view.tags.map_tags.select()
 
 
 @navigator.register(MapTags, 'Add')
@@ -478,7 +478,7 @@ class RedHatUpdatesView(RegionView):
     @property
     def is_displayed(self):
         return (
-            self.redhatupdates.is_active() and
+            self.redhat_updates.is_active() and
             self.edit_registration.is_displayed and
             self.title.text == 'Red Hat Software Updates'
         )
@@ -511,7 +511,7 @@ class RedHatUpdatesEditView(RegionView):
     @property
     def is_displayed(self):
         return (
-            self.redhatupdates.is_active() and
+            self.redhat_updates.is_active() and
             self.validate_button.is_displayed and
             self.title.text == 'Red Hat Software Updates'
         )
@@ -791,7 +791,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
     def step(self):
-        self.prerequisite_view.redhatupdates.select()
+        self.prerequisite_view.redhat_updates.select()
 
 
 @navigator.register(RedHatUpdates)
@@ -817,7 +817,7 @@ class CANDUCollectionView(RegionView):
     @property
     def is_displayed(self):
         return (
-            self.canducollection.is_active() and
+            self.candu_collection.is_active() and
             self.all_clusters_cb.is_displayed
         )
 
@@ -869,4 +869,4 @@ class CANDUCollectionDetails(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
     def step(self):
-        self.prerequisite_view.canducollection.select()
+        self.prerequisite_view.candu_collection.select()
