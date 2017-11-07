@@ -88,9 +88,13 @@ class ServerLogDepot(Pretty, Navigatable):
             view.fill({'depot_name': self.depot_name,
                        'uri': self.uri})
         if self.depot_type in ['FTP', 'Samba']:
-            view.fill({'username': self.username,
-                       'password': self.password,
-                       'confirm_password': self.password})
+            data_dict = {
+                'username': self.username,
+                'password': self.password,
+            }
+            if self.appliance.version > '5.9':
+                data_dict['confirm_password'] = self.password
+            view.fill(data_dict)
             view.validate.click()
             view.flash.assert_success_message("Log Depot Settings were validated")
         if cancel:
