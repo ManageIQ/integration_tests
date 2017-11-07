@@ -1,7 +1,13 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Select
-from widgetastic_manageiq import SSUIlist, SSUIDropdown, Notification, SSUIAppendToBodyDropdown
+from widgetastic_manageiq import (
+    SSUIlist,
+    SSUIDropdown,
+    Notification,
+    SSUIAppendToBodyDropdown,
+    SSUIConfigDropdown)
 from widgetastic_patternfly import Input, Button
+from widgetastic.utils import VersionPick, Version
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
 from cfme.common.vm import VM
@@ -22,6 +28,7 @@ class MyServicesView(SSUIBaseLoggedInPage):
     service = SSUIlist(list_name='serviceList')
     notification = Notification()
 
+    @property
     def in_myservices(self):
         return (
             self.logged_in_as_current_user and
@@ -29,7 +36,10 @@ class MyServicesView(SSUIBaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return self.in_myservices and self.title.text == "My Services"
+        if self.browser.product_version >= '5.8':
+            return self.in_myservices and self.title.text == "My Services"
+        else:
+            return self.in_myservices
 
 
 class DetailsMyServiceView(MyServicesView):
@@ -38,14 +48,17 @@ class DetailsMyServiceView(MyServicesView):
     @property
     def is_displayed(self):
         return (self.in_myservices and
-               self.title.text in {self.context['object'].name, 'Service Details'})
+                self.title.text in {self.context['object'].name, 'Service Details'})
 
     notification = Notification()
-    configuration = SSUIDropdown('Configuration')
     policy_btn = SSUIDropdown('Policy')
     lifecycle_btn = SSUIDropdown('Lifecycle')
     power_operations = SSUIDropdown('Power Operations')
     access_dropdown = SSUIAppendToBodyDropdown('Access')
+    remove_service = Button("Remove Service")
+    configuration = VersionPick({
+        Version.lowest(): SSUIConfigDropdown("dropdownKebabRight"),
+        '5.8': SSUIDropdown('Configuration')})
 
 
 class ServiceEditForm(MyServicesView):
@@ -153,7 +166,11 @@ def set_ownership(self, owner, group):
     assert view.is_displayed
     # TODO - remove sleep when BZ 1496233 is fixed
     time.sleep(10)
-    assert view.notification.assert_message("Setting ownership.")
+    if self.appliance.version >= "5.8":
+        assert view.notification.assert_message("Setting ownership.")
+    else:
+        assert view.notification.assert_message("{} ownership was saved."
+                                                .format(self.name))
 
 
 @MyService.edit_tags.external_implementation_for(ViaSSUI)
@@ -177,7 +194,10 @@ def edit_tags(self, tag, value):
 @MyService.delete.external_implementation_for(ViaSSUI)
 def delete(self):
     view = navigate_to(self, 'Details')
-    view.configuration.item_select('Remove')
+    if self.appliance.version >= "5.8":
+        view.configuration.item_select('Remove')
+    else:
+        view.remove_service.click()
     view = self.create_view(RemoveServiceView)
     view.remove.click()
     view = self.create_view(MyServicesView)
@@ -249,6 +269,11 @@ class MyServiceSetOwnership(SSUINavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
+        # this is mandatory otherwise the locator is not found .
+        wait_for(
+            lambda: self.prerequisite_view.configuration.is_displayed, delay=5, num_sec=300,
+            message="waiting for view to be displayed"
+        )
         self.prerequisite_view.configuration.item_select('Set Ownership')
 
 
