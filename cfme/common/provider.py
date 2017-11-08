@@ -621,7 +621,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
         if app.version < '5.9' or (app.version >= '5.9' and BZ(1501941).blocks):
             for prov in app.rest_api.collections.providers.all:
                 try:
-                    if any([True for db_type in cls.db_types if db_type in prov.type]):
+                    if any(db_type in prov.type for db_type in cls.db_types):
                         logger.info('Deleting provider: %s', prov.name)
                         prov.action.delete()
                         prov.wait_not_exists()
