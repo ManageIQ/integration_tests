@@ -4,17 +4,18 @@ import json
 import math
 import os
 import re
+import six
 from collections import namedtuple
+from datetime import date
 from math import ceil
 from tempfile import NamedTemporaryFile
+from wait_for import TimedOutError, wait_for
 
-import six
 from cached_property import cached_property
-from datetime import date
 from jsmin import jsmin
 from lxml.html import document_fromstring
 from selenium.common.exceptions import WebDriverException
-from wait_for import TimedOutError, wait_for
+from cfme.utils.blockers import BZ
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.log import logged
 from widgetastic.utils import ParametrizedLocator, Parameter, ParametrizedString, attributize_string
@@ -43,7 +44,6 @@ from widgetastic_patternfly import (
     VerticalNavigation, Tab)
 
 from cfme.exceptions import ItemNotFound, ManyEntitiesFound
-from cfme.utils.blockers import BZ
 
 
 class DynamicTableAddError(Exception):
