@@ -14,6 +14,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils import version
+from cfme.utils.wait import wait_for
 from . import ServicesCatalogView
 
 
@@ -111,6 +112,11 @@ class EditCatalogItemView(BasicInfoForm):
             self.title.text == 'Editing Service Catalog Item "{}"'
                 .format(self.context['object'].name)
         )
+
+    def after_fill(self, was_change):
+        # TODO: This is a workaround (Jira RHCFQE-5429)
+        if was_change:
+            wait_for(lambda: not self.save_button.disabled, timeout='10s', delay=0.2)
 
 
 class AddButtonGroupView(ButtonGroupForm):
