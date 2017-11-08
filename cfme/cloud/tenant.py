@@ -49,7 +49,7 @@ class TenantDetailsAccordion(View):
 
 class TenantEntities(BaseEntitiesView):
     """The entities on the main list page"""
-    table = Table('//div[@id="list_grid"]//table')
+    table = Table('//div[@id="gtl_div"]//table')
     # todo: remove stuff about and use the same widgets from entities view ^^
 
 

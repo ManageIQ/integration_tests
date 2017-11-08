@@ -8,6 +8,7 @@ from widgetastic_manageiq import BaseNonInteractiveEntitiesView, CheckableManage
 
 from cached_property import cached_property
 from cfme.base.login import BaseLoggedInPage
+from cfme.modeling.base import BaseCollection
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.fixtures import pytest_selenium as sel
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
@@ -283,6 +284,22 @@ class EditTagsFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
+
+
+@navigator.register(WidgetasticTaggable, 'EditTags')
+class EditTagsFromListCollection(CFMENavigateStep):
+    VIEW = TagPageView
+
+    def prerequisite(self):
+        try:
+            if isinstance(self.obj.parent, BaseCollection):
+                return navigate_to(self.obj.parent, 'All')
+        except AttributeError:
+            return navigate_to(self.obj, 'All')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.get_entity(surf_pages=True, name=self.obj.name).check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 

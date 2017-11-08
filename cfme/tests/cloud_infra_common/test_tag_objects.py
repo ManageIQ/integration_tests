@@ -1,128 +1,168 @@
 # -*- coding: utf-8 -*-
 """This module tests tagging of objects in different locations."""
-import diaper
 import pytest
 
-from cfme.cloud.provider import CloudProvider
-# from cfme.cloud.flavor import Flavor # Replace when all targets support widgets
-# from cfme.cloud.availability_zone import AvailabilityZone # Replace all targets support widgets
+from cfme.cloud.availability_zone import AvailabilityZone
+from cfme.cloud.flavor import Flavor
 from cfme.cloud.instance import Instance
-from cfme.cloud.tenant import TenantCollection
-from cfme.infrastructure.cluster import ClusterCollection
-from cfme.infrastructure.datastore import DatastoreCollection
-from cfme.infrastructure.host import HostCollection
+from cfme.cloud.instance.image import Image
+from cfme.cloud.keypairs import KeyPair
+from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
-from cfme.web_ui import mixins
-from cfme.modeling.base import BaseCollection
+from fixtures.provider import setup_one_or_skip
+from cfme.utils.providers import ProviderFilter
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.exceptions import ItemNotFound
-
-
-param_classes = {
-    # TODO: replace other classes with collections
-    'Infra Providers': InfraProvider,
-    'Infra VMs': Vm,
-    'Infra Templates': Template,
-    'Infra Hosts': HostCollection,
-    'Infra Clusters': ClusterCollection,
-    'Infra Stores': DatastoreCollection,
-
-    'Cloud Providers': CloudProvider,
-    'Cloud Instances': Instance,
-    # 'Cloud Flavors': Flavor, # Test needs to be refactored along with tag mixin for widgets
-    # 'Cloud Availabity Zones': AvailabilityZone,  # Add back when all classes support widgets
-    'Cloud Tenants': TenantCollection
-}
 
 pytestmark = [
-    pytest.mark.parametrize("location", param_classes),
-    pytest.mark.tier(3)
+    pytest.mark.tier(2)
 ]
 
 
-def _navigate_and_check(location, appliance):
-    if issubclass(param_classes[location], BaseCollection):
-        cls_or_col = param_classes[location](appliance)
+infra_test_items = [
+    ('infra_provider', InfraProvider),
+    ('vms', Vm),
+    ('templates', Template),
+    ('hosts', None),
+    ('clusters', None),
+    ('datastores', None)
+]
+
+cloud_test_items = [
+    ('cloud_provider', CloudProvider),
+    ('instances', Instance),
+    ('flavors', Flavor),
+    ('availability_zones', AvailabilityZone),
+    ('cloud_tenants', None),
+    ('keypairs', None),
+    ('templates', Image)
+]
+
+
+@pytest.fixture(scope='module')
+def infra_provider(request):
+    prov_filter = ProviderFilter(classes=[InfraProvider])
+    return setup_one_or_skip(request, filters=[prov_filter])
+
+
+@pytest.fixture(scope='module')
+def cloud_provider(request):
+    prov_filter = ProviderFilter(classes=[CloudProvider],
+                                 required_fields=[['provisioning', 'stacks']])
+    return setup_one_or_skip(request, filters=[prov_filter])
+
+
+def get_collection_entity(appliance, collection_name, param_class, provider):
+    if collection_name in ['infra_provider', 'cloud_provider']:
+        return provider
+    if not param_class:
+        param_class = getattr(appliance.collections, collection_name)
+    view = navigate_to(param_class, 'All')
+    names = view.entities.entity_names
+    if names:
+        name = names[0]
     else:
-        cls_or_col = param_classes[location]
-    view = navigate_to(cls_or_col, 'All')
-    view.toolbar.view_selector.select('Grid View')
+        pytest.skip("No content found for test")
     try:
-        entity = view.entities.get_first_entity()
-        entity.check()
-        return entity
-    except ItemNotFound:
-        pytest.skip("No Quadicon present, cannot test.")
-
-# TODO Replace navigation and item selection with widgets when all tested classes have them
+        return param_class.instantiate(name=name, provider=provider)
+    except AttributeError:
+        return param_class(name=name, provider=provider)
 
 
-def _tag_item_through_selecting(request, location, tag, appliance):
-    """Add a tag to an item with going through the details page.
+def _tag_cleanup(test_item, tag):
+    tags = test_item.get_tags()
+    if tags:
+        result = (
+            not object_tags.category.display_name == tag.category.display_name and
+            not object_tags.display_name == tag.display_name for object_tags in tags
+        )
+        if not result:
+            test_item.remove_tag(tag=tag)
+    else:
+        result = True
+    return result
 
-    Prerequisities:
-        * Have a tag category and tag created.
-        * Be on the page you want to test.
+
+@pytest.fixture(params=cloud_test_items, ids=([item[0] for item in cloud_test_items]),
+                scope='module')
+def cloud_test_item(request, appliance, cloud_provider):
+    collection_name, param_class = request.param
+    return get_collection_entity(appliance, collection_name, param_class, cloud_provider)
+
+
+@pytest.fixture(params=infra_test_items, ids=[item[0] for item in infra_test_items],
+                scope='module')
+def infra_test_item(request, appliance, infra_provider):
+    collection_name, param_class = request.param
+    return get_collection_entity(appliance, collection_name, param_class, infra_provider)
+
+
+@pytest.fixture(scope='function')
+def tagging_check(tag):
+
+    def _tagging_check(test_item, tag_place):
+        """ Check if tagging is working
+            1. Add tag
+            2. Check assigned tag on details page
+            3. Remove tag
+            4. Check tag unassigned on details page
+        """
+        _tag_cleanup(test_item, tag)
+        test_item.add_tag(tag=tag, details=tag_place)
+        tags = test_item.get_tags()
+        assert any(
+            object_tags.category.display_name == tag.category.display_name and
+            object_tags.display_name == tag.display_name for object_tags in tags), (
+            "{}: {} not in ({})".format(tag.category.display_name, tag.display_name, str(tags)))
+
+        test_item.remove_tag(tag=tag, details=tag_place)
+        assert _tag_cleanup(test_item, tag)
+
+    return _tagging_check
+
+
+@pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
+def test_tag_cloud_objects(tagging_check, cloud_test_item, tag_place):
+    """ Test for cloud items tagging action from list and details pages """
+    tagging_check(cloud_test_item, tag_place)
+
+
+@pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
+def test_tag_infra_objects(tagging_check, infra_test_item, tag_place):
+    """ Test for infrastructure items tagging action from list and details pages """
+    tagging_check(infra_test_item, tag_place)
+
+
+@pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
+def test_tagvis_cloud_object(widgetastic_check_tag_visibility, cloud_test_item, visibility,
+                             appliance):
+    """ Tests infra provider and its items honors tag visibility
+    Prerequisites:
+        Catalog, tag, role, group and restricted user should be created
 
     Steps:
-        * Select any quadicon.
-        * Select ``Policy/Edit Tags`` and assign the tag to it.
-        * Click on the quadicon and verify the tag is assigned. (TODO)
-        * Go back to the quadicon view and select ``Policy/Edit Tags`` and remove the tag.
-        * Click on the quadicon and verify the tag is not present. (TODO)
+        1. As admin add tag
+        2. Login as restricted user, item is visible for user
+        3. As admin remove tag
+        4. Login as restricted user, item is not visible for user
     """
-    _navigate_and_check(location, appliance)
+    if isinstance(cloud_test_item, KeyPair) and appliance.version < '5.9':
+        pytest.skip('Keypairs visibility works starting 5.9')
 
-    def _delete():
-        # Ignoring the result of the check here
-        _navigate_and_check(location, appliance)
-        mixins.remove_tag(tag)
-    request.addfinalizer(lambda: diaper(_delete))
-    mixins.add_tag(tag)
-    _delete()
+    widgetastic_check_tag_visibility(cloud_test_item, visibility)
 
 
-def _tag_item_through_details(request, location, tag, appliance):
-    """Add a tag to an item with going through the details page.
-
-    Prerequisities:
-        * Have a tag category and tag created.
-        * Be on the page you want to test.
+@pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
+def test_tagvis_infra_object(infra_test_item, widgetastic_check_tag_visibility,
+                             visibility):
+    """ Tests infra provider and its items honors tag visibility
+    Prerequisites:
+        Catalog, tag, role, group and restricted user should be created
 
     Steps:
-        * Click any quadicon.
-        * On the details page, select ``Policy/Edit Tags`` and assign the tag to it.
-        * Verify the tag is assigned. (TODO)
-        * Select ``Policy/Edit Tags`` and remove the tag.
-        * Verify the tag is not present. (TODO)
+        1. As admin add tag
+        2. Login as restricted user, item is visible for user
+        3. As admin remove tag
+        4. Login as restricted user, iten is not visible for user
     """
-    entity = _navigate_and_check(location, appliance)
-    entity.click()
-    request.addfinalizer(lambda: diaper(lambda: mixins.remove_tag(tag)))
-    mixins.add_tag(tag)
-    mixins.remove_tag(tag)
-
-
-@pytest.mark.usefixtures('has_no_providers', scope='class')
-class TestCloudTagVisibility():
-
-    def test_cloud_tag_item_through_selecting(self, cloud_provider, request, location, tag,
-                                              appliance):
-        _tag_item_through_selecting(request, location, tag, appliance)
-
-    def test_cloud_tag_item_through_details(self, cloud_provider, request, location, tag,
-                                            appliance):
-        _tag_item_through_details(request, location, tag, appliance)
-
-
-@pytest.mark.usefixtures('has_no_providers', scope='class')
-class TestInfraTagVisibility():
-
-    def test_infra_tag_item_through_selecting(self, cloud_provider, request, location, tag,
-                                              appliance):
-        _tag_item_through_selecting(request, location, tag, appliance)
-
-    def test_infra_tag_item_through_details(self, cloud_provider, request, location, tag,
-                                            appliance):
-        _tag_item_through_details(request, location, tag, appliance)
+    widgetastic_check_tag_visibility(infra_test_item, visibility)

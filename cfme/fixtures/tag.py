@@ -130,15 +130,24 @@ def widgetastic_check_tag_visibility(tag, user_restricted):
 
         Returns: None
         """
-        view = navigate_to(vis_object, 'Details')
         if vis_expect:
-            vis_object.add_tag(tag)
-        elif tag.name in vis_object.get_tags(tenant=tag.category):
-            vis_object.remove_tag(tag)
+            vis_object.add_tag(tag=tag)
+        else:
+            tags = vis_object.get_tags()
+            tag_assigned = (
+                object_tags.category.display_name == tag.category.display_name and
+                object_tags.display_name == tag.display_name for object_tags in tags
+            )
+            if tag_assigned:
+                vis_object.remove_tag(tag=tag)
         with user_restricted:
-            view = navigate_to(vis_object, 'Details')
-            test_vis = tag.name in view.entities.smart_management.get_text_of(tag.category.name)
+            try:
+                navigate_to(vis_object, 'Details')
+                actual_visibility = True
+            except Exception:
+                logger.debug('Tagged item is not visible')
+                actual_visibility = False
 
-        assert test_vis == vis_expect
+        assert actual_visibility == vis_expect
 
     return _check_item_visibility
