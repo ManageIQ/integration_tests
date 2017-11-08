@@ -632,7 +632,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
         else:
             from cfme.utils.providers import get_crud_by_name
             all_provs = app.rest_api.collections.providers.all
-            prov_types = {prov.type for prov in all_provs}
+            prov_types = {prov.type for prov in all_provs if prov.type in cls.db_types}
             for prov_type in prov_types:
                 provs = [prov for prov in all_provs if prov.type == prov_type]
                 for prov in provs:
