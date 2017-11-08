@@ -4,7 +4,7 @@ import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import ParametrizedLocator, VersionPick
 from widgetastic.widget import ConditionalSwitchableView, ParametrizedView, Text, TextInput, View
 from widgetastic_manageiq import SummaryTable, Table
 from widgetastic_patternfly import BootstrapSelect, Button, Dropdown, FlashMessages, Input
@@ -14,6 +14,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
 
 
@@ -31,7 +32,12 @@ class CredentialsBaseView(BaseLoggedInPage):
 
 class CredentialsListView(CredentialsBaseView):
     configuration = Dropdown("Configuration")
-    credentials = Table(".//div[@id='list_grid']/table")
+    credentials = Table(
+        VersionPick({
+            Version.lowest(): ".//div[@id='list_grid']/table",
+            "5.9": ".//div[@id='miq-gtl-view']//table"
+        })
+    )
 
     @property
     def is_displayed(self):
@@ -235,7 +241,11 @@ class Credential(BaseEntity):
 
     def delete(self):
         view = navigate_to(self, "Details")
-        view.configuration.item_select("Remove this Credential", handle_alert=True)
+        if self.appliance.version < "5.9":
+            remove_str = "Remove this Credential"
+        else:
+            remove_str = "Remove this Credential from Inventory"
+        view.configuration.item_select(remove_str, handle_alert=True)
         credentials_list_page = self.create_view(CredentialsListView)
         wait_for(lambda: False, silent_failure=True, timeout=5)
         assert credentials_list_page.is_displayed
