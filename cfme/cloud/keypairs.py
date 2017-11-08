@@ -5,7 +5,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown, Button
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import WidgetasticTaggable
+from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import KeyPairNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
@@ -123,20 +123,20 @@ class KeyPair(BaseEntity, WidgetasticTaggable):
 
     def delete(self, cancel=False, wait=False):
         view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Remove this Key Pair',
-                                               handle_alert=(not cancel))
+        msg = 'Remove this Key Pair'
+        if self.appliance.version >= "5.9":
+            msg = 'Remove this Key Pair from Inventory'
+        view.toolbar.configuration.item_select(msg, handle_alert=not cancel)
         # cancel doesn't redirect, confirmation does
         view.flush_widget_cache()
         if cancel:
             view = self.create_view(KeyPairDetailsView)
         else:
             view = self.create_view(KeyPairAllView)
-        wait_for(lambda: view.is_displayed, fail_condition=False, num_sec=10, delay=1)
-
-        # flash message only displayed if it was deleted
-        if not cancel:
             view.flash.assert_no_error()
             view.flash.assert_success_message('Delete initiated for 1 Key Pair')
+            view.entities.paginator.set_items_per_page(100)
+        wait_for(lambda: view.is_displayed, fail_condition=False, num_sec=10, delay=1)
 
         if wait:
             def refresh():
@@ -145,12 +145,11 @@ class KeyPair(BaseEntity, WidgetasticTaggable):
                 view.flush_widget_cache()
 
             view = navigate_to(self.parent, 'All')
-
             wait_for(
                 lambda: self.name in view.entities.all_entity_names,
                 message="Wait keypairs to disappear",
                 fail_condition=True,
-                num_sec=300,
+                num_sec=350,
                 delay=5,
                 fail_func=refresh
             )
@@ -185,7 +184,7 @@ class KeyPairCollection(BaseCollection):
                                   'public_key': public_key,
                                   'provider': provider.name
                                   })
-        if cancel and not changed:
+        if cancel and changed:
             view.form.cancel.click()
             flash_message = 'Add of new Key Pair was cancelled by the user'
         else:
@@ -234,3 +233,13 @@ class Add(CFMENavigateStep):
     def step(self, *args, **kwargs):
         """Raises DropdownItemDisabled from widgetastic_patternfly if no RHOS provider present"""
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Key Pair')
+
+
+@navigator.register(KeyPair, 'EditTagsFromDetails')
+class KeyPairEditTag(CFMENavigateStep):
+    """ This navigation destination help to WidgetasticTaggable"""
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

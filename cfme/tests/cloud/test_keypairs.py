@@ -6,23 +6,23 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import TimedOutError
 
-pytestmark = [
-    pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([OpenStackProvider], scope="module")
-]
+pytestmark = [pytest.mark.usefixtures('setup_provider'),
+              pytest.mark.provider([OpenStackProvider], scope="module")]
 
 
 @pytest.mark.tier(3)
-def test_keypair_crud(appliance, provider):
+def test_keypair_crud(appliance, openstack_provider):
     """ This will test whether it will create new Keypair and then deletes it.
     Steps:
         * Provide Keypair name.
         * Select Cloud Provider.
         * Also delete it.
     """
-    keypairs = appliance.collections.keypairs
+    kp_collection = appliance.collections.keypairs
     try:
-        keypair = keypairs.create(name=fauxfactory.gen_alphanumeric(), provider=provider)
+        keypair = kp_collection.create(
+            name=fauxfactory.gen_alphanumeric(), provider=openstack_provider
+        )
     except TimedOutError:
         if BZ(1444520, forced_streams=['5.6', '5.7', 'upstream']).blocks:
             pytest.skip('Timed out creating keypair, BZ1444520')
@@ -35,7 +35,7 @@ def test_keypair_crud(appliance, provider):
 
 
 @pytest.mark.tier(3)
-def test_keypair_crud_with_key(openstack_provider, keypairs):
+def test_keypair_crud_with_key(appliance, openstack_provider):
     """ This will test whether it will create new Keypair and then deletes it.
 
     Steps:
@@ -45,8 +45,11 @@ def test_keypair_crud_with_key(openstack_provider, keypairs):
     """
     key = RSA.generate(1024)
     public_key = key.publickey().exportKey('OpenSSH')
+    kp_collection = appliance.collections.keypairs
     try:
-        keypair = keypairs.create(fauxfactory.gen_alphanumeric(), openstack_provider, public_key)
+        keypair = kp_collection.create(
+            name=fauxfactory.gen_alphanumeric(), provider=openstack_provider, public_key=public_key
+        )
     except TimedOutError:
         if BZ(1444520, forced_streams=['5.6', '5.7', 'upstream']).blocks:
             pytest.skip('Timed out creating keypair, BZ1444520')
@@ -59,7 +62,7 @@ def test_keypair_crud_with_key(openstack_provider, keypairs):
 
 
 @pytest.mark.tier(3)
-def test_keypair_create_cancel(openstack_provider, keypairs):
+def test_keypair_create_cancel(appliance, openstack_provider):
     """ This will test cancelling on adding a keypair
 
     Steps:
@@ -67,12 +70,15 @@ def test_keypair_create_cancel(openstack_provider, keypairs):
         * Select Cloud Provider.
         * Also delete it.
     """
-    keypair = keypairs.create(name="", provider=openstack_provider, cancel=True)
+    kp_collection = appliance.collections.keypairs
+    keypair = kp_collection.create(
+        name=fauxfactory.gen_alphanumeric(), provider=openstack_provider, cancel=True
+    )
 
     assert not keypair.exists
 
 
-def test_keypair_add_and_remove_tag(openstack_provider, appliance):
+def test_keypair_add_and_remove_tag(appliance, openstack_provider):
     """ This will test whether it will add and remove tag for newly created Keypair or not
     and then deletes it.
 
@@ -95,21 +101,19 @@ def test_keypair_add_and_remove_tag(openstack_provider, appliance):
             pytest.skip('Timed out creating keypair, BZ1444520')
         else:
             pytest.fail('Timed out creating keypair')
+
     assert keypair.exists
 
+    # add tag
     keypair.add_tag('Department', 'Accounting')
     tagged_value = keypair.get_tags()
-    assert (
-        tag.category.display_name == 'Department' and tag.display_name == 'Accounting'
-        for tag in keypair.get_tags()), (
-        'Assigned tag was not found on the details page')
+    assert tagged_value[0].display_name == 'Accounting'
+    assert tagged_value[0].category.display_name == 'Department'
 
+    # remove tag
     keypair.remove_tag('Department', 'Accounting')
-    tagged_value1 = keypair.get_tags()
-    assert tagged_value1 != tagged_value, "Remove tag failed."
-    # Above small conversion in assert statement convert 'tagged_value' in tuple("a","b") and then
-    # compare with tag which is tuple. As get_tags will return assigned tag in list format["a: b"].
+    tagged_value = keypair.get_tags()
+    assert not tagged_value
 
     keypair.delete(wait=True)
-
     assert not keypair.exists
