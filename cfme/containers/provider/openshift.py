@@ -12,7 +12,7 @@ from cfme.common.provider import DefaultEndpoint
 from cfme.utils.ocp_cli import OcpCli
 from cfme.utils.path import data_path
 from cfme.utils.varmeth import variable
-from cfme.utils.version import current_version
+from cfme.utils import version
 
 
 class CustomAttribute(object):
@@ -46,12 +46,38 @@ class HawkularEndpoint(DefaultEndpoint):
     def view_value_mapping(self):
         out = {
             'hostname': self.hostname,
-            'api_port': self.api_port
+            'api_port': self.api_port,
+            'sec_protocol': self.sec_protocol
         }
-        if current_version() >= '5.8':
-            out['sec_protocol'] = self.sec_protocol
-            if self.sec_protocol.lower() == 'ssl trusting custom ca':
-                out['trusted_ca_certificates'] = OpenshiftDefaultEndpoint.get_ca_cert()
+
+        if out['sec_protocol'] and self.sec_protocol.lower() == 'ssl trusting custom ca':
+            out['trusted_ca_certificates'] = OpenshiftDefaultEndpoint.get_ca_cert()
+
+        return out
+
+
+class AlertsEndpoint(DefaultEndpoint):
+    """Represents Alerts Endpoint"""
+    name = 'alerts'
+
+    @property
+    def view_value_mapping(self):
+
+        out = {}
+
+        out['hostname'] = version.pick({
+            version.LOWEST: None,
+            '5.9': self.hostname})
+        out['api_port'] = version.pick({
+            version.LOWEST: None,
+            '5.9': self.api_port})
+        out['sec_protocol'] = version.pick({
+            version.LOWEST: None,
+            '5.9': self.sec_protocol})
+
+        if out['sec_protocol'] and self.sec_protocol.lower() == 'ssl trusting custom ca':
+            out['trusted_ca_certificates'] = OpenshiftDefaultEndpoint.get_ca_cert()
+
         return out
 
 
@@ -63,11 +89,43 @@ class OpenshiftProvider(ContainersProvider):
     db_types = ["Openshift::ContainerManager"]
     endpoints_form = ContainersProviderEndpointsForm
 
-    def __init__(self, name=None, key=None, zone=None, metrics_type=None,
-                 provider_data=None, endpoints=None, appliance=None):
+    def __init__(
+            self,
+            name=None,
+            key=None,
+            zone=None,
+            metrics_type=None,
+            alerts_type=None,
+            provider_data=None,
+            endpoints=None,
+            appliance=None,
+            http_proxy=None,
+            adv_http=None,
+            adv_https=None,
+            no_proxy=None,
+            image_repo=None,
+            image_reg=None,
+            image_tag=None,
+            cve_loc=None):
+
+        self.http_proxy = http_proxy
+        self.adv_http = adv_http
+        self.adv_https = adv_https
+        self.no_proxy = no_proxy
+        self.image_repo = image_repo
+        self.image_reg = image_reg
+        self.image_tag = image_tag
+        self.cve_loc = cve_loc
+
         super(OpenshiftProvider, self).__init__(
-            name=name, key=key, zone=zone, metrics_type=metrics_type, provider_data=provider_data,
-            endpoints=endpoints, appliance=appliance)
+            name=name,
+            key=key,
+            zone=zone,
+            metrics_type=metrics_type,
+            provider_data=provider_data,
+            alerts_type=alerts_type,
+            endpoints=endpoints,
+            appliance=appliance)
 
     @cached_property
     def cli(self):
@@ -82,14 +140,34 @@ class OpenshiftProvider(ContainersProvider):
 
         mapping = {
             'name': self.name,
-            'zone': self.zone,
-            'metrics_type': self.metrics_type
+            'zone': self.zone
         }
 
         mapping['prov_type'] = (
             'OpenShift Container Platform'
             if self.appliance.is_downstream
             else 'OpenShift')
+
+        if self.appliance.version >= '5.9':
+            mapping['metrics_type'] = self.metrics_type
+            mapping['alerts_type'] = self.alerts_type
+            mapping['proxy'] = {
+                'http_proxy': self.http_proxy
+            }
+            mapping['advanced'] = {
+                'adv_http': self.adv_http,
+                'adv_https': self.adv_https,
+                'no_proxy': self.no_proxy,
+                'image_repo': self.image_repo,
+                'image_reg': self.image_reg,
+                'image_tag': self.image_tag,
+                'cve_loc': self.cve_loc
+            }
+        else:
+            mapping['metrics_type'] = None
+            mapping['alerts_type'] = None
+            mapping['proxy'] = None
+            mapping['advanced'] = None
 
         return mapping
 
@@ -120,18 +198,38 @@ class OpenshiftProvider(ContainersProvider):
                 endpoints[endp] = OpenshiftDefaultEndpoint(**prov_config['endpoints'][endp])
             elif HawkularEndpoint.name == endp:
                 endpoints[endp] = HawkularEndpoint(**prov_config['endpoints'][endp])
+            elif AlertsEndpoint.name == endp:
+                endpoints[endp] = AlertsEndpoint(**prov_config['endpoints'][endp])
             # TODO Add Prometheus and logic for having to select or the other based on metrcis_type
             else:
                 raise Exception('Unsupported endpoint type "{}".'.format(endp))
+
+        settings = prov_config.get('settings', {})
+        advanced = settings.get('advanced', {})
+        http_proxy = settings.get('proxy', {}).get('http_proxy')
+        adv_http, adv_https, no_proxy, image_repo, image_reg, image_tag, cve_loc = [
+            advanced.get(field) for field in
+            ('adv_http', 'adv_https', 'no_proxy',
+             'image_repo', 'image_reg', 'image_tag', 'cve_loc')
+        ]
 
         return cls(
             name=prov_config.get('name'),
             key=prov_key,
             zone=prov_config.get('server_zone'),
             metrics_type=prov_config.get('metrics_type'),
+            alerts_type=prov_config.get('alerts_type'),
             endpoints=endpoints,
             provider_data=prov_config,
-            appliance=appliance
+            appliance=appliance,
+            http_proxy=http_proxy,
+            adv_http=adv_http,
+            adv_https=adv_https,
+            no_proxy=no_proxy,
+            image_repo=image_repo,
+            image_reg=image_reg,
+            image_tag=image_tag,
+            cve_loc=cve_loc
         )
 
     def custom_attributes(self):

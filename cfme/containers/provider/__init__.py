@@ -48,8 +48,9 @@ class ContainersProviderDefaultEndpoint(DefaultEndpoint):
         if self.sec_protocol.lower() == 'ssl trusting custom ca' and hasattr(self, 'get_ca_cert'):
             out['trusted_ca_certificates'] = self.get_ca_cert()
 
-        if version.current_version() < '5.9':
-            out['confirm_password'] = self.token
+        out['confirm_password'] = version.pick({
+            version.LOWEST: self.token,
+            '5.9': None})
 
         return out
 
@@ -62,14 +63,11 @@ class ContainersProviderEndpointsForm(View):
     class default(Tab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Default'
         sec_protocol = BootstrapSelect('default_security_protocol')
-        # trusted_ca_certificates appears only in 5.8
         trusted_ca_certificates = TextInput('default_tls_ca_certs')
         api_port = Input('default_api_port')
 
     @View.nested
     class hawkular(Tab, BeforeFillMixin):  # NOQA
-        TAB_NAME = 'Hawkular'
-        sec_protocol = BootstrapSelect(id='hawkular_security_protocol')
         TAB_NAME = VersionPick({
             Version.lowest(): 'Hawkular',
             '5.9': 'Metrics'
@@ -78,7 +76,6 @@ class ContainersProviderEndpointsForm(View):
             Version.lowest(): BootstrapSelect(id='hawkular_security_protocol'),
             '5.9': BootstrapSelect(id='metrics_security_protocol')
         })
-        # trusted_ca_certificates appears only in 5.8
         trusted_ca_certificates = VersionPick({
             Version.lowest(): TextInput('hawkular_tls_ca_certs'),
             '5.9': TextInput('metrics_tls_ca_certs')
@@ -91,6 +88,15 @@ class ContainersProviderEndpointsForm(View):
             Version.lowest(): Input('hawkular_api_port'),
             '5.9': Input('metrics_api_port')
         })
+        validate = Button('Validate')
+
+    @View.nested
+    class alerts(Tab, BeforeFillMixin):  # NOQA
+        TAB_NAME = 'Alerts'
+        sec_protocol = BootstrapSelect(id='prometheus_alerts_security_protocol')
+        trusted_ca_certificates = TextInput('prometheus_alerts_tls_ca_certs')
+        hostname = Input('prometheus_alerts_hostname')
+        api_port = Input('prometheus_alerts_api_port')
         validate = Button('Validate')
 
 
@@ -148,7 +154,12 @@ class ContainersProvider(BaseProvider, Pretty):
     provider_types = {}
     in_version = ('5.5', version.LATEST)
     category = "container"
-    pretty_attrs = ['name', 'key', 'zone', 'metrics_type']
+    pretty_attrs = [
+        'name',
+        'key',
+        'zone',
+        'metrics_type',
+        'alerts_type']
     STATS_TO_MATCH = [
         'num_project',
         'num_service',
@@ -173,6 +184,7 @@ class ContainersProvider(BaseProvider, Pretty):
             key=None,
             zone=None,
             metrics_type=None,
+            alerts_type=None,
             endpoints=None,
             provider_data=None,
             appliance=None):
@@ -182,16 +194,18 @@ class ContainersProvider(BaseProvider, Pretty):
         self.zone = zone
         self.endpoints = endpoints
         self.provider_data = provider_data
-        self.metrics_type = (metrics_type if self.appliance.version >= '5.9' else None)
+        self.metrics_type = metrics_type
+        self.alerts_type = alerts_type
 
     @property
     def view_value_mapping(self):
-        return {
+        mapping = {
             'name': self.name,
             'prov_type': self.type,
-            'zone': self.zone,
-            'metrics_type': self.metrics_type
+            'zone': self.zone
         }
+
+        return mapping
 
     @variable(alias='db')
     def num_project(self):
