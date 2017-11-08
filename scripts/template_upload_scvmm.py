@@ -142,6 +142,12 @@ def run(**kwargs):
 
     for provider in list_provider_keys("scvmm"):
 
+        # skip provider if block_upload is set
+        if (cfme_data[provider].get('template_upload') and
+                cfme_data[provider]['template_upload'].get('block_upload')):
+            logger.info('Skipping upload on {} due to block_upload'.format(provider))
+            continue
+
         kwargs = make_kwargs_scvmm(cfme_data, provider,
                                    kwargs.get('image_url'), kwargs.get('template_name'))
         check_kwargs(**kwargs)

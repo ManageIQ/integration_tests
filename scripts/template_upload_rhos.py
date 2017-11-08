@@ -238,7 +238,15 @@ def run(**kwargs):
     if kwargs['provider_data']:
         provider_data = kwargs['provider_data']
         mgmt_sys = providers = provider_data['management_systems']
+    else:
+        mgmt_sys = cfme_data.management_systems
     for provider in providers:
+        # skip provider if block_upload is set
+        if (mgmt_sys[provider].get('template_upload') and
+                mgmt_sys[provider]['template_upload'].get('block_upload')):
+            logger.info('Skipping upload on {} due to block_upload'.format(provider))
+            continue
+
         if kwargs['provider_data']:
             if mgmt_sys[provider]['type'] != 'openstack':
                 continue

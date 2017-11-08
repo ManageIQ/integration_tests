@@ -152,6 +152,11 @@ def run(**kwargs):
         else:
             mgmt_sys = cfme_data['management_systems']
         for provider in providers:
+            # skip provider if block_upload is set
+            if (mgmt_sys[provider].get('template_upload') and
+                    mgmt_sys[provider]['template_upload'].get('block_upload')):
+                logger.info('Skipping upload on {} due to block_upload'.format(provider))
+                continue
             if 'podtesting' not in mgmt_sys[provider]['tags']:
                 continue
             if kwargs['provider_data']:
