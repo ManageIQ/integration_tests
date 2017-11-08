@@ -797,7 +797,7 @@ def test_superadmin_tenant_crud(request, appliance):
     Steps:
         * Create tenant
         * Update description of tenant
-        * Update name of tenat
+        * Update name of tenant
         * Delete tenant
     """
     tenant_collection = appliance.collections.tenants
@@ -951,3 +951,14 @@ def test_unique_tenant_name_on_parent_level(request, appliance):
 def test_unique_project_name_on_parent_level(request, appliance):
     tenant_unique_tenant_project_name_on_parent_level(request,
                                                       appliance.collections.projects)
+
+
+def test_tenant_quota_input_validate(appliance):
+    roottenant = appliance.collections.tenants.get_root_tenant()
+    fields = [('cpu', 2.5), ('storage', '1.x'), ('memory', '2.x'), ('vm', 1.5)]
+
+    for field in fields:
+        view = navigate_to(roottenant, 'ManageQuotas', wait_for_view=True)
+        view.form.fill({'{}_cb'.format(field[0]): True, '{}_txt'.format(field[0]): field[1]})
+        assert view.save_button.disabled
+        view.form.fill({'{}_cb'.format(field[0]): False})
