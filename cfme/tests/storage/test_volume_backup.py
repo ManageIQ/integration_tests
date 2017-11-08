@@ -1,23 +1,59 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
-import random
 
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils import version
+from cfme.utils.log import logger
 
 
 pytestmark = [pytest.mark.ignore_stream("upstream"),
               pytest.mark.usefixtures('setup_provider'),
               pytest.mark.provider([OpenStackProvider], scope='module')]
 
+STORAGE_SIZE = 1
+
+
+@pytest.yield_fixture(scope='module')
+def backup(appliance, provider):
+    volume_collection = appliance.collections.volumes
+    storage_manager = version.pick({'5.8': '{} Cinder Manager'.format(provider.name),
+                                    version.LOWEST: None})
+    backup_collection = appliance.collections.volume_backups.filter({'provider': provider})
+
+    # create new volume
+    volume = volume_collection.create(name=fauxfactory.gen_alpha(),
+                                      storage_manager=storage_manager,
+                                      tenant=provider.data['provisioning']['cloud_tenant'],
+                                      size=STORAGE_SIZE,
+                                      provider=provider)
+
+    # create new backup for crated volume
+    backup_name = fauxfactory.gen_alpha()
+    volume.create_backup(backup_name)
+    backup = backup_collection.instantiate(backup_name, provider)
+
+    yield backup
+
+    try:
+        if backup.exists:
+            backup_collection.delete(backup)
+        if volume.exists:
+            volume.delete(wait=False)
+    except Exception:
+        logger.warning('Exception during volume deletion - skipping..')
+
 
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
-def test_storage_volume_backup_edit_tag_from_detail(appliance, provider):
-    collection = appliance.collections.volume_backups.filter({'provider': provider})
-    backups = collection.all()
-    backup = random.choice(backups)
+def test_storage_volume_backup_create(backup):
+    assert backup.exists
+    assert backup.size == '{} GB'.format(STORAGE_SIZE)
 
+
+@pytest.mark.tier(3)
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+def test_storage_volume_backup_edit_tag_from_detail(backup):
     # add tag with category Department and tag communication
     backup.add_tag('Department', 'Communication')
     tag_available = backup.get_tags()
@@ -28,3 +64,10 @@ def test_storage_volume_backup_edit_tag_from_detail(appliance, provider):
     backup.remove_tag('Department', 'Communication')
     tag_available = backup.get_tags()
     assert not tag_available
+
+
+@pytest.mark.tier(3)
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+def test_storage_volume_backup_delete(backup):
+    backup.parent.delete(backup)
+    assert not backup.exists

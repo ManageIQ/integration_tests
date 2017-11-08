@@ -9,6 +9,7 @@ from widgetastic_manageiq import (
     BaseQuadIconEntity,
     BaseTileIconEntity,
     BootstrapSelect,
+    BootstrapSwitch,
     BreadCrumb,
     ItemsToolBarViewSelector,
     JSBaseEntity,
@@ -175,6 +176,21 @@ class VolumeEditView(VolumeView):
     save = Button('Save')
 
 
+class VolumeBackupView(VolumeView):
+    @property
+    def is_displayed(self):
+        return False
+
+    backup_name = TextInput(name='backup_name')
+    # options
+    incremental = BootstrapSwitch(name='incremental')
+    force = BootstrapSwitch(name='force')
+
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+
 @attr.s
 class Volume(BaseEntity):
     # Navigation menu option
@@ -227,6 +243,18 @@ class Volume(BaseEntity):
         self.provider.refresh_provider_relationships()
         self.browser.refresh()
 
+    def create_backup(self, name, incremental=None, force=None):
+        """create backup of cloud volume"""
+        view = navigate_to(self, 'Backup')
+        view.backup_name.fill(name)
+        view.incremental.fill(incremental)
+        view.force.fill(force)
+
+        view.save.click()
+        view.flash.assert_success_message('Backup for Cloud Volume "{}" created'.format(self.name))
+
+        wait_for(lambda: int(self.backups) > 0, delay=20, timeout=1000, fail_func=self.refresh)
+
     @property
     def exists(self):
         try:
@@ -244,6 +272,11 @@ class Volume(BaseEntity):
     def tenant(self):
         view = navigate_to(self, 'Details')
         return view.entities.relationships.get_text_of('Cloud Tenants')
+
+    @property
+    def backups(self):
+        view = navigate_to(self, 'Details')
+        return view.entities.relationships.get_text_of('Cloud Volume Backups')
 
 
 @attr.s
@@ -347,3 +380,13 @@ class VolumeEdit(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Cloud Volume')
+
+
+@navigator.register(Volume, 'Backup')
+class VolumeBackup(CFMENavigateStep):
+    VIEW = VolumeBackupView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select('Create a Backup of this Cloud '
+                                                                 'Volume')

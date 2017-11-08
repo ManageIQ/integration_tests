@@ -137,6 +137,14 @@ class VolumeBackup(BaseEntity, WidgetasticTaggable):
         self.browser.refresh()
 
     @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+            return True
+        except BackupNotFound:
+            return False
+
+    @property
     def size(self):
         """ size of cloud volume backup.
 
@@ -173,10 +181,12 @@ class VolumeBackupCollection(BaseCollection):
     ENTITY = VolumeBackup
 
     def all(self):
-        """returning all backup objects"""
+        """returning all backup objects for respective storage manager type"""
         view = navigate_to(self, 'All')
-        backups = [self.instantiate(name=item, provider=self.filters.get('provider'))
-                   for item in view.entities.all_entity_names]
+
+        backups = [self.instantiate(name=item['Name'], provider=self.filters.get('provider'))
+                   for item in view.entities.elements.read()
+                   if self.filters.get('provider').name in item['Cloud Provider']]
         return backups
 
     def delete(self, *backups):
@@ -230,7 +240,7 @@ class Details(CFMENavigateStep):
             self.prerequisite_view.entities.get_entity(self.obj.name,
                                                        surf_pages=True).click()
         except ItemNotFound:
-            raise ItemNotFound('Could not locate volume backup {}'.format(self.obj.name))
+            raise BackupNotFound('Could not locate volume backup {}'.format(self.obj.name))
 
 
 @navigator.register(VolumeBackup, 'EditTagsFromDetails')
