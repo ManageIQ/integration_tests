@@ -67,7 +67,12 @@ def test_storage_volume_backup_edit_tag_from_detail(backup):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
 def test_storage_volume_backup_delete(backup):
-    backup.parent.delete(backup)
+    """ Volume backup deletion method not support by 5.8;
+        Implementing collective delete
+    """
+
+    backups = backup.parent.all()
+    backup.parent.delete(*backups)
     assert not backup.exists

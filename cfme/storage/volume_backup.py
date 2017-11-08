@@ -70,6 +70,10 @@ class VolumeBackupView(BaseLoggedInPage):
             self.navigation.currently_selected == ['Storage', 'Block Storage', 'Volume Backups']
         )
 
+    @property
+    def is_displayed(self):
+        return self.in_volume_backup
+
 
 class VolumeBackupAllView(VolumeBackupView):
     """The all Volume Backup page"""
