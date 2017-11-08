@@ -19,7 +19,7 @@ from wrapanapi.exceptions import ImageNotFoundError, MultipleImagesError
 from cfme.utils import trackerbot
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger, add_stdout_handler
-from cfme.utils.providers import get_mgmt
+from cfme.utils.providers import get_mgmt, list_provider_keys
 from cfme.utils.ssh import SSHClient
 from cfme.utils.wait import wait_for
 
@@ -204,8 +204,10 @@ def run(template_name, image_url, stream, **kwargs):
     prov_to_upload = []
     valid_providers = [
         prov_key
-        for prov_key in mgmt_sys
-        if (mgmt_sys[prov_key]['type'] == 'ec2') and ('disabled' not in mgmt_sys[prov_key]['tags'])
+        for prov_key in list_provider_keys("ec2")
+        if ('disabled' not in mgmt_sys[prov_key]['tags']) and
+           (mgmt_sys[prov_key].get('template_upload') and
+            not mgmt_sys[prov_key]['template_upload'].get('block_upload'))
     ]
 
     if valid_providers:

@@ -205,6 +205,12 @@ def run(**kwargs):
 
     thread_queue = []
     for provider in list_provider_keys("gce"):
+        # skip provider if block_upload is set
+        provider_yaml = cfme_data.management_systems.get(provider)
+        if (provider_yaml.get('template_upload') and
+                provider_yaml.template_upload.get('block_upload')):
+            logger.info('Skipping upload on {} due to block_upload'.format(provider))
+            continue
         template_name = kwargs.get('template_name')
         bucket_name = kwargs.get('bucket_name')
         stream = kwargs.get('stream')
