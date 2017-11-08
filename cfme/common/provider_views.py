@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+from lxml.html import document_fromstring
 from widgetastic.utils import VersionPick, Version
-from widgetastic.widget import View, Text, ConditionalSwitchableView
-from widgetastic_manageiq import PaginationPane
+from widgetastic.widget import View, Text, ConditionalSwitchableView, ParametrizedView
+from widgetastic_manageiq import PaginationPane, BaseTileIconEntity, BaseQuadIconEntity, \
+    BaseListEntity, NonJSBaseEntity, JSBaseEntity
 from widgetastic_patternfly import Dropdown, BootstrapSelect, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
@@ -17,9 +19,60 @@ from widgetastic_manageiq import (BreadCrumb,
                                   BaseEntitiesView,
                                   DynaTree,
                                   BootstrapTreeview,
-                                  ProviderEntity,
                                   BaseNonInteractiveEntitiesView)
 from cfme.common.host_views import HostEntitiesView
+
+
+class ProviderQuadIconEntity(BaseQuadIconEntity):
+    """ Provider child of Quad Icon entity
+
+    """
+    @property
+    def data(self):
+        br = self.browser
+        return {
+            "no_host": br.text(self.QUADRANT.format(pos='a')),
+            "vendor": br.get_attribute('src', self.QUADRANT.format(pos='c')),
+            "creds": br.get_attribute('src', self.QUADRANT.format(pos='d')),
+        }
+
+
+class ProviderTileIconEntity(BaseTileIconEntity):
+    """ Provider child of Tile Icon entity
+
+    """
+    quad_icon = ParametrizedView.nested(ProviderQuadIconEntity)
+
+
+class NonJSProviderEntity(NonJSBaseEntity):
+    """ Provider child of Proxy entity
+
+    """
+    quad_entity = ProviderQuadIconEntity
+    list_entity = BaseListEntity
+    tile_entity = ProviderTileIconEntity
+
+
+class JSProviderEntity(JSBaseEntity):
+    @property
+    def data(self):
+        data_dict = super(JSProviderEntity, self).data
+        if 'quadicon' in data_dict and data_dict['quadicon']:
+            quad_data = document_fromstring(data_dict['quadicon'])
+            data_dict['no_host'] = int(quad_data.xpath(self.QUADRANT.format(pos="a"))[0].text)
+            data_dict['vendor'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get('src')
+            data_dict['creds'] = quad_data.xpath(self.QUADRANT.format(pos="d"))[0].get('src')
+        return data_dict
+
+
+def ProviderEntity():  # noqa
+    """ Temporary wrapper for Provider Entity during transition to JS based Entity
+
+    """
+    return VersionPick({
+        Version.lowest(): NonJSProviderEntity,
+        '5.9': JSProviderEntity,
+    })
 
 
 class ProviderDetailsToolBar(View):

@@ -4,18 +4,17 @@ import json
 import math
 import os
 import re
-import six
 from collections import namedtuple
-from datetime import date
 from math import ceil
 from tempfile import NamedTemporaryFile
-from wait_for import TimedOutError, wait_for
 
+import six
 from cached_property import cached_property
+from datetime import date
 from jsmin import jsmin
 from lxml.html import document_fromstring
 from selenium.common.exceptions import WebDriverException
-from cfme.utils.blockers import BZ
+from wait_for import TimedOutError, wait_for
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.log import logged
 from widgetastic.utils import ParametrizedLocator, Parameter, ParametrizedString, attributize_string
@@ -44,6 +43,7 @@ from widgetastic_patternfly import (
     VerticalNavigation, Tab)
 
 from cfme.exceptions import ItemNotFound, ManyEntitiesFound
+from cfme.utils.blockers import BZ
 
 
 class DynamicTableAddError(Exception):
@@ -2902,53 +2902,6 @@ class BaseEntitiesView(View):
     @entities.register('Tile View')
     class TileView(EntitiesConditionalView):
         pass
-
-
-class ProviderQuadIconEntity(BaseQuadIconEntity):
-    """ Provider child of Quad Icon entity
-
-    """
-    @property
-    def data(self):
-        br = self.browser
-        return {
-            "no_host": br.text(self.QUADRANT.format(pos='a')),
-            "vendor": br.get_attribute('src', self.QUADRANT.format(pos='c')),
-            "creds": br.get_attribute('src', self.QUADRANT.format(pos='d')),
-        }
-
-
-class ProviderTileIconEntity(BaseTileIconEntity):
-    """ Provider child of Tile Icon entity
-
-    """
-    quad_icon = ParametrizedView.nested(ProviderQuadIconEntity)
-
-
-class ProviderListEntity(BaseListEntity):
-    """ Provider child of List entity
-
-    """
-    pass
-
-
-class NonJSProviderEntity(NonJSBaseEntity):
-    """ Provider child of Proxy entity
-
-    """
-    quad_entity = ProviderQuadIconEntity
-    list_entity = ProviderListEntity
-    tile_entity = ProviderTileIconEntity
-
-
-def ProviderEntity():  # noqa
-    """ Temporary wrapper for Provider Entity during transition to JS based Entity
-
-    """
-    return VersionPick({
-        Version.lowest(): NonJSProviderEntity,
-        '5.9': JSBaseEntity,
-    })
 
 
 class DashboardWidgetsPicker(View):
