@@ -60,13 +60,13 @@ def fqdn_appliance(appliance, preconfigured):
 
 
 @pytest.yield_fixture(scope="function")
-def appliance_with_disk():
-    return fqdn_appliance(preconfigured=False)
+def appliance_with_disk(appliance):
+    return fqdn_appliance(appliance, preconfigured=False)
 
 
 @pytest.yield_fixture(scope="function")
-def ipa_appliance():
-    return fqdn_appliance(preconfigured=True)
+def ipa_appliance(appliance):
+    return fqdn_appliance(appliance, preconfigured=True)
 
 
 @pytest.yield_fixture()
