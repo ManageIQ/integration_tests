@@ -85,7 +85,10 @@ class JSInstanceEntity(JSBaseEntity):
 
             try:
                 state = quad_data.xpath(self.QUADRANT.format(pos="b"))[0].get('style')
-                state = state.split('"')[1]
+                try:
+                    state = state.split('"')[1]
+                except IndexError:
+                    state = state.split("'")[1]
                 state = os.path.split(state)[1]
                 state = os.path.splitext(state)[0]
             except IndexError:
