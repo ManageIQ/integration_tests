@@ -51,17 +51,15 @@ def call_appliance(ip_address, action, args, kwargs):
     # Given a provider class, find the named method and call it with
     # *args. This could possibly be generalized for other CLI tools.
     target_obj = IPAppliance(ip_address)
+    fields_to_traverse, action = action.split('.')[:-1], action.split('.')[-1]
 
     # Iterate over non-callables, such as appliance.db
-    try:
-        while '.' in action:
-            target_obj = getattr(target_obj, action.split('.', 1)[0])
-            if not callable(target_obj):
-                action = action.split('.', 1)[1]
-            else:
-                raise AttributeError
-    except AttributeError:
-        raise Exception('Property "{}" not found for object "{}"'.format(action, target_obj))
+    for field in fields_to_traverse:
+        try:
+            target_obj = getattr(target_obj, field)
+        except AttributeError:
+            raise Exception(
+                'Field "{}" not found for object "{}"'.format(field, target_obj))
 
     try:
         call = getattr(target_obj, action)
