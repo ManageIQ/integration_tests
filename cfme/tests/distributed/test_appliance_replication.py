@@ -74,7 +74,8 @@ def configure_db_replication(db_address, appliance):
        the db_address specified. Then, it waits for the UI to show the replication
        as active and the backlog as empty.
     """
-    conf.set_replication_worker_host(db_address)
+    appliance.server.zone.region.diagnostic_replication.set_replication(
+        {'host': db_address}, 'global')
     view = current_appliance.server.browser.create_view(ServerView)
     view.flash.assert_message("Configuration settings saved for CFME Server")  # may be partial
     navigate_to(current_appliance.server, 'Server')
