@@ -2,7 +2,7 @@ import pytest
 from random import choice
 
 from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.networks.topology import Topology
+from cfme.networks.topology import TopologyCollection
 from cfme.utils import testgen
 from cfme.utils.wait import wait_for
 
@@ -13,7 +13,8 @@ pytestmark = pytest.mark.usefixtures('setup_provider')
 
 def test_topology_search(provider, appliance):
     '''Testing search functionality in Topology view '''
-    topology_object = Topology(appliance)
+    top_collection = TopologyCollection(appliance)
+    topology_object = top_collection.instantiate()
     topology_object.display_names.enable(True)
 
     wait_for(lambda: len(topology_object.elements) > 0,
@@ -39,14 +40,15 @@ def test_topology_search(provider, appliance):
 
 def test_topology_toggle_display(provider, appliance):
     '''Testing display functionality in Topology view'''
-    topology_object = Topology(appliance)
+    top_collection = TopologyCollection(appliance)
+    topology_object = top_collection.instantiate()
     for legend in topology_object.legends_obj:
         for state in (True, False):
             legend.set_active(state)
             topology_object.reload_elements_and_lines()
             for elem in topology_object.elements:
                 vis_terms = {True: 'Visible', False: 'Hidden'}
-                assert elem.type != legend.name.rstrip('s') and elem.is_hidden != state, \
+                assert elem.type != legend.name.rstrip('s') or elem.is_hidden != state, \
                     'Element is {} but should be {} since "{}" \
                      display is currently {}'.format(vis_terms[not state],
                                                      vis_terms[state],

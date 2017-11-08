@@ -71,23 +71,6 @@ class TopologyElement(BaseEntity):
     element = attr.ib()
     obj = attr.ib()
 
-    def instantiate(self, *args, **kwargs):
-        super(TopologyElement, self).instantiate(*args, **kwargs)
-        if self.element is None:
-            raise ValueError('Element should not be None')
-        element_data = re.search('Name: (.*) Type: (.*) Status: (.*)', self.element.text)
-        if len(element_data.groups()) != 3:
-            raise RuntimeError('Topology element does not contain name, type or status')
-        self.name = element_data.group(1)
-        self.type = element_data.group(2)
-        self.status = element_data.group(3)
-        self.x = round(float(self.element.get_attribute('cx')), 1)
-        self.y = round(float(self.element.get_attribute('cy')), 1)
-
-    def __repr__(self):
-        return "<TopologyElement name:{}, type:{}, status:{}, x:{}, y:{}, is_hidden:{}>".format(
-            self.name, self.type, self.status, self.x, self.y, self.is_hidden)
-
     @property
     def is_hidden(self):
         return 'opacity: 0.2' in self.element.get_attribute('style')
@@ -127,12 +110,21 @@ class TopologyElementCollection(BaseCollection):
     """Collection object for elements in topology"""
     ENTITY = TopologyElement
 
+    def instantiate(self, *args, **kwargs):
+        elem = super(TopologyElementCollection, self).instantiate(*args, **kwargs)
+        assert elem.element, 'Element should not be None'
+        element_data = re.search('Name: (.*) Type: (.*) Status: (.*)', elem.element.text)
+        assert len(element_data.groups()) == 3, 'Topology element doesnt have name, type or status'
+        elem.name = element_data.group(1)
+        elem.type = element_data.group(2)
+        elem.status = element_data.group(3)
+        elem.x = round(float(elem.element.get_attribute('cx')), 1)
+        elem.y = round(float(elem.element.get_attribute('cy')), 1)
+        return elem
+
     def filter(self, obj):
         elements = obj.browser.elements(obj.view.ELEMENTS)
-        elem_objs = [self.instantiate(element, obj) for element in elements]
-        for elem in elem_objs:
-            elem.refresh()
-        return elem_objs
+        return [self.instantiate(element, obj) for element in elements]
 
 
 @attr.s
@@ -142,32 +134,25 @@ class TopologyLine(BaseEntity):
     """
     element = attr.ib()
 
-    def instantiate(self, *args, **kwargs):
-        super(TopologyLine, super).instantiate(*args, **kwargs)
-        if self.element is None:
-            raise ValueError('Element should not be None')
-        self.connection = self.element.get_attribute('class')
-        self.x1 = round(float(self.element.get_attribute('x1')), 1)
-        self.x2 = round(float(self.element.get_attribute('x2')), 1)
-        self.y1 = round(float(self.element.get_attribute('y1')), 1)
-        self.y2 = round(float(self.element.get_attribute('y2')), 1)
-
-    def __repr__(self):
-        return "<Topologylines_obj Connection:{}, x1,y1:{},{}, x2,y2:{},{}>".format(
-            self.connection, self.x1, self.y1, self.x2, self.y2)
-
 
 @attr.s
 class TopologyLineCollection(BaseCollection):
     """Collection object for lines in topology"""
     ENTITY = TopologyLine
 
+    def instantiate(self, *args, **kwargs):
+        line = super(TopologyLineCollection, self).instantiate(*args, **kwargs)
+        assert line.element, 'Element should not be None'
+        line.connection = line.element.get_attribute('class')
+        line.x1 = round(float(line.element.get_attribute('x1')), 1)
+        line.x2 = round(float(line.element.get_attribute('x2')), 1)
+        line.y1 = round(float(line.element.get_attribute('y1')), 1)
+        line.y2 = round(float(line.element.get_attribute('y2')), 1)
+        return line
+
     def filter(self, topology):
         lines = topology.browser.elements(topology.view.LINES)
-        lines_objs = [self.instantiate(element=line) for line in lines]
-        for line in lines_objs:
-            line.refresh()
-        return lines_objs
+        return [self.instantiate(element=line) for line in lines]
 
 
 @attr.s
@@ -182,16 +167,6 @@ class Topology(BaseEntity):
     element_ref = attr.ib(default=None)
     display_names = attr.ib(default=None)
     view = attr.ib(default=None)
-
-    def instantiate(self, *args, **kwargs):
-        super(Topology, self).instantiate(*args, **kwargs)
-        self.elements_col = TopologyElementCollection(self)
-        self.lines_col = TopologyLineCollection(self)
-        self.legends_col = TopologyLegendCollection(self)
-        self.view = navigate_to(self, 'All')
-        self.view.toolbar.refresh.click()
-        self.reload_elements_and_lines()
-        self.reload_legends()
 
     def reload_elements_and_lines(self):
         self.elements_obj = []
@@ -227,6 +202,22 @@ class Topology(BaseEntity):
     @property
     def lines(self):
         return self.lines_obj
+
+
+@attr.s
+class TopologyCollection(BaseCollection):
+    """Collection object for elements in topology"""
+    ENTITY = Topology
+
+    def instantiate(self, *args, **kwargs):
+        topology = super(TopologyCollection, self).instantiate(*args, **kwargs)
+        topology.elements_col = TopologyElementCollection(topology)
+        topology.lines_col = TopologyLineCollection(topology)
+        topology.legends_col = TopologyLegendCollection(topology)
+        topology.view = navigate_to(topology, 'All')
+        topology.reload_elements_and_lines()
+        topology.reload_legends()
+        return topology
 
 
 @navigator.register(Topology, 'All')
