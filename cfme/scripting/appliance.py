@@ -33,18 +33,22 @@ def main():
     pass
 
 
-@main.command('upgrade', help='Upgrades an appliance to new version')
+@main.command('upgrade', help='Upgrades an appliance to latest Z-stream')
 @click.argument('appliance-ip', default=None, required=False)
 @click.option('--cfme-only', is_flag=True, help='Upgrade cfme packages only')
-@click.option('--update-to', default='59', help='Must be 58 or (59 is default)')
+@click.option('--update-to', default='5.9.z', help='Must be 5.8.z or (5.9.z is default)')
 def upgrade_appliance(appliance_ip, cfme_only, update_to):
     """Upgrades an appliance"""
+    supported_version_repo_map = {'5.8.z': 'update_url_58', '5.9.z': 'update_url_59'}
+    assert update_to in supported_version_repo_map, "{} is not a supported version".format(
+        update_to
+    )
+    update_url = supported_version_repo_map[update_to]
     if appliance_ip:
         print('Connecting to {}'.format(appliance_ip))
     else:
         print('Fetching appliance from env.local.yaml')
     app = get_appliance(appliance_ip)
-    update_url = 'update_url_{}'.format(update_to)
     print('Extending appliance partitions')
     app.db.extend_partition()
     urls = process_url(cfme_data['basic_info'][update_url])
