@@ -633,8 +633,14 @@ class Vm(VM):
 
             toolbar.select('Revert to selected snapshot', invokes_alert=True)
             sel.handle_alert(cancel=cancel)
-            flash.assert_message_match('Revert To Snapshot initiated for 1 VM and Instance from '
-                                       'the CFME Database')
+            flash_message = version.pick({
+                version.LOWEST: "Revert To Snapshot initiated for 1 VM and Instance from "
+                                "the CFME Database",
+                version.UPSTREAM: "Revert to a Snapshot initiated for 1 VM and Instance "
+                                  "from the ManageIQ Database",
+                '5.9': "Revert to a Snapshot initiated for 1 VM and Instance from "
+                       "the CFME Database"})
+            flash.assert_message_match(flash_message)
 
         def refresh(self):
             self._nav_to_snapshot_mgmt()
