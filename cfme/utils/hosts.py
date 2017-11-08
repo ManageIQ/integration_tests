@@ -6,7 +6,6 @@ utils.hosts
 import socket
 
 from cfme.utils import conf
-from cfme.utils.appliance import get_or_create_current_appliance
 from cfme.utils.log import logger
 from cfme.utils.update import update
 from cfme.infrastructure import host
@@ -23,6 +22,9 @@ def setup_host_creds(provider, host_name, remove_creds=False, ignore_errors=Fals
     try:
         appliance = provider.appliance
         host_data = get_host_data_by_name(provider.key, host_name)
+        if host_data is None:
+            raise ValueError(
+                'There is no {} host entry for provider {}!'.format(host_name, provider.key))
         test_host_collection = appliance.collections.hosts
         test_host = test_host_collection.instantiate(name=host_name)
         if not test_host.has_valid_credentials:
@@ -35,9 +37,9 @@ def setup_host_creds(provider, host_name, remove_creds=False, ignore_errors=Fals
             with update(test_host):
                 test_host.credentials = host.Host.Credential(principal="", secret="",
                                                              verify_secret="")
-    except Exception as e:
+    except Exception:
         if not ignore_errors:
-            raise e
+            raise
 
 
 def setup_all_provider_hosts_credentials():
