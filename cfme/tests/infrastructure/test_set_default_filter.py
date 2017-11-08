@@ -73,7 +73,7 @@ def test_clear_datastore_filter_results(appliance):
     """ Test for clearing filter results for datastores."""
     dc = DatastoreCollection(appliance)
     view = navigate_to(dc, 'All')
-    view.sidebar.datastores.tree.click_path('Datastores', 'All Datastores', 'Global Filters',
+    view.sidebar.datastores.tree.click_path('All Datastores', 'Global Filters',
                                             'Store Type / VMFS')
     view.entities.search.clear_search()
     assert view.entities.title.text == 'All Datastores', 'Clear filter results failed'
