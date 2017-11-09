@@ -223,6 +223,11 @@ class ApplianceDB(AppliancePlugin):
                 self.logger.warning(
                     'Failed to set --dbdisk from the appliance. On 5.9.0.3+ it will fail.')
 
+        # make sure the dbdisk is unmounted, RHOS ephemeral disks come up mounted
+        result = client.run_command('umount {}'.format(db_disk))
+        if not result.success:
+            self.logger.warning('umount non-zero return, output was: '.format(result))
+
         if self.appliance.has_cli:
             base_command = 'appliance_console_cli --region {}'.format(region)
             # use the cli
