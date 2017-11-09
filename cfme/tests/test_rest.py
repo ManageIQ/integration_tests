@@ -182,6 +182,8 @@ def test_select_attributes(appliance, collection_name):
     for resource in response.get('resources', []):
         assert 'id' in resource
         expected_len = 2 if 'href' in resource else 1
+        if 'fqname' in resource:
+            expected_len += 1
         assert len(resource) == expected_len
 
 
