@@ -1870,16 +1870,23 @@ class IPAppliance(object):
 
     @cached_property
     def zone_description(self):
-        zone_id = self.server_zone_id()
-        zones = list(
-            self.db.client.session.query(self.db.client["zones"]).filter(
-                self.db.client["zones"].id == zone_id
+        if self.appliance.version < '5.8':
+            zone_id = self.server_zone_id()
+            zones = list(
+                self.db.client.session.query(self.db.client["zones"]).filter(
+                    self.db.client["zones"].id == zone_id
+                )
             )
-        )
-        if zones:
-            return zones[0].description
+            if zones:
+                return zones[0].description
+            else:
+                return None
         else:
-            return None
+            zones = self.rest_api.collections.zones.find_by(id=self.server_zone_id())
+            if zones:
+                return zones[0].description
+            else:
+                return None
 
     def host_id(self, hostname):
         hosts = list(
