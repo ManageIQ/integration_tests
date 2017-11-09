@@ -30,7 +30,7 @@ def main():
     if not args.address:
         appliance = get_or_create_current_appliance()
     else:
-        appliance = IPAppliance(address=urlparse(args.address).netloc)
+        appliance = IPAppliance(hostname=urlparse(args.address).netloc)
 
     appliance.install_vddk(
         reboot=args.reboot, force=args.force, vddk_url=args.vddk_url, log_callback=log)

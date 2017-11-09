@@ -28,6 +28,6 @@ def pytest_sessionstart(session):
     dev_branch = session.config.getoption("dev_branch")
     pytest.store.write_line(
         "Changing the upstream appliance {} to {}#{} ...".format(
-            pytest.store.current_appliance.address, dev_repo, dev_branch))
+            pytest.store.current_appliance.hostname, dev_repo, dev_branch))
     pytest.store.current_appliance.use_dev_branch(dev_repo, dev_branch)
     pytest.store.write_line("Appliance change finished ...")

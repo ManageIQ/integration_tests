@@ -29,7 +29,7 @@ if __name__ == '__main__':
             result = sprout.request_check(pool_id)
         appliance_ip = result['appliances'][0]['ip_address']
         print('received an appliance with IP address: {}'.format(appliance_ip))
-        with IPAppliance(appliance_ip) as appliance:
+        with IPAppliance(hostname=appliance_ip) as appliance:
             exit(
                 coverage_report_jenkins(
                     appliance,

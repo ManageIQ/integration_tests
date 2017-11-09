@@ -37,7 +37,7 @@ def setup_external_auth_ipa(**data):
     }
     current_appliance = get_or_create_current_appliance()
     appliance_name = 'cfmeappliance{}'.format(fauxfactory.gen_alpha(7).lower())
-    appliance_address = current_appliance.address
+    appliance_address = current_appliance.hostname
     appliance_fqdn = '{}.{}'.format(appliance_name, data['iparealm'].lower())
     with SSHClient(**connect_kwargs) as ipaserver_ssh:
         ipaserver_ssh.run_command('cp /etc/hosts /etc/hosts_bak')
@@ -89,7 +89,7 @@ def setup_external_auth_openldap(**data):
     }
     current_appliance = get_or_create_current_appliance()
     appliance_name = 'cfmeappliance{}'.format(fauxfactory.gen_alpha(7).lower())
-    appliance_address = current_appliance.address
+    appliance_address = current_appliance.hostname
     appliance_fqdn = '{}.{}'.format(appliance_name, data['domain_name'])
     with SSHClient(**connect_kwargs) as ldapserver_ssh:
         # updating the /etc/hosts is a workaround due to the

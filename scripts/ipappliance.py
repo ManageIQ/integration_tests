@@ -50,7 +50,7 @@ def log_callback(s):
 def call_appliance(ip_address, action, args, kwargs):
     # Given a provider class, find the named method and call it with
     # *args. This could possibly be generalized for other CLI tools.
-    target_obj = IPAppliance(ip_address)
+    target_obj = IPAppliance(hostname=ip_address)
     fields_to_traverse, action = action.split('.')[:-1], action.split('.')[-1]
 
     # Iterate over non-callables, such as appliance.db

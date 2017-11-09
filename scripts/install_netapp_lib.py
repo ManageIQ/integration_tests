@@ -30,8 +30,8 @@ def main():
     if not args.address:
         appliance = get_or_create_current_appliance()
     else:
-        appliance = IPAppliance(address=args.address)
-    print('Address: {}'.format(appliance.address))
+        appliance = IPAppliance(hostname=args.address)
+    print('Address: {}'.format(appliance.hostname))
     print('SDK URL: {}'.format(args.sdk_url))
     print('Restart: {}'.format(args.restart))
 

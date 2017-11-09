@@ -14,7 +14,7 @@ def test_set_hostname(appliance):
 
 def test_configure_appliance_internal_fetch_key(
         app_creds, temp_appliance_unconfig_funcscope, appliance):
-    fetch_key_ip = appliance.address
+    fetch_key_ip = appliance.hostname
     temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_internal_fetch_key(
         0, 'localhost', app_creds['username'], app_creds['password'], 'vmdb_production',
         temp_appliance_unconfig_funcscope.unpartitioned_disks[0], fetch_key_ip,
@@ -25,7 +25,7 @@ def test_configure_appliance_internal_fetch_key(
 
 def test_configure_appliance_external_join(app_creds, appliance,
         temp_appliance_unconfig_funcscope):
-    appliance_ip = appliance.address
+    appliance_ip = appliance.hostname
     temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_external_join(
         appliance_ip, app_creds['username'], app_creds['password'], 'vmdb_production', appliance_ip,
         app_creds['sshlogin'], app_creds['sshpass'])
@@ -36,7 +36,7 @@ def test_configure_appliance_external_join(app_creds, appliance,
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_configure_appliance_external_create(
         app_creds, dedicated_db_appliance, temp_appliance_unconfig_funcscope):
-    hostname = dedicated_db_appliance.address
+    hostname = dedicated_db_appliance.hostname
     temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_external_create(5,
         hostname, app_creds['username'], app_creds['password'], 'vmdb_production', hostname,
         app_creds['sshlogin'], app_creds['sshpass'])
@@ -50,7 +50,7 @@ def test_configure_appliance_external_create(
 def test_external_auth(auth_type, ipa_crud, app_creds):
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*{} to true.*'.format(auth_type)],
-                            hostname=ipa_crud.address,
+                            hostname=ipa_crud.hostname,
                             username=app_creds['sshlogin'],
                             password=app_creds['password'])
     evm_tail.fix_before_start()
@@ -60,7 +60,7 @@ def test_external_auth(auth_type, ipa_crud, app_creds):
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*{} to false.*'.format(auth_type)],
-                            hostname=ipa_crud.address,
+                            hostname=ipa_crud.hostname,
                             username=app_creds['sshlogin'],
                             password=app_creds['password'])
 

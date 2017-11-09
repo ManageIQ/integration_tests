@@ -223,9 +223,9 @@ def main(**kwargs):
         if kwargs.get('configure'):
             logger.info('Configuring appliance, this can take a while.')
             if kwargs.get('deploy'):
-                app = IPAppliance(address=ip)
+                app = IPAppliance(hostname=ip)
             else:
-                app = Appliance(kwargs['provider'], deploy_args['vm_name'])
+                app = Appliance.from_provider(kwargs['provider'], deploy_args['vm_name'])
             if provider_type == 'gce':
                 with app as ipapp:
                     ipapp.configure_gce()
@@ -236,7 +236,7 @@ def main(**kwargs):
         logger.exception(e)
         logger.error('Appliance Configuration Failed')
         if not kwargs.get('deploy'):
-            app = Appliance(kwargs['provider'], deploy_args['vm_name'])
+            app = Appliance.from_provider(kwargs['provider'], deploy_args['vm_name'])
             ssh_client = app.ssh_client()
             status, output = ssh_client.run_command('find /root/anaconda-post.log')
             if status == 0:

@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+import six
 import socket
 import traceback
 import warnings
@@ -9,7 +10,7 @@ from copy import copy
 from datetime import datetime
 from tempfile import NamedTemporaryFile
 from time import sleep, time
-from urlparse import ParseResult, urlparse
+from urlparse import urlparse
 
 import six
 import attr
@@ -197,7 +198,9 @@ class IPAppliance(object):
     it knows both the provider, vm_name and can there for derive the IP address.
 
     Args:
-        ipaddress: The IP address of the provider
+        hostname: The IP address  or host name of the provider
+        ui_protocol: The protocol used in the URL
+        ui_port: The port where the UI runs.
         browser_steal: If True then then current browser is killed and the new appliance
             is used to generate a new session.
         container: If the appliance is running as a container or as a pod, specifies its name.
@@ -214,7 +217,9 @@ class IPAppliance(object):
     db = ApplianceDB.declare()
 
     CONFIG_MAPPING = {
-        'base_url': 'address',
+        'hostname': 'hostname',
+        'ui_protocol': 'ui_protocol',
+        'ui_port': 'ui_port',
         'browser_steal': 'browser_steal',
         'container': 'container',
         'pod': 'container',
@@ -223,7 +228,8 @@ class IPAppliance(object):
         'db_port': 'db_port',
         'ssh_port': 'ssh_port',
     }
-    CONFIG_NONGLOBAL = {'base_url'}
+    CONFIG_NONGLOBAL = {'hostname'}
+    PROTOCOL_PORT_MAPPING = {'http': 80, 'https': 443}
 
     @property
     def as_json(self):
@@ -237,9 +243,21 @@ class IPAppliance(object):
         return cls(**json.loads(json_string))
 
     def __init__(
-            self, address=None, browser_steal=False, container=None, openshift_creds=None,
-            db_host=None, db_port=None, ssh_port=None):
+            self, hostname, ui_protocol='https', ui_port=None, browser_steal=False,
+            container=None, openshift_creds=None, db_host=None, db_port=None, ssh_port=None):
         self._server = None
+        if not isinstance(hostname, six.string_types):
+            raise TypeError('Appliance\'s hostname must be a string!')
+        self.hostname = hostname
+        if ui_protocol not in self.PROTOCOL_PORT_MAPPING:
+            raise TypeError(
+                'Wrong protocol {!r} passed, expected {!r}'.format(
+                    ui_protocol, list(self.PROTOCOL_PORT_MAPPING.keys())))
+        self.ui_protocol = ui_protocol
+        self.ui_port = ui_port or self.PROTOCOL_PORT_MAPPING[ui_protocol]
+        self.ssh_port = ssh_port or ports.SSH
+        self.db_port = db_port or ports.DB
+        self.db_host = db_host
         self.browser = ViaUI(owner=self)
         self.ssui = ViaSSUI(owner=self)
         self.rest_context = ViaREST(owner=self)
@@ -248,27 +266,9 @@ class IPAppliance(object):
 
         from cfme.modeling.base import EntityCollections
         self.collections = EntityCollections.for_appliance(self)
-        self.ssh_port = ssh_port or ports.SSH
-        self.db_port = db_port or ports.DB
-        if address is not None:
-            if not isinstance(address, ParseResult):
-                address = urlparse(str(address))
-            if not (address.scheme and address.netloc):
-                # Use .path (w.x.y.z ip format)
-                self.address = address.path
-                self.scheme = "https"
-                self._url = "https://{}/".format(address.path)
-            else:
-                # schema://w.x.y.z/ format
-                self.address = address.netloc
-                self.scheme = address.scheme
-                self._url = address.geturl()
-        else:
-            self.scheme = 'https'   # by default
         self.browser_steal = browser_steal
         self.container = container
         self.openshift_creds = openshift_creds or {}
-        self.db_host = db_host
         self._user = None
         self.appliance_console = ApplianceConsole(self)
         self.appliance_console_cli = ApplianceConsoleCli(self)
@@ -329,9 +329,8 @@ class IPAppliance(object):
         return self
 
     def __repr__(self):
-        return '{}(address={!r}, container={!r}, db_host={!r}, db_port={!r}, ssh_port={!r})'.format(
-            type(self).__name__, self.address, self.container, self.db_host, self.db_port,
-            self.ssh_port)
+        # TODO: Put something better here. This solves the purpose temporarily.
+        return '{}.from_json({!r})'.format(type(self).__name__, self.as_json)
 
     def __call__(self, **kwargs):
         """Syntactic sugar for overriding certain instance variables for context managers.
@@ -400,13 +399,13 @@ class IPAppliance(object):
             assert stack.pop() is self, 'appliance stack inconsistent'
 
     def __eq__(self, other):
-        return isinstance(other, IPAppliance) and self.address == other.address
+        return isinstance(other, IPAppliance) and self.hostname == other.hostname
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return hash(self.address)
+        return hash(self.hostname)
 
     @cached_property
     def rest_logger(self):
@@ -434,7 +433,7 @@ class IPAppliance(object):
 
         """
 
-        log_callback("Configuring appliance {}".format(self.address))
+        log_callback("Configuring appliance {}".format(self.hostname))
         loosen_pgssl = kwargs.pop('loosen_pgssl', True)
         fix_ntp_clock = kwargs.pop('fix_ntp_clock', True)
         region = kwargs.pop('region', 0)
@@ -579,15 +578,53 @@ class IPAppliance(object):
         return list(found_cruds)
 
     @classmethod
-    def from_url(cls, url):
-        return cls(urlparse(url))
+    def from_url(cls, url, **kwargs):
+        """Create an appliance instance from a URL.
+
+        Supported format using a simple regexp expression:
+        ``(https?://)?hostname_or_ip(:port)?/?``
+
+        Args:
+            url: URL to be parsed from
+            **kwargs: For setting and overriding the params parsed from the URL
+
+        Returns:
+            A :py:class:`IPAppliance` instance.
+        """
+        if not isinstance(url, six.string_types):
+            raise TypeError('url for .from_url must be a string')
+        parsed = urlparse(url)
+        new_kwargs = {}
+        if parsed.netloc:
+            host_part = parsed.netloc
+        elif parsed.path and not parsed.netloc:
+            # If you only pass the hostname (+ port possibly) without scheme or anything else
+            host_part = parsed.path
+        else:
+            raise ValueError('Unsupported url specification: {}'.format(url))
+
+        if ':' in host_part:
+            hostname, port = host_part.rsplit(':', 1)
+            port = int(port)
+        else:
+            hostname = host_part
+            if parsed.scheme:
+                port = cls.PROTOCOL_PORT_MAPPING[parsed.scheme]
+            else:
+                port = None
+        new_kwargs['hostname'] = hostname
+        if port is not None:
+            new_kwargs['ui_port'] = port
+        if parsed.scheme:
+            new_kwargs['ui_protocol'] = parsed.scheme
+        new_kwargs.update(kwargs)
+        return cls(**new_kwargs)
 
     def new_rest_api_instance(
             self, entry_point=None, auth=None, logger="default", verify_ssl=False):
         """Returns new REST API instance."""
         return MiqApi(
-            entry_point=entry_point or "{}://{}:{}/api".format(
-                self.scheme, self.address, self.ui_port),
+            entry_point=entry_point or self.url_path('/api'),
             auth=auth or (conf.credentials["default"]["username"],
                           conf.credentials["default"]["password"]),
             logger=self.rest_logger if logger == "default" else logger,
@@ -605,20 +642,23 @@ class IPAppliance(object):
             return int(out)
         return None
 
-    @cached_property
-    def address(self):
-        # If address wasn't set in __init__, use the hostname from base_url
-        if getattr(self, "_url", None) is not None:
-            parsed_url = urlparse(self._url)
-            return parsed_url.netloc
-        else:
-            parsed_url = urlparse(store.base_url)
-            return parsed_url.netloc
+    @property
+    def url(self):
+        """Returns a proper URL of the appliance.
 
-    @cached_property
-    def hostname(self):
-        parsed_url = urlparse(self.url)
-        return parsed_url.hostname
+        If the ports do not correspond the protocols' default port numbers, then the ports are
+        explicitly specified as well.
+        """
+        # If address wasn't set in __init__, use the hostname from base_url
+        show_port = self.PROTOCOL_PORT_MAPPING[self.ui_protocol] != self.ui_port
+        if show_port:
+            return '{}://{}:{}/'.format(self.ui_protocol, self.hostname, self.ui_port)
+        else:
+            return '{}://{}/'.format(self.ui_protocol, self.hostname)
+
+    def url_path(self, path):
+        """generates URL with an additional path. Useful for generating REST or SSUI URLs."""
+        return '{}/{}'.format(self.url.rstrip('/'), path.lstrip('/'))
 
     @property
     def unpartitioned_disks(self):
@@ -670,22 +710,6 @@ class IPAppliance(object):
                     "Couldn't fetch the product name from appliance, using ManageIQ as default")
                 return 'ManageIQ'
 
-    @property
-    def ui_port(self):
-        parsed_url = urlparse(self.url)
-        if parsed_url.port is not None:
-            return parsed_url.port
-        elif parsed_url.scheme == "https":
-            return 443
-        elif parsed_url.scheme == "http":
-            return 80
-        else:
-            raise Exception("Unknown scheme {} for {}".format(parsed_url.scheme, store.base_url))
-
-    @cached_property
-    def url(self):
-        return "{}://{}/".format(self.scheme, self.address)
-
     @cached_property
     def is_downstream(self):
         return self.product_name == 'CFME'
@@ -727,7 +751,7 @@ class IPAppliance(object):
 
     @cached_property
     def log(self):
-        return create_sublogger(self.address)
+        return create_sublogger(self.hostname)
 
     @cached_property
     def coverage(self):
@@ -837,7 +861,7 @@ class IPAppliance(object):
         """
         logger.info('Diagnosing EVM failures, this can take a while...')
 
-        if not self.address:
+        if not self.hostname:
             return 'appliance has no IP Address; provisioning failed or networking is broken'
 
         logger.info('Checking appliance SSH Connection')
@@ -1008,14 +1032,14 @@ class IPAppliance(object):
         store.terminalreporter.write_line('Phase 1 of 2: rake assets:clobber')
         status, out = client.run_rake_command("assets:clobber")
         if status != 0:
-            msg = 'Appliance {} failed to nuke old assets'.format(self.address)
+            msg = 'Appliance {} failed to nuke old assets'.format(self.hostname)
             log_callback(msg)
             raise ApplianceException(msg)
 
         store.terminalreporter.write_line('Phase 2 of 2: rake assets:precompile')
         status, out = client.run_rake_command("assets:precompile")
         if status != 0:
-            msg = 'Appliance {} failed to precompile assets'.format(self.address)
+            msg = 'Appliance {} failed to precompile assets'.format(self.hostname)
             log_callback(msg)
             raise ApplianceException(msg)
 
@@ -1265,7 +1289,7 @@ class IPAppliance(object):
         self.log.error(result.output)
         if result.rc != 0:
             self.log.error('appliance update failed')
-            msg = 'Appliance {} failed to update RHEL, error in logs'.format(self.address)
+            msg = 'Appliance {} failed to update RHEL, error in logs'.format(self.hostname)
             log_callback(msg)
             raise ApplianceException(msg)
 
@@ -1333,7 +1357,7 @@ class IPAppliance(object):
             status, output = ssh.run_command('systemctl {} evmserverd'.format(command))
 
         if expected_exit_code is not None and status != expected_exit_code:
-            msg = 'Failed to {} evmserverd on {}\nError: {}'.format(command, self.address, output)
+            msg = 'Failed to {} evmserverd on {}\nError: {}'.format(command, self.hostname, output)
             log_callback(msg)
             raise ApplianceException(msg)
 
@@ -2215,65 +2239,35 @@ class IPAppliance(object):
 class Appliance(IPAppliance):
     """Appliance represents an already provisioned cfme appliance vm
 
-    Args:
-        provider_name: Name of the provider this appliance is running under
-        vm_name: Name of the VM this appliance is running as
-        browser_steal: Setting of the browser_steal attribute.
+    **DO NOT INSTANTIATE DIRECTLY - USE :py:meth:`from_provider`**
+
     """
 
     _default_name = 'EVM'
-
-    # For JSON Serialization
-    CONFIG_MAPPING = {
-        'provider_name': 'provider_name',
-        'vm_name': 'vm_name',
-        'container': 'container',
-    }
-    CONFIG_NONGLOBAL = {'vm_name'}
-
-    def __init__(self, provider_name, vm_name, browser_steal=False, container=None):
-        """Initializes a deployed appliance VM
-        """
-        super(Appliance, self).__init__(browser_steal=browser_steal, container=None)
-        self.name = Appliance._default_name
-
-        self._provider_key = provider_name
-        self.vmname = vm_name
-
-    def __eq__(self, other):
-        return isinstance(other, type(self)) and (
-            self.vmname == other.vmname and self._provider_key == other._provider_key)
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __hash__(self):
-        return hash((self.vmname, self._provider_key))
 
     @property
     def ipapp(self):
         # For backwards compat
         return self
 
-    @cached_property
-    def provider(self):
-        """
-        Note:
-            Cannot be cached because provider object is unpickable.
+    @classmethod
+    def from_provider(cls, provider_key, vm_name, name=None, **kwargs):
+        """Constructor of this Appliance.
+
+        Retrieves the IP address of the appliance from the provider and then instantiates it,
+        adding some extra parameters that are required by this class.
+
+        Args:
+            provider_name: Name of the provider this appliance is running under
+            vm_name: Name of the VM this appliance is running as
+            browser_steal: Setting of the browser_steal attribute.
         """
         from cfme.utils.providers import get_mgmt
-        return get_mgmt(self._provider_key)
+        provider = get_mgmt(provider_key)
 
-    @property
-    def vm_name(self):
-        """ VM's name of the appliance on the provider """
-        return self.vmname
-
-    @cached_property
-    def address(self):
         def is_ip_available():
             try:
-                ip = self.provider.get_ip_address(self.vm_name)
+                ip = provider.get_ip_address(vm_name)
                 if ip is None:
                     return False
                 else:
@@ -2284,12 +2278,18 @@ class Appliance(IPAppliance):
         ec, tc = wait_for(is_ip_available,
                           delay=5,
                           num_sec=600)
-        return str(ec)
+        hostname = str(ec)
+        appliance = cls(hostname=hostname, **kwargs)
+        appliance.vm_name = vm_name
+        appliance.provider = provider
+        appliance.provider_key = provider_key
+        appliance.name = name or cls._default_name
+        return appliance
 
     def _custom_configure(self, **kwargs):
         log_callback = kwargs.pop(
             "log_callback",
-            lambda msg: logger.info("Custom configure %s: %s", self.vmname, msg))
+            lambda msg: logger.info("Custom configure %s: %s", self.vm_name, msg))
         region = kwargs.get('region', 0)
         db_address = kwargs.get('db_address')
         key_address = kwargs.get('key_address')
@@ -2333,7 +2333,7 @@ class Appliance(IPAppliance):
                          ``None`` (default ``None``)
 
         """
-        log_callback("Configuring appliance {} on {}".format(self.vmname, self._provider_key))
+        log_callback("Configuring appliance {} on {}".format(self.vm_name, self.provider_key))
         if kwargs:
             with self:
                 self._custom_configure(**kwargs)
@@ -2362,7 +2362,7 @@ class Appliance(IPAppliance):
                 if str(self.version).startswith("5.2.5") or str(self.version).startswith("5.5"):
                     try:
                         self.wait_for_web_ui(timeout=300, running=False)
-                    except:
+                    except Exception:
                         pass
                     self.wait_for_web_ui(running=True)
 
@@ -2374,7 +2374,7 @@ class Appliance(IPAppliance):
             log_callback('Credentialing hosts...')
             if not RUNNING_UNDER_SPROUT:
                 from cfme.utils.hosts import setup_providers_hosts_credentials
-            setup_providers_hosts_credentials(self._provider_key, ignore_errors=True)
+            setup_providers_hosts_credentials(self.provider_key, ignore_errors=True)
 
             # if rhev, set relationship
             if self.is_on_rhev:
@@ -2382,7 +2382,7 @@ class Appliance(IPAppliance):
                 log_callback('Setting up CFME VM relationship...')
                 from cfme.common.vm import VM
                 from cfme.utils.providers import get_crud
-                vm = VM.factory(self.vm_name, get_crud(self._provider_key))
+                vm = VM.factory(self.vm_name, get_crud(self.provider_key))
                 cfme_rel = Vm.CfmeRelationship(vm)
                 cfme_rel.set_relationship(str(self.server_name()), self.server_id())
 
@@ -2474,7 +2474,7 @@ class Appliance(IPAppliance):
     @logger_wrap("Remove RHEV LUN: {}")
     def remove_rhev_direct_lun_disk(self, log_callback=None):
         if not self.is_on_rhev:
-            msg = "appliance {} NOT on rhev, unable to disconnect direct_lun".format(self.vmname)
+            msg = "appliance {} NOT on rhev, unable to disconnect direct_lun".format(self.vm_name)
             log_callback(msg)
             raise ApplianceException(msg)
         log_callback('Removing RHEV direct_lun hook...')
@@ -2582,7 +2582,7 @@ class ApplianceStack(LocalStack):
         super(ApplianceStack, self).push(obj)
 
         logger.info("Pushed appliance {} on stack (was {} before) ".format(
-            obj.address, getattr(was_before, 'address', 'empty')))
+            obj.hostname, getattr(was_before, 'hostname', 'empty')))
         if obj.browser_steal:
             from cfme.utils import browser
             browser.start()
@@ -2622,10 +2622,15 @@ def load_appliances(appliance_list, global_kwargs):
         if kwargs.pop('dummy', False):
             result.append(DummyAppliance(**kwargs))
             continue
-        if not kwargs.get('base_url'):
-            raise ValueError('Appliance definition {!r} is missing base_url'.format(kwargs))
-
-        result.append(IPAppliance(**{IPAppliance.CONFIG_MAPPING[k]: v for k, v in kwargs.items()}))
+        if 'base_url' in kwargs:
+            warnings.warn(
+                'Your appliance specification has old-style base_url, please change',
+                category=DeprecationWarning, stacklevel=2)
+            url = kwargs.pop('base_url')
+            appliance = IPAppliance.from_url(url, **kwargs)
+        else:
+            appliance = IPAppliance(**{IPAppliance.CONFIG_MAPPING[k]: v for k, v in kwargs.items()})
+        result.append(appliance)
     return result
 
 
@@ -2653,7 +2658,7 @@ def _version_for_version_or_stream(version_or_stream, sprout_client=None):
 @attr.s
 class DummyAppliance(object):
     """a dummy with minimal attribute set"""
-    address = '0.0.0.0'
+    hostname = '0.0.0.0'
     browser_steal = False
     version = attr.ib(default=Version('5.8.0'), convert=_version_for_version_or_stream)
     is_downstream = True

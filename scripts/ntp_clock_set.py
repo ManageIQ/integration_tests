@@ -28,7 +28,7 @@ def main():
     parser.add_argument('address', nargs="?", default=None,
         help='hostname or ip address of target appliance')
     args = parser.parse_args()
-    ip_a = IPAppliance(args.address)
+    ip_a = IPAppliance(hostname=args.address)
     ip_a.fix_ntp_clock()
     print("Time was set")
 

@@ -19,7 +19,7 @@ def process_vm(vm, mgmt, user, prov):
         return
     ip = mgmt.get_ip_address(vm, timeout=1)
     if ip:
-        with appliance.IPAppliance(ip) as app:
+        with appliance.IPAppliance(hostname=ip) as app:
             try:
                 ver = app.version
                 assert ver

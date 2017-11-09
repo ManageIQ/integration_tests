@@ -39,18 +39,18 @@ class ApplianceDB(AppliancePlugin):
         try:
             db_addr = self.appliance.wait_for_host_address()
             if db_addr is None:
-                return self.appliance.address
+                return self.appliance.hostname
             db_addr = db_addr.strip()
             ip_addr = self.appliance.ssh_client.run_command('ip address show')
             if db_addr in ip_addr.output or db_addr.startswith('127') or 'localhost' in db_addr:
                 # address is local, use the appliance address
-                return self.appliance.address
+                return self.appliance.hostname
             else:
                 return db_addr
         except (IOError, KeyError) as exc:
             self.logger.error('Unable to pull database address from appliance')
             self.logger.error(exc)
-            return self.appliance.address
+            return self.appliance.hostname
 
     @property
     def is_partition_extended(self):
@@ -207,7 +207,7 @@ class ApplianceDB(AppliancePlugin):
             If key_address is None, a new encryption key is generated for the appliance.
         """
         # self.logger.info('Enabling internal DB (region {}) on {}.'.format(region, self.address))
-        self.address = self.appliance.address
+        self.address = self.appliance.hostname
         clear_property_cache(self, 'client')
 
         client = self.ssh_client
@@ -336,7 +336,7 @@ class ApplianceDB(AppliancePlugin):
             self.logger.error('error enabling external db')
             self.logger.error(out)
             msg = ('Appliance {} failed to enable external DB running on {}'
-                  .format(self.appliance.address, db_address))
+                  .format(self.appliance.hostname, db_address))
             self.logger.error(msg)
             from . import ApplianceException
             raise ApplianceException(msg)
@@ -371,7 +371,7 @@ class ApplianceDB(AppliancePlugin):
     @property
     def is_internal(self):
         """Is database internal"""
-        if self.address == self.appliance.address:
+        if self.address == self.appliance.hostname:
             return True
         return False
 

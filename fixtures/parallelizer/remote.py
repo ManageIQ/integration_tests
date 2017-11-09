@@ -200,7 +200,7 @@ if __name__ == '__main__':
 
     slave_args = conf.slave_config.pop('args')
     slave_options = conf.slave_config.pop('options')
-    ip_address = appliance.address
+    ip_address = appliance.hostname
     appliance_data = conf.slave_config.get("appliance_data", {})
     if ip_address in appliance_data:
         template_name, provider_name = appliance_data[ip_address]

@@ -118,7 +118,7 @@ class SproutClient(object):
         logger.debug(data)
         appliances = []
         for appliance in data['appliances']:
-            appliances.append(IPAppliance(appliance['ip_address']))
+            appliances.append(IPAppliance(hostname=appliance['ip_address']))
         return appliances, request_id
 
     def destroy_pool(self, pool_id):

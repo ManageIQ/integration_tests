@@ -116,7 +116,7 @@ def depot_machine_ip():
 @pytest.fixture(scope="module")
 def configured_external_appliance(temp_appliance_preconfig, app_creds_modscope,
                                   temp_appliance_unconfig):
-    hostname = temp_appliance_preconfig.address
+    hostname = temp_appliance_preconfig.hostname
     temp_appliance_unconfig.appliance_console_cli.configure_appliance_external_join(hostname,
         app_creds_modscope['username'], app_creds_modscope['password'], 'vmdb_production',
         hostname, app_creds_modscope['sshlogin'], app_creds_modscope['sshpass'])

@@ -86,7 +86,7 @@ def process_args(args):
 def call_appliance(provider_name, vm_name, action, *args):
     # Given a provider class, find the named method and call it with
     # *args. This could possibly be generalized for other CLI tools.
-    appliance = Appliance(provider_name, vm_name)
+    appliance = Appliance.from_provider(provider_name, vm_name)
 
     try:
         call = getattr(appliance, action)
