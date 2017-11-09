@@ -1227,15 +1227,14 @@ class TenantQuotaView(ConfigurationView):
 
     @property
     def is_displayed(self):
+        if type(self.context['object']) is Tenant:
+            obj_type = 'Tenant'
+        elif type(self.context['object']) is Project:
+            obj_type = 'Project'
         return (
             self.form.template_cb.is_displayed and
-            any((
-                self.title.text == 'Manage quotas for Tenant "{}"'.format(
-                    self.context['object'].name),
-                self.title.text == 'Manage quotas for Project "{}"'.format(
-                    self.context['object'].name)
-            ))
-        )
+            self.title.text == 'Manage quotas for {} "{}"'.format(obj_type,
+                                                                  self.context['object'].name))
 
 
 class AllTenantView(ConfigurationView):
@@ -1298,13 +1297,15 @@ class EditTenantView(View):
 
     @property
     def is_displayed(self):
+        if type(self.context['object']) is Tenant:
+            obj_type = 'Tenant'
+        elif type(self.context['object']) is Project:
+            obj_type = 'Project'
+
         return (
             self.form.accordions.accesscontrol.is_opened and
-            any([self.form.title.text == 'Editing Tenant "{}"'.format(self.context['object'].name),
-                 self.form.title.text == 'Editing Project "{}"'.format(
-                     self.context['object'].name)])
+            self.form.title.text == 'Editing {} "{}"'.format(obj_type, self.context['object'].name)
         )
-        # used any() because `project` inherits `tenant` and edit page can have any one in name
 
 
 @attr.s
