@@ -730,8 +730,7 @@ class Group(Updateable, Pretty, Navigatable):
         flash_success_msg = 'EVM Group "{}": Delete successful'.format(self.description)
         flash_blocked_msg_list = [
             ('EVM Group "{}": '
-             'Error during delete: A read only group cannot be deleted.'.format(
-                self.description)),
+             'Error during delete: A read only group cannot be deleted.'.format(self.description)),
             ('EVM Group "{}": Error during delete: '
              'The group has users assigned that do not '
              'belong to any other group'.format(self.description))]
