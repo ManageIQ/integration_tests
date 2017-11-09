@@ -85,7 +85,10 @@ class ServerCollection(BaseCollection, sentaku.modeling.ElementMixin):
 
     def get_master(self):
         server_collection = self.appliance.rest_api.collections.servers
-        server = server_collection.find_by(is_master=True)[0]
+        if self.appliance.is_dev:
+            server = server_collection.all[0]
+        else:
+            server = server_collection.find_by(is_master=True)[0]
         return self.instantiate(name=server.name, sid=server.id)
 
 

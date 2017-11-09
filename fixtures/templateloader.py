@@ -2,9 +2,11 @@
 """Preloads all templates on all providers that were selected for testing. Useful for test collect.
 """
 import pytest
-from fixtures.pytest_store import store
+
 from cfme.utils import trackerbot
+from cfme.utils.conf import env
 from cfme.utils.providers import list_provider_keys
+from fixtures.pytest_store import store
 
 TEMPLATES = {}
 
@@ -12,12 +14,20 @@ TEMPLATES = {}
 @pytest.mark.tryfirst
 def pytest_addoption(parser):
     # Create the cfme option group for use in other plugins
-    parser.addoption("--use-template-cache", dest="use_template_cache", action="store_true",
-        default=False, help="Use a cached version of the templates and not redownload them")
+    parser.addoption(
+        "--use-template-cache", dest="use_template_cache", action="store_true",
+        default=False, help="Use a cached version of the templates and not redownload them"
+    )
 
 
 def pytest_configure(config):
-    if store.parallelizer_role == 'master' or trackerbot.conf.get('url') is None:
+    is_dev = False
+    if 'appliances' in env:
+        for appliance in env.appliances:
+            if appliance.get('is_dev', False):
+                is_dev = True
+    tb_url = trackerbot.conf.get('url')
+    if store.parallelizer_role == 'master' or tb_url is None or is_dev:
         return
 
     # A further optimization here is to make the calls to trackerbot per provider
