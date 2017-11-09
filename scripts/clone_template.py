@@ -4,6 +4,7 @@
 Where possible, defaults will come from cfme_data"""
 import argparse
 import sys
+import yaml
 
 from cfme.utils.appliance import Appliance, IPAppliance
 from cfme.utils.conf import cfme_data, credentials as cred, provider_data
@@ -11,7 +12,6 @@ from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.path import log_path
 from cfme.utils.providers import get_mgmt
 from cfme.utils.wait import wait_for
-
 
 # log to stdout
 add_stdout_handler(logger)
@@ -134,10 +134,25 @@ def main(**kwargs):
     elif provider_type == 'ec2':
         # ec2 doesn't have an api to list available flavors, so the first flavor is the default
         try:
-            flavor = kwargs.get('flavor') or flavors[0]
+            # c3.xlarge has 4 CPU cores and 7.5GB RAM - minimal requirements for CFME Appliance
+            flavor = kwargs.get('flavor', 'c3.xlarge')
         except IndexError:
             raise Exception('--flavor is required for EC2 instances and default is not set')
         deploy_args['instance_type'] = flavor
+        deploy_args['key_name'] = "shared"
+        # we want to override default cloud-init which disables root login and password login
+        cloud_init_dict = {
+            'chpasswd':
+            {
+                'expire': False,
+                'list': '{}:{}\n'.format(cred['ssh']['username'], cred['ssh']['password'])
+            },
+            'disable_root': 0,
+            'ssh_pwauth': 1
+        }
+        cloud_init = "#cloud-config\n{}".format(yaml.safe_dump(cloud_init_dict,
+                                                               default_flow_style=False))
+        deploy_args['user_data'] = cloud_init
     elif provider_type == 'openstack':
         # filter openstack flavors based on what's available
         available_flavors = provider.list_flavor()

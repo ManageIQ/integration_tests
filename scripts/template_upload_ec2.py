@@ -144,7 +144,7 @@ def create_image(ec2, ami_name, bucket_name):
              func_args=[import_task_id],
              fail_condition=False,
              delay=5,
-             timeout='30m',
+             timeout='90m',
              message='Importing image to EC2')
 
     ami_id = ec2.get_image_id_if_import_completed(import_task_id)
