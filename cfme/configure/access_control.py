@@ -415,6 +415,7 @@ class UserTagsEdit(CFMENavigateStep):
         self.prerequisite_view.toolbar.policy.item_select(
             "Edit 'My Company' Tags for this User")
 
+
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # RBAC USER METHODS
 ####################################################################################################
@@ -440,7 +441,7 @@ class GroupForm(ConfigurationView):
     retrieve_button = Button('Retrieve')
 
     @View.nested
-    class my_company_tags(Tab):     # noqa
+    class my_company_tags(Tab):  # noqa
         """ Represents 'My company tags' tab in Group Form """
         TAB_NAME = "My Company Tags"
         tree_locator = VersionPick({
@@ -449,13 +450,13 @@ class GroupForm(ConfigurationView):
         tree = CheckableBootstrapTreeview(tree_locator)
 
     @View.nested
-    class hosts_and_clusters(Tab):      # noqa
+    class hosts_and_clusters(Tab):  # noqa
         """ Represents 'Hosts and Clusters' tab in Group Form """
         TAB_NAME = "Hosts & Clusters"
         tree = CheckableBootstrapTreeview('hac_treebox')
 
     @View.nested
-    class vms_and_templates(Tab):       # noqa
+    class vms_and_templates(Tab):  # noqa
         """ Represents 'VM's and Templates' tab in Group Form """
         TAB_NAME = "VMs & Templates"
         tree = CheckableBootstrapTreeview('vat_treebox')
@@ -485,7 +486,7 @@ class DetailsGroupView(ConfigurationView):
             # tree.currently_selected returns a list of strings with each item being the text of
             # each level of the accordion. Last element should be the Group's name
             (self.accordions.accesscontrol.tree.currently_selected[-1] ==
-                self.context['object'].description)
+             self.context['object'].description)
         )
 
 
@@ -729,11 +730,11 @@ class Group(Updateable, Pretty, Navigatable):
         flash_success_msg = 'EVM Group "{}": Delete successful'.format(self.description)
         flash_blocked_msg_list = [
             ('EVM Group "{}": '
-                'Error during delete: A read only group cannot be deleted.'.format(
-                    self.description)),
+             'Error during delete: A read only group cannot be deleted.'.format(
+                self.description)),
             ('EVM Group "{}": Error during delete: '
-                'The group has users assigned that do not '
-                'belong to any other group'.format(self.description))]
+             'The group has users assigned that do not '
+             'belong to any other group'.format(self.description))]
         delete_group_txt = 'Delete this Group'
 
         view = navigate_to(self, 'Details')
@@ -915,6 +916,7 @@ class GroupTagsEdit(CFMENavigateStep):
         self.prerequisite_view.toolbar.policy.item_select(
             "Edit 'My Company' Tags for this Group")
 
+
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # END RBAC GROUP METHODS
 ####################################################################################################
@@ -1088,15 +1090,15 @@ class Role(Updateable, Pretty, Navigatable):
                 for currently selected role
         """
         flash_blocked_msg = ("Role \"{}\": Error during delete: Cannot delete record "
-                "because of dependent entitlements".format(self.name))
+                             "because of dependent entitlements".format(self.name))
         flash_success_msg = 'Role "{}": Delete successful'.format(self.name)
         delete_role_txt = 'Delete this Role'
 
         view = navigate_to(self, 'Details')
 
         if not view.toolbar.configuration.item_enabled(delete_role_txt):
-                raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
-                    delete_role_txt))
+            raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
+                delete_role_txt))
 
         view.toolbar.configuration.item_select(delete_role_txt, handle_alert=cancel)
         try:
@@ -1228,7 +1230,12 @@ class TenantQuotaView(ConfigurationView):
     def is_displayed(self):
         return (
             self.form.template_cb.is_displayed and
-            self.title.text == 'Manage quotas for Tenant "{}"'.format(self.context['object'].name)
+            any((
+                self.title.text == 'Manage quotas for Tenant "{}"'.format(
+                    self.context['object'].name),
+                self.title.text == 'Manage quotas for Project "{}"'.format(
+                    self.context['object'].name)
+            ))
         )
 
 
@@ -1275,6 +1282,7 @@ class DetailsTenantView(ConfigurationView):
 
 class ParentDetailsTenantView(DetailsTenantView):
     """ Parent Tenant Details View """
+
     @property
     def is_displayed(self):
         return (
@@ -1294,7 +1302,8 @@ class EditTenantView(View):
         return (
             self.form.accordions.accesscontrol.is_opened and
             any([self.form.title.text == 'Editing Tenant "{}"'.format(self.context['object'].name),
-                self.form.title.text == 'Editing Project "{}"'.format(self.context['object'].name)])
+                 self.form.title.text == 'Editing Project "{}"'.format(
+                     self.context['object'].name)])
         )
         # used any() because `project` inherits `tenant` and edit page can have any one in name
 
@@ -1358,18 +1367,17 @@ class Tenant(Updateable, BaseEntity):
 
     def set_quota(self, **kwargs):
         """ Sets tenant quotas """
-        view = navigate_to(self, 'ManageQuotas')
-        wait_for(lambda: view.is_displayed, fail_condition=False, num_sec=5, delay=0.5)
+        view = navigate_to(self, 'ManageQuotas', wait_for_view=True)
         view.form.fill({'cpu_cb': kwargs.get('cpu_cb'),
-                   'cpu_txt': kwargs.get('cpu'),
-                   'memory_cb': kwargs.get('memory_cb'),
-                   'memory_txt': kwargs.get('memory'),
-                   'storage_cb': kwargs.get('storage_cb'),
-                   'storage_txt': kwargs.get('storage'),
-                   'vm_cb': kwargs.get('vm_cb'),
-                   'vm_txt': kwargs.get('vm'),
-                   'template_cb': kwargs.get('template_cb'),
-                   'template_txt': kwargs.get('template')})
+                        'cpu_txt': kwargs.get('cpu'),
+                        'memory_cb': kwargs.get('memory_cb'),
+                        'memory_txt': kwargs.get('memory'),
+                        'storage_cb': kwargs.get('storage_cb'),
+                        'storage_txt': kwargs.get('storage'),
+                        'vm_cb': kwargs.get('vm_cb'),
+                        'vm_txt': kwargs.get('vm'),
+                        'template_cb': kwargs.get('template_cb'),
+                        'template_txt': kwargs.get('template')})
         view.save_button.click()
         view = self.create_view(DetailsTenantView)
         view.flash.assert_success_message('Quotas for Tenant "{}" were saved'.format(self.name))
@@ -1419,7 +1427,7 @@ class TenantCollection(BaseCollection):
 
         view = self.create_view(AddTenantView)
         changed = view.form.fill({'name': name,
-                   'description': description})
+                                  'description': description})
         if changed:
             view.form.add_button.click()
         else:
@@ -1480,6 +1488,7 @@ class TenantManageQuotas(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select('Manage Quotas')
 
+
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # END TENANT METHODS
 ####################################################################################################
@@ -1520,7 +1529,7 @@ class ProjectCollection(TenantCollection):
 
         view = self.create_view(AddTenantView)
         changed = view.form.fill({'name': name,
-                   'description': description})
+                                  'description': description})
         if changed:
             view.form.add_button.click()
         else:
@@ -1530,7 +1539,6 @@ class ProjectCollection(TenantCollection):
         view.flash.assert_success_message('Project "{}" was saved'.format(name))
 
         return project
-
 
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # END PROJECT METHODS
