@@ -165,7 +165,10 @@ class OrchestrationTemplate(Updateable, Pretty, Navigatable, WidgetasticTaggable
 
     def delete(self):
         view = navigate_to(self, "Details")
-        view.configuration.item_select("Remove this Orchestration Template", handle_alert=True)
+        msg = "Remove this Orchestration Template"
+        if self.appliance.version >= '5.9':
+            msg = '{} from Inventory'.format(msg)
+        view.configuration.item_select(msg, handle_alert=True)
         view.flash.assert_success_message('Orchestration Template "{}" was deleted.'.format(
             self.template_name))
 
