@@ -61,27 +61,26 @@ def test_paginator(some_dialogs, soft_assert, appliance):
         * During the cycling, assert the numbers displayed in the paginator make sense
         * During the cycling, assert the paginator does not get stuck.
     """
-    navigate_to(DialogCollection(appliance), 'All')
-    from cfme.web_ui import paginator
-    paginator.results_per_page(50)
-    paginator.results_per_page(5)
+    view = navigate_to(DialogCollection(appliance), 'All')
+    view.paginator.set_items_per_page(50)
+    view.paginator.set_items_per_page(5)
     # Now we must have only 5
     soft_assert(len(list(dialogs_table.rows())) == 5, "Changing number of rows failed!")
     # try to browse
     current_rec_offset = None
     dialogs_found = set()
-    for page in paginator.pages():
-        if paginator.rec_offset() == current_rec_offset:
+    for _ in view.paginator.pages():
+        if view.paginator.min_item == current_rec_offset:
             soft_assert(False, "Paginator is locked, it does not advance to next page")
             break
         if current_rec_offset is None:
-            current_rec_offset = paginator.rec_offset()
+            current_rec_offset = view.paginator.min_item
         for text in get_relevant_rows(dialogs_table):
             dialogs_found.add(text)
 
-        current_total = paginator.rec_total()
-        current_rec_offset = paginator.rec_offset()
-        current_rec_end = paginator.rec_end()
+        current_total = view.paginator.items_amount
+        current_rec_offset = view.paginator.min_item
+        current_rec_end = view.paginator.max_item
 
         assert current_rec_offset <= current_rec_end <= current_total, \
             "Incorrect paginator value, expected {0} <= {1} <= {2}".format(

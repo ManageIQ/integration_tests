@@ -16,10 +16,6 @@ def page_controls_exist():
     return new_paginator().is_displayed
 
 
-def _page_nums():
-    return new_paginator().pages_amount
-
-
 def check_all():
     """ selects all items """
     new_paginator().check_all()
@@ -50,15 +46,6 @@ def last():
     new_paginator().last_page()
 
 
-def results_per_page(num):
-    """ Changes the number of results on a page.
-
-    Args:
-        num: Number of results per page
-    """
-    new_paginator().set_items_per_page(num)
-
-
 def sort_by(sort):
     """ Changes the sort by field.
 
@@ -68,27 +55,9 @@ def sort_by(sort):
     new_paginator().sort(sort)
 
 
-def rec_offset():
-    """ Returns the first record offset."""
-    try:
-        return int(new_paginator().paginator.page_info()[0])
-    except TypeError:
-            raise PaginatorException()
-
-
-def rec_end():
-    """ Returns the record set index."""
-    return new_paginator().paginator.page_info()[1]
-
-
 def rec_total():
     """ Returns the total number of records."""
     return new_paginator().items_amount
-
-
-def reset():
-    """Reset the paginator to the first page or do nothing if no pages"""
-    new_paginator().first_page()
 
 
 def pages():

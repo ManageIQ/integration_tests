@@ -134,8 +134,9 @@ def test_infra_grid_page_per_item(request, page, value, set_grid):
     limit = visual.grid_view_limit
     view = navigate_to(page, 'All', use_resetter=False)
     view.toolbar.view_selector.select("Grid View")
-    min_item, max_item, item_amt = view.paginator.paginator.page_info()
-    if int(view.paginator.items_amount) >= int(limit):
+    max_item = view.paginator.max_item
+    item_amt = view.paginator.items_amount
+    if int(item_amt) >= int(limit):
         assert int(max_item) == int(limit), "Gridview Failed for page {}!".format(page)
     assert int(max_item) <= int(item_amt)
 
@@ -153,8 +154,9 @@ def test_infra_tile_page_per_item(request, page, value, set_tile):
     limit = visual.tile_view_limit
     view = navigate_to(page, 'All', use_resetter=False)
     view.toolbar.view_selector.select('Tile View')
-    min_item, max_item, item_amt = view.paginator.paginator.page_info()
-    if int(view.paginator.items_amount) >= int(limit):
+    max_item = view.paginator.max_item
+    item_amt = view.paginator.items_amount
+    if int(item_amt) >= int(limit):
         assert int(max_item) == int(limit), "Tileview Failed for page {}!".format(page)
     assert int(max_item) <= int(item_amt)
 
@@ -172,8 +174,9 @@ def test_infra_list_page_per_item(request, page, value, set_list):
     limit = visual.list_view_limit
     view = navigate_to(page, 'All', use_resetter=False)
     view.toolbar.view_selector.select('List View')
-    min_item, max_item, item_amt = view.paginator.paginator.page_info()
-    if int(view.paginator.items_amount) >= int(limit):
+    max_item = view.paginator.max_item
+    item_amt = view.paginator.items_amount
+    if int(item_amt) >= int(limit):
         assert int(max_item) == int(limit), "Listview Failed for page {}!".format(page)
     assert int(max_item) <= int(item_amt)
 
@@ -190,8 +193,9 @@ def test_infra_report_page_per_item(value, set_report):
     limit = visual.report_view_limit
     report = CannedSavedReport.new(path)
     view = navigate_to(report, 'Details')
-    min_item, max_item, item_amt = view.paginator.paginator.page_info()
-    if int(view.paginator.items_amount) >= int(limit):
+    max_item = view.paginator.max_item
+    item_amt = view.paginator.items_amount
+    if int(item_amt) >= int(limit):
         assert int(max_item) == int(limit), "Reportview Failed!"
     assert int(max_item) <= int(item_amt)
 
