@@ -22,13 +22,12 @@ def test_system_image_type_crud(collection_init):
     sys_image_type = collection.create(
         name=fauxfactory.gen_alphanumeric(8),
         provision_type=SystemImageType.VM_OR_INSTANCE)
-    # sys_image_type.create()
     with update(sys_image_type):
         sys_image_type.name = sys_image_type.name + "_update"
     sys_image_type.delete(cancel=False)
 
 
-def test_duplicate_name_error_validation():
+def test_duplicate_name_error_validation(collection_init):
     """
     Tests a System Image for duplicate name.
     """
@@ -36,22 +35,22 @@ def test_duplicate_name_error_validation():
     sys_image_type = collection.create(
         name=fauxfactory.gen_alphanumeric(8),
         provision_type=SystemImageType.VM_OR_INSTANCE)
-    sys_image_type.create()
     with error.expected('Name has already been taken'):
-        sys_image_type.create()
+        collection.create(
+            name=fauxfactory.gen_alphanumeric(8),
+            provision_type=SystemImageType.VM_OR_INSTANCE)
     sys_image_type.delete(cancel=False)
 
 
-def test_name_required_error_validation():
+def test_name_required_error_validation(collection_init):
     """
     Tests a System Image with no name.
     """
     collection = collection_init
-    sys_image_type = collection.create(
-        name=None,
-        provision_type=SystemImageType.VM_OR_INSTANCE)
     with error.expected('Name is required'):
-        sys_image_type.create()
+        collection.create(
+            name=None,
+            provision_type=SystemImageType.VM_OR_INSTANCE)
 
 # Commenting the maximum charater validation due to
 # http://cfme-tests.readthedocs.org/guides/gotchas.html#

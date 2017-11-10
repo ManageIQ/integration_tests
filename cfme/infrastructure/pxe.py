@@ -947,6 +947,7 @@ class ISODatastoreDetails(CFMENavigateStep):
 @navigator.register(PXEServer, 'PXEMainPage')
 @navigator.register(CustomizationTemplate, 'PXEMainPage')
 @navigator.register(SystemImageTypeCollection, 'PXEMainPage')
+@navigator.register(SystemImageType, 'PXEMainPage')
 @navigator.register(ISODatastore, 'PXEMainPage')
 class PXEMainPage(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
