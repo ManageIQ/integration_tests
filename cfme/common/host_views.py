@@ -193,10 +193,14 @@ class HostDriftAnalysis(ComputeInfrastructureHostsView):
 
 class HostTimelinesView(TimelinesView, ComputeInfrastructureHostsView):
     """Represents a Host Timelines page."""
+    breadcrumb = BreadCrumb()
 
     @property
     def is_displayed(self):
-        return self.in_compute_infrastructure_hosts and super(TimelinesView, self).is_displayed
+        return (
+            self.in_compute_infrastructure_hosts and
+            '{} (Summary)'.format(self.context['object'].name) in self.breadcrumb.locations and
+            self.is_timelines)
 
 
 class HostDiscoverView(ComputeInfrastructureHostsView):

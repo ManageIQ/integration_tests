@@ -2481,6 +2481,11 @@ class TimelinesView(View):
     def is_displayed(self):
         return self.title.text == 'Timelines'
 
+    @property
+    def is_timelines(self):
+        """method to check title text for base Timelines without overriding is_displayed"""
+        return self.title.text == 'Timelines'
+
 
 class AttributeValueForm(View):
     @View.nested

@@ -110,12 +110,15 @@ class ClusterDetailsView(ClusterView):
 
 class ClusterTimelinesView(TimelinesView, ClusterView):
     """The timelines page of a cluster"""
+    breadcrumb = BreadCrumb()
+
     @property
     def is_displayed(self):
         """Determine if this page is currently being displayed"""
         return (
             self.in_cluster and
-            super(TimelinesView, self).is_displayed)
+            '{} (Summary)'.format(self.context['object'].name) in self.breadcrumb.locations and
+            self.is_timelines)
 
 
 @attr.s

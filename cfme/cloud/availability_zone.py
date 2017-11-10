@@ -104,7 +104,7 @@ class CloudAvailabilityZoneTimelinesView(TimelinesView, AvailabilityZoneView):
             self.in_availability_zones and
             self.breadcrumb.active_location == 'Timelines' and
             "{} (Summary)".format(self.context['object'].name) in self.breadcrumb.locations and
-            super(TimelinesView, self).is_displayed)
+            self.is_timelines)
 
 
 class AvailabilityZone(WidgetasticTaggable, Navigatable):

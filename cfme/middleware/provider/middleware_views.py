@@ -824,6 +824,9 @@ class DomainServerGroupAllView(DomainView):
 class MiddlewareProviderTimelinesView(TimelinesView, BaseLoggedInPage):
     @property
     def is_displayed(self):
-        return (self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Middleware', 'Providers'] and
-            TimelinesView.is_displayed)
+        return False
+        #     (
+        # self.logged_in_as_current_user and
+        # self.navigation.currently_selected == ['Middleware', 'Providers'] and
+        # # TODO unique identifier for middleware timelines
+        # self.is_timelines)

@@ -10,7 +10,7 @@ from wrapanapi.containers.node import Node as ApiNode
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
-from widgetastic_manageiq import Button, Text, TimelinesView
+from widgetastic_manageiq import Button, Text, TimelinesView, BreadCrumb
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.containers.provider import (ContainersProvider, Labelable,
@@ -183,14 +183,15 @@ class Utilization(CFMENavigateStep):
 
 class NodeTimelinesView(TimelinesView, NodeView):
     """Timeline page for Nodes"""
+    breadcrumb = BreadCrumb()
 
     @property
     def is_displayed(self):
         """Is this page currently being displayed"""
         return (
             self.in_node and
-            super(NodeTimelinesView, self).is_displayed
-        )
+            '{} (Summary)'.format(self.context['object'].name) in self.breadcrumb.locations and
+            self.is_timelines)
 
 
 @navigator.register(Node, 'Timelines')

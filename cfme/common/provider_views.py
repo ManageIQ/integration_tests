@@ -181,11 +181,17 @@ class ProviderTimelinesView(TimelinesView, BaseLoggedInPage):
     """
      represents Timelines page
     """
+    breadcrumb = BreadCrumb()
+
     @property
     def is_displayed(self):
-        return (self.logged_in_as_current_user and
-                self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
-                TimelinesView.is_displayed)
+        expected_name = self.context['object'].name
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
+            ('{} (Summary)'.format(expected_name) in self.breadcrumb.locations or
+                '{} (Dashboard)'.format(expected_name) in self.breadcrumb.locations) and
+            self.is_timelines)
 
 
 class InfraProvidersDiscoverView(BaseLoggedInPage):
