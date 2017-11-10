@@ -225,7 +225,8 @@ set +e
 if [ "$USE_SPROUT" = "yes" ];
 then
     log "invoking complete collectonly with dummy instance before test"
-    run_n_log "py.test --collectonly --dummy-appliance --dummy-appliance-version $SPROUT_GROUP --use-provider complete"
+    run_n_log "py.test --collectonly --dummy-appliance --dummy-appliance-version $SPROUT_GROUP --use-provider complete" \
+    || exit # shortcut when collect fails
 
 
 
@@ -235,11 +236,11 @@ then
 else
     log "no sprout used"
     log "invoking complete collectonly with given appliance instance before test"
-    run_n_log "py.test --collectonly --use-provider complete"
+    run_n_log "py.test --collectonly --use-provider complete"  || exit # shortcut when collect fails
 fi
 
 log "smoke testing"
-run_n_log "py.test -m smoke"
+run_n_log "py.test -m smoke" || exit # shortcut when smoke fails
 
 # Finally, run the py.test
 log "$PYTEST"
