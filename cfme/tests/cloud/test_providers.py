@@ -118,7 +118,8 @@ def test_provider_add_with_bad_credentials(provider):
         provider.create(validate_credentials=True)
 
 
-@pytest.mark.tier(2)
+@pytest.mark.tier(1)
+@pytest.mark.smoke
 @pytest.mark.usefixtures('has_no_cloud_providers')
 @test_requirements.discovery
 def test_provider_crud(provider):
