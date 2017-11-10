@@ -16,7 +16,7 @@ The scripts for respective providers are:
     - template_upload_scvmm.py
     - template_upload_vsphere.py
 """
-
+import pdb
 import argparse
 import re
 import datetime
@@ -255,7 +255,7 @@ def browse_directory(dir_url):
         logger.exception("Skipping: %r", dir_url)
         return None
 
-    rhevm_pattern = re.compile(r'<a href="?\'?([^"\']*(?:rhevm\.ova|ovirt)[^"\'>]*)')
+    rhevm_pattern = re.compile(r'<a href="?\'?([^"\']*rhevm[^"\'>]*)')
     rhevm_image_name = rhevm_pattern.findall(string_from_url)
     rhos_pattern = re.compile(r'<a href="?\'?([^"\']*(?:rhos|openstack|rhelosp)[^"\'>]*)')
     rhos_image_name = rhos_pattern.findall(string_from_url)
@@ -271,7 +271,7 @@ def browse_directory(dir_url):
     openshift_image_name = openshift_pattern.findall(string_from_url)
 
     if len(rhevm_image_name) is not 0:
-        name_dict['template_upload_rhevm'] = rhevm_image_name[0]
+        name_dict['template_upload_rhevm_qcow2'] = rhevm_image_name[0]
     if len(rhos_image_name) is not 0:
         name_dict['template_upload_rhos'] = rhos_image_name[0]
     if len(scvmm_image_name) is not 0:
