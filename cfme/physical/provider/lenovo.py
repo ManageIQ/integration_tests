@@ -1,4 +1,5 @@
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
+from wrapanapi.lenovo import LenovoSystem
 
 from . import PhysicalProvider
 
