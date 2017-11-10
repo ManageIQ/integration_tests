@@ -157,7 +157,7 @@ class VolumeBackup(BaseEntity, WidgetasticTaggable):
             :py:class:`int' size of volume backup in GB.
         """
         view = navigate_to(self, 'Details')
-        return int(view.entities.properties.get_text_of('Size')[:-2])
+        return int(view.entities.properties.get_text_of('Size').split()[0])
 
     @property
     def status(self):
