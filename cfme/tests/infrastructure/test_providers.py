@@ -34,7 +34,7 @@ def test_empty_discovery_form_validation(appliance):
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_discovery_cancelled_validation(appliance):
     """ Tests that the flash message is correct when discovery is cancelled."""
     discover(None, cancel=True)
@@ -45,7 +45,7 @@ def test_discovery_cancelled_validation(appliance):
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_add_cancelled_validation(appliance):
     """Tests that the flash message is correct when add is cancelled."""
     prov = VMwareProvider()
@@ -56,7 +56,7 @@ def test_add_cancelled_validation(appliance):
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_type_required_validation():
     """Test to validate type while adding a provider"""
     prov = InfraProvider()
@@ -68,7 +68,7 @@ def test_type_required_validation():
 
 
 @pytest.mark.tier(3)
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_name_required_validation():
     """Tests to validate the name while adding a provider"""
     endpoint = VirtualCenterEndpoint(hostname=fauxfactory.gen_alphanumeric(5))
@@ -85,7 +85,7 @@ def test_name_required_validation():
 
 
 @pytest.mark.tier(3)
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_host_name_required_validation():
     """Test to validate the hostname while adding a provider"""
     endpoint = VirtualCenterEndpoint(hostname=None)
@@ -103,7 +103,7 @@ def test_host_name_required_validation():
 
 
 @pytest.mark.tier(3)
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_name_max_character_validation(request, infra_provider):
     """Test to validate max character for name field"""
     request.addfinalizer(lambda: infra_provider.delete_if_exists(cancel=False))
@@ -114,7 +114,7 @@ def test_name_max_character_validation(request, infra_provider):
 
 
 @pytest.mark.tier(3)
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_host_name_max_character_validation():
     """Test to validate max character for host name field"""
     endpoint = VirtualCenterEndpoint(hostname=fauxfactory.gen_alphanumeric(256))
@@ -127,7 +127,7 @@ def test_host_name_max_character_validation():
 
 
 @pytest.mark.tier(3)
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_api_port_max_character_validation():
     """Test to validate max character for api port field"""
     endpoint = RHEVMEndpoint(hostname=fauxfactory.gen_alphanumeric(5),
@@ -145,7 +145,7 @@ def test_api_port_max_character_validation():
 
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_providers_discovery(request, provider):
     """Tests provider discovery
 
@@ -163,7 +163,7 @@ def test_providers_discovery(request, provider):
 @pytest.mark.uncollectif(lambda provider: provider.type == 'rhevm', 'blocker=1399622')
 @pytest.mark.tier(3)
 @pytest.mark.usefixtures('has_no_infra_providers')
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_provider_add_with_bad_credentials(provider):
     """Tests provider add with bad credentials
 
@@ -182,7 +182,7 @@ def test_provider_add_with_bad_credentials(provider):
 
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
-@test_requirements.provider_discovery
+@test_requirements.discovery
 @pytest.mark.meta(blockers=[BZ(1450527, unblock=lambda provider: provider.type != 'scvmm')])
 def test_provider_crud(provider):
     """Tests provider add with good credentials
@@ -207,7 +207,7 @@ def test_provider_crud(provider):
 
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
-@test_requirements.provider_discovery
+@test_requirements.discovery
 @pytest.mark.parametrize('verify_tls', [False, True], ids=['no_tls', 'tls'])
 @pytest.mark.uncollectif(lambda provider:
     not (provider.one_of(RHEVMProvider) and
