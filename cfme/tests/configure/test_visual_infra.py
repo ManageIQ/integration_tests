@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from copy import copy
-import itertools
 import pytest
 from cfme import test_requirements
 from cfme.configure.settings import visual
@@ -19,27 +18,20 @@ pytestmark = [pytest.mark.tier(3),
 # navigation to navmazing. all items have to be put back once navigation change is fully done
 
 
-def get_parameter(view):
-    grid_pages = [
-        InfraProvider,
-        vms.Vm,
-    ]
-    if "grid" in view:
-        value = visual.grid_view_entities
-    elif "tile" in view:
-        value = visual.tile_view_entities
-    else:
-        value = visual.list_view_entities
-    parameter = itertools.product(value, grid_pages)
-    return parameter
+@pytest.fixture(scope='module', params=[InfraProvider, vms.Vm])
+def page(request):
+    return request.param
 
 
-report_parameter = ['5', '10', '20', '50', '100', '200', '500', '1000']
+@pytest.fixture(scope='module', params=['10', '20', '50', '100', '200', '500', '1000'])
+def value(request):
+    return request.param
 
-# BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331327
-# BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331399
-# TODO: update landing_pages once these bugs are fixed.
-landing_pages = [
+
+LANDING_PAGES = [
+    # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331327
+    # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331399
+    # TODO: update landing_pages once these bugs are fixed.
     'Cloud Intel / Dashboard',
     'Services / My Services',
     'Services / Catalogs',
@@ -130,7 +122,6 @@ def set_template_quad():
 
 
 @pytest.mark.meta(blockers=[1267148])
-@pytest.mark.parametrize("value, page", get_parameter("grid"), scope="module")
 def test_infra_grid_page_per_item(request, page, value, set_grid):
     """ Tests grid items per page
 
@@ -150,7 +141,6 @@ def test_infra_grid_page_per_item(request, page, value, set_grid):
 
 
 @pytest.mark.meta(blockers=[1267148])
-@pytest.mark.parametrize("value, page", get_parameter("tile"), scope="module")
 def test_infra_tile_page_per_item(request, page, value, set_tile):
     """ Tests tile items per page
 
@@ -170,7 +160,6 @@ def test_infra_tile_page_per_item(request, page, value, set_tile):
 
 
 @pytest.mark.meta(blockers=[1267148])
-@pytest.mark.parametrize("value, page", get_parameter("list"), scope="module")
 def test_infra_list_page_per_item(request, page, value, set_list):
     """ Tests list items per page
 
@@ -190,7 +179,6 @@ def test_infra_list_page_per_item(request, page, value, set_list):
 
 
 @pytest.mark.meta(blockers=[1267148, 1273529])
-@pytest.mark.parametrize("value", report_parameter, scope="module")
 def test_infra_report_page_per_item(value, set_report):
     """ Tests report items per page
 
@@ -210,7 +198,7 @@ def test_infra_report_page_per_item(value, set_report):
 
 @pytest.mark.uncollect('Needs to be fixed after menu removed')
 @pytest.mark.meta(blockers=[1267148])
-@pytest.mark.parametrize('start_page', landing_pages, scope="module")
+@pytest.mark.parametrize('start_page', LANDING_PAGES, scope="module")
 def test_infra_start_page(request, appliance, start_page):
     """ Tests start page
 
