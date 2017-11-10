@@ -9,14 +9,20 @@ from cfme.utils.update import update
 pytestmark = [pytest.mark.tier(3)]
 
 
-def test_system_image_type_crud():
+@pytest.fixture(scope="module")
+def collection_init(appliance):
+    return appliance.collections.system_image_type
+
+
+def test_system_image_type_crud(collection_init):
     """
     Tests a System Image Type using CRUD operations.
     """
-    sys_image_type = SystemImageType(
+    collection = collection_init
+    sys_image_type = collection.create(
         name=fauxfactory.gen_alphanumeric(8),
         provision_type=SystemImageType.VM_OR_INSTANCE)
-    sys_image_type.create()
+    # sys_image_type.create()
     with update(sys_image_type):
         sys_image_type.name = sys_image_type.name + "_update"
     sys_image_type.delete(cancel=False)
@@ -26,7 +32,8 @@ def test_duplicate_name_error_validation():
     """
     Tests a System Image for duplicate name.
     """
-    sys_image_type = SystemImageType(
+    collection = collection_init
+    sys_image_type = collection.create(
         name=fauxfactory.gen_alphanumeric(8),
         provision_type=SystemImageType.VM_OR_INSTANCE)
     sys_image_type.create()
@@ -39,7 +46,8 @@ def test_name_required_error_validation():
     """
     Tests a System Image with no name.
     """
-    sys_image_type = SystemImageType(
+    collection = collection_init
+    sys_image_type = collection.create(
         name=None,
         provision_type=SystemImageType.VM_OR_INSTANCE)
     with error.expected('Name is required'):

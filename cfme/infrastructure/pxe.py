@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """ A model of a PXE Server in CFME
 """
+import attr
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 from widgetastic.widget import View, Text, Checkbox
 from widgetastic_manageiq import ManageIQTree, Input, ScriptBox, SummaryTable, Table
 from widgetastic_patternfly import Dropdown, Accordion, FlashMessages, BootstrapSelect, Button
 
+from cfme.base import BaseEntity, BaseCollection
 from cfme.base.login import BaseLoggedInPage
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -591,6 +594,7 @@ class PXESystemImageTypesView(PXEMainView):
     """
     represents whole All System Image Types page
     """
+    table = Table('records_div')
 
     @property
     def is_displayed(self):
@@ -633,7 +637,8 @@ class PXESystemImageTypeEditView(PXESystemImageTypeForm):
     cancel = Button('Cancel')
 
 
-class SystemImageType(Updateable, Pretty, Navigatable):
+@attr.s
+class SystemImageType(Updateable, Pretty, BaseEntity):
     """Model of a System Image Type in CFME.
 
     Args:
@@ -644,29 +649,12 @@ class SystemImageType(Updateable, Pretty, Navigatable):
     VM_OR_INSTANCE = "VM and Instance"
     HOST_OR_NODE = "Host / Node"
 
-    def __init__(self, name=None, provision_type=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.provision_type = provision_type
-
-    def create(self, cancel=False):
-        """
-        Creates a System Image Type object
-
-        Args:
-            cancel (boolean): Whether to cancel out of the creation.  The cancel is done
-                after all the information present in the SIT has been filled in the UI.
-        """
-        view = navigate_to(self, 'Add')
-        view.fill({'name': self.name, 'type': self.provision_type})
-        main_view = self.create_view(PXESystemImageTypesView)
-        if cancel:
-            view.cancel.click()
-            msg = 'Add of new System Image Type was cancelled by the user'
-        else:
-            view.add.click()
-            msg = 'System Image Type "{}" was added'.format(self.name)
-        main_view.flash.assert_success_message(msg)
+    # def __init__(self, name=None, provision_type=None, appliance=None):
+    #     Navigatable.__init__(self, appliance=appliance)
+    #     self.name = name
+    #     self.provision_type = provision_type
+    name = attr.ib(default=None)
+    provision_type = attr.ib(default=None)
 
     def update(self, updates, cancel=False):
         """
@@ -704,6 +692,39 @@ class SystemImageType(Updateable, Pretty, Navigatable):
             navigate_to(self, 'Details')
 
 
+@attr.s
+class SystemImageTypeCollection(BaseCollection):
+    """ Collection class for SystemImageType. """
+
+    ENTITY = SystemImageType
+
+    def create(self, name, provision_type, cancel=False):
+        """
+        Creates a System Image Type object
+
+        Args:
+            name: It contains name of the System Image Type
+            provision_type: Type on Image. i.e Vm and Instance or Host
+            cancel (boolean): Whether to cancel out of the creation.  The cancel is done
+                after all the information present in the SIT has been filled in the UI.
+        """
+
+        system_image_type = self.instantiate(name, provision_type)
+
+        view = navigate_to(self, 'Add')
+        view.fill({'name': name, 'type': provision_type})
+        main_view = self.create_view(PXESystemImageTypesView)
+        if cancel:
+            view.cancel.click()
+            msg = 'Add of new System Image Type was cancelled by the user'
+        else:
+            view.add.click()
+            msg = 'System Image Type "{}" was added'.format(name)
+        main_view.flash.assert_success_message(msg)
+        return system_image_type
+
+
+@navigator.register(SystemImageTypeCollection, 'All')
 @navigator.register(SystemImageType, 'All')
 class SystemImageTypeAll(CFMENavigateStep):
     VIEW = PXESystemImageTypesView
@@ -713,7 +734,7 @@ class SystemImageTypeAll(CFMENavigateStep):
         self.view.sidebar.image_types.tree.click_path('All System Image Types')
 
 
-@navigator.register(SystemImageType, 'Add')
+@navigator.register(SystemImageTypeCollection, 'Add')
 class SystemImageTypeAdd(CFMENavigateStep):
     VIEW = PXESystemImageTypeAddView
     prerequisite = NavigateToSibling('All')
@@ -925,7 +946,7 @@ class ISODatastoreDetails(CFMENavigateStep):
 
 @navigator.register(PXEServer, 'PXEMainPage')
 @navigator.register(CustomizationTemplate, 'PXEMainPage')
-@navigator.register(SystemImageType, 'PXEMainPage')
+@navigator.register(SystemImageTypeCollection, 'PXEMainPage')
 @navigator.register(ISODatastore, 'PXEMainPage')
 class PXEMainPage(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
