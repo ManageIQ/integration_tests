@@ -523,6 +523,9 @@ class ManagementEngineView(BaseLoggedInPage):
     Edit management engine relationship page
     The title actually as Instance|VM.VM_TYPE string in it, otherwise the same
     """
+    flash = FlashMessages('.//div[@id="flash_msg_div"]'
+                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
+
     @View.nested
     class form(View):  # noqa
         server = BootstrapSelect('server_id')
