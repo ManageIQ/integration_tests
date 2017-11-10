@@ -268,7 +268,7 @@ class Volume(BaseEntity):
         """ size of storage cloud volume.
 
         Returns:
-            :py:class:`int' size of volume.
+            :py:class:`str' size of volume.
         """
         view = navigate_to(self, 'Details')
         return view.entities.properties.get_text_of('Size')
