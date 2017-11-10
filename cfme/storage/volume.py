@@ -9,6 +9,7 @@ from widgetastic_manageiq import (
     BaseQuadIconEntity,
     BaseTileIconEntity,
     BootstrapSelect,
+    BootstrapSwitch,
     BreadCrumb,
     ItemsToolBarViewSelector,
     JSBaseEntity,
@@ -23,7 +24,7 @@ from widgetastic_patternfly import Button, Dropdown, FlashMessages
 from widgetastic.widget import View, Text, ParametrizedView
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.exceptions import VolumeNotFound, ItemNotFound
+from cfme.exceptions import VolumeNotFoundError, ItemNotFound
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.log import logger
@@ -175,6 +176,21 @@ class VolumeEditView(VolumeView):
     save = Button('Save')
 
 
+class VolumeBackupView(VolumeView):
+    @property
+    def is_displayed(self):
+        return False
+
+    backup_name = TextInput(name='backup_name')
+    # options
+    incremental = BootstrapSwitch(name='incremental')
+    force = BootstrapSwitch(name='force')
+
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+
 @attr.s
 class Volume(BaseEntity):
     # Navigation menu option
@@ -227,23 +243,55 @@ class Volume(BaseEntity):
         self.provider.refresh_provider_relationships()
         self.browser.refresh()
 
+    def create_backup(self, name, incremental=None, force=None):
+        """create backup of cloud volume"""
+        view = navigate_to(self, 'Backup')
+        view.backup_name.fill(name)
+        view.incremental.fill(incremental)
+        view.force.fill(force)
+
+        view.save.click()
+        view.flash.assert_success_message('Backup for Cloud Volume "{}" created'.format(self.name))
+
+        wait_for(lambda: self.backups > 0, delay=20, timeout=1000, fail_func=self.refresh)
+
     @property
     def exists(self):
         try:
             navigate_to(self, 'Details')
             return True
-        except VolumeNotFound:
+        except VolumeNotFoundError:
             return False
 
     @property
     def size(self):
+        """ size of storage cloud volume.
+
+        Returns:
+            :py:class:`str' size of volume.
+        """
         view = navigate_to(self, 'Details')
         return view.entities.properties.get_text_of('Size')
 
     @property
     def tenant(self):
+        """ cloud tenants for volume.
+
+        Returns:
+            :py:class:`str' respective tenants.
+        """
         view = navigate_to(self, 'Details')
         return view.entities.relationships.get_text_of('Cloud Tenants')
+
+    @property
+    def backups(self):
+        """ number of available backups for volume.
+
+        Returns:
+            :py:class:`int' backup count.
+        """
+        view = navigate_to(self, 'Details')
+        return int(view.entities.relationships.get_text_of('Cloud Volume Backups'))
 
 
 @attr.s
@@ -295,7 +343,7 @@ class VolumeCollection(BaseCollection):
                 try:
                     view.entities.get_entity(volume.name).check()
                 except ItemNotFound:
-                    raise VolumeNotFound("Volume {} not found".format(volume.name))
+                    raise VolumeNotFoundError("Volume {} not found".format(volume.name))
 
             view.toolbar.configuration.item_select('Delete selected Cloud Volumes',
                                                    handle_alert=True)
@@ -303,7 +351,7 @@ class VolumeCollection(BaseCollection):
             for volume in volumes:
                 volume.wait_for_disappear()
         else:
-            raise VolumeNotFound('No Cloud Volume for Deletion')
+            raise VolumeNotFoundError('No Cloud Volume for Deletion')
 
 
 @navigator.register(VolumeCollection, 'All')
@@ -328,7 +376,7 @@ class VolumeDetails(CFMENavigateStep):
                                                        surf_pages=True).click()
 
         except ItemNotFound:
-            raise VolumeNotFound('Volume {} not found'.format(self.obj.name))
+            raise VolumeNotFoundError('Volume {} not found'.format(self.obj.name))
 
 
 @navigator.register(VolumeCollection, 'Add')
@@ -347,3 +395,13 @@ class VolumeEdit(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Cloud Volume')
+
+
+@navigator.register(Volume, 'Backup')
+class VolumeBackup(CFMENavigateStep):
+    VIEW = VolumeBackupView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select('Create a Backup of this Cloud '
+                                                                 'Volume')

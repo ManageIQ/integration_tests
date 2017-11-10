@@ -324,7 +324,7 @@ class AvailabilityZoneNotFound(CFMEException):
     pass
 
 
-class VolumeNotFound(CFMEException):
+class VolumeNotFoundError(CFMEException):
     """
     Raised if a specific cloud volume cannot be found in the UI
     """
@@ -471,6 +471,10 @@ class ManyEntitiesFound(CFMEException):
 
 class RoleNotFound(CFMEException):
     """Raised when Deployment role not found"""
+
+
+class BackupNotFoundError(CFMEException):
+    """Raised when volume backup not found"""
 
 
 class RBACOperationBlocked(CFMEException):
