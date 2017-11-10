@@ -16,7 +16,7 @@ from widgetastic.widget import View, Text
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
-from cfme.exceptions import BackupNotFound, ItemNotFound
+from cfme.exceptions import BackupNotFoundError, ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.wait import wait_for
@@ -94,6 +94,7 @@ class VolumeBackupDetailsView(VolumeBackupView):
         expected_title = '{} (Summary)'.format(self.context['object'].name)
 
         return (
+            self.in_volume_backup and
             self.title.text == expected_title and
             self.entities.breadcrumb.active_location == expected_title)
 
@@ -145,7 +146,7 @@ class VolumeBackup(BaseEntity, WidgetasticTaggable):
         try:
             navigate_to(self, 'Details')
             return True
-        except BackupNotFound:
+        except BackupNotFoundError:
             return False
 
     @property
@@ -153,10 +154,10 @@ class VolumeBackup(BaseEntity, WidgetasticTaggable):
         """ size of cloud volume backup.
 
         Returns:
-            :py:class:`int' size of volume backup.
+            :py:class:`int' size of volume backup in GB.
         """
         view = navigate_to(self, 'Details')
-        return view.entities.properties.get_text_of('Size')
+        return int(view.entities.properties.get_text_of('Size')[:-2])
 
     @property
     def status(self):
@@ -187,10 +188,13 @@ class VolumeBackupCollection(BaseCollection):
     def all(self):
         """returning all backup objects for respective storage manager type"""
         view = navigate_to(self, 'All')
+        view.toolbar.view_selector.select("List View")
+        backups = []
 
-        backups = [self.instantiate(name=item['Name'], provider=self.filters.get('provider'))
-                   for item in view.entities.elements.read()
-                   if self.filters.get('provider').name in item['Cloud Provider']]
+        for item in view.entities.elements.read():
+            if self.filters.get('provider').name in item['Cloud Provider']:
+                backups.append(self.instantiate(name=item['Name'],
+                                                provider=self.filters.get('provider')))
         return backups
 
     def delete(self, *backups):
@@ -207,7 +211,7 @@ class VolumeBackupCollection(BaseCollection):
                 try:
                     view.entities.get_entity(backup.name).check()
                 except ItemNotFound:
-                    raise BackupNotFound("Volume backup {} not found".format(backup.name))
+                    raise BackupNotFoundError("Volume backup {} not found".format(backup.name))
 
             view.toolbar.configuration.item_select('Delete selected Backups', handle_alert=True)
 
@@ -221,7 +225,7 @@ class VolumeBackupCollection(BaseCollection):
             )
 
         else:
-            raise BackupNotFound('No Volume Backups for Deletion')
+            raise BackupNotFoundError('No Volume Backups for Deletion')
 
 
 @navigator.register(VolumeBackupCollection, 'All')
@@ -241,10 +245,10 @@ class Details(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         try:
-            self.prerequisite_view.entities.get_entity(self.obj.name,
+            self.prerequisite_view.entities.get_entity(by_name=self.obj.name,
                                                        surf_pages=True).click()
         except ItemNotFound:
-            raise BackupNotFound('Could not locate volume backup {}'.format(self.obj.name))
+            raise BackupNotFoundError('Could not locate volume backup {}'.format(self.obj.name))
 
 
 @navigator.register(VolumeBackup, 'EditTagsFromDetails')

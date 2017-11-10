@@ -24,7 +24,7 @@ from widgetastic_patternfly import Button, Dropdown, FlashMessages
 from widgetastic.widget import View, Text, ParametrizedView
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.exceptions import VolumeNotFound, ItemNotFound
+from cfme.exceptions import VolumeNotFoundError, ItemNotFound
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.log import logger
@@ -253,30 +253,45 @@ class Volume(BaseEntity):
         view.save.click()
         view.flash.assert_success_message('Backup for Cloud Volume "{}" created'.format(self.name))
 
-        wait_for(lambda: int(self.backups) > 0, delay=20, timeout=1000, fail_func=self.refresh)
+        wait_for(lambda: self.backups > 0, delay=20, timeout=1000, fail_func=self.refresh)
 
     @property
     def exists(self):
         try:
             navigate_to(self, 'Details')
             return True
-        except VolumeNotFound:
+        except VolumeNotFoundError:
             return False
 
     @property
     def size(self):
+        """ size of storage cloud volume.
+
+        Returns:
+            :py:class:`int' size of volume.
+        """
         view = navigate_to(self, 'Details')
         return view.entities.properties.get_text_of('Size')
 
     @property
     def tenant(self):
+        """ cloud tenants for volume.
+
+        Returns:
+            :py:class:`str' respective tenants.
+        """
         view = navigate_to(self, 'Details')
         return view.entities.relationships.get_text_of('Cloud Tenants')
 
     @property
     def backups(self):
+        """ number of available backups for volume.
+
+        Returns:
+            :py:class:`int' backup count.
+        """
         view = navigate_to(self, 'Details')
-        return view.entities.relationships.get_text_of('Cloud Volume Backups')
+        return int(view.entities.relationships.get_text_of('Cloud Volume Backups'))
 
 
 @attr.s
@@ -328,7 +343,7 @@ class VolumeCollection(BaseCollection):
                 try:
                     view.entities.get_entity(volume.name).check()
                 except ItemNotFound:
-                    raise VolumeNotFound("Volume {} not found".format(volume.name))
+                    raise VolumeNotFoundError("Volume {} not found".format(volume.name))
 
             view.toolbar.configuration.item_select('Delete selected Cloud Volumes',
                                                    handle_alert=True)
@@ -336,7 +351,7 @@ class VolumeCollection(BaseCollection):
             for volume in volumes:
                 volume.wait_for_disappear()
         else:
-            raise VolumeNotFound('No Cloud Volume for Deletion')
+            raise VolumeNotFoundError('No Cloud Volume for Deletion')
 
 
 @navigator.register(VolumeCollection, 'All')
@@ -361,7 +376,7 @@ class VolumeDetails(CFMENavigateStep):
                                                        surf_pages=True).click()
 
         except ItemNotFound:
-            raise VolumeNotFound('Volume {} not found'.format(self.obj.name))
+            raise VolumeNotFoundError('Volume {} not found'.format(self.obj.name))
 
 
 @navigator.register(VolumeCollection, 'Add')

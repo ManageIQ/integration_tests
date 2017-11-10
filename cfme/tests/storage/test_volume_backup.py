@@ -48,7 +48,7 @@ def backup(appliance, provider):
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 def test_storage_volume_backup_create(backup):
     assert backup.exists
-    assert backup.size == '{} GB'.format(STORAGE_SIZE)
+    assert backup.size == STORAGE_SIZE
 
 
 @pytest.mark.tier(3)
