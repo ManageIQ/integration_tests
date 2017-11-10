@@ -6,11 +6,13 @@ import fauxfactory
 from cfme import test_requirements
 from cfme.utils.appliance import ViaREST
 from cfme.utils.update import update
+from fixtures.pytest_store import store
 
 
 pytestmark = [test_requirements.generic_objects]
 
 
+@pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.9')
 @pytest.mark.parametrize('context', [ViaREST])
 def test_generic_object_definition_crud(appliance, context):
     with appliance.context.use(context):
