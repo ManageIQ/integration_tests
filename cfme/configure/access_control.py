@@ -1227,13 +1227,10 @@ class TenantQuotaView(ConfigurationView):
 
     @property
     def is_displayed(self):
-        if type(self.context['object']) is Tenant:
-            obj_type = 'Tenant'
-        elif type(self.context['object']) is Project:
-            obj_type = 'Project'
+
         return (
             self.form.template_cb.is_displayed and
-            self.title.text == 'Manage quotas for {} "{}"'.format(obj_type,
+            self.title.text == 'Manage quotas for {} "{}"'.format(self.context['object'].obj_type,
                                                                   self.context['object'].name))
 
 
@@ -1258,7 +1255,7 @@ class AddTenantView(View):
     def is_displayed(self):
         return (
             self.accordions.accesscontrol.is_opened and
-            self.title.text == 'Adding a new Tenant'
+            self.title.text == 'Adding a new {}'.format(self.context['object'].obj_type)
         )
 
 
@@ -1274,7 +1271,8 @@ class DetailsTenantView(ConfigurationView):
     def is_displayed(self):
         return (
             self.accordions.accesscontrol.is_opened and
-            self.title.text == 'Tenant "{}"'.format(self.context['object'].name)
+            self.title.text == '{} "{}"'.format(self.context['object'].obj_type,
+                                                self.context['object'].name)
         )
 
 
@@ -1285,7 +1283,8 @@ class ParentDetailsTenantView(DetailsTenantView):
     def is_displayed(self):
         return (
             self.accordions.accesscontrol.is_opened and
-            self.title.text == 'Tenant "{}"'.format(self.context['object'].parent_tenant.name)
+            self.title.text == '{} "{}"'.format(self.context['object'].parent_tenant.obj_type,
+                                                self.context['object'].parent_tenant.name)
         )
 
 
@@ -1297,14 +1296,11 @@ class EditTenantView(View):
 
     @property
     def is_displayed(self):
-        if type(self.context['object']) is Tenant:
-            obj_type = 'Tenant'
-        elif type(self.context['object']) is Project:
-            obj_type = 'Project'
 
         return (
             self.form.accordions.accesscontrol.is_opened and
-            self.form.title.text == 'Editing {} "{}"'.format(obj_type, self.context['object'].name)
+            self.form.title.text == 'Editing {} "{}"'.format(self.context['object'].obj_type,
+                                                             self.context['object'].name)
         )
 
 
@@ -1321,6 +1317,8 @@ class Tenant(Updateable, BaseEntity):
         description: Description of the tenant
         parent_tenant: Parent tenant, can be None, can be passed as string or object
     """
+    obj_type = 'Tenant'
+
     name = attr.ib()
     description = attr.ib(default="")
     parent_tenant = attr.ib(default=None)
@@ -1380,7 +1378,8 @@ class Tenant(Updateable, BaseEntity):
                         'template_txt': kwargs.get('template')})
         view.save_button.click()
         view = self.create_view(DetailsTenantView)
-        view.flash.assert_success_message('Quotas for Tenant "{}" were saved'.format(self.name))
+        view.flash.assert_success_message('Quotas for {} "{}" were saved'.format(
+            self.obj_type, self.name))
         assert view.is_displayed
 
     def __eq__(self, other):
@@ -1507,7 +1506,7 @@ class Project(Tenant):
         description: Description of the project
         parent_tenant: Parent project, can be None, can be passed as string or object
     """
-    pass
+    obj_type = 'Project'
 
 
 class ProjectCollection(TenantCollection):
