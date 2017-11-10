@@ -78,3 +78,9 @@ def delete(self):
     definition.action.delete()
     assert_response(self.appliance)
     self.rest_response = self.appliance.rest_api.response
+
+
+@GenericObjectDefinition.exists.external_getter_implemented_for(ViaREST)
+def exists(self):
+    return bool(
+        self.appliance.rest_api.collections.generic_object_definitions.find_by(name=self.name))
