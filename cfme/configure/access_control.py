@@ -1317,12 +1317,12 @@ class Tenant(Updateable, BaseEntity):
         description: Description of the tenant
         parent_tenant: Parent tenant, can be None, can be passed as string or object
     """
+    obj_type = 'Tenant'
+
     name = attr.ib()
     description = attr.ib(default="")
     parent_tenant = attr.ib(default=None)
     _default = attr.ib(default=False)
-
-    obj_type = 'Tenant'
 
     def update(self, updates):
         """ Update tenant/project method
