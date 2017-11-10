@@ -617,16 +617,29 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
         """ Clear all providers of given class on the appliance """
         from cfme.utils.appliance import current_appliance as app
         app.rest_api.collections.providers.reload()
-        for prov in app.rest_api.collections.providers.all:
-            try:
-                if any([True for db_type in cls.db_types if db_type in prov.type]):
+        # cfme 5.9 doesn't allow to remove provider thru api
+        if app.version < '5.9' or (app.version >= '5.9' and BZ(1501941).blocks):
+            for prov in app.rest_api.collections.providers.all:
+                try:
+                    if any(db_type in prov.type for db_type in cls.db_types):
+                        logger.info('Deleting provider: %s', prov.name)
+                        prov.action.delete()
+                        prov.wait_not_exists()
+                except APIException as ex:
+                    # Provider is already gone (usually caused by NetworkManager objs)
+                    if 'RecordNotFound' not in str(ex):
+                        raise ex
+        else:
+            from cfme.utils.providers import get_crud_by_name
+            all_provs = app.rest_api.collections.providers.all
+            prov_types = {prov.type for prov in all_provs if prov.type in cls.db_types}
+            for prov_type in prov_types:
+                provs = [prov for prov in all_provs if prov.type == prov_type]
+                for prov in provs:
+                    prov_obj = get_crud_by_name(prov.name)
                     logger.info('Deleting provider: %s', prov.name)
-                    prov.action.delete()
-                    prov.wait_not_exists()
-            except APIException as ex:
-                # Provider is already gone (usually caused by NetworkManager objs)
-                if 'RecordNotFound' not in str(ex):
-                    raise ex
+                    prov_obj.delete_if_exists()
+                    prov_obj.wait_for_delete()
         app.rest_api.collections.providers.reload()
 
     def one_of(self, *classes):
