@@ -15,7 +15,7 @@ class LenovoEndpointForm(DefaultEndpointForm):
 class LenovoProvider(PhysicalProvider):
     type_name = 'lenovo'
     endpoints_form = LenovoEndpointForm
-    string_name = "Ems Physical Infras"
+    string_name = 'Physical Infrastructure'
 
     def __init__(self, appliance, name=None, key=None, endpoints=None):
         super(LenovoProvider, self).__init__(
