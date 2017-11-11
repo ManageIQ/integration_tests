@@ -88,6 +88,21 @@ class All(CFMENavigateStep):
         # Reset view and selection
         pass
 
+@navigator.register(PhysicalProvider, 'Details')
+class Details(CFMENavigateStep):
+    VIEW = PhysicalProviderDetailsView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).click()
+
+    def resetter(self):
+        # Reset view and selection
+        if version.current_version() >= '5.7':  # no view selector in 5.6
+            view_selector = self.view.toolbar.view_selector
+            if view_selector.selected != 'Summary View':
+                view_selector.select('Summary View')
+
 
 @navigator.register(PhysicalProvider, 'Details')
 class Details(CFMENavigateStep):
