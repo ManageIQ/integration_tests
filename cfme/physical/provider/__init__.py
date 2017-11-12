@@ -5,6 +5,7 @@ from cfme.base.ui import Server
 from navmazing import NavigateToObject, NavigateToSibling
 
 from cfme.base.ui import BaseLoggedInPage
+from cfme.utils import conf, version
 from cfme.common.provider import BaseProvider
 from cfme.common.provider_views import PhysicalProviderAddView, PhysicalProvidersView, PhysicalProviderDetailsView
 from cfme.utils.appliance import Navigatable
