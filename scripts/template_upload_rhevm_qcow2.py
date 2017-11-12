@@ -36,7 +36,7 @@ def parse_cmd_line():
                         help='stream name: downstream-##z, upstream, upstream_stable, etc',
                         default=None)
     parser.add_argument("--image_url", dest="image_url",
-                        help="URL of ova file to upload", default=None)
+                        help="URL of qcow2 file to upload", default=None)
     parser.add_argument("--template_name", dest="template_name",
                         help="Name of the new template", default=None)
     parser.add_argument("--sdomain", dest="sdomain",
@@ -52,6 +52,8 @@ def parse_cmd_line():
                         help="Interface of second (database) disk", default=None)
     parser.add_argument("--provider", dest="provider",
                         help="Rhevm provider (to look for in cfme_data)", default=None)
+    parser.add_argument("--glance", dest="glance",
+                        help="Glance server to upload images to", default='glance11-server')
     args = parser.parse_args()
     return args
 
@@ -153,8 +155,8 @@ def import_template(api, edomain, sdomain, cluster, temp_template_name, provider
         logger.exception("RHEVM:%r import_template to data domain failed:", provider)
 
 
-def make_vm_from_template(api, cluster, temp_template_name, temp_vm_name, provider,
-                          mgmt_network=None):
+def make_vm_from_template(api, stream, provider, cfme_data, cluster, temp_template_name,
+        temp_vm_name, provider, mgmt_network=None):
     """Makes temporary VM from imported template. This template will be later deleted.
        It's used to add a new disk and to convert back to template.
 
@@ -167,15 +169,19 @@ def make_vm_from_template(api, cluster, temp_template_name, temp_vm_name, provid
         temp_vm_name: temporary vm name to be created.
         provider: provider_key
     """
+    provider_dict = cfme_data['management_systems'][provider]
+    cores = provider_dict[stream]['cpu']
+    sockets = provider_dict[stream]['sockets']
+    cpu = params.CPU(topology=params.CpuTopology(cores=cores, sockets=sockets))
+    vm_memory = provider_dict[stream]['memory'] * 1024 * 1024 * 1024
+
     try:
         if api.vms.get(temp_vm_name) is not None:
             logger.info("RHEVM:%r Warning: found another VM with this name (%r).",
                         provider, temp_vm_name)
             logger.info("RHEVM:%r Skipping this step, attempting to continue...", provider)
             return
-        # TO DO: Get values from the yamls
-        vm_memory = 12 * 1024 * 1024 * 1024
-        cpu = params.CPU(topology=params.CpuTopology(cores=4, sockets=1))
+
         actual_template = api.templates.get(temp_template_name)
         actual_cluster = api.clusters.get(cluster)
         params_vm = params.VM(name=temp_vm_name, template=actual_template, cluster=actual_cluster,
@@ -277,41 +283,6 @@ def templatize_vm(api, template_name, cluster, temp_vm_name, provider):
         logger.exception("RHEVM:%r templatizing temporary VM failed", provider)
 
 
-def cleanup_empty_dir_on_edomain(path, edomainip, sshname, sshpass, provider_ip, provider):
-    """Cleanup all the empty directories on the edomain/edomain_id/master/vms
-    else api calls will result in 400 Error with ovf not found,
-    Args:
-        path: path for vms directory on edomain.
-        edomain: Export domain of chosen RHEVM provider.
-        edomainip: edomainip to connect through ssh.
-        sshname: edomain ssh credentials.
-        sshpass: edomain ssh credentials.
-        provider: provider under execution
-        provider_ip: provider ip address
-    """
-    try:
-        edomain_path = edomainip + ':' + path
-        temp_path = '~/tmp_filemount'
-        command = 'mkdir -p {} &&'.format(temp_path)
-        command += 'mount -O tcp {} {} &&'.format(edomain_path, temp_path)
-        command += 'cd {}/master/vms &&'.format(temp_path)
-        command += 'find . -maxdepth 1 -type d -empty -delete &&'
-        command += 'cd ~ && umount {} &&'.format(temp_path)
-        command += 'rmdir {}'.format(temp_path)
-        logger.info("RHEVM:%r Deleting the empty directories on edomain/vms file...", provider)
-
-        with make_ssh_client(provider_ip, sshname, sshpass) as ssh_client:
-            result = ssh_client.run_command(command)
-        if result.failed:
-            logger.error("RHEVM:%r Error while deleting the empty directories on path: \n %r",
-                provider, str(result))
-        else:
-            logger.info("RHEVM:%r successfully deleted the empty directories on path..", provider)
-    except Exception:
-        logger.exception('RHEVM:%r Exception cleaning up empty dir on edomain', provider)
-        return False
-
-
 def cleanup(api, edomain, ssh_client, ovaname, provider, temp_template_name, temp_vm_name):
     """Cleans up all the mess that the previous functions left behind.
 
@@ -335,22 +306,6 @@ def cleanup(api, edomain, ssh_client, ovaname, provider, temp_template_name, tem
         temporary_template = api.templates.get(temp_template_name)
         if temporary_template:
             temporary_template.delete()
-
-        # waiting for template on export domain
-        unimported_template = api.storagedomains.get(edomain).templates.get(
-            temp_template_name)
-        logger.info("RHEVM:%r waiting for template on export domain...", provider)
-        wait_for(check_edomain_template, [api, edomain, temp_template_name],
-                 fail_condition=False, delay=5, num_sec=600)
-
-        if unimported_template:
-            logger.info("RHEVM:%r deleting the template on export domain...", provider)
-            wait_for(unimported_template.delete, delay=10, num_sec=600, handle_exception=True)
-
-        logger.info("RHEVM:%r waiting for template delete on export domain...", provider)
-        wait_for(is_edomain_template_deleted, [api, temp_template_name, edomain],
-                 fail_condition=False, delay=5, num_sec=600)
-        logger.info("RHEVM:%r successfully deleted template on export domain...", provider)
 
     except Exception:
         logger.exception("RHEVM:%r Exception occurred in cleanup method:", provider)
@@ -524,12 +479,12 @@ def upload_template(rhevip, sshname, sshpass, username, password,
             logger.info("RHEVM:%r The script will now end.", provider)
             return True
         try:
-            logger.info("RHEVM:%r Importing new template to data domain", provider)
-            import_template_glance(api, kwargs.get('edomain'), kwargs.get('sdomain'),
-                kwargs.get('cluster'), temp_template_name, provider)
+            # logger.info("RHEVM:%r Importing new template to data domain", provider)
+            # import_template_glance(api, kwargs.get('edomain'), kwargs.get('sdomain'),
+            #    kwargs.get('cluster'), temp_template_name, provider)
             logger.info("RHEVM:%r Making a temporary VM from new template", provider)
-            make_vm_from_template(api, kwargs.get('cluster'), temp_template_name, temp_vm_name,
-                provider, mgmt_network=kwargs.get('mgmt_network'))
+            make_vm_from_template(api, stream, provider, kwargs.get('cluster'), temp_template_name,
+                temp_vm_name, provider, mgmt_network=kwargs.get('mgmt_network'))
 
             logger.info("RHEVM:%r Adding disk to created VM", provider)
             add_disk_to_vm(api, kwargs.get('sdomain'), kwargs.get('disk_size'),
