@@ -15,6 +15,7 @@ def test_topology_search(provider, appliance):
     '''Testing search functionality in Topology view '''
     top_collection = TopologyCollection(appliance)
     topology_object = top_collection.instantiate()
+    topology_object.refresh
     topology_object.display_names.enable(True)
 
     wait_for(lambda: len(topology_object.elements) > 0,
@@ -42,6 +43,7 @@ def test_topology_toggle_display(provider, appliance):
     '''Testing display functionality in Topology view'''
     top_collection = TopologyCollection(appliance)
     topology_object = top_collection.instantiate()
+    topology_object.refresh
     for legend in topology_object.legends_obj:
         for state in (True, False):
             legend.set_active(state)

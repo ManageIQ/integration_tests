@@ -1,5 +1,5 @@
-import re
 import attr
+import re
 
 from navmazing import NavigateToAttribute
 
@@ -184,6 +184,12 @@ class Topology(BaseEntity):
         self.display_names = TopologyDisplayNames(self.appliance, element)
 
     @property
+    def refresh(self):
+        self.view = navigate_to(self, 'All')
+        self.reload_elements_and_lines()
+        self.reload_legends()
+
+    @property
     def movement_stopped(self):
         element = self.elements_col.filter(self)[-1]
         if element.x == self.element_ref.x and element.y == self.element_ref.y:
@@ -214,9 +220,6 @@ class TopologyCollection(BaseCollection):
         topology.elements_col = TopologyElementCollection(topology)
         topology.lines_col = TopologyLineCollection(topology)
         topology.legends_col = TopologyLegendCollection(topology)
-        topology.view = navigate_to(topology, 'All')
-        topology.reload_elements_and_lines()
-        topology.reload_legends()
         return topology
 
 
