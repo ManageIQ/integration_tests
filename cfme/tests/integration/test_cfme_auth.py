@@ -2,7 +2,7 @@
 import pytest
 
 from cfme.base.credential import Credential
-from cfme.configure.access_control import Group, User
+from cfme.configure.access_control import User
 from cfme.utils.conf import cfme_data
 
 
@@ -28,23 +28,28 @@ def data(request, auth_mode, add_group):
 
 
 @pytest.fixture()
-def group(request, data, auth_mode, add_group):
+def group(request, data, auth_mode, add_group, appliance):
     if not data:
         pytest.skip("No data spcified for user group")
     credentials = Credential(
         principal=data["username"],
         secret=data["password"],
     )
-    user_group = Group(description=data['group_name'], role="EvmRole-user",
-                       user_to_lookup=data["username"], ldap_credentials=credentials)
+    group_collection = appliance.collections.rbac_groups
+    user_group = None
     if add_group == RETRIEVE_GROUP:
+        user_group = group_collection.instantiate(
+            description=data['group_name'], role="EvmRole-user",
+            user_to_lookup=data["username"], ldap_credentials=credentials)
         if 'ext' in auth_mode:
             user_group.add_group_from_ext_auth_lookup()
         elif 'miq' in auth_mode:
             user_group.add_group_from_ldap_lookup()
         request.addfinalizer(user_group.delete)
     elif add_group == CREATE_GROUP:
-        user_group.create()
+        user_group = group_collection.create(
+            description=data['group_name'], role="EvmRole-user",
+            user_to_lookup=data["username"], ldap_credentials=credentials)
         request.addfinalizer(user_group.delete)
 
 

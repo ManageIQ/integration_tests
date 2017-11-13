@@ -1,4 +1,5 @@
 import attr
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import (
     UpDownSelect, PaginationPane, SummaryFormItem, Table, BaseListEntity)
@@ -10,9 +11,9 @@ from widgetastic.widget import Checkbox, View, Text
 
 from cfme.base.credential import Credential
 from cfme.base.ui import ConfigurationView
-from cfme.exceptions import OptionNotAvailable, RBACOperationBlocked
-from cfme.utils.appliance import Navigatable
+from cfme.exceptions import RBACOperationBlocked
 from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
@@ -172,7 +173,7 @@ class User(Updateable, Pretty, Navigatable):
                 for currently selected role
         """
         if self.appliance.version < "5.8":
-            user_blocked_msg = ("Userid has already been taken")
+            user_blocked_msg = "Userid has already been taken"
         else:
             user_blocked_msg = ("Userid is not unique within region {}".format(
                 self.appliance.server_region()))
@@ -556,10 +557,11 @@ class GroupEditTagsView(ConfigurationView):
         )
 
 
-class Group(Updateable, Pretty, Navigatable):
+@attr.s
+class Group(BaseEntity):
     """Represents a group in CFME UI
 
-    Args:
+    Properties:
         description: group description
         role: group role
         tenant: group tenant
@@ -572,61 +574,14 @@ class Group(Updateable, Pretty, Navigatable):
     """
     pretty_attrs = ['description', 'role']
 
-    def __init__(self, description=None, role=None, tenant="My Company", user_to_lookup=None,
-                 ldap_credentials=None, tag=None, host_cluster=None, vm_template=None,
-                 appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.description = description
-        self.role = role
-        self.tenant = tenant
-        self.ldap_credentials = ldap_credentials
-        self.user_to_lookup = user_to_lookup
-        self.tag = tag
-        self.host_cluster = host_cluster
-        self.vm_template = vm_template
-
-    def create(self, cancel=False):
-        """ Create group method
-
-        Args:
-            cancel: True - if you want to cancel group creation,
-                    by default group will be created
-        Throws:
-            RBACOperationBlocked: If operation is blocked due to current user
-                not having appropriate permissions OR delete is not allowed
-                for currently selected user
-        """
-        if self.appliance.version < "5.8":
-            flash_blocked_msg = ("Description has already been taken")
-        else:
-            flash_blocked_msg = "Description is not unique within region {}".format(
-                self.appliance.server_region())
-
-        view = navigate_to(self, 'Add')
-        view.fill({
-            'description_txt': self.description,
-            'role_select': self.role,
-            'group_tenant': self.tenant
-        })
-        self._set_group_restriction(view.my_company_tags, self.tag)
-        self._set_group_restriction(view.hosts_and_clusters, self.host_cluster)
-        self._set_group_restriction(view.vms_and_templates, self.vm_template)
-        if cancel:
-            view.cancel_button.click()
-            flash_message = 'Add of new Group was cancelled by the user'
-        else:
-            view.add_button.click()
-            flash_message = 'Group "{}" was saved'.format(self.description)
-        view = self.create_view(AllGroupView)
-
-        try:
-            view.flash.assert_message(flash_blocked_msg)
-            raise RBACOperationBlocked(flash_blocked_msg)
-        except AssertionError:
-            pass
-
-        view.flash.assert_success_message(flash_message)
-        assert view.is_displayed
+    description = attr.ib(default=None)
+    role = attr.ib(default=None)
+    tenant = attr.ib(default="My Company")
+    ldap_credentials = attr.ib(default=None)
+    user_to_lookup = attr.ib(default=None)
+    tag = attr.ib(default=None)
+    host_cluster = attr.ib(default=None)
+    vm_template = attr.ib(default=None)
 
     def _retrieve_ldap_user_groups(self):
         """ Retrive ldap user groups
@@ -799,7 +754,7 @@ class Group(Updateable, Pretty, Navigatable):
         """
         name_column = "Name"
         find_row_kwargs = {name_column: self.description}
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.parent, 'All')
         row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
         original_sequence = row.sequence.text
 
@@ -845,7 +800,7 @@ class Group(Updateable, Pretty, Navigatable):
 
     @property
     def group_order(self):
-        view = navigate_to(Group, 'EditGroupSequence')
+        view = navigate_to(self, 'EditGroupSequence')
         return view.group_order_selector.items
 
     @property
@@ -857,7 +812,76 @@ class Group(Updateable, Pretty, Navigatable):
             return False
 
 
-@navigator.register(Group, 'All')
+@attr.s
+class GroupCollection(BaseCollection):
+    """ Collection object for the :py:class: `cfme.configure.access_control.Group`. """
+    ENTITY = Group
+
+    def create(self, description=None, role=None, tenant="My Company", ldap_credentials=None,
+            user_to_lookup=None, tag=None, host_cluster=None, vm_template=None, cancel=False):
+        """ Create group method
+
+        Args:
+            description: group description
+            role: group role
+            tenant: group tenant
+            user_to_lookup: ldap user to lookup
+            ldap_credentials: ldap user credentials
+            tag: tag for group restriction
+            host_cluster: host/cluster for group restriction
+            vm_template: vm/template for group restriction
+            appliance: appliance under test
+            cancel: True - if you want to cancel group creation,
+                    by default group will be created
+        Throws:
+            RBACOperationBlocked: If operation is blocked due to current user
+                not having appropriate permissions OR delete is not allowed
+                for currently selected user
+        """
+        if self.appliance.version < "5.8":
+            flash_blocked_msg = ("Description has already been taken")
+        else:
+            flash_blocked_msg = "Description is not unique within region {}".format(
+                self.appliance.server_region())
+
+        view = navigate_to(self, 'Add')
+
+        group = self.instantiate(
+            description=description, role=role, tenant=tenant, ldap_credentials=ldap_credentials,
+            user_to_lookup=user_to_lookup, tag=tag, host_cluster=host_cluster,
+            vm_template=vm_template)
+
+        view.fill({
+            'description_txt': group.description,
+            'role_select': group.role,
+            'group_tenant': group.tenant
+        })
+
+        group._set_group_restriction(view.my_company_tags, group.tag)
+        group._set_group_restriction(view.hosts_and_clusters, group.host_cluster)
+        group._set_group_restriction(view.vms_and_templates, group.vm_template)
+
+        if cancel:
+            view.cancel_button.click()
+            flash_message = 'Add of new Group was cancelled by the user'
+        else:
+            view.add_button.click()
+            flash_message = 'Group "{}" was saved'.format(group.description)
+        view = self.create_view(AllGroupView)
+
+        try:
+            view.flash.assert_message(flash_blocked_msg)
+            raise RBACOperationBlocked(flash_blocked_msg)
+        except AssertionError:
+            pass
+
+        view.flash.assert_success_message(flash_message)
+        assert view.is_displayed
+
+        return group
+
+
+@navigator.register(GroupCollection, 'All')
 class GroupAll(CFMENavigateStep):
     VIEW = AllGroupView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
@@ -867,7 +891,7 @@ class GroupAll(CFMENavigateStep):
             self.obj.appliance.server_region_string(), 'Groups')
 
 
-@navigator.register(Group, 'Add')
+@navigator.register(GroupCollection, 'Add')
 class GroupAdd(CFMENavigateStep):
     VIEW = AddGroupView
     prerequisite = NavigateToSibling('All')
@@ -879,7 +903,7 @@ class GroupAdd(CFMENavigateStep):
 @navigator.register(Group, 'EditGroupSequence')
 class EditGroupSequence(CFMENavigateStep):
     VIEW = EditGroupSequenceView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select(
@@ -889,7 +913,7 @@ class EditGroupSequence(CFMENavigateStep):
 @navigator.register(Group, 'Details')
 class GroupDetails(CFMENavigateStep):
     VIEW = DetailsGroupView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(

@@ -34,9 +34,10 @@ def role_only_user_owned(appliance):
 
 @pytest.yield_fixture(scope="module")
 def group_only_user_owned(appliance, role_only_user_owned):
-    group = ac.Group(description='group_only_user_owned_' + fauxfactory.gen_alphanumeric(),
-                     role=role_only_user_owned.name)
-    group.create()
+    group_collection = appliance.collections.rbac_groups
+    group = group_collection.create(
+        description='group_only_user_owned_{}'.format(fauxfactory.gen_alphanumeric()),
+        role=role_only_user_owned.name)
     yield group
     appliance.server.login_admin()
     group.delete()
@@ -55,9 +56,10 @@ def role_user_or_group_owned(appliance):
 
 @pytest.yield_fixture(scope="module")
 def group_user_or_group_owned(appliance, role_user_or_group_owned):
-    group = ac.Group(description='group_user_or_group_owned_' + fauxfactory.gen_alphanumeric(),
-                     role=role_user_or_group_owned.name)
-    group.create()
+    group_collection = appliance.collections.rbac_groups
+    group = group_collection.create(
+        description='group_user_or_group_owned_{}'.format(fauxfactory.gen_alphanumeric()),
+        role=role_user_or_group_owned.name)
     yield group
     appliance.server.login_admin()
     group.delete()
