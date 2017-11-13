@@ -209,7 +209,7 @@ class VolumeBackupCollection(BaseCollection):
         if view.entities.get_all():
             for backup in backups:
                 try:
-                    view.entities.get_entity(backup.name).check()
+                    view.entities.get_entity(name=backup.name).check()
                 except ItemNotFound:
                     raise BackupNotFoundError("Volume backup {} not found".format(backup.name))
 
@@ -245,7 +245,7 @@ class Details(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         try:
-            self.prerequisite_view.entities.get_entity(by_name=self.obj.name,
+            self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                        surf_pages=True).click()
         except ItemNotFound:
             raise BackupNotFoundError('Could not locate volume backup {}'.format(self.obj.name))
