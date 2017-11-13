@@ -1,4 +1,5 @@
 import attr
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import (
     UpDownSelect, PaginationPane, SummaryFormItem, Table, BaseListEntity)
@@ -11,8 +12,8 @@ from widgetastic.widget import Checkbox, View, Text
 from cfme.base.credential import Credential
 from cfme.base.ui import ConfigurationView
 from cfme.exceptions import OptionNotAvailable, RBACOperationBlocked
-from cfme.utils.appliance import Navigatable
 from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
@@ -986,10 +987,11 @@ class AllRolesView(ConfigurationView):
         )
 
 
-class Role(Updateable, Pretty, Navigatable):
+@attr.s
+class Role(BaseEntity):
     """ Represents a role in CFME UI
 
-    Args:
+    Properties:
         name: role name
         vm_restriction: restriction used for role
         product_features: product feature to select
@@ -998,45 +1000,9 @@ class Role(Updateable, Pretty, Navigatable):
 
     pretty_attrs = ['name', 'product_features']
 
-    def __init__(self, name=None, vm_restriction=None, product_features=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.vm_restriction = vm_restriction
-        self.product_features = product_features or []
-
-    def create(self, cancel=False):
-        """ Create role method
-            Args:
-                cancel: True - if you want to cancel role creation,
-                        by default, role will be created
-        Throws:
-            RBACOperationBlocked: If operation is blocked due to current user
-                not having appropriate permissions OR update is not allowed
-                for currently selected role
-        """
-        flash_blocked_msg = "Name has already been taken"
-
-        view = navigate_to(self, 'Add')
-        view.fill({'name_txt': self.name,
-                   'vm_restriction_select': self.vm_restriction})
-        self.set_role_product_features(view, self.product_features)
-        if cancel:
-            view.cancel_button.click()
-            flash_message = 'Add of new Role was cancelled by the user'
-        else:
-            view.add_button.click()
-            flash_message = 'Role "{}" was saved'.format(self.name)
-        view = self.create_view(AllRolesView)
-
-        try:
-            view.flash.assert_message(flash_blocked_msg)
-            raise RBACOperationBlocked(flash_blocked_msg)
-        except AssertionError:
-            pass
-
-        view.flash.assert_success_message(flash_message)
-
-        assert view.is_displayed
+    name = attr.ib(default=None)
+    vm_restriction = attr.ib(default=None)
+    product_features = attr.ib(default=[])
 
     def update(self, updates):
         """ Update role method
@@ -1125,7 +1091,9 @@ class Role(Updateable, Pretty, Navigatable):
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Copy this Role to a new Role')
         view = self.create_view(AddRoleView)
-        new_role = Role(name=name)
+
+        new_role = self.parent.instantiate(name=name)
+
         view.fill({'name_txt': new_role.name})
         view.add_button.click()
         view = self.create_view(AllRolesView)
@@ -1151,7 +1119,60 @@ class Role(Updateable, Pretty, Navigatable):
         return feature_update
 
 
-@navigator.register(Role, 'All')
+@attr.s
+class RoleCollection(BaseCollection):
+    ENTITY = Role
+
+    def create(
+            self,
+            name=None, vm_restriction=None, product_features=None, cancel=False):
+        """ Create role method
+            Args:
+                name: role name
+                vm_restriction: restriction used for role
+                product_features: product feature to select
+                appliance: appliance unter test
+                cancel: True - if you want to cancel role creation,
+                        by default, role will be created
+        Throws:
+            RBACOperationBlocked: If operation is blocked due to current user
+                not having appropriate permissions OR update is not allowed
+                for currently selected role
+        """
+        flash_blocked_msg = "Name has already been taken"
+
+        view = navigate_to(self, 'Add')
+
+        role = self.instantiate(
+            name=name,
+            vm_restriction=vm_restriction,
+            product_features=product_features)
+
+        view.fill({'name_txt': role.name,
+                   'vm_restriction_select': role.vm_restriction})
+        role.set_role_product_features(view, role.product_features)
+        if cancel:
+            view.cancel_button.click()
+            flash_message = 'Add of new Role was cancelled by the user'
+        else:
+            view.add_button.click()
+            flash_message = 'Role "{}" was saved'.format(role.name)
+        view = self.create_view(AllRolesView)
+
+        try:
+            view.flash.assert_message(flash_blocked_msg)
+            raise RBACOperationBlocked(flash_blocked_msg)
+        except AssertionError:
+            pass
+
+        view.flash.assert_success_message(flash_message)
+
+        assert view.is_displayed
+
+        return role
+
+
+@navigator.register(RoleCollection, 'All')
 class RoleAll(CFMENavigateStep):
     VIEW = AllRolesView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
@@ -1161,7 +1182,7 @@ class RoleAll(CFMENavigateStep):
             self.obj.appliance.server_region_string(), 'Roles')
 
 
-@navigator.register(Role, 'Add')
+@navigator.register(RoleCollection, 'Add')
 class RoleAdd(CFMENavigateStep):
     VIEW = AddRoleView
     prerequisite = NavigateToSibling('All')
@@ -1173,7 +1194,7 @@ class RoleAdd(CFMENavigateStep):
 @navigator.register(Role, 'Details')
 class RoleDetails(CFMENavigateStep):
     VIEW = DetailsRoleView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(

@@ -2,7 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme.base.credential import Credential
-from cfme.configure.access_control import Group, Role, User
+from cfme.configure.access_control import Group, User
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.web_ui import mixins
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -38,14 +38,14 @@ def tag(category):
 
 
 @pytest.yield_fixture(scope="module")
-def role():
+def role(appliance):
     """
         Returns role object used in test module
     """
-    role = Role(
+    role_collection = appliance.collections.rbac_roles
+    role = role_collection.create(
         name='role{}'.format(fauxfactory.gen_alphanumeric()),
         vm_restriction='None')
-    role.create()
     yield role
     role.delete()
 
