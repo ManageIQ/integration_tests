@@ -3,7 +3,7 @@ from collections import Iterable
 
 from manageiq_client.api import APIException
 from widgetastic.widget import View, Text
-from widgetastic_patternfly import Input, Button
+from widgetastic_patternfly import Input, Button, DropdownItemDisabled
 
 from cfme.base.credential import (
     Credential, EventsCredential, TokenCredential, SSHCredential, CANDUCredential)
@@ -23,11 +23,13 @@ from cfme.utils.wait import wait_for, RefreshTimer
 from . import PolicyProfileAssignable, SummaryMixin
 
 
+# TODO: Move to collection when it happens
 def base_types():
     from pkg_resources import iter_entry_points
     return {ep.name: ep.resolve() for ep in iter_entry_points('manageiq.provider_categories')}
 
 
+# TODO: Move to collection when it happens
 def provider_types(category):
     from pkg_resources import iter_entry_points
     return {
@@ -36,11 +38,17 @@ def provider_types(category):
     }
 
 
+# TODO: Move to collection when it happens
 def all_types():
     all_types = base_types()
     for category in all_types.keys():
         all_types.update(provider_types(category))
     return all_types
+
+
+# TODO: Move to collection when it happens
+def provider_db_mapping():
+    return {v.db_types[0]: v for k, v in all_types().items()}
 
 
 class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
@@ -618,7 +626,8 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
         from cfme.utils.appliance import current_appliance as app
         app.rest_api.collections.providers.reload()
         # cfme 5.9 doesn't allow to remove provider thru api
-        if app.version < '5.9' or (app.version >= '5.9' and BZ(1501941).blocks):
+        bz_blocked = BZ(1501941, forced_streams=['5.9']).blocks
+        if app.version < '5.9' or (app.version >= '5.9' and not bz_blocked):
             for prov in app.rest_api.collections.providers.all:
                 try:
                     if any(db_type in prov.type for db_type in cls.db_types):
@@ -630,16 +639,27 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
                     if 'RecordNotFound' not in str(ex):
                         raise ex
         else:
-            from cfme.utils.providers import get_crud_by_name
+            db_map = provider_db_mapping()
             all_provs = app.rest_api.collections.providers.all
-            prov_types = {prov.type for prov in all_provs if prov.type in cls.db_types}
-            for prov_type in prov_types:
-                provs = [prov for prov in all_provs if prov.type == prov_type]
-                for prov in provs:
-                    prov_obj = get_crud_by_name(prov.name)
-                    logger.info('Deleting provider: %s', prov.name)
-                    prov_obj.delete_if_exists()
-                    prov_obj.wait_for_delete()
+            pages = set()
+            for prov in all_provs:
+                prov_cat_class = db_map.get(prov.type.replace('ManageIQ::Providers::', ''))
+                if prov_cat_class:
+                    pages.add(all_types()[prov_cat_class.category])
+            for page in pages:
+                logger.debug('Deleteing all providers for category [{}]'.format(page.string_name))
+                view = navigate_to(page, 'All')
+                view.browser.refresh()
+                try:
+                    view.paginator.check_all()
+                    view.toolbar.configuration.item_select(
+                        'Remove {} Providers from Inventory'.format(page.string_name),
+                        handle_alert=True
+                    )
+                except DropdownItemDisabled:
+                    logger.debug('No providers to delete')
+            for prov in app.rest_api.collections.providers.all:
+                prov.wait_not_exists(num_sec=300)
         app.rest_api.collections.providers.reload()
 
     def one_of(self, *classes):
