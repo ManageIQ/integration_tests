@@ -88,6 +88,7 @@ class All(CFMENavigateStep):
         # Reset view and selection
         pass
 
+
 @navigator.register(PhysicalProvider, 'Details')
 class Details(CFMENavigateStep):
     VIEW = PhysicalProviderDetailsView
@@ -98,10 +99,16 @@ class Details(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        if version.current_version() >= '5.7':  # no view selector in 5.6
-            view_selector = self.view.toolbar.view_selector
-            if view_selector.selected != 'Summary View':
-                view_selector.select('Summary View')
+        pass
+
+
+@navigator.register(PhysicalProvider, 'Edit')
+class Edit(CFMENavigateStep):
+    VIEW = PhysicalProviderEditView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this Infrastructure Provider')
 
 
 @navigator.register(PhysicalProvider, 'Details')
