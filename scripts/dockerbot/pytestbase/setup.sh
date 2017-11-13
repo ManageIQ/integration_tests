@@ -22,7 +22,7 @@ on_exit () {
     log "Checking out master branch..."
     git checkout origin/master
     log "Running pip update..."
-    run_pip_update
+    (run_pip_update)  # subshell to avoid exit in failure
     log "#*"
     if [ -n "$POST_TASK" ]; then
         [ $RES -eq 0 ] || [ $RES -eq 5 ] && OUT_RESULT="passed" || OUT_RESULT="failed"
