@@ -101,8 +101,8 @@ class Region(Navigatable, sentaku.modeling.ElementMixin):
             self.appliance.product_name, self.number, self.number)
 
     @property
-    def diagnostic_replication(self):
-        from cfme.configure.configuration.diagnostics_settings import Replication
+    def replication(self):
+        from cfme.configure.configuration.region_settings import Replication
         replication = Replication(self.appliance)
         return replication
 
