@@ -146,4 +146,4 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute("appliance.server", "AnsiblePlaybooks")
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).click()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()

@@ -165,7 +165,7 @@ def test_delete_instance(new_instance):
     assert new_instance.name not in new_instance.provider.mgmt.list_vm()
     view = navigate_to(new_instance, 'AllForProvider')
     try:
-        view.entities.get_entity(new_instance.name, surf_pages=True)
+        view.entities.get_entity(name=new_instance.name, surf_pages=True)
         assert False, "entity still exists"
     except ItemNotFound:
         pass

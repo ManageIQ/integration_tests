@@ -216,7 +216,7 @@ class Cluster(Pretty, BaseEntity, WidgetasticTaggable):
     def exists(self):
         view = navigate_to(self.parent, 'All')
         try:
-            view.entities.get_entity(by_name=self.name, surf_pages=True)
+            view.entities.get_entity(name=self.name, surf_pages=True)
             return True
         except ItemNotFound:
             return False
@@ -299,10 +299,10 @@ class Details(CFMENavigateStep):
         """Navigate to the correct view"""
         # todo: figure out why the same cfme version shows clusters with short and long name
         try:
-            entity = self.prerequisite_view.entities.get_entity(by_name=self.obj.short_name,
+            entity = self.prerequisite_view.entities.get_entity(name=self.obj.short_name,
                                                                 surf_pages=True)
         except ItemNotFound:
-            entity = self.prerequisite_view.entities.get_entity(by_name=self.obj.name,
+            entity = self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                                 surf_pages=True)
         entity.click()
 

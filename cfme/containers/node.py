@@ -14,8 +14,7 @@ from widgetastic_manageiq import Button, Text, TimelinesView
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.containers.provider import (ContainersProvider, Labelable,
-    ContainerObjectAllBaseView, LoggingableView, ContainerObjectDetailsBaseView,
-    click_row)
+    ContainerObjectAllBaseView, LoggingableView, ContainerObjectDetailsBaseView)
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import (CFMENavigateStep, navigator,
                                                      navigate_to)
@@ -136,8 +135,8 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
-        click_row(self.prerequisite_view,
-                  name=self.obj.name, provider=self.obj.provider.name)
+        self.prerequisite_view.entities.get_entity(name=self.obj.name,
+                                                   provider=self.obj.provider.name).click()
 
 
 @navigator.register(Node, 'EditTags')

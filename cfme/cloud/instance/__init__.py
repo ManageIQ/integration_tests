@@ -279,7 +279,7 @@ class Instance(VM, Navigatable):
         view.toolbar.view_selector.select('Grid View')
 
         try:
-            return view.entities.get_entity(by_name=self.name, surf_pages=True)
+            return view.entities.get_entity(name=self.name, surf_pages=True)
         except ItemNotFound:
             raise InstanceNotFound("Instance '{}' not found in UI!".format(self.name))
 
@@ -308,7 +308,7 @@ class Instance(VM, Navigatable):
             view = navigate_to(self, 'AllForProvider')
             view.toolbar.view_selector.select('List View')
             try:
-                row = view.entities.get_entity(by_name=self.name)
+                row = view.entities.get_entity(name=self.name)
             except ItemNotFound:
                 raise InstanceNotFound('Failed to find instance in table: {}'.format(self.name))
             row.check()
@@ -420,7 +420,7 @@ class Details(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
-            row = self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True)
+            row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
         except ItemNotFound:
             raise InstanceNotFound('Failed to locate instance with name "{}"'.format(self.obj.name))
         row.click()

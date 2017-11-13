@@ -84,7 +84,7 @@ class Details(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
-            entity = self.prerequisite_view.entities.get_entity(by_name=self.obj.name)
+            entity = self.prerequisite_view.entities.get_entity(name=self.obj.name)
         except NoSuchElementException:
             raise MiddlewareProviderNotFound(
                 "Middleware Provider '{}' not found in table".format(self.obj.name))
@@ -97,7 +97,7 @@ class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(by_name=self.obj.name).check()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name).check()
         self.prerequisite_view.toolbar.configuration \
             .item_select('Edit Selected Middleware Providers')
 
@@ -117,7 +117,7 @@ class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(by_name=self.obj.name).check()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name).check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 

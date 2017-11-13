@@ -10,7 +10,7 @@ from widgetastic.widget import View
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
-    ContainerObjectDetailsBaseView, click_row, ContainerObjectDetailsEntities)
+    ContainerObjectDetailsBaseView, ContainerObjectDetailsEntities)
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
@@ -73,8 +73,8 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        click_row(self.prerequisite_view,
-                  name=self.obj.name, project_name=self.obj.project_name)
+        self.prerequisite_view.entities.get_entity(name=self.obj.name,
+                                                   project_name=self.obj.project_name).click()
 
 
 @navigator.register(Pod, 'EditTags')

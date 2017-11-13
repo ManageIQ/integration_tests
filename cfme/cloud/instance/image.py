@@ -173,7 +173,7 @@ class ImageDetails(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
-            row = self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True)
+            row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
         except ItemNotFound:
             raise ImageNotFound('Failed to locate image with name "{}"'.format(self.obj.name))
         row.click()

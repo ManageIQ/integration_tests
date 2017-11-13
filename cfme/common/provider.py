@@ -422,7 +422,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
         """Clicks on Refresh relationships button in provider"""
         if from_list_view:
             view = navigate_to(self, 'All')
-            entity = view.entities.get_entity(self.name, surf_pages=True)
+            entity = view.entities.get_entity(name=self.name, surf_pages=True)
             entity.check()
 
         else:
@@ -511,7 +511,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
 
         def is_entity_present():
             try:
-                view.entities.get_entity(self.name, surf_pages=True)
+                view.entities.get_entity(name=self.name, surf_pages=True)
                 return True
             except ItemNotFound:
                 return False

@@ -7,7 +7,7 @@ from wrapanapi.containers.image_registry import ImageRegistry as ApiImageRegistr
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.containers.provider import (navigate_and_get_rows, ContainerObjectAllBaseView,
-                                      ContainerObjectDetailsBaseView, click_row)
+                                      ContainerObjectDetailsBaseView)
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 
@@ -70,7 +70,7 @@ class ImageRegistryDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        click_row(self.prerequisite_view, host=self.obj.host)
+        self.prerequisite_view.entities.get_entity(host=self.obj.host).click()
 
 
 @navigator.register(ImageRegistry, 'EditTags')
