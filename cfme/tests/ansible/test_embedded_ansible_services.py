@@ -3,7 +3,10 @@ import fauxfactory
 import json
 import pytest
 
+from widgetastic_patternfly import BootstrapSelect
+
 from cfme import test_requirements
+from cfme.automate.buttons import Button, ButtonGroup
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogBundle
@@ -123,6 +126,27 @@ def service(appliance, ansible_catalog_item):
 
     if service_.exists:
         service_.delete()
+
+
+@pytest.yield_fixture
+def custom_service_button(ansible_catalog_item):
+    buttongroup = ButtonGroup(
+        text=fauxfactory.gen_alphanumeric(),
+        hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()))
+    buttongroup.type = buttongroup.SERVICE
+    buttongroup.create()
+    button = Button(
+        group=buttongroup,
+        text=fauxfactory.gen_alphanumeric(),
+        hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
+        dialog=ansible_catalog_item.provisioning["provisioning_dialog_name"],
+        system="Request",
+        request="Order_Ansible_Playbook"
+    )
+    button.create()
+    yield button
+    button.delete_if_exists()
+    buttongroup.delete_if_exists()
 
 
 @pytest.mark.tier(1)
@@ -315,3 +339,20 @@ def test_service_ansible_execution_ttl(request, service_catalog, ansible_catalog
     service_request.wait_for_request(method="ui", num_sec=200 * 60, delay=120)
     view = navigate_to(service, "Details")
     assert view.provisioning.results.get_text_of("Status") == "successful"
+
+
+@pytest.mark.tier(3)
+def test_custom_button_ansible_credential_list(custom_service_button, service_catalog, service,
+        service_request, appliance):
+    """Test if credential list matches when the Ansible Playbook Service Dialog is invoked from a
+    Button versus a Service Order Screen.
+    https://bugzilla.redhat.com/show_bug.cgi?id=1448918
+    """
+    service_catalog.order()
+    service_request.wait_for_request()
+    view = navigate_to(service, "Details")
+    view.toolbar.custom_button(custom_service_button.group.text).item_select(
+        custom_service_button.text)
+    credentials_dropdown = BootstrapSelect(appliance.browser.widgetastic, id="credential")
+    all_options = [option.text for option in credentials_dropdown.all_options]
+    assert ["<Default>", "CFME Default Credential"] == all_options
