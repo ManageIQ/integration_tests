@@ -31,13 +31,14 @@ def test_duplicate_name_error_validation(collection_init):
     """
     Tests a System Image for duplicate name.
     """
+    name = fauxfactory.gen_alphanumeric(8)
     collection = collection_init
     sys_image_type = collection.create(
-        name=fauxfactory.gen_alphanumeric(8),
+        name=name,
         provision_type=SystemImageType.VM_OR_INSTANCE)
     with error.expected('Name has already been taken'):
         collection.create(
-            name=fauxfactory.gen_alphanumeric(8),
+            name=name,
             provision_type=SystemImageType.VM_OR_INSTANCE)
     sys_image_type.delete(cancel=False)
 
