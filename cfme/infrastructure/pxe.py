@@ -648,10 +648,6 @@ class SystemImageType(Updateable, Pretty, BaseEntity):
     VM_OR_INSTANCE = "VM and Instance"
     HOST_OR_NODE = "Host / Node"
 
-    # def __init__(self, name=None, provision_type=None, appliance=None):
-    #     Navigatable.__init__(self, appliance=appliance)
-    #     self.name = name
-    #     self.provision_type = provision_type
     name = attr.ib(default=None)
     provision_type = attr.ib(default=None)
 
@@ -712,13 +708,13 @@ class SystemImageTypeCollection(BaseCollection):
 
         view = navigate_to(self, 'Add')
         view.fill({'name': name, 'type': provision_type})
-        main_view = self.create_view(PXESystemImageTypesView)
         if cancel:
             view.cancel.click()
             msg = 'Add of new System Image Type was cancelled by the user'
         else:
             view.add.click()
             msg = 'System Image Type "{}" was added'.format(name)
+        main_view = self.create_view(PXESystemImageTypesView)
         main_view.flash.assert_success_message(msg)
         return system_image_type
 
