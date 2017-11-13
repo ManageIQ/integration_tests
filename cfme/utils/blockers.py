@@ -157,7 +157,10 @@ class BZ(Blocker):
     @classproperty
     def bugzilla(cls):
         if not hasattr(cls, "_bugzilla"):
-            cls._bugzilla = Bugzilla.from_config()
+            try:
+                cls._bugzilla = Bugzilla.from_config()
+            except KeyError:
+                return None
         return cls._bugzilla
 
     def __init__(self, bug_id, **kwargs):
