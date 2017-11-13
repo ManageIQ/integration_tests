@@ -594,7 +594,6 @@ class PXESystemImageTypesView(PXEMainView):
     """
     represents whole All System Image Types page
     """
-    table = Table('records_div')
 
     @property
     def is_displayed(self):

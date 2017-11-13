@@ -10,15 +10,14 @@ pytestmark = [pytest.mark.tier(3)]
 
 
 @pytest.fixture(scope="module")
-def collection_init(appliance):
+def collection(appliance):
     return appliance.collections.system_image_type
 
 
-def test_system_image_type_crud(collection_init):
+def test_system_image_type_crud(collection):
     """
     Tests a System Image Type using CRUD operations.
     """
-    collection = collection_init
     sys_image_type = collection.create(
         name=fauxfactory.gen_alphanumeric(8),
         provision_type=SystemImageType.VM_OR_INSTANCE)
@@ -27,12 +26,11 @@ def test_system_image_type_crud(collection_init):
     sys_image_type.delete(cancel=False)
 
 
-def test_duplicate_name_error_validation(collection_init):
+def test_duplicate_name_error_validation(collection):
     """
     Tests a System Image for duplicate name.
     """
     name = fauxfactory.gen_alphanumeric(8)
-    collection = collection_init
     sys_image_type = collection.create(
         name=name,
         provision_type=SystemImageType.VM_OR_INSTANCE)
@@ -43,11 +41,10 @@ def test_duplicate_name_error_validation(collection_init):
     sys_image_type.delete(cancel=False)
 
 
-def test_name_required_error_validation(collection_init):
+def test_name_required_error_validation(collection):
     """
     Tests a System Image with no name.
     """
-    collection = collection_init
     with error.expected('Name is required'):
         collection.create(
             name=None,
