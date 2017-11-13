@@ -19,7 +19,8 @@ def test_provider_crud(provider):
     Metadata:
         test_flag: crud
     """
-    provider.create('lenovo')
+    provider.create()
+
     # Fails on upstream, all provider types - BZ1087476
     provider.validate_stats(ui=True)
 

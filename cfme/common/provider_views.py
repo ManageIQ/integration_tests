@@ -568,6 +568,17 @@ class InfraProviderEditView(ProviderEditView):
                 self.title.text == 'Edit Infrastructure Provider')
 
 
+class PhysicalProviderEditView(ProviderEditView):
+    """
+     represents Provider Edit View
+    """
+    @property
+    def is_displayed(self):
+        return (super(PhysicalProviderEditView, self).is_displayed and
+                self.navigation.currently_selected == ['Compute''Physical Infrastructure','Providers'] and
+                self.title.text == 'Edit Infrastructure Provider')
+
+
 class CloudProviderEditView(ProviderEditView):
     """
      represents Cloud Provider Edit View
