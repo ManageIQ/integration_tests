@@ -190,8 +190,11 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     def get_clusters(self):
         """returns the list of clusters belonging to the provider"""
         view = navigate_to(self, 'Clusters')
+        # TODO quadicon with JS vs non-JS doesn't have consistent attributes, no name for non-JS
+        view.toolbar.view_selector.select('List View')
         col = self.appliance.collections.clusters
-        return [col.instantiate(e.name, self) for e in view.entities.get_all(surf_pages=True)]
+        entities = view.entities.get_all(surf_pages=True)
+        return [col.instantiate(e.data['name'], self) for e in entities]
 
     def as_fill_value(self):
         return self.name
