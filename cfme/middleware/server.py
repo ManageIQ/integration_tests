@@ -1,5 +1,6 @@
 import re
 
+from urllib import unquote, quote
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 from wrapanapi.hawkular import CanonicalPath
@@ -42,7 +43,7 @@ def _db_select_query(name=None, feed=None, provider=None, server_group=None,
     if name:
         query = query.filter(t_ms.name == name)
     if feed:
-        query = query.filter(t_ms.feed == feed)
+        query = query.filter(t_ms.feed == quote(feed, safe='%'))
     if provider:
         query = query.filter(t_ems.name == provider.name)
     if server_group:
@@ -144,7 +145,7 @@ class MiddlewareServer(MiddlewareBase, WidgetasticTaggable, Container, Reportabl
             servers.append(MiddlewareServer(
                 name=server.name,
                 hostname=server.hostname,
-                feed=server.feed,
+                feed=unquote(server.feed),
                 product=server.product,
                 db_id=server.id,
                 provider=_provider,
@@ -222,7 +223,7 @@ class MiddlewareServer(MiddlewareBase, WidgetasticTaggable, Container, Reportabl
         if server:
             return MiddlewareServer(
                 db_id=server.id, provider=self.provider,
-                feed=server.feed, name=server.name,
+                feed=unquote(server.feed), name=server.name,
                 hostname=server.hostname,
                 properties=parse_properties(server.properties))
         return None
@@ -294,7 +295,7 @@ class MiddlewareServer(MiddlewareBase, WidgetasticTaggable, Container, Reportabl
     def start_server(self):
         view = self.load_details(refresh=True)
         view.toolbar.power.item_select('Start Server', handle_alert=True)
-        view.assert_success_message('Start initiated for selected server(s)')
+        view.flash.assert_success_message('Start initiated for selected server(s)')
 
     def suspend_server(self, timeout=10, cancel=False):
         view = self.load_details(refresh=True)
