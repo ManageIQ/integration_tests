@@ -1614,6 +1614,14 @@ class JSPaginationPane(View, ReportDataControllerMixin):
 
             # Adding 1 to pages_amount to include the last page in loop
             for page in range(1, self.pages_amount + 1):
+                # JSPaginatinoPane will wait for elements to load after changing page
+                # miq-tile-selection covers both - Grid and Tile view
+                if self.browser.is_displayed('//*[@class="miq-data-table"]'):
+                    wait_for(lambda: self.browser.is_displayed(
+                        '//*[@class="miq-data-table"]/table'), num_sec=10, delay=1)
+                elif self.browser.is_displayed('//*[@class="miq-tile-section"]'):
+                    wait_for(lambda: self.browser.is_displayed('//*[@class="card-view-pf"]/div'),
+                             num_sec=10, delay=1)
                 yield self.cur_page
                 if self.cur_page == self.pages_amount:
                     # last or only page, stop looping
