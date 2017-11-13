@@ -56,7 +56,7 @@ def test_myservice_crud(appliance, setup_provider, context, order_catalog_item_i
         my_service.delete()
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.8' or current_version() >= '5.9')
+@pytest.mark.uncollectif(lambda: current_version() >= '5.9')
 @pytest.mark.parametrize('context', [ViaSSUI])
 @pytest.mark.parametrize('order_catalog_item_in_ops_ui', [['console_test']], indirect=True)
 def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
