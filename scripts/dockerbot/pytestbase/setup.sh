@@ -62,6 +62,12 @@ do_or_die () {
     done
 }
 
+
+gate() {
+	log "gating $2 to $ARTIFACTOR_DIR/$1"
+	eval "$2" >> $ARTIFACTOR_DIR/$1 2>&1 || (log "failed" ;exit 1)
+}
+
 # Runs pip update - optionally can make use of wheelhouse
 run_pip_update () {
     if [ -n "$WHEEL_HOST_URL" ]; then
@@ -225,22 +231,22 @@ set +e
 if [ "$USE_SPROUT" = "yes" ];
 then
     log "invoking complete collectonly with dummy instance before test"
-    run_n_log "py.test --collectonly --dummy-appliance --dummy-appliance-version $SPROUT_GROUP --use-provider complete" \
+    gate "collectonly.txt" "py.test --collectonly --dummy-appliance --dummy-appliance-version $SPROUT_GROUP --use-provider complete" \
     || exit # shortcut when collect fails
 
 
 
-    miq sprout checkout --populate-yaml  2>&1 >> $ARTIFACTOR_DIR/setup.txt &
+    run_n_log "miq sprout checkout --populate-yaml" &
     sleep 5
     do_or_die "(date && grep -q appliances: conf/env.local.yaml)>> $ARTIFACTOR_DIR/setup.txt" 5 60
 else
     log "no sprout used"
     log "invoking complete collectonly with given appliance instance before test"
-    run_n_log "py.test --collectonly --use-provider complete"  || exit # shortcut when collect fails
+    gate "collectonly.txt" "py.test --collectonly --use-provider complete"
 fi
 
 log "smoke testing"
-run_n_log "py.test -m smoke" || exit # shortcut when smoke fails
+gate "smoke.txt" "py.test -m smoke"
 
 # Finally, run the py.test
 log "$PYTEST"
