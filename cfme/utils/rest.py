@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Helper functions for tests using REST API."""
 
+from cfme.exceptions import OptionNotAvailable
 from cfme.utils.wait import wait_for
 
 
@@ -72,3 +73,31 @@ def get_vms_in_service(rest_api, service):
     # return entities under /api/vms, not under /api/services/:id/vms subcollection
     # where "actions" are not available
     return [rest_api.get_entity('vms', vm['id']) for vm in service.vms.all]
+
+
+def create_resource(rest_api, col_name, col_data, col_action='create', substr_search=False):
+    """Creates new resource in collection."""
+    collection = getattr(rest_api.collections, col_name)
+    try:
+        action = getattr(collection.action, col_action)
+    except AttributeError:
+        raise OptionNotAvailable(
+            "Action `{}` for {} is not implemented in this version".format(col_action, col_name))
+
+    entities = action(*col_data)
+    action_response = rest_api.response
+    search_str = '%{}%' if substr_search else '{}'
+    for entity in col_data:
+        if entity.get('name'):
+            wait_for(lambda: collection.find_by(
+                name=search_str.format(entity.get('name'))) or False, num_sec=180, delay=10)
+        elif entity.get('description'):
+            wait_for(lambda: collection.find_by(
+                description=search_str.format(entity.get('description'))) or False,
+                num_sec=180, delay=10)
+        else:
+            raise NotImplementedError
+
+    # make sure action response is preserved
+    rest_api.response = action_response
+    return entities
