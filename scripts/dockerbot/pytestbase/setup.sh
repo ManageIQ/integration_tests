@@ -70,11 +70,11 @@ gate() {
 
 # Runs pip update - optionally can make use of wheelhouse
 run_pip_update () {
+	export PYCURL_SSL_LIBRARY=nss
     if [ -n "$WHEEL_HOST_URL" ]; then
-        run_n_log "PYCURL_SSL_LIBRARY=nss pip install --trusted-host $WHEEL_HOST -f $WHEEL_HOST_URL -Ur $CFME_REPO_DIR/requirements/frozen.txt --no-cache-dir"
-    else
-        run_n_log "PYCURL_SSL_LIBRARY=nss pip install -Ur $CFME_REPO_DIR/requirements/frozen.txt --no-cache-dir"
+        export PIP_TRUSTED_HOST="$WHEEL_HOST" PIP_FIND_LINKS="$WHEEL_HOST_URL"
     fi
+    gate "pip_install.txt" "pip install -Ur $CFME_REPO_DIR/requirements/frozen.txt --no-cache-dir"
     # ensures entrypoint updates
     run_n_log "pip install -e ."
 }
@@ -140,7 +140,7 @@ log "#*"
 
 log "GPG Checking #~"
 # Get the GPG-Keys
-do_or_die "/get_keys.py >> $ARTIFACTOR_DIR/setup.txt 2>&1" 5 1
+gate "get_keys.txt "do_or_die /get_keys.py 5 1"
 
 # die on errors
 set -e
@@ -231,10 +231,7 @@ set +e
 if [ "$USE_SPROUT" = "yes" ];
 then
     log "invoking complete collectonly with dummy instance before test"
-    gate "collectonly.txt" "py.test --collectonly --dummy-appliance --dummy-appliance-version $SPROUT_GROUP --use-provider complete" \
-    || exit # shortcut when collect fails
-
-
+    gate "collectonly.txt" "py.test --collectonly --dummy-appliance --dummy-appliance-version $SPROUT_GROUP --use-provider complete"
 
     run_n_log "miq sprout checkout --populate-yaml" &
     sleep 5
