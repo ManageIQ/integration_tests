@@ -3,12 +3,15 @@ from widgetastic.widget import Text, View
 from widgetastic_manageiq import Accordion, ManageIQTree
 from widgetastic_patternfly import Button, Input, BootstrapSelect
 from widgetastic.exceptions import NoSuchElementException
+from widgetastic.utils import VersionPick
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
+from cfme.utils.version import Version
+from cfme.utils.wait import wait_for
 
 
 class ServicesCatalogView(BaseLoggedInPage):
@@ -34,6 +37,12 @@ class ServicesCatalogView(BaseLoggedInPage):
 
 class OrderForm(ServicesCatalogView):
     title = Text('#explorer_title_text')
+    dialog_title = Text(
+        VersionPick({
+            Version.lowest(): ".//div[@id='main_div']//h3",
+            "5.9": ".//div[@id='main_div']//h2"
+        })
+    )
 
     timeout = Input(name='stack_timeout')
     db_user = Input(name="param_DBUser__protected")
@@ -112,15 +121,23 @@ class OrderServiceCatalogView(OrderForm):
 @ServiceCatalogs.order.external_implementation_for(ViaUI)
 def order(self):
     view = navigate_to(self, 'Order')
+    wait_for(lambda: view.dialog_title.is_displayed, timeout=10)
     if self.stack_data:
         view.fill(self.stack_data)
     if self.dialog_values:
         view.fill(self.dialog_values)
     if self.ansible_dialog_values:
         view.fill(self.ansible_dialog_values)
+    if self.appliance.version < "5.9":
+        msg = "Order Request was Submitted"
+        msg_type = "success"
+    else:
+        msg = "Service ordered successfully!"
+        msg_type = "info"
     view.submit_button.click()
     view = self.create_view(RequestsView)
-    view.flash.assert_success_message("Order Request was Submitted")
+    view.flash.assert_no_error()
+    view.flash.assert_message(msg, t=msg_type)
 
 
 @navigator.register(Server)
