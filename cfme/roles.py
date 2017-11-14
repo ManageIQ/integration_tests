@@ -279,3 +279,312 @@ group_data = {
         'about'
     ]
 }
+
+# Matches structure/string format of VerticalNavigation output for tree, not UI access control tree
+# TODO include non-vertical nav RBAC to settings, help
+# TODO RBAC goes deeper than veritcal nav, into accordions. example cloud intel -> Reports
+role_access_ui_59z = {
+    'evmgroup-super_administrator': {
+        'Automation': {
+            'Ansible': ['Credentials', 'Repositories', 'Playbooks'],
+            'Ansible Tower': ['Jobs', 'Explorer'],
+            'Automate': ['Log', 'Generic Objects', 'Simulation', 'Import / Export', 'Customization',
+                         'Requests', 'Explorer']},
+        'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
+        'Compute': {
+            'Clouds': ['Flavors', 'Instances', 'Providers', 'Host Aggregates', 'Availability Zones',
+                       'Key Pairs', 'Tenants', 'Stacks', 'Topology'],
+            'Containers': ['Container Nodes', 'Containers', 'Providers', 'Overview',
+                           'Container Templates', 'Image Registries', 'Container Builds',
+                           'Container Services', 'Volumes', 'Container Images', 'Routes', 'Pods',
+                           'Replicators', 'Projects', 'Topology'],
+            'Infrastructure': ['Datastores', 'Networking', 'Providers', 'Virtual Machines', 'Hosts',
+                               'Clusters', 'Topology', 'PXE', 'Resource Pools'],
+            'Physical Infrastructure': ['Topology', 'Servers', 'Providers']},
+        'Configuration': ['Management'],
+        'Control': ['Import / Export', 'Log', 'Explorer', 'Simulation'],
+        'Middleware': ['Datasources', 'Providers', 'Messagings', 'Servers', 'Domains', 'Topology',
+                       'Deployments'],
+        'Monitor': {
+            'Alerts': ['Overview', 'All Alerts', 'Most Recent Alerts']},
+        'Networks': ['Subnets', 'Load Balancers', 'Providers', 'Security Groups', 'Floating IPs',
+                     'Network Ports', 'Topology', 'Networks', 'Network Routers'],
+        'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
+        'Red Hat Insights': ['Rules', 'Overview', 'Inventory', 'Actions'],
+        'Services': ['Requests', 'Workloads', 'Catalogs', 'My Services'],
+        'Storage': {
+            'Block Storage': ['Volume Snapshots', 'Managers', 'Volume Backups', 'Volumes'],
+            'Object Storage': ['Managers', 'Object Store Containers', 'Object Store Objects']}
+    },
+    'evmgroup-administrator': {
+        'Automation': {
+            'Ansible': ['Credentials', 'Repositories', 'Playbooks'],
+            'Ansible Tower': ['Jobs', 'Explorer'],
+            'Automate': ['Log', 'Generic Objects', 'Simulation', 'Import / Export', 'Customization',
+                         'Requests', 'Explorer']},
+        'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
+        'Compute': {
+            'Clouds': ['Flavors', 'Instances', 'Providers', 'Host Aggregates', 'Availability Zones',
+                       'Stacks', 'Topology'],
+            'Containers': ['Container Nodes', 'Containers', 'Providers', 'Overview',
+                           'Image Registries', 'Container Builds', 'Container Services',
+                           'Volumes', 'Container Images', 'Routes', 'Pods', 'Replicators',
+                           'Projects', 'Topology'],
+            'Infrastructure': ['Datastores', 'Networking', 'Providers', 'Virtual Machines', 'Hosts',
+                               'Clusters', 'Topology', 'PXE', 'Resource Pools'],
+            'Physical Infrastructure': ['Providers']},
+        'Configuration': ['Management'],
+        'Control': ['Import / Export', 'Log', 'Explorer', 'Simulation'],
+        'Networks': ['Providers', 'Security Groups', 'Floating IPs', 'Networks'],
+        'Middleware': ['Datasources', 'Providers', 'Servers', 'Deployments', 'Topology'],
+        'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
+        'Services': ['Requests', 'Workloads', 'Catalogs', 'My Services'],
+        'Storage': {
+            'Object Storage': ['Managers', 'Object Store Containers', 'Object Store Objects']}
+    },
+    'evmgroup-approver': {
+        'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
+                               'PXE', 'Resource Pools'],
+            'Physical Infrastructure': ['Servers', 'Providers']},
+        'Control': ['Log', 'Simulation'],
+        'Middleware': ['Servers'],
+        'Services': ['Requests', 'Workloads'],
+    },
+    'evmgroup-auditor': {
+        'Automation': {
+            'Ansible': ['Credentials', 'Repositories', 'Playbooks'],
+            'Ansible Tower': ['Explorer']},
+        'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
+                               'PXE', 'Resource Pools'],
+            'Physical Infrastructure': ['Servers', 'Providers']},
+        'Control': ['Log', 'Simulation'],
+        'Middleware': ['Servers'],
+        'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
+        'Services': ['Workloads']},
+    'evmgroup-desktop': {
+        'Automation': {
+            'Ansible Tower': ['Explorer']},
+        'Cloud Intel': ['Dashboard'],
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Virtual Machines']},
+        'Configuration': ['Management'],
+        'Services': ['Requests', 'Workloads']
+    },
+    'evmgroup-operator': {
+        'Automation': {
+            'Ansible': ['Credentials', 'Repositories', 'Playbooks'],
+            'Ansible Tower': ['Explorer']},
+        'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
+                               'PXE', 'Resource Pools'],
+            'Physical Infrastructure': ['Servers', 'Providers']},
+        'Configuration': ['Management'],
+        'Middleware': ['Servers'],
+        'Services': ['Workloads']
+    },
+    'evmgroup-security': {
+        'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts',
+                               'Clusters', 'Resource Pools'],
+            'Physical Infrastructure': ['Servers', 'Providers']},
+        'Control': ['Log', 'Simulation'],
+        'Middleware': ['Servers'],
+        'Services': ['My Services', 'Workloads']
+    },
+    'evmgroup-support': {
+        'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
+                               'Resource Pools'],
+            'Physical Infrastructure': ['Servers', 'Providers']},
+        'Control': ['Log', 'Simulation'],
+        'Middleware': ['Servers'],
+        'Services': ['My Services', 'Workloads']
+    },
+    'evmgroup-user': {
+        'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
+                               'Resource Pools'],
+            'Physical Infrastructure': ['Servers', 'Providers']},
+        'Middleware': ['Servers'],
+        'Services': ['Requests', 'Workloads', 'My Services']
+    },
+    'evmgroup-vm_user': {
+        'Automation': {
+            'Ansible': ['Credentials', 'Repositories', 'Playbooks'],
+            'Ansible Tower': ['Explorer']},
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Virtual Machines']},
+        'Configuration': ['Management'],
+        'Middleware': ['Servers'],
+        'Services': ['Requests', 'Workloads'],
+    }
+}
+
+role_access_ui_58z = {
+    'evmgroup-super_administrator': {
+        'Automation': {
+            'Ansible': ['Credentials', 'Repositories', 'Playbooks'],
+            'Ansible Tower': ['Jobs', 'Explorer'],
+            'Automate': ['Log', 'Simulation', 'Import / Export', 'Customization', 'Explorer']},
+        'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
+        'Compute': {
+            'Clouds': ['Flavors', 'Instances', 'Providers', 'Host Aggregates', 'Availability Zones',
+                       'Key Pairs', 'Tenants', 'Stacks', 'Topology'],
+            'Containers': ['Container Nodes', 'Containers', 'Providers', 'Overview',
+                           'Container Templates', 'Image Registries', 'Container Builds',
+                           'Container Services', 'Volumes', 'Container Images', 'Routes', 'Pods',
+                           'Replicators', 'Projects', 'Topology'],
+            'Infrastructure': ['Datastores', 'Networking', 'Providers', 'Virtual Machines', 'Hosts',
+                               'Clusters', 'Topology', 'PXE', 'Resource Pools']},
+        'Configuration': ['Management'],
+        'Control': ['Import / Export', 'Log', 'Explorer', 'Simulation'],
+        'Middleware': ['Datasources', 'Providers', 'Messagings', 'Servers', 'Domains', 'Topology',
+                       'Deployments'],
+        'Monitor': {
+            'Alerts': ['Overview', 'All Alerts', 'Most Recent Alerts']},
+        'Networks': ['Subnets', 'Load Balancers', 'Providers', 'Security Groups', 'Floating IPs',
+                     'Network Ports', 'Topology', 'Networks', 'Network Routers'],
+        'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
+        'Red Hat Insights': ['Rules', 'Overview', 'Inventory', 'Actions'],
+        'Services': ['Requests', 'Workloads', 'Catalogs', 'My Services'],
+        'Storage': {
+            'Block Storage': ['Volume Snapshots', 'Managers', 'Volume Backups', 'Volumes'],
+            'Object Storage': ['Managers', 'Object Store Containers', 'Object Store Objects']}
+    },
+    'evmgroup-administrator': {
+        'Automation': {
+            'Ansible Tower': ['Jobs', 'Explorer'],
+            'Automate': ['Log', 'Simulation', 'Import / Export', 'Customization', 'Explorer']},
+        'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
+        'Compute': {
+            'Clouds': ['Flavors', 'Instances', 'Providers', 'Host Aggregates', 'Availability Zones',
+                       'Stacks', 'Topology'],
+            'Containers': ['Container Nodes', 'Containers', 'Providers', 'Overview',
+                           'Image Registries', 'Container Builds', 'Container Services',
+                           'Volumes', 'Container Images', 'Routes', 'Pods', 'Replicators',
+                           'Projects', 'Topology'],
+            'Infrastructure': ['Datastores', 'Networking', 'Providers', 'Virtual Machines', 'Hosts',
+                               'Clusters', 'Topology', 'PXE', 'Resource Pools']},
+        'Configuration': ['Management'],
+        'Control': ['Import / Export', 'Log', 'Explorer', 'Simulation'],
+        'Networks': ['Providers', 'Security Groups', 'Floating IPs', 'Networks'],
+        'Middleware': ['Datasources', 'Providers', 'Servers', 'Deployments', 'Topology'],
+        'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
+        'Services': ['Requests', 'Workloads', 'Catalogs', 'My Services'],
+        'Storage': {
+            'Object Storage': ['Managers', 'Object Store Containers', 'Object Store Objects']}
+    },
+    'evmgroup-approver': {
+        'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
+                               'PXE', 'Resource Pools']},
+        'Control': ['Log', 'Simulation'],
+        'Services': ['Requests', 'Workloads'],
+    },
+    'evmgroup-auditor': {
+        'Automation': {
+            'Ansible': ['Credentials', 'Repositories', 'Playbooks'],
+            'Ansible Tower': ['Explorer']},
+        'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
+                               'PXE', 'Resource Pools']},
+        'Control': ['Log', 'Simulation'],
+        'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
+        'Services': ['Workloads']},
+    'evmgroup-desktop': {
+        'Automation': {
+            'Ansible Tower': ['Explorer']},
+        'Cloud Intel': ['Dashboard'],
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Virtual Machines']},
+        'Configuration': ['Management'],
+        'Services': ['Requests', 'Workloads']
+    },
+    'evmgroup-operator': {
+        'Automation': {
+            'Ansible Tower': ['Explorer']},
+        'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
+                               'PXE', 'Resource Pools']},
+        'Configuration': ['Management'],
+        'Services': ['Workloads']
+    },
+    'evmgroup-security': {
+        'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts',
+                               'Clusters', 'Resource Pools']},
+        'Control': ['Log', 'Simulation'],
+        'Services': ['Workloads']
+    },
+    'evmgroup-support': {
+        'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
+                               'Resource Pools']},
+        'Control': ['Log', 'Simulation'],
+        'Services': ['Workloads']
+    },
+    'evmgroup-user': {
+        'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
+                               'Resource Pools']},
+        'Services': ['Requests', 'Workloads']
+    },
+    'evmgroup-vm_user': {
+        'Automation': {
+            'Ansible Tower': ['Explorer']},
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Virtual Machines']},
+        'Configuration': ['Management'],
+        'Services': ['Requests', 'Workloads'],
+    }
+}
+
+role_access_ssui = {
+    'evmgroup-user_limited_self_service': {
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Virtual Machines']},
+        'Services': ['Requests', 'Catalogs', 'My Services']
+    },
+    'evmgroup-user_self_service': {
+        'Automation': {
+            'Ansible': ['Credentials', 'Repositories', 'Playbooks'],
+            'Ansible Tower': ['Explorer']},
+        'Compute': {
+            'Clouds': ['Instances'],
+            'Infrastructure': ['Virtual Machines'],
+            'Physical Infrastructure': ['Providers']},
+        'Configuration': ['Management'],
+        'Services': ['Requests', 'Catalogs', 'My Services']
+    },
+}

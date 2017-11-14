@@ -55,23 +55,26 @@ def configure_openldap_auth_mode_default_groups(browser, available_auth_modes):
         yield
 
 
-@pytest.yield_fixture(scope='module')
-def configure_aws_iam_auth_mode(browser, available_auth_modes):
+@pytest.yield_fixture(scope='function')
+def configure_aws_iam_auth_mode(appliance, available_auth_modes):
     """Configure AWS IAM authentication mode"""
     if 'miq_aws_iam' in available_auth_modes:
-        auth_mode = current_appliance.server.authentication
-        aws_iam_data = dict(cfme_data.get('auth_modes', {})['miq_aws_iam'])
-        aws_iam_creds = credentials[aws_iam_data.pop('credentials')]
-        aws_iam_data['access_key'] = aws_iam_creds['username']
-        aws_iam_data['secret_key'] = aws_iam_creds['password']
-        auth_mode.set_auth_mode(**aws_iam_data)
+        auth_mode = appliance.server.authentication
+        fill_data = cfme_data.auth_modes.miq_aws_iam
+        creds = credentials[fill_data.pop('credentials')]  # remove cred key from fill_data with pop
+        fill_data.update(
+            {'access_key': creds['username'],
+             'secret_key': creds['password']})
+        auth_mode.set_auth_mode(**fill_data)
         yield
         current_appliance.server.login_admin()
         auth_mode.set_auth_mode()
     else:
-        yield
+        # Need this configuration data to test, can't make up aws_iam account.
+        pytest.skip('miq_aws_iam yaml configuration not available for configure_aws_iam_auth_mode')
 
 
+# TODO remove this fixture, its doing what the above fixtures are doing but taking an argument
 @pytest.fixture()
 def configure_auth(request, auth_mode):
     data = cfme_data['auth_modes'].get(auth_mode, {})
