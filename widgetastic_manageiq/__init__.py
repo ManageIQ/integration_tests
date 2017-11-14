@@ -2613,6 +2613,10 @@ class BaseQuadIconEntity(ParametrizedView, ClickableMixin):
         return self.checkbox.fill(False)
 
     @property
+    def name(self):
+        return self.browser.get_attribute('title', self.label)
+
+    @property
     def data(self):
         """ every entity like QuadIcon/ListEntity etc displays some data,
         which is different for each entity type.
@@ -2656,6 +2660,10 @@ class BaseTileIconEntity(ParametrizedView):
 
     def uncheck(self):
         return self.quad_icon(self.context['id']).uncheck()
+
+    @property
+    def name(self):
+        return self.quad_icon(self.context['id']).name
 
     @property
     def data(self):
@@ -2705,6 +2713,10 @@ class BaseListEntity(ParametrizedView, ClickableMixin):
 
     def uncheck(self):
         return self.checkbox.fill(False)
+
+    @property
+    def name(self):
+        return self.data['name'] if 'name' in self.data else None
 
     @property
     def data(self):
@@ -2783,6 +2795,10 @@ class JSBaseEntity(View, ReportDataControllerMixin):
             return False
         else:
             return checked
+
+    @property
+    def name(self):
+        return self.data['name'] if 'name' in self.data else None
 
     def check(self):
         self._call_item_method('select')
