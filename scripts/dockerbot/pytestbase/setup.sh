@@ -67,7 +67,7 @@ gate() {
 	log "gating $2 to $ARTIFACTOR_DIR/$1"
 	eval "$2" >> $ARTIFACTOR_DIR/$1 2>&1 
 	local RES=$?
-	if [ $RES ]
+	if [ "$RES" -ne "0" ]
 	then
 		log "failed"
 		exit $RES
