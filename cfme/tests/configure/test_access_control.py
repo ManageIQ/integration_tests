@@ -213,7 +213,7 @@ def test_user_email_error_validation(group_collection):
 
 
 @pytest.mark.tier(2)
-def test_user_edit_tag(appliance):
+def test_user_edit_tag(group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
