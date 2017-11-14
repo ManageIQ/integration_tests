@@ -2716,7 +2716,7 @@ class BaseListEntity(ParametrizedView, ClickableMixin):
 
     @property
     def name(self):
-        return self.data['name'] if 'name' in self.data['name'] else None
+        return self.data['name'] if 'name' in self.data else None
 
     @property
     def data(self):
@@ -2798,7 +2798,7 @@ class JSBaseEntity(View, ReportDataControllerMixin):
 
     @property
     def name(self):
-        return self.data['name'] if 'name' in self.data['name'] else None
+        return self.data['name'] if 'name' in self.data else None
 
     def check(self):
         self._call_item_method('select')
