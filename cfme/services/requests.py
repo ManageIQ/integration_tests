@@ -247,7 +247,7 @@ class RequestBasicView(BaseLoggedInPage):
 
 
 class RequestsView(RequestBasicView):
-    table = Table(locator='//*[@id="list_grid"]/table')
+    table = Table(locator='//div[@id="gtl_div"]//table')
     paginator = PaginationPane()
 
     def find_request(self, cells, partial_check=False):
@@ -266,9 +266,7 @@ class RequestsView(RequestBasicView):
                     cells['{}{}'.format(column_name, contains)] = cells.pop(key)
                     break
 
-        # TODO Replace Paginator with paginator_pane after 1450002 gets resolved
-        from cfme.web_ui import paginator
-        for page in paginator.pages():
+        for _ in self.paginator.pages():
             rows = list(self.table.rows(**cells))
             if len(rows) == 0:
                 # row not on this page, assume it has yet to appear
