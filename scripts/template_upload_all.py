@@ -16,7 +16,6 @@ The scripts for respective providers are:
     - template_upload_scvmm.py
     - template_upload_vsphere.py
 """
-import pdb
 import argparse
 import re
 import datetime
@@ -58,6 +57,8 @@ def parse_cmd_line():
                         help='local yaml file path, to use local provider_data & not conf/cfme_data'
                              'to be useful for template upload/deploy by non cfmeqe',
                         default=None)
+    parser.add_argument("--glance", dest="glance",
+                        help="Glance server to upload images to", default='glance11-server')
     args = parser.parse_args()
     return args
 
@@ -310,6 +311,7 @@ def main():
     urls = cfme_data['basic_info']['cfme_images_url']
     stream = args.stream or cfme_data['template_upload']['stream']
     upload_url = args.image_url
+    glance = args.glance
     provider_type = args.provider_type or cfme_data['template_upload']['provider_type']
 
     if args.provider_data is not None:
@@ -361,7 +363,7 @@ def main():
             if module not in dir_files.iterkeys():
                 continue
         elif provider_type == 'rhevm':
-            module = 'template_upload_rhevm'
+            module = 'template_upload_rhevm_qcow2'
             if module not in dir_files.iterkeys():
                 continue
         elif provider_type == 'virtualcenter':
@@ -390,6 +392,7 @@ def main():
             return 1
         kwargs['stream'] = stream
         kwargs['image_url'] = dir_files[module]
+        kwargs['glance'] = glance
         if args.provider_data is not None:
             kwargs['provider_data'] = provider_data
         else:

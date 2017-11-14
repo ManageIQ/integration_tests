@@ -8,11 +8,10 @@ This script is designed to run either as a standalone rhevm template uploader, o
 together with template_upload_all script. This is why all the function calls, which would
 normally be placed in main function, are located in function run(**kwargs).
 """
-import pdb
+import subprocess
 
 import argparse
 import fauxfactory
-import re
 import sys
 from threading import Lock, Thread
 
@@ -58,52 +57,6 @@ def parse_cmd_line():
     return args
 
 
-def add_glance(api, provider):
-    glance_provider = 'glance11-server'
-    provider_dict = cfme_data['management_systems'][glance_provider]
-    creds_key = provider_dict['credentials']
-
-    def is_glance_added(api, name):
-        for domain in api.openstackimageproviders.list():
-            if domain.get_name() == glance_provider:
-                return True
-        else:
-            return False
-
-    # Get the list of OpenStack image providers (a.k.a. Glance providers)
-    # that match the name that we want to use:
-    providers = [
-        domain for domain in api.openstackimageproviders.list()
-        if domain.get_name() == glance_provider
-    ]
-
-    try:
-        # If there is no such provider, then add it:
-        if len(providers) == 0:
-            glance_sd = api.openstackimageproviders.add(
-                params.OpenStackImageProvider(
-                    name=glance_provider,
-                    description='My Glance',
-                    url=provider_dict['url'],
-                    requires_authentication=True,
-                    authentication_url=provider_dict['auth_url'],
-                    username=credentials[creds_key]['username'],
-                    password=credentials[creds_key]['password'],
-                    tenant_name=credentials[creds_key]['tenant']
-                )
-            )
-
-        wait_for(is_glance_added, [api, glance_provider],
-            fail_condition=False, delay=5, num_sec=240)
-        if not api.openstackimageproviders.get(name=glance_provider):
-            logger.error("RHV:%s Glance provider %s could not be attached", provider,
-                glance_provider)
-            sys.exit(127)
-        logger.info('RHV:%s Attached Glance provider %s', provider, glance_sd.get_name())
-    except Exception:
-        logger.exception("RHV:%r add_glance failed:", provider)
-
-
 def make_ssh_client(rhevip, sshname, sshpass):
     connect_kwargs = {
         'username': sshname,
@@ -126,36 +79,124 @@ def is_ovirt_engine_running(rhevm_ip, sshname, sshpass):
         return False
 
 
-def import_template(api, edomain, sdomain, cluster, temp_template_name, provider):
-    """Imports template from export domain to storage domain.
+def get_qcow_name(qcowurl):
+    """Returns ova filename."""
+    return qcowurl.split("/")[-1]
+
+
+def download_qcow(qcowurl):
+    """Downloads qcow2 file from and url
 
     Args:
-        api: API to RHEVM instance.
-        edomain: Export domain of selected RHEVM provider.
-        sdomain: Storage domain of selected RHEVM provider.
-        cluster: Cluster to save imported template on.
+        ssh_client: :py:class:`utils.ssh.SSHClient` instance
+        qcowurl: URL of ova file
     """
+    rc = subprocess.call(
+        ['curl', '-O', qcowurl])
+    if rc == 0:
+        print('Successfully downloaded qcow2 file')
+    else:
+        print('There was an error while downloading qcow2 file')
+        sys.exit(127)
+
+
+def add_glance(api, provider, glance_server):
+    provider_dict = cfme_data['management_systems'][glance_server]
+    creds_key = provider_dict['credentials']
+
+    def is_glance_added(api, name):
+        for domain in api.openstackimageproviders.list():
+            if domain.get_name() == glance_server:
+                return True
+        else:
+            return False
+
+    # Get the list of OpenStack image providers (a.k.a. Glance providers)
+    # that match the name that we want to use:
+    providers = [
+        domain for domain in api.openstackimageproviders.list()
+        if domain.get_name() == glance_server
+    ]
+
+    try:
+        # If there is no such provider, then add it:
+        if len(providers) == 0:
+            glance_sd = api.openstackimageproviders.add(
+                params.OpenStackImageProvider(
+                    name=glance_server,
+                    description=glance_server,
+                    url=provider_dict['url'],
+                    requires_authentication=True,
+                    authentication_url=provider_dict['auth_url'],
+                    username=credentials[creds_key]['username'],
+                    password=credentials[creds_key]['password'],
+                    tenant_name=credentials[creds_key]['tenant']
+                )
+            )
+        else:
+            logger.info("RHEVM:%r Warning: Found a Glance provider with this name (%r).",
+                    provider, glance_server)
+            logger.info("RHEVM:%r Skipping this step, attempting to continue", provider)
+            return
+
+        wait_for(is_glance_added, [api, glance_server],
+            fail_condition=False, delay=5, num_sec=240)
+        if not api.openstackimageproviders.get(name=glance_server):
+            logger.error("RHV:%s Glance provider %s could not be attached", provider,
+                glance_server)
+            sys.exit(127)
+        logger.info('RHV:%s Attached Glance provider %s', provider, glance_sd.get_name())
+    except Exception:
+        logger.exception("RHV:%r add_glance failed:", provider)
+
+
+def import_template_from_glance(api, sdomain, cluster, temp_template_name,
+        glance_server, provider, qcowname):
     try:
         if api.templates.get(temp_template_name) is not None:
             logger.info("RHEVM:%r Warning: found another template with this name.", provider)
             logger.info("RHEVM:%r Skipping this step, attempting to continue...", provider)
             return
-        actual_template = api.storagedomains.get(edomain).templates.get(temp_template_name)
-        actual_storage_domain = api.storagedomains.get(sdomain)
-        actual_cluster = api.clusters.get(cluster)
-        import_action = params.Action(async=False, cluster=actual_cluster,
-                                      storage_domain=actual_storage_domain)
-        actual_template.import_template(action=import_action)
-        # Check if the template is really there
+
+        # Find the storage domain:
+        sd = api.storagedomains.get(name=glance_server)
+
+        # Find the image:
+        image = sd.images.get(name=qcowname)
+
+        # Import the image:
+        image.import_image(params.Action(
+            async=True,
+            import_as_template=True,
+            template=params.Template(
+                name=temp_template_name
+            ),
+            cluster=params.Cluster(
+                name=cluster
+            ),
+            storage_domain=params.StorageDomain(
+                name=sdomain
+            )
+        )
+        )
+
+        def is_image_imported(api, name):
+            if api.templates.get(name):
+                return True
+            else:
+                return False
+
+        wait_for(is_image_imported, [api, temp_template_name],
+            fail_condition=False, delay=5, num_sec=240)
         if not api.templates.get(temp_template_name):
-            logger.info("RHEVM:%r The template failed to import on data domain", provider)
+            logger.error("RHEVM:%r Failed to import template from Glance", provider)
             sys.exit(127)
-        logger.info("RHEVM:%r successfully imported template on data domain", provider)
+        logger.info("RHEVM:%r Successfully imported template from Glance", provider)
     except Exception:
-        logger.exception("RHEVM:%r import_template to data domain failed:", provider)
+        logger.exception("RHEVM:%r import_template_from_glance() failed:", provider)
 
 
-def make_vm_from_template(api, stream, provider, cfme_data, cluster, temp_template_name,
+def make_vm_from_template(api, stream, cfme_data, cluster, temp_template_name,
         temp_vm_name, provider, mgmt_network=None):
     """Makes temporary VM from imported template. This template will be later deleted.
        It's used to add a new disk and to convert back to template.
@@ -170,7 +211,7 @@ def make_vm_from_template(api, stream, provider, cfme_data, cluster, temp_templa
         provider: provider_key
     """
     provider_dict = cfme_data['management_systems'][provider]
-    cores = provider_dict[stream]['cpu']
+    cores = provider_dict[stream]['cores']
     sockets = provider_dict[stream]['sockets']
     cpu = params.CPU(topology=params.CpuTopology(cores=cores, sockets=sockets))
     vm_memory = provider_dict[stream]['memory'] * 1024 * 1024 * 1024
@@ -283,7 +324,7 @@ def templatize_vm(api, template_name, cluster, temp_vm_name, provider):
         logger.exception("RHEVM:%r templatizing temporary VM failed", provider)
 
 
-def cleanup(api, edomain, ssh_client, ovaname, provider, temp_template_name, temp_vm_name):
+def cleanup(api, qcowname, provider, temp_template_name, temp_vm_name):
     """Cleans up all the mess that the previous functions left behind.
 
     Args:
@@ -291,11 +332,12 @@ def cleanup(api, edomain, ssh_client, ovaname, provider, temp_template_name, tem
         edomain: Export domain of chosen RHEVM provider.
     """
     try:
-        logger.info("RHEVM:%r Deleting the  .ova file...", provider)
-        command = 'rm {}'.format(ovaname)
-        result = ssh_client.run_command(command)
-        if result.failed:
-            logger.error('Failure deleting ova file: %r', str(result))
+        logger.info("RHEVM:%r Deleting the  .qcow2 file...", provider)
+        rc = subprocess.call(
+            ['rm', qcowname])
+        if rc != 0:
+            print('Failure deleting qcow2 file')
+            sys.exit(127)
 
         logger.info("RHEVM:%r Deleting the temp_vm on sdomain...", provider)
         temporary_vm = api.vms.get(temp_vm_name)
@@ -448,7 +490,7 @@ def make_kwargs_rhevm(cfmeqe_data, provider):
 
 
 def upload_template(rhevip, sshname, sshpass, username, password,
-                    provider, image_url, template_name, provider_data, stream):
+                    provider, image_url, template_name, provider_data, stream, glance):
     try:
         logger.info("RHEVM:%r Template %r upload started", provider, template_name)
         if provider_data:
@@ -460,14 +502,11 @@ def upload_template(rhevip, sshname, sshpass, username, password,
             api = get_mgmt(kwargs.get('provider')).api
         kwargs['image_url'] = image_url
         kwargs['template_name'] = template_name
-        """
+        qcowname = get_qcow_name(image_url)
         temp_template_name = ('auto-tmp-{}-'.format(
             fauxfactory.gen_alphanumeric(8))) + template_name
         temp_vm_name = ('auto-vm-{}-'.format(
             fauxfactory.gen_alphanumeric(8))) + template_name
-        """
-        temp_template_name = 'auto-tmp-nan-' + template_name
-        temp_vm_name = 'auto-vm-nan-' + template_name
         if template_name is None:
             template_name = cfme_data['basic_info']['appliance_template']
 
@@ -478,12 +517,18 @@ def upload_template(rhevip, sshname, sshpass, username, password,
             logger.info("RHEVM:%r Found finished template with name %r.", provider, template_name)
             logger.info("RHEVM:%r The script will now end.", provider)
             return True
+        logger.info("RHEVM:%r Downloading .qcow2 file...", provider)
+        download_qcow(kwargs.get('image_url'))
         try:
-            # logger.info("RHEVM:%r Importing new template to data domain", provider)
-            # import_template_glance(api, kwargs.get('edomain'), kwargs.get('sdomain'),
-            #    kwargs.get('cluster'), temp_template_name, provider)
+            logger.info("RHEVM:%r Adding Glance", provider)
+            add_glance(api, provider, glance)
+
+            logger.info("RHEVM:%r Importing new template to data domain", provider)
+            import_template_from_glance(api, kwargs.get('sdomain'), kwargs.get('cluster'),
+                temp_template_name, glance, provider, qcowname)
+
             logger.info("RHEVM:%r Making a temporary VM from new template", provider)
-            make_vm_from_template(api, stream, provider, kwargs.get('cluster'), temp_template_name,
+            make_vm_from_template(api, stream, cfme_data, kwargs.get('cluster'), temp_template_name,
                 temp_vm_name, provider, mgmt_network=kwargs.get('mgmt_network'))
 
             logger.info("RHEVM:%r Adding disk to created VM", provider)
@@ -494,16 +539,11 @@ def upload_template(rhevip, sshname, sshpass, username, password,
             logger.info("RHEVM:%r Templatizing VM", provider)
             templatize_vm(api, template_name, kwargs.get('cluster'), temp_vm_name, provider)
 
-            # if not provider_data:
-            #    logger.info("RHEVM:%r Add template %r to trackerbot", provider, template_name)
-            #    trackerbot.trackerbot_add_provider_template(stream, provider, template_name)
+            if not provider_data:
+                logger.info("RHEVM:%r Add template %r to trackerbot", provider, template_name)
+                trackerbot.trackerbot_add_provider_template(stream, provider, template_name)
         finally:
-            # cleanup(api, kwargs.get('edomain'), ssh_client, ovaname, provider,
-            #    temp_template_name, temp_vm_name)
-            # change_edomain_state(api, 'maintenance', kwargs.get('edomain'), provider)
-            # cleanup_empty_dir_on_edomain(path, edomain_ip,
-            #     sshname, sshpass, rhevip, provider)
-            # change_edomain_state(api, 'active', kwargs.get('edomain'), provider)
+            cleanup(api, qcowname, provider, temp_template_name, temp_vm_name)
             api.disconnect()
             logger.info("RHEVM:%r Template %r upload Ended", provider, template_name)
         if provider_data and api.templates.get(template_name):
@@ -512,7 +552,6 @@ def upload_template(rhevip, sshname, sshpass, username, password,
             deploy_args = {'provider': provider, 'vm_name': vm_name,
                            'template': template_name, 'deploy': True}
             getattr(__import__('clone_template'), "main")(**deploy_args)
-        api.disconnect()
         logger.info("RHEVM:%r Template %r upload Ended", provider, template_name)
     except Exception:
         logger.exception("RHEVM:%r Template %r upload exception", provider, template_name)
@@ -572,12 +611,12 @@ def run(**kwargs):
             rhevm_credentials = mgmt_sys[provider]['credentials']
             username = credentials[rhevm_credentials]['username']
             password = credentials[rhevm_credentials]['password']
-
         rhevip = mgmt_sys[provider]['ipaddress']
         thread = Thread(target=upload_template,
                         args=(rhevip, sshname, sshpass, username, password, provider,
                               kwargs.get('image_url'), kwargs.get('template_name'),
-                              kwargs['provider_data'], kwargs['stream']))
+                              kwargs['provider_data'], kwargs['stream'],
+                              kwargs['glance']))
         thread.daemon = True
         thread_queue.append(thread)
         thread.start()
