@@ -65,7 +65,13 @@ do_or_die () {
 
 gate() {
 	log "gating $2 to $ARTIFACTOR_DIR/$1"
-	eval "$2" >> $ARTIFACTOR_DIR/$1 2>&1 || (log "failed" ;exit 1)
+	eval "$2" >> $ARTIFACTOR_DIR/$1 2>&1 
+	local RES=$?
+	if [ $RES ]
+	then
+		log "failed"
+		exit $RES
+	fi
 }
 
 # Runs pip update - optionally can make use of wheelhouse
@@ -140,7 +146,7 @@ log "#*"
 
 log "GPG Checking #~"
 # Get the GPG-Keys
-gate "get_keys.txt "do_or_die /get_keys.py 5 1"
+gate "get_keys.txt" "do_or_die /get_keys.py 5 1"
 
 # die on errors
 set -e
