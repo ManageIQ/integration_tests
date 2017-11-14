@@ -9,8 +9,8 @@ from cfme.utils.update import Updateable
 
 
 @attr.s
-class GenericObjectDefinition(BaseEntity, Updateable, sentaku.modeling.ElementMixin):
-    """Generic Objects Definition class to context switch between UI and REST.
+class GenericObjectInstance(BaseEntity, Updateable, sentaku.modeling.ElementMixin):
+    """Generic Objects class to context switch between REST and Automate.
 
     Read/Update/Delete functionality.
     """
@@ -19,17 +19,16 @@ class GenericObjectDefinition(BaseEntity, Updateable, sentaku.modeling.ElementMi
     exists = sentaku.ContextualProperty()
 
     name = attr.ib()
-    description = attr.ib()
-    attributes = attr.ib(default=None)  # e.g. {'address': 'string'}
-    associations = attr.ib(default=None)  # e.g. {'services': 'Service'}
-    methods = attr.ib(default=None)  # e.g. ['method1', 'method2']
+    definition = attr.ib()  # generic object definition
+    attributes = attr.ib(default=None)  # e.g. {'address': 'Test Address'}
+    associations = attr.ib(default=None)  # e.g. {'services': [myservice1, myservice2]}
     rest_response = attr.ib(default=None, init=False)
 
 
 @attr.s
-class GenericObjectDefinitionCollection(BaseCollection, sentaku.modeling.ElementMixin):
+class GenericObjectInstanceCollection(BaseCollection, sentaku.modeling.ElementMixin):
 
-    ENTITY = GenericObjectDefinition
+    ENTITY = GenericObjectInstance
 
     create = sentaku.ContextualMethod()
 
