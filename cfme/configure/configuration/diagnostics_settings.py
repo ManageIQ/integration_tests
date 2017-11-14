@@ -484,4 +484,3 @@ class ZoneDiagnosticsCollectLogs(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.collectlogs.select()
-

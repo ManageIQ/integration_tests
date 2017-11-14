@@ -884,7 +884,7 @@ class ReplicationView(RegionView):
 
     @property
     def is_displayed(self):
-            return self.replication_type.is_displayed
+        return self.replication_type.is_displayed
 
 
 class ReplicationGlobalView(ReplicationView):
@@ -912,10 +912,6 @@ class ReplicationGlobalAddView(ReplicationView):
         return self.accept_button.is_displayed
 
 
-class ReplicationGlobalEditView(ReplicationGlobalAddView):
-    update_button = Button('Update')
-
-
 class ReplicationRemoteView(ReplicationView):
     """ Replication Remote setup View """
     pass
@@ -923,18 +919,31 @@ class ReplicationRemoteView(ReplicationView):
 
 
 class Replication(NavigatableMixin):
-    """ Class represents a Replication tab in CFME UI """
+    """ Class represents a Replication tab in CFME UI
+
+        Note:
+        Remote settings is not covered for now as 'Excluded Tables' element widget should be added
+    """
 
     def __init__(self, appliance):
         self.appliance = appliance
 
     def set_replication(self, updates=None, replication_type=None, reset=False):
+        """ Set replication settings
+
+            Args:
+                 updates(dict): Replication update values, mandatory is host,
+                     db creds get from credentials
+                 replication_type(str): Replication type, use 'global' or 'remote'
+                 reset: Pass True to reset made changes
+
+        """
         db_creds = conf.credentials.database
         if not replication_type:
             view = navigate_to(self, 'Details')
             view.replication_type.fill('<None>')
-        else:
-            view = navigate_to(self, '{}Add'.format(replication_type.capitalize()))
+        elif replication_type == 'global':
+            view = navigate_to(self, 'GlobalAdd')
             view.fill({
                 'database': (
                     updates.get('database') if updates.get('database') else 'vmdb_production'),
@@ -945,6 +954,9 @@ class Replication(NavigatableMixin):
                 'password': (
                     updates.get('password') if updates.get('password') else db_creds.password)
             })
+        else:
+            view = navigate_to(self, 'RemoteAdd')
+            # TODO fill remote settings will be done after widget added
         if reset:
             view.reset_button.click()
             view.flash.assert_message('All changes have been reset')
@@ -955,7 +967,14 @@ class Replication(NavigatableMixin):
             except Exception:
                 logger.warning('Nothing was updated, please check the data')
 
-    def _remore_replication_row(self, host=None):
+    def _global_replication_row(self, host=None):
+        """ Get replication row from table
+
+            Args:
+                host: host values
+            Returns:
+                host row object, of is host is not passed first table row is returned
+        """
         view = navigate_to(self, 'Global')
         if host:
             return view.subscription_table.row(host='host')
@@ -963,15 +982,28 @@ class Replication(NavigatableMixin):
             return view.subscription_table.row[0]
 
     def get_replication_status(self, replication_type='global', host=None):
+        """ Get replication status, if replication is active
+
+            Args:
+                replication_type: Replication type string, default is global
+                host: host to check
+            Returns: True if active, otherwise False
+        """
         view = navigate_to(self, replication_type.capitalize())
         if replication_type == 'remote':
             return view.is_displayed
         else:
-            return self._remore_replication_row(host)
+            return self._global_replication_row(host).is_displayed
 
     def get_global_replication_backlog(self, host=None):
-        row = self._remore_replication_row(host)
-        return int(row.backlog.text)
+        """ Get global replication backlog value
+
+            Args:
+                host: host value
+            Returns: backlog number value
+        """
+        row = self._global_replication_row(host)
+        return int(row.backlog.text.split(' ')[0])
 
 
 @navigator.register(Replication, 'Details')

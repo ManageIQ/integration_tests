@@ -84,8 +84,8 @@ def configure_db_replication(db_address, appliance):
                              fail_func=current_appliance.server.browser.refresh,
                              message="get_replication_status")
     assert rep_status
-    wait_for(lambda: replication_conf.get_global_replication_backlog(navigate=False) == 0,
-             fail_condition=False, num_sec=120, delay=10,
+    wait_for(lambda: replication_conf.get_global_replication_backlog == 0, fail_condition=False,
+             num_sec=120, delay=10,
              fail_func=current_appliance.server.browser.refresh, message="get_replication_backlog")
 
 
