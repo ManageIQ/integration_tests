@@ -59,6 +59,7 @@ class DetailsMyServiceView(MyServicesView):
     configuration = VersionPick({
         Version.lowest(): SSUIConfigDropdown("dropdownKebabRight"),
         '5.8': SSUIDropdown('Configuration')})
+    console_button = Button(tooltip="HTML5 console", classes=['open-console-button'])
 
 
 class ServiceEditForm(MyServicesView):
@@ -260,7 +261,10 @@ class LaunchVMConsole(SSUINavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.access_dropdown.item_select('VM Console')
+        if self.appliance.version < "5.8":
+            self.prerequisite_view.console_button.click()
+        else:
+            self.prerequisite_view.access_dropdown.item_select('VM Console')
 
 
 @navigator.register(MyService, 'SetOwnership')
