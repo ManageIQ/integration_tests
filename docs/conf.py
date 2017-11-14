@@ -278,7 +278,7 @@ texinfo_documents = [
 autodoc_default_flags = ['members']
 
 
-MOCK_MODULES = ['pycurl', 'wrapanapi', 'ovirt-engine-sdk-python', 'wrapanapi.utils',
+MOCK_MODULES = ['git', 'pycurl', 'wrapanapi', 'ovirt-engine-sdk-python', 'wrapanapi.utils',
                 'wrapanapi.base', 'wrapanapi.exceptions',
                 'wrapanapi.ec2', 'wrapanapi.openstack', 'wrapanapi.rhevm',
                 'wrapanapi.scvmm', 'wrapanapi.virtualcenter', 'wrapanapi.kubernetes',
