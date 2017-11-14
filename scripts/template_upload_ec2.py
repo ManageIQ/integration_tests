@@ -205,9 +205,8 @@ def run(template_name, image_url, stream, **kwargs):
     valid_providers = [
         prov_key
         for prov_key in list_provider_keys("ec2")
-        if ('disabled' not in mgmt_sys[prov_key]['tags']) and
-           (mgmt_sys[prov_key].get('template_upload') and
-            not mgmt_sys[prov_key]['template_upload'].get('block_upload'))
+        if ('disabled' not in mgmt_sys[prov_key]['tags'] and
+            not mgmt_sys[prov_key].get('template_upload', {}).get('block_upload', False))
     ]
 
     if valid_providers:
@@ -259,7 +258,7 @@ def run(template_name, image_url, stream, **kwargs):
         cleanup_s3(ec2=ec2, bucket_name=bucket_name, ami_name=ami_name)
 
         # Track it
-        logger.info("EC2:%r:%r Adding template %r to trackerbot for stream",
+        logger.info("EC2:%r:%r Adding template %r to trackerbot for stream %r",
                     prov_key, region, ami_name, stream)
         trackerbot.trackerbot_add_provider_template(stream, prov_key, ami_name)
         logger.info('EC2:%r:%r Template %r creation complete', prov_key, region, ami_name)
