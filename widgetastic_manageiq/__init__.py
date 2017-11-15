@@ -3596,3 +3596,30 @@ class PotentiallyInvisibleTab(Tab):
             self.logger.info('Tab not present and ignoring turned on - not touching the tab.')
             return
         return super(PotentiallyInvisibleTab, self).select()
+
+
+class Splitter(Widget):
+    """ Represents the folder manager in Edit Report Menus screen
+    (Cloud Intel/Reports/Edit Report Menus).
+
+    """
+
+    left_button = Text("//span[@class='fa fa-angle-left']")
+    right_button = Text("//span[@class='fa fa-angle-right']")
+
+    def __init__(self, parent, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+
+    def pull_left(self):
+        if self.left_button.is_displayed:
+            self.left_button.click()
+
+    def pull_right(self):
+        if self.right_button.is_displayed:
+            self.right_button.click()
+
+    def reset(self):
+        for _ in range(4):
+            self.pull_left()
+        for _ in range(2):
+            self.pull_right()
