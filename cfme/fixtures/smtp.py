@@ -9,6 +9,7 @@ about the collector.
 import logging
 import os
 import pytest
+import signal
 import subprocess
 import time
 
@@ -53,7 +54,7 @@ def smtp_test(request, appliance):
             return
         logger.info("Sending KeyboardInterrupt to collector")
         try:
-            subprocess.call(['pkill', '-INT', '-P', str(collector.pid)])
+            collector.send_signal(signal.SIGINT)
         except OSError as e:
             # TODO: Better logging.
             logger.exception(e)
@@ -62,11 +63,11 @@ def smtp_test(request, appliance):
         time.sleep(2)
         if collector.poll() is None:
             logger.info("Sending SIGTERM to collector")
-            subprocess.call(['pkill', '-TERM', '-P', str(collector.pid)])
+            collector.send_signal(signal.SIGTERM)
             time.sleep(5)
             if collector.poll() is None:
                 logger.info("Sending SIGKILL to collector")
-                subprocess.call(['pkill', '-KILL', '-P', str(collector.pid)])
+                collector.send_signal(signal.SIGKILL)
         collector.wait()
         logger.info("Collector finished")
         logger.info("Cleaning up smtp setup in CFME")
