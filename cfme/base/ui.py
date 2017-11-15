@@ -660,99 +660,6 @@ class DiagnosticsWorkers(CFMENavigateStep):
         self.prerequisite_view.workers.select()
 
 
-class DiagnosticsCollectLogsView(ServerDiagnosticsView):
-    title = Text('#explorer_title_text')
-
-    edit = Button(title="Edit the Log Depot settings for the selected Server")
-    collect = Dropdown(VersionPick({Version.lowest(): 'Collect Logs',
-                       '5.7': 'Collect'}))
-
-    log_depot_uri = SummaryFormItem('Basic Info', 'Log Depot URI')
-    last_log_collection = SummaryFormItem('Basic Info', 'Last Log Collection')
-    last_log_message = SummaryFormItem('Basic Info', 'Last Message')
-
-    @property
-    def is_displayed(self):
-        return (
-            super(DiagnosticsCollectLogsView, self).is_displayed and
-            self.collectlogs.is_displayed and
-            self.collectlogs.is_active and
-            self.title.text == 'Diagnostics Server "{} [{}]" (current)'.format(
-                self.context['object'].name, self.context['object'].sid))
-
-
-class ZoneDiagnosticsCollectLogsView(DiagnosticsCollectLogsView):
-    edit = Button(title="Edit the Log Depot settings for the selected Zone")
-
-    @property
-    def is_displayed(self):
-        return (
-            self.collectlogs.is_displayed and
-            self.collectlogs.is_active and
-            self.title.text == 'Diagnostics Zone "{}" (current)'.format(
-                self.context['object'].description))
-
-
-@navigator.register(Server, "DiagnosticsCollectLogs")
-class DiagnosticsCollectLogs(CFMENavigateStep):
-    VIEW = DiagnosticsCollectLogsView
-    prerequisite = NavigateToSibling('Diagnostics')
-
-    def step(self):
-        self.prerequisite_view.collectlogs.select()
-
-
-@navigator.register(Server, "DiagnosticsCollectLogsSlave")
-class DiagnosticsCollectLogsSlave(CFMENavigateStep):
-    VIEW = DiagnosticsCollectLogsView
-    prerequisite = NavigateToSibling('Diagnostics')
-
-    def step(self):
-        self.prerequisite_view.accordions.diagnostics.tree.click_path(
-            self.appliance.server_region_string(),
-            "Zone: {} (current)".format(self.appliance.zone_description),
-            "Server: {} [{}]".format(self.appliance.slave_server_name(),
-                                     self.appliance.slave_server_zone_id()))
-        self.prerequisite_view.collectlogs.select()
-
-
-class DiagnosticsCollectLogsEditView(DiagnosticsCollectLogsView):
-
-    @property
-    def is_displayed(self):
-        return super(DiagnosticsCollectLogsView, self).is_displayed and self.protocol.is_displayed
-
-    depot_type = BootstrapSelect('log_protocol')
-    depot_name = Input('depot_name')
-    uri = Input('uri')
-    username = Input(name='log_userid')
-    password = Input(name='log_password')
-    confirm_password = Input(name='log_verify')
-    validate = Button('Validate')
-
-    save = Button('Save')
-    reset = Button('Reset')
-    cancel = Button('Cancel')
-
-
-@navigator.register(Server, "DiagnosticsCollectLogsEdit")
-class DiagnosticsCollectLogsEdit(CFMENavigateStep):
-    VIEW = DiagnosticsCollectLogsEditView
-    prerequisite = NavigateToSibling('DiagnosticsCollectLogs')
-
-    def step(self):
-        self.prerequisite_view.edit.click()
-
-
-@navigator.register(Server, "DiagnosticsCollectLogsEditSlave")
-class DiagnosticsCollectLogsEditSlave(CFMENavigateStep):
-    VIEW = DiagnosticsCollectLogsEditView
-    prerequisite = NavigateToSibling('DiagnosticsCollectLogsSlave')
-
-    def step(self):
-        self.prerequisite_view.edit.click()
-
-
 @navigator.register(Server)
 class CFMELog(CFMENavigateStep):
     VIEW = ServerDiagnosticsView
@@ -1233,24 +1140,6 @@ class ZoneDiagnosticsServers(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.servers.select()
-
-
-@navigator.register(Zone, 'DiagnosticsCollectLogs')
-class ZoneDiagnosticsCollectLogs(CFMENavigateStep):
-    VIEW = ZoneDiagnosticsCollectLogsView
-    prerequisite = NavigateToSibling('Diagnostics')
-
-    def step(self):
-        self.prerequisite_view.collectlogs.select()
-
-
-@navigator.register(Zone, 'DiagnosticsCollectLogsEdit')
-class ZoneDiagnosticsCollectLogsEdit(CFMENavigateStep):
-    VIEW = DiagnosticsCollectLogsEditView
-    prerequisite = NavigateToSibling('DiagnosticsCollectLogs')
-
-    def step(self):
-        self.prerequisite_view.edit.click()
 
 
 @navigator.register(Zone, 'CANDUGapCollection')
