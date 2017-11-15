@@ -11,7 +11,7 @@ normally be placed in main function, are located in function run(**kwargs).
 import argparse
 import sys
 import os
-import urllib2
+import requests
 from threading import Lock
 
 from wrapanapi.exceptions import ImageNotFoundError, MultipleImagesError
@@ -104,27 +104,19 @@ def download_image_file(image_url):
     :return: tuple, file name and file path strings
     """
     file_name = image_url.split('/')[-1]
-    u = urllib2.urlopen(image_url)
-    meta = u.info()
-    file_size = int(meta.getheaders("Content-Length")[0])
-    file_path = os.path.abspath(file_name)
-    if os.path.isfile(file_name):
-        if file_size == os.path.getsize(file_name):
-            return file_name, file_path
-        os.remove(file_name)
-    logger.info("Downloading: %r Bytes: %r", file_name, file_size)
-    with open(file_name, 'wb') as image_file:
-        # os.system('cls')
-        file_size_dl = 0
-        block_sz = 8192
-        while True:
-            buffer_f = u.read(block_sz)
-            if not buffer_f:
-                break
-
-            file_size_dl += len(buffer_f)
-            image_file.write(buffer_f)
-    return file_name, file_path
+    with requests.get(image_url, stream=True) as r:
+        file_size = int(r.headers['content-length'])
+        file_path = os.path.abspath(file_name)
+        if os.path.isfile(file_name):
+            if file_size == os.path.getsize(file_name):
+                r.close()
+                return file_name, file_path
+            os.remove(file_name)
+        logger.info("Downloading: %r Bytes: %r", file_name, file_size)
+        with open(file_name, 'wb') as image_file:
+            for chunk in r.iter_content(chunk_size=8192):
+                image_file.write(chunk)
+        return file_name, file_path
 
 
 def create_image(ec2, ami_name, bucket_name):
