@@ -661,6 +661,9 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
                 except DropdownItemDisabled:
                     logger.debug('No providers to delete')
             for prov in app.rest_api.collections.providers:
+                prov_cat_class = db_map.get(prov.type.replace('ManageIQ::Providers::', ''))
+                if not prov_cat_class:
+                    continue
                 prov.wait_not_exists(
                     num_sec=300, fail_func=app.rest_api.collections.providers.reload
                 )
