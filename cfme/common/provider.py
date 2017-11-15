@@ -640,8 +640,10 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
                         raise ex
         else:
             db_map = provider_db_mapping()
-            all_provs = app.rest_api.collections.providers.all
+            app.rest_api.collections.providers.reload()
+            all_provs = app.rest_api.collections.providers
             pages = set()
+            logger.debug('Providers existing: {}'.format([(prov.name, prov.id) for prov in all_provs]))
             for prov in all_provs:
                 prov_cat_class = db_map.get(prov.type.replace('ManageIQ::Providers::', ''))
                 if prov_cat_class:
@@ -658,8 +660,10 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
                     )
                 except DropdownItemDisabled:
                     logger.debug('No providers to delete')
-            for prov in app.rest_api.collections.providers.all:
-                prov.wait_not_exists(num_sec=300)
+            for prov in app.rest_api.collections.providers:
+                prov.wait_not_exists(
+                    num_sec=300, fail_func=app.rest_api.collections.providers.reload
+                )
         app.rest_api.collections.providers.reload()
 
     def one_of(self, *classes):
