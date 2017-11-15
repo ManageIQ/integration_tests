@@ -53,6 +53,7 @@ def test_control_explorer_tree(control_explorer_view, destination):
     Steps:
         * Open each accordion tab and click on top node of the tree.
     """
+    navigate_to(Server, 'ControlExplorer')
     accordion_name = destination.lower().replace(" ", "_")
     accordion = getattr(control_explorer_view, accordion_name)
     accordion.tree.click_path("All {}".format(destination))
