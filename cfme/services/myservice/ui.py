@@ -1,5 +1,6 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, View
+from widgetastic.utils import Parameter
+from widgetastic.widget import ParametrizedView, Text, View
 from widgetastic_manageiq import (Accordion, ManageIQTree, Calendar, SummaryTable,
                                   BaseNonInteractiveEntitiesView)
 from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Tab
@@ -65,6 +66,14 @@ class SetOwnershipForm(MyServicesView):
 class MyServiceDetailsToolbar(View):
     """View of toolbar widgets to nest"""
     reload = Button(title='Reload current display')
+
+    @ParametrizedView.nested
+    class custom_button(ParametrizedView):  # noqa
+        PARAMETERS = ("button_group", )
+        _dropdown = Dropdown(text=Parameter("button_group"))
+
+        def item_select(self, button, handle_alert=None):
+            self._dropdown.item_select(button, handle_alert=handle_alert)
 
 
 class MyServiceDetailView(MyServicesView):
@@ -228,7 +237,11 @@ def exists(self):
 @MyService.delete.external_implementation_for(ViaUI)
 def delete(self):
     view = navigate_to(self, 'Details')
-    view.configuration.item_select('Remove Service', handle_alert=True)
+    if self.appliance.version < "5.9":
+        remove_str = 'Remove Service'
+    else:
+        remove_str = 'Remove Service from Inventory'
+    view.configuration.item_select(remove_str, handle_alert=True)
     view = self.create_view(MyServicesView)
     view.flash.assert_no_error()
     assert view.is_displayed

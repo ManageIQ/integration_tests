@@ -31,7 +31,7 @@ class RepositoryBaseView(BaseLoggedInPage):
 
 class RepositoryAllView(RepositoryBaseView):
     configuration = Dropdown("Configuration")
-    entities = Table(".//div[@id='list_grid']/table")
+    entities = Table(".//div[@id='gtl_div']//table")
     paginator = PaginationPane()
 
     @property
@@ -159,7 +159,11 @@ class Repository(BaseEntity, Fillable):
     def delete(self):
         """Delete the repository in the UI."""
         view = navigate_to(self, "Details")
-        view.configuration.item_select("Remove this Repository", handle_alert=True)
+        if self.appliance.version < "5.9":
+            remove_str = "Remove this Repository"
+        else:
+            remove_str = "Remove this Repository from Inventory"
+        view.configuration.item_select(remove_str, handle_alert=True)
         repo_list_page = self.create_view(RepositoryAllView)
         assert repo_list_page.is_displayed
         repo_list_page.flash.assert_no_error()
