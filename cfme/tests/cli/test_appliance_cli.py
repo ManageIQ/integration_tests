@@ -1,6 +1,7 @@
+import pytest
 from cfme.utils.log_validator import LogValidator
 from cfme.utils import version
-import pytest
+from wait_for import wait_for
 
 
 def test_set_hostname(appliance):
@@ -74,3 +75,30 @@ def test_ipa_crud(ipa_creds, configured_appliance):
     configured_appliance.appliance_console_cli.configure_ipa(ipa_creds['ipaserver'],
         ipa_creds['username'], ipa_creds['password'], ipa_creds['domain'], ipa_creds['realm'])
     configured_appliance.appliance_console_cli.uninstall_ipa_client()
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
+def test_black_console_cli_extend_storage(unconfigured_appliance):
+    unconfigured_appliance.ssh_client.run_command('appliance_console_cli -t auto')
+
+    def is_storage_extended(unconfigured_appliance):
+        assert unconfigured_appliance.ssh_client.run_command("df -h | grep /var/www/miq_tmp")
+    wait_for(is_storage_extended, func_args=[unconfigured_appliance])
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
+def test_black_console_cli_extend_log_storage(unconfigured_appliance):
+    unconfigured_appliance.ssh_client.run_command('appliance_console_cli -l auto')
+
+    def is_storage_extended(unconfigured_appliance):
+        assert unconfigured_appliance.ssh_client.run_command("df -h | grep /vg_miq_logs")
+    wait_for(is_storage_extended, func_args=[unconfigured_appliance])
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
+def test_black_console_cli_configure_dedicated_db(unconfigured_appliance, app_creds):
+    unconfigured_appliance.appliance_console_cli.configure_appliance_dedicated_db(
+        0, app_creds['username'], app_creds['password'], 'vmdb_production',
+        unconfigured_appliance.unpartitioned_disks[0]
+    )
+    wait_for(lambda: unconfigured_appliance.db.is_dedicated_active)
