@@ -13,7 +13,7 @@ def test_system_image_type_crud(appliance):
     """
     Tests a System Image Type using CRUD operations.
     """
-    collection = appliance.collections.system_image_type
+    collection = appliance.collections.system_image_types
     sys_image_type = collection.create(
         name=fauxfactory.gen_alphanumeric(8),
         provision_type=SystemImageType.VM_OR_INSTANCE)
@@ -26,7 +26,7 @@ def test_duplicate_name_error_validation(appliance):
     """
     Tests a System Image for duplicate name.
     """
-    collection = appliance.collections.system_image_type
+    collection = appliance.collections.system_image_types
     name = fauxfactory.gen_alphanumeric(8)
     sys_image_type = collection.create(
         name=name,
@@ -42,7 +42,7 @@ def test_name_required_error_validation(appliance):
     """
     Tests a System Image with no name.
     """
-    collection = appliance.collections.system_image_type
+    collection = appliance.collections.system_image_types
     with error.expected('Name is required'):
         collection.create(
             name=None,
