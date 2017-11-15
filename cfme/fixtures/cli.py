@@ -53,7 +53,7 @@ def fqdn_appliance(appliance, preconfigured):
     else:
         logger.error("Couldn't provision an appliance at all")
         raise SproutException('No provision available')
-    yield apps[0]
+    return apps[0]
 
     apps[0].ssh_client.close()
     sp.destroy_pool(pool_id)
@@ -61,12 +61,12 @@ def fqdn_appliance(appliance, preconfigured):
 
 @pytest.yield_fixture(scope="function")
 def appliance_with_disk(appliance):
-    return fqdn_appliance(appliance, preconfigured=False)
+    yield fqdn_appliance(appliance, preconfigured=False)
 
 
 @pytest.yield_fixture(scope="function")
 def ipa_appliance(appliance):
-    return fqdn_appliance(appliance, preconfigured=True)
+    yield fqdn_appliance(appliance, preconfigured=True)
 
 
 @pytest.yield_fixture()
