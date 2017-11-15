@@ -499,6 +499,3 @@ _configure_warnings()
 
 # Register a custom excepthook to log unhandled exceptions
 sys.excepthook = _custom_excepthook
-
-# Suppress psphere's really annoying "No handler found" messages.
-logging.getLogger('psphere').addHandler(logging.NullHandler())
