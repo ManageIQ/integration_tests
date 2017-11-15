@@ -55,7 +55,7 @@ def upload_to_glance(image, image_name_in_glance, provider, disk_format):
     glance.images.upload(glance_img.id, open(image, 'rb'))
 
 
-def main():
+def main(args):
     parser = argparse.ArgumentParser(description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
@@ -64,10 +64,9 @@ def main():
     parser.add_argument('--provider', help='Glance provider key in cfme_data', required=True)
     parser.add_argument('--disk_format', help='Disk format of image', default='qcow2')
 
-    args = parser.parse_args()
-
+    args = parser.parse_args(args)
     upload_to_glance(args.image, args.image_name_in_glance, args.provider, args.disk_format)
 
 
-if __name__ == "__main__":
-    sys.exit(main())
+if __name__ == '__main__':
+    main(sys.argv[1:])

@@ -17,6 +17,8 @@ from threading import Lock, Thread
 
 from ovirtsdk.xml import params
 
+import image_upload_glance
+
 from cfme.utils import net, trackerbot
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger, add_stdout_handler
@@ -151,7 +153,7 @@ def add_glance(api, provider, glance_server):
 
 
 def import_template_from_glance(api, sdomain, cluster, temp_template_name,
-        glance_server, provider, qcowname):
+        glance_server, provider, template_name):
     try:
         if api.templates.get(temp_template_name) is not None:
             logger.info("RHEVM:%r Warning: found another template with this name.", provider)
@@ -162,7 +164,7 @@ def import_template_from_glance(api, sdomain, cluster, temp_template_name,
         sd = api.storagedomains.get(name=glance_server)
 
         # Find the image:
-        image = sd.images.get(name=qcowname)
+        image = sd.images.get(name=template_name)
 
         # Import the image:
         image.import_image(params.Action(
@@ -520,12 +522,16 @@ def upload_template(rhevip, sshname, sshpass, username, password,
         logger.info("RHEVM:%r Downloading .qcow2 file...", provider)
         download_qcow(kwargs.get('image_url'))
         try:
+            logger.info("RHEVM:%r Uploading template to Glance", provider)
+            image_upload_glance.main(["--image", qcowname, "--image_name_in_glance",
+            template_name, "--provider", glance])
+
             logger.info("RHEVM:%r Adding Glance", provider)
             add_glance(api, provider, glance)
 
             logger.info("RHEVM:%r Importing new template to data domain", provider)
             import_template_from_glance(api, kwargs.get('sdomain'), kwargs.get('cluster'),
-                temp_template_name, glance, provider, qcowname)
+                temp_template_name, glance, provider, template_name)
 
             logger.info("RHEVM:%r Making a temporary VM from new template", provider)
             make_vm_from_template(api, stream, cfme_data, kwargs.get('cluster'), temp_template_name,
