@@ -3,7 +3,6 @@ import re
 import urlparse
 from collections import defaultdict, namedtuple
 from datetime import date
-import urllib
 
 import slumber
 import requests
@@ -313,10 +312,13 @@ def depaginate(api, result):
 def composite_uncollect(build, source='jenkins'):
     """Composite build function"""
     since = env.get('ts', time.time())
-    url = "{0}?build={1}&source={2}&since={3}".format(
-        conf['ostriz'], urllib.quote(build), urllib.quote(source), urllib.quote(since))
+    params = {
+        'build': build,
+        'source': source,
+        'since': since,
+    }
     try:
-        resp = requests.get(url, timeout=10)
+        resp = requests.get(conf['ostriz'], params=params, timeout=10)
         return resp.json()
     except Exception as e:
         print(e)
