@@ -14,19 +14,25 @@ from cfme.services.myservice import MyService
 from cfme.optimize.utilization import Utilization
 from cfme.optimize.bottlenecks import Bottlenecks
 from cfme.infrastructure.networking import InfraNetworking
-from cfme.web_ui.splitter import pull_splitter_left, pull_splitter_right
 from cfme.utils import version
 from cfme.utils.appliance import current_appliance
 from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
+from widgetastic_manageiq import Splitter
+
+# LOCATIONS = [
+#     (Server, 'ControlExplorer'), (Server, 'AutomateExplorer'), (Server, 'AutomateCustomization'),
+#     (MyService, 'All'), (Server, 'ServiceCatalogsDefault'), (Server, 'WorkloadsDefault'),
+#     (CustomReport, 'All'), (ComputeRate, 'All'), (Instance, 'All'), (Vm, 'VMsOnly'),
+#     (ISODatastore, 'All'), (Server, 'Configuration'), (DatastoreCollection, 'All'),
+#     (ConfigManager, 'All'), (Utilization, 'All'), (InfraNetworking, 'All'), (Bottlenecks, 'All')
+# ]
 LOCATIONS = [
     (Server, 'ControlExplorer'), (Server, 'AutomateExplorer'), (Server, 'AutomateCustomization'),
-    (MyService, 'All'), (Server, 'ServiceCatalogsDefault'), (Server, 'WorkloadsDefault'),
-    (CustomReport, 'All'), (ComputeRate, 'All'), (Instance, 'All'), (Vm, 'VMsOnly'),
-    (ISODatastore, 'All'), (Server, 'Configuration'), (DatastoreCollection, 'All'),
-    (ConfigManager, 'All'), (Utilization, 'All'), (InfraNetworking, 'All'), (Bottlenecks, 'All')
+    (MyService, 'All'), (Server, 'ServiceCatalogsDefault'), (Server, 'Configuration'),
+    (Utilization, 'All'), (InfraNetworking, 'All')
 ]
 
 
@@ -48,15 +54,21 @@ pytestmark = [
 )
 @pytest.mark.requirement('general_ui')
 @pytest.mark.tier(3)
-def test_pull_splitter_persistence(location, appliance):
+def test_pull_splitter_persistence(request, location, appliance):
+    splitter = Splitter(parent=appliance.browser.widgetastic)
+
+    request.addfinalizer(splitter.reset)
+
     if location[0] == Server:
         location = (current_appliance.server, location[1])
     elif issubclass(location[0], BaseCollection):
         location = (location[0](appliance), location[1])
     navigate_to(*location)
-    # First we move splitter to hidden position by pulling it left twice
-    pull_splitter_left()
-    pull_splitter_left()
+
+    # TODO: When all WT is complete, use the view for this
+
+    splitter.pull_left()
+    splitter.pull_left()
     navigate_to(Server, 'Dashboard')
     try:
         navigate_to(*location)
@@ -71,7 +83,7 @@ def test_pull_splitter_persistence(location, appliance):
     # Then we iterate over all the other positions
     for position in ["col-md-2", "col-md-3", "col-md-4", "col-md-5"]:
         # Pull splitter left
-        pull_splitter_right()
+        splitter.pull_right()
         navigate_to(Server, 'Dashboard')
         navigate_to(*location)
         # Then check its position
