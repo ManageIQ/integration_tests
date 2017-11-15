@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import logging
 import socket
@@ -41,6 +42,7 @@ from .implementations.rest import ViaREST
 from .implementations.ssui import ViaSSUI
 from .implementations.ui import ViaUI
 from .services import SystemdService
+import six
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # EMS types recognized by IP or credentials
@@ -112,7 +114,7 @@ class ApplianceConsole(object):
             channel = self.appliance.ssh_client.invoke_shell()
         self.commands = commands
         for command in commands:
-            if isinstance(command, basestring):
+            if isinstance(command, six.string_types):
                 command_string, timeout = command, timeout
             else:
                 command_string, timeout = command

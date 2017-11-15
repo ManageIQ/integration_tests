@@ -43,10 +43,12 @@ To ensure the appliance has the default roles::
 For a list of server role names currently exposed in the CFME interface,
 see keys of :py:data:`cfme.configure.configuration.server_roles`.
 """
+from __future__ import absolute_import
 from markers.meta import plugin
 
 from cfme.utils.conf import cfme_data
 from cfme.configure.configuration.server_settings import ServerInformation
+import six
 
 available_roles = set(ServerInformation.SERVER_ROLES)
 
@@ -71,7 +73,7 @@ def add_server_roles(server_roles, server_roles_mode="add"):
         # The ones that are already enabled and enable/disable the ones specified
         # -server_role, +server_role or server_role
         roles_with_vals = server_settings.server_roles_db
-        if isinstance(server_roles, basestring):
+        if isinstance(server_roles, six.string_types):
             server_roles = server_roles.split(' ')
         for role in server_roles:
             if role.startswith('-'):

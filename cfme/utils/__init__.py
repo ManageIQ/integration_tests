@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import atexit
 import re
 import subprocess
@@ -8,6 +9,7 @@ import diaper
 from cached_property import cached_property
 from functools import partial
 from werkzeug.local import LocalProxy
+import six
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 
@@ -18,7 +20,7 @@ class FakeObject(object):
 
 
 def fakeobject_or_object(obj, attr, default=None):
-    if isinstance(obj, basestring):
+    if isinstance(obj, six.string_types):
         return FakeObject(**{attr: obj})
     elif not obj:
         return FakeObject(**{attr: default})
@@ -205,7 +207,7 @@ def safe_string(o):
     Args:
         o: Anything.
     """
-    if not isinstance(o, basestring):
+    if not isinstance(o, six.string_types):
         if hasattr(o, "__unicode__"):
             o = unicode(o)
         else:
