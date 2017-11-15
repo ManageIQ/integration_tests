@@ -62,7 +62,7 @@ def test_workload_capacity_and_utilization_rep(appliance, request, scenario, set
             'appliance_roles': ', '.join(roles_cap_and_util_rep),
             'scenario': scenario}
     quantifiers = {}
-    monitor_thread = SmemMemoryMonitor(appliance.ssh_client(), scenario_data)
+    monitor_thread = SmemMemoryMonitor(scenario_data, appliance)
 
     def cleanup_workload(scenario, from_ts, quantifiers, scenario_data):
         starttime = time.time()
@@ -72,7 +72,7 @@ def test_workload_capacity_and_utilization_rep(appliance, request, scenario, set
         monitor_thread.grafana_urls = g_urls
         monitor_thread.signal = False
         monitor_thread.join()
-        add_workload_quantifiers(quantifiers, scenario_data)
+        add_workload_quantifiers(quantifiers, scenario_data, appliance)
         timediff = time.time() - starttime
         logger.info('Finished cleaning up monitoring thread in {}'.format(timediff))
     request.addfinalizer(lambda: cleanup_workload(scenario, from_ts, quantifiers, scenario_data))

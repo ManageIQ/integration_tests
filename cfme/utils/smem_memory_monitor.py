@@ -9,8 +9,6 @@ import yaml
 from cfme.utils.conf import cfme_performance
 from cfme.utils.log import logger
 from cfme.utils.path import results_path
-from cfme.utils.version import get_version
-from cfme.utils.version import current_version
 from collections import OrderedDict
 from cycler import cycler
 from datetime import datetime
@@ -142,14 +140,14 @@ SAMPLE_INTERVAL = 10
 
 
 class SmemMemoryMonitor(Thread):
-    def __init__(self, ssh_client, scenario_data):
+    def __init__(self, scenario_data, appliance):
         super(SmemMemoryMonitor, self).__init__()
-        self.ssh_client = ssh_client
         self.scenario_data = scenario_data
         self.grafana_urls = {}
         self.miq_server_id = ''
         self.use_slab = False
         self.signal = True
+        self.appliance = appliance
 
     def create_process_result(self, process_results, starttime, process_pid, process_name,
             memory_by_pid):
@@ -182,7 +180,7 @@ class SmemMemoryMonitor(Thread):
         # Available memory could potentially be better metric
         appliance_results[plottime] = {}
 
-        exit_status, meminfo_raw = self.ssh_client.run_command('cat /proc/meminfo')
+        exit_status, meminfo_raw = self.appliance.ssh_client.run_command('cat /proc/meminfo')
         if exit_status:
             logger.error('Exit_status nonzero in get_appliance_memory: {}, {}'.format(exit_status,
                 meminfo_raw))
@@ -208,7 +206,7 @@ class SmemMemoryMonitor(Thread):
             appliance_results[plottime]['swap_free'] = float(meminfo['SwapFree']) / 1024
 
     def get_evm_workers(self):
-        exit_status, worker_types = self.ssh_client.run_command(
+        exit_status, worker_types = self.appliance.ssh_client.run_command(
             'psql -t -q -d vmdb_production -c '
             '\"select pid,type from miq_workers where miq_server_id = \'{}\'\"'.format(
                 self.miq_server_id))
@@ -242,17 +240,18 @@ class SmemMemoryMonitor(Thread):
 
     def get_miq_server_id(self):
         # Obtain the Miq Server GUID:
-        exit_status, miq_server_guid = self.ssh_client.run_command('cat /var/www/miq/vmdb/GUID')
+        exit_status, miq_server_guid = self.appliance.ssh_client.run_command(
+            'cat /var/www/miq/vmdb/GUID')
         logger.info('Obtained appliance GUID: {}'.format(miq_server_guid.strip()))
         # Get server id:
-        exit_status, miq_server_id = self.ssh_client.run_command(
+        exit_status, miq_server_id = self.appliance.ssh_client.run_command(
             'psql -t -q -d vmdb_production -c "select id from miq_servers where guid = \'{}\'"'
             ''.format(miq_server_guid.strip()))
         logger.info('Obtained miq_server_id: {}'.format(miq_server_id.strip()))
         self.miq_server_id = miq_server_id.strip()
 
     def get_pids_memory(self):
-        exit_status, smem_out = self.ssh_client.run_command(
+        exit_status, smem_out = self.appliance.ssh_client.run_command(
             'smem -c \'pid rss pss uss vss swap name command\' | sed 1d')
         pids_memory = smem_out.strip().split('\n')
         memory_by_pid = {}
@@ -297,7 +296,7 @@ class SmemMemoryMonitor(Thread):
         """
         appliance_results = OrderedDict()
         process_results = OrderedDict()
-        install_smem(self.ssh_client)
+        install_smem(self.appliance.ssh_client, self.appliance)
         self.get_miq_server_id()
         logger.info('Starting Monitoring Thread.')
         while self.signal:
@@ -357,7 +356,7 @@ class SmemMemoryMonitor(Thread):
         logger.info('Monitoring CFME Memory Terminating')
 
         create_report(self.scenario_data, appliance_results, process_results, self.use_slab,
-            self.grafana_urls)
+            self.grafana_urls, self.appliance)
 
     def run(self):
         try:
@@ -367,21 +366,23 @@ class SmemMemoryMonitor(Thread):
             logger.error('{}'.format(traceback.format_exc()))
 
 
-def install_smem(ssh_client):
+def install_smem(appliance):
     # smem is included by default in 5.6 appliances
     logger.info('Installing smem.')
-    ver = get_version()
+    ver = appliance.version
     if ver == '55':
-        ssh_client.run_command('rpm -i {}'.format(cfme_performance['tools']['rpms']['epel7_rpm']))
-        ssh_client.run_command('yum install -y smem')
+        appliance.ssh_client.run_command('rpm -i {}'.format(
+            cfme_performance['tools']['rpms']['epel7_rpm']))
+        appliance.ssh_client.run_command('yum install -y smem')
     # Patch smem to display longer command line names
     logger.info('Patching smem')
-    ssh_client.run_command('sed -i s/\.27s/\.200s/g /usr/bin/smem')
+    appliance.ssh_client.run_command('sed -i s/\.27s/\.200s/g /usr/bin/smem')
 
 
-def create_report(scenario_data, appliance_results, process_results, use_slab, grafana_urls):
+def create_report(scenario_data, appliance_results, process_results, use_slab, grafana_urls,
+                  appliance):
     logger.info('Creating Memory Monitoring Report.')
-    ver = current_version()
+    ver = appliance.version
 
     provider_names = 'No Providers'
     if 'providers' in scenario_data['scenario']:
@@ -950,9 +951,9 @@ def generate_workload_html(directory, ver, scenario_data, provider_names, grafan
     logger.info('Generated Workload html in: {}'.format(timediff))
 
 
-def add_workload_quantifiers(quantifiers, scenario_data):
+def add_workload_quantifiers(quantifiers, scenario_data, appliance):
     starttime = time.time()
-    ver = current_version()
+    ver = appliance.version
     workload_path = results_path.join('{}-{}-{}'.format(test_ts, scenario_data['test_dir'], ver))
     directory = workload_path.join(scenario_data['scenario']['name'])
     file_name = str(directory.join('workload.html'))
