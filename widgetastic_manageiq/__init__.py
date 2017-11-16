@@ -43,7 +43,7 @@ from widgetastic_patternfly import (
     CandidateNotFound, Dropdown, Input, FlashMessages,
     VerticalNavigation, Tab)
 
-from cfme.exceptions import ItemNotFound, ManyEntitiesFound
+from cfme.exceptions import ItemNotFound
 
 
 class DynamicTableAddError(Exception):
@@ -2745,9 +2745,10 @@ class NonJSBaseEntity(View):
     list_entity = BaseListEntity
     tile_entity = BaseTileIconEntity
 
-    def __init__(self, parent, id, logger=None):
+    def __init__(self, parent, id, name=None, logger=None):
         View.__init__(self, parent, logger=logger)
         self.id = id
+        self._name = name
 
     def _get_existing_entity(self):
         for item in (self.quad_entity, self.tile_entity, self.list_entity):
@@ -2755,6 +2756,15 @@ class NonJSBaseEntity(View):
                 return item(id=self.id)
         else:
             raise NoSuchElementException("Item {id} isn't found on page".format(id=self.id))
+
+    @property
+    def name(self):
+        # ugly hack for 5.8 to provide entity name even when it is not displayed on current page
+        try:
+            item = self._get_existing_entity()
+            return item.name
+        except NoSuchElementException:
+            return self._name
 
     def __getattr__(self, name):
         if name.startswith('__'):
@@ -2784,9 +2794,10 @@ class JSBaseEntity(View, ReportDataControllerMixin):
     """
     QUADRANT = './/div[@class="flobj {pos}72"]/*[self::p or self::img or self::div]'
 
-    def __init__(self, parent, id, logger=None):
+    def __init__(self, parent, id, name=None, logger=None):
         View.__init__(self, parent, logger=logger)
         self.id = id
+        self._name = name or self.name
 
     @property
     def is_checked(self):
@@ -2798,7 +2809,10 @@ class JSBaseEntity(View, ReportDataControllerMixin):
 
     @property
     def name(self):
-        return self.data['name'] if 'name' in self.data else None
+        if self.is_displayed:
+            return self.data['name'] if 'name' in self.data else None
+        else:
+            return getattr(self, '_name', None)
 
     def check(self):
         self._call_item_method('select')
@@ -2831,7 +2845,11 @@ class JSBaseEntity(View, ReportDataControllerMixin):
 
     @property
     def is_displayed(self):
-        return self._invoke_cmd('is_displayed', self.id)
+        try:
+            return self._invoke_cmd('is_displayed', self.id)
+        except WebDriverException:
+            # there is sometimes an exception if such entity is not displayed
+            return False
 
 
 class EntitiesConditionalView(View, ReportDataControllerMixin):
@@ -2930,8 +2948,8 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         else:
             entities = []
             for _ in self.paginator.pages():
-                entities.extend([self.parent.entity_class(parent=self, id=id)
-                                for id in self.entity_ids])
+                entities.extend([self.parent.entity_class(parent=self, id=el['id'], name=el['name'])
+                                for el in self._current_page_elements])
             return entities
 
     def get_entity(self, surf_pages=False, **keys):
