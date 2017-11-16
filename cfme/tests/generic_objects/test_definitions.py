@@ -16,8 +16,7 @@ pytestmark = [test_requirements.generic_objects]
 @pytest.mark.parametrize('context', [ViaREST])
 def test_generic_object_definition_crud(appliance, context):
     with appliance.context.use(context):
-        definitions_collection = appliance.collections.generic_object_definitions
-        definition = definitions_collection.create(
+        definition = appliance.collections.generic_object_definitions.create(
             name="rest_generic_class{}".format(fauxfactory.gen_alphanumeric()),
             description="Generic Object Definition",
             attributes={"addr01": "string"},

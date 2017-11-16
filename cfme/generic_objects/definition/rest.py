@@ -9,12 +9,10 @@ from cfme.utils.rest import assert_response, create_resource
 
 
 @GenericObjectDefinitionCollection.create.external_implementation_for(ViaREST)
-def create(self, name, description=None, attributes=None, associations=None, methods=None):
-    data = {'name': name, 'properties': {}}
-    properties = data['properties']
+def create(self, name, description, attributes=None, associations=None, methods=None):
+    body = {'name': name, 'description': description, 'properties': {}}
+    properties = body['properties']
 
-    if description:
-        data['description'] = description
     if attributes:
         properties['attributes'] = attributes
     if associations:
@@ -22,7 +20,7 @@ def create(self, name, description=None, attributes=None, associations=None, met
     if methods:
         properties['methods'] = methods
 
-    create_resource(self.appliance.rest_api, 'generic_object_definitions', [data])
+    create_resource(self.appliance.rest_api, 'generic_object_definitions', [body])
     assert_response(self.appliance)
     rest_response = self.appliance.rest_api.response
 
@@ -45,22 +43,20 @@ def update(self, updates):
 
     definition = definition[0]
 
-    attributes = updates.pop('attributes', None)
-    associations = updates.pop('associations', None)
-    methods = updates.pop('methods', None)
+    top = ['name', 'description']
+    prop = ['attributes', 'associations', 'methods']
 
-    data = updates.copy()
-    data['properties'] = {}
-    properties = data['properties']
+    body = {}
+    properties = body['properties'] = {}
 
-    if attributes:
-        properties['attributes'] = attributes
-    if associations:
-        properties['associations'] = associations
-    if methods:
-        properties['methods'] = methods
+    for key in top:
+        new = updates.get(key)
+        body.update({} if new is None else {key: new})
+    for key in prop:
+        new = updates.get(key)
+        properties.update({} if new is None else {key: new})
 
-    definition.action.edit(**data)
+    definition.action.edit(**body)
     assert_response(self.appliance)
     self.rest_response = self.appliance.rest_api.response
 

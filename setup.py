@@ -119,7 +119,9 @@ setup(
                 'cfme.storage.object_store_container:ObjectStoreContainerCollection'),
             'zones = cfme.base:ZoneCollection',
             ('generic_object_definitions = '
-                'cfme.generic_objects.definition:GenericObjectDefinitionCollection')
+                'cfme.generic_objects.definition:GenericObjectDefinitionCollection'),
+            ('generic_objects = '
+                'cfme.generic_objects.instance:GenericObjectInstanceCollection')
         ],
         'pytest11':
         [
