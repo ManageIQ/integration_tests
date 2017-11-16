@@ -6,65 +6,60 @@ from cached_property import cached_property
 from cfme.utils.appliance import NavigatableMixin
 
 
-class ApplianceCollections(object):
+def load_appliance_collections():
+    from pkg_resources import iter_entry_points
+    return {
+        ep.name: ep.resolve() for ep in iter_entry_points('manageiq.appliance_collections')
+    }
+
+
+@attr.s
+class EntityCollections(object):
     """Caches instances of collection objects for use by the collections accessor
 
     The appliance object has a ``collections`` attribute. This attribute is an instance
     of this class. It is initialized with an appliance object and locally stores a cache
     of all known good collections.
     """
-    _collection_classes = None
+    _parent = attr.ib(repr=False, cmp=False, hash=False)
+    _availiable_collections = attr.ib(repr=False, cmp=False, hash=False)
+    _filters = attr.ib(cmp=False, hash=False, default=attr.Factory(dict))
+    _collection_cache = attr.ib(repr=False, cmp=False, hash=False, init=False,
+                                default=attr.Factory(dict))
 
-    def __init__(self, appliance):
-        self._collection_cache = {}
-        self._appliance = appliance
-        if not self._collection_classes:
-            self._load_collections()
+    @classmethod
+    def for_appliance(cls, appliance):
+        return cls(parent=appliance, availiable_collections=load_appliance_collections())
 
-    def __dir__(self):
-        internal_dir = dir(super(ApplianceCollections, self))
-        return internal_dir + self._collection_classes.keys()
+    @classmethod
+    def for_entity(cls, entity, collections):
+        return cls(parent=entity, availiable_collections=collections, filters={'parent': entity})
 
-    def _load_collections(self):
-        """Loads the collection definitions from the entrypoints system"""
-        from pkg_resources import iter_entry_points
-        ApplianceCollections._collection_classes = {
-            ep.name: ep.resolve() for ep in iter_entry_points('manageiq.appliance_collections')
-        }
-
-    def __getattr__(self, name):
-        if name not in self._collection_classes:
-            raise AttributeError('Collection [{}] not known to object'.format(name))
-        if name not in self._collection_cache:
-            cls = self._collection_classes[name]
-            self._collection_cache[name] = cls(self._appliance)
-        return self._collection_cache[name]
-
-
-class ObjectCollections(ApplianceCollections):
-    def __init__(self, parent):
-        self._collection_cache = {}
-        self._parent = parent
-        self._appliance = self._parent.appliance
-        self._collections = self._parent._collections
+    @classmethod
+    def declared(cls, **spec):
+        """returns a cached property named collections for use in entities"""
+        @cached_property
+        def collections(self):
+            return cls.for_entity(self, spec)
+        collections.spec = spec
+        return collections
 
     def __dir__(self):
-        internal_dir = dir(super(ObjectCollections, self))
-        return internal_dir + self._collections.keys()
+        internal_dir = dir(super(EntityCollections, self))
+        return internal_dir + self._availiable_collections.keys()
 
     def __getattr__(self, name):
-        if name not in self._collections:
+        if name not in self._availiable_collections:
             raise AttributeError('Collection [{}] not known to object'.format(name))
         if name not in self._collection_cache:
-            filter = {'parent': self._parent}
-            cls_and_or_filter = self._collections[name]
+            item_filters = self._filters.copy()
+            cls_and_or_filter = self._availiable_collections[name]
             if isinstance(cls_and_or_filter, tuple):
-                filter.update(cls_and_or_filter[1])
+                item_filters.update(cls_and_or_filter[1])
                 cls = cls_and_or_filter[0]
             else:
                 cls = cls_and_or_filter
-            cls = self._collections[name]
-            self._collection_cache[name] = cls(self._parent, filters=filter)
+            self._collection_cache[name] = cls(self._parent, filters=item_filters)
         return self._collection_cache[name]
 
 
@@ -143,7 +138,12 @@ class BaseEntity(NavigatableMixin):
 
     @cached_property
     def collections(self):
-        return ObjectCollections(self)
+        try:
+            spec = self._collections
+        except AttributeError:
+            raise AttributeError("collections")
+
+        return EntityCollections.for_entity(self, spec)
 
 
 @attr.s
