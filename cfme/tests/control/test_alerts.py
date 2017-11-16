@@ -33,6 +33,7 @@ pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=["+automate", "+smartproxy", "+notifier"]),
     pytest.mark.uncollectif(BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576'),
+    pytest.mark.uncollectif(BZ(1501895, forced_streams=['5.9']).blocks, 'BZ 1501895'),
     pytest.mark.tier(3),
     test_requirements.alert
 ]
