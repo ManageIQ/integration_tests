@@ -32,7 +32,7 @@ def roottenant(appliance):
 
 
 @pytest.fixture(scope="function")
-def prov_data(provider, provisioning):
+def prov_data():
     return {
         "catalog": {'vm_name': ''},
         "environment": {'automatic_placement': True},
