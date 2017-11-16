@@ -91,13 +91,8 @@ def provider_rest(request, appliance, provider):
     else:
         pytest.skip("No credentials info found for provider {}.".format(provider.name))
 
-    cert = getattr(endpoint_default, "ca_certs", None)
-    if cert:
-        default_connection["endpoint"]["certificate_authority"] = cert
-        con_config_to_include.append(default_connection)
-
-    if hasattr(endpoint_default, "verify_tls"):
-        default_connection["endpoint"]["verify_ssl"] = 1 if endpoint_default.verify_tls else 0
+    if hasattr(endpoint_default, "verify_tls") and not endpoint_default.verify_tls:
+        default_connection["endpoint"]["verify_ssl"] = 0
         con_config_to_include.append(default_connection)
     if hasattr(endpoint_default, "api_port") and endpoint_default.api_port:
         default_connection["endpoint"]["port"] = endpoint_default.api_port
