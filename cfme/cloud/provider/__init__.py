@@ -44,8 +44,8 @@ class CloudProviderInstancesView(BaseLoggedInPage):
 
 class CloudProviderImagesToolbar(View):
     """
-        Toolbar view for cloud provider images relationships
-        """
+    Toolbar view for cloud provider images relationships
+    """
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     download = Dropdown('Download')
