@@ -301,7 +301,7 @@ def test_resume(provider, testing_instance, verify_vm_suspended, soft_assert):
         provider.mgmt.is_vm_running(testing_instance.name), "instance is not running")
 
 
-def test_terminate(provider, testing_instance, verify_vm_running, soft_assert):
+def test_terminate(provider, testing_instance, verify_vm_running, soft_assert, appliance):
     """ Tests instance terminate
 
     Metadata:
@@ -310,7 +310,9 @@ def test_terminate(provider, testing_instance, verify_vm_running, soft_assert):
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE)
 
-    flash.assert_message_contain('Vm Destroy initiated')
+    msg_part = "Terminate initiated" if appliance.version >= '5.9' else "Vm Destroy initiated"
+    msg = "{} for 1 VM and Instance from the {} Database".format(msg_part, appliance.product_name)
+    flash.assert_success_message(msg)
     terminated_states = (testing_instance.STATE_TERMINATED, testing_instance.STATE_ARCHIVED,
             testing_instance.STATE_UNKNOWN)
     soft_assert(testing_instance.wait_for_instance_state_change(desired_state=terminated_states,
