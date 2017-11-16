@@ -2,7 +2,7 @@ import re
 import pytest
 import random
 import attr
-from urlparse import urlparse
+from six.moves.urllib_parse import urlparse
 from threading import Timer
 from cfme.utils import at_exit, conf
 # todo: use own logger after logfix merge
