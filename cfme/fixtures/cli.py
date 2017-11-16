@@ -1,5 +1,6 @@
 from cfme.utils.version import get_stream
 from collections import namedtuple
+from contextlib import contextmanager
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger
@@ -28,12 +29,12 @@ def dedicated_db_appliance(app_creds, appliance):
         raise Exception("Can't setup dedicated db on appliance below 5.7 builds")
 
 
-""" The Following fixture 'fqdn_appliance' provisions one appliance for testing from an FQDN
-    provider unless there are no provisions available"""
+""" The Following fixtures are for provisioning one preconfigured or unconfigured appliance for
+    testing from an FQDN provider unless there are no provisions available"""
 
 
-@pytest.yield_fixture(scope="function")
-def fqdn_appliance(appliance):
+@contextmanager
+def fqdn_appliance(appliance, preconfigured):
     sp = SproutClient.from_config()
     available_providers = set(sp.call_method('available_providers'))
     required_providers = set(cfme_data['fqdn_providers'])
@@ -43,7 +44,9 @@ def fqdn_appliance(appliance):
     for provider in usable_providers:
         try:
             apps, pool_id = sp.provision_appliances(
-                count=1, preconfigured=True, version=version, stream=stream, provider=provider)
+                count=1, preconfigured=preconfigured, version=version, stream=stream,
+                provider=provider
+            )
             break
         except Exception as e:
             logger.warning("Couldn't provision appliance with following error:")
@@ -59,11 +62,23 @@ def fqdn_appliance(appliance):
 
 
 @pytest.yield_fixture()
-def ipa_crud(fqdn_appliance, app_creds, ipa_creds):
-    fqdn_appliance.appliance_console_cli.configure_ipa(ipa_creds['ipaserver'],
+def unconfigured_appliance(appliance):
+    with fqdn_appliance(appliance, preconfigured=False) as app:
+        yield app
+
+
+@pytest.yield_fixture()
+def configured_appliance(appliance):
+    with fqdn_appliance(appliance, preconfigured=True) as app:
+        yield app
+
+
+@pytest.yield_fixture()
+def ipa_crud(configured_appliance, ipa_creds):
+    configured_appliance.appliance_console_cli.configure_ipa(ipa_creds['ipaserver'],
         ipa_creds['username'], ipa_creds['password'], ipa_creds['domain'], ipa_creds['realm'])
 
-    yield(fqdn_appliance)
+    yield(configured_appliance)
 
 
 @pytest.fixture()
