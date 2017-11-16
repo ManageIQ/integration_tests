@@ -10,7 +10,7 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from fixtures.provider import setup_one_by_class_or_skip
 from cfme.utils import version
 from cfme.utils.log import logger
-from cfme.utils.rest import get_vms_in_service
+from cfme.utils.rest import create_resource, get_vms_in_service
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
 
@@ -509,40 +509,22 @@ def users(request, rest_api, num=1):
 
 def _creating_skeleton(request, rest_api, col_name, col_data, col_action='create',
         substr_search=False):
-    collection = getattr(rest_api.collections, col_name)
-    try:
-        action = getattr(collection.action, col_action)
-    except AttributeError:
-        raise OptionNotAvailable(
-            "Action `{}` for {} is not implemented in this version".format(col_action, col_name))
 
-    entities = action(*col_data)
-    action_response = rest_api.response
-    search_str = '%{}%' if substr_search else '{}'
-    for entity in col_data:
-        if entity.get('name'):
-            wait_for(lambda: collection.find_by(
-                name=search_str.format(entity.get('name'))) or False, num_sec=180, delay=10)
-        elif entity.get('description'):
-            wait_for(lambda: collection.find_by(
-                description=search_str.format(entity.get('description'))) or False,
-                num_sec=180, delay=10)
-        else:
-            raise NotImplementedError
+    entities = create_resource(
+        rest_api, col_name, col_data, col_action=col_action, substr_search=substr_search)
 
     # make sure the original list of `entities` is preserved for cleanup
     original_entities = list(entities)
 
     @request.addfinalizer
     def _finished():
+        collection = getattr(rest_api.collections, col_name)
         collection.reload()
         ids = [e.id for e in original_entities]
         delete_entities = [e for e in collection if e.id in ids]
         if delete_entities:
             collection.action.delete(*delete_entities)
 
-    # make sure action response is preserved
-    rest_api.response = action_response
     return entities
 
 
