@@ -1,5 +1,6 @@
 from cfme.utils.version import get_stream
 from collections import namedtuple
+from contextlib import contextmanager
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger
@@ -32,6 +33,7 @@ def dedicated_db_appliance(app_creds, appliance):
     testing from an FQDN provider unless there are no provisions available"""
 
 
+@contextmanager
 def fqdn_appliance(appliance, preconfigured):
     sp = SproutClient.from_config()
     available_providers = set(sp.call_method('available_providers'))
@@ -53,28 +55,30 @@ def fqdn_appliance(appliance, preconfigured):
     else:
         logger.error("Couldn't provision an appliance at all")
         raise SproutException('No provision available')
-    return apps[0]
+    yield apps[0]
 
     apps[0].ssh_client.close()
     sp.destroy_pool(pool_id)
 
 
-@pytest.yield_fixture(scope="function")
-def appliance_with_disk(appliance):
-    yield fqdn_appliance(appliance, preconfigured=False)
-
-
-@pytest.yield_fixture(scope="function")
-def ipa_appliance(appliance):
-    yield fqdn_appliance(appliance, preconfigured=True)
+@pytest.yield_fixture()
+def unconfigured_appliance(appliance):
+    with fqdn_appliance(appliance, preconfigured=False) as app:
+        yield app
 
 
 @pytest.yield_fixture()
-def ipa_crud(ipa_appliance, ipa_creds):
-    ipa_appliance.appliance_console_cli.configure_ipa(ipa_creds['ipaserver'],
+def configured_appliance(appliance):
+    with fqdn_appliance(appliance, preconfigured=True) as app:
+        yield app
+
+
+@pytest.yield_fixture()
+def ipa_crud(configured_appliance, ipa_creds):
+    configured_appliance.appliance_console_cli.configure_ipa(ipa_creds['ipaserver'],
         ipa_creds['username'], ipa_creds['password'], ipa_creds['domain'], ipa_creds['realm'])
 
-    yield(ipa_appliance)
+    yield(configured_appliance)
 
 
 @pytest.fixture()

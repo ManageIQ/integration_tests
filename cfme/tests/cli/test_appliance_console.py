@@ -143,33 +143,33 @@ def test_black_console_external_db_create(app_creds, dedicated_db_appliance,
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-def test_black_console_extend_storage(appliance_with_disk):
+def test_black_console_extend_storage(unconfigured_appliance):
     """'ap' launches appliance_console, '' clears info screen, '10/13' extend storage, '1' select
     disk, 'y' confirm configuration and '' complete."""
 
-    opt = '10' if appliance_with_disk.version >= "5.8" else '13'
+    opt = '10' if unconfigured_appliance.version >= "5.8" else '13'
     command_set = ('ap', '', opt, '1', 'y', '')
-    appliance_with_disk.appliance_console.run_commands(command_set)
+    unconfigured_appliance.appliance_console.run_commands(command_set)
 
-    def is_storage_extended(appliance_with_disk):
-        assert appliance_with_disk.ssh_client.run_command("df -h | grep /var/www/miq_tmp")
-    wait_for(is_storage_extended, func_args=[appliance_with_disk])
+    def is_storage_extended(unconfigured_appliance):
+        assert unconfigured_appliance.ssh_client.run_command("df -h | grep /var/www/miq_tmp")
+    wait_for(is_storage_extended, func_args=[unconfigured_appliance])
 
 
 @pytest.mark.skip('No IPA servers currently available')
-def test_black_console_ipa(ipa_creds, ipa_appliance):
+def test_black_console_ipa(ipa_creds, configured_appliance):
     """'ap' launches appliance_console, '' clears info screen, '11/14' setup IPA, 'y' confirm setup
     + wait 40 secs and '' finish."""
 
-    opt = '11' if ipa_appliance.version >= "5.8" else '14'
+    opt = '11' if configured_appliance.version >= "5.8" else '14'
     command_set = ('ap', '', opt, ipa_creds['hostname'], ipa_creds['domain'], '',
         ipa_creds['username'], ipa_creds['password'], TimedCommand('y', 40), '')
-    ipa_appliance.appliance_console.run_commands(command_set)
+    configured_appliance.appliance_console.run_commands(command_set)
 
-    def is_sssd_running(ipa_appliance):
-        assert ipa_appliance.ssh_client.run_command("systemctl status sssd | grep running")
-    wait_for(is_sssd_running, func_args=[ipa_appliance])
-    return_code, output = ipa_appliance.ssh_client.run_command(
+    def is_sssd_running(configured_appliance):
+        assert configured_appliance.ssh_client.run_command("systemctl status sssd | grep running")
+    wait_for(is_sssd_running, func_args=[configured_appliance])
+    return_code, output = configured_appliance.ssh_client.run_command(
         "cat /etc/ipa/default.conf | grep 'enable_ra = True'")
     assert return_code == 0
 

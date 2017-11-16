@@ -70,7 +70,7 @@ def test_external_auth(auth_type, ipa_crud, app_creds):
 
 
 @pytest.mark.skip('No IPA servers currently available')
-def test_ipa_crud(ipa_creds, ipa_appliance):
-    ipa_appliance.appliance_console_cli.configure_ipa(ipa_creds['ipaserver'],
+def test_ipa_crud(ipa_creds, configured_appliance):
+    configured_appliance.appliance_console_cli.configure_ipa(ipa_creds['ipaserver'],
         ipa_creds['username'], ipa_creds['password'], ipa_creds['domain'], ipa_creds['realm'])
-    ipa_appliance.appliance_console_cli.uninstall_ipa_client()
+    configured_appliance.appliance_console_cli.uninstall_ipa_client()
