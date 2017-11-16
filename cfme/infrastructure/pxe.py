@@ -720,7 +720,6 @@ class SystemImageTypeCollection(BaseCollection):
 
 
 @navigator.register(SystemImageTypeCollection, 'All')
-@navigator.register(SystemImageType, 'All')
 class SystemImageTypeAll(CFMENavigateStep):
     VIEW = PXESystemImageTypesView
     prerequisite = NavigateToSibling('PXEMainPage')
@@ -741,7 +740,7 @@ class SystemImageTypeAdd(CFMENavigateStep):
 @navigator.register(SystemImageType, 'Details')
 class SystemImageTypeDetails(CFMENavigateStep):
     VIEW = PXESystemImageTypeDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.sidebar.image_types.tree.click_path('All System Image Types',
@@ -942,7 +941,6 @@ class ISODatastoreDetails(CFMENavigateStep):
 @navigator.register(PXEServer, 'PXEMainPage')
 @navigator.register(CustomizationTemplate, 'PXEMainPage')
 @navigator.register(SystemImageTypeCollection, 'PXEMainPage')
-@navigator.register(SystemImageType, 'PXEMainPage')
 @navigator.register(ISODatastore, 'PXEMainPage')
 class PXEMainPage(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
