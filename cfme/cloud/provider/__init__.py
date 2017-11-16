@@ -1,20 +1,17 @@
 """ A model of a Cloud Provider in CFME
 """
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_manageiq import TimelinesView
+from widgetastic.widget import View
+from widgetastic_patternfly import Dropdown
+from widgetastic_manageiq import TimelinesView, BreadCrumb, ItemsToolBarViewSelector
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView
-from cfme.common.provider_views import (CloudProviderAddView,
-                                        CloudProviderEditView,
-                                        CloudProviderDetailsView,
-                                        CloudProvidersView,
-                                        CloudProvidersDiscoverView,
-                                        ProvidersManagePoliciesView
-                                        )
-import cfme.fixtures.pytest_selenium as sel
+from cfme.common.provider_views import (
+    CloudProviderAddView, CloudProviderEditView, CloudProviderDetailsView, CloudProvidersView,
+    CloudProvidersDiscoverView, ProvidersManagePoliciesView)
 from cfme.common.provider import CloudInfraProvider
-from cfme.web_ui import InfoBlock
+from cfme.common.vm_views import VMToolbar, VMEntities
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.log import logger
@@ -28,6 +25,47 @@ class CloudProviderTimelinesView(TimelinesView, BaseLoggedInPage):
         return self.logged_in_as_current_user and \
             self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and \
             super(TimelinesView, self).is_displayed
+
+
+class CloudProviderInstancesView(BaseLoggedInPage):
+    """
+    The collection page for provider instances
+    """
+    @property
+    def is_displayed(self):
+        return (
+            self.breadcrumb.locations[0] == 'Cloud Providers' and
+            self.entities.title.text == '{} (All Instances)'.format(self.context['object'].name))
+
+    breadcrumb = BreadCrumb()
+    toolbar = View.nested(VMToolbar)
+    including_entities = View.include(VMEntities, use_parent=True)
+
+
+class CloudProviderImagesToolbar(View):
+    """
+    Toolbar view for cloud provider images relationships
+    """
+    configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
+    download = Dropdown('Download')
+
+    view_selector = View.nested(ItemsToolBarViewSelector)
+
+
+class CloudProviderImagesView(BaseLoggedInPage):
+    """
+    The collection page for provider images
+    """
+    @property
+    def is_displayed(self):
+        return (
+            self.breadcrumb.locations[0] == 'Cloud Providers' and
+            self.entities.title.text == '{} (All Images)'.format(self.context['object'].name))
+
+    breadcrumb = BreadCrumb()
+    toolbar = View.nested(CloudProviderImagesToolbar)
+    including_entities = View.include(VMEntities, use_parent=True)
 
 
 class CloudProvider(Pretty, CloudInfraProvider):
@@ -186,24 +224,20 @@ class Timelines(CFMENavigateStep):
 
 @navigator.register(CloudProvider, 'Instances')
 class Instances(CFMENavigateStep):
+    VIEW = CloudProviderInstancesView
     prerequisite = NavigateToSibling('Details')
 
-    def am_i_here(self):
-        return self.entities.title.text == '{} (All Instances)'.format(self.obj.name)
-
     def step(self, *args, **kwargs):
-        sel.click(InfoBlock.element('Relationships', 'Instances'))
+        self.prerequisite_view.entities.relationships.click_at('Instances')
 
 
 @navigator.register(CloudProvider, 'Images')
 class Images(CFMENavigateStep):
+    VIEW = CloudProviderImagesView
     prerequisite = NavigateToSibling('Details')
 
-    def am_i_here(self):
-        return self.entities.title.text == '{} (All Images)'.format(self.obj.name)
-
     def step(self, *args, **kwargs):
-        sel.click(InfoBlock.element('Relationships', 'Images'))
+        self.prerequisite_view.entities.relationships.click_at('Images')
 
 
 def get_all_providers():
