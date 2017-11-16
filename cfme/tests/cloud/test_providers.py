@@ -23,6 +23,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
+from fixtures.pytest_store import store
 
 pytestmark = [pytest.mark.provider([CloudProvider], scope="function")]
 
@@ -331,7 +332,8 @@ class TestProvidersRESTAPI(object):
             assert 'SecurityGroup' in security_groups[0]['type']
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    # arbitration_profiles were removed in versions >= 5.9'
+    @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9')
     def test_create_arbitration_profiles(self, appliance, arbitration_profiles):
         """Tests creation of arbitration profiles.
 
@@ -345,7 +347,8 @@ class TestProvidersRESTAPI(object):
             assert 'ArbitrationProfile' in profile.type
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    # arbitration_profiles were removed in versions >= 5.9'
+    @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9')
     @pytest.mark.parametrize('method', ['post', 'delete'])
     def test_delete_arbitration_profiles_from_detail(self, appliance, arbitration_profiles, method):
         """Tests delete arbitration profiles from detail.
@@ -362,7 +365,8 @@ class TestProvidersRESTAPI(object):
             assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    # arbitration_profiles were removed in versions >= 5.9'
+    @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9')
     def test_delete_arbitration_profiles_from_collection(self, appliance, arbitration_profiles):
         """Tests delete arbitration profiles from collection.
 
@@ -377,7 +381,8 @@ class TestProvidersRESTAPI(object):
         assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    # arbitration_profiles were removed in versions >= 5.9'
+    @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9')
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
     def test_edit_arbitration_profiles(self, appliance, arbitration_profiles, from_detail):
         """Tests editing of arbitration profiles.
@@ -404,7 +409,10 @@ class TestProvidersRESTAPI(object):
             assert edited[i].availability_zone_id == zone.id
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    # arbitration_rules were removed in versions >= 5.9'
+    @pytest.mark.uncollectif(lambda:
+        store.current_appliance.version >= '5.9' or
+        store.current_appliance.version < '5.8')
     def test_create_arbitration_rules_with_profile(self, request, appliance, arbitration_profiles):
         """Tests creation of arbitration rules referencing arbitration profiles.
 
@@ -431,7 +439,10 @@ class TestProvidersRESTAPI(object):
             assert record.arbitration_profile_id == rule.arbitration_profile_id == profile.id
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    # arbitration_rules were removed in versions >= 5.9'
+    @pytest.mark.uncollectif(lambda:
+        store.current_appliance.version >= '5.9' or
+        store.current_appliance.version < '5.8')
     def test_create_arbitration_rule_with_invalid_profile(self, request, appliance):
         """Tests creation of arbitration rule referencing invalid arbitration profile.
 
