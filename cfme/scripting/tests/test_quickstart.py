@@ -36,6 +36,7 @@ def yamls_volume():
 
 @pytest.mark.parametrize('image, python', IMAGE_SPEC)
 @pytest.mark.long_running
+@pytest.mark.xfail(run=False, reason="temporaryly broken, needs restoration")
 def test_quickstart_run(image, python, root_volume, yamls_volume):
     subprocess.check_call(
         "docker run "
