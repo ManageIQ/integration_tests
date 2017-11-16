@@ -27,6 +27,13 @@ class VMwareProvider(InfraProvider):
     _fullscreen_xpath = '//*[@id="fullscreen"]'
     bad_credentials_error_msg = 'Cannot complete login due to an incorrect user name or password.'
 
+    ems_events = [
+        ('vm_create', {'event_type': 'VmDeployedEvent', 'dest_vm_or_template_id': None}),
+        ('vm_stop', {'event_type': 'VmPoweredOffEvent', 'vm_or_template_id': None}),
+        ('vm_start', {'event_type': 'VmPoweredOnEvent', 'vm_or_template_id': None}),
+        ('vm_delete', {'event_type': 'VmRemovedEvent', 'vm_or_template_id': None})
+    ]
+
     def __init__(self, name=None, endpoints=None, key=None, zone=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None, appliance=None):
         super(VMwareProvider, self).__init__(
