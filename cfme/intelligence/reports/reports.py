@@ -127,7 +127,7 @@ class CustomReportDetailsView(CloudIntelReportsView):
     @View.nested
     class saved_reports(Tab):  # noqa
         TAB_NAME = "Saved Reports"
-        table = Table(".//div[@id='records_div']/table")
+        table = Table(".//div[@id='records_div' or @class='miq-data-table']/table")
         paginator = PaginationPane()
 
     @property

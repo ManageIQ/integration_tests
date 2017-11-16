@@ -11,7 +11,8 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
 class CloudIntelReportsView(BaseLoggedInPage):
-    flash = FlashMessages('.//div[starts-with(@id, "flash_text_div")]')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]'
+                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
 
     @property
     def in_intel_reports(self):
