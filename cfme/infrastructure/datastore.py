@@ -329,10 +329,7 @@ class All(CFMENavigateStep):
         tb = self.view.toolbar
         if tb.view_selector.is_displayed and 'Grid View' not in tb.view_selector.selected:
             tb.view_selector.select("Grid View")
-        paginator = self.view.entities.paginator
-        if paginator.exists:
-            paginator.check_all()
-            paginator.uncheck_all()
+        self.view.entities.paginator.reset_selection()
 
 
 @navigator.register(Datastore, 'Details')

@@ -72,3 +72,7 @@ def pages():
         :py:class:`ValueError`: When the paginator "breaks" (does not change)
     """
     return new_paginator().pages()
+
+
+def reset_selection():
+    new_paginator().reset_selection()

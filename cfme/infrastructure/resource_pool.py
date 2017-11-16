@@ -229,8 +229,7 @@ class All(CFMENavigateStep):
     def resetter(self):
         """Reset view and selection"""
         self.view.toolbar.view_selector.select('Grid View')
-        self.view.paginator.check_all()
-        self.view.paginator.uncheck_all()
+        self.view.paginator.reset_selection()
 
 
 @navigator.register(ResourcePool, 'Details')

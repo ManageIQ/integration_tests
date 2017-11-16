@@ -1654,6 +1654,13 @@ class JSPaginationPane(View, ReportDataControllerMixin):
             raise NoSuchElementException('Row matching filter {} not found on table {}'
                                          .format(kwargs, table))
 
+    def reset_selection(self):
+        if self.is_displayed:
+            self.check_all()
+            self.uncheck_all()
+            return True
+        return False
+
 
 class NonJSPaginationPane(View):
     """ Represents Paginator Pane with the following controls.
@@ -1815,6 +1822,13 @@ class NonJSPaginationPane(View):
         else:
             raise NoSuchElementException('Row matching filter {} not found on table {}'
                                          .format(kwargs, table))
+
+    def reset_selection(self):
+        if self.is_displayed:
+            self.check_all()
+            self.uncheck_all()
+            return True
+        return False
 
 
 def PaginationPane(*args, **kwargs):  # noqa
@@ -3508,19 +3522,6 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
             return NonJSBaseEntity
         else:
             return JSBaseEntity
-
-    @property
-    def entity_names(self):
-        """ looks for entities and extracts their names
-
-        Returns: all current page entities
-        """
-        if self.browser.product_version < '5.9':
-            br = self.browser
-            return [br.get_attribute('title', el) for el in br.elements(self.elements)]
-        else:
-            entities = self._invoke_cmd('get_all_items')
-            return [entity['item']['cells']['Name'] for entity in entities]
 
     def get_all(self):
         """ obtains all entities like QuadIcon displayed by view

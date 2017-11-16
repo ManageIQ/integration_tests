@@ -127,8 +127,7 @@ class All(CFMENavigateStep):
     def resetter(self):
         # Reset view and selection
         self.view.toolbar.view_selector.select("List View")
-        self.view.paginator.check_all()
-        self.view.paginator.uncheck_all()
+        self.view.paginator.reset_selection()
 
 
 @navigator.register(Image, 'Details')
