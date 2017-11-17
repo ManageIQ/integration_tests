@@ -16,7 +16,6 @@ warnings.simplefilter('error', ApplianceSummoningWarning)
 
 def pytest_addoption(parser):
     parser.addoption('--dummy-appliance', action='store_true')
-    parser.addoption('--dummy-appliance-version', default=attr.NOTHING)
 
 
 def appliances_from_cli(cli_appliances):
@@ -38,8 +37,7 @@ def pytest_configure(config):
     if stack.top:
         appliances = [stack.top]
     elif config.getoption('--dummy-appliance'):
-        appliances = [DummyAppliance(
-            version=config.getoption('--dummy-appliance-version'))]
+        appliances = [DummyAppliance()]
         reporter.write_line('Retrieved Dummy Appliance', red=True)
     elif config.option.appliances:
         appliances = appliances_from_cli(config.option.appliances)
