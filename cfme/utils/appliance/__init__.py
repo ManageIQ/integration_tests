@@ -651,11 +651,11 @@ class IPAppliance(object):
                 # result = self.ssh_client.run_command('cat /tmp/product_name.txt')
                 # return result.output
 
-                res = self.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
+                res = self.ssh_client.run_command('cat /etc/redhat-release')
                 if res.rc != 0:
-                    raise RuntimeError('Unable to retrieve appliance VMDB version')
+                    raise RuntimeError('Unable to retrieve /etc/redhat-release')
                 version_string = res.output.strip()
-                if version_string == 'master':
+                if 'CentOS' in version_string:
                     return 'ManageIQ'
                 else:
                     return 'CFME'
