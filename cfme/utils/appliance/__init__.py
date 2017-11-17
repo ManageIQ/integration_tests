@@ -169,6 +169,11 @@ class ApplianceConsoleCli(object):
                 dbname=dbname, dbdisk=dbdisk, fetch_key=fetch_key, sshlogin=sshlogin,
                 sshpass=sshpass))
 
+    def configure_appliance_dedicated_db(self, region, username, password, dbname, dbdisk):
+        self._run("--region {region} --internal --username {username} --password {password}"
+            " --dbname {dbname} --verbose --dbdisk {dbdisk} --key --standalone".format(
+                region=region, username=username, password=password, dbname=dbname, dbdisk=dbdisk))
+
     def configure_ipa(self, ipaserver, username, password, domain, realm):
         self._run("--ipaserver {ipaserver} --ipaprincipal {username} --ipapassword {password}"
             " --ipadomain {domain} --iparealm {realm}".format(
