@@ -248,14 +248,14 @@ class InfraVmDetailsView(InfraVmView):
             relationship_provider_name == expected_provider)
 
 
-class InfraVmTimelinesView(TimelinesView, BaseLoggedInPage):
+class InfraVmTimelinesView(TimelinesView, InfraVmView):
     @property
     def is_displayed(self):
+        expected_name = self.context['object'].name
         return (
-            self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Compute', 'Infrastructure',
-                                                   '/vm_infra/explorer'] and
-            super(TimelinesView, self).is_displayed)
+            self.in_infra_vms and
+            self.title.text == 'Timelines for Virtual Machine "{}"'.format(expected_name))
+    # Timelines for Virtual Machine "landon-test"
 
 
 class InfraVmReconfigureView(BaseLoggedInPage):

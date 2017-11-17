@@ -20,11 +20,15 @@ from cfme.utils.pretty import Pretty
 
 
 class CloudProviderTimelinesView(TimelinesView, BaseLoggedInPage):
+    breadcrumb = BreadCrumb()
+
     @property
     def is_displayed(self):
-        return self.logged_in_as_current_user and \
-            self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and \
-            super(TimelinesView, self).is_displayed
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
+            '{} (Summary)'.format(self.context['object'].name) in self.breadcrumb.locations and
+            self.is_timelines)
 
 
 class CloudProviderInstancesView(BaseLoggedInPage):

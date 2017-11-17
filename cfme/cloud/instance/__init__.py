@@ -124,12 +124,13 @@ class InstanceDetailsView(CloudInstanceView):
     entities = View.nested(VMDetailsEntities)
 
 
-class InstanceTimelinesView(CloudInstanceView, TimelinesView):
+class InstanceTimelinesView(TimelinesView, CloudInstanceView):
     @property
     def is_displayed(self):
+        expected_name = self.context['object'].name
         return (
             self.in_cloud_instance and
-            super(TimelinesView, self).is_displayed)
+            self.title.text == 'Timelines for Instance "{}"'.format(expected_name))
 
 
 class Instance(VM, Navigatable):
