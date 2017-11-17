@@ -30,7 +30,7 @@ stream_matchers = (
     (get_stream('5.9'), r'^cfme-59.*-(?P<month>\d{2})(?P<day>\d{2})'),
     # Nightly builds have potentially multiple version streams bound to them so we
     # cannot use get_stream()
-    ('upstream_stable', r'^miq-stable-(?P<release>gaprindashvili[-\w]*?)'
+    ('upstream_stable', r'^miq-stable-(?P<release>gapri[-\w]*?)'  # release name limit to 5 chars
                         r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
     ('upstream_euwe', r'^miq-stable-(?P<release>euwe[-\w]*?)'
                       r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
