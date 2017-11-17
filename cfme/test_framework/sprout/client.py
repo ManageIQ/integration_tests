@@ -3,8 +3,6 @@ import json
 import os
 import requests
 
-import attr
-
 from cfme.utils.version import get_stream
 from cfme.utils.appliance import current_appliance, IPAppliance
 from cfme.utils.conf import credentials, env
@@ -21,22 +19,23 @@ class AuthException(SproutException):
     pass
 
 
-@attr.s
 class APIMethodCall(object):
-    _client = attr.ib()
-    _method_name = attr.ib()
+    def __init__(self, client, method_name):
+        self._client = client
+        self._method_name = method_name
 
     def __call__(self, *args, **kwargs):
         return self._client.call_method(self._method_name, *args, **kwargs)
 
 
-@attr.s
 class SproutClient(object):
-    _proto = attr.ib(default="http")
-    _host = attr.ib(default="localhost")
-    _port = attr.ib(default=8000)
-    _entry = attr.ib(default="appliances/api")
-    _auth = attr.ib(default=None)
+    def __init__(
+            self, protocol="http", host="localhost", port=8000, entry="appliances/api", auth=None):
+        self._proto = protocol
+        self._host = host
+        self._port = port
+        self._entry = entry
+        self._auth = auth
 
     @property
     def api_entry(self):

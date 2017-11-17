@@ -11,7 +11,6 @@ from tempfile import NamedTemporaryFile
 from time import sleep, time
 from urlparse import ParseResult, urlparse
 
-import six
 import attr
 
 import dateutil.parser
@@ -36,6 +35,7 @@ from cfme.utils.path import data_path, patches_path, scripts_path, conf_path
 from cfme.utils.ssh import SSHTail
 from cfme.utils.version import Version, get_stream, pick
 from cfme.utils.wait import wait_for, TimedOutError
+
 from .db import ApplianceDB
 from .implementations.ui import ViaUI
 from .implementations.rest import ViaREST
@@ -2629,33 +2629,12 @@ def load_appliances(appliance_list, global_kwargs):
     return result
 
 
-def _version_for_version_or_stream(version_or_stream, sprout_client=None):
-    if version_or_stream is attr.NOTHING:
-        return attr.fields(DummyAppliance).version.default
-    if isinstance(version_or_stream, Version):
-        return version_or_stream
-
-    assert isinstance(version_or_stream, six.string_types), version_or_stream
-
-    from cfme.test_framework.sprout.client import SproutClient
-    sprout_client = SproutClient.from_config() if sprout_client is None else sprout_client
-
-    if version_or_stream[0].isdigit():  # presume streams start with non-number
-        return Version(version_or_stream)
-    for version_str in sprout_client.available_cfme_versions():
-        version = Version(version_str)
-        if version.stream() == version_or_stream:
-            return version
-
-    raise LookupError(version_or_stream)
-
-
 @attr.s
 class DummyAppliance(object):
     """a dummy with minimal attribute set"""
     address = '0.0.0.0'
     browser_steal = False
-    version = attr.ib(default=Version('5.8.0'), convert=_version_for_version_or_stream)
+    version = Version('5.8.0')
     is_downstream = True
     is_pod = False
     build = 'missing :)'
@@ -2701,7 +2680,6 @@ def load_appliances_from_config(config):
 
 class ApplianceSummoningWarning(Warning):
     """to ease filtering/erroring on magical appliance creation based on script vs code"""
-
 
 def get_or_create_current_appliance():
     if stack.top is None:
