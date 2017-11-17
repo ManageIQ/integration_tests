@@ -339,7 +339,6 @@ def cleanup(api, qcowname, provider, temp_template_name, temp_vm_name):
             ['rm', qcowname])
         if rc != 0:
             print('Failure deleting qcow2 file')
-            sys.exit(127)
 
         logger.info("RHEVM:%r Deleting the temp_vm on sdomain...", provider)
         temporary_vm = api.vms.get(temp_vm_name)
@@ -519,6 +518,7 @@ def upload_template(rhevip, sshname, sshpass, username, password,
             logger.info("RHEVM:%r Found finished template with name %r.", provider, template_name)
             logger.info("RHEVM:%r The script will now end.", provider)
             return True
+
         logger.info("RHEVM:%r Downloading .qcow2 file...", provider)
         download_qcow(kwargs.get('image_url'))
         try:

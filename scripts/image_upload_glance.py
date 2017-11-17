@@ -44,8 +44,8 @@ def upload_to_glance(image, image_name_in_glance, provider, disk_format):
     # So, we are running a check to make sure an image with the same name doesn't already exist.
     for img in glance.images.list():
         if img.name == image_name_in_glance:
-            print("Image already exists on Glance server")
-            sys.exit(127)
+            print("image_upload_glance: Image already exists on Glance server")
+            return
 
     glance_img = glance.images.create(name=image_name_in_glance)
     # Update image properties before uploading the image.
