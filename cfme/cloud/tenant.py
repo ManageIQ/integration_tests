@@ -324,9 +324,7 @@ class TenantAll(CFMENavigateStep):
     def resetter(self):
         """Reset the view"""
         self.view.toolbar.view_selector.select('List View')
-        if self.view.table.is_displayed:
-            self.view.paginator.check_all()
-            self.view.paginator.uncheck_all()
+        self.view.paginator.reset_selection()
 
 
 @navigator.register(Tenant, 'Details')

@@ -59,9 +59,7 @@ class ImageRegistryAll(CFMENavigateStep):
     def resetter(self):
         # Reset view and selection
         self.view.toolbar.view_selector.select("List View")
-        if self.view.paginator.is_displayed:
-            self.view.paginator.check_all()
-            self.view.paginator.uncheck_all()
+        self.view.paginator.reset_selection()
 
 
 @navigator.register(ImageRegistry, 'Details')

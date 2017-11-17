@@ -133,12 +133,9 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         tb = self.view.toolbar
-        paginator = self.view.entities.paginator
         if 'Grid View' not in tb.view_selector.selected:
             tb.view_selector.select('Grid View')
-        if paginator.exists:
-            paginator.check_all()
-            paginator.uncheck_all()
+        self.view.entities.paginator.reset_selection()
 
 
 @navigator.register(CloudProvider, 'Add')

@@ -235,9 +235,7 @@ class All(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Middleware', 'Messagings')
 
     def resetter(self):
-        # Reset view and selection
-        self.view.entities.paginator.check_all()
-        self.view.entities.paginator.uncheck_all()
+        self.view.entities.paginator.reset_selection()
 
 
 @navigator.register(MiddlewareMessaging, 'Details')
