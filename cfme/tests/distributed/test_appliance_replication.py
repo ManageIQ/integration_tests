@@ -6,10 +6,9 @@ from urlparse import urlparse
 
 from cfme.base.ui import ServerView
 from cfme.common.vm import VM
-from cfme.configure import configuration as conf
 from cfme.infrastructure.provider import wait_for_a_provider
 from cfme.utils import version
-from cfme.utils.appliance import provision_appliance, current_appliance
+from cfme.utils.appliance import provision_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
@@ -39,11 +38,11 @@ def get_ssh_client(hostname):
     return SSHClient(**connect_kwargs)
 
 
-def get_replication_appliances():
+def get_replication_appliances(appliance):
     """Returns two database-owning appliances configured
        with unique region numbers.
     """
-    ver_to_prov = str(current_appliance.version)
+    ver_to_prov = str(appliance.version)
     appl1 = provision_appliance(ver_to_prov, 'long-test_repl_A')
     appl2 = provision_appliance(ver_to_prov, 'long-test_repl_B')
     appl1.configure(region=1)
@@ -74,20 +73,20 @@ def configure_db_replication(db_address, appliance):
        the db_address specified. Then, it waits for the UI to show the replication
        as active and the backlog as empty.
     """
-    conf.set_replication_worker_host(db_address)
-    view = current_appliance.server.browser.create_view(ServerView)
+    replication_conf = appliance.server.zone.region.replication
+    replication_conf.set_replication(
+        {'host': db_address}, 'global')
+    view = appliance.server.browser.create_view(ServerView)
     view.flash.assert_message("Configuration settings saved for CFME Server")  # may be partial
-    navigate_to(current_appliance.server, 'Server')
     appliance.server.settings.enable_server_roles('database_synchronization')
-    navigate_to(current_appliance.server.zone.region, 'Replication')
-    rep_status, _ = wait_for(conf.get_replication_status, func_kwargs={'navigate': False},
-                             fail_condition=False, num_sec=360, delay=10,
-                             fail_func=current_appliance.server.browser.refresh,
+    rep_status, _ = wait_for(replication_conf.get_replication_status, fail_condition=False,
+                             num_sec=360, delay=10,
+                             fail_func=appliance.server.browser.refresh,
                              message="get_replication_status")
     assert rep_status
-    wait_for(lambda: conf.get_replication_backlog(navigate=False) == 0, fail_condition=False,
-             num_sec=120, delay=10, fail_func=current_appliance.server.browser.refresh,
-             message="get_replication_backlog")
+    wait_for(lambda: replication_conf.get_global_replication_backlog == 0, fail_condition=False,
+             num_sec=120, delay=10,
+             fail_func=appliance.server.browser.refresh, message="get_replication_backlog")
 
 
 @pytest.yield_fixture(scope="module")
@@ -112,7 +111,7 @@ def test_vm(virtualcenter_provider):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
+@pytest.mark.ignore_stream("upstream")
 def test_appliance_replicate_between_regions(request, virtualcenter_provider):
     """Tests that a provider added to an appliance in one region
         is replicated to the parent appliance in another region.
@@ -165,7 +164,7 @@ def test_external_database_appliance(request, virtualcenter_provider):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
+@pytest.mark.ignore_stream("upstream")
 def test_appliance_replicate_sync_role_change(request, virtualcenter_provider, appliance):
     """Tests that a role change is replicated
 
@@ -173,6 +172,7 @@ def test_appliance_replicate_sync_role_change(request, virtualcenter_provider, a
         test_flag: replication
     """
     appl1, appl2 = get_replication_appliances()
+    replication_conf = appliance.server.zone.region.replication
 
     def finalize():
         appl1.destroy()
@@ -184,16 +184,12 @@ def test_appliance_replicate_sync_role_change(request, virtualcenter_provider, a
         configure_db_replication(appl2.address)
         # Replication is up and running, now disable DB sync role
         server_settings.disable_server_roles('database_synchronization')
-        navigate_to(appliance.server.zone.region, 'Replication')
-        wait_for(conf.get_replication_status, func_kwargs={'navigate': False}, fail_condition=True,
-                 num_sec=360, delay=10, fail_func=appl1.server.browser.refresh,
-                 message="get_replication_status")
+        wait_for(replication_conf.get_replication_status, fail_condition=True, num_sec=360,
+                 delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
         server_settings.enable_server_roles('database_synchronization')
-        navigate_to(appliance.server.zone.region, 'Replication')
-        wait_for(conf.get_replication_status, func_kwargs={'navigate': False}, fail_condition=False,
-                 num_sec=360, delay=10, fail_func=appl1.server.browser.refresh,
-                 message="get_replication_status")
-        assert conf.get_replication_status()
+        wait_for(replication_conf.get_replication_status, fail_condition=False, num_sec=360,
+                 delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
+        assert replication_conf.get_replication_status()
         virtualcenter_provider.create()
         wait_for_a_provider()
 
@@ -213,6 +209,7 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, virtualcente
         test_flag: replication
     """
     appl1, appl2 = get_replication_appliances()
+    replication_conf = appliance.server.zone.region.replication
 
     def finalize():
         appl1.destroy()
@@ -225,16 +222,12 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, virtualcente
         # Replication is up and running, now disable DB sync role
         virtualcenter_provider.create()
         server_settings.disable_server_roles('database_synchronization')
-        navigate_to(appliance.server.zone.region, 'Replication')
-        wait_for(conf.get_replication_status, func_kwargs={'navigate': False}, fail_condition=True,
-                 num_sec=360, delay=10, fail_func=appl1.server.browser.refresh,
-                 message="get_replication_status")
+        wait_for(replication_conf.get_replication_status, fail_condition=True, num_sec=360,
+                 delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
         server_settings.enable_server_roles('database_synchronization')
-        navigate_to(appliance.server.zone.region, 'Replication')
-        wait_for(conf.get_replication_status, func_kwargs={'navigate': False}, fail_condition=False,
-                 num_sec=360, delay=10, fail_func=appl1.server.browser.refresh,
-                 message="get_replication_status")
-        assert conf.get_replication_status()
+        wait_for(replication_conf.get_replication_status, fail_condition=False, num_sec=360,
+                 delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
+        assert replication_conf.get_replication_status()
         wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True
@@ -252,6 +245,7 @@ def test_appliance_replicate_database_disconnection(request, virtualcenter_provi
         test_flag: replication
     """
     appl1, appl2 = get_replication_appliances()
+    replication_conf = appliance.server.zone.region.replication
 
     def finalize():
         appl1.destroy()
@@ -264,11 +258,9 @@ def test_appliance_replicate_database_disconnection(request, virtualcenter_provi
         appl2.db.stop_db_service()
         sleep(60)
         appl2.db.start_db_service()
-        navigate_to(appliance.server.zone.region, 'Replication')
-        wait_for(conf.get_replication_status, func_kwargs={'navigate': False},
-                 fail_condition=False, num_sec=360, delay=10,
-                 fail_func=appl1.server.browser.refresh, message="get_replication_status")
-        assert conf.get_replication_status()
+        wait_for(replication_conf.get_replication_status, fail_condition=False, num_sec=360,
+                 delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
+        assert replication_conf.get_replication_status()
         virtualcenter_provider.create()
         wait_for_a_provider()
 
@@ -288,6 +280,7 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, virtua
         test_flag: replication
     """
     appl1, appl2 = get_replication_appliances()
+    replication_conf = appliance.server.zone.region.replication
 
     def finalize():
         appl1.destroy()
@@ -301,11 +294,9 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, virtua
         appl2.db.stop_db_service()
         sleep(60)
         appl2.db.start_db_service()
-        navigate_to(appliance.server.zone.region, 'Replication')
-        wait_for(conf.get_replication_status, func_kwargs={'navigate': False},
-                 fail_condition=False, num_sec=360, delay=10,
-                 fail_func=appl1.server.browser.refresh, message="get_replication_status")
-        assert conf.get_replication_status()
+        wait_for(replication_conf.get_replication_status, fail_condition=False, num_sec=360,
+                 delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
+        assert replication_conf.get_replication_status()
         wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True

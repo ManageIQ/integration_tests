@@ -100,5 +100,11 @@ class Region(Navigatable, sentaku.modeling.ElementMixin):
         return "{} Region: Region {} [{}]".format(
             self.appliance.product_name, self.number, self.number)
 
+    @property
+    def replication(self):
+        from cfme.configure.configuration.region_settings import Replication
+        replication = Replication(self.appliance)
+        return replication
+
 from . import ui, ssui  # NOQA last for import cycles
 sentaku.register_external_implementations_in(ui, ssui)

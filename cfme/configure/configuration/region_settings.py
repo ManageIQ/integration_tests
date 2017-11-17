@@ -4,14 +4,16 @@ import re
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic_patternfly import Input, BootstrapSelect, Button, BootstrapSwitch
 # TODO replace with dynamic table
-from widgetastic_manageiq import VanillaTable, SummaryFormItem, Table
+from widgetastic_manageiq import VanillaTable, SummaryFormItem, Table, Dropdown
 from widgetastic.widget import Checkbox, Text
 
 from cfme.base.ui import RegionView
 from cfme.modeling.base import BaseCollection
-from cfme.utils.appliance import Navigatable
+from cfme.utils import conf
+from cfme.utils.appliance import Navigatable, NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 
@@ -870,3 +872,185 @@ class CANDUCollectionDetails(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.candu_collection.select()
+
+
+# ========================= Replication ================================
+
+class ReplicationView(RegionView):
+    """ Replication Tab View """
+    replication_type = BootstrapSelect(id='replication_type')
+    save_button = Button('Save')
+    reset_button = Button('Reset')
+
+    @property
+    def in_region(self):
+        return (
+            self.accordions.settings.tree.currently_selected == [
+                self.obj.appliance.server.zone.region.settings_string]
+        )
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_region and
+            self.replication_type.is_displayed
+        )
+
+
+class ReplicationGlobalView(ReplicationView):
+    """ Replication Global setup View"""
+    add_subscription = Button('Add Subscription')
+    subscription_table = VanillaTable('//form[@id="form_div"]//table[contains(@class, "table")]')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_region and
+            self.add_subscription.is_displayed
+        )
+
+
+class ReplicationGlobalAddView(ReplicationView):
+    database = Input(locator='//input[contains(@ng-model, "dbname")]')
+    port = Input(name='port')
+    host = Input(locator='//input[contains(@ng-model, "host")]')
+    username = Input(name='userid')
+    password = Input(name='password')
+    accept_button = Button('Accept')
+    action_dropdown = Dropdown(
+        "//*[@id='form_div']//table//button[contains(@class, 'dropdown-toggle')]")
+
+    @property
+    def is_displayed(self):
+        return self.accept_button.is_displayed
+
+
+class ReplicationRemoteView(ReplicationView):
+    """ Replication Remote setup View """
+    pass
+    # TODO add widget for "Excluded Tables"
+
+
+class Replication(NavigatableMixin):
+    """ Class represents a Replication tab in CFME UI
+
+        Note:
+        Remote settings is not covered for now as 'Excluded Tables' element widget should be added
+    """
+
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+    def set_replication(self, updates=None, replication_type=None, reset=False):
+        """ Set replication settings
+
+            Args:
+                 updates(dict): Replication update values, mandatory is host,
+                     db creds get from credentials
+                 replication_type(str): Replication type, use 'global' or 'remote'
+                 reset: Pass True to reset made changes
+
+        """
+        db_creds = conf.credentials.database
+        if not replication_type:
+            view = navigate_to(self, 'Details')
+            view.replication_type.fill('<None>')
+        elif replication_type == 'global':
+            view = navigate_to(self, 'GlobalAdd')
+            view.fill({
+                'database': (
+                    updates.get('database') if updates.get('database') else 'vmdb_production'),
+                'host': updates.get('host'),
+                'port': updates.get('port') if updates.get('port') else '5432',
+                'username': (
+                    updates.get('username') if updates.get('username') else db_creds.username),
+                'password': (
+                    updates.get('password') if updates.get('password') else db_creds.password)
+            })
+        else:
+            view = navigate_to(self, 'RemoteAdd')
+            # TODO fill remote settings will be done after widget added
+        if reset:
+            view.reset_button.click()
+            view.flash.assert_message('All changes have been reset')
+        else:
+            try:
+                view.accept_button.click()
+                view.save_button.click()
+            except Exception:
+                logger.warning('Nothing was updated, please check the data')
+
+    def _global_replication_row(self, host=None):
+        """ Get replication row from table
+
+            Args:
+                host: host values
+            Returns:
+                host row object, of is host is not passed first table row is returned
+        """
+        view = navigate_to(self, 'Global')
+        if host:
+            return view.subscription_table.row(host='host')
+        else:
+            return view.subscription_table.row[0]
+
+    def get_replication_status(self, replication_type='global', host=None):
+        """ Get replication status, if replication is active
+
+            Args:
+                replication_type: Replication type string, default is global
+                host: host to check
+            Returns: True if active, otherwise False
+        """
+        view = navigate_to(self, replication_type.capitalize())
+        if replication_type == 'remote':
+            return view.is_displayed
+        else:
+            return self._global_replication_row(host).is_displayed
+
+    def get_global_replication_backlog(self, host=None):
+        """ Get global replication backlog value
+
+            Args:
+                host: host value
+            Returns: backlog number value
+        """
+        row = self._global_replication_row(host)
+        return int(row.backlog.text.split(' ')[0])
+
+
+@navigator.register(Replication, 'Details')
+class ReplicationDetails(CFMENavigateStep):
+    VIEW = ReplicationView
+    prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
+
+    def step(self):
+        self.prerequisite_view.replication.select()
+
+
+@navigator.register(Replication, 'Global')
+class ReplicationGlobalSetup(CFMENavigateStep):
+    VIEW = ReplicationGlobalView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.replication_type.fill('Global')
+
+
+@navigator.register(Replication, 'GlobalAdd')
+class ReplicationGlobalAdd(CFMENavigateStep):
+    VIEW = ReplicationGlobalAddView
+    prerequisite = NavigateToSibling('Global')
+
+    def step(self):
+        if not self.view.accept_button.is_displayed:
+            self.prerequisite_view.add_subscription.click()
+
+
+@navigator.register(Replication, 'RemoteAdd')
+class ReplicationRemoteAdd(CFMENavigateStep):
+    VIEW = ReplicationRemoteView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.replication_type.fill('Remote')
