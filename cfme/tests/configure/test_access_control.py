@@ -60,7 +60,7 @@ def new_user(user_collection, group):
         user_creds.principal = user_creds.principal.lower()
 
     user = user_collection.create(
-        name='user' + fauxfactory.gen_alphanumeric(),
+        name='user{}'.format(fauxfactory.gen_alphanumeric()),
         credential=user_creds,
         email='xyz@redhat.com',
         group=group,
@@ -160,7 +160,7 @@ def test_userid_required_error_validation(group_collection, user_collection):
 
     with error.expected("Userid can't be blank"):
         user_collection.create(
-            name='user' + fauxfactory.gen_alphanumeric(),
+            name='user{}'.format(fauxfactory.gen_alphanumeric()),
             credential=Credential(principal='', secret='redhat'),
             email='xyz@redhat.com',
             group=group)
@@ -179,8 +179,9 @@ def test_user_password_required_error_validation(user_collection, group_collecti
 
     with error.expected(check):
         user_collection.create(
-            name='user' + fauxfactory.gen_alphanumeric(),
-            credential=Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret=None),
+            name='user{}'.format(fauxfactory.gen_alphanumeric()),
+            credential=Credential(
+                principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret=None),
             email='xyz@redhat.com',
             group=group)
 
@@ -193,7 +194,7 @@ def test_user_password_required_error_validation(user_collection, group_collecti
 def test_user_group_error_validation(user_collection):
     with error.expected("A User must be assigned to a Group"):
         user_collection.create(
-            name='user' + fauxfactory.gen_alphanumeric(),
+            name='user{}'.format(fauxfactory.gen_alphanumeric()),
             credential=new_credential(),
             email='xyz@redhat.com',
             group='')
@@ -206,7 +207,7 @@ def test_user_email_error_validation(user_collection, group_collection):
 
     with error.expected("Email must be a valid email address"):
         user_collection.create(
-            name='user' + fauxfactory.gen_alphanumeric(),
+            name='user{}'.format(fauxfactory.gen_alphanumeric()),
             credential=new_credential(),
             email='xyzdhat.com',
             group=group)
