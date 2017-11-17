@@ -18,7 +18,6 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from cfme.utils.wait import wait_for
 
 
 def simple_user(userid, password):
@@ -818,7 +817,7 @@ class GroupCollection(BaseCollection):
     ENTITY = Group
 
     def create(self, description=None, role=None, tenant="My Company", ldap_credentials=None,
-            user_to_lookup=None, tag=None, host_cluster=None, vm_template=None, cancel=False):
+               user_to_lookup=None, tag=None, host_cluster=None, vm_template=None, cancel=False):
         """ Create group method
 
         Args:
@@ -1251,7 +1250,6 @@ class TenantQuotaView(ConfigurationView):
 
     @property
     def is_displayed(self):
-
         return (
             self.form.template_cb.is_displayed and
             self.title.text == 'Manage quotas for {} "{}"'.format(self.context['object'].obj_type,
@@ -1261,7 +1259,9 @@ class TenantQuotaView(ConfigurationView):
 class AllTenantView(ConfigurationView):
     """ All Tenants View """
     toolbar = View.nested(AccessControlToolbar)
-    table = Table('//*[@id="fieldset"]/table')
+    table = Table(VersionPick(
+        {Version.lowest(): '//*[@id="records_div"]/table',
+         '5.9': '//*[@id="miq-gtl-view"]/miq-data-table/div/table'}))
 
     @property
     def is_displayed(self):
@@ -1320,7 +1320,6 @@ class EditTenantView(View):
 
     @property
     def is_displayed(self):
-
         return (
             self.form.accordions.accesscontrol.is_opened and
             self.form.title.text == 'Editing {} "{}"'.format(self.context['object'].obj_type,
