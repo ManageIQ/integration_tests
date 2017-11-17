@@ -6,7 +6,8 @@ import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 from widgetastic.widget import View, Text, Checkbox
-from widgetastic_manageiq import ManageIQTree, Input, ScriptBox, SummaryTable, Table
+from widgetastic_manageiq import (ManageIQTree, Input, ScriptBox, SummaryTable, Table, Version,
+                                  VersionPick)
 from widgetastic_patternfly import Dropdown, Accordion, FlashMessages, BootstrapSelect, Button
 
 from cfme.base import BaseEntity, BaseCollection
@@ -232,7 +233,7 @@ class PXEServer(Updateable, Pretty, Navigatable):
                                                    'was cancelled by the user')
         else:
             view.add.click()
-            main_view.flash.assert_success_message('PXE Server "{}" was added'.format(self.name))
+            main_view.flash.assert_no_error()
             if refresh:
                 self.refresh(timeout=refresh_timeout)
 
@@ -279,7 +280,7 @@ class PXEServer(Updateable, Pretty, Navigatable):
                                                    'cancelled by the user'.format(name))
         else:
             view.save.click()
-            main_view.flash.assert_success_message('PXE Server "{}" was saved'.format(name))
+            main_view.flash.assert_no_error()
 
     def delete(self, cancel=True):
         """
@@ -289,11 +290,13 @@ class PXEServer(Updateable, Pretty, Navigatable):
             cancel: Whether to cancel the deletion, defaults to True
         """
         view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Remove this PXE Server', handle_alert=not cancel)
+        view.toolbar.configuration.item_select(VersionPick({
+            Version.lowest(): 'Remove this PXE Server',
+            '5.9': 'Remove this PXE Server from Inventory'}).pick(self.appliance.version),
+            handle_alert=not cancel)
         if not cancel:
             main_view = self.create_view(PXEServersView)
-            main_view.flash.assert_success_message('PXE Server "{}": '
-                                                   'Delete successful'.format(self.name))
+            main_view.flash.assert_no_error()
         else:
             navigate_to(self, 'Details')
 
