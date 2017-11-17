@@ -8,7 +8,7 @@ from cfme.base.ui import ServerView
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import wait_for_a_provider
 from cfme.utils import version
-from cfme.utils.appliance import provision_appliance, current_appliance
+from cfme.utils.appliance import provision_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
@@ -38,11 +38,11 @@ def get_ssh_client(hostname):
     return SSHClient(**connect_kwargs)
 
 
-def get_replication_appliances():
+def get_replication_appliances(appliance):
     """Returns two database-owning appliances configured
        with unique region numbers.
     """
-    ver_to_prov = str(current_appliance.version)
+    ver_to_prov = str(appliance.version)
     appl1 = provision_appliance(ver_to_prov, 'long-test_repl_A')
     appl2 = provision_appliance(ver_to_prov, 'long-test_repl_B')
     appl1.configure(region=1)
@@ -76,17 +76,17 @@ def configure_db_replication(db_address, appliance):
     replication_conf = appliance.server.zone.region.replication
     replication_conf.set_replication(
         {'host': db_address}, 'global')
-    view = current_appliance.server.browser.create_view(ServerView)
+    view = appliance.server.browser.create_view(ServerView)
     view.flash.assert_message("Configuration settings saved for CFME Server")  # may be partial
     appliance.server.settings.enable_server_roles('database_synchronization')
     rep_status, _ = wait_for(replication_conf.get_replication_status, fail_condition=False,
                              num_sec=360, delay=10,
-                             fail_func=current_appliance.server.browser.refresh,
+                             fail_func=appliance.server.browser.refresh,
                              message="get_replication_status")
     assert rep_status
     wait_for(lambda: replication_conf.get_global_replication_backlog == 0, fail_condition=False,
              num_sec=120, delay=10,
-             fail_func=current_appliance.server.browser.refresh, message="get_replication_backlog")
+             fail_func=appliance.server.browser.refresh, message="get_replication_backlog")
 
 
 @pytest.yield_fixture(scope="module")
