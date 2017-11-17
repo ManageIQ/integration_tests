@@ -104,7 +104,7 @@ def template_name(image_link, image_ts, checksum_link, version=None):
                                      r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})')
                 # Use match so we can use regex group names
                 result = pattern.match(image_name)
-                return "miq-stable-{}-{}{}{}".format(result.group('release'),
+                return "miq-stable-{}-{}{}{}".format(result.group('release')[:5],  # keep it short
                                                      result.group('year'),
                                                      result.group('month'),
                                                      result.group('day'))
