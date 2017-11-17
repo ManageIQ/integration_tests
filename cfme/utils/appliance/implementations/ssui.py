@@ -1,3 +1,5 @@
+import os
+
 from jsmin import jsmin
 from navmazing import Navigate, NavigateStep
 from selenium.common.exceptions import NoSuchElementException
@@ -109,8 +111,12 @@ class SSUINavigateStep(NavigateStep):
             raise
             self.go(_tries, *args, **kwargs)
 
-    def go(self, _tries=0):
+    def go(self, _tries=0, *args, **kwargs):
+        nav_args = {'use_resetter': True, 'wait_for_view': False}
         _tries += 1
+        for arg in nav_args:
+            if arg in kwargs:
+                nav_args[arg] = kwargs.pop(arg)
         self.pre_navigate(_tries)
         logger.debug("SSUI-NAVIGATE: Checking if already at {}".format(self._name))
         here = False
@@ -127,10 +133,16 @@ class SSUINavigateStep(NavigateStep):
             self.prerequisite_view = self.prerequisite()
             logger.debug("SSUI-NAVIGATE: Heading to destination {}".format(self._name))
             self.do_nav(_tries)
-        self.resetter()
+        if nav_args['use_resetter']:
+            self.resetter()
         self.post_navigate(_tries)
-        if self.VIEW is not None:
-            return self.view
+        if nav_args['wait_for_view'] and not os.environ.get('DISABLE_NAVIGATE_ASSERT', False):
+            wait_for(
+                lambda: self.view.is_displayed, num_sec=10,
+                message='Waiting for SSUI view [{}] to display'.format(self.view.__class__.__name__)
+            )
+        # TODO construct log message for nav
+        return self.view
 
 
 navigator = Navigate()
