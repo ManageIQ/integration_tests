@@ -17,8 +17,6 @@ from threading import Lock, Thread
 
 from ovirtsdk.xml import params
 
-import image_upload_glance
-
 from cfme.utils import net, trackerbot
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger, add_stdout_handler
@@ -523,8 +521,9 @@ def upload_template(rhevip, sshname, sshpass, username, password,
         download_qcow(kwargs.get('image_url'))
         try:
             logger.info("RHEVM:%r Uploading template to Glance", provider)
-            image_upload_glance.main(["--image", qcowname, "--image_name_in_glance",
-            template_name, "--provider", glance])
+            glance_args = {'image': qcowname, 'image_name_in_glance': template_name,
+                'provider': glance, 'disk_format': 'qcow2'}
+            getattr(__import__('image_upload_glance'), "run")(**glance_args)
 
             logger.info("RHEVM:%r Adding Glance", provider)
             add_glance(api, provider, glance)

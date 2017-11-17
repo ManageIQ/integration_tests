@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 """
-Script to upload iso/qcow2/ova images to Glance server
+Script to upload iso/qcow2 images to Glance server
 
 Usage:
 1.scripts/image_upload_glance.py --image cfme-rhevm-5.8.2.1-1.x86_64.qcow2 \
@@ -21,6 +21,19 @@ from cfme.utils.conf import cfme_data, credentials
 from keystoneauth1 import loading
 from keystoneauth1 import session
 from glanceclient import Client
+
+
+def parse_cmd_line():
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    parser.add_argument('--image', help='Image to be uploaded to Glance', required=True)
+    parser.add_argument('--image_name_in_glance', help='Image name in Glance', required=True)
+    parser.add_argument('--provider', help='Glance provider key in cfme_data', required=True)
+    parser.add_argument('--disk_format', help='Disk format of image', default='qcow2')
+
+    args = parser.parse_args()
+    return args
 
 
 def upload_to_glance(image, image_name_in_glance, provider, disk_format):
@@ -55,18 +68,12 @@ def upload_to_glance(image, image_name_in_glance, provider, disk_format):
     glance.images.upload(glance_img.id, open(image, 'rb'))
 
 
-def main(args):
-    parser = argparse.ArgumentParser(description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-
-    parser.add_argument('--image', help='Image to be uploaded to Glance', required=True)
-    parser.add_argument('--image_name_in_glance', help='Image name in Glance', required=True)
-    parser.add_argument('--provider', help='Glance provider key in cfme_data', required=True)
-    parser.add_argument('--disk_format', help='Disk format of image', default='qcow2')
-
-    args = parser.parse_args(args)
-    upload_to_glance(args.image, args.image_name_in_glance, args.provider, args.disk_format)
+def run(**kwargs):
+    upload_to_glance(kwargs['image'], kwargs['image_name_in_glance'], kwargs['provider'],
+        kwargs['disk_format'])
 
 
-if __name__ == '__main__':
-    main(sys.argv[1:])
+if __name__ == "__main__":
+    args = parse_cmd_line()
+    kwargs = dict(args._get_kwargs())
+    sys.exit(run(**kwargs))
