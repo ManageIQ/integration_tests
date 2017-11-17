@@ -131,7 +131,7 @@ class SSUINavigateStep(NavigateStep):
     def go(self, _tries=0, *args, **kwargs):
         nav_args = {'use_resetter': True, 'wait_for_view': False}
 
-        self.log_message("Beginning Navigation...", level="info")
+        self.log_message("Beginning SUI Navigation...", level="info")
         start_time = time.time()
         if _tries > 2:
             # Need at least three tries:
