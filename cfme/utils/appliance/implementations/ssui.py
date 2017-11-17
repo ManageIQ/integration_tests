@@ -155,7 +155,7 @@ class SSUINavigateStep(NavigateStep):
                 "Exception raised [{}] whilst checking if already here".format(e), level="error")
 
         if not here:
-            self.log_message("Prerequiesite Needed")
+            self.log_message("Prerequisite Needed")
             self.prerequisite_view = self.prerequisite()
             self.do_nav(_tries, *args, **kwargs)
         if nav_args['use_resetter']:
