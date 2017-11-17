@@ -278,7 +278,7 @@ class PhysicalServerCollection(BaseCollection):
         view.toolbar.power.item_select("Power Off", handle_alert=True)
 
 
-@navigator.register(PhysicalServerCollection)
+@navigator.register(PhysicalServerCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = PhysicalServersView
     prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
