@@ -26,7 +26,6 @@ from cfme.utils.providers import ProviderFilter
 from cfme.utils.update import update
 from cfme.utils import version
 
-
 pytestmark = test_requirements.rbac
 
 
@@ -85,6 +84,7 @@ def check_item_visibility(tag):
         item.remove_tag(category_name, tag.display_name)
         with user_restricted:
             assert not item.exists
+
     return _check_item_visibility
 
 
@@ -570,12 +570,11 @@ def _test_vm_removal():
 @pytest.mark.tier(3)
 @pytest.mark.parametrize(
     'product_features, action',
-    [(
-        {version.LOWEST: [
-            ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
-             'Provision VMs']], },
-        _test_vm_provision)])
+    [({version.LOWEST: [
+        ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
+        ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
+         'Provision VMs']], },
+      _test_vm_provision)])
 def test_permission_edit(appliance, request, product_features, action):
     """
     Ensures that changes in permissions are enforced on next login
@@ -708,7 +707,7 @@ def single_task_permission_test(appliance, product_features, actions):
     # Enable only specified product features
     test_prod_features = [(['Everything'], False)] + [(f, True) for f in product_features]
     test_permissions(appliance, _mk_role(name=fauxfactory.gen_alphanumeric(),
-                              product_features=test_prod_features), actions, {})
+                                         product_features=test_prod_features), actions, {})
 
     # Enable everything but specified product features
     test_prod_features = [(['Everything'], True)]
@@ -720,7 +719,7 @@ def single_task_permission_test(appliance, product_features, actions):
 
     test_prod_features += [(f, False) for f in product_features]
     test_permissions(appliance, _mk_role(name=fauxfactory.gen_alphanumeric(),
-                              product_features=test_prod_features), {}, actions)
+                                         product_features=test_prod_features), {}, actions)
 
 
 @pytest.mark.tier(3)
@@ -737,7 +736,7 @@ def test_permissions_vm_provisioning(appliance):
     features = [
         ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
         ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
-            'Provision VMs']
+         'Provision VMs']
     ]
 
     single_task_permission_test(
@@ -1001,3 +1000,13 @@ def test_tenant_quota_input_validate(appliance):
         view.form.fill({'{}_cb'.format(field[0]): True, '{}_txt'.format(field[0]): field[1]})
         assert view.save_button.disabled
         view.form.fill({'{}_cb'.format(field[0]): False})
+
+
+def test_delete_default_tenant(appliance):
+    roottenant = appliance.collections.tenants.get_root_tenant()
+    view = navigate_to(appliance.collections.tenants, 'All')
+    for row in view.table.rows():
+        if row.name.text == roottenant.name:
+            row[0].check()
+    with error.handler('Default Tenant "{}" can not be deleted'.format(roottenant.name)):
+        view.toolbar.configuration.item_select('Delete selected items', handle_alert=True)
