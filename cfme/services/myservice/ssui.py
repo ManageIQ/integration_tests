@@ -258,7 +258,9 @@ class MyServiceEdit(SSUINavigateStep):
 @navigator.register(MyService, 'VM Console')
 class LaunchVMConsole(SSUINavigateStep):
     VIEW = EditMyServiceView
-    prerequisite = NavigateToSibling('Details')
+
+    def prerequisite(self):
+        return navigate_to(self.obj, 'Details', wait_for_view=True)
 
     def step(self):
         if self.appliance.version < "5.8":
