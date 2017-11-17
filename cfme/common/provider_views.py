@@ -30,11 +30,14 @@ class ProviderQuadIconEntity(BaseQuadIconEntity):
     @property
     def data(self):
         br = self.browser
-        return {
-            "no_host": br.text(self.QUADRANT.format(pos='a')),
-            "vendor": br.get_attribute('src', self.QUADRANT.format(pos='c')),
-            "creds": br.get_attribute('src', self.QUADRANT.format(pos='d')),
-        }
+        try:
+            return {
+                "no_host": int(br.text(self.QUADRANT.format(pos='a'))),
+                "vendor": br.get_attribute('src', self.QUADRANT.format(pos='c')),
+                "creds": br.get_attribute('src', self.QUADRANT.format(pos='d')),
+            }
+        except TypeError:
+            return {}
 
 
 class ProviderTileIconEntity(BaseTileIconEntity):
@@ -57,12 +60,15 @@ class JSProviderEntity(JSBaseEntity):
     @property
     def data(self):
         data_dict = super(JSProviderEntity, self).data
-        if 'quadicon' in data_dict and data_dict['quadicon']:
-            quad_data = document_fromstring(data_dict['quadicon'])
-            data_dict['no_host'] = int(quad_data.xpath(self.QUADRANT.format(pos="a"))[0].text)
-            data_dict['vendor'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get('src')
-            data_dict['creds'] = quad_data.xpath(self.QUADRANT.format(pos="d"))[0].get('src')
-        return data_dict
+        try:
+            if 'quadicon' in data_dict and data_dict['quadicon']:
+                quad_data = document_fromstring(data_dict['quadicon'])
+                data_dict['no_host'] = int(quad_data.xpath(self.QUADRANT.format(pos="a"))[0].text)
+                data_dict['vendor'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get('src')
+                data_dict['creds'] = quad_data.xpath(self.QUADRANT.format(pos="d"))[0].get('src')
+            return data_dict
+        except IndexError, TypeError:
+            return {}
 
 
 def ProviderEntity():  # noqa

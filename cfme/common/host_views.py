@@ -59,12 +59,15 @@ class ComputeInfrastructureHostsView(BaseLoggedInPage):
 class HostQuadIconEntity(BaseQuadIconEntity):
     @property
     def data(self):
-        return {
-            'no_vm': int(self.browser.text(self.QUADRANT.format(pos="a"))),
-            'state': self.browser.get_attribute("style", self.QUADRANT.format(pos="b")),
-            'vendor': self.browser.get_attribute("alt", self.QUADRANT.format(pos="c")),
-            'creds': self.browser.get_attribute("alt", self.QUADRANT.format(pos="d"))
-        }
+        try:
+            return {
+                'no_vm': int(self.browser.text(self.QUADRANT.format(pos="a"))),
+                'state': self.browser.get_attribute("style", self.QUADRANT.format(pos="b")),
+                'vendor': self.browser.get_attribute("alt", self.QUADRANT.format(pos="c")),
+                'creds': self.browser.get_attribute("alt", self.QUADRANT.format(pos="d"))
+            }
+        except IndexError:
+            return {}
 
 
 class HostTileIconEntity(BaseTileIconEntity):
@@ -85,13 +88,16 @@ class JSHostEntity(JSBaseEntity):
     @property
     def data(self):
         data_dict = super(JSHostEntity, self).data
-        if 'quadicon' in data_dict and data_dict['quadicon']:
-            quad_data = document_fromstring(data_dict['quadicon'])
-            data_dict['no_vm'] = int(quad_data.xpath(self.QUADRANT.format(pos="a"))[0].text)
-            data_dict['state'] = quad_data.xpath(self.QUADRANT.format(pos="b"))[0].get('style')
-            data_dict['vendor'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get('alt')
-            data_dict['creds'] = quad_data.xpath(self.QUADRANT.format(pos="d"))[0].get('alt')
-        return data_dict
+        try:
+            if 'quadicon' in data_dict and data_dict['quadicon']:
+                quad_data = document_fromstring(data_dict['quadicon'])
+                data_dict['no_vm'] = int(quad_data.xpath(self.QUADRANT.format(pos="a"))[0].text)
+                data_dict['state'] = quad_data.xpath(self.QUADRANT.format(pos="b"))[0].get('style')
+                data_dict['vendor'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get('alt')
+                data_dict['creds'] = quad_data.xpath(self.QUADRANT.format(pos="d"))[0].get('alt')
+            return data_dict
+        except IndexError, TypeError:
+            return {}
 
 
 def HostEntity():  # noqa
