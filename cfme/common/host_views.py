@@ -96,7 +96,7 @@ class JSHostEntity(JSBaseEntity):
                 data_dict['vendor'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get('alt')
                 data_dict['creds'] = quad_data.xpath(self.QUADRANT.format(pos="d"))[0].get('alt')
             return data_dict
-        except IndexError, TypeError:
+        except (IndexError, TypeError):
             return {}
 
 

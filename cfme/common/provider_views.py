@@ -67,7 +67,7 @@ class JSProviderEntity(JSBaseEntity):
                 data_dict['vendor'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get('src')
                 data_dict['creds'] = quad_data.xpath(self.QUADRANT.format(pos="d"))[0].get('src')
             return data_dict
-        except IndexError, TypeError:
+        except (IndexError, TypeError):
             return {}
 
 
