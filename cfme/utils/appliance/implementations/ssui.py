@@ -1,3 +1,7 @@
+from inspect import isclass
+import os
+import time
+
 from jsmin import jsmin
 from navmazing import Navigate, NavigateStep
 from selenium.common.exceptions import NoSuchElementException
@@ -5,6 +9,7 @@ from widgetastic.browser import Browser, DefaultPlugin
 
 from cached_property import cached_property
 from fixtures.pytest_store import store
+from cfme import exceptions
 from cfme.utils.browser import manager
 from cfme.utils.log import logger, create_sublogger
 from cfme.utils.wait import wait_for
@@ -109,28 +114,68 @@ class SSUINavigateStep(NavigateStep):
             raise
             self.go(_tries, *args, **kwargs)
 
-    def go(self, _tries=0):
+    def log_message(self, msg, level="debug"):
+        class_name = self.obj.__name__ if isclass(self.obj) else self.obj.__class__.__name__
+        str_msg = "[SUI-NAV/{}/{}]: {}".format(class_name, self._name, msg)
+        getattr(logger, level)(str_msg)
+
+    def construct_message(self, here, resetter, view, duration, waited):
+        str_here = "Already Here" if here else "Needed Navigation"
+        str_resetter = "Resetter Used" if resetter else "No Resetter"
+        str_view = "View Returned" if view else "No View Available"
+        str_waited = "Waited on View" if waited else "No Wait on View"
+        return "{}/{}/{}/{} (elapsed {}ms)".format(
+            str_here, str_resetter, str_view, str_waited, duration
+        )
+
+    def go(self, _tries=0, *args, **kwargs):
+        nav_args = {'use_resetter': True, 'wait_for_view': False}
+
+        self.log_message("Beginning SUI Navigation...", level="info")
+        start_time = time.time()
+        if _tries > 2:
+            # Need at least three tries:
+            # 1: login_admin handles an alert or CannotContinueWithNavigation appears.
+            # 2: Everything should work. If not, NavigationError.
+            raise exceptions.NavigationError(self._name)
+
         _tries += 1
-        self.pre_navigate(_tries)
-        logger.debug("SSUI-NAVIGATE: Checking if already at {}".format(self._name))
+        for arg in nav_args:
+            if arg in kwargs:
+                nav_args[arg] = kwargs.pop(arg)
+        self.pre_navigate(_tries, *args, **kwargs)
+
         here = False
+        resetter_used = False
+        waited = False
         try:
             here = self.am_i_here()
         except Exception as e:
-            logger.debug(
-                "SSUI-NAVIGATE: Exception raised [{}] whilst checking if already at {}".format(
-                    e, self._name))
-        if here:
-            logger.debug("SSUI-NAVIGATE: Already at {}".format(self._name))
-        else:
-            logger.debug("SSUI-NAVIGATE: I'm not at {}".format(self._name))
+            self.log_message(
+                "Exception raised [{}] whilst checking if already here".format(e), level="error")
+
+        if not here:
+            self.log_message("Prerequisite Needed")
             self.prerequisite_view = self.prerequisite()
-            logger.debug("SSUI-NAVIGATE: Heading to destination {}".format(self._name))
-            self.do_nav(_tries)
-        self.resetter()
+            self.do_nav(_tries, *args, **kwargs)
+        if nav_args['use_resetter']:
+            resetter_used = True
+            self.resetter()
         self.post_navigate(_tries)
-        if self.VIEW is not None:
-            return self.view
+        view = self.view if self.VIEW is not None else None
+        duration = int((time.time() - start_time) * 1000)
+        if view and nav_args['wait_for_view'] and not os.environ.get(
+                'DISABLE_NAVIGATE_ASSERT', False):
+            waited = True
+            wait_for(
+                lambda: view.is_displayed, num_sec=10,
+                message="Waiting for view [{}] to display".format(view.__class__.__name__)
+            )
+        self.log_message(
+            self.construct_message(here, resetter_used, view, duration, waited), level="info"
+        )
+
+        return view
 
 
 navigator = Navigate()
