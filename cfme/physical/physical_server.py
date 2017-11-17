@@ -2,11 +2,19 @@
 """A model of an Infrastructure PhysicalServer in CFME."""
 import attr
 
+from navmazing import NavigateToSibling, NavigateToAttribute
+
 from cfme.common import PolicyProfileAssignable, WidgetasticTaggable
+from cfme.common.physical_server_views import (
+    PhysicalServerDetailsView,
+    PhysicalServerManagePoliciesView,
+    PhysicalServersView,
+    PhysicalServerTimelinesView
+)
 
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseEntity, BaseCollection
-from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -184,3 +192,47 @@ class PhysicalServerCollection(BaseCollection):
     def power_off(self, *physical_servers):
         view = self.check_physical_servers(physical_servers)
         view.toolbar.power.item_select("Power Off", handle_alert=True)
+
+
+@navigator.register(PhysicalServerCollection)
+class All(CFMENavigateStep):
+    VIEW = PhysicalServersView
+    prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
+
+    def step(self):
+        self.prerequisite_view.navigation.select("Compute", "Infrastructure", "PhysicalServers")
+
+
+@navigator.register(PhysicalServer)
+class Details(CFMENavigateStep):
+    VIEW = PhysicalServerDetailsView
+    prerequisite = NavigateToAttribute("parent", "All")
+
+    def step(self):
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
+
+
+@navigator.register(PhysicalServer)
+class PolicyAssignment(CFMENavigateStep):
+    VIEW = PhysicalServerManagePoliciesView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self):
+        self.prerequisite_view.toolbar.policy.item_select("Manage Policies")
+
+
+@navigator.register(PhysicalServer)
+class Provision(CFMENavigateStep):
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self):
+        self.prerequisite_view.toolbar.lifecycle.item_select("Provision this item")
+
+
+@navigator.register(PhysicalServer)
+class Timelines(CFMENavigateStep):
+    VIEW = PhysicalServerTimelinesView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self):
+        self.prerequisite_view.toolbar.monitoring.item_select("Timelines")
