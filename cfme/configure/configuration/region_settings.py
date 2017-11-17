@@ -883,8 +883,18 @@ class ReplicationView(RegionView):
     reset_button = Button('Reset')
 
     @property
+    def in_region(self):
+        return (
+            self.accordions.settings.tree.currently_selected == [
+                self.obj.appliance.server.zone.region.settings_string]
+        )
+
+    @property
     def is_displayed(self):
-        return self.replication_type.is_displayed
+        return (
+            self.in_region and
+            self.replication_type.is_displayed
+        )
 
 
 class ReplicationGlobalView(ReplicationView):
@@ -894,7 +904,10 @@ class ReplicationGlobalView(ReplicationView):
 
     @property
     def is_displayed(self):
-        return self.add_subscription.is_displayed
+        return (
+            self.in_region and
+            self.add_subscription.is_displayed
+        )
 
 
 class ReplicationGlobalAddView(ReplicationView):
