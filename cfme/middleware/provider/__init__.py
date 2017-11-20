@@ -306,8 +306,9 @@ class Container(SummaryMixin):
             "minor_version": minor_version
         })
         view.form.cancel_button.click() if cancel else view.form.deploy_button.click()
-        view.flash.assert_success_message('JDBC Driver "{}" has been installed on this server.'
-                    .format(driver_name))
+        view.flash.assert_success_message(
+            'JDBC Driver "{}" has been submitted for installation on this server.'
+            .format(driver_name))
 
     def add_datasource(self, ds_type, ds_name, jndi_name, ds_url,
                xa_ds=False, driver_name=None,
