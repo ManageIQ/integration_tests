@@ -6,7 +6,7 @@ import pytest
 
 from copy import copy, deepcopy
 
-from cfme.utils import error
+from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.provider_views import (InfraProviderAddView,
                                         InfraProvidersView,
@@ -14,10 +14,11 @@ from cfme.common.provider_views import (InfraProviderAddView,
 from cfme.infrastructure.provider import discover, wait_for_a_provider, InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider, RHEVMEndpoint
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider, VirtualCenterEndpoint
+from cfme.utils import error
 from cfme.utils import testgen, version
-from cfme.utils.update import update
 from cfme.utils.blockers import BZ
-from cfme import test_requirements
+from cfme.utils.rest import delete_resources_from_collection
+from cfme.utils.update import update
 
 pytest_generate_tests = testgen.generate([InfraProvider], scope="function")
 
@@ -311,26 +312,20 @@ class TestProvidersRESTAPI(object):
                 entity.action.delete.DELETE()
             assert appliance.rest_api.response.status_code == 404
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
-    def test_delete_custom_attributes_from_collection(self, appliance, custom_attributes):
+    def test_delete_custom_attributes_from_collection(self, custom_attributes):
         """Test deleting custom attributes from collection using REST API.
 
         Metadata:
             test_flag: rest
         """
         attributes, provider = custom_attributes
-        provider.custom_attributes.action.delete(*attributes)
-        assert appliance.rest_api.response.status_code == 200
-        with error.expected('ActiveRecord::RecordNotFound'):
-            provider.custom_attributes.action.delete(*attributes)
-        assert appliance.rest_api.response.status_code == 404
+        delete_resources_from_collection(provider.custom_attributes, attributes, not_found=True)
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
-    def test_delete_single_custom_attribute_from_collection(self, appliance, custom_attributes):
+    def test_delete_single_custom_attribute_from_collection(self, custom_attributes):
         """Test deleting single custom attribute from collection using REST API.
 
         Metadata:
@@ -338,11 +333,7 @@ class TestProvidersRESTAPI(object):
         """
         attributes, provider = custom_attributes
         attribute = attributes[0]
-        provider.custom_attributes.action.delete(attribute)
-        assert appliance.rest_api.response.status_code == 200
-        with error.expected('ActiveRecord::RecordNotFound'):
-            provider.custom_attributes.action.delete(attribute)
-        assert appliance.rest_api.response.status_code == 404
+        delete_resources_from_collection(provider.custom_attributes, [attribute], not_found=True)
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)

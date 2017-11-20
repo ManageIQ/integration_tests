@@ -9,6 +9,7 @@ from cfme import test_requirements
 from cfme.rest.gen_data import rates as _rates
 from cfme.utils import error
 from cfme.utils.blockers import BZ
+from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -185,8 +186,5 @@ class TestRatesViaREST(object):
         Metadata:
             test_flag: rest
         """
-        appliance.rest_api.collections.rates.action.delete(*rates)
-        assert appliance.rest_api.response.status_code == 200
-        with error.expected("ActiveRecord::RecordNotFound"):
-            appliance.rest_api.collections.rates.action.delete(*rates)
-        assert appliance.rest_api.response.status_code == 404
+        collection = appliance.rest_api.collections.rates
+        delete_resources_from_collection(collection, rates)

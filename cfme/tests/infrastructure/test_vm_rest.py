@@ -6,7 +6,7 @@ from cfme import test_requirements
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils import error
-from cfme.utils.rest import assert_response
+from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.wait import wait_for
 
 
@@ -75,9 +75,4 @@ def test_delete_vm_from_detail(vm_name, appliance, method):
 def test_delete_vm_from_collection(vm_name, appliance):
     vm = appliance.rest_api.collections.vms.get(name=vm_name)
     collection = appliance.rest_api.collections.vms
-    collection.action.delete(vm)
-    assert_response(appliance)
-    wait_for(lambda: not collection.find_by(name=vm_name), num_sec=300, delay=10)
-    with error.expected('ActiveRecord::RecordNotFound'):
-        collection.action.delete(vm)
-    assert_response(appliance, http_status=404)
+    delete_resources_from_collection(collection, [vm], not_found=True, num_sec=300, delay=10)

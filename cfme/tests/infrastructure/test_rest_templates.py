@@ -6,6 +6,7 @@ from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import mark_vm_as_template
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils import error
+from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.version import current_version
 
 pytestmark = [test_requirements.rest]
@@ -99,8 +100,5 @@ def test_delete_template_from_collection(appliance, template):
     Metadata:
         test_flag: rest
     """
-    appliance.rest_api.collections.templates.action.delete(template)
-    assert appliance.rest_api.response.status_code == 200
-    with error.expected("ActiveRecord::RecordNotFound"):
-        appliance.rest_api.collections.templates.action.delete(template)
-    assert appliance.rest_api.response.status_code == 404
+    collection = appliance.rest_api.collections.templates
+    delete_resources_from_collection(collection, [template])

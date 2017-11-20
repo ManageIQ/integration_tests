@@ -29,7 +29,7 @@ from fixtures.pytest_store import store
 from cfme.utils import error, version
 from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
-from cfme.utils.rest import assert_response
+from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -278,11 +278,8 @@ class TestServiceRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        appliance.rest_api.collections.services.action.delete(*services)
-        assert_response(appliance)
-        with error.expected("ActiveRecord::RecordNotFound"):
-            appliance.rest_api.collections.services.action.delete(*services)
-        assert_response(appliance, http_status=404)
+        collection = appliance.rest_api.collections.services
+        delete_resources_from_collection(collection, services)
 
     @pytest.mark.parametrize(
         "from_detail", [True, False],
@@ -627,11 +624,8 @@ class TestServiceDialogsRESTAPI(object):
             test_flag: rest
         """
         service_dialog = appliance.rest_api.collections.service_dialogs.get(label=dialog.label)
-        appliance.rest_api.collections.service_dialogs.action.delete(service_dialog)
-        assert_response(appliance)
-        with error.expected("ActiveRecord::RecordNotFound"):
-            appliance.rest_api.collections.service_dialogs.action.delete(service_dialog)
-        assert_response(appliance, http_status=404)
+        collection = appliance.rest_api.collections.service_dialogs
+        delete_resources_from_collection(collection, [service_dialog])
 
 
 class TestServiceTemplateRESTAPI(object):
@@ -670,11 +664,8 @@ class TestServiceTemplateRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        appliance.rest_api.collections.service_templates.action.delete(*service_templates)
-        assert_response(appliance)
-        with error.expected("ActiveRecord::RecordNotFound"):
-            appliance.rest_api.collections.service_templates.action.delete(*service_templates)
-        assert_response(appliance, http_status=404)
+        collection = appliance.rest_api.collections.service_templates
+        delete_resources_from_collection(collection, service_templates)
 
     # POST method is not available on < 5.8, as described in BZ 1427338
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
@@ -973,20 +964,8 @@ class TestServiceCatalogsRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        appliance.rest_api.collections.service_catalogs.action.delete.POST(*service_catalogs)
-        assert_response(appliance)
-
-        for catalog in service_catalogs:
-            wait_for(
-                lambda: not appliance.rest_api.collections.service_catalogs.find_by(
-                    name=catalog.name),
-                num_sec=300,
-                delay=5
-            )
-
-        with error.expected('ActiveRecord::RecordNotFound'):
-            appliance.rest_api.collections.service_catalogs.action.delete.POST(*service_catalogs)
-        assert_response(appliance, http_status=404)
+        collection = appliance.rest_api.collections.service_catalogs
+        delete_resources_from_collection(collection, service_catalogs, num_sec=300, delay=5)
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
@@ -1101,11 +1080,7 @@ class TestPendingRequestsRESTAPI(object):
             test_flag: rest
         """
         collection = appliance.rest_api.collections.service_requests
-        collection.action.delete(pending_request)
-        assert_response(appliance)
-        with error.expected('ActiveRecord::RecordNotFound'):
-            collection.action.delete(pending_request)
-        assert_response(appliance, http_status=404)
+        delete_resources_from_collection(collection, [pending_request])
 
     def test_order_manual_approval(self, request, appliance, pending_request):
         """Tests ordering single catalog item with manual approval using the REST API.
@@ -1345,11 +1320,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
             test_flag: rest
         """
         collection = appliance.rest_api.collections.orchestration_templates
-        collection.action.delete(*orchestration_templates)
-        assert_response(appliance)
-        with error.expected("ActiveRecord::RecordNotFound"):
-            collection.action.delete(*orchestration_templates)
-        assert_response(appliance, http_status=404)
+        delete_resources_from_collection(collection, orchestration_templates, not_found=True)
 
     @pytest.mark.tier(3)
     @pytest.mark.meta(blockers=[BZ(1414881, forced_streams=['5.7', '5.8', 'upstream'])])
@@ -1716,8 +1687,4 @@ class TestServiceOrderCart(object):
             test_flag: rest
         """
         collection = appliance.rest_api.collections.service_orders
-        collection.action.delete(cart)
-        assert_response(appliance)
-        with error.expected('ActiveRecord::RecordNotFound'):
-            collection.action.delete(cart)
-        assert_response(appliance, http_status=404)
+        delete_resources_from_collection(collection, [cart])
