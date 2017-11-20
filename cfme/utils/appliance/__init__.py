@@ -251,12 +251,12 @@ class IPAppliance(object):
             if not (address.scheme and address.netloc):
                 # Use .path (w.x.y.z ip format)
                 self.address = address.path
-                self._scheme = "https"
+                self.scheme = "https"
                 self._url = "https://{}/".format(address.path)
             else:
                 # schema://w.x.y.z/ format
                 self.address = address.netloc
-                self._scheme = address.scheme
+                self.scheme = address.scheme
                 self._url = address.geturl()
         self.browser_steal = browser_steal
         self.container = container
@@ -675,13 +675,6 @@ class IPAppliance(object):
             return 80
         else:
             raise Exception("Unknown scheme {} for {}".format(parsed_url.scheme, store.base_url))
-
-    @property
-    def scheme(self):
-        scheme = getattr(self, '_scheme', None)
-        if scheme:
-            return scheme
-        return "https"  # By default
 
     @cached_property
     def url(self):
