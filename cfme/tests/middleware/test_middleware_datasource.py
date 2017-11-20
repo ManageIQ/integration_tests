@@ -117,7 +117,8 @@ def test_datasource_details(provider):
         * Select each datasource details in UI
         * Compare selected datasource UI details with CFME database and MGMT system
     """
-    ds_list = MiddlewareDatasource.datasources_in_db(provider=provider)
+    server = get_hawkular_server(provider)
+    ds_list = MiddlewareDatasource.datasources_in_db(server=server, provider=provider)
     for ds in get_random_list(ds_list, ITEMS_LIMIT):
         ds_ui = ds.datasource(method='ui')
         ds_db = ds.datasource(method='db')
