@@ -85,7 +85,7 @@ def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards):
         for dash in dashboards.all():
             soft_assert(dash.name in dash_dict, "Dashboard {} not found!".format(dash.name))
             if dash.name in dash_dict:
-                for widget in dash.widgets.all():
+                for widget in dash.collections.widgets.all():
                     soft_assert(widget.name in dash_dict[dash.name].widgets,
                                 "Widget {} not found in {}!".format(widget.name, dash.name))
                 del dash_dict[dash.name]

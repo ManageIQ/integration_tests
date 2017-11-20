@@ -168,8 +168,11 @@ class Dashboard(Updateable, Pretty, Navigatable):
         view.add_button.click()
         view = self.create_view(DashboardAllGroupsView)
         assert view.is_displayed
-        view.flash.assert_no_error()
-        view.flash.assert_message('Dashboard "{}" was saved'.format(self.name))
+        if self.appliance.version < "5.9":
+            msg_part = self.name
+        else:
+            msg_part = self.title
+        view.flash.assert_success_message('Dashboard "{}" was saved'.format(msg_part))
 
     def update(self, updates):
         """Update this Dashboard in the UI.
