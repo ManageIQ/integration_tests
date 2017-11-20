@@ -2850,8 +2850,13 @@ class JSBaseEntity(View, ReportDataControllerMixin):
         """
         data = self._invoke_cmd('get_item', self.id)['item']
         cells = data.pop('cells')
+        cells = {str(key).replace(' ', '_').lower(): value for key, value in cells.items()}
+        data = {str(key).replace(' ', '_').lower(): value for key, value in data.items()}
+        # some entities have id column in List View mode.
+        if 'id' in cells:
+            cells['another_id'] = cells.pop('id')
         data.update(cells)
-        return {str(key).replace(' ', '_').lower(): value for key, value in data.items()}
+        return data
 
     def read(self):
         return self.is_checked
