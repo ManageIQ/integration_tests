@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-
 import pytest
 
+from widgetastic.exceptions import NoSuchElementException
+
 from cfme import test_requirements
-from cfme.configure.tasks import Tasks
-from cfme.fixtures import pytest_selenium as sel
+from cfme.configure.tasks import Tasks, delete_all_tasks
 from cfme.infrastructure import host as host_obj
 from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import DriftGrid, toolbar as tb
@@ -49,8 +49,11 @@ def test_host_drift_analysis(appliance, request, setup_provider, provider, host,
     """
     host_collection = appliance.collections.hosts
     test_host = host_collection.instantiate(name=host['name'], provider=provider)
-    wait_for(lambda: test_host.exists, delay=20, num_sec=120, fail_func=sel.refresh,
-             message="hosts_exists")
+    wait_for(lambda: test_host.exists, delay=20, num_sec=120,
+             fail_func=appliance.server.browser.refresh, message="hosts_exists")
+
+    # tabs changed, hack until configure.tasks is refactored for collections and versioned widgets
+    destination = 'AllTasks' if appliance.version >= '5.9' else 'AllOtherTasks'
 
     # get drift history num
     drift_num_orig = int(test_host.get_detail('Relationships', 'Drift History'))
@@ -74,8 +77,7 @@ def test_host_drift_analysis(appliance, request, setup_provider, provider, host,
                 }
             )
     # clear table
-    view = navigate_to(Tasks, 'AllOtherTasks')
-    view.delete.item_select('Delete All', handle_alert=True)
+    delete_all_tasks(destination)
 
     # initiate 1st analysis
     test_host.run_smartstate_analysis()
@@ -85,8 +87,9 @@ def test_host_drift_analysis(appliance, request, setup_provider, provider, host,
         """ Check if analysis is finished - if not, reload page
         """
         finished = False
-        view = navigate_to(Tasks, 'AllOtherTasks')
-        host_analysis_row = view.tabs.allothertasks.table.row(
+
+        view = navigate_to(Tasks, destination)
+        host_analysis_row = getattr(view.tabs, destination.lower()).table.row(
             task_name="SmartState Analysis for '{}'".format(test_host.name))
         if host_analysis_row.state.text == 'Finished':
             finished = True
@@ -105,7 +108,7 @@ def test_host_drift_analysis(appliance, request, setup_provider, provider, host,
         delay=20,
         num_sec=120,
         message="Waiting for Drift History count to increase",
-        fail_func=sel.refresh
+        fail_func=appliance.server.browser.refresh
     )
 
     # add a tag and a finalizer to remove it
@@ -124,7 +127,7 @@ def test_host_drift_analysis(appliance, request, setup_provider, provider, host,
         delay=20,
         num_sec=120,
         message="Waiting for Drift History count to increase",
-        fail_func=sel.refresh
+        fail_func=appliance.server.browser.refresh
     )
 
     # check drift difference
@@ -136,7 +139,7 @@ def test_host_drift_analysis(appliance, request, setup_provider, provider, host,
 
     # Accounting tag should not be displayed, because it was changed to True
     tb.select("Attributes with same values")
-    with error.expected(sel.NoSuchElementException):
+    with error.expected(NoSuchElementException):
         d_grid.get_cell('Accounting', 0)
 
     # Accounting tag should be displayed now
