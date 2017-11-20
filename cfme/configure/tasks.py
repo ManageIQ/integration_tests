@@ -8,74 +8,13 @@ from widgetastic.widget import View
 from widgetastic_manageiq import BootstrapSelect, Button, CheckboxSelect, Table
 from widgetastic_patternfly import Dropdown, Tab, FlashMessages
 
-from cfme import web_ui as ui
 from cfme.base.login import BaseLoggedInPage
-from cfme.web_ui import toolbar as tb
-import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import Form, Region, CheckboxTable, fill
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for, TimedOutError
-
-buttons = Region(
-    locators={
-        'default': '//*[@id="buttons_off"]/a',
-        'apply': '//*[@id="buttons_on"]/a[1]',
-        'reset': '//*[@id="buttons_on"]/a[2]'
-    }
-)
-
-filter_form = Form(
-    fields=[
-        ("zone", ui.Select("//select[@id='chosen_zone']")),
-        ("user", ui.Select("//select[@id='user_choice']")),
-        ("time_period", ui.Select("//select[@id='time_period']")),
-        ("task_status_queued", ui.Input('queued')),
-        ("task_status_running", ui.Input('running')),
-        ("task_status_ok", ui.Input('ok')),
-        ("task_status_error", ui.Input('error')),
-        ("task_status_warn", ui.Input('warn')),
-        ("task_state", ui.Select("//select[@id='state_choice']")),
-    ]
-)
+from cfme.utils.wait import TimedOutError
 
 table_loc = '//div[@id="records_div" or @id="main_div"]//table'
-
-tasks_table = CheckboxTable(
-    table_locator=table_loc + '[thead]',
-    header_checkbox_locator="//div[@id='records_div' or @id='main_div']//input[@id='masterToggle']"
-)
-
-
-# TODO move these into Task class
-def _filter(
-        zone=None,
-        user=None,
-        time_period=None,
-        task_status_queued=None,
-        task_status_running=None,
-        task_status_ok=None,
-        task_status_error=None,
-        task_status_warn=None,
-        task_state=None):
-    """ Does filtering of the results in table. Needs to be on the correct page before called.
-
-    If there was no change in the form and the apply button does not appear, nothing happens.
-
-    Args:
-        zone: Value for 'Zone' select
-        user: Value for 'User' select
-        time_period: Value for 'Time period' select.
-        task_status_*: :py:class:`bool` values for checkboxes
-        task_state: Value for 'Task State' select.
-    """
-    fill(filter_form, locals())
-    try:
-        wait_for(lambda: sel.is_displayed(buttons.apply), num_sec=5)
-        sel.click(buttons.apply)
-    except TimedOutError:
-        pass
 
 
 def is_vm_analysis_finished(name, **kwargs):
@@ -157,12 +96,6 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
                             task_name=tabs_data['task'].format(name),
                             expected_status=tabs_data['state'],
                             clear_tasks_after_success=clear_tasks_after_success)
-
-
-def wait_analysis_finished(task_name, task_type, delay=5, timeout='5M'):
-    """ Wait until analysis is finished (or timeout exceeded)"""
-    wait_for(lambda: is_analysis_finished(task_name, task_type),
-             delay=delay, timeout=timeout, fail_func=tb.refresh)
 
 
 class TasksView(BaseLoggedInPage):

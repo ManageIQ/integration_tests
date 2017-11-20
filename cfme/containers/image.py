@@ -59,8 +59,11 @@ class Image(WidgetasticTaggable, Labelable, Navigatable, LoadDetailsMixin, Polic
         assert filter(lambda m: 'Analysis successfully initiated' in m.text, view.flash.messages)
         if wait_for_finish:
             try:
-                tasks.wait_analysis_finished('Container image analysis',
-                                             'container', timeout=timeout)
+                wait_for(tasks.is_analysis_finished,
+                         func_kwargs={'task_name': 'Container image analysis',
+                                      'task_type': 'container'},
+                         timeout=timeout,
+                         fail_func=self.appliance.server.browser.refresh)
             except TimedOutError:
                 raise TimedOutError('Timeout exceeded, Waited too much time for SSA to finish ({}).'
                                     .format(timeout))
