@@ -2661,6 +2661,11 @@ class DummyAppliance(object):
     build = 'missing :)'
     managed_known_providers = []
 
+    @classmethod
+    def from_config(cls, pytest_config):
+        version = pytest_config.getoption('--dummy-appliance-version')
+        return cls(version=(version or attr.NOTHING))
+
     def set_session_timeout(self, *k):
         pass
 
