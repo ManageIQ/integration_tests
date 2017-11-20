@@ -22,7 +22,7 @@ on_exit () {
     log "Checking out master branch..."
     git checkout origin/master
     log "Running pip update..."
-    run_pip_update
+    (run_pip_update)  # subshell to avoid exit in failure
     log "#*"
     if [ -n "$POST_TASK" ]; then
         [ $RES -eq 0 ] || [ $RES -eq 5 ] && OUT_RESULT="passed" || OUT_RESULT="failed"
@@ -62,13 +62,25 @@ do_or_die () {
     done
 }
 
+
+gate() {
+	log "gating $2 to $ARTIFACTOR_DIR/$1"
+	eval "$2" >> $ARTIFACTOR_DIR/$1 2>&1 
+	local RES=$?
+	if [ "$RES" -ne "0" ]
+	then
+		log "failed"
+		exit $RES
+	fi
+}
+
 # Runs pip update - optionally can make use of wheelhouse
 run_pip_update () {
+	export PYCURL_SSL_LIBRARY=nss
     if [ -n "$WHEEL_HOST_URL" ]; then
-        run_n_log "PYCURL_SSL_LIBRARY=nss pip install --trusted-host $WHEEL_HOST -f $WHEEL_HOST_URL -Ur $CFME_REPO_DIR/requirements/frozen.txt --no-cache-dir"
-    else
-        run_n_log "PYCURL_SSL_LIBRARY=nss pip install -Ur $CFME_REPO_DIR/requirements/frozen.txt --no-cache-dir"
+        export PIP_TRUSTED_HOST="$WHEEL_HOST" PIP_FIND_LINKS="$WHEEL_HOST_URL"
     fi
+    gate "pip_install.txt" "pip install -Ur $CFME_REPO_DIR/requirements/frozen.txt --no-cache-dir"
     # ensures entrypoint updates
     run_n_log "pip install -e ."
 }
@@ -134,7 +146,7 @@ log "#*"
 
 log "GPG Checking #~"
 # Get the GPG-Keys
-do_or_die "/get_keys.py >> $ARTIFACTOR_DIR/setup.txt 2>&1" 5 1
+gate "get_keys.txt" "do_or_die /get_keys.py 5 1"
 
 # die on errors
 set -e
@@ -219,14 +231,26 @@ run_n_log "find $CFME_REPO_DIR -name \"*.pyc\" -exec rm -rf {} \;"
 
 set +e
 
+
+
+
 if [ "$USE_SPROUT" = "yes" ];
 then
-    miq sprout checkout --populate-yaml  2>&1 >> $ARTIFACTOR_DIR/setup.txt &
+    log "invoking complete collectonly with dummy instance before test"
+    gate "collectonly.txt" "py.test --collectonly --dummy-appliance --dummy-appliance-version $SPROUT_GROUP --use-provider complete"
+
+    run_n_log "miq sprout checkout --populate-yaml" &
     sleep 5
     do_or_die "(date && grep -q appliances: conf/env.local.yaml)>> $ARTIFACTOR_DIR/setup.txt" 5 60
 else
     log "no sprout used"
+    log "invoking complete collectonly with given appliance instance before test"
+    gate "collectonly.txt" "py.test --collectonly --use-provider complete"
 fi
+
+log "smoke testing"
+gate "smoke.txt" "py.test -m smoke"
+
 # Finally, run the py.test
 log "$PYTEST"
 
