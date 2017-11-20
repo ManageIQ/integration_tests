@@ -101,7 +101,7 @@ def download_qcow(qcowurl):
 
 
 def add_glance(api, provider, glance_server):
-    provider_dict = cfme_data['management_systems'][glance_server]
+    provider_dict = cfme_data['template_upload'][glance_server]
     creds_key = provider_dict['credentials']
 
     def is_glance_added(api, name):
@@ -210,11 +210,10 @@ def make_vm_from_template(api, stream, cfme_data, cluster, temp_template_name,
         temp_vm_name: temporary vm name to be created.
         provider: provider_key
     """
-    provider_dict = cfme_data['management_systems'][provider]
-    cores = provider_dict[stream]['cores']
-    sockets = provider_dict[stream]['sockets']
+    cores = cfme_data['template_upload']['hardware'][stream]['cores']
+    sockets = cfme_data['template_upload']['hardware'][stream]['sockets']
     cpu = params.CPU(topology=params.CpuTopology(cores=cores, sockets=sockets))
-    vm_memory = provider_dict[stream]['memory'] * 1024 * 1024 * 1024
+    vm_memory = cfme_data['template_upload']['hardware'][stream]['memory'] * 1024 * 1024 * 1024
 
     try:
         if api.vms.get(temp_vm_name) is not None:

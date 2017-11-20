@@ -41,7 +41,7 @@ def upload_to_glance(image, image_name_in_glance, provider, disk_format):
     Upload iso/qcow2/ova images to Glance.
     """
     api_version = '2'  # python-glanceclient API version
-    provider_dict = cfme_data['management_systems'][provider]
+    provider_dict = cfme_data['template_upload'][provider]
     creds_key = provider_dict['credentials']
 
     loader = loading.get_plugin_loader('password')
