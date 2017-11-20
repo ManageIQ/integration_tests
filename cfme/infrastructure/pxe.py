@@ -506,14 +506,14 @@ class CustomizationTemplate(Updateable, Pretty, BaseEntity):
 
         if cancel:
             view.cancel.click()
-            msg = 'Edit of Customization Template "{}" was cancelled by the user'.format(name)
+            # msg = 'Edit of Customization Template "{}" was cancelled by the user'.format(name)
         else:
             view.save.click()
-            if self.appliance.version < 5.9:
-                msg = 'Customization Template "{}" was saved'.format(name)
-            else:
-                msg = 'Customization Template "{}" was saved'.format(description)
-        main_view.flash.assert_success_message(msg)
+            # if self.appliance.version < 5.9:
+            #     msg = 'Customization Template "{}" was saved'.format(name)
+            # else:
+            #     msg = 'Customization Template "{}" was saved'.format(description)
+        main_view.flash.assert_no_error()
 
 
 @attr.s
@@ -547,14 +547,14 @@ class CustomizationTemplateCollection(BaseCollection):
         main_view = self.create_view(PXECustomizationTemplatesView)
         if cancel:
             view.cancel.click()
-            msg = 'Add of new Customization Template was cancelled by the user'
+            # msg = 'Add of new Customization Template was cancelled by the user'
         else:
             view.add.click()
-            if self.appliance.version < 5.9:
-                msg = 'Customization Template "{}" was saved'.format(name)
-            else:
-                msg = 'Customization Template "{}" was saved'.format(description)
-        main_view.flash.assert_success_message(msg)
+            # if self.appliance.version < 5.9:
+            #     msg = 'Customization Template "{}" was saved'.format(name)
+            # else:
+            #     msg = 'Customization Template "{}" was saved'.format(description)
+        main_view.flash.assert_no_error()
         return customization_templates
 
     def delete(self, cancel=False, *ct_objs):

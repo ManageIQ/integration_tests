@@ -125,5 +125,5 @@ def test_pxe_servicecatalog(appliance, setup_provider, provider, catalog_item, r
     request_description = catalog_item.name
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
-    provision_request.wait_for_request()
+    provision_request.wait_for_request(num_sec=3600)
     assert provision_request.is_succeeded()
