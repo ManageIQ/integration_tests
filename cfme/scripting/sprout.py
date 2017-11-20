@@ -49,6 +49,7 @@ def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
     sr = SproutProvisioningRequest(group=group, count=appliances, version=version, date=date,
                                    lease_time=timeout, provision_timeout=provision_timeout,
                                    desc=desc, cpu=override_cpu, ram=override_ram, provider=provider)
+    print(sr)
     sm = SproutManager()
 
     def exit_gracefully(signum, frame):
