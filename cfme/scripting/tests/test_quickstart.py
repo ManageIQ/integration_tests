@@ -6,14 +6,16 @@ import pytest
 
 
 IMAGE_SPEC = [
-    ('fedora:23', 'python3'),
     ('fedora:24', 'python3'),
     ('fedora:25', 'python3'),
-    ('centos:7', 'python2'),
+    ('fedora:26', 'python3'),
+    ('fedora:27', 'python3'),
+    pytest.param('centos:7', 'python2', marks=pytest.mark.xfail(
+        run=False, reason='bad centos packageset')),
 ]
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True, scope='module')
 def check_docker():
     try:
         subprocess.call("docker info", shell=True)
@@ -26,7 +28,7 @@ def root_volume():
     return path.project_path
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def yamls_volume():
     volume = path.project_path.join('../cfme-qe-yamls')
     if not volume.check(dir=1):
@@ -36,7 +38,6 @@ def yamls_volume():
 
 @pytest.mark.parametrize('image, python', IMAGE_SPEC)
 @pytest.mark.long_running
-@pytest.mark.xfail(run=False, reason="temporaryly broken, needs restoration")
 def test_quickstart_run(image, python, root_volume, yamls_volume):
     subprocess.check_call(
         "docker run "
