@@ -142,7 +142,7 @@ class Cluster(Pretty, BaseEntity, WidgetasticTaggable):
     def __attrs_post_init__(self):
         col = self.appliance.rest_api.collections
         self._id = [
-            cl.id
+            int(cl.id)
             for cl in col.clusters
             if cl.name in (self.short_name, self.name) and cl.ems_id == self.provider.id
         ][-1]
