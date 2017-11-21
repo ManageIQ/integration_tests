@@ -2,7 +2,9 @@
 """Helper functions for tests using REST API."""
 
 from cfme.exceptions import OptionNotAvailable
+from cfme.utils import error
 from cfme.utils.wait import wait_for
+from fixtures.pytest_store import store
 
 
 def assert_response(
@@ -101,3 +103,19 @@ def create_resource(rest_api, col_name, col_data, col_action='create', substr_se
     # make sure action response is preserved
     rest_api.response = action_response
     return entities
+
+
+def delete_resources_from_collection(collection, resources, not_found=False, num_sec=10, delay=2):
+    collection.action.delete(*resources)
+    assert_response(collection._api)
+
+    for resource in resources:
+        resource.wait_not_exists(num_sec=num_sec, delay=delay)
+
+    if not_found or store.current_appliance.version < '5.9':
+        with error.expected('ActiveRecord::RecordNotFound'):
+            collection.action.delete(*resources)
+        assert_response(collection._api, http_status=404)
+    else:
+        collection.action.delete(*resources)
+        assert_response(collection._api, success=False)

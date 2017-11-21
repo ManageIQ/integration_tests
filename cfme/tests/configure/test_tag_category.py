@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
+import pytest
+
 from cfme.configure.configuration.region_settings import Category
 from cfme.rest.gen_data import categories as _categories
-import pytest
+from cfme.utils import error
+from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
-from cfme.utils import error
 
 
 @pytest.mark.tier(2)
@@ -99,8 +101,5 @@ class TestCategoriesViaREST(object):
         Metadata:
             test_flag: rest
         """
-        appliance.rest_api.collections.categories.action.delete(*categories)
-        assert appliance.rest_api.response.status_code == 200
-        with error.expected("ActiveRecord::RecordNotFound"):
-            appliance.rest_api.collections.categories.action.delete(*categories)
-        assert appliance.rest_api.response.status_code == 404
+        collection = appliance.rest_api.collections.categories
+        delete_resources_from_collection(collection, categories, not_found=True)

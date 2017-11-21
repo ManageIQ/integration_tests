@@ -8,7 +8,7 @@ from cfme import test_requirements
 from cfme.rest.gen_data import conditions as _conditions
 from cfme.rest.gen_data import policies as _policies
 from cfme.utils.blockers import BZ
-from cfme.utils.rest import assert_response
+from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
@@ -73,20 +73,7 @@ class TestConditionsRESTAPI(object):
             test_flag: rest
         """
         collection = appliance.rest_api.collections.conditions
-        collection.action.delete.POST(*conditions)
-        assert_response(appliance)
-
-        for condition in conditions:
-            wait_for(
-                lambda: not appliance.rest_api.collections.conditions.find_by(
-                    name=condition.name),
-                num_sec=100,
-                delay=5
-            )
-
-        with error.expected('ActiveRecord::RecordNotFound'):
-            collection.action.delete.POST(*conditions)
-        assert_response(appliance, http_status=404)
+        delete_resources_from_collection(collection, conditions, num_sec=100, delay=5)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     @pytest.mark.parametrize(
@@ -196,20 +183,7 @@ class TestPoliciesRESTAPI(object):
             test_flag: rest
         """
         collection = appliance.rest_api.collections.policies
-        collection.action.delete.POST(*policies)
-        assert_response(appliance)
-
-        for policy in policies:
-            wait_for(
-                lambda: not appliance.rest_api.collections.policies.find_by(
-                    name=policy.name),
-                num_sec=100,
-                delay=5
-            )
-
-        with error.expected('ActiveRecord::RecordNotFound'):
-            collection.action.delete.POST(*policies)
-        assert_response(appliance, http_status=404)
+        delete_resources_from_collection(collection, policies, num_sec=100, delay=5)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     @pytest.mark.meta(blockers=[BZ(1435777, forced_streams=['5.8', 'upstream'])])

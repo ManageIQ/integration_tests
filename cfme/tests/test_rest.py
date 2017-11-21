@@ -16,7 +16,7 @@ from cfme.rest.gen_data import vm as _vm
 from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
-from cfme.utils.rest import assert_response
+from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for, wait_for_decorator
 from fixtures.provider import setup_one_or_skip
@@ -905,9 +905,4 @@ class TestNotificationsRESTAPI(object):
         collection = appliance.rest_api.collections.notifications
         collection.reload()
         notifications = [collection[-i] for i in range(1, 3)]
-
-        collection.action.delete(*notifications)
-        assert_response(appliance)
-        with error.expected("ActiveRecord::RecordNotFound"):
-            collection.action.delete(*notifications)
-        assert_response(appliance, http_status=404)
+        delete_resources_from_collection(collection, notifications)

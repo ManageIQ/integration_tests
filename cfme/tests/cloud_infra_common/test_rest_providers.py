@@ -6,7 +6,7 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.common.provider import CloudInfraProvider
 from cfme.utils import error, testgen
 from cfme.utils.blockers import BZ
-from cfme.utils.rest import assert_response
+from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.version import pick
 from cfme.utils.wait import wait_for
 
@@ -234,9 +234,5 @@ def test_provider_delete_from_collection(provider_rest, appliance):
     Metadata:
         test_flag: rest
     """
-    appliance.rest_api.collections.providers.action.delete(provider_rest)
-    assert_response(appliance)
-    provider_rest.wait_not_exists(num_sec=30)
-    with error.expected("ActiveRecord::RecordNotFound"):
-        appliance.rest_api.collections.providers.action.delete(provider_rest)
-    assert_response(appliance, http_status=404)
+    collection = appliance.rest_api.collections.providers
+    delete_resources_from_collection(collection, [provider_rest], num_sec=30)

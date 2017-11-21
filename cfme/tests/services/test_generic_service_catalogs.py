@@ -2,15 +2,16 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.automate.service_dialogs import DialogCollection
 from cfme.rest.gen_data import service_catalogs as _service_catalogs
+from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.services.catalogs.catalog_item import CatalogBundle
-from cfme import test_requirements
-from selenium.common.exceptions import NoSuchElementException
 from cfme.utils import error
 from cfme.utils.log import logger
+from cfme.utils.rest import delete_resources_from_collection
+from selenium.common.exceptions import NoSuchElementException
 
 
 pytestmark = [
@@ -143,11 +144,8 @@ class TestServiceCatalogViaREST(object):
         Metadata:
             test_flag: rest
         """
-        appliance.rest_api.collections.service_catalogs.action.delete(*service_catalogs)
-        assert appliance.rest_api.response.status_code == 200
-        with error.expected("ActiveRecord::RecordNotFound"):
-            appliance.rest_api.collections.service_catalogs.action.delete(*service_catalogs)
-        assert appliance.rest_api.response.status_code == 404
+        collection = appliance.rest_api.collections.service_catalogs
+        delete_resources_from_collection(collection, service_catalogs)
 
     def test_edit_service_catalog(self, appliance, service_catalogs):
         """Tests editing a service catalog via rest.

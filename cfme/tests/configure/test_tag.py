@@ -13,7 +13,7 @@ from cfme.rest.gen_data import (
 )
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
-from cfme.utils.rest import assert_response
+from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.version import current_version
 from cfme.utils.blockers import BZ
 from cfme.utils import error
@@ -180,11 +180,8 @@ class TestTagsViaREST(object):
         Metadata:
             test_flag: rest
         """
-        appliance.rest_api.collections.tags.action.delete(*tags)
-        assert_response(appliance)
-        with error.expected("ActiveRecord::RecordNotFound"):
-            appliance.rest_api.collections.tags.action.delete(*tags)
-        assert_response(appliance, http_status=404)
+        collection = appliance.rest_api.collections.tags
+        delete_resources_from_collection(collection, tags, not_found=True)
 
     @pytest.mark.tier(3)
     def test_create_tag_with_wrong_arguments(self, appliance):

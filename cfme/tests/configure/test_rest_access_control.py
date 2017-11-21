@@ -13,7 +13,7 @@ from cfme.rest.gen_data import (
     users as _users,
 )
 from cfme.utils import error
-from cfme.utils.rest import assert_response
+from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -99,11 +99,8 @@ class TestTenantsViaREST(object):
         Metadata:
             test_flag: rest
         """
-        appliance.rest_api.collections.tenants.action.delete(*tenants)
-        assert appliance.rest_api.response.status_code == 200
-        with error.expected("ActiveRecord::RecordNotFound"):
-            appliance.rest_api.collections.tenants.action.delete(*tenants)
-        assert appliance.rest_api.response.status_code == 404
+        collection = appliance.rest_api.collections.tenants
+        delete_resources_from_collection(collection, tenants)
 
 
 class TestRolesViaREST(object):
@@ -184,11 +181,8 @@ class TestRolesViaREST(object):
         Metadata:
             test_flag: rest
         """
-        appliance.rest_api.collections.roles.action.delete(*roles)
-        assert appliance.rest_api.response.status_code == 200
-        with error.expected("ActiveRecord::RecordNotFound"):
-            appliance.rest_api.collections.roles.action.delete(*roles)
-        assert appliance.rest_api.response.status_code == 404
+        collection = appliance.rest_api.collections.roles
+        delete_resources_from_collection(collection, roles)
 
     @pytest.mark.tier(3)
     def test_add_delete_role(self, appliance):
@@ -321,11 +315,8 @@ class TestGroupsViaREST(object):
         Metadata:
             test_flag: rest
         """
-        appliance.rest_api.collections.groups.action.delete(*groups)
-        assert appliance.rest_api.response.status_code == 200
-        with error.expected("ActiveRecord::RecordNotFound"):
-            appliance.rest_api.collections.groups.action.delete(*groups)
-        assert appliance.rest_api.response.status_code == 404
+        collection = appliance.rest_api.collections.groups
+        delete_resources_from_collection(collection, groups, not_found=True)
 
 
 class TestUsersViaREST(object):
@@ -475,8 +466,5 @@ class TestUsersViaREST(object):
         Metadata:
             test_flag: rest
         """
-        appliance.rest_api.collections.users.action.delete(*users)
-        assert appliance.rest_api.response.status_code == 200
-        with error.expected("ActiveRecord::RecordNotFound"):
-            appliance.rest_api.collections.users.action.delete(*users)
-        assert appliance.rest_api.response.status_code == 404
+        collection = appliance.rest_api.collections.users
+        delete_resources_from_collection(collection, users)
