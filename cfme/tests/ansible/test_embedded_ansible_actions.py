@@ -179,8 +179,8 @@ def service_request(appliance, ansible_catalog_item):
 
 
 @pytest.yield_fixture
-def service(ansible_catalog_item):
-    service_ = MyService(ansible_catalog_item.name)
+def service(appliance, ansible_catalog_item):
+    service_ = MyService(appliance, ansible_catalog_item.name)
     yield service_
 
     if service_.exists:
