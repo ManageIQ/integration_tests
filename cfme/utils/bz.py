@@ -150,30 +150,28 @@ class Bugzilla(object):
         variants = self.get_bug_variants(bug)
         filtered = set([])
         version_series = ".".join(str(version).split(".")[:2])
-        for variant in variants:
+        for variant in sorted(variants, key=lambda variant: variant.id):
             if variant.id in ignore_bugs:
                 continue
             if variant.version is not None and variant.version > version:
                 continue
-            if ((variant.version is not None and variant.target_release is not None) and
+            if variant.release_flag is not None and version.is_in_series(variant.release_flag):
+                logger.info('Found matching bug for %d by release - #%d', bug.id, variant.id)
+                filtered.clear()
+                filtered.add(variant)
+                break
+            elif ((variant.version is not None and variant.target_release is not None) and
                     (
                         variant.version.is_in_series(version_series) or
                         variant.target_release.is_in_series(version_series))):
                     filtered.add(variant)
-            elif variant.release_flag is not None:
-                if version.is_in_series(variant.release_flag):
-                    # Simple case
-                    filtered.add(variant)
-                else:
-                    logger.info(
-                        "Ignoring bug #%s, appliance version not in bug release flag", variant.id)
             else:
                 logger.info("No release flags, wrong versions, ignoring %s", variant.id)
         if not filtered:
             # No appropriate bug was found
             for forced_stream in force_block_streams:
                 # Find out if we force this bug.
-                if current_version().is_in_series(forced_stream):
+                if version.is_in_series(forced_stream):
                     return bug
             else:
                 # No bug, yipee :)
