@@ -288,7 +288,7 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         """Reset the view"""
-        self.view.paginator.reset_selection()
+        self.view.entities.paginator.reset_selection()
 
 
 @navigator.register(Cluster, 'Details')
