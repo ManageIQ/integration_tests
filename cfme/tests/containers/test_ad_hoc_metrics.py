@@ -27,7 +27,7 @@ def metrics_up_and_running(provider):
 
 def is_ad_hoc_greyed(provider_object):
     view = navigate_to(provider_object, 'Details')
-    return view.monitor.item_enabled('Ad hoc Metrics')
+    return view.toolbar.monitoring.item_enabled('Ad hoc Metrics')
 
 
 @pytest.mark.polarion('CMP-10643')

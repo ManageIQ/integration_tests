@@ -25,8 +25,7 @@ from cfme.common.provider_views import (
     BeforeFillMixin, ContainerProviderAddView, ContainerProvidersView,
     ContainerProviderEditView, ContainerProviderEditViewUpdated, ProvidersView,
     ContainerProviderAddViewUpdated, ProviderSideBar,
-    ProviderDetailsToolBar, ContainerProviderDetailsView
-)
+    ProviderDetailsToolBar, ProviderDetailsView)
 from cfme.utils import version
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -136,6 +135,16 @@ class LoggingableView(View):
         browser_instance.switch_to_window(appliance_window)
 
         return logging_url
+
+
+class ContainerProviderDetailsView(ProviderDetailsView, LoggingableView):
+    """
+     Container Details page
+    """
+    @property
+    def is_displayed(self):
+        return (super(ContainerProviderDetailsView, self).is_displayed and
+                self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'])
 
 
 class ContainersProvider(BaseProvider, Pretty):
@@ -445,7 +454,7 @@ class AdHocMain(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.monitor.item_select('Ad hoc Metrics')
+        self.prerequisite_view.toolbar.monitoring.item_select('Ad hoc Metrics')
 
 
 class ContainerObjectAllBaseView(ProvidersView):

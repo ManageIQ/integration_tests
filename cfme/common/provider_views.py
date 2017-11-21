@@ -173,16 +173,6 @@ class MiddlewareProviderDetailsView(ProviderDetailsView):
                 self.navigation.currently_selected == ['Middleware', 'Providers'])
 
 
-class ContainerProviderDetailsView(ProviderDetailsView):
-    """
-     Container Details page
-    """
-    @property
-    def is_displayed(self):
-        return (super(ContainerProviderDetailsView, self).is_displayed and
-                self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'])
-
-
 class ProviderTimelinesView(TimelinesView, BaseLoggedInPage):
     """
      represents Timelines page
