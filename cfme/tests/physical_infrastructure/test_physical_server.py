@@ -20,7 +20,6 @@ def test_physical_servers_view_displayed(physical_server_collection):
     physical_servers_view = navigate_to(physical_server_collection, 'All')
     assert physical_servers_view.is_displayed
 
-
 def test_physical_servers_view_dropdowns(physical_server_collection):
     """Navigate to the physical servers page and verify that the dropdown menus are present"""
     physical_servers_view = navigate_to(physical_server_collection, 'All')
