@@ -3,9 +3,11 @@ import pytest
 
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.physical.provider.lenovo import LenovoProvider
+from cfme import test_requirements
 
 pytestmark = [pytest.mark.tier(3), pytest.mark.provider([LenovoProvider], scope="module")]
 
+pytest_generate_tests = testgen.generate([LenovoProvider], scope="module")
 
 @pytest.fixture(scope="module")
 def physical_server_collection(appliance, provider, setup_provider_modscope):
