@@ -1,4 +1,5 @@
 import signal
+import collections
 
 import zmq
 from py.path import local
@@ -56,7 +57,12 @@ class SlaveManager(object):
         self.session = session
         self.collection = {item.nodeid: item for item in session.items}
         terminalreporter.disable()
-        self.send_event("collectionfinish", node_ids=self.collection.keys())
+        to_remove = self.send_event("collectionfinish", node_ids=self.collection.keys())
+
+        # If we have tests that we shouldn't, we just log out and warn people
+        if isinstance(to_remove, collections.Iterable) and not isinstance(to_remove, str):
+            for item in to_remove:
+                self.log.warning("Test [{}] ignored, not on master collection".format(item))
 
     def pytest_runtest_logstart(self, nodeid, location):
         """pytest runtest logstart hook
