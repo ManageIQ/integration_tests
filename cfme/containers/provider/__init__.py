@@ -445,7 +445,7 @@ class AdHocMain(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.monitor.item_select('Ad hoc Metrics')
+        self.prerequisite_view.toolbar.monitoring.item_select('Ad hoc Metrics')
 
 
 class ContainerObjectAllBaseView(ProvidersView):

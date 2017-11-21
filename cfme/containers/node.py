@@ -176,7 +176,7 @@ class Utilization(CFMENavigateStep):
 
     def step(self):
         """Navigate to the Utilization page"""
-        self.prerequisite_view.monitor.item_select('Utilization')
+        self.prerequisite_view.toolbar.monitoring.item_select('Utilization')
 
 
 class NodeTimelinesView(TimelinesView, NodeView):
@@ -199,7 +199,7 @@ class Timelines(CFMENavigateStep):
 
     def step(self):
         """Navigate to the Timelines page"""
-        self.prerequisite_view.monitor.item_select('Timelines')
+        self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 
 # TODO Need Ad hoc Metrics
 # TODO Need External Logging

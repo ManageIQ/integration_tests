@@ -55,7 +55,7 @@ def test_external_logging_activated(provider, appliance, test_item):
         obj_inst = test_item.obj.get_random_instances(provider, 1, appliance).pop()
 
     view = navigate_to(obj_inst, 'Details')
-    assert view.monitor.item_enabled('External Logging'), (
+    assert view.toolbar.monitoring.item_enabled('External Logging'), (
         "Monitoring --> External Logging not activated")
 
     cfme_logging_url = "https://{url}".format(url=view.get_logging_url())
