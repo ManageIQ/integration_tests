@@ -499,13 +499,17 @@ class CustomizationTemplate(Updateable, Pretty, BaseEntity):
         view.fill(updates)
         main_view = self.create_view(PXECustomizationTemplatesView, override=updates)
         name = updates.get('name') or self.name
+        description = updates.get('description') or self.description
 
         if cancel:
             view.cancel.click()
             msg = 'Edit of Customization Template "{}" was cancelled by the user'.format(name)
         else:
             view.save.click()
-            msg = 'Customization Template "{}" was saved'.format(name)
+            if self.appliance.version < 5.9:
+                msg = 'Customization Template "{}" was saved'.format(name)
+            else:
+                msg = 'Customization Template "{}" was saved'.format(description)
         main_view.flash.assert_success_message(msg)
 
 
@@ -543,7 +547,10 @@ class CustomizationTemplateCollection(BaseCollection):
             msg = 'Add of new Customization Template was cancelled by the user'
         else:
             view.add.click()
-            msg = 'Customization Template "{}" was saved'.format(name)
+            if self.appliance.version < 5.9:
+                msg = 'Customization Template "{}" was saved'.format(name)
+            else:
+                msg = 'Customization Template "{}" was saved'.format(description)
         main_view.flash.assert_success_message(msg)
         return customization_templates
 
