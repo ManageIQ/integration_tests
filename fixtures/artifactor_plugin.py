@@ -298,17 +298,18 @@ lock = RLock()
 
 def shutdown(config):
     holder = config.pluginmanager.getplugin('appliance-holder')
-    app = holder.held_appliance
-    with lock:
-        proc = config._art_proc
-        if proc:
-            if not store.slave_manager:
-                write_line('collecting artifacts')
-                fire_art_hook(config, 'finish_session')
-            fire_art_hook(config, 'teardown_merkyl',
-                          ip=app.address)
-            if not store.slave_manager:
-                config._art_client.terminate()
-                proc = config._art_proc
-                if proc:
-                    proc.wait()
+    if holder:
+        app = holder.held_appliance
+        with lock:
+            proc = config._art_proc
+            if proc:
+                if not store.slave_manager:
+                    write_line('collecting artifacts')
+                    fire_art_hook(config, 'finish_session')
+                fire_art_hook(config, 'teardown_merkyl',
+                              ip=app.address)
+                if not store.slave_manager:
+                    config._art_client.terminate()
+                    proc = config._art_proc
+                    if proc:
+                        proc.wait()
