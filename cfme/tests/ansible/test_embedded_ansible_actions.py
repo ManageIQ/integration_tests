@@ -14,7 +14,6 @@ from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.net import net_check
 from cfme.utils.update import update
-from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 from fixtures.provider import setup_one_by_class_or_skip
 
@@ -22,7 +21,8 @@ from fixtures.provider import setup_one_by_class_or_skip
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=["+embedded_ansible"]),
-    pytest.mark.uncollectif(lambda: current_version() < "5.8"),
+    pytest.mark.ignore_stream("upstream", '5.7'),
+    pytest.mark.uncollectif(BZ(1515841, forced_streams=['5.9']).blocks, 'BZ 1515841'),
     pytest.mark.ignore_stream("upstream"),
     test_requirements.ansible
 ]
@@ -179,8 +179,8 @@ def service_request(appliance, ansible_catalog_item):
 
 
 @pytest.yield_fixture
-def service(ansible_catalog_item):
-    service_ = MyService(ansible_catalog_item.name)
+def service(appliance, ansible_catalog_item):
+    service_ = MyService(appliance, ansible_catalog_item.name)
     yield service_
 
     if service_.exists:
