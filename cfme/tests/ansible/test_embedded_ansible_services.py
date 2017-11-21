@@ -13,6 +13,7 @@ from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 
@@ -20,6 +21,7 @@ pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=["+embedded_ansible"]),
     pytest.mark.ignore_stream("upstream", '5.7'),
+    pytest.mark.uncollectif(BZ(1515841, forced_streams=['5.9']).blocks, 'BZ 1515841'),
     test_requirements.ansible
 ]
 
