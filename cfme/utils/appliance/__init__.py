@@ -28,6 +28,7 @@ from fixtures.pytest_store import store
 from cfme.utils import clear_property_cache
 from cfme.utils import conf, ssh, ports
 from cfme.utils.datafile import load_data_file
+
 from cfme.utils.events import EventListener
 from cfme.utils.log import logger, create_sublogger, logger_wrap
 from cfme.utils.net import net_check
@@ -1855,6 +1856,7 @@ class IPAppliance(object):
         return "{} Region: Region {} [{}]".format(
             self.product_name, r, r)
 
+    @removals.remove(message='This call is being deprecated in 17.18')
     def slave_server_zone_id(self):
         table = self.db.client["miq_servers"]
         try:
@@ -1863,6 +1865,7 @@ class IPAppliance(object):
         except TypeError:
             return None
 
+    @removals.remove(message='This call is being deprecated in 17.18')
     def slave_server_name(self):
         table = self.db.client["miq_servers"]
         try:

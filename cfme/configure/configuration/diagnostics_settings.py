@@ -267,14 +267,21 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
         last_collection = self.last_collection
         # Initiate the collection
         view.toolbar.collect.item_select(selection)
+        slave_servers = self.appliance.server.slave_servers
+        first_slave_server = slave_servers[0] if slave_servers else None
+
         if self.zone_collect:
             message = "Zone {}".format(self.appliance.server.zone.name)
         elif self.second_server_collect:
             message = "MiqServer {} [{}]".format(
-                self.appliance.slave_server_name(), self.appliance.slave_server_zone_id())
+                first_slave_server.name,
+                first_slave_server.zone.id
+            )
         else:
             message = "MiqServer {} [{}]".format(
-                self.appliance.server_name(), self.appliance.server_zone_id())
+                first_slave_server.name,
+                first_slave_server.zone.id
+            )
         view.flash.assert_message(
             "Log collection for {} {} has been initiated".format(
                 self.appliance.product_name, message))
@@ -450,11 +457,12 @@ class DiagnosticsCollectLogsSlave(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'Diagnostics')
 
     def step(self):
+        slave_server = self.appliance.server.slave_servers[0]
         self.prerequisite_view.accordions.diagnostics.tree.click_path(
             self.appliance.server_region_string(),
             "Zone: {} (current)".format(self.appliance.zone_description),
-            "Server: {} [{}]".format(self.appliance.slave_server_name(),
-                                     int(self.appliance.slave_server_zone_id())))
+            "Server: {} [{}]".format(slave_server.name,
+                                     int(slave_server.zone.id)))
         self.prerequisite_view.collectlogs.select()
 
 

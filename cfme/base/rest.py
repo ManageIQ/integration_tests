@@ -1,7 +1,6 @@
-from . import RegionCollection, ZoneCollection, ServerCollection, Server, Zone, Region
 from cfme.modeling.base import parent_of_type
-
 from cfme.utils.appliance import ViaREST
+from . import RegionCollection, ZoneCollection, ServerCollection, Server, Zone, Region
 
 
 @RegionCollection.all.external_implementation_for(ViaREST)
@@ -33,9 +32,12 @@ def server_all(self):
     server_collection = self.appliance.rest_api.collections.servers
     servers = []
     parent = self.filters.get('parent')
+    slave_only = self.filters.get('slave', False)
     for server in server_collection:
         server.reload(attributes=['zone_id'])
         if parent and server.zone_id != parent.id:
+            continue
+        if slave_only and server.is_master:
             continue
         servers.append(self.instantiate(name=server.name, sid=server.id))
     # TODO: This code needs a refactor once the attributes can be loaded from the collection
@@ -66,6 +68,11 @@ def zone(self):
         )
         self._zone = zone_obj
     return self._zone
+
+
+@Server.slave_servers.external_getter_implemented_for(ViaREST)
+def slave_servers(self):
+    return self.zone.collections.servers.filter({'slave': True}).all()
 
 
 @Zone.region.external_getter_implemented_for(ViaREST)

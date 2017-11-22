@@ -276,11 +276,14 @@ def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_mac
         else:
             collect_logs.collect_current()
 
+    slave_servers = appliance.server.slave_servers
+    first_slave_server = slave_servers[0] if slave_servers else None
+
     if from_slave and zone_collect:
-        check_ftp(log_depot.ftp, appliance.slave_server_name(), appliance.slave_server_zone_id())
+        check_ftp(log_depot.ftp, first_slave_server.name, first_slave_server.zone.id)
         check_ftp(log_depot.ftp, appliance.server_name(), appliance.server_zone_id())
     elif from_slave:
-        check_ftp(log_depot.ftp, appliance.slave_server_name(), appliance.slave_server_zone_id())
+        check_ftp(log_depot.ftp, first_slave_server.name, first_slave_server.zone.id)
     else:
         check_ftp(log_depot.ftp, appliance.server_name(), appliance.server_zone_id())
 
