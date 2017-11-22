@@ -77,9 +77,15 @@ def test_provision_cloud_init(request, setup_provider, provider, provisioning,
     logger.info('Instance args: {}'.format(inst_args))
 
     instance.create(**inst_args)
-
-    connect_ip, tc = wait_for(mgmt_system.get_ip_address, [vm_name], num_sec=300,
-                              handle_exception=True)
+    provision_request = provider.appliance.collections.requests.instantiate(vm_name,
+                                                                   partial_check=True)
+    try:
+        provision_request.wait_for_request()
+    except Exception as e:
+        logger.info(
+            "Provision failed {}: {}".format(e, provision_request.request_state))
+        raise e
+    connect_ip = mgmt_system.get_ip_address(vm_name)
 
     # Check that we can at least get the uptime via ssh this should only be possible
     # if the username and password have been set via the cloud-init script so
