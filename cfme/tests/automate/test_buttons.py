@@ -154,10 +154,6 @@ def test_button_avp_displayed(dialog, request):
                     text=fauxfactory.gen_alphanumeric(),
                     hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
                     dialog=dialog, system="Request", request="InspectMe")
-    navigate_to(button, 'Add')
-    section_loc = "//*[(self::h3 or self::p) and normalize-space(text())='Attribute/Value Pairs']"
-    assert sel.is_displayed(section_loc),\
-        "The Attribute/Value Pairs part of the form is not displayed"
-    for i in range(1, 6):
-        assert sel.is_displayed('#attribute_{}'.format(i))
-        assert sel.is_displayed('#value_{}'.format(i))
+    view = navigate_to(button, 'Add')
+    assert view.advanced.attribute_1.is_displayed
+    assert view.advanced.value_1.is_displayed

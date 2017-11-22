@@ -18,6 +18,7 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     test_requirements.automate,
     pytest.mark.meta(server_roles="+automate"),
+    pytest.mark.long_running,
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.tier(3),
     pytest.mark.provider(

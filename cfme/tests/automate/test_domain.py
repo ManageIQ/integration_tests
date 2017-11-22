@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.import_export import AutomateGitRepository
 
 from cfme.utils import error
@@ -17,8 +16,7 @@ pytestmark = [test_requirements.automate]
 @pytest.mark.tier(1)
 @pytest.mark.parametrize('enabled', [True, False], ids=['enabled', 'disabled'])
 def test_domain_crud(request, enabled, appliance):
-    domains = DomainCollection(appliance)
-    domain = domains.create(
+    domain = appliance.collections.domains.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha(),
         enabled=enabled)
@@ -42,32 +40,59 @@ def test_domain_crud(request, enabled, appliance):
 
 
 @pytest.mark.tier(1)
+def test_domain_edit_enabled(request, appliance):
+    domain = appliance.collections.domains.create(
+        name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha(),
+        enabled=True)
+    request.addfinalizer(domain.delete_if_exists)
+    assert domain.exists
+    view = navigate_to(domain, 'Details')
+    assert 'Disabled' not in view.title.text
+    with update(domain):
+        domain.enabled = False
+    view = navigate_to(domain, 'Details')
+    assert 'Disabled' in view.title.text
+
+
+@pytest.mark.tier(2)
+def test_domain_lock_disabled(request, appliance):
+    domain = appliance.collections.domains.create(
+        name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha(),
+        enabled=False)
+    request.addfinalizer(domain.delete_if_exists)
+    domain.lock()
+    view = navigate_to(domain, 'Details')
+    assert 'Disabled' in view.title.text
+    assert 'Locked' in view.title.text
+
+
+@pytest.mark.tier(1)
 def test_domain_delete_from_table(request, appliance):
-    domains = DomainCollection(appliance)
     generated = []
     for _ in range(3):
-        domain = domains.create(
+        domain = appliance.collections.domains.create(
             name=fauxfactory.gen_alpha(),
             description=fauxfactory.gen_alpha(),
             enabled=True)
         request.addfinalizer(domain.delete_if_exists)
         generated.append(domain)
 
-    domains.delete(*generated)
+    appliance.collections.domains.delete(*generated)
     for domain in generated:
         assert not domain.exists
 
 
 @pytest.mark.tier(2)
 def test_duplicate_domain_disallowed(request, appliance):
-    domains = DomainCollection(appliance)
-    domain = domains.create(
+    domain = appliance.collections.domains.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha(),
         enabled=True)
     request.addfinalizer(domain.delete_if_exists)
     with error.expected("Name has already been taken"):
-        domains.create(
+        appliance.collections.domains.create(
             name=domain.name,
             description=domain.description,
             enabled=domain.enabled)
@@ -76,10 +101,9 @@ def test_duplicate_domain_disallowed(request, appliance):
 @pytest.mark.tier(2)
 @pytest.mark.polarion('RHCF3-11228')
 def test_domain_cannot_delete_builtin(appliance):
-    domains = DomainCollection(appliance)
-    manageiq_domain = domains.instantiate(name='ManageIQ')
+    manageiq_domain = appliance.collections.domains.instantiate(name='ManageIQ')
     details_view = navigate_to(manageiq_domain, 'Details')
-    if domains.appliance.version < '5.7':
+    if appliance.version < '5.7':
         assert details_view.configuration.is_displayed
         assert 'Remove this Domain' not in details_view.configuration.items
     else:
@@ -89,10 +113,9 @@ def test_domain_cannot_delete_builtin(appliance):
 @pytest.mark.tier(2)
 @pytest.mark.polarion('RHCF3-11227')
 def test_domain_cannot_edit_builtin(appliance):
-    domains = DomainCollection(appliance)
-    manageiq_domain = domains.instantiate(name='ManageIQ')
+    manageiq_domain = appliance.collections.domains.instantiate(name='ManageIQ')
     details_view = navigate_to(manageiq_domain, 'Details')
-    if domains.appliance.version < '5.7':
+    if appliance.version < '5.7':
         assert details_view.configuration.is_displayed
         assert not details_view.configuration.item_enabled('Edit this Domain')
     else:
@@ -101,15 +124,13 @@ def test_domain_cannot_edit_builtin(appliance):
 
 @pytest.mark.tier(2)
 def test_domain_name_wrong(appliance):
-    domains = DomainCollection(appliance)
     with error.expected('Name may contain only'):
-        domains.create(name='with space')
+        appliance.collections.domains.create(name='with space')
 
 
 @pytest.mark.tier(2)
 def test_domain_lock_unlock(request, appliance):
-    domains = DomainCollection(appliance)
-    domain = domains.create(
+    domain = appliance.collections.domains.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha(),
         enabled=True)
@@ -125,9 +146,17 @@ def test_domain_lock_unlock(request, appliance):
     # Check that nothing is editable
     # namespaces
     details = navigate_to(ns1, 'Details')
-    assert not details.configuration.is_displayed
+    if appliance.version < '5.9':
+        assert not details.configuration.is_displayed
+    else:
+        assert details.configuration.is_displayed
+        assert details.configuration.items == ['Copy selected Classes']
     details = navigate_to(ns2, 'Details')
-    assert not details.configuration.is_displayed
+    if appliance.version < '5.9':
+        assert not details.configuration.is_displayed
+    else:
+        assert details.configuration.is_displayed
+        assert details.configuration.items == ['Copy selected Classes']
     # class
     details = navigate_to(cls, 'Details')
     assert details.configuration.items == ['Copy selected Instances']

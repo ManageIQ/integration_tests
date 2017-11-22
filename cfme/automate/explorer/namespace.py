@@ -215,7 +215,7 @@ class NamespaceCollection(BaseCollection):
             return self.instantiate(name=name, description=description)
 
     def delete(self, *namespaces):
-        all_page = navigate_to(self.parent.parent, 'Details')
+        all_page = navigate_to(self.parent, 'Details')
         namespaces = list(namespaces)
         parents = set()
         # Check if the parent is the same
