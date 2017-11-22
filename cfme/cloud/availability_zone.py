@@ -2,16 +2,16 @@
 """
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
-from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Dropdown, Button
+from widgetastic_manageiq import BaseEntitiesView
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
-from cfme.exceptions import AvailabilityZoneNotFound
+from cfme.exceptions import AvailabilityZoneNotFound, ItemNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
-    TimelinesView, ItemsToolBarViewSelector, Text, Table, Search, PaginationPane, BreadCrumb,
+    TimelinesView, ItemsToolBarViewSelector, Text, Table, PaginationPane, BreadCrumb,
     SummaryTable, Accordion, ManageIQTree)
 
 
@@ -32,11 +32,9 @@ class AvailabilityZoneDetailsToolBar(View):
     view_selector = View.nested(ItemsToolBarViewSelector)
 
 
-class AvailabilityZoneEntities(View):
+class AvailabilityZoneEntities(BaseEntitiesView):
     """View containing the widgets for the main content pane"""
-    title = Text('//div[@id="main-content"]//h1')
     table = Table("//div[@id='gtl_div']//table")
-    search = View.nested(Search)
 
 
 class AvailabilityZoneDetailsEntities(View):
@@ -77,8 +75,8 @@ class AvailabilityZoneAllView(AvailabilityZoneView):
             self.entities.title.text == 'Availability Zones')
 
     toolbar = View.nested(AvailabilityZoneToolBar)
-    entities = View.nested(AvailabilityZoneEntities)
-    paginator = PaginationPane()
+    include_entities = View.include(AvailabilityZoneEntities)
+    #paginator = PaginationPane()
 
 
 class ProviderAvailabilityZoneAllView(AvailabilityZoneAllView):
@@ -145,11 +143,10 @@ class AvailabilityZoneDetails(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
-            row = self.prerequisite_view.paginator.find_row_on_pages(
-                self.prerequisite_view.entities.table,
-                name=self.obj.name,
-                cloud_provider=self.obj.provider.name)
-        except NoSuchElementException:
+            row = self.prerequisite_view.entities.get_entity(name=self.obj.name,
+                                                             provider=self.obj.provider.name,
+                                                             urf_pages=True)
+        except ItemNotFound:
             raise AvailabilityZoneNotFound('Could not locate Availability Zone "{}" on provider {}'
                                            .format(self.obj.name, self.obj.provider.name))
         row.click()
