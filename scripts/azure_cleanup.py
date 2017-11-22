@@ -10,9 +10,9 @@ from cfme.utils.providers import list_provider_keys, get_mgmt
 def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
     parser.add_argument('--nic-template',
-                        help='NIC Name template to be removed', default="test-", type=str)
+                        help='NIC Name template to be removed', default="test", type=str)
     parser.add_argument('--pip-template',
-                        help='PIP Name template to be removed', default="test-", type=str)
+                        help='PIP Name template to be removed', default="test", type=str)
     parser.add_argument('--days-old',
                         help='--days-old argument to find stack items older than X days ',
                         default="7", type=int)
@@ -32,8 +32,6 @@ def azure_cleanup(nic_template, pip_template, days_old, output):
             for provider_key in list_provider_keys('azure'):
                 provider_mgmt = get_mgmt(provider_key)
                 nic_list = provider_mgmt.list_free_nics(nic_template)
-                pip_list = provider_mgmt.list_free_pip(pip_template)
-                stack_list = provider_mgmt.list_stack(days_old=days_old)
                 report.write("----- Provider: {} -----\n".format(provider_key))
                 if nic_list:
                     report.write("Removing Nics with the name \'{}\':\n".format(nic_template))
@@ -42,6 +40,7 @@ def azure_cleanup(nic_template, pip_template, days_old, output):
                     provider_mgmt.remove_nics_by_search(nic_template)
                 else:
                     report.write("No \'{}\' NICs were found\n".format(nic_template))
+                pip_list = provider_mgmt.list_free_pip(pip_template)
                 if pip_list:
                     report.write("Removing Public IPs with the name \'{}\':\n".
                                  format(pip_template))
@@ -50,6 +49,7 @@ def azure_cleanup(nic_template, pip_template, days_old, output):
                     provider_mgmt.remove_pips_by_search(pip_template)
                 else:
                     report.write("No \'{}\' Public IPs were found\n".format(pip_template))
+                stack_list = provider_mgmt.list_stack(days_old=days_old)
                 if stack_list:
                     report.write(
                         "Removing empty Stacks:\n")
