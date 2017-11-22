@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
-from widgetastic.utils import VersionPick, Version
-from widgetastic.widget import View, Text, ConditionalSwitchableView, ParametrizedView
-from widgetastic_manageiq import PaginationPane, BaseTileIconEntity, BaseQuadIconEntity, \
-    BaseListEntity, NonJSBaseEntity, JSBaseEntity
-from widgetastic_patternfly import Dropdown, BootstrapSelect, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common.host_views import HostEntitiesView
+from widgetastic.exceptions import NoSuchElementException
+from widgetastic.utils import VersionPick, Version
+from widgetastic.widget import View, Text, ConditionalSwitchableView, ParametrizedView
+from widgetastic_patternfly import Dropdown, BootstrapSelect, FlashMessages
 from widgetastic_manageiq import (BreadCrumb,
                                   SummaryTable,
                                   Button,
@@ -16,8 +16,14 @@ from widgetastic_manageiq import (BreadCrumb,
                                   Checkbox,
                                   Input,
                                   Table,
-                                  BaseEntitiesView)
-from cfme.common.host_views import HostEntitiesView
+                                  BaseEntitiesView,
+                                  PaginationPane,
+                                  BaseTileIconEntity,
+                                  BaseQuadIconEntity,
+                                  BaseListEntity,
+                                  NonJSBaseEntity,
+                                  JSBaseEntity
+                                  )
 
 
 class ProviderQuadIconEntity(BaseQuadIconEntity):
@@ -33,7 +39,7 @@ class ProviderQuadIconEntity(BaseQuadIconEntity):
                 "vendor": br.get_attribute('src', self.QUADRANT.format(pos='c')),
                 "creds": br.get_attribute('src', self.QUADRANT.format(pos='d')),
             }
-        except TypeError:
+        except (IndexError, TypeError, NoSuchElementException):
             return {}
 
 
@@ -64,7 +70,7 @@ class JSProviderEntity(JSBaseEntity):
                 data_dict['vendor'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get('src')
                 data_dict['creds'] = quad_data.xpath(self.QUADRANT.format(pos="d"))[0].get('src')
             return data_dict
-        except (IndexError, TypeError):
+        except (IndexError, TypeError, NoSuchElementException):
             return {}
 
 

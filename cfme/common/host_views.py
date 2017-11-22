@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
+
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import (
     Parameter,
     ParametrizedLocator,
@@ -64,7 +66,7 @@ class HostQuadIconEntity(BaseQuadIconEntity):
                 'vendor': self.browser.get_attribute("alt", self.QUADRANT.format(pos="c")),
                 'creds': self.browser.get_attribute("alt", self.QUADRANT.format(pos="d"))
             }
-        except IndexError:
+        except (IndexError, NoSuchElementException):
             return {}
 
 

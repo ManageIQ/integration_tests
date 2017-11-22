@@ -159,5 +159,5 @@ def test_cloud_start_page(request, appliance, start_page):
 def test_cloudprovider_noquads(request, set_cloud_provider_quad):
     view = navigate_to(CloudProvider, 'All')
     view.toolbar.view_selector.select("Grid View")
-    # Here get_first_entity() method will return None when the Quadrants option is deactivated.
-    assert view.entities.get_first_entity().data is None
+    # Here data property will return an empty dict when the Quadrants option is deactivated.
+    assert bool(view.entities.get_first_entity().data) is False

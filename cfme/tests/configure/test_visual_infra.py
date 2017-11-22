@@ -2,6 +2,7 @@
 
 from copy import copy
 import pytest
+
 from cfme import test_requirements
 from cfme.configure.settings import visual
 from cfme.intelligence.reports.reports import CannedSavedReport
@@ -230,8 +231,8 @@ def test_infraprovider_noquads(request, set_infra_provider_quad):
     """
     view = navigate_to(InfraProvider, 'All')
     view.toolbar.view_selector.select("Grid View")
-    # Here get_first_entity() method will return None when the Quadrants option is deactivated.
-    assert view.entities.get_first_entity().data is None
+    # Here data property will return an empty dict when the Quadrants option is deactivated.
+    assert bool(view.entities.get_first_entity().data) is False
 
 
 def test_host_noquads(appliance, request, set_host_quad):
@@ -242,8 +243,8 @@ def test_host_noquads(appliance, request, set_host_quad):
     host_collection = appliance.collections.hosts
     view = navigate_to(host_collection, 'All')
     view.toolbar.view_selector.select("Grid View")
-    # Here get_first_entity() method will return None when the Quadrants option is deactivated.
-    assert view.entities.get_first_entity().data is None
+    # Here data property will return an empty dict when the Quadrants option is deactivated.
+    assert bool(view.entities.get_first_entity().data) is False
 
 
 def test_datastore_noquads(request, set_datastore_quad, appliance):
@@ -254,9 +255,8 @@ def test_datastore_noquads(request, set_datastore_quad, appliance):
     dc = DatastoreCollection(appliance)
     view = navigate_to(dc, 'All')
     view.toolbar.view_selector.select("Grid View")
-    # Here get_first_entity() method will return None when the Quadrants option is deactivated.
-    assert view.entities.get_first_entity().data is None
-    # assert visual.check_image_exists, "Image View Failed!"
+    # Here data property will return an empty dict when the Quadrants option is deactivated.
+    assert bool(view.entities.get_first_entity().data) is False
 
 
 def test_vm_noquads(request, set_vm_quad):
@@ -278,5 +278,5 @@ def test_template_noquads(request, set_template_quad):
     """
     view = navigate_to(vms.Template, 'TemplatesOnly')
     view.toolbar.view_selector.select("Grid View")
-    # Here get_first_entity() method will return None when the Quadrants option is deactivated.
-    assert view.entities.get_first_entity().data is None
+    # Here data property will return an empty dict when the Quadrants option is deactivated.
+    assert bool(view.entities.get_first_entity().data) is False

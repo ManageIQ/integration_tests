@@ -4,7 +4,15 @@ import attr
 
 from navmazing import NavigateToAttribute
 from widgetastic.widget import View, Text
+from cfme.base.login import BaseLoggedInPage
+from cfme.common import WidgetasticTaggable
+from cfme.common.host_views import HostsView
 from cfme.exceptions import ItemNotFound
+from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.pretty import Pretty
+from cfme.utils.wait import wait_for
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic_manageiq import (ManageIQTree,
                                   SummaryTable,
                                   ItemsToolBarViewSelector,
@@ -17,13 +25,7 @@ from widgetastic_manageiq import (ManageIQTree,
 from widgetastic.widget import ParametrizedView
 from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
 from widgetastic.utils import Version, VersionPick
-from cfme.base.login import BaseLoggedInPage
-from cfme.common import WidgetasticTaggable
-from cfme.common.host_views import HostsView
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.utils.pretty import Pretty
-from cfme.utils.wait import wait_for
+
 
 
 class DatastoreToolBar(View):
@@ -54,11 +56,14 @@ class DatastoreSideBar(View):
 class DatastoreQuadIconEntity(BaseQuadIconEntity):
     @property
     def data(self):
-        return {
-            'type': self.browser.get_attribute("alt", self.QUADRANT.format(pos="a")),
-            'no_vm': int(self.browser.text(self.QUADRANT.format(pos="b"))),
-            'no_host': int(self.browser.text(self.QUADRANT.format(pos="c"))),
-        }
+        try:
+            return {
+                'type': self.browser.get_attribute("alt", self.QUADRANT.format(pos="a")),
+                'no_vm': int(self.browser.text(self.QUADRANT.format(pos="b"))),
+                'no_host': int(self.browser.text(self.QUADRANT.format(pos="c"))),
+            }
+        except NoSuchElementException:
+            return {}
 
 
 class DatastoreTileIconEntity(BaseTileIconEntity):
