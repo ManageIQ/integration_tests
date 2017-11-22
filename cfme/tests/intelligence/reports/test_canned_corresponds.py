@@ -126,7 +126,6 @@ def test_operations_vm_on(soft_assert, appliance):
 def test_datastores_summary(soft_assert, appliance):
     """Checks Datastores Summary report with DB data. Checks all data in report, even rounded
     storage sizes."""
-
     adb = appliance.db.client
     storages = adb['storages']
     vms = adb['vms']
@@ -139,21 +138,40 @@ def test_datastores_summary(soft_assert, appliance):
                                        storages.total_space, storages.name, storages.id).all()
 
     assert len(storages_in_db) == len(list(report.data.rows))
+
+    storages_in_db_list = []
+    report_rows_list = []
+
     for store in storages_in_db:
 
         number_of_vms = adb.session.query(vms.id).filter(
             vms.storage_id == store.id).filter(
                 vms.template == 'f').count()
+
         number_of_hosts = adb.session.query(host_storages.host_id).filter(
             host_storages.storage_id == store.id).count()
 
-        for item in report.data.rows:
-            if store.name.encode('utf8') == item['Datastore Name']:
-                assert store.store_type.encode('utf8') == item['Type']
-                assert round_num(store.free_space) == extract_num(item['Free Space'])
-                assert round_num(store.total_space) == extract_num(item['Total Space'])
-                assert int(number_of_hosts) == int(item['Number of Hosts'])
-                assert int(number_of_vms) == int(item['Number of VMs'])
+        store_dict = {
+            'Datastore Name': store.name.encode('utf8'),
+            'Type': store.store_type.encode('utf8'),
+            'Free Space': round_num(store.free_space),
+            'Total Space': round_num(store.total_space),
+            'Number of Hosts': int(number_of_hosts),
+            'Number of VMs': int(number_of_vms)
+        }
+
+        storages_in_db_list.append(store_dict)
+
+    for row in report.data.rows:
+
+        row['Free Space'] = extract_num(row['Free Space'])
+        row['Total Space'] = extract_num(row['Total Space'])
+        row['Number of Hosts'] = int(row['Number of Hosts'])
+        row['Number of VMs'] = int(row['Number of VMs'])
+
+        report_rows_list.append(row)
+
+    assert sorted(storages_in_db_list) == sorted(report_rows_list)
 
 
 def round_num(column):
