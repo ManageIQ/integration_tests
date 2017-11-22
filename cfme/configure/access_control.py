@@ -175,7 +175,7 @@ class User(Updateable, Pretty, Navigatable):
             user_blocked_msg = "Userid has already been taken"
         else:
             user_blocked_msg = ("Userid is not unique within region {}".format(
-                self.appliance.server_region()))
+                self.appliance.server.zone.region.number))
 
         view = navigate_to(self, 'Add')
         view.fill({
@@ -841,7 +841,7 @@ class GroupCollection(BaseCollection):
             flash_blocked_msg = ("Description has already been taken")
         else:
             flash_blocked_msg = "Description is not unique within region {}".format(
-                self.appliance.server_region())
+                self.appliance.server.zone.region.number)
 
         view = navigate_to(self, 'Add')
 

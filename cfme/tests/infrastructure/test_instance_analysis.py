@@ -260,7 +260,7 @@ def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data,
         logger.info("Setting a relationship between VM and appliance")
         from cfme.infrastructure.virtual_machines import Vm
         cfme_rel = Vm.CfmeRelationship(vm)
-        server_name = appliance.server_name()
+        server_name = appliance.server.name
         cfme_rel.set_relationship(str(server_name), configuration.server_id())
 
     yield vm

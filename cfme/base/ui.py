@@ -502,7 +502,7 @@ class Details(CFMENavigateStep):
             self.obj.zone.region.settings_string,
             "Zones",
             "Zone: {} (current)".format(self.obj.appliance.zone_description),
-            "Server: {} [{}] (current)".format(self.obj.appliance.server_name(),
+            "Server: {} [{}] (current)".format(self.obj.appliance.server.name,
                 self.obj.sid))
 
 

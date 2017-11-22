@@ -468,8 +468,8 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
             flash_message = (
                 'Configuration settings saved for {} Server "{} [{}]" in Zone "{}"'.format(
                     self.appliance.product_name,
-                    self.appliance.server_name(),
-                    self.appliance.server_id(),
+                    self.appliance.server.name,
+                    self.appliance.server.sid,
                     self.appliance.server.zone.name))
             view.flash.assert_message(flash_message)
         else:
@@ -629,8 +629,8 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
             flash_message = (
                 'Authentication settings saved for {} Server "{} [{}]" in Zone "{}"'.format(
                     self.appliance.product_name,
-                    self.appliance.server_name(),
-                    self.appliance.server_id(),
+                    self.appliance.server.name,
+                    self.appliance.server.id,
                     self.appliance.server.zone.name))
             view.flash.assert_message(flash_message)
 
@@ -660,8 +660,8 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
             flash_message = (
                 'Authentication settings saved for {} Server "{} [{}]" in Zone "{}"'.format(
                     self.appliance.product_name,
-                    self.appliance.server_name(),
-                    self.appliance.server_id(),
+                    self.appliance.server.name,
+                    self.appliance.server.id,
                     self.appliance.server.zone.name))
             view.flash.assert_message(flash_message)
         else:

@@ -208,7 +208,7 @@ def test_collect_log_depot(log_depot, appliance, configured_depot, request):
     # Start the collection
     configured_depot.collect_all()
     # Check it on FTP
-    check_ftp(log_depot.ftp, appliance.server_name(), appliance.server_zone_id())
+    check_ftp(log_depot.ftp, appliance.server.name, appliance.server.zone.id)
 
 
 @pytest.mark.meta(blockers=[BZ(1436367, forced_streams=["5.8"])])
@@ -281,11 +281,11 @@ def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_mac
 
     if from_slave and zone_collect:
         check_ftp(log_depot.ftp, first_slave_server.name, first_slave_server.zone.id)
-        check_ftp(log_depot.ftp, appliance.server_name(), appliance.server_zone_id())
+        check_ftp(log_depot.ftp, appliance.server.name, appliance.server.zone.id)
     elif from_slave:
         check_ftp(log_depot.ftp, first_slave_server.name, first_slave_server.zone.id)
     else:
-        check_ftp(log_depot.ftp, appliance.server_name(), appliance.server_zone_id())
+        check_ftp(log_depot.ftp, appliance.server.name, appliance.server.zone.id)
 
 
 @pytest.mark.meta(blockers=[BZ(1436367, forced_streams=["5.8"])])
@@ -324,4 +324,4 @@ def test_collect_single_servers(log_depot, appliance, depot_machine_ip, request,
     else:
         collect_logs.collect_current()
 
-    check_ftp(log_depot.ftp, appliance.server_name(), appliance.server_zone_id())
+    check_ftp(log_depot.ftp, appliance.server.name, appliance.server.zone.id)

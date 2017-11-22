@@ -21,7 +21,7 @@ class BottlenecksTabsView(BottlenecksView):
         return (
             super(BottlenecksView, self).is_displayed and
             self.title.text == 'Region "Region {}" Bottlenecks Summary'
-            .format(self.browser.appliance.server_region()) and
+            .format(self.browser.appliance.server.zone.region.number) and
             self.bottlenecks.is_opened and
             self.bottlenecks.tree.currently_selected == ["Bottlenecks"])
 
