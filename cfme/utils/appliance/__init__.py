@@ -682,10 +682,6 @@ class IPAppliance(object):
             raise Exception("Unknown scheme {} for {}".format(parsed_url.scheme, store.base_url))
 
     @cached_property
-    def scheme(self):
-        return "https"  # By default
-
-    @cached_property
     def url(self):
         return "{}://{}/".format(self.scheme, self.address)
 

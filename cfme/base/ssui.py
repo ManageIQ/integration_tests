@@ -118,7 +118,8 @@ class LoginPage(View):
 @Server.address.external_implementation_for(ViaSSUI)
 def address(self):
     logger.info("USING SSUI ADDRESS")
-    return 'https://{}/self_service/'.format(self.appliance.address)
+    return '{scheme}://{addr}/self_service/'.format(scheme=self.appliance.scheme,
+                                                    addr=self.appliance.address)
 
 
 LOGIN_METHODS = ['click_on_login', 'press_enter_after_password']

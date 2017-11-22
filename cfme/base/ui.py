@@ -35,7 +35,7 @@ from cfme.utils.blockers import BZ
 @Server.address.external_implementation_for(ViaUI)
 def address(self):
     logger.info("USING UI ADDRESS")
-    return 'https://{}/'.format(self.appliance.address)
+    return '{scheme}://{addr}/'.format(scheme=self.appliance.scheme, addr=self.appliance.address)
 
 
 class LoginPage(View):
