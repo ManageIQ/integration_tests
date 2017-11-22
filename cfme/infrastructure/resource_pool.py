@@ -3,12 +3,13 @@ import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic_patternfly import Button, Dropdown, FlashMessages
+from widgetastic_patternfly import Button, Dropdown
+from widgetastic_manageiq import BaseEntitiesView
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.exceptions import ResourcePoolNotFound
+from cfme.exceptions import ResourcePoolNotFound, ItemNotFound
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
 from cfme.utils.appliance import Navigatable
@@ -45,14 +46,9 @@ class ResourcePoolDetailsAccordion(View):
         tree = ManageIQTree()
 
 
-class ResourcePoolEntities(View):
+class ResourcePoolEntities(BaseEntitiesView):
     """Entities on the main list page"""
-    title = Text('//div[@id="main-content"]//h1')
-    table = Table(".//div[@id='list_grid']//table|.//div[@id='miq-gtl-view']//table")
-    search = View.nested(Search)
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
+    table = Table("//div[@id='list_grid']//table")
 
 
 class ResourcePoolDetailsEntities(View):
@@ -83,8 +79,8 @@ class ResourcePoolAllView(ResourcePoolView):
             self.entities.title.text == 'Resource Pools')
 
     toolbar = View.nested(ResourcePoolToolbar)
-    entities = View.nested(ResourcePoolEntities)
-    paginator = PaginationPane()
+    include_entities = View.include(ResourcePoolEntities, use_parent=True)
+    # paginator = PaginationPane()
 
 
 class ResourcePoolDetailsView(ResourcePoolView):
@@ -240,10 +236,7 @@ class Details(CFMENavigateStep):
         """Navigate to the item"""
         self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
-            row = self.prerequisite_view.paginator.find_row_on_pages(
-                self.prerequisite_view.entities.table,
-                name=self.obj.name
-            )
-        except NoSuchElementException:
+            row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
+        except ItemNotFound:
             raise ResourcePoolNotFound('Resource pool {} not found'.format(self.obj.name))
         row.click()

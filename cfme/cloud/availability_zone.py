@@ -75,8 +75,8 @@ class AvailabilityZoneAllView(AvailabilityZoneView):
             self.entities.title.text == 'Availability Zones')
 
     toolbar = View.nested(AvailabilityZoneToolBar)
-    include_entities = View.include(AvailabilityZoneEntities)
-    #paginator = PaginationPane()
+    include_entities = View.include(AvailabilityZoneEntities, use_parent=True)
+    # paginator = PaginationPane()
 
 
 class ProviderAvailabilityZoneAllView(AvailabilityZoneAllView):
@@ -143,9 +143,7 @@ class AvailabilityZoneDetails(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
-            row = self.prerequisite_view.entities.get_entity(name=self.obj.name,
-                                                             provider=self.obj.provider.name,
-                                                             urf_pages=True)
+            row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
         except ItemNotFound:
             raise AvailabilityZoneNotFound('Could not locate Availability Zone "{}" on provider {}'
                                            .format(self.obj.name, self.obj.provider.name))
