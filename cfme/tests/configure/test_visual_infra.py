@@ -264,10 +264,10 @@ def test_vm_noquads(request, set_vm_quad):
         This test checks that VM Quadrant when switched off from Mysetting page under
         Visual Tab under "Show VM Quadrants" option works properly.
     """
-    view = navigate_to(vms.Vm, 'All')
+    view = navigate_to(vms.Vm, 'VMsOnly')
     view.toolbar.view_selector.select("Grid View")
-    # Here get_first_entity() method will return None when the Quadrants option is deactivated.
-    assert view.entities.get_first_entity().data is None
+    # Here data property will return an empty dict when the Quadrants option is deactivated.
+    assert bool(view.entities.get_first_entity().data) is False
 
 
 @pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:11215'])

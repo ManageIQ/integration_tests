@@ -27,7 +27,6 @@ from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
 from widgetastic.utils import Version, VersionPick
 
 
-
 class DatastoreToolBar(View):
     """
     represents datastore toolbar and its controls
