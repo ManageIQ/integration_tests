@@ -94,33 +94,36 @@ class JSInstanceEntity(JSBaseEntity):
     @property
     def data(self):
         data_dict = super(JSInstanceEntity, self).data
-        if 'quadicon' in data_dict and data_dict['quadicon']:
-            quad_data = document_fromstring(data_dict['quadicon'])
-            data_dict['os'] = quad_data.xpath(self.QUADRANT.format(pos="a"))[0].get('src')
-            data_dict['vendor'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get('src')
-            data_dict['no_snapshot'] = quad_data.xpath(self.QUADRANT.format(pos="d"))[0].text
+        try:
+            if 'quadicon' in data_dict and data_dict['quadicon']:
+                quad_data = document_fromstring(data_dict['quadicon'])
+                data_dict['os'] = quad_data.xpath(self.QUADRANT.format(pos="a"))[0].get('src')
+                data_dict['vendor'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get('src')
+                data_dict['no_snapshot'] = quad_data.xpath(self.QUADRANT.format(pos="d"))[0].text
 
-            try:
-                state = quad_data.xpath(self.QUADRANT.format(pos="b"))[0].get('style')
                 try:
-                    state = state.split('"')[1]
+                    state = quad_data.xpath(self.QUADRANT.format(pos="b"))[0].get('style')
+                    try:
+                        state = state.split('"')[1]
+                    except IndexError:
+                        state = state.split("'")[1]
+                    state = os.path.split(state)[1]
+                    state = os.path.splitext(state)[0]
                 except IndexError:
-                    state = state.split("'")[1]
-                state = os.path.split(state)[1]
-                state = os.path.splitext(state)[0]
-            except IndexError:
-                state = ''
+                    state = ''
 
-            data_dict['state'] = state
+                data_dict['state'] = state
 
-            try:
-                policy = quad_data.xpath(self.QUADRANT.format(pos="g"))[0].get('src')
-            except:
-                policy = None
+                try:
+                    policy = quad_data.xpath(self.QUADRANT.format(pos="g"))[0].get('src')
+                except:
+                    policy = None
 
-            data_dict['policy'] = policy
+                data_dict['policy'] = policy
 
-        return data_dict
+            return data_dict
+        except IndexError:
+            return {}
 
 
 def InstanceEntity():  # noqa

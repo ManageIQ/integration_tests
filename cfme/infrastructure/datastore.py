@@ -1,6 +1,7 @@
 """ A model of an Infrastructure Datastore in CFME
 """
 import attr
+from lxml.html import document_fromstring
 
 from navmazing import NavigateToAttribute
 from widgetastic.widget import View, Text
@@ -79,11 +80,26 @@ class NonJSDatastoreEntity(NonJSBaseEntity):
     tile_entity = DatastoreTileIconEntity
 
 
+class JSDatastoreEntity(JSBaseEntity):
+    @property
+    def data(self):
+        data_dict = super(JSDatastoreEntity, self).data
+        try:
+            if 'quadicon' in data_dict and data_dict['quadicon']:
+                quad_data = document_fromstring(data_dict['quadicon'])
+                data_dict['type'] = quad_data.xpath(self.QUADRANT.format(pos="a"))[0].text
+                data_dict['no_vm'] = quad_data.xpath(self.QUADRANT.format(pos="b"))[0].get()
+                data_dict['no_host'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get()
+            return data_dict
+        except (IndexError, TypeError, NoSuchElementException):
+            return {}
+
+
 def DatastoreEntity():  # noqa
     """Temporary wrapper for Datastore Entity during transition to JS based Entity """
     return VersionPick({
         Version.lowest(): NonJSDatastoreEntity,
-        '5.9': JSBaseEntity,
+        '5.9': JSDatastoreEntity,
     })
 
 
