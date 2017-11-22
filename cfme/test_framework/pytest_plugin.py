@@ -71,6 +71,7 @@ pytest_plugins = (
     'fixtures.randomness',
     'fixtures.rbac',
     'fixtures.screenshots',
+    'fixtures.skip_not_implemented',
     'fixtures.soft_assert',
     'fixtures.ssh_client',
     'fixtures.templateloader',
