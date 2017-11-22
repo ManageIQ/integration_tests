@@ -642,11 +642,12 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
             # Delete all matching
             for prov in app.managed_known_providers:
                 if prov.one_of(cls):
+                    logger.info('Deleting provider: %s', prov.name)
                     prov.delete(cancel=False)
             # Wait for all matching to be deleted
             for prov in app.managed_known_providers:
                 if prov.one_of(cls):
-                    prov.wait_not_exists()
+                    prov.wait_for_delete()
         app.rest_api.collections.providers.reload()
 
     def one_of(self, *classes):
