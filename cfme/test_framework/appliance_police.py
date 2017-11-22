@@ -34,6 +34,9 @@ def appliance_police():
             'postgres': ports.DB}
         port_results = {pn: net_check(pp, force=True) for pn, pp in port_numbers.items()}
         for port, result in port_results.items():
+            if port == 'ssh' and store.current_appliance.is_pod:
+                # ssh is not available for podified appliance
+                continue
             if not result:
                 raise AppliancePoliceException('Unable to connect', port_numbers[port])
 

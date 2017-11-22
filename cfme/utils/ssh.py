@@ -99,6 +99,7 @@ class SSHClient(paramiko.SSHClient):
     Args:
         container: If specified, then it is assumed that the VM hosts a container of CFME. The
             param then contains the name of the container.
+        project: openshift's project which holds CFME pods
         is_pod: If specified and True, then it is assumed that the target is a podified openshift
             app and ``container`` then specifies the name of the pod to interact with.
         stdout: If specified, overrides the system stdout file for streaming output.
@@ -111,8 +112,10 @@ class SSHClient(paramiko.SSHClient):
         self._keystate = connect_kwargs.pop('keystate', None)
         # Container is used to store both docker VM's container name and Openshift pod name.
         self._container = connect_kwargs.pop('container', None)
+        self._project = connect_kwargs.pop('project', None)
         self.is_pod = connect_kwargs.pop('is_pod', False)
-
+        self.oc_username = connect_kwargs.pop('oc_username', None)
+        self.oc_password = connect_kwargs.pop('oc_password', False)
         self.f_stdout = connect_kwargs.pop('stdout', sys.stdout)
         self.f_stderr = connect_kwargs.pop('stderr', sys.stderr)
 
@@ -202,7 +205,29 @@ class SSHClient(paramiko.SSHClient):
             self._connect_kwargs.update(kwargs)
             self._check_port()
             # Only install ssh keys if they aren't installed (or currently being installed)
-            return super(SSHClient, self).connect(**self._connect_kwargs)
+            conn = super(SSHClient, self).connect(**self._connect_kwargs)
+        else:
+            conn = None
+
+        if self.is_pod:
+            # checking whether already logged into openshift
+            is_loggedin = self.run_command(command='oc whoami', ensure_host=True)
+            if is_loggedin.success:
+                username = str(is_loggedin).strip()
+                logger.info('user {u} is already logged in'.format(u=username))
+                if username != self.oc_username:
+                    logger.info('logging out from openshift')
+                    self.run_command(command='oc logout', ensure_host=True)
+                else:
+                    return conn
+
+            logger.info("logging into openshift")
+            login_cmd = 'oc login --username={u} --password={p}'
+            login_cmd = login_cmd.format(u=self.oc_username,
+                                         p=self.oc_password)
+            self.run_command(command=login_cmd, ensure_host=True)
+
+        return conn
 
     def open_sftp(self, *args, **kwargs):
         if self.is_container:
@@ -240,8 +265,9 @@ class SSHClient(paramiko.SSHClient):
         logger.info("Running command %r", command)
         if self.is_pod and not ensure_host:
             # This command will be executed in the context of the host provider
-            command = 'oc rsh {} bash -c {}'.format(self._container, quote(
-                'source /etc/default/evm; ' + command))
+            command = 'source /etc/default/evm; ' + command
+            cmd = 'oc exec --namespace={proj} {pod} -- bash -c {cmd}'
+            command = cmd.format(proj=self._project, pod=self._container, cmd=quote(command))
             ensure_host = True
         elif self.is_container and not ensure_host:
             command = 'docker exec {} bash -c {}'.format(self._container, quote(
@@ -264,6 +290,7 @@ class SSHClient(paramiko.SSHClient):
                 session.get_pty()
             if timeout:
                 session.settimeout(float(timeout))
+
             session.exec_command(command)
             stdout = session.makefile()
             stderr = session.makefile_stderr()
@@ -360,9 +387,10 @@ class SSHClient(paramiko.SSHClient):
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).put(
                 local_file, tmp_full_name, **kwargs)
             # use oc rsync to put the file in the container
-            assert self.run_command(
-                'oc rsync /tmp/{} {}:/tmp/'.format(tmp_folder_name, self._container),
-                ensure_host=True)
+            rsync_cmd = 'oc rsync --namespace={proj} /tmp/{file} {pod}:/tmp/'
+            assert self.run_command(rsync_cmd.format(proj=self._project, file=tmp_folder_name,
+                                                     pod=self._container),
+                                    ensure_host=True)
             # Move the file onto correct place
             assert self.run_command('mv {} {}'.format(tmp_full_name, remote_file))
             return scp
@@ -409,9 +437,10 @@ class SSHClient(paramiko.SSHClient):
             # Now copy the file in container to the tmp folder
             assert self.run_command('cp {} {}'.format(remote_file, tmp_full_name))
             # Use the oc rsync to pull the file onto the host
-            assert self.run_command(
-                'oc rsync {}:/tmp/{} /tmp'.format(self._container, tmp_folder_name),
-                ensure_host=True)
+            rsync_cmd = 'oc rsync --namespace={proj} {pod}:/tmp/{file} /tmp'
+            assert self.run_command(rsync_cmd.format(proj=self._project, pod=self._container,
+                                                     file=tmp_folder_name),
+                                    ensure_host=True)
             # Now download the file to the openshift host
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).get(
                 tmp_full_name, local_path, **kwargs)

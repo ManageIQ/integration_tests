@@ -138,10 +138,17 @@ class ApplianceDB(AppliancePlugin):
         On all appliances waits for database to be ready.
 
         """
+        key_address = kwargs.pop('key_address', None)
+        db_address = kwargs.pop('db_address', None)
         self.logger.info('Starting DB setup')
+        is_pod = kwargs.pop('is_pod', False)
         if self.appliance.is_downstream:
             # We only execute this on downstream appliances.
-            self.enable_internal(**kwargs)
+            if is_pod:
+                self.enable_external(db_address=db_address, **kwargs)
+            else:
+                self.enable_internal(key_address=key_address, **kwargs)
+
         elif not self.appliance.evmserverd.running:
             self.appliance.evmserverd.start()
             self.appliance.evmserverd.enable()  # just to be sure here.
@@ -296,11 +303,13 @@ class ApplianceDB(AppliancePlugin):
         client = self.ssh_client
 
         if self.appliance.has_cli:
-            # copy v2 key
-            master_client = client(hostname=self.address)
-            rand_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
-            master_client.get_file("/var/www/miq/vmdb/certs/v2_key", rand_filename)
-            client.put_file(rand_filename, "/var/www/miq/vmdb/certs/v2_key")
+
+            if not client.is_pod:
+                # copy v2 key
+                master_client = client(hostname=self.address)
+                rand_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
+                master_client.get_file("/var/www/miq/vmdb/certs/v2_key", rand_filename)
+                client.put_file(rand_filename, "/var/www/miq/vmdb/certs/v2_key")
 
             # enable external DB with cli
             status, out = client.run_command(
@@ -381,24 +390,39 @@ class ApplianceDB(AppliancePlugin):
     @property
     def is_online(self):
         """Is database online"""
-        db_check_command = ('psql -U postgres -t  -c "select now()" postgres')
-        result = self.ssh_client.run_command(db_check_command)
+        db_check_command = ('env PGPASSWORD={pwd} psql -U {user} '
+                            '-h {ip} -t  -c "select now()" postgres')
+        ensure_host = True if self.ssh_client.is_pod else False
+        db_check_command = db_check_command.format(ip=self.address,
+                                                   user=conf.credentials['database']['username'],
+                                                   pwd=conf.credentials['database']['password'])
+        result = self.ssh_client.run_command(db_check_command, ensure_host=ensure_host)
         return result.rc == 0
 
     @property
     def has_database(self):
         """Does database have a database defined"""
-        db_check_command = ('psql -U postgres -t  -c "SELECT datname FROM pg_database '
-            'WHERE datname LIKE \'vmdb_%\';" postgres | grep -q vmdb_production')
-        result = self.ssh_client.run_command(db_check_command)
+        db_check_command = ('env PGPASSWORD={pwd} psql -U {user} -t -h {ip} -c '
+                            '"SELECT datname FROM pg_database '
+                            'WHERE datname LIKE \'vmdb_%\';" postgres | grep -q vmdb_production')
+        ensure_host = True if self.ssh_client.is_pod else False
+        db_check_command = db_check_command.format(ip=self.address,
+                                                   user=conf.credentials['database']['username'],
+                                                   pwd=conf.credentials['database']['password'])
+        result = self.ssh_client.run_command(db_check_command, ensure_host=ensure_host)
         return result.rc == 0
 
     @property
     def has_tables(self):
         """Does database have tables defined"""
-        db_check_command = ('psql -U postgres -t  -c "SELECT * FROM information_schema.tables '
-            'WHERE table_schema = \'public\';" vmdb_production | grep -q vmdb_production')
-        result = self.ssh_client.run_command(db_check_command)
+        db_check_command = ('env PGPASSWORD={pwd} psql -U {user} -t -h {ip} -c "SELECT * FROM '
+                            'information_schema.tables WHERE table_schema = \'public\';" '
+                            'vmdb_production | grep -q vmdb_production')
+        ensure_host = True if self.ssh_client.is_pod else False
+        db_check_command = db_check_command.format(ip=self.address,
+                                                   user=conf.credentials['database']['username'],
+                                                   pwd=conf.credentials['database']['password'])
+        result = self.ssh_client.run_command(db_check_command, ensure_host=ensure_host)
         return result.rc == 0
 
     def start_db_service(self):
