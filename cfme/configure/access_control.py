@@ -1289,7 +1289,9 @@ class DetailsTenantView(ConfigurationView):
     name = Text('Name')
     description = Text('Description')
     parent = Text('Parent')
-    table = Table('//*[@id="fieldset"]/table')
+    table = Table(VersionPick(
+        {Version.lowest(): '//*[@id="fieldset"]/table',
+         '5.9': '//*[@id="tenant_info"]/div[2]/div/fieldset/table'}))
 
     @property
     def is_displayed(self):
@@ -1404,6 +1406,28 @@ class Tenant(Updateable, BaseEntity):
         view.flash.assert_success_message('Quotas for {} "{}" were saved'.format(
             self.obj_type, self.name))
         assert view.is_displayed
+
+    @property
+    def quota(self):
+        view = navigate_to(self, 'Details')
+        quotas = {
+            'cpu': 'Allocated Virtual CPUs',
+            'memory': 'Allocated Memory in GB',
+            'storage': 'Allocated Storage in GB',
+            'num_vms': 'Allocated Number of Virtual Machines',
+            'templates': 'Allocated Number of Templates'
+        }
+
+        for field in quotas.keys():
+            item = view.table.row(name=quotas[field])
+            quotas[field] = {
+                'total': item.total_quota.text,
+                'in_use': item.in_use.text,
+                'allocated': item.allocated.text,
+                'available': item.available.text
+            }
+
+        return quotas
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):
