@@ -639,36 +639,15 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
                     if 'RecordNotFound' not in str(ex):
                         raise ex
         else:
-            db_map = provider_db_mapping()
-            app.rest_api.collections.providers.reload()
-            all_provs = app.rest_api.collections.providers
-            pages = set()
-            logger.debug(
-                'Providers existing: {}'.format([(prov.name, prov.id) for prov in all_provs])
-            )
-            for prov in all_provs:
-                prov_cat_class = db_map.get(prov.type.replace('ManageIQ::Providers::', ''))
-                if prov_cat_class:
-                    pages.add(all_types()[prov_cat_class.category])
-            for page in pages:
-                logger.debug('Deleteing all providers for category [{}]'.format(page.string_name))
-                view = navigate_to(page, 'All')
-                view.browser.refresh()
-                try:
-                    view.paginator.check_all()
-                    view.toolbar.configuration.item_select(
-                        'Remove {} Providers from Inventory'.format(page.string_name),
-                        handle_alert=True
-                    )
-                except DropdownItemDisabled:
-                    logger.debug('No providers to delete')
-            for prov in app.rest_api.collections.providers:
-                prov_cat_class = db_map.get(prov.type.replace('ManageIQ::Providers::', ''))
-                if not prov_cat_class:
-                    continue
-                prov.wait_not_exists(
-                    num_sec=300, fail_func=app.rest_api.collections.providers.reload
-                )
+            # Delete all matching
+            for prov in app.managed_known_providers:
+                if prov.one_of(cls):
+                    logger.info('Deleting provider: %s', prov.name)
+                    prov.delete(cancel=False)
+            # Wait for all matching to be deleted
+            for prov in app.managed_known_providers:
+                if prov.one_of(cls):
+                    prov.wait_for_delete()
         app.rest_api.collections.providers.reload()
 
     def one_of(self, *classes):
