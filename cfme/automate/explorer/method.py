@@ -3,10 +3,10 @@ import attr
 
 from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import VersionPick
-from widgetastic.widget import Text
+from widgetastic.utils import ParametrizedLocator, VersionPick
+from widgetastic.widget import Table, Text, View
 from widgetastic_manageiq import SummaryFormItem, ScriptBox, Input
-from widgetastic_patternfly import BootstrapSelect, Button, CandidateNotFound
+from widgetastic_patternfly import BootstrapSelect, BootstrapSwitch, Button, CandidateNotFound
 
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -14,6 +14,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.blockers import BZ
 from cfme.utils.timeutil import parsetime
 from cfme.utils.version import Version
+from cfme.utils.wait import wait_for
 
 from . import AutomateExplorerView, check_tree_path
 from .common import Copiable, CopyViewBase
@@ -53,21 +54,100 @@ class MethodDetailsView(AutomateExplorerView):
             self.fqdn.text == self.context['object'].tree_path_name_only[1:])
 
 
+class PlaybookBootstrapSelect(BootstrapSelect):
+    """BootstrapSelect widget for Ansible Playbook Method form.
+
+    BootstrapSelect widgets don't have ``data-id`` attribute in this form, so we have to override
+    ROOT locator.
+
+    """
+    ROOT = ParametrizedLocator('.//select[normalize-space(@name)={@id|quote}]/..')
+
+
+class ActionsCell(View):
+    edit = Button(**{"ng-click": "vm.editKeyValue(this.arr[0], this.arr[1], this.arr[2], $index)"})
+    delete = Button(**{"ng-click": "vm.removeKeyValue($index)"})
+
+
+class PlaybookInputParameters(View):
+    """Represents input parameters part of playbook method edit form.
+
+    """
+
+    input_name = Input(name="provisioning_key")
+    default_value = Input(name="provisioning_value")
+    provisioning_type = PlaybookBootstrapSelect("provisioning_type")
+    add_button = Button(**{"ng-click": "vm.addKeyValue()"})
+    variables_table = Table(
+        ".//div[@id='inputs_div']//table",
+        column_widgets={"Actions": ActionsCell()}
+    )
+
+    def _values_to_remove(self, values):
+        return list(set(self.all_vars) - set(values))
+
+    def _values_to_add(self, values):
+        return list(set(values) - set(self.all_vars))
+
+    def fill(self, values):
+        """
+
+        Args:
+            values (list): [] to remove all vars or [("var", "value", "type"), ...] to fill the view
+        """
+        if set(values) == set(self.all_vars):
+            return False
+        else:
+            for value in self._values_to_remove(values):
+                rows = list(self.variables_table)
+                for row in rows:
+                    if row[0].text == value[0]:
+                        row["Actions"].widget.delete.click()
+                        break
+            for value in self._values_to_add(values):
+                self.input_name.fill(value[0])
+                self.default_value.fill(value[1])
+                self.provisioning_type.fill(value[2])
+                self.add_button.click()
+            return True
+
+    @property
+    def all_vars(self):
+        if self.variables_table.is_displayed:
+            return [(row["Input Name"].text, row["Default value"].text, row["Data Type"].text) for
+                    row in self.variables_table]
+        else:
+            return []
+
+    def read(self):
+        return self.all_vars
+
+
 class MethodAddView(AutomateExplorerView):
     title = Text('#explorer_title_text')
 
     location = BootstrapSelect('cls_method_location', can_hide_on_select=True)
-    name = Input(name='cls_method_name')
-    display_name = Input(name='cls_method_display_name')
 
+    inline_name = Input(name='cls_method_name')
+    inline_display_name = Input(name='cls_method_display_name')
     script = ScriptBox()
     data = Input(name='cls_method_data')
-
     validate_button = Button('Validate')
+    # TODO: inline input parameters
+
+    playbook_name = Input(name='name')
+    playbook_display_name = Input(name='display_name')
+    repository = PlaybookBootstrapSelect('provisioning_repository_id')
+    playbook = PlaybookBootstrapSelect('provisioning_playbook_id')
+    machine_credential = PlaybookBootstrapSelect('provisioning_machine_credential_id')
+    hosts = Input('provisioning_inventory')
+    max_ttl = Input('provisioning_execution_ttl')
+    escalate_privilege = BootstrapSwitch('provisioning_become_enabled')
+    verbosity = PlaybookBootstrapSelect('provisioning_verbosity')
+    playbook_input_parameters = PlaybookInputParameters()
+
     add_button = Button('Add')
     cancel_button = Button('Cancel')
-
-    # TODO: Input parameters
 
     @property
     def is_displayed(self):
@@ -83,19 +163,38 @@ class MethodAddView(AutomateExplorerView):
 class MethodEditView(AutomateExplorerView):
     title = Text('#explorer_title_text')
 
-    name = Input(name='method_name')
-    display_name = Input(name='method_display_name')
-    location = BootstrapSelect('method_location')
-
+    # inline
+    inline_name = Input(name='method_name')
+    inline_display_name = Input(name='method_display_name')
     script = ScriptBox()
     data = Input(name='method_data')
-
     validate_button = Button('Validate')
+    # TODO: inline input parameters
+
+    # playbook
+    playbook_name = Input(name='name')
+    playbook_display_name = Input(name='display_name')
+    repository = PlaybookBootstrapSelect('provisioning_repository_id')
+    playbook = PlaybookBootstrapSelect('provisioning_playbook_id')
+    machine_credential = PlaybookBootstrapSelect('provisioning_machine_credential_id')
+    hosts = Input('provisioning_inventory')
+    max_ttl = Input('provisioning_execution_ttl')
+    escalate_privilege = BootstrapSwitch('provisioning_become_enabled')
+    verbosity = PlaybookBootstrapSelect('provisioning_verbosity')
+    playbook_input_parameters = PlaybookInputParameters()
+
     save_button = Button('Save')
     reset_button = Button('Reset')
     cancel_button = Button('Cancel')
 
-    # TODO: Input parameters
+    def before_fill(self, values):
+        location = self.context['object'].location
+        if 'display_name' in values and location in ['inline', 'playbook']:
+            values['{}_display_name'.format(location)] = values['display_name']
+            del values['display_name']
+        elif 'name' in values and location in ['inline', 'playbook']:
+            values['{}_name'.format(location)] = values['name']
+            del values['name']
 
     @property
     def is_displayed(self):
@@ -115,7 +214,10 @@ class Method(BaseEntity, Copiable):
         '5.9': 'fa-ruby',
     })
 
-    def __init__(self, collection, name, display_name=None, location=None, script=None, data=None):
+    def __init__(self, collection, name=None, display_name=None, location='inline', script=None,
+                 data=None, repository=None, playbook=None, machine_credential=None, hosts=None,
+                 max_ttl=None, escalate_privilege=None, verbosity=None,
+                 playbook_input_parameters=None, cancel=False, validate=True):
         super(Method, self).__init__(collection)
 
         self.name = name
@@ -124,6 +226,14 @@ class Method(BaseEntity, Copiable):
         self.location = location
         self.script = script
         self.data = data
+        self.repository = repository
+        self.playbook = playbook
+        self.machine_credential = machine_credential
+        self.hosts = hosts
+        self.max_ttl = max_ttl
+        self.escalate_privilege = escalate_privilege
+        self.verbosity = verbosity
+        self.playbook_input_parameters = playbook_input_parameters
 
     __repr__ = object.__repr__
 
@@ -228,19 +338,35 @@ class MethodCollection(BaseCollection):
 
     def create(
             self, name=None, display_name=None, location='inline', script=None, data=None,
-            cancel=False, validate=True):
-        add_page = navigate_to(self, 'Add')
-        fill_dict = {
-            k: v
-            for k, v in {
-                'name': name,
-                'display_name': display_name,
-                'location': location,
+            cancel=False, validate=True, repository=None, playbook=None, machine_credential=None,
+            hosts=None, max_ttl=None, escalate_privilege=None, verbosity=None,
+            playbook_input_parameters=None):
+        add_page = navigate_to(self, 'Add', wait_for_view=True)
+        add_page.fill({'location': location})
+        if location == 'inline':
+            add_page.fill({
+                'inline_name': name,
+                'inline_display_name': display_name,
                 'script': script,
-                'data': data,
-            }.items()
-            if v is not None}
-        add_page.fill(fill_dict)
+                'data': data
+            })
+        if location == 'playbook':
+            add_page.fill({
+                'playbook_name': name,
+                'playbook_display_name': display_name,
+                'repository': repository
+            })
+            wait_for(lambda: add_page.playbook.is_displayed, delay=0.5, num_sec=2)
+            add_page.fill({
+                'playbook': playbook,
+                'machine_credential': machine_credential,
+                'hosts': hosts,
+                'max_ttl': max_ttl,
+                'escalate_privilege': escalate_privilege,
+                'verbosity': verbosity,
+                'playbook_input_parameters': playbook_input_parameters
+            })
+            validate = False
         if validate and not BZ(1499881, forced_streams=['5.9']).blocks:
             add_page.validate_button.click()
             add_page.flash.assert_no_error()
@@ -252,14 +378,25 @@ class MethodCollection(BaseCollection):
             return None
         else:
             add_page.add_button.click()
-            add_page.flash.assert_no_error()
-            add_page.flash.assert_message('Automate Method "{}" was added'.format(name))
+            if self.appliance.version < "5.9":
+                msg = 'Automate Method "{}" was added'.format(name)
+            else:
+                msg = 'Automate Method "{}" was saved'.format(name)
+            add_page.flash.assert_success_message(msg)
             return self.instantiate(
                 name=name,
                 display_name=display_name,
                 location=location,
                 script=script,
-                data=data)
+                data=data,
+                repository=repository,
+                playbook=playbook,
+                machine_credential=machine_credential,
+                hosts=hosts,
+                max_ttl=max_ttl,
+                escalate_privilege=escalate_privilege,
+                verbosity=verbosity,
+                playbook_input_parameters=playbook_input_parameters)
 
     def delete(self, *methods):
         all_page = navigate_to(self.parent, 'Details')
