@@ -1486,7 +1486,7 @@ class TenantAll(CFMENavigateStep):
 @navigator.register(Tenant, 'Details')
 class TenantDetails(CFMENavigateStep):
     VIEW = DetailsTenantView
-    prerequisite = NavigateToAttribute('parent', 'All')
+    prerequisite = NavigateToAttribute('appliance.collections.tenants', 'All')
 
     def step(self):
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(
