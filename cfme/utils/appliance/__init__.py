@@ -300,8 +300,6 @@ class IPAppliance(object):
     @property
     def server(self):
         if self._server is None:
-            from cfme.base import ServerCollection
-            collection = ServerCollection(self)
             self._server = self.collections.servers.get_master()
         return self._server
 

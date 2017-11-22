@@ -61,11 +61,10 @@ def zone(self):
         server = server_res[0]
         server.reload(attributes=['zone'])
         zone = server.zone
-        zc = ZoneCollection(self.appliance)
-        zc.instantiate(
+        zone_obj = self.appliance.collections.zones.instantiate(
             name=zone.name, description=zone.description, id=zone.id
         )
-        self._zone = zone
+        self._zone = zone_obj
     return self._zone
 
 
@@ -79,8 +78,7 @@ def region(self):
     else:
         zone_res = self.appliance.rest_api.collections.zones.find_by(id=self.id)
         zone = zone_res[0]
-        zone[0].reload(attributes=['region_number'])
-        rc = RegionCollection(self.appliance)
-        rc.instantiate(number=zone.region_number)
-        self._zone = zone
+        zone.reload(attributes=['region_number'])
+        region_obj = self.appliance.collections.regions.instantiate(number=zone.region_number)
+        self._region = region_obj
     return self._region
