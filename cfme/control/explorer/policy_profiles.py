@@ -66,9 +66,11 @@ class PolicyProfilesAllView(ControlExplorerView):
 
     @property
     def is_displayed(self):
+
         return (
             self.in_control_explorer and
-            self.title.text == "All Policy Profiles"
+            # BZ(1516302)
+            'All Policy Profile' in self.title.text
         )
 
 
