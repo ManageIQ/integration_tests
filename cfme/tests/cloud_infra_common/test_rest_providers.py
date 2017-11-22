@@ -92,7 +92,7 @@ def provider_rest(request, appliance, provider):
         pytest.skip("No credentials info found for provider {}.".format(provider.name))
 
     cert = getattr(endpoint_default, "ca_certs", None)
-    if cert:
+    if cert and appliance.version >= '5.8':
         default_connection["endpoint"]["certificate_authority"] = cert
         con_config_to_include.append(default_connection)
 
