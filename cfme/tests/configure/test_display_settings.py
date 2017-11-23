@@ -4,7 +4,6 @@ import pytest
 from cfme import test_requirements
 from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import ColorGroup, form_buttons
 from cfme.utils.appliance import current_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils import version
@@ -30,26 +29,6 @@ def set_timezone():
     visual.timezone = "(GMT-10:00) Hawaii"
     yield
     visual.timezone = time_zone
-
-
-def set_header_color(name):
-    cg = ColorGroup('Header Accent Color')
-    if cg.active != name:
-        cg.choose(name)
-        sel.click(form_buttons.save)
-
-
-def is_header_color_changed(name):
-    cg = ColorGroup('Header Accent Color')
-    if cg.active == name:
-        return cg.status(name)
-
-
-def reset_default_color(default_color):
-    cg = ColorGroup('Header Accent Color')
-    if cg.active != default_color:
-        cg.choose(default_color)
-        sel.click(form_buttons.save)
 
 
 def test_timezone_setting(set_timezone):
