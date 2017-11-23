@@ -9,8 +9,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM
 from cfme.common.vm_views import (
     ProvisionView, VMToolbar, VMEntities, VMDetailsEntities, RetirementView, EditView,
-    SetOwnershipView, ManagementEngineView, ManagePoliciesView,
-    PolicySimulationView)
+    SetOwnershipView, ManagementEngineView, PolicySimulationView)
 from cfme.exceptions import InstanceNotFound, ItemNotFound
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance import Navigatable
@@ -447,15 +446,6 @@ class EditManagementEngineRelationship(CFMENavigateStep):
     def step(self, *args, **kwargs):
         configuration = self.prerequisite_view.toolbar.configuration
         configuration.item_select('Edit Management Engine Relationship')
-
-
-@navigator.register(Instance, 'ManagePolicies')
-class ManagePolicies(CFMENavigateStep):
-    VIEW = ManagePoliciesView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
 @navigator.register(Instance, 'Provision')

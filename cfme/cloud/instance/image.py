@@ -6,7 +6,7 @@ from widgetastic_manageiq import ItemsToolBarViewSelector, SummaryTable, ItemNot
 from cfme.exceptions import ImageNotFound
 from cfme.common.vm import Template
 from cfme.common.vm_views import (
-    EditView, SetOwnershipView, ManagePoliciesView, PolicySimulationView, BasicProvisionFormView,
+    EditView, SetOwnershipView, PolicySimulationView, BasicProvisionFormView,
     VMEntities)
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
@@ -204,15 +204,6 @@ class ImageSetOwnership(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Set Ownership')
-
-
-@navigator.register(Image, 'ManagePolicies')
-class ImageManagePolicies(CFMENavigateStep):
-    VIEW = ManagePoliciesView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
 @navigator.register(Image, 'PolicySimulation')

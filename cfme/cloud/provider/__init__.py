@@ -184,25 +184,6 @@ class EditFromDetails(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Cloud Provider')
 
 
-@navigator.register(CloudProvider, 'ManagePolicies')
-class ManagePolicies(CFMENavigateStep):
-    VIEW = ProvidersManagePoliciesView
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
-        self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
-
-
-@navigator.register(CloudProvider, 'ManagePoliciesFromDetails')
-class ManagePoliciesFromDetails(CFMENavigateStep):
-    VIEW = ProvidersManagePoliciesView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
-
-
 @navigator.register(CloudProvider, 'EditTags')
 class EditTags(CFMENavigateStep):
     VIEW = TagPageView
