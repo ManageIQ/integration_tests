@@ -82,7 +82,7 @@ class PolicyProfileAssignable(object):
             assign: Wheter to assign or unassign.
             policy_profile_names: :py:class:`str` with Policy Profile names.
         """
-        view = navigate_to(self, 'EditPoliciesFromDetails')
+        view = navigate_to(self, 'ManagePoliciesFromDetails')
         for policy_profile in policy_profile_names:
             if assign:
 
