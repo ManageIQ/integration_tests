@@ -9,7 +9,6 @@ import sys
 from ovirtsdk.api import API
 
 # VSPHERE
-from psphere.managedobjects import VirtualMachine
 from wrapanapi.virtualcenter import VMWareSystem
 
 # RHOS
@@ -89,8 +88,7 @@ def rhevm_vm_status(api, vm_name):
 
 
 def vsphere_vm_status(api, vm_name):
-    vm = VirtualMachine.get(api.api, name=vm_name)
-    return vm.runtime.powerState
+    return api.vm_status(vm_name)
 
 
 def rhevm_is_vm_up(api, vm_name):
@@ -113,8 +111,8 @@ def vsphere_is_vm_up(api, vm_name):
         api: api endpoint to vsphere
         vm_name: name of the vm
     """
-    vm = VirtualMachine.get(api.api, name=vm_name)
-    if vm.runtime.powerState == 'poweredOn':
+    vm_status = api.vm_status(vm_name)
+    if vm_status == 'poweredOn':
         return True
     return False
 
@@ -139,8 +137,8 @@ def vsphere_is_vm_down(api, vm_name):
         api: api endpoint to vsphere
         vm_name: name og the vm
     """
-    vm = VirtualMachine.get(api.api, name=vm_name)
-    if vm.runtime.powerState == 'poweredOff':
+    vm_status = api.vm_status(vm_name)
+    if vm_status == 'poweredOff':
         return True
     return False
 
@@ -190,7 +188,6 @@ def vsphere_delete_vm(api, vm_name):
         api: api endpoint to vsphere
         vm_name: name of the vm
     """
-    vm = VirtualMachine.get(api.api, name=vm_name)
     vm_status = vsphere_vm_status(api, vm_name)
     if vm_status != 'poweredOn' and vm_status != 'poweredOff':
         # something is wrong, locked image etc
@@ -198,12 +195,12 @@ def vsphere_delete_vm(api, vm_name):
         raise Exception(exc_msg)
     print("status: {}".format(vm_status))
     if vm_status == "poweredOn":
-        print("Powering down: {}".format(vm.name))
-        vm.PowerOffVM_Task()
+        print("Powering down: {}".format(vm_name))
+        api.stop_vm(vm_name)
         wait_for(vsphere_is_vm_down, [api, vm_name], fail_condition=False, delay=10,
                  num_sec=120)
     print("Deleting: {}".format(vm_name))
-    vm.Destroy_Task()
+    api.delete_vm(vm_name)
 
 
 def rhos_delete_vm(api, vm_name):
@@ -275,17 +272,16 @@ def vsphere_check_with_api(api, run_time, text):
         run_time: when this run time is exceeded for the VM, it will be deleted
         text: when this string is found in the name of VM, it may be deleted
     """
-    vms = VirtualMachine.all(api.api)
+    vms = api.all_vms()
     vms_to_delete = []
     templates_to_delete = []
 
-    nightly_templates = [VirtualMachine.get(api.api, name=x)
-                         for x in api.list_template() if "miq-nightly" in x]
-    nightly_templates.sort(key=lambda x: datetime.datetime.strptime(x.name[-12:], "%Y%m%d%H%M"))
+    nightly_templates = filter(lambda t: 'miq-nightly' in t, api.list_template())
+    nightly_templates.sort(key=lambda x: datetime.datetime.strptime(x[-12:], '%Y%m%d%H%M'))
 
     if len(nightly_templates) > MRU_NIGHTLIES:
         for template in nightly_templates[:-MRU_NIGHTLIES]:
-            templates_to_delete.append(template.name)
+            templates_to_delete.append(template)
 
     for vm in vms:
         vm_name = vm.name
