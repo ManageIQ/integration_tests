@@ -15,7 +15,6 @@ from cfme.common.host_views import (
     HostDriftAnalysis,
     HostDriftHistory,
     HostEditView,
-    HostManagePoliciesView,
     HostsView,
     HostTimelinesView
 )
@@ -528,15 +527,6 @@ class Discover(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select("Discover items")
-
-
-@navigator.register(Host)
-class PolicyAssignment(CFMENavigateStep):
-    VIEW = HostManagePoliciesView
-    prerequisite = NavigateToSibling("Details")
-
-    def step(self):
-        self.prerequisite_view.toolbar.policy.item_select("Manage Policies")
 
 
 @navigator.register(Host)

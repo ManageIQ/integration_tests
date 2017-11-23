@@ -15,7 +15,6 @@ from cfme.common.provider_views import (InfraProviderAddView,
                                         InfraProviderDetailsView,
                                         ProviderTimelinesView,
                                         InfraProvidersDiscoverView,
-                                        ProvidersManagePoliciesView,
                                         InfraProvidersView,
                                         ProviderNodesView)
 from cfme.fixtures import pytest_selenium as sel
@@ -252,25 +251,6 @@ class Details(CFMENavigateStep):
             view_selector = self.view.toolbar.view_selector
             if view_selector.selected != 'Summary View':
                 view_selector.select('Summary View')
-
-
-@navigator.register(InfraProvider, 'ManagePolicies')
-class ManagePolicies(CFMENavigateStep):
-    VIEW = ProvidersManagePoliciesView
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
-        self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
-
-
-@navigator.register(InfraProvider, 'ManagePoliciesFromDetails')
-class ManagePoliciesFromDetails(CFMENavigateStep):
-    VIEW = ProvidersManagePoliciesView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
 @navigator.register(InfraProvider, 'EditTags')

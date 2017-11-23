@@ -4,7 +4,7 @@ from urlparse import urlparse
 from widgetastic.exceptions import NoSuchElementException, RowNotFound
 from widgetastic_patternfly import BootstrapSelect, Button
 from widgetastic.widget import Table, Text, View
-from widgetastic_manageiq import BaseNonInteractiveEntitiesView, CheckableManageIQTree
+from widgetastic_manageiq import BaseNonInteractiveEntitiesView, CheckableManageIQTree, BreadCrumb
 
 from cached_property import cached_property
 from cfme.base.login import BaseLoggedInPage
@@ -24,6 +24,7 @@ class ManagePoliciesView(BaseLoggedInPage):
     Manage policies page
     """
     policy_profiles = CheckableManageIQTree(tree_id='protectbox')
+    breadcrumb = BreadCrumb()  # some views have breadcrumb, some not
     entities = View.nested(BaseNonInteractiveEntitiesView)
     save = Button('Save')
     reset = Button('Reset')

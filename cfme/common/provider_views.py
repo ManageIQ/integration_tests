@@ -16,10 +16,7 @@ from widgetastic_manageiq import (BreadCrumb,
                                   Checkbox,
                                   Input,
                                   Table,
-                                  BaseEntitiesView,
-                                  DynaTree,
-                                  BootstrapTreeview,
-                                  BaseNonInteractiveEntitiesView)
+                                  BaseEntitiesView)
 from cfme.common.host_views import HostEntitiesView
 
 
@@ -247,28 +244,6 @@ class CloudProvidersDiscoverView(BaseLoggedInPage):
         return (self.logged_in_as_current_user and
                 self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
                 self.title.text == 'Cloud Providers Discovery')
-
-
-class ProvidersManagePoliciesView(BaseLoggedInPage):
-    """
-     Provider's Manage Policies view
-    """
-    policies = VersionPick({Version.lowest(): DynaTree('protect_treebox'),
-                            '5.7': BootstrapTreeview('protectbox')})
-
-    @View.nested
-    class entities(BaseNonInteractiveEntitiesView):  # noqa
-        @property
-        def entity_class(self):
-            return ProviderEntity().pick(self.browser.product_version)
-
-    save = Button('Save')
-    reset = Button('Reset')
-    cancel = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        return False
 
 
 class NodesToolBar(View):
