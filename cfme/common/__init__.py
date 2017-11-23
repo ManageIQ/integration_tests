@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
-from functools import partial
 from navmazing import NavigateToSibling
 from urlparse import urlparse
 from widgetastic.exceptions import NoSuchElementException, RowNotFound
 from widgetastic_patternfly import BootstrapSelect, Button
 from widgetastic.widget import Table, Text, View
-from widgetastic_manageiq import BaseNonInteractiveEntitiesView
+from widgetastic_manageiq import BaseNonInteractiveEntitiesView, CheckableManageIQTree
 
 from cached_property import cached_property
 from cfme.base.login import BaseLoggedInPage
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import BootstrapTreeview, flash, form_buttons, toolbar
 from cfme.web_ui.timelines import Timelines
 from cfme.web_ui.topology import Topology
 from cfme.web_ui.utilization import Utilization
@@ -20,7 +18,16 @@ from cfme.utils import attributize_string
 from cfme.utils.units import Unit
 from cfme.utils.log import logger
 
-pol_btn = partial(toolbar.select, "Policy")
+
+class ManagePoliciesView(BaseLoggedInPage):
+    """
+    Manage policies page
+    """
+    policy_profiles = CheckableManageIQTree(tree_id='protectbox')
+    entities = View.nested(BaseNonInteractiveEntitiesView)
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
 
 
 class PolicyProfileAssignable(object):
@@ -28,7 +35,6 @@ class PolicyProfileAssignable(object):
 
     It provides functionality to assign and unassign Policy Profiles
     """
-    manage_policies_tree = BootstrapTreeview("protectbox")
 
     @property
     def assigned_policy_profiles(self):
@@ -71,15 +77,25 @@ class PolicyProfileAssignable(object):
             assign: Wheter to assign or unassign.
             policy_profile_names: :py:class:`str` with Policy Profile names.
         """
-        self.load_details(refresh=True)
-        pol_btn("Manage Policies")
+        view = navigate_to(self, 'EditPoliciesFromDetails')
         for policy_profile in policy_profile_names:
             if assign:
-                self.manage_policies_tree.check_node(policy_profile)
+
+                view.policy_profiles.check_node(policy_profile)
             else:
-                self.manage_policies_tree.uncheck_node(policy_profile)
-        form_buttons.save()
-        flash.assert_no_errors()
+                view.policy_profiles.uncheck_node(policy_profile)
+        view.save.click()
+        details_view = self.create_view(navigator.get_class(self, 'Details').VIEW)
+        details_view.flash.assert_no_errors()
+
+
+@navigator.register(PolicyProfileAssignable, 'EditPoliciesFromDetails')
+class EditPoliciesFromDetails(CFMENavigateStep):
+    VIEW = ManagePoliciesView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
 class TagPageView(BaseLoggedInPage):

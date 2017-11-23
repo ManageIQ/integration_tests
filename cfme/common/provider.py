@@ -3,7 +3,7 @@ from collections import Iterable
 
 from manageiq_client.api import APIException
 from widgetastic.widget import View, Text
-from widgetastic_patternfly import Input, Button, DropdownItemDisabled
+from widgetastic_patternfly import Input, Button
 
 from cfme.base.credential import (
     Credential, EventsCredential, TokenCredential, SSHCredential, CANDUCredential)
