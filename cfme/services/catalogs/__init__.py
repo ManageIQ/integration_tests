@@ -44,7 +44,7 @@ class ServicesCatalogView(BaseLoggedInPage):
         tree = ManageIQTree()
 
     @View.nested
-    class toolbar(View):
+    class toolbar(View):  # noqa
         configuration = Dropdown('Configuration')
         policy = Dropdown('Policy')
 

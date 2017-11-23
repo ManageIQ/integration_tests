@@ -169,7 +169,7 @@ class OrchestrationTemplate(Updateable, Pretty, Navigatable, WidgetasticTaggable
         msg = "Remove this Orchestration Template"
         if self.appliance.version >= '5.9':
             msg = '{} from Inventory'.format(msg)
-        view.configuration.item_select(msg, handle_alert=True)
+        view.toolbar.configuration.item_select(msg, handle_alert=True)
         view.flash.assert_success_message('Orchestration Template "{}" was deleted.'.format(
             self.template_name))
 
@@ -244,7 +244,7 @@ class AddDialog(CFMENavigateStep):
     VIEW = AddDialogView
 
     def step(self):
-        self.view.configuration.item_select('Create Service Dialog from Orchestration Template')
+        self.view.toolbar.configuration.item_select('Create Service Dialog from Orchestration Template')
 
 
 @navigator.register(OrchestrationTemplate, 'Edit')
@@ -254,7 +254,7 @@ class EditTemplate(CFMENavigateStep):
     VIEW = EditTemplateView
 
     def step(self):
-        self.view.configuration.item_select("Edit this Orchestration Template")
+        self.view.toolbar.configuration.item_select("Edit this Orchestration Template")
 
 
 @navigator.register(OrchestrationTemplate, 'AddTemplate')
@@ -264,7 +264,7 @@ class AddTemplate(CFMENavigateStep):
     VIEW = AddTemplateView
 
     def step(self):
-        self.view.configuration.item_select("Create new Orchestration Template")
+        self.view.toolbar.configuration.item_select("Create new Orchestration Template")
 
 
 @navigator.register(OrchestrationTemplate, 'CopyTemplate')
@@ -274,4 +274,4 @@ class CopyTemplate(CFMENavigateStep):
     VIEW = CopyTemplateView
 
     def step(self):
-        self.view.configuration.item_select("Copy this Orchestration Template")
+        self.view.toolbar.configuration.item_select("Copy this Orchestration Template")
