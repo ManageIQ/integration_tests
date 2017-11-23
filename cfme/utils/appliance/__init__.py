@@ -263,6 +263,8 @@ class IPAppliance(object):
                 self.address = address.netloc
                 self.scheme = address.scheme
                 self._url = address.geturl()
+        else:
+            self.scheme = 'https'   # by default
         self.browser_steal = browser_steal
         self.container = container
         self.openshift_creds = openshift_creds or {}
