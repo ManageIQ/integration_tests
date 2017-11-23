@@ -83,6 +83,9 @@ class Namespace(BaseEntity):
 
     __repr__ = object.__repr__
 
+    def __hash__(self):
+        return hash((self.name, id(self.parent)))
+
     @cached_property
     def description(self):
         return self.db_object.description
@@ -187,6 +190,9 @@ class Namespace(BaseEntity):
 class NamespaceCollection(BaseCollection):
 
     ENTITY = Namespace
+
+    def __eq__(self, other):
+        return self.parent == other.parent
 
     @property
     def tree_path(self):

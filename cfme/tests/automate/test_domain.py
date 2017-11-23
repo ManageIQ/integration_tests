@@ -146,11 +146,7 @@ def test_domain_lock_unlock(request, appliance):
     # Check that nothing is editable
     # namespaces
     details = navigate_to(ns1, 'Details')
-    if appliance.version < '5.9':
-        assert not details.configuration.is_displayed
-    else:
-        assert details.configuration.is_displayed
-        assert details.configuration.items == ['Copy selected Classes']
+    assert not details.configuration.is_displayed
     details = navigate_to(ns2, 'Details')
     if appliance.version < '5.9':
         assert not details.configuration.is_displayed
