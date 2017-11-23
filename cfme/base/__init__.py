@@ -116,6 +116,7 @@ class RegionCollection(BaseCollection, sentaku.modeling.ElementMixin):
     ENTITY = Region
 
 
-from . import ui, ssui  # NOQA last for import cycles
+from . import ui, ssui, rest  # NOQA last for import cycles
 importscan.scan(ui)
 importscan.scan(ssui)
+importscan.scan(rest)
