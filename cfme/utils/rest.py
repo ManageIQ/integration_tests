@@ -4,7 +4,6 @@
 from cfme.exceptions import OptionNotAvailable
 from cfme.utils import error
 from cfme.utils.wait import wait_for
-from fixtures.pytest_store import store
 
 
 def assert_response(
@@ -112,7 +111,8 @@ def delete_resources_from_collection(collection, resources, not_found=False, num
     for resource in resources:
         resource.wait_not_exists(num_sec=num_sec, delay=delay)
 
-    if not_found or store.current_appliance.version < '5.9':
+    current_version = collection._api.server_info.get('version')
+    if not_found or current_version < '5.9':
         with error.expected('ActiveRecord::RecordNotFound'):
             collection.action.delete(*resources)
         assert_response(collection._api, http_status=404)
