@@ -9,7 +9,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView
 from cfme.common.provider_views import (
     CloudProviderAddView, CloudProviderEditView, CloudProviderDetailsView, CloudProvidersView,
-    CloudProvidersDiscoverView, ProvidersManagePoliciesView)
+    CloudProvidersDiscoverView)
 from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm_views import VMToolbar, VMEntities
 from cfme.utils.appliance import Navigatable

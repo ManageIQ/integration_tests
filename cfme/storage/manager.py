@@ -6,7 +6,6 @@ from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View, NoSuchElementException, Text
 from widgetastic_manageiq import (
     Accordion,
-    BootstrapTreeview,
     BreadCrumb,
     ManageIQTree,
     PaginationPane,
@@ -20,7 +19,7 @@ from widgetastic_patternfly import (
 )
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import WidgetasticTaggable
+from cfme.common import WidgetasticTaggable, PolicyProfileAssignable
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -111,23 +110,8 @@ class StorageManagerDetailsView(StorageManagerView):
     entities = View.nested(StorageManagerDetailsEntities)
 
 
-class StorageManagePoliciesView(StorageManagerView):
-    """The policies page for Storage Manager or Provider"""
-    breadcrumb = BreadCrumb()
-    policies = BootstrapTreeview("protectbox")
-    save = Button("Save")
-    reset = Button("Reset")
-    cancel = Button("Cancel")
-
-    @property
-    def is_displayed(self):
-        return (
-            self.in_manager and
-            self.breadcrumb.active_location == "'Storage Manager' Policy Assignment")
-
-
 @attr.s
-class StorageManager(BaseEntity, WidgetasticTaggable):
+class StorageManager(BaseEntity, WidgetasticTaggable, PolicyProfileAssignable):
     """ Model of an storage manager in cfme
 
     Args:

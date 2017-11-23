@@ -14,7 +14,6 @@ from widgetastic_manageiq import (
     BaseListEntity,
     BaseQuadIconEntity,
     BaseTileIconEntity,
-    BootstrapTreeview,
     BreadCrumb,
     Button,
     Checkbox,
@@ -24,7 +23,6 @@ from widgetastic_manageiq import (
     SummaryTable,
     Table,
     TimelinesView,
-    BaseNonInteractiveEntitiesView
 )
 from widgetastic_patternfly import (
     BootstrapSelect,
