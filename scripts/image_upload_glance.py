@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 """
-Script to upload iso/qcow2/ova images to Glance server
+Script to upload iso/qcow2 images to Glance server
 
 Usage:
 1.scripts/image_upload_glance.py --image cfme-rhevm-5.8.2.1-1.x86_64.qcow2 \
@@ -23,12 +23,25 @@ from keystoneauth1 import session
 from glanceclient import Client
 
 
+def parse_cmd_line():
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    parser.add_argument('--image', help='Image to be uploaded to Glance', required=True)
+    parser.add_argument('--image_name_in_glance', help='Image name in Glance', required=True)
+    parser.add_argument('--provider', help='Glance provider key in cfme_data', required=True)
+    parser.add_argument('--disk_format', help='Disk format of image', default='qcow2')
+
+    args = parser.parse_args()
+    return args
+
+
 def upload_to_glance(image, image_name_in_glance, provider, disk_format):
     """
     Upload iso/qcow2/ova images to Glance.
     """
     api_version = '2'  # python-glanceclient API version
-    provider_dict = cfme_data['management_systems'][provider]
+    provider_dict = cfme_data['template_upload'][provider]
     creds_key = provider_dict['credentials']
 
     loader = loading.get_plugin_loader('password')
@@ -44,8 +57,8 @@ def upload_to_glance(image, image_name_in_glance, provider, disk_format):
     # So, we are running a check to make sure an image with the same name doesn't already exist.
     for img in glance.images.list():
         if img.name == image_name_in_glance:
-            print("Image already exists on Glance server")
-            sys.exit(127)
+            print("image_upload_glance: Image already exists on Glance server")
+            return
 
     glance_img = glance.images.create(name=image_name_in_glance)
     # Update image properties before uploading the image.
@@ -55,19 +68,12 @@ def upload_to_glance(image, image_name_in_glance, provider, disk_format):
     glance.images.upload(glance_img.id, open(image, 'rb'))
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-
-    parser.add_argument('--image', help='Image to be uploaded to Glance', required=True)
-    parser.add_argument('--image_name_in_glance', help='Image name in Glance', required=True)
-    parser.add_argument('--provider', help='Glance provider key in cfme_data', required=True)
-    parser.add_argument('--disk_format', help='Disk format of image', default='qcow2')
-
-    args = parser.parse_args()
-
-    upload_to_glance(args.image, args.image_name_in_glance, args.provider, args.disk_format)
+def run(**kwargs):
+    upload_to_glance(kwargs['image'], kwargs['image_name_in_glance'], kwargs['provider'],
+        kwargs['disk_format'])
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    args = parse_cmd_line()
+    kwargs = dict(args._get_kwargs())
+    sys.exit(run(**kwargs))
