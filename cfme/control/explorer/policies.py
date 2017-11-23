@@ -1,25 +1,24 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
-import attr
-
 from copy import copy
 
+import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic_manageiq import (
-    BootstrapSwitchSelect, CheckboxSelect, MultiBoxSelect, SummaryFormItem, Dropdown)
-from widgetastic_patternfly import Button, Input
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import Checkbox, Table, Text, TextInput, View
+from widgetastic_patternfly import Button, Input
 
-from . import ControlExplorerView
 from actions import Action
-from cfme.utils import ParamClassName
 from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
+from widgetastic_manageiq import (
+    BootstrapSwitchSelect, CheckboxSelect, MultiBoxSelect, SummaryFormItem, Dropdown)
+from widgetastic_manageiq.expression_editor import ExpressionEditor
+from . import ControlExplorerView
 
 
 class PoliciesAllView(ControlExplorerView):
