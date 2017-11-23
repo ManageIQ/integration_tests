@@ -11,7 +11,7 @@ from .reports import CustomSavedReportDetailsView
 
 class AllSavedReportsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
-    table = Table(".//div[@id='records_div']/table")
+    table = Table(".//div[@id='records_div' or @id='main_div']//table")
     paginator = PaginationPane()
 
     @property

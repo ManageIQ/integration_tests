@@ -66,7 +66,7 @@ class ScheduleAddEditEntities(View):
 class ScheduleAllView(ConfigurationView):
     """ Shedule All view on the shedule configuration page"""
     toolbar = View.nested(ScheduleToolbar)
-    table = Table(locator="//div[@id='records_div']/table")
+    table = Table(locator="//div[@id='records_div' or @id='main_div']//table")
     paginator = PaginationPane()
 
     @property
