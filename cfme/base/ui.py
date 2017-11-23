@@ -5,13 +5,14 @@ from selenium.webdriver.common.keys import Keys
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, TimelinesView)
+from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, SummaryFormItem,
+                                  TimelinesView)
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
     FlashMessages, BootstrapSelect, Tab)
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View, Table, Text, Image, FileInput
 
-from cfme.automate.explorer import AutomateExplorer  # noqa
+
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.credential import Credential
 from cfme.configure.about import AboutView
