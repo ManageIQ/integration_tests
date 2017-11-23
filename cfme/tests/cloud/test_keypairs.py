@@ -72,7 +72,7 @@ def test_keypair_create_cancel(openstack_provider, keypairs):
     assert not keypair.exists
 
 
-def test_keypair_add_and_remove_tag(openstack_provider, keypairs):
+def test_keypair_add_and_remove_tag(openstack_provider, appliance):
     """ This will test whether it will add and remove tag for newly created Keypair or not
     and then deletes it.
 
@@ -83,8 +83,13 @@ def test_keypair_add_and_remove_tag(openstack_provider, keypairs):
         * Remove tag from Keypair
         * Also delete it.
     """
+
+    kp_collection = appliance.collections.keypairs
+
     try:
-        keypair = keypairs.create(name=fauxfactory.gen_alphanumeric(), provider=openstack_provider)
+        keypair = kp_collection.create(
+            name=fauxfactory.gen_alphanumeric(), provider=openstack_provider
+        )
     except TimedOutError:
         if BZ(1444520, forced_streams=['5.6', '5.7', 'upstream']).blocks:
             pytest.skip('Timed out creating keypair, BZ1444520')
