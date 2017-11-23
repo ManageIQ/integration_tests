@@ -1238,7 +1238,6 @@ def create(self, name=None, description=None, smartproxy_ip=None, ntp_servers=No
 class AutomateSimulationView(BaseLoggedInPage):
     @property
     def is_displayed(self):
-        from cfme.automate import automate_menu_name
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == automate_menu_name(
@@ -1263,7 +1262,6 @@ class AutomateSimulation(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self):
-        from cfme.automate import automate_menu_name
         self.prerequisite_view.navigation.select(
             *automate_menu_name(self.obj.appliance) + ['Simulation'])
 
@@ -1274,7 +1272,6 @@ class AutomateImportExportBaseView(BaseLoggedInPage):
 
     @property
     def in_import_export(self):
-        from cfme.automate import automate_menu_name
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == automate_menu_name(
@@ -1314,6 +1311,5 @@ class AutomateImportExport(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self):
-        from cfme.automate import automate_menu_name
         self.prerequisite_view.navigation.select(
             *automate_menu_name(self.obj.appliance) + ['Import / Export'])
