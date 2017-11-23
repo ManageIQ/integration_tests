@@ -44,7 +44,7 @@ def test_download_lists_base(filetype, objecttype, appliance):
 @pytest.mark.parametrize("collection", OBJECTCOLLECTIONS)
 def test_download_pdf_summary(appliance, collection, provider):
     """ Download the summary details of specific object """
-    instance = appliance.get(collection)
+    instance = collection(appliance)
     if instance.all():
         random_obj = instance.all()[0].name
         try:
