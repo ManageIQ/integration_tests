@@ -117,11 +117,11 @@ def vddk_url(provider):
 @pytest.yield_fixture(scope="function")
 def configure_fleecing(appliance, provider, vm, vddk_url):
     host = vm.get_detail(properties=("Relationships", "Host"))
-    setup_host_creds(provider.key, host)
+    setup_host_creds(provider, host)
     appliance.install_vddk(vddk_url=vddk_url)
     yield
     appliance.uninstall_vddk()
-    setup_host_creds(provider.key, host, remove_creds=True)
+    setup_host_creds(provider, host, remove_creds=True)
 
 
 @pytest.fixture
