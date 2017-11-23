@@ -427,18 +427,25 @@ class ParallelSession(object):
                     self.ack(slave, event_name)
                 elif event_name == 'collectionfinish':
                     slave_collection = event_data['node_ids']
-                    # compare slave collection to the master, all test ids must be the same
-                    self.log.debug('diffing {} collection'.format(slave.id))
-                    diff_err = report_collection_diff(
-                        slave.id, self.collection, slave_collection)
-                    if diff_err:
-                        self.print_message(
-                            'collection differs, respawning', slave.id,
-                            purple=True)
-                        self.print_message(diff_err, purple=True)
-                        self.log.error('{}'.format(diff_err))
-                        self.kill(slave)
-                        slave.start()
+                    # compare slave collection to the master, if test collections differ
+                    # we do two things
+                    # 1) If we have a test that the slave doesn't, we remove it from our list
+                    # 2) If the slave has a test that we don't we ask them to ignore it
+                    # Then everyone is playing with the same tests and that's fair
+                    master_ids = set(self.collection)
+                    slave_ids = set(slave_collection)
+                    master_remove = master_ids - slave_ids
+                    slave_remove = slave_ids - master_ids
+                    if master_remove:
+                        for item in master_remove:
+                            self.log.warning(
+                                "Master had test [{}] but not on slave [{}]: so ignoring!".format(
+                                    item, slave.id
+                                )
+                            )
+                    self.collection = list(set(self.collection) - set(master_remove))
+                    if slave_remove:
+                        self.send(slave, list(slave_remove))
                     else:
                         self.ack(slave, event_name)
                 elif event_name == 'need_tests':
