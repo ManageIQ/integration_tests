@@ -10,8 +10,7 @@ from cfme.exceptions import FlavorNotFound, ItemNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
-    ItemsToolBarViewSelector, SummaryTable, Text, Table, PaginationPane, Accordion, ManageIQTree,
-    Search, BreadCrumb)
+    ItemsToolBarViewSelector, SummaryTable, Text, Table, Accordion, ManageIQTree, BreadCrumb)
 
 
 class FlavorView(BaseLoggedInPage):
@@ -31,6 +30,7 @@ class FlavorToolBar(View):
 
 class FlavorEntities(BaseEntitiesView):
     table = Table("//div[@id='gtl_div']//table")
+    # todo: remove table and use entities instead
 
 
 class FlavorDetailsToolBar(View):
@@ -64,8 +64,7 @@ class FlavorAllView(FlavorView):
             self.entities.title.text == 'Flavors')
 
     toolbar = FlavorToolBar()
-    include_entities = View.include(FlavorEntities, use_parent=True)
-    # paginator = PaginationPane()
+    including_entities = View.include(FlavorEntities, use_parent=True)
 
 
 class ProviderFlavorAllView(FlavorAllView):

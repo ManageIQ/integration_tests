@@ -15,8 +15,7 @@ from cfme.utils.wait import wait_for
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from widgetastic_manageiq import (
-    ItemsToolBarViewSelector, ManageIQTree, PaginationPane, Text, Table, Search, BreadCrumb,
-    SummaryTable, Accordion)
+    ItemsToolBarViewSelector, ManageIQTree, Text, Table, BreadCrumb, SummaryTable, Accordion)
 
 
 class ResourcePoolToolbar(View):
@@ -49,6 +48,7 @@ class ResourcePoolDetailsAccordion(View):
 class ResourcePoolEntities(BaseEntitiesView):
     """Entities on the main list page"""
     table = Table("//div[@id='list_grid']//table")
+    # todo: remove table and use entities instead
 
 
 class ResourcePoolDetailsEntities(View):
@@ -62,13 +62,16 @@ class ResourcePoolDetailsEntities(View):
 
 class ResourcePoolView(BaseLoggedInPage):
     """Base view for header and nav checking, navigatable views should inherit this"""
+    title = Text('//div[@id="main-content"]//h1')
+
     @property
     def in_resource_pool(self):
         nav_chain = ['Compute', 'Infrastructure', 'Resource Pools']
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == nav_chain)
-
+            self.navigation.currently_selected == nav_chain and
+            self.title == 'Resource Pools'
+        )
 
 class ResourcePoolAllView(ResourcePoolView):
     """The "all" view -- a list of app the resource pools"""
@@ -79,8 +82,7 @@ class ResourcePoolAllView(ResourcePoolView):
             self.entities.title.text == 'Resource Pools')
 
     toolbar = View.nested(ResourcePoolToolbar)
-    include_entities = View.include(ResourcePoolEntities, use_parent=True)
-    # paginator = PaginationPane()
+    including_entities = View.include(ResourcePoolEntities, use_parent=True)
 
 
 class ResourcePoolDetailsView(ResourcePoolView):
@@ -196,7 +198,7 @@ class ResourcePool(Pretty, BaseEntity, WidgetasticTaggable):
         view = navigate_to(self.parent, 'All')
         try:
             view.toolbar.view_selector.select('List View')
-            view.paginator.find_row_on_pages(view.entities.table, name=self.name)
+            view.entities.paginator.find_row_on_pages(view.entities.table, name=self.name)
             return True
         except NoSuchElementException:
             return False
@@ -223,7 +225,7 @@ class All(CFMENavigateStep):
     def resetter(self):
         """Reset view and selection"""
         self.view.toolbar.view_selector.select('Grid View')
-        self.view.paginator.reset_selection()
+        self.view.entities.paginator.reset_selection()
 
 
 @navigator.register(ResourcePool, 'Details')

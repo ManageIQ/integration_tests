@@ -11,7 +11,7 @@ from cfme.exceptions import AvailabilityZoneNotFound, ItemNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
-    TimelinesView, ItemsToolBarViewSelector, Text, Table, PaginationPane, BreadCrumb,
+    TimelinesView, ItemsToolBarViewSelector, Text, Table, BreadCrumb,
     SummaryTable, Accordion, ManageIQTree)
 
 
@@ -35,6 +35,7 @@ class AvailabilityZoneDetailsToolBar(View):
 class AvailabilityZoneEntities(BaseEntitiesView):
     """View containing the widgets for the main content pane"""
     table = Table("//div[@id='gtl_div']//table")
+    # todo: remove table and use entities instead
 
 
 class AvailabilityZoneDetailsEntities(View):
@@ -75,8 +76,7 @@ class AvailabilityZoneAllView(AvailabilityZoneView):
             self.entities.title.text == 'Availability Zones')
 
     toolbar = View.nested(AvailabilityZoneToolBar)
-    include_entities = View.include(AvailabilityZoneEntities, use_parent=True)
-    # paginator = PaginationPane()
+    including_entities = View.include(AvailabilityZoneEntities, use_parent=True)
 
 
 class ProviderAvailabilityZoneAllView(AvailabilityZoneAllView):
