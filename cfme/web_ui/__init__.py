@@ -63,40 +63,6 @@ from cfme.utils.pretty import Pretty
 from wait_for import TimedOutError, wait_for
 
 
-class Selector(object):
-    """
-    Special Selector object allowing object resolution on attr access
-
-    The Selector is a simple class which allows a 'super' widget to support multiple
-    implementations. This is achieved by the use of a ``decide`` method which accesses
-    attrs of the object set by the ``__init__`` of the child class. These attributes
-    are then used to decide which type of object is on a page. In some cases, this can
-    avoid a version pick if the information used to instantiate both old and new implementations
-    can be identical. This is most noteably if using an "id" which remains constant from
-    implementation to implementation.
-
-    As an example, imagine the normal "checkbox" is replaced wit ha fancy new web 2.0
-    checkbox. Both have an "input" element, and give it the same "id". When the decide method is
-    invoked, the "id" is inspected and used to determine if it is an old or a new style widget.
-    We then set a hidden attribute of the super widget and proxy all further attr requests to
-    that object.
-
-    This means that in order for things to behave as expect ALL implementations must also expose
-    the same "public" API.
-    """
-
-    def __init__(self):
-        self._obj = None
-
-    def __getattr__(self, name):
-        if not self._obj:
-            self._obj = self.decide()
-        return getattr(self._obj, name)
-
-    def decide(self):
-        raise Exception('This widget does not have a "decide" method which is mandatory')
-
-
 class Region(Pretty):
     """
     Base class for all UI regions/pages
@@ -192,17 +158,6 @@ class Region(Pretty):
             logger.info("Title %s doesn't match expected title %s", window_title, self.title)
             title_match = False
         return title_match and ident_match
-
-
-def get_context_current_page():
-    """
-    Returns the current page name
-
-    Returns: A string containing the current page name
-    """
-    url = browser().current_url()
-    stripped = url.lstrip('https://')
-    return stripped[stripped.find('/'):stripped.rfind('?')]
 
 
 class CachedTableHeaders(object):
@@ -696,94 +651,6 @@ class Table(Pretty):
             return sel.move_to_element(self.row_element)
 
 
-class CAndUGroupTable(Table):
-    """Type of tables used in C&U, not tested in others.
-
-    Provides ``.groups()`` generator which yields group objects. A group objects consists of the
-    rows that are located in the group plus the summary informations. THe main principle is that
-    all the rows inside group are stored in group object's ``.rows`` and when the script encounters
-    the end of the group, it will store the summary data after the data rows as attributes, so eg.
-    ``Totals:`` will become ``group.totals``. All the rows are represented as dictionaries.
-    """
-    class States:
-        NORMAL_ROWS = 0
-        GROUP_SUMMARY = 1
-
-    class Group(object):
-        def __init__(self, group_id, headers, rows, info_rows):
-            self.id = group_id
-            self.rows = [dict(zip(headers, row)) for row in rows]
-            info_headers = headers[1:]
-            for info_row in info_rows:
-                name = info_row[0]
-                rest = info_row[1:]
-                data = dict(zip(info_headers, rest))
-                group_attr = attributize_string(name)
-                setattr(self, group_attr, data)
-
-        def __repr__(self):
-            return '<CAndUGroupTable.Group {}'.format(repr(self.id))
-
-    def paginated_rows(self):
-        from cfme.web_ui import paginator
-        for page in paginator.pages():
-            for row in self.rows():
-                yield row
-
-    def find_group(self, group_id):
-        """Finds a group by its group ID (the string that is alone on the line)"""
-        for group in self.groups():
-            if group.id == group_id:
-                return group_id
-        else:
-            raise KeyError('Group {} not found'.format(group_id))
-
-    def groups(self):
-        headers = map(sel.text, self.headers)
-        headers_length = len(headers)
-        rows = self.paginated_rows()
-        current_group_rows = []
-        current_group_summary_rows = []
-        current_group_id = None
-        state = self.States.NORMAL_ROWS
-        while True:
-            try:
-                row = rows.next()
-            except StopIteration:
-                if state == self.States.GROUP_SUMMARY:
-                    row = None
-                else:
-                    break
-            if state == self.States.NORMAL_ROWS:
-                if len(row.columns) == headers_length:
-                    current_group_rows.append(tuple(map(sel.text, row.columns)))
-                else:
-                    # Transition to the group summary
-                    current_group_id = sel.text(row.columns[0]).strip()
-                    state = self.States.GROUP_SUMMARY
-            elif state == self.States.GROUP_SUMMARY:
-                # row is None == we are at the end of the table so a slightly different behaviour
-                if row is not None:
-                    fc_length = len(sel.text(row.columns[0]).strip())
-                if row is None or fc_length == 0:
-                    # Done with group
-                    yield self.Group(
-                        current_group_id, headers, current_group_rows, current_group_summary_rows)
-                    current_group_rows = []
-                    current_group_summary_rows = []
-                    current_group_id = None
-                    state = self.States.NORMAL_ROWS
-                else:
-                    current_group_summary_rows.append(tuple(map(sel.text, row.columns)))
-            else:
-                raise RuntimeError('This should never happen')
-
-        if current_group_id is not None or current_group_rows or current_group_summary_rows:
-            raise ValueError(
-                'GroupTable could not be parsed properly: {} {} {}'.format(
-                    current_group_id, repr(current_group_rows), repr(current_group_summary_rows)))
-
-
 class CheckboxTable(Table):
     """:py:class:`Table` with support for checkboxes
 
@@ -1006,19 +873,6 @@ class PagedTable(Table):
             row = self.find_row_by_cells(cells)
             if row is not None:
                 return row
-
-
-def table_in_object(table_title):
-    """If you want to point to tables inside object view, this is what you want to use.
-
-    Works both on down- and upstream.
-
-    Args:
-        table_title: Text in `p` element preceeding the table
-    Returns: XPath locator for the desired table.
-    """
-    return ("//table[(preceding-sibling::p[1] | preceding-sibling::h3[1])[normalize-space(.)={}]]"
-        .format(quoteattr(table_title)))
 
 
 @multimethod(lambda loc, value: (sel.tag(loc), sel.get_attribute(loc, 'type')))
@@ -2595,22 +2449,6 @@ class AngularCalendarInput(Pretty):
 @fill.method((AngularCalendarInput, Anything))
 def _fill_angular_calendar_input(obj, a):
     return obj.fill(a)
-
-
-def breadcrumbs():
-    """Returns a list of breadcrumbs names if names==True else return as elements.
-
-    Returns:
-        :py:class:`list` of breadcrumbs if they are present, :py:class:`NoneType` otherwise.
-    """
-    elems = sel.elements('//ol[contains(@class, "breadcrumb")]/li')
-    return elems if elems else None
-
-
-def breadcrumbs_names():
-    elems = breadcrumbs()
-    if elems:
-        return map(sel.text_sane, elems)
 
 
 SUMMARY_TITLE_LOCATORS = [

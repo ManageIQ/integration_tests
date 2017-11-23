@@ -2,20 +2,20 @@
 """Page model for Cloud Intel / Reports / Reports"""
 from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
-from cfme.utils.wait import wait_for
-from cfme.utils.pretty import Pretty
-from cfme.utils.update import Updateable
-from cfme.utils.timeutil import parsetime
-from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from . import CloudIntelReportsView, ReportsMultiBoxSelect
-
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import Text, Checkbox, View, ParametrizedView, Table as VanillaTable
-from widgetastic.exceptions import NoSuchElementException
-from widgetastic_manageiq import PaginationPane, Table
 from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab, CandidateNotFound
-from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
+
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.pretty import Pretty
+from cfme.utils.timeutil import parsetime
+from cfme.utils.update import Updateable
+from cfme.utils.wait import wait_for
+from widgetastic_manageiq import PaginationPane, Table
+from widgetastic_manageiq.expression_editor import ExpressionEditor
+from . import CloudIntelReportsView, ReportsMultiBoxSelect
 
 
 class CustomReportFormCommon(CloudIntelReportsView):
