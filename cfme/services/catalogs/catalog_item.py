@@ -3,12 +3,11 @@ from types import NoneType
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Checkbox, View
 from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound, Tab
-from widgetastic_manageiq import Table, ManageIQTree
+from widgetastic_manageiq import ManageIQTree
 
 from cfme.common.vm_views import BasicProvisionFormView
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import tabstrip
 from cfme.utils.update import Updateable
 from cfme.utils.pretty import Pretty
 from cfme.utils.appliance import Navigatable
@@ -33,6 +32,14 @@ class BasicInfoForm(ServicesCatalogView):
     select_resource = BootstrapSelect('resource_id')
     tree = ManageIQTree('automate_treebox')
     cancel_button = Button('Cancel')
+
+
+class BasicInfoTab(Tab, BasicInfoForm):
+    TAB_NAME = 'Basic Info'
+
+
+class RequestInfoTab(Tab, BasicProvisionFormView):
+    TAB_NAME = 'Request Info'
 
 
 class ButtonGroupForm(ServicesCatalogView):
@@ -89,9 +96,9 @@ class CatalogForm(BasicInfoForm):
 
 
 class AddCatalogItemView(CatalogForm):
-    template_table = Table('//div[@id="prov_vm_div"]/table')
     apply_button = Button('Apply')
     add_button = Button("Add")
+    request_info = View.nested(RequestInfoTab)
 
     @property
     def is_displayed(self):
@@ -135,21 +142,7 @@ class AddButtonView(ButtonForm):
 
 class CatalogBundleFormView(ServicesCatalogView):
     title = Text('#explorer_title_text')
-
-    @View.nested
-    class basic_info(Tab):  # noqa
-        TAB_NAME = "Basic Info"
-        name = Input(name='name')
-        description = Input(name='description')
-        display = Checkbox(name='display')
-        select_catalog = BootstrapSelect('catalog_id')
-        select_dialog = BootstrapSelect('dialog_id')
-        select_orch_template = BootstrapSelect('template_id')
-        select_provider = BootstrapSelect('manager_id')
-        select_config_template = BootstrapSelect('template_id')
-        field_entry_point = Input(name='fqname')
-        retirement_entry_point = Input(name='retire_fqname')
-        tree = ManageIQTree('automate_treebox')
+    basic_info = View.nested(BasicInfoTab)
 
     @View.nested
     class resources(Tab):  # noqa
@@ -232,17 +225,12 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
                 "Datastore", self.domain, "Service", "Retirement",
                 "StateMachines", "ServiceRetirement", "Generic")
             view.apply_button.click()
-
-        if self.catalog_name is not None \
-                and self.provisioning_data is not None \
-                and not isinstance(self.provider, NoneType):
-            tabstrip.select_tab("Request Info")
-            tabstrip.select_tab("Catalog")
-            row = view.template_table.row(name=self.catalog_name, provider=self.provider.name)
-            row.click()
-            provisioning_view = self.create_view(BasicProvisionFormView)
-            provisioning_view.fill_with(self.provisioning_data)
-
+        if (self.catalog_name is not None and
+                self.provisioning_data is not None and
+                not isinstance(self.provider, NoneType)):
+            view.request_info.catalog.catalog_name.row(
+                name=self.catalog_name, provider=self.provider.name).click()
+            view.request_info.fill(self.provisioning_data)
         view.add_button.click()
         view.flash.assert_success_message('Service Catalog Item "{}" was added'.format(self.name))
         view = self.create_view(AllCatalogItemView)
