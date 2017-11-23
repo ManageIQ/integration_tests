@@ -65,12 +65,7 @@ def test_pxe_image_type_required_error_validation(collection):
             script_data='Testing the script')
 
 
-@pytest.mark.meta(
-    blockers=[
-        BZ(1092951, ignore_bugs=[1083198]),
-        BZ(1450927, forced_streams=['5.8']),
-    ]
-)
+@pytest.mark.uncollectif(BZ(1449116, forced_streams=['5.7', '5.8']).blocks, reason='BZ 1449116')
 def test_duplicate_name_error_validation(collection):
     """Test to validate duplication in customization templates."""
 
