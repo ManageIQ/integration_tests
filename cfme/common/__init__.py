@@ -91,7 +91,7 @@ class PolicyProfileAssignable(object):
                 view.policy_profiles.uncheck_node(policy_profile)
         view.save.click()
         details_view = self.create_view(navigator.get_class(self, 'Details').VIEW)
-        details_view.flash.assert_no_errors()
+        details_view.flash.assert_no_error()
 
 
 @navigator.register(PolicyProfileAssignable, 'ManagePoliciesFromDetails')
