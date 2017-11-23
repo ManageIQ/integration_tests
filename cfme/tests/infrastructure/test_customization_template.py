@@ -104,9 +104,8 @@ def test_name_max_character_validation(collection):
         image_type='RHEL-6',
         script_type='Kickstart',
         script_data='Testing the script')
-    created_template = collection.create(name=template_name.name[:255],
+    created_template = collection.instantiate(name=template_name.name[:255],
                                          image_type=template_name.image_type)
     view = navigate_to(created_template, 'Details')
     assert len(view.entities.basic_information.get_text_of('Name')) < 256
-    created_template.delete(cancel=False)
     collection.delete(False, created_template)
