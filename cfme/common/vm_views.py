@@ -174,6 +174,21 @@ class VMEntities(BaseEntitiesView):
     adv_search_clear = Text('//div[@id="main-content"]//h1//span[@id="clear_search"]/a')
 
 
+class HostAllVMsView(BaseLoggedInPage):
+    """
+    This view is used in test_host_relationships
+    """
+
+    title = Text(".//div[@id='main-content']//h1")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.navigation.currently_selected == ["Compute", "Infrastructure", "Hosts"] and
+            self.title.text == "{} (All Direct VMs)".format(self.context["object"].name)
+        )
+
+
 class VMDetailsEntities(View):
     """
     Details entities view for vms/instances details destinations
