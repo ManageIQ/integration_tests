@@ -18,7 +18,8 @@ class ServicesCatalogView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return self.in_explorer and self.configuration.is_displayed and not self.catalogs.is_dimmed
+        return (self.in_explorer and self.toolbar.configuration.is_displayed and
+                not self.catalogs.is_dimmed)
 
     @View.nested
     class service_catalogs(Accordion):  # noqa
@@ -42,8 +43,16 @@ class ServicesCatalogView(BaseLoggedInPage):
     class catalogs(Accordion):  # noqa
         tree = ManageIQTree()
 
-    configuration = Dropdown('Configuration')
-    policy = Dropdown('Policy')
+    @View.nested
+    class toolbar(View):
+        configuration = Dropdown('Configuration')
+        policy = Dropdown('Policy')
+
+    # for backward compatibility. it is difficult to figure out where those are used
+    # TODO: this should be fixed by this code owner
+    configuration = toolbar.configuration
+    policy = toolbar.policy
+
     flash = FlashMessages(".//div[@id='flash_msg_div']/div")
 
 
