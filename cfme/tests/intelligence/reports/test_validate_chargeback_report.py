@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import cfme.configure.access_control as ac
 import cfme.intelligence.chargeback.rates as rates
 import cfme.intelligence.chargeback.assignments as cb
 import fauxfactory
@@ -8,21 +7,22 @@ import math
 import pytest
 import re
 
-from cfme.cloud.provider.azure import AzureProvider
-from cfme.cloud.provider.gce import GCEProvider
 from cfme import test_requirements
 from cfme.base.credential import Credential
+from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.vm import VM
 from cfme.common.provider import BaseProvider
+from cfme.configure.access_control import GroupCollection, UserCollection
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CustomReport
-from datetime import date
-from fixtures.provider import setup_or_skip
 from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
+from datetime import date
+from fixtures.provider import setup_or_skip
 
 
 pytestmark = [
@@ -76,19 +76,19 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
         provider.mgmt.start_vm(vm_name)
         provider.mgmt.wait_vm_running(vm_name)
 
-    group_collection = appliance.collections.rbac_groups
-    cb_group = group_collection.instantiate(description='EvmGroup-user')
-    user = ac.User(name=provider.name + fauxfactory.gen_alphanumeric(),
-        credential=new_credential(),
-        email='abc@example.com',
-        group=cb_group,
-        cost_center='Workload',
-        value_assign='Database')
+    cb_group = GroupCollection(appliance).instantiate(description='EvmGroup-user')
 
     vm = VM.factory(vm_name, provider)
 
     try:
-        user.create()
+        user = UserCollection(appliance).create(
+            name='{}{}'.format(provider.name, fauxfactory.gen_alphanumeric()),
+            credential=new_credential(),
+            email='abc@example.com',
+            group=cb_group,
+            cost_center='Workload',
+            value_assign='Database')
+
         vm.set_ownership(user=user.name)
         logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
 

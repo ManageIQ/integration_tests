@@ -35,5 +35,5 @@ def test_group_roles(
     except KeyError:
         pytest.fail('No match in credentials file for group "{}"'.format(group_name))
 
-    appliance.server.login(simple_user(username, password))
+    appliance.server.login(simple_user(appliance, username, password))
     # assert set(menu.nav.visible_pages()) == set(group_data)
