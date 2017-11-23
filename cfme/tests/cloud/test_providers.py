@@ -363,7 +363,7 @@ def test_select_key_pair_none_while_provisioning(request, has_no_cloud_providers
     provider.validate()
 
     view = navigate_to(Instance, 'Provision')
-    view.form.image_table[0].click()
+    view.image_table[0].click()
     view.form.continue_button.click()
 
     view.form.properties.guest_keypair.fill('<None>')

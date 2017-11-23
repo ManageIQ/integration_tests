@@ -12,8 +12,8 @@ from widgetastic.utils import partial_match, Parameter, VersionPick, Version
 from widgetastic.widget import (
     Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
 from widgetastic_patternfly import (
-    Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, CheckableBootstrapTreeview)
-
+    Button, BootstrapSelect, BootstrapSwitch, CheckableBootstrapTreeview, Dropdown, Input as
+    WInput)
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.candu_views import VMUtilizationAllView
 from cfme.common.vm import VM, Template as BaseTemplate
@@ -707,26 +707,29 @@ class Vm(VM):
             raise OptionNotAvailable(option + " is not a supported action")
 
     def migrate_vm(self, email=None, first_name=None, last_name=None,
-                   host_name=None, datastore_name=None):
+                   host=None, datastore=None):
         view = navigate_to(self, 'Migrate')
         first_name = first_name or fauxfactory.gen_alphanumeric()
         last_name = last_name or fauxfactory.gen_alphanumeric()
         email = email or "{}@{}.test".format(first_name, last_name)
         try:
             prov_data = cfme_data["management_systems"][self.provider.key]["provisioning"]
+            host_name = host or prov_data.get("host")
+            datastore_name = datastore or prov_data.get("datastore")
         except (KeyError, IndexError):
             raise ValueError("You have to specify the correct options in cfme_data.yaml")
-        provisioning_data = {
+        request_data = {
             'request': {
                 'email': email,
                 'first_name': first_name,
-                'last_name': last_name},
-            'environment': {"host_name": {'name': prov_data.get("host")}},
+                'last_name': last_name,
+            },
+            'environment': {
+                'host_name': {'name': host_name},
+                'datastore_name': {'name': datastore_name}
+            },
         }
-        if not self.provider.one_of(RHEVMProvider):
-            provisioning_data['environment']["datastore_name"] = {
-                "name": prov_data.get("datastore")}
-        view.form.fill_with(provisioning_data, on_change=view.form.submit)
+        view.form.fill_with(request_data, on_change=view.form.submit)
 
     def clone_vm(self, email=None, first_name=None, last_name=None,
                  vm_name=None, provision_type=None):

@@ -481,7 +481,7 @@ class SetRetirement(CFMENavigateStep):
 @navigator.register(Instance, 'Timelines')
 class Timelines(CFMENavigateStep):
     VIEW = InstanceTimelinesView
-    prerequisite = NavigateToSibling('Details')
+    prerequisite = NavigateToSibling('ArchiveDetails')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')

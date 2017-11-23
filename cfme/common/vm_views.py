@@ -378,13 +378,13 @@ class ProvisionView(BaseLoggedInPage):
     """
     title = Text('#explorer_title_text')
     breadcrumb = BreadCrumb()
+    image_table = Table('//div[@id="pre_prov_div"]//table')
 
     @View.nested
     class form(BasicProvisionFormView):  # noqa
         """First page of provision form is image selection
         Second page of form is tabbed with nested views
         """
-        image_table = Table('//div[@id="pre_prov_div"]//table')
         continue_button = Button('Continue')  # Continue button on 1st page, image selection
         submit_button = Button('Submit')  # Submit for 2nd page, tabular form
         cancel_button = Button('Cancel')
@@ -396,8 +396,7 @@ class ProvisionView(BaseLoggedInPage):
                                        self.parent_view.context['object'].template_name)
             provider_name = self.parent_view.context['object'].provider.name
             try:
-                row = self.image_table.row(name=template_name,
-                                           provider=provider_name)
+                row = self.parent.image_table.row(name=template_name, provider=provider_name)
             except IndexError:
                 raise TemplateNotFound('Cannot find template "{}" for provider "{}"'
                                        .format(template_name, provider_name))
@@ -435,7 +434,6 @@ class MigrateVmView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        # Nothing is shown
         return False
 
 
