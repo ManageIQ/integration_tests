@@ -98,6 +98,7 @@ setup(
             'clusters = cfme.infrastructure.cluster:ClusterCollection',
             'hosts = cfme.infrastructure.host:HostCollection',
             'deployment_roles = cfme.infrastructure.deployment_roles:DeploymentRoleCollection',
+            'customization_templates = cfme.infrastructure.pxe:CustomizationTemplateCollection',
             'system_image_types = cfme.infrastructure.pxe:SystemImageTypeCollection',
             'schedules = cfme.intelligence.reports.schedules:ScheduleCollection',
             ('system_schedules = '

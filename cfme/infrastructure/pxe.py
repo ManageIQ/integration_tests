@@ -11,9 +11,9 @@ from widgetastic_patternfly import Dropdown, Accordion, FlashMessages, Bootstrap
 
 from cfme.base import BaseEntity, BaseCollection
 from cfme.base.login import BaseLoggedInPage
-from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils import conf
+from cfme.utils.appliance import get_or_create_current_appliance, Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.datafile import load_data_file
 from cfme.utils.path import project_path
 from cfme.utils.update import Updateable
@@ -391,6 +391,7 @@ class PXECustomizationTemplatesView(PXEMainView):
     represents Customization Template Groups page
     """
     entities = Table(locator='.//div[@id="template_folders_div"]/table')
+    table = Table("//div[@id='main_div']//table")
 
     @property
     def is_displayed(self):
@@ -445,51 +446,18 @@ class PXECustomizationTemplateEditView(PXECustomizationTemplateForm):
     cancel = Button('Cancel')
 
 
-class CustomizationTemplate(Updateable, Pretty, Navigatable):
-    """ Model of a Customization Template in CFME
-
-    Args:
-        name: The name of the template.
-        description: Template description.
-        image_type: Image type name, must be one of an existing System Image Type.
-        script_type: Script type, either Kickstart, Cloudinit or Sysprep.
-        script_data: The scripts data.
+@attr.s
+class CustomizationTemplate(Updateable, Pretty, BaseEntity):
+    """
+    Model of a Customization Template in CFME
     """
     pretty_attrs = ['name', 'image_type']
 
-    def __init__(self, name=None, description=None, image_type=None, script_type=None,
-                 script_data=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.description = description
-        self.image_type = image_type
-        self.script_type = script_type
-        self.script_data = script_data
-
-    def create(self, cancel=False):
-        """
-        Creates a Customization Template object
-
-        Args:
-            cancel (boolean): Whether to cancel out of the creation.  The cancel is done
-                after all the information present in the CT has been filled in the UI.
-        """
-        view = navigate_to(self, 'Add')
-
-        view.fill({'name': self.name,
-                   'description': self.description,
-                   'image_type': self.image_type,
-                   'type': self.script_type,
-                   'script': self.script_data})
-        main_view = self.create_view(PXECustomizationTemplatesView)
-
-        if cancel:
-            view.cancel.click()
-            msg = 'Add of new Customization Template was cancelled by the user'
-        else:
-            view.add.click()
-            msg = 'Customization Template "{}" was saved'.format(self.name)
-        main_view.flash.assert_success_message(msg)
+    name = attr.ib(default=None)
+    description = attr.ib(default=None)
+    script_data = attr.ib(default=None)
+    image_type = attr.ib(default=None)
+    script_type = attr.ib(default=None)
 
     @variable(alias='db')
     def exists(self):
@@ -520,38 +488,94 @@ class CustomizationTemplate(Updateable, Pretty, Navigatable):
            updates (dict): fields that are changing.
            cancel (boolean): whether to cancel out of the update.
         """
+
+        if 'image_type' in updates and updates['image_type'] is None:
+            updates['image_type'] = '<Choose>'
+
+        elif 'script_type' in updates and updates['script_type'] is None:
+            updates['script_type'] = '<Choose>'
+
         view = navigate_to(self, 'Edit')
         view.fill(updates)
         main_view = self.create_view(PXECustomizationTemplatesView, override=updates)
         name = updates.get('name') or self.name
+        description = updates.get('description') or self.description
 
         if cancel:
             view.cancel.click()
             msg = 'Edit of Customization Template "{}" was cancelled by the user'.format(name)
         else:
             view.save.click()
-            msg = 'Customization Template "{}" was saved'.format(name)
+            if self.appliance.version < 5.9:
+                msg = 'Customization Template "{}" was saved'.format(name)
+            else:
+                msg = 'Customization Template "{}" was saved'.format(description)
         main_view.flash.assert_success_message(msg)
 
-    def delete(self, cancel=True):
+
+@attr.s
+class CustomizationTemplateCollection(BaseCollection):
+    """Collection class for CustomizationTemplate"""
+
+    ENTITY = CustomizationTemplate
+
+    def create(self, name, description, image_type, script_type, script_data, cancel=False):
+        """
+        Creates a Customization Template object
+
+        Args:
+            cancel (boolean): Whether to cancel out of the creation.  The cancel is done
+                after all the information present in the CT has been filled in the UI.
+            name: Name of CT
+            description:description: The description field of CT.
+            image_type: Image type of the CT.
+            script_data: Contains the script data.
+            script_type: It specifies the script_type of the script.
+        """
+
+        customization_templates = self.instantiate(name, description, script_data,
+                                                   image_type, script_type)
+        view = navigate_to(self, 'Add')
+        view.fill({'name': name,
+                   'description': description,
+                   'image_type': image_type,
+                   'type': script_type,
+                   'script': script_data})
+        main_view = self.create_view(PXECustomizationTemplatesView)
+        if cancel:
+            view.cancel.click()
+            msg = 'Add of new Customization Template was cancelled by the user'
+        else:
+            view.add.click()
+            if self.appliance.version < 5.9:
+                msg = 'Customization Template "{}" was saved'.format(name)
+            else:
+                msg = 'Customization Template "{}" was saved'.format(description)
+        main_view.flash.assert_success_message(msg)
+        return customization_templates
+
+    def delete(self, cancel=False, *ct_objs):
         """
         Deletes a Customization Template server from CFME
 
         Args:
+            ct_objs: It's a Customization Template object
             cancel: Whether to cancel the deletion, defaults to True
         """
-        view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Remove this Customization Template',
-                                               handle_alert=cancel)
-        if not cancel:
-            main_view = self.create_view(PXECustomizationTemplatesView)
-            msg = 'Customization Template "{}": Delete successful'.format(self.description)
-            main_view.flash.assert_success_message(msg)
-        else:
-            navigate_to(self, 'Details')
+
+        for ct_obj in ct_objs:
+            view = navigate_to(ct_obj, 'Details')
+            view.toolbar.configuration.item_select('Remove this Customization Template',
+                                                   handle_alert=not cancel)
+            if not cancel:
+                main_view = ct_obj.create_view(PXECustomizationTemplatesView)
+                msg = 'Customization Template "{}": Delete successful'.format(ct_obj.description)
+                main_view.flash.assert_success_message(msg)
+            else:
+                navigate_to(ct_obj, 'Details')
 
 
-@navigator.register(CustomizationTemplate, 'All')
+@navigator.register(CustomizationTemplateCollection, 'All')
 class CustomizationTemplateAll(CFMENavigateStep):
     VIEW = PXECustomizationTemplatesView
     prerequisite = NavigateToSibling('PXEMainPage')
@@ -561,7 +585,7 @@ class CustomizationTemplateAll(CFMENavigateStep):
                                                      'System Image Types'))
 
 
-@navigator.register(CustomizationTemplate, 'Add')
+@navigator.register(CustomizationTemplateCollection, 'Add')
 class CustomizationTemplateAdd(CFMENavigateStep):
     VIEW = PXECustomizationTemplateAddView
     prerequisite = NavigateToSibling('All')
@@ -573,7 +597,7 @@ class CustomizationTemplateAdd(CFMENavigateStep):
 @navigator.register(CustomizationTemplate, 'Details')
 class CustomizationTemplateDetails(CFMENavigateStep):
     VIEW = PXECustomizationTemplateDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         tree = self.view.sidebar.templates.tree
@@ -939,7 +963,7 @@ class ISODatastoreDetails(CFMENavigateStep):
 
 
 @navigator.register(PXEServer, 'PXEMainPage')
-@navigator.register(CustomizationTemplate, 'PXEMainPage')
+@navigator.register(CustomizationTemplateCollection, 'PXEMainPage')
 @navigator.register(SystemImageTypeCollection, 'PXEMainPage')
 @navigator.register(ISODatastore, 'PXEMainPage')
 class PXEMainPage(CFMENavigateStep):
@@ -960,12 +984,13 @@ def get_template_from_config(template_config_name):
                                  replacements=template_config['replacements'])
 
     script_data = script_data.read()
-
-    return CustomizationTemplate(name=template_config['name'],
-                                 description=template_config['description'],
-                                 image_type=template_config['image_type'],
-                                 script_type=template_config['script_type'],
-                                 script_data=script_data)
+    appliance = get_or_create_current_appliance()
+    collection = appliance.collections.customization_templates
+    return collection.instantiate(name=template_config['name'],
+                                  description=template_config['description'],
+                                  image_type=template_config['image_type'],
+                                  script_type=template_config['script_type'],
+                                  script_data=script_data)
 
 
 def get_pxe_server_from_config(pxe_config_name):

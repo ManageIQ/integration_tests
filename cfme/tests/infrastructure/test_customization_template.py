@@ -2,100 +2,100 @@
 import fauxfactory
 import pytest
 
-from cfme.infrastructure import pxe
-from cfme.utils import error
-from cfme.utils.blockers import BZ
+from cfme.utils import error, version
 from cfme.utils.update import update
 
 pytestmark = [pytest.mark.tier(3)]
 
 
-def test_customization_template_crud():
-    """Basic CRUD test for customization templates."""
-    template_crud = pxe.CustomizationTemplate(
-        name=fauxfactory.gen_alphanumeric(8),
-        description=fauxfactory.gen_alphanumeric(16),
-        image_type='RHEL-6',
-        script_type='Kickstart',
-        script_data='Testing the script')
+@pytest.fixture(scope="module")
+def collection(appliance):
+    return appliance.collections.customization_templates
 
-    template_crud.create()
+
+def test_customization_template_crud(collection):
+    """Basic CRUD test for customization templates."""
+
+    template_crud = collection.create(name=fauxfactory.gen_alphanumeric(8),
+                                      description=fauxfactory.gen_alphanumeric(16),
+                                      image_type='RHEL-6',
+                                      script_type='Kickstart',
+                                      script_data='Testing the script')
+
     with update(template_crud):
         template_crud.name = template_crud.name + "_update"
-    template_crud.delete(cancel=False)
+    collection.delete(False, template_crud)
 
 
-def test_name_required_error_validation():
+def test_name_required_error_validation(collection):
     """Test to validate name in customization templates."""
-    template_name = pxe.CustomizationTemplate(
-        name=None,
-        description=fauxfactory.gen_alphanumeric(16),
-        image_type='RHEL-6',
-        script_type='Kickstart',
-        script_data='Testing the script')
 
     with error.expected('Name is required'):
-        template_name.create()
+        collection.create(
+            name=None,
+            description=fauxfactory.gen_alphanumeric(16),
+            image_type='RHEL-6',
+            script_type='Kickstart',
+            script_data='Testing the script')
 
 
-def test_type_required_error_validation():
+def test_type_required_error_validation(collection):
     """Test to validate type in customization templates."""
-    template_name = pxe.CustomizationTemplate(
-        name=fauxfactory.gen_alphanumeric(8),
-        description=fauxfactory.gen_alphanumeric(16),
-        image_type='RHEL-6',
-        script_type='<Choose>',
-        script_data='Testing the script')
 
     with error.expected('Type is required'):
-        template_name.create()
+        collection.create(
+            name=fauxfactory.gen_alphanumeric(8),
+            description=fauxfactory.gen_alphanumeric(16),
+            image_type='RHEL-6',
+            script_type=None,
+            script_data='Testing the script')
 
 
-def test_pxe_image_type_required_error_validation():
+def test_pxe_image_type_required_error_validation(collection):
     """Test to validate pxe image type in customization templates."""
-    template_name = pxe.CustomizationTemplate(
-        name=fauxfactory.gen_alphanumeric(8),
-        description=fauxfactory.gen_alphanumeric(16),
-        image_type='<Choose>',
-        script_type='Kickstart',
-        script_data='Testing the script')
 
     with error.expected("Pxe_image_type can't be blank"):
-        template_name.create()
+        collection.create(
+            name=fauxfactory.gen_alphanumeric(8),
+            description=fauxfactory.gen_alphanumeric(16),
+            image_type=None,
+            script_type='Kickstart',
+            script_data='Testing the script')
 
 
-@pytest.mark.meta(
-    blockers=[
-        BZ(1092951, ignore_bugs=[1083198]),
-        BZ(1450927, forced_streams=['5.8']),
-    ]
-)
-def test_duplicate_name_error_validation():
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
+def test_duplicate_name_error_validation(collection):
     """Test to validate duplication in customization templates."""
-    template_name = pxe.CustomizationTemplate(
-        name=fauxfactory.gen_alphanumeric(8),
-        description=fauxfactory.gen_alphanumeric(16),
+
+    name = fauxfactory.gen_alphanumeric(8)
+    description = fauxfactory.gen_alphanumeric(16)
+    template_name = collection.create(
+        name=name,
+        description=description,
         image_type='RHEL-6',
         script_type='Kickstart',
         script_data='Testing the script')
 
-    template_name.create()
     with error.expected('Name has already been taken'):
-        template_name.create()
-    template_name.delete(cancel=False)
+        collection.create(
+            name=name,
+            description=description,
+            image_type='RHEL-6',
+            script_type='Kickstart',
+            script_data='Testing the script')
+    collection.delete(False, template_name)
 
 
 @pytest.mark.xfail(message='http://cfme-tests.readthedocs.org/guides/gotchas.html#'
-    'selenium-is-not-clicking-on-the-element-it-says-it-is')
-def test_name_max_character_validation():
+                           'selenium-is-not-clicking-on-the-element-it-says-it-is')
+def test_name_max_character_validation(collection):
     """Test to validate name with maximum characters in customization templates."""
-    template_name = pxe.CustomizationTemplate(
-        name=fauxfactory.gen_alphanumeric(256),
-        description=fauxfactory.gen_alphanumeric(16),
-        image_type='RHEL-6',
-        script_type='Kickstart',
-        script_data='Testing the script')
 
     with error.expected('Name is required'):
-        template_name.create()
-    template_name.delete(cancel=False)
+        template_name = collection.create(
+            name=fauxfactory.gen_alphanumeric(256),
+            description=fauxfactory.gen_alphanumeric(16),
+            image_type='RHEL-6',
+            script_type='Kickstart',
+            script_data='Testing the script')
+    collection.delete(False, template_name)
