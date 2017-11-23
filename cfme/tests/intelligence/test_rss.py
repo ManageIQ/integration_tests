@@ -10,8 +10,8 @@ rss_table = Table("//div[@id='tab_div']/table", header_offset=1)
 
 
 @pytest.mark.tier(3)
-def test_verify_rss_links():
-    navigate_to(Server, 'RSS')
+def test_verify_rss_links(appliance):
+    navigate_to(appliance.server, 'RSS')
     for row in rss_table.rows():
         url = pytest.sel.text(row["feed_url"]).strip()
         req = requests.get(url, verify=False)

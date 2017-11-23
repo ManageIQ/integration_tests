@@ -270,7 +270,7 @@ class RepositoryCollection(BaseCollection):
         """
         repositories = list(repositories)
         checked_repositories = []
-        view = navigate_to(Server, "AnsibleRepositories")
+        view = navigate_to(self.appliance.server, "AnsibleRepositories")
         view.paginator.uncheck_all()
         if not view.entities.is_displayed:
             raise ValueError("No repository found!")

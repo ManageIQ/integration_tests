@@ -40,14 +40,15 @@ class ControlImportExport(CFMENavigateStep):
         self.view.navigation.select("Control", "Import / Export")
 
 
-def import_file(filename, cancel=False):
+# TODO: This function should be on a class somewhere
+def import_file(appliance, filename, cancel=False):
     """ Go to Control / Import Export and import given file.
 
     Args:
         filename: Full path to file to import.
         cancel: Whether to click Cancel instead of commit.
     """
-    view = navigate_to(Server, "ControlImportExport")
+    view = navigate_to(appliance.server, "ControlImportExport")
     assert view.is_displayed
     view.fill({
         "upload_file": filename
@@ -61,7 +62,8 @@ def import_file(filename, cancel=False):
     view.commit_button.click()
 
 
-def is_imported(policy_profile):
-    view = navigate_to(Server, "ControlImportExport")
+# TODO: This function should be on a class somewhere
+def is_imported(appliance, policy_profile):
+    view = navigate_to(appliance.server, "ControlImportExport")
     assert view.is_displayed
     return policy_profile in view.policy_profiles.read()

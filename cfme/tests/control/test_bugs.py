@@ -148,7 +148,7 @@ def hardware_reconfigured_alert(alert_collection):
 
 
 @pytest.mark.meta(blockers=[1155284])
-def test_scope_windows_registry_stuck(request, infra_provider, policy_collection,
+def test_scope_windows_registry_stuck(request, appliance, infra_provider, policy_collection,
         policy_profile_collection):
     """If you provide Scope checking windows registry, it messes CFME up. Recoverable."""
     policy = policy_collection.create(
@@ -168,7 +168,7 @@ def test_scope_windows_registry_stuck(request, infra_provider, policy_collection
     vm = VM.factory(Vm.get_first_vm(provider=infra_provider).name, infra_provider)
     vm.assign_policy_profiles(profile.description)
     # It should be screwed here, but do additional check
-    navigate_to(Server, 'Dashboard')
+    navigate_to(appliance.server, 'Dashboard')
     navigate_to(Vm, 'All')
     assert "except" not in pytest.sel.title().lower()
     vm.unassign_policy_profiles(profile.description)

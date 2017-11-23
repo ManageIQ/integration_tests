@@ -105,7 +105,7 @@ def test_user_crud(group_collection):
 
 # @pytest.mark.meta(blockers=[1035399]) # work around instead of skip
 @pytest.mark.tier(2)
-def test_user_login(group_collection):
+def test_user_login(appliance, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
@@ -113,7 +113,7 @@ def test_user_login(group_collection):
     user.create()
     try:
         with user:
-            navigate_to(Server, 'Dashboard')
+            navigate_to(appliance.server, 'Dashboard')
     finally:
         user.appliance.server.login_admin()
 

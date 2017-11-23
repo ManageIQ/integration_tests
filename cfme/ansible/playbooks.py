@@ -122,7 +122,7 @@ class PlaybooksCollection(BaseCollection):
     ENTITY = Playbook
 
     def all(self):
-        view = navigate_to(Server, "AnsiblePlaybooks")
+        view = navigate_to(self.appliance.server, "AnsiblePlaybooks")
         playbooks = []
         for entity in view.entities.get_all(surf_pages=True):
             parent = self.filters.get('parent', None)

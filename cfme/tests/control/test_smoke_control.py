@@ -31,29 +31,29 @@ control_explorer_accordions = [
 
 
 @pytest.fixture(scope="module")
-def control_explorer_view():
-    return navigate_to(Server, "ControlExplorer")
+def control_explorer_view(appliance):
+    return navigate_to(appliance.server, "ControlExplorer")
 
 
 @pytest.mark.parametrize("destination", destinations)
-def test_control_navigation(destination):
+def test_control_navigation(destination, appliance):
     """This test verifies presence of destinations of Control tab.
 
     Steps:
         * Open each destination of Control tab.
     """
-    view = navigate_to(Server, destination)
+    view = navigate_to(appliance.server, destination)
     assert view.is_displayed
 
 
 @pytest.mark.parametrize("destination", control_explorer_accordions)
-def test_control_explorer_tree(control_explorer_view, destination):
+def test_control_explorer_tree(control_explorer_view, destination, appliance):
     """This test checks the accordion of Control/Explorer.
 
     Steps:
         * Open each accordion tab and click on top node of the tree.
     """
-    navigate_to(Server, 'ControlExplorer')
+    navigate_to(appliance.server, 'ControlExplorer')
     accordion_name = destination.lower().replace(" ", "_")
     accordion = getattr(control_explorer_view, accordion_name)
     accordion.tree.click_path("All {}".format(destination))

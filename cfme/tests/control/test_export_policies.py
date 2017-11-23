@@ -29,7 +29,7 @@ def policy_profile(request, policy_collection, policy_profile_collection):
 @test_requirements.control
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1202229], automates=[1202229])
-def test_policy_profiles_listed(policy_profile):
+def test_policy_profiles_listed(appliance, policy_profile):
     """This test verifies that policy profiles are displayed in the selector for export.
 
     Prerequisities:
@@ -40,4 +40,4 @@ def test_policy_profiles_listed(policy_profile):
         * Select ``Policy Profiles`` from the ``Export:`` dropdown.
         * Assert that the policy profile is displayed in the selector.
     """
-    is_imported(policy_profile)
+    is_imported(appliance, policy_profile)

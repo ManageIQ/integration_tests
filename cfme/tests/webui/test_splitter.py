@@ -69,7 +69,7 @@ def test_pull_splitter_persistence(request, location, appliance):
 
     splitter.pull_left()
     splitter.pull_left()
-    navigate_to(Server, 'Dashboard')
+    navigate_to(appliance.server, 'Dashboard')
     try:
         navigate_to(*location)
     except (TypeError, CannotScrollException):
@@ -84,7 +84,7 @@ def test_pull_splitter_persistence(request, location, appliance):
     for position in ["col-md-2", "col-md-3", "col-md-4", "col-md-5"]:
         # Pull splitter left
         splitter.pull_right()
-        navigate_to(Server, 'Dashboard')
+        navigate_to(appliance.server, 'Dashboard')
         navigate_to(*location)
         # Then check its position
         if not pytest.sel.elements("//div[@id='left_div'][contains(@class, {})]"

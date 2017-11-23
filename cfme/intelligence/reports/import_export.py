@@ -83,8 +83,8 @@ class ImportExportWidgets(CFMENavigateStep):
         self.view.import_export.tree.click_path("Import / Export", "Widgets")
 
 
-def export_reports(*custom_report_names):
-    view = navigate_to(Server, "ImportExportCustomReports")
+def export_reports(appliance, *custom_report_names):
+    view = navigate_to(appliance.server, "ImportExportCustomReports")
     assert view.is_displayed
     view.fill({
         "items_for_export": list(custom_report_names)
@@ -92,8 +92,8 @@ def export_reports(*custom_report_names):
     view.export_button.click()
 
 
-def import_reports(filename, overwrite=False):
-    view = navigate_to(Server, "ImportExportCustomReports")
+def import_reports(appliance, filename, overwrite=False):
+    view = navigate_to(appliance.server, "ImportExportCustomReports")
     assert view.is_displayed
     view.fill({
         "overwrite": overwrite,
@@ -103,8 +103,8 @@ def import_reports(filename, overwrite=False):
     view.flash.assert_no_error()
 
 
-def export_widgets(*widget_names):
-    view = navigate_to(Server, "ImportExportWidgets")
+def export_widgets(appliance, *widget_names):
+    view = navigate_to(appliance.server, "ImportExportWidgets")
     assert view.is_displayed
     view.fill({
         "items_for_export": list(widget_names)
@@ -112,8 +112,8 @@ def export_widgets(*widget_names):
     view.export_button.click()
 
 
-def import_widgets(filename, overwrite=False):
-    view = navigate_to(Server, "ImportExportWidgets")
+def import_widgets(appliance, filename, overwrite=False):
+    view = navigate_to(appliance.server, "ImportExportWidgets")
     assert view.is_displayed
     view.fill({
         "overwrite": overwrite,

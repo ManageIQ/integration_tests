@@ -14,7 +14,7 @@ def test_csrf_post(appliance):
     to something invalid should set off the CSRF detector and reject the request
 
     """
-    dashboard = navigate_to(Server, 'Dashboard')
+    dashboard = navigate_to(appliance.server, 'Dashboard')
     dashboard.csrf_token = "Bogus!"
     dashboard.reset_widgets(cancel=False)
 
