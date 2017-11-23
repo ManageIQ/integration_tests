@@ -189,6 +189,21 @@ class HostAllVMsView(BaseLoggedInPage):
         )
 
 
+class ProviderAllVMsView(BaseLoggedInPage):
+    """
+    This view is used in test_provider_relationships
+    """
+
+    title = Text(".//div[@id='main-content']//h1")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.navigation.currently_selected == ["Compute", "Infrastructure", "Providers"] and
+            self.title.text == "{} (All Direct VMs)".format(self.context["object"].name)
+        )
+
+
 class VMDetailsEntities(View):
     """
     Details entities view for vms/instances details destinations

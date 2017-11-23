@@ -351,3 +351,16 @@ class HostsEditView(HostEditView):
     @property
     def is_displayed(self):
         return self.in_compute_infrastructure_hosts and self.title.text == 'Credentials/Settings'
+
+
+class ProviderAllHostsView(HostsView):
+    """
+    This view is used in test_provider_relationships
+    """
+
+    @property
+    def is_displayed(self):
+        return (
+            self.navigation.currently_selected == ["Compute", "Infrastructure", "Providers"] and
+            self.title.text == "{} (All Managed Hosts)".format(self.context["object"].name)
+        )

@@ -122,6 +122,20 @@ class HostAllDatastoresView(DatastoresView):
         )
 
 
+class ProviderAllDatastoresView(DatastoresView):
+    """
+    This view is used in test_provider_relationships
+    """
+
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ["Compute", "Infrastructure", "Providers"] and
+            self.entities.title.text == "{} (All Datastores)".format(self.context["object"].name)
+        )
+
+
 class DatastoreDetailsView(BaseLoggedInPage):
     """
     represents Datastore Details page
