@@ -3623,8 +3623,7 @@ class PotentiallyInvisibleTab(Tab):
 
 
 class Splitter(Widget):
-    """ Represents the folder manager in Edit Report Menus screen
-    (Cloud Intel/Reports/Edit Report Menus).
+    """ Represents the frame splitter
 
     """
 
