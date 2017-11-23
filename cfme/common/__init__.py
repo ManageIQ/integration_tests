@@ -29,6 +29,10 @@ class ManagePoliciesView(BaseLoggedInPage):
     reset = Button('Reset')
     cancel = Button('Cancel')
 
+    @property
+    def is_displayed(self):
+        return False
+
 
 class PolicyProfileAssignable(object):
     """This class can be inherited by anything that provider load_details method.
@@ -89,12 +93,22 @@ class PolicyProfileAssignable(object):
         details_view.flash.assert_no_errors()
 
 
-@navigator.register(PolicyProfileAssignable, 'EditPoliciesFromDetails')
-class EditPoliciesFromDetails(CFMENavigateStep):
+@navigator.register(PolicyProfileAssignable, 'ManagePoliciesFromDetails')
+class ManagePoliciesFromDetails(CFMENavigateStep):
     VIEW = ManagePoliciesView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
+        self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
+
+
+@navigator.register(PolicyProfileAssignable, 'ManagePolicies')
+class ManagePolicies(CFMENavigateStep):
+    VIEW = ManagePoliciesView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
         self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 

@@ -228,19 +228,6 @@ class HostDiscoverView(ComputeInfrastructureHostsView):
         return self.in_compute_infrastructure_hosts and self.title.text == "Hosts / Nodes Discovery"
 
 
-class HostManagePoliciesView(BaseLoggedInPage):
-    """Host's Manage Policies view."""
-    policies = BootstrapTreeview("protectbox")
-    entities = View.nested(BaseNonInteractiveEntitiesView)
-    save_button = Button("Save")
-    reset_button = Button("Reset")
-    cancel_button = Button("Cancel")
-
-    @property
-    def is_displayed(self):
-        return False
-
-
 class HostsToolbar(View):
     """Represents hosts toolbar and its controls."""
     configuration = Dropdown(text="Configuration")
