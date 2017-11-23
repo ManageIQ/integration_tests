@@ -9,11 +9,10 @@ from widgetastic.widget import Text, TextInput, Widget
 from widgetastic_patternfly import Button, Input
 
 from . import ControlExplorerView
+from cfme.common import ExpressionEditor
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.update import Updateable
 from cfme.utils import ParamClassName
-
-from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 
 
 class Expression(Widget):

@@ -14,12 +14,12 @@ from widgetastic.widget import Checkbox, Table, Text, TextInput, View
 
 from . import ControlExplorerView
 from actions import Action
+from cfme.common import ExpressionEditor
 from cfme.utils import ParamClassName
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 
 
 class PoliciesAllView(ControlExplorerView):
