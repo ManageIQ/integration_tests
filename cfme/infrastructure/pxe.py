@@ -64,7 +64,7 @@ class PXEMainView(BaseLoggedInPage):
     toolbar = View.nested(PXEToolBar)
     sidebar = View.nested(PXESideBar)
     title = Text('//div[@id="main-content"]//h1')
-    entities = Table(locator='.//div[@id="records_div"]/table')
+    entities = Table(locator='.//div[@id="records_div" or @id="main_div"]//table')
 
     @property
     def is_displayed(self):

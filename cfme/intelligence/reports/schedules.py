@@ -19,7 +19,7 @@ from . import CloudIntelReportsView
 
 class SchedulesAllView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
-    schedules_table = Table(".//div[@id='records_div']/table")
+    schedules_table = Table(".//div[@id='records_div' or @id='main_div']//table")
     paginator = PaginationPane()
 
     @property

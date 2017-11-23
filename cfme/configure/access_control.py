@@ -47,7 +47,7 @@ class UserForm(ConfigurationView):
 
 
 class UsersEntities(View):
-    table = Table('//div[@id=\'records_div\']//table')
+    table = Table("//div[@id='records_div' or @id='main_div']//table")
 
 
 class AllUserView(ConfigurationView):
