@@ -406,9 +406,10 @@ class HostCollection(BaseCollection):
                 raise ItemNotFound('Could not find host {} in the UI'.format(host.name))
         return view
 
-    def create(self, name, provider, credentials=None, hostname=None, ip_address=None,
+    def create(self, name, provider=None, credentials=None, hostname=None, ip_address=None,
                host_platform=None, custom_ident=None, ipmi_address=None, mac_address=None,
-               ipmi_credentials=None, cancel=False, validate_credentials=False):
+               ipmi_credentials=None, cancel=False, validate_credentials=False,
+               interface_type='lan'):
         """Creates a host in the UI.
 
         Args:
@@ -481,6 +482,58 @@ class HostCollection(BaseCollection):
         view = self.check_hosts(hosts)
         view.toolbar.power.item_select("Power Off", handle_alert=True)
 
+    def _get_config(self, host_key):
+        host_config = conf.cfme_data.get('management_hosts', {})[host_key]
+        credentials = get_credentials_from_config(host_config['credentials'])
+        ipmi_credentials = get_credentials_from_config(host_config['ipmi_credentials'])
+        ipmi_credentials.ipmi = True
+        return host_config, credentials, ipmi_credentials
+
+    def get_from_config(self, host_key):
+        """Creates a Host object given a yaml entry in cfme_data.
+
+        Usage:
+            get_from_config('esx')
+
+        Returns: A Host object that has methods that operate on CFME
+        """
+        # TODO: Include provider key in YAML and include provider object when creating
+        host_config, credentials, ipmi_credentials = self._get_config(host_key)
+        return self.instantiate(
+            name=host_config['name'],
+            hostname=host_config['hostname'],
+            ip_address=host_config['ipaddress'],
+            custom_ident=host_config.get('custom_ident'),
+            host_platform=host_config.get('host_platform'),
+            ipmi_address=host_config['ipmi_address'],
+            mac_address=host_config['mac_address'],
+            interface_type=host_config.get('interface_type', 'lan'),
+            credentials=credentials,
+            ipmi_credentials=ipmi_credentials
+        )
+
+    def create_from_config(self, host_key):
+        """Creates a Host object given a yaml entry in cfme_data.
+
+        Usage:
+            create_from_config('esx')
+
+        Returns: A Host object that has methods that operate on CFME
+        """
+        # TODO: Include provider key in YAML and include provider object when creating
+        host_config, credentials, ipmi_credentials = self._get_config(host_key)
+        return self.create(
+            name=host_config['name'],
+            hostname=host_config['hostname'],
+            ip_address=host_config['ipaddress'],
+            custom_ident=host_config.get('custom_ident'),
+            host_platform=host_config.get('host_platform'),
+            ipmi_address=host_config['ipmi_address'],
+            mac_address=host_config['mac_address'],
+            interface_type=host_config.get('interface_type', 'lan'),
+            credentials=credentials,
+            ipmi_credentials=ipmi_credentials
+        )
 
 @navigator.register(HostCollection)
 class All(CFMENavigateStep):
@@ -559,30 +612,3 @@ class Timelines(CFMENavigateStep):
 def get_credentials_from_config(credential_config_name):
     creds = conf.credentials[credential_config_name]
     return Host.Credential(principal=creds["username"], secret=creds["password"])
-
-
-def get_from_config(provider_config_name):
-    """Creates a Host object given a yaml entry in cfme_data.
-
-    Usage:
-        get_from_config('esx')
-
-    Returns: A Host object that has methods that operate on CFME
-    """
-    # TODO: Include provider key in YAML and include provider object when creating
-    prov_config = conf.cfme_data.get('management_hosts', {})[provider_config_name]
-    credentials = get_credentials_from_config(prov_config['credentials'])
-    ipmi_credentials = get_credentials_from_config(prov_config['ipmi_credentials'])
-    ipmi_credentials.ipmi = True
-    return Host(
-        name=prov_config['name'],
-        hostname=prov_config['hostname'],
-        ip_address=prov_config['ipaddress'],
-        custom_ident=prov_config.get('custom_ident'),
-        host_platform=prov_config.get('host_platform'),
-        ipmi_address=prov_config['ipmi_address'],
-        mac_address=prov_config['mac_address'],
-        interface_type=prov_config.get('interface_type', 'lan'),
-        credentials=credentials,
-        ipmi_credentials=ipmi_credentials
-    )

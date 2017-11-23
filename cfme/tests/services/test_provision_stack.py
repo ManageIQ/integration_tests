@@ -72,7 +72,7 @@ def dialog(appliance, provider, template):
     )
     dialog = appliance.collections.service_dialogs
     sd = dialog.instantiate(label=dialog_name)
-    tab = sd.tabs.instantiate(tab_label="Basic Information")
+    tab = sd.tabs.instantiate(tab_label="Basic Information", tab_desc="Basic Information Tab")
     box = tab.boxes.instantiate(box_label="Options")
     element = box.elements.instantiate(element_data=element_data)
     element.add_another_element(element_data)
