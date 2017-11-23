@@ -33,6 +33,9 @@ def get_host_data_by_name(provider_key, host_name):
 
 
 # Tests to automate BZ 1278904
+@pytest.mark.meta(blockers=[BZ(1516849,
+                            forced_streams=['5.8', '5.9', 'upstream'],
+                            unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_host_good_creds(appliance, request, setup_provider, provider):
     """
     Tests host credentialing  with good credentials
@@ -56,6 +59,9 @@ def test_host_good_creds(appliance, request, setup_provider, provider):
 @pytest.mark.meta(
     blockers=[BZ(1310910, unblock=lambda provider: provider.type != 'rhevm')]
 )
+@pytest.mark.meta(blockers=[BZ(1516849,
+                            forced_streams=['5.8', '5.9', 'upstream'],
+                            unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_host_bad_creds(appliance, request, setup_provider, provider):
     """
     Tests host credentialing  with bad credentials
