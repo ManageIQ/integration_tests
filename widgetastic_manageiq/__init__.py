@@ -2463,6 +2463,7 @@ class TimelinesChart(View):
                                     $(arguments[0]).art_click();""", group)
 
     def get_events(self, *categories):
+
         got_categories = self.get_categories(*categories)
         events = []
         for category in got_categories:
@@ -2472,6 +2473,7 @@ class TimelinesChart(View):
                 if not self._is_group(raw_event):
                     # if ordinary event
                     event_text = self.browser.get_attribute('data-content', raw_event)
+                    self.logger.debug('RAW events in get_events: %r', event_text)
                     events.append(self._prepare_event(event_text, cat_name))
                 else:
                     # if event group
@@ -2482,6 +2484,7 @@ class TimelinesChart(View):
                     for row in self.legend.rows():
                         event_text = self.browser.get_attribute('innerHTML', row['Event'])
                         events.append(self._prepare_event(event_text, cat_name))
+        self.logger.debug('ALL events in get_events array: %r', events)
         return events
 
 

@@ -956,6 +956,19 @@ class Vm(VM):
 
         # TODO This should (one day) return a VM reconfigure request obj that we can further use
 
+    @property
+    def cluster(self):
+        all_clusters = self.provider.get_clusters()
+        return next(cl for cl in all_clusters if cl.id == self.cluster_id)
+
+    @property
+    def host(self):
+        vm_api = self.appliance.rest_api.collections.vms.get(name=self.name)
+        vm_api.reload(attributes='host_name')
+        host = self.appliance.collections.hosts.instantiate(name=vm_api.host_name,
+                                                            provider=self.provider)
+        return host
+
 
 class Template(BaseTemplate):
     REMOVE_MULTI = "Remove Templates from the VMDB"
