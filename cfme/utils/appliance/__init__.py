@@ -8,7 +8,7 @@ from datetime import datetime
 from tempfile import NamedTemporaryFile
 from textwrap import dedent
 from time import sleep, time
-from urlparse import urlparse
+from six.moves.urllib_parse import urlparse
 
 import attr
 import dateutil.parser

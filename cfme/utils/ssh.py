@@ -8,7 +8,7 @@ import sys
 from collections import namedtuple
 from os import path as os_path
 from subprocess import check_call
-from urlparse import urlparse
+from six.moves.urllib_parse import urlparse
 
 
 from cached_property import cached_property

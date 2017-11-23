@@ -48,7 +48,7 @@ def _load_firefox_profile():
     profile_dict = json.loads(profile_json)
 
     profile = FirefoxProfile(firefox_profile_tmpdir)
-    for pref in profile_dict.iteritems():
+    for pref in profile_dict.items():
         profile.set_preference(*pref)
     profile.update_preferences()
     return profile

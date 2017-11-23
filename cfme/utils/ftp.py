@@ -8,10 +8,7 @@ import ftplib
 import re
 from datetime import datetime
 from time import strptime, mktime
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
+from io import BytesIO
 
 
 class FTPException(Exception):
@@ -293,7 +290,7 @@ class FTPClient(object):
 
         """
         TIMECHECK_FILE_NAME = fauxfactory.gen_alphanumeric(length=16)
-        void_file = StringIO(fauxfactory.gen_alpha())
+        void_file = BytesIO(fauxfactory.gen_alpha())
         self.cwd(self.upload_dir)
         assert "Transfer complete" in self.storbinary(TIMECHECK_FILE_NAME, void_file),\
             "Could not upload a file for time checking with name {}!".format(TIMECHECK_FILE_NAME)
