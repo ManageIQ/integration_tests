@@ -8,14 +8,11 @@ from cfme.utils.appliance import Navigatable
 from cfme.utils.pretty import Pretty
 
 
-class Server(Navigatable, sentaku.modeling.ElementMixin):
-    def __init__(self, appliance, zone=None, name="EVM", sid=1):
-        Navigatable.__init__(self, appliance=appliance)
-        self.zone = zone or appliance.server.zone
-        self.name = name
-        self.sid = sid
-        self.zone.servers.append(self)
-        self.parent = self.appliance.context
+@attr.s
+class Server(BaseEntity, sentaku.modeling.ElementMixin):
+    name = attr.ib()
+    sid = attr.ib(default=1)
+    _zone = attr.ib(init=False, default=None)
 
     address = sentaku.ContextualMethod()
     login = sentaku.ContextualMethod()
@@ -25,6 +22,8 @@ class Server(Navigatable, sentaku.modeling.ElementMixin):
     logged_in = sentaku.ContextualMethod()
     current_full_name = sentaku.ContextualMethod()
     current_username = sentaku.ContextualMethod()
+
+    zone = sentaku.ContextualProperty()
 
     @property
     def settings(self):
@@ -45,6 +44,13 @@ class Server(Navigatable, sentaku.modeling.ElementMixin):
 
 
 @attr.s
+class ServerCollection(BaseCollection, sentaku.modeling.ElementMixin):
+    ENTITY = Server
+
+    all = sentaku.ContextualMethod()
+    get_master = sentaku.ContextualMethod()
+
+@attr.s
 class Zone(Pretty, BaseEntity, sentaku.modeling.ElementMixin):
     """ Configure/Configuration/Region/Zones functionality
 
@@ -55,20 +61,18 @@ class Zone(Pretty, BaseEntity, sentaku.modeling.ElementMixin):
     exists = sentaku.ContextualProperty()
     update = sentaku.ContextualMethod()
     delete = sentaku.ContextualMethod()
+    region = sentaku.ContextualProperty()
 
-    region = attr.ib(default=None)
     name = attr.ib(default="default")
     description = attr.ib(default="Default Zone")
+    id = attr.ib(default=None)
     smartproxy_ip = attr.ib(default=None)
     ntp_servers = attr.ib(default=None)
     max_scans = attr.ib(default=None)
     user = attr.ib(default=None)
+    _region = attr.ib(init=False, default=None)
 
-    # TODO we need to fix this set() addition
-    def __attrs_post_init__(self):
-        self.servers = []
-        self.region = self.region or self.appliance.server.zone.region
-        self.region.zones.append(self)
+    _collections = {'servers': ServerCollection}
 
     @property
     def collect_logs(self):
@@ -84,17 +88,14 @@ class ZoneCollection(BaseCollection, sentaku.modeling.ElementMixin):
     region = attr.ib(default=None)
 
     create = sentaku.ContextualMethod()
-
-    def __attrs_post_init__(self):
-        self.region = self.region or self.appliance.server.zone.region
+    all = sentaku.ContextualMethod()
 
 
-class Region(Navigatable, sentaku.modeling.ElementMixin):
-    def __init__(self, appliance, number=0):
-        self.appliance = appliance
-        self.zones = []
-        self.number = number
-        self.parent = self.appliance.context
+@attr.s
+class Region(BaseEntity, sentaku.modeling.ElementMixin):
+    number = attr.ib(default=0)
+
+    _collections = {'zones': ZoneCollection}
 
     @property
     def settings_string(self):
@@ -108,6 +109,14 @@ class Region(Navigatable, sentaku.modeling.ElementMixin):
         return replication
 
 
-from . import ui, ssui  # NOQA last for import cycles
+@attr.s
+class RegionCollection(BaseCollection, sentaku.modeling.ElementMixin):
+    all = sentaku.ContextualMethod()
+
+    ENTITY = Region
+
+
+from . import ui, ssui, rest  # NOQA last for import cycles
 importscan.scan(ui)
 importscan.scan(ssui)
+importscan.scan(rest)

@@ -9,7 +9,6 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.automate.explorer import AutomateExplorer  # NOQA
-from cfme.base import Server
 from cfme.control.explorer import ControlExplorer  # NOQA
 from cfme.exceptions import RBACOperationBlocked
 from cfme.common.provider import base_types
@@ -105,7 +104,7 @@ def test_user_crud(group_collection):
 
 # @pytest.mark.meta(blockers=[1035399]) # work around instead of skip
 @pytest.mark.tier(2)
-def test_user_login(group_collection):
+def test_user_login(appliance, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
@@ -113,7 +112,7 @@ def test_user_login(group_collection):
     user.create()
     try:
         with user:
-            navigate_to(Server, 'Dashboard')
+            navigate_to(appliance.server, 'Dashboard')
     finally:
         user.appliance.server.login_admin()
 
@@ -457,7 +456,7 @@ def test_tagvis_group(user_restricted, group_with_tag, check_item_visibility):
 
 # Role test cases
 @pytest.mark.tier(2)
-def test_role_crud():
+def test_role_crud(appliance):
     role = new_role()
     role.create()
     with update(role):
@@ -544,7 +543,7 @@ def test_assign_user_to_new_group(group_collection):
     user.create()
 
 
-def _test_vm_provision():
+def _test_vm_provision(appliance):
     logger.info("Checking for provision access")
     navigate_to(vms.Vm, 'VMsOnly')
     vms.lcl_btn("Provision VMs")
@@ -579,10 +578,10 @@ def test_permission_edit(appliance, request, product_features, action):
     """
     Ensures that changes in permissions are enforced on next login
     Args:
-        appliance - cfme appliance fixture
-        request - pytest request fixture
-        product_features - product features to set for test role
-        action - reference to a function to execute under the test user context
+        appliance: cfme appliance fixture
+        request: pytest request fixture
+        product_features: product features to set for test role
+        action: reference to a function to execute under the test user context
     """
     product_features = version.pick(product_features)
     request.addfinalizer(appliance.server.login_admin)
@@ -624,9 +623,14 @@ def _mk_role(name=None, vm_restriction=None, product_features=None):
                         product_features=product_features)
 
 
-def _go_to(cls, dest='All'):
+def _go_to(cls_or_obj, dest='All'):
     """Create a thunk that navigates to the given destination"""
-    return lambda: navigate_to(cls, dest)
+    def nav(appliance):
+        if cls_or_obj == 'server':
+            navigate_to(appliance.server, dest)
+        else:
+            navigate_to(cls_or_obj, dest)
+    return nav
 
 
 @pytest.mark.tier(3)
@@ -634,22 +638,22 @@ def _go_to(cls, dest='All'):
     'role,allowed_actions,disallowed_actions',
     [[_mk_role(product_features=[[['Everything'], False],  # minimal permission
                                  [['Everything', 'Settings', 'Tasks'], True]]),
-      {'tasks': lambda: sel.click(tasks.buttons.default)},  # can only access one thing
+      {'tasks': lambda appliance: sel.click(tasks.buttons.default)},  # can only access one thing
       {
           'my services': _go_to(MyService),
-          'chargeback': _go_to(Server, 'Chargeback'),
+          'chargeback': _go_to('server', 'Chargeback'),
           'clouds providers': _go_to(base_types()['cloud']),
           'infrastructure providers': _go_to(base_types()['infra']),
-          'control explorer': _go_to(Server, 'ControlExplorer'),
-          'automate explorer': _go_to(Server, 'AutomateExplorer')}],
+          'control explorer': _go_to('server', 'ControlExplorer'),
+          'automate explorer': _go_to('server', 'AutomateExplorer')}],
      [_mk_role(product_features=[[['Everything'], True]]),  # full permissions
       {
           'my services': _go_to(MyService),
-          'chargeback': _go_to(Server, 'Chargeback'),
+          'chargeback': _go_to('server', 'Chargeback'),
           'clouds providers': _go_to(base_types()['cloud']),
           'infrastructure providers': _go_to(base_types()['infra']),
-          'control explorer': _go_to(Server, 'ControlExplorer'),
-          'automate explorer': _go_to(Server, 'AutomateExplorer')},
+          'control explorer': _go_to('server', 'ControlExplorer'),
+          'automate explorer': _go_to('server', 'AutomateExplorer')},
       {}]])
 @pytest.mark.meta(blockers=[1262759])
 def test_permissions(appliance, role, allowed_actions, disallowed_actions):
@@ -657,12 +661,12 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions):
         and the disallowed actions fail
 
         Args:
-            appliance - cfme_test appliance fixture
-            role - reference to a function that will create a role object
-            allowed_actions - Action(s) that should succeed under given roles
-                permission
-            disallowed_actions - Action(s) that should fail under given roles
-                permission
+            appliance: cfme_test appliance fixture
+            role: reference to a function that will create a role object
+            allowed_actions: Action(s) that should succeed under given roles
+                             permission
+            disallowed_actions: Action(s) that should fail under given roles
+                                permission
 
         *_actions are a list of actions with each item consisting of a dictionary
             object: [ { "Action Name": function_reference_action }, ...]
@@ -681,14 +685,14 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions):
 
             for name, action_thunk in allowed_actions.items():
                 try:
-                    action_thunk()
+                    action_thunk(appliance)
                 except Exception:
                     fails[name] = "{}: {}".format(name, traceback.format_exc())
 
             for name, action_thunk in disallowed_actions.items():
                 try:
                     with error.expected(Exception):
-                        action_thunk()
+                        action_thunk(appliance)
                 except error.UnexpectedSuccessException:
                     fails[name] = "{}: {}".format(name, traceback.format_exc())
 

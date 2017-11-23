@@ -8,8 +8,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 @pytest.fixture(scope="session")
-def widgets_generated(setup_only_one_provider):
-    navigate_to(Server, 'Dashboard')
+def widgets_generated(setup_only_one_provider, appliance):
+    navigate_to(appliance.server, 'Dashboard')
     widget_list = []
     for widget in Widget.all():
         widget_list.append((widget.name, widget.content_type))

@@ -69,7 +69,8 @@ def custom_widgets(request):
 
 @test_requirements.dashboard
 @pytest.mark.tier(3)
-def test_widgets_on_dashboard(request, dashboard, default_widgets, custom_widgets, soft_assert):
+def test_widgets_on_dashboard(appliance, request, dashboard, default_widgets,
+                              custom_widgets, soft_assert):
     with update(dashboard):
         dashboard.widgets = map(lambda w: w.title, custom_widgets)
 
@@ -77,7 +78,7 @@ def test_widgets_on_dashboard(request, dashboard, default_widgets, custom_widget
         with update(dashboard):
             dashboard.widgets = default_widgets
     request.addfinalizer(_finalize)
-    view = navigate_to(Server, "Dashboard")
+    view = navigate_to(appliance.server, "Dashboard")
     view.reset_widgets()
     soft_assert(len(Widget.all()) == len(custom_widgets), "Count of the widgets differ")
     for custom_w in custom_widgets:

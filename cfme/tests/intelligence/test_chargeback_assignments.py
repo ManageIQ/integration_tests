@@ -16,8 +16,8 @@ pytestmark = [
 
 
 @pytest.mark.meta(blockers=[1273654])
-def test_assign_compute_enterprise(virtualcenter_provider):
-    view = navigate_to(Server, 'Chargeback')
+def test_assign_compute_enterprise(appliance, virtualcenter_provider):
+    view = navigate_to(appliance.server, 'Chargeback')
 
     enterprise = cb.Assign(
         assign_to="The Enterprise",
@@ -33,8 +33,8 @@ def test_assign_compute_enterprise(virtualcenter_provider):
     assert selected_option == "Default", 'Selection does not match'
 
 
-def test_assign_compute_provider(virtualcenter_provider):
-    view = navigate_to(Server, 'Chargeback')
+def test_assign_compute_provider(appliance, virtualcenter_provider):
+    view = navigate_to(appliance.server, 'Chargeback')
 
     compute_provider = cb.Assign(
         assign_to=version.pick({version.LOWEST: 'Selected Cloud/Infrastructure Providers',
@@ -50,8 +50,8 @@ def test_assign_compute_provider(virtualcenter_provider):
     assert selected_option == "Default", 'Selection does not match'
 
 
-def test_assign_compute_cluster(virtualcenter_provider):
-    view = navigate_to(Server, 'Chargeback')
+def test_assign_compute_cluster(appliance, virtualcenter_provider):
+    view = navigate_to(appliance.server, 'Chargeback')
 
     cluster_name = random.choice(virtualcenter_provider.get_yaml_data()["clusters"])
 
@@ -68,8 +68,8 @@ def test_assign_compute_cluster(virtualcenter_provider):
     assert selected_option == "Default", 'Selection does not match'
 
 
-def test_assign_compute_taggedvm(virtualcenter_provider):
-    view = navigate_to(Server, 'Chargeback')
+def test_assign_compute_taggedvm(appliance, virtualcenter_provider):
+    view = navigate_to(appliance.server, 'Chargeback')
 
     tagged_vm = cb.Assign(
         assign_to="Tagged VMs and Instances",
@@ -86,8 +86,8 @@ def test_assign_compute_taggedvm(virtualcenter_provider):
 
 
 @pytest.mark.meta(blockers=[1273654])
-def test_assign_storage_enterprise(virtualcenter_provider):
-    view = navigate_to(Server, 'Chargeback')
+def test_assign_storage_enterprise(appliance, virtualcenter_provider):
+    view = navigate_to(appliance.server, 'Chargeback')
 
     enterprise = cb.Assign(
         assign_to="The Enterprise",
@@ -103,8 +103,8 @@ def test_assign_storage_enterprise(virtualcenter_provider):
     assert selected_option == "Default", 'Selection does not match'
 
 
-def test_assign_storage_datastores(virtualcenter_provider):
-    view = navigate_to(Server, 'Chargeback')
+def test_assign_storage_datastores(appliance, virtualcenter_provider):
+    view = navigate_to(appliance.server, 'Chargeback')
 
     datastore = random.choice(virtualcenter_provider.get_yaml_data()["datastores"])["name"]
 
@@ -121,8 +121,8 @@ def test_assign_storage_datastores(virtualcenter_provider):
     assert selected_option == "Default", 'Selection does not match'
 
 
-def test_assign_storage_tagged_datastores(virtualcenter_provider):
-    view = navigate_to(Server, 'Chargeback')
+def test_assign_storage_tagged_datastores(appliance, virtualcenter_provider):
+    view = navigate_to(appliance.server, 'Chargeback')
 
     tagged_datastore = cb.Assign(
         assign_to="Tagged Datastores",
