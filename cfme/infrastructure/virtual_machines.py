@@ -127,6 +127,17 @@ class VmsTemplatesAccordion(View):
         ACCORDION_NAME = 'Templates'
         tree = ManageIQTree()
 
+    def child_widget_accessed(self, _):
+        from cfme.web_ui.splitter import pull_splitter_right, pull_splitter_left
+        # <div class="col-md-10 col-md-push-2 max-height resizable" id="right_div" style="min-height: 0px;">
+        # use for splitter reset
+        if not _.is_displayed:
+            pull_splitter_right()
+            pull_splitter_right()
+        if not _.is_displayed:
+            pull_splitter_left()
+            pull_splitter_left()
+
 
 class InfraVmView(BaseLoggedInPage):
     """Base view for header/nav check, inherit for navigatable views"""
