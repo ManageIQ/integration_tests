@@ -1,3 +1,5 @@
+import importscan
+
 import sentaku
 
 from cfme.utils.appliance import Navigatable
@@ -33,4 +35,5 @@ class MyService(Updateable, Navigatable, WidgetasticTaggable, sentaku.modeling.E
 
 
 from . import ui, ssui  # NOQA last for import cycles
-sentaku.register_external_implementations_in(ui, ssui)
+importscan.scan(ui)
+importscan.scan(ssui)

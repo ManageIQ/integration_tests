@@ -1,3 +1,5 @@
+import importscan
+
 import sentaku
 
 from cfme.utils.appliance import Navigatable
@@ -24,4 +26,4 @@ class Dashboard(Navigatable, sentaku.modeling.ElementMixin):
 
 
 from . import ssui  # NOQA last for import cycles
-sentaku.register_external_implementations_in(ssui)
+importscan.scan(ssui)
