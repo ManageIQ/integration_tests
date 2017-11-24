@@ -4,7 +4,7 @@ from widgetastic.utils import Fillable
 
 from cached_property import cached_property
 from cfme.exceptions import DestinationNotFound
-from navmazing import NavigateToSibling, NavigateToObject
+from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import BreadCrumb, BaseEntitiesView, View
 
 from cfme.base.ui import Server
@@ -205,7 +205,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
 @navigator.register(InfraProvider, 'All')
 class All(CFMENavigateStep):
     VIEW = InfraProvidersView
-    prerequisite = NavigateToObject(Server, 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Providers')

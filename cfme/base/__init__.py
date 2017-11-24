@@ -4,7 +4,6 @@ import importscan
 import sentaku
 
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance import Navigatable
 from cfme.utils.pretty import Pretty
 
 
@@ -49,6 +48,7 @@ class ServerCollection(BaseCollection, sentaku.modeling.ElementMixin):
 
     all = sentaku.ContextualMethod()
     get_master = sentaku.ContextualMethod()
+
 
 @attr.s
 class Zone(Pretty, BaseEntity, sentaku.modeling.ElementMixin):
