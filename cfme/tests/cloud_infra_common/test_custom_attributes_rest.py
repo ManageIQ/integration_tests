@@ -7,8 +7,7 @@ from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import CloudInfraProvider, InfraProvider
-from cfme.utils import error
-from cfme.utils import testgen
+from cfme.utils import error, testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -120,8 +119,7 @@ class TestCustomAttributesRESTAPI(object):
     @pytest.mark.uncollectif(lambda provider, collection_name:
         _uncollectif(provider, collection_name)
     )
-    @pytest.mark.parametrize(
-        "collection_name", COLLECTIONS)
+    @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_add(self, request, collection_name, appliance, fixtures_db):
         """Test adding custom attributes to resource using REST API.
 
@@ -137,8 +135,7 @@ class TestCustomAttributesRESTAPI(object):
     @pytest.mark.uncollectif(lambda provider, collection_name:
         _uncollectif(provider, collection_name)
     )
-    @pytest.mark.parametrize(
-        "collection_name", COLLECTIONS)
+    @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_delete_from_detail_post(self, request, collection_name, appliance, fixtures_db):
         """Test deleting custom attributes from detail using POST method.
 
@@ -157,8 +154,7 @@ class TestCustomAttributesRESTAPI(object):
         current_version() < '5.9' or  # BZ 1422596 was not fixed for versions < 5.9
         _uncollectif(provider, collection_name)
     )
-    @pytest.mark.parametrize(
-        "collection_name", COLLECTIONS)
+    @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_delete_from_detail_delete(self, request, collection_name, appliance, fixtures_db):
         """Test deleting custom attributes from detail using DELETE method.
 
@@ -176,8 +172,7 @@ class TestCustomAttributesRESTAPI(object):
     @pytest.mark.uncollectif(lambda provider, collection_name:
         _uncollectif(provider, collection_name)
     )
-    @pytest.mark.parametrize(
-        "collection_name", COLLECTIONS)
+    @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_delete_from_collection(self, request, collection_name, fixtures_db):
         """Test deleting custom attributes from collection using REST API.
 
@@ -191,8 +186,7 @@ class TestCustomAttributesRESTAPI(object):
     @pytest.mark.uncollectif(lambda provider, collection_name:
         _uncollectif(provider, collection_name)
     )
-    @pytest.mark.parametrize(
-        "collection_name", COLLECTIONS)
+    @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_delete_single_from_collection(self, request, collection_name, fixtures_db):
         """Test deleting single custom attribute from collection using REST API.
 
@@ -207,8 +201,7 @@ class TestCustomAttributesRESTAPI(object):
     @pytest.mark.uncollectif(lambda provider, collection_name:
         _uncollectif(provider, collection_name)
     )
-    @pytest.mark.parametrize(
-        "collection_name", COLLECTIONS)
+    @pytest.mark.parametrize("collection_name", COLLECTIONS)
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
     def test_edit(self, request, from_detail, collection_name, appliance, fixtures_db):
         """Test editing custom attributes using REST API.
@@ -246,8 +239,7 @@ class TestCustomAttributesRESTAPI(object):
     @pytest.mark.uncollectif(lambda provider, collection_name:
         _uncollectif(provider, collection_name)
     )
-    @pytest.mark.parametrize(
-        "collection_name", COLLECTIONS)
+    @pytest.mark.parametrize("collection_name", COLLECTIONS)
     @pytest.mark.meta(blockers=[
         BZ(
             1516762,
@@ -281,8 +273,7 @@ class TestCustomAttributesRESTAPI(object):
     @pytest.mark.uncollectif(lambda provider, collection_name:
         _uncollectif(provider, collection_name)
     )
-    @pytest.mark.parametrize(
-        "collection_name", COLLECTIONS)
+    @pytest.mark.parametrize("collection_name", COLLECTIONS)
     @pytest.mark.meta(blockers=[
         BZ(
             1516762,
