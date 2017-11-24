@@ -4,6 +4,8 @@ import itertools
 from cached_property import cached_property
 
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.utils import VersionPick, Version
+from widgetastic.widget import View
 from wrapanapi.containers.image import Image as ApiImage
 
 from cfme.common import (WidgetasticTaggable, PolicyProfileAssignable,
@@ -15,12 +17,47 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator,
 from cfme.utils.appliance import Navigatable
 from cfme.configure import tasks
 from cfme.utils.wait import wait_for, TimedOutError
-from widgetastic_manageiq import SummaryTable
-from widgetastic.widget import View
+from widgetastic_manageiq import SummaryTable, BaseEntitiesView, JSBaseEntity, NonJSBaseEntity
+
+
+class JSImageEntity(JSBaseEntity):
+    @property
+    def data(self):
+        data_dict = super(JSImageEntity, self).data
+        if 'another_id' in data_dict:
+            data_dict['image_id'] = data_dict.pop('another_id')
+        return data_dict
+
+
+def ImageEntity():  # noqa
+    """ Temporary wrapper for Provider Entity during transition to JS based Entity
+
+    """
+    return VersionPick({
+        Version.lowest(): NonJSBaseEntity,
+        '5.9': JSImageEntity,
+    })
+
+
+class ImageEntitiesView(BaseEntitiesView):
+    """
+     represents child class of Entities view for Provider entities
+    """
+    @property
+    def entity_class(self):
+        return ImageEntity().pick(self.browser.product_version)
+
+    def get_id_by_keys(self, **keys):
+        updated_keys = keys.copy()
+        if 'image_id' in updated_keys:
+            updated_keys['id'] = updated_keys.pop('image_id')
+        return super(ImageEntitiesView, self).get_id_by_keys(**updated_keys)
 
 
 class ImageAllView(ContainerObjectAllBaseView):
     SUMMARY_TEXT = "Container Images"
+
+    including_entities = View.include(ImageEntitiesView, use_parent=True)
 
 
 class ImageDetailsView(ContainerObjectDetailsBaseView):
