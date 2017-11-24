@@ -223,7 +223,7 @@ def test_unset_retirement_date(retire_vm):
 
 @test_requirements.retirement
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1306471, unblock=lambda provider: provider.one_of(InfraProvider)),
+@pytest.mark.meta(blockers=[BZ(1516953, forced_streams='5.9'),
                             BZ(1430373, forced_streams=['5.6'],
                                unblock=lambda provider: provider.one_of(InfraProvider))])
 @pytest.mark.parametrize('remove_date', [True, False], ids=['remove_date', 'set_future_date'])
