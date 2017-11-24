@@ -568,8 +568,10 @@ class VM(BaseVM):
 
     retire_form = Form(fields=[
         ('date_retire',
-            AngularCalendarInput("retirement_date_datepicker",
-                                 "//label[contains(normalize-space(.), 'Retirement Date')]")),
+            AngularCalendarInput(version.pick(
+                {"5.9": "retirement_date_datepicker",
+                version.LOWEST: "retirement_date"}),
+                "//label[contains(normalize-space(.), 'Retirement Date')]")),
         ('warn', AngularSelect('retirementWarning'))
     ])
 
