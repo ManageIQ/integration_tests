@@ -205,6 +205,36 @@ class TemplatesOnlyAllView(InfraVmView):
             self.entities.title.text == 'All Templates')
 
 
+class ProviderTemplatesOnlyAllView(TemplatesOnlyAllView):
+
+    @property
+    def is_displayed(self):
+        if self.browser.product_version < '5.8':
+            msg = '{} (All Templates)'.format(self.context['object'].name)
+        else:
+            msg = '{} (All Miq Templates)'.format(self.context['object'].name)
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
+            self.entities.title.text == msg
+        )
+
+
+class HostTemplatesOnlyAllView(TemplatesOnlyAllView):
+
+    @property
+    def is_displayed(self):
+        if self.browser.product_version < "5.9":
+            title = "{} (All Templates)".format(self.context["object"].name)
+        else:
+            title = "{} (All Miq Templates)".format(self.context["object"].name)
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Hosts'] and
+            self.entities.title.text == title
+        )
+
+
 class InfraVmSummaryView(VMDetailsEntities):
     operating_ranges = SummaryTable(title="Normal Operating Ranges (over 30 days)")
     datastore_allocation = SummaryTable(title="Datastore Allocation Summary")

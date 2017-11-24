@@ -136,6 +136,22 @@ class StackAllView(StackView):
         return self.in_stacks and self.entities.title.text == 'Orchestration Stacks'
 
 
+class ProviderStackAllView(StackAllView):
+
+    @property
+    def is_displayed(self):
+        """Is this page currently being displayed"""
+        if self.browser.product_version < '5.8':
+            msg = '{} (All Stacks)'.format(self.context['object'].name)
+        else:
+            msg = '{} (All Orchestration Stacks)'.format(self.context['object'].name)
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
+            self.entities.title.text == msg
+        )
+
+
 class StackDetailsView(StackView):
     """The detail page"""
     toolbar = View.nested(StackDetailsToolbar)

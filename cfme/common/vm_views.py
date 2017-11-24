@@ -183,9 +183,13 @@ class HostAllVMsView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
+        if self.browser.product_version < "5.9":
+            title = "{} (All VMs)".format(self.context["object"].name)
+        else:
+            title = "{} (All Direct VMs)".format(self.context["object"].name)
         return (
             self.navigation.currently_selected == ["Compute", "Infrastructure", "Hosts"] and
-            self.title.text == "{} (All Direct VMs)".format(self.context["object"].name)
+            self.title.text == title
         )
 
 
@@ -198,9 +202,13 @@ class ProviderAllVMsView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
+        if self.browser.product_version < "5.8":
+            msg = "{} (All VMs)".format(self.context["object"].name)
+        else:
+            msg = "{} (All Direct VMs)".format(self.context["object"].name)
         return (
             self.navigation.currently_selected == ["Compute", "Infrastructure", "Providers"] and
-            self.title.text == "{} (All Direct VMs)".format(self.context["object"].name)
+            self.title.text == msg
         )
 
 

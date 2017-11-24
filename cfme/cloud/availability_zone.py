@@ -81,6 +81,18 @@ class AvailabilityZoneAllView(AvailabilityZoneView):
     paginator = PaginationPane()
 
 
+class ProviderAvailabilityZoneAllView(AvailabilityZoneAllView):
+
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
+            self.entities.title.text == '{} (All Availability Zones)'.format(
+                self.context['object'].name)
+        )
+
+
 class AvailabilityZoneDetailsView(AvailabilityZoneView):
     """Collect the view components into a single view"""
     @property
