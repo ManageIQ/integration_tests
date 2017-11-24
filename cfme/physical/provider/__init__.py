@@ -1,6 +1,6 @@
 from widgetastic.utils import Fillable
 
-from navmazing import NavigateToObject
+from navmazing import NavigateToAttribute
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.utils.pretty import Pretty
@@ -43,7 +43,7 @@ class PhysicalProvider(Pretty, BaseProvider, Fillable):
 class All(CFMENavigateStep):
     # This view will need to be created
     VIEW = BaseLoggedInPage
-    prerequisite = NavigateToObject(Server, 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Physical Infrastructure', 'Providers')

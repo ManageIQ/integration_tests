@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from copy import deepcopy
 
-from navmazing import NavigateToSibling, NavigateToObject, NavigationDestinationNotFound
+from navmazing import NavigateToSibling, NavigateToAttribute, NavigationDestinationNotFound
 from widgetastic.widget import View, Text, ConditionalSwitchableView
 from widgetastic.utils import Fillable
 from widgetastic_patternfly import Dropdown, Button, CandidateNotFound, TextInput, Tab
@@ -388,7 +388,7 @@ class AnalysisProfile(Pretty, Updateable, Fillable, Navigatable):
 @navigator.register(AnalysisProfile, 'All')
 class AnalysisProfileAll(CFMENavigateStep):
     VIEW = AnalysisProfileAllView
-    prerequisite = NavigateToObject(Server, 'Configuration')
+    prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
         server_region = self.obj.appliance.server_region_string()

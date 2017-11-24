@@ -5,8 +5,7 @@ from selenium.webdriver.common.keys import Keys
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, SummaryFormItem,
-                                  TimelinesView)
+from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, TimelinesView)
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
     FlashMessages, BootstrapSelect, Tab)
 from widgetastic.utils import Version, VersionPick
@@ -31,6 +30,7 @@ from cfme.utils.log import logger
 
 from cfme.exceptions import BugException
 from cfme.utils.blockers import BZ
+
 
 @Server.address.external_implementation_for(ViaUI)
 def address(self):
