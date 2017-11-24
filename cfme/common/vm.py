@@ -143,7 +143,8 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
                      '5.6.2.2': 'Remove from the VMDB',
                      '5.7': 'Remove Virtual Machine'}
     RETIRE_DATE_FMT = {version.LOWEST: parsetime.american_date_only_format,
-                       '5.7': parsetime.american_minutes_with_utc}
+                       '5.7': parsetime.american_minutes_with_utc,
+                       '5.9': parsetime.saved_report_title_format}
     _param_name = ParamClassName('name')
 
     ###
