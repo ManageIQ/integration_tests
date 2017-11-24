@@ -16,7 +16,7 @@ from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.timeutil import parsetime
 from cfme.utils.wait import wait_for
-from cfme.utils.version import pick, current_version
+from cfme.utils.version import pick
 
 
 pytest_generate_tests = testgen.generate(
@@ -104,6 +104,8 @@ def verify_retirement_date(retire_vm, expected_date='Never'):
         # convert to a parsetime object for comparsion, function depends on version
         if 'UTC' in pick(VM.RETIRE_DATE_FMT):
             convert_func = parsetime.from_american_minutes_with_utc
+        elif pick(VM.RETIRE_DATE_FMT).endswith('+0000'):
+            convert_func = parsetime.from_saved_report_title_format
         else:
             convert_func = parsetime.from_american_date_only
         expected_date.update({'retire': convert_func(retire_vm.retirement_date)})
