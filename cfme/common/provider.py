@@ -132,7 +132,6 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
             check_existing (boolean): Check if this provider already exists, skip if it does
             validate_inventory (boolean): Whether or not to block until the provider stats in CFME
                 match the stats gleaned from the backend management system
-                (default: ``True``)
 
         Returns:
             True if it was created, False if it already existed
@@ -142,7 +141,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
         else:
             created = True
 
-            logger.info('Setting up Infra Provider: %s', self.key)
+            logger.info('Setting up Provider: %s', self.key)
             add_view = navigate_to(self, 'Add')
 
             if not cancel or (cancel and any(self.view_value_mapping.values())):
@@ -207,21 +206,130 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
 
         return created
 
-    def create_rest(self):
+    def create_rest(self, check_existing=False, validate_inventory=False):
+        """
+        Creates a provider using REST
 
-        logger.info('Setting up provider: %s via rest', self.key)
+        Args:
+            check_existing (boolean): Check if this provider already exists, skip if it does
+            validate_inventory (boolean): Whether or not to block until the provider stats in CFME
+                match the stats gleaned from the backend management system
+
+        Returns:
+            True if it was created, False if it already existed
+        """
+        if check_existing and self.exists:
+            return False
+
+        logger.info("Setting up provider via REST: %s", self.key)
+
+        default_connection = {
+            "endpoint": {"role": "default"}
+        }
+        con_config_to_include = []
+
+        # provider attributes
+        prov_data = {
+            "hostname": self.hostname,
+            "ipaddress": self.ip_address,
+            "name": self.name,
+            "type": "ManageIQ::Providers::{}".format(self.db_types[0]),
+        }
+
+        if getattr(self, "region", None):
+            prov_data["provider_region"] = version.pick(
+                self.region) if isinstance(self.region, dict) else self.region
+        if getattr(self, "project", None):
+            prov_data["project"] = self.project
+
+        if self.type_name == "azure":
+            prov_data["uid_ems"] = self.tenant_id
+            prov_data["provider_region"] = self.region.lower().replace(" ", "")
+            if getattr(self, "subscription_id", None):
+                prov_data["subscription"] = self.subscription_id
+
+        # default endpoint
+        endpoint_default = self.endpoints["default"]
+        if getattr(endpoint_default.credentials, "principal", None):
+            prov_data["credentials"] = {
+                "userid": endpoint_default.credentials.principal,
+                "password": endpoint_default.credentials.secret,
+            }
+        elif getattr(endpoint_default.credentials, "service_account", None):
+            default_connection["authentication"] = {
+                "type": "AuthToken",
+                "auth_type": "default",
+                "auth_key": endpoint_default.credentials.service_account,
+            }
+            con_config_to_include.append(default_connection)
+        else:
+            raise AssertionError("Provider wasn't added. "
+                "No credentials info found for provider {}.".format(self.name))
+
+        cert = getattr(endpoint_default, "ca_certs", None)
+        if cert and self.appliance.version >= "5.8":
+            default_connection["endpoint"]["certificate_authority"] = cert
+            con_config_to_include.append(default_connection)
+
+        if hasattr(endpoint_default, "verify_tls"):
+            default_connection["endpoint"]["verify_ssl"] = 1 if endpoint_default.verify_tls else 0
+            con_config_to_include.append(default_connection)
+        if getattr(endpoint_default, "api_port", None):
+            default_connection["endpoint"]["port"] = endpoint_default.api_port
+            con_config_to_include.append(default_connection)
+        if getattr(endpoint_default, "security_protocol", None):
+            security_protocol = endpoint_default.security_protocol.lower()
+            if security_protocol == "basic (ssl)":
+                security_protocol = "ssl"
+            default_connection["endpoint"]["security_protocol"] = security_protocol
+            con_config_to_include.append(default_connection)
+
+        # candu endpoint
+        if "candu" in self.endpoints:
+            endpoint_candu = self.endpoints["candu"]
+            if isinstance(prov_data["credentials"], dict):
+                prov_data["credentials"] = [prov_data["credentials"]]
+            prov_data["credentials"].append({
+                "userid": endpoint_candu.credentials.principal,
+                "password": endpoint_candu.credentials.secret,
+                "auth_type": "metrics",
+            })
+            candu_connection = {
+                "endpoint": {
+                    "hostname": endpoint_candu.hostname,
+                    "path": endpoint_candu.database,
+                    "role": "metrics",
+                },
+            }
+            if getattr(endpoint_candu, "api_port", None):
+                candu_connection["endpoint"]["port"] = endpoint_candu.api_port
+            if hasattr(endpoint_candu, "verify_tls") and not endpoint_candu.verify_tls:
+                candu_connection["endpoint"]["verify_ssl"] = 0
+            con_config_to_include.append(candu_connection)
+
+        prov_data["connection_configurations"] = []
+        appended = []
+        for config in con_config_to_include:
+            role = config["endpoint"]["role"]
+            if role not in appended:
+                prov_data["connection_configurations"].append(config)
+                appended.append(role)
+
         try:
-            self.appliance.rest_api.collections.providers.action.create(
-                hostname=self.hostname,
-                ipaddress=self.ip_address,
-                name=self.name,
-                type="ManageIQ::Providers::{}".format(self.db_types[0]),
-                credentials={'userid': self.endpoints['default'].credentials.principal,
-                             'password': self.endpoints['default'].credentials.secret})
+            self.appliance.rest_api.collections.providers.action.create(**prov_data)
+        except APIException as err:
+            raise AssertionError("Provider wasn't added: {}".format(err))
 
-            return self.appliance.rest_api.response.status_code == 200
-        except APIException:
-            return None
+        response = self.appliance.rest_api.response
+        if not response:
+            raise AssertionError("Provider wasn't added, status code {}".format(
+                response.status_code))
+
+        if validate_inventory:
+            self.validate()
+
+        self.appliance.rest_api.response = response
+        return True
 
     def update(self, updates, cancel=False, validate_credentials=True):
         """
