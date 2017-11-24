@@ -314,7 +314,7 @@ class AddDatasourceForm(View):
     ds_url = TextInput("connection_url_input")
     username = TextInput("user_name_input")
     password = TextInput("password_input")
-    sec_domain = TextInput("security_domain_input", use_id=True)
+    sec_domain = TextInput(id="security_domain_input")
     next_button = Button(title='Next')
     back_button = Button(title='Back')
     finish_button = Button(title='Finish')
