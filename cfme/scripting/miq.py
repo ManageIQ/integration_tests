@@ -8,6 +8,7 @@ from cfme.scripting.sprout import main as sprout_main
 
 from scripts.dockerbot.sel_container import main as sel_con_main
 from scripts.release import main as rel_main
+from cfme.scripting.ci import main as ci_main
 
 
 @click.group()
@@ -23,6 +24,8 @@ cli.add_command(shell_main, name="shell")
 cli.add_command(conf_main, name="conf")
 cli.add_command(sprout_main, name="sprout")
 cli.add_command(setup_main, name="setup-env")
+cli.add_command(ci_main, name="ci")
+
 
 if __name__ == '__main__':
     cli()

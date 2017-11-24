@@ -1,0 +1,5 @@
+FROM cfmeqe/dockerbot-base
+ADD ./temporary_git_repo/integration_tests /integration_tests
+RUN cd /integration_tests && \
+	python -m cfme.scripting.quickstart && \
+	dnf clean all

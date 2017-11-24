@@ -87,3 +87,6 @@ conf/README
 
 # custom imports
 conf/miq_python_startup.py
+
+# temporaries to support docker image building
+scripts/dockerbot/pytestbase/temporary_git_repo/

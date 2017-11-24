@@ -9,7 +9,7 @@ import slumber
 import requests
 import time
 
-from cfme.utils.conf import env
+from cfme.utils import conf
 from cfme.utils.providers import providers_data
 from cfme.utils.version import get_stream
 
@@ -45,7 +45,6 @@ generic_matchers = (
     ('sprout', r'^sprout_template'),
     ('rhevm-internal', r'^auto-tmp'),
 )
-conf = env.get('trackerbot', {})
 _active_streams = None
 
 TemplateInfo = namedtuple('TemplateInfo', ['group_name', 'datestamp', 'stream'])
@@ -75,7 +74,7 @@ def cmdline_parser():
 def api(trackerbot_url=None):
     """Return an API object authenticated to the given trackerbot api"""
     if trackerbot_url is None:
-        trackerbot_url = conf['url']
+        trackerbot_url = conf.env.trackerbot.url
 
     return slumber.API(trackerbot_url)
 
@@ -312,9 +311,9 @@ def depaginate(api, result):
 
 def composite_uncollect(build, source='jenkins'):
     """Composite build function"""
-    since = env.get('ts', time.time())
+    since = conf.env.get('ts', time.time())
     url = "{0}?build={1}&source={2}&since={3}".format(
-        conf['ostriz'], urllib.quote(build), urllib.quote(source), urllib.quote(since))
+        conf.env['ostriz'], urllib.quote(build), urllib.quote(source), urllib.quote(since))
     try:
         resp = requests.get(url, timeout=10)
         return resp.json()
