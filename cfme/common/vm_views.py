@@ -3,7 +3,7 @@ from lxml.html import document_fromstring
 import os
 from time import sleep
 
-from widgetastic.widget import View, Text, TextInput, Checkbox, ParametrizedView
+from widgetastic.widget import View, Text, TextInput, ParametrizedView
 from widgetastic_patternfly import (
     Dropdown, BootstrapSelect, Tab, FlashMessages, Input, CheckableBootstrapTreeview)
 from widgetastic_manageiq import BreadCrumb, PaginationPane
@@ -12,7 +12,8 @@ from widgetastic_manageiq import BreadCrumb, PaginationPane
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import TemplateNotFound
 from widgetastic_manageiq import (
-    Calendar, SummaryTable, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect, RadioGroup,
+    Calendar, Checkbox, SummaryTable, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect,
+    RadioGroup,
     VersionPick, Version, BaseEntitiesView, NonJSBaseEntity, BaseListEntity, BaseQuadIconEntity,
     BaseTileIconEntity, JSBaseEntity, BaseNonInteractiveEntitiesView)
 
@@ -314,7 +315,7 @@ class BasicProvisionFormView(View):
         hardware_monitoring = BootstrapSelect('hardware__monitoring')
         boot_disk_size = BootstrapSelect('hardware__boot_disk_size')
         # GCE
-        is_preemtible = Input(name='hardware__is_preemptible')
+        is_preemptible = Checkbox(name='hardware__is_preemptible')
 
     @View.nested
     class customize(Tab):  # noqa
