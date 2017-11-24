@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from widgetastic.widget import Text, Checkbox
 from widgetastic_patternfly import BootstrapSelect, Button, Input
-from widgetastic_manageiq import ScriptBox, Table
+from widgetastic_manageiq import ScriptBox, Table, PaginationPane
 from navmazing import NavigateToAttribute, NavigateToSibling
 from cfme.common import WidgetasticTaggable
 from cfme.utils.update import Updateable
@@ -96,6 +96,7 @@ class TemplateTypeView(ServicesCatalogView):
 
     templates = Table("//table[@class='table table-striped table-bordered "
                       "table-hover table-selectable]'")
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
@@ -174,8 +175,7 @@ class OrchestrationTemplate(Updateable, Pretty, Navigatable, WidgetasticTaggable
 
     def delete_all_templates(self):
         view = navigate_to(self, "TemplateType")
-        from cfme.web_ui import paginator
-        paginator.check_all()
+        view.paginator.check_all()
         view.configuration.item_select("Remove selected Orchestration Templates", handle_alert=True)
 
     def copy_template(self, template_name, content, draft=None, description=None):
