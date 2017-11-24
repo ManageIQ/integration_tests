@@ -567,12 +567,11 @@ def date_retire_element(fill_data):
 class VM(BaseVM):
     TO_RETIRE = None
 
+    retire_form_click_away = "//label[contains(normalize-space(.), 'Retirement Date')]"
     retire_form = Form(fields=[
         ('date_retire',
-            AngularCalendarInput(version.pick(
-                {"5.9": "retirement_date_datepicker",
-                version.LOWEST: "retirement_date"}),
-                "//label[contains(normalize-space(.), 'Retirement Date')]")),
+            {version.LOWEST: AngularCalendarInput("retirement_date", retire_form_click_away),
+             '5.9': AngularCalendarInput("retirement_date_datepicker", retire_form_click_away)}),
         ('warn', AngularSelect('retirementWarning'))
     ])
 
