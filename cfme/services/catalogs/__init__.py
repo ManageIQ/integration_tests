@@ -50,8 +50,13 @@ class ServicesCatalogView(BaseLoggedInPage):
 
     # for backward compatibility. it is difficult to figure out where those are used
     # TODO: this should be fixed by this code owner
-    configuration = toolbar.configuration
-    policy = toolbar.policy
+    @property
+    def configuration(self):
+        return self.toolbar.configuration
+
+    @property
+    def policy(self):
+        return self.toolbar.policy
 
     flash = FlashMessages(".//div[@id='flash_msg_div']/div")
 
