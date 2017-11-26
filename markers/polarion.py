@@ -24,4 +24,5 @@ def _update_polarion_in_junit(request, record_xml_property):
     record_id_to_xml = partial(record_xml_property, "test_id")
     ids = extract_polarion_ids(request.node)
     if ids is not None:
-        map(record_id_to_xml, ids)
+        for id in ids:
+            record_id_to_xml(id)
