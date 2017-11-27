@@ -132,6 +132,7 @@ setup(
             'resource_pools = cfme.infrastructure.resource_pool:ResourcePoolCollection',
             'volumes = cfme.storage.volume:VolumeCollection',
             'volume_backups = cfme.storage.volume_backup:VolumeBackupCollection',
+            'volume_snapshots = cfme.storage.volume_snapshot:VolumeSnapshotCollection',
             'block_managers = cfme.storage.manager:BlockManagerCollection',
             'object_managers = cfme.storage.manager:ObjectManagerCollection',
             'object_store_objects = cfme.storage.object_store_object:ObjectStoreObjectCollection',

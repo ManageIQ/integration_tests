@@ -147,6 +147,18 @@ class VolumeBackupView(VolumeView):
     cancel = Button('Cancel')
 
 
+class VolumeSnapshotView(VolumeView):
+    @property
+    def is_displayed(self):
+        return False
+
+    snapshot_name = TextInput(name='snapshot_name')
+
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+
 @attr.s
 class Volume(BaseEntity):
 
@@ -206,6 +218,17 @@ class Volume(BaseEntity):
                  timeout=1000,
                  fail_func=self.refresh)
 
+    def create_snapshot(self, name):
+        """create snapshot of cloud volume"""
+        view = navigate_to(self, 'Snapshot')
+        view.snapshot_name.fill(name)
+
+        view.save.click()
+        view.flash.assert_success_message('Snapshot for Cloud Volume "{}" '
+                                          'created'.format(self.name))
+
+        wait_for(lambda: self.snapshots > 0, delay=20, timeout=1000, fail_func=self.refresh)
+
     @property
     def exists(self):
         try:
@@ -256,6 +279,16 @@ class Volume(BaseEntity):
         """
         view = navigate_to(self, 'Details')
         return int(view.entities.relationships.get_text_of('Cloud Volume Backups'))
+
+    @property
+    def snapshots(self):
+        """ number of available snapshots for volume.
+
+        Returns:
+            :py:class:`int' snapshot count.
+        """
+        view = navigate_to(self, 'Details')
+        return int(view.entities.relationships.get_text_of('Cloud Volume Snapshots'))
 
 
 @attr.s
@@ -365,4 +398,14 @@ class VolumeBackup(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Create a Backup of this Cloud '
+                                                                 'Volume')
+
+
+@navigator.register(Volume, 'Snapshot')
+class VolumeSnapshot(CFMENavigateStep):
+    VIEW = VolumeSnapshotView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select('Create a Snapshot of this Cloud '
                                                                  'Volume')
