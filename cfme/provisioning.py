@@ -3,7 +3,6 @@ from cfme.infrastructure.virtual_machines import Vm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-from cfme.web_ui import flash
 
 
 def do_vm_provisioning(appliance, template_name, provider, vm_name, provisioning_data, request,
@@ -19,7 +18,7 @@ def do_vm_provisioning(appliance, template_name, provider, vm_name, provisioning
             'notes': note}})
     view = navigate_to(vm, 'Provision')
     view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
-    flash.assert_no_errors()
+    view.flash.assert_no_error()
     if not wait:
         return
 
