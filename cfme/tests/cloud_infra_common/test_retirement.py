@@ -16,7 +16,7 @@ from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.timeutil import parsetime
 from cfme.utils.wait import wait_for
-from cfme.utils.version import pick, current_version
+from cfme.utils.version import pick
 
 
 pytest_generate_tests = testgen.generate(
@@ -104,6 +104,8 @@ def verify_retirement_date(retire_vm, expected_date='Never'):
         # convert to a parsetime object for comparsion, function depends on version
         if 'UTC' in pick(VM.RETIRE_DATE_FMT):
             convert_func = parsetime.from_american_minutes_with_utc
+        elif pick(VM.RETIRE_DATE_FMT).endswith('+0000'):
+            convert_func = parsetime.from_saved_report_title_format
         else:
             convert_func = parsetime.from_american_date_only
         expected_date.update({'retire': convert_func(retire_vm.retirement_date)})
@@ -189,8 +191,7 @@ def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged):
 
 @test_requirements.retirement
 @pytest.mark.tier(1)
-@pytest.mark.meta(blockers=[BZ(1419150, forced_streams='5.6',
-                               unblock=lambda: current_version() >= '5.7')])
+@pytest.mark.meta(blockers=[BZ(1516953, forced_streams=['5.9'])])
 @pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
 def test_set_retirement_date(retire_vm, warn):
     """Tests setting retirement date and verifies configured date is reflected in UI
@@ -205,6 +206,7 @@ def test_set_retirement_date(retire_vm, warn):
 
 @test_requirements.retirement
 @pytest.mark.tier(1)
+@pytest.mark.meta(blockers=[BZ(1516953, forced_streams=['5.9'])])
 def test_unset_retirement_date(retire_vm):
     """Tests cancelling a scheduled retirement by removing the set date
     """
@@ -223,7 +225,7 @@ def test_unset_retirement_date(retire_vm):
 
 @test_requirements.retirement
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1306471, unblock=lambda provider: provider.one_of(InfraProvider)),
+@pytest.mark.meta(blockers=[BZ(1516953, forced_streams=['5.9']),
                             BZ(1430373, forced_streams=['5.6'],
                                unblock=lambda provider: provider.one_of(InfraProvider))])
 @pytest.mark.parametrize('remove_date', [True, False], ids=['remove_date', 'set_future_date'])

@@ -143,7 +143,8 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
                      '5.6.2.2': 'Remove from the VMDB',
                      '5.7': 'Remove Virtual Machine'}
     RETIRE_DATE_FMT = {version.LOWEST: parsetime.american_date_only_format,
-                       '5.7': parsetime.american_minutes_with_utc}
+                       '5.7': parsetime.american_minutes_with_utc,
+                       '5.9': parsetime.saved_report_title_format}
     _param_name = ParamClassName('name')
 
     ###
@@ -566,10 +567,11 @@ def date_retire_element(fill_data):
 class VM(BaseVM):
     TO_RETIRE = None
 
+    retire_form_click_away = "//label[contains(normalize-space(.), 'Retirement Date')]"
     retire_form = Form(fields=[
         ('date_retire',
-            AngularCalendarInput("retirement_date",
-                                 "//label[contains(normalize-space(.), 'Retirement Date')]")),
+            {version.LOWEST: AngularCalendarInput("retirement_date", retire_form_click_away),
+             '5.9': AngularCalendarInput("retirement_date_datepicker", retire_form_click_away)}),
         ('warn', AngularSelect('retirementWarning'))
     ])
 
