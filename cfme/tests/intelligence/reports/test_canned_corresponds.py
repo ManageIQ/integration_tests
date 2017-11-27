@@ -7,16 +7,15 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.net import ip_address, resolve_hostname
 from cfme.utils.providers import get_crud_by_name
-from cfme.utils import testgen
 from cfme import test_requirements
 
 
-pytest_generate_tests = testgen.generate(classes=[InfraProvider], scope='module')
+pytestmark = [pytest.mark.tier(3),
+              pytest.mark.usefixtures('setup_provider'),
+              pytest.mark.provider(classes=[InfraProvider], scope='module'),
+              test_requirements.report]
 
 
-@pytest.mark.tier(3)
-@pytest.mark.usefixtures('setup_provider')
-@test_requirements.report
 def test_providers_summary(soft_assert):
     """Checks some informations about the provider. Does not check memory/frequency as there is
     presence of units and rounding."""
@@ -41,9 +40,6 @@ def test_providers_summary(soft_assert):
                     "Physical CPU count does not match at {}".format(provider["Name"]))
 
 
-@pytest.mark.tier(3)
-@pytest.mark.usefixtures('setup_provider')
-@test_requirements.report
 def test_cluster_relationships(soft_assert):
     path = ["Relationships", "Virtual Machines, Folders, Clusters", "Cluster Relationships"]
     report = CannedSavedReport.new(path)
@@ -86,9 +82,6 @@ def test_cluster_relationships(soft_assert):
             soft_assert(False, "Hostname {} not found in {}".format(host_name, provider_name))
 
 
-@pytest.mark.tier(3)
-@test_requirements.report
-@pytest.mark.usefixtures('setup_provider')
 @pytest.mark.meta(blockers=[BZ(1504010, forced_streams=['5.7', '5.8', 'upstream'])])
 def test_operations_vm_on(soft_assert, appliance):
 
@@ -128,9 +121,6 @@ def test_operations_vm_on(soft_assert, appliance):
                  item['Last Analysis Time'] == ''))
 
 
-@pytest.mark.tier(3)
-@test_requirements.report
-@pytest.mark.usefixtures('setup_provider')
 def test_datastores_summary(soft_assert, appliance):
     """Checks Datastores Summary report with DB data. Checks all data in report, even rounded
     storage sizes."""
