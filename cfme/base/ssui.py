@@ -129,7 +129,7 @@ def login(self, user=None, method=LOGIN_METHODS[-1]):
         username = conf.credentials['default']['username']
         password = conf.credentials['default']['password']
         cred = Credential(principal=username, secret=password)
-        user = User(credential=cred)
+        user = self.appliance.collections.users.instantiate(credential=cred)
 
     logged_in_view = self.appliance.ssui.create_view(SSUIBaseLoggedInPage)
 
@@ -159,8 +159,7 @@ def login_admin(self, **kwargs):
     username = conf.credentials['default']['username']
     password = conf.credentials['default']['password']
     cred = Credential(principal=username, secret=password)
-    from cfme.configure.access_control import User
-    user = User(credential=cred)
+    user = self.appliance.collections.users.instantiate(credential=cred)
     user.name = 'Administrator'
     logged_in_view = self.login(user, **kwargs)
     return logged_in_view

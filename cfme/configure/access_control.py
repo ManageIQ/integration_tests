@@ -1,12 +1,10 @@
 import attr
-
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_manageiq import (UpDownSelect, PaginationPane, SummaryFormItem, Table,
-    BaseListEntity)
-from widgetastic_patternfly import (BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview,
-    BootstrapSwitch, CandidateNotFound, Dropdown)
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Checkbox, View, Text
+from widgetastic_patternfly import (
+    BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview,
+    BootstrapSwitch, CandidateNotFound, Dropdown)
 
 from cfme.base.credential import Credential
 from cfme.base.ui import ConfigurationView
@@ -17,11 +15,8 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
-
-
-def simple_user(userid, password):
-    creds = Credential(principal=userid, secret=password)
-    return User(name=userid, credential=creds)
+from widgetastic_manageiq import (
+    UpDownSelect, PaginationPane, SummaryFormItem, Table, BaseListEntity)
 
 
 class AccessControlToolbar(View):
@@ -206,8 +201,10 @@ class User(Updateable, Pretty, BaseEntity):
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Copy this User to a new User')
         view = self.create_view(AddUserView)
-        new_user = User(name="{}copy".format(self.name),
-                        credential=Credential(principal='redhat', secret='redhat'))
+        new_user = self.parent.instantiate(
+            name="{}copy".format(self.name),
+            credential=Credential(principal='redhat', secret='redhat')
+        )
         view.fill({
             'name_txt': new_user.name,
             'userid_txt': new_user.credential.principal,
@@ -333,6 +330,10 @@ class UserCollection(BaseCollection):
 
     ENTITY = User
 
+    def simple_user(self, userid, password):
+        creds = Credential(principal=userid, secret=password)
+        return self.instantiate(name=userid, credential=creds)
+
     def create(self, name=None, credential=None, email=None, group=None, cost_center=None,
                value_assign=None, cancel=False):
         """ User creation method
@@ -379,7 +380,7 @@ class UserCollection(BaseCollection):
             flash_message = 'Add of new User was cancelled by the user'
         else:
             view.add_button.click()
-            flash_message = 'User "{}" was saved'.format(self.name)
+            flash_message = 'User "{}" was saved'.format(user.name)
 
         try:
             view.flash.assert_message(user_blocked_msg)
@@ -393,9 +394,10 @@ class UserCollection(BaseCollection):
 
         # To ensure tree update
         view.browser.refresh()
+        return user
 
 
-@navigator.register(User, 'All')
+@navigator.register(UserCollection, 'All')
 class UserAll(CFMENavigateStep):
     VIEW = AllUserView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
@@ -405,7 +407,7 @@ class UserAll(CFMENavigateStep):
             self.obj.appliance.server_region_string(), 'Users')
 
 
-@navigator.register(User, 'Add')
+@navigator.register(UserCollection, 'Add')
 class UserAdd(CFMENavigateStep):
     VIEW = AddUserView
     prerequisite = NavigateToSibling('All')
@@ -417,7 +419,7 @@ class UserAdd(CFMENavigateStep):
 @navigator.register(User, 'Details')
 class UserDetails(CFMENavigateStep):
     VIEW = DetailsUserView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(
@@ -1152,7 +1154,7 @@ class Role(Updateable, Pretty, BaseEntity):
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Copy this Role to a new Role')
         view = self.create_view(AddRoleView)
-        new_role = Role(name=name)
+        new_role = self.parent.instantiate(name=name)
         view.fill({'name_txt': new_role.name})
         view.add_button.click()
         view = self.create_view(AllRolesView)
@@ -1184,10 +1186,10 @@ class RoleCollection(BaseCollection):
 
     def create(self, name=None, vm_restriction=None, product_features=None, cancel=False):
         """ Create role method
-            Args:
-                cancel: True - if you want to cancel role creation,
-                        by default, role will be created
-        Throws:
+        Args:
+            cancel: True - if you want to cancel role creation,
+                    by default, role will be created
+        Raises:
             RBACOperationBlocked: If operation is blocked due to current user
                 not having appropriate permissions OR update is not allowed
                 for currently selected role
@@ -1201,7 +1203,7 @@ class RoleCollection(BaseCollection):
         view = navigate_to(self, 'Add')
         view.fill({'name_txt': role.name,
                    'vm_restriction_select': role.vm_restriction})
-        self.set_role_product_features(view, role.product_features)
+        role.set_role_product_features(view, role.product_features)
         if cancel:
             view.cancel_button.click()
             flash_message = 'Add of new Role was cancelled by the user'
@@ -1220,8 +1222,10 @@ class RoleCollection(BaseCollection):
 
         assert view.is_displayed
 
+        return role
 
-@navigator.register(Role, 'All')
+
+@navigator.register(RoleCollection, 'All')
 class RoleAll(CFMENavigateStep):
     VIEW = AllRolesView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
@@ -1231,7 +1235,7 @@ class RoleAll(CFMENavigateStep):
             self.obj.appliance.server_region_string(), 'Roles')
 
 
-@navigator.register(Role, 'Add')
+@navigator.register(RoleCollection, 'Add')
 class RoleAdd(CFMENavigateStep):
     VIEW = AddRoleView
     prerequisite = NavigateToSibling('All')
@@ -1243,7 +1247,7 @@ class RoleAdd(CFMENavigateStep):
 @navigator.register(Role, 'Details')
 class RoleDetails(CFMENavigateStep):
     VIEW = DetailsRoleView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(
