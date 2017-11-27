@@ -8,14 +8,13 @@ from cfme.middleware.domain import MiddlewareDomain
 from cfme.middleware.server_group import MiddlewareServerGroup
 from cfme.middleware.messaging import MiddlewareMessaging
 from random_methods import get_random_object
-from cfme.utils import testgen
 from cfme.utils.version import current_version
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
+    pytest.mark.provider([HawkularProvider], scope="function")
 ]
-pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
 
 tags = [
     Tag(category=Category(display_name='Environment', single_value=True), display_name='Test'),
