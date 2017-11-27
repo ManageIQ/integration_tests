@@ -4,10 +4,6 @@ The aim is that no direct calls to selenium be made at all.
 One reason for this it to ensure that all function calls to selenium wait for the ajax
 response which is needed in CFME.
 
-Members of this module are available in the the pytest.sel namespace, e.g.::
-
-    pytest.sel.click(locator)
-
 :var ajax_wait_js: A Javascript function for ajax wait checking
 :var class_selector: Regular expression to detect simple CSS locators
 """
