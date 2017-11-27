@@ -7,11 +7,10 @@ from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import CloudInfraProvider, InfraProvider
-from cfme.utils import error, testgen
+from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
-from cfme.utils.providers import ProviderFilter
 from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.version import current_version
 
@@ -19,15 +18,9 @@ from cfme.utils.version import current_version
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.tier(2),
+    pytest.mark.provider([CloudInfraProvider], scope='module'),
     test_requirements.rest
 ]
-
-
-pytest_generate_tests = testgen.generate(
-    gen_func=testgen.providers,
-    filters=[ProviderFilter(classes=[CloudInfraProvider])],
-    scope='module'
-)
 
 COLLECTIONS = ['providers', 'instances', 'vms']
 COLLECTIONS_ADDED_IN_59 = ['instances', 'vms']
