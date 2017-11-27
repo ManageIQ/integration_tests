@@ -19,7 +19,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CustomReport
 from datetime import date
 from fixtures.provider import setup_or_skip
-from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -31,25 +30,10 @@ pytestmark = [
                                BZ(1468729, forced_streams=["5.9"]),
                                BZ(1486529, forced_streams=["5.7", "5.8"],
                                   unblock=lambda provider: not provider.one_of(GCEProvider))]),
+    pytest.mark.provider([VMwareProvider, RHEVMProvider, AzureProvider, GCEProvider],
+                         scope='module', required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
     test_requirements.chargeback
 ]
-
-
-def pytest_generate_tests(metafunc):
-    # Filter out providers not meant for Chargeback Testing
-    argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, [VMwareProvider, RHEVMProvider, AzureProvider, GCEProvider],
-        required_fields=[(['cap_and_util', 'test_chargeback'], True)]
-    )
-
-    new_argvalues = []
-    new_idlist = []
-    for i, argvalue_tuple in enumerate(argvalues):
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
 @pytest.yield_fixture(scope="module")
