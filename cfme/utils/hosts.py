@@ -42,15 +42,6 @@ def setup_host_creds(provider, host_name, remove_creds=False, ignore_errors=Fals
             raise
 
 
-def setup_all_provider_hosts_credentials():
-    for provider_key in conf.cfme_data.get('management_systems', {}):
-        if 'hosts' in conf.cfme_data.get('management_systems', {})[provider_key]:
-            for yamlhost in conf.cfme_data.get('management_systems', {})[provider_key]['hosts']:
-                setup_host_creds(provider_key, yamlhost['name'])
-
-
-def setup_providers_hosts_credentials(provider_key, ignore_errors=False):
-    if provider_key in conf.cfme_data.get('management_systems', {}):
-        if 'hosts' in conf.cfme_data.get('management_systems', {})[provider_key]:
-            for yamlhost in conf.cfme_data.get('management_systems', {})[provider_key]['hosts']:
-                setup_host_creds(provider_key, yamlhost['name'], ignore_errors=ignore_errors)
+def setup_providers_hosts_credentials(provider, ignore_errors=False):
+    for yamlhost in provider.data.get('hosts', []):
+        setup_host_creds(provider, yamlhost['name'], ignore_errors=ignore_errors)
