@@ -91,6 +91,8 @@ setup(
             'cloud_tenants = cfme.cloud.tenant:TenantCollection',
             'tenants = cfme.configure.access_control:TenantCollection',
             'projects = cfme.configure.access_control:ProjectCollection',
+            'groups = cfme.configure.access_control:GroupCollection',
+            'users = cfme.configure.access_control:UserCollection',
             'candus = cfme.configure.configuration.region_settings:CANDUCollection',
             'groups = cfme.configure.access_control:GroupCollection',
             'nodes = cfme.containers.node:NodeCollection',

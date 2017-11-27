@@ -12,7 +12,6 @@ from cfme.base.credential import Credential
 from cfme.base.ui import ConfigurationView
 from cfme.exceptions import RBACOperationBlocked
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
@@ -120,7 +119,8 @@ class EditTagsUserView(ConfigurationView):
         )
 
 
-class User(Updateable, Pretty, Navigatable):
+@attr.s
+class User(Updateable, Pretty, BaseEntity):
     """ Class represents an user in CFME UI
 
     Args:
@@ -134,16 +134,13 @@ class User(Updateable, Pretty, Navigatable):
     """
     pretty_attrs = ['name', 'group']
 
-    def __init__(self, name=None, credential=None, email=None, group=None, cost_center=None,
-                 value_assign=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.credential = credential
-        self.email = email
-        self.group = group
-        self.cost_center = cost_center
-        self.value_assign = value_assign
-        self._restore_user = None
+    name = attr.ib(default=None)
+    credential = attr.ib(default=None)
+    email = attr.ib(default=None)
+    group = attr.ib(default=None)
+    cost_center = attr.ib(default=None)
+    value_assign = attr.ib(default=None)
+    _restore_user = attr.ib(default=None, init=False)
 
     def __enter__(self):
         if self._restore_user != self.appliance.user:
@@ -158,54 +155,6 @@ class User(Updateable, Pretty, Navigatable):
             self.appliance.server.logout()
             self.appliance.user = self._restore_user
             self._restore_user = None
-
-    def create(self, cancel=False):
-        """ User creation method
-
-        Args:
-            cancel: True - if you want to cancel user creation,
-                    by defaul user will be created
-
-        Throws:
-            RBACOperationBlocked: If operation is blocked due to current user
-                not having appropriate permissions OR update is not allowed
-                for currently selected role
-        """
-        if self.appliance.version < "5.8":
-            user_blocked_msg = "Userid has already been taken"
-        else:
-            user_blocked_msg = ("Userid is not unique within region {}".format(
-                self.appliance.server.zone.region.number))
-
-        view = navigate_to(self, 'Add')
-        view.fill({
-            'name_txt': self.name,
-            'userid_txt': self.credential.principal,
-            'password_txt': self.credential.secret,
-            'password_verify_txt': self.credential.verify_secret,
-            'email_txt': self.email,
-            'user_group_select': getattr(self.group, 'description', None)
-        })
-
-        if cancel:
-            view.cancel_button.click()
-            flash_message = 'Add of new User was cancelled by the user'
-        else:
-            view.add_button.click()
-            flash_message = 'User "{}" was saved'.format(self.name)
-
-        try:
-            view.flash.assert_message(user_blocked_msg)
-            raise RBACOperationBlocked(user_blocked_msg)
-        except AssertionError:
-            pass
-
-        view = self.create_view(AllUserView)
-        view.flash.assert_success_message(flash_message)
-        assert view.is_displayed
-
-        # To ensure tree update
-        view.browser.refresh()
 
     def update(self, updates):
         """ Update user method
@@ -377,6 +326,73 @@ class User(Updateable, Pretty, Navigatable):
     @property
     def description(self):
         return self.credential.principal
+
+
+@attr.s
+class UserCollection(BaseCollection):
+
+    ENTITY = User
+
+    def create(self, name=None, credential=None, email=None, group=None, cost_center=None,
+               value_assign=None, cancel=False):
+        """ User creation method
+
+        Args:
+            name: Name of the user
+            credential: User's credentials
+            email: User's email
+            group: User's group for assigment
+            cost_center: User's cost center
+            value_assign: user's value to assign
+            appliance: appliance under test
+            cancel: True - if you want to cancel user creation,
+                    by defaul user will be created
+
+        Throws:
+            RBACOperationBlocked: If operation is blocked due to current user
+                not having appropriate permissions OR update is not allowed
+                for currently selected role
+        """
+        if self.appliance.version < "5.8":
+            user_blocked_msg = "Userid has already been taken"
+        else:
+            user_blocked_msg = ("Userid is not unique within region {}".format(
+                self.appliance.server.zone.region.number))
+
+        user = self.instantiate(
+            name=name, credential=credential, email=email, group=group, cost_center=cost_center,
+            value_assign=value_assign
+        )
+
+        view = navigate_to(self, 'Add')
+        view.fill({
+            'name_txt': user.name,
+            'userid_txt': user.credential.principal,
+            'password_txt': user.credential.secret,
+            'password_verify_txt': user.credential.verify_secret,
+            'email_txt': user.email,
+            'user_group_select': getattr(user.group, 'description', None)
+        })
+
+        if cancel:
+            view.cancel_button.click()
+            flash_message = 'Add of new User was cancelled by the user'
+        else:
+            view.add_button.click()
+            flash_message = 'User "{}" was saved'.format(self.name)
+
+        try:
+            view.flash.assert_message(user_blocked_msg)
+            raise RBACOperationBlocked(user_blocked_msg)
+        except AssertionError:
+            pass
+
+        view = self.create_view(AllUserView)
+        view.flash.assert_success_message(flash_message)
+        assert view.is_displayed
+
+        # To ensure tree update
+        view.browser.refresh()
 
 
 @navigator.register(User, 'All')
@@ -1028,7 +1044,8 @@ class AllRolesView(ConfigurationView):
         )
 
 
-class Role(Updateable, Pretty, Navigatable):
+@attr.s
+class Role(Updateable, Pretty, BaseEntity):
     """ Represents a role in CFME UI
 
     Args:
@@ -1040,45 +1057,13 @@ class Role(Updateable, Pretty, Navigatable):
 
     pretty_attrs = ['name', 'product_features']
 
-    def __init__(self, name=None, vm_restriction=None, product_features=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.vm_restriction = vm_restriction
-        self.product_features = product_features or []
+    name = attr.ib(default=None)
+    vm_restriction = attr.ib(default=None)
+    product_features = attr.ib(default=None)
 
-    def create(self, cancel=False):
-        """ Create role method
-            Args:
-                cancel: True - if you want to cancel role creation,
-                        by default, role will be created
-        Throws:
-            RBACOperationBlocked: If operation is blocked due to current user
-                not having appropriate permissions OR update is not allowed
-                for currently selected role
-        """
-        flash_blocked_msg = "Name has already been taken"
-
-        view = navigate_to(self, 'Add')
-        view.fill({'name_txt': self.name,
-                   'vm_restriction_select': self.vm_restriction})
-        self.set_role_product_features(view, self.product_features)
-        if cancel:
-            view.cancel_button.click()
-            flash_message = 'Add of new Role was cancelled by the user'
-        else:
-            view.add_button.click()
-            flash_message = 'Role "{}" was saved'.format(self.name)
-        view = self.create_view(AllRolesView)
-
-        try:
-            view.flash.assert_message(flash_blocked_msg)
-            raise RBACOperationBlocked(flash_blocked_msg)
-        except AssertionError:
-            pass
-
-        view.flash.assert_success_message(flash_message)
-
-        assert view.is_displayed
+    def __attrs_post_init__(self):
+        if not self.product_features:
+            self.product_features = []
 
     def update(self, updates):
         """ Update role method
@@ -1191,6 +1176,49 @@ class Role(Updateable, Pretty, Navigatable):
                     view.product_features_tree.uncheck_node(*path)
             feature_update = True
         return feature_update
+
+
+@attr.s
+class RoleCollection(BaseCollection):
+    ENTITY = Role
+
+    def create(self, name=None, vm_restriction=None, product_features=None, cancel=False):
+        """ Create role method
+            Args:
+                cancel: True - if you want to cancel role creation,
+                        by default, role will be created
+        Throws:
+            RBACOperationBlocked: If operation is blocked due to current user
+                not having appropriate permissions OR update is not allowed
+                for currently selected role
+        """
+        flash_blocked_msg = "Name has already been taken"
+
+        role = self.instantiate(
+            name=name, vm_restriction=vm_restriction, product_features=product_features
+        )
+
+        view = navigate_to(self, 'Add')
+        view.fill({'name_txt': role.name,
+                   'vm_restriction_select': role.vm_restriction})
+        self.set_role_product_features(view, role.product_features)
+        if cancel:
+            view.cancel_button.click()
+            flash_message = 'Add of new Role was cancelled by the user'
+        else:
+            view.add_button.click()
+            flash_message = 'Role "{}" was saved'.format(role.name)
+        view = self.create_view(AllRolesView)
+
+        try:
+            view.flash.assert_message(flash_blocked_msg)
+            raise RBACOperationBlocked(flash_blocked_msg)
+        except AssertionError:
+            pass
+
+        view.flash.assert_success_message(flash_message)
+
+        assert view.is_displayed
 
 
 @navigator.register(Role, 'All')
