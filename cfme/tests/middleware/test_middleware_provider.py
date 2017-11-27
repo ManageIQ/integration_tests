@@ -11,15 +11,14 @@ from cfme.common.provider_views import (MiddlewareProviderAddView,
 from cfme.middleware.provider import MiddlewareProvider
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.utils import error
-from cfme.utils import testgen
 from cfme.utils.update import update
 from cfme.utils.version import current_version
 
 
 pytestmark = [
     pytest.mark.uncollectif(lambda: current_version() < '5.8'),
+    pytest.mark.provider([MiddlewareProvider], scope='function')
 ]
-pytest_generate_tests = testgen.generate([MiddlewareProvider], scope='function')
 
 
 @pytest.mark.usefixtures('has_no_middleware_providers')
