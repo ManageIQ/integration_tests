@@ -10,7 +10,6 @@ from cached_property import cached_property
 from cfme.base.login import BaseLoggedInPage
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui.timelines import Timelines
 from cfme.web_ui.topology import Topology
 from cfme.web_ui.utilization import Utilization
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
@@ -645,31 +644,6 @@ class TopologyMixin(object):
     @cached_property
     def topology(self):
         return Topology(self)
-
-
-class TimelinesMixin(object):
-    """Use this mixin to have simple access to the Timelines page.
-    To use this `TimelinesMixin` you have to implement `load_timelines_page`
-    function, which should take to timelines page
-
-    Sample usage:
-
-    .. code-block:: python
-
-        # Change Timelines showing interval Select
-        timelines.change_interval('Hourly')
-        # Change Timelines showing event group Select
-        timelines.select_event_category('Application')
-        # Change Level of showed Timelines
-        timelines.change_level('Detail')
-        # Check whether timelines contain particular event
-        # which is generated after provided datetime
-        timelines.contains_event('hawkular_deployment.ok', before_test_date)
-
-    """
-    @cached_property
-    def timelines(self):
-        return Timelines(self)
 
 
 class UtilizationMixin(object):
