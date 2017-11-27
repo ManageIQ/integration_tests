@@ -3,13 +3,13 @@ from xml.sax.saxutils import quoteattr, unescape
 
 from cfme.exceptions import CannotScrollException
 from cfme.base.ui import Server
-from cfme.cloud.instance import Instance
-from cfme.infrastructure.config_management import ConfigManager
-from cfme.infrastructure.datastore import DatastoreCollection
-from cfme.infrastructure.pxe import ISODatastore
-from cfme.infrastructure.virtual_machines import Vm
-from cfme.intelligence.chargeback.rates import ComputeRate
-from cfme.intelligence.reports.reports import CustomReport
+# from cfme.cloud.instance import Instance
+# from cfme.infrastructure.config_management import ConfigManager
+# from cfme.infrastructure.datastore import DatastoreCollection
+# from cfme.infrastructure.pxe import ISODatastore
+# from cfme.infrastructure.virtual_machines import Vm
+# from cfme.intelligence.chargeback.rates import ComputeRate
+# from cfme.intelligence.reports.reports import CustomReport
 import cfme.fixtures.pytest_selenium as sel
 from cfme.services.myservice import MyService
 from cfme.optimize.utilization import Utilization

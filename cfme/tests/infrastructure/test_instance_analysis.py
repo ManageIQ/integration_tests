@@ -11,11 +11,9 @@ from cfme.cloud.provider import CloudProvider
 from cfme.configure import configuration
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.configure.tasks import is_vm_analysis_finished
-from cfme.control.explorer.policy_profiles import PolicyProfileCollection
-from cfme.control.explorer.policies import PolicyCollection, VMControlPolicy
-from cfme.control.explorer.actions import ActionCollection
+from cfme.control.explorer.policies import VMControlPolicy
 from cfme.fixtures import pytest_selenium as sel
-from cfme.infrastructure import host, datastore
+from cfme.infrastructure import host
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import InfoBlock, DriftGrid, toolbar
 from cfme.utils import testgen, ssh, safe_string, error

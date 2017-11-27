@@ -376,7 +376,6 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
             if invokes_alert is False else True)
         self.vm_console
 
-
     def open_details(self, properties=None):
         """Clicks on details infoblock"""
         self.load_details(refresh=True)

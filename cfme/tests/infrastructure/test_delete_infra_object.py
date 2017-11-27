@@ -3,7 +3,7 @@
 import pytest
 from cfme import test_requirements
 from cfme.common.vm import VM
-from cfme.infrastructure import host, datastore, resource_pool
+from cfme.infrastructure import resource_pool
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to

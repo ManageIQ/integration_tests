@@ -8,7 +8,6 @@ from cfme.utils.path import data_path
 from cfme.utils.appliance import DummyAppliance
 
 
-
 @pytest.fixture(scope="session", autouse=True)
 def ensure_websocket_role_disabled(appliance):
     # TODO: This is a temporary solution until we find something better.

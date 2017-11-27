@@ -1,5 +1,4 @@
 """A set of functions for dealing with the paginator controls."""
-from cfme.exceptions import PaginatorException
 from widgetastic_manageiq import PaginationPane
 from cfme.utils.appliance import get_or_create_current_appliance
 

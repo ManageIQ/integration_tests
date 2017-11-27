@@ -4,7 +4,6 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.storage.manager import ObjectManagerCollection, BlockManagerCollection
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 

@@ -2,7 +2,7 @@
 from widgetastic_manageiq import Table
 from widgetastic_patternfly import Button, Input
 from widgetastic.widget import Select, ClickableMixin, Checkbox, Text
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 from cfme.base.ui import Server
 from navmazing import NavigateToAttribute
 from . import CloudIntelReportsView

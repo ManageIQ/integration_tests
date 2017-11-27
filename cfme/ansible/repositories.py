@@ -8,7 +8,6 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Dropdown, Button, Input, FlashMessages
 from widgetastic_manageiq import Table, PaginationPane
 
-from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity

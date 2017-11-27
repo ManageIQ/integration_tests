@@ -5,7 +5,6 @@ import attr
 from urlparse import urlparse
 from threading import Timer
 from cfme.utils import at_exit, conf
-from cfme.utils.appliance import IPAppliance, stack as appliance_stack
 # todo: use own logger after logfix merge
 from cfme.utils.log import logger as log
 from cfme.utils.path import project_path
