@@ -1,6 +1,5 @@
 import pytest
 from cfme.middleware.provider.hawkular import HawkularProvider
-from cfme.utils import testgen
 from cfme.utils.version import current_version
 from server_methods import get_eap_server
 from jdbc_driver_methods import download_jdbc_driver, deploy_jdbc_driver
@@ -10,8 +9,8 @@ from jdbc_driver_methods import POSTGRESPLUS_94_JDBC, POSTGRESQL_94_JDBC, SYBASE
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
+    pytest.mark.provider([HawkularProvider], scope="function")
 ]
-pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
 ITEMS_LIMIT = 5  # when we have big list, limit number of items to test
 
 DRIVERS = [ORACLE_12C_JDBC,
