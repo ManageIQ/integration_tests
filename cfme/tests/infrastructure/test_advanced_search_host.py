@@ -2,6 +2,7 @@
 """This testing module tests the behaviour of the search box in the Hosts section"""
 import fauxfactory
 import pytest
+import cfme.fixtures.pytest_selenium as sel
 from itertools import dropwhile
 
 from cfme.web_ui import search
@@ -121,7 +122,7 @@ def test_filter_save_cancel(host_collection, hosts, hosts_with_vm_count, host_wi
     # Try save filter
     search.save_filter(get_expression(True), filter_name, cancel=True)
     assert_no_cfme_exception()
-    with pytest.raises(pytest.sel.NoSuchElementException):
+    with pytest.raises(sel.NoSuchElementException):
         search.load_filter(filter_name)  # does not exist
 
 

@@ -15,6 +15,7 @@ import fauxfactory
 import pytest
 from fixtures.pytest_store import store
 from fixtures.artifactor_plugin import fire_art_test_hook
+import cfme.fixtures.pytest_selenium as sel
 from cfme.utils.log import logger
 
 
@@ -24,7 +25,7 @@ def take_screenshot(request):
 
     def _take_screenshot(name):
         logger.info("Taking a screenshot named {}".format(name))
-        ss, ss_error = pytest.sel.take_screenshot()
+        ss, ss_error = sel.take_screenshot()
         g_id = fauxfactory.gen_alpha(length=6)
         if ss:
             fire_art_test_hook(

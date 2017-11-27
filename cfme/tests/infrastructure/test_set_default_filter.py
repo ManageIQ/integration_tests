@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+import cfme.fixtures.pytest_selenium as sel
 from cfme.infrastructure import host, datastore
 from cfme.web_ui.search import search_box
 from cfme.utils import version
@@ -20,12 +21,12 @@ def test_set_default_host_filter(request, appliance):
     def unset_default_host_filter():
         navigate_to(host_collection, 'All')
         list_acc.select('Filters', 'ALL', by_title=False)
-        pytest.sel.click(host.default_host_filter_btn)
+        sel.click(host.default_host_filter_btn)
     request.addfinalizer(unset_default_host_filter)
 
     navigate_to(host_collection, 'All')
     list_acc.select('Filters', 'Status / Running', by_title=False)
-    pytest.sel.click(host.default_host_filter_btn)
+    sel.click(host.default_host_filter_btn)
     appliance.server.logout()
     appliance.server.login_admin()
     navigate_to(host_collection, 'All')
@@ -40,7 +41,7 @@ def test_clear_host_filter_results(appliance):
     # TODO many parts of this test and others in this file need to be replaced with WT calls
     view = navigate_to(host_collection, 'All')
     list_acc.select('Filters', 'Status / Stopped', by_title=False)
-    pytest.sel.click(search_box.clear_advanced_search)
+    sel.click(search_box.clear_advanced_search)
     page_title = view.title.text
     assert page_title == 'Hosts', 'Clear filter results failed'
 
@@ -56,12 +57,12 @@ def test_set_default_datastore_filter(request, appliance):
     def unset_default_datastore_filter():
         navigate_to(dc, 'All')
         list_acc.select('Filters', 'ALL', by_title=False)
-        pytest.sel.click(datastore.default_datastore_filter_btn)
+        sel.click(datastore.default_datastore_filter_btn)
     request.addfinalizer(unset_default_datastore_filter)
 
     navigate_to(dc, 'All')
     list_acc.select('Filters', 'Store Type / NFS', by_title=False)
-    pytest.sel.click(datastore.default_datastore_filter_btn)
+    sel.click(datastore.default_datastore_filter_btn)
     appliance.server.logout()
     appliance.server.login_admin()
     navigate_to(dc, 'All')

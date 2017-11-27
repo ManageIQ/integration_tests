@@ -4,6 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.service_dialogs import DialogCollection
+import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Table
 from cfme.utils.appliance.implementations.ui import navigate_to
 
@@ -37,7 +38,7 @@ def some_dialogs(appliance, request):
 def get_relevant_rows(table):
     result = []
     for row in table.rows():
-        text = pytest.sel.text(row.label).encode("utf-8").strip()
+        text = sel.text(row.label).encode("utf-8").strip()
         if text.startswith("test_paginator_"):
             result.append(text)
     return result

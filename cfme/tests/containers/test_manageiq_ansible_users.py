@@ -2,6 +2,7 @@ import pytest
 
 from cfme.containers.provider import ContainersProvider
 from cfme.configure.access_control import User
+import cfme.fixtures.pytest_selenium as sel
 from cfme.utils.ansible import (setup_ansible_script, run_ansible,
     fetch_miq_ansible_module, create_tmp_directory, remove_tmp_files)
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -135,6 +136,6 @@ def test_manageiq_ansible_delete_user(ansible_users, provider):
 def run_ansible_script(script, reload=True):
     run_status = run_ansible(script)
     if reload:
-        pytest.sel.refresh()
+        sel.refresh()
     navigate_to(User, 'All')
     return run_status

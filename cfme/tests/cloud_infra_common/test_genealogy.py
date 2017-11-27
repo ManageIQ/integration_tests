@@ -5,6 +5,7 @@ from cfme.common.vm import VM
 from cfme.utils import testgen
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
+import cfme.fixtures.pytest_selenium as sel
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.utils.generators import random_vm_name
@@ -85,7 +86,7 @@ def test_vm_genealogy_detected(
             parent = opt.text.strip()
         else:
             # Ordinary Select
-            parent = pytest.sel.text(opt).strip()
+            parent = sel.text(opt).strip()
         assert parent.startswith(small_template.name), "The parent template not detected!"
     else:
         try:
