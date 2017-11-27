@@ -91,7 +91,7 @@ class JSDatastoreEntity(JSBaseEntity):
                 data_dict['no_vm'] = quad_data.xpath(self.QUADRANT.format(pos="b"))[0].get()
                 data_dict['no_host'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get()
             return data_dict
-        except (IndexError, TypeError, NoSuchElementException):
+        except IndexError:
             return {}
 
 
