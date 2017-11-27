@@ -2,18 +2,27 @@ import pytest
 from datetime import datetime
 
 from cfme.middleware.provider.hawkular import HawkularProvider
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.version import current_version
-from deployment_methods import get_resource_path
-from deployment_methods import RESOURCE_WAR_NAME
-from deployment_methods import RESOURCE_EAR_NAME
-from deployment_methods import deploy_archive, generate_runtime_name, undeploy
-from deployment_methods import check_deployment_appears
-from deployment_methods import check_deployment_not_listed
-from datasource_methods import ORACLE_12C_DS
-from datasource_methods import generate_ds_name, delete_datasource_from_list
+from cfme.utils.wait import wait_for
+from datasource_methods import (
+    ORACLE_12C_DS,
+    generate_ds_name,
+    delete_datasource_from_list
+)
+from deployment_methods import (
+    RESOURCE_EAR_NAME,
+    RESOURCE_WAR_NAME,
+    check_deployment_appears,
+    check_deployment_not_listed,
+    deploy_archive,
+    generate_runtime_name,
+    undeploy,
+    get_resource_path
+)
 from jdbc_driver_methods import download_jdbc_driver, deploy_jdbc_driver
 from server_methods import get_eap_server
-from cfme.utils.wait import wait_for
+
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -32,7 +41,7 @@ def test_load_deployment_timelines(provider):
     # events are shown in UTC timezone
     before_test_date = datetime.utcnow()
     gen_deploy_events(provider)
-    timelines = provider.timelines
+    timelines = navigate_to(provider, 'Timelines')
     load_event_details(timelines)
     check_contains_event(timelines, before_test_date, DEPLOYMENT_OK_EVENT)
     load_event_summary(timelines)
@@ -43,7 +52,7 @@ def test_undeployment_timelines(provider):
     # events are shown in UTC timezone
     before_test_date = datetime.utcnow()
     gen_undeploy_events(provider)
-    timelines = provider.timelines
+    timelines = navigate_to(provider, 'Timelines')
     load_event_details(timelines)
     check_contains_event(timelines, before_test_date, UNDEPLOYMENT_OK_EVENT)
     load_event_summary(timelines)
@@ -54,7 +63,7 @@ def test_deployment_failure_timelines(provider):
     # events are shown in UTC timezone
     before_test_date = datetime.utcnow()
     gen_deploy_fail_events(provider)
-    timelines = provider.timelines
+    timelines = navigate_to(provider, 'Timelines')
     load_event_details(timelines)
     check_contains_event(timelines, before_test_date, DEPLOYMENT_FAIL_EVENT)
     load_event_summary(timelines)
@@ -65,7 +74,7 @@ def test_create_datasource_timelines(provider):
     # events are shown in UTC timezone
     before_test_date = datetime.utcnow()
     gen_ds_creation_events(provider, ORACLE_12C_DS)
-    timelines = provider.timelines
+    timelines = navigate_to(provider, 'Timelines')
     load_event_details(timelines)
     check_contains_event(timelines, before_test_date, DS_CREATION_OK_EVENT)
     load_event_summary(timelines)
@@ -76,7 +85,7 @@ def test_delete_dataource_timelines(provider):
     # events are shown in UTC timezone
     before_test_date = datetime.utcnow()
     gen_ds_deletion_events(provider, ORACLE_12C_DS)
-    timelines = provider.timelines
+    timelines = navigate_to(provider, 'Timelines')
     load_event_details(timelines)
     check_contains_event(timelines, before_test_date, DS_DELETION_OK_EVENT)
     load_event_summary(timelines)
@@ -84,25 +93,41 @@ def test_delete_dataource_timelines(provider):
 
 
 def load_event_details(timelines):
-    timelines.change_interval('Days')
-    timelines.select_event_category('Application')
-    timelines.check_detailed_events(True)
+    timelines.filter.time_range.select_by_visible_text('Days')
+    timelines.filter.event_category.select_by_visible_text('Application')
+    timelines.filter.detailed_events.fill(True)
+    timelines.filter.apply.click()
 
 
 def load_event_summary(timelines):
-    timelines.check_detailed_events(False)
+    timelines.filter.detailed_events.fill(False)
+    timelines.filter.apply.click()
 
 
 def check_contains_event(timelines, before_test_date, event):
-    wait_for(lambda: timelines.contains_event(event, before_test_date),
-        fail_func=timelines.reload, delay=10, num_sec=60,
+    wait_for(lambda: contains_event(timelines, event, before_test_date),
+        fail_func=timelines.filter.apply.click, delay=10, num_sec=60,
         message='Event {} must be listed in Timelines.'.format(event))
 
 
 def check_not_contains_event(timelines, before_test_date, event):
-    wait_for(lambda: not timelines.contains_event(event, before_test_date),
-        fail_func=timelines.reload, delay=10, num_sec=60,
+    wait_for(lambda: not contains_event(timelines, event, before_test_date),
+        fail_func=timelines.filter.apply.click, delay=10, num_sec=60,
         message='Event {} must NOT be listed in Timelines.'.format(event))
+
+
+def contains_event(timelines, event_type, date_after=datetime.min):
+    """Checks whether list of events contains provided particular
+    'event_type' with data not earlier than provided 'date_after'.
+    If 'date_after' is not provided, will use datetime.min.
+    """
+    if date_after and not isinstance(date_after, datetime):
+        raise KeyError("'date_after' should be an instance of date")
+    for event in timelines.chart.get_events():
+        if event.event_type == event_type and datetime.strptime(
+                event.date_time, '%Y-%m-%d %H:%M:%S %Z') >= date_after:
+            return True
+    return False
 
 
 def gen_deploy_events(provider):

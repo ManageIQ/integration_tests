@@ -3,7 +3,7 @@ import re
 from widgetastic_patternfly import Input, BootstrapSelect
 from wrapanapi.hawkular import Hawkular
 
-from cfme.common import TopologyMixin, TimelinesMixin
+from cfme.common import TopologyMixin
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -28,7 +28,7 @@ class HawkularEndpointForm(DefaultEndpointForm):
     api_port = Input('default_api_port')
 
 
-class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, MiddlewareProvider):
+class HawkularProvider(MiddlewareBase, TopologyMixin, MiddlewareProvider):
     """
     HawkularProvider class holds provider data. Used to perform actions on hawkular provider page
 
@@ -187,10 +187,6 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
     def recheck_auth_status(self):
         view = self.load_details(refresh=True)
         view.toolbar.authentication.item_select("Re-check Authentication Status")
-
-    def load_timelines_page(self):
-        view = self.load_details()
-        view.toolbar.monitoring.item_select("Timelines")
 
     @staticmethod
     def from_config(prov_config, prov_key, appliance=None):
