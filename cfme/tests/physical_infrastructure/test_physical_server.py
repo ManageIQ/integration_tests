@@ -48,11 +48,3 @@ def test_physical_servers_view_dropdowns(physical_server_collection):
 
     lifecycle_items = physical_servers_view.toolbar.lifecycle.items
     assert "Provision Physical Server" in lifecycle_items
-
-
-def test_physical_servers_view_details(physical_server_collection, provider):
-    """Navigate to the physical servers details page and verify that the server is displayed"""
-    physical_servers = physical_server_collection.all(provider)
-    physical_server = physical_servers[0]
-    physical_servers_view = navigate_to(physical_server, 'Details')
-    assert physical_servers_view.is_displayed
