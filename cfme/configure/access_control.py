@@ -1289,9 +1289,7 @@ class DetailsTenantView(ConfigurationView):
     name = Text('Name')
     description = Text('Description')
     parent = Text('Parent')
-    table = Table(VersionPick(
-        {Version.lowest(): '//*[@id="fieldset"]/table',
-         '5.9': '//*[@id="tenant_info"]/div[2]/div/fieldset/table'}))
+    table = Table('//*[self::fieldset or @id="fieldset"]/table')
 
     @property
     def is_displayed(self):
@@ -1418,7 +1416,7 @@ class Tenant(Updateable, BaseEntity):
             'templates': 'Allocated Number of Templates'
         }
 
-        for field in quotas.keys():
+        for field in quotas:
             item = view.table.row(name=quotas[field])
             quotas[field] = {
                 'total': item.total_quota.text,
