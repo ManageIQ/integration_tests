@@ -139,7 +139,6 @@ class Catalog(Updateable, Pretty, Navigatable, WidgetasticTaggable):
         try:
             navigate_to(self, 'Details')
             return True
-        # web_ui.Table.click_row_by_cells throws a NameError exception on no match
         except NameError:
             return False
 
