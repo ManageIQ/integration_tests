@@ -4,7 +4,6 @@ from cfme.utils import error
 from cfme.middleware.deployment import MiddlewareDeployment
 from cfme.middleware.provider import get_random_list
 from cfme.middleware.provider.hawkular import HawkularProvider
-from cfme.utils import testgen
 from cfme.utils.version import current_version
 from deployment_methods import deploy, get_deployment_from_list
 from deployment_methods import get_deployments_set
@@ -19,8 +18,8 @@ from server_methods import get_hawkular_server, get_eap_server
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
+    pytest.mark.provider([HawkularProvider], scope="function")
 ]
-pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
 ITEMS_LIMIT = 1  # when we have big list, limit number of items to test
 
 
