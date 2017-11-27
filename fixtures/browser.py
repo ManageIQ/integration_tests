@@ -17,12 +17,6 @@ failed_test_tracking = {
 }
 
 
-def pytest_namespace():
-    # Return the contents of this file as the 'sel' namespace in pytest.
-    from cfme.fixtures import pytest_selenium
-    return {'sel': pytest_selenium}
-
-
 def pytest_runtest_setup(item):
     from cfme.utils.appliance import (
         get_or_create_current_appliance,

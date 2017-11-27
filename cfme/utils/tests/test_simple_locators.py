@@ -1,17 +1,18 @@
 import pytest
 
+import cfme.fixtures.pytest_selenium as sel
 
 @pytest.fixture(scope='module')
 def test_page(browser, datafile):
     test_page_html = datafile('/utils/tests/test_simple_locators/elements.html').read()
-    pytest.sel.get('data:text/html;base64,{}'.format(test_page_html.encode('base64')))
+    sel.get('data:text/html;base64,{}'.format(test_page_html.encode('base64')))
 
 
 pytestmark = pytest.mark.usefixtures('test_page')
 
 
 def assert_len(locator, required_len):
-    assert len(pytest.sel.elements(locator)) == required_len
+    assert len(sel.elements(locator)) == required_len
 
 
 def test_by_id():

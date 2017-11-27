@@ -130,7 +130,7 @@ class HostStatsNotContains(CFMEException):
 
 
 class NavigationError(CFMEException):
-    """Raised when the pytest.sel.go_to function is unable to navigate to the requested page."""
+    """Raised when the pytest_selenium.go_to function is unable to navigate to the requested page."""
     def __init__(self, page_name):
         self.page_name = page_name
 
