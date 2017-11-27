@@ -364,16 +364,12 @@ class ApplianceDB(AppliancePlugin):
     @property
     def is_enabled(self):
         """Is database enabled"""
-        if self.address is None:
-            return False
-        return True
+        return self.address is not None
 
     @property
     def is_internal(self):
         """Is database internal"""
-        if self.address == self.appliance.hostname:
-            return True
-        return False
+        return self.address == self.appliance.hostname
 
     @property
     def is_ready(self):
