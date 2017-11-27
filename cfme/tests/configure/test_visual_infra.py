@@ -232,7 +232,7 @@ def test_infraprovider_noquads(request, set_infra_provider_quad):
     view = navigate_to(InfraProvider, 'All')
     view.toolbar.view_selector.select("Grid View")
     # Here data property will return an empty dict when the Quadrants option is deactivated.
-    assert bool(view.entities.get_first_entity().data) is False
+    assert not view.entities.get_first_entity().data
 
 
 def test_host_noquads(appliance, request, set_host_quad):
@@ -244,7 +244,7 @@ def test_host_noquads(appliance, request, set_host_quad):
     view = navigate_to(host_collection, 'All')
     view.toolbar.view_selector.select("Grid View")
     # Here data property will return an empty dict when the Quadrants option is deactivated.
-    assert bool(view.entities.get_first_entity().data) is False
+    assert not view.entities.get_first_entity().data
 
 
 def test_datastore_noquads(request, set_datastore_quad, appliance):
@@ -256,7 +256,7 @@ def test_datastore_noquads(request, set_datastore_quad, appliance):
     view = navigate_to(dc, 'All')
     view.toolbar.view_selector.select("Grid View")
     # Here data property will return an empty dict when the Quadrants option is deactivated.
-    assert bool(view.entities.get_first_entity().data) is False
+    assert not view.entities.get_first_entity().data
 
 
 def test_vm_noquads(request, set_vm_quad):
@@ -267,7 +267,7 @@ def test_vm_noquads(request, set_vm_quad):
     view = navigate_to(vms.Vm, 'VMsOnly')
     view.toolbar.view_selector.select("Grid View")
     # Here data property will return an empty dict when the Quadrants option is deactivated.
-    assert bool(view.entities.get_first_entity().data) is False
+    assert not view.entities.get_first_entity().data
 
 
 @pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:11215'])
@@ -279,4 +279,4 @@ def test_template_noquads(request, set_template_quad):
     view = navigate_to(vms.Template, 'TemplatesOnly')
     view.toolbar.view_selector.select("Grid View")
     # Here data property will return an empty dict when the Quadrants option is deactivated.
-    assert bool(view.entities.get_first_entity().data) is False
+    assert not view.entities.get_first_entity().data
