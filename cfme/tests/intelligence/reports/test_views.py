@@ -8,17 +8,15 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CannedSavedReport
-from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
+
 pytestmark = [pytest.mark.tier(3),
               test_requirements.report,
-              pytest.mark.usefixtures('setup_provider')]
-
-pytest_generate_tests = testgen.generate(
-    [OpenStackProvider, EC2Provider, RHEVMProvider, VMwareProvider],
-    scope='module')
+              pytest.mark.usefixtures('setup_provider'),
+              pytest.mark.provider([OpenStackProvider, EC2Provider, RHEVMProvider, VMwareProvider],
+                                   scope='module')]
 
 
 @pytest.yield_fixture(scope='module')
