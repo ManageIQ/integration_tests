@@ -4,6 +4,8 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.utils import error
+from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
@@ -108,9 +110,14 @@ class TestReposRESTAPI(object):
         assert_response(appliance)
         repository.wait_not_exists(num_sec=300, delay=5)
 
-        # this will fail once BZ 1477520 is fixed
-        del_action()
-        assert_response(appliance, success=False)
+        if appliance.version < '5.9' and BZ(1511148).blocks:
+            del_action()
+            assert_response(appliance, success=False)
+        else:
+            # testing BZ 1477520
+            with error.expected('ActiveRecord::RecordNotFound'):
+                del_action()
+            assert_response(appliance, http_status=404)
 
     def test_delete_repository_from_collection(self, appliance, repository):
         """Deletes repository from collection using REST API
@@ -122,7 +129,6 @@ class TestReposRESTAPI(object):
         assert_response(appliance)
         repository.wait_not_exists(num_sec=300, delay=5)
 
-        # this will fail once BZ 1477520 is fixed
         appliance.rest_api.collections.configuration_script_sources.action.delete.POST(repository)
         assert_response(appliance, success=False)
 
