@@ -39,6 +39,9 @@ def vm_crud(provider, setup_provider_modscope, small_template_modscope):
                          BZ(1509020, forced_streams=['5.8', '5.9']).blocks,
                          'BZ 1509020')
 @pytest.mark.meta(blockers=[1238371], automates=[1238371])
+@pytest.mark.meta(blockers=[BZ(1514509,
+                            forced_streams=['5.7', '5.8', '5.9', 'upstream'],
+                            unblock=lambda provider: provider.type != 'rhevm')])
 def test_vm_create(request, appliance, vm_crud, provider, register_event):
     """ Test whether vm_create_complete event is emitted.
 
