@@ -94,14 +94,11 @@ class JSInstanceEntity(JSBaseEntity):
     @property
     def data(self):
         data_dict = super(JSInstanceEntity, self).data
-        if 'quadicon' in data_dict and data_dict['quadicon']:
-            try:
-                quad_data = document_fromstring(data_dict['quadicon'])
-                data_dict['os'] = quad_data.xpath(self.QUADRANT.format(pos="a"))[0].get('src')
-                data_dict['vendor'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get('src')
-                data_dict['no_snapshot'] = quad_data.xpath(self.QUADRANT.format(pos="d"))[0].text
-            except IndexError:
-                return {}
+        if data_dict and 'quadicon' in data_dict and data_dict['quadicon']:
+            quad_data = document_fromstring(data_dict['quadicon'])
+            data_dict['os'] = quad_data.xpath(self.QUADRANT.format(pos="a"))[0].get('src')
+            data_dict['vendor'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get('src')
+            data_dict['no_snapshot'] = quad_data.xpath(self.QUADRANT.format(pos="d"))[0].text
 
             try:
                 state = quad_data.xpath(self.QUADRANT.format(pos="b"))[0].get('style')
