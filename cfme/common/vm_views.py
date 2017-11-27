@@ -13,8 +13,8 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import TemplateNotFound
 from widgetastic_manageiq import (
     Calendar, SummaryTable, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect, RadioGroup,
-    CheckableManageIQTree, VersionPick, Version, BaseEntitiesView, NonJSBaseEntity, BaseListEntity,
-    BaseQuadIconEntity, BaseTileIconEntity, JSBaseEntity, BaseNonInteractiveEntitiesView)
+    VersionPick, Version, BaseEntitiesView, NonJSBaseEntity, BaseListEntity, BaseQuadIconEntity,
+    BaseTileIconEntity, JSBaseEntity, BaseNonInteractiveEntitiesView)
 
 
 class InstanceQuadIconEntity(BaseQuadIconEntity):
@@ -439,24 +439,6 @@ class ManagementEngineView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         # Only the name is displayed
-        return False
-
-
-class ManagePoliciesView(BaseLoggedInPage):
-    """
-    Manage policies page
-    """
-    @View.nested
-    class form(View):  # noqa
-        policy_profiles = CheckableManageIQTree(tree_id='protectbox')
-        entities = View.nested(BaseNonInteractiveEntitiesView)
-        save_button = Button('Save')
-        reset_button = Button('Reset')
-        cancel_button = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        # TODO match quadicon using entities, no provider match through icon asset yet
         return False
 
 

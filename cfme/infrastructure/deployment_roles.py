@@ -13,7 +13,6 @@ from widgetastic_manageiq import (Accordion,
                                   BaseQuadIconEntity,
                                   BaseTileIconEntity,
                                   BootstrapSelect,
-                                  BootstrapTreeview,
                                   BreadCrumb,
                                   CompareToolBarActionsView,
                                   ItemsToolBarViewSelector,
@@ -30,6 +29,7 @@ from widgetastic_patternfly import (BootstrapNav,
                                     )
 
 from cfme.base.ui import BaseLoggedInPage
+from cfme.common import PolicyProfileAssignable
 from cfme.exceptions import ItemNotFound, RoleNotFound
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -216,26 +216,8 @@ class DeploymentRoleEditTagsView(DeploymentRoleView):
             self.breadcrumb.active_location == 'Tag Assignment')
 
 
-class DeploymentRoleManagePoliciesView(DeploymentRoleView):
-    """Deployment role Manage Policies view."""
-    breadcrumb = BreadCrumb()
-    policies = BootstrapTreeview("protectbox")
-    save_button = Button("Save")
-    reset_button = Button("Reset")
-    cancel_button = Button("Cancel")
-
-    @property
-    def is_displayed(self):
-        """Is this page currently displayed"""
-        return (
-            self.in_dep_role and
-            (self.breadcrumb.active_location == "'Cluster / Deployment Role' Policy Assignment" or
-             self.breadcrumb.active_location == "'Deployment Role' Policy Assignment")
-        )
-
-
 @attr.s
-class DeploymentRoles(BaseEntity):
+class DeploymentRoles(BaseEntity, PolicyProfileAssignable):
     """ Model of an infrastructure deployment roles in cfme
 
     Args:

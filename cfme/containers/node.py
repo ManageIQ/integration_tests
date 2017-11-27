@@ -12,7 +12,7 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
 from widgetastic_manageiq import Button, Text, TimelinesView, BreadCrumb
 
-from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.common import WidgetasticTaggable, TagPageView, PolicyProfileAssignable
 from cfme.containers.provider import (ContainersProvider, Labelable,
     ContainerObjectAllBaseView, LoggingableView, ContainerObjectDetailsBaseView)
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -20,7 +20,6 @@ from cfme.utils.appliance.implementations.ui import (CFMENavigateStep, navigator
                                                      navigate_to)
 from cfme.utils.appliance import current_appliance
 from cfme.common.provider_views import ProviderDetailsToolBar
-from cfme.common.vm_views import ManagePoliciesView
 
 
 class NodeDetailsToolBar(ProviderDetailsToolBar):
@@ -54,7 +53,7 @@ class NodeDetailsView(ContainerObjectDetailsBaseView):
 
 
 @attr.s
-class Node(BaseEntity, WidgetasticTaggable, Labelable):
+class Node(BaseEntity, WidgetasticTaggable, Labelable, PolicyProfileAssignable):
     """Node Class"""
     PLURAL = 'Nodes'
     all_view = NodeAllView
@@ -144,16 +143,6 @@ class EditTags(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
-
-
-@navigator.register(Node, 'ManagePolicies')
-class ManagePolicies(CFMENavigateStep):
-    VIEW = ManagePoliciesView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        """Navigate to the Manage Policies page"""
-        self.prerequisite_view.policy.item_select('Manage Policies')
 
 
 class NodeUtilizationView(NodeView):

@@ -14,7 +14,6 @@ from widgetastic_manageiq import (
     BaseListEntity,
     BaseQuadIconEntity,
     BaseTileIconEntity,
-    BootstrapTreeview,
     BreadCrumb,
     Button,
     Checkbox,
@@ -24,7 +23,6 @@ from widgetastic_manageiq import (
     SummaryTable,
     Table,
     TimelinesView,
-    BaseNonInteractiveEntitiesView
 )
 from widgetastic_patternfly import (
     BootstrapSelect,
@@ -226,19 +224,6 @@ class HostDiscoverView(ComputeInfrastructureHostsView):
     @property
     def is_displayed(self):
         return self.in_compute_infrastructure_hosts and self.title.text == "Hosts / Nodes Discovery"
-
-
-class HostManagePoliciesView(BaseLoggedInPage):
-    """Host's Manage Policies view."""
-    policies = BootstrapTreeview("protectbox")
-    entities = View.nested(BaseNonInteractiveEntitiesView)
-    save_button = Button("Save")
-    reset_button = Button("Reset")
-    cancel_button = Button("Cancel")
-
-    @property
-    def is_displayed(self):
-        return False
 
 
 class HostsToolbar(View):
