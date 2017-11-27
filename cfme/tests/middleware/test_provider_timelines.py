@@ -2,7 +2,6 @@ import pytest
 from datetime import datetime
 
 from cfme.middleware.provider.hawkular import HawkularProvider
-from cfme.utils import testgen
 from cfme.utils.version import current_version
 from deployment_methods import get_resource_path
 from deployment_methods import RESOURCE_WAR_NAME
@@ -19,8 +18,8 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
+    pytest.mark.provider([HawkularProvider], scope="function")
 ]
-pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
 
 DEPLOYMENT_OK_EVENT = 'hawkular_deployment.ok'
 UNDEPLOYMENT_OK_EVENT = 'hawkular_deployment_remove.ok'
