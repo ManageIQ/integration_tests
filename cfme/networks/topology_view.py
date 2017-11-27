@@ -4,27 +4,34 @@ from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_patternfly import FlashMessages, Button, Input
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.utils.version import current_version
 
 
 class TopologySearch(View):
     """ Represents search_text control of TopologyView """
-    search_text = Input(id="search")
+    search_text = Input(id='search')
+    search_text_new = Input(id='search_topology')
     search_btn = Text('//*[@id="main-content"]/div[2]/div/div[1]/div/div/form/div[2]/button')
+    search_btn_new = Text('//*[@id="miq-toolbar-menu"]/miq-toolbar-menu/'
+                          'div/div/ng-repeat/div/form/div[2]/button')
     clear_btn = Text('//*[@id="main-content"]/div[2]/div/div[1]/div/div/form/div[1]/div/button')
+    clear_btn_new = Text('//*[@id="miq-toolbar-menu"]/miq-toolbar-menu/div/'
+                         'div/ng-repeat/div/form/div[1]/div/button[2]')
 
     def clear_search(self):
-        if not self.is_empty:
+        if current_version() < '5.9':
             self.clear_btn.click()
-            self.search_btn.click()
+        else:
+            self.clear_btn_new.click()
+        self.search("")
 
     def search(self, text):
-        self.search_text.fill(text)
-        self.search_btn.click()
-
-    @property
-    @logged(log_result=True)
-    def is_empty(self):
-        return not bool(self.search_text.value)
+        if current_version() < '5.9':
+            self.search_text.fill(text)
+            self.search_btn.click()
+        else:
+            self.search_text_new.fill(text)
+            self.search_btn_new.click()
 
 
 class TopologyToolbar(View):
@@ -54,5 +61,5 @@ class TopologyView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return (super(BaseLoggedInPage, self).is_displayed and
+        return (self.logged_in_as_current_user and
                 self.navigation.currently_selected == ['Networks', 'Topology'])

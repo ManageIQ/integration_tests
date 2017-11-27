@@ -158,9 +158,9 @@ class TopologyLineCollection(BaseCollection):
 @attr.s
 class Topology(BaseEntity):
     "Class represents SDN topology"
-    elements_obj = attr.ib(default=[])
-    lines_obj = attr.ib(default=[])
-    legends_obj = attr.ib(default=[])
+    elements_obj = attr.ib(default=None)
+    lines_obj = attr.ib(default=None)
+    legends_obj = attr.ib(default=None)
     elements_col = attr.ib(default=None)
     lines_col = attr.ib(default=None)
     legends_col = attr.ib(default=None)
@@ -196,6 +196,18 @@ class Topology(BaseEntity):
             return True
         self.element_ref = element
         return False
+
+    @property
+    def legends_collection(self):
+        return self.legends_col
+
+    @property
+    def elements_collection(self):
+        return self.elements_col
+
+    @property
+    def lines_collection(self):
+        return self.lines_col
 
     @property
     def legends(self):
