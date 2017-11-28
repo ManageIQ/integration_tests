@@ -131,7 +131,10 @@ class ResourcePool(Pretty, BaseEntity, WidgetasticTaggable):
             wait: Whether or not to wait for the delete, defaults to False
         """
         view = navigate_to(self, 'Details')
-        item_name = 'Remove Resource Pool from Inventory'
+        if self.appliance.version < '5.9':
+            item_name = 'Remove Resource Pool'
+        else:
+            item_name = 'Remove Resource Pool from Inventory'
         view.toolbar.configuration.item_select(item_name, handle_alert=not cancel)
 
         # cancel doesn't redirect, confirmation does
