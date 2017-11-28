@@ -46,7 +46,8 @@ class AutomateExplorer(CFMENavigateStep):
 def check_tree_path(actual, desired):
     if len(actual) != len(desired):
         return False
-    for actual_item, desired_item in zip(actual, desired):
+    # We don't care about icons because we also match titles, which give the type away
+    for actual_item, desired_item in zip(actual, without_icons(desired)):
         if isinstance(desired_item, re._pattern_type):
             if desired_item.match(actual_item) is None:
                 return False
@@ -55,3 +56,13 @@ def check_tree_path(actual, desired):
                 return False
     else:
         return True
+
+
+def without_icons(tree_path):
+    """Tree paths with icons have tuples as steps with the icon being the first one."""
+    processed = []
+    for item in tree_path:
+        if isinstance(item, tuple):
+            item = item[1]
+        processed.append(item)
+    return processed

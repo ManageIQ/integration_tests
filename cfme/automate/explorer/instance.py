@@ -196,10 +196,12 @@ class Instance(BaseEntity, Copiable):
 
     @property
     def tree_path(self):
+        icon_name = 'fa-file-text-o'
         if self.display_name:
-            return self.parent_obj.tree_path + ['{} ({})'.format(self.display_name, self.name)]
+            return self.parent_obj.tree_path + [
+                (icon_name, '{} ({})'.format(self.display_name, self.name))]
         else:
-            return self.parent_obj.tree_path + [self.name]
+            return self.parent_obj.tree_path + [(icon_name, self.name)]
 
     @property
     def tree_path_name_only(self):

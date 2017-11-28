@@ -157,10 +157,15 @@ class Method(BaseEntity, Copiable):
 
     @property
     def tree_path(self):
-        if self.display_name:
-            return self.parent_obj.tree_path + ['{} ({})'.format(self.display_name, self.name)]
+        if self.appliance.version < '5.9':
+            icon_name = 'product-method'
         else:
-            return self.parent_obj.tree_path + [self.name]
+            icon_name = 'fa-ruby'
+        if self.display_name:
+            return self.parent_obj.tree_path + [
+                (icon_name, '{} ({})'.format(self.display_name, self.name))]
+        else:
+            return self.parent_obj.tree_path + [(icon_name, self.name)]
 
     @property
     def tree_path_name_only(self):
