@@ -1507,7 +1507,7 @@ class ReportDataControllerMixin(object):
     def _call_item_method(self, method):
         raw_data = {'controller': 'reportDataController',
                     'action': 'get_item',
-                    'data': [self.id]}
+                    'data': [self.entity_id]}
         js_data = json.dumps(raw_data)
         js_cmd = ('sendDataWithRx({data}); '
                   'return ManageIQ.qe.gtl.result.{method}()').format(data=js_data, method=method)
