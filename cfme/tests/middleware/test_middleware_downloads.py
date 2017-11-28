@@ -8,15 +8,15 @@ from cfme.middleware.server_group import MiddlewareServerGroup
 from cfme.middleware.messaging import MiddlewareMessaging
 from random_methods import get_random_object, get_random_domain
 from random_methods import get_random_server, get_random_server_group
-from cfme.utils import testgen
 from cfme.utils import version
 from cfme.utils.version import current_version
+
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
+    pytest.mark.provider([HawkularProvider], scope="function"),
 ]
-pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
 FILETYPES = ["txt", "csv", "pdf"]
 
 
