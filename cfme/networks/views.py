@@ -509,6 +509,18 @@ class SecurityGroupView(BaseLoggedInPage):
                 self.entities.title.text == 'Security Groups')
 
 
+class ProviderSecurityGroupAllView(SecurityGroupView):
+
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
+            self.entities.title.text == '{} (All Security Groups)'.format(
+                self.context['object'].name)
+        )
+
+
 class SecurityGroupDetailsView(BaseLoggedInPage):
     """ Represents detail view of network provider """
     title = Text('//div[@id="main-content"]//h1')

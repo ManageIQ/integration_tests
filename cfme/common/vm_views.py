@@ -174,6 +174,44 @@ class VMEntities(BaseEntitiesView):
     adv_search_clear = Text('//div[@id="main-content"]//h1//span[@id="clear_search"]/a')
 
 
+class HostAllVMsView(BaseLoggedInPage):
+    """
+    This view is used in test_host_relationships
+    """
+
+    title = Text(".//div[@id='main-content']//h1")
+
+    @property
+    def is_displayed(self):
+        if self.browser.product_version < "5.9":
+            title = "{} (All VMs)".format(self.context["object"].name)
+        else:
+            title = "{} (All Direct VMs)".format(self.context["object"].name)
+        return (
+            self.navigation.currently_selected == ["Compute", "Infrastructure", "Hosts"] and
+            self.title.text == title
+        )
+
+
+class ProviderAllVMsView(BaseLoggedInPage):
+    """
+    This view is used in test_provider_relationships
+    """
+
+    title = Text(".//div[@id='main-content']//h1")
+
+    @property
+    def is_displayed(self):
+        if self.browser.product_version < "5.8":
+            msg = "{} (All VMs)".format(self.context["object"].name)
+        else:
+            msg = "{} (All Direct VMs)".format(self.context["object"].name)
+        return (
+            self.navigation.currently_selected == ["Compute", "Infrastructure", "Providers"] and
+            self.title.text == msg
+        )
+
+
 class VMDetailsEntities(View):
     """
     Details entities view for vms/instances details destinations

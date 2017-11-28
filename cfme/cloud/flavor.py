@@ -70,6 +70,17 @@ class FlavorAllView(FlavorView):
     paginator = PaginationPane()
 
 
+class ProviderFlavorAllView(FlavorAllView):
+
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
+            self.entities.title.text == '{} (All Flavors)'.format(self.context["object"].name)
+        )
+
+
 class FlavorDetailsView(FlavorView):
     @property
     def is_displayed(self):

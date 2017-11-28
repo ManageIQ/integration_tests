@@ -92,6 +92,19 @@ class ClusterAllView(ClusterView):
     including_entities = View.include(BaseEntitiesView, use_parent=True)
 
 
+class ProviderAllClustersView(ClusterAllView):
+    """
+    This view is used in test_provider_relationships
+    """
+
+    @property
+    def is_displayed(self):
+        return (
+            self.navigation.currently_selected == ["Compute", "Infrastructure", "Providers"] and
+            self.entities.title.text == "{} (All Clusters)".format(self.context["object"].name)
+        )
+
+
 class ClusterDetailsView(ClusterView):
     """The details page of a cluster"""
     @property

@@ -6,10 +6,10 @@ from cfme.base.credential import Credential
 from cfme.common.host_views import HostsEditView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils import testgen
 from cfme.utils.conf import credentials
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
 
 pytestmark = [pytest.mark.tier(3)]
 

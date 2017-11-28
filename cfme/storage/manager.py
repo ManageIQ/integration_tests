@@ -95,6 +95,17 @@ class StorageManagerAllView(StorageManagerView):
     paginator = PaginationPane()
 
 
+class ProviderStorageManagerAllView(StorageManagerAllView):
+
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
+            self.title.text == '{} (All Storage Managers)'.format(self.context['object'].name)
+        )
+
+
 class StorageManagerDetailsView(StorageManagerView):
     """The details page for Storage Manager or Provider"""
     @property
