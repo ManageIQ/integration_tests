@@ -1,7 +1,6 @@
 import pytest
 
 from cfme.middleware.provider import MiddlewareProvider
-from cfme.utils import testgen
 from cfme.utils import version
 from cfme.utils.version import current_version
 from cfme.middleware.server import MiddlewareServer
@@ -14,8 +13,9 @@ from cfme.middleware.deployment import MiddlewareDeployment
 
 pytestmark = [
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.provider([MiddlewareProvider], scope='function'),
 ]
-pytest_generate_tests = testgen.generate([MiddlewareProvider], scope='function')
 
 TOPOLOGY_TYPES = {"servers": {"MiddlewareServer"},
                   "deployments": {"MiddlewareDeployment",
@@ -29,7 +29,6 @@ TOPOLOGY_TYPES = {"servers": {"MiddlewareServer"},
                   "server_groups": {"MiddlewareServerGroup"}}
 
 
-@pytest.mark.usefixtures('setup_provider')
 def test_topology(provider):
     """Tests topology page from provider page
 
@@ -75,7 +74,6 @@ def test_topology(provider):
 
 
 @pytest.mark.uncollectif(current_version() != version.UPSTREAM)
-@pytest.mark.usefixtures('setup_provider')
 def test_topology_details(provider):
     """Tests items details in topology page from provider page
 
@@ -113,7 +111,6 @@ def test_topology_details(provider):
     verify_elements_match(MiddlewareDeployment.deployments_in_db(), deployments)
 
 
-@pytest.mark.usefixtures('setup_provider')
 def test_topology_filter(provider):
     """Tests filters in topology page from provider page
 
@@ -138,7 +135,6 @@ def test_topology_filter(provider):
             verify_elements_shown(provider.topology, type)
 
 
-@pytest.mark.usefixtures('setup_provider')
 def test_topology_server_hierarchy(provider):
     """Tests all server's hierarchical content in topology
 

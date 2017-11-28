@@ -5,14 +5,14 @@ from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui.utilization import Option
 from random_methods import get_random_object
-from cfme.utils import testgen
 from cfme.utils.version import current_version
+
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
+    pytest.mark.provider([HawkularProvider], scope="function"),
 ]
-pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
 
 
 @pytest.mark.parametrize("object_type", [MiddlewareServer,
