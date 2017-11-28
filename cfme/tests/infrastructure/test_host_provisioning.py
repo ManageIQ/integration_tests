@@ -89,8 +89,7 @@ def test_host_provisioning(appliance, setup_provider, cfme_data, host_provisioni
     """
 
     # Add host before provisioning
-    test_host = host.get_from_config('esx')
-    test_host.create()
+    test_host = appliance.collections.hosts.create_from_config('esx')
 
     # Populate provisioning_data before submitting host provisioning form
     pxe_server, pxe_image, pxe_image_type, pxe_kickstart, datacenter, cluster, datastores,\

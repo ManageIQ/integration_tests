@@ -115,7 +115,7 @@ def test_button_crud(dialog, request):
 
 @pytest.mark.meta(blockers=[1193758, 1205235])
 @pytest.mark.tier(3)
-def test_button_on_host(dialog, request):
+def test_button_on_host(appliance, dialog, request):
     buttongroup = ButtonGroup(
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()))
@@ -128,9 +128,9 @@ def test_button_on_host(dialog, request):
                     dialog=dialog, system="Request", request="InspectMe")
     request.addfinalizer(button.delete_if_exists)
     button.create()
-    myhost = host.get_from_config('esx')
+    myhost = appliance.collections.hosts.get_from_config('esx')
     if not myhost.exists:
-        myhost.create()
+        myhost = appliance.collections.hosts.create_from_config('esx')
     myhost.execute_button(buttongroup.hover, button.text)
 
 
