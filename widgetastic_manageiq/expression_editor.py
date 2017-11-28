@@ -233,7 +233,6 @@ class ExpressionEditor(View, Pretty):
             count: Name of the field to compare (Host.VMs, ...).
             key: Operation to do (=, <, >=, ...).
             value: Value to check against.
-        Returns: See :py:func:`cfme.web_ui.fill`.
         """
         view = self.count_form_view
         view.fill(dict(
@@ -301,7 +300,6 @@ class ExpressionEditor(View, Pretty):
             tag: Name of the field to compare (Host.VMs, ...).
             key: Operation to do (=, <, >=, IS NULL, ...).
             value: Value to check against.
-        Returns: See :py:func:`cfme.web_ui.fill`.
         """
         field_norm = field.strip().lower()
         if ("date updated" in field_norm or "date created" in field_norm or
