@@ -244,6 +244,7 @@ class IPAppliance(object):
         self.browser = ViaUI(owner=self)
         self.ssui = ViaSSUI(owner=self)
         self.rest_context = ViaREST(owner=self)
+        self.rest_context.strict_calls = False
         self.context = ImplementationContext.from_instances(
             [self.browser, self.ssui, self.rest_context])
 

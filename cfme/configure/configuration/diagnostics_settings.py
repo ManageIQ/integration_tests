@@ -279,8 +279,8 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             )
         else:
             message = "MiqServer {} [{}]".format(
-                first_slave_server.name,
-                first_slave_server.zone.id
+                self.appliance.server.name,
+                self.appliance.server.zone.id
             )
         view.flash.assert_message(
             "Log collection for {} {} has been initiated".format(
@@ -462,7 +462,7 @@ class DiagnosticsCollectLogsSlave(CFMENavigateStep):
             self.appliance.server_region_string(),
             "Zone: {} (current)".format(self.appliance.zone_description),
             "Server: {} [{}]".format(slave_server.name,
-                                     int(slave_server.zone.id)))
+                                     int(slave_server.sid)))
         self.prerequisite_view.collectlogs.select()
 
 
