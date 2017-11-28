@@ -35,7 +35,7 @@ def group(request, data, auth_mode, add_group, appliance):
         principal=data["username"],
         secret=data["password"],
     )
-    group_collection = appliance.collections.rbac_groups
+    group_collection = appliance.collections.groups
     user_group = None
     if add_group == RETRIEVE_GROUP:
         user_group = group_collection.instantiate(

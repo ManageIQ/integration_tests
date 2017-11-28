@@ -76,7 +76,7 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
         provider.mgmt.start_vm(vm_name)
         provider.mgmt.wait_vm_running(vm_name)
 
-    group_collection = appliance.collections.rbac_groups
+    group_collection = appliance.collections.groups
     cb_group = group_collection.instantiate(description='EvmGroup-user')
     user = ac.User(name=provider.name + fauxfactory.gen_alphanumeric(),
         credential=new_credential(),

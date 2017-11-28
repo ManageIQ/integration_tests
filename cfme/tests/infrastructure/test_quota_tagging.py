@@ -70,7 +70,7 @@ def set_entity_quota_source(max_quota_test_instance, entity):
         max_quota_test_instance.fields = {'quota_source_type': {'value': entity}}
 
 
-@pytest.fixture(params=[('rbac_groups', 'group', 'EvmGroup-super_administrator')], scope='module')
+@pytest.fixture(params=[('groups', 'group', 'EvmGroup-super_administrator')], scope='module')
 def entities(appliance, request, max_quota_test_instance):
     collection, entity, description = request.param
     set_entity_quota_source(max_quota_test_instance, entity)

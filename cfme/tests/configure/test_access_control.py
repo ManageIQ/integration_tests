@@ -30,7 +30,7 @@ pytestmark = test_requirements.rbac
 
 @pytest.fixture(scope='module')
 def group_collection(appliance):
-    return appliance.collections.rbac_groups
+    return appliance.collections.groups
 
 
 @pytest.fixture(scope='module')
