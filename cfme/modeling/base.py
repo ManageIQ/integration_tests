@@ -4,6 +4,8 @@ from collections import Callable
 from cached_property import cached_property
 
 from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance.implementations.ui import VersionPick  # 100% sure version_class patched
+from cfme.utils.log import logger
 
 
 def load_appliance_collections():
@@ -56,9 +58,20 @@ class EntityCollections(object):
             cls_and_or_filter = self._availiable_collections[name]
             if isinstance(cls_and_or_filter, tuple):
                 item_filters.update(cls_and_or_filter[1])
-                cls = cls_and_or_filter[0]
+                cls_or_verpick = cls_and_or_filter[0]
             else:
-                cls = cls_and_or_filter
+                cls_or_verpick = cls_and_or_filter
+            # Now check whether we verpick the collection or not
+            if isinstance(cls_or_verpick, VersionPick):
+                cls = cls_or_verpick.pick(self.parent.appliance.version)
+                try:
+                    logger.info(
+                        '[COLLECTIONS] Version picked collection %s as %s.%s',
+                        name, cls.__module__, cls.__name__)
+                except (AttributeError, TypeError, ValueError):
+                    logger.exception('[COLLECTIONS] Is the collection %s truly a collection?', name)
+            else:
+                cls = cls_or_verpick
             self._collection_cache[name] = cls(self._parent, filters=item_filters)
         return self._collection_cache[name]
 
