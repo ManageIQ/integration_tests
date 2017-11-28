@@ -263,17 +263,17 @@ class MiddlewareServer(MiddlewareBase, WidgetasticTaggable, Container, Reportabl
     @variable(alias='ui')
     def is_starting(self):
         self.load_details(refresh=True)
-        return self.get_detail("Properties", "Server State") == 'Starting'
+        return self.get_detail("Properties", "Server State").lower() == 'starting'
 
     @variable(alias='ui')
     def is_stopping(self):
         self.load_details(refresh=True)
-        return self.get_detail("Properties", "Server State") == 'Stopping'
+        return self.get_detail("Properties", "Server State").lower() == 'stopping'
 
     @variable(alias='ui')
     def is_stopped(self):
         self.load_details(refresh=True)
-        return self.get_detail("Properties", "Server State") == 'Stopped'
+        return self.get_detail("Properties", "Server State").lower() == 'stopped'
 
     def shutdown_server(self, timeout=10, cancel=False):
         view = self.load_details(refresh=True)
