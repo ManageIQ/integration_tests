@@ -1,4 +1,3 @@
-from widgetastic.log import logged
 from widgetastic.widget import View, Text, Checkbox
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_patternfly import FlashMessages, Button, Input
