@@ -191,11 +191,16 @@ class Dashboard(Updateable, Pretty, Navigatable):
         view = self.create_view(DashboardDetailsView)
         assert view.is_displayed
         view.flash.assert_no_error()
-        if changed:
-            view.flash.assert_message('Dashboard "{}" was saved'.format(self.name))
+        if self.appliance.version < "5.9":
+            success_msg = 'Dashboard "{}" was saved'.format(self.name)
+            cancel_msg = 'Edit of Dashboard "{}" was cancelled by the user'.format(self.name)
         else:
-            view.flash.assert_message(
-                'Edit of Dashboard "{}" was cancelled by the user'.format(self.name))
+            success_msg = 'Dashboard "{}" was saved'.format(self.title)
+            cancel_msg = 'Edit of Dashboard "{}" was cancelled by the user'.format(self.title)
+        if changed:
+            view.flash.assert_message(success_msg)
+        else:
+            view.flash.assert_message(cancel_msg)
 
     def delete(self, cancel=False):
         """Delete this Dashboard in the UI.
