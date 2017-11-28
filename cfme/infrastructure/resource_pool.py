@@ -48,7 +48,7 @@ class ResourcePoolDetailsAccordion(View):
 class ResourcePoolEntities(View):
     """Entities on the main list page"""
     title = Text('//div[@id="main-content"]//h1')
-    table = Table("//div[@id='list_grid']//table")
+    table = Table(".//div[@id='list_grid']//table|.//div[@id='miq-gtl-view']//table")
     search = View.nested(Search)
     # element attributes changed from id to class in upstream-fine+, capture both with locator
     flash = FlashMessages('.//div[@id="flash_msg_div"]'
@@ -131,7 +131,7 @@ class ResourcePool(Pretty, BaseEntity, WidgetasticTaggable):
             wait: Whether or not to wait for the delete, defaults to False
         """
         view = navigate_to(self, 'Details')
-        item_name = 'Remove Resource Pool'
+        item_name = 'Remove Resource Pool from Inventory'
         view.toolbar.configuration.item_select(item_name, handle_alert=not cancel)
 
         # cancel doesn't redirect, confirmation does
@@ -159,7 +159,7 @@ class ResourcePool(Pretty, BaseEntity, WidgetasticTaggable):
 
     def wait_for_exists(self):
         """Wait for the resource pool to be created"""
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.parent, 'All')
 
         def refresh():
             if self.provider:
@@ -194,7 +194,7 @@ class ResourcePool(Pretty, BaseEntity, WidgetasticTaggable):
 
     @property
     def exists(self):
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.parent, 'All')
         try:
             view.toolbar.view_selector.select('List View')
             view.paginator.find_row_on_pages(view.entities.table, name=self.name)

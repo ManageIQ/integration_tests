@@ -82,7 +82,8 @@ def test_delete_resource_pool_appear_after_refresh(setup_provider, provider, app
         test_flag: delete_object
     """
     resourcepool_name = provider.data['remove_test']['resource_pool']
-    test_resourcepool = appliance.collections.resource_pools.instantiate(name=resourcepool_name)
+    test_resourcepool = appliance.collections.resource_pools.instantiate(
+        name=resourcepool_name, provider=provider)
     test_resourcepool.delete(cancel=False, wait=True)
     provider.refresh_provider_relationships()
     test_resourcepool.wait_for_exists()
