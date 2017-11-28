@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.base import Server
 from cfme.dashboard import Widget
 from cfme.intelligence.reports import widgets
 from cfme.utils.appliance.implementations.ui import navigate_to

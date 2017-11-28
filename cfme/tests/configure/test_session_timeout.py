@@ -7,12 +7,14 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.utils.browser import ensure_browser_open, quit
 from cfme.utils.wait import wait_for
 
+
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_session_timeout(request, appliance):
     """Sets the timeout to shortest possible time and waits if it really times out."""
 
     auth_settings = appliance.server.authentication
+
     @request.addfinalizer  # Wow, why we did not figure this out before?!
     def _finalize():
         quit()

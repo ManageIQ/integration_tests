@@ -2,7 +2,6 @@ import fauxfactory
 import pytest
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.update import update
-from cfme.cloud.tenant import TenantCollection
 from cfme.utils.log import logger
 from cfme.utils.version import current_version
 

@@ -20,8 +20,10 @@ class TimeProfileAddForm(View):
     timezone = BootstrapSelect('profile_tz')
     days = BootstrapSwitch(name='all_days')
     hours = BootstrapSwitch(name='all_hours')
-    save_button = Button(VersionPick({Version.lowest(): 'Add',
-                                          '5.8': 'Save'}))
+    save_button = Button(VersionPick({
+        Version.lowest(): 'Add',
+        '5.8': 'Save'})
+    )
     configuration = Dropdown('Configuration')
     table = Table("//div[@id='main_div']//table")
     save_edit_button = Button('Save')

@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 
-from cfme.base import Server
 from cfme.dashboard import Widget
 from cfme.intelligence.reports.widgets.menu_widgets import MenuWidget
 from cfme.intelligence.reports.widgets.report_widgets import ReportWidget

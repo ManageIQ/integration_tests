@@ -10,8 +10,7 @@ import fauxfactory
 import pytest
 import random
 
-from cfme.control.explorer import (actions, alert_profiles, alerts, conditions, policies,
-    policy_profiles)
+from cfme.control.explorer import alert_profiles, conditions, policies
 
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update

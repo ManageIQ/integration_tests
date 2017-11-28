@@ -3,7 +3,6 @@ import cfme.intelligence.chargeback.assignments as cb
 import pytest
 import random
 
-from cfme.base import Server
 from cfme.intelligence.chargeback.assignments import AssignmentsView
 from cfme import test_requirements
 from cfme.utils import version

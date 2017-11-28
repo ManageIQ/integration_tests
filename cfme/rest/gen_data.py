@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 
-from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider

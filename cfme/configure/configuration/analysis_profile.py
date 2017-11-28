@@ -9,7 +9,7 @@ from widgetastic_manageiq import (
     Table, PaginationPane, SummaryFormItem, Checkbox, CheckboxSelect, DynamicTable)
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.base.ui import Server, ConfigurationView
+from cfme.base.ui import ConfigurationView
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
