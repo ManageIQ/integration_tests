@@ -24,9 +24,9 @@ pytestmark = [
 @pytest.yield_fixture(scope="module")
 def role_only_user_owned(appliance):
     appliance.server.login_admin()
-    role = ac.Role(name='role_only_user_owned_' + fauxfactory.gen_alphanumeric(),
+    role_collection = appliance.collections.rbac_roles
+    role = role_collection.create(name='role_only_user_owned_' + fauxfactory.gen_alphanumeric(),
                    vm_restriction='Only User Owned')
-    role.create()
     yield role
     appliance.server.login_admin()
     role.delete()
@@ -46,9 +46,9 @@ def group_only_user_owned(appliance, role_only_user_owned):
 @pytest.yield_fixture(scope="module")
 def role_user_or_group_owned(appliance):
     appliance.server.login_admin()
-    role = ac.Role(name='role_user_or_group_owned_' + fauxfactory.gen_alphanumeric(),
+    role_collection = appliance.collections.rbac_roles
+    role = role_collection.create(name='role_user_or_group_owned_' + fauxfactory.gen_alphanumeric(),
                    vm_restriction='Only User or Group Owned')
-    role.create()
     yield role
     appliance.server.login_admin()
     role.delete()
@@ -75,7 +75,7 @@ def new_credential():
 
 @pytest.yield_fixture(scope="module")
 def user1(appliance, group_only_user_owned):
-    user1 = new_user(group_only_user_owned)
+    user1 = new_user(appliance, group_only_user_owned)
     yield user1
     appliance.server.login_admin()
     user1.delete()
@@ -83,7 +83,7 @@ def user1(appliance, group_only_user_owned):
 
 @pytest.yield_fixture(scope="module")
 def user2(appliance, group_only_user_owned):
-    user2 = new_user(group_only_user_owned)
+    user2 = new_user(appliance, group_only_user_owned)
     yield user2
     appliance.server.login_admin()
     user2.delete()
@@ -91,20 +91,21 @@ def user2(appliance, group_only_user_owned):
 
 @pytest.yield_fixture(scope="module")
 def user3(appliance, group_user_or_group_owned):
-    user3 = new_user(group_user_or_group_owned)
+    user3 = new_user(appliance, group_user_or_group_owned)
     yield user3
     appliance.server.login_admin()
     user3.delete()
 
 
-def new_user(group_only_user_owned):
-    user = ac.User(name='user_' + fauxfactory.gen_alphanumeric(),
-                   credential=new_credential(),
-                   email='abc@redhat.com',
-                   group=group_only_user_owned,
-                   cost_center='Workload',
-                   value_assign='Database')
-    user.create()
+def new_user(appliance, group_only_user_owned):
+    user = ac.UserCollection(appliance).create(
+        name='user_' + fauxfactory.gen_alphanumeric(),
+        credential=new_credential(),
+        email='abc@redhat.com',
+        group=group_only_user_owned,
+        cost_center='Workload',
+        value_assign='Database')
+
     return user
 
 

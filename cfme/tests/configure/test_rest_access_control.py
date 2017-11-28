@@ -4,7 +4,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.configure.access_control import User
 from cfme.rest.gen_data import (
     _creating_skeleton,
     groups as _groups,
@@ -368,7 +367,8 @@ class TestUsersViaREST(object):
         user.action.edit(password=new_password)
         assert appliance.rest_api.response.status_code == 200
         cred = Credential(principal=user.userid, secret=new_password)
-        new_user = User(credential=cred)
+        user_collection = appliance.collections.rbac_users
+        new_user = user_collection.instantiate(credential=cred)
         appliance.server.login(new_user)
 
     @pytest.mark.tier(3)
