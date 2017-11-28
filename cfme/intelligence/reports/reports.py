@@ -13,7 +13,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import PaginationPane, Table
+from widgetastic_manageiq import PaginationPane, Table, ReportToolBarViewSelector
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 from . import CloudIntelReportsView, ReportsMultiBoxSelect
 
@@ -309,6 +309,7 @@ class CustomSavedReportDetailsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
     table = VanillaTable(".//div[@id='report_html_div']/table")
     paginator = PaginationPane()
+    view_selector = View.nested(ReportToolBarViewSelector)
 
     @ParametrizedView.nested
     class download(ParametrizedView):  # noqa
@@ -487,9 +488,6 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
         self.queued_datetime_in_title = parsetime.from_american_with_utc(
             queued_datetime).to_saved_report_title_format()
         self.datetime_in_tree = parsetime.from_american_with_utc(self.datetime).to_iso_with_utc()
-
-    def navigate(self):
-        navigate_to(self, "Details")
 
     @classmethod
     def new(cls, path):

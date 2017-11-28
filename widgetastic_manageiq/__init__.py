@@ -1816,6 +1816,49 @@ class CompareToolBarActionsView(View):
             yield self.compressed_button
 
 
+class ReportToolBarViewSelector(View):
+    """ represents toolbar's view selector control
+
+    .. code-block:: python
+
+        view_selector = View.nested(ReportToolBarViewSelector)
+
+        view_selector.select('Graph View')
+        view_selector.selected
+    """
+    ROOT = './/div[contains(@class, "toolbar-pf")]'
+    graph_button = Button(title='Graph View')
+    hybrid_button = Button(title='Hybrid View')
+    tabular_button = Button(title='Tabular View')
+
+    @property
+    def _view_buttons(self):
+        yield self.graph_button
+        yield self.hybrid_button
+        yield self.tabular_button
+
+    def select(self, title):
+        for button in self._view_buttons:
+            if button.title == title:
+                return button.click()
+        else:
+            raise ValueError("The view with title {title} isn't present".format(title=title))
+
+    @property
+    def selected(self):
+        if self.is_displayed:
+            return next(btn.title for btn in self._view_buttons if btn.active)
+        else:
+            return None
+
+    def read(self):
+        return self.selected
+
+    @property
+    def is_displayed(self):
+        return self.graph_button.is_displayed
+
+
 class Search(View):
     """ Represents search_text control
     # TODO Add advanced search
