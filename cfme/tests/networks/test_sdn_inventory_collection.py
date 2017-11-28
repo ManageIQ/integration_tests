@@ -3,13 +3,14 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.networks.cloud_network import CloudNetwork
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
-pytest_generate_tests = testgen.generate(
-    classes=[EC2Provider, AzureProvider, OpenStackProvider], scope='module')
-pytestmark = pytest.mark.usefixtures('setup_provider')
+pytestmark = [
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.provider([EC2Provider, AzureProvider, OpenStackProvider],
+                         scope='module'),
+]
 
 
 @pytest.mark.tier(1)

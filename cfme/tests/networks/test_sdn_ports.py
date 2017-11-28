@@ -3,13 +3,14 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.exceptions import ManyEntitiesFound, ItemNotFound
 from cfme.networks.network_port import NetworkPortCollection
 from cfme.networks.provider import NetworkProviderCollection
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
 
-pytest_generate_tests = testgen.generate(classes=[EC2Provider], scope='module')
-pytestmark = pytest.mark.usefixtures('setup_provider')
+pytestmark = [
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.provider([EC2Provider], scope='module')
+]
 
 
 @pytest.mark.meta(blockers=[BZ(1480577, forced_streams=["5.7", "5.8"])])
