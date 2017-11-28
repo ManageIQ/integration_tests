@@ -30,20 +30,22 @@ def verify_server_running(provider, server):
              fail_func=lambda: refresh(provider))
 
 
-def verify_server_starting(provider, server):
+def verify_server_starting(provider, server, silent_failure=False):
     refresh(provider)
     wait_for(lambda: server.is_starting(),
              delay=DELAY, num_sec=NUM_SEC,
              message='Server {} must be starting'.format(server.name),
-             fail_func=lambda: refresh(provider))
+             fail_func=lambda: refresh(provider),
+             silent_failure=silent_failure)
 
 
-def verify_server_stopping(provider, server):
+def verify_server_stopping(provider, server, silent_failure=False):
     refresh(provider)
     wait_for(lambda: server.is_stopping(),
              delay=DELAY, num_sec=NUM_SEC,
              message='Server {} must be stopping'.format(server.name),
-             fail_func=lambda: refresh(provider))
+             fail_func=lambda: refresh(provider),
+             silent_failure=silent_failure)
 
 
 def verify_server_suspended(provider, server):
