@@ -2,9 +2,9 @@ import attr
 from collections import Callable
 
 from cached_property import cached_property
+from widgetastic.utils import VersionPick
 
 from cfme.utils.appliance import NavigatableMixin
-from cfme.utils.appliance.implementations.ui import VersionPick  # 100% sure version_class patched
 from cfme.utils.log import logger
 
 
