@@ -15,7 +15,7 @@ from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, Tab)
 from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree,
-    NonJSPaginationPane, SummaryTable, TimelinesView)
+    NonJSPaginationPane, SummaryTable, TimelinesView, Search)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 from widgetastic.utils import partial_match
 
@@ -150,6 +150,7 @@ class VmsTemplatesAllView(InfraVmView):
     sidebar = View.nested(VmsTemplatesAccordion)
     including_entities = View.include(VMEntities, use_parent=True)
     pagination = View.nested(NonJSPaginationPane)
+    search = View.nested(Search)
 
     @property
     def is_displayed(self):
@@ -182,6 +183,7 @@ class VmsOnlyAllView(InfraVmView):
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
     including_entities = View.include(VMEntities, use_parent=True)
+    search = View.nested(Search)
 
     @property
     def is_displayed(self):

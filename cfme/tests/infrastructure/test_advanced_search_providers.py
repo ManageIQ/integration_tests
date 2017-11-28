@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""This testing module tests the behaviour of the search box in the Provider section
+"""This testing module tests the behaviour of the view.search box in the Provider section
 
 It does not check for filtering results so far."""
 import fauxfactory
@@ -10,10 +10,7 @@ from cfme.infrastructure.provider import InfraProvider
 from fixtures.pytest_store import store
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
-from cfme.web_ui import search
-from cfme.web_ui.search import DisabledButtonException
-from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
-    is_cfme_exception, cfme_exception_text)
+from cfme.web_ui.cfme_exception import is_cfme_exception, cfme_exception_text
 
 
 pytestmark = [
@@ -23,14 +20,11 @@ pytestmark = [
 @pytest.yield_fixture(scope="function")
 def setup_cleanup_search():
     """Navigate to InfraProvider, clear search on setup and teardown"""
-    navigate_to(InfraProvider, 'All')
-    search.ensure_no_filter_applied()
-
+    view = navigate_to(InfraProvider, 'All')
+    view.search.remove_search_filters()
     yield
-
     # cleanup after test
-    search.ensure_no_filter_applied()
-    search.ensure_advanced_search_closed()
+    view.search.remove_search_filters()
 
 
 @pytest.yield_fixture(scope="function")
@@ -53,76 +47,81 @@ def rails_delete_filter(request):
 
 
 def test_can_do_advanced_search():
-    navigate_to(InfraProvider, 'All')
-    assert search.is_advanced_search_possible(), "Cannot do advanced search here!"
+    view = navigate_to(InfraProvider, 'All')
+    assert view.search.is_advanced_search_possible, "Cannot do advanced view.search here!"
 
 
 @pytest.mark.requires("test_can_do_advanced_search")
 def test_can_open_advanced_search():
-    navigate_to(InfraProvider, 'All')
-    search.ensure_advanced_search_open()
+    view = navigate_to(InfraProvider, 'All')
+    view.search.open_advanced_search()
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
 def test_filter_without_user_input():
     # Set up the filter
-    search.fill_and_apply_filter("fill_count(Infrastructure Provider.VMs, >=, 0)")
-    assert_no_cfme_exception()
+    view = navigate_to(InfraProvider, 'All')
+    view.search.advanced_search(
+        "fill_count(Infrastructure Provider.VMs, >=, 0)")
+    view.flash.assert_no_error()
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
 def test_filter_with_user_input():
     # Set up the filter
+    view = navigate_to(InfraProvider, 'All')
     logger.debug('DEBUG: test_with_user_input: fill and apply')
-    search.fill_and_apply_filter("fill_count(Infrastructure Provider.VMs, >=)",
-                                 fill_callback={"COUNT": 0})
-    assert_no_cfme_exception()
+    view.search.advanced_search(
+        "fill_count(Infrastructure Provider.VMs, >=)", {'COUNT': 0})
+    view.flash.assert_no_error()
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
 def test_filter_with_user_input_and_cancellation():
     # Set up the filter
-    search.fill_and_apply_filter(
-        "fill_count(Infrastructure Provider.VMs, >=)", fill_callback={"COUNT": 0},
-        cancel_on_user_filling=True
+    view = navigate_to(InfraProvider, 'All')
+    view.search.advanced_search(
+        "fill_count(Infrastructure Provider.VMs, >=)", {"COUNT": 0}, True
     )
-    assert_no_cfme_exception()
+    view.flash.assert_no_error()
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
 def test_filter_save_cancel(rails_delete_filter):
     # bind filter_name to the function for fixture cleanup
+    view = navigate_to(InfraProvider, 'All')
     test_filter_save_cancel.filter_name = fauxfactory.gen_alphanumeric()
     logger.debug('Set filter_name to: {}'.format(test_filter_save_cancel.filter_name))
 
     # Try save filter
-    assert search.save_filter("fill_count(Infrastructure Provider.VMs, >)",
-                              test_filter_save_cancel.filter_name, cancel=True)
-    assert_no_cfme_exception()
+    assert view.search.save_filter("fill_count(Infrastructure Provider.VMs, >)",
+                                   test_filter_save_cancel.filter_name, cancel=True)
+    view.flash.assert_no_error()
 
-    assert search.reset_filter()
+    assert view.search.reset_filter()
     # Exception depends on system state - Load button will be disabled if there are no saved filters
-    with pytest.raises((DisabledButtonException, NoSuchElementException)):
-        search.load_filter(saved_filter=test_filter_save_cancel.filter_name)
+    with pytest.raises(NoSuchElementException):
+        view.search.load_filter(saved_filter=test_filter_save_cancel.filter_name)
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
 def test_filter_save_and_load(rails_delete_filter):
     # bind filter_name to the function for fixture cleanup
+    view = navigate_to(InfraProvider, 'All')
     test_filter_save_and_load.filter_name = fauxfactory.gen_alphanumeric()
     logger.debug('Set filter_name to: {}'.format(test_filter_save_and_load.filter_name))
 
     # Save filter
-    assert search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)",
-                              test_filter_save_and_load.filter_name)
-    assert_no_cfme_exception()
+    assert view.search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)",
+                                   test_filter_save_and_load.filter_name)
+    view.flash.assert_no_error()
 
     # Reset filter
-    assert search.reset_filter()
+    assert view.search.reset_filter()
 
     # Load filter
-    assert search.load_filter(test_filter_save_and_load.filter_name)
-    assert_no_cfme_exception()
+    assert view.search.load_filter(test_filter_save_and_load.filter_name)
+    view.flash.assert_no_error()
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
@@ -130,18 +129,18 @@ def test_filter_save_and_cancel_load(rails_delete_filter):
     # bind filter_name to the function for fixture cleanup
     test_filter_save_and_cancel_load.filter_name = fauxfactory.gen_alphanumeric()
     logger.debug('Set filter_name to: {}'.format(test_filter_save_and_cancel_load.filter_name))
-
+    view = navigate_to(InfraProvider, 'All')
     # Save filter
-    assert search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)",
-                              test_filter_save_and_cancel_load.filter_name)
-    assert_no_cfme_exception()
+    assert view.search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)",
+                                   test_filter_save_and_cancel_load.filter_name)
+    view.flash.assert_no_error()
 
     # Reset Filter
-    assert search.reset_filter()
+    assert view.search.reset_filter()
 
     # Load and cancel
-    assert search.load_filter(test_filter_save_and_cancel_load.filter_name, cancel=True)
-    assert_no_cfme_exception()
+    assert view.search.load_filter(test_filter_save_and_cancel_load.filter_name, cancel=True)
+    view.flash.assert_no_error()
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
@@ -150,79 +149,86 @@ def test_filter_save_and_cancel_load_with_user_input(rails_delete_filter):
     test_filter_save_and_cancel_load_with_user_input.filter_name = fauxfactory.gen_alphanumeric()
     logger.debug('Set filter_name to: {}'.format(
         test_filter_save_and_cancel_load_with_user_input.filter_name))
-
+    view = navigate_to(InfraProvider, 'All')
     # Save filter
-    assert search.save_filter("fill_count(Infrastructure Provider.VMs, >)",
-                              test_filter_save_and_cancel_load_with_user_input.filter_name)
-    assert_no_cfme_exception()
+    assert view.search.save_filter("fill_count(Infrastructure Provider.VMs, >)",
+                                   test_filter_save_and_cancel_load_with_user_input.filter_name)
+    view.flash.assert_no_error()
 
     # Reset Filter
-    assert search.reset_filter()
+    assert view.search.reset_filter()
 
-    search.load_and_apply_filter(
+    view.search.load_filter(
         test_filter_save_and_cancel_load_with_user_input.filter_name,
         fill_callback={"COUNT": 0},
-        cancel_on_user_filling=True
+        cancel_on_user_filling=True,
+        apply=True
     )
-    assert_no_cfme_exception()
+    view.flash.assert_no_error()
 
 
 def test_quick_search_without_filter(request):
-    assert_no_cfme_exception()
-    # Make sure that we empty the regular search field after the test
-    request.addfinalizer(search.ensure_normal_search_empty)
+    view = navigate_to(InfraProvider, 'All')
+    # Make sure that we empty the regular view.search field after the test
+    request.addfinalizer(view.search.remove_search_filters)
     # Filter this host only
-    search.normal_search(fauxfactory.gen_alphanumeric())
-    assert_no_cfme_exception()
+    view.search.simple_search(fauxfactory.gen_alphanumeric())
+    view.flash.assert_no_error()
 
 
 def test_quick_search_with_filter(request):
-    search.fill_and_apply_filter("fill_count(Infrastructure Provider.VMs, >=, 0)")
-    assert_no_cfme_exception()
-    # Make sure that we empty the regular search field after the test
-    request.addfinalizer(search.ensure_normal_search_empty)
+    view = navigate_to(InfraProvider, 'All')
+    view.search.advanced_search(
+        "fill_count(Infrastructure Provider.VMs, >=, 0)")
+    view.flash.assert_no_error()
+    # Make sure that we empty the regular view.search field after the test
+    request.addfinalizer(view.search.remove_search_filters)
     # Filter this host only
-    search.normal_search(fauxfactory.gen_alphanumeric())
-    assert_no_cfme_exception()
+    view.search.simple_search(fauxfactory.gen_alphanumeric())
+    view.flash.assert_no_error()
 
 
 def test_can_delete_filter():
+    view = navigate_to(InfraProvider, 'All')
     filter_name = fauxfactory.gen_alphanumeric()
     logger.debug('Set filter_name to: {}'.format(filter_name))
-    assert search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
-    assert_no_cfme_exception()
-    search.reset_filter()
-    assert_no_cfme_exception()
-    search.load_filter(filter_name)
-    assert_no_cfme_exception()
-    if not search.delete_filter():
+    assert view.search.save_filter(
+        "fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
+    view.flash.assert_no_error()
+    view.search.reset_filter()
+    view.flash.assert_no_error()
+    view.search.load_filter(filter_name)
+    view.flash.assert_no_error()
+    if not view.search.delete_filter():
         raise pytest.fail("Cannot delete filter! Probably the delete button is not present!")
-    assert_no_cfme_exception()
+    view.flash.assert_no_error()
 
 
 def test_delete_button_should_appear_after_save(rails_delete_filter):
     """Delete button appears only after load, not after save"""
     # bind filter_name to the function for fixture cleanup
+    view = navigate_to(InfraProvider, 'All')
     test_delete_button_should_appear_after_save.filter_name = fauxfactory.gen_alphanumeric()
-    search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)",
-                       test_delete_button_should_appear_after_save.filter_name)
+    view.search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)",
+                            test_delete_button_should_appear_after_save.filter_name)
 
-    if not search.delete_filter():  # Returns False if the button is not present
+    if not view.search.delete_filter():  # Returns False if the button is not present
         pytest.fail("Could not delete filter right after saving!")
 
 
 def test_cannot_delete_more_than_once():
     """When Delete button appars, it does not want to go away"""
+    view = navigate_to(InfraProvider, 'All')
     filter_name = fauxfactory.gen_alphanumeric()
-    assert search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
+    assert view.search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
 
-    assert search.load_filter(filter_name)  # circumvent the thing happening in previous test
+    assert view.search.load_filter(filter_name)  # circumvent the thing happening in previous test
     # Delete once
-    if not search.delete_filter():
+    if not view.search.delete_filter():
         pytest.fail("Could not delete the filter even first time!")
-    assert_no_cfme_exception()
+    view.flash.assert_no_error()
     # Try it second time
-    if search.delete_filter():  # If the button is there, it says True
+    if view.search.delete_filter():  # If the button is there, it says True
         # This should not happen
         msg = "Delete twice accepted!"
         if is_cfme_exception():

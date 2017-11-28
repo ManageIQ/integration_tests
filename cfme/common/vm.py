@@ -325,6 +325,9 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
         if 'Grid View' != view.toolbar.view_selector.selected:
             view.toolbar.view_selector.select('Grid View')
 
+        if use_search:
+            view.search.simple_search(self.name)
+
         try:
             return view.entities.get_entity(name=self.name, surf_pages=True, use_search=use_search)
         except ItemNotFound:

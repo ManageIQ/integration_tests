@@ -25,6 +25,7 @@ from widgetastic_manageiq import (
     SummaryTable,
     Table,
     TimelinesView,
+    Search
 )
 from widgetastic_patternfly import (
     BootstrapSelect,
@@ -255,6 +256,7 @@ class HostsView(ComputeInfrastructureHostsView):
     sidebar = View.nested(HostSideBar)
     paginator = PaginationPane()
     including_entities = View.include(HostEntitiesView, use_parent=True)
+    search = View.nested(Search)
 
     @property
     def is_displayed(self):
