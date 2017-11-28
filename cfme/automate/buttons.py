@@ -275,6 +275,8 @@ class ButtonFormCommon(AutomateCustomizationView):
         message = Input(name='object_message')
         request = Input(name='object_request')
         # TODO: AVP and Visibility
+        attribute_1 = Input(name='attribute_1')
+        value_1 = Input(name='value_1')
         # TODO: Role Access
 
     cancel = Button('Cancel')

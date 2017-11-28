@@ -83,6 +83,9 @@ class Namespace(BaseEntity):
 
     __repr__ = object.__repr__
 
+    def __hash__(self):
+        return hash((self.name, id(self.parent)))
+
     @cached_property
     def description(self):
         return self.db_object.description
@@ -188,6 +191,9 @@ class NamespaceCollection(BaseCollection):
 
     ENTITY = Namespace
 
+    def __eq__(self, other):
+        return self.parent == other.parent
+
     @property
     def tree_path(self):
         return self.parent.tree_path
@@ -215,7 +221,7 @@ class NamespaceCollection(BaseCollection):
             return self.instantiate(name=name, description=description)
 
     def delete(self, *namespaces):
-        all_page = navigate_to(self.parent.parent, 'Details')
+        all_page = navigate_to(self.parent, 'Details')
         namespaces = list(namespaces)
         parents = set()
         # Check if the parent is the same

@@ -40,6 +40,7 @@ def klass(request, namespace):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.polarion('RHCF3-3922')
 def test_instance_crud(klass):
     instance = klass.instances.create(
         name=fauxfactory.gen_alphanumeric(),
@@ -56,7 +57,7 @@ def test_instance_crud(klass):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.polarion('RHCF3-4317')
+@pytest.mark.polarion('RHCF3-20871')
 def test_duplicate_instance_disallowed(request, klass):
     name = fauxfactory.gen_alphanumeric()
     klass.instances.create(name=name)
@@ -66,7 +67,7 @@ def test_duplicate_instance_disallowed(request, klass):
 
 @pytest.mark.meta(blockers=[1148541])
 @pytest.mark.tier(3)
-@pytest.mark.polarion('RHCF3-3655')
+@pytest.mark.polarion('RHCF3-20872')
 def test_instance_display_name_unset_from_ui(request, klass):
     instance = klass.instances.create(
         name=fauxfactory.gen_alphanumeric(),
