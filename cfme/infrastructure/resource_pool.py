@@ -1,9 +1,5 @@
-""" A model of an Infrastructure Resource pool in CFME
-
-
-:var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
-           Resource pool pages.
-"""
+# -*- coding: utf-8 -*-
+import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
 from widgetastic.exceptions import NoSuchElementException
@@ -11,10 +7,9 @@ from widgetastic_patternfly import Button, Dropdown, FlashMessages
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.exceptions import ResourcePoolNotFound
-from cfme.web_ui import match_location
 from cfme.utils.pretty import Pretty
-from cfme.utils.providers import get_crud
 from cfme.utils.wait import wait_for
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -76,9 +71,7 @@ class ResourcePoolView(BaseLoggedInPage):
         nav_chain = ['Compute', 'Infrastructure', 'Resource Pools']
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == nav_chain and
-            # TODO: Also needs to be converted to Widgetastic
-            match_location(controller='resource_pool', title='Resource Pools'))
+            self.navigation.currently_selected == nav_chain)
 
 
 class ResourcePoolAllView(ResourcePoolView):
@@ -110,27 +103,19 @@ class ResourcePoolDetailsView(ResourcePoolView):
     entities = View.nested(ResourcePoolDetailsEntities)
 
 
-class ResourcePool(Pretty, Navigatable, WidgetasticTaggable):
+@attr.s
+class ResourcePool(Pretty, BaseEntity, WidgetasticTaggable):
     """ Model of an infrastructure Resource pool in cfme
 
     Args:
         name: Name of the Resource pool.
-        provider_key: Name of the provider this resource pool is attached to.
+        provider: Provider object.
 
-    Note:
-        If given a provider_key, it will navigate through ``Infrastructure/Providers`` instead
-        of the direct path through ``Infrastructure/Resourcepool``.
     """
     pretty_attrs = ['name', 'provider_key']
-
-    def __init__(self, name=None, provider_key=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.quad_name = 'resource_pool'
-        self.name = name
-        if provider_key:
-            self.provider = get_crud(provider_key, appliance=appliance)
-        else:
-            self.provider = None
+    quad_name = 'resource_pool'
+    name = attr.ib()
+    provider = attr.ib()
 
     def _get_context(self):
         context = {'resource_pool': self}
@@ -138,11 +123,12 @@ class ResourcePool(Pretty, Navigatable, WidgetasticTaggable):
             context['provider'] = self.provider
         return context
 
-    def delete(self, cancel=True, wait=False):
+    def delete(self, cancel=False, wait=False):
         """Deletes a resource pool from CFME
 
-        :param cancel: Whether or not to cancel the deletion, defaults to True
-        :param wait: Whether or not to wait for the delete, defaults to False
+        Args:
+            cancel: Whether or not to cancel the deletion, defaults to True
+            wait: Whether or not to wait for the delete, defaults to False
         """
         view = navigate_to(self, 'Details')
         item_name = 'Remove Resource Pool'
@@ -217,7 +203,16 @@ class ResourcePool(Pretty, Navigatable, WidgetasticTaggable):
             return False
 
 
-@navigator.register(ResourcePool, 'All')
+@attr.s
+class ResourcePoolCollection(BaseCollection):
+    """Collection object for the :py:class:`cfme.infrastructure.resource_pool.ResourcePool`."""
+
+    ENTITY = ResourcePool
+
+    # TODO: delete() when needed
+
+
+@navigator.register(ResourcePoolCollection, 'All')
 class All(CFMENavigateStep):
     """A navigation step for the All page"""
     VIEW = ResourcePoolAllView
@@ -236,7 +231,7 @@ class All(CFMENavigateStep):
 class Details(CFMENavigateStep):
     """A navigation step for the Details page"""
     VIEW = ResourcePoolDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
         """Navigate to the item"""
