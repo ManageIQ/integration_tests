@@ -665,3 +665,17 @@ resources:
             db_deallocate_url: url for deallocation
 
 cfme_annotations_path: data/testcase_tiers_and_types.csv
+
+clock_servers:
+    - 0.pool.ntp.org
+    - 1.pool.ntp.org
+    - 2.pool.ntp.org
+
+vm_console:
+    cert:
+        install_dir: /var/www/miq/vmdb/certs
+        country: US
+        state: North Carolina
+        city: Durham
+        organization: CFME
+        organizational_unit: QE
