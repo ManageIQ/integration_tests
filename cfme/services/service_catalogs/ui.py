@@ -10,6 +10,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
+from cfme.utils.blockers import BZ
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
 
@@ -134,6 +135,9 @@ def order(self):
     else:
         msg = "Dialog submitted successfully!"
         msg_type = "info"
+    # TODO Remove once repaired
+    if BZ(1513541, forced_streams=['5.9']).blocks:
+        raise NotImplementedError("Service Order is broken - check BZ 1513541")
     view.submit_button.click()
     view = self.create_view(RequestsView)
     view.flash.assert_no_error()

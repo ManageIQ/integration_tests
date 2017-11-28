@@ -65,7 +65,7 @@ def test_pxe_image_type_required_error_validation(collection):
             script_data='Testing the script')
 
 
-@pytest.mark.uncollectif(BZ(1449116, forced_streams=['5.7', '5.8']).blocks, reason='BZ 1449116')
+@pytest.mark.meta(blockers=[BZ(1449116, forced_streams=['5.7', '5.8'])])
 def test_duplicate_name_error_validation(collection):
     """Test to validate duplication in customization templates."""
 
@@ -99,8 +99,7 @@ def test_name_max_character_validation(collection):
         image_type='RHEL-6',
         script_type='Kickstart',
         script_data='Testing the script')
-    created_template = collection.instantiate(name=template_name.name[:255],
-                                         image_type=template_name.image_type)
-    view = navigate_to(created_template, 'Details')
+    template_name.name = template_name.name[:255]
+    view = navigate_to(template_name, 'Details')
     assert len(view.entities.basic_information.get_text_of('Name')) < 256
-    collection.delete(False, created_template)
+    collection.delete(False, template_name)
