@@ -5,7 +5,7 @@ import pytest
 from cfme.utils.conf import cfme_data
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
+from cfme.infrastructure.pxe import get_template_from_config, ISODatastore, ISODatastoreCollection
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils import testgen
 
@@ -52,9 +52,10 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture
-def datastore_init(iso_cust_template, iso_datastore, provisioning):
+def datastore_init(appliance, iso_cust_template, iso_datastore, provisioning):
     if not iso_datastore.exists():
-        iso_datastore.create()
+        collection = appliance.collections.iso_datastores
+        collection.create(iso_datastore)
     # Fails on upstream, BZ1109256
     iso_datastore.set_iso_image_type(provisioning['iso_file'], provisioning['iso_image_type'])
     if not iso_cust_template.exists():
