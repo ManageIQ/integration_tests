@@ -24,39 +24,54 @@ IN_VIRTUALENV = getattr(sys, 'real_prefix', None) is not None
 
 PRISTINE_ENV = dict(os.environ)
 
-REDHAT_PACKAGES_OLD = (
-    " python-virtualenv gcc postgresql-devel libxml2-devel"
-    " libxslt-devel zeromq3-devel libcurl-devel"
-    " redhat-rpm-config gcc-c++ openssl-devel"
-    " libffi-devel python-devel tesseract"
-    " freetype-devel")
+REDHAT_PACKAGES_SPECS = [
 
-
-REDHAT_PACKAGES_F25 = (
-    " python2-virtualenv gcc postgresql-devel libxml2-devel"
-    " libxslt-devel zeromq3-devel libcurl-devel"
-    " redhat-rpm-config gcc-c++ openssl-devel"
-    " libffi-devel python2-devel tesseract"
-    " freetype-devel")
-
-REDHAT_PACKAGES_F26 = (
-    " python2-virtualenv gcc postgresql-devel libxml2-devel"
-    " libxslt-devel zeromq-devel libcurl-devel"
-    " redhat-rpm-config gcc-c++ openssl-devel"
-    " libffi-devel python2-devel tesseract"
-    " freetype-devel")
+    ("Fedora release 24", "nss",
+     " python-virtualenv gcc postgresql-devel libxml2-devel"
+     " libxslt-devel zeromq3-devel libcurl-devel"
+     " redhat-rpm-config gcc-c++ openssl-devel"
+     " libffi-devel python-devel tesseract"
+     " freetype-devel"),
+    ("Fedora release 25", "nss",
+     " python2-virtualenv gcc postgresql-devel libxml2-devel"
+     " libxslt-devel zeromq3-devel libcurl-devel"
+     " redhat-rpm-config gcc-c++ openssl-devel"
+     " libffi-devel python2-devel tesseract"
+     " freetype-devel"),
+    ("Fedora release 26", "nss",
+     " python2-virtualenv gcc postgresql-devel libxml2-devel"
+     " libxslt-devel zeromq-devel libcurl-devel"
+     " redhat-rpm-config gcc-c++ openssl-devel"
+     " libffi-devel python2-devel tesseract"
+     " freetype-devel"),
+    ("Fedora release 27", "openssl",
+     " python2-virtualenv gcc postgresql-devel libxml2-devel"
+     " libxslt-devel zeromq-devel libcurl-devel"
+     " redhat-rpm-config gcc-c++ openssl-devel"
+     " libffi-devel python2-devel tesseract"
+     " freetype-devel"),
+    ("CentOS Linux release 7", "nss",
+     " python-virtualenv gcc postgresql-devel libxml2-devel"
+     " libxslt-devel zeromq3-devel libcurl-devel"
+     " redhat-rpm-config gcc-c++ openssl-devel"
+     " libffi-devel python-devel tesseract"
+     " freetype-devel")
+]
 
 
 if os.path.exists(REDHAT_RELEASE_FILE):
-    os.environ['PYCURL_SSL_LIBRARY'] = 'nss'
+
     with open(REDHAT_RELEASE_FILE) as fp:
         release_string = fp.read()
-    if "Fedora release 25" in release_string:
-        REDHAT_PACKAGES = REDHAT_PACKAGES_F25
-    elif "Fedora release 26" in release_string:
-        REDHAT_PACKAGES = REDHAT_PACKAGES_F26
+    for release, curl_ssl, packages in REDHAT_PACKAGES_SPECS:
+        if release_string.startswith(release):
+            REDHAT_PACKAGES = packages
+            os.environ['PYCURL_SSL_LIBRARY'] = curl_ssl
+            break
     else:
-        REDHAT_PACKAGES = REDHAT_PACKAGES_OLD
+        print("{} not known".format(release_string))
+        sys.exit(1)
+    assert REDHAT_PACKAGES
 
     if HAS_DNF:
         INSTALL_COMMAND = 'dnf install -y'
@@ -66,6 +81,8 @@ if os.path.exists(REDHAT_RELEASE_FILE):
         INSTALL_COMMAND = 'sudo ' + INSTALL_COMMAND
 else:
     INSTALL_COMMAND = None
+    # to actually print them
+    REDHAT_PACKAGES = REDHAT_PACKAGES_SPECS[-1][-1]
 
 
 def command_text(command, shell):
@@ -104,7 +121,7 @@ def install_system_packages():
         print("WARNING: unknown distribution,",
               "please ensure you have the required packages installed")
         print("INFO: on redhat based systems this is the equivalend of:")
-        print("$ dnf install -y", REDHAT_PACKAGES_OLD)
+        print("$ dnf install -y", REDHAT_PACKAGES)
 
 
 def setup_virtualenv(target, use_site):
