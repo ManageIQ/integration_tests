@@ -75,14 +75,15 @@ def test_delete_template_appear_after_refresh(setup_provider, provider):
     test_template.wait_to_appear()
 
 
-def test_delete_resource_pool_appear_after_refresh(setup_provider, provider):
+def test_delete_resource_pool_appear_after_refresh(setup_provider, provider, appliance):
     """ Tests delete pool
 
     Metadata:
         test_flag: delete_object
     """
     resourcepool_name = provider.data['remove_test']['resource_pool']
-    test_resourcepool = resource_pool.ResourcePool(name=resourcepool_name)
+    test_resourcepool = appliance.collections.resource_pools.instantiate(
+        name=resourcepool_name, provider=provider)
     test_resourcepool.delete(cancel=False, wait=True)
     provider.refresh_provider_relationships()
     test_resourcepool.wait_for_exists()

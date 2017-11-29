@@ -111,6 +111,7 @@ setup(
             'network_security_groups = cfme.networks.security_group:SecurityGroupCollection',
             'network_subnets = cfme.networks.subnet:SubnetCollection',
             'requests = cfme.services.requests:RequestCollection',
+            'resource_pools = cfme.infrastructure.resource_pool:ResourcePoolCollection',
             'volumes = cfme.storage.volume:VolumeCollection',
             'volume_backups = cfme.storage.volume_backup:VolumeBackupCollection',
             'block_managers = cfme.storage.manager:BlockManagerCollection',
