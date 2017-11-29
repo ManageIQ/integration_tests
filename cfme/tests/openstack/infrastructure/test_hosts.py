@@ -2,7 +2,6 @@ import pytest
 
 from cfme.configure.tasks import is_host_analysis_finished
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from cfme.web_ui import toolbar
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
 
@@ -18,13 +17,13 @@ def host_collection(appliance):
     return appliance.collections.hosts
 
 
-def test_host_configuration(host_collection, provider, soft_assert):
+def test_host_configuration(host_collection, provider, soft_assert, appliance):
     hosts = host_collection.all(provider)
     assert hosts
     for host in hosts:
         host.run_smartstate_analysis()
         wait_for(is_host_analysis_finished, [host.name], delay=15,
-                 timeout="10m", fail_func=toolbar.refresh)
+                 timeout="10m", fail_func=appliance.browser.refresh)
         fields = ['Packages', 'Services', 'Files']
         for field in fields:
             value = int(host.get_detail("Configuration", field))
