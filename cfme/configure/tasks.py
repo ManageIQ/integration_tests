@@ -14,7 +14,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError
 
-table_loc = '//div[@id="records_div" or @id="main_div"]//table'
+table_loc = '//div[@id="gtl_div"]//table'
 
 
 def is_vm_analysis_finished(name, **kwargs):
