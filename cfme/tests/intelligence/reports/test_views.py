@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-import cfme.web_ui.toolbar as tb
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
@@ -9,6 +8,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.utils.blockers import BZ
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 
 
@@ -22,7 +22,7 @@ pytestmark = [
 
 
 @pytest.yield_fixture(scope='module')
-def create_report():
+def report():
     # TODO parameterize on path, for now test infrastructure reports
     path = ["Configuration Management", "Hosts", "Virtual Infrastructure Platforms"]
     report = CannedSavedReport.new(path)
@@ -36,9 +36,9 @@ def create_report():
         logger.warning('Failed to delete report for path {} and time {}'.format(path, report_time))
 
 
-@pytest.mark.parametrize('view', ['Hybrid View', 'Graph View', 'Tabular View'])
+@pytest.mark.parametrize('view_mode', ['Hybrid View', 'Graph View', 'Tabular View'])
 @pytest.mark.meta(blockers=[BZ(1401560)])
-def test_report_view(create_report, view):
-    create_report.navigate()
-    tb.select(view)
-    assert tb.is_active(view), "View setting failed for {}".format(view)
+def test_report_view(report, view_mode):
+    view = navigate_to(report, 'Details')
+    view.view_selector.select(view_mode)
+    assert view.view_selector.selected == view_mode, "View setting failed for {}".format(view)
