@@ -8,16 +8,15 @@ from wait_for import TimedOutError
 from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.exceptions import ItemNotFound
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.version import current_version
 
 
-pytest_generate_tests = testgen.generate([OpenStackProvider],
-                                         scope='module')
-
-pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
+pytestmark = [
+    pytest.mark.usefixtures("setup_provider_modscope"),
+    pytest.mark.provider([OpenStackProvider], scope='module')
+]
 
 
 @pytest.yield_fixture(scope='function')
