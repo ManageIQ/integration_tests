@@ -7,19 +7,17 @@ from cfme.cloud.provider import CloudProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme import test_requirements
-from cfme.utils import testgen
 from cfme.utils.log import logger
 
 
 pytestmark = [
     test_requirements.service,
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.tier(2)
+    pytest.mark.tier(2),
+    pytest.mark.provider([CloudProvider],
+                         required_fields=[['provisioning', 'image']],
+                         scope="module"),
 ]
-
-
-pytest_generate_tests = testgen.generate(
-    [CloudProvider], required_fields=[['provisioning', 'image']], scope="module")
 
 
 def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog, request,
