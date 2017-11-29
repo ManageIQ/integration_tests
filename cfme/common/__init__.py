@@ -10,8 +10,6 @@ from cached_property import cached_property
 from cfme.base.login import BaseLoggedInPage
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui.topology import Topology
-from cfme.web_ui.utilization import Utilization
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from cfme.utils import attributize_string
 from cfme.utils.units import Unit
@@ -641,9 +639,9 @@ class TopologyMixin(object):
         topology.elements[0].is_displayed()
 
     """
-    @cached_property
-    def topology(self):
-        return Topology(self)
+    # @cached_property
+    # def topology(self):
+    #     return Topology(self)
 
 
 class UtilizationMixin(object):
@@ -673,6 +671,6 @@ class UtilizationMixin(object):
         page.utilization.jvm_non_heap_usage_bytes.committed.set_active(active=False) # => Disables
         page.utilization.jvm_non_heap_usage_bytes.committed.set_active(active=True) # => Enables
     """
-    @cached_property
-    def utilization(self):
-        return Utilization(self)
+    # @cached_property
+    # def utilization(self):
+    #     return Utilization(self)
