@@ -1,14 +1,14 @@
 import pytest
 
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from cfme.utils import testgen
 from cfme.utils.version import current_version
 
-pytest_generate_tests = testgen.generate([OpenstackInfraProvider],
-                                         scope='module')
 
-pytestmark = [pytest.mark.uncollectif(lambda: current_version() < '5.7'),
-              pytest.mark.usefixtures("setup_provider_modscope")]
+pytestmark = [
+    pytest.mark.uncollectif(lambda: current_version() < '5.7'),
+    pytest.mark.usefixtures("setup_provider_modscope"),
+    pytest.mark.provider([OpenstackInfraProvider], scope='module'),
+]
 
 
 @pytest.fixture(scope="module")
