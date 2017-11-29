@@ -66,6 +66,7 @@ REDHAT_PACKAGES_SPECS = [
      " libxslt-devel zeromq3-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python-devel tesseract"
+     " libpng-devel"
      " freetype-devel")
 ]
 
