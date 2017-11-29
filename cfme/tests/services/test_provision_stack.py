@@ -11,7 +11,6 @@ from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.stack import StackCollection
 from cfme import test_requirements
-from cfme.utils import testgen
 from cfme.utils.conf import credentials
 from cfme.utils.path import orchestration_path
 from cfme.utils.datafile import load_data_file
@@ -23,15 +22,11 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.ignore_stream("upstream"),
     test_requirements.stack,
-    pytest.mark.tier(2)
+    pytest.mark.tier(2),
+    pytest.mark.provider([CloudProvider],
+                         required_fields=[['provisioning', 'stack_provisioning']],
+                         scope="module"),
 ]
-
-
-pytest_generate_tests = testgen.generate(
-    [CloudProvider], required_fields=[
-        ['provisioning', 'stack_provisioning']
-    ],
-    scope="module")
 
 
 @pytest.yield_fixture(scope="function")
