@@ -296,8 +296,7 @@ class IPAppliance(object):
 
     @property
     def default_zone(self):
-        from cfme.base import Region, Zone
-        return Zone(self, region=Region(self, self.server_region()))
+        return self.appliance.server.zone
 
     @property
     def server(self):
@@ -1834,18 +1833,21 @@ class IPAppliance(object):
         except TypeError:
             return None
 
+    @removals.remove(message='This call is being deprecated in 17.18')
     def server_region(self):
         try:
             return self.configuration_details[0]
         except TypeError:
             return None
 
+    @removals.remove(message='This call is being deprecated in 17.18')
     def server_name(self):
         try:
             return self.configuration_details[1]
         except TypeError:
             return None
 
+    @removals.remove(message='This call is being deprecated in 17.18')
     def server_zone_id(self):
         try:
             return self.configuration_details[3]
@@ -1853,7 +1855,7 @@ class IPAppliance(object):
             return None
 
     def server_region_string(self):
-        r = self.server_region()
+        r = self.server.zone.region.number
         return "{} Region: Region {} [{}]".format(
             self.product_name, r, r)
 
@@ -1871,7 +1873,7 @@ class IPAppliance(object):
         table = self.db.client["miq_servers"]
         try:
             return self.db.client.session.query(table.name).filter(
-                table.id == self.slave_server_zone_id()).first()[0]
+                table.id == self.slave_server.zone.id).first()[0]
         except TypeError:
             return None
 
@@ -1882,7 +1884,7 @@ class IPAppliance(object):
     @cached_property
     def zone_description(self):
         if self.appliance.version < '5.8':
-            zone_id = self.server_zone_id()
+            zone_id = self.server.zone.id
             zones = list(
                 self.db.client.session.query(self.db.client["zones"]).filter(
                     self.db.client["zones"].id == zone_id
@@ -1893,7 +1895,7 @@ class IPAppliance(object):
             else:
                 return None
         else:
-            zones = self.rest_api.collections.zones.find_by(id=self.server_zone_id())
+            zones = self.rest_api.collections.zones.find_by(id=self.server.zone.id)
             if zones:
                 return zones[0].description
             else:
@@ -2388,7 +2390,7 @@ class Appliance(IPAppliance):
                 from cfme.utils.providers import get_crud
                 vm = VM.factory(self.vm_name, get_crud(self._provider_key))
                 cfme_rel = Vm.CfmeRelationship(vm)
-                cfme_rel.set_relationship(str(self.server_name()), self.server_id())
+                cfme_rel.set_relationship(str(self.server.name), self.server.sid)
 
     def does_vm_exist(self):
         return self.provider.does_vm_exist(self.vm_name)
