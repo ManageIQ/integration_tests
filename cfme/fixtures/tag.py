@@ -54,7 +54,7 @@ def group_with_tag(appliance, role, category, tag):
     """
         Returns group object with set up tag filter used in test module
     """
-    group = appliance.collections.rbac_groups.create(
+    group = appliance.collections.groups.create(
         description='grp{}'.format(fauxfactory.gen_alphanumeric()),
         role=role.name,
         tag=[category.display_name, tag.display_name]
