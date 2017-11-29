@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 from cfme.base.login import BaseLoggedInPage
+from widgetastic_manageiq import Table
 
 
 class RSSView(BaseLoggedInPage):
+
+    table = Table('//div[@id="tab_div"]/table')
+
     @property
     def is_displayed(self):
         return (
