@@ -10,7 +10,6 @@ from cfme.cloud.instance import Instance
 from cfme.cloud.keypairs import KeyPairCollection, KeyPairAllView
 from cfme.cloud.stack import StackCollection, StackAllView
 from cfme.cloud.tenant import TenantCollection, TenantAllView
-from cfme.web_ui import toolbar as tb
 from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 
@@ -68,8 +67,8 @@ def set_default_page():
 
 
 def go_to_grid(page):
-    navigate_to(page, 'All')
-    tb.select('Grid View')
+    view = navigate_to(page, 'All')
+    view.toolbar.view_selector.select('Grid View')
 
 
 @pytest.yield_fixture(scope="module")
