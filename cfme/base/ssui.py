@@ -9,7 +9,6 @@ from widgetastic_manageiq import SSUIVerticalNavigation
 from widgetastic.utils import ParametrizedLocator
 
 from cfme.base.credential import Credential
-from cfme.configure.access_control import User
 from cfme.utils import conf
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance.implementations.ssui import navigator, SSUINavigateStep, navigate_to
@@ -128,6 +127,7 @@ LOGIN_METHODS = ['click_on_login', 'press_enter_after_password']
 @Server.login.external_implementation_for(ViaSSUI)
 def login(self, user=None, method=LOGIN_METHODS[-1]):
     if not user:
+        from cfme.configure.access_control import User
         username = conf.credentials['default']['username']
         password = conf.credentials['default']['password']
         cred = Credential(principal=username, secret=password)

@@ -2,7 +2,7 @@ import attr
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import (
-    UpDownSelect, PaginationPane, SummaryFormItem, Table, BaseListEntity)
+    UpDownSelect, PaginationPane, SummaryFormItem, Table, BaseListEntity, SummaryTable)
 from widgetastic_patternfly import (
     BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview,
     BootstrapSwitch, CandidateNotFound, Dropdown)
@@ -204,6 +204,9 @@ class User(Updateable, Pretty, Navigatable):
         view.flash.assert_success_message(flash_message)
         assert view.is_displayed
 
+        # To ensure tree update
+        view.browser.refresh()
+
     def update(self, updates):
         """ Update user method
 
@@ -334,6 +337,14 @@ class User(Updateable, Pretty, Navigatable):
         view = self.create_view(DetailsUserView)
         view.flash.assert_success_message('Tag edits were successfully saved')
         assert view.is_displayed
+
+    def get_tags(self):
+        tags = []
+        view = navigate_to(self, 'EditTags')
+        for row in view.tag_table:
+            tags.append((row.category.text, row.assigned_value.text))
+        view.cancel_button.click()
+        return tags
 
     # TODO update elements, after 1469035 fix
     def change_stored_password(self, changes=None, cancel=False):
@@ -745,6 +756,14 @@ class Group(BaseEntity):
         view.flash.assert_success_message('Tag edits were successfully saved')
         assert view.is_displayed
 
+    def get_tags(self):
+        tags = []
+        view = navigate_to(self, 'EditTags')
+        for row in view.tag_table:
+            tags.append((row.category.text, row.assigned_value.text))
+        view.cancel_button.click()
+        return tags
+
     def set_group_order(self, updated_order):
         """ Sets group order for group lookup
 
@@ -877,6 +896,8 @@ class GroupCollection(BaseCollection):
         view.flash.assert_success_message(flash_message)
         assert view.is_displayed
 
+        # To ensure that the group list is updated
+        view.browser.refresh()
         return group
 
 

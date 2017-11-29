@@ -15,7 +15,6 @@ from cfme.common.provider import base_types
 from cfme.infrastructure import virtual_machines as vms
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
-from cfme.web_ui import InfoBlock
 from cfme.configure import tasks
 from fixtures.provider import setup_one_or_skip
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -67,10 +66,6 @@ def new_role():
     return Role(
         name='rol{}'.format(fauxfactory.gen_alphanumeric()),
         vm_restriction='None')
-
-
-def get_tag():
-    return InfoBlock('Smart Management', 'My Company Tags').text
 
 
 @pytest.fixture(scope='function')
@@ -219,7 +214,7 @@ def test_user_edit_tag(group_collection):
     user = new_user(group)
     user.create()
     user.edit_tags("Cost Center *", "Cost Center 001")
-    assert get_tag() == "Cost Center: Cost Center 001", "User edit tag failed"
+    assert ('Cost Center *', 'Cost Center 001') in user.get_tags(), "User edit tag failed"
     user.delete()
 
 
@@ -233,7 +228,7 @@ def test_user_remove_tag(group_collection):
     user.edit_tags("Department", "Engineering")
     user.remove_tag("Department", "Engineering")
     navigate_to(user, 'Details')
-    assert get_tag() != "Department: Engineering", "Remove User tag failed"
+    assert ('Department', 'Engineering') not in user.get_tags(), "Remove User tag failed"
     user.delete()
 
 
@@ -350,7 +345,7 @@ def test_group_edit_tag(group_collection):
     group = group_collection.create(description=group_description, role=role)
 
     group.edit_tags("Cost Center *", "Cost Center 001")
-    assert get_tag() == "Cost Center: Cost Center 001", "Group edit tag failed"
+    assert ('Cost Center *', 'Cost Center 001') in group.get_tags(), "Group edit tag failed"
     group.delete()
 
 
@@ -363,7 +358,7 @@ def test_group_remove_tag(group_collection):
     navigate_to(group, 'Edit')
     group.edit_tags("Department", "Engineering")
     group.remove_tag("Department", "Engineering")
-    assert get_tag() != "Department: Engineering", "Remove Group tag failed"
+    assert ('Department', 'Engineering') not in group.get_tags(), "Group User tag failed"
     group.delete()
 
 
