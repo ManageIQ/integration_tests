@@ -4,16 +4,17 @@ import fauxfactory
 import pytest
 
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils import version
 
 
-pytest_generate_tests = testgen.generate([OpenStackProvider], scope='module')
+pytestmark = [
+    pytest.mark.usefixtures("setup_provider_modscope"),
+    pytest.mark.provider([OpenStackProvider], scope='module')
+]
 
-pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 
 VOLUME_SIZE = 1
 

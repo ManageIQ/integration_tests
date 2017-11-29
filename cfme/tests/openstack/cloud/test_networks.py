@@ -4,16 +4,15 @@ import fauxfactory
 import pytest
 
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
 
-pytest_generate_tests = testgen.generate([OpenStackProvider],
-                                         scope='module')
-
-pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
+pytestmark = [
+    pytest.mark.usefixtures("setup_provider_modscope"),
+    pytest.mark.provider([OpenStackProvider], scope='module'),
+]
 
 
 SUBNET_CIDR = '11.11.11.0/24'
