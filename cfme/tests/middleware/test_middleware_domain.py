@@ -2,7 +2,6 @@ import pytest
 from cfme.middleware.domain import MiddlewareDomain
 from cfme.middleware.provider import get_random_list
 from cfme.middleware.provider.hawkular import HawkularProvider
-from cfme.utils import testgen
 from cfme.utils.version import current_version
 from domain_methods import verify_domain_stopped, verify_domain_running
 
@@ -10,8 +9,8 @@ from domain_methods import verify_domain_stopped, verify_domain_running
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
+    pytest.mark.provider([HawkularProvider], scope="function"),
 ]
-pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
 
 
 @pytest.yield_fixture(scope="function")
