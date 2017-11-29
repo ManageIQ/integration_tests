@@ -779,22 +779,6 @@ def test_permissions_vm_provisioning(appliance):
 #    )
 
 
-# commenting this out, there is validation around the 'no group selected'and we have a test for it
-# @pytest.mark.meta(blockers=[1154112])
-# def test_user_add_button_should_be_disabled_without_group(soft_assert):
-#     from cfme.web_ui import fill, form_buttons
-#     navigate_to(User, 'Add')
-#     pw = fauxfactory.gen_alphanumeric()
-#     fill(User.user_form, {
-#         "name_txt": fauxfactory.gen_alphanumeric(),
-#         "userid_txt": fauxfactory.gen_alphanumeric(),
-#         "password_txt": pw,
-#         "password_verify_txt": pw,
-#         "email_txt": "test@test.test"
-#     })
-#     assert not sel.is_displayed(form_buttons.add), "The Add button should not be displayed!"
-
-
 @pytest.mark.tier(2)
 def test_user_change_password(appliance, request):
     group_name = 'EvmGroup-user'
