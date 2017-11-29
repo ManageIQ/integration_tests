@@ -9,22 +9,19 @@ from cfme.automate.explorer.domain import DomainCollection
 from cfme import test_requirements
 from cfme.utils.log import logger
 from cfme.utils.update import update
-from cfme.utils import testgen
 
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('vm_name', 'catalog_item', 'uses_infra_providers'),
     test_requirements.service,
-    pytest.mark.long_running
+    pytest.mark.long_running,
+    pytest.mark.provider([InfraProvider],
+                         required_fields=[['provisioning', 'template'],
+                                          ['provisioning', 'host'],
+                                          ['provisioning', 'datastore']],
+                         scope="module"),
 ]
-
-
-pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
-    ['provisioning', 'template'],
-    ['provisioning', 'host'],
-    ['provisioning', 'datastore']
-], scope="module")
 
 
 @pytest.fixture(scope="function")
