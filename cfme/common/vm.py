@@ -326,7 +326,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
             view.toolbar.view_selector.select('Grid View')
 
         try:
-            return view.entities.get_entity(name=self.name, surf_pages=True, use_search=True)
+            return view.entities.get_entity(name=self.name, surf_pages=True, use_search=use_search)
         except ItemNotFound:
             raise VmOrInstanceNotFound("VM '{}' not found in UI!".format(self.name))
 
