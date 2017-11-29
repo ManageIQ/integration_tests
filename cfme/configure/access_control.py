@@ -1463,6 +1463,10 @@ class TenantCollection(BaseCollection):
                                 default=True)
 
     def create(self, name, description, parent):
+        if self.appliance.version > '5.9':
+            tenant_success_flash_msg = 'Tenant "{}" has been successfully added.'
+        else:
+            tenant_success_flash_msg = 'Tenant "{}" was saved'
 
         tenant = self.instantiate(name, description, parent)
 
@@ -1478,7 +1482,8 @@ class TenantCollection(BaseCollection):
             view.form.cancel_button.click()
 
         view = self.create_view(ParentDetailsTenantView)
-        view.flash.assert_success_message('Tenant "{}" was saved'.format(name))
+
+        view.flash.assert_success_message(tenant_success_flash_msg.format(name))
 
         return tenant
 
@@ -1566,6 +1571,11 @@ class ProjectCollection(TenantCollection):
             name=str(self.appliance.rest_api.collections.tenants[0].name), default=True)
 
     def create(self, name, description, parent):
+        if self.appliance.version > '5.9':
+            project_success_flash_msg = 'Project "{}" has been successfully added.'
+        else:
+            project_success_flash_msg = 'Project "{}" was saved'
+
         project = self.instantiate(name, description, parent)
 
         view = navigate_to(project.parent_tenant, 'Details')
@@ -1580,7 +1590,7 @@ class ProjectCollection(TenantCollection):
             view.form.cancel_button.click()
 
         view = self.create_view(ParentDetailsTenantView)
-        view.flash.assert_success_message('Project "{}" was saved'.format(name))
+        view.flash.assert_success_message(project_success_flash_msg.format(name))
 
         return project
 
