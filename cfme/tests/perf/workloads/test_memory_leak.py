@@ -1,24 +1,24 @@
 import time
 import pytest
 
-from cfme.utils import conf, testgen
+from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.grafana import get_scenario_dashboard_urls
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.smem_memory_monitor import add_workload_quantifiers, SmemMemoryMonitor
 from cfme.utils.workloads import get_memory_leak_scenarios
+from markers.env_markers.provider import providers
 
 
 roles_memory_leak = ['automate', 'database_operations', 'ems_inventory', 'ems_metrics_collector',
     'ems_metrics_coordinator', 'ems_metrics_processor', 'ems_operations', 'event', 'notifier',
     'reporting', 'scheduler', 'user_interface', 'web_services']
 
-pytest_generate_tests = testgen.generate(
-    gen_func=testgen.providers,
-    filters=[ProviderFilter()],
-    scope="module"
-)
+
+pytestmark = [pytest.mark.provider(gen_func=providers,
+                                   filters=[ProviderFilter()],
+                                   scope="module")]
 
 
 def prepare_workers(appliance):
