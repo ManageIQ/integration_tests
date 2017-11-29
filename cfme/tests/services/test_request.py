@@ -5,19 +5,17 @@ from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme import test_requirements
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
+
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('vm_name', 'uses_infra_providers', 'catalog_item'),
     pytest.mark.long_running,
     test_requirements.service,
-    pytest.mark.tier(3)
+    pytest.mark.tier(3),
+    pytest.mark.provider([VMwareProvider], scope="module"),
 ]
-
-
-pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
 
 
 def test_copy_request(appliance, setup_provider, provider, catalog_item, request):
