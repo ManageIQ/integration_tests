@@ -2619,6 +2619,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         Args:
             keys: only entity which matches to keys will be returned
             surf_pages (bool): current page entity if False, all entities otherwise
+            use_search (bool): it filters out all entities except entity with name passed in keys
 
         Returns: matched entity (QuadIcon/etc.)
         """
