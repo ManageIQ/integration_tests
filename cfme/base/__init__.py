@@ -23,6 +23,7 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
     current_username = sentaku.ContextualMethod()
 
     zone = sentaku.ContextualProperty()
+    slave_servers = sentaku.ContextualProperty()
 
     @property
     def settings(self):
