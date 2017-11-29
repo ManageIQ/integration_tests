@@ -1,7 +1,6 @@
 import pytest
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
-from cfme.utils import testgen
 from cfme.utils.version import current_version
 from server_methods import verify_server_running, verify_server_stopped
 from server_methods import get_servers_set, verify_server_suspended
@@ -9,11 +8,12 @@ from server_methods import get_eap_server, get_hawkular_server
 from server_methods import verify_server_starting, verify_server_stopping
 from server_methods import get_eap_container_server
 
+
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
+    pytest.mark.provider([HawkularProvider], scope="function"),
 ]
-pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
 
 
 @pytest.yield_fixture(scope="function")
