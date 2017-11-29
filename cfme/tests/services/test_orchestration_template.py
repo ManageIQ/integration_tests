@@ -3,13 +3,20 @@ import fauxfactory
 import pytest
 from cfme.cloud.provider import CloudProvider
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
-from cfme.utils import testgen, error
+from cfme.utils import error
 from cfme.utils.update import update
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
-pytestmark = [test_requirements.stack, pytest.mark.tier(2)]
+pytestmark = [
+    test_requirements.stack,
+    pytest.mark.tier(2),
+    pytest.mark.provider([CloudProvider],
+                         required_fields=[['provisioning', 'stack_provisioning']],
+                         scope="module")
+]
+
 
 METHOD_TORSO = """
 {  "AWSTemplateFormatVersion" : "2010-09-09",
@@ -40,12 +47,6 @@ METHOD_TORSO_copied = """
   }
 }
 """
-
-
-pytest_generate_tests = testgen.generate([CloudProvider],
-    required_fields=[
-        ['provisioning', 'stack_provisioning']
-], scope="module")
 
 
 @pytest.yield_fixture(scope="function")
