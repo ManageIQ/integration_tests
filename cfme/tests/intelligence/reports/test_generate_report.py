@@ -10,15 +10,16 @@ import pytest
 
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CannedSavedReport
-from cfme.utils import testgen
 from cfme import test_requirements
 # from utils.log import logger
 
-pytestmark = [pytest.mark.tier(3),
-              test_requirements.report,
-              pytest.mark.usefixtures('setup_provider')]
 
-pytest_generate_tests = testgen.generate([VMwareProvider], scope='module')
+pytestmark = [
+    pytest.mark.tier(3),
+    test_requirements.report,
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.provider([VMwareProvider], scope='module'),
+]
 
 
 report_path = [
