@@ -15,12 +15,15 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator,
 from cfme.utils.appliance import Navigatable
 from cfme.configure import tasks
 from cfme.utils.wait import wait_for, TimedOutError
-from widgetastic_manageiq import SummaryTable
+from widgetastic_manageiq import SummaryTable, BaseEntitiesView
 from widgetastic.widget import View
 
 
 class ImageAllView(ContainerObjectAllBaseView):
     SUMMARY_TEXT = "Container Images"
+
+    # ProviderEntity has its own fields, image view should rather use BaseEntity instead
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
 
 
 class ImageDetailsView(ContainerObjectDetailsBaseView):

@@ -2850,8 +2850,10 @@ class JSBaseEntity(View, ReportDataControllerMixin):
         """
         data = self._invoke_cmd('get_item', self.entity_id)['item']
         cells = data.pop('cells')
+        cells = {str(key).replace(' ', '_').lower(): value for key, value in cells.items()}
+        data = {str(key).replace(' ', '_').lower(): value for key, value in data.items()}
         data.update(cells)
-        return {str(key).replace(' ', '_').lower(): value for key, value in data.items()}
+        return data
 
     def read(self):
         return self.is_checked
@@ -2945,6 +2947,21 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
             entity_id = keys.pop('entity_id', None)
             if entity_id:
                 return self.parent.entity_class(parent=self, entity_id=entity_id)
+            elif 'id' in keys:
+                # it turned out that there are some views which have entities with internal id
+                # which override entity id in JS code. this is workaround for such case
+                elements = self._current_page_elements
+                for el in elements:
+                    entity = self.parent.entity_class(parent=self, entity_id=el['entity_id'])
+                    for key, value in keys.items():
+                        try:
+                            if entity.data[key] != str(value):
+                                break
+                        except KeyError:
+                            break
+                    else:
+                        return entity
+                pass
             else:
                 return self.parent.entity_class(parent=self, entity_id=self.get_id_by_keys(**keys))
         return None
