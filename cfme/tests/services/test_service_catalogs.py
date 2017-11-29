@@ -10,22 +10,20 @@ from cfme.services.service_catalogs import ServiceCatalogs
 from cfme import test_requirements
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for_decorator
-from cfme.utils import testgen, error
+from cfme.utils import error
 
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('vm_name', 'catalog_item', 'uses_infra_providers'),
     test_requirements.service,
-    pytest.mark.long_running
+    pytest.mark.long_running,
+    pytest.mark.provider([InfraProvider],
+                         required_fields=[['provisioning', 'template'],
+                                          ['provisioning', 'host'],
+                                          ['provisioning', 'datastore']],
+                         scope="module"),
 ]
-
-
-pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
-    ['provisioning', 'template'],
-    ['provisioning', 'host'],
-    ['provisioning', 'datastore']
-], scope="module")
 
 
 @pytest.mark.tier(2)
