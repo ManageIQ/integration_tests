@@ -2,15 +2,13 @@ import pytest
 
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from cfme.utils import testgen
 
 
-pytestmark = [pytest.mark.meta(server_roles='+smartproxy +smartstate'),
-              pytest.mark.usefixtures("setup_provider_modscope")]
-
-
-pytest_generate_tests = testgen.generate([OpenstackInfraProvider],
-                                         scope='module')
+pytestmark = [
+    pytest.mark.meta(server_roles='+smartproxy +smartstate'),
+    pytest.mark.usefixtures("setup_provider_modscope"),
+    pytest.mark.provider([OpenstackInfraProvider], scope='module')
+]
 
 
 def test_number_of_cpu(provider, soft_assert):
