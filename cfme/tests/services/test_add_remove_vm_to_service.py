@@ -9,7 +9,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 
-from cfme.utils import testgen
 from cfme.utils.log import logger
 
 
@@ -20,11 +19,9 @@ pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers'),
     pytest.mark.long_running,
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.tier(3)
+    pytest.mark.tier(3),
+    pytest.mark.provider([VMwareProvider], scope="module"),
 ]
-
-
-pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
 
 
 @pytest.fixture(scope="function")

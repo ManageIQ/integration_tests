@@ -9,7 +9,6 @@ from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.infrastructure.provider import InfraProvider
 from cfme.common.provider import cleanup_vm
-from cfme.utils import testgen
 from cfme.utils.log import logger
 from cfme.utils.blockers import BZ
 
@@ -19,15 +18,13 @@ pytestmark = [
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.usefixtures('vm_name', 'catalog_item', 'uses_infra_providers'),
     test_requirements.service,
-    pytest.mark.long_running
+    pytest.mark.long_running,
+    pytest.mark.provider([InfraProvider],
+                         required_fields=[['provisioning', 'template'],
+                                          ['provisioning', 'host'],
+                                          ['provisioning', 'datastore']],
+                         scope="module")
 ]
-
-
-pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
-    ['provisioning', 'template'],
-    ['provisioning', 'host'],
-    ['provisioning', 'datastore']
-], scope="module")
 
 
 @pytest.yield_fixture(scope="function")
