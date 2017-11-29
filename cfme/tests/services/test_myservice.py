@@ -9,7 +9,7 @@ from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.myservice.ui import MyServiceDetailView
 
-from cfme.utils import browser, testgen, version
+from cfme.utils import browser, version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import ensure_browser_open
 from cfme.utils.log import logger
@@ -23,7 +23,8 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.long_running,
     test_requirements.service,
-    pytest.mark.tier(2)
+    pytest.mark.tier(2),
+    pytest.mark.provider([VMwareProvider], scope="module"),
 ]
 
 
@@ -36,9 +37,6 @@ def needs_firefox():
     ensure_browser_open()
     if browser.browser().name != "firefox":
         pytest.skip(msg="This test needs firefox to run")
-
-
-pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
 
 
 @pytest.yield_fixture(scope='function')
