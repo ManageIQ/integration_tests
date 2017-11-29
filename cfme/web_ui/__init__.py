@@ -2285,7 +2285,7 @@ class AngularSelect(Pretty):
             new_loc = self._loc + '/../div/ul/li/a[normalize-space(.)={}]'.format(
                 unescape(quoteattr(text)))
         else:
-            new_loc = self._loc + '/../div/ul/li/a[contains(normalize-space(.), {})]'.format(
+            new_loc = '//div/ul/li/a/span[contains(normalize-space(.), {})]'.format(
                 unescape(quoteattr(text)))
         e = sel.element(new_loc)
         sel.execute_script("arguments[0].scrollIntoView();", e)
