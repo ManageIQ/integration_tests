@@ -8,18 +8,20 @@ from cfme.networks.network_router import NetworkRouterCollection
 from cfme.networks.provider import NetworkProviderCollection
 from cfme.networks.security_group import SecurityGroupCollection
 from cfme.networks.subnet import SubnetCollection
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
 
-pytest_generate_tests = testgen.generate([AzureProvider], scope="module")
-pytestmark = pytest.mark.usefixtures('setup_provider')
+pytestmark = [
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.meta(blockers=[BZ(1480577, forced_streams=["5.7", "5.8"])]),
+    pytest.mark.provider([AzureProvider], scope="module")
+]
 FILETYPES = ["txt", "csv", "pdf"]
 extensions_mapping = {'txt': 'Text', 'csv': 'CSV', 'pdf': 'PDF'}
 OBJECTCOLLECTIONS = [NetworkProviderCollection, BalancerCollection, CloudNetworkCollection,
-                    NetworkPortCollection, SecurityGroupCollection, SubnetCollection,
-                    NetworkRouterCollection]
+                     NetworkPortCollection, SecurityGroupCollection, SubnetCollection,
+                     NetworkRouterCollection]
 
 
 def download(objecttype, extension):
@@ -32,7 +34,6 @@ def download_summary(spec_object):
     view.toolbar.download.click()
 
 
-@pytest.mark.meta(blockers=[BZ(1480577, forced_streams=["5.7", "5.8"])])
 @pytest.mark.parametrize("filetype", FILETYPES)
 @pytest.mark.parametrize("objecttype", OBJECTCOLLECTIONS)
 def test_download_lists_base(filetype, objecttype, appliance):
@@ -40,7 +41,6 @@ def test_download_lists_base(filetype, objecttype, appliance):
     download(appliance.get(objecttype), filetype)
 
 
-@pytest.mark.meta(blockers=[BZ(1480577, forced_streams=["5.7", "5.8"])])
 @pytest.mark.parametrize("collection", OBJECTCOLLECTIONS)
 def test_download_pdf_summary(appliance, collection, provider):
     """ Download the summary details of specific object """

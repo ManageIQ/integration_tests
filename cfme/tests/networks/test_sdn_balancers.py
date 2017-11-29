@@ -3,13 +3,14 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.networks.provider import NetworkProviderCollection
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
-pytest_generate_tests = testgen.generate(
-    classes=[AzureProvider, EC2Provider, OpenStackProvider], scope='module')
-pytestmark = pytest.mark.usefixtures('setup_provider')
+pytestmark = [
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.provider([AzureProvider, EC2Provider, OpenStackProvider],
+                         scope='module')
+]
 
 
 def test_prov_balances_number(provider, appliance):
