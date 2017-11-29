@@ -25,7 +25,12 @@ IN_VIRTUALENV = getattr(sys, 'real_prefix', None) is not None
 PRISTINE_ENV = dict(os.environ)
 
 REDHAT_PACKAGES_SPECS = [
-
+    ("Fedora release 23", "nss",
+     " python-virtualenv gcc postgresql-devel libxml2-devel"
+     " libxslt-devel zeromq3-devel libcurl-devel"
+     " redhat-rpm-config gcc-c++ openssl-devel"
+     " libffi-devel python-devel tesseract"
+     " freetype-devel"),
     ("Fedora release 24", "nss",
      " python-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq3-devel libcurl-devel"
