@@ -155,7 +155,7 @@ class Category(Pretty, Navigatable, Updateable):
         row.actions.click()
         view.browser.handle_alert(cancel=cancel)
         if not cancel:
-            if not BZ(1510473, forced_streams=['5.9']).blocks:
+            if BZ(1510473, forced_streams=['5.9']).blocks:
                 view.flash.assert_success_message(
                     'Category "{}": Delete successful'.format(self.name))
 
