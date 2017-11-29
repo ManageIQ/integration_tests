@@ -12,7 +12,7 @@ from cfme.exceptions import (
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     AngularCalendarInput, AngularSelect, Form, InfoBlock, Input, Select, fill, flash,
-    form_buttons, toolbar, PagedTable, search, CheckboxTable,
+    form_buttons, toolbar, PagedTable, CheckboxTable,
     DriftGrid, BootstrapTreeview
 )
 import cfme.web_ui.toolbar as tb
@@ -325,11 +325,8 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
         if 'Grid View' != view.toolbar.view_selector.selected:
             view.toolbar.view_selector.select('Grid View')
 
-        if use_search:
-            search.normal_search(self.name)
-
         try:
-            return view.entities.get_entity(name=self.name, surf_pages=True)
+            return view.entities.get_entity(name=self.name, surf_pages=True, use_search=True)
         except ItemNotFound:
             raise VmOrInstanceNotFound("VM '{}' not found in UI!".format(self.name))
 
