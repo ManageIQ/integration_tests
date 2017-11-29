@@ -3,13 +3,13 @@
 import pytest
 
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
-pytest_generate_tests = testgen.generate([OpenstackInfraProvider],
-                                         scope='module')
-pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
+pytestmark = [
+    pytest.mark.usefixtures("setup_provider_modscope"),
+    pytest.mark.provider([OpenstackInfraProvider], scope='module'),
+]
 
 
 def test_api_port(provider):

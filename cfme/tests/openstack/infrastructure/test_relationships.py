@@ -8,15 +8,14 @@ import pytest
 import cfme.fixtures.pytest_selenium as sel
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import InfoBlock, Table
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
-pytestmark = [pytest.mark.meta(server_roles='+smartproxy +smartstate'),
-              pytest.mark.usefixtures("setup_provider_modscope")]
-
-
-pytest_generate_tests = testgen.generate([OpenstackInfraProvider], scope='module')
+pytestmark = [
+    pytest.mark.meta(server_roles='+smartproxy +smartstate'),
+    pytest.mark.usefixtures("setup_provider_modscope"),
+    pytest.mark.provider([OpenstackInfraProvider], scope='module'),
+]
 
 
 def test_assigned_roles(provider):
