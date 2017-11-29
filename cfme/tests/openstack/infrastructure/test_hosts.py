@@ -3,14 +3,14 @@ import pytest
 from cfme.configure.tasks import is_host_analysis_finished
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import toolbar
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
 
 
-pytest_generate_tests = testgen.generate([OpenstackInfraProvider],
-                                         scope='module')
-pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
+pytestmark = [
+    pytest.mark.usefixtures("setup_provider_modscope"),
+    pytest.mark.provider([OpenstackInfraProvider], scope='module'),
+]
 
 
 @pytest.fixture(scope="module")
