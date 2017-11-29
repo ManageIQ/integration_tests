@@ -165,7 +165,7 @@ def test_embed_tower_playbooks_list_changed(appliance, wait_for_ansible):
             repo_url,
             description=fauxfactory.gen_alpha()
         )
-        playbooks.append(repository.playbooks.all())
+        playbooks.append(set(playbook.name for playbook in repository.playbooks.all()))
         repository.delete()
     assert not set(playbooks[1]).issuperset(set(playbooks[0]))
 
