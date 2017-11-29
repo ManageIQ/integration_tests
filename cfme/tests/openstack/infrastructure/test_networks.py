@@ -4,13 +4,13 @@ import pytest
 
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from cfme.utils import testgen
 
 
-pytest_generate_tests = testgen.generate([OpenStackProvider, OpenstackInfraProvider],
-                                         scope='module')
-
-pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
+pytestmark = [
+    pytest.mark.usefixtures("setup_provider_modscope"),
+    pytest.mark.provider([OpenStackProvider, OpenstackInfraProvider],
+                         scope='module'),
+]
 
 
 def test_list_networks(provider, appliance):
