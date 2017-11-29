@@ -273,12 +273,16 @@ class InfraVmReconfigureView(BaseLoggedInPage):
     cpu_total = WInput()  # read-only, TODO widgetastic
 
     disks_table = DisksTable()
+    affected_vms = Table('.//div[@id="records_div" or @id="miq-gtl-view"]//table')
 
     submit_button = Button('Submit', classes=[Button.PRIMARY])
     cancel_button = Button('Cancel', classes=[Button.DEFAULT])
 
-    # The page doesn't contain enough info to ensure that it's the right VM -> always navigate
-    is_displayed = False
+    @property
+    def is_displayed(self):
+        return (self.title.text == 'Reconfigure Virtual Machine' and
+                len([row for row in self.affected_vms.rows()]) == 1 and
+                self.context['object'].name in [row.name.text for row in self.affected_vms.rows()])
 
 
 class InfraVmSnapshotToolbar(View):
@@ -901,7 +905,7 @@ class Vm(VM):
         if not any_changes and not cancel:
             raise ValueError("No changes specified - cannot reconfigure VM.")
 
-        vm_recfg = navigate_to(self, 'Reconfigure')
+        vm_recfg = navigate_to(self, 'Reconfigure', wait_for_view=True)
 
         # We gotta add disks separately
         fill_data = {k: v for k, v in changes.iteritems() if k != 'disks'}
