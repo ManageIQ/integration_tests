@@ -132,7 +132,7 @@ def order(self):
         msg = "Order Request was Submitted"
         msg_type = "success"
     else:
-        msg = "Service ordered successfully!"
+        msg = "Dialog submitted successfully!"
         msg_type = "info"
     view.submit_button.click()
     view = self.create_view(RequestsView)
