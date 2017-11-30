@@ -8,7 +8,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils import error, testgen
+from cfme.utils import error
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.rest import assert_response, delete_resources_from_collection
@@ -17,19 +17,12 @@ from cfme.utils.wait import wait_for
 
 
 pytestmark = [
-    pytest.mark.uncollectif(
-        lambda: current_version() < '5.8'),
+    pytest.mark.uncollectif(lambda: current_version() < '5.8'),
     pytest.mark.long_running,
     pytest.mark.tier(2),
-    test_requirements.snapshot
+    test_requirements.snapshot,
+    pytest.mark.provider([VMwareProvider, OpenStackProvider], scope='module'),
 ]
-
-
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc,
-        [VMwareProvider, OpenStackProvider])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
 
 
 @pytest.yield_fixture(scope='module')
