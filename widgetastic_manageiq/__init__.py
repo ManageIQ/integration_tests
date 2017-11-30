@@ -2675,14 +2675,19 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                                 for el in self._current_page_elements])
             return entities
 
-    def get_entity(self, surf_pages=False, **keys):
+    def get_entity(self, surf_pages=False, use_search=False, **keys):
         """ obtains one entity matched to by_name and stops on that page
         Args:
             keys: only entity which matches to keys will be returned
             surf_pages (bool): current page entity if False, all entities otherwise
+            use_search (bool): it filters out all entities except entity with name passed in keys
 
         Returns: matched entity (QuadIcon/etc.)
         """
+        if use_search and 'name' in keys:
+            self.search.clear_search()
+            self.search.search(text=keys['name'])
+
         for _ in self.paginator.pages():
             if len(keys) == 1 and 'name' in keys:
                 entity_id = self.get_id_by_name(name=keys['name'])
