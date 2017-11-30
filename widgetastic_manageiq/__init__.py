@@ -1150,7 +1150,7 @@ class ReportDataControllerMixin(object):
     def _call_item_method(self, method):
         raw_data = {'controller': 'reportDataController',
                     'action': 'get_item',
-                    'data': [self.id]}
+                    'data': [self.entity_id]}
         js_data = json.dumps(raw_data)
         js_cmd = ('sendDataWithRx({data}); '
                   'return ManageIQ.qe.gtl.result.{method}()').format(data=js_data, method=method)
@@ -2296,14 +2296,14 @@ class BaseQuadIconEntity(ParametrizedView, ClickableMixin):
     It is expected that some properties like "data" will be overridden in its children
 
     """
-    PARAMETERS = ('id',)
+    PARAMETERS = ('entity_id',)
     ROOT = ParametrizedLocator('.//table[./tbody/tr/td/*[(self::a or self::span) and '
-                               'substring(@href, '
-                               'string-length(@href)-string-length("/{id}")+1)="/{id}"]]')
+                               'substring(@href, string-length(@href)'
+                               '-string-length("/{entity_id}")+1)="/{entity_id}"]]')
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
     label = Text(locator=ParametrizedLocator('./tbody/tr/td/*[(self::a or self::span) and '
                                              'substring(@href, string-length(@href)-'
-                                             'string-length("/{id}")+1)="/{id}"]'))
+                                             'string-length("/{entity_id}")+1)="/{entity_id}"]'))
     checkbox = Checkbox(locator='./tbody/tr/td/input[@type="checkbox"]')
     QUADRANT = './/div[@class="flobj {pos}72"]/*[self::p or self::img or self::div]'
 
@@ -2349,26 +2349,26 @@ class BaseTileIconEntity(ParametrizedView):
     """ represents Tile Icon entity. one of states entity can be in
 
     """
-    PARAMETERS = ('id',)
+    PARAMETERS = ('entity_id',)
     ROOT = ParametrizedLocator('.//table[.//table[./tbody/tr/td/*[(self::a or self::span) and '
                                'substring(@href, string-length(@href)-'
-                               'string-length("/{id}")+1)="/{id}"]]]')
+                               'string-length("/{entity_id}")+1)="/{entity_id}"]]]')
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
     quad_icon = ParametrizedView.nested(BaseQuadIconEntity)
 
     @property
     def is_checked(self):
-        return self.quad_icon(self.context['id']).is_checked
+        return self.quad_icon(self.context['entity_id']).is_checked
 
     def check(self):
-        return self.quad_icon(self.context['id']).check()
+        return self.quad_icon(self.context['entity_id']).check()
 
     def uncheck(self):
-        return self.quad_icon(self.context['id']).uncheck()
+        return self.quad_icon(self.context['entity_id']).uncheck()
 
     @property
     def name(self):
-        return self.quad_icon(self.context['id']).name
+        return self.quad_icon(self.context['entity_id']).name
 
     @property
     def data(self):
@@ -2376,7 +2376,7 @@ class BaseTileIconEntity(ParametrizedView):
         which is different for each entity type.
         This is property which should hold such data.
         """
-        quad_data = self.quad_icon(self.context['id']).data
+        quad_data = self.quad_icon(self.context['entity_id']).data
         br = self.browser
         # it seems we don't have list widget in other places.
         # so, this code just parses it, creates dict and adds it to quad icon dict
@@ -2386,10 +2386,10 @@ class BaseTileIconEntity(ParametrizedView):
         return quad_data
 
     def read(self):
-        return self.quad_icon(self.context['id']).read()
+        return self.quad_icon(self.context['entity_id']).read()
 
     def fill(self, values):
-        return self.quad_icon(self.context['id']).fill()
+        return self.quad_icon(self.context['entity_id']).fill()
 
     @property
     def is_displayed(self):
@@ -2404,8 +2404,8 @@ class BaseListEntity(ParametrizedView, ClickableMixin):
     """ represents List entity. one of states entity can be in
 
     """
-    PARAMETERS = ('id',)
-    ROOT = ParametrizedLocator('.//tr[contains(@onclick, "miqRowClick(\'{id}\'")]')
+    PARAMETERS = ('entity_id',)
+    ROOT = ParametrizedLocator('.//tr[contains(@onclick, "miqRowClick(\'{entity_id}\'")]')
     parent_table = Table(locator='./ancestor::table[1]')
     checkbox = Checkbox(locator='.//input[@type="checkbox"]')
 
@@ -2450,17 +2450,17 @@ class NonJSBaseEntity(View):
     list_entity = BaseListEntity
     tile_entity = BaseTileIconEntity
 
-    def __init__(self, parent, id, name=None, logger=None):
+    def __init__(self, parent, entity_id, name=None, logger=None):
         View.__init__(self, parent, logger=logger)
-        self.id = id
+        self.entity_id = entity_id
         self._name = name
 
     def _get_existing_entity(self):
         for item in (self.quad_entity, self.tile_entity, self.list_entity):
-            if item(id=self.id).is_displayed:
-                return item(id=self.id)
+            if item(entity_id=self.entity_id).is_displayed:
+                return item(entity_id=self.entity_id)
         else:
-            raise NoSuchElementException("Item {id} isn't found on page".format(id=self.id))
+            raise NoSuchElementException("Item {id} isn't found on page".format(id=self.entity_id))
 
     @property
     def name(self):
@@ -2499,9 +2499,9 @@ class JSBaseEntity(View, ReportDataControllerMixin):
     """
     QUADRANT = './/div[@class="flobj {pos}72"]/*[self::p or self::img or self::div]'
 
-    def __init__(self, parent, id, name=None, logger=None):
+    def __init__(self, parent, entity_id, name=None, logger=None):
         View.__init__(self, parent, logger=logger)
-        self.id = id
+        self.entity_id = entity_id
         self._name = name or self.name
 
     @property
@@ -2534,10 +2534,12 @@ class JSBaseEntity(View, ReportDataControllerMixin):
         which is different for each entity type.
         This is property which should hold such data.
         """
-        data = self._invoke_cmd('get_item', self.id)['item']
+        data = self._invoke_cmd('get_item', self.entity_id)['item']
         cells = data.pop('cells')
+        cells = {str(key).replace(' ', '_').lower(): value for key, value in cells.items()}
+        data = {str(key).replace(' ', '_').lower(): value for key, value in data.items()}
         data.update(cells)
-        return {str(key).replace(' ', '_').lower(): value for key, value in data.items()}
+        return data
 
     def read(self):
         return self.is_checked
@@ -2551,7 +2553,7 @@ class JSBaseEntity(View, ReportDataControllerMixin):
     @property
     def is_displayed(self):
         try:
-            return self._invoke_cmd('is_displayed', self.id)
+            return self._invoke_cmd('is_displayed', self.entity_id)
         except WebDriverException:
             # there is sometimes an exception if such entity is not displayed
             return False
@@ -2576,17 +2578,17 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
             for el in br.elements(self.elements):
                 el_id = int(br.get_attribute('href', el).split('/')[-1])
                 el_name = br.get_attribute('title', el)
-                elements.append({'name': el_name, 'id': el_id})
+                elements.append({'name': el_name, 'entity_id': el_id})
         else:
             entities = self._invoke_cmd('get_all_items')
             for entity in entities:
                 elements.append({'name': entity['item']['cells']['Name'],
-                                 'id': entity['item']['id']})
+                                 'entity_id': entity['item']['id']})
         return elements
 
     @property
     def entity_ids(self):
-        return [el['id'] for el in self._current_page_elements]
+        return [el['entity_id'] for el in self._current_page_elements]
 
     @property
     def entity_names(self):
@@ -2599,7 +2601,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
     def get_id_by_name(self, name):
         for el in self._current_page_elements:
             if el['name'] == name:
-                return el['id']
+                return el['entity_id']
         return None
 
     def get_entity_by_keys(self, **keys):
@@ -2618,7 +2620,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                 elements = self._current_page_elements
 
             for el in elements:
-                entity = self.parent.entity_class(parent=self, id=el['id'])
+                entity = self.parent.entity_class(parent=self, entity_id=el['entity_id'])
                 for key, value in keys.items():
                     try:
                         if entity.data[key] != str(value):
@@ -2628,11 +2630,26 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                 else:
                     return entity
         else:
-            entity_id = keys.pop('id', None)
+            entity_id = keys.pop('entity_id', None)
             if entity_id:
-                return self.parent.entity_class(parent=self, id=entity_id)
+                return self.parent.entity_class(parent=self, entity_id=entity_id)
+            elif 'id' in keys:
+                # it turned out that there are some views which have entities with internal id
+                # which override entity id in JS code. this is workaround for such case
+                elements = self._current_page_elements
+                for el in elements:
+                    entity = self.parent.entity_class(parent=self, entity_id=el['entity_id'])
+                    for key, value in keys.items():
+                        try:
+                            if entity.data[key] != str(value):
+                                break
+                        except KeyError:
+                            break
+                    else:
+                        return entity
+                pass
             else:
-                return self.parent.entity_class(parent=self, id=self.get_id_by_keys(**keys))
+                return self.parent.entity_class(parent=self, entity_id=self.get_id_by_keys(**keys))
         return None
 
     @property
@@ -2649,11 +2666,12 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         Returns: all entities (QuadIcon/etc.) displayed by view
         """
         if not surf_pages:
-            return [self.parent.entity_class(parent=self, id=id) for id in self.entity_ids]
+            return [self.parent.entity_class(parent=self, entity_id=eid) for eid in self.entity_ids]
         else:
             entities = []
             for _ in self.paginator.pages():
-                entities.extend([self.parent.entity_class(parent=self, id=el['id'], name=el['name'])
+                entities.extend([self.parent.entity_class(parent=self, entity_id=el['entity_id'],
+                                                          name=el['name'])
                                 for el in self._current_page_elements])
             return entities
 
@@ -2668,8 +2686,8 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         for _ in self.paginator.pages():
             if len(keys) == 1 and 'name' in keys:
                 entity_id = self.get_id_by_name(name=keys['name'])
-            elif len(keys) == 1 and 'id' in keys:
-                entity_id = keys['id']
+            elif len(keys) == 1 and 'entity_id' in keys:
+                entity_id = keys['entity_id']
             else:
                 entity_id = None
                 entity = self.get_entity_by_keys(**keys)
@@ -2677,7 +2695,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                     return entity
 
             if entity_id:
-                return self.parent.entity_class(parent=self, id=entity_id)
+                return self.parent.entity_class(parent=self, entity_id=entity_id)
 
             if not surf_pages:
                 raise ItemNotFound("Entity {keys} isn't found on this page".format(keys=keys))
@@ -2691,7 +2709,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         Returns: matched entity (QuadIcon/etc.)
         """
         for entity_id in self.entity_ids:
-            return self.parent.entity_class(parent=self, id=entity_id)
+            return self.parent.entity_class(parent=self, entity_id=entity_id)
 
         raise ItemNotFound("No Entities found on this page")
 
@@ -2739,12 +2757,12 @@ class BaseEntitiesView(View):
                     attr = br.get_attribute('onclick', row)
                     el_id = int(re.search("miqRowClick\('(\d+)", attr).group(1))
                     el_name = row.name.text if getattr(row, 'name', None) else ''
-                    elements.append({'name': el_name, 'id': el_id})
+                    elements.append({'name': el_name, 'entity_id': el_id})
             else:
                 entities = self._invoke_cmd('get_all_items')
                 for entity in entities:
                     elements.append({'name': entity['item']['cells']['Name'],
-                                     'id': entity['item']['id']})
+                                     'entity_id': entity['item']['id']})
             return elements
 
     @entities.register('Tile View')
@@ -3161,17 +3179,17 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
             for el in br.elements(self.elements):
                 el_id = int(br.get_attribute('href', el).split('/')[-1])
                 el_name = br.get_attribute('title', el)
-                elements.append({'name': el_name, 'id': el_id})
+                elements.append({'name': el_name, 'entity_id': el_id})
         else:
             entities = self._invoke_cmd('get_all_items')
             for entity in entities:
                 elements.append({'name': entity['item']['cells']['Name'],
-                                 'id': entity['item']['id']})
+                                 'entity_id': entity['item']['id']})
         return elements
 
     @property
     def entity_ids(self):
-        return [el['id'] for el in self._current_page_elements]
+        return [el['entity_id'] for el in self._current_page_elements]
 
     @property
     def entity_names(self):
@@ -3184,13 +3202,13 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
     def get_id_by_name(self, name):
         for el in self._current_page_elements:
             if el['name'] == name:
-                return el['id']
+                return el['entity_id']
         return None
 
     def get_entity_by_keys(self, **keys):
         if self.browser.product_version < '5.9':
             for el in self._current_page_elements:
-                entity = self.entity_class(parent=self, id=el['id'])
+                entity = self.entity_class(parent=self, entity_id=el['entity_id'])
                 for key, value in keys.items():
                     try:
                         if entity.data[key] != str(value):
@@ -3200,11 +3218,11 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
                 else:
                     return entity
         else:
-            entity_id = keys.pop('id', None)
+            entity_id = keys.pop('entity_id', None)
             if entity_id:
-                return self.entity_class(parent=self, id=entity_id)
+                return self.entity_class(parent=self, entity_id=entity_id)
             else:
-                return self.entity_class(parent=self, id=self.get_id_by_keys(**keys))
+                return self.entity_class(parent=self, entity_id=self.get_id_by_keys(**keys))
         return None
 
     @property
@@ -3219,7 +3237,7 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
 
         Returns: all entities (QuadIcon/etc.) displayed by view
         """
-        return [self.entity_class(parent=self, id=id) for id in self.entity_ids]
+        return [self.entity_class(parent=self, entity_id=eid) for eid in self.entity_ids]
 
     def get_entity(self, **keys):
         """ obtains one entity matched to some of keys
@@ -3231,8 +3249,8 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
         """
         if len(keys) == 1 and 'name' in keys:
             entity_id = self.get_id_by_name(name=keys['name'])
-        elif len(keys) == 1 and 'id' in keys:
-            entity_id = keys['id']
+        elif len(keys) == 1 and 'entity_id' in keys:
+            entity_id = keys['entity_id']
         else:
             entity_id = None
             entity = self.get_entity_by_keys(**keys)
@@ -3240,7 +3258,7 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
                 return entity
 
         if entity_id:
-            return self.entity_class(parent=self, id=entity_id)
+            return self.entity_class(parent=self, entity_id=entity_id)
 
         raise ItemNotFound("Entity {keys} isn't found on this page".format(keys=keys))
 
@@ -3250,7 +3268,7 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
         Returns: matched entity (QuadIcon/etc.)
         """
         for entity_id in self.entity_ids:
-            return self.entity_class(parent=self, id=entity_id)
+            return self.entity_class(parent=self, entity_id=entity_id)
 
         raise ItemNotFound("No Entities found on this page")
 
