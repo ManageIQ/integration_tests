@@ -4,20 +4,16 @@ import pytest
 import cfme.configure.access_control as ac
 from cfme import test_requirements
 from cfme.base.credential import Credential
+from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
-from cfme.utils import testgen
 from cfme.utils.blockers import BZ
-
-
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.all_providers(metafunc, required_fields=['ownership_vm'])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
 pytestmark = [
     test_requirements.ownership,
     pytest.mark.meta(blockers=[BZ(1380781, forced_streams=["5.7"])]),
-    pytest.mark.tier(3)
+    pytest.mark.tier(3),
+    pytest.mark.provider([BaseProvider], required_fields=['ownership_vm'], scope='module')
 ]
 
 
