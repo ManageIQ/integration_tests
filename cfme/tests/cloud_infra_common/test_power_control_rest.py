@@ -2,8 +2,8 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
-from cfme.utils import testgen
 from cfme.utils.generators import random_vm_name
 from cfme.utils.wait import wait_for
 from cfme.utils.log import logger
@@ -16,13 +16,10 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 pytestmark = [
     test_requirements.power,
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers'),
-    pytest.mark.tier(2)
+    pytest.mark.tier(2),
+    pytest.mark.provider([BaseProvider], scope='module'),
+    pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"]),
 ]
-
-
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.all_providers(metafunc)
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
 @pytest.fixture(scope='function')
@@ -76,7 +73,6 @@ def verify_action_result(rest_api, assert_success=True):
     return success, message
 
 
-@pytest.mark.parametrize("from_detail", [True, False], ids=["cfrom_detail", "from_collection"])
 def test_stop_vm_rest(appliance, vm_obj, verify_vm_running, soft_assert, from_detail):
     """Test stop of vm
 
@@ -107,7 +103,6 @@ def test_stop_vm_rest(appliance, vm_obj, verify_vm_running, soft_assert, from_de
     soft_assert(not verify_vm_power_state(vm, vm_obj.STATE_ON), "vm still running")
 
 
-@pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
 def test_start_vm_rest(appliance, vm_obj, verify_vm_stopped, soft_assert, from_detail):
     """Test start vm
 
@@ -138,7 +133,6 @@ def test_start_vm_rest(appliance, vm_obj, verify_vm_stopped, soft_assert, from_d
     soft_assert(verify_vm_power_state(vm, vm_obj.STATE_ON), "vm not running")
 
 
-@pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
 def test_suspend_vm_rest(appliance, vm_obj, verify_vm_running, soft_assert, from_detail):
     """Test suspend vm
 
@@ -176,7 +170,6 @@ def test_suspend_vm_rest(appliance, vm_obj, verify_vm_running, soft_assert, from
 
 @pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider),
                          reason='Not supported for RHV provider')
-@pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
 def test_reset_vm_rest(vm_obj, verify_vm_running, from_detail, appliance):
     """
     Test reset vm
