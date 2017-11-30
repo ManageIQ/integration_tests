@@ -3,23 +3,21 @@
 import fauxfactory
 import pytest
 
+from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers'),
-    pytest.mark.tier(2)
+    pytest.mark.tier(2),
+    pytest.mark.provider([BaseProvider],
+                         required_fields=['provisioning'],
+                         scope='module'),
 ]
-
-
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.all_providers(metafunc, required_fields=['provisioning'])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
 @pytest.yield_fixture(scope="function")
