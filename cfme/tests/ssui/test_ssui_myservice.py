@@ -7,10 +7,12 @@ from cfme.services.myservice import MyService
 from cfme import test_requirements
 from cfme.utils import testgen, ssh
 from cfme.utils.appliance import ViaSSUI
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.version import current_version
 from wait_for import wait_for
+
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -46,7 +48,6 @@ def test_myservice_crud(appliance, setup_provider, context, order_catalog_item_i
     """Test Myservice crud in SSUI."""
     service_name = order_catalog_item_in_ops_ui.name
     with appliance.context.use(context):
-        appliance.server.login()
         my_service = MyService(appliance, service_name)
         my_service.set_ownership("Administrator", "EvmGroup-approver")
         my_service.update({'description': '{}_edited'.format(service_name)})
@@ -54,6 +55,16 @@ def test_myservice_crud(appliance, setup_provider, context, order_catalog_item_i
         if appliance.version > "5.8":
             my_service.edit_tags("Cost Center", "Cost Center 001")
         my_service.delete()
+
+
+@pytest.mark.meta(blockers=[BZ(1518056, forced_streams=["5.7"])])
+@pytest.mark.parametrize('context', [ViaSSUI])
+def test_retire_service(appliance, setup_provider, context, order_catalog_item_in_ops_ui):
+    """Tests retire service"""
+    service_name = order_catalog_item_in_ops_ui.name
+    with appliance.context.use(context):
+        my_service = MyService(appliance, service_name)
+        my_service.retire()
 
 
 @pytest.mark.uncollectif(lambda: current_version() >= '5.9')
@@ -69,7 +80,6 @@ def test_vm_console(request, appliance, setup_provider, context, configure_webso
     console_vm_password = credentials[catalog_item.provider.data.templates.console_template
                             .creds].password
     with appliance.context.use(context):
-        appliance.server.login()
         myservice = MyService(appliance, service_name)
         vm_obj = myservice.launch_vm_console(catalog_item)
         vm_console = vm_obj.vm_console
