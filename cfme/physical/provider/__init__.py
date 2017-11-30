@@ -1,15 +1,13 @@
+from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import Fillable
 
-from navmazing import NavigateToAttribute
-
-from cfme.base.ui import BaseLoggedInPage
-from cfme.utils.pretty import Pretty
-from cfme.common.provider import BaseProvider
-from cfme.utils.appliance import Navigatable
-from cfme.utils.varmeth import variable
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
-
 from cfme.base.ui import Server
+from cfme.common.provider import BaseProvider
+from cfme.common.provider_views import PhysicalProviderAddView, PhysicalProvidersView
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.pretty import Pretty
+from cfme.utils.varmeth import variable
 
 
 class PhysicalProvider(Pretty, BaseProvider, Fillable):
@@ -25,9 +23,11 @@ class PhysicalProvider(Pretty, BaseProvider, Fillable):
     # db_types = ["InfraManager"]
 
     def __init__(
-            self, appliance, name):
+            self, appliance=None, name=None, key=None, endpoints=None):
         Navigatable.__init__(self, appliance=appliance)
+        self.endpoints = self._prepare_endpoints(endpoints)
         self.name = name
+        self.key = key
 
     @variable(alias='db')
     def num_server(self):
@@ -42,7 +42,7 @@ class PhysicalProvider(Pretty, BaseProvider, Fillable):
 @navigator.register(PhysicalProvider, 'All')
 class All(CFMENavigateStep):
     # This view will need to be created
-    VIEW = BaseLoggedInPage
+    VIEW = PhysicalProvidersView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
@@ -51,3 +51,14 @@ class All(CFMENavigateStep):
     def resetter(self):
         # Reset view and selection
         pass
+
+
+@navigator.register(PhysicalProvider, 'Add')
+class Add(CFMENavigateStep):
+    VIEW = PhysicalProviderAddView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        self.prerequisite_view.toolbar.configuration.item_select(
+            'Add a New Infrastructure Provider'
+        )

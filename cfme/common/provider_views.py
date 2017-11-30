@@ -365,6 +365,18 @@ class MiddlewareProvidersView(ProvidersView):
                 self.entities.title.text == 'Middleware Providers')
 
 
+class PhysicalProvidersView(ProvidersView):
+    """
+     represents Main view displaying all Infra providers
+    """
+    @property
+    def is_displayed(self):
+        return (super(PhysicalProvidersView, self).is_displayed and
+                self.navigation.currently_selected == [
+                    'Compute', 'Physical Infrastructure', 'Providers'] and
+                self.entities.title.text == 'Physical Infrastructure Providers')
+
+
 class BeforeFillMixin(object):
     """
      this mixin is used to activate appropriate tab before filling this tab
@@ -465,6 +477,19 @@ class MiddlewareProviderAddView(ProviderAddView):
         return (super(MiddlewareProviderAddView, self).is_displayed and
                 self.navigation.currently_selected == ['Middleware', 'Providers'] and
                 self.title.text == 'Add New Middleware Provider')
+
+
+class PhysicalProviderAddView(ProviderAddView):
+    """
+     represents Middleware Provider Add View
+    """
+
+    @property
+    def is_displayed(self):
+        return (super(PhysicalProviderAddView, self).is_displayed and
+                self.navigation.currently_selected == [
+                    'Compute', 'Physical Infrastructure', 'Providers'] and
+                self.title.text == 'Add New Ems Physical Infra')
 
 
 class ProviderEditView(ProviderAddView):
