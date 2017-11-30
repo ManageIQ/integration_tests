@@ -854,19 +854,14 @@ class SSUIlist(Widget, ClickableMixin):
 
     @ParametrizedView.nested
     class list(ParametrizedView):  # noqa
-        PARAMETERS = ("list_name", "item_name",)
+        PARAMETERS = ("item_name",)
         list_item = Text(
-            ParametrizedLocator('.//div[@id={list_name|quote}]/../div'
-                                '//*[normalize-space(.)={item_name|quote}]'))
+            ParametrizedLocator('.//div/span/*[normalize-space(.)={item_name|quote}]'))
 
         def list_click(self):
             """Clicks the list item with this name."""
 
             return self.list_item.click()
-
-    def __init__(self, parent, list_name, logger=None):
-        Widget.__init__(self, parent, logger=logger)
-        self.list_name = list_name
 
     def click_at(self, item_name):
         """Clicks the list item with this name.
@@ -874,7 +869,8 @@ class SSUIlist(Widget, ClickableMixin):
         Args:
             item_name: Name of the item
         """
-        return self.list(self.list_name, item_name).list_click()
+
+        return self.list(item_name).list_click()
 
 
 class SSUIDropdown(Dropdown):

@@ -6,7 +6,7 @@ from widgetastic_manageiq import (
     Notification,
     SSUIAppendToBodyDropdown,
     SSUIConfigDropdown)
-from widgetastic_patternfly import Input, Button
+from widgetastic_patternfly import Input, Button, Dropdown
 from widgetastic.utils import VersionPick, Version
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
@@ -25,7 +25,7 @@ import time
 
 class MyServicesView(SSUIBaseLoggedInPage):
     title = Text(locator='//li[@class="active"]')
-    service = SSUIlist(list_name='serviceList')
+    service = SSUIlist()
     notification = Notification()
 
     @property
@@ -51,14 +51,16 @@ class DetailsMyServiceView(MyServicesView):
                 self.title.text in {self.context['object'].name, 'Service Details'})
 
     notification = Notification()
-    policy_btn = SSUIDropdown('Policy')
-    lifecycle_btn = SSUIDropdown('Lifecycle')
+    policy = SSUIDropdown('Policy')
     power_operations = SSUIDropdown('Power Operations')
     access_dropdown = SSUIAppendToBodyDropdown('Access')
     remove_service = Button("Remove Service")
     configuration = VersionPick({
         Version.lowest(): SSUIConfigDropdown("dropdownKebabRight"),
         '5.8': SSUIDropdown('Configuration')})
+    lifecycle = VersionPick({
+        Version.lowest(): Dropdown("Retire"),
+        '5.8': SSUIDropdown('Lifecycle')})
     console_button = Button(tooltip="HTML5 console", classes=['open-console-button'])
 
 
@@ -137,6 +139,19 @@ class RemoveServiceView(MyServicesView):
             self.title.text == 'Remove Service')
 
 
+class RetireServiceView(MyServicesView):
+    title = Text(locator='//h4[@id="myModalLabel"]')
+
+    retire = Button('Yes, Retire Service Now')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_myservices and
+            self.title.text == 'Retire Service Now')
+
+
 @MyService.update.external_implementation_for(ViaSSUI)
 def update(self, updates):
     view = navigate_to(self, 'Edit')
@@ -147,7 +162,7 @@ def update(self, updates):
         lambda: view.is_displayed, delay=15, num_sec=300,
         message="waiting for view to be displayed"
     )
-    # TODO - remove sleep when BZ 1496233 is fixed
+    # TODO - remove sleep when BZ 1518954 is fixed
     time.sleep(10)
     assert view.notification.assert_message(
         "{} was edited.".format(self.name))
@@ -165,7 +180,7 @@ def set_ownership(self, owner, group):
     view.save_button.click()
     view = self.create_view(DetailsMyServiceView)
     assert view.is_displayed
-    # TODO - remove sleep when BZ 1496233 is fixed
+    # TODO - remove sleep when BZ 1518954 is fixed
     time.sleep(10)
     if self.appliance.version >= "5.8":
         assert view.notification.assert_message("Setting ownership.")
@@ -187,7 +202,7 @@ def edit_tags(self, tag, value):
     view.save.click()
     view = self.create_view(DetailsMyServiceView)
     assert view.is_displayed
-    # TODO - remove sleep when BZ 1496233 is fixed
+    # TODO - remove sleep when BZ 1518954 is fixed
     time.sleep(10)
     assert view.notification.assert_message("Tagging successful.")
 
@@ -207,7 +222,7 @@ def delete(self):
         message="waiting for view to be displayed"
     )
     assert view.is_displayed
-    # TODO - remove sleep when BZ 1496233 is fixed
+    # TODO - remove sleep when BZ 1518954 is fixed
     time.sleep(10)
     assert view.notification.assert_message("{} was removed.".format(self.name))
 
@@ -224,6 +239,19 @@ def launch_vm_console(self, catalog_item):
     )
     return vm_obj
 
+
+@MyService.retire.external_implementation_for(ViaSSUI)
+def retire(self):
+    view = navigate_to(self, 'Retire', wait_for_view=True)
+    view.retire.click()
+    view = self.create_view(MyServicesView)
+    assert wait_for(
+        lambda: view.is_displayed, delay=3, num_sec=300,
+        message="waiting for view to be displayed"
+    )
+    # TODO - remove sleep when BZ 1518954 is fixed
+    time.sleep(10)
+    assert view.notification.assert_message("{} was retired.".format(self.name))
 
 @navigator.register(MyService, 'All')
 class MyServiceAll(SSUINavigateStep):
@@ -289,4 +317,17 @@ class MyServiceEditTags(SSUINavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.policy_btn.item_select('Edit Tags')
+        self.prerequisite_view.policy.item_select('Edit Tags')
+
+
+@navigator.register(MyService, 'Retire')
+class MyServiceRetire(SSUINavigateStep):
+    VIEW = RetireServiceView
+
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        if self.appliance.version >= "5.8":
+            self.prerequisite_view.lifecycle.item_select('Retire')
+        else:
+            self.prerequisite_view.lifecycle.item_select('Retire Now')
