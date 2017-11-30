@@ -17,6 +17,7 @@ from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree,
     NonJSPaginationPane, SummaryTable, TimelinesView)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
+from widgetastic.utils import partial_match
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, Template as BaseTemplate
@@ -757,7 +758,7 @@ class Vm(VM):
                 'last_name': last_name},
             'environment': {"host_name": {'name': prov_data.get("host")},
                             "datastore_name": {"name": prov_data.get("datastore")}},
-            'network': {'vlan': prov_data.get("vlan")},
+            'network': {'vlan': partial_match(prov_data.get("vlan"))},
         }
         view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
 

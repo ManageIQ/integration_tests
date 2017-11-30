@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from widgetastic.utils import partial_match
+
 from cfme.common.provider import cleanup_vm
 from cfme.rest.gen_data import dialog as _dialog
 from cfme.rest.gen_data import service_catalog_obj as _catalog
@@ -40,7 +42,7 @@ def create_catalog_item(provider, provisioning, vm_name, dialog, catalog, consol
         'environment': {'host_name': {'name': host},
                         'datastore_name': {'name': datastore},
                         },
-        'network': {'vlan': vlan,
+        'network': {'vlan': partial_match(vlan),
                     },
     }
 
