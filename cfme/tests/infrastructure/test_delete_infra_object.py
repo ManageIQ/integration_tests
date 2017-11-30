@@ -5,17 +5,15 @@ from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.infrastructure import resource_pool
 from cfme.infrastructure.provider import InfraProvider
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
 
 
-pytestmark = [pytest.mark.tier(3),
-              test_requirements.general_ui]
-
-
-pytest_generate_tests = testgen.generate(
-    [InfraProvider], required_fields=['remove_test'], scope="module")
+pytestmark = [
+    pytest.mark.tier(3),
+    test_requirements.general_ui,
+    pytest.mark.provider([InfraProvider], required_fields=['remove_test'], scope="module")
+]
 
 
 def test_delete_cluster_appear_after_refresh(setup_provider, provider, appliance):
