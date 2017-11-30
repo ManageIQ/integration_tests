@@ -19,7 +19,7 @@ pytestmark = [
 
 @pytest.fixture
 def vm_name():
-    return random_vm_name()
+    return random_vm_name(context='quota')
 
 
 @pytest.fixture
