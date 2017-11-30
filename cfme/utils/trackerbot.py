@@ -25,9 +25,9 @@ stream_matchers = (
     (get_stream('5.4'), r'^cfme-54.*-(?P<month>\d{2})(?P<day>\d{2})'),
     (get_stream('5.5'), r'^cfme-55.*-(?P<month>\d{2})(?P<day>\d{2})'),
     (get_stream('5.6'), r'^cfme-56.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.7'), r'^cfme-57.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.8'), r'^cfme-58.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.9'), r'^cfme-59.*-(?P<month>\d{2})(?P<day>\d{2})'),
+    (get_stream('5.7'), r'^cfme-57.*-(?P<year>\d{4})?(?P<month>\d{2})(?P<day>\d{2})'),
+    (get_stream('5.8'), r'^cfme-58.*-(?P<year>\d{4})?(?P<month>\d{2})(?P<day>\d{2})'),
+    (get_stream('5.9'), r'^cfme-59.*-(?P<year>\d{4})?(?P<month>\d{2})(?P<day>\d{2})'),
     # Nightly builds have potentially multiple version streams bound to them so we
     # cannot use get_stream()
     ('upstream_stable', r'^miq-stable-(?P<release>gapri[-\w]*?)'  # release name limit to 5 chars
