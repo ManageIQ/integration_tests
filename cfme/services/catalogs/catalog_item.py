@@ -1,19 +1,19 @@
-from types import NoneType
+import time
 
 from navmazing import NavigateToAttribute, NavigateToSibling
+from types import NoneType
 from widgetastic.widget import Text, Checkbox, View
 from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound, Tab
-from widgetastic_manageiq import ManageIQTree
 
-from cfme.common.vm_views import BasicProvisionFormView
 from cfme.common import WidgetasticTaggable, TagPageView
-from cfme.fixtures import pytest_selenium as sel
-from cfme.utils.update import Updateable
-from cfme.utils.pretty import Pretty
+from cfme.common.vm_views import BasicProvisionFormView
+from cfme.utils import version
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.utils import version
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import ManageIQTree
 from . import ServicesCatalogView
 
 
@@ -289,7 +289,7 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
                    'request': "InspectMe"})
         view.add_button.click()
         view = self.create_view(DetailsCatalogItemView)
-        sel.sleep(5)
+        time.sleep(5)
         assert view.is_displayed
         view.flash.assert_success_message('Button "btn_descr" was added')
 
