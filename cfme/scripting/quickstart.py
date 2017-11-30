@@ -104,9 +104,14 @@ def command_text(command, shell):
         return ' '.join(map(quote, command))
 
 
-def call_or_exit(command, shell=False, **kw):
+def call_or_exit(command, shell=False, long_running=False, **kw):
     try:
-        print('QS $', command_text(command, shell))
+        if long_running:
+            print(
+                'QS $', command_text(command, shell),
+                '# this may take some time to finish ...')
+        else:
+            print('QS $', command_text(command, shell))
         res = subprocess.call(command, shell=shell, **kw)
     except Exception as e:
         print(repr(e))
@@ -190,7 +195,7 @@ def install_requirements(venv_path, quiet=False):
         'pip', 'install',
         '-r', REQUIREMENT_FILE,
         '--no-binary', 'pycurl',
-        *(['-q'] if quiet else []))
+        *(['-q'] if quiet else []), long_running=quiet)
 
     with open(remember_file, 'w') as fp:
         fp.write(current_hash)
