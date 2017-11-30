@@ -7,22 +7,20 @@ from cfme.utils import error
 from cfme.infrastructure import host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
-pytestmark = [pytest.mark.tier(3)]
+
+pytestmark = [
+    pytest.mark.tier(3),
+    pytest.mark.provider([VMwareProvider, RHEVMProvider], scope='module')
+]
+
 
 msgs = {
     'virtualcenter': 'Cannot complete login due to an incorrect user name or password.',
     'rhevm': 'Login failed due to a bad username or password.'
 }
-
-
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, [VMwareProvider, RHEVMProvider])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
 def get_host_data_by_name(provider_key, host_name):
