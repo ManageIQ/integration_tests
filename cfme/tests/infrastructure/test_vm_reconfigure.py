@@ -3,19 +3,18 @@ import pytest
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils import testgen
 from cfme.utils.wait import wait_for
 from cfme.utils.generators import random_vm_name
 
-pytest_generate_tests = testgen.generate(
-    [VMwareProvider, RHEVMProvider],
-    required_fields=['templates'],
-    scope="module")
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider_modscope'),
     pytest.mark.long_running,
-    pytest.mark.tier(2)]
+    pytest.mark.tier(2),
+    pytest.mark.provider([VMwareProvider, RHEVMProvider],
+                         required_fields=['templates'],
+                         scope='module'),
+]
 
 
 @pytest.yield_fixture(scope='module')
