@@ -3,7 +3,6 @@ import pytest
 from cfme.infrastructure.provider import InfraProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme import test_requirements
-from cfme.utils import testgen
 from cfme.utils.appliance import ViaSSUI
 
 
@@ -11,15 +10,13 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     test_requirements.ssui,
     pytest.mark.long_running,
-    pytest.mark.ignore_stream("upstream", "5.9")
+    pytest.mark.ignore_stream("upstream", "5.9"),
+    pytest.mark.provider([InfraProvider],
+                         required_fields=[['provisioning', 'template'],
+                                          ['provisioning', 'host'],
+                                          ['provisioning', 'datastore']],
+                         scope="module"),
 ]
-
-
-pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
-    ['provisioning', 'template'],
-    ['provisioning', 'host'],
-    ['provisioning', 'datastore']
-], scope="module")
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
