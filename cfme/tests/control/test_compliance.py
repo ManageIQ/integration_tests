@@ -8,7 +8,7 @@ from cfme.control.explorer.policies import HostCompliancePolicy, VMCompliancePol
 from cfme.control.explorer.conditions import VMCondition
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
-from cfme.utils import testgen, conf
+from cfme.utils import conf
 from cfme.utils.blockers import BZ
 from cfme.utils.hosts import setup_providers_hosts_credentials
 from cfme.utils.update import update
@@ -20,11 +20,9 @@ pytestmark = [
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.meta(server_roles=["+automate", "+smartstate", "+smartproxy"]),
     pytest.mark.tier(3),
-    test_requirements.control
+    test_requirements.control,
+    pytest.mark.provider([VMwareProvider], scope='module'),
 ]
-
-
-pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
 
 
 @pytest.fixture(scope="module")
