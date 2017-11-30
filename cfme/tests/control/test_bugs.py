@@ -1,22 +1,21 @@
 # -*- coding: utf-8 -*-
 from collections import namedtuple
+
 import fauxfactory
 import pytest
+from widgetastic.widget import Text
 
 from cfme import test_requirements
 from cfme.common.vm import VM
-from cfme.exceptions import CFMEExceptionOccured
-import cfme.fixtures.pytest_selenium as sel
-from cfme.control.explorer.policies import VMCompliancePolicy, VMControlPolicy
 from cfme.control.explorer.alerts import AlertDetailsView
 from cfme.control.explorer.conditions import VMCondition
+from cfme.control.explorer.policies import VMCompliancePolicy, VMControlPolicy
+from cfme.exceptions import CFMEExceptionOccured
 from cfme.infrastructure.virtual_machines import Vm
-from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.generators import random_vm_name
 from cfme.utils.appliance import get_or_create_current_appliance
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from widgetastic.widget import Text
-
+from cfme.utils.generators import random_vm_name
 
 pytestmark = [
     test_requirements.control,
@@ -169,8 +168,8 @@ def test_scope_windows_registry_stuck(request, appliance, infra_provider, policy
     vm.assign_policy_profiles(profile.description)
     # It should be screwed here, but do additional check
     navigate_to(appliance.server, 'Dashboard')
-    navigate_to(Vm, 'All')
-    assert "except" not in sel.title().lower()
+    view = navigate_to(Vm, 'All')
+    assert "except" not in view.entities.title.text.lower()
     vm.unassign_policy_profiles(profile.description)
 
 
