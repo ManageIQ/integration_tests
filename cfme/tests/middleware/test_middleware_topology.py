@@ -12,8 +12,8 @@ from cfme.middleware.deployment import MiddlewareDeployment
 
 
 pytestmark = [
-    pytest.skip('Skipped until Topology is refactored for WT'),
-    pytest.mark.uncollectif(lambda: current_version() < '5.7'),
+    # pytest.mark.uncollectif(lambda: current_version() < '5.7'),
+    pytest.mark.uncollectif(lambda: True, reason='Skipped until Topology is refactored for WT'),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider([MiddlewareProvider], scope='function'),
 ]
