@@ -4,16 +4,15 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
-pytest_generate_tests = testgen.generate([CloudProvider])
-
-
-pytestmark = [pytest.mark.tier(3),
-              test_requirements.storage,
-              pytest.mark.usefixtures('openstack_provider', 'setup_provider')]
+pytestmark = [
+    pytest.mark.tier(3),
+    test_requirements.storage,
+    pytest.mark.usefixtures('openstack_provider', 'setup_provider'),
+    pytest.mark.provider([CloudProvider])
+]
 
 
 MANAGER_TYPE = ['Swift Manager', 'Cinder Manager']
@@ -31,7 +30,6 @@ def collection_manager(request, openstack_provider, appliance):
     yield collection, manager
 
 
-@pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
 def test_manager_navigation(collection_manager):
     collection, manager = collection_manager

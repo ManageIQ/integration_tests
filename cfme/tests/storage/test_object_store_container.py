@@ -3,13 +3,13 @@ import pytest
 import random
 
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.utils import testgen
 
 
-pytestmark = pytest.mark.usefixtures("setup_provider")
-
-
-pytest_generate_tests = testgen.generate([OpenStackProvider], scope="module")
+pytestmark = [
+    pytest.mark.tier(3),
+    pytest.mark.usefixtures("setup_provider"),
+    pytest.mark.provider([OpenStackProvider], scope="module"),
+]
 
 
 @pytest.yield_fixture(scope="module")
@@ -20,7 +20,6 @@ def containers(appliance, provider):
     yield containers if containers else pytest.skip("No Containers Available")
 
 
-@pytest.mark.tier(3)
 def test_add_remove_tag(containers):
     container = random.choice(containers)
 
