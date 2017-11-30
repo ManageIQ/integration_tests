@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
+import pytest
 
 # from cfme.configure.tasks import is_cluster_analysis_finished
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.fixtures import pytest_selenium as sel
-from cfme.utils import testgen
 from cfme.utils.wait import wait_for
 
-pytestmark = [test_requirements.smartstate]
-
-
-pytest_generate_tests = testgen.generate(
-    [InfraProvider], required_fields=['remove_test'], scope="module")
+pytestmark = [
+    test_requirements.smartstate,
+    pytest.mark.provider([InfraProvider], required_fields=['remove_test'], scope="module")
+]
 
 
 def test_run_cluster_analysis(request, setup_provider, provider, soft_assert, appliance):
