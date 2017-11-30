@@ -4,16 +4,13 @@ import pytest
 
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
-from cfme.utils import testgen
-
-
-pytest_generate_tests = testgen.generate([SCVMMProvider], scope="module")
 
 
 @pytest.mark.meta(blockers=[1178961])
 @pytest.mark.uncollectif(
     lambda provider: "host_group" in provider.data.get("provisioning", {}),
     reason="No host group")
+@pytest.mark.provider([SCVMMProvider], scope="module")
 def test_no_dvd_ruins_refresh(provider, small_template):
     host_group = provider.data["provisioning"]["host_group"]
     with provider.mgmt.with_vm(
