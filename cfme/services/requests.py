@@ -370,7 +370,7 @@ class RequestDetailsView(RequestsView):
     class properties(Tab):  # noqa
         instance_type = SummaryFormItem('Properties', 'Instance Type')
         boot_disk_size = SummaryFormItem('Properties', 'Boot Disk Size ')
-        is_preemtible = Checkbox(name='hardware__is_preemptible')
+        is_preemptible = Checkbox(name='hardware__is_preemptible')
 
     @View.nested
     class customize(Tab):  # noqa

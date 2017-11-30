@@ -181,7 +181,7 @@ def test_provision_from_template(provider, provisioned_instance):
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(GCEProvider) or
                          current_version() < "5.7")
-def test_gce_preemtible_provision(provider, testing_instance, soft_assert):
+def test_gce_preemptible_provision(provider, testing_instance, soft_assert):
     instance, inst_args, image = testing_instance
     instance.create(**inst_args)
     instance.wait_to_appear(timeout=800)
