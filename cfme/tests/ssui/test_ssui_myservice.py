@@ -5,26 +5,25 @@ import pytest
 from cfme.infrastructure.provider import InfraProvider
 from cfme.services.myservice import MyService
 from cfme import test_requirements
-from cfme.utils import testgen, ssh
+from cfme.utils import ssh
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.version import current_version
 from wait_for import wait_for
 
+
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     test_requirements.ssui,
     pytest.mark.long_running,
-    pytest.mark.ignore_stream("upstream", "5.9")
+    pytest.mark.ignore_stream("upstream", "5.9"),
+    pytest.mark.provider([InfraProvider],
+                         required_fields=[['provisioning', 'template'],
+                                          ['provisioning', 'host'],
+                                          ['provisioning', 'datastore']],
+                         scope="module"),
 ]
-
-
-pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
-    ['provisioning', 'template'],
-    ['provisioning', 'host'],
-    ['provisioning', 'datastore']
-], scope="module")
 
 
 @pytest.fixture(scope="module")
