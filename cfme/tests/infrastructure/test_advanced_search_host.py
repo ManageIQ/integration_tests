@@ -7,6 +7,9 @@ from cfme.web_ui.cfme_exception import is_cfme_exception, cfme_exception_text
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
+pytestmark = [pytest.mark.tier(3)]
+
+
 @pytest.fixture(scope='module')
 def host_collection(appliance):
     return appliance.collections.hosts
@@ -37,9 +40,6 @@ def get_expression(user_input=False, op=">"):
         return expression + ")"
     else:
         return expression + ", {})"
-
-
-pytestmark = [pytest.mark.usefixtures("close_search"), pytest.mark.tier(3)]
 
 
 @pytest.fixture(scope="function")
@@ -129,7 +129,8 @@ def test_filter_save_and_load(host_collection, request, hosts, hosts_with_vm_cou
     view.flash.assert_no_error()
     view.search.reset_filter()
 
-    view.search.load_filter(filter_name, fill_callback={"COUNT": median_vm_count}, apply=True)
+    view.search.load_filter(
+        filter_name, fill_callback={"COUNT": median_vm_count}, apply_filter=True)
     view.flash.assert_no_error()
     request.addfinalizer(view.search.delete_filter)
     assert len(more_than_median_hosts) == len(host_collection.all(infra_provider))
@@ -181,7 +182,7 @@ def test_filter_save_and_load_cancel(host_collection, request, hosts, hosts_with
         filter_name,
         fill_callback={"COUNT": median_vm_count},
         cancel_on_user_filling=True,
-        apply=True
+        apply_filter=True
     )
     view.flash.assert_no_error()
 
@@ -209,7 +210,7 @@ def test_quick_search_with_filter(host_collection, request, hosts, hosts_with_vm
     view.search.advanced_search(get_expression(False, ">=").format(median_vm_count))
     view.flash.assert_no_error()
     # Make sure that we empty the regular search field after the test
-    request.addfinalizer(view.search.remove_search_filters())
+    request.addfinalizer(view.search.remove_search_filters)
     # Filter this host only
     view.search.simple_search(median_host)
     view.flash.assert_no_error()

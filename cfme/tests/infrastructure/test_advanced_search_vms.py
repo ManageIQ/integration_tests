@@ -127,7 +127,7 @@ def test_filter_save_and_load(request, vms, subset_of_vms, expression_for_vms_su
     view.flash.assert_no_error()
     view.search.reset_filter()
 
-    view.search.load_filter(filter_name, fill_callback={"Virtual Machine": vm}, apply=True)
+    view.search.load_filter(filter_name, fill_callback={"Virtual Machine": vm}, apply_filter=True)
     view.flash.assert_no_error()
     request.addfinalizer(view.search.delete_filter)
     assert vm in virtual_machines.get_all_vms(do_not_navigate=True)
@@ -176,7 +176,7 @@ def test_filter_save_and_load_cancel(request, vms, subset_of_vms):
         filter_name,
         fill_callback={"Virtual Machine": vm},
         cancel_on_user_filling=True,
-        apply=True
+        apply_filter=True
     )
     view.flash.assert_no_error()
 

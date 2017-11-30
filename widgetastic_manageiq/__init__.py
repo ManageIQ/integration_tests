@@ -1897,9 +1897,7 @@ class AdvancedSearchView(View):
 
 
 class Search(View):
-    """ Represents search_text control
-    # TODO Add advanced search
-    """
+    """ Represents search_text control """
     search_input = Input(id="search_text")
     search_button = Text("//div[@id='searchbox']//div[contains(@class, 'form-group')]"
                          "/*[self::a or (self::button and @type='submit')]")
@@ -1918,17 +1916,20 @@ class Search(View):
         return self.search_input.is_displayed
 
     def clear_simple_search(self):
+        """ Clear simple search field """
         if not self.is_empty:
             self.clear_button.click()
             self.search_button.click()
 
     def simple_search(self, text):
+        """ Search text using simple search """
         self.search_input.fill(text)
         self.search_button.click()
 
     @property
     @logged(log_result=True)
     def is_empty(self):
+        """ Checks if simple search field is emply """
         return not bool(self.search_input.value)
 
 
@@ -1940,8 +1941,9 @@ class Search(View):
 
     def reset_filter(self):
         """Clears the filter expression
-            Returns result of clicking reset when enabled
-            Returns false when reset is button is disabled
+
+            Returns: result of clicking reset when enabled(True),
+                false when reset is button is disabled
         """
         view = self.advanced_search_form
         if not view.reset_filter_button.disabled:
@@ -1953,30 +1955,40 @@ class Search(View):
         return reset_result
 
     def apply_filter(self):
-        """Applies an existing filter"""
-        if self.advanced_search_form.apply_filter_button.disabled:
-            return False
-        else:
+        """ Applies an existing filter
+
+            Returns: Apply button state, True - if active and clicked,
+                False - disabled, or not visible
+        """
+        try:
             self.advanced_search_form.apply_filter_button.click()
             return True
+        except NoSuchElementException:
+            return False
 
     def delete_filter(self, cancel=False):
-        """If possible, deletes the currently loaded filter."""
-        if self.advanced_search_form.delete_filter_button.disabled:
-            return False
-        else:
+        """If possible, deletes the currently loaded filter
+
+            Returns: Delet button state, True - if active and clicked,
+                False - disabled, or not visible
+        """
+        try:
             self.advanced_search_form.delete_filter_button.click(handle_alert=not cancel)
             return True
+        except NoSuchElementException:
+            return False
 
-    def save_filter(self, expression_program, save_name, global_search=False, apply=False,
+    def save_filter(self, expression_program, save_name, global_search=False, apply_filter=False,
                     cancel=False):
         """Fill the filtering expression and save it
 
-        Args:
-            expression_program: the expression to be filled.
-            save_name: Name of the filter to be saved with.
-            global_search: Whether to check the Global search checkbox.
-            cancel: Whether to cancel the save dialog without saving
+            Args:
+                expression_program: the expression to be filled.
+                save_name: Name of the filter to be saved with.
+                global_search: Whether to check the Global search checkbox.
+                apply_filter: Apply filter or not, default(False) not to apply
+                cancel: Whether to cancel the save dialog without saving
+            Returns: True - if fields where updated
         """
         self.open_advanced_search()
         self.advanced_search_form.search_exp_editor.fill(expression_program)
@@ -1989,19 +2001,22 @@ class Search(View):
             self.advanced_search_form.save_filter_form.cancel_button.click()
         elif updated:
             self.advanced_search_form.save_filter_form.save_filter_button.click()
-            if apply:
+            if apply_filter:
                 self.apply_filter()
                 self.advanced_search_form.close_button.click()
         return updated
 
     def load_filter(self, saved_filter=None, report_filter=None, fill_callback=None,
-                    cancel_on_user_filling=False, cancel=False, apply=False):
+                    apply_filter=False, cancel_on_user_filling=False, cancel=False):
         """Load saved filter
 
-        Args:
-            saved_filter: `Choose a saved XYZ filter`
-            report_filter: `Choose a XYZ report filter`
-            cancel: Whether to cancel the load dialog without loading
+            Args:
+                saved_filter: `Choose a saved XYZ filter`
+                report_filter: `Choose a XYZ report filter`
+                apply_filter: Apply filter or not, default(False) not to apply
+                cancel_on_user_filling: If True, user input form will be closed
+                cancel: Whether to cancel the load dialog without loading
+            Returns: True - if fields where updated
         """
         self.open_advanced_search()
         if self.advanced_search_form.load_filter_button.disabled:
@@ -2014,24 +2029,24 @@ class Search(View):
         if saved_filter is not None:
             updated = self.advanced_search_form.load_filter_form.fill(
                 {'filter_dropdown': saved_filter})
-        else:  # No other check needed, covered by those two asserts
+        else:
             updated = self.advanced_search_form.load_filter_form.fill(
                 {'filter_dropdown': report_filter})
         if cancel:
             self.advanced_search_form.load_filter_form.cancel_button.click()
         elif updated:
             self.advanced_search_form.load_filter_form.save_filter_button.click()
-            if apply:
+            if apply_filter:
                 self.apply_filter()
                 self._process_user_filling(fill_callback, cancel_on_user_filling)
                 self.close_advanced_search()
         return updated
 
     def advanced_search(self, expression_program, user_input=None, cancel_user_filling=False):
-        """Fill the filtering expression and apply it
+        """ Fill the filtering expression and apply it
 
-        Args:
-            expression_program: Expression to fill to the filter.
+            Args:
+                expression_program: Expression to fill to the filter.
         """
         self.open_advanced_search()
         self.advanced_search_form.search_exp_editor.fill(expression_program)
@@ -2040,17 +2055,17 @@ class Search(View):
         self.close_advanced_search()
 
     def _process_user_filling(self, user_input, cancel_on_user_filling=False):
-        """This function handles answering CFME's requests on user input.
+        """ This function handles answering CFME's requests on user input.
 
-        A `fill_callback` function is passed. If the box with user input appears, all requested
-        inputs are gathered and iterated over. On each element the `fill_callback` function is
+        A `user_input` function is passed. If the box with user input appears, all requested
+        inputs are gathered and iterated over. On each element the `user_input` function is
         called
         with 2 parameters: text which precedes the element itself to do matching, and the element.
 
-        This function does not check return status after `fill_callback` call.
+        This function does not check return status after `user_input` call.
 
-        Args:
-            fill_callback: The function to be called on each user input.
+            Args:
+                user_input: The function to be called on each user input.
         """
         user_input_form = self.advanced_search_form.filter_user_input_form
         wait_for(
@@ -2058,7 +2073,6 @@ class Search(View):
             num_sec=10, delay=2, message='Waiting for button became active')
         if isinstance(user_input, dict):
             for user_input_label, user_input_value in user_input.items():
-                # todo need extend expression widget
                 field_for_input = self.browser.element(
                     user_input_form.USER_INPUT_FIELD.format(quote(user_input_label)))
                 field_for_input.send_keys(user_input_value)
@@ -2081,10 +2095,7 @@ class Search(View):
         return self.filter_clear_button.is_displayed
 
     def open_advanced_search(self):
-        """Make sure the advanced search box is opened.
-
-        If the advanced search box is closed, open it if it exists (otherwise exception raised).
-        """
+        """Make sure the advanced search box is opened. """
         if not self.is_advanced_search_opened:
             self.advanced_search_button.click()
             wait_for(lambda: self.is_advanced_search_opened, fail_condition=False,
@@ -2099,7 +2110,6 @@ class Search(View):
 
     def remove_search_filters(self):
         """If any filter is applied in the quadicon view, it will be disabled."""
-        # The expression filter
         if self.is_advanced_search_applied:
             self.close_advanced_search()
             self.filter_clear_button.click()

@@ -14,17 +14,7 @@ from cfme.web_ui.cfme_exception import is_cfme_exception, cfme_exception_text
 
 
 pytestmark = [
-    pytest.mark.usefixtures("setup_cleanup_search", "infra_provider"), pytest.mark.tier(3)]
-
-
-@pytest.yield_fixture(scope="function")
-def setup_cleanup_search():
-    """Navigate to InfraProvider, clear search on setup and teardown"""
-    view = navigate_to(InfraProvider, 'All')
-    view.search.remove_search_filters()
-    yield
-    # cleanup after test
-    view.search.remove_search_filters()
+    pytest.mark.usefixtures("infra_provider"), pytest.mark.tier(3)]
 
 
 @pytest.yield_fixture(scope="function")
@@ -58,18 +48,20 @@ def test_can_open_advanced_search():
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_filter_without_user_input():
+def test_filter_without_user_input(request):
     # Set up the filter
     view = navigate_to(InfraProvider, 'All')
+    request.addfinalizer(view.search.remove_search_filters)
     view.search.advanced_search(
         "fill_count(Infrastructure Provider.VMs, >=, 0)")
     view.flash.assert_no_error()
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_filter_with_user_input():
+def test_filter_with_user_input(request):
     # Set up the filter
     view = navigate_to(InfraProvider, 'All')
+    request.addfinalizer(view.search.remove_search_filters)
     logger.debug('DEBUG: test_with_user_input: fill and apply')
     view.search.advanced_search(
         "fill_count(Infrastructure Provider.VMs, >=)", {'COUNT': 0})
@@ -77,9 +69,10 @@ def test_filter_with_user_input():
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_filter_with_user_input_and_cancellation():
+def test_filter_with_user_input_and_cancellation(request):
     # Set up the filter
     view = navigate_to(InfraProvider, 'All')
+    request.addfinalizer(view.search.remove_search_filters)
     view.search.advanced_search(
         "fill_count(Infrastructure Provider.VMs, >=)", {"COUNT": 0}, True
     )
@@ -144,7 +137,7 @@ def test_filter_save_and_cancel_load(rails_delete_filter):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_filter_save_and_cancel_load_with_user_input(rails_delete_filter):
+def test_filter_save_and_cancel_load_with_user_input(rails_delete_filter, request):
     # bind filter_name to the function for fixture cleanup
     test_filter_save_and_cancel_load_with_user_input.filter_name = fauxfactory.gen_alphanumeric()
     logger.debug('Set filter_name to: {}'.format(
@@ -157,12 +150,12 @@ def test_filter_save_and_cancel_load_with_user_input(rails_delete_filter):
 
     # Reset Filter
     assert view.search.reset_filter()
-
+    request.addfinalizer(view.search.remove_search_filters)
     view.search.load_filter(
         test_filter_save_and_cancel_load_with_user_input.filter_name,
         fill_callback={"COUNT": 0},
         cancel_on_user_filling=True,
-        apply=True
+        apply_filter=True
     )
     view.flash.assert_no_error()
 
@@ -170,7 +163,7 @@ def test_filter_save_and_cancel_load_with_user_input(rails_delete_filter):
 def test_quick_search_without_filter(request):
     view = navigate_to(InfraProvider, 'All')
     # Make sure that we empty the regular view.search field after the test
-    request.addfinalizer(view.search.remove_search_filters)
+    request.addfinalizer(view.search.clear_simple_search)
     # Filter this host only
     view.search.simple_search(fauxfactory.gen_alphanumeric())
     view.flash.assert_no_error()
