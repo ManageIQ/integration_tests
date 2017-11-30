@@ -2,12 +2,10 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.cloud.provider.azure import AzureProvider
 from cfme.common.provider import CloudInfraProvider
 from cfme.utils import error, testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response, delete_resources_from_collection
-from cfme.utils.version import pick
 from cfme.utils.wait import wait_for
 
 
@@ -37,7 +35,7 @@ def delete_provider(appliance, name):
 
     if appliance.version >= '5.9' and BZ(1501941, forced_streams=['5.9', 'upstream']).blocks:
         prov.action.edit(enabled=False)
-        wait_for(_delete, num_sec=80)
+        wait_for(_delete, num_sec=100)
     else:
         prov.action.delete()
         prov.wait_not_exists(num_sec=30)
@@ -49,101 +47,10 @@ def provider_rest(request, appliance, provider):
     delete_provider(appliance, provider.name)
     request.addfinalizer(lambda: delete_provider(appliance, provider.name))
 
-    default_connection = {
-        "endpoint": {"role": "default"}
-    }
-    con_config_to_include = []
-
-    # provider attributes
-    prov_data = {
-        "hostname": provider.hostname,
-        "ipaddress": provider.ip_address,
-        "name": provider.name,
-        "type": "ManageIQ::Providers::{}".format(provider.db_types[0]),
-    }
-
-    if hasattr(provider, "region"):
-        prov_data["provider_region"] = pick(
-            provider.region) if isinstance(provider.region, dict) else provider.region
-    if hasattr(provider, "project"):
-        prov_data["project"] = provider.project
-
-    if provider.one_of(AzureProvider):
-        prov_data["uid_ems"] = provider.tenant_id
-        prov_data["provider_region"] = provider.region.lower().replace(" ", "")
-        if hasattr(provider, "subscription_id"):
-            prov_data["subscription"] = provider.subscription_id
-
-    # default endpoint
-    endpoint_default = provider.endpoints["default"]
-    if hasattr(endpoint_default.credentials, "principal"):
-        prov_data["credentials"] = {
-            "userid": endpoint_default.credentials.principal,
-            "password": endpoint_default.credentials.secret,
-        }
-    elif hasattr(endpoint_default.credentials, "service_account"):
-        default_connection["authentication"] = {
-            "type": "AuthToken",
-            "auth_type": "default",
-            "auth_key": endpoint_default.credentials.service_account,
-        }
-        con_config_to_include.append(default_connection)
-    else:
-        pytest.skip("No credentials info found for provider {}.".format(provider.name))
-
-    cert = getattr(endpoint_default, "ca_certs", None)
-    if cert and appliance.version >= '5.8':
-        default_connection["endpoint"]["certificate_authority"] = cert
-        con_config_to_include.append(default_connection)
-
-    if hasattr(endpoint_default, "verify_tls"):
-        default_connection["endpoint"]["verify_ssl"] = 1 if endpoint_default.verify_tls else 0
-        con_config_to_include.append(default_connection)
-    if hasattr(endpoint_default, "api_port") and endpoint_default.api_port:
-        default_connection["endpoint"]["port"] = endpoint_default.api_port
-        con_config_to_include.append(default_connection)
-    if hasattr(endpoint_default, "security_protocol") and endpoint_default.security_protocol:
-        security_protocol = endpoint_default.security_protocol.lower()
-        if security_protocol == "basic (ssl)":
-            security_protocol = "ssl"
-        default_connection["endpoint"]["security_protocol"] = security_protocol
-        con_config_to_include.append(default_connection)
-
-    # candu endpoint
-    if "candu" in provider.endpoints:
-        endpoint_candu = provider.endpoints["candu"]
-        if isinstance(prov_data["credentials"], dict):
-            prov_data["credentials"] = [prov_data["credentials"]]
-        prov_data["credentials"].append({
-            "userid": endpoint_candu.credentials.principal,
-            "password": endpoint_candu.credentials.secret,
-            "auth_type": "metrics",
-        })
-        candu_connection = {
-            "endpoint": {
-                "hostname": endpoint_candu.hostname,
-                "path": endpoint_candu.database,
-                "role": "metrics",
-            },
-        }
-        if hasattr(endpoint_candu, "api_port") and endpoint_candu.api_port:
-            candu_connection["endpoint"]["port"] = endpoint_candu.api_port
-        if hasattr(endpoint_candu, "verify_tls") and not endpoint_candu.verify_tls:
-            candu_connection["endpoint"]["verify_ssl"] = 0
-        con_config_to_include.append(candu_connection)
-
-    prov_data["connection_configurations"] = []
-    appended = []
-    for config in con_config_to_include:
-        role = config["endpoint"]["role"]
-        if role not in appended:
-            prov_data["connection_configurations"].append(config)
-            appended.append(role)
-
-    response = appliance.rest_api.collections.providers.action.create(**prov_data)
+    provider.create_rest()
     assert_response(appliance)
 
-    provider_rest = response[0]
+    provider_rest = appliance.rest_api.collections.providers.get(name=provider.name)
     return provider_rest
 
 
@@ -158,7 +65,7 @@ def test_create_provider(provider_rest):
 
 
 @pytest.mark.tier(1)
-def test_provider_refresh(provider_rest, appliance, provider):
+def test_provider_refresh(provider_rest, appliance):
     """Test checking that refresh invoked from the REST API works.
 
     Metadata:
