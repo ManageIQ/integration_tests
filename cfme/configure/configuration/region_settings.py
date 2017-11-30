@@ -115,14 +115,11 @@ class Category(Pretty, Navigatable, Updateable):
 
         if cancel:
             view.cancel_button.click()
-            flash_message = 'Add of new Category was cancelled by the user'
         else:
             view.add_button.click()
-            flash_message = 'Category "{}" was added'.format(self.display_name)
 
         view = self.create_view(CompanyCategoriesAllView)
-        if not BZ(1510473, forced_streams=['5.9']).blocks:
-            view.flash.assert_success_message(flash_message)
+        view.flash.assert_no_error()
 
     def update(self, updates, cancel=False):
         """ Update category method
@@ -134,30 +131,24 @@ class Category(Pretty, Navigatable, Updateable):
         view.fill(self._form_mapping(**updates))
         if cancel:
             view.cancel_button.click()
-            flash_message = 'Edit of Category "{}" was cancelled by the user'.format(self.name)
         else:
             view.save_button.click()
-            flash_message = 'Category "{}" was saved'.format(self.name)
 
         view = self.create_view(CompanyCategoriesAllView)
-        if not BZ(1510473, forced_streams=['5.9']).blocks:
-            view.flash.assert_success_message(flash_message)
+        view.flash.assert_no_error()
 
     def delete(self, cancel=True):
         """ Delete existing category
 
             Args:
-                cancel: Default value 'True', category will be deleted
-                        'False' - deletion of category will be canceled
+                cancel: Default value 'True', deletion of category will be canceled
+                        'False' - category will be deleted
         """
         view = navigate_to(self, 'All')
         row = view.table.row(name=self.name)
         row.actions.click()
         view.browser.handle_alert(cancel=cancel)
-        if not cancel:
-            if BZ(1510473, forced_streams=['5.9']).blocks:
-                view.flash.assert_success_message(
-                    'Category "{}": Delete successful'.format(self.name))
+        view.flash.assert_no_error()
 
 
 @navigator.register(Category, 'All')
@@ -255,12 +246,14 @@ class Tag(Pretty, Navigatable, Updateable):
         view = navigate_to(self, 'Add')
         view.fill(self._form_mapping(**self.__dict__))
         view.add_button.click()
+        view.flash.assert_no_error()
 
     def update(self, updates):
         """ Update category method """
         view = navigate_to(self, 'Edit')
         view.fill(self._form_mapping(**updates))
         view.save_button.click()
+        view.flash.assert_no_error()
 
     def delete(self, cancel=True):
         """ Delete category method """
@@ -268,6 +261,7 @@ class Tag(Pretty, Navigatable, Updateable):
         row = view.table.row(name=self.name)
         row.actions.click()
         view.browser.handle_alert(cancel=cancel)
+        view.flash.assert_no_error()
 
 
 @navigator.register(Tag, 'All')
