@@ -7,26 +7,20 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.infrastructure.pxe import get_template_from_config
 from cfme.utils import ssh
-from cfme.utils import testgen
 from cfme.utils.wait import wait_for
+
 
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers'),
-    pytest.mark.meta(server_roles="+automate +notifier")
+    pytest.mark.meta(server_roles="+automate +notifier"),
+    pytest.mark.provider([RHEVMProvider],
+                         required_fields=[['provisioning', 'ci-template'],
+                                          ['provisioning', 'ci-username'],
+                                          ['provisioning', 'ci-pass'],
+                                          ['provisioning', 'image'],
+                                          ['provisioning', 'vlan']],
+                         scope='module'),
 ]
-
-
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.providers_by_class(metafunc, [RHEVMProvider],
-        required_fields=[
-            ['provisioning', 'ci-template'],
-            ['provisioning', 'ci-username'],
-            ['provisioning', 'ci-pass'],
-            ['provisioning', 'image'],
-            ['provisioning', 'vlan']
-    ])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
 @pytest.fixture(scope="module")
