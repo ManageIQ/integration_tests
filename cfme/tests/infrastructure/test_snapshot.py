@@ -10,7 +10,6 @@ from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm  # For Vm.Snapshot
-from cfme.utils import testgen
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -23,11 +22,9 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.tier(2),
-    test_requirements.snapshot
+    test_requirements.snapshot,
+    pytest.mark.provider([RHEVMProvider, VMwareProvider], scope="module"),
 ]
-
-
-pytest_generate_tests = testgen.generate([RHEVMProvider, VMwareProvider], scope="module")
 
 
 @pytest.fixture(scope="module")
