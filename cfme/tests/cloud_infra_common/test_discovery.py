@@ -1,20 +1,21 @@
 # -*- coding: utf-8 -*-
 import pytest
 import time
+from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
 from cfme.exceptions import CFMEException
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
-from cfme.utils import testgen
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError
 from cfme import test_requirements
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.all_providers(metafunc)
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytestmark = [
+    pytest.mark.tier(2),
+    test_requirements.discovery,
+    pytest.mark.provider([BaseProvider], scope='module')
+]
 
 
 @pytest.fixture(scope="module")
@@ -53,8 +54,6 @@ def wait_for_vm_state_changes(vm, timeout=600):
         raise CFMEException("VM should be Archived but it is Orphaned now.")
 
 
-@pytest.mark.tier(2)
-@test_requirements.discovery
 def test_vm_discovery(request, setup_provider, provider, vm_crud):
     """ Tests whether cfme will discover a vm change (add/delete) without being manually refreshed.
 
