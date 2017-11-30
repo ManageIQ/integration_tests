@@ -5,13 +5,16 @@ from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.wait import wait_for
-from cfme.utils import testgen
 from cfme.utils.version import current_version
 
 
-pytestmark = [test_requirements.provision]
-
-pytest_generate_tests = testgen.generate([VMwareProvider, RHEVMProvider], scope="module")
+pytestmark = [
+    test_requirements.provision,
+    pytest.mark.tier(2),
+    pytest.mark.meta(server_roles="+automate"),
+    pytest.mark.usefixtures("setup_provider"),
+    pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module"),
+]
 
 
 def get_provision_data(rest_api, provider, template_name, auto_approve=True):
@@ -68,9 +71,6 @@ def provision_data(appliance, provider, small_template_modscope):
 
 # Here also available the ability to create multiple provision request, but used the save
 # href and method, so it doesn't make any sense actually
-@pytest.mark.tier(2)
-@pytest.mark.meta(server_roles="+automate")
-@pytest.mark.usefixtures("setup_provider")
 def test_provision(request, provision_data, provider, appliance):
     """Tests provision via REST API.
     Prerequisities:
@@ -100,9 +100,6 @@ def test_provision(request, provision_data, provider, appliance):
     assert provider.mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
 
 
-@pytest.mark.tier(2)
-@pytest.mark.meta(server_roles="+automate")
-@pytest.mark.usefixtures("setup_provider")
 def test_create_pending_provision_requests(appliance, provider, small_template):
     """Tests creation and and auto-approval of pending provision request
     using /api/provision_requests.
@@ -130,9 +127,6 @@ def test_create_pending_provision_requests(appliance, provider, small_template):
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
-@pytest.mark.tier(2)
-@pytest.mark.meta(server_roles="+automate")
-@pytest.mark.usefixtures("setup_provider")
 def test_provision_attributes(appliance, provider, small_template):
     """Tests that it's possible to display additional attributes in /api/provision_requests/:id.
 
