@@ -24,23 +24,9 @@ def delete_provider(appliance, name):
 
     prov = provs[0]
 
-    # workaround for BZ1501941
-    def _delete():
-        try:
-            prov.action.delete()
-        except Exception as exc:
-            if 'ActiveRecord::RecordNotFound' in str(exc):
-                return True
-            raise
-        retval = prov.wait_not_exists(num_sec=20, silent_failure=True)
-        return bool(retval)
-
-    if appliance.version >= '5.9' and BZ(1501941, forced_streams=['5.9', 'upstream']).blocks:
-        prov.action.edit(enabled=False)
-        wait_for(_delete, num_sec=80)
-    else:
-        prov.action.delete()
-        prov.wait_not_exists(num_sec=30)
+    # testing BZ1501941
+    prov.action.delete()
+    prov.wait_not_exists()
 
 
 @pytest.fixture(scope="function")
