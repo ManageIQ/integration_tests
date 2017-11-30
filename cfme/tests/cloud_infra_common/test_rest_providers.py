@@ -3,15 +3,17 @@ import pytest
 
 from cfme import test_requirements
 from cfme.common.provider import CloudInfraProvider
-from cfme.utils import error, testgen
+from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.wait import wait_for
 
 
-pytest_generate_tests = testgen.generate(classes=[CloudInfraProvider])
-
-pytestmark = [test_requirements.rest]
+pytestmark = [
+    test_requirements.rest,
+    pytest.mark.tier(1),
+    pytest.mark.provider([CloudInfraProvider])
+]
 
 
 def delete_provider(appliance, name):
@@ -54,7 +56,6 @@ def provider_rest(request, appliance, provider):
     return provider_rest
 
 
-@pytest.mark.tier(1)
 def test_create_provider(provider_rest):
     """Tests creating provider using REST API.
 
@@ -64,7 +65,6 @@ def test_create_provider(provider_rest):
     assert "ManageIQ::Providers::" in provider_rest.type
 
 
-@pytest.mark.tier(1)
 def test_provider_refresh(provider_rest, appliance):
     """Test checking that refresh invoked from the REST API works.
 
@@ -95,7 +95,6 @@ def test_provider_refresh(provider_rest, appliance):
         assert task.status.lower() == "ok", "Task failed with status '{}'".format(task.status)
 
 
-@pytest.mark.tier(1)
 def test_provider_edit(request, provider_rest, appliance):
     """Test editing a provider using REST API.
 
@@ -111,7 +110,6 @@ def test_provider_edit(request, provider_rest, appliance):
     assert provider_rest.name == new_name == edited.name
 
 
-@pytest.mark.tier(1)
 @pytest.mark.meta(blockers=[BZ(1501941, forced_streams=['5.9', 'upstream'])])
 @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
 def test_provider_delete_from_detail(provider_rest, appliance, method):
@@ -133,7 +131,6 @@ def test_provider_delete_from_detail(provider_rest, appliance, method):
     assert_response(appliance, http_status=404)
 
 
-@pytest.mark.tier(1)
 @pytest.mark.meta(blockers=[BZ(1501941, forced_streams=['5.9', 'upstream'])])
 def test_provider_delete_from_collection(provider_rest, appliance):
     """Tests deletion of the provider from collection using REST API.
