@@ -1,35 +1,31 @@
 from __future__ import absolute_import
+
 import time
-from selenium.webdriver.common.keys import Keys
 
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
-
-from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, TimelinesView)
-from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
-    FlashMessages, BootstrapSelect, Tab)
+from selenium.webdriver.common.keys import Keys
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View, Table, Text, Image, FileInput
+from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
+                                    FlashMessages, BootstrapSelect, Tab)
 
-
-from cfme.base.login import BaseLoggedInPage
 from cfme.base.credential import Credential
+from cfme.base.login import BaseLoggedInPage
 from cfme.configure.about import AboutView
 from cfme.configure.documentation import DocView
 from cfme.configure.tasks import TasksView
 from cfme.dashboard import DashboardView
-from cfme.intelligence.rss import RSSView
+from cfme.exceptions import BugException
 from cfme.exceptions import ZoneNotFound, DestinationNotFound
 from cfme.intelligence.chargeback import ChargebackView
-
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, ViaUI, navigate_to
-from . import Server, Region, Zone, ZoneCollection
-
+from cfme.intelligence.rss import RSSView
 from cfme.utils import conf
-from cfme.utils.log import logger
-
-from cfme.exceptions import BugException
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, ViaUI, navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
+from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, TimelinesView)
+from . import Server, Region, Zone, ZoneCollection
 
 
 @Server.address.external_implementation_for(ViaUI)
@@ -1229,7 +1225,7 @@ def create(self, name=None, description=None, smartproxy_ip=None, ntp_servers=No
         add_page.flash.assert_no_error()
         add_page.flash.assert_message('Zone "{}" was added'.format(name))
     return self.instantiate(
-        region=self.region, name=name, description=description, smartproxy_ip=smartproxy_ip,
+        name=name, description=description, smartproxy_ip=smartproxy_ip,
         ntp_servers=ntp_servers, max_scans=max_scans, user=user
     )
 
