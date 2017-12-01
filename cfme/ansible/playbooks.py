@@ -124,10 +124,11 @@ class PlaybooksCollection(BaseCollection):
     def all(self):
         view = navigate_to(self.appliance.server, "AnsiblePlaybooks")
         playbooks = []
-        for entity in view.entities.get_all(surf_pages=True):
-            parent = self.filters.get('parent', None)
-            if (parent and entity.data["Repository"] == parent.name) or not parent:
-                playbooks.append(self.instantiate(entity.data["Name"], entity.data["Repository"]))
+        parent = self.filters.get('parent', None)
+        for _ in view.entities.paginator.pages():
+            for row in view.entities.elements:
+                if (parent and row["Repository"].text == parent.name) or not parent:
+                    playbooks.append(self.instantiate(row["Name"].text, row["Repository"].text))
         return playbooks
 
 
