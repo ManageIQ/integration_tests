@@ -16,7 +16,6 @@ from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import flash
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError
@@ -27,9 +26,6 @@ pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers'),
     pytest.mark.long_running,
     test_requirements.provision,
-    pytest.mark.meta(blockers=[
-        BZ(1265466, unblock=lambda provider: not provider.one_of(RHEVMProvider))
-    ]),
     pytest.mark.tier(3),
     pytest.mark.provider([InfraProvider],
                          required_fields=[['provisioning', 'template'],
@@ -151,14 +147,14 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
 
 # Special parametrization in testgen above
 @pytest.mark.meta(blockers=[1209847, 1380782])
-@pytest.mark.parametrize("disk_format", ["thin", "thick", "preallocated"])
+@pytest.mark.parametrize("disk_format", ["Thin", "Thick", "Preallocated"])
 @pytest.mark.uncollectif(lambda provider, disk_format:
-                         (provider.one_of(RHEVMProvider) and disk_format == "thick") or
-                         (not provider.one_of(RHEVMProvider) and disk_format == "preallocated") or
-                         # Temporarily, our storage domain cannot handle preallocated disks
-                         (provider.one_of(RHEVMProvider) and disk_format == "preallocated") or
+                         (provider.one_of(RHEVMProvider) and disk_format == "Thick") or
+                         (not provider.one_of(RHEVMProvider) and disk_format == "Preallocated") or
+                         # Temporarily, our storage domain cannot handle Preallocated disks
+                         (provider.one_of(RHEVMProvider) and disk_format == "Preallocated") or
                          (provider.one_of(SCVMMProvider)) or
-                         (provider.key == "vsphere55" and disk_format == "thick"))
+                         (provider.key == "vsphere55" and disk_format == "Thick"))
 def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_name):
     """ Tests disk format selection in provisioning dialog.
 
@@ -185,7 +181,7 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_na
     view = navigate_to(vm, 'Details')
     thin = view.entities.datastore_allocation.get_text_of('Thin Provisioning Used').strip().lower()
     vm.load_details(refresh=True)
-    if disk_format == "thin":
+    if disk_format == "Thin":
         assert thin == 'true', "The disk format should be Thin"
     else:
         assert thin != 'true', "The disk format should not be Thin"

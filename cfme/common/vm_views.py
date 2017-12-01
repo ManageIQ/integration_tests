@@ -295,8 +295,8 @@ class BasicProvisionFormView(View):
         cores_per_socket = BootstrapSelect('hardware__cores_per_socket')
         num_cpus = BootstrapSelect('hardware__number_of_cpus')
         memory = BootstrapSelect('hardware__vm_memory')
-        schedule_type = RadioGroup(locator=('//div[@id="hardware"]'
-                                            '//div[./div[@class="radio-inline"]]'))
+        disk_format = RadioGroup(locator=('//div[@id="hardware"]'
+                                          '//div[./div[contains(@class, "radio")]]'))
         vm_limit_cpu = Input(name='hardware__cpu_limit')
         vm_limit_memory = Input(name='hardware__memory_limit')
         vm_reserve_cpu = Input(name='hardware__cpu_reserve')
@@ -340,7 +340,7 @@ class BasicProvisionFormView(View):
         TAB_NAME = 'Schedule'
         # Common
         schedule_type = RadioGroup(locator=('//div[@id="schedule"]'
-                                            '//div[./div[@class="radio-inline"]]'))
+                                            '//div[./div[contains(@class, "radio")]]'))
         provision_date = Calendar('miq_date_1')
         provision_start_hour = BootstrapSelect('start_hour')
         provision_start_min = BootstrapSelect('start_min')
