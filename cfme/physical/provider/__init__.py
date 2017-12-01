@@ -2,13 +2,11 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import Fillable
 
 from cfme.base.ui import Server
-from navmazing import NavigateToObject, NavigateToSibling
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.utils import conf, version
+from cfme.utils import version
 from cfme.common.provider import BaseProvider
 from cfme.common.provider_views import (PhysicalProviderAddView,
-                                        PhysicalProvidersView,
                                         PhysicalProviderDetailsView,
                                         PhysicalProviderEditView)
 from cfme.utils.appliance import Navigatable
@@ -80,7 +78,7 @@ class PhysicalProvider(Pretty, BaseProvider, Fillable):
 @navigator.register(PhysicalProvider, 'All')
 class All(CFMENavigateStep):
     # This view will need to be created
-    VIEW = PhysicalProvidersView
+    VIEW = BaseLoggedInPage
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
@@ -110,7 +108,8 @@ class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.toolbar.configuration.item_select('Edit this Infrastructure Provider')
+        self.prerequisite_view.toolbar.configuration.item_select(
+            'Edit this Infrastructure Provider')
 
 
 @navigator.register(PhysicalProvider, 'Add')

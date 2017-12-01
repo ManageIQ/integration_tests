@@ -560,7 +560,8 @@ class PhysicalProviderEditView(ProviderEditView):
     @property
     def is_displayed(self):
         return (super(PhysicalProviderEditView, self).is_displayed and
-                self.navigation.currently_selected == ['Compute''Physical Infrastructure','Providers'] and
+                self.navigation.currently_selected ==
+                ['Compute''Physical Infrastructure', 'Providers'] and
                 self.title.text == 'Edit Infrastructure Provider')
 
 
