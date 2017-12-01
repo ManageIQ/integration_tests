@@ -1864,12 +1864,23 @@ class AdvancedFilterSave(View):
     save_filter_button = Button('Save')
     cancel_button = Button('Cancel')
 
+    @property
+    def is_displayed(self):
+        return (
+            self.search_name_field.is_displayed and
+            self.global_search.is_displayed
+        )
+
 
 class AdvancedFilterLoad(View):
     """ View for load Advanced Filter """
     filter_dropdown = BootstrapSelect(id='chosen_search')
     save_filter_button = Button('Load')
     cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return self.filter_dropdown.is_displayed
 
 
 class AdvancedFilterUserInput(View):
@@ -1878,6 +1889,10 @@ class AdvancedFilterUserInput(View):
         '//div[@id="user_input_filter"]//div[contains(normalize-space(.), {})]/input')
     user_input_cancel = Button('Cancel')
     user_input_apply = Button(title='Apply the current filter (Enter)')
+
+    @property
+    def is_displayed(self):
+        return self.user_input_apply.is_displayed
 
 
 class AdvancedSearchView(View):
@@ -1895,6 +1910,15 @@ class AdvancedSearchView(View):
     save_filter_form = View.nested(AdvancedFilterSave)
     load_filter_form = View.nested(AdvancedFilterLoad)
     filter_user_input_form = View.nested(AdvancedFilterUserInput)
+
+    @property
+    def is_displayed(self):
+        return (
+            self.search_exp_editor.is_displayed or
+            self.save_filter_form.is_displayed or
+            self.load_filter_form.is_displayed or
+            self.filter_user_input_form.is_displayed
+        )
 
 
 class Search(View):
@@ -1938,7 +1962,7 @@ class Search(View):
     @property
     def is_advanced_search_opened(self):
         """Checks whether the advanced search box is currently opened"""
-        return self.advanced_search_form.search_exp_editor.is_displayed
+        return self.advanced_search_form.is_displayed
 
     def reset_filter(self):
         """Clears the filter expression
