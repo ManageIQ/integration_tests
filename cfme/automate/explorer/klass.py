@@ -434,8 +434,7 @@ class ClassSchema(Navigatable):
             fields.append(re.sub(r'^\(([^)]+)\)$', '\\1', row.name.text.strip()))
         return fields
 
-    def _fill_field(
-            self, page, **fields):
+    def _fill_field(self, page, **fields):
         page.schema.add_field.click()
         # Collect things to one fill dict
         fields = copy(fields)

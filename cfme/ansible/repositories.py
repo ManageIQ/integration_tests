@@ -201,7 +201,7 @@ class RepositoryCollection(BaseCollection):
 
         Returns: an instance of :py:class:`cfme.ansible.repositories.Repository`
         """
-        add_page = navigate_to(self, "Add")
+        add_page = navigate_to(self, "Add", wait_for_view=True)
         fill_dict = {
             "name": name,
             "description": description,
