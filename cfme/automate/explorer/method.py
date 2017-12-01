@@ -3,6 +3,7 @@ import attr
 
 from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic.utils import VersionPick
 from widgetastic.widget import Text
 from widgetastic_manageiq import SummaryFormItem, ScriptBox, Input
 from widgetastic_patternfly import BootstrapSelect, Button, CandidateNotFound
@@ -12,6 +13,7 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.timeutil import parsetime
+from cfme.utils.version import Version
 
 from . import AutomateExplorerView, check_tree_path
 from .common import Copiable, CopyViewBase
@@ -108,6 +110,11 @@ class MethodEditView(AutomateExplorerView):
 
 
 class Method(BaseEntity, Copiable):
+    ICON_NAME = VersionPick({
+        Version.lowest(): 'product-method',
+        '5.9': 'fa-ruby',
+    })
+
     def __init__(self, collection, name, display_name=None, location=None, script=None, data=None):
         super(Method, self).__init__(collection)
 
@@ -157,15 +164,11 @@ class Method(BaseEntity, Copiable):
 
     @property
     def tree_path(self):
-        if self.appliance.version < '5.9':
-            icon_name = 'product-method'
-        else:
-            icon_name = 'fa-ruby'
         if self.display_name:
             return self.parent_obj.tree_path + [
-                (icon_name, '{} ({})'.format(self.display_name, self.name))]
+                (self.ICON_NAME, '{} ({})'.format(self.display_name, self.name))]
         else:
-            return self.parent_obj.tree_path + [(icon_name, self.name)]
+            return self.parent_obj.tree_path + [(self.ICON_NAME, self.name)]
 
     @property
     def tree_path_name_only(self):

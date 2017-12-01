@@ -143,6 +143,8 @@ class InstanceEditView(AutomateExplorerView):
 
 
 class Instance(BaseEntity, Copiable):
+    ICON_NAME = 'fa-file-text-o'
+
     def __init__(self, collection, name, display_name=None, description=None, fields=None):
         super(Instance, self).__init__(collection)
 
@@ -196,12 +198,11 @@ class Instance(BaseEntity, Copiable):
 
     @property
     def tree_path(self):
-        icon_name = 'fa-file-text-o'
         if self.display_name:
             return self.parent_obj.tree_path + [
-                (icon_name, '{} ({})'.format(self.display_name, self.name))]
+                (self.ICON_NAME, '{} ({})'.format(self.display_name, self.name))]
         else:
-            return self.parent_obj.tree_path + [(icon_name, self.name)]
+            return self.parent_obj.tree_path + [(self.ICON_NAME, self.name)]
 
     @property
     def tree_path_name_only(self):
