@@ -159,7 +159,7 @@ class VmsTemplatesAllView(InfraVmView):
             self.entities.title.text == 'All VMs & Templates')
 
     def reset_page(self):
-        self.entities.search.clear_search()
+        self.entities.search.remove_search_filters()
 
 
 class VmTemplatesAllForProviderView(InfraVmView):
@@ -175,7 +175,7 @@ class VmTemplatesAllForProviderView(InfraVmView):
             'VM or Templates under Provider \"{}\"'.format(self.context['object'].provider.name))
 
     def reset_page(self):
-        self.entities.search.clear_search()
+        self.entities.search.remove_search_filters()
 
 
 class VmsOnlyAllView(InfraVmView):
@@ -191,7 +191,7 @@ class VmsOnlyAllView(InfraVmView):
             self.entities.title.text == 'All VMs')
 
     def reset_page(self):
-        self.entities.search.clear_search()
+        self.entities.search.remove_search_filters()
 
 
 class TemplatesOnlyAllView(InfraVmView):

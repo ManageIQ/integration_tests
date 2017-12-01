@@ -43,7 +43,7 @@ def test_search_bar(provider, soft_assert):
 
         try:
             for search_string, result in search_strings_and_result.items():
-                view.entities.search.search(search_string)
+                view.entities.search.simple_search(search_string)
                 results_row_names = view.entities.entity_names
                 if result:
                     soft_assert(result in results_row_names,
@@ -56,4 +56,4 @@ def test_search_bar(provider, soft_assert):
                         'Should not find records, search results: "{}"'
                         .format(search_string, results_row_names))
         finally:
-            view.entities.search.clear_search()
+            view.entities.search.clear_simple_search()

@@ -31,7 +31,7 @@ class WorkloadsView(BaseLoggedInPage):
             self.tree.click_path("All VMs & Instances", "My Filters", filter_name)
 
         def clear_filter(self):
-            self.parent.search.clear_search()
+            self.parent.search.clear_simple_search()
             self.tree.click_path("All VMs & Instances")
 
     @View.nested
@@ -46,7 +46,7 @@ class WorkloadsView(BaseLoggedInPage):
             self.tree.click_path("All Templates & Images", "My Filters", filter_name)
 
         def clear_filter(self):
-            self.parent.search.clear_search()
+            self.parent.search.clear_simple_search()
             self.tree.click_path("All Templates & Images")
 
 
@@ -122,7 +122,7 @@ class AllVMs(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Services', 'Workloads')
-        self.view.search.clear_search()
+        self.view.search.clear_simple_search()
         self.view.vms.clear_filter()
 
 
@@ -133,5 +133,5 @@ class AllTemplates(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Services', 'Workloads')
-        self.view.search.clear_search()
+        self.view.search.clear_simple_search()
         self.view.templates.clear_filter()

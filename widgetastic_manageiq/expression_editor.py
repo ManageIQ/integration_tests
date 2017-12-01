@@ -10,7 +10,7 @@ from cfme.utils.pretty import Pretty
 
 from widgetastic_patternfly import Input, BootstrapSelect, Button
 from widgetastic.widget import View
-from widgetastic_manageiq import Calendar
+from widgetastic_manageiq import Calendar, Checkbox
 from widgetastic.utils import VersionPick, Version
 
 
@@ -27,7 +27,7 @@ class ExpressionEditor(View, Pretty):
         field = BootstrapSelect("chosen_field")
         key = BootstrapSelect("chosen_key")
         value = Input(name="chosen_value")
-        user_input = Input(name="user_input")
+        user_input = Checkbox(name="user_input")
 
     @View.nested
     class field_date_form(View):  # noqa
@@ -41,14 +41,14 @@ class ExpressionEditor(View, Pretty):
         count = BootstrapSelect("chosen_count")
         key = BootstrapSelect("chosen_key")
         value = Input(name="chosen_value")
-        user_input = Input(name="user_input")
+        user_input = Checkbox(name="user_input")
 
     @View.nested
     class tag_form_view(View):  # noqa
         type = BootstrapSelect("chosen_typ")
         tag = BootstrapSelect("chosen_tag")
         value = BootstrapSelect("chosen_value")
-        user_input = Input(name="user_input")
+        user_input = Checkbox(name="user_input")
 
     @View.nested
     class find_form_view(View):  # noqa

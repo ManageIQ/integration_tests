@@ -3,7 +3,6 @@ import pytest
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.infrastructure import host, datastore
-from cfme.web_ui.search import search_box
 from cfme.utils import version
 from cfme.web_ui import listaccordion as list_acc
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -41,7 +40,7 @@ def test_clear_host_filter_results(appliance):
     # TODO many parts of this test and others in this file need to be replaced with WT calls
     view = navigate_to(host_collection, 'All')
     list_acc.select('Filters', 'Status / Stopped', by_title=False)
-    sel.click(search_box.clear_advanced_search)
+    view.entities.search.remove_search_filters()
     page_title = view.title.text
     assert page_title == 'Hosts', 'Clear filter results failed'
 
@@ -76,5 +75,5 @@ def test_clear_datastore_filter_results(appliance):
     view = navigate_to(dc, 'All')
     view.sidebar.datastores.tree.click_path('All Datastores', 'Global Filters',
                                             'Store Type / VMFS')
-    view.entities.search.clear_search()
+    view.entities.search.remove_search_filters()
     assert view.entities.title.text == 'All Datastores', 'Clear filter results failed'
