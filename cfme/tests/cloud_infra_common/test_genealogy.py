@@ -2,7 +2,6 @@
 import pytest
 
 from cfme.common.vm import VM
-from cfme.utils import testgen
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 import cfme.fixtures.pytest_selenium as sel
@@ -10,30 +9,20 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
+from cfme.common.provider import BaseProvider
+from cfme.utils.providers import ProviderFilter
+from markers.env_markers.provider import providers
+
 
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers', 'provider'),
-    pytest.mark.tier(2)
+    pytest.mark.tier(2),
+    pytest.mark.provider(gen_func=providers,
+                         filters=[ProviderFilter(classes=[BaseProvider]),
+                                  lambda provider: not provider.one_of(SCVMMProvider,
+                                                                       RHEVMProvider)],
+                         scope='module'),
 ]
-
-
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.all_providers(metafunc)
-
-    new_idlist = []
-    new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-
-        if metafunc.function in {test_vm_genealogy_detected} \
-                and args["provider"].one_of(SCVMMProvider, RHEVMProvider):
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
 @pytest.fixture(scope="function")
