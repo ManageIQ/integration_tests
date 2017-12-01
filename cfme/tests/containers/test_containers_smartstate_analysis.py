@@ -1,4 +1,5 @@
 import dateparser
+import random
 from collections import namedtuple
 
 import pytest
@@ -6,7 +7,6 @@ import pytest
 from cfme.containers.image import Image
 from cfme.containers.provider import (ContainersProvider, ContainersTestItem,
                                       refresh_and_navigate)
-
 from cfme.utils.wait import wait_for
 from cfme.configure.tasks import delete_all_tasks
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -43,6 +43,8 @@ TEST_ITEMS = (
     )
 )
 
+NUM_SELECTED_IMAGES = 1
+
 
 @pytest.fixture(scope='function')
 def delete_all_container_tasks():
@@ -50,8 +52,9 @@ def delete_all_container_tasks():
 
 
 @pytest.fixture(scope='function')
-def random_image_instance(provider, appliance):
-    return Image.get_random_instances(provider, 1, appliance).pop()
+def random_image_instance(appliance):
+    collection = appliance.collections.container_images
+    return random.sample(collection.all(), NUM_SELECTED_IMAGES).pop()
 
 
 @pytest.mark.polarion('10030')

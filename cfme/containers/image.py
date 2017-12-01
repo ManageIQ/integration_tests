@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-import random
+import attr
 import itertools
+import random
 from cached_property import cached_property
 
 from navmazing import NavigateToSibling, NavigateToAttribute
@@ -10,10 +11,11 @@ from cfme.common import (WidgetasticTaggable, PolicyProfileAssignable,
                          TagPageView)
 from cfme.containers.provider import (Labelable, navigate_and_get_rows, ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView, LoadDetailsMixin,
-                                      refresh_and_navigate, ContainerObjectDetailsEntities)
+                                      refresh_and_navigate, ContainerObjectDetailsEntities,
+                                      ContainersProvider)
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.utils.appliance import Navigatable
 from cfme.configure import tasks
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.wait import wait_for, TimedOutError
 from widgetastic_manageiq import SummaryTable, BaseEntitiesView
 from widgetastic.widget import View
@@ -33,17 +35,16 @@ class ImageDetailsView(ContainerObjectDetailsBaseView):
         compliance = SummaryTable(title='Compliance')
 
 
-class Image(WidgetasticTaggable, Labelable, Navigatable, LoadDetailsMixin, PolicyProfileAssignable):
+@attr.s
+class Image(BaseEntity, WidgetasticTaggable, Labelable, LoadDetailsMixin, PolicyProfileAssignable):
 
     PLURAL = 'Container Images'
     all_view = ImageAllView
     details_view = ImageDetailsView
 
-    def __init__(self, name, image_id, provider, appliance=None):
-        self.name = name
-        self.id = image_id
-        self.provider = provider
-        Navigatable.__init__(self, appliance=appliance)
+    name = attr.ib()
+    id = attr.ib()
+    provider = attr.ib()
 
     @cached_property
     def mgmt(self):
@@ -56,6 +57,9 @@ class Image(WidgetasticTaggable, Labelable, Navigatable, LoadDetailsMixin, Polic
     def perform_smartstate_analysis(self, wait_for_finish=False, timeout='7M'):
         """Performing SmartState Analysis on this Image
         """
+        # task_name change from str to regular expression pattern following Bugzilla Bug 1483590
+        # task name will contain also Image name
+        # the str compile on tasks module
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
         # TODO: Modify accordingly once there is FlashMessages.assert_massage_contains()
@@ -63,7 +67,7 @@ class Image(WidgetasticTaggable, Labelable, Navigatable, LoadDetailsMixin, Polic
         if wait_for_finish:
             try:
                 wait_for(tasks.is_analysis_finished,
-                         func_kwargs={'task_name': 'Container image analysis',
+                         func_kwargs={'name': '(?i)(Container Image.*)',
                                       'task_type': 'container'},
                          timeout=timeout,
                          fail_func=self.appliance.server.browser.refresh)
@@ -122,7 +126,27 @@ class Image(WidgetasticTaggable, Labelable, Navigatable, LoadDetailsMixin, Polic
             raise ValueError("{} is not a known state for compliance".format(text))
 
 
-@navigator.register(Image, 'All')
+@attr.s
+class ImageCollection(BaseCollection):
+    """Collection object for :py:class:`Image`."""
+    ENTITY = Image
+
+    def all(self):
+
+        image_table = self.appliance.db.client['container_images']
+        ems_table = self.appliance.db.client['ext_management_systems']
+        image_query = self.appliance.db.client.session.query(
+            image_table.name, image_table.image_ref, ems_table.name).join(
+            ems_table, image_table.ems_id == ems_table.id)
+        images = []
+
+        for name, id, provider_name in image_query.all():
+            images.append(self.instantiate(name=name, id=id,
+                provider=ContainersProvider(name=provider_name, appliance=self.appliance)))
+        return images
+
+
+@navigator.register(ImageCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = ImageAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -133,13 +157,13 @@ class All(CFMENavigateStep):
     def resetter(self):
         # Reset view and selection
         self.view.toolbar.view_selector.select("List View")
-        self.view.paginator.reset_selection()
+        self.view.paginator.set_items_per_page(1000)
 
 
 @navigator.register(Image, 'Details')
 class Details(CFMENavigateStep):
     VIEW = ImageDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute("parent", 'All')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(provider=self.obj.provider.name,
