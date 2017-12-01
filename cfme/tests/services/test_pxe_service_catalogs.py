@@ -2,6 +2,8 @@
 import fauxfactory
 import pytest
 
+from widgetastic.utils import partial_match
+
 from cfme.common.provider import cleanup_vm
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
@@ -94,7 +96,7 @@ def catalog_item(provider, vm_name, dialog, catalog, provisioning, setup_pxe_ser
         'customize': {'root_password': pxe_root_password,
                       'custom_template': {'name': pxe_kickstart},
                       },
-        'network': {'vlan': pxe_vlan,
+        'network': {'vlan': partial_match(pxe_vlan),
                     },
     }
 

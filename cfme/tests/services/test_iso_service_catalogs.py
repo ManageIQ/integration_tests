@@ -2,6 +2,8 @@
 import fauxfactory
 import pytest
 
+from widgetastic.utils import partial_match
+
 from cfme.common.provider import cleanup_vm
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
@@ -81,7 +83,7 @@ def catalog_item(setup_provider, provider, vm_name, dialog, catalog, provisionin
         'customize': {'custom_template': {'name': iso_kickstart},
                       'root_password': iso_root_password,
                       },
-        'network': {'vlan': vlan,
+        'network': {'vlan': partial_match(vlan),
                     },
     }
 

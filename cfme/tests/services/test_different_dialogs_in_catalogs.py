@@ -2,6 +2,8 @@
 import fauxfactory
 import pytest
 
+from widgetastic.utils import partial_match
+
 from cfme import test_requirements
 from cfme.automate.service_dialogs import DialogCollection
 from cfme.services.service_catalogs import ServiceCatalogs
@@ -69,7 +71,7 @@ def catalog_item(provider, provisioning, vm_name, tagcontrol_dialog, catalog):
         'environment': {'host_name': {'name': host},
                         'datastore_name': {'name': datastore},
                         },
-        'network': {'vlan': vlan,
+        'network': {'vlan': partial_match(vlan),
                     },
     }
 

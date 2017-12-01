@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """This module tests various ways how to set up the provisioning using the provisioning dialog."""
 import re
-from datetime import datetime, timedelta
-
 import fauxfactory
 import pytest
+from datetime import datetime, timedelta
+
+from widgetastic.utils import partial_match
+
 from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.virtual_machines import Vm
@@ -57,7 +59,7 @@ def prov_data(provisioning, provider):
             'last_name': fauxfactory.gen_alphanumeric(),
             'manager_name': '{} {}'.format(fauxfactory.gen_alphanumeric(),
                                            fauxfactory.gen_alphanumeric())},
-        'network': {'vlan': provisioning.get('vlan')},
+        'network': {'vlan': partial_match(provisioning.get('vlan'))},
         'environment': {'datastore_name': {'name': provisioning['datastore']},
                         'host_name': {'name': provisioning['host']}},
         'catalog': {},

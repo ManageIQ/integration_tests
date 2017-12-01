@@ -3,6 +3,8 @@
 import fauxfactory
 import pytest
 
+from widgetastic.utils import partial_match
+
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm
@@ -83,7 +85,7 @@ def generated_request(appliance,
         provisioning_data['catalog']['provision_type'] = 'VMware'
 
     try:
-        provisioning_data['network'] = {'vlan': provisioning['vlan']}
+        provisioning_data['network'] = {'vlan': partial_match(provisioning['vlan'])}
     except KeyError:
         # provisioning['vlan'] is required for rhevm provisioning
         if provider_data["type"] == 'rhevm':
