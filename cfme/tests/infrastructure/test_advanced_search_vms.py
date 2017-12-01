@@ -47,7 +47,8 @@ def expression_for_vms_subset(subset_of_vms):
 @pytest.fixture(scope="function")
 def vm_advanced_search():
     view = navigate_to(Vm, 'VMsOnly')
-    assert view.entities.search.is_advanced_search_possible, "Cannot do advanced view.entities.search here!"
+    assert view.entities.search.is_advanced_search_possible, (
+        "Cannot do advanced view.entities.search here!")
     yield view
     view.entities.search.remove_search_filters()
 
@@ -111,12 +112,13 @@ def test_filter_save_and_load(request, vm_advanced_search, vms, subset_of_vms,
     filter_name = fauxfactory.gen_alphanumeric()
     vm = sample(subset_of_vms, 1)[0]
     # Set up the filter
-    vm_advanced_search.entities.search.save_filter("fill_field(Virtual Machine : Name, =)", filter_name)
+    vm_advanced_search.entities.search.save_filter(
+        "fill_field(Virtual Machine : Name, =)", filter_name)
     vm_advanced_search.flash.assert_no_error()
     vm_advanced_search.entities.search.reset_filter()
 
-    vm_advanced_search.entities.search.load_filter(filter_name, fill_callback={"Virtual Machine": vm},
-                                          apply_filter=True)
+    vm_advanced_search.entities.search.load_filter(
+        filter_name, fill_callback={"Virtual Machine": vm}, apply_filter=True)
 
     @request.addfinalizer
     def cleanup():
@@ -131,7 +133,8 @@ def test_filter_save_and_load(request, vm_advanced_search, vms, subset_of_vms,
 def test_filter_save_and_cancel_load(request, vm_advanced_search):
     filter_name = fauxfactory.gen_alphanumeric()
     # Set up the filter
-    vm_advanced_search.entities.search.save_filter("fill_field(Virtual Machine : Name, =)", filter_name)
+    vm_advanced_search.entities.search.save_filter(
+        "fill_field(Virtual Machine : Name, =)", filter_name)
 
     @request.addfinalizer
     def cleanup():
@@ -149,7 +152,8 @@ def test_filter_save_and_load_cancel(request, vms, subset_of_vms, vm_advanced_se
     filter_name = fauxfactory.gen_alphanumeric()
     vm = sample(subset_of_vms, 1)[0]
     # Set up the filter
-    vm_advanced_search.entities.search.save_filter("fill_field(Virtual Machine : Name, =)", filter_name)
+    vm_advanced_search.entities.search.save_filter(
+        "fill_field(Virtual Machine : Name, =)", filter_name)
 
     @request.addfinalizer
     def cleanup():
@@ -197,7 +201,8 @@ def test_quick_search_with_filter(vm_advanced_search, vms, subset_of_vms,
 
 def test_can_delete_filter(vm_advanced_search):
     filter_name = fauxfactory.gen_alphanumeric()
-    vm_advanced_search.entities.search.save_filter("fill_count(Virtual Machine.Files, >, 0)", filter_name)
+    vm_advanced_search.entities.search.save_filter(
+        "fill_count(Virtual Machine.Files, >, 0)", filter_name)
     vm_advanced_search.flash.assert_no_error()
     vm_advanced_search.entities.search.reset_filter()
     vm_advanced_search.flash.assert_no_error()
@@ -211,21 +216,24 @@ def test_can_delete_filter(vm_advanced_search):
 def test_delete_button_should_appear_after_save(request, vm_advanced_search):
     """Delete button appears only after load, not after save"""
     filter_name = fauxfactory.gen_alphanumeric()
-    vm_advanced_search.entities.search.save_filter("fill_count(Virtual Machine.Files, >, 0)", filter_name)
+    vm_advanced_search.entities.search.save_filter(
+        "fill_count(Virtual Machine.Files, >, 0)", filter_name)
 
     @request.addfinalizer
     def cleanup():
         vm_advanced_search.entities.search.load_filter(filter_name)
         vm_advanced_search.entities.search.delete_filter()
 
-    if not vm_advanced_search.entities.search.delete_filter():  # Returns False if the button is not present
+    # Returns False if the button is not present
+    if not vm_advanced_search.entities.search.delete_filter():
         pytest.fail("Could not delete filter right after saving!")
 
 
 def test_cannot_delete_more_than_once(vm_advanced_search, nuke_browser_after_test):
     """When Delete button appars, it does not want to go away"""
     filter_name = fauxfactory.gen_alphanumeric()
-    vm_advanced_search.entities.search.save_filter("fill_count(Virtual Machine.Files, >, 0)", filter_name)
+    vm_advanced_search.entities.search.save_filter(
+        "fill_count(Virtual Machine.Files, >, 0)", filter_name)
     # circumvent the thing happening in previous test
     vm_advanced_search.entities.search.load_filter(filter_name)
     # Delete once

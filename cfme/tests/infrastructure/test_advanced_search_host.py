@@ -190,11 +190,7 @@ def test_quick_search_without_filter(host_collection, request, hosts, hosts_with
     view.flash.assert_no_error()
     # Check it is there
     all_hosts_visible = host_collection.all(infra_provider)
-    median_host_result = False
-    for hosts in all_hosts_visible:
-        if hosts.name == median_host:
-            median_host_result = True
-    assert len(all_hosts_visible) == 1 and median_host_result
+    assert len(all_hosts_visible) == 1 and median_host in [host.name for host in all_hosts_visible]
 
 
 def test_quick_search_with_filter(host_collection, request, hosts, hosts_with_vm_count,
@@ -210,11 +206,7 @@ def test_quick_search_with_filter(host_collection, request, hosts, hosts_with_vm
     view.flash.assert_no_error()
     # Check it is there
     all_hosts_visible = host_collection.all(infra_provider)
-    median_host_result = False
-    for hosts in all_hosts_visible:
-        if hosts.name == median_host:
-            median_host_result = True
-    assert len(all_hosts_visible) == 1 and median_host_result
+    assert len(all_hosts_visible) == 1 and median_host in [host.name for host in all_hosts_visible]
 
 
 def test_can_delete_filter(host_collection, hosts_advanced_search):

@@ -24,8 +24,7 @@ from widgetastic_manageiq import (
     PaginationPane,
     SummaryTable,
     Table,
-    TimelinesView,
-    Search
+    TimelinesView
 )
 from widgetastic_patternfly import (
     BootstrapSelect,

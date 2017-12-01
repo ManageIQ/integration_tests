@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""This testing module tests the behaviour of the view.entities.search box in the Provider section
+"""This testing module tests the behaviour of the search box in the Provider section
 
 It does not check for filtering results so far."""
 import fauxfactory
@@ -40,7 +40,7 @@ def rails_delete_filter(request):
 def advanced_search_view():
     view = navigate_to(InfraProvider, 'All')
     assert view.entities.search.is_advanced_search_possible, (
-        "Cannot do advanced view.entities.search here!")
+        "Cannot do advanced search here!")
     yield view
     view.entities.search.remove_search_filters()
 
