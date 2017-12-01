@@ -2942,8 +2942,8 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         Returns: matched entity (QuadIcon/etc.)
         """
         if use_search and 'name' in keys:
-            self.search.clear_search()
-            self.search.search(text=keys['name'])
+            self.search.clear_simple_search()
+            self.search.simple_search(text=keys['name'])
 
         for _ in self.paginator.pages():
             if len(keys) == 1 and 'name' in keys:
