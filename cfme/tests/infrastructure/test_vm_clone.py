@@ -4,22 +4,18 @@ import pytest
 
 from cfme.common.provider import cleanup_vm
 from cfme.common.vm import VM
-from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils import testgen
 from cfme.utils.log import logger
 
+
 pytestmark = [
-    pytest.mark.meta(roles="+automate")
+    pytest.mark.meta(roles="+automate"),
+    pytest.mark.provider([VMwareProvider],
+                         required_fields=[['provisioning', 'template'],
+                                          ['provisioning', 'host'],
+                                          ['provisioning', 'datastore']],
+                         scope="module"),
 ]
-
-
-pytest_generate_tests = testgen.generate([VMwareProvider], required_fields=[
-    ['provisioning', 'template'],
-    ['provisioning', 'host'],
-    ['provisioning', 'datastore']
-], scope="module")
 
 
 @pytest.fixture(scope="function")
