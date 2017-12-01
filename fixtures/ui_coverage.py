@@ -122,7 +122,7 @@ class CoverageManager(object):
         # if parallelized, this is decided in sessionstart and written to the conf
         if store.parallelizer_role == 'slave':
             from cfme.utils.appliance import IPAppliance
-            return IPAppliance(conf['.ui-coverage']['collection_appliance'])
+            return IPAppliance.from_url(conf['.ui-coverage']['collection_appliance'])
         else:
             # otherwise, coverage only happens on one appliance
             return store.current_appliance
@@ -240,13 +240,13 @@ class CoverageManager(object):
         self.ipapp.ssh_client.run_command('systemctl stop evmserverd')
         # collect back to the collection appliance if parallelized
         if store.current_appliance != self.collection_appliance:
-            self.print_message('sending reports to {}'.format(self.collection_appliance.address))
+            self.print_message('sending reports to {}'.format(self.collection_appliance.hostname))
             result = self.ipapp.ssh_client.run_command(
                 'sshpass -p {passwd} '
                 'scp -o StrictHostKeyChecking=no '
                 '-r /var/www/miq/vmdb/coverage/* '
                 '{addr}:/var/www/miq/vmdb/coverage/'.format(
-                    addr=self.collection_appliance.address,
+                    addr=self.collection_appliance.hostname,
                     passwd=quote(self.ipapp.ssh_client._connect_kwargs['password'])),
                 timeout=1800)
             if not result:
@@ -292,7 +292,7 @@ class UiCoveragePlugin(object):
         # report recipient for merging at the end. Need to to write this out to a conf file
         # since all the slaves are going to use to to know where to ship their reports
         if store.parallelizer_role == 'master':
-            collection_appliance_address = manager().collection_appliance.address
+            collection_appliance_address = manager().collection_appliance.hostname
             conf.runtime['.ui-coverage']['collection_appliance'] = collection_appliance_address
             conf.save('.ui-coverage')
 

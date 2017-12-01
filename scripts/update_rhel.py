@@ -22,7 +22,7 @@ def main():
         '(required for proper operation)', action="store_true", default=False)
 
     args = parser.parse_args()
-    ip_a = IPAppliance(args.address)
+    ip_a = IPAppliance(hostname=args.address)
     # Don't reboot here, so we can print updates to the console when we do
     res = ip_a.update_rhel(*args.urls, reboot=False, streaming=True, cleanup=args.cleanup)
 

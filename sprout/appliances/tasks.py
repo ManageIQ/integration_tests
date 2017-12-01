@@ -440,7 +440,8 @@ def prepare_template_deploy(self, template_id):
 def prepare_template_verify_version(self, template_id):
     template = Template.objects.get(id=template_id)
     template.set_status("Verifying version.")
-    appliance = CFMEAppliance(template.provider_name, template.name, container=template.container)
+    appliance = CFMEAppliance.from_provider(
+        template.provider_name, template.name, container=template.container)
     appliance.ipapp.wait_for_ssh()
     try:
         true_version = appliance.version
@@ -491,7 +492,8 @@ def prepare_template_verify_version(self, template_id):
 def prepare_template_configure(self, template_id):
     template = Template.objects.get(id=template_id)
     template.set_status("Customization started.")
-    appliance = CFMEAppliance(template.provider_name, template.name, container=template.container)
+    appliance = CFMEAppliance.from_provider(
+        template.provider_name, template.name, container=template.container)
     try:
         appliance.configure(
             setup_fleece=False,
@@ -1986,7 +1988,8 @@ def create_docker_vm(self, group_id, provider_id, version, date, pull_url):
 def configure_docker_template(self, template_id, pull_url):
     template = Template.objects.get(id=template_id)
     template.set_status("Waiting for SSH.")
-    appliance = CFMEAppliance(template.provider_name, template.name, container=template.container)
+    appliance = CFMEAppliance.from_provider(
+        template.provider_name, template.name, container=template.container)
     appliance.ipapp.wait_for_ssh()
     with appliance.ipapp.ssh_client as ssh:
         template.set_status("Setting the pull URL.")

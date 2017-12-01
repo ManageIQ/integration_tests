@@ -40,7 +40,7 @@ def main():
     args = parser.parse_args()
 
     print('Initializing Appliance External DB')
-    ip_a = IPAppliance(args.address)
+    ip_a = IPAppliance(hostname=args.address)
     status, out = ip_a.db.enable_external(args.db_address, args.region, args.database,
         args.username, args.password)
 

@@ -23,7 +23,7 @@ def get_appliance(appliance_ip):
     if not appliance_ip:
         app = get_or_create_current_appliance()
     else:
-        app = IPAppliance(appliance_ip)
+        app = IPAppliance(hostname=appliance_ip)
     return app
 
 

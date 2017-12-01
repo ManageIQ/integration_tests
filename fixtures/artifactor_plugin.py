@@ -144,7 +144,7 @@ def pytest_configure(config):
 
 @pytest.fixture(scope='session')
 def merkyl_setup(request, appliance):
-    fire_art_hook(request.config, 'setup_merkyl', ip=appliance.address)
+    fire_art_hook(request.config, 'setup_merkyl', ip=appliance.hostname)
 
 
 def fire_art_hook(config, hook, **hook_args):
@@ -205,7 +205,7 @@ def pytest_runtest_protocol(item):
         param_dict = {p: get_name(v) for p, v in params.iteritems()}
     except:
         param_dict = {}
-    ip = appliance.address
+    ip = appliance.hostname
     # This pre_start_test hook is needed so that filedump is able to make get the test
     # object set up before the logger starts logging. As the logger fires a nested hook
     # to the filedumper, and we can't specify order inriggerlib.
@@ -234,7 +234,7 @@ def pytest_runtest_teardown(item, nextitem):
     name, location = get_test_idents(item)
     holder = item.config.pluginmanager.getplugin('appliance-holder')
     app = holder.held_appliance
-    ip = app.address
+    ip = app.hostname
     fire_art_test_hook(
         item, 'finish_test',
         slaveid=store.slaveid, ip=ip, wait_for_task=True)
@@ -307,7 +307,7 @@ def shutdown(config):
                     write_line('collecting artifacts')
                     fire_art_hook(config, 'finish_session')
                 fire_art_hook(config, 'teardown_merkyl',
-                              ip=app.address)
+                              ip=app.hostname)
                 if not store.slave_manager:
                     config._art_client.terminate()
                     proc = config._art_proc

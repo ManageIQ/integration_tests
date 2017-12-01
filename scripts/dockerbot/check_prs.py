@@ -217,7 +217,7 @@ def vm_reaper():
                     if task['vm_name'] == "None":
                         vm_cleanup = True
                     else:
-                        appliance = Appliance(task['provider'], task['vm_name'])
+                        appliance = Appliance.from_provider(task['provider'], task['vm_name'])
                         try:
                             if appliance.does_vm_exist():
                                 logger.info("Destroying {}".format(appliance.vm_name))

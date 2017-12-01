@@ -28,7 +28,7 @@ def test_workload_capacity_and_utilization_rep(appliance, request, scenario, set
         'hostname': scenario['replication_master']['ip_address'],
         'username': scenario['replication_master']['ssh']['username'],
         'password': scenario['replication_master']['ssh']['password']}
-    master_appliance = IPAppliance(address=scenario['replication_master']['ip_address'],
+    master_appliance = IPAppliance(hostname=scenario['replication_master']['ip_address'],
                                    openshift_creds=ssh_master_args)
 
     ssh_client_master = SSHClient(**ssh_master_args)
@@ -95,7 +95,7 @@ def test_workload_capacity_and_utilization_rep(appliance, request, scenario, set
         master_appliance.set_pglogical_replication(replication_type=':global')
         # Setup master to subscribe:
         master_appliance.add_pglogical_replication_subscription(ssh_client_master,
-            appliance.address)
+            appliance.hostname)
     else:
         # Setup local towards Master
         appliance.set_rubyrep_replication(scenario['replication_master']['ip_address'])

@@ -48,7 +48,7 @@ def get_replication_appliances(appliance):
     appl1.configure(region=1)
     appl1.ipapp.wait_for_web_ui()
     appl2.update_guid()
-    appl2.configure(region=2, key_address=appl1.address)
+    appl2.configure(region=2, key_address=appl1.hostname)
     appl2.ipapp.wait_for_web_ui()
     return appl1, appl2
 
@@ -62,8 +62,8 @@ def get_distributed_appliances():
     appl2 = provision_appliance(ver_to_prov, 'long-test_childDB_B')
     appl1.configure(region=1, patch_ajax_wait=False)
     appl1.ipapp.wait_for_web_ui()
-    appl2.configure(region=1, patch_ajax_wait=False, key_address=appl1.address,
-                    db_address=appl1.address)
+    appl2.configure(region=1, patch_ajax_wait=False, key_address=appl1.hostname,
+                    db_address=appl1.hostname)
     appl2.ipapp.wait_for_web_ui()
     return appl1, appl2
 
@@ -127,7 +127,7 @@ def test_appliance_replicate_between_regions(request, virtualcenter_provider):
     request.addfinalizer(finalize)
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
-        configure_db_replication(appl2.address)
+        configure_db_replication(appl2.hostname)
         virtualcenter_provider.create()
         wait_for_a_provider()
 
@@ -181,7 +181,7 @@ def test_appliance_replicate_sync_role_change(request, virtualcenter_provider, a
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
         server_settings = appliance.server.settings
-        configure_db_replication(appl2.address)
+        configure_db_replication(appl2.hostname)
         # Replication is up and running, now disable DB sync role
         server_settings.disable_server_roles('database_synchronization')
         wait_for(replication_conf.get_replication_status, fail_condition=True, num_sec=360,
@@ -218,7 +218,7 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, virtualcente
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
         server_settings = appliance.server.settings
-        configure_db_replication(appl2.address)
+        configure_db_replication(appl2.hostname)
         # Replication is up and running, now disable DB sync role
         virtualcenter_provider.create()
         server_settings.disable_server_roles('database_synchronization')
@@ -253,7 +253,7 @@ def test_appliance_replicate_database_disconnection(request, virtualcenter_provi
     request.addfinalizer(finalize)
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
-        configure_db_replication(appl2.address)
+        configure_db_replication(appl2.hostname)
         # Replication is up and running, now stop the DB on the replication parent
         appl2.db.stop_db_service()
         sleep(60)
@@ -288,7 +288,7 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, virtua
     request.addfinalizer(finalize)
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
-        configure_db_replication(appl2.address)
+        configure_db_replication(appl2.hostname)
         # Replication is up and running, now stop the DB on the replication parent
         virtualcenter_provider.create()
         appl2.db.stop_db_service()
@@ -323,7 +323,7 @@ def test_distributed_vm_power_control(request, test_vm, virtualcenter_provider, 
     request.addfinalizer(finalize)
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
-        configure_db_replication(appl2.address)
+        configure_db_replication(appl2.hostname)
         virtualcenter_provider.create()
         wait_for_a_provider()
 

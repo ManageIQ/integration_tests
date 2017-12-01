@@ -587,7 +587,7 @@ class Template(MetadataMixin):
 
     @property
     def cfme(self):
-        return CFMEAppliance(self.provider_name, self.name, container=self.container)
+        return CFMEAppliance.from_provider(self.provider_name, self.name, container=self.container)
 
     @property
     def can_be_deleted(self):
@@ -854,11 +854,12 @@ class Appliance(MetadataMixin):
 
     @property
     def cfme(self):
-        return CFMEAppliance(self.provider_name, self.name, container=self.template.container)
+        return CFMEAppliance.from_provider(
+            self.provider_name, self.name, container=self.template.container)
 
     @property
     def ipapp(self):
-        return IPAppliance(self.ip_address, container=self.template.container)
+        return IPAppliance(hostname=self.ip_address, container=self.template.container)
 
     def user_can_use(self, user):
         return self.provider.user_can_use(user)

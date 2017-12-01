@@ -35,7 +35,7 @@ def fix_merkyl_workaround(request, appliance):
         fire_art_hook(
             request.config,
             'setup_merkyl',
-            ip=appliance.address)
+            ip=appliance.hostname)
 
 
 @pytest.fixture(scope="session", autouse=True)

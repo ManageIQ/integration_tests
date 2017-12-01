@@ -80,7 +80,7 @@ def open_port(app):
     print("Waiting until port {} will be opened".format(ports.TOWER))
     wait_for(
         net_check,
-        [ports.TOWER, app.address],
+        [ports.TOWER, app.hostname],
         {"force": True},
         num_sec=600,
         delay=5
@@ -93,7 +93,7 @@ def upload_license(app, license_path):
     open_port(app)
     print("Sending license file to embedded ansible")
     r = requests.post(
-        'https://{addr}:{port}/api/v1/config/'.format(addr=app.address, port=ports.TOWER),
+        'https://{addr}:{port}/api/v1/config/'.format(addr=app.hostname, port=ports.TOWER),
         headers={"Content-Type": "application/json"},
         data=open(license_path, "rb"),
         auth=("admin", password),

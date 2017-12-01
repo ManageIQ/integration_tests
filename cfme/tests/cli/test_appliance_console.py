@@ -114,7 +114,7 @@ def test_black_console_external_db(temp_appliance_unconfig_funcscope, app_creds,
     '3' join external region, 'port' ip and port of joining region, '' use defult db name, ''
     default username, 'pwd' db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
 
-    ip = appliance.address
+    ip = appliance.hostname
     pwd = app_creds['password']
     opt = '5' if temp_appliance_unconfig_funcscope.version >= "5.8" else '8'
     port = (ip, '') if temp_appliance_unconfig_funcscope.version >= "5.8" else (ip,)
@@ -132,7 +132,7 @@ def test_black_console_external_db_create(app_creds, dedicated_db_appliance,
     'port' ip and port for dedicated db, '' use defult db name, '' default username, 'pwd' db
     password, 'pwd' confirm db password + wait 360 secs and '' finish."""
 
-    ip = dedicated_db_appliance.address
+    ip = dedicated_db_appliance.hostname
     pwd = app_creds['password']
     opt = '5' if temp_appliance_unconfig_funcscope.version >= "5.8" else '8'
     port = (ip, '') if temp_appliance_unconfig_funcscope.version >= "5.8" else (ip,)
@@ -186,7 +186,7 @@ def test_black_console_external_auth(auth_type, app_creds, ipa_crud):
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*{} to true.*'.format(auth_type.option)],
-                            hostname=ipa_crud.address,
+                            hostname=ipa_crud.hostname,
                             username=app_creds['sshlogin'],
                             password=app_creds['password'])
     evm_tail.fix_before_start()
@@ -197,7 +197,7 @@ def test_black_console_external_auth(auth_type, app_creds, ipa_crud):
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*{} to false.*'.format(auth_type.option)],
-                            hostname=ipa_crud.address,
+                            hostname=ipa_crud.hostname,
                             username=app_creds['sshlogin'],
                             password=app_creds['password'])
 
@@ -216,7 +216,7 @@ def test_black_console_external_auth_all(app_creds, ipa_crud):
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*sso_enabled to true.*', '.*saml_enabled to true.*',
                                 '.*local_login_disabled to true.*'],
-                            hostname=ipa_crud.address,
+                            hostname=ipa_crud.hostname,
                             username=app_creds['sshlogin'],
                             password=app_creds['password'])
     evm_tail.fix_before_start()
@@ -228,7 +228,7 @@ def test_black_console_external_auth_all(app_creds, ipa_crud):
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*sso_enabled to false.*',
                                 '.*saml_enabled to false.*', '.*local_login_disabled to false.*'],
-                            hostname=ipa_crud.address,
+                            hostname=ipa_crud.hostname,
                             username=app_creds['sshlogin'],
                             password=app_creds['password'])
 

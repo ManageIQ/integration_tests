@@ -187,7 +187,7 @@ if __name__ == '__main__':
     parser.add_argument('--jenkins-user', default=None)
     parser.add_argument('--jenkins-token', default=None)
     args = parser.parse_args()
-    with IPAppliance(args.work_appliance_ip) as appliance:
+    with IPAppliance(hostname=args.work_appliance_ip) as appliance:
         exit(main(
             appliance,
             args.jenkins_url,

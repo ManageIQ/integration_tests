@@ -24,7 +24,7 @@ def main():
         help='Destination Domain name')
     args = parser.parse_args()
 
-    ip_a = IPAppliance(args.hostname)
+    ip_a = IPAppliance(hostname=args.hostname)
     status, out = ip_a.clone_domain(args.source, args.dest)
     return status
 

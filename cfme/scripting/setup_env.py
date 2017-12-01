@@ -46,8 +46,8 @@ def setup_distributed_env(cfme_version, provider, lease):
     apps = provision_appliances(count=2, cfme_version=cfme_version, provider=provider,
         lease_time=lease_time)
     opt = '5' if cfme_version >= "5.8" else '8'
-    ip0 = apps[0].address
-    ip1 = apps[1].address
+    ip0 = apps[0].hostname
+    ip1 = apps[1].hostname
     port = (ip0, '') if cfme_version >= "5.8" else (ip0,)
     command_set0 = ('ap', '', opt, '1', '1', 'y', '1', 'n', '1', pwd,
         TimedCommand(pwd, 360), '')
@@ -76,9 +76,9 @@ def setup_ha_env(cfme_version, provider, lease):
     print("Provisioning and configuring HA environment")
     apps = provision_appliances(count=3, cfme_version=cfme_version, provider=provider,
         lease_time=lease_time)
-    ip0 = apps[0].address
-    ip1 = apps[1].address
-    ip2 = apps[2].address
+    ip0 = apps[0].hostname
+    ip1 = apps[1].hostname
+    ip2 = apps[2].hostname
     opt = '5' if cfme_version >= "5.8" else '8'
     rep = '6' if cfme_version >= "5.8" else '9'
     mon = '9' if cfme_version >= "5.8" else '12'
@@ -138,8 +138,8 @@ def setup_replication_env(cfme_version, provider, lease, sprout_poolid):
         print("Appliance pool lease time is {}".format(lease))
 
     print("Configuring replicated environment")
-    ip0 = apps[0].address
-    ip1 = apps[1].address
+    ip0 = apps[0].hostname
+    ip1 = apps[1].hostname
     opt = '5' if cfme_version >= "5.8" else '8'
     command_set0 = ('ap', '', opt, '1', '1', 'y', '1', 'n', '99', pwd,
         TimedCommand(pwd, 360), '')
@@ -157,7 +157,7 @@ def setup_replication_env(cfme_version, provider, lease, sprout_poolid):
     apps[1].set_pglogical_replication(replication_type=':remote')
     print("Setup - Replication on global appliance")
     apps[0].set_pglogical_replication(replication_type=':global')
-    apps[0].add_pglogical_replication_subscription(apps[1].address)
+    apps[0].add_pglogical_replication_subscription(apps[1].hostname)
     print("Done!")
 
 

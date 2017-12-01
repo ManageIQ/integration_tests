@@ -15,7 +15,7 @@ class MerkylInspector(object):
         and does nothing special.
         """
         self.node = request.node
-        self.ip = get_or_create_current_appliance().address
+        self.ip = get_or_create_current_appliance().hostname
 
     def get_log(self, log_name):
         """ A simple getter for log files.

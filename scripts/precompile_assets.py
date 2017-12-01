@@ -16,7 +16,7 @@ def main():
         help='hostname or ip address of target appliance')
 
     args = parser.parse_args()
-    ip_a = IPAppliance(args.address)
+    ip_a = IPAppliance(hostname=args.address)
 
     status = ip_a.precompile_assets()
     if status == 0:
