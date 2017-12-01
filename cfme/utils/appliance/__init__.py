@@ -1365,8 +1365,7 @@ class IPAppliance(object):
         store.terminalreporter.write_line('evmserverd is being restarted, be patient please')
         with self.ssh_client as ssh:
             if rude:
-                self._evm_service_command(
-                    "stop", expected_exit_code=0, log_callback=log_callback)
+                self.evmserverd.stop()
                 log_callback('Waiting for evm service to stop')
                 try:
                     wait_for(
@@ -1383,10 +1382,9 @@ class IPAppliance(object):
                 wait_for(
                     lambda: self.db.is_online, num_sec=90, delay=10, fail_condition=False,
                     message="database to be available")
-                self._evm_service_command("start", expected_exit_code=0, log_callback=log_callback)
+                self.evmserverd.start()
             else:
-                self._evm_service_command(
-                    "restart", expected_exit_code=0, log_callback=log_callback)
+                self.evmserverd.restart()
         self.server_details_changed()
 
     @logger_wrap("Waiting for EVM service: {}")
