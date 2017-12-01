@@ -3,19 +3,33 @@ from lxml.html import document_fromstring
 import os
 from time import sleep
 
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View, Text, TextInput, ParametrizedView
 from widgetastic_patternfly import (
     Dropdown, BootstrapSelect, Tab, FlashMessages, Input, CheckableBootstrapTreeview)
-from widgetastic_manageiq import BreadCrumb, PaginationPane
+from widgetastic_manageiq import (Calendar,
+                                  Checkbox,
+                                  SummaryTable,
+                                  Button,
+                                  ItemsToolBarViewSelector,
+                                  Table,
+                                  MultiBoxSelect,
+                                  RadioGroup,
+                                  VersionPick,
+                                  Version,
+                                  BaseEntitiesView,
+                                  NonJSBaseEntity,
+                                  BaseListEntity,
+                                  BaseQuadIconEntity,
+                                  BaseTileIconEntity,
+                                  JSBaseEntity,
+                                  BaseNonInteractiveEntitiesView,
+                                  BreadCrumb,
+                                  PaginationPane)
 
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import TemplateNotFound
-from widgetastic_manageiq import (
-    Calendar, Checkbox, SummaryTable, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect,
-    RadioGroup,
-    VersionPick, Version, BaseEntitiesView, NonJSBaseEntity, BaseListEntity, BaseQuadIconEntity,
-    BaseTileIconEntity, JSBaseEntity, BaseNonInteractiveEntitiesView)
 
 
 class InstanceQuadIconEntity(BaseQuadIconEntity):
@@ -34,6 +48,8 @@ class InstanceQuadIconEntity(BaseQuadIconEntity):
 
             state = os.path.split(state)[1]
             state = os.path.splitext(state)[0]
+        except NoSuchElementException:
+            return {}
         except IndexError:
             state = ''
 
@@ -79,10 +95,13 @@ class JSInstanceEntity(JSBaseEntity):
     def data(self):
         data_dict = super(JSInstanceEntity, self).data
         if 'quadicon' in data_dict and data_dict['quadicon']:
-            quad_data = document_fromstring(data_dict['quadicon'])
-            data_dict['os'] = quad_data.xpath(self.QUADRANT.format(pos="a"))[0].get('src')
-            data_dict['vendor'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get('src')
-            data_dict['no_snapshot'] = quad_data.xpath(self.QUADRANT.format(pos="d"))[0].text
+            try:
+                quad_data = document_fromstring(data_dict['quadicon'])
+                data_dict['os'] = quad_data.xpath(self.QUADRANT.format(pos="a"))[0].get('src')
+                data_dict['vendor'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get('src')
+                data_dict['no_snapshot'] = quad_data.xpath(self.QUADRANT.format(pos="d"))[0].text
+            except IndexError:
+                return {}
 
             try:
                 state = quad_data.xpath(self.QUADRANT.format(pos="b"))[0].get('style')
