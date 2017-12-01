@@ -7,31 +7,21 @@ from cfme.common.host_views import HostsEditView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.utils import testgen
 from cfme.utils.conf import credentials
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.providers import ProviderFilter
+from markers.env_markers.provider import providers
 
-pytestmark = [pytest.mark.tier(3)]
 
+all_infra_prov = ProviderFilter(classes=[InfraProvider], required_fields=['hosts'])
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without multiple hosts defined
-    argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, [InfraProvider], required_fields=["hosts"])
-
-    new_argvalues = []
-    new_idlist = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-        hosts = args['provider'].data.get('hosts', {})
-
-        if len(hosts) < 2:
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+pytestmark = [
+    pytest.mark.tier(3),
+    pytest.mark.provider(gen_func=providers,
+                         filters=[all_infra_prov,
+                                  lambda provider: len(provider.data.get('hosts', {})) > 1],
+                         scope='module'),
+]
 
 
 def navigate_and_select_quads(provider):
