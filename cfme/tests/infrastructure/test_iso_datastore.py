@@ -2,14 +2,13 @@ import pytest
 
 from cfme.infrastructure import pxe
 from cfme.infrastructure.provider import InfraProvider
-from cfme.utils import testgen
+
 
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers'),
+    pytest.mark.tier(2),
+    pytest.mark.provider([InfraProvider], required_fields=['iso_datastore']),
 ]
-
-
-pytest_generate_tests = testgen.generate([InfraProvider], required_fields=['iso_datastore'])
 
 
 @pytest.fixture()
@@ -19,7 +18,6 @@ def no_iso_dss(provider):
         template_crud.delete(cancel=False)
 
 
-@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1200783])
 def test_iso_datastore_crud(setup_provider, no_iso_dss, provider):
     """

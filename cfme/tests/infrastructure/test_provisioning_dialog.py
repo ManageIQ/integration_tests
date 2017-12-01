@@ -15,12 +15,12 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import flash
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError
+
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -28,19 +28,15 @@ pytestmark = [
     pytest.mark.long_running,
     test_requirements.provision,
     pytest.mark.meta(blockers=[
-        BZ(
-            1265466,
-            unblock=lambda provider: not provider.one_of(RHEVMProvider))
+        BZ(1265466, unblock=lambda provider: not provider.one_of(RHEVMProvider))
     ]),
-    pytest.mark.tier(3)
+    pytest.mark.tier(3),
+    pytest.mark.provider([InfraProvider],
+                         required_fields=[['provisioning', 'template'],
+                                          ['provisioning', 'host'],
+                                          ['provisioning', 'datastore']],
+                         scope="module"),
 ]
-
-
-pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
-    ['provisioning', 'template'],
-    ['provisioning', 'host'],
-    ['provisioning', 'datastore']
-], scope="module")
 
 
 @pytest.fixture(scope="function")
