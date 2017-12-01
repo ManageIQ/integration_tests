@@ -117,8 +117,14 @@ def test_filter_save_and_load(request, vm_advanced_search, vms, subset_of_vms,
 
     vm_advanced_search.search.load_filter(filter_name, fill_callback={"Virtual Machine": vm},
                                           apply_filter=True)
+
+    @request.addfinalizer
+    def cleanup():
+        vm_advanced_search.search.load_filter(filter_name)
+        vm_advanced_search.search.delete_filter()
+
     vm_advanced_search.flash.assert_no_error()
-    request.addfinalizer(vm_advanced_search.search.delete_filter)
+
     assert vm in virtual_machines.get_all_vms(do_not_navigate=True)
 
 
@@ -129,10 +135,8 @@ def test_filter_save_and_cancel_load(request, vm_advanced_search):
 
     @request.addfinalizer
     def cleanup():
-        navigate_to(Vm, 'VMsOnly')
         vm_advanced_search.search.load_filter(filter_name)
         vm_advanced_search.search.delete_filter()
-        vm_advanced_search.search.close_advanced_search()
 
     vm_advanced_search.flash.assert_no_error()
     vm_advanced_search.search.reset_filter()
@@ -149,10 +153,8 @@ def test_filter_save_and_load_cancel(request, vms, subset_of_vms, vm_advanced_se
 
     @request.addfinalizer
     def cleanup():
-        navigate_to(Vm, 'VMsOnly')
         vm_advanced_search.search.load_filter(filter_name)
         vm_advanced_search.search.delete_filter()
-        vm_advanced_search.search.close_advanced_search()
 
     vm_advanced_search.flash.assert_no_error()
     vm_advanced_search.search.reset_filter()
@@ -213,10 +215,8 @@ def test_delete_button_should_appear_after_save(request, vm_advanced_search):
 
     @request.addfinalizer
     def cleanup():
-        vm_advanced_search = navigate_to(Vm, 'VMsOnly')
         vm_advanced_search.search.load_filter(filter_name)
         vm_advanced_search.search.delete_filter()
-        vm_advanced_search.search.close_advanced_search()
 
     if not vm_advanced_search.search.delete_filter():  # Returns False if the button is not present
         pytest.fail("Could not delete filter right after saving!")
@@ -234,7 +234,7 @@ def test_cannot_delete_more_than_once(vm_advanced_search, nuke_browser_after_tes
     vm_advanced_search.flash.assert_no_error()
     # Try it second time
     if vm_advanced_search.search.delete_filter():  # If the button is there, it says True
-        # This should not happen
+        # This should not happen reduntant
         msg = "Delete twice accepted!"
         if is_cfme_exception():
             msg += " CFME Exception text: `{}`".format(cfme_exception_text())

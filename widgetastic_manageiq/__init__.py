@@ -1874,7 +1874,8 @@ class AdvancedFilterLoad(View):
 
 class AdvancedFilterUserInput(View):
     """ View for Advanced Filter user input """
-    USER_INPUT_FIELD = '//div[@id="user_input_filter"]//div[contains(text(), {})]/input'
+    USER_INPUT_FIELD = (
+        '//div[@id="user_input_filter"]//div[contains(normalize-space(.), {})]/input')
     user_input_cancel = Button('Cancel')
     user_input_apply = Button(title='Apply the current filter (Enter)')
 
@@ -2042,7 +2043,7 @@ class Search(View):
                 self.close_advanced_search()
         return updated
 
-    def advanced_search(self, expression_program, user_input=None, cancel_user_filling=False):
+    def advanced_search(self, expression_program, user_input=None, cancel_on_user_filling=False):
         """ Fill the filtering expression and apply it
 
             Args:
@@ -2051,7 +2052,7 @@ class Search(View):
         self.open_advanced_search()
         self.advanced_search_form.search_exp_editor.fill(expression_program)
         self.apply_filter()
-        self._process_user_filling(user_input, cancel_user_filling)
+        self._process_user_filling(user_input, cancel_on_user_filling)
         self.close_advanced_search()
 
     def _process_user_filling(self, user_input, cancel_on_user_filling=False):

@@ -63,14 +63,12 @@ def test_filter_with_user_input(advanced_search_view):
     advanced_search_view.flash.assert_no_error()
 
 
-def test_filter_with_user_input_and_cancellation(request):
-    # Set up the filter
-    view = navigate_to(InfraProvider, 'All')
-    request.addfinalizer(view.search.remove_search_filters)
-    view.search.advanced_search(
+def test_filter_with_user_input_and_cancellation(advanced_search_view):
+    # Set up the filtergit
+    advanced_search_view.search.advanced_search(
         "fill_count(Infrastructure Provider.VMs, >=)", {"COUNT": 0}, True
     )
-    view.flash.assert_no_error()
+    advanced_search_view.flash.assert_no_error()
 
 
 def test_filter_save_cancel(rails_delete_filter, advanced_search_view):

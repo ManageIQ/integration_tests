@@ -55,7 +55,6 @@ def hosts_advanced_search(host_collection):
     view = navigate_to(host_collection, 'All')
     assert view.search.is_advanced_search_possible, "Cannot do advanced search here!"
     yield view
-    view = navigate_to(host_collection, 'All')
     view.search.remove_search_filters()
 
 
@@ -140,9 +139,8 @@ def test_filter_save_and_cancel_load(host_collection, request, hosts, hosts_with
 
     @request.addfinalizer
     def cleanup():
-        view = navigate_to(host_collection, 'All')
-        view.search.load_filter(filter_name)
-        view.search.delete_filter()
+        hosts_advanced_search.search.load_filter(filter_name)
+        hosts_advanced_search.search.delete_filter()
 
     hosts_advanced_search.flash.assert_no_error()
     hosts_advanced_search.search.reset_filter()
@@ -161,9 +159,8 @@ def test_filter_save_and_load_cancel(hosts_advanced_search, request, hosts, host
 
     @request.addfinalizer
     def cleanup():
-        view = navigate_to(host_collection, 'All')
-        view.search.load_filter(filter_name)
-        view.search.delete_filter()
+        hosts_advanced_search.search.load_filter(filter_name)
+        hosts_advanced_search.search.delete_filter()
 
     hosts_advanced_search.flash.assert_no_error()
     hosts_advanced_search.search.reset_filter()
@@ -189,7 +186,11 @@ def test_quick_search_without_filter(host_collection, request, hosts, hosts_with
     view.flash.assert_no_error()
     # Check it is there
     all_hosts_visible = host_collection.all(infra_provider)
-    assert len(all_hosts_visible) == 1 and median_host in all_hosts_visible
+    median_host_result = False
+    for hosts in all_hosts_visible:
+        if hosts.name == median_host:
+            median_host_result = True
+    assert len(all_hosts_visible) == 1 and median_host_result
 
 
 def test_quick_search_with_filter(host_collection, request, hosts, hosts_with_vm_count,
@@ -205,7 +206,11 @@ def test_quick_search_with_filter(host_collection, request, hosts, hosts_with_vm
     view.flash.assert_no_error()
     # Check it is there
     all_hosts_visible = host_collection.all(infra_provider)
-    assert len(all_hosts_visible) == 1 and median_host in all_hosts_visible
+    median_host_result = False
+    for hosts in all_hosts_visible:
+        if hosts.name == median_host:
+            median_host_result = True
+    assert len(all_hosts_visible) == 1 and median_host_result
 
 
 def test_can_delete_filter(host_collection, hosts_advanced_search):
@@ -228,9 +233,8 @@ def test_delete_button_should_appear_after_save(host_collection, hosts_advanced_
 
     @request.addfinalizer
     def cleanup():
-        view = navigate_to(host_collection, 'All')
-        view.search.load_filter(filter_name)
-        view.search.delete_filter()
+        hosts_advanced_search.search.load_filter(filter_name)
+        hosts_advanced_search.search.delete_filter()
 
     if not hosts_advanced_search.search.delete_filter():
         # Returns False if the button is not present
