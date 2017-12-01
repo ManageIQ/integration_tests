@@ -1,17 +1,16 @@
 """ Page functions for Flavor pages
 """
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Dropdown, Button, View
+from widgetastic_manageiq import BaseEntitiesView
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
-from cfme.exceptions import FlavorNotFound
+from cfme.exceptions import FlavorNotFound, ItemNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
-    ItemsToolBarViewSelector, SummaryTable, Text, Table, PaginationPane, Accordion, ManageIQTree,
-    Search, BreadCrumb)
+    ItemsToolBarViewSelector, SummaryTable, Text, Table, Accordion, ManageIQTree, BreadCrumb)
 
 
 class FlavorView(BaseLoggedInPage):
@@ -29,10 +28,9 @@ class FlavorToolBar(View):
     view_selector = View.nested(ItemsToolBarViewSelector)
 
 
-class FlavorEntities(View):
-    title = Text('//div[@id="main-content"]//h1')
+class FlavorEntities(BaseEntitiesView):
     table = Table("//div[@id='gtl_div']//table")
-    search = View.nested(Search)
+    # todo: remove table and use entities instead
 
 
 class FlavorDetailsToolBar(View):
@@ -66,8 +64,7 @@ class FlavorAllView(FlavorView):
             self.entities.title.text == 'Flavors')
 
     toolbar = FlavorToolBar()
-    entities = FlavorEntities()
-    paginator = PaginationPane()
+    including_entities = View.include(FlavorEntities, use_parent=True)
 
 
 class ProviderFlavorAllView(FlavorAllView):
@@ -126,11 +123,8 @@ class FlavorDetails(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
-            row = self.prerequisite_view.paginator.find_row_on_pages(
-                self.prerequisite_view.entities.table,
-                name=self.obj.name,
-                cloud_provider=self.obj.provider.name)
-        except NoSuchElementException:
+            row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
+        except ItemNotFound:
             raise FlavorNotFound('Could not locate flavor "{}" on provider {}'
                                  .format(self.obj.name, self.obj.provider.name))
         row.click()
