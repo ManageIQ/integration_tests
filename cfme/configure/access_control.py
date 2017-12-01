@@ -1,10 +1,9 @@
 import attr
 
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_manageiq import (
-    UpDownSelect, PaginationPane, SummaryFormItem, Table, BaseListEntity, SummaryTable)
-from widgetastic_patternfly import (
-    BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview,
+from widgetastic_manageiq import (UpDownSelect, PaginationPane, SummaryFormItem, Table,
+    BaseListEntity)
+from widgetastic_patternfly import (BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview,
     BootstrapSwitch, CandidateNotFound, Dropdown)
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Checkbox, View, Text
@@ -18,6 +17,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.wait import wait_for
 
 
 def simple_user(userid, password):
@@ -1381,11 +1381,19 @@ class Tenant(Updateable, BaseEntity):
         changed = view.form.fill(updates)
         if changed:
             view.save_button.click()
-            flash_message = 'Project "{}" was saved'.format(updates.get('name', self.name))
+            if self.appliance.version < '5.9':
+                flash_message = 'Project "{}" was saved'.format(updates.get('name', self.name))
+            else:
+                flash_message = 'Tenant "{}" has been successfully saved.'.format(
+                    updates.get('name', self.name))
         else:
             view.cancel_button.click()
-            flash_message = 'Edit of Project "{}" was cancelled by the user'.format(
-                updates.get('name', self.name))
+            if self.appliance.version < '5.9':
+                flash_message = 'Edit of Project "{}" was cancelled by the user'.format(
+                    updates.get('name', self.name))
+            else:
+                flash_message = 'Edit of Tenant "{}" was canceled by the user.'.format(
+                    updates.get('name', self.name))
         view = self.create_view(DetailsTenantView, override=updates)
         view.flash.assert_message(flash_message)
 
@@ -1495,6 +1503,7 @@ class TenantCollection(BaseCollection):
         view.toolbar.configuration.item_select('Add child Tenant to this Tenant')
 
         view = self.create_view(AddTenantView)
+        wait_for(lambda: view.form.is_displayed, timeout=5)
         changed = view.form.fill({'name': name,
                                   'description': description})
         if changed:
