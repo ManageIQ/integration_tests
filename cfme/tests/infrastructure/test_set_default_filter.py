@@ -40,7 +40,7 @@ def test_clear_host_filter_results(appliance):
     # TODO many parts of this test and others in this file need to be replaced with WT calls
     view = navigate_to(host_collection, 'All')
     list_acc.select('Filters', 'Status / Stopped', by_title=False)
-    view.search.remove_search_filters()
+    view.entities.search.remove_search_filters()
     page_title = view.title.text
     assert page_title == 'Hosts', 'Clear filter results failed'
 
@@ -75,5 +75,5 @@ def test_clear_datastore_filter_results(appliance):
     view = navigate_to(dc, 'All')
     view.sidebar.datastores.tree.click_path('All Datastores', 'Global Filters',
                                             'Store Type / VMFS')
-    view.search.remove_search_filters()
+    view.entities.search.remove_search_filters()
     assert view.entities.title.text == 'All Datastores', 'Clear filter results failed'

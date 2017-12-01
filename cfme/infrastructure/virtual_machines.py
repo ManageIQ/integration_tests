@@ -15,7 +15,7 @@ from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, Tab)
 from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree,
-    NonJSPaginationPane, SummaryTable, TimelinesView, Search)
+    NonJSPaginationPane, SummaryTable, TimelinesView)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 from widgetastic.utils import partial_match
 
@@ -150,7 +150,6 @@ class VmsTemplatesAllView(InfraVmView):
     sidebar = View.nested(VmsTemplatesAccordion)
     including_entities = View.include(VMEntities, use_parent=True)
     pagination = View.nested(NonJSPaginationPane)
-    search = View.nested(Search)
 
     @property
     def is_displayed(self):
@@ -160,14 +159,13 @@ class VmsTemplatesAllView(InfraVmView):
             self.entities.title.text == 'All VMs & Templates')
 
     def reset_page(self):
-        self.search.remove_search_filters()
+        self.entities.search.remove_search_filters()
 
 
 class VmTemplatesAllForProviderView(InfraVmView):
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
     including_entities = View.include(VMEntities, use_parent=True)
-    search = View.nested(Search)
 
     @property
     def is_displayed(self):
@@ -177,14 +175,13 @@ class VmTemplatesAllForProviderView(InfraVmView):
             'VM or Templates under Provider \"{}\"'.format(self.context['object'].provider.name))
 
     def reset_page(self):
-        self.search.remove_search_filters()
+        self.entities.search.remove_search_filters()
 
 
 class VmsOnlyAllView(InfraVmView):
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
     including_entities = View.include(VMEntities, use_parent=True)
-    search = View.nested(Search)
 
     @property
     def is_displayed(self):
@@ -194,7 +191,7 @@ class VmsOnlyAllView(InfraVmView):
             self.entities.title.text == 'All VMs')
 
     def reset_page(self):
-        self.search.remove_search_filters()
+        self.entities.search.remove_search_filters()
 
 
 class TemplatesOnlyAllView(InfraVmView):

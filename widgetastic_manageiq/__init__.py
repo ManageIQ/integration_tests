@@ -2004,7 +2004,7 @@ class Search(View):
             self.advanced_search_form.save_filter_form.save_filter_button.click()
             if apply_filter:
                 self.apply_filter()
-                self.advanced_search_form.close_button.click()
+                self.close_advanced_search()
         return updated
 
     def load_filter(self, saved_filter=None, report_filter=None, fill_callback=None,

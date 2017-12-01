@@ -256,7 +256,6 @@ class HostsView(ComputeInfrastructureHostsView):
     sidebar = View.nested(HostSideBar)
     paginator = PaginationPane()
     including_entities = View.include(HostEntitiesView, use_parent=True)
-    search = View.nested(Search)
 
     @property
     def is_displayed(self):
