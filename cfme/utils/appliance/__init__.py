@@ -1389,14 +1389,26 @@ class IPAppliance(object):
         store.terminalreporter.write_line('evmserverd is being restarted, be patient please')
         with self.ssh_client as ssh:
             if rude:
-                log_callback('restarting evm service by killing processes')
+                self.evmserverd.stop()
+                log_callback('Waiting for evm service to stop')
+                try:
+                    wait_for(
+                        self.is_evm_service_running, num_sec=120, fail_condition=True, delay=10,
+                        message='evm service to stop')
+                except TimedOutError:
+                    # Don't care if it's still running
+                    pass
+                log_callback('killing any remaining processes and restarting postgres')
                 status, msg = ssh.run_command(
-                    'killall -9 ruby; systemctl restart {}-postgresql'.format(
-                        self.db.postgres_version))
-                self._evm_service_command("start", expected_exit_code=0, log_callback=log_callback)
+                    'killall -9 ruby; systemctl restart {}-postgresql'
+                    .format(self.db.postgres_version))
+                log_callback('Waiting for database to be available')
+                wait_for(
+                    lambda: self.db.is_online, num_sec=90, delay=10, fail_condition=False,
+                    message="database to be available")
+                self.evmserverd.start()
             else:
-                self._evm_service_command(
-                    "restart", expected_exit_code=0, log_callback=log_callback)
+                self.evmserverd.restart()
         self.server_details_changed()
 
     @logger_wrap("Waiting for EVM service: {}")
