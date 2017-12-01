@@ -21,7 +21,8 @@ from widgetastic_manageiq.vm_reconfigure import DisksTable
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, Template as BaseTemplate
 from cfme.common.vm_views import (
-    ManagementEngineView, ProvisionView, EditView, RetirementView, VMDetailsEntities, VMToolbar,
+    ManagementEngineView, CloneVmView, ProvisionView, EditView, RetirementView,
+    VMDetailsEntities, VMToolbar,
     VMEntities)
 from cfme.exceptions import (
     CandidateNotFound, VmNotFound, OptionNotAvailable, DestinationNotFound, ItemNotFound,
@@ -1314,7 +1315,7 @@ class VmMigrate(CFMENavigateStep):
 
 @navigator.register(Vm, 'Clone')
 class VmClone(CFMENavigateStep):
-    VIEW = ProvisionView
+    VIEW = CloneVmView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
