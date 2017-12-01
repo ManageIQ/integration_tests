@@ -8,11 +8,14 @@ from cfme import test_requirements
 
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
-from cfme.utils import testgen
+
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     test_requirements.vm_migrate,
+    pytest.mark.tier(2),
+    pytest.mark.meta(blockers=[BZ(1478518, forced_streams=['5.7', '5.8', '5.9', 'upstream'])]),
+    pytest.mark.provider([VMwareProvider, RHEVMProvider], scope='module')
 ]
 
 
@@ -28,14 +31,6 @@ def new_vm(setup_provider_modscope, provider, request):
     return vm
 
 
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, [VMwareProvider, RHEVMProvider])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
-
-
-@pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1478518, forced_streams=['5.7', '5.8', '5.9', 'upstream'])])
 def test_vm_migrate(appliance, new_vm, provider):
     """Tests migration of a vm
 
