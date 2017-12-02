@@ -22,13 +22,13 @@ STORAGE_SIZE = 1
 @pytest.yield_fixture(scope='module')
 def snapshot(appliance, provider):
     volume_collection = appliance.collections.volumes
-    storage_manager = version.pick({'5.8': '{} Cinder Manager'.format(provider.name),
-                                    version.LOWEST: None})
     snapshot_collection = appliance.collections.volume_snapshots.filter({'provider': provider})
+
+    manager_name = '{} Cinder Manager'.format(provider.name) if appliance.version >= '5.8' else None
 
     # create new volume
     volume = volume_collection.create(name=fauxfactory.gen_alpha(),
-                                      storage_manager=storage_manager,
+                                      storage_manager=manager_name,
                                       tenant=provider.data['provisioning']['cloud_tenant'],
                                       size=STORAGE_SIZE,
                                       provider=provider)
