@@ -5,7 +5,6 @@ import random
 
 from cfme.intelligence.chargeback.assignments import AssignmentsView
 from cfme import test_requirements
-from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
