@@ -1,5 +1,6 @@
 import fauxfactory
 import pytest
+from widgetastic.exceptions import RowNotFound
 
 from cfme.base.credential import Credential
 from cfme.configure.access_control import Role, User
@@ -106,7 +107,7 @@ def check_item_visibility(tag, user_restricted):
         else:
             try:
                 vis_object.remove_tag(tag=tag)
-            except TypeError:
+            except RowNotFound:
                 logger.debug('Tag is already removed')
         actual_visibility = False
         with user_restricted:
