@@ -11,7 +11,6 @@ from cfme.utils.pretty import Pretty
 from widgetastic_patternfly import Input, BootstrapSelect, Button
 from widgetastic.widget import View
 from widgetastic_manageiq import Calendar, Checkbox
-from widgetastic.utils import VersionPick, Version
 
 
 class ExpressionEditor(View, Pretty):
@@ -83,42 +82,14 @@ class ExpressionEditor(View, Pretty):
     MAKE_BUTTON = "//span[not(contains(@style,'none'))]//img[@alt='{}']"
     ATOM_ROOT = "./div[@id='exp_atom_editor_div']"
     EXPRESSIONS_ROOT = "./fieldset/div"
-    COMMIT = VersionPick({
-        Version.lowest(): "//img[@alt='Commit expression element changes']",
-        "5.7.1": Button(title="Commit expression element changes"),
-    })
-    DISCARD = VersionPick({
-        Version.lowest(): "//img[@alt='Discard expression element changes']",
-        "5.7.1": Button(title="Discard expression element changes"),
-    })
-    REMOVE = VersionPick({
-        Version.lowest(): ("//span[not(contains(@style, 'none'))]/"
-            "/img[@alt='Remove this expression element']"),
-        "5.8": Button(title="Remove this expression element"),
-    })
-    NOT = VersionPick({
-        Version.lowest(): ("//span[not(contains(@style, 'none'))]"
-           "//img[@alt='Wrap this expression element with a NOT']"),
-        "5.8": Button(title="Wrap this expression element with a NOT"),
-    })
-    OR = VersionPick({
-        Version.lowest(): ("//span[not(contains(@style, 'none'))]/"
-            "/img[@alt='OR with a new expression element']"),
-        "5.8": Button(title="OR with a new expression element"),
-    })
-    AND = VersionPick({
-        Version.lowest(): ("//span[not(contains(@style, 'none'))]/"
-            "/img[@alt='AND with a new expression element']"),
-        "5.8": Button(title="AND with a new expression element"),
-    })
-    REDO = VersionPick({
-        Version.lowest(): "//img[@alt='Redo']",
-        "5.8": Button(title="Redo the last change"),
-    })
-    UNDO = VersionPick({
-        Version.lowest(): "//img[@alt='Undo']",
-        "5.8": Button(title="Undo the last change"),
-    })
+    COMMIT = Button(title="Commit expression element changes")
+    DISCARD = Button(title="Discard expression element changes")
+    REMOVE = Button(title="Remove this expression element")
+    NOT = Button(title="Wrap this expression element with a NOT")
+    OR = Button(title="OR with a new expression element")
+    AND = Button(title="AND with a new expression element")
+    REDO = Button(title="Redo the last change")
+    UNDO = Button(title="Undo the last change")
     SELECT_SPECIFIC = "//img[@alt='Click to change to a specific Date/Time format']"
     SELECT_RELATIVE = "//img[@alt='Click to change to a relative Date/Time format']"
 
