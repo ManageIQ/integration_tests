@@ -1,27 +1,22 @@
 # -*- coding: utf-8 -*-
 import pytest
 import random
+import socket
 
 from cfme.base.credential import Credential
 from cfme.common.host_views import HostsEditView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
-from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.providers import ProviderFilter
-from markers.env_markers.provider import providers
-
-
-all_infra_prov = ProviderFilter(classes=[InfraProvider], required_fields=['hosts'])
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.tier(3),
-    pytest.mark.provider(gen_func=providers,
-                         filters=[all_infra_prov,
-                                  lambda provider: len(provider.data.get('hosts', {})) > 1],
-                         scope='module'),
+    pytest.mark.provider([InfraProvider], required_fields=['hosts'], scope='module'),
 ]
 
 
@@ -40,7 +35,43 @@ def navigate_and_select_quads(provider):
     return edit_view
 
 
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+def test_discover_host(request, provider, appliance):
+    if provider.delete_if_exists(cancel=False):
+        provider.wait_for_delete()
+
+    collection = appliance.collections.hosts
+
+    @request.addfinalizer
+    def _cleanup():
+        all_hosts = collection.all(provider)
+        if all_hosts:
+            collection.delete(*all_hosts)
+
+    ipaddresses = []
+    all_hosts = provider.data.get('hosts', [])
+    for host in all_hosts:
+        ipaddr = host.ipaddress if hasattr(host, 'ipaddress') else socket.gethostbyname(host.name)
+        ipaddresses.append(ipaddr)
+    ipaddresses.sort()
+
+    first_addr = provider.ip_address if hasattr(provider, 'ip_address') else ipaddresses[0]
+    last_addr = ipaddresses[-1]
+
+    collection.discover(first_addr, last_addr, esx=True)
+    hosts_view = navigate_to(collection, 'All')
+    expected_len = len(all_hosts)
+
+    def _check_items_visibility():
+        hosts_view.browser.refresh()
+        return len(hosts_view.entities.entity_names) == expected_len
+
+    wait_for(_check_items_visibility, num_sec=600, delay=10)
+    assert sorted(hosts_view.entities.entity_names) == ipaddresses
+
+
 # Tests to automate BZ 1201092
+@pytest.mark.uncollectif(lambda provider: len(provider.data.get('hosts', {})) < 2)
 def test_multiple_host_good_creds(setup_provider, provider):
     """  Tests multiple host credentialing  with good credentials """
     host = random.choice(provider.data["hosts"])
@@ -65,6 +96,7 @@ def test_multiple_host_good_creds(setup_provider, provider):
 
 
 @pytest.mark.meta(blockers=[BZ(1524411, forced_streams=['5.9', 'upstream'])])
+@pytest.mark.uncollectif(lambda provider: len(provider.data.get('hosts', {})) < 2)
 def test_multiple_host_bad_creds(setup_provider, provider):
     """    Tests multiple host credentialing with bad credentials """
     host = random.choice(provider.data["hosts"])
