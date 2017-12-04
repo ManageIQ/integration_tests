@@ -60,3 +60,17 @@ def test_name_required_error_validation(appliance):
 #        provision_type='Vm')
 #    sys_image_type.create()
 #    sys_image_type.delete(cancel=False)
+
+
+def test_system_image_type_selective_delete(appliance):
+    """
+    Tests System Image Type for delete operation using select option on All page.
+    """
+    collection = appliance.collections.system_image_types
+    sys_image_type1 = collection.create(
+        name=fauxfactory.gen_alphanumeric(8),
+        provision_type=SystemImageType.VM_OR_INSTANCE)
+    sys_image_type2 = collection.create(
+        name=fauxfactory.gen_alphanumeric(8),
+        provision_type=SystemImageType.VM_OR_INSTANCE)
+    collection.delete(False, sys_image_type1, sys_image_type2)
