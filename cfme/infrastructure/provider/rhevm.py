@@ -68,10 +68,7 @@ class RHEVMProvider(InfraProvider):
     def view_value_mapping(self):
         return {
             'name': self.name,
-            'prov_type': version.pick({version.LOWEST: 'Red Hat Enterprise Virtualization Manager',
-                                       '5.7.1': 'Red Hat Virtualization Manager',
-                                       '5.7.3': 'Red Hat Virtualization',
-                                       '5.8': 'Red Hat Virtualization Manager',
+            'prov_type': version.pick({version.LOWEST: 'Red Hat Virtualization Manager',
                                        '5.8.0.10': 'Red Hat Virtualization'}),
         }
 

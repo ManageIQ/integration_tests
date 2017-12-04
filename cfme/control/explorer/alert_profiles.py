@@ -7,7 +7,7 @@ from widgetastic_manageiq import CheckableManageIQTree, MultiBoxSelect
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from . import ControlExplorerView
-from cfme.utils import version, ParamClassName
+from cfme.utils import ParamClassName
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
