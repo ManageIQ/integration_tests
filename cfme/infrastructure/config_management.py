@@ -360,9 +360,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
 
     @property
     def _refresh_flash_msg(self):
-        return version.pick({'5.7': 'Refresh Provider initiated for 1 provider ({})'.
-                                    format(self.type),
-                             '5.8': 'Refresh Provider initiated for 1 provider'})
+        return 'Refresh Provider initiated for 1 provider'
 
     @property
     def exists(self):
