@@ -541,6 +541,8 @@ def test_alert_profile_crud(request, alert_profile_class, alert_collection,
 @pytest.mark.meta(blockers=[BZ(1416311, forced_streams=["5.7"])])
 def test_alert_profile_assigning(alert_profile):
     if isinstance(alert_profile, alert_profiles.ServerAlertProfile):
+        if BZ(1489697, forced_streams=["5.8"]).blocks:
+            pytest.skip("BZ 1489697")
         alert_profile.assign_to("Selected Servers", selections=["Servers", "EVM"])
     else:
         alert_profile.assign_to("The Enterprise")
