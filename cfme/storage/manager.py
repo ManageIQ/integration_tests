@@ -133,10 +133,7 @@ class StorageManager(BaseEntity, WidgetasticTaggable, PolicyProfileAssignable):
 
     name = attr.ib()
     provider = attr.ib()
-    storage_title = VersionPick({
-        Version.lowest(): 'Storage Provider',
-        '5.8': 'Storage Manager'
-    })
+    storage_title = 'Storage Manager'
 
     @property
     def navigation_path(self):
