@@ -3,7 +3,6 @@ from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_patternfly import FlashMessages, Button, Input
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.utils.version import current_version
 
 
 class TopologySearch(View):
@@ -18,14 +17,14 @@ class TopologySearch(View):
                          'div/ng-repeat/div/form/div[1]/div/button[2]')
 
     def clear_search(self):
-        if current_version() < '5.9':
+        if self.browser.product_version < '5.9':
             self.clear_btn.click()
         else:
             self.clear_btn_new.click()
         self.search("")
 
     def search(self, text):
-        if current_version() < '5.9':
+        if self.browser.product_version < '5.9':
             self.search_text.fill(text)
             self.search_btn.click()
         else:
