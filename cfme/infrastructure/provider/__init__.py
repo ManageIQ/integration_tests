@@ -1,5 +1,6 @@
 """ A model of an Infrastructure Provider in CFME
 """
+from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from widgetastic.utils import Fillable
 
 from cached_property import cached_property
@@ -260,7 +261,11 @@ class EditTags(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
+        try:
+            self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
+        except MoveTargetOutOfBoundsException:
+            # TODO: Remove once fixed 1475303
+            self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(InfraProvider, 'Edit')
@@ -270,8 +275,13 @@ class Edit(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
-        self.prerequisite_view.toolbar.configuration.item_select('Edit Selected '
-                                                                 'Infrastructure Providers')
+        try:
+            self.prerequisite_view.toolbar.configuration.item_select(
+                'Edit Selected Infrastructure Providers')
+        except MoveTargetOutOfBoundsException:
+            # TODO: Remove once fixed 1475303
+            self.prerequisite_view.toolbar.configuration.item_select(
+                'Edit Selected Infrastructure Providers')
 
 
 @navigator.register(InfraProvider, 'Timelines')
@@ -281,7 +291,11 @@ class Timelines(CFMENavigateStep):
 
     def step(self):
         mon = self.prerequisite_view.toolbar.monitoring
-        mon.item_select('Timelines')
+        try:
+            mon.item_select('Timelines')
+        except MoveTargetOutOfBoundsException:
+            # TODO: Remove once fixed 1475303
+            mon.item_select('Timelines')
 
 
 @navigator.register(InfraProvider, 'Clusters')
