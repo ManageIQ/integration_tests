@@ -98,6 +98,7 @@ class TopologyElement(BaseEntity):
     def double_click(self):
         self.obj.browser.double_click(self.element)
 
+    @property
     def is_displayed(self):
         try:
             return self.element.is_displayed()
@@ -157,41 +158,10 @@ class TopologyLineCollection(BaseCollection):
 
 @attr.s
 class Topology(BaseEntity):
-    "Class represents SDN topology"
-    elements_obj = attr.ib(default=None)
-    lines_obj = attr.ib(default=None)
-    legends_obj = attr.ib(default=None)
-    elements_col = attr.ib(default=None)
-    lines_col = attr.ib(default=None)
-    legends_col = attr.ib(default=None)
-    element_ref = attr.ib(default=None)
-    display_names = attr.ib(default=None)
-    view = attr.ib(default=None)
-
-    def reload_elements_and_lines(self):
-        self.elements_obj = []
-        self.lines_obj = self.lines_col.filter(self)
-        found_elements = self.elements_col.filter(self)
-
-        if found_elements:
-            self.element_ref = found_elements[-1]
-            wait_for(lambda: self.movement_stopped, delay=2, num_sec=30)
-            self.elements_obj = self.elements_col.filter(self)
-
-    def reload_legends(self):
-        self.legends_obj = self.legends_col.filter(self)
-        element = self.browser.element(self.view.DISPLAY_NAME)
-        self.display_names = TopologyDisplayNames(self.appliance, element)
-
-    @property
-    def refresh(self):
-        self.view = navigate_to(self, 'All')
-        self.reload_elements_and_lines()
-        self.reload_legends()
-
+    """Class represents SDN topology"""
     @property
     def movement_stopped(self):
-        element = self.elements_col.filter(self)[-1]
+        element = self.elements_collection.filter(self)[-1]
         if element.x == self.element_ref.x and element.y == self.element_ref.y:
             return True
         self.element_ref = element
@@ -199,40 +169,45 @@ class Topology(BaseEntity):
 
     @property
     def legends_collection(self):
-        return self.legends_col
+        return TopologyLegendCollection(self)
 
     @property
     def elements_collection(self):
-        return self.elements_col
+        return TopologyElementCollection(self)
 
     @property
     def lines_collection(self):
-        return self.lines_col
+        return TopologyLineCollection(self)
 
     @property
     def legends(self):
-        return self.legends_obj
+        return self.legends_collection.filter(self)
 
     @property
     def elements(self):
-        return self.elements_obj
+        found_elements = self.elements_collection.filter(self)
+        if found_elements:
+            self.element_ref = found_elements[-1]
+            wait_for(lambda: self.movement_stopped, delay=2, num_sec=30)
+            return self.elements_collection.filter(self)
 
     @property
     def lines(self):
-        return self.lines_obj
+        return self.lines_collection.filter(self)
+
+    @property
+    def display_names(self):
+        return TopologyDisplayNames(self.appliance, self.browser.element(self.view.DISPLAY_NAME))
+
+    @property
+    def open_view(self):
+        self.view = navigate_to(self, 'All')
 
 
 @attr.s
 class TopologyCollection(BaseCollection):
     """Collection object for elements in topology"""
     ENTITY = Topology
-
-    def instantiate(self, *args, **kwargs):
-        topology = super(TopologyCollection, self).instantiate(*args, **kwargs)
-        topology.elements_col = TopologyElementCollection(topology)
-        topology.lines_col = TopologyLineCollection(topology)
-        topology.legends_col = TopologyLegendCollection(topology)
-        return topology
 
 
 @navigator.register(Topology, 'All')
