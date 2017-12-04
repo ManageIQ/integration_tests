@@ -9,10 +9,10 @@ from wrapanapi.containers.image import Image as ApiImage
 
 from cfme.common import (WidgetasticTaggable, PolicyProfileAssignable,
                          TagPageView)
-from cfme.containers.provider import (Labelable, navigate_and_get_rows, ContainerObjectAllBaseView,
+from cfme.containers.provider import (ContainersProvider, Labelable, navigate_and_get_rows,
+                                      ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView, LoadDetailsMixin,
-                                      refresh_and_navigate, ContainerObjectDetailsEntities,
-                                      ContainersProvider)
+                                      refresh_and_navigate, ContainerObjectDetailsEntities)
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.configure import tasks
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -129,6 +129,7 @@ class Image(BaseEntity, WidgetasticTaggable, Labelable, LoadDetailsMixin, Policy
 @attr.s
 class ImageCollection(BaseCollection):
     """Collection object for :py:class:`Image`."""
+
     ENTITY = Image
 
     def all(self):
@@ -142,7 +143,8 @@ class ImageCollection(BaseCollection):
 
         for name, id, provider_name in image_query.all():
             images.append(self.instantiate(name=name, id=id,
-                provider=ContainersProvider(name=provider_name, appliance=self.appliance)))
+                          provider=ContainersProvider(
+                              name=provider_name, appliance=self.appliance)))
         return images
 
 

@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
+import attr
 import random
 import itertools
 from cached_property import cached_property
+
+from navmazing import NavigateToAttribute, NavigateToSibling
 
 from wrapanapi.containers.service import Service as ApiService
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
     ContainerObjectDetailsBaseView)
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
-from navmazing import NavigateToAttribute, NavigateToSibling
 
 
 class ServiceAllView(ContainerObjectAllBaseView):
@@ -21,17 +23,16 @@ class ServiceDetailsView(ContainerObjectDetailsBaseView):
     pass
 
 
-class Service(WidgetasticTaggable, Labelable, Navigatable):
+@attr.s
+class Service(BaseEntity, WidgetasticTaggable, Labelable):
 
     PLURAL = 'Container Services'
     all_view = ServiceAllView
     details_view = ServiceDetailsView
 
-    def __init__(self, name, project_name, provider, appliance=None):
-        self.name = name
-        self.provider = provider
-        self.project_name = project_name
-        Navigatable.__init__(self, appliance=appliance)
+    name = attr.ib()
+    project_name = attr.ib()
+    provider = attr.ib()
 
     @cached_property
     def mgmt(self):
@@ -46,7 +47,14 @@ class Service(WidgetasticTaggable, Labelable, Navigatable):
                 for obj in itertools.islice(service_list, count)]
 
 
-@navigator.register(Service, 'All')
+@attr.s
+class ServiceCollection(BaseCollection):
+    """Collection object for :py:class:`Service`."""
+
+    ENTITY = Service
+
+
+@navigator.register(ServiceCollection, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
     VIEW = ServiceAllView
@@ -62,7 +70,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(Service, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToSibling('parent', 'All')
     VIEW = ServiceDetailsView
 
     def step(self):
