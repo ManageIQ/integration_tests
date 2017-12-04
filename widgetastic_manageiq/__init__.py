@@ -1012,13 +1012,8 @@ class SSUIServiceCatalogcard(Widget, ClickableMixin):
     class catalog_card(ParametrizedView):  # noqa
         PARAMETERS = ("item_name",)
 
-        card = VersionPick({
-            Version.lowest(): Text(
-                ParametrizedLocator('.//div[@class="ss-card"]'
-                                    '/h3[normalize-space(.)={item_name|quote}]')),
-            '5.8': Text(
-                ParametrizedLocator('.//div[@class="card-content"]/div'
-                                    '/ss-card/h3[normalize-space(.)={item_name|quote}]'))})
+        card = Text(ParametrizedLocator('.//div[@class="card-content"]/div'
+                                        '/ss-card/h3[normalize-space(.)={item_name|quote}]'))
 
         def card_click(self):
             """Clicks the primary card with this name."""
