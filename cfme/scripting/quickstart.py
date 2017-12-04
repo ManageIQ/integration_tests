@@ -60,6 +60,7 @@ REDHAT_PACKAGES_SPECS = [
      " libxslt-devel zeromq3-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python-devel tesseract"
+     " libpng-devel"
      " freetype-devel"),
     ("Red Hat Enterprise Linux Server release 7", "nss",
      " python-virtualenv gcc postgresql-devel libxml2-devel"
@@ -148,11 +149,16 @@ def setup_virtualenv(target, use_site):
     add = ['--system-site-packages'] if use_site else []
 
     call_or_exit(['virtualenv', target] + add)
+
     venv_call(target,
               'pip', 'install', '-U',
+              # pip wheel and setuptools are updated just in case
+              # since enterprise distros ship versions that are too stable
+              # for our purposes
+              'pip', 'wheel', 'setuptools',
               # setuptools_scm and docutils installation prevents
               # missbehaved packages from failing
-              'pip', 'wheel', 'setuptools_scm', 'docutils')
+              'setuptools_scm', 'docutils')
 
 
 def venv_call(venv_path, command, *args, **kwargs):
