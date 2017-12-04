@@ -260,11 +260,7 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
 
     def delete(self):
         view = navigate_to(self, "Details")
-        view.configuration.item_select(
-            version.pick({
-                version.LOWEST: 'Remove Item from the VMDB',
-                '5.7': 'Remove Catalog Item'}),
-            handle_alert=True)
+        view.configuration.item_select('Remove Catalog Item', handle_alert=True)
         view = self.create_view(AllCatalogItemView)
         assert view.is_displayed
         view.flash.assert_success_message('The selected Catalog Item was deleted')
