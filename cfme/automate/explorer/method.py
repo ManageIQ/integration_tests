@@ -3,7 +3,7 @@ import attr
 
 from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import ParametrizedLocator, VersionPick
+from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import Table, Text, View
 from widgetastic_manageiq import SummaryFormItem, ScriptBox, Input
 from widgetastic_patternfly import BootstrapSelect, BootstrapSwitch, Button, CandidateNotFound
@@ -209,10 +209,6 @@ class MethodEditView(AutomateExplorerView):
 
 
 class Method(BaseEntity, Copiable):
-    ICON_NAME = VersionPick({
-        Version.lowest(): 'product-method',
-        '5.9': 'fa-ruby',
-    })
 
     def __init__(self, collection, name=None, display_name=None, location='inline', script=None,
                  data=None, repository=None, playbook=None, machine_credential=None, hosts=None,
@@ -274,11 +270,15 @@ class Method(BaseEntity, Copiable):
 
     @property
     def tree_path(self):
+        if self.appliance.version < '5.9':
+            icon_name_map = {'inline': 'product-method'}
+        else:
+            icon_name_map = {'inline': 'fa-ruby', 'playbook': 'vendor-ansible'}
         if self.display_name:
             return self.parent_obj.tree_path + [
-                (self.ICON_NAME, '{} ({})'.format(self.display_name, self.name))]
+                (icon_name_map[self.location], '{} ({})'.format(self.display_name, self.name))]
         else:
-            return self.parent_obj.tree_path + [(self.ICON_NAME, self.name)]
+            return self.parent_obj.tree_path + [(icon_name_map[self.location], self.name)]
 
     @property
     def tree_path_name_only(self):
