@@ -3,7 +3,6 @@ import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View
-from widgetastic.utils import VersionPick, Version
 from widgetastic_patternfly import Dropdown, Button, FlashMessages
 from widgetastic_manageiq import (
     ItemsToolBarViewSelector, Text, TextInput, Accordion, ManageIQTree, BreadCrumb,
@@ -195,9 +194,7 @@ class KeyPairCollection(BaseCollection):
             flash_message = 'Add of new Key Pair was cancelled by the user'
         else:
             view.form.add.click()
-            flash_message = VersionPick({
-                Version.lowest(): 'Creating Key Pair {}'.format(name),
-                '5.8': 'Key Pair "{}" created'.format(name)}).pick(self.appliance.version)
+            flash_message = 'Key Pair "{}" created'.format(name)
 
         # add/cancel should redirect, new view
         view = self.create_view(KeyPairAllView)
