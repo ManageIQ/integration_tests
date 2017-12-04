@@ -14,11 +14,8 @@ class RHEVMEndpoint(DefaultEndpoint):
     def view_value_mapping(self):
         return {'hostname': self.hostname,
                 'api_port': getattr(self, 'api_port', None),
-                'verify_tls': version.pick({version.LOWEST: None,
-                                            '5.8': getattr(self, 'verify_tls', None)}),
-                'ca_certs': version.pick({version.LOWEST: None,
-                                          '5.8': getattr(self, 'ca_certs', None)})
-                }
+                'verify_tls': getattr(self, 'verify_tls', None),
+                'ca_certs': getattr(self, 'ca_certs', None)}
 
 
 class RHEVMEndpointForm(View):
