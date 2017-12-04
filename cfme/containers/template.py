@@ -12,6 +12,7 @@ from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
     ContainerObjectDetailsBaseView)
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.providers import get_crud_by_name
 
 
 class TemplateAllView(ContainerObjectAllBaseView):
@@ -51,6 +52,29 @@ class TemplateCollection(BaseCollection):
     """Collection object for :py:class:`Template`."""
 
     ENTITY = Template
+
+    def all(self):
+        # container_templates table has ems_id, join with ext_mgmgt_systems on id for provider name
+        # Then join with container_projects on the id for the project
+        template_table = self.appliance.db.client['container_templates']
+        ems_table = self.appliance.db.client['ext_management_systems']
+        project_table = self.appliance.db.client['container_projects']
+        template_query = (
+            self.appliance.db.client.session
+                .query(template_table.name, project_table.name, ems_table.name)
+                .join(ems_table, template_table.ems_id == ems_table.id)
+                .join(project_table, template_table.container_project_id == project_table.id))
+        provider = None
+        # filtered
+        if self.filters.get('provider'):
+            provider = self.filters.get('provider')
+            template_query = template_query.filter(ems_table.name == provider.name)
+        templates = []
+        for name, project_name, ems_name in template_query.all():
+            templates.append(self.instantiate(name=name, project_name=project_name,
+                                              provider=provider or get_crud_by_name(ems_name)))
+
+        return templates
 
 
 @navigator.register(TemplateCollection, 'All')

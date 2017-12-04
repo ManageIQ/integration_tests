@@ -12,6 +12,7 @@ from cfme.containers.provider import (navigate_and_get_rows, ContainerObjectAllB
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils.providers import get_crud_by_name
 
 
 class ImageRegistryAllView(ContainerObjectAllBaseView):
@@ -54,6 +55,28 @@ class ImageRegistryCollection(BaseCollection):
     """Collection object for :py:class:`Image Registry`."""
 
     ENTITY = ImageRegistry
+
+    def all(self):
+        # container_image_registries table has ems_id,
+        # join with ext_mgmgt_systems on id for provider name
+        image_registry_table = self.appliance.db.client['container_image_registries']
+        ems_table = self.appliance.db.client['ext_management_systems']
+        image_registry_query = (
+            self.appliance.db.client.session
+                .query(image_registry_table.host, ems_table.name)
+                .join(ems_table, image_registry_table.ems_id == ems_table.id))
+        provider = None
+        # filtered
+        if self.filters.get('provider'):
+            provider = self.filters.get('provider')
+            image_registry_query = image_registry_query.filter(ems_table.name == provider.name)
+        image_registries = []
+        for host, ems_name in image_registry_query.all():
+            image_registries.append(
+                self.instantiate(host=host,
+                                 provider=provider or get_crud_by_name(ems_name)))
+
+        return image_registries
 
 
 @navigator.register(ImageRegistryCollection, 'All')
