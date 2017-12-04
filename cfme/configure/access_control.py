@@ -455,9 +455,7 @@ class GroupForm(ConfigurationView):
     class my_company_tags(Tab):  # noqa
         """ Represents 'My company tags' tab in Group Form """
         TAB_NAME = "My Company Tags"
-        tree_locator = VersionPick({
-            Version.lowest(): 'tagsbox',
-            '5.8': 'tags_treebox'})
+        tree_locator = 'tags_treebox'
         tree = CheckableBootstrapTreeview(tree_locator)
 
     @View.nested
