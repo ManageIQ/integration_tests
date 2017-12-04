@@ -36,8 +36,7 @@ def test_assign_compute_provider(appliance, virtualcenter_provider):
     view = navigate_to(appliance.server, 'Chargeback')
 
     compute_provider = cb.Assign(
-        assign_to=version.pick({version.LOWEST: 'Selected Cloud/Infrastructure Providers',
-                            '5.7': 'Selected Providers'}),
+        assign_to='Selected Providers',
         selections={
             virtualcenter_provider.name: {'Rate': 'Default'}
         })
