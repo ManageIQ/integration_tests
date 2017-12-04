@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """A model of an Infrastructure Host in CFME."""
 import attr
+
 from manageiq_client.api import APIException
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
+from widgetastic.utils import VersionPick
 
 from cfme.base.credential import Credential as BaseCredential
 from cfme.common import PolicyProfileAssignable, WidgetasticTaggable
@@ -131,10 +133,10 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
             cancel (bool): Whether to cancel the deletion, defaults to True
         """
         view = navigate_to(self, "Details")
-        msg = 'Remove item'
-        if self.appliance.version >= '5.9':
-            msg = 'Remove item from Inventory'
-        view.toolbar.configuration.item_select(msg, handle_alert=not cancel)
+        remove_item = VersionPick({
+            '5.8': 'Remove item',
+            '5.9': 'Remove item from Inventory'})
+        view.toolbar.configuration.item_select(remove_item, handle_alert=not cancel)
         if not cancel:
             view = self.create_view(HostsView)
             assert view.is_displayed
@@ -478,8 +480,13 @@ class HostCollection(BaseCollection):
     def delete(self, *hosts):
         """Deletes this host from CFME."""
         view = self.check_hosts(hosts)
-        view.toolbar.configuration.item_select('Remove items from Inventory', handle_alert=True)
-        view.flash.assert_success_message('The selected Hosts / Nodes was deleted')
+        remove_item = VersionPick({
+            '5.8': 'Remove items',
+            '5.9': 'Remove items from Inventory'})
+        view.toolbar.configuration.item_select(remove_item, handle_alert=True)
+        view.flash.assert_success_message(
+            'Delete initiated for {} Hosts / Nodes from the {} Database'.format(
+                len(hosts), self.appliance.product_name))
         for host in hosts:
             host.wait_for_delete()
 
@@ -489,8 +496,8 @@ class HostCollection(BaseCollection):
 
         parts = from_address.split('.')
         fill_dict = {
-            'esx': True if esx else None,
-            'ipmi': True if ipmi else None,
+            'esx': esx or None,
+            'ipmi': ipmi or None,
             'from_ip1': parts[0],
             'from_ip2': parts[1],
             'from_ip3': parts[2],

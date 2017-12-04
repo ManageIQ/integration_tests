@@ -20,6 +20,26 @@ pytestmark = [
 ]
 
 
+@pytest.fixture(scope='module')
+def hosts_ipaddresses(provider):
+    ipaddresses = []
+    all_hosts = provider.data.get('hosts', [])
+    for host in all_hosts:
+        if hasattr(host, 'ipaddress'):
+            ipaddr = host.ipaddress
+        else:
+            try:
+                ipaddr = socket.gethostbyname(host.name)
+            except Exception:
+                ipaddr = None
+        if ipaddr:
+            ipaddresses.append(ipaddr)
+    if not ipaddresses:
+        pytest.skip('No hosts IP addresses found for provider "{}"'.format(provider.name))
+    ipaddresses.sort()
+    return tuple(ipaddresses)
+
+
 def navigate_and_select_quads(provider):
     """navigate to the hosts edit page and select all the quads on the first page
 
@@ -36,38 +56,33 @@ def navigate_and_select_quads(provider):
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
-def test_discover_host(request, provider, appliance):
+def test_discover_host(request, provider, appliance, hosts_ipaddresses):
     if provider.delete_if_exists(cancel=False):
         provider.wait_for_delete()
 
     collection = appliance.collections.hosts
 
-    @request.addfinalizer
     def _cleanup():
         all_hosts = collection.all(provider)
         if all_hosts:
             collection.delete(*all_hosts)
 
-    ipaddresses = []
-    all_hosts = provider.data.get('hosts', [])
-    for host in all_hosts:
-        ipaddr = host.ipaddress if hasattr(host, 'ipaddress') else socket.gethostbyname(host.name)
-        ipaddresses.append(ipaddr)
-    ipaddresses.sort()
+    _cleanup()
+    request.addfinalizer(_cleanup)
 
-    first_addr = provider.ip_address if hasattr(provider, 'ip_address') else ipaddresses[0]
-    last_addr = ipaddresses[-1]
+    first_addr = provider.ip_address if hasattr(provider, 'ip_address') else hosts_ipaddresses[0]
+    last_addr = hosts_ipaddresses[-1]
 
     collection.discover(first_addr, last_addr, esx=True)
     hosts_view = navigate_to(collection, 'All')
-    expected_len = len(all_hosts)
+    expected_len = len(provider.data.get('hosts', {}))
 
     def _check_items_visibility():
         hosts_view.browser.refresh()
         return len(hosts_view.entities.entity_names) == expected_len
 
     wait_for(_check_items_visibility, num_sec=600, delay=10)
-    assert sorted(hosts_view.entities.entity_names) == ipaddresses
+    assert tuple(sorted(hosts_view.entities.entity_names)) == hosts_ipaddresses
 
 
 # Tests to automate BZ 1201092
