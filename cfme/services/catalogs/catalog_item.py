@@ -7,7 +7,6 @@ from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotF
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.common.vm_views import BasicProvisionFormView
-from cfme.utils import version
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty

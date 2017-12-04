@@ -9,7 +9,6 @@ from cfme.utils.update import Updateable
 from cfme.utils.pretty import Pretty
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.utils import version
 
 from . import ServicesCatalogView
 
