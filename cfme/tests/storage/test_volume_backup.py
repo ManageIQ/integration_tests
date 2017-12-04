@@ -17,8 +17,7 @@ STORAGE_SIZE = 1
 @pytest.yield_fixture(scope='module')
 def backup(appliance, provider):
     volume_collection = appliance.collections.volumes
-    storage_manager = version.pick({'5.8': '{} Cinder Manager'.format(provider.name),
-                                    version.LOWEST: None})
+    storage_manager = '{} Cinder Manager'.format(provider.name)
     backup_collection = appliance.collections.volume_backups.filter({'provider': provider})
 
     # create new volume

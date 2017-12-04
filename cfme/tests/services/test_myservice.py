@@ -9,7 +9,7 @@ from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.myservice.ui import MyServiceDetailView
 
-from cfme.utils import browser, version
+from cfme.utils import browser
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import ensure_browser_open
 from cfme.utils.log import logger
