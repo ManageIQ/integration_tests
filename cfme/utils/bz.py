@@ -135,20 +135,31 @@ class Bugzilla(object):
                 expanded.add(b)
         return found
 
-    def resolve_blocker(self, blocker, version=None, ignore_bugs=None, force_block_streams=None):
+    def resolve_blocker(self, blockers, version=None, ignore_bugs=None, force_block_streams=None):
         # ignore_bugs is mutable but is not mutated here! Same force_block_streams
         force_block_streams = force_block_streams or []
         ignore_bugs = set([]) if not ignore_bugs else ignore_bugs
-        if isinstance(id, BugWrapper):
-            bug = blocker
-        else:
-            bug = self.get_bug(blocker)
+        new_blockers = []
+        for blocker in blockers:
+            if isinstance(blocker, BugWrapper):
+                new_blockers.append(blocker)
+            else:
+                new_blockers.append(self.get_bug(blocker))
+        blockers = new_blockers
+        blocker_ids = [b.id for b in blockers]
         if version is None:
             version = current_version()
         if version == LATEST:
-            version = bug.product.latest_version
-        is_upstream = version == bug.product.latest_version
-        variants = self.get_bug_variants(bug)
+            version = blockers[0].product.latest_version
+        if len(blockers) > 1:
+            variants = blockers
+        else:
+            variants = self.get_bug_variants(blockers[0])
+            logger.debug(
+                'Resolved the bug id %d into all these BZs: %r',
+                blockers[0].id,
+                [b.id for b in variants])
+        is_upstream = version == variants[0].product.latest_version
         filtered = set([])
         version_series = ".".join(str(version).split(".")[:2])
         for variant in sorted(variants, key=lambda variant: variant.id):
@@ -157,13 +168,15 @@ class Bugzilla(object):
             if variant.version is not None and variant.version > version:
                 continue
             if variant.release_flag is not None and version.is_in_series(variant.release_flag):
-                logger.info('Found matching bug for %d by release - #%d', bug.id, variant.id)
+                logger.info('Found matching bug for %r by release - #%d', blocker_ids, variant.id)
                 filtered.clear()
                 filtered.add(variant)
                 break
             elif is_upstream and variant.release_flag == 'future':
                 # It is an upstream bug
-                logger.info('Found a matching upstream bug #%d for bug #%d', variant.id, bug.id)
+                logger.info(
+                    'Found a matching upstream bug #%d for bugs %r',
+                    variant.id, [b.id for b in variants])
                 return variant
             elif ((variant.version is not None and variant.target_release is not None) and
                     (
@@ -178,7 +191,7 @@ class Bugzilla(object):
             for forced_stream in force_block_streams:
                 # Find out if we force this bug.
                 if version.is_in_series(forced_stream):
-                    return bug
+                    return variants[0]
             else:
                 # No bug, yipee :)
                 return None
