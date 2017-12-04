@@ -530,19 +530,18 @@ class CustomizationTemplateCollection(BaseCollection):
 
         customization_templates = self.instantiate(name, description, script_data,
                                                    image_type, script_type)
-        if not customization_templates.exists():
-            view = navigate_to(self, 'Add')
-            view.fill({'name': name,
-                       'description': description,
-                       'image_type': image_type,
-                       'type': script_type,
-                       'script': script_data})
-            main_view = self.create_view(PXECustomizationTemplatesView)
-            if cancel:
-                view.cancel.click()
-            else:
-                view.add.click()
-            main_view.flash.assert_no_error()
+        view = navigate_to(self, 'Add')
+        view.fill({'name': name,
+                   'description': description,
+                   'image_type': image_type,
+                   'type': script_type,
+                   'script': script_data})
+        main_view = self.create_view(PXECustomizationTemplatesView)
+        if cancel:
+            view.cancel.click()
+        else:
+            view.add.click()
+        main_view.flash.assert_no_error()
         return customization_templates
 
     def delete(self, cancel=False, *ct_objs):
@@ -976,11 +975,18 @@ def get_template_from_config(template_config_name):
     script_data = script_data.read()
     appliance = get_or_create_current_appliance()
     collection = appliance.collections.customization_templates
-    return collection.create(name=template_config['name'],
-                             description=template_config['description'],
-                             image_type=template_config['image_type'],
-                             script_type=template_config['script_type'],
-                             script_data=script_data)
+    custimization_template = collection.instantiate(name=template_config['name'],
+                                                    description=template_config['description'],
+                                                    image_type=template_config['image_type'],
+                                                    script_type=template_config['script_type'],
+                                                    script_data=script_data)
+    if not custimization_template.exists():
+        return collection.create(name=template_config['name'],
+                                 description=template_config['description'],
+                                 image_type=template_config['image_type'],
+                                 script_type=template_config['script_type'],
+                                 script_data=script_data)
+    return custimization_template
 
 
 def get_pxe_server_from_config(pxe_config_name):
