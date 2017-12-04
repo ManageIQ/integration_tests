@@ -220,14 +220,18 @@ class Volume(BaseEntity):
 
     def create_snapshot(self, name):
         """create snapshot of cloud volume"""
+        initial_snapshot_count = self.snapshots_count
         view = navigate_to(self, 'Snapshot')
-        view.snapshot_name.fill(name)
 
+        view.snapshot_name.fill(name)
         view.save.click()
         view.flash.assert_success_message('Snapshot for Cloud Volume "{}" '
                                           'created'.format(self.name))
 
-        wait_for(lambda: self.snapshots > 0, delay=20, timeout=1000, fail_func=self.refresh)
+        wait_for(lambda: self.snapshots_count > initial_snapshot_count,
+                 delay=20,
+                 timeout=1000,
+                 fail_func=self.refresh)
 
     @property
     def exists(self):
@@ -255,7 +259,7 @@ class Volume(BaseEntity):
         """ size of storage cloud volume.
 
         Returns:
-            :py:class:`str' size of volume.
+            :py:class:`str` size of volume.
         """
         view = navigate_to(self, 'Details')
         return view.entities.properties.get_text_of('Size')
@@ -265,7 +269,7 @@ class Volume(BaseEntity):
         """ cloud tenants for volume.
 
         Returns:
-            :py:class:`str' respective tenants.
+            :py:class:`str` respective tenants.
         """
         view = navigate_to(self, 'Details')
         return view.entities.relationships.get_text_of('Cloud Tenants')
@@ -275,17 +279,17 @@ class Volume(BaseEntity):
         """ number of available backups for volume.
 
         Returns:
-            :py:class:`int' backup count.
+            :py:class:`int` backup count.
         """
         view = navigate_to(self, 'Details')
         return int(view.entities.relationships.get_text_of('Cloud Volume Backups'))
 
     @property
-    def snapshots(self):
+    def snapshots_count(self):
         """ number of available snapshots for volume.
 
         Returns:
-            :py:class:`int' snapshot count.
+            :py:class:`int` snapshot count.
         """
         view = navigate_to(self, 'Details')
         return int(view.entities.relationships.get_text_of('Cloud Volume Snapshots'))

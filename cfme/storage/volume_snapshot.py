@@ -62,7 +62,7 @@ class VolumeSnapshotView(BaseLoggedInPage):
         'contains(@class, "flash_text_div")]')
 
     @property
-    def in_volume_snapshot(self):
+    def in_volume_snapshots(self):
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == ['Storage', 'Block Storage', 'Volume Snapshots']
@@ -70,7 +70,7 @@ class VolumeSnapshotView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return self.in_volume_snapshot
+        return self.in_volume_snapshots
 
 
 class VolumeSnapshotAllView(VolumeSnapshotView):
@@ -81,7 +81,7 @@ class VolumeSnapshotAllView(VolumeSnapshotView):
     @property
     def is_displayed(self):
         return (
-            self.in_volume_snapshot and
+            self.in_volume_snapshots and
             self.title.text == 'Cloud Volume Snapshots')
 
 
@@ -92,7 +92,7 @@ class VolumeSnapshotDetailsView(VolumeSnapshotView):
         expected_title = '{} (Summary)'.format(self.context['object'].name)
 
         return (
-            self.in_volume_snapshot and
+            self.in_volume_snapshots and
             self.title.text == expected_title and
             self.entities.breadcrumb.active_location == expected_title)
 
@@ -121,7 +121,7 @@ class VolumeSnapshot(BaseEntity, WidgetasticTaggable):
         """ check for snapshot exist on UI.
 
         Returns:
-            :py:class:`bool'
+            :py:class:`bool`
         """
         view = navigate_to(self.parent, 'All')
         return self.name in view.entities.all_entity_names
@@ -131,7 +131,7 @@ class VolumeSnapshot(BaseEntity, WidgetasticTaggable):
         """ status of cloud volume snapshot.
 
         Returns:
-            :py:class:`str' Status of volume snapshot.
+            :py:class:`str` Status of volume snapshot.
         """
         view = navigate_to(self.parent, 'All')
         view.toolbar.view_selector.select("List View")
@@ -145,27 +145,27 @@ class VolumeSnapshot(BaseEntity, WidgetasticTaggable):
         """ size of cloud volume snapshot.
 
         Returns:
-            :py:class:`int' size of volume snapshot in GB.
+            :py:class:`int` size of volume snapshot in GB.
         """
         view = navigate_to(self, 'Details')
         return int(view.entities.properties.get_text_of('Size').split()[0])
 
     @property
-    def volume(self):
+    def volume_name(self):
         """ volume name of snapshot.
 
         Returns:
-            :py:class:`str' respective volume name.
+            :py:class:`str` respective volume name.
         """
         view = navigate_to(self, 'Details')
         return view.entities.relationships.get_text_of('Cloud Volume')
 
     @property
-    def tenant(self):
+    def tenant_name(self):
         """ Tenant name of snapshot.
 
         Returns:
-            :py:class:`str' respective tenant name for snapshot.
+            :py:class:`str` respective tenant name for snapshot.
         """
         view = navigate_to(self, 'Details')
         return view.entities.relationships.get_text_of('Cloud Tenants')
@@ -188,7 +188,7 @@ class VolumeSnapshot(BaseEntity, WidgetasticTaggable):
 
 @attr.s
 class VolumeSnapshotCollection(BaseCollection):
-    """Collection object for :py:class:'cfme.storage.volume_snapshots.VolumeSnapshot' """
+    """Collection object for :py:class:`cfme.storage.volume_snapshots.VolumeSnapshot`"""
 
     ENTITY = VolumeSnapshot
 
