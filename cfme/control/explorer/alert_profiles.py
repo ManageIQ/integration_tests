@@ -190,13 +190,7 @@ class BaseAlertProfile(BaseEntity, Updateable, Pretty):
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
-                'Alert Profile "{}" assignments {} saved'.format(
-                    self.description,
-                    version.pick({
-                        version.LOWEST: "succesfully",
-                        "5.8": "successfully",
-                    })
-                ))
+                'Alert Profile "{}" assignments successfully saved'.format(self.description))
         else:
             view.flash.assert_message(
                 'Edit of Alert Profile "{}" was cancelled by the user'.format(self.description))
