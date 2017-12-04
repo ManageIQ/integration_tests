@@ -65,9 +65,9 @@ def test_duplicate_instance_disallowed(request, klass):
         klass.instances.create(name=name)
 
 
-@pytest.mark.meta(blockers=[1148541])
 @pytest.mark.tier(3)
 @pytest.mark.polarion('RHCF3-20872')
+@pytest.mark.blockers(1148541)
 def test_instance_display_name_unset_from_ui(request, klass):
     instance = klass.instances.create(
         name=fauxfactory.gen_alphanumeric(),
