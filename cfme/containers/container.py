@@ -8,7 +8,6 @@ from widgetastic_manageiq import Accordion, ManageIQTree, View, Table
 from widgetastic_patternfly import VerticalNavigation
 from widgetastic.widget import Text
 from widgetastic.xpath import quote
-from widgetastic.utils import Version, VersionPick
 
 from cfme.containers.provider import (ContainerObjectAllBaseView, ContainerObjectDetailsBaseView)
 from cfme.common import WidgetasticTaggable, TagPageView
@@ -19,10 +18,7 @@ from cfme.utils import version
 
 class ContainerAllView(ContainerObjectAllBaseView):
     """Containers All view"""
-    summary = Text(VersionPick({
-        Version.lowest(): '//h3[normalize-space(.) = {}]'.format(quote('All Containers')),
-        '5.8': '//h1[normalize-space(.) = {}]'.format(quote('Containers'))
-    }))
+    summary = Text('//h1[normalize-space(.) = {}]'.format(quote('Containers')))
     containers = Table(locator="//div[@id='list_grid']//table")
 
     @View.nested
