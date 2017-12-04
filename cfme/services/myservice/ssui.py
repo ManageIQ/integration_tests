@@ -7,7 +7,6 @@ from widgetastic_manageiq import (
     SSUIAppendToBodyDropdown,
     SSUIConfigDropdown)
 from widgetastic_patternfly import Input, Button, Dropdown
-from widgetastic.utils import VersionPick, Version
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
 from cfme.common.vm import VM
@@ -55,12 +54,8 @@ class DetailsMyServiceView(MyServicesView):
     power_operations = SSUIDropdown('Power Operations')
     access_dropdown = SSUIAppendToBodyDropdown('Access')
     remove_service = Button("Remove Service")
-    configuration = VersionPick({
-        Version.lowest(): SSUIConfigDropdown("dropdownKebabRight"),
-        '5.8': SSUIDropdown('Configuration')})
-    lifecycle = VersionPick({
-        Version.lowest(): Dropdown("Retire"),
-        '5.8': SSUIDropdown('Lifecycle')})
+    configuration = SSUIDropdown('Configuration')
+    lifecycle = SSUIDropdown('Lifecycle')
     console_button = Button(tooltip="HTML5 console", classes=['open-console-button'])
 
 
