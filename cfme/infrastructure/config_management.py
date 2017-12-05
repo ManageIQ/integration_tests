@@ -236,6 +236,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
 
     pretty_attr = ['name', 'url']
     type = None
+    refresh_flash_msg = 'Refresh Provider initiated for 1 provider'
 
     def __init__(self, name=None, url=None, ssl=None, credentials=None, key=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
@@ -293,7 +294,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
             view.entities.add.click()
             success_message = '{} Provider "{}" was added'.format(self.type, self.name)
             view.entities.flash.assert_success_message(success_message)
-            view.entities.flash.assert_success_message(self._refresh_flash_msg)
+            view.entities.flash.assert_success_message(self.refresh_flash_msg)
             if validate:
                 try:
                     self.yaml_data['config_profiles']
@@ -359,12 +360,6 @@ class ConfigManager(Updateable, Pretty, Navigatable):
                 wait_for(func=lambda: self.exists, fail_condition=True, delay=15, num_sec=60)
 
     @property
-    def _refresh_flash_msg(self):
-        return version.pick({'5.7': 'Refresh Provider initiated for 1 provider ({})'.
-                                    format(self.type),
-                             '5.8': 'Refresh Provider initiated for 1 provider'})
-
-    @property
     def exists(self):
         """Returns whether the manager exists in the UI or not"""
         view = navigate_to(self, 'All')
@@ -388,7 +383,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
             view.toolbar.configuration.item_select('Refresh Relationships and Power states',
                                                    handle_alert=not cancel)
         if not cancel:
-            view.entities.flash.assert_success_message(self._refresh_flash_msg)
+            view.entities.flash.assert_success_message(self.refresh_flash_msg)
 
     @property
     def config_profiles(self):
