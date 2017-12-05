@@ -1,14 +1,13 @@
 import attr
-
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
+from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.networks.views import (CloudNetworkAddView, CloudNetworkEditView, CloudNetworkDetailsView,
                                  CloudNetworkView)
 from cfme.utils import providers, version
-from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.wait import wait_for
 
@@ -18,7 +17,6 @@ class CloudNetwork(WidgetasticTaggable, BaseEntity):
     """Class representing cloud networks in cfme database"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'
-    page_name = 'cloud_network'
     string_name = 'CloudNetwork'
     quad_name = None
     db_types = ['CloudNetwork']

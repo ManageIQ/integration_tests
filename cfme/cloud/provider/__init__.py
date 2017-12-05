@@ -4,20 +4,20 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown
-from widgetastic_manageiq import TimelinesView, BreadCrumb, ItemsToolBarViewSelector
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView
+from cfme.common.provider import CloudInfraProvider
 from cfme.common.provider_views import (
     CloudProviderAddView, CloudProviderEditView, CloudProviderDetailsView, CloudProvidersView,
     CloudProvidersDiscoverView)
-from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm_views import VMToolbar, VMEntities
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for
 from cfme.utils.pretty import Pretty
+from cfme.utils.wait import wait_for
+from widgetastic_manageiq import TimelinesView, BreadCrumb, ItemsToolBarViewSelector
 
 
 class CloudProviderTimelinesView(TimelinesView, BaseLoggedInPage):
@@ -97,7 +97,6 @@ class CloudProvider(Pretty, CloudInfraProvider):
     pretty_attrs = ['name', 'credentials', 'zone', 'key']
     STATS_TO_MATCH = ['num_template', 'num_vm']
     string_name = "Cloud"
-    page_name = "clouds"
     templates_destination_name = "Images"
     vm_name = "Instances"
     template_name = "Images"

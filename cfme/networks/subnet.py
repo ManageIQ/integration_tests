@@ -1,13 +1,12 @@
 import attr
-
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
+from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.networks.views import SubnetDetailsView, SubnetView, SubnetAddView, SubnetEditView
 from cfme.utils import providers, version
-from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.wait import wait_for
 
@@ -17,7 +16,6 @@ class Subnet(WidgetasticTaggable, BaseEntity):
     """Class representing subnets in sdn"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'
-    page_name = 'network_subnet'
     string_name = 'NetworkSubnet'
     quad_name = None
     db_types = ['NetworkSubnet']

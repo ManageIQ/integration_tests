@@ -19,7 +19,6 @@ class PhysicalProvider(Pretty, BaseProvider, Fillable):
     pretty_attrs = ['name']
     STATS_TO_MATCH = ['num_server']
     # string_name = "Physical Infrastructure"
-    # page_name = "infrastructure"
     # db_types = ["InfraManager"]
 
     def __init__(
