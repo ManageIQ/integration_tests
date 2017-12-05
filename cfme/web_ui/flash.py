@@ -90,11 +90,8 @@ def get_messages():
 def dismiss():
     """Dismiss the current flash message"""
     element = sel.element(area.message)
-    if version.current_version() < '5.7':
-        sel.click(element)
-    else:
-        close_button = sel.element('.//button[@class="close"]', root=element)
-        sel.click(close_button)
+    close_button = sel.element('.//button[@class="close"]', root=element)
+    sel.click(close_button)
 
 
 def get_all_messages():
