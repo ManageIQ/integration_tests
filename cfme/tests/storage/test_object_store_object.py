@@ -13,7 +13,6 @@ pytestmark = [
 ]
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 def test_object_add_remove_tag(objects, provider):
     all_objects = objects.all()  # This call here doesn't filter at all
     obj = random.choice(all_objects)
