@@ -76,7 +76,6 @@ def configure_websocket(appliance):
     server_settings.disable_server_roles('websocket')
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.8', reason='Only valid for >= 5.8')
 def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
         configure_vmware_console_for_test, take_screenshot):
     """
