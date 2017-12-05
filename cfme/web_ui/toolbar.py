@@ -71,10 +71,7 @@ def select_n_move(el):
 
 def select(*args, **kwargs):
     logger.debug('Selecting %r', args)
-    if version.current_version() > '5.5.0.7':
-        return pf_select(*args, **kwargs)
-    else:
-        return old_select(*args, **kwargs)
+    return pf_select(*args, **kwargs)
 
 
 def pf_select(root, sub=None, invokes_alert=False):
