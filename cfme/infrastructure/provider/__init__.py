@@ -1,12 +1,9 @@
 """ A model of an Infrastructure Provider in CFME
 """
+from cached_property import cached_property
+from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from widgetastic.utils import Fillable
-
-from cached_property import cached_property
-from cfme.exceptions import DestinationNotFound
-from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_manageiq import BreadCrumb, BaseEntitiesView, View
 
 from cfme.base.ui import Server
 from cfme.common import TagPageView
@@ -18,6 +15,7 @@ from cfme.common.provider_views import (InfraProviderAddView,
                                         InfraProvidersDiscoverView,
                                         InfraProvidersView,
                                         ProviderNodesView)
+from cfme.exceptions import DestinationNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import ClusterView, ClusterToolbar
 from cfme.infrastructure.host import Host
@@ -28,6 +26,7 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import BreadCrumb, BaseEntitiesView, View
 
 
 class ProviderClustersView(ClusterView):
@@ -69,7 +68,6 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     pretty_attrs = ['name', 'key', 'zone']
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
     string_name = "Infrastructure"
-    page_name = "infrastructure"
     templates_destination_name = "Templates"
     db_types = ["InfraManager"]
     hosts_menu_item = "Hosts"

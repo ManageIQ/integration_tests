@@ -1,11 +1,11 @@
 import attr
-
-from navmazing import NavigateToSibling, NavigateToAttribute
 from cached_property import cached_property
+from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import WidgetasticTaggable
 from cfme.common.provider import BaseProvider
 from cfme.exceptions import ItemNotFound
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.networks.balancer import BalancerCollection
 from cfme.networks.cloud_network import CloudNetworkCollection
 from cfme.networks.network_port import NetworkPortCollection
@@ -23,7 +23,6 @@ from cfme.networks.views import (
     OneProviderSubnetView
 )
 from cfme.utils import version
-from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.wait import wait_for
 
@@ -38,9 +37,7 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable, BaseEntity):
     STATS_TO_MATCH = []
     string_name = 'Networks'
     in_version = ('5.8', version.LATEST)
-    page_name = 'networks'
     edit_page_suffix = ''
-    detail_page_suffix = ''
     refresh_text = 'Refresh items and relationships'
     quad_name = None
     category = 'networks'

@@ -1,8 +1,8 @@
 
-import os
-import re
 from random import sample
 
+import os
+import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 
@@ -15,9 +15,11 @@ from cfme.common.provider_views import (
     MiddlewareProviderDetailsView)
 from cfme.exceptions import MiddlewareProviderNotFound
 from cfme.middleware.provider.middleware_views import (ProviderMessagingAllView,
-    ProviderDeploymentAllView, ProviderDatasourceAllView,
-    ProviderServerAllView, MiddlewareProviderTimelinesView,
-    ProviderDomainsAllView)
+                                                       ProviderDeploymentAllView,
+                                                       ProviderDatasourceAllView,
+                                                       ProviderServerAllView,
+                                                       MiddlewareProviderTimelinesView,
+                                                       ProviderDomainsAllView)
 from cfme.utils import version
 from cfme.utils.appliance import current_appliance
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -42,7 +44,6 @@ def _get_providers_page():
 class MiddlewareProvider(BaseProvider):
     in_version = ('5.7', version.LATEST)
     category = "middleware"
-    page_name = 'middleware'
     string_name = 'Middleware'
     provider_types = {}
     STATS_TO_MATCH = []

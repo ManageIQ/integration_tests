@@ -1,14 +1,13 @@
 import attr
-
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
+from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.networks.views import (NetworkRouterDetailsView, NetworkRouterView, NetworkRouterAddView,
                                  NetworkRouterEditView, NetworkRouterAddInterfaceView)
 from cfme.utils import version
-from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.wait import wait_for
 
@@ -18,7 +17,6 @@ class NetworkRouter(WidgetasticTaggable, BaseEntity):
     """ Class representing network ports in sdn"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'
-    page_name = 'NetworkRouter'
     string_name = 'NetworkRouter'
     quad_name = None
     db_types = ['NetworkRouter']

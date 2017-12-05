@@ -1,19 +1,14 @@
-import re
 import random
 from random import sample
 from traceback import format_exc
 
+import re
 from navmazing import NavigateToSibling, NavigateToAttribute
-
+from widgetastic.utils import VersionPick, Version
+from widgetastic.widget import Text, View, TextInput
 from widgetastic_patternfly import (
     SelectorDropdown, Dropdown, BootstrapSelect, Input, Button, Tab, FlashMessages
 )
-from widgetastic.utils import VersionPick, Version
-from widgetastic.widget import Text, View, TextInput
-from widgetastic_manageiq import (
-    SummaryTable, BreadCrumb, Accordion, ManageIQTree
-)
-
 from wrapanapi.utils import eval_strings
 
 from cfme import exceptions
@@ -30,10 +25,13 @@ from cfme.utils import version
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.browser import browser
+from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
-from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import (
+    SummaryTable, BreadCrumb, Accordion, ManageIQTree
+)
 
 
 class ContainersProviderDefaultEndpoint(DefaultEndpoint):
@@ -161,7 +159,6 @@ class ContainersProvider(BaseProvider, Pretty):
         'num_container']
     # TODO add 'num_volume'
     string_name = "Containers"
-    page_name = "containers"
     detail_page_suffix = 'provider_detail'
     edit_page_suffix = 'provider_edit_detail'
     quad_name = None
