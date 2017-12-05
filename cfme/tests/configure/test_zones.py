@@ -2,9 +2,9 @@
 import fauxfactory
 import pytest
 
+from cfme.utils import error
 from cfme.utils.appliance import current_appliance
 from cfme.utils.update import update
-from cfme.utils import error
 
 
 @pytest.mark.tier(1)
@@ -59,17 +59,11 @@ def test_zone_change_appliance_zone(request, appliance):
     )
     request.addfinalizer(zone.delete)
 
-    @request.addfinalizer
-    def _return_zone_back():
-        appliance.server.zone = appliance.default_zone
-
     server_settings = appliance.server.settings
     request.addfinalizer(lambda: server_settings.update_basic_information(
         {'appliance_zone': "default"}))
-    appliance.server.zone = zone
     server_settings.update_basic_information({'appliance_zone': zone.name})
-    assert zone.description == appliance.zone_description
-    appliance.server.zone = appliance.default_zone
+    assert zone.description == appliance.server.zone.description
 
 
 @pytest.mark.tier(2)

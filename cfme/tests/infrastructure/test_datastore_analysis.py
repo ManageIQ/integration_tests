@@ -6,7 +6,6 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import datastore, host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.web_ui import toolbar as tb, InfoBlock
 from cfme.utils import conf, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
