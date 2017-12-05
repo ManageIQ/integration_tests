@@ -45,15 +45,13 @@ class ButtonGroupDetailView(AutomateCustomizationView):
     text = SummaryFormItem(
         'Basic Information',
         VersionPick({
-            Version.lowest(): 'Button Text',
-            '5.8': 'Button Group Text',
+            Version.lowest(): 'Button Group Text',
             '5.9': 'Text'}),
         text_filter=lambda text: re.sub(r'\s+Display on Button\s*$', '', text))
     hover = SummaryFormItem(
         'Basic Information',
         VersionPick({
-            Version.lowest(): 'Button Hover Text',
-            '5.8': 'Button Group Hover Text',
+            Version.lowest(): 'Button Group Hover Text',
             '5.9': 'Hover Text'}))
 
     @property

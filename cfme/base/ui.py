@@ -4,8 +4,8 @@ import time
 
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
+
 from selenium.webdriver.common.keys import Keys
-from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View, Table, Text, Image, FileInput
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
                                     FlashMessages, BootstrapSelect, Tab)
@@ -35,12 +35,7 @@ def address(self):
 
 
 class LoginPage(View):
-    flash = FlashMessages(
-        VersionPick({
-            Version.lowest(): 'div#flash_text_div',
-            '5.8': '//div[@class="flash_text_div"]'
-        })
-    )
+    flash = FlashMessages('//div[@class="flash_text_div"]')
 
     class details(View):  # noqa
         region = Text('.//p[normalize-space(text())="Region:"]/span')

@@ -4,7 +4,6 @@ from navmazing import NavigateToAttribute
 from widgetastic_manageiq import Table, BootstrapSelect, BreadCrumb, Text, ViewButtonGroup
 from widgetastic_patternfly import (BootstrapSwitch,
                                     Input, Button, CheckableBootstrapTreeview, Dropdown)
-from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View
 from cfme.base.ui import MySettingsView
 from cfme.base.login import BaseLoggedInPage
@@ -20,10 +19,7 @@ class TimeProfileAddForm(View):
     timezone = BootstrapSelect('profile_tz')
     days = BootstrapSwitch(name='all_days')
     hours = BootstrapSwitch(name='all_hours')
-    save_button = Button(VersionPick({
-        Version.lowest(): 'Add',
-        '5.8': 'Save'})
-    )
+    save_button = Button('Save')
     configuration = Dropdown('Configuration')
     table = Table("//div[@id='main_div']//table")
     save_edit_button = Button('Save')
