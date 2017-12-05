@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.datastore import DatastoreCollection
 
@@ -39,29 +38,6 @@ def test_clear_host_filter_results(appliance):
     view.entities.search.remove_search_filters()
     page_title = view.title.text
     assert page_title == 'Hosts', 'Clear filter results failed'
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() >= "5.6")
-def test_set_default_datastore_filter(request, appliance):
-    """ Test for setting default filter for datastores."""
-
-    # I guess this test has to be redesigned
-    # Add cleanup finalizer
-    dc = DatastoreCollection(appliance)
-
-    def unset_default_datastore_filter():
-        view = navigate_to(dc, 'All')
-        view.filters.navigation.select('ALL')
-        view.default_filter_btn.click()
-    request.addfinalizer(unset_default_datastore_filter)
-
-    view = navigate_to(dc, 'All')
-    view.filters.navigation.select('Store Type / NFS')
-    view.default_filter_btn.click()
-    appliance.server.logout()
-    appliance.server.login_admin()
-    navigate_to(dc, 'All')
-    assert view.filters.navigation.currently_selected[0] == 'Store Type / NFS (Default)'
 
 
 def test_clear_datastore_filter_results(appliance):

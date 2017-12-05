@@ -245,7 +245,6 @@ class TestServiceRESTAPI(object):
             assert service.name == new_names[i]
 
     # POST method is not available on < 5.8, as described in BZ 1414852
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     def test_delete_service_post(self, appliance, services):
         """Tests deleting services from detail using POST method.
 
@@ -413,7 +412,6 @@ class TestServiceRESTAPI(object):
         vm = appliance.rest_api.collections.vms.get(name=service_data['vm_name'])
         assert service.vms[0].id == vm.id
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     def test_service_add_resource(self, request, appliance, vm):
         """Tests adding resource to service.
 
@@ -428,7 +426,6 @@ class TestServiceRESTAPI(object):
         assert_response(appliance)
         assert len(service.vms) == 1
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     def test_service_remove_resource(self, request, appliance, service_data):
         """Tests removing resource from service.
 
@@ -445,7 +442,6 @@ class TestServiceRESTAPI(object):
         assert_response(appliance)
         assert len(service.vms) == vms_num - 1
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     def test_service_remove_all_resources(self, request, appliance, vm, service_data):
         """Tests removing all resources from service.
 
@@ -477,10 +473,7 @@ class TestServiceRESTAPI(object):
         service = collection.action.create(service_body())[0]
         request.addfinalizer(service.action.delete)
         bodies = []
-        references = [{'id': service.id}]
-        if version.current_version() >= '5.8':
-            # referencing using href is not supported in versions < 5.8
-            references.append({'href': service.href})
+        references = [{'id': service.id}, {'href': service.href}]
         for ref in references:
             bodies.append(service_body(parent_service=ref))
         response = collection.action.create(*bodies)
@@ -668,7 +661,6 @@ class TestServiceTemplateRESTAPI(object):
         delete_resources_from_collection(collection, service_templates)
 
     # POST method is not available on < 5.8, as described in BZ 1427338
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     def test_delete_service_template_post(self, appliance, service_templates):
         """Tests deleting service templates from detail using POST method.
 
@@ -894,7 +886,6 @@ class TestServiceCatalogsRESTAPI(object):
         def _finished():
             appliance.rest_api.collections.services.action.delete(*new_services)
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     def test_order_catalog_bundle(self, appliance, request, catalog_bundle):
         """Tests ordering catalog bundle using the REST API.
 
@@ -968,7 +959,6 @@ class TestServiceCatalogsRESTAPI(object):
         delete_resources_from_collection(collection, service_catalogs, num_sec=300, delay=5)
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 class TestPendingRequestsRESTAPI(object):
     def _get_instance(self, miq_domain):
         auto_class = (miq_domain
@@ -1384,7 +1374,6 @@ class TestOrchestrationTemplatesRESTAPI(object):
             assert orchestration_templates[i].description == new[i]['description']
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     @pytest.mark.parametrize(
         "from_detail", [True, False],
         ids=["from_detail", "from_collection"])
@@ -1428,7 +1417,6 @@ class TestOrchestrationTemplatesRESTAPI(object):
             assert new_record.name == copied[i].name
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     @pytest.mark.parametrize(
         "from_detail", [True, False],
         ids=["from_detail", "from_collection"])
@@ -1494,7 +1482,6 @@ class TestServiceOrderCart(object):
         return response
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     def test_create_empty_cart(self, appliance, cart):
         """Tests creating an empty cart.
 
@@ -1506,7 +1493,6 @@ class TestServiceOrderCart(object):
         assert cart_dict['id'] == cart.id
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     def test_create_second_cart(self, request, appliance, cart):
         """Tests that it's not possible to create second cart.
 
@@ -1539,7 +1525,6 @@ class TestServiceOrderCart(object):
         assert response['id'] == cart_dict['id']
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     def test_add_to_cart(self, request, cart, service_templates_class):
         """Tests adding service requests to a cart.
 
@@ -1554,7 +1539,6 @@ class TestServiceOrderCart(object):
             assert service_request.source_id in templates_ids
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     def test_delete_requests(self, appliance, cart, service_templates_class):
         """Tests that deleting service requests removes them also from a cart.
 
@@ -1574,7 +1558,6 @@ class TestServiceOrderCart(object):
         assert all_req_ids - cart_req_ids == all_req_ids
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     def test_remove_from_cart(self, appliance, cart, service_templates_class):
         """Tests removing service requests from a cart.
 
@@ -1594,7 +1577,6 @@ class TestServiceOrderCart(object):
         assert all_req_ids - cart_req_ids == all_req_ids
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     def test_clear_cart(self, appliance, cart, service_templates_class):
         """Tests removing all service requests from a cart.
 
@@ -1612,7 +1594,6 @@ class TestServiceOrderCart(object):
         assert all_req_ids - cart_req_ids == all_req_ids
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     def test_copy_cart(self, appliance, cart):
         """Tests that it's not possible to copy a cart.
 
@@ -1624,7 +1605,6 @@ class TestServiceOrderCart(object):
         assert_response(appliance, http_status=400)
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     def test_order_cart(self, request, appliance, cart, service_templates_class):
         """Tests ordering service requests in a cart.
 
@@ -1659,7 +1639,6 @@ class TestServiceOrderCart(object):
             appliance.rest_api.get('{}/cart'.format(cart.collection._href))
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
     def test_delete_cart_from_detail(self, appliance, cart, method):
         """Tests deleting cart from detail.
@@ -1679,7 +1658,6 @@ class TestServiceOrderCart(object):
         assert_response(appliance, http_status=404)
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     def test_delete_cart_from_collection(self, appliance, cart):
         """Tests deleting cart from collection.
 

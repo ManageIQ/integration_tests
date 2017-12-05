@@ -5,7 +5,6 @@ import fauxfactory
 
 from cfme import test_requirements
 from cfme.configure.settings import DefaultView
-from cfme.utils import version
 from cfme.utils.rest import assert_response
 from cfme.utils.testgen import config_managers, generate
 from cfme.utils.wait import wait_for
@@ -81,9 +80,7 @@ def _check_edited_authentications(appliance, authentications, new_names):
         assert auth.name == record[0].name
 
 
-@pytest.mark.uncollectif(lambda config_manager_obj:
-        config_manager_obj.type != 'Ansible Tower' or
-        version.current_version() < '5.8')
+@pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type != 'Ansible Tower')
 class TestAuthenticationsRESTAPI(object):
 
     def test_authentications_edit_single(self, appliance, authentications):
