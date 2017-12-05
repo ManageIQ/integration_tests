@@ -7,7 +7,6 @@ from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotF
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.common.vm_views import BasicProvisionFormView
-from cfme.utils import version
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
@@ -260,11 +259,7 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
 
     def delete(self):
         view = navigate_to(self, "Details")
-        view.configuration.item_select(
-            version.pick({
-                version.LOWEST: 'Remove Item from the VMDB',
-                '5.7': 'Remove Catalog Item'}),
-            handle_alert=True)
+        view.configuration.item_select('Remove Catalog Item', handle_alert=True)
         view = self.create_view(AllCatalogItemView)
         assert view.is_displayed
         view.flash.assert_success_message('The selected Catalog Item was deleted')

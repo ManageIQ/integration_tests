@@ -6,7 +6,6 @@ from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.utils.appliance import current_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils import version
 from cfme.configure import settings  # NOQA
 
 
@@ -37,12 +36,8 @@ def test_timezone_setting(set_timezone):
     Metadata:
         test_flag: visuals
     """
-    locator = version.pick({
-        version.LOWEST: ('//label[contains(@class,"control-label") and contains(., "Started On")]'
-            '/../div/p[contains(., "{}")]'.format("HST")),
-        '5.7': ('//label[contains(@class,"control-label") and contains(., "Started On")]'
-            '/../div/p[contains(., "{}")]'.format("-1000"))
-    })
+    locator = ('//label[contains(@class,"control-label") and contains(., "Started On")]'
+               '/../div/p[contains(., "{}")]'.format("-1000"))
 
     navigate_to(current_appliance.server, 'DiagnosticsDetails')
 

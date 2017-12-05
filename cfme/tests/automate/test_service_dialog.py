@@ -5,7 +5,7 @@ import fauxfactory
 from cfme import test_requirements
 from cfme.automate.service_dialogs import DialogCollection
 from cfme.utils.update import update
-from cfme.utils import version, error
+from cfme.utils import error
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
@@ -54,9 +54,7 @@ def test_service_dialog_duplicate_name(appliance, request):
     label = 'duplicate_' + fauxfactory.gen_alphanumeric()
     dialog = create_dialog(appliance, element_data, label=label)
     request.addfinalizer(dialog.delete_if_exists)
-    error_message = version.pick({
-        '5.8': 'Validation failed: Label is not unique within region 0',
-        '5.7': 'Label has already been taken'})
+    error_message = 'Validation failed: Label is not unique within region 0'
     with error.expected(error_message):
         create_dialog(appliance, element_data, label=label)
 

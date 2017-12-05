@@ -32,10 +32,7 @@ def test_evmserverd_stop(appliance, request):
             stopping the service are present.
     """
 
-    server_name_key = version.pick({
-        version.LOWEST: 'Server Name',
-        '5.8': 'Server'
-    })
+    server_name_key = 'Server'
 
     server_names = {server[server_name_key] for server in appliance.ssh_client.status["servers"]}
     request.addfinalizer(appliance.start_evm_service)
