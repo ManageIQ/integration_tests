@@ -171,6 +171,15 @@ management_systems:
                 credentials: lenovo
                 ipaddress: 10.0.0.1
                 api_port: 3000
+    nuage:
+        name: nuage_net
+        type: nuage
+        endpoints:
+            default:
+                hostname: 10.0.0.1
+                credentials: nuage
+                security_protocol: Non-SSL
+                api_port: 5000
     openshift:
         name: openshift
         type: openshift

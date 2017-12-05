@@ -4,7 +4,6 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import WidgetasticTaggable
 from cfme.common.provider import BaseProvider
-from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.networks.balancer import BalancerCollection
 from cfme.networks.cloud_network import CloudNetworkCollection
@@ -15,6 +14,7 @@ from cfme.networks.subnet import SubnetCollection
 from cfme.networks.views import (
     NetworkProviderDetailsView,
     NetworkProviderView,
+    NetworkProviderAddView,
     OneProviderBalancerView,
     OneProviderCloudNetworkView,
     OneProviderNetworkPortView,
@@ -24,7 +24,6 @@ from cfme.networks.views import (
 )
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.utils.wait import wait_for
 
 
 @attr.s
@@ -35,10 +34,10 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable, BaseEntity):
           only automaticaly with cloud provider
     """
     STATS_TO_MATCH = []
-    string_name = 'Networks'
+    string_name = 'Network'
     in_version = ('5.8', version.LATEST)
     edit_page_suffix = ''
-    refresh_text = 'Refresh items and relationships'
+    refresh_text = 'Refresh Relationships and Power States'
     quad_name = None
     category = 'networks'
     provider_types = {}
@@ -58,35 +57,12 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable, BaseEntity):
     name = attr.ib()
     provider = attr.ib(default=None)
 
-    def refresh_provider_relationships(self, cancel=True):
-        """ Refresh relationships of network provider """
-        view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Refresh Relationships and Power States',
-                                               handle_alert=not cancel)
-
-    def delete(self, cancel=True):
-        """ Deletes a network provider from CFME """
-        view = navigate_to(self, 'Details')
-        wait_for(lambda: view.toolbar.configuration.item_enabled('Remove this Network Provider'),
-                 num_sec=10)
-        view.toolbar.configuration.item_select('Remove this Network Provider',
-                                               handle_alert=not cancel)
-
     @property
     def valid_credentials_state(self):
         """ Checks whether credentials are valid """
         view = navigate_to(self, 'Details')
         cred_state = view.entities.status.get_text_of('Default Credentials')
         return cred_state == "Valid"
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-        except ItemNotFound:
-            return False
-        else:
-            return True
 
     @cached_property
     def balancers(self):
@@ -126,7 +102,16 @@ class NetworkProviderCollection(BaseCollection):
         list_networks = view.entities.get_all(surf_pages=True)
         return [self.instantiate(name=p.name) for p in list_networks]
 
+    # A rare collection override of instantiate
+    def instantiate(self, prov_class, *args, **kwargs):
+        return prov_class.from_collection(self, *args, **kwargs)
 
+    def create(self, prov_class, *args, **kwargs):
+        obj = self.instantiate(prov_class, *args, **kwargs)
+        obj.create()
+
+
+@navigator.register(NetworkProvider, 'All')  # To be removed once all CEMv3
 @navigator.register(NetworkProviderCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = NetworkProviderView
@@ -134,6 +119,17 @@ class All(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.navigation.select('Networks', 'Providers')
+
+
+@navigator.register(NetworkProvider, 'Add')  # To be removed once all CEMv3
+@navigator.register(NetworkProviderCollection, 'Add')
+class Add(CFMENavigateStep):
+    VIEW = NetworkProviderAddView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        self.prerequisite_view.toolbar.configuration.item_select('Add a New '
+                                                                 'Network Provider')
 
 
 @navigator.register(NetworkProvider, 'Details')
