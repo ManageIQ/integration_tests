@@ -15,7 +15,6 @@ from cfme.services.myservice import MyService
 from cfme.optimize.utilization import Utilization
 from cfme.optimize.bottlenecks import Bottlenecks
 from cfme.infrastructure.networking import InfraNetworking
-from cfme.utils import version
 from cfme.utils.appliance import current_appliance
 from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -42,8 +41,6 @@ pytestmark = [
         "location", LOCATIONS, ids=[
             "{}-{}".format(loc[0].__name__, loc[1]) for loc in LOCATIONS]
     ),
-    pytest.mark.uncollectif(lambda location: location[0] == InfraNetworking and
-        version.current_version() < '5.7')
 ]
 
 

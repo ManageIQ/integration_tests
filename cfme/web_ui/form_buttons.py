@@ -164,16 +164,15 @@ _stored_pw_angular = "//a[contains(@ng-hide, 'bChangeStoredPassword')]"
 
 
 def change_stored_password():
-    if version.current_version() > '5.5':
-        if sel.is_displayed(_stored_pw_script):
-            sel.execute_script(
-                sel.get_attribute(
-                    sel.element(_stored_pw_script), 'onClick'))
-            sel.wait_for_ajax()  # To play safe
-        elif sel.is_displayed(_stored_pw_angular):
-            sel.click(_stored_pw_angular)
-        else:
-            logger.info("Probably no creds")
+    if sel.is_displayed(_stored_pw_script):
+        sel.execute_script(
+            sel.get_attribute(
+                sel.element(_stored_pw_script), 'onClick'))
+        sel.wait_for_ajax()  # To play safe
+    elif sel.is_displayed(_stored_pw_angular):
+        sel.click(_stored_pw_angular)
+    else:
+        logger.info("Probably no creds")
 
 
 @fill.method((FormButton, bool))

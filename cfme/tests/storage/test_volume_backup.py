@@ -44,14 +44,12 @@ def backup(appliance, provider):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 def test_storage_volume_backup_create(backup):
     assert backup.exists
     assert backup.size == STORAGE_SIZE
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 def test_storage_volume_backup_edit_tag_from_detail(backup):
     # add tag with category Department and tag communication
     backup.add_tag('Department', 'Communication')
