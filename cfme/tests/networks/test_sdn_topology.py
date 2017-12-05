@@ -4,6 +4,7 @@ from random import choice
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.networks.topology import TopologyCollection
 from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytest_generate_tests = testgen.generate(classes=[EC2Provider], scope='module')
@@ -14,7 +15,7 @@ def test_topology_search(provider, appliance):
     """Testing search functionality in Topology view """
     top_collection = TopologyCollection(appliance)
     topology_object = top_collection.instantiate()
-    topology_object.open_view
+    view = navigate_to(topology_object, 'All')
     topology_object.display_names.enable(True)
 
     elements = topology_object.elements
@@ -22,7 +23,7 @@ def test_topology_search(provider, appliance):
 
     element_to_search = choice(elements)
     search_term = element_to_search.name[:len(element_to_search.name) / 2]
-    topology_object.view.toolbar.search_box.search(text=search_term)
+    view.toolbar.search_box.search(text=search_term)
 
     for element in topology_object.elements:
         if search_term in element.name:
@@ -33,14 +34,14 @@ def test_topology_search(provider, appliance):
             assert element.is_hidden, 'Element should not be visible.\
                                        search: "{}", found: "{}"'.format(search_term, element.name)
 
-    topology_object.view.toolbar.search_box.clear_search()
+    view.toolbar.search_box.clear_search()
 
 
 def test_topology_toggle_display(provider, appliance):
     """Testing display functionality in Topology view"""
     top_collection = TopologyCollection(appliance)
     topology_object = top_collection.instantiate()
-    topology_object.open_view
+    navigate_to(topology_object, 'All')
     for legend in topology_object.legends:
         for state in (True, False):
             legend.set_active(state)

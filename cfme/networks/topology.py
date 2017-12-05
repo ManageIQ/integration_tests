@@ -36,8 +36,9 @@ class TopologyLegendCollection(BaseCollection):
     ENTITY = TopologyLegend
 
     def filter(self, topology):
+        view = navigate_to(topology, 'All')
         final_legends = []
-        legends = topology.browser.elements(topology.view.LEGENDS)
+        legends = topology.browser.elements(view.LEGENDS)
         for element in legends:
             legend_name = topology.browser.text(element.find_element_by_tag_name('label'))
             final_legends.append(self.instantiate(element, legend_name))
@@ -124,7 +125,8 @@ class TopologyElementCollection(BaseCollection):
         return elem
 
     def filter(self, obj):
-        elements = obj.browser.elements(obj.view.ELEMENTS)
+        view = navigate_to(obj, 'All')
+        elements = obj.browser.elements(view.ELEMENTS)
         return [self.instantiate(element, obj) for element in elements]
 
 
@@ -152,7 +154,8 @@ class TopologyLineCollection(BaseCollection):
         return line
 
     def filter(self, topology):
-        lines = topology.browser.elements(topology.view.LINES)
+        view = navigate_to(topology, 'All')
+        lines = topology.browser.elements(view.LINES)
         return [self.instantiate(element=line) for line in lines]
 
 
@@ -197,11 +200,8 @@ class Topology(BaseEntity):
 
     @property
     def display_names(self):
-        return TopologyDisplayNames(self.appliance, self.browser.element(self.view.DISPLAY_NAME))
-
-    @property
-    def open_view(self):
-        self.view = navigate_to(self, 'All')
+        view = navigate_to(self, 'All')
+        return TopologyDisplayNames(self.appliance, self.browser.element(view.DISPLAY_NAME))
 
 
 @attr.s
