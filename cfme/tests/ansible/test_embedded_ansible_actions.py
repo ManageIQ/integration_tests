@@ -15,15 +15,13 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.net import net_check
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
-from fixtures.provider import setup_one_by_class_or_skip
+from markers.env_markers.provider import ONE_PER_TYPE
 
 
 pytestmark = [
-    pytest.mark.long_running,
-    pytest.mark.meta(server_roles=["+embedded_ansible"]),
-    pytest.mark.ignore_stream("upstream", '5.7'),
-    pytest.mark.uncollectif(BZ(1515841, forced_streams=['5.9']).blocks, 'BZ 1515841'),
     pytest.mark.ignore_stream("upstream"),
+    pytest.mark.long_running,
+    pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, scope="module"),
     test_requirements.ansible
 ]
 
@@ -49,13 +47,11 @@ ANSIBLE_ACTION_VALUES = [
 
 
 @pytest.fixture(scope="module")
-def provider(request):
-    return setup_one_by_class_or_skip(request, VMwareProvider)
-
-
-@pytest.fixture(scope="module")
 def wait_for_ansible(appliance):
+    appliance.server.settings.enable_server_roles("embedded_ansible")
     appliance.wait_for_embedded_ansible()
+    yield
+    appliance.server.settings.disable_server_roles("embedded_ansible")
 
 
 @pytest.yield_fixture(scope="module")
@@ -133,7 +129,6 @@ def ansible_action(appliance, ansible_catalog_item):
         action.delete()
 
 
-@pytest.mark.uncollectif(BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576')
 @pytest.yield_fixture(scope="module")
 def policy_for_testing(appliance, vmware_vm, provider, ansible_action):
     policy = appliance.collections.policies.create(
@@ -190,9 +185,9 @@ def service(appliance, ansible_catalog_item):
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("host_type,inventory", ANSIBLE_ACTION_VALUES, ids=[
     value[0] for value in ANSIBLE_ACTION_VALUES])
-def test_action_run_ansible_playbook(request, ansible_catalog_item, ansible_action, vmware_vm,
-                                     ansible_credential, service_request, service, host_type,
-                                     inventory):
+def test_action_run_ansible_playbook(request, ansible_catalog_item, ansible_action,
+        policy_for_testing, vmware_vm, ansible_credential, service_request, service, host_type,
+        inventory):
     """Tests a policy with ansible playbook action against localhost, manual address,
        target machine and unavailable address.
     """
