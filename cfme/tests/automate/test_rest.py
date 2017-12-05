@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
 """REST API specific automate tests."""
-import pytest
-
 from cfme import test_requirements
-from cfme.utils import version
 
 
 pytestmark = [test_requirements.rest]
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_rest_search_automate(appliance):
     rest_api = appliance.rest_api
 
