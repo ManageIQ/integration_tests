@@ -61,7 +61,6 @@ class ConfigManagementSideBar(View):
 
 class ConfigManagementEntities(BaseEntitiesView):
     """The entities on the page"""
-    table = Table('//div[@id="main_div"]//div[@id="list_grid"]/table')
 
 
 class ConfigManagementProfileEntities(BaseEntitiesView):
@@ -79,7 +78,7 @@ class ConfigManagementProfileEntities(BaseEntitiesView):
     @View.nested
     class configured_systems(Tab):          # noqa
         TAB_NAME = 'Configured Systems'
-        table = Table('//div[@id="main_div"]//div[@id="list_grid"]/table')
+        elements = Table('//div[@id="main_div"]//div[@id="list_grid" or @id="gtl_div"]//table')
 
 
 class ConfigManagementAddForm(View):
@@ -177,9 +176,14 @@ class ConfigManagementDetailsView(ConfigManagementView):
     @property
     def is_displayed(self):
         """Is this view being displayed?"""
-        titles = [t.format(self.obj.name) for t in [
-            'Configuration Profiles under Red Hat Satellite Provider "{} Configuration Manager"',
-            'Inventory Groups under Ansible Tower Provider "{} Configuration Manager"'
+        if self.browser.product_version > '5.9':
+            mgr = 'Automation Manager'
+        else:
+            mgr = 'Configuration Manager'
+
+        titles = [t.format(name=self.obj.name, mgr=mgr) for t in [
+            'Configuration Profiles under Red Hat Satellite Provider "{name} {mgr}"',
+            'Inventory Groups under Ansible Tower Provider "{name} {mgr}"'
         ]]
         return self.in_config and self.entities.title.text in titles
 
@@ -251,7 +255,12 @@ class ConfigManager(Updateable, Pretty, Navigatable):
     @property
     def ui_name(self):
         """Return the name used in the UI"""
-        return '{} Configuration Manager'.format(self.name)
+        if self.appliance.version > '5.9':
+            mgr = 'Automation Manager'
+        else:
+            mgr = 'Configuration Manager'
+
+        return '{name} {mgr}'.format(name=self.name, mgr=mgr)
 
     def create(self, cancel=False, validate_credentials=True, validate=True, force=False):
         """Creates the manager through UI
@@ -475,9 +484,9 @@ class ConfigProfile(Pretty, Navigatable):
         if 'unassigned' not in self.name.lower():
             view.entities.configured_systems.click()
 
-        if view.entities.configured_systems.table.is_displayed:
+        if view.entities.configured_systems.elements.is_displayed:
             return [ConfigSystem(row.hostname.text, self)
-                    for row in view.entities.configured_systems.table]
+                    for row in view.entities.configured_systems.elements]
         return list()
 
 
