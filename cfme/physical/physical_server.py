@@ -3,6 +3,7 @@
 import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from cached_property import cached_property
+from cfme.utils import conf
 from cfme.common import PolicyProfileAssignable, WidgetasticTaggable
 from cfme.common.physical_server_views import (
     PhysicalServerDetailsView,
@@ -10,7 +11,7 @@ from cfme.common.physical_server_views import (
     PhysicalServersView,
     PhysicalServerTimelinesView
 )
-from cfme.exceptions import ItemNotFound
+from cfme.exceptions import ItemNotFound, StatsDoNotMatch, HostStatsNotContains
 from cfme.modeling.base import BaseEntity, BaseCollection
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from cfme.utils.log import logger
@@ -18,7 +19,10 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
 from cfme.utils.providers import get_crud_by_name
-
+from cfme.exceptions import (ProviderHasNoKey, ProviderHasNoProperty)
+from wrapanapi.lenovo import LenovoSystem
+from cfme.utils.varmeth import variable
+from cfme.fixtures import pytest_selenium as sel
 
 @attr.s
 class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticTaggable):
@@ -44,6 +48,9 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
     ip_address = attr.ib(default=None)
     custom_ident = attr.ib(default=None)
     db_id = None
+    mgmt_class = LenovoSystem
+
+    STATS_TO_MATCH = ['power_state']
 
     def load_details(self, refresh=False):
         """To be compatible with the Taggable and PolicyProfileAssignable mixins.
@@ -68,9 +75,9 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
         view = navigate_to(self, "Details")
         view.toolbar.power.item_select("Power Off", handle_alert=True)
 
-    @property
+    @variable(alias='ui')
     def power_state(self):
-        return self.get_detail("Properties", "Power State")
+        return self.get_detail("Power Management", "Power State")
 
     def refresh(self, cancel=False):
         """Perform 'Refresh Relationships and Power States' for the server.
@@ -153,6 +160,65 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
             num_sec=500,
             fail_func=view.browser.refresh
         )
+
+    def validate_stats(self, ui=False):
+        """ Validates that the detail page matches the physical server's information.
+
+        This method logs into the provider using the mgmt_system interface and collects
+        a set of statistics to be matched against the UI. An exception will be raised
+        if the stats retrieved from the UI do not match those retrieved from wrapanapi.
+        """
+
+        # Make sure we are on the physical server detail page
+        if ui:
+            self.load_details()
+
+        # Retrieve the data from the provider
+        providers_data = conf.cfme_data.get("management_systems", {})
+        providers = providers_data
+
+        # Gather the data necessary to instantiate an instance of the management class
+        # defined in wrapanapi.
+        provider_data = providers['lenovo']
+        credentials = provider_data['credentials']  
+        credentials = conf.credentials[credentials]
+        provider_kwargs = provider_data.copy()
+        provider_kwargs.update(credentials)
+        provider_kwargs['logger'] = logger
+
+        # Create an instance of the management class
+        mgmt = self.mgmt_class(**provider_kwargs)
+
+        # Check that the stats match
+        self._check_for_matching_stats(mgmt, self.STATS_TO_MATCH, ui=ui)
+
+    def _check_for_matching_stats(self, client, stats_to_match=None, ui=False):
+        """ A function that checks that the stats from CFME and wrapanapi match.
+
+            If the stats do not match, an exception is raised.
+        """
+        # Retrieve the stats from wrapanapi
+        host_stats = client.stats(self, *stats_to_match)
+
+        # Refresh the browser
+        method = None
+        if ui:
+            self.browser.selenium.refresh()
+            method = 'ui'
+
+        # Verify that the stats retrieved from wrapanapi match those retrieved
+        # from the UI
+        for stat in stats_to_match:
+            try:
+                cfme_stat = getattr(self, stat)(method=method)
+
+                if host_stats[stat] != cfme_stat:
+                    raise StatsDoNotMatch("The {} stat does not match. (server: {}, host stat: {}, cfme stat: {})".format(stat, self.name, host_stats[stat], cfme_stat))
+            except KeyError:
+                raise HostStatsNotContains(
+                    "Host stats information does not contain '{}'".format(stat))
+            except AttributeError:
+                raise ProviderHasNoProperty("Provider does not know how to get '{}'".format(stat))
 
 
 @attr.s

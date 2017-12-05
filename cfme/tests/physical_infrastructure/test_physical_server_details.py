@@ -56,3 +56,9 @@ def test_physical_server_details_dropdowns(physical_server_collection, provider)
 
     monitoring_items = physical_server_view.toolbar.monitoring.items
     assert "Timelines" in monitoring_items
+
+
+def test_physical_server_details_stats(physical_server_collection, provider):
+    """Navigate to the physical server details page and verify that the stats match"""
+    physical_servers = physical_server_collection.all(provider)
+    physical_servers[0].validate_stats(ui=True)
