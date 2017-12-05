@@ -78,6 +78,7 @@ if distro_id:
     for release_name, release_version, curl_ssl, packages in REDHAT_PACKAGES_SPECS:
         if distro_id == release_name and distro_ver == release_version:
             REDHAT_PACKAGES = packages
+            os.environ['PYCURL_SSL_LIBRARY'] = curl_ssl
             break
     else:
         print("{} not known".format(distro_id))
