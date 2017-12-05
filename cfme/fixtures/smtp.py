@@ -82,7 +82,8 @@ def smtp_test(request, appliance):
     server_port_open = net_check_remote(mail_server_port, my_ip, force=True)
     assert query_port_open and server_port_open,\
         'Ports {} and {} on the machine executing the tests are closed.\n'\
-        'The ports are randomly chosen -> turn firewall off.'\
+        'The ports are randomly chosen -> turn firewall off.\n'\
+        'Alternatively, you might add SMTP as a trusted service: firewall-cmd --add-service=smtp.'\
         .format(mail_query_port, mail_server_port)
     client = SMTPCollectorClient(
         my_ip,
