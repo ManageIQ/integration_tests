@@ -9,9 +9,7 @@ from cfme.cloud.instance.image import Image
 from cfme.cloud.keypairs import KeyPairCollection
 from cfme.cloud.stack import StackCollection
 from cfme.cloud.provider import CloudProvider
-from cfme.utils import version
 from cfme.modeling.base import BaseCollection
-from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
 from fixtures.provider import setup_one_or_skip
 
@@ -88,21 +86,3 @@ def test_tagvis_cloud_object(check_item_visibility, testing_vis_object, visibili
         4. Login as restricted user, item is not visible for user
     """
     check_item_visibility(testing_vis_object, visibility)
-
-
-@pytest.mark.meta(blockers=[BZ(1441637)])
-@pytest.mark.uncollectif(lambda: version.current_version() >= "5.7")
-@pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
-def test_tagvis_cloud_keypair(check_item_visibility, key_pair, visibility):
-    """ Tests infra provider and its items honors tag visibility
-    Prerequisites:
-        Catalog, tag, role, group and restricted user should be created
-        Additionally cloud key_pair should be created
-
-    Steps:
-        1. As admin add tag to key_pair
-        2. Login as restricted user, key_pair is visible for user
-        3. As admin remove tag from key_pair
-        4. Login as restricted user, key_pair is not visible for user
-    """
-    check_item_visibility(key_pair, visibility)

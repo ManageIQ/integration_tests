@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module contains tests that exercise control of evmserverd service."""
 import pytest
-import re
 from cfme.utils import version
 from cfme.utils.wait import wait_for_decorator
 
