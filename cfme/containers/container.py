@@ -18,7 +18,7 @@ from cfme.utils import version
 
 class ContainerAllView(ContainerObjectAllBaseView):
     """Containers All view"""
-    summary = Text('//h1[normalize-space(.) = {}]'.format(quote('Containers')))
+    summary = Text('//h1[normalize-space(.) = "Containers"]')
     containers = Table(locator="//div[@id='list_grid']//table")
 
     @View.nested
