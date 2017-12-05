@@ -33,7 +33,6 @@ def test_configure_appliance_external_join(app_creds, appliance,
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_configure_appliance_external_create(
         app_creds, dedicated_db_appliance, temp_appliance_unconfig_funcscope):
     hostname = dedicated_db_appliance.hostname

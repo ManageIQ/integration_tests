@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module contains tests that exercise control of evmserverd service."""
 import pytest
-import re
 from cfme.utils import version
 from cfme.utils.wait import wait_for_decorator
 
@@ -51,34 +50,3 @@ def test_evmserverd_stop(appliance, request):
     status = appliance.ssh_client.run_command("systemctl status evmserverd")
     assert "Stopped EVM server daemon" in status.output
     assert "code=exited" in status.output
-
-
-@pytest.mark.tier(1)
-@pytest.mark.uncollectif(lambda: version.current_version() >= "5.5")
-def test_evmserverd_start_twice(appliance, request):
-    """If evmserverd start is ran twice, it will then tell that it is already running.
-
-    Steps:
-        * Stop the evmserverd using ``service evmserverd stop``.
-        * Start the evmserverd using ``service evmserverd start`` command.
-        * Assert that the output of the previous command states "Running EVM in background".
-        * Start the evmserverd using ``service evmserverd start`` command.
-        * Assert that the output of the previous command states "EVM is already running".
-        * Extract the PID of the evmserverd from the output from the last command.
-        * Verify the process with such PID exists ``kill -0 $PID``.
-    """
-    request.addfinalizer(appliance.start_evm_service)
-    appliance.stop_evm_service()
-    # Start first time
-    res = appliance.start_evm_service()
-    assert "running evm in background" in res.output.lower()
-    assert res.rc == 0
-    # Start second time
-    res = appliance.start_evm_service()
-    assert "evm is already running" in res.output.lower()
-    assert res.rc == 0
-    # Verify the process is running
-    pid_match = re.search(r"\(PID=(\d+)\)", res.output)
-    assert pid_match is not None
-    pid = int(pid_match.groups()[0])
-    assert appliance.ssh_client.run_command("kill -0 {}".format(pid)).rc == 0
