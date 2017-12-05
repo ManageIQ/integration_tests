@@ -9,7 +9,7 @@ from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.myservice.ui import MyServiceDetailView
 
-from cfme.utils import browser, version
+from cfme.utils import browser
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import ensure_browser_open
 from cfme.utils.log import logger
@@ -46,9 +46,7 @@ def myservice(appliance, setup_provider, provider, catalog_item, request):
     Metadata:
         test_flag: provision
     """
-    vm_name = version.pick({
-        version.LOWEST: catalog_item.provisioning_data["catalog"]["vm_name"] + '_0001',
-        '5.7': catalog_item.provisioning_data["catalog"]["vm_name"] + '0001'})
+    vm_name = catalog_item.provisioning_data["catalog"]["vm_name"] + '0001'
     catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()

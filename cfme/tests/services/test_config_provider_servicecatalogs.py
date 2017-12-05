@@ -6,7 +6,7 @@ from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.catalogs.catalog_item import CatalogItem
 
-from cfme.utils import testgen, version
+from cfme.utils import testgen
 from cfme.utils.log import logger
 
 
@@ -56,9 +56,7 @@ def catalog_item(request, config_manager, dialog, catalog):
                                display_in=True,
                                catalog=catalog,
                                dialog=dialog,
-                               provider=version.pick({
-                                   '5.7': '{} Configuration Manager'.format(provider_name),
-                                   '5.8': '{} Automation Manager'.format(provider_name)}),
+                               provider='{} Automation Manager'.format(provider_name),
                                provider_type=provider_type,
                                config_template=template)
     request.addfinalizer(catalog_item.delete)
