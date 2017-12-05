@@ -9,8 +9,7 @@ from cfme.utils.blockers import BZ
 
 pytest_generate_tests = generate(gen_func=config_managers)
 pytestmark = [pytest.mark.uncollectif(lambda config_manager_obj:
-                                      config_manager_obj.type == "Ansible Tower" and
-                                      version.current_version() > "5.6"),
+                                      config_manager_obj.type == "Ansible Tower"),
               pytest.mark.meta(blockers=[BZ(1393987)])]
 
 
@@ -48,21 +47,11 @@ def tag(category):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(
-    blockers=[BZ(1388928, unblock=lambda config_manager_obj: (
-        config_manager_obj.type == "Ansible Tower" and version.current_version() > "5.7.0.9") or
-        config_manager_obj.type != "Ansible Tower")]
-)
 def test_config_manager_detail_config_btn(request, config_manager):
     config_manager.refresh_relationships()
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(
-    blockers=[BZ(1388928, unblock=lambda config_manager_obj: (
-        config_manager_obj.type == "Ansible Tower" and version.current_version() > "5.7.0.9") or
-        config_manager_obj.type != "Ansible Tower")]
-)
 def test_config_manager_add(request, config_manager_obj):
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.create()
@@ -98,13 +87,7 @@ def test_config_manager_edit(request, config_manager):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower" and
-    version.current_version() > "5.7.0.9")
-@pytest.mark.meta(
-    blockers=[BZ(1388928, unblock=lambda config_manager_obj: (
-        config_manager_obj.type == "Ansible Tower" and version.current_version() > "5.7.0.9") or
-        config_manager_obj.type != "Ansible Tower")]
-)
+@pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
 def test_config_manager_remove(config_manager):
     config_manager.delete()
 
@@ -112,11 +95,6 @@ def test_config_manager_remove(config_manager):
 # Disable this test for Tower, no Configuration profiles can be retrieved from Tower side yet
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
-@pytest.mark.meta(
-    blockers=[BZ(1388928, unblock=lambda config_manager_obj: (
-        config_manager_obj.type == "Ansible Tower" and version.current_version() > "5.7.0.9") or
-        config_manager_obj.type != "Ansible Tower")]
-)
 def test_config_system_tag(request, config_system, tag):
     config_system.add_tag(tag=tag, details=False)
     tags = config_system.get_tags()
