@@ -243,24 +243,34 @@ def test_service_ansible_playbook_provision_in_requests(appliance, ansible_catal
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
-def test_service_ansible_playbook_confirm():
+def test_service_ansible_playbook_confirm(appliance, soft_assert):
     """Tests after selecting playbook additional widgets appear and are pre-populated where
     possible.
     """
     view = navigate_to(AnsiblePlaybookCatalogItem, "Add")
     assert view.provisioning.is_displayed
     assert view.retirement.is_displayed
-    assert view.provisioning.repository.is_displayed
-    assert view.provisioning.hosts.is_displayed
-    assert view.provisioning.verbosity.is_displayed
-    assert view.retirement.repository.is_displayed
-    assert view.retirement.hosts.is_displayed
-    assert view.retirement.verbosity.is_displayed
-    assert view.retirement.remove_resources.is_displayed
-    assert view.provisioning.hosts.value == "localhost"
-    assert view.retirement.hosts.value == "localhost"
-    assert view.retirement.verbosity.selected_option == "0 (Normal)"
-    assert view.retirement.remove_resources.selected_option == "Yes"
+    soft_assert(view.provisioning.repository.is_displayed)
+    soft_assert(view.provisioning.verbosity.is_displayed)
+    soft_assert(view.provisioning.verbosity.selected_option == "0 (Normal)")
+    if appliance.version < "5.9":
+        soft_assert(view.provisioning.hosts.is_displayed)
+        soft_assert(view.provisioning.hosts.value == "localhost")
+        soft_assert(view.retirement.hosts.is_displayed)
+        soft_assert(view.retirement.hosts.value == "localhost")
+        soft_assert(view.retirement.remove_resources.selected_option == "Yes")
+    else:
+        soft_assert(view.provisioning.localhost.is_displayed)
+        soft_assert(view.provisioning.specify_host_values.is_displayed)
+        soft_assert(view.provisioning.logging_output.is_displayed)
+        soft_assert(view.retirement.localhost.is_displayed)
+        soft_assert(view.retirement.specify_host_values.is_displayed)
+        soft_assert(view.retirement.logging_output.is_displayed)
+        soft_assert(view.retirement.remove_resources.selected_option == "")
+    soft_assert(view.retirement.repository.is_displayed)
+    soft_assert(view.retirement.verbosity.is_displayed)
+    soft_assert(view.retirement.remove_resources.is_displayed)
+    soft_assert(view.retirement.verbosity.selected_option == "0 (Normal)")
 
 
 @pytest.mark.tier(3)
