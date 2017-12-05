@@ -1,5 +1,6 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import Parameter, ParametrizedLocator, ParametrizedString
+from widgetastic.utils import (Parameter, ParametrizedLocator, ParametrizedString, Version,
+    VersionPick)
 from widgetastic.widget import Checkbox, Table, Text, View
 from widgetastic_manageiq import FileInput, SummaryForm, SummaryTable
 from widgetastic_patternfly import (
@@ -117,7 +118,10 @@ class AnsibleCatalogItemForm(ServicesCatalogView):
         playbook = BootstrapSelect("provisioning_playbook_id")
         machine_credential = BootstrapSelect("provisioning_machine_credential_id")
         cloud_type = BootstrapSelect("provisioning_cloud_type")
+        localhost = Input(id="provisioning_inventory_localhost")
+        specify_host_values = Input(id="provisioning_inventory_specify")
         hosts = Input("provisioning_inventory")
+        logging_output = BootstrapSelect("provisioning_log_output")
         max_ttl = Input("provisioning_execution_ttl")
         escalate_privilege = BootstrapSwitch("provisioning_become_enabled")
         verbosity = BootstrapSelect("provisioning_verbosity")
@@ -135,11 +139,17 @@ class AnsibleCatalogItemForm(ServicesCatalogView):
         playbook = BootstrapSelect("retirement_playbook_id")
         machine_credential = BootstrapSelect("retirement_machine_credential_id")
         cloud_type = BootstrapSelect("retirement_cloud_type")
+        localhost = Input(id="retirement_inventory_localhost")
+        specify_host_values = Input(id="retirement_inventory_specify")
         hosts = Input("retirement_inventory")
+        logging_output = BootstrapSelect("retirement_log_output")
         max_ttl = Input("retirement_execution_ttl")
         escalate_privilege = BootstrapSwitch("retirement_become_enabled")
         verbosity = BootstrapSelect("retirement_verbosity")
-        remove_resources = BootstrapSelect("vm.catalogItemModel.retirement_remove_resources")
+        remove_resources = VersionPick({
+            Version.lowest(): BootstrapSelect("vm.catalogItemModel.retirement_remove_resources"),
+            "5.9": BootstrapSelect("vm.vm.catalogItemModel.retirement_remove_resources")
+        })
         extra_vars = AnsibleExtraVariables(tab="retirement")
 
     cancel = Button("Cancel")
