@@ -33,17 +33,6 @@ def test_timeprofile_crud():
 
 
 @pytest.mark.sauce
-@pytest.mark.uncollectif(lambda: version.current_version() > '5.7')
-def test_timeprofile_duplicate_name():
-    nt = new_timeprofile()
-    nt.create()
-    msg = "Error during 'add': Validation failed: Description has already been taken"
-    with error.expected(msg):
-        nt.create()
-    nt.delete()
-
-
-@pytest.mark.sauce
 def test_timeprofile_name_max_character_validation():
     tp = st.Timeprofile(
         description=fauxfactory.gen_alphanumeric(50),
