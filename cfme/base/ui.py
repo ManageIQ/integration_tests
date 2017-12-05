@@ -5,11 +5,7 @@ import time
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, TimelinesView)
-from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
-    FlashMessages, BootstrapSelect, Tab)
 from selenium.webdriver.common.keys import Keys
-from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View, Table, Text, Image, FileInput
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
                                     FlashMessages, BootstrapSelect, Tab)
