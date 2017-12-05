@@ -7,6 +7,7 @@ from widgetastic.widget import Text, Checkbox, View
 
 from cfme.base.ui import ServerView
 from cfme.exceptions import ConsoleNotSupported, ConsoleTypeNotSupported
+from cfme.utils import conf
 from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
@@ -318,7 +319,6 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
              reset: By default(False) changes will not be reset, if True changes will be reset
 
         """
-        view = navigate_to(self, 'Details')
         for name, value in updates.items():
             if name == 'console_type':
                 if value not in self.CONSOLE_TYPES:
@@ -328,6 +328,14 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
                         product_name=self.appliance.product_name,
                         version=self.appliance.version
                     )
+                if value == 'VMware WebMKS' and self.appliance.version >= '5.9':
+                    self.appliance.ssh_client.run_command('curl {} -o WebMKS_SDK.zip'
+                        .format(conf.cfme_data.vm_console.webmks_console.webmks_sdk_download_url))
+                    self.appliance.ssh_client.run_command('unzip ~/WebMKS_SDK.zip -d {}'
+                        .format(conf.cfme_data.vm_console.webmks_console.
+                            webmks_sdk_extract_location))
+
+        view = navigate_to(self, 'Details')
         updated = view.vmware_console.fill(updates)
         self._save_action(view, updated, reset)
 
