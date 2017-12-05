@@ -6,6 +6,7 @@ from datetime import timedelta
 from cfme.optimize.bottlenecks import Bottlenecks
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.timeutil import parsetime
 from cfme.utils.ssh import SSHClient
 
@@ -41,7 +42,7 @@ def db_restore(temp_appliance_extended_db):
     db_storage_ssh = SSHClient(hostname=db_storage_hostname, **conf.credentials['bottlenecks'])
     with db_storage_ssh as ssh_client:
         # Different files for different versions
-        ver = "_58" if temp_appliance_extended_db.version > '5.7' else "_57"
+        ver = "_58" if temp_appliance_extended_db.version < '5.9' else "_59"
         rand_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
         ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/v2_key{}".format(ver),
                             rand_filename)
@@ -113,6 +114,7 @@ def test_bottlenecks_report_time_zone(temp_appliance_extended_db, db_restore, db
         assert row[0].text == (db_row[0][0] - timedelta(hours=4)).strftime("%m/%d/%y %H:%M:%S -04")
 
 
+@pytest.mark.meta(blockers=[BZ(1507565, forced_streams=["5.8"])])
 @pytest.mark.tier(2)
 def test_bottlenecks_summary_event_groups(temp_appliance_extended_db, db_restore, db_tbl,
                                           db_events):

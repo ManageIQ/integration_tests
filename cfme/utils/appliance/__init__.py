@@ -21,7 +21,7 @@ import warnings
 import yaml
 from cached_property import cached_property
 from debtcollector import removals
-from manageiq_client.api import ManageIQClient as VanillaMiqApi
+from manageiq_client.api import APIException, ManageIQClient as VanillaMiqApi
 from werkzeug.local import LocalStack, LocalProxy
 
 from cfme.utils import clear_property_cache
@@ -799,7 +799,7 @@ class IPAppliance(object):
     def version(self):
         try:
             version_string = self.rest_api.server_info['version']
-        except (AttributeError, KeyError, IOError):
+        except (AttributeError, KeyError, IOError, APIException):
             self.log.exception('appliance.version could not be retrieved from REST, falling back')
             res = self.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
             if res.rc != 0:
