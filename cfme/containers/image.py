@@ -156,8 +156,8 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
+        self.view.entities.search.clear_simple_search()
         self.view.toolbar.view_selector.select("List View")
-        self.view.paginator.set_items_per_page(1000)
 
 
 @navigator.register(Image, 'Details')
@@ -167,6 +167,7 @@ class Details(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(provider=self.obj.provider.name,
+                                                   use_search=True, name=self.obj.name,
                                                    id=self.obj.id).click()
 
 
