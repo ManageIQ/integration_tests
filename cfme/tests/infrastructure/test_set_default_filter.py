@@ -16,17 +16,17 @@ def test_set_default_host_filter(request, appliance):
     # Add cleanup finalizer
     def unset_default_host_filter():
         view = navigate_to(host_collection, 'All')
-        view.filters.Navigation.select('ALL')
+        view.filters.navigation.select('ALL')
         view.default_filter_btn.click()
     request.addfinalizer(unset_default_host_filter)
 
     view = navigate_to(host_collection, 'All')
-    view.filters.Navigation.select('Status / Running')
+    view.filters.navigation.select('Status / Running')
     view.default_filter_btn.click()
     appliance.server.logout()
     appliance.server.login_admin()
     navigate_to(host_collection, 'All')
-    assert view.filters.Navigation.currently_selected[0] == 'Status / Running (Default)'
+    assert view.filters.navigation.currently_selected[0] == 'Status / Running (Default)'
 
 
 def test_clear_host_filter_results(appliance):
@@ -35,7 +35,7 @@ def test_clear_host_filter_results(appliance):
 
     # TODO many parts of this test and others in this file need to be replaced with WT calls
     view = navigate_to(host_collection, 'All')
-    view.filters.Navigation.select('Status / Stopped')
+    view.filters.navigation.select('Status / Stopped')
     view.entities.search.remove_search_filters()
     page_title = view.title.text
     assert page_title == 'Hosts', 'Clear filter results failed'
@@ -51,17 +51,17 @@ def test_set_default_datastore_filter(request, appliance):
 
     def unset_default_datastore_filter():
         view = navigate_to(dc, 'All')
-        view.filters.Navigation.select('ALL')
+        view.filters.navigation.select('ALL')
         view.default_filter_btn.click()
     request.addfinalizer(unset_default_datastore_filter)
 
     view = navigate_to(dc, 'All')
-    view.filters.Navigation.select('Store Type / NFS')
+    view.filters.navigation.select('Store Type / NFS')
     view.default_filter_btn.click()
     appliance.server.logout()
     appliance.server.login_admin()
     navigate_to(dc, 'All')
-    assert view.filters.Navigation.currently_selected[0] == 'Store Type / NFS (Default)'
+    assert view.filters.navigation.currently_selected[0] == 'Store Type / NFS (Default)'
 
 
 def test_clear_datastore_filter_results(appliance):

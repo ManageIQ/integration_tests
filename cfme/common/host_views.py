@@ -256,7 +256,7 @@ class HostsView(ComputeInfrastructureHostsView):
         ACCORDION_NAME = "Filters"
 
         @View.nested
-        class Navigation(VerticalNavigation): # noqa
+        class navigation(VerticalNavigation): # noqa
             DIV_LINKS_MATCHING = './/div/ul/li/a[contains(text(), {txt})]'
 
             def __init__(self, parent, logger=None):
