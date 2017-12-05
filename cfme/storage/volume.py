@@ -194,9 +194,7 @@ class VolumeBackupView(VolumeView):
 @attr.s
 class Volume(BaseEntity):
     # Navigation menu option
-    nav = VersionPick({
-        Version.lowest(): ['Storage', 'Volumes'],
-        '5.8': ['Storage', 'Block Storage', 'Volumes']})
+    nav = ['Storage', 'Block Storage', 'Volumes']
 
     name = attr.ib()
     provider = attr.ib()
@@ -319,9 +317,7 @@ class VolumeCollection(BaseCollection):
                         'volume_name': name,
                         'size': size})
         view.form.add.click()
-        base_message = VersionPick({
-            Version.lowest(): 'Creating Cloud Volume "{}"',
-            '5.8': 'Cloud Volume "{}" created'}).pick(self.appliance.version)
+        base_message = 'Cloud Volume "{}" created'
         view.flash.assert_success_message(base_message.format(name))
 
         volume = self.instantiate(name, provider)
