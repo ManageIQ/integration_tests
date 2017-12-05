@@ -72,6 +72,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     templates_destination_name = "Templates"
     db_types = ["InfraManager"]
     hosts_menu_item = "Hosts"
+    vm_name = "Virtual Machines"
 
     def __init__(
             self, name=None, endpoints=None, key=None, zone=None, provider_data=None,
@@ -83,10 +84,6 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         self.provider_data = provider_data
         self.zone = zone
         self.template_name = "Templates"
-
-    @cached_property
-    def vm_name(self):
-        return "Virtual Machines"
 
     @variable(alias='db')
     def num_datastore(self):
