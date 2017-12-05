@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-import cfme.fixtures.pytest_selenium as sel
-from cfme.infrastructure import host, datastore
 from cfme.utils import version
-from cfme.web_ui import listaccordion as list_acc
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.datastore import DatastoreCollection
 
@@ -18,19 +15,18 @@ def test_set_default_host_filter(request, appliance):
 
     # Add cleanup finalizer
     def unset_default_host_filter():
-        navigate_to(host_collection, 'All')
-        list_acc.select('Filters', 'ALL', by_title=False)
-        sel.click(host.default_host_filter_btn)
+        view = navigate_to(host_collection, 'All')
+        view.filters.Navigation.select('ALL')
+        view.default_filter_btn.click()
     request.addfinalizer(unset_default_host_filter)
 
-    navigate_to(host_collection, 'All')
-    list_acc.select('Filters', 'Status / Running', by_title=False)
-    sel.click(host.default_host_filter_btn)
+    view = navigate_to(host_collection, 'All')
+    view.filters.Navigation.select('Status / Running')
+    view.default_filter_btn.click()
     appliance.server.logout()
     appliance.server.login_admin()
     navigate_to(host_collection, 'All')
-    assert list_acc.is_selected('Filters', 'Status / Running (Default)', by_title=False),\
-        'Status / Running filter not set as default'
+    assert view.filters.Navigation.currently_selected[0] == 'Status / Running (Default)'
 
 
 def test_clear_host_filter_results(appliance):
@@ -39,7 +35,7 @@ def test_clear_host_filter_results(appliance):
 
     # TODO many parts of this test and others in this file need to be replaced with WT calls
     view = navigate_to(host_collection, 'All')
-    list_acc.select('Filters', 'Status / Stopped', by_title=False)
+    view.filters.Navigation.select('Status / Stopped')
     view.entities.search.remove_search_filters()
     page_title = view.title.text
     assert page_title == 'Hosts', 'Clear filter results failed'
@@ -54,19 +50,18 @@ def test_set_default_datastore_filter(request, appliance):
     dc = DatastoreCollection(appliance)
 
     def unset_default_datastore_filter():
-        navigate_to(dc, 'All')
-        list_acc.select('Filters', 'ALL', by_title=False)
-        sel.click(datastore.default_datastore_filter_btn)
+        view = navigate_to(dc, 'All')
+        view.filters.Navigation.select('ALL')
+        view.default_filter_btn.click()
     request.addfinalizer(unset_default_datastore_filter)
 
-    navigate_to(dc, 'All')
-    list_acc.select('Filters', 'Store Type / NFS', by_title=False)
-    sel.click(datastore.default_datastore_filter_btn)
+    view = navigate_to(dc, 'All')
+    view.filters.Navigation.select('Store Type / NFS')
+    view.default_filter_btn.click()
     appliance.server.logout()
     appliance.server.login_admin()
     navigate_to(dc, 'All')
-    assert list_acc.is_selected('Filters', 'Store Type / NFS (Default)', by_title=False),\
-        'Store Type / NFS not set as default'
+    assert view.filters.Navigation.currently_selected[0] == 'Store Type / NFS (Default)'
 
 
 def test_clear_datastore_filter_results(appliance):

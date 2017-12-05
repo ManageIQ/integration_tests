@@ -10,6 +10,8 @@ from widgetastic.utils import (
 )
 from widgetastic.widget import ParametrizedView, Text, View
 from widgetastic_manageiq import (
+    Accordion,
+    ManageIQTree,
     BaseEntitiesView,
     NonJSBaseEntity,
     JSBaseEntity,
@@ -31,7 +33,8 @@ from widgetastic_patternfly import (
     CheckableBootstrapTreeview,
     Dropdown,
     FlashMessages,
-    Tab
+    Tab,
+    VerticalNavigation
 )
 
 from cfme.base.login import BaseLoggedInPage
@@ -238,11 +241,6 @@ class HostsToolbar(View):
     view_selector = View.nested(ItemsToolBarViewSelector)
 
 
-class HostSideBar(View):
-    """Represents left side bar. It usually contains navigation, filters, etc."""
-    pass
-
-
 class HostEntitiesView(BaseEntitiesView):
     """Represents the view with different items like hosts."""
     @property
@@ -252,7 +250,21 @@ class HostEntitiesView(BaseEntitiesView):
 
 class HostsView(ComputeInfrastructureHostsView):
     toolbar = View.nested(HostsToolbar)
-    sidebar = View.nested(HostSideBar)
+
+    @View.nested
+    class filters(Accordion):  # noqa
+        ACCORDION_NAME = "Filters"
+
+        @View.nested
+        class Navigation(VerticalNavigation): # noqa
+            DIV_LINKS_MATCHING = './/div/ul/li/a[contains(text(), {txt})]'
+
+            def __init__(self, parent, logger=None):
+                VerticalNavigation.__init__(self, parent, '#Host_def_searches', logger=logger)
+
+        tree = ManageIQTree()
+
+    default_filter_btn = Button(title="Set the current filter as my default")
     paginator = PaginationPane()
     including_entities = View.include(HostEntitiesView, use_parent=True)
 
