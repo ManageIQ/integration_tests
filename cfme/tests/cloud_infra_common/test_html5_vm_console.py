@@ -9,20 +9,22 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.provider import CloudInfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.common.vm import VM
-from cfme.utils import testgen, version, ssh
+from cfme.utils import version, ssh
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.conf import credentials
 from cfme.utils.providers import ProviderFilter
 from wait_for import wait_for
+from markers.env_markers.provider import providers
 
-pytestmark = pytest.mark.usefixtures('setup_provider')
 
-pytest_generate_tests = testgen.generate(
-    gen_func=testgen.providers,
-    filters=[ProviderFilter(classes=[CloudInfraProvider], required_flags=['html5_console'])],
-    scope='module'
-)
+pytestmark = [
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.provider(gen_func=providers,
+                         filters=[ProviderFilter(classes=[CloudInfraProvider],
+                                                 required_flags=['html5_console'])],
+                         scope='module'),
+]
 
 
 @pytest.fixture(scope="function")
