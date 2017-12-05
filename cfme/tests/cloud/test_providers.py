@@ -50,10 +50,9 @@ def test_discovery_cancelled_validation(appliance):
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-@pytest.mark.meta(blockers=[BZ(1514448, forced_streams=["5.9"])])
 def test_add_cancelled_validation(request):
     """Tests that the flash message is correct when add is cancelled."""
-    prov = EC2Provider()
+    prov = AzureProvider()
     request.addfinalizer(prov.delete_if_exists)
     prov.create(cancel=True)
     view = prov.browser.create_view(CloudProvidersView)
