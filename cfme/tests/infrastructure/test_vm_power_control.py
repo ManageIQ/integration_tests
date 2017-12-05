@@ -346,6 +346,8 @@ def test_no_template_power_control(provider, soft_assert):
     soft_assert(not toolbar.exists("Power"), "Power displayed in template details!")
 
 
+@pytest.mark.uncollectif(lambda provider: provider.one_of(SCVMMProvider) and
+                         BZ(1520489, forced_streams=['5.9']).blocks, 'BZ 1520489')
 def test_no_power_controls_on_archived_vm(testing_vm, archived_vm, soft_assert):
     """ Ensures that no power button is displayed from details view of archived vm
 
@@ -359,6 +361,8 @@ def test_no_power_controls_on_archived_vm(testing_vm, archived_vm, soft_assert):
     soft_assert(not toolbar.exists("Power"), "Power displayed in template details!")
 
 
+@pytest.mark.uncollectif(lambda provider: provider.one_of(SCVMMProvider) and
+                         BZ(1520489, forced_streams=['5.9']).blocks, 'BZ 1520489')
 def test_archived_vm_status(testing_vm, archived_vm):
     vm_state = testing_vm.find_quadicon(from_any_provider=True).data['state']
     assert ('currentstate-archived' in vm_state)
