@@ -294,7 +294,6 @@ class TestProvidersRESTAPI(object):
         return response
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
     def test_cloud_networks_query(self, cloud_provider, appliance, from_detail):
         """Tests querying cloud providers and cloud_networks collection for network info.
@@ -314,7 +313,6 @@ class TestProvidersRESTAPI(object):
         assert 'CloudNetwork' in networks[0].type
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     def test_security_groups_query(self, cloud_provider, appliance):
         """Tests querying cloud networks subcollection for security groups info.
 
