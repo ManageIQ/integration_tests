@@ -13,7 +13,6 @@ from cfme.containers.provider import (ContainerObjectAllBaseView, ContainerObjec
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
-from cfme.utils import version
 
 
 class ContainerAllView(ContainerObjectAllBaseView):
@@ -76,11 +75,8 @@ class ContainerAll(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Containers')
 
     def resetter(self):
-        if version.current_version() < '5.8':
-            self.view.Filters.tree.click_path('All Containers')
-        else:
-            self.view.Filters.Navigation.select('ALL (Default)')
-        # Reset view and selection
+        """Reset view and selection"""
+        self.view.Filters.Navigation.select('ALL (Default)')
         self.view.toolbar.view_selector.select("List View")
         self.view.paginator.reset_selection()
 

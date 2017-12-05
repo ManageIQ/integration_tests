@@ -430,7 +430,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
 
     @property
     def quad_name(self):
-        if version.current_version() >= '5.8' and self.type == 'Ansible Tower':
+        if self.type == 'Ansible Tower':
             return '{} Automation Manager'.format(self.name)
         else:
             return '{} Configuration Manager'.format(self.name)

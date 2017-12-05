@@ -42,16 +42,14 @@ class ContainersProviderDefaultEndpoint(DefaultEndpoint):
 
     @property
     def view_value_mapping(self):
-        out = {
-            'hostname': self.hostname,
-            'password': self.token,
-            'api_port': self.api_port
-        }
-        if version.current_version() >= '5.8':
-            out['sec_protocol'] = self.sec_protocol
-            if self.sec_protocol.lower() == 'ssl trusting custom ca' and \
-                    hasattr(self, 'get_ca_cert'):
-                out['trusted_ca_certificates'] = self.get_ca_cert()
+        out = {'hostname': self.hostname,
+               'password': self.token,
+               'api_port': self.api_port,
+               'sec_protocol': self.sec_protocol}
+
+        if self.sec_protocol.lower() == 'ssl trusting custom ca' and hasattr(self, 'get_ca_cert'):
+            out['trusted_ca_certificates'] = self.get_ca_cert()
+
         if version.current_version() < '5.9':
             out['confirm_password'] = self.token
 

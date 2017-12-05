@@ -77,6 +77,7 @@ def tags(request, rest_api, categories):
 
 def dialog_ui(appliance):
     """Creates service dialog using UI."""
+    # TODO: this function is not used with supported versions
     service_dialogs = appliance.collections.service_dialogs
     uid = fauxfactory.gen_alphanumeric()
     # ele_name has to be "service_name" so that we can override the service name generated
@@ -155,11 +156,6 @@ def dialog_rest(request, rest_api):
 
 def dialog(request, appliance):
     """Returns service dialog object."""
-    # action "create" is not supported in version < 5.8, use UI
-    if version.current_version() < '5.8':
-        return dialog_ui(appliance)
-
-    # setup dialog using REST API
     rest_resource = dialog_rest(request, appliance.rest_api)
     service_dialogs = appliance.collections.service_dialogs
     service_dialog = service_dialogs.instantiate(
@@ -231,16 +227,13 @@ def rates(request, rest_api, num=3):
     chargeback = rest_api.collections.chargebacks.get(rate_type='Compute')
     data = []
     for _ in range(num):
-        req = {
-            'description': 'test_rate_{}'.format(fauxfactory.gen_alphanumeric()),
-            'source': 'allocated',
-            'group': 'cpu',
-            'per_time': 'daily',
-            'per_unit': 'megahertz',
-            'chargeback_rate_id': chargeback.id
-        }
-        if version.current_version() >= '5.8':
-            req['chargeable_field_id'] = chargeback.id
+        req = {'description': 'test_rate_{}'.format(fauxfactory.gen_alphanumeric()),
+               'source': 'allocated',
+               'group': 'cpu',
+               'per_time': 'daily',
+               'per_unit': 'megahertz',
+               'chargeback_rate_id': chargeback.id,
+               'chargeable_field_id': chargeback.id}
         data.append(req)
 
     return _creating_skeleton(request, rest_api, 'rates', data)
@@ -384,8 +377,9 @@ def service_templates_rest(request, appliance, service_dialog=None, service_cata
 
 
 def service_templates(request, appliance, service_dialog=None, service_catalog=None, num=4):
-    tmplt = service_templates_ui if version.current_version() < '5.8' else service_templates_rest
-    return tmplt(
+    # TODO: remove, because it copies service_templates_rest for supported versions.
+    # tmplt = service_templates_ui if version.current_version() < '5.8' else service_templates_rest
+    return service_templates_rest(
         request, appliance, service_dialog=service_dialog, service_catalog=service_catalog, num=num)
 
 
