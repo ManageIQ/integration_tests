@@ -46,7 +46,7 @@ function replaceSelectContents(name, data, submit_handling) {
 
 $(document).ready(function() {
     // UI setup
-    $('select.selectpicker').selectpicker();
+    $('select.selectpicker').selectpicker({dropupAuto: false});
 
     // Description setting
     $('button.set-pool-desc').click(function(){
