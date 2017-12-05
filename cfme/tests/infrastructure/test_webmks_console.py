@@ -55,7 +55,6 @@ def ssh_client(vm_obj, console_template):
         yield vm_ssh_client
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.8', reason='Only valid for >= 5.8')
 def test_webmks_vm_console(request, appliance, provider, vm_obj,
         configure_vmware_console_for_test, take_screenshot, ssh_client):
     """Test the VMware WebMKS console support for a particular provider.
