@@ -176,14 +176,9 @@ class ConfigManagementDetailsView(ConfigManagementView):
     @property
     def is_displayed(self):
         """Is this view being displayed?"""
-        if self.browser.product_version > '5.9':
-            mgr = 'Automation Manager'
-        else:
-            mgr = 'Configuration Manager'
-
-        titles = [t.format(name=self.obj.name, mgr=mgr) for t in [
-            'Configuration Profiles under Red Hat Satellite Provider "{name} {mgr}"',
-            'Inventory Groups under Ansible Tower Provider "{name} {mgr}"'
+        titles = [t.format(name=self.obj.name) for t in [
+            'Configuration Profiles under Red Hat Satellite Provider "{name} Automation Manager"',
+            'Inventory Groups under Ansible Tower Provider "{name} Automation Manager"'
         ]]
         return self.in_config and self.entities.title.text in titles
 
@@ -255,12 +250,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
     @property
     def ui_name(self):
         """Return the name used in the UI"""
-        if self.appliance.version > '5.9':
-            mgr = 'Automation Manager'
-        else:
-            mgr = 'Configuration Manager'
-
-        return '{name} {mgr}'.format(name=self.name, mgr=mgr)
+        return '{name} Automation Manager'.format(name=self.name)
 
     def create(self, cancel=False, validate_credentials=True, validate=True, force=False):
         """Creates the manager through UI
@@ -444,7 +434,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
 
     @property
     def quad_name(self):
-        if version.current_version() >= '5.8' and self.type == 'Ansible Tower':
+        if self.type == 'Ansible Tower':
             return '{} Automation Manager'.format(self.name)
         else:
             return '{} Configuration Manager'.format(self.name)
