@@ -47,7 +47,7 @@ def setup_distributed_env(cfme_version, provider, lease, desc):
     apps, request_id = provision_appliances(count=2, cfme_version=cfme_version, provider=provider,
         lease_time=lease_time)
     sprout_client = SproutClient.from_config()
-    sprout_client.set_pool_description(request_id, '{}'.format(desc))
+    sprout_client.set_pool_description(request_id, desc)
     opt = '5' if cfme_version >= "5.8" else '8'
     ip0 = apps[0].hostname
     ip1 = apps[1].hostname
@@ -81,7 +81,7 @@ def setup_ha_env(cfme_version, provider, lease, desc):
     apps, request_id = provision_appliances(count=3, cfme_version=cfme_version, provider=provider,
         lease_time=lease_time)
     sprout_client = SproutClient.from_config()
-    sprout_client.set_pool_description(request_id, '{}'.format(desc))
+    sprout_client.set_pool_description(request_id, desc)
     ip0 = apps[0].hostname
     ip1 = apps[1].hostname
     ip2 = apps[2].hostname
@@ -144,7 +144,7 @@ def setup_replication_env(cfme_version, provider, lease, sprout_poolid, desc):
         )
         print("Appliance pool lease time is {}".format(lease))
     sprout_client = SproutClient.from_config()
-    sprout_client.set_pool_description(request_id, '{}'.format(desc))
+    sprout_client.set_pool_description(request_id, desc)
     print("Configuring replicated environment")
     ip0 = apps[0].hostname
     ip1 = apps[1].hostname
