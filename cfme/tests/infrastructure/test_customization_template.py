@@ -2,7 +2,9 @@
 import fauxfactory
 import pytest
 
-from cfme.utils import error, version
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils import error
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 pytestmark = [pytest.mark.tier(3)]
@@ -63,7 +65,7 @@ def test_pxe_image_type_required_error_validation(collection):
             script_data='Testing the script')
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
+@pytest.mark.meta(blockers=[BZ(1449116, forced_streams=['5.7', '5.8'])])
 def test_duplicate_name_error_validation(collection):
     """Test to validate duplication in customization templates."""
 
@@ -86,16 +88,18 @@ def test_duplicate_name_error_validation(collection):
     collection.delete(False, template_name)
 
 
-@pytest.mark.xfail(message='http://cfme-tests.readthedocs.org/guides/gotchas.html#'
-                           'selenium-is-not-clicking-on-the-element-it-says-it-is')
 def test_name_max_character_validation(collection):
-    """Test to validate name with maximum characters in customization templates."""
-
-    with error.expected('Name is required'):
-        template_name = collection.create(
-            name=fauxfactory.gen_alphanumeric(256),
-            description=fauxfactory.gen_alphanumeric(16),
-            image_type='RHEL-6',
-            script_type='Kickstart',
-            script_data='Testing the script')
+    """Test to validate name with maximum characters in customization templates.
+       Max length is controlled by UI elements - we are not allowed to input more than we should
+       Opens template details to verify that extra symbols were cut
+    """
+    template_name = collection.create(
+        name=fauxfactory.gen_alphanumeric(256),
+        description=fauxfactory.gen_alphanumeric(16),
+        image_type='RHEL-6',
+        script_type='Kickstart',
+        script_data='Testing the script')
+    template_name.name = template_name.name[:255]
+    view = navigate_to(template_name, 'Details')
+    assert len(view.entities.basic_information.get_text_of('Name')) < 256
     collection.delete(False, template_name)
