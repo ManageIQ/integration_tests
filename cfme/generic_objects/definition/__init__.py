@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import attr
-
+import importscan
 import sentaku
 
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -35,4 +35,4 @@ class GenericObjectDefinitionCollection(BaseCollection, sentaku.modeling.Element
 
 
 from . import rest  # NOQA last for import cycles
-sentaku.register_external_implementations_in(rest)
+importscan.scan(rest)

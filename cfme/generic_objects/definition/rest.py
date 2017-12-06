@@ -4,11 +4,12 @@ from cfme.generic_objects.definition import (
     GenericObjectDefinition,
     GenericObjectDefinitionCollection
 )
+from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.rest import ViaREST
 from cfme.utils.rest import assert_response, create_resource
 
 
-@GenericObjectDefinitionCollection.create.external_implementation_for(ViaREST)
+@MiqImplementationContext.external_for(GenericObjectDefinitionCollection.create, ViaREST)
 def create(self, name, description, attributes=None, associations=None, methods=None):
     body = {'name': name, 'description': description, 'properties': {}}
     properties = body['properties']
@@ -32,7 +33,7 @@ def create(self, name, description, attributes=None, associations=None, methods=
     return entity
 
 
-@GenericObjectDefinition.update.external_implementation_for(ViaREST)
+@MiqImplementationContext.external_for(GenericObjectDefinition.update, ViaREST)
 def update(self, updates):
     definition = self.appliance.rest_api.collections.generic_object_definitions.find_by(
         name=self.name)
@@ -61,7 +62,7 @@ def update(self, updates):
     self.rest_response = self.appliance.rest_api.response
 
 
-@GenericObjectDefinition.delete.external_implementation_for(ViaREST)
+@MiqImplementationContext.external_for(GenericObjectDefinition.delete, ViaREST)
 def delete(self):
     definition = self.appliance.rest_api.collections.generic_object_definitions.find_by(
         name=self.name)
@@ -76,7 +77,7 @@ def delete(self):
     self.rest_response = self.appliance.rest_api.response
 
 
-@GenericObjectDefinition.exists.external_getter_implemented_for(ViaREST)
+@MiqImplementationContext.external_for(GenericObjectDefinition.exists, ViaREST)
 def exists(self):
     return bool(
         self.appliance.rest_api.collections.generic_object_definitions.find_by(name=self.name))

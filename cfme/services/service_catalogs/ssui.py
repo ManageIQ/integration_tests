@@ -1,10 +1,12 @@
+import time
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text
-from widgetastic_manageiq import SSUIServiceCatalogcard, SSUIInput, Notification
 from widgetastic_patternfly import Input, Button, BootstrapSelect
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ssui import (
     navigator,
     SSUINavigateStep,
@@ -12,7 +14,7 @@ from cfme.utils.appliance.implementations.ssui import (
     ViaSSUI
 )
 from cfme.utils.wait import wait_for
-import time
+from widgetastic_manageiq import SSUIServiceCatalogcard, SSUIInput, Notification
 
 
 class ServiceCatalogsView(SSUIBaseLoggedInPage):
@@ -90,7 +92,7 @@ class ShoppingCartView(DetailsServiceCatalogsView):
         )
 
 
-@ServiceCatalogs.add_to_shopping_cart.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(ServiceCatalogs.add_to_shopping_cart, ViaSSUI)
 def add_to_shopping_cart(self):
     view = navigate_to(self, 'Details')
     wait_for(
@@ -111,7 +113,7 @@ def add_to_shopping_cart(self):
     assert view.notification.assert_message("Item added to shopping cart")
 
 
-@ServiceCatalogs.order.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(ServiceCatalogs.order, ViaSSUI)
 def order(self):
     view = navigate_to(self, 'ShoppingCart')
     wait_for(

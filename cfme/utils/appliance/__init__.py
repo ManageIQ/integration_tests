@@ -1,36 +1,31 @@
 import json
 import logging
-import os
-import re
-import six
 import socket
 import traceback
-import warnings
 from copy import copy
 from datetime import datetime
 from tempfile import NamedTemporaryFile
 from time import sleep, time
 from urlparse import urlparse
 
-import six
 import attr
-
 import dateutil.parser
-from debtcollector import removals
 import fauxfactory
+import os
+import re
 import requests
+import sentaku
+import six
+import warnings
 import yaml
 from cached_property import cached_property
+from debtcollector import removals
 from manageiq_client.api import ManageIQClient as VanillaMiqApi
-from sentaku import ImplementationContext
 from werkzeug.local import LocalStack, LocalProxy
 
-from fixtures import ui_coverage
-from fixtures.pytest_store import store
 from cfme.utils import clear_property_cache
 from cfme.utils import conf, ssh, ports
 from cfme.utils.datafile import load_data_file
-
 from cfme.utils.events import EventListener
 from cfme.utils.log import logger, create_sublogger, logger_wrap
 from cfme.utils.net import net_check
@@ -38,12 +33,13 @@ from cfme.utils.path import data_path, patches_path, scripts_path, conf_path
 from cfme.utils.ssh import SSHTail
 from cfme.utils.version import Version, get_stream, pick
 from cfme.utils.wait import wait_for, TimedOutError
+from fixtures import ui_coverage
+from fixtures.pytest_store import store
 from .db import ApplianceDB
-from .implementations.ui import ViaUI
 from .implementations.rest import ViaREST
 from .implementations.ssui import ViaSSUI
+from .implementations.ui import ViaUI
 from .services import SystemdService
-
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # EMS types recognized by IP or credentials
@@ -263,7 +259,7 @@ class IPAppliance(object):
         self.ssui = ViaSSUI(owner=self)
         self.rest_context = ViaREST(owner=self)
         self.rest_context.strict_calls = False
-        self.context = ImplementationContext.from_instances(
+        self.context = MiqImplementationContext.from_instances(
             [self.browser, self.ssui, self.rest_context])
 
         from cfme.modeling.base import EntityCollections
@@ -2790,3 +2786,8 @@ class Navigatable(NavigatableMixin):
 
     def __init__(self, appliance=None):
         self.appliance = appliance or get_or_create_current_appliance()
+
+
+class MiqImplementationContext(sentaku.ImplementationContext):
+    """ Our context for Sentaku"""
+    pass
