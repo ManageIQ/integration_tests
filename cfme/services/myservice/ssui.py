@@ -4,9 +4,8 @@ from widgetastic_manageiq import (
     SSUIlist,
     SSUIDropdown,
     Notification,
-    SSUIAppendToBodyDropdown,
-    SSUIConfigDropdown)
-from widgetastic_patternfly import Input, Button, Dropdown
+    SSUIAppendToBodyDropdown)
+from widgetastic_patternfly import Input, Button
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
 from cfme.common.vm import VM
@@ -35,10 +34,7 @@ class MyServicesView(SSUIBaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        if self.browser.product_version >= '5.8':
-            return self.in_myservices and self.title.text == "My Services"
-        else:
-            return self.in_myservices
+        return self.in_myservices and self.title.text == "My Services"
 
 
 class DetailsMyServiceView(MyServicesView):

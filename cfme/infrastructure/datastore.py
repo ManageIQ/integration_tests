@@ -149,10 +149,7 @@ class ProviderAllDatastoresView(DatastoresView):
 
     @property
     def is_displayed(self):
-        if self.browser.product_version < "5.8":
-            msg = "{} (All Managed Datastores)".format(self.context["object"].name)
-        else:
-            msg = "{} (All Datastores)".format(self.context["object"].name)
+        msg = "{} (All Datastores)".format(self.context["object"].name)
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == ["Compute", "Infrastructure", "Providers"] and
