@@ -9,7 +9,7 @@ from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import toolbar as tb
-from cfme.utils.blockers import BZ
+from cfme.utils.blockers import BZ, JIRA
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
@@ -185,7 +185,7 @@ def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged):
     verify_retirement_date(retire_ec2_s3_vm, expected_date=retire_times)
 
 
-@pytest.mark.meta(blockers=[BZ(1516953, forced_streams=['5.9'])])
+@pytest.mark.meta(blockers=[JIRA('RHCFQE-5912')])
 @pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
 def test_set_retirement_date(retire_vm, warn):
     """Tests setting retirement date and verifies configured date is reflected in UI
@@ -198,7 +198,7 @@ def test_set_retirement_date(retire_vm, warn):
     verify_retirement_date(retire_vm, expected_date=retire_date)
 
 
-@pytest.mark.meta(blockers=[BZ(1516953, forced_streams=['5.9'])])
+@pytest.mark.meta(blockers=[JIRA('RHCFQE-5912')])
 def test_unset_retirement_date(retire_vm):
     """Tests cancelling a scheduled retirement by removing the set date
     """
@@ -216,7 +216,7 @@ def test_unset_retirement_date(retire_vm):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1516953, forced_streams=['5.9']),
+@pytest.mark.meta(blockers=[JIRA('RHCFQE-5912'),
                             BZ(1430373, forced_streams=['5.6'],
                                unblock=lambda provider: provider.one_of(InfraProvider))])
 @pytest.mark.parametrize('remove_date', [True, False], ids=['remove_date', 'set_future_date'])
