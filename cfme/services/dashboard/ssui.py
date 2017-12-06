@@ -48,10 +48,7 @@ class MyServicesView(MyServiceForm):
 
     @property
     def is_displayed(self):
-        if self.browser.product_version >= '5.8':
-            return self.in_myservices and self.title.text == "My Services"
-        else:
-            return self.in_myservices
+        return self.in_myservices and self.title.text == "My Services"
 
 
 @Dashboard.num_of_rows.external_implementation_for(ViaSSUI)
