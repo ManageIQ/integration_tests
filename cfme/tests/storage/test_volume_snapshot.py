@@ -4,7 +4,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.utils import version
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -43,6 +42,10 @@ def snapshot(appliance, provider):
     try:
         if snapshot.exists:
             snapshot_collection.delete(snapshot)
+    except Exception:
+        logger.warning('Exception during snapshot deletion - skipping..')
+
+    try:
         if volume.exists:
             volume.delete(wait=False)
     except Exception:
@@ -50,7 +53,6 @@ def snapshot(appliance, provider):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 def test_storage_volume_snapshot_create(snapshot):
     wait_for(lambda: snapshot.status == 'available',
              delay=20, timeout=800, fail_func=snapshot.refresh)
@@ -60,7 +62,6 @@ def test_storage_volume_snapshot_create(snapshot):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 def test_storage_volume_snapshot_edit_tag_from_detail(snapshot):
     # add tag with category Department and tag communication
     snapshot.add_tag('Department', 'Communication')
@@ -75,7 +76,6 @@ def test_storage_volume_snapshot_edit_tag_from_detail(snapshot):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 def test_storage_volume_snapshot_delete(snapshot):
     snapshot.delete()
     assert not snapshot.exists

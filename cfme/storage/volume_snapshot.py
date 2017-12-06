@@ -10,7 +10,7 @@ from widgetastic_manageiq import (
     ManageIQTree,
     SummaryTable
 )
-from widgetastic_patternfly import Button, Dropdown, FlashMessages
+from widgetastic_patternfly import Button, Dropdown
 from widgetastic.widget import View, Text
 
 from cfme.base.ui import BaseLoggedInPage
@@ -57,9 +57,6 @@ class VolumeSnapshotDetailSidebar(View):
 class VolumeSnapshotView(BaseLoggedInPage):
     """A base view for all the Volume Snapshot pages"""
     title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
-    flash = FlashMessages(
-        './/div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-        'contains(@class, "flash_text_div")]')
 
     @property
     def in_volume_snapshots(self):
@@ -179,7 +176,7 @@ class VolumeSnapshot(BaseEntity, WidgetasticTaggable):
 
         wait_for(
             lambda: not self.exists,
-            message="Wait backups to disappear",
+            message="Wait snapshot to disappear",
             delay=20,
             timeout=800,
             fail_func=self.refresh
