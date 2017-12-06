@@ -6,7 +6,13 @@ from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
+<<<<<<< 68a63981a292aaee5095f0925b359f35cf05c84d
+=======
+from cfme.exceptions import VmOrInstanceNotFound
+from cfme.utils import testgen
+>>>>>>> Changing user_ownership_vm.exists to group_ownership_vm.find_quadicon(from_any_provider=True) for restricted user
 from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
 
 
 pytestmark = [
@@ -126,7 +132,11 @@ def test_user_ownership_crud(request, user1, setup_provider, provider):
         assert user_ownership_vm.exists, "vm not found"
     user_ownership_vm.unset_ownership()
     with user1:
-        assert not user_ownership_vm.exists, "vm exists"
+        try:
+            user_ownership_vm.find_quadicon(from_any_provider=True)
+            pytest.fail("vm found! but shouldn\'t")
+        except VmOrInstanceNotFound:
+            logger.debug("vm not found as expected")
 
 
 def test_group_ownership_on_user_only_role(request, user2, setup_provider, provider):
@@ -134,7 +144,11 @@ def test_group_ownership_on_user_only_role(request, user2, setup_provider, provi
     group_ownership_vm = VM.factory(ownership_vm, provider)
     group_ownership_vm.set_ownership(group=user2.group.description)
     with user2:
-        assert not group_ownership_vm.exists, "vm not found"
+        try:
+            group_ownership_vm.find_quadicon(from_any_provider=True)
+            pytest.fail("vm found! but shouldn\'t")
+        except VmOrInstanceNotFound:
+            logger.debug("vm not found as expected")
     group_ownership_vm.set_ownership(user=user2.name)
     with user2:
         assert group_ownership_vm.exists, "vm exists"
@@ -149,7 +163,11 @@ def test_group_ownership_on_user_or_group_role(
         assert group_ownership_vm.exists, "vm not found"
     group_ownership_vm.unset_ownership()
     with user3:
-        assert not group_ownership_vm.exists, "vm exists"
+        try:
+            group_ownership_vm.find_quadicon(from_any_provider=True)
+            pytest.fail("vm found! but shouldn\'t")
+        except VmOrInstanceNotFound:
+            logger.debug("vm not found as expected")
 
 
 # @pytest.mark.meta(blockers=[1202947])
