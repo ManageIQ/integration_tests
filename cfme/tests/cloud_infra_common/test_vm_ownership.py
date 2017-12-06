@@ -6,11 +6,7 @@ from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
-<<<<<<< 68a63981a292aaee5095f0925b359f35cf05c84d
-=======
 from cfme.exceptions import VmOrInstanceNotFound
-from cfme.utils import testgen
->>>>>>> Changing user_ownership_vm.exists to group_ownership_vm.find_quadicon(from_any_provider=True) for restricted user
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
@@ -134,7 +130,7 @@ def test_user_ownership_crud(request, user1, setup_provider, provider):
     with user1:
         try:
             user_ownership_vm.find_quadicon(from_any_provider=True)
-            pytest.fail("vm found! but shouldn\'t")
+            pytest.fail("vm found! but shouldn't")
         except VmOrInstanceNotFound:
             logger.debug("vm not found as expected")
 
@@ -146,7 +142,7 @@ def test_group_ownership_on_user_only_role(request, user2, setup_provider, provi
     with user2:
         try:
             group_ownership_vm.find_quadicon(from_any_provider=True)
-            pytest.fail("vm found! but shouldn\'t")
+            pytest.fail("vm found! but shouldn't")
         except VmOrInstanceNotFound:
             logger.debug("vm not found as expected")
     group_ownership_vm.set_ownership(user=user2.name)
@@ -165,7 +161,7 @@ def test_group_ownership_on_user_or_group_role(
     with user3:
         try:
             group_ownership_vm.find_quadicon(from_any_provider=True)
-            pytest.fail("vm found! but shouldn\'t")
+            pytest.fail("vm found! but shouldn't")
         except VmOrInstanceNotFound:
             logger.debug("vm not found as expected")
 
