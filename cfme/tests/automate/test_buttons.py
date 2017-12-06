@@ -7,6 +7,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
+from markers.env_markers.provider import ONE
 
 
 pytestmark = [
@@ -112,7 +113,7 @@ def test_button_crud(dialog, request):
     assert not button.exists
 
 
-@pytest.mark.provider([InfraProvider], scope='function', selector='one')
+@pytest.mark.provider([InfraProvider], scope='function', selector=ONE)
 @pytest.mark.tier(3)
 def test_button_on_host(appliance, request, provider, setup_provider):
     buttongroup = ButtonGroup(
