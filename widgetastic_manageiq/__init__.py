@@ -1349,8 +1349,8 @@ class NonJSPaginationPane(View):
             int(value)
         except ValueError:
             raise ValueError("Value should be integer and not {}".format(value))
-        version = self.browser.product_version
-        if (version >= '5.7.4' and version < '5.8') or version >= '5.8.2':
+
+        if self.browser.product_version >= '5.8.2':
             items_text = str(value)
         else:
             items_text = '{} items'.format(value)
