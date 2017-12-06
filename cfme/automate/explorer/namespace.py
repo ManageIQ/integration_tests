@@ -135,12 +135,7 @@ class Namespace(BaseEntity):
             assert details_page.is_displayed
             details_page.flash.assert_no_error()
         else:
-            if self.browser.product_version < '5.7':
-                # Domain list in 5.6 and lower
-                from .domain import DomainCollection, DomainListView
-                dc = DomainCollection(self.appliance)
-                result_view = self.create_view(DomainListView, dc)
-            elif isinstance(self.parent_obj, Domain):
+            if isinstance(self.parent_obj, Domain):
                 result_view = self.create_view(DomainDetailsView, self.parent_obj)
             else:
                 result_view = self.create_view(NamespaceDetailsView, self.parent_obj)
