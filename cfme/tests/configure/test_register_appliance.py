@@ -64,14 +64,16 @@ def pytest_generate_tests(metafunc):
 @pytest.yield_fixture(scope="function")
 def appliance_preupdate(temp_appliance_preconfig_funcscope, appliance):
     """Requests appliance from sprout and configures rpms for crud update"""
+    if appliance.version >= '5.9':
+        url = cfme_data['basic_info']['rpmrebuild_59']
+    else:
+        url = cfme_data['basic_info']['rpmrebuild']
     run = temp_appliance_preconfig_funcscope.ssh_client.run_command
-    url = cfme_data['basic_info']['rpmrebuild']
     run('curl -o /etc/yum.repos.d/rpmrebuild.repo {}'.format(url))
-    run('yum install rpmrebuild -y')
+    run('yum install rpmrebuild createrepo -y')
     run('mkdir /myrepo')
     run('rpmrebuild --release=99 cfme-appliance')
-    run('cp /root/rpmbuild/RPMS/x86_64/cfme-appliance-* '
-        '/myrepo/cfme-{}-99.x86_64.rpm'.format(appliance.version))
+    run('cp /root/rpmbuild/RPMS/x86_64/cfme-appliance-* /myrepo/')
     run('createrepo /myrepo/')
     run('echo '
         '"[local-repo]\nname=Internal repository\nbaseurl=file:///myrepo/\nenabled=1\ngpgcheck=0"'
@@ -80,7 +82,7 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope, appliance):
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_rh_creds_validation(request, reg_method, reg_data, proxy_url, proxy_creds):
+def test_rh_creds_validation(reg_method, reg_data, proxy_url, proxy_creds):
     """ Tests whether credentials are validated correctly for RHSM and SAT6 """
     repo = reg_data.get('enable_repo')
     if not repo:
@@ -113,10 +115,9 @@ def test_rh_creds_validation(request, reg_method, reg_data, proxy_url, proxy_cre
     red_hat_updates.update_registration(cancel=True)
 
 
-@pytest.mark.meta(blockers=[BZ(1513493, forced_streams=['5.9', 'upstream'])])
 @pytest.mark.ignore_stream("upstream")
 def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, proxy_creds):
-    """ Tests whether an appliance can be registered againt RHSM and SAT6 """
+    """ Tests whether an appliance can be registered against RHSM and SAT6 """
     repo = reg_data.get('enable_repo')
     if not repo:
         set_default_repo = True
@@ -157,7 +158,7 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
         func=red_hat_updates.is_registering,
         func_args=[appliance.server.name],
         delay=10,
-        num_sec=100,
+        num_sec=240,
         fail_func=red_hat_updates.refresh
     )
 
