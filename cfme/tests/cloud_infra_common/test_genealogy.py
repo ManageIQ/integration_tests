@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.common.vm import VM
 from cfme import test_requirements
+from cfme.common.provider import BaseProvider
+from cfme.common.vm import VM
 from cfme.cloud.provider import CloudProvider
-import cfme.fixtures.pytest_selenium as sel
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
-from cfme.common.provider import BaseProvider
 from cfme.utils.providers import ProviderFilter
 from markers.env_markers.provider import providers
 
@@ -69,13 +69,9 @@ def test_vm_genealogy_detected(
 
     if from_edit:
         vm_crud.open_edit()
-        opt = vm_crud.edit_form.parent_sel.first_selected_option
-        if isinstance(opt, tuple):
-            # AngularSelect
-            parent = opt.text.strip()
-        else:
-            # Ordinary Select
-            parent = sel.text(opt).strip()
+        view = navigate_to(vm_crud, 'Edit')
+        opt = view.form.parent_vm.all_selected_options[0]
+        parent = opt.strip()
         assert parent.startswith(small_template.name), "The parent template not detected!"
     else:
         try:

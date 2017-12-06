@@ -3,6 +3,7 @@
 # in selenium (the group is selected then immediately reset)
 import fauxfactory
 import pytest
+from widgetastic.exceptions import RowNotFound
 
 from cfme import test_requirements
 from cfme.common.vm import VM, Template
@@ -331,6 +332,15 @@ def detect_system_type(vm):
         return WINDOWS
 
 
+def is_details_row_present(view, *filters):
+    view.paginator.set_items_per_page(1000)
+    try:
+        view.table.row(*filters)
+    except (RowNotFound, NameError):
+        return False
+    return True
+
+
 @pytest.mark.tier(1)
 @pytest.mark.long_running
 def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_analysis_data,
@@ -372,7 +382,7 @@ def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_a
     # Check release and quadricon
     quadicon_os_icon = template.find_quadicon().data['os']
     details_os_icon = template.get_detail(
-        properties=('Properties', 'Operating System'), icon_href=True)
+        properties=('Properties', 'Operating System'))
     logger.info("Icons: {}, {}".format(details_os_icon, quadicon_os_icon))
 
     # We shouldn't use get_detail anymore - it takes too much time
@@ -441,7 +451,7 @@ def test_ssa_vm(provider, instance, soft_assert):
     # Check release and quadricon
     quadicon_os_icon = instance.find_quadicon().data['os']
     details_os_icon = instance.get_detail(
-        properties=('Properties', 'Operating System'), icon_href=True)
+        properties=('Properties', 'Operating System'))
     logger.info("Icons: %s, %s", details_os_icon, quadicon_os_icon)
 
     # We shouldn't use get_detail anymore - it takes too much time
@@ -524,9 +534,9 @@ def test_ssa_users(provider, instance, soft_assert):
         assert current == expected
 
     # Make sure created user is in the list
-    instance.open_details(("Security", "Users"))
+    view = instance.open_details(("Security", "Users"))
     if instance.system_type != WINDOWS:
-        if not instance.paged_table.find_row_on_all_pages('Name', username):
+        if not is_details_row_present(view, ('Name', username)):
             pytest.fail("User {0} was not found".format(username))
 
 
@@ -557,9 +567,9 @@ def test_ssa_groups(provider, instance, soft_assert):
         assert current == expected
 
     # Make sure created group is in the list
-    instance.open_details(("Security", "Groups"))
+    view = instance.open_details(("Security", "Groups"))
     if instance.system_type != WINDOWS:
-        if not instance.paged_table.find_row_on_all_pages('Name', group):
+        if not is_details_row_present(view, ('Name', group)):
             pytest.fail("Group {0} was not found".format(group))
 
 
@@ -599,8 +609,8 @@ def test_ssa_packages(provider, instance, soft_assert):
     assert current == expected
 
     # Make sure new package is listed
-    instance.open_details(("Configuration", "Packages"))
-    if not instance.paged_table.find_row_on_all_pages('Name', package_name):
+    view = instance.open_details(("Configuration", "Packages"))
+    if not is_details_row_present(view, ('Name', package_name)):
         pytest.fail("Package {0} was not found".format(package_name))
 
 
@@ -620,8 +630,8 @@ def test_ssa_files(provider, instance, policy_profile, soft_assert):
     current = instance.get_detail(properties=('Configuration', 'Files'))
     assert current != '0', "No files were scanned"
 
-    instance.open_details(("Configuration", "Files"))
-    if not instance.paged_table.find_row_on_all_pages('Name', ssa_expect_file):
+    view = instance.open_details(("Configuration", "Files"))
+    if not is_details_row_present(view, ('Name', ssa_expect_file)):
         pytest.fail("File {0} was not found".format(ssa_expect_file))
 
 

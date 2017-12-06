@@ -419,7 +419,6 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('AllForProvider')
 
     def step(self):
-        self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True,
                                                              use_search=True)
