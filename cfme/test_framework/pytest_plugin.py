@@ -70,6 +70,7 @@ pytest_plugins = (
     'fixtures.qa_contact',
     'fixtures.randomness',
     'fixtures.rbac',
+    'fixtures.sauce',
     'fixtures.screenshots',
     'fixtures.skip_not_implemented',
     'fixtures.soft_assert',
