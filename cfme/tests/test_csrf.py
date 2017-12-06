@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.base.ui import LoginPage
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for, TimedOutError
 
@@ -18,9 +17,11 @@ def test_csrf_post(appliance):
     dashboard.csrf_token = "Bogus!"
     dashboard.reset_widgets(cancel=False)
 
-    login_page = appliance.browser.create_view(LoginPage)
-
     try:
-        wait_for(lambda: login_page.is_displayed, num_sec=15, delay=0.2)
+        wait_for(
+            lambda: (
+                dashboard.unexpected_error is not None and
+                'InvalidAuthenticityToken' in dashboard.unexpected_error),
+            num_sec=15, delay=0.2)
     except TimedOutError:
         pytest.fail("CSRF attack succeeded!")
