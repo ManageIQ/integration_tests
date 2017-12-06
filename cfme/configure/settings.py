@@ -4,6 +4,7 @@ from navmazing import NavigateToAttribute
 from widgetastic_manageiq import Table, BootstrapSelect, BreadCrumb, Text, ViewButtonGroup
 from widgetastic_patternfly import (BootstrapSwitch,
                                     Input, Button, CheckableBootstrapTreeview, Dropdown)
+from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
 from cfme.base.ui import MySettingsView
 from cfme.base.login import BaseLoggedInPage
@@ -19,8 +20,7 @@ class TimeProfileAddForm(View):
     timezone = BootstrapSelect('profile_tz')
     days = BootstrapSwitch(name='all_days')
     hours = BootstrapSwitch(name='all_hours')
-    save_button = Button('Save')
-    add = Button('Add')
+    save_button = Button(VersionPick({Version.lowest(): 'Save', '5.9': 'Add'}))
     configuration = Dropdown('Configuration')
     table = Table("//div[@id='main_div']//table")
     save_edit_button = Button('Save')
@@ -60,10 +60,7 @@ class Timeprofile(Updateable, Navigatable):
             'timezone': self.timezone,
         })
         if not cancel:
-            if self.appliance.version < '5.9':
-                view.timeprofile_form.save_button.click()
-            else:
-                view.timeprofile_form.add.click()
+            view.timeprofile_form.save_button.click()
             view.flash.assert_message('Time Profile "{}" was saved'.format(self.description))
 
     def update(self, updates):
@@ -107,10 +104,7 @@ class Timeprofile(Updateable, Navigatable):
             })
 
         if changed:
-            if self.appliance.version < '5.9':
-                view.timeprofile_form.save_button.click()
-            else:
-                view.timeprofile_form.add.click()
+            view.timeprofile_form.save_button.click()
         return new_timeprofile
 
     def delete(self):
