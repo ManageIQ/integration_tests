@@ -43,7 +43,7 @@ def test_timeprofile_name_max_character_validation():
 
 
 @pytest.mark.sauce
-def test_days_required_error_validation(soft_assert):
+def test_days_required_error_validation(appliance, soft_assert):
     tp = st.Timeprofile(
         description='time_profile' + fauxfactory.gen_alphanumeric(),
         scope='Current User',
@@ -53,12 +53,15 @@ def test_days_required_error_validation(soft_assert):
     view = navigate_to(st.Timeprofile, 'All')
     tp.create(cancel=True)
     soft_assert(view.timeprofile_form.help_block.text == "At least one day needs to be selected")
-    soft_assert(view.timeprofile_form.save_button.disabled)
+    if appliance.version < 5.9:
+        soft_assert(view.timeprofile_form.save_button.disabled)
+    else:
+        soft_assert(view.timeprofile_form.add.disabled)
     view.timeprofile_form.cancel_button.click()
 
 
 @pytest.mark.sauce
-def test_hours_required_error_validation(soft_assert):
+def test_hours_required_error_validation(appliance, soft_assert):
     tp = st.Timeprofile(
         description='time_profile' + fauxfactory.gen_alphanumeric(),
         scope='Current User',
@@ -68,12 +71,15 @@ def test_hours_required_error_validation(soft_assert):
     view = navigate_to(st.Timeprofile, 'All')
     tp.create(cancel=True)
     soft_assert(view.timeprofile_form.help_block.text == "At least one hour needs to be selected")
-    soft_assert(view.timeprofile_form.save_button.disabled)
+    if appliance.version < 5.9:
+        soft_assert(view.timeprofile_form.save_button.disabled)
+    else:
+        soft_assert(view.timeprofile_form.add.disabled)
     view.timeprofile_form.cancel_button.click()
 
 
 @pytest.mark.sauce
-def test_timeprofile_description_required_error_validation(soft_assert):
+def test_timeprofile_description_required_error_validation(appliance, soft_assert):
     tp = st.Timeprofile(
         description=None,
         scope='Current User',
@@ -81,5 +87,8 @@ def test_timeprofile_description_required_error_validation(soft_assert):
     view = navigate_to(st.Timeprofile, 'All')
     tp.create(cancel=True)
     soft_assert(view.timeprofile_form.description.help_block == "Required")
-    soft_assert(view.timeprofile_form.save_button.disabled)
+    if appliance.version < 5.9:
+        soft_assert(view.timeprofile_form.save_button.disabled)
+    else:
+        soft_assert(view.timeprofile_form.add.disabled)
     view.timeprofile_form.cancel_button.click()

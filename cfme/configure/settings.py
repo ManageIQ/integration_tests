@@ -20,6 +20,7 @@ class TimeProfileAddForm(View):
     days = BootstrapSwitch(name='all_days')
     hours = BootstrapSwitch(name='all_hours')
     save_button = Button('Save')
+    add = Button('Add')
     configuration = Dropdown('Configuration')
     table = Table("//div[@id='main_div']//table")
     save_edit_button = Button('Save')
@@ -59,9 +60,11 @@ class Timeprofile(Updateable, Navigatable):
             'timezone': self.timezone,
         })
         if not cancel:
-            view.timeprofile_form.save_button.click()
-            end = "saved" if self.appliance.version > '5.7' else "added"
-            view.flash.assert_message('Time Profile "{}" was {}'.format(self.description, end))
+            if self.appliance.version < '5.9':
+                view.timeprofile_form.save_button.click()
+            else:
+                view.timeprofile_form.add.click()
+            view.flash.assert_message('Time Profile "{}" was saved'.format(self.description))
 
     def update(self, updates):
         view = navigate_to(self, 'All')
@@ -104,7 +107,10 @@ class Timeprofile(Updateable, Navigatable):
             })
 
         if changed:
-            view.timeprofile_form.save_button.click()
+            if self.appliance.version < '5.9':
+                view.timeprofile_form.save_button.click()
+            else:
+                view.timeprofile_form.add.click()
         return new_timeprofile
 
     def delete(self):
