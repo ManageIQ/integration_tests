@@ -2,12 +2,12 @@
 import fauxfactory
 import pytest
 from cfme import test_requirements
-from cfme.fixtures import pytest_selenium as sel
 from cfme.automate.buttons import Button, ButtonGroup
-from cfme.infrastructure import host
+from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
+from markers.env_markers.provider import ONE
 
 
 pytestmark = [
@@ -113,9 +113,9 @@ def test_button_crud(dialog, request):
     assert not button.exists
 
 
-@pytest.mark.meta(blockers=[1193758, 1205235])
+@pytest.mark.provider([InfraProvider], scope='function', selector=ONE)
 @pytest.mark.tier(3)
-def test_button_on_host(appliance, dialog, request):
+def test_button_on_host(appliance, request, provider, setup_provider):
     buttongroup = ButtonGroup(
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()))
@@ -125,13 +125,11 @@ def test_button_on_host(appliance, dialog, request):
     button = Button(group=buttongroup,
                     text=fauxfactory.gen_alphanumeric(),
                     hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
-                    dialog=dialog, system="Request", request="InspectMe")
+                    system="Request", request="InspectMe")
     request.addfinalizer(button.delete_if_exists)
     button.create()
-    myhost = appliance.collections.hosts.get_from_config('esx')
-    if not myhost.exists:
-        myhost = appliance.collections.hosts.create_from_config('esx')
-    myhost.execute_button(buttongroup.hover, button.text)
+    host = appliance.collections.hosts.all(provider)[0]
+    host.execute_button(buttongroup.hover, button.text, handle_alert=None)
 
 
 @pytest.mark.meta(blockers=[BZ(1460774, forced_streams=["5.8", "upstream"])])
