@@ -2,8 +2,8 @@
 from copy import copy
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic_patternfly import Input, Button, BootstrapSelect, BootstrapSwitch
 from widgetastic.widget import Text, Checkbox, View
+from widgetastic_patternfly import Input, Button, BootstrapSelect, BootstrapSwitch
 
 from cfme.base.ui import ServerView
 from cfme.exceptions import ConsoleNotSupported, ConsoleTypeNotSupported
@@ -638,7 +638,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
                 'Authentication settings saved for {} Server "{} [{}]" in Zone "{}"'.format(
                     self.appliance.product_name,
                     self.appliance.server.name,
-                    self.appliance.server.id,
+                    self.appliance.server.sid,
                     self.appliance.server.zone.name))
             view.flash.assert_message(flash_message)
 
@@ -669,7 +669,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
                 'Authentication settings saved for {} Server "{} [{}]" in Zone "{}"'.format(
                     self.appliance.product_name,
                     self.appliance.server.name,
-                    self.appliance.server.id,
+                    self.appliance.server.sid,
                     self.appliance.server.zone.name))
             view.flash.assert_message(flash_message)
         else:
