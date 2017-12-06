@@ -102,10 +102,9 @@ class VolumeView(BaseLoggedInPage):
     """Base class for header and nav check"""
     @property
     def in_volume(self):
-        nav = Volume.nav.pick(self.context['object'].appliance.version)
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == nav)
+            self.navigation.currently_selected == VolumeCollection.nav)
 
 
 class VolumeAllView(VolumeView):
@@ -193,8 +192,6 @@ class VolumeBackupView(VolumeView):
 
 @attr.s
 class Volume(BaseEntity):
-    # Navigation menu option
-    nav = ['Storage', 'Block Storage', 'Volumes']
 
     name = attr.ib()
     provider = attr.ib()
@@ -297,6 +294,9 @@ class VolumeCollection(BaseCollection):
     """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
     ENTITY = Volume
 
+    # Navigation menu option
+    nav = ['Storage', 'Block Storage', 'Volumes']
+
     def create(self, name, storage_manager, tenant, size, provider):
         """Create new storage volume
 
@@ -356,8 +356,7 @@ class VolumeAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        nav = Volume.nav.pick(self.obj.appliance.version)
-        self.prerequisite_view.navigation.select(*nav)
+        self.prerequisite_view.navigation.select(*self.obj.nav)
 
 
 @navigator.register(Volume, 'Details')
