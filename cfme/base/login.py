@@ -1,3 +1,4 @@
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
 from widgetastic_patternfly import NavDropdown, VerticalNavigation, FlashMessages
 
@@ -52,8 +53,18 @@ class BaseLoggedInPage(View):
 
     @property
     def csrf_token(self):
-        return self.browser.get_attribute('csrf-token', self.CSRF_TOKEN)
+        return self.browser.get_attribute('content', self.CSRF_TOKEN)
 
     @csrf_token.setter
     def csrf_token(self, value):
-        self.browser.set_attribute('csrf-token', value, self.CSRF_TOKEN)
+        self.browser.set_attribute('content', value, self.CSRF_TOKEN)
+
+    @property
+    def unexpected_error(self):
+        if not self.browser.elements('//h1[contains(., "Unexpected error encountered")]'):
+            return None
+        try:
+            err_el = self.browser.element('//h2[contains(., "Error text:")]/following-sibling::h3')
+            return self.browser.text(err_el)
+        except NoSuchElementException:
+            return None
