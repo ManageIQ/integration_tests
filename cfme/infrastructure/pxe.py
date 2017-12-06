@@ -975,18 +975,18 @@ def get_template_from_config(template_config_name):
     script_data = script_data.read()
     appliance = get_or_create_current_appliance()
     collection = appliance.collections.customization_templates
-    custimization_template = collection.instantiate(name=template_config['name'],
+    customization_template = collection.instantiate(name=template_config['name'],
                                                     description=template_config['description'],
                                                     image_type=template_config['image_type'],
                                                     script_type=template_config['script_type'],
                                                     script_data=script_data)
-    if not custimization_template.exists():
+    if not customization_template.exists():
         return collection.create(name=template_config['name'],
                                  description=template_config['description'],
                                  image_type=template_config['image_type'],
                                  script_type=template_config['script_type'],
                                  script_data=script_data)
-    return custimization_template
+    return customization_template
 
 
 def get_pxe_server_from_config(pxe_config_name):
