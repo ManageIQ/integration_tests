@@ -2,14 +2,16 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from riggerlib import recursive_update
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
+from widgetastic.utils import VersionPick, Version
 from widgetastic_patternfly import Dropdown, Button
 from widgetastic_manageiq import ManageIQTree, TimelinesView, Accordion
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM
 from cfme.common.vm_views import (
-    ProvisionView, VMToolbar, VMEntities, VMDetailsEntities, RetirementView, EditView,
-    SetOwnershipView, ManagementEngineView, PolicySimulationView)
+    ProvisionView, VMToolbar, VMEntities, VMDetailsEntities, EditView,
+    SetOwnershipView, ManagementEngineView, PolicySimulationView,
+    RetirementView, RetirementViewWithOffset)
 from cfme.exceptions import InstanceNotFound, ItemNotFound
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance import Navigatable
@@ -151,10 +153,9 @@ class Instance(VM, Navigatable):
     PROVISION_CANCEL = 'Add of new VM Provision Request was cancelled by the user'
     PROVISION_START = ('VM Provision Request was Submitted, you will be notified when your VMs '
                        'are ready')
-
     REMOVE_SINGLE = 'Remove Instance'
-
     TO_OPEN_EDIT = "Edit this Instance"
+    DETAILS_VIEW_CLASS = InstanceDetailsView
 
     def __init__(self, name, provider, template_name=None, appliance=None):
         super(Instance, self).__init__(name=name, provider=provider, template_name=template_name)
@@ -420,7 +421,8 @@ class Details(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
-            row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
+            row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True,
+                                                             use_search=True)
         except ItemNotFound:
             raise InstanceNotFound('Failed to locate instance with name "{}"'.format(self.obj.name))
         row.click()
@@ -478,7 +480,15 @@ class SetOwnership(CFMENavigateStep):
 
 @navigator.register(Instance, 'SetRetirement')
 class SetRetirement(CFMENavigateStep):
-    VIEW = RetirementView
+    def view_classes(self):
+        return VersionPick({
+            Version.lowest(): RetirementView,
+            "5.9": RetirementViewWithOffset
+        })
+
+    @property
+    def VIEW(self):  # noqa
+        return self.view_classes().pick(self.obj.appliance.version)
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):

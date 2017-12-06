@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Module containing classes with common behaviour for both VMs and Instances of all types."""
-from datetime import date
+from datetime import datetime, date, timedelta
 from functools import partial
 
 from wrapanapi import exceptions
@@ -25,7 +25,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
 from cfme.utils.virtual_machines import deploy_template
-from cfme.utils.wait import wait_for, TimedOutError
+from cfme.utils.wait import wait_for
 
 from . import PolicyProfileAssignable, SummaryMixin
 
@@ -146,6 +146,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
                        '5.7': parsetime.american_minutes_with_utc,
                        '5.9': parsetime.saved_report_title_format}
     _param_name = ParamClassName('name')
+    DETAILS_VIEW_CLASS = None
 
     ###
     # Shared behaviour
@@ -708,42 +709,132 @@ class VM(BaseVM):
         """Check if VM exists on provider itself"""
         return self.provider.mgmt.does_vm_exist(self.name)
 
-    def set_retirement_date(self, when, warn=None):
-        """Sets the retirement date for this Vm object.
-
-        It incorporates some magic to make it work reliably since the retirement form is not very
-        pretty and it can't be just "done".
+    def set_retirement_date(self, when=None, offset=None, warn=None):
+        """Overriding common method to use widgetastic views/widgets properly
 
         Args:
-            when: When to retire. :py:class:`str` in format mm/dd/yyyy of
-                :py:class:`datetime.datetime` or :py:class:`utils.timeutil.parsetime`.
+            when: :py:class:`datetime.datetime` object, when to retire (date in future)
+            offset: :py:class:`dict` with months, weeks, days, hours keys. other keys ignored
             warn: When to warn, fills the select in the form in case the ``when`` is specified.
+
+        Note: this should be moved up to the common VM class when infra+cloud+common are all WT
+
+        If when and offset are both None, this removes retirement date
+
+        Examples:
+            # To set a specific retirement date 2 days from today
+            two_days_later = datetime.date.today() + datetime.timedelta(days=2)
+            vm.set_retirement_date(when=two_days_later)
+
+            # To set a retirement offset 2 weeks from now
+            vm.set_retirement_date(offset={weeks=2})
+
+        Offset is dict to remove ambiguity between timedelta/datetime and months/weeks/days/hours
+        timedelta supports creation with weeks, but not months
+        timedelta supports days attr, but not weeks or months
+        timedelta days attr will report a total summary, not the component that was passed to it
+        For these reasons timedelta isn't appropriate for offset
+        An enhancement to cfme.utils.timeutil extending timedelta would be great for making this a
+        bit cleaner
         """
-        # TODO: refactor for retirement nav destinations and widget form fill when child classes
-        self.load_details()
-        lcl_btn("Set Retirement Date")
-        if callable(self.retire_form.date_retire):
-            # It is the old functiton
-            sel.wait_for_element("#miq_date_1")
+        new_retire = self.appliance.version >= "5.9"
+        view = navigate_to(self, 'SetRetirement')
+        fill_date = None
+        fill_offset = None
+
+        # explicit is/not None use here because of empty strings and dicts
+
+        if when is not None and offset is not None:
+            raise ValueError('set_retirement_date takes when or offset, but not both')
+        if not new_retire and offset is not None:
+            raise ValueError('Offset retirement only available in CFME 59z+ or miq-gaprindashvili')
+        if when is not None and not isinstance(when, (datetime, date)):
+            raise ValueError('when argument must be a datetime object')
+
+        # due to major differences between the forms and their interaction, I'm splitting this
+        # method into two major blocks, one for each version. As a result some patterns will be
+        # repeated in both blocks
+        # This will allow for making changes to one version or the other without strange
+        # interaction in the logic
+
+        # format the date
+        # needs 4 digit year for fill
+        # displayed 2 digit year for flash message
+        if new_retire:
+            # 59z/G-release retirement
+            if when is not None and offset is None:
+                # Specific datetime retire, H+M are 00:00 by default if just date passed
+                fill_date = when.strftime('%m/%d/%Y %H:%M')  # 4 digit year
+                msg_date = when.strftime('%m/%d/%y %H:%M UTC')  # two digit year and timestamp
+                msg = 'Retirement date set to {}'.format(msg_date)
+            elif when is None and offset is None:
+                # clearing retirement date with empty string in textinput
+                fill_date = ''
+                msg = 'Retirement date removed'
+            elif offset is not None:
+                # retirement by offset
+                fill_date = None
+                fill_offset = {k: v for k, v in offset.items() if k in ['months',
+                                                                        'weeks',
+                                                                        'days',
+                                                                        'hours']}
+                # hack together an offset
+                # timedelta can take weeks, but not months
+                # copy and pop, only used to generate message, not used for form fill
+                offset_copy = fill_offset.copy()
+                if 'months' in offset_copy:
+                    new_weeks = offset_copy.get('weeks', 0) + int(offset_copy.pop('months', 0)) * 4
+                    offset_copy.update({'weeks': new_weeks})
+
+                msg_date = datetime.utcnow() + timedelta(**offset_copy)
+                msg = 'Retirement date set to {}'.format(msg_date.strftime('%m/%d/%y %H:%M UTC'))
+            # TODO move into before_fill when no need to click away from datetime picker
+            view.form.fill({
+                'retirement_mode':
+                    'Time Delay from Now' if fill_offset else 'Specific Date and Time'})
+            view.flush_widget_cache()  # since retirement_date is conditional widget
+            if fill_date is not None:  # specific check because of empty string
+                # two part fill, widget seems to block warn selection when open
+                changed_date = view.form.fill({
+                    'retirement_date': {'datetime_select': fill_date}})
+                view.title.click()  # close datetime widget
+                changed_warn = view.form.fill({'retirement_warning': warn})
+                changed = changed_date or changed_warn
+            elif fill_offset:
+                changed = view.form.fill({
+                    'retirement_date': fill_offset, 'retirement_warning': warn})
+
         else:
-            sel.wait_for_element(self.retire_form.date_retire)
-        if when is None:
-            try:
-                wait_for(lambda: sel.is_displayed(retire_remove_button), num_sec=5, delay=0.2)
-                sel.click(retire_remove_button)
-                wait_for(lambda: not sel.is_displayed(retire_remove_button), num_sec=10, delay=0.2)
-                sel.click(form_buttons.save)
-            except TimedOutError:
-                pass
+            # 58z/euwe retirement
+            if when:
+                fill_date = when.strftime('%m/%d/%Y')  # 4 digit year
+                msg_date = when.strftime('%m/%d/%y 00:00 UTC')  # two digit year and default 0 UTC
+                msg = 'Retirement date set to {}'.format(msg_date)
+            else:
+                fill_date = None
+                msg = 'Retirement date removed'
+            if fill_date:
+                changed = view.form.fill({'retirement_date': fill_date, 'retirement_warning': warn})
+            else:
+                if view.form.remove_date.is_displayed:
+                    view.form.remove_date.click()
+                    changed = True
+                else:
+                    # no date set, nothing to change
+                    logger.info('Retirement date not set, cannot clear, canceling form')
+                    changed = False
+
+        # Form save and flash messages are the same between versions
+        if changed:
+            view.form.save.click()
         else:
-            if sel.is_displayed(retire_remove_button):
-                sel.click(retire_remove_button)
-                wait_for(lambda: not sel.is_displayed(retire_remove_button), num_sec=15, delay=0.2)
-            fill(self.retire_form.date_retire, when)
-            wait_for(lambda: sel.is_displayed(retire_remove_button), num_sec=15, delay=0.2)
-            if warn is not None:
-                fill(self.retire_form.warn, warn)
-            sel.click(form_buttons.save)
+            logger.info('No form changes for setting retirement, clicking cancel')
+            view.form.cancel.click()
+            msg = 'Set/remove retirement date was cancelled by the user'
+        if self.DETAILS_VIEW_CLASS is not None:
+            view = self.create_view(self.DETAILS_VIEW_CLASS)
+            assert view.is_displayed
+        view.flash.assert_success_message(msg)
 
     def equal_drift_results(self, row_text, section, *indexes):
         """ Compares drift analysis results of a row specified by it's title text
