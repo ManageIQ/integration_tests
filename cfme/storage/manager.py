@@ -2,7 +2,6 @@
 import attr
 
 from navmazing import NavigateToAttribute
-from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View, NoSuchElementException, Text
 from widgetastic_manageiq import (
     Accordion,
@@ -75,8 +74,7 @@ class StorageManagerView(BaseLoggedInPage):
 
     @property
     def in_manager(self):
-        navigation_path = VersionPick(self.context['object'].navigation_path).pick(
-            self.context['object'].appliance.version)
+        navigation_path = self.context['object'].navigation_path
         return(
             self.logged_in_as_current_user and
             self.navigation.currently_selected == navigation_path)
@@ -169,9 +167,7 @@ class BlockManagerCollection(BaseCollection):
     """Collection object [block manager] for the :py:class:'cfme.storage.manager'"""
     ENTITY = StorageManager
     manager_type = 'Block Storage Managers'
-    navigation_path = {
-        Version.lowest(): ['Storage', 'Storage Providers'],
-        '5.8': ['Storage', 'Block Storage', 'Managers']}
+    navigation_path = ['Storage', 'Block Storage', 'Managers']
 
 
 @attr.s
@@ -179,9 +175,7 @@ class ObjectManagerCollection(BaseCollection):
     """Collection object [object manager] for the :py:class:'cfme.storage.manager'"""
     ENTITY = StorageManager
     manager_type = 'Object Storage Managers'
-    navigation_path = {
-        Version.lowest(): ['Storage', 'Storage Providers'],
-        '5.8': ['Storage', 'Object Storage', 'Managers']}
+    navigation_path = ['Storage', 'Object Storage', 'Managers']
 
 
 @navigator.register(BlockManagerCollection, 'All')
@@ -191,8 +185,7 @@ class StorageManagerAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        navigation_path = VersionPick(self.obj.navigation_path).pick(self.obj.appliance.version)
-        self.prerequisite_view.navigation.select(*navigation_path)
+        self.prerequisite_view.navigation.select(*self.obj.navigation_path)
 
 
 @navigator.register(StorageManager, 'Details')

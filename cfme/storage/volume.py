@@ -5,23 +5,16 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import (
     Accordion,
     BaseEntitiesView,
-    BaseListEntity,
-    BaseQuadIconEntity,
-    BaseTileIconEntity,
     BootstrapSelect,
     BootstrapSwitch,
     BreadCrumb,
     ItemsToolBarViewSelector,
-    JSBaseEntity,
     ManageIQTree,
-    NonJSBaseEntity,
     SummaryTable,
     TextInput,
-    Version,
-    VersionPick
 )
-from widgetastic_patternfly import Button, Dropdown, FlashMessages
-from widgetastic.widget import View, Text, ParametrizedView
+from widgetastic_patternfly import Button, Dropdown
+from widgetastic.widget import View, Text
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import VolumeNotFoundError, ItemNotFound
@@ -44,48 +37,12 @@ class VolumeDetailsToolbar(View):
     download = Button('Download summary in PDF format')
 
 
-class VolumeQuadIconEntity(BaseQuadIconEntity):
-    pass
-
-
-class VolumeTileIconEntity(BaseTileIconEntity):
-    quad_icon = ParametrizedView.nested(VolumeQuadIconEntity)
-
-
-class VolumeListEntity(BaseListEntity):
-    pass
-
-
-class NonJSVolumeEntity(NonJSBaseEntity):
-    quad_entity = VolumeQuadIconEntity
-    list_entity = VolumeListEntity
-    tile_entity = VolumeTileIconEntity
-
-
-def VolumeEntity():  # noqa
-    """Temporary wrapper for Volume Entity during transition to JS based Entity """
-    return VersionPick({
-        Version.lowest(): NonJSVolumeEntity,
-        '5.9': JSBaseEntity,
-    })
-
-
-class VolumeEntities(BaseEntitiesView):
-    """The entities on the main list of Volume Page"""
-
-    @property
-    def entity_class(self):
-        return VolumeEntity().pick(self.browser.product_version)
-
-
 class VolumeDetailsEntities(View):
     breadcrumb = BreadCrumb()
     title = Text('//div[@id="main-content"]//h1')
     properties = SummaryTable('Properties')
     relationships = SummaryTable('Relationships')
     smart_management = SummaryTable('Smart Management')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
 
 
 class VolumeDetailsAccordion(View):
@@ -102,15 +59,14 @@ class VolumeView(BaseLoggedInPage):
     """Base class for header and nav check"""
     @property
     def in_volume(self):
-        nav = Volume.nav.pick(self.context['object'].appliance.version)
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == nav)
+            self.navigation.currently_selected == ['Storage', 'Block Storage', 'Volumes'])
 
 
 class VolumeAllView(VolumeView):
     toolbar = View.nested(VolumeToolbar)
-    including_entities = View.include(VolumeEntities, use_parent=True)
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
 
     @property
     def is_displayed(self):
@@ -193,8 +149,6 @@ class VolumeBackupView(VolumeView):
 
 @attr.s
 class Volume(BaseEntity):
-    # Navigation menu option
-    nav = ['Storage', 'Block Storage', 'Volumes']
 
     name = attr.ib()
     provider = attr.ib()
@@ -216,11 +170,7 @@ class Volume(BaseEntity):
         view.volume_name.fill(name)
         view.save.click()
 
-        # Wrong flash for 5.7[BZ-1506992]. As BZ clear 5.7 will consistence with 5.8 and 5.9.
-        if self.appliance.version < "5.8":
-            view.flash.assert_success_message('Updating Cloud Volume "{}"'.format(self.name))
-        else:
-            view.flash.assert_success_message('Cloud Volume "{}" updated'.format(name))
+        view.flash.assert_success_message('Cloud Volume "{}" updated'.format(name))
 
         self.name = name
         wait_for(lambda: self.exists, delay=20, timeout=500, fail_func=self.refresh)
@@ -230,8 +180,7 @@ class Volume(BaseEntity):
 
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Delete this Cloud Volume', handle_alert=True)
-
-        view.entities.flash.assert_success_message('Delete initiated for 1 Cloud Volume.')
+        view.flash.assert_success_message('Delete initiated for 1 Cloud Volume.')
 
         if wait:
             self.wait_for_disappear(500)
@@ -356,8 +305,7 @@ class VolumeAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        nav = Volume.nav.pick(self.obj.appliance.version)
-        self.prerequisite_view.navigation.select(*nav)
+        self.prerequisite_view.navigation.select('Storage', 'Block Storage', 'Volumes')
 
 
 @navigator.register(Volume, 'Details')
