@@ -26,9 +26,10 @@ def test_add_remove_tag(containers):
     # add tag with category Department and tag communication
     container.add_tag('Department', 'Communication')
     tag_available = container.get_tags()
-    assert 'Department' in tag_available and 'Communication' in tag_available
+    assert tag_available[0].display_name == 'Communication'
+    assert tag_available[0].category.display_name == 'Department'
 
     # remove assigned tag
     container.remove_tag('Department', 'Communication')
     tag_available = container.get_tags()
-    assert 'Department' not in tag_available and 'Communication' not in tag_available
+    assert not tag_available
