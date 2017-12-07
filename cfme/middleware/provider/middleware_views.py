@@ -99,6 +99,7 @@ class ServerDetailsEntities(View):
     properties = SummaryTable(title='Properties')
     relationships = SummaryTable(title='Relationships')
     smart_management = SummaryTable(title='Smart Management')
+    compliance = SummaryTable(title='Compliance')
     flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
