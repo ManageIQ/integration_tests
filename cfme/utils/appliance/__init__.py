@@ -475,8 +475,8 @@ class IPAppliance(object):
         prov_data = conf.cfme_data.get('management_systems', {})['how to pass provider name here?']
         if prov_data['type'] == 'openstack':
 
-            LOOPBACK_SCRIPT_PATH = "/usr/local/sbin/loopbacks"
-            LOOPBACK_SCRIPT_CONTENT = """EOF
+            loopback_script_path = "/usr/local/sbin/loopbacks"
+            loopback_script_content = """EOF
             #!/bin/bash
             DB_PATH="/var/opt/rh/rh-postgresql95/db"
             DB="vmdb_db.img"
@@ -496,8 +496,8 @@ class IPAppliance(object):
             fi
             EOF"""
 
-            LOOPBACK_UNIT_PATH = "/etc/systemd/system/multi-user.target.wants/loopback.service"
-            LOOPBACK_UNIT_CONTENT = """EOF
+            loopback_unit_path = "/etc/systemd/system/multi-user.target.wants/loopback.service"
+            loopback_unit_content = """EOF
             [Unit]
             Description=Setup loop devices
             DefaultDependencies=false
@@ -516,21 +516,21 @@ class IPAppliance(object):
             Also=systemd-udev-settle.service
             EOF"""
 
-            UDEV_RULE_PATH = "/etc/udev/rules.d/75-persistent-disk.rules"
-            UDEV_RULE_CONTENT = """EOF
+            udev_rule_path = "/etc/udev/rules.d/75-persistent-disk.rules"
+            udev_rule_content = """EOF
             KERNEL=="loop0", SYMLINK+="vdb"
             KERNEL=="loop0p1", SYMLINK+="vdb1"
             EOF"""
 
-            CONTENT = [
-                (LOOPBACK_SCRIPT_PATH, LOOPBACK_SCRIPT_CONTENT),
-                (LOOPBACK_UNIT_PATH, LOOPBACK_UNIT_CONTENT),
-                (UDEV_RULE_PATH, UDEV_RULE_CONTENT)
+            content = [
+                (loopback_script_path, loopback_script_content),
+                (loopback_unit_path, loopback_unit_content),
+                (udev_rule_path, udev_rule_content)
             ]
 
             client = self.ssh_client
 
-            COMMANDS_TO_RUN = [
+            commands_to_run = [
                 "chmod ug+x /usr/local/sbin/loopbacks",
                 "chown root:root /usr/local/sbin/loopbacks",
                 "systemctl daemon-reload",
@@ -539,10 +539,10 @@ class IPAppliance(object):
             ]
 
             logging.info("Creating loopback script, unit file and udev rule")
-            for path, content in CONTENT:
+            for path, content in content:
                 client.run_command("cat > {path} << {content}".format(path=path, content=content))
 
-            for command in COMMANDS_TO_RUN:
+            for command in commands_to_run:
                 logging.info("Running command: {}".format(command))
                 client.run_command(command)
 
