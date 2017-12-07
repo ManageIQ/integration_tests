@@ -181,9 +181,9 @@ class CoverageManager(object):
         def _bundle_install():
             self.ipapp.ssh_client.run_command('yum -y install git')
             self.ipapp.ssh_client.run_command('cd {}; bundle'.format(rails_root))
+
         version.pick({
-            version.LOWEST: _bundle_install,
-            '5.4': _gem_install,
+            version.LOWEST: _gem_install,
             version.LATEST: _bundle_install,
         })()
 

@@ -222,10 +222,7 @@ class ProviderAllVMsView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        if self.browser.product_version < "5.8":
-            msg = "{} (All VMs)".format(self.context["object"].name)
-        else:
-            msg = "{} (All Direct VMs)".format(self.context["object"].name)
+        msg = "{} (All Direct VMs)".format(self.context["object"].name)
         return (
             self.navigation.currently_selected == ["Compute", "Infrastructure", "Providers"] and
             self.title.text == msg
