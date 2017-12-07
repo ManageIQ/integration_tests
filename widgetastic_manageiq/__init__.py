@@ -1572,7 +1572,10 @@ class RadioGroup(Widget):
 
     def _get_parent_label(self, name):
         br = self.browser
-        return next(btn for btn in br.elements(self.LABELS) if br.text(btn) == name)
+        try:
+            return next(btn for btn in br.elements(self.LABELS) if br.text(btn) == name)
+        except StopIteration:
+            raise NoSuchElementException("RadioButton {name} is absent on page".format(name=name))
 
     @property
     def button_names(self):
