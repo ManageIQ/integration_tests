@@ -38,6 +38,7 @@ class VolumeSnapshotDetailsToolbar(View):
 class VolumeSnapshotDetailsEntities(View):
     """The entities on the Volume Snapshot detail page"""
     breadcrumb = BreadCrumb()
+    title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
     properties = SummaryTable('Properties')
     relationships = SummaryTable('Relationships')
     smart_management = SummaryTable('Smart Management')
@@ -56,7 +57,6 @@ class VolumeSnapshotDetailSidebar(View):
 
 class VolumeSnapshotView(BaseLoggedInPage):
     """A base view for all the Volume Snapshot pages"""
-    title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
 
     @property
     def in_volume_snapshots(self):
@@ -79,7 +79,7 @@ class VolumeSnapshotAllView(VolumeSnapshotView):
     def is_displayed(self):
         return (
             self.in_volume_snapshots and
-            self.title.text == 'Cloud Volume Snapshots')
+            self.entities.title.text == 'Cloud Volume Snapshots')
 
 
 class VolumeSnapshotDetailsView(VolumeSnapshotView):
@@ -90,7 +90,7 @@ class VolumeSnapshotDetailsView(VolumeSnapshotView):
 
         return (
             self.in_volume_snapshots and
-            self.title.text == expected_title and
+            self.entities.title.text == expected_title and
             self.entities.breadcrumb.active_location == expected_title)
 
     toolbar = View.nested(VolumeSnapshotDetailsToolbar)
