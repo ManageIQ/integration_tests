@@ -1,8 +1,6 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import Parameter
 from widgetastic.widget import ParametrizedView, Text, View
-from widgetastic_manageiq import (Accordion, ManageIQTree, Calendar, SummaryTable,
-                                  BaseNonInteractiveEntitiesView)
 from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Tab
 
 from cfme.base.login import BaseLoggedInPage
@@ -10,9 +8,11 @@ from cfme.common import TagPageView
 from cfme.common.vm_views import VMDetailsEntities
 from cfme.services.myservice import MyService
 from cfme.services.requests import RequestsView
-from cfme.utils.appliance import current_appliance
+from cfme.utils.appliance import current_appliance, MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import (Accordion, ManageIQTree, Calendar, SummaryTable,
+                                  BaseNonInteractiveEntitiesView)
 
 
 class MyServicesView(BaseLoggedInPage):
@@ -179,7 +179,7 @@ class ServiceVMDetailsView(VMDetailsEntities):
         )
 
 
-@MyService.retire.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(MyService.retire, ViaUI)
 def retire(self):
     view = navigate_to(self, 'Details')
     view.lifecycle_btn.item_select("Retire this Service", handle_alert=True)
@@ -196,7 +196,7 @@ def retire(self):
         message='Service Retirement wait')
 
 
-@MyService.retire_on_date.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(MyService.retire_on_date, ViaUI)
 def retire_on_date(self, retirement_date):
     view = navigate_to(self, 'SetRetirement')
     view.retirement_date.fill(retirement_date)
@@ -209,7 +209,7 @@ def retire_on_date(self, retirement_date):
         message='Service Retirement wait')
 
 
-@MyService.update.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(MyService.update, ViaUI)
 def update(self, updates):
     view = navigate_to(self, 'Edit')
     changed = view.fill_with(updates, on_change=view.save_button, no_change=view.cancel_button)
@@ -225,7 +225,7 @@ def update(self, updates):
     assert view.is_displayed
 
 
-@MyService.exists.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(MyService.exists, ViaUI)
 def exists(self):
     try:
         navigate_to(self, 'Details')
@@ -234,7 +234,7 @@ def exists(self):
         return False
 
 
-@MyService.delete.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(MyService.delete, ViaUI)
 def delete(self):
     view = navigate_to(self, 'Details')
     if self.appliance.version < "5.9":
@@ -249,7 +249,7 @@ def delete(self):
         'Service "{}": Delete successful'.format(self.name))
 
 
-@MyService.set_ownership.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(MyService.set_ownership, ViaUI)
 def set_ownership(self, owner, group):
     view = navigate_to(self, 'SetOwnership')
     view.fill({'select_owner': owner,
@@ -261,7 +261,7 @@ def set_ownership(self, owner, group):
     view.flash.assert_success_message('Ownership saved for selected Service')
 
 
-@MyService.edit_tags.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(MyService.edit_tags, ViaUI)
 def edit_tags(self, tag, value):
     view = navigate_to(self, 'EditTagsFromDetails')
     view.fill({'select_tag': tag,
@@ -273,21 +273,21 @@ def edit_tags(self, tag, value):
     view.flash.assert_success_message('Tag edits were successfully saved')
 
 
-@MyService.check_vm_add.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(MyService.check_vm_add, ViaUI)
 def check_vm_add(self, add_vm_name):
     view = navigate_to(self, 'Details')
     view.entities.get_entity(name=add_vm_name).click()
     view.flash.assert_no_error()
 
 
-@MyService.download_file.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(MyService.download_file, ViaUI)
 def download_file(self, extension):
     view = navigate_to(self, 'All')
     view.download_choice.item_select("Download as {}".format(extension))
     view.flash.assert_no_error()
 
 
-@MyService.reconfigure_service.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(MyService.reconfigure_service, ViaUI)
 def reconfigure_service(self):
     view = navigate_to(self, 'Reconfigure')
     view.submit_button.click()

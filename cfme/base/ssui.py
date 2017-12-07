@@ -1,21 +1,20 @@
-from . import Server
-
-from selenium.webdriver.common.keys import Keys
+import time
 
 from navmazing import NavigateToSibling
+from selenium.webdriver.common.keys import Keys
+from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import View, ParametrizedView
 from widgetastic_patternfly import NavDropdown, FlashMessages, Input, Button, Text
-from widgetastic_manageiq import SSUIVerticalNavigation
-from widgetastic.utils import ParametrizedLocator
 
 from cfme.base.credential import Credential
 from cfme.utils import conf
+from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance.implementations.ssui import navigator, SSUINavigateStep, navigate_to
 from cfme.utils.browser import ensure_browser_open, quit
 from cfme.utils.log import logger
-
-import time
+from widgetastic_manageiq import SSUIVerticalNavigation
+from . import Server
 
 
 class SSUIBaseLoggedInPage(View):
@@ -114,7 +113,7 @@ class LoginPage(View):
             self.extra.appliance.user = user
 
 
-@Server.address.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(Server.address, ViaSSUI)
 def address(self):
     logger.info("USING SSUI ADDRESS")
     return self.appliance.url_path('/self_service/')
@@ -123,7 +122,7 @@ def address(self):
 LOGIN_METHODS = ['click_on_login', 'press_enter_after_password']
 
 
-@Server.login.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(Server.login, ViaSSUI)
 def login(self, user=None, method=LOGIN_METHODS[-1]):
     if not user:
         from cfme.configure.access_control import User
@@ -150,7 +149,7 @@ def login(self, user=None, method=LOGIN_METHODS[-1]):
     return logged_in_view
 
 
-@Server.login_admin.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(Server.login_admin, ViaSSUI)
 def login_admin(self, **kwargs):
     """
     Convenience function to log into CFME using the admin credentials from the yamls.

@@ -1,18 +1,19 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, View
-from widgetastic_manageiq import Accordion, ManageIQTree
-from widgetastic_patternfly import Button, Input, BootstrapSelect
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick
+from widgetastic.widget import Text, View
+from widgetastic_patternfly import Button, Input, BootstrapSelect
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
-from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.requests import RequestsView
+from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
 from cfme.utils.blockers import BZ
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import Accordion, ManageIQTree
 
 
 class ServicesCatalogView(BaseLoggedInPage):
@@ -119,7 +120,7 @@ class OrderServiceCatalogView(OrderForm):
         )
 
 
-@ServiceCatalogs.order.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(ServiceCatalogs.order, ViaUI)
 def order(self):
     view = navigate_to(self, 'Order')
     wait_for(lambda: view.dialog_title.is_displayed, timeout=10)

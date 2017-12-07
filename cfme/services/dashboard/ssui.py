@@ -1,17 +1,18 @@
 import re
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text
-from widgetastic_manageiq import SSUIPrimarycard, SSUIAggregatecard, SSUIlist, SSUIPaginationPane
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
 from cfme.services.dashboard import Dashboard
+from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ssui import (
     navigator,
     SSUINavigateStep,
     navigate_to,
-    ViaSSUI
+    ViaSSUI,
 )
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import SSUIPrimarycard, SSUIAggregatecard, SSUIlist, SSUIPaginationPane
 
 
 class DashboardView(SSUIBaseLoggedInPage):
@@ -51,7 +52,7 @@ class MyServicesView(MyServiceForm):
         return self.in_myservices and self.title.text == "My Services"
 
 
-@Dashboard.num_of_rows.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(Dashboard.num_of_rows, ViaSSUI)
 def num_of_rows(self):
     """Returns the number of rows/services displayed
        in paginator"""
@@ -62,7 +63,7 @@ def num_of_rows(self):
     return rows
 
 
-@Dashboard.results.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(Dashboard.results, ViaSSUI)
 def results(self):
     """Returns the count of services displayed at the top of page"""
     view = self.create_view(MyServicesView)
@@ -73,7 +74,7 @@ def results(self):
     return int_result
 
 
-@Dashboard.total_services.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(Dashboard.total_services, ViaSSUI)
 def total_services(self):
     """Returns the total services(Integer) displayed on dashboard"""
 
@@ -90,7 +91,7 @@ def total_services(self):
     return total_service
 
 
-@Dashboard.total_requests.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(Dashboard.total_requests, ViaSSUI)
 def total_requests(self):
     """Total Request cannot be clicked so this method just
     returns the total number of requests displayed on dashboard.
@@ -101,7 +102,7 @@ def total_requests(self):
     return total_request
 
 
-@Dashboard.pending_requests.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(Dashboard.pending_requests, ViaSSUI)
 def pending_requests(self):
     """Pending Request cannot be clicked so this method just
     returns the total number of requests displayed on dashboard.
@@ -112,7 +113,7 @@ def pending_requests(self):
     return pending_request
 
 
-@Dashboard.approved_requests.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(Dashboard.approved_requests, ViaSSUI)
 def approved_requests(self):
     """Approved Request cannot be clicked so this method just
     returns the total number of requests displayed on dashboard.
@@ -123,7 +124,7 @@ def approved_requests(self):
     return approved_request
 
 
-@Dashboard.denied_requests.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(Dashboard.denied_requests, ViaSSUI)
 def denied_requests(self):
     """Denied Request cannot be clicked so this method just
     returns the total number of requests displayed on dashboard.
@@ -134,7 +135,7 @@ def denied_requests(self):
     return denied_request
 
 
-@Dashboard.retiring_soon.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(Dashboard.retiring_soon, ViaSSUI)
 def retiring_soon(self):
     """Returns the count of retiring soon services displayed on dashboard"""
 
@@ -151,7 +152,7 @@ def retiring_soon(self):
     return retiring_services
 
 
-@Dashboard.current_services.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(Dashboard.current_services, ViaSSUI)
 def current_services(self):
     """Returns the count of active services displayed on dashboard"""
 
@@ -168,7 +169,7 @@ def current_services(self):
     return current_service
 
 
-@Dashboard.retired_services.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(Dashboard.retired_services, ViaSSUI)
 def retired_services(self):
     """Returns the count of retired services displayed on dashboard"""
 
@@ -185,7 +186,7 @@ def retired_services(self):
     return retired_service
 
 
-@Dashboard.monthly_charges.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(Dashboard.monthly_charges, ViaSSUI)
 def monthly_charges(self):
     """Returns the chargeback data displayed on dashboard"""
 

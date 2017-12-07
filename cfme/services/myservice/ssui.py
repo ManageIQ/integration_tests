@@ -1,24 +1,19 @@
+# TO DO - remove sleep when BZ 1496233 is fixed
+import time
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Select
-from widgetastic_manageiq import (
-    SSUIlist,
-    SSUIDropdown,
-    Notification,
-    SSUIAppendToBodyDropdown)
 from widgetastic_patternfly import Input, Button
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
 from cfme.common.vm import VM
+from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ssui import (
-    navigator,
-    SSUINavigateStep,
-    navigate_to,
-    ViaSSUI
+    navigator, SSUINavigateStep, navigate_to, ViaSSUI
 )
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import (SSUIlist, SSUIDropdown, Notification, SSUIAppendToBodyDropdown)
 from . import MyService
-# TO DO - remove sleep when BZ 1496233 is fixed
-import time
 
 
 class MyServicesView(SSUIBaseLoggedInPage):
@@ -143,7 +138,7 @@ class RetireServiceView(MyServicesView):
             self.title.text == 'Retire Service Now')
 
 
-@MyService.update.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(MyService.update, ViaSSUI)
 def update(self, updates):
     view = navigate_to(self, 'Edit')
     view.fill_with(updates, on_change=view.save_button, no_change=view.cancel_button)
@@ -159,7 +154,7 @@ def update(self, updates):
         "{} was edited.".format(self.name))
 
 
-@MyService.set_ownership.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(MyService.set_ownership, ViaSSUI)
 def set_ownership(self, owner, group):
     view = navigate_to(self, 'SetOwnership')
     wait_for(
@@ -180,7 +175,7 @@ def set_ownership(self, owner, group):
                                                 .format(self.name))
 
 
-@MyService.edit_tags.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(MyService.edit_tags, ViaSSUI)
 def edit_tags(self, tag, value):
     view = navigate_to(self, 'EditTagsFromDetails')
     wait_for(
@@ -198,7 +193,7 @@ def edit_tags(self, tag, value):
     assert view.notification.assert_message("Tagging successful.")
 
 
-@MyService.delete.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(MyService.delete, ViaSSUI)
 def delete(self):
     view = navigate_to(self, 'Details')
     if self.appliance.version >= "5.8":
@@ -218,7 +213,7 @@ def delete(self):
     assert view.notification.assert_message("{} was removed.".format(self.name))
 
 
-@MyService.launch_vm_console.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(MyService.launch_vm_console, ViaSSUI)
 def launch_vm_console(self, catalog_item):
     navigate_to(self, 'VM Console')
     # TODO need to remove 0001 from the line below and find correct place/way to put it in code
@@ -231,7 +226,7 @@ def launch_vm_console(self, catalog_item):
     return vm_obj
 
 
-@MyService.retire.external_implementation_for(ViaSSUI)
+@MiqImplementationContext.external_for(MyService.retire, ViaSSUI)
 def retire(self):
     view = navigate_to(self, 'Retire', wait_for_view=True)
     view.retire.click()

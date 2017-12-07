@@ -21,6 +21,7 @@ from cfme.exceptions import ZoneNotFound, DestinationNotFound
 from cfme.intelligence.chargeback import ChargebackView
 from cfme.intelligence.rss import RSSView
 from cfme.utils import conf
+from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, ViaUI, navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
@@ -28,7 +29,7 @@ from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, Ti
 from . import Server, Region, Zone, ZoneCollection
 
 
-@Server.address.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(Server.address, ViaUI)
 def address(self):
     logger.info("USING UI ADDRESS")
     return self.appliance.url
@@ -133,7 +134,7 @@ class LoginPage(View):
         return self.logged_out
 
 
-@Server.logged_in.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(Server.logged_in, ViaUI)
 def logged_in(self):
     return self.appliance.browser.create_view(BaseLoggedInPage).logged_in
 
@@ -141,7 +142,7 @@ def logged_in(self):
 LOGIN_METHODS = ['click_on_login', 'press_enter_after_password', '_js_auth_fn']
 
 
-@Server.login.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(Server.login, ViaUI)
 def login(self, user=None, method=LOGIN_METHODS[-1]):
     """
     Login to CFME with the given username and password.
@@ -188,7 +189,7 @@ def login(self, user=None, method=LOGIN_METHODS[-1]):
     return logged_in_view
 
 
-@Server.login_admin.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(Server.login_admin, ViaUI)
 def login_admin(self, **kwargs):
     """
     Convenience function to log into CFME using the admin credentials from the yamls.
@@ -205,7 +206,7 @@ def login_admin(self, **kwargs):
     return logged_in_page
 
 
-@Server.logout.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(Server.logout, ViaUI)
 def logout(self):
     """
     Logs out of CFME.
@@ -216,7 +217,7 @@ def logout(self):
         self.appliance.user = None
 
 
-@Server.current_full_name.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(Server.current_full_name, ViaUI)
 def current_full_name(self):
     """ Returns the current username.
     Returns: the current username.
@@ -1151,7 +1152,7 @@ def exists(self):
         return False
 
 
-@Zone.update.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(Zone.update, ViaUI)
 def update(self, updates):
     view = navigate_to(self, 'Edit')
     changed = view.fill(updates)
@@ -1170,7 +1171,7 @@ def update(self, updates):
             'Edit of Zone "{}" was cancelled by the user'.format(self.name))
 
 
-@Zone.delete.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(Zone.delete, ViaUI)
 def delete(self, cancel=False):
     """ Delete the Zone represented by this object.
 
@@ -1183,7 +1184,7 @@ def delete(self, cancel=False):
         view.flash.assert_message('Zone "{}": Delete successful'.format(self.name))
 
 
-@ZoneCollection.create.external_implementation_for(ViaUI)
+@MiqImplementationContext.external_for(ZoneCollection.create, ViaUI)
 def create(self, name=None, description=None, smartproxy_ip=None, ntp_servers=None,
            max_scans=None, user=None, cancel=False):
 
