@@ -1,25 +1,24 @@
 # -*- coding: utf-8 -*-
 """This module tests various ways how to set up the provisioning using the provisioning dialog."""
-import re
-import fauxfactory
-import pytest
 from datetime import datetime, timedelta
 
+import fauxfactory
+import pytest
+import re
 from widgetastic.utils import partial_match
 
 from cfme import test_requirements
+from cfme.base.login import BaseLoggedInPage
 from cfme.common.provider import cleanup_vm
-from cfme.infrastructure.virtual_machines import Vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.web_ui import flash
+from cfme.infrastructure.virtual_machines import Vm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError
-
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -74,7 +73,8 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
         vm = Vm(name=vm_name, provider=provider, template_name=template)
         view = navigate_to(vm, 'Provision')
         view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
-        flash.assert_no_errors()
+        base_view = vm.appliance.browser.create_view(BaseLoggedInPage)
+        base_view.flash.assert_no_error()
 
         request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
         request_description = 'Provision from [{}] to [{}]'.format(template, vm_name)

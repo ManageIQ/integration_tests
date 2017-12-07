@@ -1,14 +1,12 @@
 import pytest
 
-from cfme.infrastructure import host
-from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.infrastructure.provider import InfraProvider
-from cfme.web_ui import flash
+from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
+from cfme.utils import testgen, version
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-from cfme.utils import testgen, version
-from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
@@ -166,8 +164,9 @@ def test_host_provisioning(appliance, setup_provider, cfme_data, host_provisioni
     }
 
     view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
-    flash.assert_success_message(
-        "Host Request was Submitted, you will be notified when your Hosts are ready")
+    view.flash.assert_success_message(
+        "Host Request was Submitted, you will be notified when your Hosts are ready"
+    )
 
     request_description = 'PXE install on [{}] from image [{}]'.format(prov_host_name, pxe_image)
     host_request = appliance.collections.requests.instantiate(request_description)
