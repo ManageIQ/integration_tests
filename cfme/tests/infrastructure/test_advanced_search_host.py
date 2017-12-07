@@ -5,7 +5,6 @@ import pytest
 from itertools import dropwhile
 from widgetastic.exceptions import NoSuchElementException
 
-from cfme.web_ui.cfme_exception import is_cfme_exception, cfme_exception_text
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
@@ -250,9 +249,4 @@ def test_cannot_delete_more_than_once(host_collection, hosts_advanced_search,
     hosts_advanced_search.flash.assert_no_error()
     # Try it second time
     # If the button is there, it says True
-    if hosts_advanced_search.entities.search.delete_filter():
-        # This should not happen
-        msg = "Delete twice accepted!"
-        if is_cfme_exception():
-            msg += " CFME Exception text: `{}`".format(cfme_exception_text())
-        pytest.fail(msg)
+    assert not hosts_advanced_search.entities.search.delete_filter(), 'Delete twice accepted!'

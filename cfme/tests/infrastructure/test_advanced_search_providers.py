@@ -211,9 +211,5 @@ def test_cannot_delete_more_than_once(advanced_search_view):
         pytest.fail("Could not delete the filter even first time!")
         advanced_search_view.flash.assert_no_error()
     # Try it second time
-    if advanced_search_view.entities.search.delete_filter():  # If the button is there, it says True
-        # This should not happen
-        msg = "Delete twice accepted!"
-        if is_cfme_exception():
-            msg += " CFME Exception text: `{}`".format(cfme_exception_text())
-        pytest.fail(msg)
+    assert not advanced_search_view.entities.search.delete_filter(), "Delete twice accepted!"
+    advanced_search_view.flash.assert_no_error()
