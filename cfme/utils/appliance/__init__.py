@@ -452,6 +452,9 @@ class IPAppliance(object):
             if fix_ntp_clock:
                 self.fix_ntp_clock(log_callback=log_callback)
                 # TODO: Handle external DB setup
+            # This is workaround for Openstack appliances to use only one disk for the VMDB
+            self.configure_rhos_db_disk()
+
             self.db.setup(region=region, key_address=key_address)
             self.wait_for_evm_service(timeout=1200, log_callback=log_callback)
 
@@ -467,6 +470,82 @@ class IPAppliance(object):
             if restart_evm:
                 self.restart_evm_service(log_callback=log_callback)
             self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+
+    def configure_rhos_db_disk(self):
+        prov_data = conf.cfme_data.get('management_systems', {})['how to pass provider name here?']
+        if prov_data['type'] == 'openstack':
+
+            LOOPBACK_SCRIPT_PATH = "/usr/local/sbin/loopbacks"
+            LOOPBACK_SCRIPT_CONTENT = """EOF
+            #!/bin/bash
+            DB_PATH="/var/opt/rh/rh-postgresql95/db"
+            DB="vmdb_db.img"
+            DB_IMG="${DB_PATH}/${DB}"
+            DB_SIZE="5GB"
+
+            if [ ! -f ${DB_IMG} ]; then
+                fallocate -l ${DB_SIZE} ${DB_IMG}
+            fi
+
+            if  ! losetup -l | grep ${DB} 1> /dev/null ; then
+                losetup -f ${DB_IMG}
+                partprobe /dev/vdb
+                partprobe /dev/vdc
+                systemctl restart lvm2-lvmetad.service
+                vgchange -a y vg_pg
+            fi
+            EOF"""
+
+            LOOPBACK_UNIT_PATH = "/etc/systemd/system/multi-user.target.wants/loopback.service"
+            LOOPBACK_UNIT_CONTENT = """EOF
+            [Unit]
+            Description=Setup loop devices
+            DefaultDependencies=false
+            ConditionFileIsExecutable=/usr/local/sbin/loopbacks
+            After=var.mount
+            Requires=systemd-remount-fs.service
+
+            [Service]
+            Type=oneshot
+            ExecStart=/usr/local/sbin/loopbacks
+            TimeoutSec=60
+            RemainAfterExit=yes
+
+            [Install]
+            WantedBy=local-fs.target
+            Also=systemd-udev-settle.service
+            EOF"""
+
+            UDEV_RULE_PATH = "/etc/udev/rules.d/75-persistent-disk.rules"
+            UDEV_RULE_CONTENT = """EOF
+            KERNEL=="loop0", SYMLINK+="vdb"
+            KERNEL=="loop0p1", SYMLINK+="vdb1"
+            EOF"""
+
+            CONTENT = [
+                (LOOPBACK_SCRIPT_PATH, LOOPBACK_SCRIPT_CONTENT),
+                (LOOPBACK_UNIT_PATH, LOOPBACK_UNIT_CONTENT),
+                (UDEV_RULE_PATH, UDEV_RULE_CONTENT)
+            ]
+
+            client = self.ssh_client
+
+            COMMANDS_TO_RUN = [
+                "chmod ug+x /usr/local/sbin/loopbacks",
+                "chown root:root /usr/local/sbin/loopbacks",
+                "systemctl daemon-reload",
+                "udevadm control --reload-rules && udevadm trigger",
+                "/usr/local/sbin/loopbacks"
+            ]
+
+            logging.info("Creating loopback script, unit file and udev rule")
+            for path, content in CONTENT:
+                # client.run_command("service auditd restart", ensure_host=True)
+                client.run_command("cat > {path} << {content}".format(path=path, content=content))
+
+            for command in COMMANDS_TO_RUN:
+                logging.info("Running command: {}".format(command))
+                client.run_command("cat > {path} << {content}".format(path=path, content=content))
 
     # TODO: this method eventually needs to be moved to provider class..
     @logger_wrap("Configure GCE IPAppliance: {}")
