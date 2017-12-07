@@ -540,12 +540,11 @@ class IPAppliance(object):
 
             logging.info("Creating loopback script, unit file and udev rule")
             for path, content in CONTENT:
-                # client.run_command("service auditd restart", ensure_host=True)
                 client.run_command("cat > {path} << {content}".format(path=path, content=content))
 
             for command in COMMANDS_TO_RUN:
                 logging.info("Running command: {}".format(command))
-                client.run_command("cat > {path} << {content}".format(path=path, content=content))
+                client.run_command(command)
 
     # TODO: this method eventually needs to be moved to provider class..
     @logger_wrap("Configure GCE IPAppliance: {}")
