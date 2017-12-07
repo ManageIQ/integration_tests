@@ -42,14 +42,18 @@ def snapshot(appliance, provider):
     try:
         if snapshot.exists:
             snapshot_collection.delete(snapshot)
-    except Exception:
-        logger.warning('Exception during snapshot deletion - skipping..')
+    except Exception as e:
+        logger.warning("{name}:{msg}: Snapshot deletion - skipping...".format(
+            name=type(e).__name__,
+            msg=str(e)))
 
     try:
         if volume.exists:
             volume.delete(wait=False)
-    except Exception:
-        logger.warning('Exception during volume deletion - skipping..')
+    except Exception as e:
+        logger.warning("{name}:{msg} Volume deletion - skipping...".format(
+            name=type(e).__name__,
+            msg=str(e)))
 
 
 @pytest.mark.tier(3)
