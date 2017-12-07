@@ -9,7 +9,7 @@ from cfme.utils.version import current_version
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
 def test_vmware_console_support(request, appliance):
     """Tests that the VMware Console Support setting may be changed."""
-    old_vm_console_type = appliance.server.settings.vmware_console_form['console_type']
+    old_vm_console_type = appliance.server.settings.vmware_console_values['console_type']
     # Set back to original console type
     request.addfinalizer(
         lambda: appliance.server.settings.update_vmware_console(
@@ -21,5 +21,5 @@ def test_vmware_console_support(request, appliance):
     for new_vm_console_type in appliance.server.settings.CONSOLE_TYPES:
         appliance.server.settings.update_vmware_console({'console_type': new_vm_console_type})
 
-        cur_vm_console_type = appliance.server.settings.vmware_console_form['console_type']
+        cur_vm_console_type = appliance.server.settings.vmware_console_values['console_type']
         assert cur_vm_console_type == new_vm_console_type
