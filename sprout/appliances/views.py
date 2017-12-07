@@ -811,6 +811,26 @@ def rename_appliance(request):
     return HttpResponse(str(appliance_rename.delay(appliance.id, new_name).task_id))
 
 
+def set_appliance_description(request):
+    if request.method != 'POST':
+        messages.error(request, "Invalid request.")
+        return go_home(request)
+    post = json.loads(request.body)
+    if not request.user.is_authenticated():
+        raise PermissionDenied()
+    try:
+        appliance_id = post.get("appliance_id")
+        appliance = Appliance.objects.get(id=appliance_id)
+    except ObjectDoesNotExist:
+        raise Http404('Appliance with ID {} does not exist!.'.format(appliance_id))
+    if not can_operate_appliance_or_pool(appliance, request.user):
+        raise PermissionDenied("Permission denied")
+    new_description = post.get("description")
+    appliance.description = new_description
+    appliance.save()
+    return json_response(True)
+
+
 def task_result(request):
     post = json.loads(request.body)
     task_id = post.get("task_id")
