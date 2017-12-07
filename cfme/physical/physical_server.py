@@ -198,7 +198,7 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
             If the stats do not match, an exception is raised.
         """
         # Retrieve the stats from wrapanapi
-        host_stats = client.stats(self, *stats_to_match)
+        host_stats = client.stats(*stats_to_match, requester=self)
 
         # Refresh the browser
         method = None
