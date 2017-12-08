@@ -9,9 +9,13 @@ from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils import testgen
+from cfme.utils.blockers import BZ
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate +notifier"),
+    pytest.mark.meta(
+        server_roles="+automate +notifier",
+        blockers=[BZ(1519943, forced_streams=['5.9', 'upstream'])]
+    ),
     pytest.mark.usefixtures('uses_infra_providers'),
     pytest.mark.tier(2)
 ]
