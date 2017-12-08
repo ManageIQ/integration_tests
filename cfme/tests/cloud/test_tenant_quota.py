@@ -108,10 +108,10 @@ def test_tenant_quota_enforce_via_lifecycle(request, appliance, provider, setup_
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data', 'extra_msg'],
     [
-        [('cpu', 2), {'properties': {'instance_type': 'm1.large'}}, '', False],
-        [('storage', 0.001), {}, '', False],
-        [('memory', 2), {'properties': {'instance_type': 'm1.large'}}, '', False],
-        [('vm', 1), {'catalog': {'num_vms': '4'}}, '###', True]
+        [('cpu', 2), {'properties': {'instance_type': 'm1.large'}}, ''],
+        [('storage', 0.001), {}, ''],
+        [('memory', 2), {'properties': {'instance_type': 'm1.large'}}, ''],
+        [('vm', 1), {'catalog': {'num_vms': '4'}}, '###']
     ],
     indirect=['set_roottenant_quota'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
