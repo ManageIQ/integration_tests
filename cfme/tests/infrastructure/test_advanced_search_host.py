@@ -236,8 +236,7 @@ def test_delete_button_should_appear_after_save(host_collection, hosts_advanced_
         pytest.fail("Could not delete filter right after saving!")
 
 
-def test_cannot_delete_more_than_once(host_collection, hosts_advanced_search,
-                                      nuke_browser_after_test):
+def test_cannot_delete_more_than_once(host_collection, hosts_advanced_search):
     """When Delete button appars, it does not want to go away"""
     filter_name = fauxfactory.gen_alphanumeric()
     hosts_advanced_search.entities.search.save_filter(get_expression(False).format(0), filter_name)
