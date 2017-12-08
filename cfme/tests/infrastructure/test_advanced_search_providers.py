@@ -10,7 +10,6 @@ from cfme.infrastructure.provider import InfraProvider
 from fixtures.pytest_store import store
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
-from cfme.web_ui.cfme_exception import is_cfme_exception, cfme_exception_text
 
 
 pytestmark = [
@@ -211,5 +210,4 @@ def test_cannot_delete_more_than_once(advanced_search_view):
         pytest.fail("Could not delete the filter even first time!")
         advanced_search_view.flash.assert_no_error()
     # Try it second time
-    assert not advanced_search_view.entities.search.delete_filter(), "Delete twice accepted!"
-    advanced_search_view.flash.assert_no_error()
+    assert not advanced_search_view.entities.search.delete_filter(), 'Delete twice accepted!'
