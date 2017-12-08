@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Module handling report menus contents"""
 from contextlib import contextmanager
-from cfme.utils import version
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from widgetastic.widget import Text
@@ -10,9 +9,6 @@ from widgetastic_patternfly import Button
 from navmazing import NavigateToAttribute
 
 from . import CloudIntelReportsView, ReportsMultiBoxSelect
-
-item_title = version.pick({'5.9': 'My Company (All Groups)',
-    version.LOWEST: 'My Company (All EVM Groups)'})
 
 
 class EditReportMenusView(CloudIntelReportsView):
@@ -41,7 +37,7 @@ class EditReportMenusView(CloudIntelReportsView):
             self.title.text == 'Editing EVM Group "{}"'.format(self.context["object"].group) and
             self.edit_report_menus.is_opened and
             self.edit_report_menus.tree.currently_selected == [
-                item_title,
+                "All EVM Groups",
                 self.context["object"].group
             ]
         )
@@ -182,6 +178,6 @@ class EditReportMenus(CFMENavigateStep):
 
     def step(self):
         self.view.edit_report_menus.tree.click_path(
-            item_title,
+            "All EVM Groups",
             self.obj.group
         )

@@ -7,6 +7,7 @@ from widgetastic_patternfly import Accordion, Button, Dropdown, FlashMessages
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
+from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
@@ -72,3 +73,8 @@ class CloudIntelReports(CFMENavigateStep):
 class ReportsMultiBoxSelect(MultiBoxSelect):
     move_into_button = Button(title=Parameter("@move_into"))
     move_from_button = Button(title=Parameter("@move_from"))
+
+
+def mycompany_title():
+    return version.pick({'5.9': 'My Company (All Groups)',
+        version.LOWEST: 'My Company (All EVM Groups)'})

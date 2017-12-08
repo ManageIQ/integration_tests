@@ -2,16 +2,13 @@
 import pytest
 import random
 
-from cfme.utils import version
-from cfme.intelligence.reports import menus, reports
+from cfme.intelligence.reports import menus, reports, mycompany_title
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
 # EvmGroup-super_administrator -> user `admin`
 # If we add more, will need relogin + user creation
 GROUPS = ["EvmGroup-super_administrator"]
-item_title = version.pick({'5.9': 'My Company (All Groups)',
-    version.LOWEST: 'My Company (All EVM Groups)'})
 
 
 def shuffle(l):
@@ -43,7 +40,7 @@ def test_shuffle_top_level(group, report_menus):
     # Now go and read the tree
     view = navigate_to(reports.CustomReport, "All")
     table = [row["Name"].text for row in view.reports_table]
-    if item_title in table:
+    if mycompany_title() in table:
         del table[-1]
     assert table == order, "The order differs!"
 
