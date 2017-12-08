@@ -3021,7 +3021,7 @@ class BaseEntitiesView(View):
             else:
                 entities = self._invoke_cmd('get_all_items')
                 for entity in entities:
-                    elements.append({'name': entity['item']['cells']['Name'],
+                    elements.append({'name': entity['item']['cells'].get('Name', None),
                                      'entity_id': entity['item']['id']})
             return elements
 
