@@ -34,7 +34,6 @@ def roottenant(appliance):
 @pytest.fixture
 def prov_data(vm_name):
     return {
-        "request": {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())},
         "catalog": {'vm_name': vm_name},
         "environment": {'automatic_placement': True},
     }
@@ -85,6 +84,7 @@ def test_tenant_quota_enforce_via_lifecycle(request, appliance, provider, setup_
     """Test Tenant Quota in UI"""
     prov_data.update(custom_prov_data)
     prov_data['catalog']['vm_name'] = vm_name
+    prov_data['request'] = {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}
     instance = Instance.factory(vm_name, provider, template_name)
     instance.create(**prov_data)
 
