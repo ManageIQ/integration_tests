@@ -10,8 +10,8 @@ from widgetastic_manageiq import (
     ManageIQTree,
     SummaryTable,
 )
-from widgetastic_patternfly import Button, Dropdown, FlashMessages
-from widgetastic.widget import View, Text
+from widgetastic_patternfly import Button, Dropdown
+from widgetastic.widget import View, Text, NoSuchElementException
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
@@ -56,9 +56,6 @@ class ObjectStoreContainerDetailSidebar(View):
 class ObjectStoreContainerView(BaseLoggedInPage):
     """A base view for all the Object Store Containers pages"""
     title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
-    flash = FlashMessages(
-        './/div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-        'contains(@class, "flash_text_div")]')
 
     @property
     def in_container(self):
@@ -115,10 +112,16 @@ class ObjectStoreContainerCollection(BaseCollection):
     ENTITY = ObjectStoreContainer
 
     def all(self):
-        """returning all containers objects"""
+        """returning all containers objects for respective Cloud Provider"""
         view = navigate_to(self, 'All')
-        containers = [self.instantiate(key=item, provider=self.filters.get('provider'))
-                      for item in view.entities.all_entity_names]
+
+        containers = []
+
+        # ToDo: use all_entity_names method as JS API issue (#2898) resolve.
+        for item in view.entities.elements.read():
+            if self.filters.get('provider').name in item['Cloud Provider']:
+                containers.append(self.instantiate(key=item['Key'],
+                                                   provider=self.filters.get('provider')))
         return containers
 
 
@@ -128,14 +131,11 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        if self.obj.appliance.version < "5.8":
-            self.prerequisite_view.navigation.select('Storage', 'Object Stores')
-        else:
-            self.prerequisite_view.navigation.select(
-                'Storage', 'Object Storage', 'Object Store Containers')
+        self.prerequisite_view.navigation.select(
+            'Storage', 'Object Storage', 'Object Store Containers')
 
     def resetter(self):
-        self.view.toolbar.view_selector.select("Grid View")
+        self.view.toolbar.view_selector.select("List View")
 
 
 @navigator.register(ObjectStoreContainer, 'Details')
@@ -145,9 +145,12 @@ class Details(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         try:
-            self.prerequisite_view.entities.get_entity(name=self.obj.key,
-                                                       surf_pages=True).click()
-        except ItemNotFound:
+            # ToDo: use get_entity method as JS API issue (#2898) resolve.
+            row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+                self.prerequisite_view.entities.elements, key=self.obj.key)
+            row.click()
+
+        except NoSuchElementException:
             raise ItemNotFound('Could not locate container {}'.format(self.obj.key))
 
 
