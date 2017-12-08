@@ -3734,3 +3734,90 @@ class Splitter(Widget):
             self.pull_left()
         for _ in range(2):
             self.pull_right()
+
+
+class DriftComparison(Widget):
+    """Represents Drift Analysis Sections Comparison Table
+
+        Args:
+        locator: Locator for Drift Analysis Sections Comparison Table.
+    """
+
+    ROOT = ParametrizedLocator('{@locator}')
+    ALL_SECTIONS = ".//tr[@data-exp-id]"
+    CELLS = "./td//i"
+    SECTION = ".//th[contains(text(), {})]/ancestor::tr"
+    INDENT = ".//tr[contains(@data-parent, {id})]"
+
+    def __init__(self, parent, locator, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.locator = locator
+
+    @property
+    def available_sections(self):
+        """ All element for drift sections """
+        return [section for section in self.browser.elements(self.ALL_SECTIONS, parent=self)]
+
+    def section_element(self, drift_section):
+        """ Element for drift section
+            Args:
+                drift_section: name for section(Can be partial text)
+            Return:
+                Section web element
+        """
+        return self.browser.element(self.SECTION.format(quote(drift_section)))
+
+    def is_changed(self, drift_section):
+        """ Check if section was changed
+            Args:
+                drift_section: name for section(Can be partial text)
+            Return:
+                bool: True if changed, otherwise False
+        """
+        cells = self.browser.elements(
+            self.CELLS, parent=self.section_element(drift_section))
+        attrs = [self.browser.get_attribute("class", cell) for cell in cells]
+        return "drift-delta" in attrs
+
+    def parent_id(self, drift_section):
+        """
+            Args:
+                drift_section: name for section(Can be partial text)
+            Return:
+                int: id numder
+        """
+        elements = self.browser.elements("{}/following-sibling::tr".format(
+            self.SECTION.format(quote(drift_section))), parent=self)
+        return self.browser.get_attribute("data-parent", elements[0])
+
+    def section_attributes(self, drift_section):
+        """ Children elements under section
+            Args:
+                drift_section: name for section(Can be partial text)
+            Return:
+                list: attributes elements
+        """
+        att_id = self.parent_id(drift_section)
+        return [child for child in self.browser.elements(self.INDENT.format(
+            id=quote(att_id)), parent=self)]
+
+    def check_section_attribute_availability(self, drift_section):
+        """Check if at least one attribute is available in the DOM
+            Can be used to check drift attributes options for section
+            Args:
+                drift_section: name for section(Can be partial text)
+            Return:
+                bool: True if available, otherwise False
+        """
+        try:
+            self.section_attributes(drift_section)
+            return True
+        except AttributeError:
+            return False
+
+    @property
+    def section_values(self):
+        return {section.text: self.is_changed(section.text) for section in self.available_sections}
+
+    def read(self):
+        return self.section_values

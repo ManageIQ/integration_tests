@@ -4,7 +4,6 @@ from time import sleep
 import os
 from lxml.html import document_fromstring
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import (
     View, Text, TextInput, ParametrizedView, Image, ConditionalSwitchableView)
 from widgetastic_patternfly import (
@@ -30,7 +29,8 @@ from widgetastic_manageiq import (Calendar,
                                   JSBaseEntity,
                                   BaseNonInteractiveEntitiesView,
                                   BreadCrumb,
-                                  PaginationPane)
+                                  PaginationPane,
+                                  DriftComparison)
 
 
 class InstanceQuadIconEntity(BaseQuadIconEntity):
@@ -255,9 +255,10 @@ class VMDetailsEntities(View):
 
 class VMPropertyDetailView(View):
     title = Text('//div[@id="main-content"]//h1//span[@id="explorer_title_text"]')
-    table = Table('//div[@id="miq-gtl-view"]//table')
+    table = Table('//div[@id="gtl_div"]//table')
 
     paginator = PaginationPane()
+
 
 class BasicProvisionFormView(View):
     @View.nested
@@ -575,6 +576,7 @@ class RightSizeView(BaseLoggedInPage):
 
 
 class DriftHistory(BaseLoggedInPage):
+    title = Text('#explorer_title_text')
     breadcrumb = BreadCrumb(locator='.//ol[@class="breadcrumb"]')
     history_table = Table(locator='.//div[@id="main_div"]/table')
     analyze_button = Button(title="Select up to 10 timestamps for Drift Analysis")
@@ -582,33 +584,21 @@ class DriftHistory(BaseLoggedInPage):
     @property
     def is_displayed(self):
         return (
-            self.in_compute_infrastructure_hosts and
-            self.title.text == "Drift History" and
+            "Drift History" in self.title.text and
             self.history_table.is_displayed
         )
 
 
 class DriftAnalysis(BaseLoggedInPage):
+    title = Text('#explorer_title_text')
     apply_button = Button("Apply")
     drift_sections = CheckableBootstrapTreeview(tree_id="all_sectionsbox")
-
-    @ParametrizedView.nested
-    class drift_analysis(ParametrizedView):  # noqa
-        PARAMETERS = ("drift_section", )
-        CELLS = "../td//i"
-        row = Text(ParametrizedLocator(".//div[@id='compare-grid']/"
-                                       "/th[normalize-space(.)={drift_section|quote}]"))
-
-        @property
-        def is_changed(self):
-            cells = self.browser.elements(self.CELLS, parent=self.row)
-            attrs = [self.browser.get_attribute("class", cell) for cell in cells]
-            return "drift-delta" in attrs
+    drift_analysis = DriftComparison(locator=".//div[@id='compare-grid']")
 
     @View.nested
     class toolbar(View):  # noqa
         all_attributes = Button(title="All attributes")
-        different_values_attributes = Button(title="Attributes with different")
+        different_values_attributes = Button(title="Attributes with different values")
         same_values_attributes = Button(title="Attributes with same values")
         details_mode = Button(title="Details Mode")
         exists_mode = Button(title="Exists Mode")
@@ -616,6 +606,5 @@ class DriftAnalysis(BaseLoggedInPage):
     @property
     def is_displayed(self):
         return (
-            self.in_compute_infrastructure_hosts and
-            self.title.text == "'{}' Drift Analysis".format(self.context["object"].name)
+            self.title.text == 'Drift for VM or Template "{}"'.format(self.context["object"].name)
         )
