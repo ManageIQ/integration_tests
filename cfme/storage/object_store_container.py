@@ -116,6 +116,8 @@ class ObjectStoreContainerCollection(BaseCollection):
         view = navigate_to(self, 'All')
 
         containers = []
+
+        # ToDo: use all_entity_names method as JS API issue (#2898) resolve.
         for item in view.entities.elements.read():
             if self.filters.get('provider').name in item['Cloud Provider']:
                 containers.append(self.instantiate(key=item['Key'],
