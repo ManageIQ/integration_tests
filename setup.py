@@ -104,6 +104,7 @@ setup(
             'physical_servers = cfme.physical.physical_server:PhysicalServerCollection',
             'deployment_roles = cfme.infrastructure.deployment_roles:DeploymentRoleCollection',
             'customization_templates = cfme.infrastructure.pxe:CustomizationTemplateCollection',
+            'time_profiles = cfme.configure.settings:TimeProfileCollection',
             'system_image_types = cfme.infrastructure.pxe:SystemImageTypeCollection',
             'schedules = cfme.intelligence.reports.schedules:ScheduleCollection',
             ('system_schedules = '
