@@ -75,8 +75,10 @@ def test_db_migrate(app_creds, temp_appliance_extended_db, db_url, db_version, d
     # Download the database
     logger.info("Downloading database: {}".format(db_desc))
     url_basename = os_path.basename(db_url)
+    # MBU Backup is to large for /tmp
+    loc = "/tmp/" if db_desc != "MBU Backup" else "/"
     rc, out = app.ssh_client.run_command(
-        'curl -o "/tmp/{}" "{}"'.format(url_basename, db_url), timeout=30)
+        'curl -o "{}{}" "{}"'.format(loc, url_basename, db_url), timeout=30)
     assert rc == 0, "Failed to download database: {}".format(out)
 
     # The v2_key is potentially here
@@ -91,7 +93,7 @@ def test_db_migrate(app_creds, temp_appliance_extended_db, db_url, db_version, d
         rc, out = ssh.run_command('createdb vmdb_production', timeout=30)
         assert rc == 0, "Failed to create clean database: {}".format(out)
         rc, out = ssh.run_command(
-            'pg_restore -v --dbname=vmdb_production /tmp/{}'.format(url_basename), timeout=600)
+            'pg_restore -v --dbname=vmdb_production {}{}'.format(loc, url_basename), timeout=600)
         assert rc == 0, "Failed to restore new database: {}".format(out)
         rc, out = ssh.run_rake_command("db:migrate", timeout=300)
         assert rc == 0, "Failed to migrate new database: {}".format(out)
