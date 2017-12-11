@@ -378,10 +378,7 @@ class MethodCollection(BaseCollection):
             return None
         else:
             add_page.add_button.click()
-            if self.appliance.version < "5.9":
-                msg = 'Automate Method "{}" was added'.format(name)
-            else:
-                msg = 'Automate Method "{}" was saved'.format(name)
+            msg = 'Automate Method "{}" was added'.format(name)
             add_page.flash.assert_success_message(msg)
             return self.instantiate(
                 name=name,
