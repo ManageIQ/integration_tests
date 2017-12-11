@@ -2,7 +2,7 @@
 import pytest
 import random
 
-from cfme.intelligence.reports import menus, reports, mycompany_title
+from cfme.intelligence.reports import menus, reports
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
@@ -40,7 +40,7 @@ def test_shuffle_top_level(group, report_menus):
     # Now go and read the tree
     view = navigate_to(reports.CustomReport, "All")
     table = [row["Name"].text for row in view.reports_table]
-    if mycompany_title() in table:
+    if view.mycompany_title in table:
         del table[-1]
     assert table == order, "The order differs!"
 

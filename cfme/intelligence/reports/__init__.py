@@ -7,7 +7,6 @@ from widgetastic_patternfly import Accordion, Button, Dropdown, FlashMessages
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
-from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
@@ -25,6 +24,14 @@ class CloudIntelReportsView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         return self.in_intel_reports and self.configuration.is_displayed
+
+    @property
+    def mycompany_title(self):
+        if self.browser.product_version < "5.9":
+            title = "My Company (All EVM Groups)"
+        else:
+            title = "My Company (All Groups)"
+        return title
 
     @View.nested
     class saved_reports(Accordion):  # noqa
@@ -73,8 +80,3 @@ class CloudIntelReports(CFMENavigateStep):
 class ReportsMultiBoxSelect(MultiBoxSelect):
     move_into_button = Button(title=Parameter("@move_into"))
     move_from_button = Button(title=Parameter("@move_from"))
-
-
-def mycompany_title():
-    return version.pick({'5.9': 'My Company (All Groups)',
-        version.LOWEST: 'My Company (All EVM Groups)'})
