@@ -2,25 +2,24 @@
 """ A model of a PXE Server in CFME
 """
 import attr
-
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 from widgetastic.widget import View, Text, Checkbox
-from widgetastic_manageiq import (ManageIQTree, Input, ScriptBox, SummaryTable, Table, Version,
-                                  VersionPick)
 from widgetastic_patternfly import Dropdown, Accordion, FlashMessages, BootstrapSelect, Button
 
 from cfme.base import BaseEntity, BaseCollection
 from cfme.base.login import BaseLoggedInPage
-from cfme.utils import conf
+from cfme.utils import conf, ParamClassName
 from cfme.utils.appliance import get_or_create_current_appliance, Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.datafile import load_data_file
 from cfme.utils.path import project_path
-from cfme.utils.update import Updateable
-from cfme.utils.wait import wait_for
 from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
+from cfme.utils.wait import wait_for
+from widgetastic_manageiq import (ManageIQTree, Input, ScriptBox, SummaryTable, Table, Version,
+                                  VersionPick)
 
 
 class PXEToolBar(View):
@@ -183,6 +182,7 @@ class PXEServer(Updateable, Pretty, Navigatable):
         menu_filename: Menu filename for iPXE/syslinux menu.
     """
     pretty_attrs = ['name', 'uri', 'access_url']
+    _param_name = ParamClassName('name')
 
     def __init__(self, name=None, depot_type=None, uri=None, userid=None, password=None,
                  access_url=None, pxe_dir=None, windows_dir=None, customize_dir=None,
@@ -820,6 +820,7 @@ class ISODatastore(Updateable, Pretty, Navigatable):
     Args:
         provider: Provider name.
     """
+    _param_name = ParamClassName('ds_name')
     pretty_attrs = ['provider']
 
     def __init__(self, provider=None, appliance=None):

@@ -2,18 +2,22 @@
 """
 import attr
 from lxml.html import document_fromstring
-
 from navmazing import NavigateToAttribute
+from widgetastic.exceptions import NoSuchElementException
+from widgetastic.utils import Version, VersionPick
+from widgetastic.widget import ParametrizedView
 from widgetastic.widget import View, Text
+from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
+
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
 from cfme.common.host_views import HostsView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
-from widgetastic.exceptions import NoSuchElementException
 from widgetastic_manageiq import (ManageIQTree,
                                   SummaryTable,
                                   ItemsToolBarViewSelector,
@@ -23,9 +27,6 @@ from widgetastic_manageiq import (ManageIQTree,
                                   BaseQuadIconEntity,
                                   BaseTileIconEntity,
                                   JSBaseEntity)
-from widgetastic.widget import ParametrizedView
-from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
-from widgetastic.utils import Version, VersionPick
 
 
 class DatastoreToolBar(View):
@@ -206,6 +207,7 @@ class Datastore(Pretty, BaseEntity, WidgetasticTaggable):
     """
 
     pretty_attrs = ['name', 'provider_key']
+    _param_name = ParamClassName('name')
 
     name = attr.ib()
     provider = attr.ib()

@@ -43,6 +43,8 @@ class BottlenecksTabsView(BottlenecksView):
 
 
 class Bottlenecks(Updateable, Pretty, Navigatable):
+    _param_name = 'Bottlenecks'
+
     def __init__(self, appliance=None):
         Navigatable.__init__(self, appliance)
 
