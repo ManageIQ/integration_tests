@@ -26,9 +26,7 @@ pytestmark = [
 @pytest.fixture(scope="module")
 def setup_ci_template(provider):
     cloud_init_template_name = provider.data['provisioning']['ci-template']
-    cloud_init_template = get_template_from_config(cloud_init_template_name)
-    if not cloud_init_template.exists():
-        cloud_init_template.create()
+    get_template_from_config(cloud_init_template_name, create=True)
 
 
 @pytest.fixture(scope="function")

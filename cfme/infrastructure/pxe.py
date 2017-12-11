@@ -963,7 +963,7 @@ class PXEMainPage(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'PXE')
 
 
-def get_template_from_config(template_config_name):
+def get_template_from_config(template_config_name, create=False):
     """
     Convenience function to grab the details for a template from the yamls and create template.
     """
@@ -976,17 +976,16 @@ def get_template_from_config(template_config_name):
     script_data = script_data.read()
     appliance = get_or_create_current_appliance()
     collection = appliance.collections.customization_templates
-    customization_template = collection.instantiate(name=template_config['name'],
-                                                    description=template_config['description'],
-                                                    image_type=template_config['image_type'],
-                                                    script_type=template_config['script_type'],
-                                                    script_data=script_data)
-    if not customization_template.exists():
-        return collection.create(name=template_config['name'],
-                                 description=template_config['description'],
-                                 image_type=template_config['image_type'],
-                                 script_type=template_config['script_type'],
-                                 script_data=script_data)
+    kwargs = {
+        'name': template_config['name'],
+        'description': template_config['description'],
+        'image_type': template_config['image_type'],
+        'script_type': template_config['script_type'],
+        'script_data': script_data
+    }
+    customization_template = collection.instantiate(**kwargs)
+    if create and not customization_template.exists():
+        return collection.create(**kwargs)
     return customization_template
 
 
