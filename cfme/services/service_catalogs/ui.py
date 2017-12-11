@@ -130,11 +130,10 @@ def order(self):
         view.fill(self.dialog_values)
     if self.ansible_dialog_values:
         view.fill(self.ansible_dialog_values)
+    msg = "Order Request was Submitted"
     if self.appliance.version < "5.9":
-        msg = "Order Request was Submitted"
         msg_type = "success"
     else:
-        msg = "Dialog submitted successfully!"
         msg_type = "info"
     # TODO Remove once repaired
     if BZ(1513541, forced_streams=['5.9']).blocks:
