@@ -7,6 +7,7 @@ from cfme.common.host_views import HostsEditView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.providers import ProviderFilter
@@ -63,6 +64,7 @@ def test_multiple_host_good_creds(setup_provider, provider):
     view.flash.assert_success_message('Credentials/Settings saved successfully')
 
 
+@pytest.mark.meta(blockers=[BZ(1524411, forced_streams=['5.9', 'upstream'])])
 def test_multiple_host_bad_creds(setup_provider, provider):
     """    Tests multiple host credentialing with bad credentials """
     host = random.choice(provider.data["hosts"])
