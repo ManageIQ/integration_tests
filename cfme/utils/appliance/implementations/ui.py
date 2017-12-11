@@ -325,7 +325,6 @@ class CFMENavigateStep(NavigateStep):
             recycle = True
         except (NoSuchElementException, InvalidElementStateException, WebDriverException,
                 StaleElementReferenceException) as e:
-            from cfme.web_ui import cfme_exception as cfme_exc  # To prevent circular imports
             # First check - if jquery is not found, there can be also another
             # reason why this happened so do not put the next branches in elif
             if isinstance(e, WebDriverException) and "jQuery" in str(e):
@@ -340,9 +339,10 @@ class CFMENavigateStep(NavigateStep):
                     br.widgetastic.is_displayed(".modal-backdrop.fade.in")):
                 logger.warning("Page was blocked with blocker div, recycling.")
                 recycle = True
-            elif cfme_exc.is_cfme_exception():
+            elif br.widgetastic.is_displayed("//div[@id='exception_div']"):
                 logger.exception("CFME Exception before force navigate started!: {}".format(
-                    cfme_exc.cfme_exception_text()))
+                    br.widgetastic.text(
+                        "//div[@id='exception_div']//td[@id='maincol']/div[2]/h3[2]")))
                 recycle = True
             elif br.widgetastic.is_displayed("//body/h1[normalize-space(.)='Proxy Error']"):
                 # 502
