@@ -9,7 +9,6 @@ from cfme.infrastructure import virtual_machines
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.web_ui.cfme_exception import is_cfme_exception, cfme_exception_text
 from cfme.utils.providers import ProviderFilter
 from fixtures.provider import setup_one_or_skip
 
@@ -229,7 +228,7 @@ def test_delete_button_should_appear_after_save(request, vm_advanced_search):
         pytest.fail("Could not delete filter right after saving!")
 
 
-def test_cannot_delete_more_than_once(vm_advanced_search, nuke_browser_after_test):
+def test_cannot_delete_more_than_once(vm_advanced_search):
     """When Delete button appars, it does not want to go away"""
     filter_name = fauxfactory.gen_alphanumeric()
     vm_advanced_search.entities.search.save_filter(
@@ -241,9 +240,4 @@ def test_cannot_delete_more_than_once(vm_advanced_search, nuke_browser_after_tes
         pytest.fail("Could not delete the filter even first time!")
     vm_advanced_search.flash.assert_no_error()
     # Try it second time
-    if vm_advanced_search.entities.search.delete_filter():  # If the button is there, it says True
-        # This should not happen reduntant
-        msg = "Delete twice accepted!"
-        if is_cfme_exception():
-            msg += " CFME Exception text: `{}`".format(cfme_exception_text())
-        pytest.fail(msg)
+    assert not vm_advanced_search.entities.search.delete_filter(), 'Delete twice accepted!'
