@@ -9,7 +9,6 @@ from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import toolbar as tb
-from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
@@ -229,11 +228,7 @@ def test_unset_retirement_date(retire_vm):
     num_days = 3
     retire_date = generate_retirement_date(delta=num_days)
     retire_vm.set_retirement_date(retire_date)
-    if BZ(1419150, forced_streams=['5.6']).blocks:
-        # The date is wrong, but we can still test unset
-        logger.warning('Skipping test step verification for BZ 1419150')
-    else:
-        verify_retirement_date(retire_vm, expected_date=retire_date)
+    verify_retirement_date(retire_vm, expected_date=retire_date)
 
     retire_vm.set_retirement_date(None)
     verify_retirement_date(retire_vm, expected_date='Never')
@@ -257,9 +252,5 @@ def test_resume_retired_instance(retire_vm, provider, remove_date):
     retire_date = None if remove_date else generate_retirement_date(delta=num_days)
     retire_vm.set_retirement_date(retire_date)
 
-    # if BZ(1419150, forced_streams=['5.6']).blocks and not remove_date:
-    #     # The date is wrong in 5.6, but we can still test unset
-    #     logger.warning('Skipping test step verification for BZ 1419150')
-    # else:
     verify_retirement_date(retire_vm, expected_date=retire_date if retire_date else 'Never')
     assert retire_vm.is_retired is False
