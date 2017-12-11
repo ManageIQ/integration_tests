@@ -23,7 +23,6 @@
   * :py:class:`Table`
   * :py:class:`Tree`
   * :py:mod:`cfme.web_ui.accordion`
-  * :py:mod:`cfme.web_ui.cfme_exception`
   * :py:mod:`cfme.web_ui.expression_editor`
   * :py:mod:`cfme.web_ui.flash`
   * :py:mod:`cfme.web_ui.form_buttons`
