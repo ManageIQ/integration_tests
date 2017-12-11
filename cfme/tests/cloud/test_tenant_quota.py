@@ -70,9 +70,9 @@ def catalog_item(provider, provisioning, template_name, dialog, catalog, prov_da
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data', 'extra_msg', 'approve'],
     [
-        [('cpu', 2), {'properties': {'instance_type': 'm1.large'}}, '', False],
+        [('cpu', 2), {}, '', False],
         [('storage', 0.001), {}, '', False],
-        [('memory', 2), {'properties': {'instance_type': 'm1.large'}}, '', False],
+        [('memory', 2), {}, '', False],
         [('vm', 1), {'catalog': {'num_vms': '4'}}, '###', True]
     ],
     indirect=['set_roottenant_quota'],
@@ -84,7 +84,10 @@ def test_tenant_quota_enforce_via_lifecycle(request, appliance, provider, setup_
     """Test Tenant Quota in UI"""
     prov_data.update(custom_prov_data)
     prov_data['catalog']['vm_name'] = vm_name
-    prov_data['request'] = {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}
+    prov_data.update({
+        'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())},
+        'properties': {'instance_type': 'm1.large'}
+    })
     instance = Instance.factory(vm_name, provider, template_name)
     instance.create(**prov_data)
 
@@ -108,10 +111,10 @@ def test_tenant_quota_enforce_via_lifecycle(request, appliance, provider, setup_
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data', 'extra_msg'],
     [
-        [('cpu', 2), {'properties': {'instance_type': 'm1.large'}}, ''],
+        [('cpu', 2), {}, ''],
         [('storage', 0.001), {}, ''],
-        [('memory', 2), {'properties': {'instance_type': 'm1.large'}}, ''],
-        [('vm', 1), {'catalog': {'num_vms': '4'}}, '###']
+        [('memory', 2), {}, ''],
+        [('vm', 1), {'catalog': {'num_vms': '4'}, '###']
     ],
     indirect=['set_roottenant_quota'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
@@ -122,6 +125,7 @@ def test_tenant_quota_enforce_via_service(request, appliance, provider, setup_pr
     """Test Tenant Quota in UI"""
     catalog_item.provisioning_data.update(custom_prov_data)
     catalog_item.provisioning_data['catalog']['vm_name'] = catalog_item.vm_name
+    catalog_item.provisioning_data.update({'properties': {'instance_type': 'm1.large'}})
     catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
                                        catalog_item.name)
