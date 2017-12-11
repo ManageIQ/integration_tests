@@ -56,6 +56,12 @@ def verify_server_suspended(provider, server):
              fail_func=lambda: refresh(provider))
 
 
+def verify_server_compliant(provider, server):
+    wait_for(lambda: server.is_compliant(),
+             delay=DELAY, num_sec=NUM_SEC,
+             message='Server {} must be Compliant'.format(server.name))
+
+
 def get_servers_set(servers):
     """
     Return the set of servers which contains only necessary fields,

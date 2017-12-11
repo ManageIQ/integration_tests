@@ -5,7 +5,11 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 from wrapanapi.hawkular import CanonicalPath
 
-from cfme.common import WidgetasticTaggable, UtilizationMixin
+from cfme.common import (
+    WidgetasticTaggable,
+    PolicyProfileAssignable,
+    UtilizationMixin
+)
 from cfme.exceptions import MiddlewareServerNotFound, \
     MiddlewareServerGroupNotFound
 from cfme.middleware.domain import MiddlewareDomain
@@ -64,7 +68,8 @@ def _get_servers_page(provider=None, server_group=None):
         return navigate_to(MiddlewareServer, 'All')
 
 
-class MiddlewareServer(MiddlewareBase, WidgetasticTaggable, Container, Reportable,
+class MiddlewareServer(MiddlewareBase, WidgetasticTaggable, PolicyProfileAssignable,
+                       Container, Reportable,
                        Navigatable, UtilizationMixin):
     """
     MiddlewareServer class provides actions and details on Server page.
@@ -275,6 +280,32 @@ class MiddlewareServer(MiddlewareBase, WidgetasticTaggable, Container, Reportabl
         self.load_details(refresh=True)
         return self.get_detail("Properties", "Server State").lower() == 'stopped'
 
+    @variable(alias='ui')
+    def compliance_status(self):
+        """Returns the title of the compliance infoblock. The title contains datetime so it can be
+        compared.
+
+        Returns:
+            :py:class:`NoneType` if no title is present (no compliance checks before), otherwise str
+        """
+        self.load_details(refresh=True)
+        return self.get_detail("Compliance", "Status")
+
+    @variable(alias='ui')
+    def is_compliant(self):
+        """Check if the Server is compliant.
+
+        Returns:
+            :py:class:`bool`
+        """
+        text = self.compliance_status().strip().lower()
+        if text.startswith("non-compliant"):
+            return False
+        elif text.startswith("compliant"):
+            return True
+        else:
+            raise ValueError("{} is not a known state for compliance".format(text))
+
     def shutdown_server(self, timeout=10, cancel=False):
         view = self.load_details(refresh=True)
         view.toolbar.power.item_select('Gracefully shutdown Server')
@@ -328,6 +359,13 @@ class MiddlewareServer(MiddlewareBase, WidgetasticTaggable, Container, Reportabl
         view = self.load_details(refresh=True)
         view.toolbar.power.item_select('Kill Server', handle_alert=True)
         view.flash.assert_success_message('Kill initiated for selected server(s)')
+
+    def check_compliance(self):
+        view = self.load_details()
+        view.toolbar.policy.item_select(
+            'Check Compliance of Last Known Configuration', handle_alert=True)
+        view.flash.assert_success_message(
+            '"{}": Check Compliance successfully initiated'.format(self.name))
 
     @classmethod
     def download(cls, extension, provider=None, server_group=None):
