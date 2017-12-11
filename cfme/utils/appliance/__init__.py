@@ -482,15 +482,15 @@ class IPAppliance(object):
         #!/bin/bash
         DB_PATH="/var/opt/rh/rh-postgresql95/db"
         DB="vmdb_db.img"
-        DB_IMG="${DB_PATH}/${DB}"
+        DB_IMG="\\${DB_PATH}/\\${DB}"
         DB_SIZE="5GB"
 
-        if [ ! -f ${DB_IMG} ]; then
-            fallocate -l ${DB_SIZE} ${DB_IMG}
+        if [ ! -f \\${DB_IMG} ]; then
+            fallocate -l \\${DB_SIZE} \\${DB_IMG}
         fi
 
-        if  ! losetup -l | grep ${DB} 1> /dev/null ; then
-            losetup -f ${DB_IMG}
+        if  ! losetup -l | grep \\${DB} 1> /dev/null ; then
+            losetup -f \\${DB_IMG}
             partprobe /dev/vdb
             partprobe /dev/vdc
             systemctl restart lvm2-lvmetad.service
@@ -746,7 +746,7 @@ class IPAppliance(object):
     def unpartitioned_disks(self):
         """Returns a list of disk devices that are not mounted."""
         disks_and_partitions = self.ssh_client.run_command(
-            "cat /proc/partitions | awk '{ print $4 }' | egrep '^[sv]d[a-z][0-9]?'").output.strip()
+            "ls -1 /dev/ | egrep '^[sv]d[a-z][0-9]?'").output.strip()
         disks_and_partitions = re.split(r'\s+', disks_and_partitions)
         partition_regexp = re.compile('^[sv]d[a-z][0-9]$')
         disks = set()
