@@ -477,7 +477,8 @@ class IPAppliance(object):
 
     def configure_rhos_db_disk(self):
         loopback_script_path = "/usr/local/sbin/loopbacks"
-        loopback_script_content = dedent("""EOF
+        loopback_script_content = dedent("""
+        EOF
         #!/bin/bash
         DB_PATH="/var/opt/rh/rh-postgresql95/db"
         DB="vmdb_db.img"
@@ -495,10 +496,12 @@ class IPAppliance(object):
             systemctl restart lvm2-lvmetad.service
             vgchange -a y vg_pg
         fi
-        EOF""")
+        EOF
+        """).strip()
 
         loopback_unit_path = "/etc/systemd/system/multi-user.target.wants/loopback.service"
-        loopback_unit_content = dedent("""EOF
+        loopback_unit_content = dedent("""
+        EOF
         [Unit]
         Description=Setup loop devices
         DefaultDependencies=false
@@ -515,13 +518,16 @@ class IPAppliance(object):
         [Install]
         WantedBy=local-fs.target
         Also=systemd-udev-settle.service
-        EOF""")
+        EOF
+        """).strip()
 
         udev_rule_path = "/etc/udev/rules.d/75-persistent-disk.rules"
-        udev_rule_content = dedent("""EOF
+        udev_rule_content = dedent("""
+        EOF
         KERNEL=="loop0", SYMLINK+="vdb"
         KERNEL=="loop0p1", SYMLINK+="vdb1"
-        EOF""")
+        EOF
+        """).strip()
 
         content = [
             (loopback_script_path, loopback_script_content),
