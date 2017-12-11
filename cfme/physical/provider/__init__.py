@@ -17,7 +17,7 @@ from cfme.utils.varmeth import variable
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 from cfme.utils.log import logger
-
+from cfme.fixtures import pytest_selenium as sel
 
 class PhysicalProvider(Pretty, BaseProvider, Fillable):
     """
@@ -38,22 +38,12 @@ class PhysicalProvider(Pretty, BaseProvider, Fillable):
         self.name = name
         self.key = key
 
-    @variable(alias='db')
+    @variable(alias='ui')
     def num_server(self):
-        provider = self.appliance.rest_api.collections.providers.find_by(name=self.name)[0]
-        servers_matching_id = [
-            server
-            for server in self.appliance.rest_api.collections.physical_servers
-            if server['ems_id'] == provider.id]
-        return len(servers_matching_id)
-
-    @num_server.variant('ui')
-    def num_server_ui(self):
-        view = navigate_to(self, 'Details')
         try:
-            num = self.view.relationships.get_text_of('Physical Servers')
-        except view.NoSuchElementException:
-            logger.error("Couldn't find number of hosts using key [Hosts] trying Nodes")
+            num = self.get_detail('Relationships', 'Physical Servers')
+        except sel.NoSuchElementException:
+            logger.error("Couldn't find number of servers")
         return int(num)
 
     def delete(self, cancel=True):
@@ -64,15 +54,14 @@ class PhysicalProvider(Pretty, BaseProvider, Fillable):
             cancel: Whether to cancel the deletion, defaults to True
         """
         view = navigate_to(self, 'Details')
-        # item_title = version.pick({'5.9': 'Remove this Infrastructure Provider from Inventory',
-        #                           version.LOWEST: 'Remove this Infrastructure Provider'})
-        # view.toolbar.configuration.item_select(item_title,
-        #                                       handle_alert=not cancel)
-        # if not cancel:
-        #     msg = ('Delete initiated for 1 {} Provider from '
-        #            'the {} Database'.format(self.string_name, self.appliance.product_name))
-        #    view.flash.assert_success_message(msg)
-
+        item_title = version.pick({'5.9': 'Remove this {} Provider from Inventory',
+                                   version.LOWEST: 'Remove this {} Provider'})
+        view.toolbar.configuration.item_select(item_title.format("Infrastructure"),
+                                               handle_alert=not cancel)
+        if not cancel:
+            msg = ('Delete initiated for 1 {} Provider from '
+                   'the {} Database'.format("Physical Infrastructure", self.appliance.product_name))
+            view.flash.assert_success_message(msg)
 
 @navigator.register(Server, 'PhysicalProviders')
 @navigator.register(PhysicalProvider, 'All')

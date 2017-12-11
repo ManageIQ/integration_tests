@@ -22,14 +22,14 @@ def test_provider_crud(provider):
     provider.create()
 
     # Fails on upstream, all provider types - BZ1087476
-    # provider.validate_stats(ui=True)
+    provider.validate_stats(ui=True)
 
     old_name = provider.name
-    # with update(provider):
-    #    provider.name = str(uuid.uuid4())  # random uuid
+    with update(provider):
+        provider.name = str(uuid.uuid4())  # random uuid
 
-    # with update(provider):
-    #    provider.name = old_name  # old name
+    with update(provider):
+        provider.name = old_name  # old name
 
     provider.delete(cancel=False)
     provider.wait_for_delete()
