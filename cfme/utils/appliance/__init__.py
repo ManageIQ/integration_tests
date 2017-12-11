@@ -7,6 +7,7 @@ from datetime import datetime
 from tempfile import NamedTemporaryFile
 from time import sleep, time
 from urlparse import urlparse
+from textwrap import dedent
 
 import attr
 import dateutil.parser
@@ -427,6 +428,7 @@ class IPAppliance(object):
             loosen_pgssl: Loosens postgres connections if ``True`` (default ``True``)
             key_address: Fetch encryption key from this address if set, generate a new key if
                          ``None`` (default ``None``)
+            on_openstack: If appliance is running on Openstack provider (default ``False``)
 
         """
 
@@ -435,6 +437,7 @@ class IPAppliance(object):
         fix_ntp_clock = kwargs.pop('fix_ntp_clock', True)
         region = kwargs.pop('region', 0)
         key_address = kwargs.pop('key_address', None)
+        on_openstack = kwargs.pop('on_openstack', False)
         with self as ipapp:
             ipapp.wait_for_ssh()
 
@@ -452,6 +455,10 @@ class IPAppliance(object):
             if fix_ntp_clock:
                 self.fix_ntp_clock(log_callback=log_callback)
                 # TODO: Handle external DB setup
+            # This is workaround for Openstack appliances to use only one disk for the VMDB
+            if on_openstack:
+                self.configure_rhos_db_disk()
+
             self.db.setup(region=region, key_address=key_address)
             self.wait_for_evm_service(timeout=1200, log_callback=log_callback)
 
@@ -467,6 +474,84 @@ class IPAppliance(object):
             if restart_evm:
                 self.restart_evm_service(log_callback=log_callback)
             self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+
+    def configure_rhos_db_disk(self):
+        loopback_script_path = "/usr/local/sbin/loopbacks"
+        loopback_script_content = dedent("""
+        EOF
+        #!/bin/bash
+        DB_PATH="/var/opt/rh/rh-postgresql95/db"
+        DB="vmdb_db.img"
+        DB_IMG="\\${DB_PATH}/\\${DB}"
+        DB_SIZE="5GB"
+
+        if [ ! -f \\${DB_IMG} ]; then
+            fallocate -l \\${DB_SIZE} \\${DB_IMG}
+        fi
+
+        if  ! losetup -l | grep \\${DB} 1> /dev/null ; then
+            losetup -f \\${DB_IMG}
+            partprobe /dev/vdb
+            partprobe /dev/vdc
+            systemctl restart lvm2-lvmetad.service
+            vgchange -a y vg_pg
+        fi
+        EOF
+        """).strip()
+
+        loopback_unit_path = "/etc/systemd/system/multi-user.target.wants/loopback.service"
+        loopback_unit_content = dedent("""
+        EOF
+        [Unit]
+        Description=Setup loop devices
+        DefaultDependencies=false
+        ConditionFileIsExecutable=/usr/local/sbin/loopbacks
+        After=var.mount
+        Requires=systemd-remount-fs.service
+
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/sbin/loopbacks
+        TimeoutSec=60
+        RemainAfterExit=yes
+
+        [Install]
+        WantedBy=local-fs.target
+        Also=systemd-udev-settle.service
+        EOF
+        """).strip()
+
+        udev_rule_path = "/etc/udev/rules.d/75-persistent-disk.rules"
+        udev_rule_content = dedent("""
+        EOF
+        KERNEL=="loop0", SYMLINK+="vdb"
+        KERNEL=="loop0p1", SYMLINK+="vdb1"
+        EOF
+        """).strip()
+
+        content = [
+            (loopback_script_path, loopback_script_content),
+            (loopback_unit_path, loopback_unit_content),
+            (udev_rule_path, udev_rule_content)
+        ]
+
+        client = self.ssh_client
+
+        commands_to_run = [
+            "chmod ug+x /usr/local/sbin/loopbacks",
+            "chown root:root /usr/local/sbin/loopbacks",
+            "systemctl daemon-reload",
+            "udevadm control --reload-rules && udevadm trigger",
+            "/usr/local/sbin/loopbacks"
+        ]
+
+        logging.info("Creating loopback script, unit file and udev rule")
+        for path, content in content:
+            client.run_command("cat > {path} << {content}".format(path=path, content=content))
+
+        for command in commands_to_run:
+            logging.info("Running command: {}".format(command))
+            client.run_command(command)
 
     # TODO: this method eventually needs to be moved to provider class..
     @logger_wrap("Configure GCE IPAppliance: {}")
@@ -661,7 +746,7 @@ class IPAppliance(object):
     def unpartitioned_disks(self):
         """Returns a list of disk devices that are not mounted."""
         disks_and_partitions = self.ssh_client.run_command(
-            "cat /proc/partitions | awk '{ print $4 }' | egrep '^[sv]d[a-z][0-9]?'").output.strip()
+            "ls -1 /dev/ | egrep '^[sv]d[a-z][0-9]?'").output.strip()
         disks_and_partitions = re.split(r'\s+', disks_and_partitions)
         partition_regexp = re.compile('^[sv]d[a-z][0-9]$')
         disks = set()
