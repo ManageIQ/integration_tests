@@ -17,14 +17,13 @@ from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree,
     NonJSPaginationPane, SummaryTable, TimelinesView)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
-from widgetastic.utils import partial_match
+from widgetastic.utils import partial_match, VersionPick, Version
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, Template as BaseTemplate
 from cfme.common.vm_views import (
     ManagementEngineView, CloneVmView, ProvisionView, EditView, RetirementView,
-    VMDetailsEntities, VMToolbar,
-    VMEntities)
+    RetirementViewWithOffset, VMDetailsEntities, VMToolbar, VMEntities)
 from cfme.exceptions import (
     CandidateNotFound, VmNotFound, OptionNotAvailable, DestinationNotFound, ItemNotFound,
     VmOrInstanceNotFound)
@@ -692,6 +691,7 @@ class Vm(VM):
     TO_OPEN_RECONFIGURE = "Reconfigure this VM"
     TO_RETIRE = "Retire this VM"
     VM_TYPE = "Virtual Machine"
+    DETAILS_VIEW_CLASS = InfraVmDetailsView
 
     def power_control_from_provider(self, option):
         """Power control a vm from the provider
@@ -1322,7 +1322,15 @@ class VmClone(CFMENavigateStep):
 
 @navigator.register(Vm, 'SetRetirement')
 class SetRetirement(CFMENavigateStep):
-    VIEW = RetirementView
+    def view_classes(self):
+        return VersionPick({
+            Version.lowest(): RetirementView,
+            "5.9": RetirementViewWithOffset
+        })
+
+    @property
+    def VIEW(self):  # noqa
+        return self.view_classes().pick(self.obj.appliance.version)
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):

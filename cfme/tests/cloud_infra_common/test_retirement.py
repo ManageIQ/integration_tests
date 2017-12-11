@@ -9,7 +9,6 @@ from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import toolbar as tb
-from cfme.utils.blockers import BZ, JIRA
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
@@ -48,7 +47,7 @@ def retire_vm(small_template, provider):
         provider: provider crud object from fixture
     """
     vm = VM.factory(random_vm_name('retire'), provider, template_name=small_template.name)
-    vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+    vm.create_on_provider(find_in_cfme=True, allow_skip="default", timeout=1200)
     yield vm
 
     try:
@@ -67,7 +66,7 @@ def retire_ec2_s3_vm(provider):
     """
     vm = VM.factory(random_vm_name('retire'), provider,
                     template_name='amzn-ami-pv-2015.03.rc-1.x86_64-s3')
-    vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+    vm.create_on_provider(find_in_cfme=True, allow_skip="default", timeout=1200)
     yield vm
 
     try:
@@ -97,8 +96,7 @@ def verify_retirement_date(retire_vm, expected_date='Never'):
     """Verify the retirement date for a variety of situations
 
     Args:
-        expected_date: a :py:class: `str` or :py:class: `parsetime` date
-            or a dict of :py:class: `parsetime` dates with 'start' and 'end' keys.
+        expected_date: a string, datetime, or a dict datetime dates with 'start' and 'end' keys.
     """
     if isinstance(expected_date, dict):
         # convert to a parsetime object for comparsion, function depends on version
@@ -185,40 +183,58 @@ def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged):
     verify_retirement_date(retire_ec2_s3_vm, expected_date=retire_times)
 
 
-@pytest.mark.meta(blockers=[JIRA('RHCFQE-5912')])
 @pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
 def test_set_retirement_date(retire_vm, warn):
     """Tests setting retirement date and verifies configured date is reflected in UI
 
     Note we cannot control the retirement time, just day, so we cannot wait for the VM to retire
     """
+    # TODO retirement supports datetime (no tz) in gaprindashvili/59z, update accordingly
     num_days = 2
     retire_date = generate_retirement_date(delta=num_days)
     retire_vm.set_retirement_date(retire_date, warn=warn.string)
     verify_retirement_date(retire_vm, expected_date=retire_date)
 
 
-@pytest.mark.meta(blockers=[JIRA('RHCFQE-5912')])
+@pytest.mark.tier(2)
+@pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
+@pytest.mark.ignore_stream('5.8')
+@pytest.mark.uncollectif(lambda provider: provider.one_of(InfraProvider))  # TODO remove when common
+def test_set_retirement_offset(retire_vm, warn):
+    """Tests setting the retirement by offset
+
+    Minimum is 1 hour, just testing that it is set like test_set_retirement_date
+    """
+    num_hours = 3
+    num_days = 1
+    num_weeks = 2
+    num_months = 0  # leave at zero for now, TODO implement months->weeks calc for expected_dates
+    retire_offset = {'months': num_months, 'weeks': num_weeks, 'days': num_days, 'hours': num_hours}
+    timedelta_offset = retire_offset.copy()
+    timedelta_offset.pop('months')  # for timedelta use
+    # pad pre-retire timestamp by 30s
+    expected_dates = {'start': datetime.utcnow() + timedelta(seconds=-30, **timedelta_offset)}
+    retire_vm.set_retirement_date(offset=retire_offset, warn=warn.string)
+
+    # pad post-retire timestamp by 30s
+    expected_dates['end'] = datetime.utcnow() + timedelta(seconds=30, **timedelta_offset)
+    verify_retirement_date(retire_vm,
+                           expected_date=expected_dates)
+
+
 def test_unset_retirement_date(retire_vm):
     """Tests cancelling a scheduled retirement by removing the set date
     """
     num_days = 3
     retire_date = generate_retirement_date(delta=num_days)
     retire_vm.set_retirement_date(retire_date)
-    if BZ(1419150, forced_streams=['5.6']).blocks:
-        # The date is wrong, but we can still test unset
-        logger.warning('Skipping test step verification for BZ 1419150')
-    else:
-        verify_retirement_date(retire_vm, expected_date=retire_date)
+    verify_retirement_date(retire_vm, expected_date=retire_date)
 
     retire_vm.set_retirement_date(None)
     verify_retirement_date(retire_vm, expected_date='Never')
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[JIRA('RHCFQE-5912'),
-                            BZ(1430373, forced_streams=['5.6'],
-                               unblock=lambda provider: provider.one_of(InfraProvider))])
 @pytest.mark.parametrize('remove_date', [True, False], ids=['remove_date', 'set_future_date'])
 def test_resume_retired_instance(retire_vm, provider, remove_date):
     """Test resuming a retired instance, should be supported for infra and cloud, though the
@@ -236,9 +252,5 @@ def test_resume_retired_instance(retire_vm, provider, remove_date):
     retire_date = None if remove_date else generate_retirement_date(delta=num_days)
     retire_vm.set_retirement_date(retire_date)
 
-    if BZ(1419150, forced_streams=['5.6']).blocks and not remove_date:
-        # The date is wrong in 5.6, but we can still test unset
-        logger.warning('Skipping test step verification for BZ 1419150')
-    else:
-        verify_retirement_date(retire_vm, expected_date=retire_date if retire_date else 'Never')
+    verify_retirement_date(retire_vm, expected_date=retire_date if retire_date else 'Never')
     assert retire_vm.is_retired is False

@@ -4,7 +4,8 @@ import os
 from time import sleep
 
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import View, Text, TextInput, ParametrizedView
+from widgetastic.widget import (
+    View, Text, TextInput, ParametrizedView, Image, ConditionalSwitchableView)
 from widgetastic_patternfly import (
     Dropdown, BootstrapSelect, Tab, FlashMessages, Input, CheckableBootstrapTreeview)
 from widgetastic_manageiq import (Calendar,
@@ -426,24 +427,49 @@ class RetirementView(BaseLoggedInPage):
     Set Retirement date view for vms/instances
     The title actually as Instance|VM.VM_TYPE string in it, otherwise the same
     """
-
     title = Text('#explorer_title_text')
 
     @View.nested
     class form(View):  # noqa
-        """The form portion of the view"""
         retirement_date = Calendar(name='retirementDate')
-        # TODO This is just an anchor with an image, weaksauce
-        # remove_date = Button()
+        remove_date = Image(locator='.//div[@id="retirement_date_div"]//a/img[@alt="Set to blank"]')
         retirement_warning = BootstrapSelect(id='retirementWarning')
         entities = View.nested(BaseNonInteractiveEntitiesView)
-        save_button = Button('Save')
-        cancel_button = Button('Cancel')
+        save = Button('Save')
+        cancel = Button('Cancel')
 
     @property
     def is_displayed(self):
         # TODO match quadicon and title
         return False
+
+
+class RetirementViewWithOffset(RetirementView):
+    """The form portion, with 59z+ offset mode selection"""
+    @View.nested
+    class form(View):  # noqa
+        retirement_mode = BootstrapSelect(id='formMode')
+        retirement_date = ConditionalSwitchableView(reference='retirement_mode')
+
+        @retirement_date.register('Specific Date and Time', default=True)
+        class RetirementDateSelectionView(View):
+            datetime_select = TextInput(id='retirement_date_datepicker')
+
+        @retirement_date.register('Time Delay from Now')
+        class RetirementOffsetSelectionView(View):
+            # TODO unique widget for these touchspin elements, with singular fill method
+            # will allow for consistent fill of view.form
+            months = TextInput(name='months')
+            weeks = TextInput(name='weeks')
+            days = TextInput(name='days')
+            hours = TextInput(name='hours')
+            retirement_offset_datetime = Text(
+                locator='.//div[@id="retirement_date_result_div"]/input[@id="retirement_date"]')
+
+        retirement_warning = BootstrapSelect(id='retirementWarning')
+        entities = View.nested(BaseNonInteractiveEntitiesView)
+        save = Button('Save')
+        cancel = Button('Cancel')
 
 
 class EditView(BaseLoggedInPage):
