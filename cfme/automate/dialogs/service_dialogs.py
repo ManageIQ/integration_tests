@@ -41,11 +41,9 @@ class DetailsDialogView(AutomateCustomizationView):
 
 @attr.s
 class Dialog(BaseEntity, Fillable):
-    """A class representing one Domain in the UI."""
+    """A class representing one Dialog in the UI."""
     label = attr.ib()
     description = attr.ib(default=None)
-    submit_btn = attr.ib(default=True)
-    cancel_btn = attr.ib(default=True)
 
     _collections = {'tabs': TabCollection}
 
@@ -77,10 +75,10 @@ class Dialog(BaseEntity, Fillable):
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
-                'Dialog "{}" was saved'.format(updates.get('name', self.label)))
+                '{} was saved'.format(updates.get('name', self.label)))
         else:
             view.flash.assert_message(
-                'Edit of Dialog "{}" was cancelled by the user'.format(self.label))
+                'Dialog editing was canceled by the user.')
 
     def delete(self):
         """ Delete dialog method"""
@@ -113,17 +111,12 @@ class DialogCollection(BaseCollection):
     tree_path = ['All Dialogs']
     ENTITY = Dialog
 
-    def create(self, label=None, description=None, submit_btn=True, cancel_btn=True):
+    def create(self, label=None, description=None):
         """ Create dialog label method """
         view = navigate_to(self, 'Add')
-        # filling label twice to avoid the selenium field bug
-        view.fill({'label': label,
-                   'description': description,
-                   'submit_btn': submit_btn,
-                   'cancel_btn': cancel_btn})
-        view.fill({'label': label})
+        view.fill({'label': label, 'description': description})
         return self.instantiate(
-            label=label, description=description, submit_btn=submit_btn, cancel_btn=cancel_btn)
+            label=label, description=description)
 
 
 @navigator.register(DialogCollection)
@@ -143,10 +136,6 @@ class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        if self.obj.appliance.version > '5.9':
-            raise NotImplementedError(
-                'Service Catalogs have moved to a new UI in UI 5.9 which is not modeled'
-            )
         self.prerequisite_view.configuration.item_select('Add a new Dialog')
 
 

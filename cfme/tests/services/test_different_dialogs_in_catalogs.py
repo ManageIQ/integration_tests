@@ -5,7 +5,6 @@ import pytest
 from widgetastic.utils import partial_match
 
 from cfme import test_requirements
-from cfme.automate.service_dialogs import DialogCollection
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
@@ -31,18 +30,21 @@ pytestmark = [
 
 @pytest.yield_fixture(scope="function")
 def tagcontrol_dialog(appliance):
-    service_dialogs = DialogCollection(appliance)
+    service_dialog = appliance.collections.service_dialogs
     dialog = "dialog_" + fauxfactory.gen_alphanumeric()
     element_data = {
-        'ele_label': "Service Level",
-        'ele_name': "service_level",
-        'ele_desc': "service_level_desc",
-        'choose_type': "Tag Control",
-        'field_category': "Service Level",
-        'field_required': True
+        'element_information': {
+            'ele_label': "Service Level",
+            'ele_name': "service_level",
+            'ele_desc': "service_level_desc",
+            'choose_type': "Tag Control",
+        },
+        'options': {
+            'field_category': "Service Level",
+            'field_required': True
+        }
     }
-    sd = service_dialogs.create(label=dialog,
-        description="my dialog", submit=True, cancel=True,)
+    sd = service_dialog.create(label=dialog, description="my dialog")
     tab = sd.tabs.create(tab_label='tab_' + fauxfactory.gen_alphanumeric(),
         tab_desc="my tab desc")
     box = tab.boxes.create(box_label='box_' + fauxfactory.gen_alphanumeric(),

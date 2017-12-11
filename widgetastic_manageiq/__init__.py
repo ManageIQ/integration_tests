@@ -1044,6 +1044,106 @@ class Notification(Widget, ClickableMixin):
             return False
 
 
+class DialogButton(Button):
+    """Multiple buttons with same name are present in Dialog UI.
+       So need to specify the div too.
+    """
+    def __locator__(self):
+        return (
+            './/div[@class="modal-footer"]/*[(self::a or self::button or'
+            '(self::input and (@type="button" or @type="submit")))'
+            ' and contains(@class, "btn") {}]'.format(self.locator_conditions))
+
+
+class DragandDropElements(View):
+    """Drag elements to a drop place."""
+    @ParametrizedView.nested
+    class dialog_element(ParametrizedView):  # noqa
+        PARAMETERS = ("drag_item", "drop_item")
+
+        dragged_element = ParametrizedLocator('.//*[@id="toolbox"]/div/dialog-editor-field-static'
+                                              '/ul/li[normalize-space(.)={drag_item|quote}]')
+
+        dropped_element = ParametrizedLocator('.//div[normalize-space(.)={drop_item|quote}]')
+
+        @property
+        def drag_div(self):
+            return self.browser.element(self.dragged_element)
+
+        @property
+        def drop_div(self):
+            return self.browser.element(self.dropped_element)
+
+    def __init__(self, parent, logger=None):
+        View.__init__(self, parent=parent, logger=logger)
+
+    def drag_and_drop(self, dragged_widget, dropped_widget):
+        dragged_widget_el = self.dialog_element(dragged_widget, dropped_widget).drag_div
+        dropped_widget_el = self.dialog_element(dragged_widget, dropped_widget).drop_div
+        self.browser.drag_and_drop(dragged_widget_el, dropped_widget_el)
+        self.browser.plugin.ensure_page_safe()
+
+
+class DialogBootstrapSwitch(BootstrapSwitch):
+    """New dialog editor has different locator than BootstrapSwitch"""
+    ROOT = ParametrizedLocator(
+        './/div[./preceding-sibling::label[normalize-space(.)={@label|quote}]]'
+        '/span/div/div[contains(@class, "bootstrap-switch-container")]//input')
+
+
+class DragandDrop(View):
+
+    def __init__(self, parent, logger=None):
+        View.__init__(self, parent=parent, logger=logger)
+
+    def drag_and_drop(self, dragged_widget, dropped_widget):
+        self.browser.drag_and_drop(dragged_widget, dropped_widget)
+        self.browser.plugin.ensure_page_safe()
+
+
+class DialogElement(Widget, ClickableMixin):
+    """Represents the element in new dialog editor"""
+
+    @ParametrizedView.nested
+    class element(ParametrizedView):  # noqa
+        PARAMETERS = ("element_name", )
+
+        ele_label = Text(ParametrizedLocator(
+            './/dialog-editor-field/div[@class="form-group"]'
+            '/label[normalize-space(.)={element_name|quote}]'))
+
+        edit_icon = Text(ParametrizedLocator(
+            './/div[contains(normalize-space(.), {element_name|quote})]'
+            '/div/button/span/i[contains(@class, "pficon-edit")]'))
+
+        def edit_icon_click(self):
+            """Clicks the edit icon with this name."""
+            wait_for(
+                lambda: self.ele_label.is_displayed, delay=5, num_sec=30,
+                message="waiting for element to be displayed"
+            )
+            self.ele_label.click()
+            wait_for(
+                lambda: self.edit_icon.is_displayed, delay=5, num_sec=30,
+                message="waiting for element to be displayed"
+            )
+            return self.edit_icon.click()
+
+    def edit_element(self, element_name):
+        """Clicks the edit_icon_click.
+
+        Args:
+            element_name: Name of the element
+        """
+        return self.element(element_name).edit_icon_click()
+
+    def drag_and_drop(self, dragged_widget, dropped_widget):
+        dragged_widget_el = self.element(dragged_widget).drag_drop_div
+        dropped_widget_el = self.element(dropped_widget).drag_drop_div
+        self.browser.drag_and_drop(dragged_widget_el, dropped_widget_el)
+        self.browser.plugin.ensure_page_safe()
+
+
 class Paginator(Widget):
     """ Represents Paginator control that includes First/Last/Next/Prev buttons
     and a control displaying amount of items on current page vs overall amount.

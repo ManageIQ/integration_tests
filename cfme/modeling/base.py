@@ -63,7 +63,7 @@ class EntityCollections(object):
                 cls_or_verpick = cls_and_or_filter
             # Now check whether we verpick the collection or not
             if isinstance(cls_or_verpick, VersionPick):
-                cls = cls_or_verpick.pick(self.parent.appliance.version)
+                cls = cls_or_verpick.pick(self._parent.appliance.version)
                 try:
                     logger.info(
                         '[COLLECTIONS] Version picked collection %s as %s.%s',

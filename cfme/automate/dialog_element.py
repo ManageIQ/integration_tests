@@ -3,11 +3,12 @@ import attr
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Checkbox, Image, Text
 from widgetastic_patternfly import Button, Input, BootstrapSelect
-from widgetastic_manageiq import ManageIQTree, Table, TextInput
+from widgetastic_manageiq import ManageIQTree, Table, TextInput, DragandDrop
 from widgetastic.xpath import quote
 
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.wait import wait_for
 
 from . import AutomateCustomizationView, AddBoxView
 
@@ -54,6 +55,7 @@ class AddElementView(ElementForm):
 class EditElementView(ElementForm):
     save_button = Button('Save')
     reset_button = Button('Reset')
+    dragndrop = DragandDrop()
 
     @property
     def is_displayed(self):
@@ -71,7 +73,7 @@ class DetailsDialogView(AutomateCustomizationView):
         return (
             self.in_customization and self.service_dialogs.is_opened and
             self.title.text == 'Dialog "{}"'.format(self.context['object'].
-                dialog.label)
+                                                    dialog.label)
         )
 
 
@@ -99,7 +101,10 @@ class Element(BaseEntity):
         view = navigate_to(self, 'Edit')
         view.element_tree.click_path(*self.tree_path[1:])
         view.plus_btn.item_select("Add a new Element to this Box")
-        view.fill(element)
+        view.fill(element.get('element_information'))
+        # Views are not nested in 5.8,hence need to check for options value
+        if element.get('options') is not None:
+            view.fill(element.get('options'))
         view.save_button.click()
         view = self.create_view(DetailsDialogView)
         assert view.is_displayed
@@ -120,12 +125,21 @@ class Element(BaseEntity):
         # Add a new element and then interchange position (BZ-1238721)
         if add_element:
             view.plus_btn.item_select("Add a new Element to this Box")
-            view.fill(second_element)
+            view.fill(second_element.get('element_information'))
+            # Views are not nested in 5.8,hence need to check for options value
+            if second_element.get('options') is not None:
+                view.fill(second_element.get('options'))
             view.element_tree.click_path(*self.tree_path[1:])
-        self.browser.drag_and_drop(self.element_loc(element_data.get("ele_label")),
-            self.element_loc(second_element.get("ele_label")))
+        dragged_el = element_data.get('element_information').get("ele_label")
+        dropped_el = second_element.get('element_information').get("ele_label")
+        view.dragndrop.drag_and_drop(self.element_loc(dragged_el), self.element_loc(dropped_el))
+
         view.save_button.click()
         view = self.create_view(DetailsDialogView)
+        wait_for(
+            lambda: view.is_displayed, delay=15, num_sec=300,
+            message="waiting for view to be displayed"
+        )
         assert view.is_displayed
         view.flash.assert_no_error()
 
@@ -142,15 +156,17 @@ class ElementCollection(BaseCollection):
     def create(self, element_data=None):
         for element in element_data:
             view = navigate_to(self, "Add")
-            if(view.ele_label.value != ""):
+            if view.ele_label.value:
                 view.plus_btn.item_select("Add a new Element to this Box")
-            view.fill(element)
+            view.fill(element.get('element_information'))
+            # Views are not nested in 5.8,hence need to check for options value
+            if element.get('options') is not None:
+                view.fill(element.get('options'))
             self.set_element_type(view, element)
         view.add_button.click()
         view.flash.assert_no_error()
         view.flash.assert_message('Dialog "{}" was added'.
-            format(self.parent.tab.dialog.label))
-        view.flash.assert_no_error()
+                                  format(self.parent.tab.dialog.label))
         return self.instantiate(element_data=element_data)
 
     def set_element_type(self, view, element):
@@ -159,8 +175,10 @@ class ElementCollection(BaseCollection):
         Args:
             each_element: subfields depending on element type.
         """
-        choose_type = element.get("choose_type")
-        dynamic_chkbox = element.get("dynamic_chkbox")
+        choose_type = element.get('element_information').get("choose_type")
+        dynamic_chkbox = False
+        if element.get('options'):
+            dynamic_chkbox = element.get('options').get("dynamic_chkbox")
         element_type = ['Drop Down List', 'Radio Button']
         if choose_type in element_type:
             if not dynamic_chkbox:
@@ -193,4 +211,7 @@ class Add(CFMENavigateStep):
 class Edit(CFMENavigateStep):
     VIEW = EditElementView
 
-    prerequisite = NavigateToAttribute('dialog', 'Edit')
+    prerequisite = NavigateToAttribute('dialog', 'Details')
+
+    def step(self):
+        self.prerequisite_view.configuration.item_select("Edit this Dialog")
