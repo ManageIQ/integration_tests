@@ -154,14 +154,6 @@ class MultiBoxSelect(View):
 
     This view can be found in policy profile, alert profiles adding screens; assigning actions to an
     event, assigning conditions to a policy screens and so on.
-    TODO When CFME 5.7.1 will become deprecated `_move_into_image_button` and
-    `_move_from_image_button` can be removed.
-
-    Attributes:
-        AVAILABLE_ITEMS_ID (str): default value of `<select>` id for available items
-        CHOSEN_ITEMS_ID (str): default value of `<select>` id for chosen items
-        MOVE_FROM (str): default value of `data-submit` attribute for 'move_from' button
-        MOVE_INTO (str): default value of `data-submit` attribute for 'move_into' button
 
     Args:
         available_items (str): provided value of `<select>` id for available items
@@ -171,41 +163,18 @@ class MultiBoxSelect(View):
 
     """
 
-    AVAILABLE_ITEMS_ID = "choices_chosen"
-    CHOSEN_ITEMS_ID = "members_chosen"
-    MOVE_INTO = "choices_chosen_div"
-    MOVE_FROM = "members_chosen_div"
-
     available_options = Select(id=Parameter("@available_items"))
     chosen_options = Select(id=Parameter("@chosen_items"))
-    _move_into_image_button = Image(ParametrizedLocator(
-        ".//a[@data-submit={@move_into|quote}]/img"))
-    _move_from_image_button = Image(ParametrizedLocator(
-        ".//a[@data-submit={@move_from|quote}]/img"))
-    _move_into_native_button = Button(**{"data-submit": Parameter("@move_into")})
-    _move_from_native_button = Button(**{"data-submit": Parameter("@move_from")})
+    move_into_button = Button(**{"data-submit": Parameter("@move_into")})
+    move_from_button = Button(**{"data-submit": Parameter("@move_from")})
 
-    def __init__(self, parent, move_into=None, move_from=None, available_items=None,
-            chosen_items=None, logger=None):
+    def __init__(self, parent, move_into="choices_chosen_div", move_from="members_chosen_div",
+            available_items="choices_chosen", chosen_items="members_chosen", logger=None):
         View.__init__(self, parent, logger=logger)
-        self.available_items = available_items or self.AVAILABLE_ITEMS_ID
-        self.chosen_items = chosen_items or self.CHOSEN_ITEMS_ID
-        self.move_into = move_into or self.MOVE_INTO
-        self.move_from = move_from or self.MOVE_FROM
-
-    @cached_property
-    def move_into_button(self):
-        if self._move_into_image_button.is_displayed:
-            return self._move_into_image_button
-        else:
-            return self._move_into_native_button
-
-    @cached_property
-    def move_from_button(self):
-        if self._move_from_image_button.is_displayed:
-            return self._move_from_image_button
-        else:
-            return self._move_from_native_button
+        self.available_items = available_items
+        self.chosen_items = chosen_items
+        self.move_into = move_into
+        self.move_from = move_from
 
     def _values_to_remove(self, values):
         return list(set(self.all_options) - set(values))
