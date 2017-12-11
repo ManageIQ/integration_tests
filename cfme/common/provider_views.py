@@ -173,7 +173,9 @@ class PhysicalProviderDetailsView(ProviderDetailsView):
     @property
     def is_displayed(self):
         return (super(PhysicalProviderDetailsView, self).is_displayed and
-                self.navigation.currently_selected == ['Compute', 'Physical Infrastructure', 'Providers'])
+                self.navigation.currently_selected == ['Compute',
+                                                       'Physical Infrastructure',
+                                                       'Providers'])
 
 
 class ProviderTimelinesView(TimelinesView, BaseLoggedInPage):

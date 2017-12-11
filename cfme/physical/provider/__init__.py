@@ -3,7 +3,6 @@ from widgetastic.utils import Fillable
 
 from cfme.base.ui import Server
 
-from cfme.base.ui import BaseLoggedInPage
 from cfme.utils import version
 from cfme.common.provider import BaseProvider
 from cfme.common.provider_views import (PhysicalProviderAddView,
@@ -75,8 +74,6 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        if version.current_version() >= '5.7':
-            view_selector = self.view.toolbar.view_selector
         pass
 
 
