@@ -7,94 +7,88 @@ LABEL company="Redhat" product="CFME" environment="dev" tier="test"
 
 RUN pip install -U pip && pip install -U virtualenv
 
-ENV PROJECTS /projects 
+# This dir will contain all volumes and virtual environments
+ENV PROJECTS /projects
 
-ENV CFMEENV cfme_env
+# This is how our python venv will be called
+ENV ENV_NAME cfme_env
 
-ENV WORK $PROJECTS/$CFMEENV 
+ENV CFME_ENV $PROJECTS/ENV_NAME
 
-RUN mkdir -p $PROJECTS && cd $PROJECTS
+RUN mkdir -p $PROJECTS
 
 WORKDIR $PROJECTS
 
-RUN virtualenv $CFMEENV
+RUN virtualenv $ENV_NAME
 
-WORKDIR $CFMEENV
-
+# Create directory under we mount all volumes
 RUN mkdir -p cfme_vol
 
-#RUN echo "export PYTHONPATH=$WORK/:${PYTHONPATH}" >> ~/.bashrc
-RUN echo "export PYTHONPATH=$WORK/:${PYTHONPATH}" >> /etc/bashrc
+ENV CFME_VOL
 
-#RUN echo "source $WORK/bin/activate" >> ~/.bashrc
-RUN echo "source $WORK/bin/activate" >> /etc/bashrc
+RUN echo "export PYTHONPATH=$CFME_ENV/:${PYTHONPATH}" >> /etc/bashrc && \
+    echo "source $CFME_ENV/bin/activate" >> /etc/bashrc && \
+    echo "cd $CFME_VOL/integration_tests" >> /etc/bashrc && \
+    echo "export CFME_ENV=$CFME_ENV" >> /etc/bashrc && \
+    echo "export PYTHONDONTWRITEBYTECODE=1" >> ${CFME_ENV}/bin/activate
 
-#RUN echo "cd $WORK" >> ~/.bashrc
-RUN echo "cd $WORK/cfme_vol/integration_tests" >> /etc/bashrc
+# RUN echo "export PYTHONPATH=${PYTHON_PATH}:$WORK/cfme_vol/integration_tests" >> bin/activate
 
-#RUN echo "export CFME_ENV=$WORK" >> ~/.bashrc
-RUN echo "export CFME_ENV=$WORK" >> /etc/bashrc
+RUN export PYCURL_SSL_LIBRARY=nss && find . -iname "*.pyc" -exec rm '{}' \;
 
-RUN echo "export PYTHONPATH=${PYTHON_PATH}:$WORK/cfme_vol/integration_tests" >> bin/activate
-
-RUN echo "PYTHONDONTWRITEBYTECODE=\"yes\"" >> bin/activate
-
-RUN export PYCURL_SSL_LIBRARY=nss
-
-RUN find . -iname "*.pyc" -exec rm '{}' \;
-
-#RUN curl -L  https://raw.githubusercontent.com/RedHatQE/cfme_tests/master/requirements.txt > requirements.txt
-RUN curl -L  https://raw.githubusercontent.com/RedHatQE/cfme_tests/master/requirements/frozen.txt > requirements.txt
-
-#RUN sed -i '/-e \./d' requirements.txt
-
-RUN source /root/.bashrc; PYCURL_SSL_LIBRARY=nss pip install -Ur ./requirements.txt && rm -rf ~/.cache/pip
+RUN curl -L  https://raw.githubusercontent.com/RedHatQE/cfme_tests/master/requirements/frozen.txt > requirements.txt && \
+    source /root/.bashrc; PYCURL_SSL_LIBRARY=nss pip install -Ur ./requirements.txt && \
+    pip install -e . && rm -rf ~/.cache/pip
 
 RUN find . -name \*.pyc -delete && find . -name __pycache__ -delete
-
-# ENV CHROME_DRIVER_VERSION 2.21
-#ENV CHROME_DRIVER_VERSION 2.27
-ENV CHROME_DRIVER_VERSION 2.32
-# ENV SELENIUM_VERSION 2.51
-ENV SELENIUM_VERSION 2.53
-# ENV FIREFOX_VERSION 38.6
-ENV FIREFOX_VERSION 47.0.2
 
 # Enable repo for google chrome
 ADD google-chrome.repo /etc/yum.repos.d/
 
+# ===== CHROME
+ENV CHROME_PATH /opt/google/chrome
 #RUN dnf install -y google-chrome-stable
 # Workaround - above repo does not work?
 RUN dnf install -y https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
+#ADD http://chromedriver.storage.googleapis.com/$CHROME_DRIVER_VERSION/chromedriver_linux64.zip \
+#    /root/chrome_webdriver/chromedriver_linux64.zip
 
-ADD http://chromedriver.storage.googleapis.com/$CHROME_DRIVER_VERSION/chromedriver_linux64.zip \
-    /root/chrome_webdriver/chromedriver_linux64.zip
+# ===== CHROME DRIVER
+ENV CHROME_DRIVER_VERSION 2.32
+ENV CHROMEDRIVER_PATH /opt/chromedriver/
+RUN mkdir -p ${CHROMEDRIVER_PATH} && cd ${CHROMEDRIVER_PATH} && \
+    curl -O http://chromedriver.storage.googleapis.com/$CHROME_DRIVER_VERSION/chromedriver_linux64.zip && \
+    unzip ./chromedriver_linux64.zip && \
+    chmod a+x ${CHROMEDRIVER_PATH}/chromedriver && \
+    rm -f ${CHROMEDRIVER_PATH}/chromedriver_linux64.zip
 
-RUN unzip /root/chrome_webdriver/chromedriver_linux64.zip -d bin/ && \
-    chmod a+x bin/chromedriver && \
-    rm -f /root/chrome_webdriver/chromedriver_linux64.zip
-
+# ===== SELENIUM
+ENV SELENIUM_VERSION 2.53
+ENV SELENIUM_PATH /opt/selenium/
 # selenium
-ADD http://selenium-release.storage.googleapis.com/$SELENIUM_VERSION/selenium-server-standalone-$SELENIUM_VERSION.0.jar selenium/selenium_latest.jar
+#ADD http://selenium-release.storage.googleapis.com/$SELENIUM_VERSION/selenium-server-standalone-$SELENIUM_VERSION.0.jar selenium/selenium_latest.jar
+RUN mkdir -p ${SELENIUM_PATH} && cd ${SELENIUM_PATH} && \
+    curl -O  http://selenium-release.storage.googleapis.com/$SELENIUM_VERSION/selenium-server-standalone-$SELENIUM_VERSION.0.jar && \
+    chmod ugo+r ${SELENIUM_PATH}/selenium_latest.jar
 
-RUN chmod ugo+r selenium/selenium_latest.jar
-
+# ===== FIREFOX
 # firefox - esr
 #ADD https://download-installer.cdn.mozilla.net/pub/firefox/releases/$FIREFOX_VERSION.0esr/linux-x86_64/en-US/firefox-$FIREFOX_VERSION.0esr.tar.bz2 \
+# ENV FIREFOX_VERSION 38.6
+ENV FIREFOX_VERSION 47.0.2
+ENV FIREFOX_PATH /opt/firefox/
+ADD mkdir -p ${FIREFOX_PATH} && cd ${FIREFOX_PATH} && \
+    curl https://download-installer.cdn.mozilla.net/pub/firefox/releases/$FIREFOX_VERSION/linux-x86_64/en-US/firefox-$FIREFOX_VERSION.tar.bz2 && \
+    -o ${FIREFOX_PATH}/firefox.tar.bz2 && tar -C ${FIREFOX_PATH} -xjvf ${FIREFOX_PATH}/firefox.tar.bz2 && \
+    rm -f ${FIREFOX_PATH}/firefox.tar.bz2
+# RUN tar -C $FIREFOX_PATH -xjvf /root/firefox.tar.bz2 && rm -f /root/firefox.tar.bz2
 
-# Firefox
-ADD https://download-installer.cdn.mozilla.net/pub/firefox/releases/$FIREFOX_VERSION/linux-x86_64/en-US/firefox-$FIREFOX_VERSION.tar.bz2 \
-    /root/firefox.tar.bz2
+RUN mkdir -p ~/.vnc && uuidgen | sed 's/-//g' > /etc/machine-id
 
-RUN tar -C /root/ -xjvf /root/firefox.tar.bz2 && rm -f /root/firefox.tar.bz2
-
-RUN mkdir -p ~/.vnc
+# setup firefox and chrome paths
+ENV PATH="${FIREFOX_PATH}:${CHROME_PATH}:${CHROMEDRIVER_PATH}:${SELENIUM_PATH}:${PATH}"
 
 ADD xstartup /usr/local/bin/xstartup
-
-#RUN chmod 755 /root/.vnc/xstartup
-
-RUN uuidgen | sed 's/-//g' > /etc/machine-id
 
 EXPOSE 5999 
 
