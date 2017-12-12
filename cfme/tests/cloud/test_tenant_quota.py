@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
 from cfme import test_requirements
@@ -113,7 +114,7 @@ def test_tenant_quota_enforce_via_lifecycle(request, appliance, provider, setup_
         [('cpu', 2), {}, ''],
         [('storage', 0.001), {}, ''],
         [('memory', 2), {}, ''],
-        [('vm', 1), {'catalog': {'num_vms': '4'}, '###']
+        [('vm', 1), {'catalog': {'num_vms': '4'}}, '###']
     ],
     indirect=['set_roottenant_quota'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
