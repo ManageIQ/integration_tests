@@ -5,17 +5,15 @@ quadicon lists, and VM details page.
 from copy import copy
 from collections import namedtuple
 import fauxfactory
-from functools import partial
 import re
-from selenium.common.exceptions import NoSuchElementException
 
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic.widget import Text, View
+from widgetastic.widget import Text, View, TextInput, Checkbox, NoSuchElementException
 from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, Tab)
 from widgetastic_manageiq import (
-    Accordion, ConditionalSwitchableView, ManageIQTree,
-    NonJSPaginationPane, SummaryTable, TimelinesView)
+    Accordion, ConditionalSwitchableView, ManageIQTree, CheckableManageIQTree, NonJSPaginationPane,
+    SummaryTable, TimelinesView)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 from widgetastic.utils import partial_match, VersionPick, Version
 
@@ -25,72 +23,18 @@ from cfme.common.vm_views import (
     ManagementEngineView, CloneVmView, ProvisionView, EditView, RetirementView,
     RetirementViewWithOffset, VMDetailsEntities, VMToolbar, VMEntities)
 from cfme.exceptions import (
-    CandidateNotFound, VmNotFound, OptionNotAvailable, DestinationNotFound, ItemNotFound,
+    VmNotFound, OptionNotAvailable, DestinationNotFound, ItemNotFound,
     VmOrInstanceNotFound)
-from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.web_ui import (
-    CheckboxTree, Form, InfoBlock, Region, Tree, fill, flash, form_buttons,
-    match_location, Table, toolbar, Calendar, Select, Input, CheckboxTable,
-    summary_title, BootstrapTreeview, AngularSelect)
+    CheckboxTree, Form, Tree, flash, form_buttons, Table,
+    BootstrapTreeview, AngularSelect)
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
 from cfme.utils import version, deferred_verpick
-
-
-# for provider specific vm/template page
-QUADICON_TITLE_LOCATOR = ("//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')"
-                          " or contains(@href, '/show/')]")
-
-cfg_btn = partial(toolbar.select, 'Configuration')
-pol_btn = partial(toolbar.select, 'Policy')
-lcl_btn = partial(toolbar.select, 'Lifecycle')
-mon_btn = partial(toolbar.select, 'Monitoring')
-pwr_btn = partial(toolbar.select, 'Power')
-
-create_button = form_buttons.FormButton("Create")
-
-manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
-
-
-manage_policies_page = Region(
-    locators={
-        'save_button': form_buttons.save,
-    })
-
-
-template_select_form = Form(
-    fields=[
-        ('template_table', Table('//div[@id="pre_prov_div"]//table')),
-        ('cancel_button', form_buttons.cancel)
-    ]
-)
-
-
-snapshot_form = Form(
-    fields=[
-        ('name', Input('name')),
-        ('description', Input('description')),
-        ('snapshot_memory', Input('snap_memory')),
-        ('create_button', create_button),
-        ('cancel_button', form_buttons.cancel)
-    ])
-
-
-retirement_date_form = Form(fields=[
-    ('retirement_date_text', Calendar("miq_date_1")),
-    ('retirement_warning_select', Select("//select[@id='retirement_warn']"))
-])
-
-retire_remove_button = "//span[@id='remove_button']/a/img"
-
-match_page = partial(match_location, controller='vm_infra', title='Virtual Machines')
-
-
-drift_table = CheckboxTable("//th[normalize-space(.)='Timestamp']/ancestor::table[1]")
 
 
 class InfraGenericDetailsToolbar(View):
@@ -136,9 +80,7 @@ class InfraVmView(BaseLoggedInPage):
     def in_infra_vms(self):
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Compute', 'Infrastructure',
-                                                   'Virtual Machines'] and
-            match_location(controller='vm_infra', title='Virtual Machines'))
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Virtual Machines'])
 
 
 class VmsTemplatesAllView(InfraVmView):
@@ -307,6 +249,72 @@ class InfraVmReconfigureView(BaseLoggedInPage):
 
     # The page doesn't contain enough info to ensure that it's the right VM -> always navigate
     is_displayed = False
+
+
+class InfraVmSnapshotToolbar(View):
+    """The toolbar on the snapshots page"""
+    history = Dropdown('history')
+    reload = Button(title='Reload current display')
+    create = Button(title='Create a new snapshot for this VM')
+    delete = Dropdown('Delete Snapshots')
+    revert = Button(title='Revert to selected snapshot')
+
+
+class InfraVmSnapshotView(InfraVmView):
+    """The Snapshots page"""
+    toolbar = View.nested(InfraVmSnapshotToolbar)
+    sidebar = View.nested(VmsTemplatesAccordion)
+    title = Text('#explorer_title_text')
+    description = Text('//label[normalize-space(.)="Description"]/../div/p|'
+                       '//td[@class="key" and normalize-space(.)="Description"]/..'
+                       '/td[not(contains(@class, "key"))]')
+    tree = ManageIQTree('snapshot_treebox')
+
+    @property
+    def is_displayed(self):
+        """Is this view being displayed"""
+        expected_title = '"Snapshots" for Virtual Machine "{}"'.format(self.context['object'].name)
+        return self.in_infra_vms and self.title.text == expected_title
+
+
+class InfraVmSnapshotAddView(InfraVmView):
+    """Add a snapshot"""
+    title = Text('#explorer_title_text')
+    name = TextInput('name')
+    description = TextInput('description')
+    snapshot_vm_memory = Checkbox('snap_memory')
+    create = Button('Create')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        """Is this view being displayed"""
+        return (
+            self.in_infra_vms and
+            self.title.text == 'Adding a new Snapshot' and
+            self.name.is_displayed)
+
+
+class InfraVmGenealogyToolbar(View):
+    """The toolbar on the genalogy page"""
+    history = Dropdown(title='history')
+    reload = Button(title='Reload current display')
+    edit_tags = Button(title='Edit Tags for this VM')
+    compare = Button(title='Compare selected VMs')
+
+
+class InfraVmGenealogyView(InfraVmView):
+    """The Genealogy page"""
+    toolbar = View.nested(InfraVmGenealogyToolbar)
+    sidebar = View.nested(VmsTemplatesAccordion)
+    title = Text('#explorer_title_text')
+    tree = CheckableManageIQTree('genealogy_treebox')
+
+    @property
+    def is_displayed(self):
+        """Is this view being displayed"""
+        expected_title = '"Genealogy" for Virtual Machine "{}"'.format(self.context['object'].name)
+        return self.in_infra_vms and self.title.text == expected_title
 
 
 class MigrateView(BaseLoggedInPage):
@@ -550,38 +558,39 @@ class Vm(VM):
             self.memory = memory
             self.vm = parent_vm
 
-        def _nav_to_snapshot_mgmt(self):
-            snapshot_title = '"Snapshots" for Virtual Machine "{}"'.format(self.vm.name)
-            if summary_title() != snapshot_title:
-                self.vm.load_details()
-                sel.click(InfoBlock.element("Properties", "Snapshots"))
+        def _find_child(self, view, parent_item, text):
+            if view.tree.child_items_with_text(parent_item, text):
+                return True
+            else:
+                for item in view.tree.child_items(parent_item):
+                    if self._find_child(view, item, text):
+                        return True
+            return False
+
+        def _find_path(self, view, parent_item, text):
+            view.tree.expand_node(view.tree.get_nodeid(parent_item))
+            children = view.tree.child_items_with_text(parent_item, text)
+            if children:
+                for child in children:
+                    if child.text:
+                        return [child.text]
+                return []
+            else:
+                for item in view.tree.child_items(parent_item):
+                    path = self._find_path(view, item, text)
+                    if path:
+                        return [item.text] + path
+            return []
 
         @property
         def exists(self):
-            self._nav_to_snapshot_mgmt()
             title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
-            try:
-                self.snapshot_tree.find_path_to(
-                    re.compile(r"{}.*?".format(title)))
-                return True
-            except CandidateNotFound:
+            view = navigate_to(self.vm, 'SnapshotsAll')
+            if view.tree.is_displayed:
+                root_item = view.tree.expand_path(self.vm.name)
+                return self._find_child(view, root_item, title)
+            else:
                 return False
-            except NoSuchElementException:
-                return False
-            except NameError:
-                return False
-
-        def _click_tree_path(self, prop):
-            """Find and click the given property in a snapshot tree path.
-
-            Args:
-                prop (str): Property to check (name or description).
-
-            Returns:
-                None
-            """
-            self.snapshot_tree.click_path(
-                *self.snapshot_tree.find_path_to(re.compile(prop)))
 
         @property
         def active(self):
@@ -590,41 +599,39 @@ class Vm(VM):
             Returns:
                 bool: True if snapshot is active, False otherwise.
             """
-            self._nav_to_snapshot_mgmt()
             title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
-            try:
-                self._click_tree_path(title)
-                if sel.is_displayed_text("{} (Active)".format(title)):
-                    return True
-            except CandidateNotFound:
-                return False
-            return False
+            view = navigate_to(self.vm, 'SnapshotsAll')
+            root_item = view.tree.expand_path(self.vm.name)
+            return self._find_child(view, root_item, '{} (Active)'.format(title))
 
         def create(self, force_check_memory=False):
+            """Create a snapshot"""
+            view = navigate_to(self.vm, 'SnapshotsAdd')
             snapshot_dict = {
                 'description': self.description
             }
-            self._nav_to_snapshot_mgmt()
-            toolbar.select('Create a new snapshot for this VM')
-
             if self.name is not None:
                 snapshot_dict['name'] = self.name
-
             if force_check_memory or self.vm.provider.mgmt.is_vm_running(self.vm.name):
                 snapshot_dict["snapshot_memory"] = self.memory
-
-            fill(snapshot_form, snapshot_dict, action=snapshot_form.create_button)
-            wait_for(lambda: self.exists, num_sec=300, delay=20, fail_func=sel.refresh,
-                     handle_exception=True)
+            view.fill(snapshot_dict)
+            view.create.click()
+            list_view = self.vm.create_view(InfraVmSnapshotView)
+            wait_for(lambda: self.exists, num_sec=300, delay=20,
+                     fail_func=list_view.toolbar.reload.click, handle_exception=True)
 
         def delete(self, cancel=False):
-            self._nav_to_snapshot_mgmt()
-
             title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
-            self._click_tree_path(title)
+            view = navigate_to(self.vm, 'SnapshotsAll')
+            root_item = view.tree.expand_path(self.vm.name)
+            snapshot_path = self._find_path(view, root_item, title)
+            if not snapshot_path:
+                raise Exception('Could not find snapshot with name "{}"'.format(title))
+            else:
+                snapshot_path = [self.vm.name] + snapshot_path
+                view.tree.click_path(*snapshot_path)
 
-            toolbar.select('Delete Snapshots', 'Delete Selected Snapshot', invokes_alert=True)
-            sel.handle_alert(cancel=cancel)
+            view.toolbar.delete.item_select('Delete Selected Snapshot', handle_alert=not cancel)
             if not cancel:
                 flash_message = version.pick({
                     version.LOWEST: "Remove Snapshot initiated for 1 "
@@ -633,15 +640,14 @@ class Vm(VM):
                                       "VM and Instance from the ManageIQ Database",
                     '5.9': "Delete Snapshot initiated for 1 VM and Instance from the CFME Database"
                 })
+                view.flash.assert_message(flash_message)
 
-                flash.assert_message_match(flash_message)
-
-            wait_for(lambda: not self.exists, num_sec=300, delay=20, fail_func=sel.refresh)
+            wait_for(lambda: not self.exists, num_sec=300, delay=20, fail_func=view.browser.refresh)
 
         def delete_all(self, cancel=False):
-            self._nav_to_snapshot_mgmt()
-            toolbar.select('Delete Snapshots', 'Delete All Existing Snapshots', invokes_alert=True)
-            sel.handle_alert(cancel=cancel)
+            view = navigate_to(self.vm, 'SnapshotsAll')
+            view.toolbar.delete.item_select('Delete All Existing Snapshots',
+                                            handle_alert=not cancel)
             if not cancel:
                 flash_message = version.pick({
                     version.LOWEST: "Remove All Snapshots initiated for 1 VM and "
@@ -651,28 +657,33 @@ class Vm(VM):
                     '5.9': "Delete All Snapshots initiated for 1 VM "
                            "and Instance from the CFME Database"})
 
-                flash.assert_message_match(flash_message)
+                view.flash.assert_message(flash_message)
 
         def revert_to(self, cancel=False):
-            self._nav_to_snapshot_mgmt()
-
             title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
-            self._click_tree_path(title)
+            view = navigate_to(self.vm, 'SnapshotsAll')
+            root_item = view.tree.expand_path(self.vm.name)
+            snapshot_path = self._find_path(view, root_item, title)
+            if not snapshot_path:
+                raise Exception('Could not find snapshot with name "{}"'.format(title))
+            else:
+                snapshot_path = [self.vm.name] + snapshot_path
+                view.tree.click_path(*snapshot_path)
 
-            toolbar.select('Revert to selected snapshot', invokes_alert=True)
-            sel.handle_alert(cancel=cancel)
-            flash_message = version.pick({
-                version.LOWEST: "Revert To Snapshot initiated for 1 VM and Instance from "
-                                "the CFME Database",
-                version.UPSTREAM: "Revert to a Snapshot initiated for 1 VM and Instance "
-                                  "from the ManageIQ Database",
-                '5.9': "Revert to a Snapshot initiated for 1 VM and Instance from "
-                       "the CFME Database"})
-            flash.assert_message_match(flash_message)
+            view.toolbar.revert.click(handle_alert=not cancel)
+            if not cancel:
+                flash_message = version.pick({
+                    version.LOWEST: "Revert To Snapshot initiated for 1 VM and Instance from "
+                                    "the CFME Database",
+                    version.UPSTREAM: "Revert to a Snapshot initiated for 1 VM and Instance "
+                                      "from the ManageIQ Database",
+                    '5.9': "Revert to a Snapshot initiated for 1 VM and Instance from "
+                           "the CFME Database"})
+                view.flash.assert_message(flash_message)
 
         def refresh(self):
-            self._nav_to_snapshot_mgmt()
-            toolbar.select('Reload current display')
+            view = navigate_to(self.vm, 'SnapshotsAll')
+            view.toolbar.reload.click()
 
     # POWER CONTROL OPTIONS
     SUSPEND = "Suspend"
@@ -797,25 +808,27 @@ class Vm(VM):
     @property
     def current_snapshot_name(self):
         """Returns the current snapshot name."""
-        self.load_details(refresh=True)
-        sel.click(InfoBlock("Properties", "Snapshots"))
-        text = sel.text("//a[contains(normalize-space(.), '(Active)')]|"
-            "//li[contains(normalize-space(.), '(Active)')]").strip()
-        # In 5.6 the locator returns the entire tree string, snapshot name is after a newline
-        return re.sub(r"\s*\(Active\)$", "", text.split('\n')[-1:][0])
+        view = navigate_to(self, 'SnapshotsAll')
+        if not view.tree.is_displayed:
+            return None
+        root_item = view.tree.expand_path(self.name)
+        active_items = view.tree.child_items_with_text(root_item, '(Active)')
+        if active_items:
+            return active_items[0].text.split(' (Active')[0]
 
     @property
     def current_snapshot_description(self):
         """Returns the current snapshot description."""
-        self.load_details(refresh=True)
-        sel.click(InfoBlock("Properties", "Snapshots"))
-        l = "|".join([
-            # Newer
-            "//label[normalize-space(.)='Description']/../div/p",
-            # Older
-            "//td[@class='key' and normalize-space(.)='Description']/.."
-            "/td[not(contains(@class, 'key'))]"])
-        return sel.text(l).strip()
+        view = navigate_to(self, 'SnapshotsAll')
+        if not view.tree.is_displayed:
+            return None
+        root_item = view.tree.expand_path(self.name)
+        active_items = view.tree.child_items_with_text(root_item, '(Active)')
+        if active_items:
+            active_items[0].click()
+            return view.description.text
+        else:
+            return None
 
     @property
     def genealogy(self):
@@ -836,40 +849,36 @@ class Vm(VM):
     class CfmeRelationship(object):
         relationship_form = Form(
             fields=[
-                ('server_select', AngularSelect("server_id")),
+                ('server_select', AngularSelect('server_id')),
                 ('save_button', form_buttons.save),
                 ('reset_button', form_buttons.reset),
                 ('cancel_button', form_buttons.cancel)
             ])
 
-        def __init__(self, o):
-            self.o = o
+        def __init__(self, vm):
+            self.vm = vm
 
         def navigate(self):
-            self.o.load_details()
-            cfg_btn('Edit Management Engine Relationship')
+            return navigate_to(self.vm, 'EditManagementEngineRelationship')
 
         def is_relationship_set(self):
-            return "<Not a Server>" not in self.get_relationship()
+            return '<Not a Server>' not in self.get_relationship()
 
         def get_relationship(self):
-            self.navigate()
-            rel = str(self.relationship_form.server_select.all_selected_options[0].text)
-            form_buttons.cancel()
+            view = self.navigate()
+            rel = str(view.form.server.all_selected_options[0].text)
+            view.form.cancel_button.click()
             return rel
 
         def set_relationship(self, server_name, server_id, click_cancel=False):
-            self.navigate()
-            option = "{} ({})".format(server_name, server_id)
+            view = self.navigate()
+            view.form.fill({'server': '{} ({})'.format(server_name, server_id)})
 
             if click_cancel:
-                fill(self.relationship_form, {'server_select': option},
-                     action=self.relationship_form.cancel_button)
+                view.form.cancel_button.click()
             else:
-                fill(self.relationship_form, {'server_select': option})
-                sel.click(form_buttons.FormButton(
-                    "Save Changes", dimmed_alt="Save", force_click=True))
-                flash.assert_success_message("Management Engine Relationship saved")
+                view.form.save_button.click()
+                view.flash.assert_success_message('Management Engine Relationship saved')
 
     @property
     def configuration(self):
@@ -955,31 +964,25 @@ class Genealogy(object):
     Args:
         o: The :py:class:`Vm` or :py:class:`Template` object.
     """
-    genealogy_tree = deferred_verpick({
-        version.LOWEST: CheckboxTree("//div[@id='genealogy_treebox']/ul"),
-        5.7: BootstrapTreeview('genealogy_treebox')
-    })
-
     section_comparison_tree = CheckboxTree("//div[@id='all_sections_treebox']/div/table")
     apply_button = form_buttons.FormButton("Apply sections")
 
     mode_mapping = {
-        "exists": "Exists Mode",
-        "details": "Details Mode",
+        'exists': 'Exists Mode',
+        'details': 'Details Mode',
     }
 
     attr_mapping = {
-        "all": "All Attributes",
-        "different": "Attributes with different values",
-        "same": "Attributes with same values",
+        'all': 'All Attributes',
+        'different': 'Attributes with different values',
+        'same': 'Attributes with same values',
     }
 
-    def __init__(self, o):
-        self.o = o
+    def __init__(self, obj):
+        self.obj = obj
 
     def navigate(self):
-        self.o.load_details()
-        sel.click(InfoBlock.element("Relationships", "Genealogy"))
+        return navigate_to(self.obj, 'GenealogyAll')
 
     def compare(self, *objects, **kwargs):
         """Compares two or more objects in the genealogy.
@@ -991,39 +994,40 @@ class Genealogy(object):
             sections: Which sections to compare.
             attributes: `all`, `different` or `same`. Default: `all`.
             mode: `exists` or `details`. Default: `exists`."""
-        sections = kwargs.get("sections")
-        attributes = kwargs.get("attributes", "all").lower()
-        mode = kwargs.get("mode", "exists").lower()
-        assert len(objects) >= 2, "You must specify at least two objects"
+        sections = kwargs.get('sections')
+        attributes = kwargs.get('attributes', 'all').lower()
+        mode = kwargs.get('mode', 'exists').lower()
+        assert len(objects) >= 2, 'You must specify at least two objects'
         objects = map(lambda o: o.name if isinstance(o, (Vm, Template)) else o, objects)
-        self.navigate()
+        view = self.navigate()
         for obj in objects:
             if not isinstance(obj, list):
-                path = self.genealogy_tree.find_path_to(obj)
-            self.genealogy_tree.check_node(*path)
-        toolbar.select("Compare selected VMs")
+                path = view.tree.find_path_to(obj)
+            view.tree.check_node(*path)
+        view.toolbar.compare.click()
+        view.flash.assert_no_errors()
         # COMPARE PAGE
-        flash.assert_no_errors()
+        compare_view = self.obj.create_view('Compare')
         if sections is not None:
-            map(lambda path: self.section_comparison_tree.check_node(*path), sections)
-            sel.click(self.apply_button)
-            flash.assert_no_errors()
+            map(lambda path: compare_view.tree.check_node(*path), sections)
+            compare_view.apply.click()
+            compare_view.flash.assert_no_errors()
         # Set requested attributes sets
-        toolbar.select(self.attr_mapping[attributes])
+        getattr(compare_view.toolbar, self.attr_mapping[attributes]).click()
         # Set the requested mode
-        toolbar.select(self.mode_mapping[mode])
+        getattr(compare_view.toolbar, self.mode_mapping[mode]).click()
 
     @property
     def tree(self):
         """Returns contents of the tree with genealogy"""
-        self.navigate()
-        return self.genealogy_tree.read_contents()
+        view = self.navigate()
+        return view.tree.read_contents()
 
     @property
     def ancestors(self):
         """Returns list of ancestors of the represented object."""
-        self.navigate()
-        path = self.genealogy_tree.find_path_to(re.compile(r"^.*?\(Selected\)$"))
+        view = self.navigate()
+        path = view.tree.find_path_to(re.compile(r"^.*?\(Selected\)$"))
         if not path:
             raise ValueError("Something wrong happened, path not found!")
         processed_path = []
@@ -1055,6 +1059,7 @@ def _method_setup(vm_names, provider_crud=None):
         view.entities.paginator.set_items_per_page(1000)
     for vm_name in vm_names:
         view.entities.get_entity(name=vm_name).check()
+    return view
 
 
 def find_quadicon(vm_name):
@@ -1080,9 +1085,9 @@ def remove(vm_names, cancel=True, provider_crud=None):
         cancel: Whether to cancel the deletion, defaults to True
         provider_crud: provider object where vm resides on (optional)
     """
-    _method_setup(vm_names, provider_crud)
-    cfg_btn('Remove selected items from the VMDB', invokes_alert=True)
-    sel.handle_alert(cancel=cancel)
+    view = _method_setup(vm_names, provider_crud)
+    view.toolbar.configuration.item_select('Remove selected items from the VMDB',
+                                           handle_alert=not cancel)
 
 
 def wait_for_vm_state_change(vm_name, desired_state, timeout=300, provider_crud=None):
@@ -1114,9 +1119,9 @@ def is_pwr_option_visible(vm_names, option, provider_crud=None):
         option: Power option param.
         provider_crud: provider object where vm resides on (optional)
     """
-    _method_setup(vm_names, provider_crud)
+    view = _method_setup(vm_names, provider_crud)
     try:
-        toolbar.is_greyed('Power', option)
+        view.toolbar.power.item_element(option)
         return True
     except NoSuchElementException:
         return False
@@ -1134,9 +1139,9 @@ def is_pwr_option_enabled(vm_names, option, provider_crud=None):
         NoOptionAvailable:
             When unable to find the power option passed
     """
-    _method_setup(vm_names, provider_crud)
+    view = _method_setup(vm_names, provider_crud)
     try:
-        return not toolbar.is_greyed('Power', option)
+        return view.toolbar.power.item_enabled(option)
     except NoSuchElementException:
         raise OptionNotAvailable("No such power option (" + str(option) + ") is available")
 
@@ -1150,12 +1155,11 @@ def do_power_control(vm_names, option, provider_crud=None, cancel=True):
         provider_crud: provider object where vm resides on (optional)
         cancel: Whether or not to cancel the power control action
     """
-    _method_setup(vm_names, provider_crud)
+    view = _method_setup(vm_names, provider_crud)
 
     if (is_pwr_option_visible(vm_names, provider_crud=provider_crud, option=option) and
             is_pwr_option_enabled(vm_names, provider_crud=provider_crud, option=option)):
-                pwr_btn(option, invokes_alert=True)
-                sel.handle_alert(cancel=cancel)
+                view.toolbar.power.item_select(option, handle_alert=not cancel)
 
 
 def perform_smartstate_analysis(vm_names, provider_crud=None, cancel=True):
@@ -1166,9 +1170,8 @@ def perform_smartstate_analysis(vm_names, provider_crud=None, cancel=True):
         provider_crud: provider object where vm resides on (optional)
         cancel: Whether or not to cancel the refresh relationships action
     """
-    _method_setup(vm_names, provider_crud)
-    cfg_btn('Perform SmartState Analysis', invokes_alert=True)
-    sel.handle_alert(cancel=cancel)
+    view = _method_setup(vm_names, provider_crud)
+    view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=not cancel)
 
 
 def get_all_vms(do_not_navigate=False):
@@ -1188,15 +1191,18 @@ def get_number_of_vms(do_not_navigate=False):
     Returns the total number of VMs visible to the user,
     including those archived or orphaned
     """
-    logger.info("Getting number of vms")
+    logger.info('Getting number of vms')
     if not do_not_navigate:
-        navigate_to(Vm, 'VMsOnly')
-    from cfme.web_ui import paginator
-    if not paginator.page_controls_exist():
-        logger.debug("No page controls")
+        view = navigate_to(Vm, 'VMsOnly')
+    else:
+        from cfme.utils.appliance import get_or_create_current_appliance
+        app = get_or_create_current_appliance()
+        view = app.browser.create_view(navigator.get_class(Vm, 'VMsOnly').VIEW)
+    if not view.entities.paginator.page_controls_exist():
+        logger.debug('No page controls')
         return 0
-    total = paginator.rec_total()
-    logger.debug("Number of VMs: %s", total)
+    total = view.entities.paginator.rec_total()
+    logger.debug('Number of VMs: %s', total)
     return int(total)
 
 
@@ -1300,6 +1306,36 @@ class VmDetails(CFMENavigateStep):
 
     def resetter(self, *args, **kwargs):
         self.view.toolbar.reload.click()
+
+
+@navigator.register(Vm, 'SnapshotsAll')
+class VmSnapshotsAll(CFMENavigateStep):
+    VIEW = InfraVmSnapshotView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.properties.click_at('Snapshots')
+
+
+@navigator.register(Vm, 'SnapshotsAdd')
+class VmSnapshotsAdd(CFMENavigateStep):
+    VIEW = InfraVmSnapshotAddView
+    prerequisite = NavigateToSibling('SnapshotsAll')
+
+    def step(self, *args, **kwargs):
+        if self.prerequisite_view.tree.is_displayed:
+            self.prerequisite_view.tree.click_path(self.obj.name)
+        self.prerequisite_view.toolbar.create.click()
+
+
+@navigator.register(Template, 'GenealogyAll')
+@navigator.register(Vm, 'GenealogyAll')
+class VmGenealogyAll(CFMENavigateStep):
+    VIEW = InfraVmGenealogyView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.relationships.click_at('Genealogy')
 
 
 @navigator.register(Vm, 'Migrate')
