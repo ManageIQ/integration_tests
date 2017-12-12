@@ -1,16 +1,14 @@
 import attr
-
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text
-from widgetastic.utils import Fillable
-from widgetastic_manageiq import PaginationPane
-from widgetastic_patternfly import CandidateNotFound
 from cached_property import cached_property
+from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic.utils import Fillable
+from widgetastic.widget import Text
+from widgetastic_patternfly import CandidateNotFound
 
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-
+from widgetastic_manageiq import PaginationPane, Table
 from . import AutomateCustomizationView, AddDialogView, EditDialogView
 from .dialog_tab import TabCollection
 
@@ -18,6 +16,7 @@ from .dialog_tab import TabCollection
 class DialogsView(AutomateCustomizationView):
     title = Text("#explorer_title_text")
     paginator = PaginationPane()
+    table = Table(".//div[@id='list_grid' or @class='miq-data-table']/table")
 
     @property
     def is_displayed(self):
