@@ -8,7 +8,6 @@ from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
 from cfme.exceptions import VmOrInstanceNotFound
 from cfme.utils.blockers import BZ
-from cfme.utils.log import logger
 
 
 pytestmark = [
@@ -106,6 +105,19 @@ def new_user(group_only_user_owned):
     return user
 
 
+def check_vm_exists(vm_ownership):
+    """
+        Checks if VM exists through All Instances tab.
+        Args:
+            vm_ownership: VM object for ownership test
+    """
+    try:
+        vm_ownership.find_quadicon(from_any_provider=True)
+        return True
+    except VmOrInstanceNotFound:
+        return False
+
+
 def test_form_button_validation(request, user1, setup_provider, provider):
     ownership_vm = provider.data['ownership_vm']
     user_ownership_vm = VM.factory(ownership_vm, provider)
@@ -128,11 +140,7 @@ def test_user_ownership_crud(request, user1, setup_provider, provider):
         assert user_ownership_vm.exists, "vm not found"
     user_ownership_vm.unset_ownership()
     with user1:
-        try:
-            user_ownership_vm.find_quadicon(from_any_provider=True)
-            pytest.fail("vm found! but shouldn't")
-        except VmOrInstanceNotFound:
-            logger.debug("vm not found as expected")
+        assert not check_vm_exists(user_ownership_vm), "vm exists! but shouldn't exist"
 
 
 def test_group_ownership_on_user_only_role(request, user2, setup_provider, provider):
@@ -140,11 +148,7 @@ def test_group_ownership_on_user_only_role(request, user2, setup_provider, provi
     group_ownership_vm = VM.factory(ownership_vm, provider)
     group_ownership_vm.set_ownership(group=user2.group.description)
     with user2:
-        try:
-            group_ownership_vm.find_quadicon(from_any_provider=True)
-            pytest.fail("vm found! but shouldn't")
-        except VmOrInstanceNotFound:
-            logger.debug("vm not found as expected")
+        assert not check_vm_exists(group_ownership_vm), "vm exists! but shouldn't exist"
     group_ownership_vm.set_ownership(user=user2.name)
     with user2:
         assert group_ownership_vm.exists, "vm exists"
@@ -159,11 +163,7 @@ def test_group_ownership_on_user_or_group_role(
         assert group_ownership_vm.exists, "vm not found"
     group_ownership_vm.unset_ownership()
     with user3:
-        try:
-            group_ownership_vm.find_quadicon(from_any_provider=True)
-            pytest.fail("vm found! but shouldn't")
-        except VmOrInstanceNotFound:
-            logger.debug("vm not found as expected")
+        assert not check_vm_exists(group_ownership_vm), "vm exists! but shouldn't exist"
 
 
 # @pytest.mark.meta(blockers=[1202947])
