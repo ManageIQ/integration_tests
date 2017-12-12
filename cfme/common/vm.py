@@ -4,20 +4,14 @@ from datetime import datetime, date, timedelta
 from functools import partial
 
 from wrapanapi import exceptions
+from widgetastic.exceptions import NoSuchElementException
 
-from cfme import js
+from cfme.common import WidgetasticTaggable
 from cfme.common.vm_console import VMConsole
+from cfme.common.vm_views import DriftAnalysis, DriftHistory, VMPropertyDetailView
 from cfme.exceptions import (
     VmOrInstanceNotFound, ItemNotFound, OptionNotAvailable, UnknownProviderType)
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import (
-    AngularCalendarInput, AngularSelect, Form, InfoBlock, Input, Select, fill, flash,
-    form_buttons, toolbar, PagedTable, CheckboxTable,
-    DriftGrid, BootstrapTreeview
-)
-import cfme.web_ui.toolbar as tb
-from cfme.common import WidgetasticTaggable
-from cfme.utils import version, ParamClassName
+from cfme.utils import ParamClassName
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -26,28 +20,9 @@ from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import VersionPick
 
 from . import PolicyProfileAssignable, SummaryMixin
-
-access_btn = partial(toolbar.select, "Access")
-cfg_btn = partial(toolbar.select, "Configuration")
-lcl_btn = partial(toolbar.select, "Lifecycle")
-mon_btn = partial(toolbar.select, 'Monitoring')
-pol_btn = partial(toolbar.select, "Policy")
-pwr_btn = partial(toolbar.select, "Power")
-
-retire_remove_button = "//span[@id='remove_button']/a/img|//a/img[contains(@src, '/clear')]"
-
-set_ownership_form = Form(fields=[
-    ('user_name', AngularSelect('user_name')),
-    ('group_name', AngularSelect('group_name')),
-    ('create_button', form_buttons.save),
-    ('reset_button', form_buttons.reset),
-    ('cancel_button', form_buttons.cancel)
-])
-
-drift_table = CheckboxTable("//th[normalize-space(.)='Timestamp']/ancestor::table[1]")
-drift_section = BootstrapTreeview('all_sectionsbox')
 
 
 def base_types(template=False):
@@ -87,21 +62,6 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
     """
     pretty_attrs = ['name', 'provider', 'template_name']
 
-    # Forms
-    edit_form = Form(
-        fields=[
-            ('custom_ident', Input("custom_1")),
-            ('description_tarea', "//textarea[@id='description']"),
-            ('parent_sel', {
-                version.LOWEST: Select("//select[@name='chosen_parent']"),
-                "5.5": AngularSelect("chosen_parent")}),
-            ('child_sel', Select("//select[@id='kids_chosen']", multi=True)),
-            ('vm_sel', Select("//select[@id='choices_chosen']", multi=True)),
-            ('add_btn', "//img[@alt='Move selected VMs to left']"),
-            ('remove_btn', "//img[@alt='Move selected VMs to right']"),
-            ('remove_all_btn', "//img[@alt='Move all VMs to right']"),
-        ])
-
     ###
     # Factory class methods
     #
@@ -136,15 +96,11 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
     TO_OPEN_EDIT = None  # Name of the item in Configuration that puts you in the form
     QUADICON_TYPE = "vm"
     # Titles of the delete buttons in configuration
-    REMOVE_SELECTED = {'5.6': 'Remove selected items',
-                       '5.6.2.2': 'Remove selected items from the VMDB',
-                       '5.7': 'Remove selected items'}
-    REMOVE_SINGLE = {'5.6': 'Remove Virtual Machine',
-                     '5.6.2.2': 'Remove from the VMDB',
-                     '5.7': 'Remove Virtual Machine'}
-    RETIRE_DATE_FMT = {version.LOWEST: parsetime.american_date_only_format,
-                       '5.7': parsetime.american_minutes_with_utc,
-                       '5.9': parsetime.saved_report_title_format}
+    REMOVE_SELECTED = 'Remove selected items'
+    REMOVE_SINGLE = VersionPick({'5.8': 'Remove Virtual Machine',
+                                 '5.9': 'Remove Virtual Machine from Inventory'})
+    RETIRE_DATE_FMT = VersionPick({'5.8': parsetime.american_minutes_with_utc,
+                                   '5.9': parsetime.saved_report_title_format})
     _param_name = ParamClassName('name')
     DETAILS_VIEW_CLASS = None
 
@@ -171,55 +127,42 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
     def quadicon_type(self):
         return self.QUADICON_TYPE
 
-    @property
-    def paged_table(self):
-        return PagedTable('//table')
-
     ###
     # Methods
     #
     def check_compliance(self, timeout=240):
-        """Initiates compliance check and waits for it to finish.
-
-        TODO This should be refactored as it's done `Host.check_compliance`. It shouldn't return
-        anything. `compliant` property should use `compliance_status`.
-
-        """
+        """Initiates compliance check and waits for it to finish."""
+        view = navigate_to(self, "Details")
         original_state = self.compliance_status
-        cfg_btn("Refresh Relationships and Power States", invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_no_errors()
-        pol_btn("Check Compliance of Last Known Configuration", invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_no_errors()
+        view.toolbar.policy.item_select("Check Compliance of Last Known Configuration",
+            handle_alert=True)
+        view.flash.assert_no_error()
         wait_for(
             lambda: self.compliance_status != original_state,
             num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name)
         )
-        return self.compliant
 
     @property
     def compliance_status(self):
-        """Returns the title of the compliance infoblock. The title contains datetime so it can be
-        compared.
+        """Returns the title of the compliance SummaryTable. The title contains datetime so it can
+        be compared.
 
         Returns:
             :py:class:`NoneType` if no title is present (no compliance checks before), otherwise str
         """
-        self.load_details(refresh=True)
-        return InfoBlock("Compliance", "Status").title
+        view = navigate_to(self, "Details")
+        view.browser.refresh()
+        return self.get_detail("Compliance", "Status")
 
     @property
     def compliant(self):
-        """Check if the VM is compliant
+        """Check if the VM is compliant.
 
         Returns:
-            :py:class:`NoneType` if the VM was never verified, otherwise :py:class:`bool`
+            :py:class:`bool`
         """
-        text = self.get_detail(properties=("Compliance", "Status")).strip().lower()
-        if text == "never verified":
-            return None
-        elif text.startswith("non-compliant"):
+        text = self.compliance_status.strip().lower()
+        if text.startswith("non-compliant"):
             return False
         elif text.startswith("compliant"):
             return True
@@ -274,12 +217,13 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
         """
 
         if from_details:
-            self.load_details(refresh=True)
-            cfg_btn(self.REMOVE_SINGLE, invokes_alert=True)
+            view = navigate_to(self, 'Details')
+            view.toolbar.configuration.item_select(self.REMOVE_SINGLE.pick(self.appliance.version),
+                                                   handle_alert=not cancel)
         else:
+            view = navigate_to(self, 'All')
             self.find_quadicon().check()
-            cfg_btn(self.REMOVE_SELECTED, invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
+            view.toolbar.configuration.item_select(self.REMOVE_SELECTED, handle_alert=not cancel)
 
     @property
     def exists(self):
@@ -330,7 +274,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
         except ItemNotFound:
             raise VmOrInstanceNotFound("VM '{}' not found in UI!".format(self.name))
 
-    def get_detail(self, properties=None, icon_href=False):
+    def get_detail(self, properties=None):
         """Gets details from the details infoblock
 
         The function first ensures that we are on the detail page for the specific VM/Instance.
@@ -341,11 +285,9 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
         Returns:
             A string representing the contents of the InfoBlock's value.
         """
-        self.load_details(refresh=True)
-        if icon_href:
-            return InfoBlock.icon_href(*properties)
-        else:
-            return InfoBlock.text(*properties)
+        view = navigate_to(self, 'Details')
+        return getattr(view.entities, properties[0].lower().replace(' ', '_')).get_text_of(
+            properties[1])
 
     def open_console(self, console='VM Console', invokes_alert=False, cancel=False):
         """
@@ -369,14 +311,15 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
         view = navigate_to(self, 'Details')
 
         # Click console button given by type
-        view.toolbar.access.item_select(console, handle_alert=None
-            if invokes_alert is False else True)
+        view.toolbar.access.item_select(console, handle_alert=not invokes_alert)
         self.vm_console
 
     def open_details(self, properties=None):
         """Clicks on details infoblock"""
-        self.load_details(refresh=True)
-        sel.click(InfoBlock(*properties))
+        view = navigate_to(self, 'Details')
+        getattr(view.entities, properties[0].lower().replace(' ', '_')).click_at(
+            properties[1])
+        return self.create_view(VMPropertyDetailView)
 
     @classmethod
     def get_first_vm(cls, provider):
@@ -396,23 +339,18 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
         Args:
             refresh: Refreshes the VM page if already there
             from_any_provider: Archived/Orphaned VMs need this
-
-        Raises:
-            VmOrInstanceNotFound:
-                When unable to find the VM passed
         """
         if from_any_provider:
-            navigate_to(self, 'AnyProviderDetails', use_resetter=False)
+            view = navigate_to(self, 'AnyProviderDetails', use_resetter=False)
         else:
-            navigate_to(self, 'Details', use_resetter=False)
+            view = navigate_to(self, 'Details', use_resetter=False)
         if refresh:
-            toolbar.refresh()
-            self.browser.plugin.ensure_page_safe()
+            view.toolbar.reload.click()
+        return view
 
     def open_edit(self):
         """Loads up the edit page of the object."""
-        self.load_details(refresh=True)
-        cfg_btn(self.TO_OPEN_EDIT)
+        return navigate_to(self, 'Edit')
 
     def open_timelines(self):
         """Navigates to an VM's timeline page.
@@ -448,11 +386,12 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
             cancel: Whether or not to cancel the refresh relationships action
         """
         if from_details:
-            self.load_details()
+            view = self.load_details()
         else:
+            view = navigate_to(self, 'All')
             self.find_quadicon(from_any_provider=from_any_provider).check()
-        cfg_btn('Refresh Relationships and Power States', invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
+        view.toolbar.configuration.item_select("Refresh Relationships and Power States",
+                                               handle_alert=not cancel)
 
     @property
     def retirement_date(self):
@@ -471,13 +410,14 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
             from_details: Whether or not to perform action from instance details page
         """
         if from_details:
-            self.load_details(refresh=True)
+            view = self.load_details()
         else:
+            view = navigate_to(self, 'All')
             self.find_quadicon().check()
-        cfg_btn('Perform SmartState Analysis', invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
+        view.toolbar.configuration.item_select('Perform SmartState Analysis',
+                                               handle_alert=not cancel)
 
-    def wait_to_disappear(self, timeout=600, load_details=True):
+    def wait_to_disappear(self, timeout=600):
         """Wait for a VM to disappear within CFME
 
         Args:
@@ -485,7 +425,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
         """
         wait_for(
             lambda: self.exists,
-            num_sec=timeout, delay=30, fail_func=sel.refresh, fail_condition=True,
+            num_sec=timeout, delay=30, fail_func=self.browser.refresh, fail_condition=True,
             message="wait for vm to not exist")
 
     wait_for_delete = wait_to_disappear  # An alias for more fitting verbosity
@@ -510,75 +450,33 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
 
     def set_ownership(self, user=None, group=None, click_cancel=False, click_reset=False):
         """Set ownership of the VM/Instance or Template/Image"""
-        self.find_quadicon(use_search=False).click()
-        cfg_btn('Set Ownership')
+        view = navigate_to(self, "SetOwnership")
+        view.form.fill({'user_name': user, 'group_name': group})
         if click_reset:
-            action = form_buttons.reset
-            msg_assert = partial(
-                flash.assert_message_match,
-                'All changes have been reset'
-            )
+            view.form.reset_button.click()
         elif click_cancel:
-            action = form_buttons.cancel
-            msg_assert = partial(
-                flash.assert_success_message,
-                'Set Ownership was cancelled by the user'
-            )
+            view.form.cancel_button.click()
         else:
-            action = form_buttons.save
-            msg_assert = partial(
-                flash.assert_success_message,
-                'Ownership saved for selected {}'.format(self.VM_TYPE)
-            )
-        fill(set_ownership_form, {'user_name': user, 'group_name': group},
-             action=action)
-        msg_assert()
+            view.form.save_button.click()
+        view.flash.assert_no_error()
 
     def unset_ownership(self):
         """Unset ownership of the VM/Instance or Template/Image"""
         # choose the vm code comes here
-        self.find_quadicon(use_search=False).click()
-        cfg_btn('Set Ownership')
-        fill(set_ownership_form, {'user_name': '<No Owner>',
-            'group_name': 'EvmGroup-administrator'},
-            action=form_buttons.save)
-        flash.assert_success_message('Ownership saved for selected {}'.format(self.VM_TYPE))
-
-
-def date_retire_element(fill_data):
-    """We need to call this function that will mimic clicking the calendar, picking the date and
-    the subsequent callbacks from the server"""
-    # TODO: Move the code in the Calendar itself? I did not check other calendars
-    if isinstance(fill_data, date):
-        date_str = '{}/{}/{}'.format(fill_data.month, fill_data.day, fill_data.year)
-    else:
-        date_str = str(fill_data)
-    sel.execute_script(
-        js.update_retirement_date_function_script +
-        "updateDate(arguments[0]);",
-        date_str
-    )
+        view = navigate_to(self, "SetOwnership")
+        view.form.fill({'user_name': '<No Owner>', 'group_name': 'EvmGroup-administrator'})
+        view.form.save_button.click()
+        view.flash.assert_no_error()
 
 
 class VM(BaseVM):
     TO_RETIRE = None
 
-    retire_form_click_away = "//label[contains(normalize-space(.), 'Retirement Date')]"
-    retire_form = Form(fields=[
-        ('date_retire',
-            {version.LOWEST: AngularCalendarInput("retirement_date", retire_form_click_away),
-             '5.9': AngularCalendarInput("retirement_date_datepicker", retire_form_click_away)}),
-        ('warn', AngularSelect('retirementWarning'))
-    ])
-
     def retire(self):
-        self.load_details(refresh=True)
-        lcl_btn(self.TO_RETIRE, invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_success_message(
-            'Retirement initiated for 1 VM and Instance from the {} Database'.format(version.pick({
-                version.LOWEST: 'CFME',
-                'upstream': 'ManageIQ'})))
+        view = self.load_details(refresh=True)
+        view.toolbar.configuration.item_select(self.TO_RETIRE,
+                                               handle_alert=True)
+        view.flash.assert_no_error()
 
     def power_control_from_provider(self):
         raise NotImplementedError("You have to implement power_control_from_provider!")
@@ -594,9 +492,14 @@ class VM(BaseVM):
         Raises:
             OptionNotAvailable: option param is not visible or enabled
         """
-        if (self.is_pwr_option_available_in_cfme(option=option, from_details=from_details)):
-                pwr_btn(option, invokes_alert=True)
-                sel.handle_alert(cancel=cancel, check_present=True)
+        if from_details:
+            view = self.load_details()
+        else:
+            view = navigate_to(self, 'All')
+
+        if self.is_pwr_option_available_in_cfme(option=option, from_details=from_details):
+
+                view.toolbar.power.item_select(option, handle_alert=not cancel)
                 logger.info(
                     "Power control action of VM/instance %s, option %s, cancel %s executed",
                     self.name, option, str(cancel))
@@ -609,11 +512,11 @@ class VM(BaseVM):
         Args:
             timeout: Timeout passed to :py:func:`utils.wait.wait_for`
         """
-        self.load_details(refresh=True)
+        view = self.load_details(refresh=True)
         wait_for(
-            lambda: not toolbar.is_greyed('Monitoring', 'Utilization'),
+            lambda: not view.toolbar.monitoring.item_enabled("Utilization"),
             delay=10, handle_exception=True, num_sec=timeout,
-            fail_func=lambda: toolbar.refresh())
+            fail_func=lambda: view.toolbar.reload.click)
 
     def wait_for_vm_state_change(self, desired_state=None, timeout=300, from_details=False,
                                  with_relationship_refresh=True, from_any_provider=False):
@@ -659,13 +562,14 @@ class VM(BaseVM):
             from_details: Whether or not to perform action from instance details page
         """
         if from_details:
-            self.load_details(refresh=True)
+            view = self.load_details(refresh=True)
         else:
+            view = navigate_to(self, "All")
             entity = self.find_quadicon()
             entity.check()
         try:
-            return not toolbar.is_greyed('Power', option)
-        except sel.NoSuchElementException:
+            return not view.toolbar.power.item_enabled(option)
+        except NoSuchElementException:
             return False
 
     def delete_from_provider(self):
@@ -836,53 +740,49 @@ class VM(BaseVM):
             assert view.is_displayed
         view.flash.assert_success_message(msg)
 
-    def equal_drift_results(self, row_text, section, *indexes):
-        """ Compares drift analysis results of a row specified by it's title text
+    def equal_drift_results(self, drift_section, section, *indexes):
+        """Compares drift analysis results of a row specified by it's title text.
 
         Args:
-            row_text: Title text of the row to compare
-            section: Accordion section where the change happened; this section will be activated
+            drift_section (str): Title text of the row to compare
+            section (str): Accordion section where the change happened
             indexes: Indexes of results to compare starting with 0 for first row (latest result).
-                     Compares all available drifts, if left empty (default).
+                     Compares all available drifts, if left empty (default)
 
         Note:
             There have to be at least 2 drift results available for this to work.
 
         Returns:
-            ``True`` if equal, ``False`` otherwise.
+            :py:class:`bool`
         """
+
+        def _select_rows(indexes):
+            for i in indexes:
+                drift_history_view.history_table[i][0].click()
+
         # mark by indexes or mark all
-        self.load_details(refresh=True)
-        sel.click(InfoBlock("Properties", "Drift History"))
+        details_view = navigate_to(self, "Details")
+        details_view.entities.relationships.click_at("Drift History")
+        drift_history_view = self.create_view(DriftHistory)
+        assert drift_history_view.is_displayed
         if indexes:
-            drift_table.select_rows_by_indexes(*indexes)
+            _select_rows(indexes)
         else:
             # We can't compare more than 10 drift results at once
             # so when selecting all, we have to limit it to the latest 10
-            if len(list(drift_table.rows())) > 10:
-                drift_table.select_rows_by_indexes(*range(0, min(10, len)))
+            rows_number = len(list(drift_history_view.history_table.rows()))
+            if rows_number > 10:
+                _select_rows(range(10))
             else:
-                drift_table.select_all()
-        tb.select("Select up to 10 timestamps for Drift Analysis")
-
-        # Make sure the section we need is active/open
-        sec_apply_btn = "//div[@id='accordion']/a[contains(normalize-space(text()), 'Apply')]"
-
-        # Deselect other sections
-        for other_section in drift_section.child_items():
-            drift_section.check_node(other_section.text)
-            drift_section.uncheck_node(other_section.text)
-
-        # Activate the required section
-        drift_section.check_node(section)
-        sel.click(sec_apply_btn)
-
-        if not tb.is_active("All attributes"):
-            tb.select("All attributes")
-        drift_grid = DriftGrid()
-        if any(drift_grid.cell_indicates_change(row_text, i) for i in range(0, len(indexes))):
-            return False
-        return True
+                _select_rows(range(rows_number))
+        drift_history_view.analyze_button.click()
+        drift_analysis_view = self.create_view(DriftAnalysis)
+        assert drift_analysis_view.is_displayed
+        drift_analysis_view.drift_sections.check_node(section)
+        drift_analysis_view.apply_button.click()
+        if not drift_analysis_view.toolbar.all_attributes.active:
+            drift_analysis_view.toolbar.all_attributes.click()
+        return drift_analysis_view.drift_analysis(drift_section).is_changed
 
 
 class Template(BaseVM, _TemplateMixin):
@@ -892,9 +792,6 @@ class Template(BaseVM, _TemplateMixin):
         # template_name gets ignored because template does not have a template, logically.
         super(Template, self).__init__(name, provider, template_name=None)
 
-    def does_vm_exist_on_provider(self):
+    def does_template_exist_on_provider(self):
         """Check if template exists on provider itself"""
         return self.provider.mgmt.does_template_exist(self.name)
-
-    # For more logical writing of conditions.
-    does_template_exist_on_provider = does_vm_exist_on_provider

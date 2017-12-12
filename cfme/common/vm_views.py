@@ -4,6 +4,7 @@ import os
 from time import sleep
 
 from widgetastic.exceptions import NoSuchElementException
+from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import (
     View, Text, TextInput, ParametrizedView, Image, ConditionalSwitchableView)
 from widgetastic_patternfly import (
@@ -251,6 +252,12 @@ class VMDetailsEntities(View):
     diagnostics = SummaryTable(title='Diagnostics')
     smart_management = SummaryTable(title='Smart Management')
 
+
+class VMPropertyDetailView(View):
+    title = Text('//div[@id="main-content"]//h1//span[@id="explorer_title_text"]')
+    table = Table('//div[@id="miq-gtl-view"]//table')
+
+    paginator = PaginationPane()
 
 class BasicProvisionFormView(View):
     @View.nested
@@ -567,3 +574,50 @@ class RightSizeView(BaseLoggedInPage):
     def is_displayed(self):
         # Only name is displayed
         return False
+
+
+class DriftHistory(BaseLoggedInPage):
+    breadcrumb = BreadCrumb(locator='.//ol[@class="breadcrumb"]')
+    history_table = Table(locator='.//div[@id="main_div"]/table')
+    analyze_button = Button(title="Select up to 10 timestamps for Drift Analysis")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_compute_infrastructure_hosts and
+            self.title.text == "Drift History" and
+            self.history_table.is_displayed
+        )
+
+
+class DriftAnalysis(BaseLoggedInPage):
+    apply_button = Button("Apply")
+    drift_sections = CheckableBootstrapTreeview(tree_id="all_sectionsbox")
+
+    @ParametrizedView.nested
+    class drift_analysis(ParametrizedView):  # noqa
+        PARAMETERS = ("drift_section", )
+        CELLS = "../td//i"
+        row = Text(ParametrizedLocator(".//div[@id='compare-grid']/"
+                                       "/th[normalize-space(.)={drift_section|quote}]"))
+
+        @property
+        def is_changed(self):
+            cells = self.browser.elements(self.CELLS, parent=self.row)
+            attrs = [self.browser.get_attribute("class", cell) for cell in cells]
+            return "drift-delta" in attrs
+
+    @View.nested
+    class toolbar(View):  # noqa
+        all_attributes = Button(title="All attributes")
+        different_values_attributes = Button(title="Attributes with different")
+        same_values_attributes = Button(title="Attributes with same values")
+        details_mode = Button(title="Details Mode")
+        exists_mode = Button(title="Exists Mode")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_compute_infrastructure_hosts and
+            self.title.text == "'{}' Drift Analysis".format(self.context["object"].name)
+        )
