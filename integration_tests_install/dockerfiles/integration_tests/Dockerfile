@@ -38,9 +38,9 @@ RUN export PYCURL_SSL_LIBRARY=nss && find . -iname "*.pyc" -exec rm '{}' \;
 
 RUN curl -L  https://raw.githubusercontent.com/RedHatQE/cfme_tests/master/requirements/frozen.txt > requirements.txt && \
     source /root/.bashrc; PYCURL_SSL_LIBRARY=nss pip install -Ur ./requirements.txt && \
-    pip install -e . && rm -rf ~/.cache/pip
+    rm -rf ~/.cache/pip
 
-RUN find . -name \*.pyc -delete && find . -name __pycache__ -delete
+# RUN find . -name \*.pyc -delete && find . -name __pycache__ -delete
 
 # Enable repo for google chrome
 ADD google-chrome.repo /etc/yum.repos.d/
