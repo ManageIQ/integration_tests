@@ -24,7 +24,7 @@ RUN virtualenv $ENV_NAME
 # Create directory under we mount all volumes
 RUN mkdir -p cfme_vol
 
-ENV CFME_VOL
+ENV CFME_VOL ${PROJECTS}/cfme_vol/
 
 RUN echo "export PYTHONPATH=$CFME_ENV/:${PYTHONPATH}" >> /etc/bashrc && \
     echo "source $CFME_ENV/bin/activate" >> /etc/bashrc && \
