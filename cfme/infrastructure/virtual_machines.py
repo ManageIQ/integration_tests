@@ -2,20 +2,16 @@
 """A model of Infrastructure Virtual Machines area of CFME.  This includes the VMs explorer tree,
 quadicon lists, and VM details page.
 """
-from copy import copy
 from collections import namedtuple
+from copy import copy
+
 import fauxfactory
 import re
-
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.utils import partial_match, VersionPick, Version
 from widgetastic.widget import Text, View, TextInput, Checkbox, NoSuchElementException
 from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, Tab)
-from widgetastic_manageiq import (
-    Accordion, ConditionalSwitchableView, ManageIQTree, CheckableManageIQTree, NonJSPaginationPane,
-    SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
-from widgetastic_manageiq.vm_reconfigure import DisksTable
-from widgetastic.utils import partial_match, VersionPick, Version
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, Template as BaseTemplate
@@ -26,12 +22,16 @@ from cfme.exceptions import (
     VmNotFound, OptionNotAvailable, DestinationNotFound, ItemNotFound,
     VmOrInstanceNotFound)
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
-from cfme.utils import version
+from widgetastic_manageiq import (
+    Accordion, ConditionalSwitchableView, ManageIQTree, CheckableManageIQTree, NonJSPaginationPane,
+    SummaryTable, TimelinesView, Table)
+from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 
 def has_child(tree, text, parent_item=None):
