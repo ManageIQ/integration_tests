@@ -1,6 +1,6 @@
 from navmazing import NavigateToSibling
 from widgetastic.widget import View
-from widgetastic_manageiq import Accordion, ManageIQTree
+from widgetastic_manageiq import Accordion, ManageIQTree, ItemsToolBarViewSelector
 from widgetastic_patternfly import Dropdown, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
@@ -47,6 +47,7 @@ class ServicesCatalogView(BaseLoggedInPage):
     class toolbar(View):  # noqa
         configuration = Dropdown('Configuration')
         policy = Dropdown('Policy')
+        view_selector = View.nested(ItemsToolBarViewSelector)
 
     # for backward compatibility. it is difficult to figure out where those are used
     # TODO: this should be fixed by this code owner
