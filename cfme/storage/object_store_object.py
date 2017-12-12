@@ -9,6 +9,7 @@ from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.providers import get_crud_by_name
 from widgetastic_manageiq import (
     Accordion,
     BaseEntitiesView,
@@ -100,6 +101,7 @@ class ObjectStoreObject(BaseEntity, WidgetasticTaggable):
         provider: provider
     """
     key = attr.ib()
+    provider = attr.ib()
 
 
 @attr.s
@@ -111,10 +113,24 @@ class ObjectStoreObjectCollection(BaseCollection):
     def all(self):
         """returning all Object Store Objects"""
         view = navigate_to(self, 'All')
-        view.toolbar.view_selector.select("Grid View")
-        objects = [self.instantiate(key=item)
-                   for item in view.entities.entity_names]
-        return objects
+        view.entities.paginator.set_items_per_page(500)
+        objects = []
+
+        try:
+            if 'provider'in self.filters:
+                for item in view.entities.elements.read():
+                    if self.filters['provider'].name in item['Cloud Provider']:
+                        objects.append(self.instantiate(key=item['Key'],
+                                                        provider=self.filters['provider']))
+            else:
+                for item in view.entities.elements.read():
+                    provider_name = item['Cloud Provider'].split()[0]
+                    provider = get_crud_by_name(provider_name)
+                    objects.append(self.instantiate(key=item['Key'], provider=provider))
+            return objects
+
+        except NoSuchElementException:
+            return None
 
     def delete(self, *objects):
         # TODO: capture flash message after BZ 1497113 resolve.
@@ -123,7 +139,7 @@ class ObjectStoreObjectCollection(BaseCollection):
         for obj in objects:
             try:
                 row = view.entities.paginator.find_row_on_pages(
-                    view.entities.elements, Key=obj.key)
+                    view.entities.elements, key=obj.key)
                 row[0].check()
             except NoSuchElementException:
                 raise ItemNotFound('Could not locate object {}'.format(obj.key))
@@ -152,8 +168,9 @@ class ObjectStoreObjectDetails(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         try:
+            # ToDo: use get_entity method as JS API issue (#2898) resolve.
             row = self.prerequisite_view.entities.paginator.find_row_on_pages(
-                self.prerequisite_view.entities.elements, Key=self.obj.key)
+                self.prerequisite_view.entities.elements, key=self.obj.key)
             row[1].click()
         except NoSuchElementException:
             raise ItemNotFound('Could not locate object {}'.format(self.obj.key))
