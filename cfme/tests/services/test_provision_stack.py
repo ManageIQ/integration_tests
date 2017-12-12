@@ -58,13 +58,17 @@ def template(provider, provisioning, setup_provider):
 def dialog(appliance, provider, template):
     template, dialog_name = template
     service_name = fauxfactory.gen_alphanumeric()
-    element_data = dict(
-        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
-        ele_name="service_name",
-        ele_desc="my ele desc",
-        choose_type="Text Box",
-        default_text_box=service_name
-    )
+    element_data = {
+        'element_information': {
+            'ele_label': "Options",
+            'ele_name': "service_name",
+            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'choose_type': "Text Box"
+        },
+        'options': {
+            'default_text_box': service_name
+        }
+    }
     dialog = appliance.collections.service_dialogs
     sd = dialog.instantiate(label=dialog_name)
     tab = sd.tabs.instantiate(tab_label="Basic Information", tab_desc="Basic Information Tab")
@@ -104,10 +108,10 @@ def random_desc():
     return fauxfactory.gen_alphanumeric()
 
 
-def prepare_stack_data(provider, provisioning):
+def prepare_stack_data(appliance, provider, provisioning):
     random_base = fauxfactory.gen_alphanumeric()
-    stackname = 'test-stack-{}'.format(random_base)
-    vm_name = 'test-stk-{}'.format(random_base)
+    stackname = 'test{}'.format(random_base)
+    vm_name = 'test-{}'.format(random_base)
     stack_timeout = "20"
     if provider.one_of(AzureProvider):
         size, resource_group, os_type, mode = map(provisioning.get,
@@ -143,15 +147,22 @@ def prepare_stack_data(provider, provisioning):
         }
     else:
         stack_prov = provisioning['stack_provisioning']
-
-        stack_data = {
-            'stack_name': stackname,
-            'stack_timeout': stack_timeout,
-            'vm_name': vm_name,
-            'key_name': stack_prov['key_name'],
-            'select_instance_type': stack_prov['instance_type'],
-            'ssh_location': provisioning['ssh_location']
-        }
+        if appliance.version == '5.8':
+            stack_data = {
+                'stack_name': stackname,
+                'stack_timeout': stack_timeout,
+                'vm_name': vm_name,
+                'key_name': stack_prov['key_name'],
+                'select_instance_type': stack_prov['instance_type'],
+                'ssh_location': provisioning['ssh_location']
+            }
+        else:
+            stack_data = {
+                'stack_name': stackname,
+                'stack_timeout': stack_timeout,
+                'vm_name': vm_name,
+                'key_name': stack_prov['key_name']
+            }
     return stack_data
 
 
@@ -163,7 +174,7 @@ def test_provision_stack(appliance, setup_provider, provider, provisioning, cata
         test_flag: provision
     """
     catalog_item, template = catalog_item
-    stack_data = prepare_stack_data(provider, provisioning)
+    stack_data = prepare_stack_data(appliance, provider, provisioning)
 
     @request.addfinalizer
     def _cleanup_vms():
@@ -187,7 +198,7 @@ def test_reconfigure_service(appliance, provider, provisioning, catalog, catalog
         test_flag: provision
     """
     catalog_item, template = catalog_item
-    stack_data = prepare_stack_data(provider, provisioning)
+    stack_data = prepare_stack_data(appliance, provider, provisioning)
 
     @request.addfinalizer
     def _cleanup_vms():
@@ -214,7 +225,7 @@ def test_remove_template_provisioning(appliance, provider, provisioning, catalog
         test_flag: provision
     """
     catalog_item, template = catalog_item
-    stack_data = prepare_stack_data(provider, provisioning)
+    stack_data = prepare_stack_data(appliance, provider, provisioning)
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
                                        catalog_item.name, stack_data)
     service_catalogs.order()
@@ -237,7 +248,7 @@ def test_retire_stack(appliance, provider, provisioning, catalog, catalog_item, 
     catalog_item, template = catalog_item
     DefaultView.set_default_view("Stacks", "Grid View")
 
-    stack_data = prepare_stack_data(provider, provisioning)
+    stack_data = prepare_stack_data(appliance, provider, provisioning)
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
                                        catalog_item.name, stack_data)
     service_catalogs.order()

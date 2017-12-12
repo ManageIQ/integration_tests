@@ -237,8 +237,8 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
                 name=self.catalog_name, provider=self.provider.name).click()
             view.request_info.fill(self.provisioning_data)
         view.add_button.click()
-        view.flash.assert_success_message('Service Catalog Item "{}" was added'.format(self.name))
         view = self.create_view(AllCatalogItemView)
+        view.flash.assert_success_message('Service Catalog Item "{}" was added'.format(self.name))
         assert view.is_displayed
 
     def update(self, updates):

@@ -57,7 +57,10 @@ class BoxCollection(BaseCollection):
              box_label and box_description.
         """
         view = navigate_to(self, "Add")
+        view.new_box.click()
+        view.edit_box.click()
         view.fill({'box_label': box_label, 'box_desc': box_desc})
+        view.save_button.click()
         return self.instantiate(box_label=box_label, box_desc=box_desc)
 
 
@@ -68,4 +71,4 @@ class Add(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent.parent', 'Add')
 
     def step(self):
-        self.prerequisite_view.plus_btn.item_select("Add a new Box to this Tab")
+        self.prerequisite_view.add_section.click()

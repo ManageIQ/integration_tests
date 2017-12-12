@@ -37,12 +37,11 @@ class CopyTemplateForm(ServicesCatalogView):
 
 
 class TemplateForm(CopyTemplateForm):
-
+    title = Text('#explorer_title_text')
     template_type = BootstrapSelect("type")
 
 
 class AddTemplateView(TemplateForm):
-
     add_button = Button("Add")
 
     @property
@@ -61,39 +60,40 @@ class EditTemplateView(TemplateForm):
     @property
     def is_displayed(self):
         return (
-            self.title.text == "Editing {}".format(self.obj.name) and
+            self.title.text == "Editing {}".format(self.context['object'].name) and
             self.orchestration_templates.is_opened
         )
 
 
 class CopyTemplateView(CopyTemplateForm):
-
+    title = Text('#explorer_title_text')
     add_button = Button("Add")
 
     @property
     def is_displayed(self):
         return (
             self.is_displayed and
-            self.title.text == "Copying {}".format(self.obj.name) and
+            self.title.text == "Copying {}".format(self.context['object'].name) and
             self.orchestration_templates.is_opened
         )
 
 
 class DetailsTemplateView(ServicesCatalogView):
+    title = Text('#explorer_title_text')
 
     @property
     def is_displayed(self):
         """ Removing last 's' character from template_type.
         For ex. 'CloudFormation Templates' ->  'CloudFormation Template'"""
         return (
-            self.title.text == '{} "{}"'.format(self.obj.template_type[:-1],
-                                                self.obj.template_name) and
+            self.title.text == '{} "{}"'.format(self.context['object'].template_type[:-1],
+                                                self.context['object'].template_name) and
             self.orchestration_templates.is_opened
         )
 
 
 class TemplateTypeView(ServicesCatalogView):
-
+    title = Text('#explorer_title_text')
     templates = Table("//table[@class='table table-striped table-bordered "
                       "table-hover table-selectable]'")
     paginator = PaginationPane()
@@ -101,7 +101,7 @@ class TemplateTypeView(ServicesCatalogView):
     @property
     def is_displayed(self):
         return (
-            self.title.text == 'All {}'.format(self.obj.template_type) and
+            self.title.text == 'All {}'.format(self.context['object'].template_type) and
             self.orchestration_templates.is_opened
         )
 
@@ -151,8 +151,9 @@ class OrchestrationTemplate(Updateable, Pretty, Navigatable, WidgetasticTaggable
                    'template_type': temp_type,
                    'content': content})
         view.add_button.click()
+        view = self.create_view(DetailsTemplateView)
         view.flash.assert_success_message('Orchestration Template '
-                                  '"{}" was saved'.format(self.template_name))
+                                          '"{}" was saved'.format(self.template_name))
 
     def update(self, updates):
         view = navigate_to(self, "Edit")

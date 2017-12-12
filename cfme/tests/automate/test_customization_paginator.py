@@ -3,15 +3,20 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.automate.service_dialogs import DialogCollection
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Table
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils import version
 
 
 pytestmark = [test_requirements.service, pytest.mark.tier(3), pytest.mark.ignore_stream("upstream")]
 
-dialogs_table = Table(".//div[@id='list_grid']/table")
+dialogs_table = Table(
+    version.pick({
+        version.LOWEST: ".//div[@id='list_grid']/table",
+        "5.9": ".//div[@class='miq-data-table']/table"
+    })
+)
 
 
 @pytest.fixture(scope="module")
@@ -20,12 +25,17 @@ def some_dialogs(appliance, request):
     request.addfinalizer(lambda: map(lambda obj: obj.delete(), to_delete))
     for i in range(6):
         random_str = fauxfactory.gen_alphanumeric(16)
-        element_data = dict(ele_label='ele_label_{}'.format(random_str),
-                            ele_name='ele_name_{}'.format(random_str),
-                            choose_type='Check Box')
-        service_dialogs = DialogCollection(appliance)
+        element_data = {
+            'element_information': {
+                'ele_label': "ele_{}".format(random_str),
+                'ele_name': format(random_str),
+                'ele_desc': format(random_str),
+                'choose_type': "Check Box"
+            }
+        }
+        service_dialogs = appliance.collections.service_dialogs
         sd = service_dialogs.create(label='test_paginator_{}'.format(random_str),
-                description="my dialog", submit=True, cancel=True,)
+                                    description="my dialog")
         tab = sd.tabs.create(tab_label='tab_{}'.format(random_str),
                 tab_desc="my tab desc")
         box = tab.boxes.create(box_label='box_{}'.format(random_str),
@@ -62,7 +72,8 @@ def test_paginator(some_dialogs, soft_assert, appliance):
         * During the cycling, assert the numbers displayed in the paginator make sense
         * During the cycling, assert the paginator does not get stuck.
     """
-    view = navigate_to(DialogCollection(appliance), 'All')
+    service_dialog = appliance.collections.service_dialogs
+    view = navigate_to(service_dialog, 'All')
     view.paginator.set_items_per_page(50)
     view.paginator.set_items_per_page(5)
     # Now we must have only 5
@@ -83,7 +94,7 @@ def test_paginator(some_dialogs, soft_assert, appliance):
         current_rec_offset = view.paginator.min_item
         current_rec_end = view.paginator.max_item
 
-        assert current_rec_offset <= current_rec_end <= current_total, \
+        assert int(current_rec_offset) <= int(current_rec_end) <= int(current_total), \
             "Incorrect paginator value, expected {0} <= {1} <= {2}".format(
                 current_rec_offset, current_rec_end, current_total)
 

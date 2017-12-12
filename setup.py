@@ -85,7 +85,7 @@ setup(
             'ansible_playbooks = cfme.ansible.playbooks:PlaybooksCollection',
             'ansible_repositories = cfme.ansible.repositories:RepositoryCollection',
             'datastores = cfme.infrastructure.datastore:DatastoreCollection',
-            'service_dialogs = cfme.automate.service_dialogs:DialogCollection',
+            'service_dialogs = cfme.automate.dialog_collection_pick:collection_pick',
             'domains = cfme.automate.explorer.domain:DomainCollection',
             'keypairs = cfme.cloud.keypairs:KeyPairCollection',
             'stacks = cfme.cloud.stack:StackCollection',

@@ -63,16 +63,13 @@ class TabCollection(BaseCollection):
     def tree_path(self):
         return self.parent.tree_path
 
-    def add_tab(self):
-        view = navigate_to(self, "AddTab")
-        view.plus_btn.item_select("Add a new Tab to this Dialog")
-
     def create(self, tab_label=None, tab_desc=None):
         """ Create tab method"""
         view = navigate_to(self, "Add")
+        view.new_tab.click()
+        view.edit_tab.click()
         view.fill({'tab_label': tab_label, 'tab_desc': tab_desc})
-        # automation bug ,so filling again.
-        view.fill({'tab_label': tab_label})
+        view.save_button.click()
         return self.instantiate(tab_label=tab_label, tab_desc=tab_desc)
 
 
@@ -83,4 +80,4 @@ class Add(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent.parent', 'Add')
 
     def step(self):
-        self.prerequisite_view.plus_btn.item_select("Add a new Tab to this Dialog")
+        self.prerequisite_view.create_tab.click()
