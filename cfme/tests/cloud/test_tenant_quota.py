@@ -10,7 +10,6 @@ from cfme.utils.generators import random_vm_name
 
 pytestmark = [
     test_requirements.quota,
-    pytest.mark.usefixtures('uses_infra_providers'),
     pytest.mark.provider([OpenStackProvider], required_fields=[['provisioning', 'image']],
                          scope="module")
 ]
