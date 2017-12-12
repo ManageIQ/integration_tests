@@ -1,5 +1,6 @@
 # dummy for editable installs
 import sys
+
 import os
 from setuptools import setup, find_packages
 
@@ -92,6 +93,8 @@ setup(
             'cloud_tenants = cfme.cloud.tenant:TenantCollection',
             'tenants = cfme.configure.access_control:TenantCollection',
             'projects = cfme.configure.access_control:ProjectCollection',
+            'roles = cfme.configure.access_control:RoleCollection',
+            'users = cfme.configure.access_control:UserCollection',
             'candus = cfme.configure.configuration.region_settings:CANDUCollection',
             'groups = cfme.configure.access_control:GroupCollection',
             'nodes = cfme.containers.node:NodeCollection',

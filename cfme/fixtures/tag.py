@@ -3,7 +3,6 @@ import pytest
 from widgetastic.exceptions import RowNotFound
 
 from cfme.base.credential import Credential
-from cfme.configure.access_control import Role, User
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -38,14 +37,13 @@ def tag(category):
 
 
 @pytest.yield_fixture(scope="module")
-def role():
+def role(appliance):
     """
         Returns role object used in test module
     """
-    role = Role(
+    role = appliance.collections.roles.create(
         name='role{}'.format(fauxfactory.gen_alphanumeric()),
         vm_restriction='None')
-    role.create()
     yield role
     role.delete()
 
@@ -65,19 +63,18 @@ def group_with_tag(appliance, role, category, tag):
 
 
 @pytest.yield_fixture(scope="module")
-def user_restricted(group_with_tag, new_credential):
+def user_restricted(appliance, group_with_tag, new_credential):
     """
         Returns restricted user object assigned
         to group with tag filter used in test module
     """
-    user = User(
+    user = appliance.collections.users.create(
         name='user{}'.format(fauxfactory.gen_alphanumeric()),
         credential=new_credential,
         email='xyz@redhat.com',
         group=group_with_tag,
         cost_center='Workload',
         value_assign='Database')
-    user.create()
     yield user
     user.delete()
 

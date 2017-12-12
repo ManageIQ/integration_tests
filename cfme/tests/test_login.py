@@ -2,7 +2,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.configure.access_control import User
 from cfme.utils.appliance import ViaSSUI, ViaUI
 from cfme.utils import conf, error, version
 
@@ -43,8 +42,7 @@ def test_bad_password(context, request, appliance):
     username = conf.credentials['default']['username']
     password = "badpassword@#$"
     cred = Credential(principal=username, secret=password)
-    user = User(credential=cred)
-    user.name = 'Administrator'
+    user = appliance.collections.users.instantiate(credential=cred, name='Administrator')
     if appliance.version.is_in_series('5.7'):
         error_message = "Sorry, the username or password you entered is incorrect."
     else:

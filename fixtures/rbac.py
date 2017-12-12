@@ -91,7 +91,6 @@ depending on if the test was run against *rhos* or *ec2*.
 
 """
 from cfme.utils.log import logger
-from cfme.configure.access_control import User
 from fixtures.pytest_store import store
 from fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.fixtures.pytest_selenium import take_screenshot
@@ -170,8 +169,10 @@ def pytest_pyfunc_call(pyfuncitem):
         user = pyfuncitem._request.getfuncargvalue('rbac_role')
         really_logout()
         logger.info("setting user to {}".format(user))
-        user_obj = User(username=conf.credentials[user]['username'],
-            password=conf.credentials[user]['password'])
+        user_obj = current_appliance.collections.users.instantiate(
+            username=conf.credentials[user]['username'],
+            password=conf.credentials[user]['password']
+        )
 
         # Actually perform the test. outcome is set to be a result object from the test
         with user_obj:
