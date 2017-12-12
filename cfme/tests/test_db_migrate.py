@@ -158,6 +158,10 @@ def test_db_migrate_replication(app_creds, temp_appliance_extended_db, dbversion
     app = temp_appliance_extended_db
     app2 = temp_appliance_global_region
 
+    # Make sure replication is disabled before migration
+    app.set_pglogical_replication(replication_type=':none')
+    app2.set_pglogical_replication(replication_type=':none')
+
     # Download the database
     logger.info("Downloading database: {}".format(dbversion))
     db_url = cfme_data['db_backups'][dbversion]['url']
@@ -234,6 +238,7 @@ def test_db_migrate_replication(app_creds, temp_appliance_extended_db, dbversion
     assert rc == 0, "Failed to change UI password of {} to {}:" \
         .format(app.user.credential.principal, app.user.credential.secret, out)
     app.server.login(app.user)
+
     app.set_pglogical_replication(replication_type=':remote')
     app2.set_pglogical_replication(replication_type=':global')
     app2.add_pglogical_replication_subscription(app.hostname)
@@ -241,9 +246,6 @@ def test_db_migrate_replication(app_creds, temp_appliance_extended_db, dbversion
     def is_provider_replicated(app, app2):
         assert set(app.managed_provider_names) == set(app2.managed_provider_names)
     wait_for(is_provider_replicated, func_args=[app, app2])
-
-    app.set_pglogical_replication(replication_type=':none')
-    app2.set_pglogical_replication(replication_type=':none')
 
 
 def test_upgrade_single_inplace(appliance_preupdate, appliance):
