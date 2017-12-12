@@ -1,23 +1,21 @@
 # -*- coding: utf-8 -*-
 """Page model for Automation/Ansible/Repositories"""
 import attr
-
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, Checkbox, Fillable
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic_patternfly import Dropdown, Button, Input, FlashMessages
-from widgetastic_manageiq import Table, PaginationPane
+from widgetastic.widget import Text, Checkbox, Fillable
+from widgetastic_patternfly import Dropdown, Button, Input
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import Table, PaginationPane
 from .playbooks import PlaybooksCollection
 
 
 class RepositoryBaseView(BaseLoggedInPage):
-    flash = FlashMessages('.//div[starts-with(@class, "flash_text_div") or @id="flash_text_div"]')
     title = Text(locator='.//div[@id="main-content"]//h1')
 
     @property

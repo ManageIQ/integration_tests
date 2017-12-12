@@ -2,20 +2,19 @@
 import atexit
 import json
 import math
-import os
-import re
-import six
 from collections import namedtuple
 from datetime import date
 from math import ceil
 from tempfile import NamedTemporaryFile
-from wait_for import TimedOutError, wait_for
 
+import os
+import re
+import six
 from cached_property import cached_property
 from jsmin import jsmin
 from lxml.html import document_fromstring
 from selenium.common.exceptions import WebDriverException
-from cfme.utils.blockers import BZ
+from wait_for import TimedOutError, wait_for
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.log import logged
 from widgetastic.utils import ParametrizedLocator, Parameter, ParametrizedString, attributize_string
@@ -30,7 +29,6 @@ from widgetastic.widget import (
     TextInput,
     Text,
     Checkbox,
-    Image,
     ParametrizedView,
     FileInput as BaseFileInput,
     ClickableMixin,
@@ -40,10 +38,10 @@ from widgetastic.xpath import quote
 from widgetastic_patternfly import (
     Accordion as PFAccordion, BootstrapSwitch, BootstrapTreeview,
     BootstrapSelect, Button, CheckableBootstrapTreeview,
-    Dropdown, Input, FlashMessages,
-    VerticalNavigation, Tab)
+    Dropdown, Input, VerticalNavigation, Tab)
 
 from cfme.exceptions import ItemNotFound
+from cfme.utils.blockers import BZ
 
 
 class DynamicTableAddError(Exception):
@@ -2891,8 +2889,6 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
     title = Text('//div[@id="main-content"]//h1')
     search = View.nested(Search)
     paginator = PaginationPane()
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
 
     @property
     def _current_page_elements(self):

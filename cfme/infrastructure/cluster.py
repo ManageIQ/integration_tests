@@ -2,21 +2,20 @@
 
 """
 import attr
-
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
-from widgetastic_manageiq import (Accordion, BreadCrumb, ItemsToolBarViewSelector, ManageIQTree,
-                                  SummaryTable, Text, TimelinesView, BaseEntitiesView)
-from widgetastic_patternfly import Button, Dropdown, FlashMessages
+from widgetastic_patternfly import Button, Dropdown
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
+from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for, TimedOutError
-from cfme.utils.log import logger
+from widgetastic_manageiq import (Accordion, BreadCrumb, ItemsToolBarViewSelector, ManageIQTree,
+                                  SummaryTable, Text, TimelinesView, BaseEntitiesView)
 
 
 # TODO: since Cluster always requires provider, it will use only one way to get to Cluster Detail's
@@ -64,9 +63,6 @@ class ClusterDetailsEntities(View):
     totals_for_vms = SummaryTable(title='Totals for VMs')
     configuration = SummaryTable(title='Configuration')
     smart_management = SummaryTable(title='Smart Management')
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
 
 
 class ClusterView(BaseLoggedInPage):
@@ -186,7 +182,7 @@ class Cluster(Pretty, BaseEntity, WidgetasticTaggable):
         # flash message only displayed if it was deleted
         if not cancel:
             msg = 'The selected Clusters / Deployment Roles was deleted'
-            view.entities.flash.assert_success_message(msg)
+            view.flash.assert_success_message(msg)
 
         if wait:
             self.provider.refresh_provider_relationships()
@@ -246,7 +242,7 @@ class Cluster(Pretty, BaseEntity, WidgetasticTaggable):
         """Run SmartState analysis"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Perform SmartState Analysis', invokes_alert=True)
-        view.entities.flash.assert_message_contain('Cluster / Deployment Role: scan successfully '
+        view.flash.assert_message_contain('Cluster / Deployment Role: scan successfully '
                                                    'initiated')
 
 
@@ -282,7 +278,7 @@ class ClusterCollection(BaseCollection):
         if set(clusters) != set(checked_clusters):
             raise ValueError('Some Clusters were not found in the UI')
         view.toolbar.configuration.item_select('Remove selected items', handle_alert=True)
-        view.entities.flash.assert_no_error()
+        view.flash.assert_no_error()
         flash_msg = ('Delete initiated for {} Clusters / Deployment Roles from the CFME Database'.
             format(len(clusters)))
         view.flash.assert_message(flash_msg)

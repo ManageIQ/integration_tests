@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
 import attr
-
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.widget import View, Text, NoSuchElementException
+from widgetastic_patternfly import Button, Dropdown
+
+from cfme.base.ui import BaseLoggedInPage
+from cfme.common import TagPageView, WidgetasticTaggable
+from cfme.exceptions import ItemNotFound
+from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from widgetastic_manageiq import (
     Accordion,
     BaseEntitiesView,
@@ -10,14 +17,6 @@ from widgetastic_manageiq import (
     ManageIQTree,
     SummaryTable
 )
-from widgetastic_patternfly import Button, Dropdown, FlashMessages
-from widgetastic.widget import View, Text, NoSuchElementException
-
-from cfme.base.ui import BaseLoggedInPage
-from cfme.common import TagPageView, WidgetasticTaggable
-from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.modeling.base import BaseCollection, BaseEntity
 
 
 class ObjectStoreObjectToolbar(View):
@@ -56,9 +55,6 @@ class ObjectStoreObjectDetailsSidebar(View):
 class ObjectStoreObjectView(BaseLoggedInPage):
     """A base view for all the Object Store Object pages"""
     title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
-    flash = FlashMessages(
-        './/div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-        'contains(@class, "flash_text_div")]')
 
     @property
     def in_object(self):

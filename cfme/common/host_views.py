@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
-
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import (
     Parameter,
@@ -9,6 +8,15 @@ from widgetastic.utils import (
     VersionPick
 )
 from widgetastic.widget import ParametrizedView, Text, View
+from widgetastic_patternfly import (
+    BootstrapSelect,
+    CheckableBootstrapTreeview,
+    Dropdown,
+    Tab,
+    VerticalNavigation
+)
+
+from cfme.base.login import BaseLoggedInPage
 from widgetastic_manageiq import (
     Accordion,
     ManageIQTree,
@@ -28,25 +36,11 @@ from widgetastic_manageiq import (
     Table,
     TimelinesView
 )
-from widgetastic_patternfly import (
-    BootstrapSelect,
-    CheckableBootstrapTreeview,
-    Dropdown,
-    FlashMessages,
-    Tab,
-    VerticalNavigation
-)
-
-from cfme.base.login import BaseLoggedInPage
 
 
 class ComputeInfrastructureHostsView(BaseLoggedInPage):
     """Common parts for host views."""
     title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
-    flash = FlashMessages(
-        './/div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-        'contains(@class, "flash_text_div")]'
-    )
 
     @property
     def in_compute_infrastructure_hosts(self):
