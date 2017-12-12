@@ -243,7 +243,6 @@ class IPAppliance(object):
     def __init__(
             self, hostname, ui_protocol='https', ui_port=None, browser_steal=False,
             container=None, openshift_creds=None, db_host=None, db_port=None, ssh_port=None):
-        self._server = None
         if not isinstance(hostname, six.string_types):
             raise TypeError('Appliance\'s hostname must be a string!')
         self.hostname = hostname
@@ -297,9 +296,7 @@ class IPAppliance(object):
 
     @property
     def server(self):
-        if self._server is None:
-            self._server = self.collections.servers.get_master()
-        return self._server
+        return self.collections.servers.get_master()
 
     @property
     def user(self):
@@ -1492,7 +1489,6 @@ class IPAppliance(object):
                 self.evmserverd.start()
             else:
                 self.evmserverd.restart()
-        self.server_details_changed()
 
     @logger_wrap("Waiting for EVM service: {}")
     def wait_for_evm_service(self, timeout=900, log_callback=None):
@@ -1881,75 +1877,10 @@ class IPAppliance(object):
         self.server_roles = server_roles
         return server_roles == self.server_roles
 
-    @cached_property
-    def configuration_details(self):
-        """Return details that are necessary to navigate through Configuration accordions.
-
-        Args:
-            ip_address: IP address of the server to match. If None, uses hostname from
-                ``conf.env['base_url']``
-
-        Returns:
-            If the data weren't found in the DB, :py:class:`NoneType`
-            If the data were found, it returns tuple ``(region, server name,
-            server id, server zone id)``
-        """
-        try:
-            servers = self.rest_api.collections.servers.all
-            chosen_server = None
-            if len(servers) == 1:
-                chosen_server = servers[0]
-            else:
-                for server in servers:
-                    if self.guid == server.guid:
-                        chosen_server = server
-            if chosen_server:
-                chosen_server.reload(attributes=['region_number'])
-                return (chosen_server.region_number, chosen_server.name,
-                        chosen_server.id, chosen_server.zone_id)
-            else:
-                return None, None, None, None
-        except:
-            return None
-
-    @cached_property
-    def configuration_details_old(self):
-        try:
-            miq_servers = self.db.client['miq_servers']
-            for region in self.db.client.session.query(self.db.client['miq_regions']):
-                reg_min = region.region * SEQ_FACT
-                reg_max = reg_min + SEQ_FACT
-                all_servers = self.db.client.session.query(miq_servers).all()
-                server = None
-                if len(all_servers) == 1:
-                    # If there's only one server, it's the one we want
-                    server = all_servers[0]
-                else:
-                    # Otherwise, filter based on id and ip/guid
-                    def server_filter(server):
-                        return all([
-                            server.id >= reg_min,
-                            server.id < reg_max,
-                            # second check because of openstack ip addresses
-                            server.ipaddress == self.db.address or server.guid == self.guid
-                        ])
-                    servers = filter(server_filter, all_servers)
-                    if servers:
-                        server = servers[0]
-                if server:
-                    return region.region, server.name, server.id, server.zone_id
-                else:
-                    return None, None, None, None
-            else:
-                return None
-
-        except KeyError:
-            return None
-
     def server_id(self):
         try:
-            return self.configuration_details[2]
-        except TypeError:
+            return self.server.sid
+        except IndexError:
             return None
 
     def server_region_string(self):
@@ -1960,26 +1891,6 @@ class IPAppliance(object):
     @cached_property
     def company_name(self):
         return self.get_yaml_config()["server"]["company"]
-
-    @cached_property
-    def zone_description(self):
-        if self.appliance.version < '5.8':
-            zone_id = self.server.zone.id
-            zones = list(
-                self.db.client.session.query(self.db.client["zones"]).filter(
-                    self.db.client["zones"].id == zone_id
-                )
-            )
-            if zones:
-                return zones[0].description
-            else:
-                return None
-        else:
-            zones = self.rest_api.collections.zones.find_by(id=self.server.zone.id)
-            if zones:
-                return zones[0].description
-            else:
-                return None
 
     def host_id(self, hostname):
         hosts = list(
@@ -2033,9 +1944,7 @@ class IPAppliance(object):
 
         # Run it
         result = self.ssh_client.run_rails_command(dest_ruby)
-        if result:
-            self.server_details_changed()
-        else:
+        if not result:
             raise Exception('Unable to set config: {!r}:{!r}'.format(result.rc, result.output))
 
     def set_session_timeout(self, timeout=86400, quiet=True):
@@ -2171,9 +2080,6 @@ class IPAppliance(object):
             logger.error('Could not detect MIQ Server workers started in {}s.'.format(
                 poll_interval * max_attempts))
         evm_tail.close()
-
-    def server_details_changed(self):
-        clear_property_cache(self, 'configuration_details', 'zone_description')
 
     @logger_wrap("Setting dev branch: {}")
     def use_dev_branch(self, repo, branch, log_callback=None):
