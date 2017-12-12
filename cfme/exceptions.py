@@ -310,6 +310,13 @@ class KeyPairNotFound(CFMEException):
     pass
 
 
+class SecurityGroupsNotFound(CFMEException):
+    """
+    Raised if a specific cloud Security Groups cannot be found in the UI
+    """
+    pass
+
+
 class ResourcePoolNotFound(CFMEException):
     """
     Raised if a specific cloud key pair cannot be found in the UI

@@ -88,6 +88,7 @@ setup(
             'domains = cfme.automate.explorer.domain:DomainCollection',
             'keypairs = cfme.cloud.keypairs:KeyPairCollection',
             'stacks = cfme.cloud.stack:StackCollection',
+            'security_groups = cfme.cloud.security_groups:SecurityGroupCollection',
             'cloud_tenants = cfme.cloud.tenant:TenantCollection',
             'tenants = cfme.configure.access_control:TenantCollection',
             'projects = cfme.configure.access_control:ProjectCollection',
