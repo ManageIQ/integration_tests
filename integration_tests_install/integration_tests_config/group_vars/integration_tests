@@ -1,5 +1,6 @@
 ---
-cfme_vol: /projects/cfme_env/cfme_vol
+# cfme_vol: /projects/cfme_env/cfme_vol
+cfme_vol: /projects/cfme_vol
 vars_config: "{{ cfme_vol }}/.vars_config.yml"
 
 # Ask user if he will be creating new PRs or just run tests

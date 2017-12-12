@@ -331,7 +331,8 @@
     - name: Create symlinks for (local) YAML repo (symlinks to remote repo will be overwritten if name is the same)
       file: src="../../{{ yaml_local_repo }}/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
       with_fileglob:
-        - /projects/cfme_env/cfme_vol/{{ yaml_local_repo }}/*.*yaml 
+        # - /projects/cfme_env/cfme_vol/{{ yaml_local_repo }}/*.*yaml 
+        - "{{ cfme_vol }}/{{ yaml_local_repo }}/*.*yaml"
       when: yaml_local_repo_yn_p.key == "y"
 
     - name: Update env.local.yaml
