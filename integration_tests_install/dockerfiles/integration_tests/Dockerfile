@@ -68,7 +68,8 @@ ENV SELENIUM_PATH /opt/selenium/
 # selenium
 #ADD http://selenium-release.storage.googleapis.com/$SELENIUM_VERSION/selenium-server-standalone-$SELENIUM_VERSION.0.jar selenium/selenium_latest.jar
 RUN mkdir -p ${SELENIUM_PATH} && cd ${SELENIUM_PATH} && \
-    curl -O  http://selenium-release.storage.googleapis.com/$SELENIUM_VERSION/selenium-server-standalone-$SELENIUM_VERSION.0.jar && \
+    curl -O  http://selenium-release.storage.googleapis.com/$SELENIUM_VERSION/selenium-server-standalone-$SELENIUM_VERSION.0.jar \
+    -o ${SELENIUM_PATH}/selenium_latest.jar && \
     chmod ugo+r ${SELENIUM_PATH}/selenium_latest.jar
 
 # ===== FIREFOX
