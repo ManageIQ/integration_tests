@@ -5,9 +5,9 @@ import traceback
 from copy import copy
 from datetime import datetime
 from tempfile import NamedTemporaryFile
+from textwrap import dedent
 from time import sleep, time
 from urlparse import urlparse
-from textwrap import dedent
 
 import attr
 import dateutil.parser
@@ -1950,49 +1950,10 @@ class IPAppliance(object):
         except TypeError:
             return None
 
-    @removals.remove(message='This call is being deprecated in 17.18')
-    def server_region(self):
-        try:
-            return self.configuration_details[0]
-        except TypeError:
-            return None
-
-    @removals.remove(message='This call is being deprecated in 17.18')
-    def server_name(self):
-        try:
-            return self.configuration_details[1]
-        except TypeError:
-            return None
-
-    @removals.remove(message='This call is being deprecated in 17.18')
-    def server_zone_id(self):
-        try:
-            return self.configuration_details[3]
-        except TypeError:
-            return None
-
     def server_region_string(self):
         r = self.server.zone.region.number
         return "{} Region: Region {} [{}]".format(
             self.product_name, r, r)
-
-    @removals.remove(message='This call is being deprecated in 17.18')
-    def slave_server_zone_id(self):
-        table = self.db.client["miq_servers"]
-        try:
-            return self.db.client.session.query(table.id).filter(
-                table.is_master == 'false').first()[0]
-        except TypeError:
-            return None
-
-    @removals.remove(message='This call is being deprecated in 17.18')
-    def slave_server_name(self):
-        table = self.db.client["miq_servers"]
-        try:
-            return self.db.client.session.query(table.name).filter(
-                table.id == self.slave_server.zone.id).first()[0]
-        except TypeError:
-            return None
 
     @cached_property
     def company_name(self):
