@@ -64,23 +64,22 @@ RUN mkdir -p ${CHROMEDRIVER_PATH} && cd ${CHROMEDRIVER_PATH} && \
 
 # ===== SELENIUM
 ENV SELENIUM_VERSION 2.53
-ENV SELENIUM_PATH /opt/selenium/
+ENV SELENIUM_PATH /opt/selenium
 # selenium
 #ADD http://selenium-release.storage.googleapis.com/$SELENIUM_VERSION/selenium-server-standalone-$SELENIUM_VERSION.0.jar selenium/selenium_latest.jar
 RUN mkdir -p ${SELENIUM_PATH} && cd ${SELENIUM_PATH} && \
-    curl -O  http://selenium-release.storage.googleapis.com/$SELENIUM_VERSION/selenium-server-standalone-$SELENIUM_VERSION.0.jar \
-    -o ${SELENIUM_PATH}/selenium_latest.jar && \
-    chmod ugo+r ${SELENIUM_PATH}/selenium_latest.jar
+    curl http://selenium-release.storage.googleapis.com/$SELENIUM_VERSION/selenium-server-standalone-$SELENIUM_VERSION.0.jar \
+    -o selenium_latest.jar && chmod ugo+r selenium_latest.jar
 
 # ===== FIREFOX
 # firefox - esr
 #ADD https://download-installer.cdn.mozilla.net/pub/firefox/releases/$FIREFOX_VERSION.0esr/linux-x86_64/en-US/firefox-$FIREFOX_VERSION.0esr.tar.bz2 \
 # ENV FIREFOX_VERSION 38.6
 ENV FIREFOX_VERSION 47.0.2
-ENV FIREFOX_PATH /opt/firefox/
-ADD mkdir -p ${FIREFOX_PATH} && cd ${FIREFOX_PATH} && \
-    curl https://download-installer.cdn.mozilla.net/pub/firefox/releases/$FIREFOX_VERSION/linux-x86_64/en-US/firefox-$FIREFOX_VERSION.tar.bz2 && \
-    -o ${FIREFOX_PATH}/firefox.tar.bz2 && tar -C ${FIREFOX_PATH} -xjvf ${FIREFOX_PATH}/firefox.tar.bz2 && \
+ENV FIREFOX_PATH /opt/firefox
+RUN mkdir -p ${FIREFOX_PATH} && cd ${FIREFOX_PATH} && \
+    curl https://download-installer.cdn.mozilla.net/pub/firefox/releases/$FIREFOX_VERSION/linux-x86_64/en-US/firefox-$FIREFOX_VERSION.tar.bz2 \
+    -o firefox.tar.bz2 && tar -C ${FIREFOX_PATH} -xjvf ${FIREFOX_PATH}/firefox.tar.bz2 && \
     rm -f ${FIREFOX_PATH}/firefox.tar.bz2
 # RUN tar -C $FIREFOX_PATH -xjvf /root/firefox.tar.bz2 && rm -f /root/firefox.tar.bz2
 
