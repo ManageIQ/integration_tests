@@ -37,28 +37,28 @@
 
 """
 
-import re
 import time
-import types
-from datetime import date
 from collections import Sequence, Mapping, Callable, Iterable
+from datetime import date
 from xml.sax.saxutils import quoteattr, unescape
 
+import re
+import types
 from cached_property import cached_property
+from multimethods import multimethod, multidispatch, Anything
 from selenium.common import exceptions as sel_exceptions
 from selenium.common.exceptions import NoSuchElementException
-from multimethods import multimethod, multidispatch, Anything
+from wait_for import TimedOutError, wait_for
 from widgetastic.xpath import quote
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions, js
-from cfme.fixtures.pytest_selenium import browser
 # For backward compatibility with code that pulls in Select from web_ui instead of sel
 from cfme.fixtures.pytest_selenium import Select
+from cfme.fixtures.pytest_selenium import browser
 from cfme.utils import attributize_string, castmap, normalize_space, version
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
-from wait_for import TimedOutError, wait_for
 
 
 class Region(Pretty):
@@ -649,230 +649,6 @@ class Table(Pretty):
             return sel.move_to_element(self.row_element)
 
 
-class CheckboxTable(Table):
-    """:py:class:`Table` with support for checkboxes
-
-    Args:
-        table_locator: See :py:class:`cfme.web_ui.Table`
-        header_checkbox_locator: Locator of header checkbox (default `None`)
-                                 Specify in case the header checkbox is not part of the header row
-        body_checkbox_locator: Locator for checkboxes in body rows
-        header_offset: See :py:class:`cfme.web_ui.Table`
-        body_offset: See :py:class:`cfme.web_ui.Table`
-    """
-    _checkbox_loc = ".//input[@type='checkbox']"
-
-    def __init__(self, table_locator, header_offset=0, body_offset=0,
-            header_checkbox_locator=None, body_checkbox_locator=None):
-        super(CheckboxTable, self).__init__(table_locator, header_offset, body_offset)
-        if body_checkbox_locator:
-            self._checkbox_loc = body_checkbox_locator
-        self._header_checkbox_loc = header_checkbox_locator
-
-    @property
-    def header_checkbox(self):
-        """Checkbox used to select/deselect all rows"""
-        if self._header_checkbox_loc is not None:
-            return sel.element(self._header_checkbox_loc)
-        else:
-            return sel.element(self._checkbox_loc, root=self.header_row)
-
-    def select_all(self):
-        """Select all rows using the header checkbox or one by one if not present"""
-        if self._header_checkbox_loc is None:
-            for row in self.rows():
-                self._set_row_checkbox(row, True)
-        else:
-            sel.uncheck(self.header_checkbox)
-            sel.check(self.header_checkbox)
-
-    def deselect_all(self):
-        """Deselect all rows using the header checkbox or one by one if not present"""
-        if self._header_checkbox_loc is None:
-            for row in self.rows():
-                self._set_row_checkbox(row, False)
-        else:
-            sel.check(self.header_checkbox)
-            sel.uncheck(self.header_checkbox)
-
-    def _set_row_checkbox(self, row, set_to=False):
-        row_checkbox = sel.element(self._checkbox_loc, root=row.locate())
-        sel.checkbox(row_checkbox, set_to)
-
-    def _set_row(self, header, value, set_to=False):
-        """ Internal method used to select/deselect a row by column header and cell value
-
-        Args:
-            header: See :py:meth:`Table.find_row`
-            value: See :py:meth:`Table.find_row`
-            set_to: Select if `True`, deselect if `False`
-        """
-        row = self.find_row(header, value)
-        if row:
-            self._set_row_checkbox(row, set_to)
-            return True
-        else:
-            return False
-
-    def select_rows_by_indexes(self, *indexes):
-        """Select rows specified by row indexes (starting with 0)
-        """
-        for i, row in enumerate(self.rows()):
-            if i in indexes:
-                self._set_row_checkbox(row, True)
-
-    def deselect_rows_by_indexes(self, *indexes):
-        """Deselect rows specified by row indexes (starting with 0)
-        """
-        for i, row in enumerate(self.rows()):
-            if i in indexes:
-                self._set_row_checkbox(row, False)
-
-    def select_row(self, header, value):
-        """Select a single row specified by column header and cell value
-
-        Args:
-            header: See :py:meth:`Table.find_row`
-            value: See :py:meth:`Table.find_row`
-
-        Returns: `True` if successful, `False` otherwise
-        """
-        return self._set_row(header, value, True)
-
-    def deselect_row(self, header, value):
-        """Deselect a single row specified by column header and cell value
-
-        Args:
-            header: See :py:meth:`Table.find_row`
-            value: See :py:meth:`Table.find_row`
-
-        Returns: `True` if successful, `False` otherwise
-        """
-        return self._set_row(header, value, False)
-
-    def _set_rows(self, cell_map, set_to=False):
-        """ Internal method used to select/deselect multiple rows
-
-        Args:
-            cell_map: See :py:meth:`Table.click_cells`
-            set_to: Select if `True`, deselect if `False`
-        """
-        failed_selects = []
-        for header, values in cell_map.items():
-            if isinstance(values, basestring):
-                values = [values]
-            for value in values:
-                res = self._set_row(header, value, set_to)
-                if not res:
-                    failed_selects.append("{}:{}".format(header, value))
-        if failed_selects:
-            raise exceptions.NotAllCheckboxesFound(failed_selects)
-
-    def select_rows(self, cell_map):
-        """Select multiple rows
-
-        Args:
-            cell_map: See :py:meth:`Table.click_cells`
-
-        Raises:
-            NotAllCheckboxesFound: If some cells were unable to be found
-        """
-        self._set_rows(cell_map, True)
-
-    def deselect_rows(self, cell_map):
-        """Deselect multiple rows
-
-        Args:
-            cell_map: See :py:meth:`Table.click_cells`
-
-        Raises:
-            NotAllCheckboxesFound: If some cells were unable to be found
-        """
-        self._set_rows(cell_map, False)
-
-    def _set_row_by_cells(self, cells, set_to=False, partial_check=False):
-        row = self.find_row_by_cells(cells, partial_check=partial_check)
-        if row:
-            self._set_row_checkbox(row, set_to)
-        else:
-            raise sel_exceptions.NoSuchElementException()
-
-    def select_row_by_cells(self, cells, partial_check=False):
-        """Select the first row matched by ``cells``
-
-        Args:
-            cells: See :py:meth:`Table.find_rows_by_cells`
-
-        """
-        self._set_row_by_cells(cells, True, partial_check)
-
-    def deselect_row_by_cells(self, cells, partial_check=False):
-        """Deselect the first row matched by ``cells``
-
-        Args:
-            cells: See :py:meth:`Table.find_rows_by_cells`
-
-        """
-        self._set_row_by_cells(cells, False, partial_check)
-
-    def _set_rows_by_cells(self, cells, set_to=False, partial_check=False):
-        rows = self.find_rows_by_cells(cells)
-        for row in rows:
-            self._set_row_checkbox(row, set_to)
-
-    def select_rows_by_cells(self, cells, partial_check=False):
-        """Select the rows matched by ``cells``
-
-        Args:
-            cells: See :py:meth:`Table.find_rows_by_cells`
-        """
-        self._set_rows_by_cells(cells, True, partial_check)
-
-    def deselect_rows_by_cells(self, cells, partial_check=False):
-        """Deselect the rows matched by ``cells``
-
-        Args:
-            cells: See :py:meth:`Table.find_rows_by_cells`
-        """
-        self._set_rows_by_cells(cells, False, partial_check)
-
-
-class PagedTable(Table):
-    """:py:class:`Table` with support for paginator
-
-    Args:
-        table_locator: See :py:class:`cfme.web_ui.Table`
-        header_checkbox_locator: Locator of header checkbox (default `None`)
-                                 Specify in case the header checkbox is not part of the header row
-        body_checkbox_locator: Locator for checkboxes in body rows
-        header_offset: See :py:class:`cfme.web_ui.Table`
-        body_offset: See :py:class:`cfme.web_ui.Table`
-    """
-    def find_row_on_all_pages(self, header, value):
-        from cfme.web_ui import paginator
-        for _ in paginator.pages():
-            sel.wait_for_element(self)
-            row = self.find_row(header, value)
-            if row is not None:
-                return row
-
-    def find_row_by_cell_on_all_pages(self, cells):
-        """Find the first row containing cells on all pages
-
-        Args:
-            cells: See :py:meth:`Table.find_rows_by_cells`
-
-        Returns: The first matching row found on any page
-
-        """
-        from cfme.web_ui import paginator
-        for _ in paginator.pages():
-            sel.wait_for_element(self)
-            row = self.find_row_by_cells(cells)
-            if row is not None:
-                return row
-
-
 @multimethod(lambda loc, value: (sel.tag(loc), sel.get_attribute(loc, 'type')))
 def fill_tag(loc, value):
     """ Return a tuple of function to do the filling, and a value to log."""
@@ -962,17 +738,6 @@ def _sd_fill_table(table, cells):
     return bool(cells)
 
 
-@fill.method((CheckboxTable, object))
-def _sd_fill_checkboxtable(table, cells):
-    """ How to fill a checkboxtable with a value (by selecting the right rows)
-    See CheckboxTable.select_by_cells
-    """
-    table._update_cache()
-    logger.debug('  Selecting CheckboxTable row')
-    table.select_rows(cells)
-    return bool(cells)
-
-
 @fill.method((Callable, object))
 def fill_callable(f, val):
     """Fill in a Callable by just calling it with the value, allow for arbitrary actions"""
@@ -986,64 +751,6 @@ def fill_select(slist, val):
     prev_sel = sel.select(slist, val)
     slist.observer_wait()
     return prev_sel
-
-
-class Calendar(Pretty):
-    """A CFME calendar form field
-
-    Calendar fields are readonly, and managed by the dxhtmlCalendar widget. A Calendar field
-    will accept any object that can be coerced into a string, but the value may not match the format
-    expected by dhtmlxCalendar or CFME. For best results, either a ``datetime.date`` or
-    ``datetime.datetime`` object should be used to create a valid date field.
-
-    Args:
-        name: "name" property of the readonly calendar field.
-
-    Usage:
-
-        calendar = web_ui.Calendar("miq_date_1")
-        web_ui.fill(calendar, date(2000, 1, 1))
-        web_ui.fill(calendar, '1/1/2001')
-
-    """
-    def __init__(self, name):
-        self.name = name
-
-    def locate(self):
-        return sel.move_to_element(Input(self.name))
-
-
-@fill.method((Calendar, object))
-def _sd_fill_date(calendar, value):
-    input = sel.element(calendar)
-    if isinstance(value, date):
-        date_str = '{}/{}/{}'.format(value.month, value.day, value.year)
-    else:
-        date_str = str(value)
-
-    # need to write to a readonly field: resort to evil
-    if sel.get_attribute(input, 'ng-model') is not None:
-        sel.set_angularjs_value(input, date_str)
-    else:
-        sel.set_attribute(input, "value", date_str)
-        # Now when we set the value, we need to simulate a change event.
-        if sel.get_attribute(input, "data-date-autoclose"):
-            # New one
-            script = "$(\"#{}\").trigger('changeDate');"
-        else:
-            # Old one
-            script = (
-                "if(typeof $j == 'undefined') {var jq = $;} else {var jq = $j;} "
-                "jq(\"#{}\").change();")
-        try:
-            sel.execute_script(script.format(calendar.name))
-        except sel_exceptions.WebDriverException as e:
-            logger.warning(
-                "An exception was raised during handling of the Cal #{}'s change event:\n{}"
-                .format(calendar.name, str(e)))
-    sel.wait_for_ajax()
-
-    return True
 
 
 @fill.method((object, types.NoneType))
