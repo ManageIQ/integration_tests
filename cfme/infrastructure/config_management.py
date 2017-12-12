@@ -17,12 +17,9 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
-from cfme.web_ui import (
-    Table
-)
 from widgetastic_manageiq import (
     Accordion, BaseEntitiesView, Button, ItemsToolBarViewSelector, ManageIQTree, SummaryTable,
-    Version, VersionPick)
+    Version, VersionPick, Table)
 
 
 class ConfigManagementToolbar(View):
@@ -256,7 +253,10 @@ class ConfigManager(Updateable, Pretty, Navigatable):
     @property
     def ui_name(self):
         """Return the name used in the UI"""
-        return '{name} Automation Manager'.format(name=self.name)
+        if self.type == 'Ansible Tower':
+            return '{} Automation Manager'.format(self.name)
+        else:
+            return '{} Configuration Manager'.format(self.name)
 
     def create(self, cancel=False, validate_credentials=True, validate=True, force=False):
         """Creates the manager through UI
