@@ -35,7 +35,7 @@ class MyServicesView(BaseLoggedInPage):
         tree = ManageIQTree()
 
     @View.nested
-    class toolbar(View):
+    class toolbar(View):  # noqa
         """
          represents provider toolbar and its controls
         """

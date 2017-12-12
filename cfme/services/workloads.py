@@ -51,7 +51,7 @@ class WorkloadsView(BaseLoggedInPage):
             self.tree.click_path("All Templates & Images")
 
     @View.nested
-    class toolbar(View):
+    class toolbar(View):  # noqa
         """
          represents workloads toolbar and its controls
         """
