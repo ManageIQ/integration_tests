@@ -12,7 +12,7 @@ from cfme.utils.appliance import current_appliance, MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (Accordion, ManageIQTree, Calendar, SummaryTable,
-                                  BaseNonInteractiveEntitiesView)
+                                  BaseNonInteractiveEntitiesView, ItemsToolBarViewSelector)
 
 
 class MyServicesView(BaseLoggedInPage):
@@ -33,6 +33,17 @@ class MyServicesView(BaseLoggedInPage):
         ACCORDION_NAME = "Services"
 
         tree = ManageIQTree()
+
+    @View.nested
+    class toolbar(View):  # noqa
+        """
+         represents provider toolbar and its controls
+        """
+        configuration = Dropdown(text='Configuration')
+        policy = Dropdown(text='Policy')
+        lifecycle = Dropdown(text='Lifecycle')
+        download = Dropdown(text='Download')
+        view_selector = View.nested(ItemsToolBarViewSelector)
 
     # TODO drop '_btn' suffix
     reload = Button(title='Reload current display')

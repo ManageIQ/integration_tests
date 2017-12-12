@@ -8,7 +8,6 @@ from cfme.infrastructure.virtual_machines import Vm
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.myservice import MyService
 from cfme.services.workloads import VmsInstances, TemplatesImages
-from cfme.web_ui import toolbar as tb
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.exceptions import ItemNotFound
 
@@ -36,9 +35,8 @@ def set_and_test_default_view(group_name, view, page):
     dest = 'All'
     if group_name == 'VMs':
         dest = 'VMsOnly'
-    navigate_to(page, dest, use_resetter=False)
-
-    assert tb.is_active(view), "{} view setting failed".format(view)
+    selected_view = navigate_to(page, dest, use_resetter=False).toolbar.view_selector.selected
+    assert view == selected_view, "{} view setting failed".format(view)
     DefaultView.set_default_view(group_name, old_default)
 
 
@@ -85,7 +83,8 @@ def set_and_test_view(group_name, view):
     vm_view = navigate_to(Vm, 'All')
     [e.check() for e in vm_view.entities.get_all()[:2]]
     vm_view.toolbar.configuration.item_select('Compare Selected items')
-    assert tb.is_active(view), "{} setting failed".format(view)
+    selected_view = vm_view.actions.views_selector.selected
+    assert view == selected_view, "{} setting failed".format(view)
     DefaultView.set_default_view(group_name, old_default)
 
 
@@ -97,12 +96,23 @@ def test_infra_compressed_view():
     set_and_test_view('Compare', 'Compressed View')
 
 
-def test_infra_details_view():
-    set_and_test_view('Compare Mode', 'Details Mode')
+def set_and_test_mode(group_name, mode):
+    old_default = DefaultView.get_default_view(group_name)
+    DefaultView.set_default_view(group_name, mode)
+    vm_view = navigate_to(Vm, 'All')
+    [e.check() for e in vm_view.entities.get_all()[:2]]
+    vm_view.toolbar.configuration.item_select('Compare Selected items')
+    selected_mode = vm_view.actions.modes_selector.selected
+    assert mode == selected_mode, "{} setting failed".format(mode)
+    DefaultView.set_default_view(group_name, old_default)
 
 
-def test_infra_exists_view():
-    set_and_test_view('Compare Mode', 'Exists Mode')
+def test_infra_details_mode():
+    set_and_test_mode('Compare Mode', 'Details Mode')
+
+
+def test_infra_exists_mode():
+    set_and_test_mode('Compare Mode', 'Exists Mode')
 
 
 def test_vm_visibility_off():
