@@ -225,6 +225,10 @@ class Volume(BaseEntity):
 
         view.snapshot_name.fill(name)
         view.save.click()
+
+        view = self.create_view(VolumeDetailsView)
+        wait_for(lambda: view.is_displayed, delay=5, timeout=50, message='waiting for view')
+
         view.flash.assert_success_message('Snapshot for Cloud Volume "{}" '
                                           'created'.format(self.name))
 
