@@ -37,7 +37,6 @@ def pytest_generate_tests(metafunc):
             ['provisioning', 'iso_image_type'],
             ['provisioning', 'vlan'],
         ])
-    argnames = argnames + ['iso_cust_template', 'iso_datastore']
 
     new_idlist = []
     new_argvalues = []
@@ -48,12 +47,21 @@ def pytest_generate_tests(metafunc):
         if iso_cust_template not in cfme_data.get('customization_templates', {}).keys():
             continue
 
-        argvalues[i].append(get_template_from_config(iso_cust_template))
-        argvalues[i].append(ISODatastore(args['provider'].name))
         new_idlist.append(idlist[i])
         new_argvalues.append(argvalues[i])
 
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+
+
+@pytest.fixture(scope="module")
+def iso_cust_template(provider, appliance):
+    iso_cust_template = provider.data['provisioning']['iso_kickstart']
+    return get_template_from_config(iso_cust_template, appliance=appliance)
+
+
+@pytest.fixture(scope="module")
+def iso_datastore(provider, appliance):
+    return ISODatastore(provider.name, appliance=appliance)
 
 
 @pytest.fixture(scope="function")

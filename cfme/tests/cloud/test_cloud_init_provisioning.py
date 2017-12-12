@@ -24,9 +24,11 @@ pytestmark = [
 
 
 @pytest.fixture(scope="module")
-def setup_ci_template(provider):
+def setup_ci_template(provider, appliance):
     cloud_init_template_name = provider.data['provisioning']['ci-template']
-    get_template_from_config(cloud_init_template_name, create=True)
+    get_template_from_config(
+        cloud_init_template_name,
+        create=True, appliance=appliance)
 
 
 @pytest.fixture(scope="function")

@@ -963,18 +963,17 @@ class PXEMainPage(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'PXE')
 
 
-def get_template_from_config(template_config_name, create=False):
+def get_template_from_config(template_config_name, create=False, appliance=None):
     """
     Convenience function to grab the details for a template from the yamls and create template.
     """
-
+    assert appliance is not None
     template_config = conf.cfme_data.get('customization_templates', {})[template_config_name]
 
     script_data = load_data_file(str(project_path.join(template_config['script_file'])),
                                  replacements=template_config['replacements'])
 
     script_data = script_data.read()
-    appliance = get_or_create_current_appliance()
     collection = appliance.collections.customization_templates
     kwargs = {
         'name': template_config['name'],
