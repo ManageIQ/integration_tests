@@ -9,37 +9,24 @@
 
 * **Elemental**
 
-  * :py:class:`AngularCalendarInput`
   * :py:class:`AngularSelect`
-  * :py:class:`Calendar`
-  * :py:class:`CheckboxTable`
   * :py:class:`DriftGrid`
   * :py:class:`Form`
   * :py:class:`InfoBlock`
   * :py:class:`Input`
-  * :py:class:`MultiFill`
   * :py:class:`Select`
-  * :py:class:`StatusBox`
   * :py:class:`Table`
   * :py:class:`Tree`
-  * :py:mod:`cfme.web_ui.accordion`
-  * :py:mod:`cfme.web_ui.expression_editor`
   * :py:mod:`cfme.web_ui.flash`
   * :py:mod:`cfme.web_ui.form_buttons`
-  * :py:mod:`cfme.web_ui.jstimelines`
   * :py:mod:`cfme.web_ui.listaccordion`
-  * :py:mod:`cfme.web_ui.menu`
   * :py:mod:`cfme.web_ui.mixins`
-  * :py:mod:`cfme.web_ui.paginator`
-  * :py:mod:`cfme.web_ui.search`
-  * :py:mod:`cfme.web_ui.tabstrip`
   * :py:mod:`cfme.web_ui.toolbar`
 
 """
 
 import time
 from collections import Sequence, Mapping, Callable, Iterable
-from datetime import date
 from xml.sax.saxutils import quoteattr, unescape
 
 import re
@@ -2060,46 +2047,6 @@ def _fill_angular_value(obj, s):
 def _fill_angular_list(obj, l):
     for i in l:
         fill(obj, i)
-
-
-class AngularCalendarInput(Pretty):
-    pretty_attrs = "input_name", "click_away_element"
-
-    def __init__(self, input_name, click_away_element):
-        self.input_name = input_name
-        self.click_away_element = click_away_element
-
-    @property
-    def input(self):
-        return Input(self.input_name, use_id=True)
-
-    @property
-    def clear_button(self):
-        return sel.element("../a/img", root=self.input)
-
-    def locate(self):
-        return self.input.locate()
-
-    def fill(self, value):
-        if isinstance(value, date):
-            value = '{}/{}/{}'.format(value.month, value.day, value.year)
-        else:
-            value = str(value)
-        try:
-            sel.click(self.input)
-            sel.set_text(self.input, value)
-        finally:
-            # To ensure the calendar itself is closed
-            sel.click(self.click_away_element)
-
-    def clear(self):
-        if sel.text(self.input).strip():
-            sel.click(self.clear_button)
-
-
-@fill.method((AngularCalendarInput, Anything))
-def _fill_angular_calendar_input(obj, a):
-    return obj.fill(a)
 
 
 SUMMARY_TITLE_LOCATORS = [
