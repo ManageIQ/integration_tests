@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+
 from cfme import test_requirements
 from cfme.cloud.instance import Instance
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.generators import random_vm_name
+from widgetastic.utils import Version, VersionPick
 
 pytestmark = [
     test_requirements.quota,
@@ -85,8 +87,8 @@ def test_tenant_quota_enforce_via_lifecycle(request, appliance, provider, setup_
     prov_data['catalog']['vm_name'] = vm_name
     prov_data.update({
         'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())},
-        'properties': {'instance_type': 'm1.large'}
-    })
+        'properties': {'instance_type': VersionPick(
+            {Version.lowest(): 'm1.large', '5.9': 'm1.large: 4 CPUs, 8 GB RAM, 4 GB Root Disk'})}})
     instance = Instance.factory(vm_name, provider, template_name)
     instance.create(**prov_data)
 
@@ -98,9 +100,7 @@ def test_tenant_quota_enforce_via_lifecycle(request, appliance, provider, setup_
     provision_request.wait_for_request(method='ui')
     assert provision_request.row.reason.text == "Quota Exceeded"
 
-    @request.addfinalizer
-    def delete():
-        provision_request.remove_request()
+    request.addfinalizer(provision_request.remove_request)
 
 
 # first arg of parametrize is the list of fixtures or parameters,
