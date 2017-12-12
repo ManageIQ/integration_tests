@@ -13,7 +13,7 @@ ENV PROJECTS /projects
 # This is how our python venv will be called
 ENV ENV_NAME cfme_env
 
-ENV CFME_ENV $PROJECTS/ENV_NAME
+ENV CFME_ENV $PROJECTS/$ENV_NAME
 
 RUN mkdir -p $PROJECTS
 
