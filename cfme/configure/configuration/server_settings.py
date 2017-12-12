@@ -472,7 +472,6 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
                 logger.warning('No values was changed')
         elif updated_result:
             view.save_button.click()
-            self.appliance.server_details_changed()
             view.flash.assert_no_error()
         else:
             logger.info('Settings were not changed')

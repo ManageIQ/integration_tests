@@ -294,7 +294,7 @@ class IPAppliance(object):
     def default_zone(self):
         return self.appliance.server.zone
 
-    @cached_property
+    @property
     def server(self):
         return self.collections.servers.get_master()
 
@@ -1487,7 +1487,6 @@ class IPAppliance(object):
                 self.evmserverd.start()
             else:
                 self.evmserverd.restart()
-        self.server_details_changed()
 
     @logger_wrap("Waiting for EVM service: {}")
     def wait_for_evm_service(self, timeout=900, log_callback=None):
@@ -1891,26 +1890,6 @@ class IPAppliance(object):
     def company_name(self):
         return self.get_yaml_config()["server"]["company"]
 
-    @cached_property
-    def zone_description(self):
-        if self.appliance.version < '5.8':
-            zone_id = self.server.zone.id
-            zones = list(
-                self.db.client.session.query(self.db.client["zones"]).filter(
-                    self.db.client["zones"].id == zone_id
-                )
-            )
-            if zones:
-                return zones[0].description
-            else:
-                return None
-        else:
-            zones = self.rest_api.collections.zones.find_by(id=self.server.zone.id)
-            if zones:
-                return zones[0].description
-            else:
-                return None
-
     def host_id(self, hostname):
         hosts = list(
             self.db.client.session.query(self.db.client["hosts"]).filter(
@@ -1963,9 +1942,7 @@ class IPAppliance(object):
 
         # Run it
         result = self.ssh_client.run_rails_command(dest_ruby)
-        if result:
-            self.server_details_changed()
-        else:
+        if not result:
             raise Exception('Unable to set config: {!r}:{!r}'.format(result.rc, result.output))
 
     def set_session_timeout(self, timeout=86400, quiet=True):
@@ -2101,9 +2078,6 @@ class IPAppliance(object):
             logger.error('Could not detect MIQ Server workers started in {}s.'.format(
                 poll_interval * max_attempts))
         evm_tail.close()
-
-    def server_details_changed(self):
-        clear_property_cache(self, 'zone_description', 'server')
 
     @logger_wrap("Setting dev branch: {}")
     def use_dev_branch(self, repo, branch, log_callback=None):
