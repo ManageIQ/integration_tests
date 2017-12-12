@@ -4,7 +4,7 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
 from widgetastic.utils import VersionPick, Version
 from widgetastic_patternfly import Dropdown, Button
-from widgetastic_manageiq import ManageIQTree, TimelinesView, Accordion
+from widgetastic_manageiq import ManageIQTree, TimelinesView, Accordion, CompareToolBarActionsView
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM
@@ -80,6 +80,7 @@ class InstanceAllView(CloudInstanceView):
             self.entities.title.text == 'All Instances' and
             self.sidebar.instances.is_opened)
 
+    actions = View.nested(CompareToolBarActionsView)
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(InstanceAccordion)
     including_entities = View.include(VMEntities, use_parent=True)

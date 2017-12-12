@@ -83,8 +83,8 @@ def set_and_test_mode(group_name, mode):
 
 
 def test_cloud_details_mode(request):
-    set_and_test_view('Compare Mode', 'Details Mode')
+    set_and_test_mode('Compare Mode', 'Details Mode')
 
 
 def test_cloud_exists_mode(request):
-    set_and_test_view('Compare Mode', 'Exists Mode')
+    set_and_test_mode('Compare Mode', 'Exists Mode')
