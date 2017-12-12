@@ -79,7 +79,7 @@ ENV FIREFOX_VERSION 47.0.2
 ENV FIREFOX_PATH /opt/firefox
 RUN mkdir -p ${FIREFOX_PATH} && cd ${FIREFOX_PATH} && \
     curl https://download-installer.cdn.mozilla.net/pub/firefox/releases/$FIREFOX_VERSION/linux-x86_64/en-US/firefox-$FIREFOX_VERSION.tar.bz2 \
-    -o firefox.tar.bz2 && tar -C ${FIREFOX_PATH} -xjvf ${FIREFOX_PATH}/firefox.tar.bz2 && \
+    -o firefox.tar.bz2 && tar -C ${FIREFOX_PATH} -xjvf ${FIREFOX_PATH}/firefox.tar.bz2 --strip-components 1 && \
     rm -f ${FIREFOX_PATH}/firefox.tar.bz2
 # RUN tar -C $FIREFOX_PATH -xjvf /root/firefox.tar.bz2 && rm -f /root/firefox.tar.bz2
 
