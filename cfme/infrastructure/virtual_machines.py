@@ -13,7 +13,7 @@ from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, Tab)
 from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree, CheckableManageIQTree, NonJSPaginationPane,
-    SummaryTable, TimelinesView)
+    SummaryTable, TimelinesView, CompareToolBarActionsView)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 from widgetastic.utils import partial_match, VersionPick, Version
 
@@ -87,6 +87,7 @@ class VmsTemplatesAllView(InfraVmView):
     """
     The collection page for instances
     """
+    actions = View.nested(CompareToolBarActionsView)
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
     including_entities = View.include(VMEntities, use_parent=True)
