@@ -123,7 +123,7 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
     prov_data['catalog']["vm_name"] = vm_name
     prov_data['hardware']["num_sockets"] = "4"
     prov_data['hardware']["cores_per_socket"] = "1" if not provider.one_of(SCVMMProvider) else None
-    prov_data['hardware']["memory"] = "4096"
+    prov_data['hardware']["memory"] = "2048"
     template_name = provider.data['provisioning']['template']
     vm = provisioner(template_name, prov_data)
 
@@ -142,7 +142,7 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
     else:
         raise ValueError("Could not parse string {}".format(repr(data)))
     soft_assert(num_cpus == "4", "num_cpus should be {}, is {}".format("4", num_cpus))
-    soft_assert(memory == "4096 MB", "memory should be {}, is {}".format("4096 MB", memory))
+    soft_assert(memory == "2048 MB", "memory should be {}, is {}".format("2048 MB", memory))
 
 
 # Special parametrization in testgen above
