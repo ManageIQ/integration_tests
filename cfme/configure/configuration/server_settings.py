@@ -473,13 +473,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
         elif updated_result:
             view.save_button.click()
             self.appliance.server_details_changed()
-            flash_message = (
-                'Configuration settings saved for {} Server "{} [{}]" in Zone "{}"'.format(
-                    self.appliance.product_name,
-                    self.appliance.server.name,
-                    self.appliance.server.sid,
-                    self.appliance.server.zone.name))
-            view.flash.assert_message(flash_message)
+            view.flash.assert_no_error()
         else:
             logger.info('Settings were not changed')
 
