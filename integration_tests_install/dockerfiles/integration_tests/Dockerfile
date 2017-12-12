@@ -40,7 +40,7 @@ RUN curl -L  https://raw.githubusercontent.com/RedHatQE/cfme_tests/master/requir
     source /root/.bashrc; PYCURL_SSL_LIBRARY=nss pip install -Ur ./requirements.txt && \
     rm -rf ~/.cache/pip
 
-# RUN find . -name \*.pyc -delete && find . -name __pycache__ -delete
+RUN find . -name \*.pyc -delete && find . -name __pycache__ -delete
 
 # Enable repo for google chrome
 ADD google-chrome.repo /etc/yum.repos.d/
@@ -54,7 +54,7 @@ RUN dnf install -y https://dl.google.com/linux/direct/google-chrome-stable_curre
 #    /root/chrome_webdriver/chromedriver_linux64.zip
 
 # ===== CHROME DRIVER
-ENV CHROME_DRIVER_VERSION 2.32
+ENV CHROME_DRIVER_VERSION 2.34
 ENV CHROMEDRIVER_PATH /opt/chromedriver/
 RUN mkdir -p ${CHROMEDRIVER_PATH} && cd ${CHROMEDRIVER_PATH} && \
     curl -O http://chromedriver.storage.googleapis.com/$CHROME_DRIVER_VERSION/chromedriver_linux64.zip && \
