@@ -8,7 +8,6 @@ from cfme.cloud.flavor import Flavor
 from cfme.cloud.instance import Instance
 from cfme.cloud.instance.image import Image
 from cfme.configure.settings import DefaultView
-from cfme.web_ui import toolbar as tb
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [pytest.mark.tier(3),
@@ -30,9 +29,8 @@ gtl_params = {
 def set_and_test_default_view(group_name, view, page):
     old_default = DefaultView.get_default_view(group_name, fieldset='Clouds')
     DefaultView.set_default_view(group_name, view, fieldset='Clouds')
-    navigate_to(page, 'All', use_resetter=False)
-    # TODO replace view detection with widgets when all tested classes have them
-    assert tb.is_active(view), "{} view setting failed".format(view)
+    selected_view = navigate_to(page, 'All', use_resetter=False).toolbar.view_selector.selected
+    assert view == selected_view, "{} view setting failed".format(view)
     DefaultView.set_default_view(group_name, old_default, fieldset='Clouds')
 
 # BZ 1283118 written against 5.5 has a mix of what default views do and don't work on different
@@ -60,7 +58,8 @@ def set_and_test_view(group_name, view):
     inst_view = navigate_to(Instance, 'All')
     [e.check() for e in inst_view.entities.get_all()[:2]]
     inst_view.toolbar.configuration.item_select('Compare Selected items')
-    assert tb.is_active(view), "{} setting failed".format(view)
+    selected_view = inst_view.actions.views_selector.selected
+    assert view == selected_view, "{} setting failed".format(view)
     DefaultView.set_default_view(group_name, old_default)
 
 
@@ -72,9 +71,20 @@ def test_cloud_compressed_view(request):
     set_and_test_view('Compare', 'Compressed View')
 
 
-def test_cloud_details_view(request):
+def set_and_test_mode(group_name, mode):
+    old_default = DefaultView.get_default_view(group_name)
+    DefaultView.set_default_view(group_name, mode)
+    inst_view = navigate_to(Instance, 'All')
+    [e.check() for e in inst_view.entities.get_all()[:2]]
+    inst_view.toolbar.configuration.item_select('Compare Selected items')
+    selected_view = inst_view.actions.modes_selector.selected
+    assert mode == selected_view, "{} setting failed".format(mode)
+    DefaultView.set_default_view(group_name, old_default)
+
+
+def test_cloud_details_mode(request):
     set_and_test_view('Compare Mode', 'Details Mode')
 
 
-def test_cloud_exists_view(request):
+def test_cloud_exists_mode(request):
     set_and_test_view('Compare Mode', 'Exists Mode')
