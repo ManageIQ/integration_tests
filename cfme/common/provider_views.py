@@ -279,6 +279,28 @@ class ProviderNodesView(BaseLoggedInPage):
                 self.title.text == title)
 
 
+class ProviderTemplatesView(BaseLoggedInPage):
+    """
+     represents Templates view (exists for Infra providers)
+    """
+    title = Text('//div[@id="main-content"]//h1')
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
+
+    @View.nested
+    class toolbar(View):  # noqa
+        configuration = Dropdown(text='Configuration')
+        policy = Dropdown(text='Policy')
+        download = Dropdown(text='Download')
+        view_selector = View.nested(ItemsToolBarViewSelector)
+
+    @property
+    def is_displayed(self):
+        title = '{name} (All Miq Templates)'.format(name=self.context['object'].name)
+        return (self.logged_in_as_current_user and
+                self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
+                self.title.text == title)
+
+
 class ProviderToolBar(View):
     """
      represents provider toolbar and its controls
