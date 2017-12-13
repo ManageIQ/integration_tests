@@ -39,8 +39,8 @@ landing_pages = {
 
 
 @pytest.fixture(scope="module")
-def visual():
-    return Visual
+def visual(appliance):
+    return Visual(appliance=appliance)
 
 
 @pytest.yield_fixture(scope="module")
@@ -68,7 +68,7 @@ def set_list(visual):
 
 
 def set_default_page(visual):
-    visual.set_login_page = "Cloud Intelligence / Dashboard"
+    visual.login_page = "Cloud Intel / Dashboard"
 
 
 def go_to_grid(page):
@@ -153,7 +153,7 @@ def test_cloud_start_page(visual, request, appliance, start_page):
     """
     start = "" if appliance.version < '5.8' else "Compute / "
     new_start_page = "{}{}".format(start, start_page)
-    request.addfinalizer(set_default_page)
+    request.addfinalizer(lambda: set_default_page(visual))
     visual.login_page = new_start_page
     appliance.server.logout()
     appliance.server.login_admin()

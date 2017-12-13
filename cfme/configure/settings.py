@@ -127,6 +127,7 @@ class TimeprofileAll(CFMENavigateStep):
 
 
 class Visual(Updateable, Navigatable):
+
     @property
     def grid_view_limit(self):
         view = navigate_to(self, 'All')

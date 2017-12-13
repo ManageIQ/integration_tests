@@ -20,8 +20,8 @@ pytestmark = [pytest.mark.tier(3),
 
 
 @pytest.fixture(scope="module")
-def visual():
-    return Visual()
+def visual(appliance):
+    return Visual(appliance=appliance)
 
 
 @pytest.fixture(scope='module', params=[InfraProvider, vms.Vm])
@@ -188,7 +188,7 @@ def test_infra_list_page_per_item(visual, request, page, value, set_list):
 
 
 @pytest.mark.meta(blockers=[1267148, 1273529])
-def test_infra_report_page_per_item(value, set_report):
+def test_infra_report_page_per_item(visual, value, set_report):
     """ Tests report items per page
 
     Metadata:
