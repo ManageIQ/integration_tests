@@ -95,7 +95,7 @@ def set_entity_quota_tag(request, entities):
     indirect=['set_entity_quota_tag'],
     ids=['max_cpu', 'max_storage', 'max_memory']
 )
-def test_user_quota_tagging(appliance, provider, setup_provider, set_entity_quota_tag,
+def test_quota_tagging(appliance, provider, setup_provider, set_entity_quota_tag,
                             custom_prov_data, vm_name, template_name, prov_data):
     prov_data.update(custom_prov_data)
     prov_data['catalog']['vm_name'] = vm_name
