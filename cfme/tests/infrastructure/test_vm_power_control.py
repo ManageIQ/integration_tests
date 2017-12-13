@@ -12,11 +12,11 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import get_all_vms
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError
-from cfme.web_ui import toolbar
 
 pytestmark = [
     pytest.mark.long_running,
@@ -103,18 +103,17 @@ def check_power_options(provider, soft_assert, vm, power_state):
         mustnt_be_available['off'].extend([vm.GUEST_RESTART, vm.GUEST_SHUTDOWN])
     if provider.one_of(RHEVMProvider):
         must_be_available['on'].remove(vm.RESET)
-    vm.load_details()
-    toolbar.pf_select('Power')
+
+    view = navigate_to(vm, 'Details')
     for pwr_option in must_be_available[power_state]:
-        soft_assert(
-            toolbar.exists('Power', pwr_option),
-            "'{}' must be available in current power state - '{}' ".format(
-                pwr_option, power_state))
+        soft_assert(view.toolbar.power.item_enabled(pwr_option),
+                    "'{}' must be available in current power state - '{}' ".format(pwr_option,
+                                                                                   power_state))
     for pwr_option in mustnt_be_available[power_state]:
         soft_assert(
-            not toolbar.exists('Power', pwr_option),
-            "'{}' must not be available in current power state - '{}' ".format(
-                pwr_option, power_state))
+            not view.toolbar.power.item_enabled(pwr_option),
+            "'{}' must not be available in current power state - '{}' ".format(pwr_option,
+                                                                               power_state))
 
 
 def wait_for_last_boot_timestamp_refresh(vm, boot_time, timeout=300):
@@ -346,9 +345,9 @@ def test_no_template_power_control(provider, soft_assert):
         * Click on some template to get into the details page
         * Verify the Power toolbar button is not visible
     """
-    provider.load_all_provider_templates()
-    toolbar.select('Grid View')
-    soft_assert(not toolbar.exists("Power"), "Power displayed in template grid view!")
+    view = navigate_to(provider, 'ProviderTemplates')
+    view.toolbar.view_selector.select('Grid View')
+    soft_assert(not view.toolbar.power.is_enabled, "Power displayed in template grid view!")
 
     # Ensure selecting a template doesn't cause power menu to appear
     templates = list(get_all_vms(True))
@@ -356,13 +355,15 @@ def test_no_template_power_control(provider, soft_assert):
     selected_template = VM.factory(template_name, provider, template=True)
 
     # Check the power button with checking the quadicon
-    entity = selected_template.find_quadicon()
+    view = navigate_to(selected_template, 'AllForProvider', use_resetter=False)
+    entity = view.entities.get_entity(name=selected_template.name, surf_pages=True)
     entity.check()
-    soft_assert(not toolbar.exists("Power"), "Power displayed when template quadicon checked!")
+    soft_assert(not view.toolbar.power.is_enabled,
+                "Power displayed when template quadicon checked!")
 
     # Ensure there isn't a power button on the details page
     entity.click()
-    soft_assert(not toolbar.exists("Power"), "Power displayed in template details!")
+    soft_assert(not view.toolbar.power.is_enabled, "Power displayed in template details!")
 
 
 @pytest.mark.uncollectif(lambda provider: provider.one_of(SCVMMProvider) and
@@ -376,8 +377,8 @@ def test_no_power_controls_on_archived_vm(testing_vm, archived_vm, soft_assert):
         * Open the view of VM Details
         * Verify the Power toolbar button is not visible
     """
-    testing_vm.load_details(from_any_provider=True)
-    soft_assert(not toolbar.exists("Power"), "Power displayed in template details!")
+    view = navigate_to(testing_vm, 'AnyProviderDetails', use_resetter=False)
+    soft_assert(not view.toolbar.power.is_enabled, "Power displayed in template details!")
 
 
 @pytest.mark.uncollectif(lambda provider: provider.one_of(SCVMMProvider) and
