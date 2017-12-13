@@ -69,7 +69,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(Template, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('parent', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = TemplateDetailsView
 
     def step(self):
