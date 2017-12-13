@@ -245,7 +245,7 @@ def test_db_migrate_replication(app_creds, temp_appliance_extended_db, dbversion
 
     def is_provider_replicated(app, app2):
         assert set(app.managed_provider_names) == set(app2.managed_provider_names)
-    wait_for(is_provider_replicated, func_args=[app, app2])
+    wait_for(is_provider_replicated, func_args=[app, app2], timeout=30)
 
 
 def test_upgrade_single_inplace(appliance_preupdate, appliance):
