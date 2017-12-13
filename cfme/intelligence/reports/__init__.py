@@ -25,6 +25,14 @@ class CloudIntelReportsView(BaseLoggedInPage):
     def is_displayed(self):
         return self.in_intel_reports and self.configuration.is_displayed
 
+    @property
+    def mycompany_title(self):
+        if self.browser.product_version < "5.9":
+            title = "My Company (All EVM Groups)"
+        else:
+            title = "My Company (All Groups)"
+        return title
+
     @View.nested
     class saved_reports(Accordion):  # noqa
         ACCORDION_NAME = "Saved Reports"
