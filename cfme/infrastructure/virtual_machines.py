@@ -159,7 +159,7 @@ class VmsOnlyAllView(InfraVmView):
     def is_displayed(self):
         return (
             self.in_infra_vms and
-            self.sidebar.vms.tree.currently_selected == 'All VMs' and
+            self.sidebar.vms.tree.currently_selected[0] == 'All VMs' and
             self.entities.title.text == 'All VMs')
 
     def reset_page(self):
