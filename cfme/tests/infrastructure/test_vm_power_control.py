@@ -1,21 +1,22 @@
 # -*- coding: utf-8 -*-
-import cfme.web_ui.flash as flash
-import pytest
 import random
 import time
+
+import pytest
+
 from cfme import test_requirements
+from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import get_all_vms
-from cfme.web_ui import toolbar
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError
-
+from cfme.web_ui import toolbar
 
 pytestmark = [
     pytest.mark.long_running,
@@ -161,7 +162,7 @@ class TestControlOnQuadicons(object):
         soft_assert(
             testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm not running")
 
-    def test_power_off(self, testing_vm, verify_vm_running, soft_assert):
+    def test_power_off(self, appliance, testing_vm, verify_vm_running, soft_assert):
         """Tests power off
 
         Metadata:
@@ -169,7 +170,10 @@ class TestControlOnQuadicons(object):
         """
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_ON, timeout=720)
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_OFF, cancel=False)
-        flash.assert_message_contain("Stop initiated")
+
+        view = appliance.browser.create_view(BaseLoggedInPage)
+        view.flash.assert_success_message(text='Stop initiated', partial=True)
+
         if_scvmm_refresh_provider(testing_vm.provider)
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_OFF, timeout=900)
         vm_state = testing_vm.find_quadicon().data['state']
@@ -193,7 +197,7 @@ class TestControlOnQuadicons(object):
             not testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm running")
 
     @pytest.mark.tier(1)
-    def test_power_on(self, testing_vm, verify_vm_stopped, soft_assert):
+    def test_power_on(self, appliance, testing_vm, verify_vm_stopped, soft_assert):
         """Tests power on
 
         Metadata:
@@ -201,7 +205,10 @@ class TestControlOnQuadicons(object):
         """
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_OFF, timeout=720)
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=False)
-        flash.assert_message_contain("Start initiated")
+
+        view = appliance.browser.create_view(BaseLoggedInPage)
+        view.flash.assert_success_message(text='Start initiated', partial=True)
+
         if_scvmm_refresh_provider(testing_vm.provider)
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_ON, timeout=900)
         vm_state = testing_vm.find_quadicon().data['state']
@@ -212,7 +219,7 @@ class TestControlOnQuadicons(object):
 
 class TestVmDetailsPowerControlPerProvider(object):
 
-    def test_power_off(self, testing_vm, verify_vm_running, soft_assert):
+    def test_power_off(self, appliance, testing_vm, verify_vm_running, soft_assert):
         """Tests power off
 
         Metadata:
@@ -223,7 +230,10 @@ class TestVmDetailsPowerControlPerProvider(object):
         last_boot_time = testing_vm.get_detail(properties=("Power Management", "Last Boot Time"))
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_OFF, cancel=False,
                                            from_details=True)
-        flash.assert_message_contain("Stop initiated")
+
+        view = appliance.browser.create_view(BaseLoggedInPage)
+        view.flash.assert_success_message(text='Stop initiated', partial=True)
+
         if_scvmm_refresh_provider(testing_vm.provider)
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_OFF, timeout=720, from_details=True)
@@ -236,7 +246,7 @@ class TestVmDetailsPowerControlPerProvider(object):
             soft_assert(new_last_boot_time == last_boot_time,
                         "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
 
-    def test_power_on(self, testing_vm, verify_vm_stopped, soft_assert):
+    def test_power_on(self, appliance, testing_vm, verify_vm_stopped, soft_assert):
         """Tests power on
 
         Metadata:
@@ -246,14 +256,17 @@ class TestVmDetailsPowerControlPerProvider(object):
             desired_state=testing_vm.STATE_OFF, timeout=720, from_details=True)
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=False,
                                            from_details=True)
-        flash.assert_message_contain("Start initiated")
+
+        view = appliance.browser.create_view(BaseLoggedInPage)
+        view.flash.assert_success_message(text='Start initiated', partial=True)
+
         if_scvmm_refresh_provider(testing_vm.provider)
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
         soft_assert(
             testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm not running")
 
-    def test_suspend(self, testing_vm, verify_vm_running, soft_assert):
+    def test_suspend(self, appliance, testing_vm, verify_vm_running, soft_assert):
         """Tests suspend
 
         Metadata:
@@ -264,7 +277,10 @@ class TestVmDetailsPowerControlPerProvider(object):
         last_boot_time = testing_vm.get_detail(properties=("Power Management", "Last Boot Time"))
         testing_vm.power_control_from_cfme(option=testing_vm.SUSPEND, cancel=False,
                                            from_details=True)
-        flash.assert_message_contain("Suspend initiated")
+
+        view = appliance.browser.create_view(BaseLoggedInPage)
+        view.flash.assert_success_message(text='Suspend initiated', partial=True)
+
         if_scvmm_refresh_provider(testing_vm.provider)
         try:
             testing_vm.wait_for_vm_state_change(
@@ -285,7 +301,7 @@ class TestVmDetailsPowerControlPerProvider(object):
                         "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
 
     def test_start_from_suspend(
-            self, testing_vm, verify_vm_suspended, soft_assert):
+            self, appliance, testing_vm, verify_vm_suspended, soft_assert):
         """Tests start from suspend
 
         Metadata:
@@ -303,7 +319,10 @@ class TestVmDetailsPowerControlPerProvider(object):
         last_boot_time = testing_vm.get_detail(properties=("Power Management", "Last Boot Time"))
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=False,
                                            from_details=True)
-        flash.assert_message_contain("Start initiated")
+
+        view = appliance.browser.create_view(BaseLoggedInPage)
+        view.flash.assert_success_message(text='Start initiated', partial=True)
+
         if_scvmm_refresh_provider(testing_vm.provider)
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
@@ -387,14 +406,17 @@ def test_power_options_from_off(provider, soft_assert, testing_vm, verify_vm_sto
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
-def test_guest_os_reset(testing_vm_tools, verify_vm_running, soft_assert):
+def test_guest_os_reset(appliance, testing_vm_tools, verify_vm_running, soft_assert):
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
     wait_for_vm_tools(testing_vm_tools)
     last_boot_time = testing_vm_tools.get_detail(properties=("Power Management", "Last Boot Time"))
     testing_vm_tools.power_control_from_cfme(
         option=testing_vm_tools.GUEST_RESTART, cancel=False, from_details=True)
-    flash.assert_message_contain("Restart Guest initiated")
+
+    view = appliance.browser.create_view(BaseLoggedInPage)
+    view.flash.assert_success_message(text='Restart Guest initiated', partial=True)
+
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
     wait_for_last_boot_timestamp_refresh(testing_vm_tools, last_boot_time)
@@ -403,14 +425,17 @@ def test_guest_os_reset(testing_vm_tools, verify_vm_running, soft_assert):
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
-def test_guest_os_shutdown(testing_vm_tools, verify_vm_running, soft_assert):
+def test_guest_os_shutdown(appliance, testing_vm_tools, verify_vm_running, soft_assert):
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
     wait_for_vm_tools(testing_vm_tools)
     last_boot_time = testing_vm_tools.get_detail(properties=("Power Management", "Last Boot Time"))
     testing_vm_tools.power_control_from_cfme(
         option=testing_vm_tools.GUEST_SHUTDOWN, cancel=False, from_details=True)
-    flash.assert_message_contain("Shutdown Guest initiated")
+
+    view = appliance.browser.create_view(BaseLoggedInPage)
+    view.flash.assert_success_message(text='Shutdown Guest initiated', partial=True)
+
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_OFF, timeout=720, from_details=True)
     soft_assert(

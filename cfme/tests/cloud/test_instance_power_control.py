@@ -2,8 +2,8 @@
 import fauxfactory
 import pytest
 
-import cfme.web_ui.flash as flash
 from cfme import test_requirements
+from cfme.base.login import BaseLoggedInPage
 from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
@@ -12,7 +12,6 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError, RefreshTimer
-
 
 pytestmark = [
     pytest.mark.tier(2),
@@ -150,7 +149,8 @@ def test_quadicon_terminate(appliance, provider, testing_instance, verify_vm_run
     logger.info("Terminate initiated")
     msg_part = "Terminate initiated" if appliance.version >= '5.9' else "Vm Destroy initiated"
     msg = "{} for 1 VM and Instance from the {} Database".format(msg_part, appliance.product_name)
-    flash.assert_success_message(msg)
+    view = appliance.browser.create_view(BaseLoggedInPage)
+    view.flash.assert_success_message(msg)
     terminated_states = (testing_instance.STATE_TERMINATED, testing_instance.STATE_ARCHIVED,
                          testing_instance.STATE_UNKNOWN)
     soft_assert(testing_instance.wait_for_instance_state_change(desired_state=terminated_states,
@@ -158,7 +158,7 @@ def test_quadicon_terminate(appliance, provider, testing_instance, verify_vm_run
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_stop(provider, testing_instance, verify_vm_running, soft_assert):
+def test_stop(appliance, provider, testing_instance, verify_vm_running, soft_assert):
     """ Tests instance stop
 
     Metadata:
@@ -166,7 +166,10 @@ def test_stop(provider, testing_instance, verify_vm_running, soft_assert):
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     testing_instance.power_control_from_cfme(option=testing_instance.STOP)
-    flash.assert_message_contain("Stop initiated")
+
+    view = appliance.browser.create_view(BaseLoggedInPage)
+    view.flash.assert_success_message(text='Stop initiated', partial=True)
+
     # Check Vm state in background
     wait_for(
         lambda: provider.mgmt.is_vm_stopped(testing_instance.name),
@@ -178,7 +181,7 @@ def test_stop(provider, testing_instance, verify_vm_running, soft_assert):
         desired_state=testing_instance.STATE_OFF, timeout=1200), "VM isn't stopped in CFME UI")
 
 
-def test_start(provider, testing_instance, verify_vm_stopped, soft_assert):
+def test_start(appliance, provider, testing_instance, verify_vm_stopped, soft_assert):
     """ Tests instance start
 
     Metadata:
@@ -188,7 +191,10 @@ def test_start(provider, testing_instance, verify_vm_stopped, soft_assert):
                                                     timeout=900)
     navigate_to(testing_instance, 'Details')
     testing_instance.power_control_from_cfme(option=testing_instance.START, cancel=False)
-    flash.assert_message_contain("Start initiated")
+
+    view = appliance.browser.create_view(BaseLoggedInPage)
+    view.flash.assert_success_message(text='Start initiated', partial=True)
+
     logger.info("Start initiated Flash message")
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     soft_assert(
@@ -196,7 +202,7 @@ def test_start(provider, testing_instance, verify_vm_stopped, soft_assert):
         "instance is not running")
 
 
-def test_soft_reboot(provider, testing_instance, verify_vm_running, soft_assert):
+def test_soft_reboot(appliance, provider, testing_instance, verify_vm_running, soft_assert):
     """ Tests instance soft reboot
 
     Metadata:
@@ -206,7 +212,10 @@ def test_soft_reboot(provider, testing_instance, verify_vm_running, soft_assert)
     state_change_time = testing_instance.get_detail(properties=('Power Management',
                                                                 'State Changed On'))
     testing_instance.power_control_from_cfme(option=testing_instance.SOFT_REBOOT)
-    flash.assert_message_contain('Restart Guest initiated')
+
+    view = appliance.browser.create_view(BaseLoggedInPage)
+    view.flash.assert_success_message(text='Restart Guest initiated', partial=True)
+
     wait_for_ui_state_refresh(testing_instance, provider, state_change_time, timeout=720)
     if provider.type == 'gce' \
             and testing_instance.get_detail(properties=('Power Management', 'Power State')) \
@@ -229,7 +238,7 @@ def test_soft_reboot(provider, testing_instance, verify_vm_running, soft_assert)
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_hard_reboot(provider, testing_instance, verify_vm_running, soft_assert):
+def test_hard_reboot(appliance, provider, testing_instance, verify_vm_running, soft_assert):
     """ Tests instance hard reboot
 
     Metadata:
@@ -241,7 +250,9 @@ def test_hard_reboot(provider, testing_instance, verify_vm_running, soft_assert)
                                                                 'State Changed On'))
 
     testing_instance.power_control_from_cfme(option=testing_instance.HARD_REBOOT)
-    flash.assert_message_contain("Reset initiated")
+
+    view = appliance.browser.create_view(BaseLoggedInPage)
+    view.flash.assert_success_message(text='Reset initiated', partial=True)
 
     wait_for_ui_state_refresh(testing_instance, provider, state_change_time, timeout=720)
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
@@ -250,7 +261,7 @@ def test_hard_reboot(provider, testing_instance, verify_vm_running, soft_assert)
 
 @pytest.mark.uncollectif(lambda provider: (not provider.one_of(OpenStackProvider) and
                                            not provider.one_of(AzureProvider)))
-def test_suspend(provider, testing_instance, verify_vm_running, soft_assert):
+def test_suspend(appliance, provider, testing_instance, verify_vm_running, soft_assert):
     """ Tests instance suspend
 
     Metadata:
@@ -258,7 +269,10 @@ def test_suspend(provider, testing_instance, verify_vm_running, soft_assert):
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     testing_instance.power_control_from_cfme(option=testing_instance.SUSPEND)
-    flash.assert_message_contain("Suspend initiated")
+
+    view = appliance.browser.create_view(BaseLoggedInPage)
+    view.flash.assert_success_message(text='Suspend initiated', partial=True)
+
     if provider.type == 'azure':
         provider.mgmt.wait_vm_suspended(testing_instance.name)
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_SUSPENDED)
@@ -268,7 +282,7 @@ def test_suspend(provider, testing_instance, verify_vm_running, soft_assert):
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_unpause(provider, testing_instance, verify_vm_paused, soft_assert):
+def test_unpause(appliance, provider, testing_instance, verify_vm_paused, soft_assert):
     """ Tests instance unpause
 
     Metadata:
@@ -276,7 +290,9 @@ def test_unpause(provider, testing_instance, verify_vm_paused, soft_assert):
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_PAUSED)
     testing_instance.power_control_from_cfme(option=testing_instance.START)
-    flash.assert_message_contain("Start initiated")
+
+    view = appliance.browser.create_view(BaseLoggedInPage)
+    view.flash.assert_success_message(text='Start initiated', partial=True)
 
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
 
@@ -286,7 +302,7 @@ def test_unpause(provider, testing_instance, verify_vm_paused, soft_assert):
 
 @pytest.mark.uncollectif(lambda provider: (not provider.one_of(OpenStackProvider) and
                                            not provider.one_of(AzureProvider)))
-def test_resume(provider, testing_instance, verify_vm_suspended, soft_assert):
+def test_resume(appliance, provider, testing_instance, verify_vm_suspended, soft_assert):
     """ Tests instance resume
 
     Metadata:
@@ -294,7 +310,10 @@ def test_resume(provider, testing_instance, verify_vm_suspended, soft_assert):
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_SUSPENDED)
     testing_instance.power_control_from_cfme(option=testing_instance.START)
-    flash.assert_message_contain("Start initiated")
+
+    view = appliance.browser.create_view(BaseLoggedInPage)
+    view.flash.assert_success_message(text='Start initiated', partial=True)
+
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
 
     soft_assert(
@@ -312,11 +331,17 @@ def test_terminate(provider, testing_instance, verify_vm_running, soft_assert, a
 
     msg_part = "Terminate initiated" if appliance.version >= '5.9' else "Vm Destroy initiated"
     msg = "{} for 1 VM and Instance from the {} Database".format(msg_part, appliance.product_name)
-    flash.assert_success_message(msg)
-    terminated_states = (testing_instance.STATE_TERMINATED, testing_instance.STATE_ARCHIVED,
-            testing_instance.STATE_UNKNOWN)
-    soft_assert(testing_instance.wait_for_instance_state_change(desired_state=terminated_states,
-        timeout=1200))
+    view = appliance.browser.create_view(BaseLoggedInPage)
+    view.flash.assert_success_message(msg)
+    terminated_states = (
+        testing_instance.STATE_TERMINATED, testing_instance.STATE_ARCHIVED,
+        testing_instance.STATE_UNKNOWN
+    )
+    soft_assert(
+        testing_instance.wait_for_instance_state_change(
+            desired_state=terminated_states, timeout=1200
+        )
+    )
 
 
 def test_power_options_from_on(provider, testing_instance, verify_vm_running, soft_assert):
