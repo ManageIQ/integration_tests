@@ -14,7 +14,8 @@ all_infra_prov = ProviderFilter(classes=[InfraProvider])
 not_scvmm = ProviderFilter(classes=[SCVMMProvider], inverted=True)
 pytestmark = [
     pytest.mark.tier(2),
-    pytest.mark.provider(gen_func=providers, filters=[not_scvmm, all_infra_prov], scope='module')
+    pytest.mark.provider(gen_func=providers, filters=[not_scvmm, all_infra_prov], scope='module'),
+    pytest.mark.usefixtures('setup_provider_modscope')
 ]
 
 
