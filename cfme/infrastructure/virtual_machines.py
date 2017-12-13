@@ -13,7 +13,7 @@ from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, Tab)
 from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree, CheckableManageIQTree, NonJSPaginationPane,
-    SummaryTable, TimelinesView, CompareToolBarActionsView)
+    SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 from widgetastic.utils import partial_match, VersionPick, Version
 
@@ -26,15 +26,44 @@ from cfme.exceptions import (
     VmNotFound, OptionNotAvailable, DestinationNotFound, ItemNotFound,
     VmOrInstanceNotFound)
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.web_ui import (
-    CheckboxTree, Form, Tree, flash, form_buttons, Table,
-    BootstrapTreeview, AngularSelect)
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
-from cfme.utils import version, deferred_verpick
+from cfme.utils import version
+
+
+def has_child(tree, text, parent_item=None):
+    """Check if a tree has an item with text"""
+    if not parent_item:
+        parent_item = tree.parent_item
+    if tree.child_items_with_text(parent_item, text):
+        return True
+    else:
+        for item in tree.child_items(parent_item):
+            if has_child(tree, text, item):
+                return True
+    return False
+
+
+def find_path(tree, text, parent_item=None):
+    """Find the path to an item with text"""
+    if not parent_item:
+        parent_item = tree.parent_item
+    tree.expand_node(tree.get_nodeid(parent_item))
+    children = tree.child_items_with_text(parent_item, text)
+    if children:
+        for child in children:
+            if child.text:
+                return [child.text]
+        return []
+    else:
+        for item in tree.child_items(parent_item):
+            path = find_path(tree, text, item)
+            if path:
+                return [item.text] + path
+    return []
 
 
 class InfraGenericDetailsToolbar(View):
@@ -548,9 +577,7 @@ class Vm(VM):
     """
 
     class Snapshot(object):
-        snapshot_tree = deferred_verpick({
-            version.LOWEST: Tree("//div[@id='snapshots_treebox']/ul"),
-            '5.7.0.1': BootstrapTreeview('snapshot_treebox')})
+        snapshot_tree = ManageIQTree('snapshot_treebox')
 
         def __init__(self, name=None, description=None, memory=None, parent_vm=None):
             super(Vm.Snapshot, self).__init__()
@@ -559,37 +586,13 @@ class Vm(VM):
             self.memory = memory
             self.vm = parent_vm
 
-        def _find_child(self, view, parent_item, text):
-            if view.tree.child_items_with_text(parent_item, text):
-                return True
-            else:
-                for item in view.tree.child_items(parent_item):
-                    if self._find_child(view, item, text):
-                        return True
-            return False
-
-        def _find_path(self, view, parent_item, text):
-            view.tree.expand_node(view.tree.get_nodeid(parent_item))
-            children = view.tree.child_items_with_text(parent_item, text)
-            if children:
-                for child in children:
-                    if child.text:
-                        return [child.text]
-                return []
-            else:
-                for item in view.tree.child_items(parent_item):
-                    path = self._find_path(view, item, text)
-                    if path:
-                        return [item.text] + path
-            return []
-
         @property
         def exists(self):
             title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
             view = navigate_to(self.vm, 'SnapshotsAll')
             if view.tree.is_displayed:
                 root_item = view.tree.expand_path(self.vm.name)
-                return self._find_child(view, root_item, title)
+                return has_child(view.tree, title, root_item)
             else:
                 return False
 
@@ -603,7 +606,7 @@ class Vm(VM):
             title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
             view = navigate_to(self.vm, 'SnapshotsAll')
             root_item = view.tree.expand_path(self.vm.name)
-            return self._find_child(view, root_item, '{} (Active)'.format(title))
+            return has_child(view.tree, '{} (Active)'.format(title), root_item)
 
         def create(self, force_check_memory=False):
             """Create a snapshot"""
@@ -625,7 +628,7 @@ class Vm(VM):
             title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
             view = navigate_to(self.vm, 'SnapshotsAll')
             root_item = view.tree.expand_path(self.vm.name)
-            snapshot_path = self._find_path(view, root_item, title)
+            snapshot_path = find_path(view.tree, title, root_item)
             if not snapshot_path:
                 raise Exception('Could not find snapshot with name "{}"'.format(title))
             else:
@@ -664,7 +667,7 @@ class Vm(VM):
             title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
             view = navigate_to(self.vm, 'SnapshotsAll')
             root_item = view.tree.expand_path(self.vm.name)
-            snapshot_path = self._find_path(view, root_item, title)
+            snapshot_path = find_path(view.tree, title, root_item)
             if not snapshot_path:
                 raise Exception('Could not find snapshot with name "{}"'.format(title))
             else:
@@ -848,13 +851,6 @@ class Vm(VM):
         return int(vm.ems_cluster_id)
 
     class CfmeRelationship(object):
-        relationship_form = Form(
-            fields=[
-                ('server_select', AngularSelect('server_id')),
-                ('save_button', form_buttons.save),
-                ('reset_button', form_buttons.reset),
-                ('cancel_button', form_buttons.cancel)
-            ])
 
         def __init__(self, vm):
             self.vm = vm
@@ -965,9 +961,6 @@ class Genealogy(object):
     Args:
         o: The :py:class:`Vm` or :py:class:`Template` object.
     """
-    section_comparison_tree = CheckboxTree("//div[@id='all_sections_treebox']/div/table")
-    apply_button = form_buttons.FormButton("Apply sections")
-
     mode_mapping = {
         'exists': 'Exists Mode',
         'details': 'Details Mode',
@@ -1003,7 +996,7 @@ class Genealogy(object):
         view = self.navigate()
         for obj in objects:
             if not isinstance(obj, list):
-                path = view.tree.find_path_to(obj)
+                path = find_path(view.tree, obj)
             view.tree.check_node(*path)
         view.toolbar.compare.click()
         view.flash.assert_no_errors()
@@ -1028,7 +1021,7 @@ class Genealogy(object):
     def ancestors(self):
         """Returns list of ancestors of the represented object."""
         view = self.navigate()
-        path = view.tree.find_path_to(re.compile(r"^.*?\(Selected\)$"))
+        path = find_path(view.tree, '(Selected)')
         if not path:
             raise ValueError("Something wrong happened, path not found!")
         processed_path = []
@@ -1045,7 +1038,7 @@ class Genealogy(object):
 # todo: there will be an entity's method to apply some operation to a bunch of entities
 def _method_setup(vm_names, provider_crud=None):
     """ Reduces some redundant code shared between methods """
-    if isinstance(vm_names, basestring):
+    if isinstance(vm_names, basestring):                                 # noqa
         vm_names = [vm_names]
 
     if provider_crud:
