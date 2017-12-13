@@ -68,6 +68,9 @@ class Details(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name).click()
 
+    def resetter(self):
+        self.view.toolbar.view_selector.select("Summary View")
+
 
 @navigator.register(Project, 'EditTags')
 class ImageRegistryEditTags(CFMENavigateStep):
