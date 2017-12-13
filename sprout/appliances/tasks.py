@@ -497,7 +497,8 @@ def prepare_template_configure(self, template_id):
     try:
         appliance.configure(
             setup_fleece=False,
-            log_callback=lambda s: template.set_status("Customization progress: {}".format(s)))
+            log_callback=lambda s: template.set_status("Customization progress: {}".format(s)),
+            on_openstack=template.provider.provider_data.get('type', None) == 'openstack')
     except Exception as e:
         template.set_status("Could not properly configure the CFME. Retrying.")
         self.retry(args=(template_id,), exc=e, countdown=10, max_retries=5)
