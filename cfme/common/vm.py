@@ -229,7 +229,9 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
     def exists(self):
         """Checks presence of the quadicon in the CFME."""
         try:
-            self.find_quadicon()
+            any_prov = version.pick({version.LOWEST: False,
+                                     '5.9': True})
+            self.find_quadicon(from_any_provider=any_prov)
             return True
         except VmOrInstanceNotFound:
             return False
