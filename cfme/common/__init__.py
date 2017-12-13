@@ -4,7 +4,11 @@ from urlparse import urlparse
 from widgetastic.exceptions import NoSuchElementException, RowNotFound
 from widgetastic_patternfly import BootstrapSelect, Button
 from widgetastic.widget import Table, Text, View
-from widgetastic_manageiq import BaseNonInteractiveEntitiesView, CheckableManageIQTree, BreadCrumb
+from widgetastic_manageiq import (
+    BaseNonInteractiveEntitiesView,
+    CheckableManageIQTree,
+    BreadCrumb,
+    Topology)
 
 from cached_property import cached_property
 from cfme.base.login import BaseLoggedInPage
@@ -639,9 +643,9 @@ class TopologyMixin(object):
         topology.elements[0].is_displayed()
 
     """
-    # @cached_property
-    # def topology(self):
-    #     return Topology(self)
+    @cached_property
+    def topology(self):
+        return Topology(self)
 
 
 class UtilizationMixin(object):
