@@ -30,7 +30,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree, CheckableManageIQTree, NonJSPaginationPane,
-    SummaryTable, TimelinesView, Table)
+    SummaryTable, TimelinesView, Table, CompareToolBarActionsView)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 
