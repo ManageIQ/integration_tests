@@ -11,6 +11,7 @@ GIT_BRANCH="master"
 
 #WORKDIR="~/projects/integration_tests_files"
 WORKDIR="${PWD}"
+REPO_LOCATION="${WORKDIR}/integration_tests"
 PLAY_LOCATION="${WORKDIR}/integration_tests/integration_tests_install/integration_tests_config"
 #PLAY_LOCATION="${WORKDIR}/cfme_tests/integration_tests_install/integration_tests_config"
 
@@ -18,7 +19,7 @@ PLAY_LOCATION="${WORKDIR}/integration_tests/integration_tests_install/integratio
 #IMG="redhatqe/integration_tests:latest"
 DOCK_IMG_CFG="patchkez/cfme_tests_config_test:latest"
 IMG="patchkez/cfme_tests_test"
-DOCK_IMG="${IMG}:latest"
+#DOCK_IMG="${IMG}:latest"
 
 USER_ID=`id -u`
 GROUP_ID=`id -g`
@@ -45,10 +46,30 @@ function log {
   echo -e $1
   echo "==============="
 }
+function get_version {
+
+cd ${REPO_LOCATION}
+#pwd
+GIT_STAT=`git status | head -1`
+
+if ( echo ${GIT_STAT} | grep -q "On branch" ); then
+  PICK_IMAGE_TAG="latest"
+elif ( echo ${GIT_STAT} | grep -q "HEAD detached at" ); then
+  PICK_IMAGE_TAG="v$(echo ${GIT_STAT} | sed 's/^HEAD detached at \(.*\)$/\1/g')"
+else
+  log "unknown"
+  PICK_IMAGE_TAG="latest"
+fi
+
+echo DOCK_IMG="${IMG}:${PICK_IMAGE_TAG}"
+DOCK_IMG="${IMG}:${PICK_IMAGE_TAG}"
+}
 
 function check_4_new_img {
+  get_version
   AUTH_TOK=`curl --silent "https://auth.docker.io/token?service=registry.docker.io&scope=repository:${IMG}:pull" | awk -F '\"' '{print $4}'`
-  REGISTRY_URL="https://registry.hub.docker.com/v2/${IMG}/manifests/latest"
+  # REGISTRY_URL="https://registry.hub.docker.com/v2/${IMG}/manifests/latest"
+  REGISTRY_URL="https://registry.hub.docker.com/v2/${IMG}/manifests/${PICK_IMAGE_TAG}"
   AUTH_HEAD="Authorization: Bearer $AUTH_TOK"
   # log "AUTH head is: ${AUTH_HEAD}"
   ACCEPT_HEAD="Accept: application/vnd.docker.distribution.manifest.v2+json"
@@ -56,6 +77,11 @@ function check_4_new_img {
   GET_LOCAL_DIGEST=`docker inspect ${DOCK_IMG} | sed -n 's/^.*"Id": "\(.[^"]*\).*/\1/gp'`
   log "REMOTE digest is: ${GET_REMOTE_DIGEST}"
   log "LOCAL digest is: ${GET_LOCAL_DIGEST}"
+
+  if [ -z ${GET_REMOTE_DIGEST} ];then
+    log "No remote digest found for image!!! Exiting.."
+    exit 1
+  fi
 
   # Perform check only if file does not exists, if it exists it means user have been notified about new image,
   # and on next init, new image will be pulled.
@@ -72,13 +98,14 @@ function check_4_new_img {
     log "STAT age is: ${AGE_STAT}"
     log "STAT compare is: ${STAT_COMPARE}"
     log "Difference is ${DIFFERENCE}"
-    
    
     if [ ${AGE_STAT} -le $(( ${STAT_COMPARE} )) ]; then
       # Compare Local and Remote Image IDs, if there is difference -> there is newer image in Docker registry
       if [ "${GET_LOCAL_DIGEST}" != "${GET_REMOTE_DIGEST}" ]; then
-        log "New version of image is available!! Please run this wrapper script with init argument"
-        touch ${DO_NOT_CHECK}
+        # log "New version of image is available!! Please run this wrapper script with init argument"
+        # touch ${DO_NOT_CHECK}
+        log "New version of image is available!! Downloading new image..."
+        docker pull ${DOCK_IMG} 
       fi
     else
       log "Last check done less than 60 minutes ago..."
@@ -120,7 +147,7 @@ function run_config {
 
   docker run -it --rm \
     -v ${PLAY_LOCATION}:/projects/ansible_virtenv/ansible_work \
-    -v ${WORKDIR}:/projects/cfme_env/cfme_vol/ \
+    -v ${WORKDIR}:/projects/cfme_vol/ \
     -v ~/.ssh:/home/${USERNAME}/.ssh:ro \
     ${ENV_VARS_CONF} \
     ${DOCK_IMG_CFG} \
@@ -137,19 +164,25 @@ function run_command {
   echo "source /etc/bashrc" > /var/tmp/bashrc
 
   docker run -it --rm \
-    -w /projects/cfme_env/cfme_vol/integration_tests \
+    -w /projects/cfme_vol/integration_tests \
     -u ${USER_ID}:${GROUP_ID} \
     -p ${VNC_PORT}:5999 \
-    -v ${WORKDIR}:/projects/cfme_env/cfme_vol/ \
+    -v ${WORKDIR}:/projects/cfme_vol/ \
     -v ~/.ssh:/home/${USERNAME}/.ssh:ro \
     -v ~/:${HOME} \
     -v /var/tmp/bashrc:${HOME}/.bashrc \
     ${ENV_VARS} \
     ${DOCK_IMG} \
-    bash -c ". /etc/bashrc; $1"
+    bash -c ". /etc/bashrc; su - root -c 'pip install -e .'; $1"
 }
+    # bash -c ". /etc/bashrc; deactivate; source ../cfme_venv/bin/activate; cp ../../bin/chromedriver ../cfme_venv/bin; $1"
+    # -v /home/patchkez/projects/integration_tests_files/wrapanapi/wrapanapi/:/projects/cfme_vol/cfme_venv/lib/python2.7/site-packages/wrapanapi/ \
 
 case $1 in
+test*)
+  log "Testing..."
+  get_version 
+  ;;
 init*)
   log "Starting init"
   run_config $2
