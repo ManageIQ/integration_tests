@@ -34,14 +34,14 @@ def temp_appliance_extended_db(temp_appliance_preconfig):
     return app
 
 
-@pytest.fixture(scope="module")
-def temp_appliance_global_region(temp_appliance_unconfig_modscope):
-    temp_appliance_unconfig_modscope.appliance_console_cli.configure_appliance_internal(
+@pytest.fixture(scope="function")
+def temp_appliance_global_region(temp_appliance_unconfig_funcscope):
+    temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_internal(
         99, 'localhost', credentials['database']['username'], credentials['database']['password'],
-        'vmdb_production', temp_appliance_unconfig_modscope.unpartitioned_disks[0])
-    temp_appliance_unconfig_modscope.wait_for_evm_service()
-    temp_appliance_unconfig_modscope.wait_for_web_ui()
-    return temp_appliance_unconfig_modscope
+        'vmdb_production', temp_appliance_unconfig_funcscope.unpartitioned_disks[0])
+    temp_appliance_unconfig_funcscope.wait_for_evm_service()
+    temp_appliance_unconfig_funcscope.wait_for_web_ui()
+    return temp_appliance_unconfig_funcscope
 
 
 @pytest.yield_fixture(scope="function")
