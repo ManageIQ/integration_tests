@@ -23,6 +23,26 @@ function selectHasValue(select_id, searched_value) {
     return false;
 }
 
+function setApplianceDescription(e) {
+    var e = $(e);
+    var title = e.attr('title');
+    var applianceId = parseInt(e.data('applianceid'));
+    var defaultTitle = (title === undefined) ? "" : title;
+    var newTitle = prompt("Please enter a new description for appliance #" + applianceId, defaultTitle);
+
+    $.ajax({
+        type: "POST",
+        url: "{% url 'set_appliance_description' %}",
+        data: JSON.stringify({appliance_id: applianceId, description: newTitle}),
+        dataType: 'json'
+    }).done(function(data){
+        alert("Description of the appliance " + applianceId + " set to '" + newTitle + "'.");
+        e.attr('title', newTitle);
+    }).fail(function(xhr, textStatus, errorThrown){
+        alert("Error during setting of the description of the appliance " + applianceId + ": '" + xhr.responseText + "'.");
+    })
+}
+
 function replaceSelectContents(name, data, submit_handling) {
     if(submit_handling === undefined) submit_handling = false;
     var old_val = $('select#' + name).val();
@@ -291,7 +311,7 @@ $(document).ready(function() {
                 {% for appliance in pool.appliances %}
                 <tr id="appliance-{{ appliance.id }}">
                     <td class="col-md-1">
-                        <small>{{ appliance.id }}</small>
+                        <small {% if appliance.description %}title="{{ appliance.description }}"{% endif %} onclick="setApplianceDescription(this);" data-applianceid="{{ appliance.id }}" class="applianceid">{{ appliance.id }}</small>
                         <br>
                         {% if appliance.ip_address %}
                              <small><a href="https://{{ appliance.ip_address }}/" target="_blank" title="{{ appliance.ip_address }}">{{ appliance.ip_address }}</a></small>
