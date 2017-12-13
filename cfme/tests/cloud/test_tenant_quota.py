@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.cloud.instance import Instance
@@ -8,7 +9,6 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.generators import random_vm_name
-from cfme.utils.version import current_version
 
 pytestmark = [
     test_requirements.quota,
@@ -87,8 +87,7 @@ def test_tenant_quota_enforce_via_lifecycle(request, appliance, provider, setup_
     prov_data['catalog']['vm_name'] = vm_name
     prov_data.update({
         'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())},
-        'properties': {'instance_type':
-                           'm1.large' if current_version() < '5.9' else 'm1.large: 4 CPUs, 8 GB RAM, 4 GB Root Disk'}})
+        'properties': {'instance_type': partial_match('m1.large')}})
     instance = Instance.factory(vm_name, provider, template_name)
     instance.create(**prov_data)
 
@@ -125,7 +124,7 @@ def test_tenant_quota_enforce_via_service(request, appliance, provider, setup_pr
     catalog_item.provisioning_data.update(custom_prov_data)
     catalog_item.provisioning_data['catalog']['vm_name'] = catalog_item.vm_name
     catalog_item.provisioning_data.update({'properties': {
-        'instance_type': 'm1.large' if current_version() < '5.9' else 'm1.large: 4 CPUs, 8 GB RAM, 4 GB Root Disk'}})
+        'instance_type': partial_match('m1.large')}})
     catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
                                        catalog_item.name)
