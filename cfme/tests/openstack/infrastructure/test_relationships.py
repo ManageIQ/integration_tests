@@ -5,9 +5,7 @@ results of the relationships
 """
 import pytest
 
-import cfme.fixtures.pytest_selenium as sel
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from cfme.web_ui import InfoBlock, Table
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
@@ -35,16 +33,17 @@ def test_nodes(provider):
 
 
 def test_templates(provider, soft_assert):
-    navigate_to(provider, 'Details')
+    view = navigate_to(provider, 'Details')
     images = [i.name for i in provider.mgmt.images]
 
-    assert int(provider.get_detail('Relationships', 'Templates')) == len(images)
-    sel.click(InfoBlock.element('Relationships', 'Templates'))
-    table = Table("//table[contains(@class, 'table')]")
+    ui_images = view.entities.view.entities.relationships.get_text_of('Templates')
+    assert int(ui_images) == len(images)
+
+    templates_view = navigate_to(provider, 'ProviderTemplates')
+    template_names = templates_view.entities.entity_names
 
     for image in images:
-        cell = table.find_cell('Name', image)
-        soft_assert(cell, 'Missing template: {}'.format(image))
+        soft_assert(image not in template_names, 'Missing template: {}'.format(image))
 
 
 def test_stacks(provider):

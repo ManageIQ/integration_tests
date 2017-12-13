@@ -1,6 +1,5 @@
 """ A model of an Infrastructure Provider in CFME
 """
-from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from widgetastic.utils import Fillable
@@ -14,12 +13,13 @@ from cfme.common.provider_views import (InfraProviderAddView,
                                         ProviderTimelinesView,
                                         InfraProvidersDiscoverView,
                                         InfraProvidersView,
-                                        ProviderNodesView)
+                                        ProviderNodesView,
+                                        ProviderTemplatesView)
 from cfme.exceptions import DestinationNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import ClusterView, ClusterToolbar
 from cfme.infrastructure.host import Host
-from cfme.utils import conf, version
+from cfme.utils import conf
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
@@ -312,6 +312,15 @@ class ProviderNodes(CFMENavigateStep):
             raise DestinationNotFound(
                 "{} aren't present on details page of this provider"
                 .format(self.obj.hosts_menu_item))
+
+
+@navigator.register(InfraProvider, 'ProviderTemplates')
+class ProviderTemplates(CFMENavigateStep):
+    VIEW = ProviderTemplatesView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.entities.relationships.click_at('Templates')
 
 
 def get_all_providers():
