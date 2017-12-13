@@ -12,13 +12,14 @@ from widgetastic_manageiq import (
     SummaryTable
 )
 from widgetastic_patternfly import BootstrapSelect, Button, Dropdown, FlashMessages
-from widgetastic.widget import View, Text
+from widgetastic.widget import View, Text, NoSuchElementException
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import BackupNotFoundError, ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
 
 
@@ -124,7 +125,7 @@ class VolumeBackup(BaseEntity, WidgetasticTaggable):
         provider: provider
     """
     name = attr.ib()
-    provider = attr.ib()
+    provider = attr.ib(default=None)
 
     def restore(self, name):
         """Restore the volume backup. this feature included in 5.9 and above.
@@ -191,11 +192,21 @@ class VolumeBackupCollection(BaseCollection):
         view.toolbar.view_selector.select("List View")
         backups = []
 
-        for item in view.entities.elements.read():
-            if self.filters.get('provider').name in item['Cloud Provider']:
-                backups.append(self.instantiate(name=item['Name'],
-                                                provider=self.filters.get('provider')))
-        return backups
+        try:
+            if 'provider' in self.filters:
+                for item in view.entities.elements.read():
+                    if self.filters.get('provider').name in item['Storage Manager']:
+                        backups.append(self.instantiate(name=item['Name'],
+                                                        provider=self.filters.get('provider')))
+            else:
+                for item in view.entities.elements.read():
+                    provider_name = item['Storage Manager'].split()[0]
+                    provider = get_crud_by_name(provider_name)
+                    backups.append(self.instantiate(name=item['Name'], provider=provider))
+            return backups
+
+        except NoSuchElementException:
+            return None
 
     def delete(self, *backups):
         """Delete one or more backups
