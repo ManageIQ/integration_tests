@@ -92,36 +92,8 @@ def new_credential():
         principal='uid{}'.format(fauxfactory.gen_alphanumeric().lower()), secret='redhat')
 
 
-# TODO Remove once widgetastic fixture replaces completely
 @pytest.fixture(scope='function')
 def check_item_visibility(tag, user_restricted):
-    def _check_item_visibility(vis_object, visibility_result):
-        """
-        Args:
-            visibility_result: pass 'True' is item should be visible,
-                               'False' if not
-        """
-        navigate_to(vis_object, 'EditTagsFromDetails')
-        if visibility_result:
-            vis_object.add_tag(tag=tag)
-        else:
-            try:
-                vis_object.remove_tag(tag=tag)
-            except RowNotFound:
-                logger.debug('Tag is already removed')
-        actual_visibility = False
-        with user_restricted:
-            try:
-                navigate_to(vis_object, 'EditTagsFromDetails')
-                actual_visibility = True
-            except Exception:
-                logger.debug('Tagged item is not visible')
-        assert actual_visibility == visibility_result
-    return _check_item_visibility
-
-
-@pytest.fixture(scope='function')
-def widgetastic_check_tag_visibility(tag, user_restricted):
     def _check_item_visibility(vis_object, vis_expect):
         """
         Args:

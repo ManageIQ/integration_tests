@@ -134,7 +134,7 @@ def test_tag_infra_objects(tagging_check, infra_test_item, tag_place):
 
 
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
-def test_tagvis_cloud_object(widgetastic_check_tag_visibility, cloud_test_item, visibility,
+def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility,
                              appliance):
     """ Tests infra provider and its items honors tag visibility
     Prerequisites:
@@ -149,11 +149,11 @@ def test_tagvis_cloud_object(widgetastic_check_tag_visibility, cloud_test_item, 
     if isinstance(cloud_test_item, KeyPair) and appliance.version < '5.9':
         pytest.skip('Keypairs visibility works starting 5.9')
 
-    widgetastic_check_tag_visibility(cloud_test_item, visibility)
+        check_item_visibility(cloud_test_item, visibility)
 
 
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
-def test_tagvis_infra_object(infra_test_item, widgetastic_check_tag_visibility,
+def test_tagvis_infra_object(infra_test_item, check_item_visibility,
                              visibility):
     """ Tests infra provider and its items honors tag visibility
     Prerequisites:
@@ -165,4 +165,4 @@ def test_tagvis_infra_object(infra_test_item, widgetastic_check_tag_visibility,
         3. As admin remove tag
         4. Login as restricted user, iten is not visible for user
     """
-    widgetastic_check_tag_visibility(infra_test_item, visibility)
+    check_item_visibility(infra_test_item, visibility)
