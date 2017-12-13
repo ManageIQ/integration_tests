@@ -11,13 +11,14 @@ from widgetastic_manageiq import (
     SummaryTable
 )
 from widgetastic_patternfly import Button, Dropdown
-from widgetastic.widget import View, Text
+from widgetastic.widget import View, Text, NoSuchElementException
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import SnapshotNotFoundError, ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
 
 
@@ -195,11 +196,21 @@ class VolumeSnapshotCollection(BaseCollection):
         view.toolbar.view_selector.select("List View")
         snapshots = []
 
-        for item in view.entities.elements.read():
-            if self.filters.get('provider').name in item['Cloud Provider']:
-                snapshots.append(self.instantiate(name=item['Name'],
-                                                  provider=self.filters.get('provider')))
-        return snapshots
+        try:
+            if 'provider' in self.filters:
+                for item in view.entities.elements.read():
+                    if self.filters.get('provider').name in item['Storage Manager']:
+                        snapshots.append(self.instantiate(name=item['Name'],
+                                                          provider=self.filters.get('provider')))
+            else:
+                for item in view.entities.elements.read():
+                    provider_name = item['Storage Manager'].split()[0]
+                    provider = get_crud_by_name(provider_name)
+                    snapshots.append(self.instantiate(name=item['Name'], provider=provider))
+            return snapshots
+
+        except NoSuchElementException:
+            return None
 
 
 @navigator.register(VolumeSnapshotCollection, 'All')
