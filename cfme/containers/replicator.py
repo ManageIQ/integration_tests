@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
+import attr
 import random
 import itertools
 from cached_property import cached_property
 
+from navmazing import NavigateToAttribute, NavigateToSibling
 from wrapanapi.containers.replicator import Replicator as ApiReplicator
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
     ContainerObjectDetailsBaseView)
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
-from navmazing import NavigateToAttribute, NavigateToSibling
 
 
 class ReplicatorAllView(ContainerObjectAllBaseView):
@@ -21,17 +22,16 @@ class ReplicatorDetailsView(ContainerObjectDetailsBaseView):
     pass
 
 
-class Replicator(WidgetasticTaggable, Labelable, Navigatable):
+@attr.s
+class Replicator(BaseEntity, WidgetasticTaggable, Labelable):
 
     PLURAL = 'Replicators'
     all_view = ReplicatorAllView
     details_view = ReplicatorDetailsView
 
-    def __init__(self, name, project_name, provider, appliance=None):
-        self.name = name
-        self.project_name = project_name
-        self.provider = provider
-        Navigatable.__init__(self, appliance=appliance)
+    name = attr.ib()
+    project_name = attr.ib()
+    provider = attr.ib()
 
     @cached_property
     def mgmt(self):
@@ -46,7 +46,14 @@ class Replicator(WidgetasticTaggable, Labelable, Navigatable):
                 for obj in itertools.islice(rc_list, count)]
 
 
-@navigator.register(Replicator, 'All')
+@attr.s
+class ReplicatorCollection(BaseCollection):
+    """Collection object for :py:class:`Replicator`."""
+
+    ENTITY = Replicator
+
+
+@navigator.register(ReplicatorCollection, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
     VIEW = ReplicatorAllView
@@ -63,7 +70,7 @@ class All(CFMENavigateStep):
 @navigator.register(Replicator, 'Details')
 class Details(CFMENavigateStep):
     VIEW = ReplicatorDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToSibling('parent', 'All')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name,

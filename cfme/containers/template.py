@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import attr
 import random
 import itertools
 from cached_property import cached_property
@@ -9,7 +10,7 @@ from wrapanapi.containers.template import Template as ApiTemplate
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
     ContainerObjectDetailsBaseView)
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
@@ -21,17 +22,16 @@ class TemplateDetailsView(ContainerObjectDetailsBaseView):
     pass
 
 
-class Template(WidgetasticTaggable, Labelable, Navigatable):
+@attr.s
+class Template(BaseEntity, WidgetasticTaggable, Labelable):
 
     PLURAL = 'Templates'
     all_view = TemplateAllView
     details_view = TemplateDetailsView
 
-    def __init__(self, name, project_name, provider, appliance=None):
-        self.name = name
-        self.project_name = project_name
-        self.provider = provider
-        Navigatable.__init__(self, appliance=appliance)
+    name = attr.ib()
+    project_name = attr.ib()
+    provider = attr.ib()
 
     @cached_property
     def mgmt(self):
@@ -46,7 +46,14 @@ class Template(WidgetasticTaggable, Labelable, Navigatable):
                 for obj in itertools.islice(template_list, count)]
 
 
-@navigator.register(Template, 'All')
+@attr.s
+class TemplateCollection(BaseCollection):
+    """Collection object for :py:class:`Template`."""
+
+    ENTITY = Template
+
+
+@navigator.register(TemplateCollection, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
     VIEW = TemplateAllView
@@ -62,7 +69,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(Template, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToSibling('parent', 'All')
     VIEW = TemplateDetailsView
 
     def step(self):

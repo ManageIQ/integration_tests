@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
+import attr
 import random
 import itertools
 from cached_property import cached_property
 
+from navmazing import NavigateToAttribute, NavigateToSibling
 from wrapanapi.containers.route import Route as ApiRoute
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
     ContainerObjectDetailsBaseView)
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
-from navmazing import NavigateToAttribute, NavigateToSibling
-from cfme.utils.appliance import Navigatable
 
 
 class RouteAllView(ContainerObjectAllBaseView):
@@ -21,17 +22,16 @@ class RouteDetailsView(ContainerObjectDetailsBaseView):
     pass
 
 
-class Route(WidgetasticTaggable, Labelable, Navigatable):
+@attr.s
+class Route(BaseEntity, WidgetasticTaggable, Labelable):
 
     PLURAL = 'Routes'
     all_view = RouteAllView
     details_view = RouteDetailsView
 
-    def __init__(self, name, project_name, provider, appliance=None):
-        self.name = name
-        self.project_name = project_name
-        self.provider = provider
-        Navigatable.__init__(self, appliance=appliance)
+    name = attr.ib()
+    project_name = attr.ib()
+    provider = attr.ib()
 
     @cached_property
     def mgmt(self):
@@ -46,7 +46,14 @@ class Route(WidgetasticTaggable, Labelable, Navigatable):
                 for obj in itertools.islice(route_list, count)]
 
 
-@navigator.register(Route, 'All')
+@attr.s
+class RouteCollection(BaseCollection):
+    """Collection object for :py:class:`Route`."""
+
+    ENTITY = Route
+
+
+@navigator.register(RouteCollection, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
     VIEW = RouteAllView
@@ -62,7 +69,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(Route, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToSibling('parent', 'All')
     VIEW = RouteDetailsView
 
     def step(self):

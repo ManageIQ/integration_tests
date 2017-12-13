@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import attr
 import random
 import itertools
 from cached_property import cached_property
@@ -10,8 +11,9 @@ from widgetastic.widget import View
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
-    ContainerObjectDetailsBaseView, ContainerObjectDetailsEntities)
-from cfme.utils.appliance import Navigatable
+                                      ContainerObjectDetailsBaseView,
+                                      ContainerObjectDetailsEntities)
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
@@ -27,17 +29,16 @@ class PodDetailsView(ContainerObjectDetailsBaseView):
         container_statuses_summary = SummaryTable(title='Container Statuses Summary')
 
 
-class Pod(WidgetasticTaggable, Labelable, Navigatable):
-
+@attr.s
+class Pod(BaseEntity, WidgetasticTaggable, Labelable):
+    """Pod Class"""
     PLURAL = 'Pods'
     all_view = PodAllView
     details_view = PodDetailsView
 
-    def __init__(self, name, project_name, provider, appliance=None):
-        self.name = name
-        self.provider = provider
-        self.project_name = project_name
-        Navigatable.__init__(self, appliance=appliance)
+    name = attr.ib()
+    provider = attr.ib()
+    project_name = attr.ib()
 
     @cached_property
     def mgmt(self):
@@ -52,7 +53,14 @@ class Pod(WidgetasticTaggable, Labelable, Navigatable):
                 for obj in itertools.islice(pod_list, count)]
 
 
-@navigator.register(Pod, 'All')
+@attr.s
+class PodCollection(BaseCollection):
+    """Collection object for :py:class:`Pod`."""
+
+    ENTITY = Pod
+
+
+@navigator.register(PodCollection, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
     VIEW = PodAllView
@@ -69,7 +77,7 @@ class All(CFMENavigateStep):
 @navigator.register(Pod, 'Details')
 class Details(CFMENavigateStep):
     VIEW = PodDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToSibling('parent', 'All')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name,

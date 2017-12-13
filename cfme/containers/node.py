@@ -104,14 +104,13 @@ class NodeCollection(BaseCollection):
         nodes = []
         for name, provider_name in node_query.all():
             # Hopefully we can get by with just provider name?
-            nodes.append(self.instantiate(name=name,
-                                          provider=ContainersProvider(name=provider_name,
-                                                                      appliance=self.appliance)))
+            nodes.append(
+                self.instantiate(
+                    name=name, provider=ContainersProvider(
+                        name=provider_name, appliance=self.appliance)))
         return nodes
 
 
-# Still registering Node to keep on consistency on container objects navigations
-@navigator.register(Node, 'All')
 @navigator.register(NodeCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = NodeAllView
