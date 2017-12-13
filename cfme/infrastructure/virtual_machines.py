@@ -8,10 +8,15 @@ from copy import copy
 import fauxfactory
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic.utils import partial_match, VersionPick, Version
-from widgetastic.widget import Text, View, TextInput, Checkbox, NoSuchElementException
+from widgetastic.widget import (
+    Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
 from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, Tab)
+from widgetastic_manageiq import (
+    Accordion, ConditionalSwitchableView, ManageIQTree, CheckableManageIQTree, NonJSPaginationPane,
+    SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
+from widgetastic_manageiq.vm_reconfigure import DisksTable
+from widgetastic.utils import partial_match, Parameter, VersionPick, Version
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, Template as BaseTemplate
@@ -28,10 +33,6 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (
-    Accordion, ConditionalSwitchableView, ManageIQTree, CheckableManageIQTree, NonJSPaginationPane,
-    SummaryTable, TimelinesView, Table, CompareToolBarActionsView)
-from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 
 def has_child(tree, text, parent_item=None):
@@ -74,6 +75,14 @@ class InfraGenericDetailsToolbar(View):
     monitoring = Dropdown("Monitoring")
     download = Button(title='Download summary in PDF format')
     lifecycle = Dropdown('Lifecycle')
+
+    @ParametrizedView.nested
+    class custom_button(ParametrizedView):  # noqa
+        PARAMETERS = ("button_group", )
+        _dropdown = Dropdown(text=Parameter("button_group"))
+
+        def item_select(self, button, handle_alert=None):
+            self._dropdown.item_select(button, handle_alert=handle_alert)
 
 
 class InfraVmDetailsToolbar(InfraGenericDetailsToolbar):

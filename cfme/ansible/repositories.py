@@ -3,7 +3,8 @@
 import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import Text, Checkbox, Fillable
+from widgetastic.widget import Text, Checkbox, Fillable, View
+from widgetastic_manageiq import Table, PaginationPane, SummaryTable
 from widgetastic_patternfly import Dropdown, Button, Input
 
 from cfme.base.login import BaseLoggedInPage
@@ -11,7 +12,6 @@ from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import Table, PaginationPane
 from .playbooks import PlaybooksCollection
 
 
@@ -37,8 +37,15 @@ class RepositoryAllView(RepositoryBaseView):
 
 
 class RepositoryDetailsView(RepositoryBaseView):
+    refresh = Button(title="Refresh this page")
     configuration = Dropdown("Configuration")
     download = Button(title="Download summary in PDF format")
+
+    @View.nested
+    class entities(View):  # noqa
+        properties = SummaryTable("Properties")
+        relationships = SummaryTable("Relationships")
+        repository_options = SummaryTable("Repository Options")
 
     @property
     def is_displayed(self):
@@ -109,6 +116,12 @@ class Repository(BaseEntity, Fillable):
     @property
     def playbooks(self):
         return self.collections.playbooks
+
+    def get_detail(self, title, field, refresh=False):
+        view = navigate_to(self, "Details")
+        if refresh:
+            view.refresh.click()
+        return getattr(view.entities, title.lower().replace(" ", "_")).get_text_of(field)
 
     @property
     def as_fill_value(self):
@@ -319,7 +332,15 @@ class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling("All")
 
     def step(self):
-        self.prerequisite_view.configuration.item_select("Add New Repository")
+        # workaround for disabled Dropdown
+        dropdown = self.prerequisite_view.configuration
+        wait_for(
+            dropdown.item_enabled,
+            func_args=["Add New Repository"],
+            timeout=60,
+            fail_func=self.prerequisite_view.browser.refresh
+        )
+        dropdown.item_select("Add New Repository")
 
 
 @navigator.register(Repository, 'Edit')
