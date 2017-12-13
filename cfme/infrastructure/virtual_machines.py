@@ -126,7 +126,7 @@ class VmsTemplatesAllView(InfraVmView):
     def is_displayed(self):
         return (
             self.in_infra_vms and
-            self.sidebar.vmstemplates.tree.currently_selected == 'All VMs & Templates' and
+            self.sidebar.vmstemplates.tree.currently_selected == ['All VMs & Templates'] and
             self.entities.title.text == 'All VMs & Templates')
 
     def reset_page(self):
@@ -919,11 +919,15 @@ class Vm(VM):
                     dependent = True
                 row = vm_recfg.disks_table.click_add_disk()
                 row.type.fill(disk.type)
-                row.mode.fill(mode)
                 # Unit first, then size (otherwise JS would try to recalculate the size...)
-                row[4].fill(disk.size_unit)
+                if self.provider.one_of(RHEVMProvider):
+                    # Workaround necessary until BZ 1524960 is resolved
+                    row[3].fill(disk.size_unit)
+                else:
+                    row[4].fill(disk.size_unit)
+                    row.mode.fill(mode)
+                    row.dependent.fill(dependent)
                 row.size.fill(disk.size)
-                row.dependent.fill(dependent)
                 row.actions.widget.click()
             elif action == 'delete':
                 row = vm_recfg.disks_table.row(name=disk.filename)
