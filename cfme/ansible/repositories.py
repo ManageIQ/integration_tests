@@ -120,7 +120,10 @@ class Repository(BaseEntity, Fillable):
     def get_detail(self, title, field, refresh=False):
         view = navigate_to(self, "Details")
         if refresh:
-            view.refresh.click()
+            if self.appliance.version < "5.9":
+                view.browser.refresh()
+            else:
+                view.refresh.click()
         return getattr(view.entities, title.lower().replace(" ", "_")).get_text_of(field)
 
     @property

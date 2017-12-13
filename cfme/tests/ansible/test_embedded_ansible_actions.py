@@ -8,7 +8,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.services.myservice import MyService
 from cfme.utils import ports
-from cfme.utils.blockers import BZ
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
@@ -61,6 +60,10 @@ def ansible_repository(appliance, wait_for_ansible):
         name=fauxfactory.gen_alpha(),
         url="https://github.com/quarckster/ansible_playbooks",
         description=fauxfactory.gen_alpha())
+    wait_for(
+        lambda: repository.get_detail("Properties", "Status", refresh=True) == "successful",
+        timeout=60
+    )
     yield repository
 
     if repository.exists:
