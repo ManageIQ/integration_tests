@@ -474,7 +474,7 @@ class VM(BaseVM):
 
     def retire(self):
         view = self.load_details(refresh=True)
-        view.toolbar.configuration.item_select(self.TO_RETIRE,
+        view.toolbar.lifecycle.item_select(self.TO_RETIRE,
                                                handle_alert=True)
         view.flash.assert_no_error()
 
