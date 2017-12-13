@@ -77,13 +77,13 @@ def test_infra_grid_defaultview(key):
     set_and_test_default_view(key, 'Grid View', gtl_params[key])
 
 
-def set_and_test_view(group_name, view):
+def set_and_test_view(group_name, view, selector_type='views_selector'):
     old_default = DefaultView.get_default_view(group_name)
     DefaultView.set_default_view(group_name, view)
     vm_view = navigate_to(Vm, 'All')
     [e.check() for e in vm_view.entities.get_all()[:2]]
     vm_view.toolbar.configuration.item_select('Compare Selected items')
-    selected_view = vm_view.actions.views_selector.selected
+    selected_view = getattr(vm_view.actions, selector_type).selected
     assert view == selected_view, "{} setting failed".format(view)
     DefaultView.set_default_view(group_name, old_default)
 
@@ -96,23 +96,12 @@ def test_infra_compressed_view():
     set_and_test_view('Compare', 'Compressed View')
 
 
-def set_and_test_mode(group_name, mode):
-    old_default = DefaultView.get_default_view(group_name)
-    DefaultView.set_default_view(group_name, mode)
-    vm_view = navigate_to(Vm, 'All')
-    [e.check() for e in vm_view.entities.get_all()[:2]]
-    vm_view.toolbar.configuration.item_select('Compare Selected items')
-    selected_mode = vm_view.actions.modes_selector.selected
-    assert mode == selected_mode, "{} setting failed".format(mode)
-    DefaultView.set_default_view(group_name, old_default)
-
-
 def test_infra_details_mode():
-    set_and_test_mode('Compare Mode', 'Details Mode')
+    set_and_test_view('Compare Mode', 'Details Mode', 'modes_selector')
 
 
 def test_infra_exists_mode():
-    set_and_test_mode('Compare Mode', 'Exists Mode')
+    set_and_test_view('Compare Mode', 'Exists Mode', 'modes_selector')
 
 
 def test_vm_visibility_off():
