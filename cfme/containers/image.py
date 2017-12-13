@@ -165,7 +165,7 @@ class All(CFMENavigateStep):
 @navigator.register(Image, 'Details')
 class Details(CFMENavigateStep):
     VIEW = ImageDetailsView
-    prerequisite = NavigateToAttribute("parent", 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(provider=self.obj.provider.name,

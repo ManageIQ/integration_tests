@@ -70,7 +70,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(Service, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('parent', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = ServiceDetailsView
 
     def step(self):

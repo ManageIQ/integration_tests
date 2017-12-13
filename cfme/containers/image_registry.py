@@ -73,7 +73,7 @@ class ImageRegistryAll(CFMENavigateStep):
 @navigator.register(ImageRegistry, 'Details')
 class ImageRegistryDetails(CFMENavigateStep):
     VIEW = ImageRegistryDetailsView
-    prerequisite = NavigateToSibling('parent', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(host=self.obj.host).click()

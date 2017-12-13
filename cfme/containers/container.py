@@ -92,7 +92,7 @@ class ContainerAll(CFMENavigateStep):
 @navigator.register(Container, 'Details')
 class ContainerDetails(CFMENavigateStep):
     VIEW = ContainerDetailsView
-    prerequisite = NavigateToSibling('parent', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
