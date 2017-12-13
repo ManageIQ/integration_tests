@@ -75,7 +75,8 @@ RUN mkdir -p ${SELENIUM_PATH} && cd ${SELENIUM_PATH} && \
 # firefox - esr
 #ADD https://download-installer.cdn.mozilla.net/pub/firefox/releases/$FIREFOX_VERSION.0esr/linux-x86_64/en-US/firefox-$FIREFOX_VERSION.0esr.tar.bz2 \
 # ENV FIREFOX_VERSION 38.6
-ENV FIREFOX_VERSION 47.0.2
+# ENV FIREFOX_VERSION 47.0.2
+ENV FIREFOX_VERSION 46.0.1
 ENV FIREFOX_PATH /opt/firefox
 RUN mkdir -p ${FIREFOX_PATH} && cd ${FIREFOX_PATH} && \
     curl https://download-installer.cdn.mozilla.net/pub/firefox/releases/$FIREFOX_VERSION/linux-x86_64/en-US/firefox-$FIREFOX_VERSION.tar.bz2 \
