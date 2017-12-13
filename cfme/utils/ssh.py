@@ -209,6 +209,10 @@ class SSHClient(paramiko.SSHClient):
         else:
             conn = None
 
+        self._after_connect()
+        return conn
+
+    def _after_connect(self):
         if self.is_pod:
             # checking whether already logged into openshift
             is_loggedin = self.run_command(command='oc whoami', ensure_host=True)
@@ -219,15 +223,13 @@ class SSHClient(paramiko.SSHClient):
                     logger.info('logging out from openshift')
                     self.run_command(command='oc logout', ensure_host=True)
                 else:
-                    return conn
+                    return
 
             logger.info("logging into openshift")
             login_cmd = 'oc login --username={u} --password={p}'
             login_cmd = login_cmd.format(u=self.oc_username,
                                          p=self.oc_password)
             self.run_command(command=login_cmd, ensure_host=True)
-
-        return conn
 
     def open_sftp(self, *args, **kwargs):
         if self.is_container:
@@ -265,9 +267,10 @@ class SSHClient(paramiko.SSHClient):
         logger.info("Running command %r", command)
         if self.is_pod and not ensure_host:
             # This command will be executed in the context of the host provider
-            command = 'source /etc/default/evm; ' + command
-            cmd = 'oc exec --namespace={proj} {pod} -- bash -c {cmd}'
-            command = cmd.format(proj=self._project, pod=self._container, cmd=quote(command))
+            command_to_run = 'source /etc/default/evm; ' + command
+            oc_cmd = 'oc exec --namespace={proj} {pod} -- bash -c {cmd}'.format(
+                proj=self._project, pod=self._container, cmd=quote(command_to_run))
+            command = oc_cmd
             ensure_host = True
         elif self.is_container and not ensure_host:
             command = 'docker exec {} bash -c {}'.format(self._container, quote(
