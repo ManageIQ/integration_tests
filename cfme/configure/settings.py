@@ -296,9 +296,6 @@ class Visual(Updateable, Navigatable):
         return text
 
 
-visual = Visual()
-
-
 class VisualTabForm(MySettingsView):
 
     @View.nested
