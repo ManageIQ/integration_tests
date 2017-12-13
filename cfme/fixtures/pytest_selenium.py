@@ -7,14 +7,17 @@ response which is needed in CFME.
 :var ajax_wait_js: A Javascript function for ajax wait checking
 :var class_selector: Regular expression to detect simple CSS locators
 """
-from HTMLParser import HTMLParser
-from time import sleep
-from xml.sax.saxutils import quoteattr, unescape
-from collections import Iterable, namedtuple
+import base64
+import json
+from collections import namedtuple
 from contextlib import contextmanager
 from textwrap import dedent
-import json
+from threading import local
+from time import sleep
+from xml.sax.saxutils import quoteattr
+
 import re
+from multimethods import singledispatch
 from selenium.common.exceptions import \
     (NoSuchAttributeException,
      NoSuchElementException, NoAlertPresentException, UnexpectedAlertPresentException,
@@ -22,26 +25,20 @@ from selenium.common.exceptions import \
      StaleElementReferenceException)
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions
-from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.remote.file_detector import LocalFileDetector, UselessFileDetector
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support.select import Select as SeleniumSelect
-from multimethods import singledispatch, multidispatch
-
-import base64
+from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.support.wait import WebDriverWait
 
 from cfme import exceptions, js
-from fixtures.pytest_store import store
 from cfme.utils import version
 from cfme.utils.browser import browser, ensure_browser_open
-from cfme.utils.path import log_path
-from cfme.utils.log import logger
-from cfme.utils.wait import wait_for
-from cfme.utils.pretty import Pretty
 from cfme.utils.deprecation import removed_in_fw30
+from cfme.utils.log import logger
+from cfme.utils.path import log_path
+from cfme.utils.wait import wait_for
+from fixtures.pytest_store import store
 
-from threading import local
 _thread_local = local()
 _thread_local.ajax_timeout = 30
 
@@ -69,32 +66,6 @@ def __repr__(self):
 
 if WebElement.__repr__ is not __repr__:
     WebElement.__repr__ = __repr__
-
-
-class ByValue(Pretty):
-    pretty_attrs = ['value']
-
-    def __init__(self, value):
-        self.value = value
-
-    def __eq__(self, other):
-        return self.value == other.value
-
-    def __str__(self):
-        return str(self.value)
-
-
-class ByText(Pretty):
-    pretty_attrs = ['text']
-
-    def __init__(self, text):
-        self.text = text
-
-    def __str__(self):
-        return str(self.text)
-
-    def __eq__(self, other):
-        return self.text == other.text
 
 
 @removed
@@ -1054,287 +1025,6 @@ def set_text(loc, text):
             el.clear()
             send_keys(el, text)
         return old_text
-
-
-class Select(SeleniumSelect, Pretty):
-    """ A proxy class for the real selenium Select() object.
-
-    We differ in one important point, that we can instantiate the object
-    without it being present on the page. The object is located at the beginning
-    of each function call.
-
-    Can hadle patternfly ``selectpicker`` kind of select. It alters the behaviour slightly, it does
-    not use :py:func:`move_to_element` and uses JavaScript more extensively.
-
-    Args:
-        loc: A locator.
-
-    Returns: A :py:class:`cfme.web_ui.Select` object.
-    """
-
-    pretty_attrs = ['_loc', 'is_multiple']
-
-    Option = namedtuple("Option", ["text", "value"])
-
-    is_broken = False  # For compatibility with AngularSelect
-
-    def __init__(self, loc, multi=False, none=None):
-        self._none = none
-        if isinstance(loc, Select):
-            self._loc = loc._loc
-        else:
-            self._loc = loc
-        self.is_multiple = multi
-
-    @property
-    def none(self):
-        if self._none:
-            return version.pick(self._none)
-        else:
-            return None
-
-    @property
-    def is_patternfly(self):
-        return "selectpicker" in get_attribute(self._loc, "class")
-
-    @property
-    def _el(self):
-        if self.is_patternfly:
-            return element(self, check_visibility=False)
-        else:
-            return move_to_element(self)
-
-    @property
-    def classes(self):
-        return classes(self._el)
-
-    @property
-    def all_options(self):
-        """Returns a list of tuples of all the options in the Select"""
-        # More reliable using javascript
-        script = dedent("""\
-            var result_arr = [];
-            var opt_elements = arguments[0].options;
-            for(var i = 0; i < opt_elements.length; i++){
-                var option = opt_elements[i];
-                result_arr.push([option.innerHTML, option.getAttribute("value")]);
-            }
-            return result_arr;
-        """)
-        options = execute_script(script, element(self._loc))
-        parser = HTMLParser()
-        return [self.Option(parser.unescape(option[0]), option[1]) for option in options]
-
-    @property
-    def all_selected_options(self):
-        """Fast variant of the original all_selected_options.
-
-        Selenium's all_selected_options iterates over ALL of the options, this directly returns
-        only those that are selected.
-        """
-        return execute_script(
-            "return arguments[0].selectedOptions;",
-            element(self, check_visibility=not self.is_patternfly))
-
-    @property
-    def first_selected_option(self):
-        """Fast variant of the original first_selected_option.
-
-        Uses all_selected_options, mimics selenium's exception behaviour.
-        """
-        try:
-            return self.all_selected_options[0]
-        except IndexError:
-            raise NoSuchElementException("No options are selected")
-
-    @property
-    def first_selected_option_text(self):
-        if not self.is_patternfly:
-            return text(self.first_selected_option)
-        else:
-            parser = HTMLParser()
-            return parser.unescape(
-                execute_script("return arguments[0].innerHTML;", self.first_selected_option))
-
-    def deselect_all(self):
-        """Fast variant of the original deselect_all.
-
-        Uses all_selected_options, mimics selenium's exception behaviour.
-        """
-        if not self.is_multiple:
-            raise NotImplementedError("You may only deselect all options of a multi-select")
-        if not self.is_patternfly:
-            for opt in self.all_selected_options:
-                raw_click(opt)
-        else:
-            execute_script(
-                "$(arguments[0]).selectpicker('deselectAll'); $(arguments[0]).trigger('change');",
-                element(self))
-
-    def get_value_by_text(self, text):
-        # unescape because it turns <> into &lt;&gt; which we don't want in xpath
-        opt = element(
-            ".//option[normalize-space(.)={}]".format(unescape(quoteattr(text))),
-            root=element(self, check_visibility=not self.is_patternfly))
-        return get_attribute(opt, "value")
-
-    def select_by_value(self, value):
-        if not self.is_patternfly:
-            return super(Select, self).select_by_value(value)
-        else:
-            execute_script(
-                "$(arguments[0]).selectpicker('val', arguments[1]);"
-                "$(arguments[0]).trigger('change');",
-                element(self, check_visibility=not self.is_patternfly), value)
-            return None
-
-    def select_by_visible_text(self, text):
-        """Dump all of the options if the required option is not present."""
-        try:
-            if not self.is_patternfly:
-                return super(Select, self).select_by_visible_text(text)
-            else:
-                # selectpicker needs value only
-                return self.select_by_value(self.get_value_by_text(text))
-        except NoSuchElementException as e:
-            msg = str(e)
-            available = ", ".join(repr(opt.text) for opt in self.all_options)
-            raise type(e)("{} - Available options: {}".format(msg, available))
-
-    def locate(self):
-        """Guards against passing wrong locator (not resolving to a select)."""
-        sel_el = element(self._loc) if self.is_patternfly else move_to_element(self._loc)
-        sel_tag = tag(sel_el)
-        if sel_tag != "select":
-            raise exceptions.UnidentifiableTagType(
-                "{} ({}) is not a select!".format(self._loc, sel_tag))
-        return sel_el
-
-    def observer_wait(self):
-        detect_observed_field(self._loc)
-
-    def __repr__(self):
-        return "{}({}, multi={})".format(
-            type(self).__name__, repr(self._loc), repr(self.is_multiple))
-
-
-@multidispatch
-def select(loc, o):
-    raise NotImplementedError('Unable to select {} in this type: {}'.format(o, loc))
-
-
-@select.method((object, ByValue))
-def _select_tuple(loc, val):
-    value = val.value
-    if not value and isinstance(loc, Select):
-        if loc.none:
-            value = loc.none
-        else:
-            return
-    elif not value:
-        return
-
-    # Do not "cast" the loc unless it is needed
-    from cfme.web_ui import AngularSelect
-    if type(loc) in {Select, AngularSelect}:
-        l = loc
-    else:
-        l = Select(loc)
-    return select_by_value(l, value)
-
-
-@select.method((object, type(None)))
-@select.method((object, basestring))
-@select.method((object, ByText))
-def _select_str(loc, s):
-    value = s
-    if not value and isinstance(loc, Select):
-        if loc.none:
-            value = loc.none
-        else:
-            return
-    elif not value:
-        return
-
-    # Do not "cast" the loc unless it is needed
-    from cfme.web_ui import AngularSelect
-    if type(loc) in {Select, AngularSelect}:
-        l = loc
-    else:
-        l = Select(loc)
-    return select_by_text(l, str(value))
-
-
-@select.method((object, Iterable))
-def _select_iter(loc, items):
-    return [select(loc, item) for item in items]
-
-
-def _sel_desel(el, getter_fn, setter_attr, item):
-    wait_for_ajax()
-    if item is not None:
-        old_item = getter_fn(el)
-        if old_item != item:
-            getattr(el, setter_attr)(item)
-            wait_for_ajax()
-        return old_item
-
-
-@removed
-def select_by_text(select_element, txt):
-    """
-    Works on a select element and selects an option by the visible text.
-
-    Args:
-        loc: A locator, expects either a string, WebElement, tuple.
-        text: The select element option's visible text.
-
-    Returns: previously selected text
-    """
-    def _getter(s):
-        try:
-            return s.first_selected_option.text
-        except (NoSuchElementException, AttributeError):
-            return None
-    return _sel_desel(select_element, _getter,
-                      'select_by_visible_text', txt)
-
-
-@removed
-def select_by_value(select_element, val):
-    """
-    Works on a select element and selects an option by the value attribute.
-
-    Args:
-        loc: A locator, expects either a string, WebElement, tuple.
-        value: The select element's option value.
-    """
-    return _sel_desel(select_element, lambda s: ByValue(value(s)), 'select_by_value', val)
-
-
-@removed
-def deselect_by_text(select_element, txt):
-    """
-    Works on a select element and deselects an option by the visible text.
-
-    Args:
-        loc: A locator, expects either a string, WebElement, tuple.
-        text: The select element option's visible text.
-    """
-    return _sel_desel(select_element, lambda s: s.first_selected_option.text,
-                      'deselect_by_visible_text', txt)
-
-
-@removed
-def deselect_by_value(select_element, val):
-    """
-    Works on a select element and deselects an option by the value attribute.
-
-    Args:
-        loc: A locator, expects either a string, WebElement, tuple.
-        value: The select element's option value.
-    """
-    return _sel_desel(select_element, lambda s: ByValue(value(s)), 'deselect_by_value', val)
 
 
 @removed

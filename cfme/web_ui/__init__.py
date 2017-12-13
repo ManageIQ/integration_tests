@@ -9,7 +9,6 @@
 
 * **Elemental**
 
-  * :py:class:`AngularSelect`
   * :py:class:`DriftGrid`
   * :py:class:`Form`
   * :py:class:`InfoBlock`
@@ -17,16 +16,13 @@
   * :py:class:`Select`
   * :py:class:`Table`
   * :py:class:`Tree`
-  * :py:mod:`cfme.web_ui.flash`
-  * :py:mod:`cfme.web_ui.form_buttons`
   * :py:mod:`cfme.web_ui.listaccordion`
-  * :py:mod:`cfme.web_ui.mixins`
   * :py:mod:`cfme.web_ui.toolbar`
 
 """
 
 from collections import Sequence, Mapping, Callable
-from xml.sax.saxutils import quoteattr, unescape
+from xml.sax.saxutils import quoteattr
 
 import re
 import types
@@ -34,13 +30,9 @@ from cached_property import cached_property
 from multimethods import multimethod, multidispatch, Anything
 from selenium.common import exceptions as sel_exceptions
 from selenium.common.exceptions import NoSuchElementException
-from widgetastic.xpath import quote
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions
-# For backward compatibility with code that pulls in Select from web_ui instead of sel
-from cfme.fixtures.pytest_selenium import Select
-from cfme.fixtures.pytest_selenium import browser
 from cfme.utils import attributize_string, normalize_space, version
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
@@ -632,15 +624,6 @@ def fill_callable(f, val):
     return f(val)
 
 
-@fill.method((Select, types.NoneType))
-@fill.method((Select, object))
-def fill_select(slist, val):
-    logger.debug('  Filling in {} with value {}'.format(str(slist), val))
-    prev_sel = sel.select(slist, val)
-    slist.observer_wait()
-    return prev_sel
-
-
 @fill.method((object, types.NoneType))
 @fill.method((types.NoneType, object))
 def _sd_fill_none(*args, **kwargs):
@@ -907,180 +890,3 @@ class DriftGrid(Pretty):
                 sel.click(el)
             except NoSuchElementException:
                 break
-
-
-fill.prefer((Select, types.NoneType), (object, types.NoneType))
-fill.prefer((object, types.NoneType), (Select, object))
-
-
-class AngularSelect(Pretty):
-    BUTTON = "//button[@data-id='{}']"
-
-    pretty_attrs = ['_loc', 'none', 'multi', 'exact']
-
-    def __init__(self, loc, none=None, multi=False, exact=False):
-        self.none = none
-        if isinstance(loc, AngularSelect):
-            self._loc = loc._loc
-        else:
-            self._loc = self.BUTTON.format(loc)
-        self.multi = multi
-        self.exact = exact
-
-    def locate(self):
-        return sel.move_to_element(self._loc)
-
-    @property
-    def select(self):
-        return Select('select#{}'.format(self.did), multi=self.multi)
-
-    @property
-    def did(self):
-        return sel.element(self._loc).get_attribute('data-id')
-
-    @property
-    def is_broken(self):
-        return sel.is_displayed(self) and sel.is_displayed(self.select)
-
-    @property
-    def is_open(self):
-        el = sel.element(self._loc)
-        return el.get_attribute('aria-expanded') == "true"
-
-    def open(self):
-        sel.click(self._loc)
-
-    def select_by_visible_text(self, text):
-        if not self.is_open:
-            self.open()
-        if self.exact:
-            new_loc = self._loc + '/../div/ul/li/a[normalize-space(.)={}]'.format(
-                unescape(quoteattr(text)))
-        else:
-            new_loc = self._loc + '/../div/ul/li/a[contains(normalize-space(.), {})]'.format(
-                unescape(quoteattr(text)))
-        e = sel.element(new_loc)
-        sel.execute_script("arguments[0].scrollIntoView();", e)
-        sel.click(new_loc)
-
-    def select_by_value(self, value):
-        value = str(value)  # Because what we read from the page is a string
-        options_map = [a.value for a in self.select.all_options]
-        index = options_map.index(value)
-        if not self.is_open:
-            self.open()
-        new_loc = self._loc + '/../div/ul/li[@data-original-index={}]'.format(index)
-        e = sel.element(new_loc)
-        sel.execute_script("arguments[0].scrollIntoView();", e)
-        sel.click(new_loc)
-
-    @property
-    def all_options(self):
-        return self.select.all_options
-
-    @property
-    def classes(self):
-        """Combines class from the button and from select."""
-        return sel.classes(self) | sel.classes("select#{}".format(self.did))
-
-    @property
-    def options(self):
-        return self.select.options
-
-    @property
-    def first_selected_option(self):
-        new_loc = self._loc + '/span'
-        e = sel.element(new_loc)
-        text = e.text
-        for option in self.all_options:
-            if option.text == text:
-                return option
-        return None
-
-    @property
-    def first_selected_option_text(self):
-        new_loc = self._loc + '/span'
-        e = sel.element(new_loc)
-        text = e.text
-        return text
-
-
-@fill.method((AngularSelect, sel.ByText))
-@fill.method((AngularSelect, basestring))
-def _fill_angular_string(obj, s):
-    if s:
-        obj.select_by_visible_text(s)
-    else:
-        return
-
-
-@fill.method((AngularSelect, sel.ByValue))
-def _fill_angular_value(obj, s):
-    if s.value:
-        obj.select_by_value(s.value)
-    else:
-        return
-
-
-@fill.method((AngularSelect, list))
-def _fill_angular_list(obj, l):
-    for i in l:
-        fill(obj, i)
-
-
-SUMMARY_TITLE_LOCATORS = [
-    '//h1'
-]
-
-SUMMARY_TITLE_LOCATORS = '|'.join(SUMMARY_TITLE_LOCATORS)
-
-
-def summary_title():
-    """Returns a title of the page.
-
-    Returns:
-        :py:class:`str` if present, :py:class:`NoneType` otherwise.
-    """
-    try:
-        return sel.text_sane(SUMMARY_TITLE_LOCATORS)
-    except sel.NoSuchElementException:
-        return None
-
-
-def browser_title():
-    """Returns a title of the page.
-
-    Returns:
-        :py:class:`str` if present, :py:class:`NoneType` otherwise.
-    """
-    try:
-        return browser().title.split(': ', 1)[1]
-    except IndexError:
-        return None
-
-
-def controller_name():
-    """Returns a title of the page.
-
-    Returns:
-        :py:class:`str` if present, :py:class:`NoneType` otherwise.
-    """
-    return sel.execute_script('return ManageIQ.controller;')
-
-
-def match_location(controller=None, title=None, summary=None):
-    """Does exact match of passed data
-
-        Returns:
-        :py:class:`bool`
-    """
-    result = []
-    if controller:
-        result.append(controller_name() == controller)
-    if title:
-        result.append(browser_title() == title)
-    if summary:
-        result.append((summary_title() == summary) or
-                      (sel.is_displayed('//h3[normalize-space(.) = {}]'.format(quote(summary)))))
-
-    return all(result)
