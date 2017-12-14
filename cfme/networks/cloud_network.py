@@ -1,6 +1,6 @@
 import attr
+
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.exceptions import NoSuchElementException
 
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
@@ -17,26 +17,17 @@ class CloudNetwork(WidgetasticTaggable, BaseEntity):
     """Class representing cloud networks in cfme database"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'
+    page_name = 'cloud_network'
     string_name = 'CloudNetwork'
     quad_name = None
     db_types = ['CloudNetwork']
 
     name = attr.ib()
-    provider_obj = attr.ib()
 
     @property
     def provider(self):
         from cfme.networks.provider import NetworkProvider
         return parent_of_type(self, NetworkProvider)
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-        except (ItemNotFound, NoSuchElementException):
-            return False
-        else:
-            return True
 
     @property
     def parent_provider(self):
@@ -81,6 +72,10 @@ class CloudNetwork(WidgetasticTaggable, BaseEntity):
         view.toolbar.configuration.item_select('Delete this Cloud Network', handle_alert=True)
         view.flash.assert_success_message('The selected Cloud Network was deleted')
 
+    def exists(self):
+        networks = [r.name for r in self.collection.all()]
+        return self.name in networks
+
     @property
     def network_provider(self):
         """ Returns network provider """
@@ -102,7 +97,7 @@ class CloudNetworkCollection(BaseCollection):
     """Collection object for Cloud Network object"""
     ENTITY = CloudNetwork
 
-    def create(self, name, tenant, provider, network_manager, network_type, is_external=False,
+    def create(self, name, tenant, provider, network_manager, network_type=None, is_external=False,
                admin_state=True, is_shared=False):
         """Create cloud network
 
@@ -129,10 +124,10 @@ class CloudNetworkCollection(BaseCollection):
                    'shared': is_shared})
         view.add.click()
         view.flash.assert_success_message('Cloud Network "{}" created'.format(name))
-        network = self.instantiate(name, provider)
+        network = self.instantiate(name)
         # Refresh provider's relationships to have new network displayed
+        provider.refresh_provider_relationships()
         wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
-        wait_for(lambda: network.exists, timeout=100, fail_func=network.browser.refresh)
         return network
 
     def all(self):
@@ -141,7 +136,11 @@ class CloudNetworkCollection(BaseCollection):
         else:
             view = navigate_to(self, 'All')
         list_networks_obj = view.entities.get_all(surf_pages=True)
-        return [self.instantiate(name=n.name, provider_obj=None) for n in list_networks_obj]
+        return [self.instantiate(name=n.name) for n in list_networks_obj]
+
+    def exists(self, network):
+        networks = [r.name for r in self.all()]
+        return network.name in networks
 
 
 @navigator.register(CloudNetworkCollection, 'All')
@@ -159,7 +158,7 @@ class Details(CFMENavigateStep):
     VIEW = CloudNetworkDetailsView
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(name=self.obj.name).click()
+        self.prerequisite_view.entities.get_entity(surf_pages=True, name=self.obj.name).click()
 
 
 @navigator.register(CloudNetworkCollection, 'Add')

@@ -1,13 +1,15 @@
 import attr
+
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.exceptions import NoSuchElementException
 
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
-from cfme.networks.views import SubnetDetailsView, SubnetView, SubnetAddView, SubnetEditView
+from cfme.networks.views import (SubnetDetailsView, SubnetView, SubnetAddView,
+                                 SubnetEditView)
 from cfme.utils import providers, version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
 
@@ -16,22 +18,12 @@ class Subnet(WidgetasticTaggable, BaseEntity):
     """Class representing subnets in sdn"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'
+    page_name = 'network_subnet'
     string_name = 'NetworkSubnet'
     quad_name = None
     db_types = ['NetworkSubnet']
 
     name = attr.ib()
-    provider_obj = attr.ib()
-    network = attr.ib()
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-        except (ItemNotFound, NoSuchElementException):
-            return False
-        else:
-            return True
 
     def edit(self, new_name, gateway=None):
         """Edit cloud subnet
@@ -118,7 +110,8 @@ class SubnetCollection(BaseCollection):
 
     ENTITY = Subnet
 
-    def create(self, name, tenant, provider, network_manager, network_name, cidr, gateway=None):
+    def create(self, name, tenant, provider, network_manager, network_name,
+               cidr, dhcp=True, gateway=None):
         """Create subnet
 
         Args:
@@ -127,24 +120,30 @@ class SubnetCollection(BaseCollection):
             provider: crud object of Openstack cloud provider
             network_manager: (str) name of network manager
             network_name: (str) name of the network to create subnet under
-            cidr: (str) CIDR of subnet, for example: 192.168.12.2/24
+            cidr: (str) ip version and CIDR of subnet, for example: ("4", "192.168.12.2/24")
             gateway: (str) gateway of subnet, if None - appliance will set it automatically
 
         Returns: instance of cfme.newtorks.subnet.Subnet
         """
         view = navigate_to(self, 'Add')
         view.fill({'network_manager': network_manager,
-                   'network': network_name,
                    'subnet_name': name,
-                   'subnet_cidr': cidr,
-                   'gateway': gateway,
-                   'cloud_tenant': tenant})
+                   'enable_dhcp': dhcp,
+                   'subnet_cidr': cidr[1],
+                   'gateway': gateway})
+        if current_version() < '5.9':
+            view.network_protocol.select_by_visible_text(cidr[0])
+            view.network.select_by_visible_text(network_name)
+        else:
+            view.network_protocol_new.select_by_visible_text("ipv{}".format(cidr[0]))
+            view.network_new.select_by_visible_text(network_name)
+        view.cloud_tenant.select_by_visible_text(tenant)
         view.add.click()
         view.flash.assert_success_message('Cloud Subnet "{}" created'.format(name))
-        subnet = self.instantiate(name, provider, network_name)
+        subnet = self.instantiate(name)
         # Refresh provider's relationships to have new subnet displayed
+        provider.refresh_provider_relationships()
         wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
-        wait_for(lambda: subnet.exists, timeout=100, fail_func=subnet.browser.refresh)
         return subnet
 
     def all(self):
@@ -154,6 +153,10 @@ class SubnetCollection(BaseCollection):
             view = navigate_to(self, 'All')
         list_networks_obj = view.entities.get_all()
         return [self.instantiate(name=p.name) for p in list_networks_obj]
+
+    def exists(self, subnet):
+        routers = [r.name for r in self.all()]
+        return subnet.name in routers
 
 
 @navigator.register(SubnetCollection, 'All')
