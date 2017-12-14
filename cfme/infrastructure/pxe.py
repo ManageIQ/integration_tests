@@ -85,7 +85,8 @@ class PXEDetailsToolBar(PXEToolBar):
     """
      represents the toolbar which appears when any pxe entity is clicked
     """
-    reload = Button(title='Reload current display')
+    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                '5.9': 'Refresh this page'}))
 
 
 class PXEServerDetailsView(PXEMainView):
