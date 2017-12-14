@@ -19,9 +19,9 @@ def vm_name():
 
 @pytest.fixture
 def template_name(provider):
-    if provider.type == 'rhevm':
+    if provider.one_of(RHEVMProvider):
         return provider.data.templates.get('full_template')['name']
-    elif provider.type == 'virtualcenter':
+    elif provider.one_of(VMwareProvider):
         return provider.data.templates.get('big_template')['name']
 
 
