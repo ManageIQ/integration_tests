@@ -24,23 +24,8 @@ def delete_provider(appliance, name):
 
     prov = provs[0]
 
-    # workaround for BZ1501941
-    def _delete():
-        try:
-            prov.action.delete()
-        except Exception as exc:
-            if 'ActiveRecord::RecordNotFound' in str(exc):
-                return True
-            raise
-        retval = prov.wait_not_exists(num_sec=20, silent_failure=True)
-        return bool(retval)
-
-    if appliance.version >= '5.9' and BZ(1501941, forced_streams=['5.9', 'upstream']).blocks:
-        prov.action.edit(enabled=False)
-        wait_for(_delete, num_sec=100)
-    else:
-        prov.action.delete()
-        prov.wait_not_exists(num_sec=30)
+    prov.action.delete()
+    prov.wait_not_exists()
 
 
 @pytest.fixture(scope="function")
@@ -110,7 +95,7 @@ def test_provider_edit(request, provider_rest, appliance):
     assert provider_rest.name == new_name == edited.name
 
 
-@pytest.mark.meta(blockers=[BZ(1501941, forced_streams=['5.9', 'upstream'])])
+# testing BZ1501941
 @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
 def test_provider_delete_from_detail(provider_rest, appliance, method):
     """Tests deletion of the provider from detail using REST API.
@@ -124,14 +109,15 @@ def test_provider_delete_from_detail(provider_rest, appliance, method):
         del_action = provider_rest.action.delete.POST
 
     del_action()
-    assert_response(appliance)
-    provider_rest.wait_not_exists(num_sec=30)
+    if not (method == 'post' and BZ(1525498, forced_streams=['5.9', 'upstream']).blocks):
+        assert_response(appliance)
+    provider_rest.wait_not_exists(num_sec=50)
     with error.expected("ActiveRecord::RecordNotFound"):
         del_action()
     assert_response(appliance, http_status=404)
 
 
-@pytest.mark.meta(blockers=[BZ(1501941, forced_streams=['5.9', 'upstream'])])
+# testing BZ1501941
 def test_provider_delete_from_collection(provider_rest, appliance):
     """Tests deletion of the provider from collection using REST API.
 
@@ -139,4 +125,8 @@ def test_provider_delete_from_collection(provider_rest, appliance):
         test_flag: rest
     """
     collection = appliance.rest_api.collections.providers
-    delete_resources_from_collection(collection, [provider_rest], num_sec=30)
+    if BZ(1525498, forced_streams=['5.9', 'upstream']).blocks:
+        delete_resources_from_collection(
+            collection, [provider_rest], num_sec=50, check_response=False)
+    else:
+        delete_resources_from_collection(collection, [provider_rest], num_sec=50)
