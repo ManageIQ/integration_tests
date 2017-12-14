@@ -103,6 +103,11 @@ class JSHostEntity(JSBaseEntity):
             return {}
 
 
+class AccordionNavigationWithoutRoot(VerticalNavigation):
+    DIV_LINKS_MATCHING = './/div/ul/li/a[contains(text(), {txt})]'
+    CURRENTLY_SELECTED = './/li[not(@class ="disabled")]/a'
+
+
 def HostEntity():  # noqa
     """ Temporary wrapper for Host Entity during transition to JS based Entity
 
@@ -146,6 +151,12 @@ class HostDetailsView(ComputeInfrastructureHostsView):
     breadcrumb = BreadCrumb(locator='.//ol[@class="breadcrumb"]')
     toolbar = View.nested(HostDetailsToolbar)
     entities = View.nested(HostDetailsEntities)
+
+    @View.nested
+    class security_accordion(Accordion):  # noqa
+        ACCORDION_NAME = "Security"
+
+        navigation = AccordionNavigationWithoutRoot(locator='#host_sec')
 
     @property
     def is_displayed(self):
@@ -255,13 +266,7 @@ class HostsView(ComputeInfrastructureHostsView):
     class filters(Accordion):  # noqa
         ACCORDION_NAME = "Filters"
 
-        @View.nested
-        class navigation(VerticalNavigation): # noqa
-            DIV_LINKS_MATCHING = './/div/ul/li/a[contains(text(), {txt})]'
-
-            def __init__(self, parent, logger=None):
-                VerticalNavigation.__init__(self, parent, '#Host_def_searches', logger=logger)
-
+        navigation = AccordionNavigationWithoutRoot(locator='#Host_def_searches')
         tree = ManageIQTree()
 
     default_filter_btn = Button(title="Set the current filter as my default")

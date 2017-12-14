@@ -5,9 +5,9 @@ from widgetastic.exceptions import NoSuchElementException
 
 from cfme import test_requirements
 from cfme.configure.tasks import Tasks, delete_all_tasks
+from cfme.common.vm_views import DriftAnalysis, DriftHistory
 from cfme.infrastructure import host as host_obj
 from cfme.infrastructure.provider import InfraProvider
-from cfme.web_ui import DriftGrid, toolbar as tb
 from cfme.utils import error, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
@@ -104,7 +104,7 @@ def test_host_drift_analysis(appliance, request, setup_provider, provider, host,
 
     # wait for for drift history num+1
     wait_for(
-        lambda: int(test_host.get_detail('Relationships', 'Drift History')) == drift_num_orig + 1,
+        lambda: test_host.get_detail('Relationships', 'Drift History') == str(drift_num_orig + 1),
         delay=20,
         num_sec=120,
         message="Waiting for Drift History count to increase",
@@ -123,7 +123,7 @@ def test_host_drift_analysis(appliance, request, setup_provider, provider, host,
 
     # wait for for drift history num+2
     wait_for(
-        lambda: int(test_host.get_detail('Relationships', 'Drift History')) == drift_num_orig + 2,
+        lambda: test_host.get_detail('Relationships', 'Drift History') == str(drift_num_orig + 2),
         delay=20,
         num_sec=120,
         message="Waiting for Drift History count to increase",
@@ -135,13 +135,14 @@ def test_host_drift_analysis(appliance, request, setup_provider, provider, host,
         "Drift analysis results are equal when they shouldn't be")
 
     # Test UI features that modify the drift grid
-    d_grid = DriftGrid()
+    drift_analysys_view = appliance.browser.create_view(DriftAnalysis)
+    drift_history_view = appliance.browser.create_view(DriftHistory)
 
     # Accounting tag should not be displayed, because it was changed to True
-    tb.select("Attributes with same values")
+    drift_analysys_view.toolbar.different_values_attributes.click()
     with error.expected(NoSuchElementException):
-        d_grid.get_cell('Accounting', 0)
+        drift_history_view.history_table.row((0, 'Accounting'))
 
     # Accounting tag should be displayed now
-    tb.select("Attributes with different values")
-    d_grid.get_cell('Accounting', 0)
+    drift_analysys_view.toolbar.different_values_attributes.click()
+    drift_history_view.history_table.row((0, 'Accounting'))
