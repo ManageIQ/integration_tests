@@ -10,7 +10,7 @@ from widgetastic_patternfly import Dropdown, Accordion, BootstrapSelect, Button
 from cfme.base import BaseEntity, BaseCollection
 from cfme.base.login import BaseLoggedInPage
 from cfme.utils import conf, ParamClassName
-from cfme.utils.appliance import get_or_create_current_appliance, Navigatable
+from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.datafile import load_data_file
 from cfme.utils.path import project_path
@@ -952,18 +952,17 @@ class PXEMainPage(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'PXE')
 
 
-def get_template_from_config(template_config_name, create=False):
+def get_template_from_config(template_config_name, create=False, appliance=None):
     """
     Convenience function to grab the details for a template from the yamls and create template.
     """
-
+    assert appliance is not None
     template_config = conf.cfme_data.get('customization_templates', {})[template_config_name]
 
     script_data = load_data_file(str(project_path.join(template_config['script_file'])),
                                  replacements=template_config['replacements'])
 
     script_data = script_data.read()
-    appliance = get_or_create_current_appliance()
     collection = appliance.collections.customization_templates
     kwargs = {
         'name': template_config['name'],
@@ -978,7 +977,7 @@ def get_template_from_config(template_config_name, create=False):
     return customization_template
 
 
-def get_pxe_server_from_config(pxe_config_name):
+def get_pxe_server_from_config(pxe_config_name, appliance):
     """
     Convenience function to grab the details for a pxe server fomr the yamls.
     """
@@ -994,7 +993,8 @@ def get_pxe_server_from_config(pxe_config_name):
                      pxe_dir=pxe_config['pxe_dir'],
                      windows_dir=pxe_config['windows_dir'],
                      customize_dir=pxe_config['customize_dir'],
-                     menu_filename=pxe_config['menu_filename'])
+                     menu_filename=pxe_config['menu_filename'],
+                     appliance=appliance)
 
 
 def remove_all_pxe_servers():
