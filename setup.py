@@ -1,5 +1,6 @@
 # dummy for editable installs
 import sys
+
 import os
 from setuptools import setup, find_packages
 
@@ -84,16 +85,19 @@ setup(
             'ansible_playbooks = cfme.ansible.playbooks:PlaybooksCollection',
             'ansible_repositories = cfme.ansible.repositories:RepositoryCollection',
             'datastores = cfme.infrastructure.datastore:DatastoreCollection',
-            'service_dialogs = cfme.automate.service_dialogs:DialogCollection',
+            'service_dialogs = cfme.automate.dialog_collection_pick:collection_pick',
             'domains = cfme.automate.explorer.domain:DomainCollection',
             'keypairs = cfme.cloud.keypairs:KeyPairCollection',
             'stacks = cfme.cloud.stack:StackCollection',
+            'security_groups = cfme.cloud.security_groups:SecurityGroupCollection',
             'cloud_tenants = cfme.cloud.tenant:TenantCollection',
             'tenants = cfme.configure.access_control:TenantCollection',
             'projects = cfme.configure.access_control:ProjectCollection',
+            'roles = cfme.configure.access_control:RoleCollection',
+            'users = cfme.configure.access_control:UserCollection',
             'candus = cfme.configure.configuration.region_settings:CANDUCollection',
             'groups = cfme.configure.access_control:GroupCollection',
-            'nodes = cfme.containers.node:NodeCollection',
+            'container_nodes = cfme.containers.node:NodeCollection',
             'dashboards = cfme.dashboard:DashboardCollection',
             'clusters = cfme.infrastructure.cluster:ClusterCollection',
             'hosts = cfme.infrastructure.host:HostCollection',
@@ -123,6 +127,15 @@ setup(
             'zones = cfme.base:ZoneCollection',
             'servers = cfme.base:ServerCollection',
             'regions = cfme.base:RegionCollection',
+            'container_pods = cfme.containers.pod:PodCollection',
+            'containers = cfme.containers.container:ContainerCollection',
+            'container_image_registries = cfme.containers.image_registry:ImageRegistryCollection',
+            'container_projects = cfme.containers.project:ProjectCollection',
+            'container_replicators = cfme.containers.replicator:ReplicatorCollection',
+            'container_routes = cfme.containers.route:RouteCollection',
+            'container_services = cfme.containers.service:ServiceCollection',
+            'container_templates = cfme.containers.template:TemplateCollection',
+            'container_volumes = cfme.containers.volume:VolumeCollection',
             ('generic_object_definitions = '
                 'cfme.generic_objects.definition:GenericObjectDefinitionCollection'),
             ('generic_objects = '

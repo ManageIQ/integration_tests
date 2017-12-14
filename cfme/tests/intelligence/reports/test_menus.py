@@ -40,7 +40,7 @@ def test_shuffle_top_level(group, report_menus):
     # Now go and read the tree
     view = navigate_to(reports.CustomReport, "All")
     table = [row["Name"].text for row in view.reports_table]
-    if "My Company (All EVM Groups)" in table:
+    if view.mycompany_title in table:
         del table[-1]
     assert table == order, "The order differs!"
 

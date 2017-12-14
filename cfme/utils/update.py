@@ -1,8 +1,6 @@
 from contextlib import contextmanager
 from copy import copy
 
-from cfme.web_ui import fill
-
 
 def public_fields(o):
     """
@@ -73,8 +71,3 @@ def update(o, **kwargs):
         o.update(o_updates, **kwargs)
         # if update succeeds, have o reflect the changes that are now in cp
         o.__dict__ = cp.__dict__
-
-
-@fill.method((object, Updateable))
-def _fill_with_updateable(o, u, **kw):
-    fill(o, u.__dict__, **kw)

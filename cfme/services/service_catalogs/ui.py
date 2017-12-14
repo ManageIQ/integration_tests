@@ -1,7 +1,8 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
+
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick
-from widgetastic.widget import Text, View
+from widgetastic.widget import Text, View, Select
 from widgetastic_patternfly import Button, Input, BootstrapSelect
 
 from cfme.base import Server
@@ -49,25 +50,43 @@ class OrderForm(ServicesCatalogView):
     timeout = Input(name='stack_timeout')
     db_user = Input(name="param_DBUser__protected")
     db_root_password = Input(name='param_DBRootPassword__protected')
-    select_instance_type = BootstrapSelect("param_InstanceType")
-    stack_name = Input(name='stack_name')
-    stack_timeout = Input(name='stack_timeout')
     resource_group = BootstrapSelect("resource_group")
     mode = BootstrapSelect('deploy_mode')
-    vm_name = Input(name="param_virtualMachineName")
+    select_instance_type = BootstrapSelect("param_InstanceType")
     vm_user = Input(name='param_adminUserName')
     vm_password = Input(name="param_adminPassword__protected")
     vm_size = BootstrapSelect('param_virtualMachineSize')
     user_image = BootstrapSelect("param_userImageName")
     os_type = BootstrapSelect('param_operatingSystemType')
-    key_name = Input(name="param_KeyName")
+    stack_name = VersionPick({
+        '5.9': Input(
+            locator='.//input[../../../div[normalize-space(.)="Stack Name"]]'),
+        Version.lowest(): Input(name='stack_name')})
+    stack_timeout = VersionPick({
+        '5.9': Input(
+            locator='.//input[../../../div[contains(normalize-space(.), "Timeout")]]'),
+        Version.lowest(): Input(name='stack_timeout')})
+
+    vm_name = VersionPick({
+        '5.9': Input(
+            locator='.//input[../../../div[contains(normalize-space(.), "Virtual Machine Name")]]'),
+        Version.lowest(): Input(name="param_virtualMachineName")})
+
+    key_name = VersionPick({
+        '5.9': Input(
+            locator='.//input[../../../div[contains(normalize-space(.), "Key Name")]]'),
+        Version.lowest(): Input(name="param_KeyName")})
+    role_arn = Input(locator='.//input[../../../div[contains(normalize-space(.), "Role ARN")]]')
     ssh_location = Input(name="param_SSHLocation")
 
     flavor = Input(name='param_flavor')
     image = Input(name="param_image")
     key = Input(name='param_key')
     private_network = Input(name="param_private_network")
-    default_select_value = BootstrapSelect('service_level')
+    default_select_value = VersionPick({
+        '5.9': Select(locator='.//select[../../'
+                              'div[contains(normalize-space(.), "Service Level")]]'),
+        Version.lowest(): BootstrapSelect('service_level')})
 
     machine_credential = BootstrapSelect("credential")
     hosts = Input(name="hosts")
@@ -130,19 +149,22 @@ def order(self):
         view.fill(self.dialog_values)
     if self.ansible_dialog_values:
         view.fill(self.ansible_dialog_values)
+    if self.stack_data and self.appliance.version > '5.9':
+        view.fill({'role_arn': "default"})
+    msg = "Order Request was Submitted"
     if self.appliance.version < "5.9":
-        msg = "Order Request was Submitted"
         msg_type = "success"
     else:
-        msg = "Dialog submitted successfully!"
         msg_type = "info"
     # TODO Remove once repaired
     if BZ(1513541, forced_streams=['5.9']).blocks:
         raise NotImplementedError("Service Order is broken - check BZ 1513541")
+    if self.stack_data and self.appliance.version > '5.9':
+        view.fill({'role_arn': "default"})
     view.submit_button.click()
     view = self.create_view(RequestsView)
     view.flash.assert_no_error()
-    view.flash.assert_message(msg, t=msg_type)
+    view.flash.assert_message(msg, msg_type)
 
 
 @navigator.register(Server)

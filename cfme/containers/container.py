@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import attr
 import random
 import itertools
 
@@ -7,11 +8,11 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import Accordion, ManageIQTree, View, Table
 from widgetastic_patternfly import VerticalNavigation
 from widgetastic.widget import Text
-from widgetastic.xpath import quote
 
-from cfme.containers.provider import (ContainerObjectAllBaseView, ContainerObjectDetailsBaseView)
+from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
+                                      ContainerObjectDetailsBaseView)
 from cfme.common import WidgetasticTaggable, TagPageView
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 
 
@@ -42,16 +43,16 @@ class ContainerDetailsView(ContainerObjectDetailsBaseView):
     pass
 
 
-class Container(WidgetasticTaggable, Navigatable):
-
+@attr.s
+class Container(BaseEntity, WidgetasticTaggable, Labelable):
+    """Container Class"""
     PLURAL = 'Containers'
     all_view = ContainerAllView
     details_view = ContainerDetailsView
 
-    def __init__(self, name, pod, appliance=None):
-        self.name = name
-        self.pod = pod
-        Navigatable.__init__(self, appliance=appliance)
+    name = attr.ib()
+    provider = attr.ib()
+    pod = attr.ib()
 
     @property
     def project_name(self):
@@ -66,7 +67,14 @@ class Container(WidgetasticTaggable, Navigatable):
                 for obj in itertools.islice(containers_list, count)]
 
 
-@navigator.register(Container, 'All')
+@attr.s
+class ContainerCollection(BaseCollection):
+    """Collection object for :py:class:`Container`."""
+
+    ENTITY = Container
+
+
+@navigator.register(ContainerCollection, 'All')
 class ContainerAll(CFMENavigateStep):
     VIEW = ContainerAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -84,7 +92,7 @@ class ContainerAll(CFMENavigateStep):
 @navigator.register(Container, 'Details')
 class ContainerDetails(CFMENavigateStep):
     VIEW = ContainerDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name,

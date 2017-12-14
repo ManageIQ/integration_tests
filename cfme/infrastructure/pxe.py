@@ -2,25 +2,24 @@
 """ A model of a PXE Server in CFME
 """
 import attr
-
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 from widgetastic.widget import View, Text, Checkbox
-from widgetastic_manageiq import (ManageIQTree, Input, ScriptBox, SummaryTable, Table, Version,
-                                  VersionPick)
-from widgetastic_patternfly import Dropdown, Accordion, FlashMessages, BootstrapSelect, Button
+from widgetastic_patternfly import Dropdown, Accordion, BootstrapSelect, Button
 
 from cfme.base import BaseEntity, BaseCollection
 from cfme.base.login import BaseLoggedInPage
-from cfme.utils import conf
+from cfme.utils import conf, ParamClassName
 from cfme.utils.appliance import get_or_create_current_appliance, Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.datafile import load_data_file
 from cfme.utils.path import project_path
-from cfme.utils.update import Updateable
-from cfme.utils.wait import wait_for
 from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
+from cfme.utils.wait import wait_for
+from widgetastic_manageiq import (ManageIQTree, Input, ScriptBox, SummaryTable, Table, Version,
+                                  VersionPick)
 
 
 class PXEToolBar(View):
@@ -60,8 +59,6 @@ class PXEMainView(BaseLoggedInPage):
     """
     represents whole All PXE Servers page
     """
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(PXEToolBar)
     sidebar = View.nested(PXESideBar)
     title = Text('//div[@id="main-content"]//h1')
@@ -86,7 +83,8 @@ class PXEDetailsToolBar(PXEToolBar):
     """
      represents the toolbar which appears when any pxe entity is clicked
     """
-    reload = Button(title='Reload current display')
+    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                '5.9': 'Refresh this page'}))
 
 
 class PXEServerDetailsView(PXEMainView):
@@ -107,8 +105,6 @@ class PXEServerDetailsView(PXEMainView):
 
 class PXEServerForm(View):
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     # common fields
     name = Input(id='name')
     depot_type = BootstrapSelect(id='log_protocol')
@@ -153,8 +149,6 @@ class PXEImageEditView(View):
     it can be found when some image is clicked in PXE Server Tree
     """
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     default_for_windows = Checkbox(id='default_for_windows')
     type = BootstrapSelect(id='image_typ')
 
@@ -183,6 +177,7 @@ class PXEServer(Updateable, Pretty, Navigatable):
         menu_filename: Menu filename for iPXE/syslinux menu.
     """
     pretty_attrs = ['name', 'uri', 'access_url']
+    _param_name = ParamClassName('name')
 
     def __init__(self, name=None, depot_type=None, uri=None, userid=None, password=None,
                  access_url=None, pxe_dir=None, windows_dir=None, customize_dir=None,
@@ -425,8 +420,6 @@ class PXECustomizationTemplateDetailsView(PXEMainView):
 
 class PXECustomizationTemplateForm(View):
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     name = Input(id='name')
     description = Input(id='description')
     image_type = BootstrapSelect(id='img_typ')
@@ -628,8 +621,6 @@ class PXESystemImageTypeDetailsView(PXEMainView):
 
 class PXESystemImageTypeForm(View):
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     name = Input(id='name')
     type = BootstrapSelect(id='provision_type')
 
@@ -794,8 +785,6 @@ class PXEDatastoreDetailsView(PXEMainView):
 
 class PXEDatastoreForm(View):
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     provider = BootstrapSelect(id='ems_id')
 
     @property
@@ -820,6 +809,7 @@ class ISODatastore(Updateable, Pretty, Navigatable):
     Args:
         provider: Provider name.
     """
+    _param_name = ParamClassName('ds_name')
     pretty_attrs = ['provider']
 
     def __init__(self, provider=None, appliance=None):
@@ -962,7 +952,7 @@ class PXEMainPage(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'PXE')
 
 
-def get_template_from_config(template_config_name):
+def get_template_from_config(template_config_name, create=False):
     """
     Convenience function to grab the details for a template from the yamls and create template.
     """
@@ -975,17 +965,16 @@ def get_template_from_config(template_config_name):
     script_data = script_data.read()
     appliance = get_or_create_current_appliance()
     collection = appliance.collections.customization_templates
-    customization_template = collection.instantiate(name=template_config['name'],
-                                                    description=template_config['description'],
-                                                    image_type=template_config['image_type'],
-                                                    script_type=template_config['script_type'],
-                                                    script_data=script_data)
-    if not customization_template.exists():
-        return collection.create(name=template_config['name'],
-                                 description=template_config['description'],
-                                 image_type=template_config['image_type'],
-                                 script_type=template_config['script_type'],
-                                 script_data=script_data)
+    kwargs = {
+        'name': template_config['name'],
+        'description': template_config['description'],
+        'image_type': template_config['image_type'],
+        'script_type': template_config['script_type'],
+        'script_data': script_data
+    }
+    customization_template = collection.instantiate(**kwargs)
+    if create and not customization_template.exists():
+        return collection.create(**kwargs)
     return customization_template
 
 

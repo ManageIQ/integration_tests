@@ -27,7 +27,9 @@ class DisksTable(VanillaTable):
         'Type': BootstrapSelect(id='hdType'),
         'Mode': BootstrapSelect(id='hdMode'),
         'Size': Input(id='dvcSize'),
+        # Workaround necessary until BZ 1524960 is resolved
         4: BootstrapSelect(id='hdUnit'),
+        3: BootstrapSelect(id='hdUnit'),
         'Dependent': BootstrapSwitch(name='cb_dependent'),
         'Delete Backing': BootstrapSwitch(name='cb_deletebacking'),
         'Actions': Button()

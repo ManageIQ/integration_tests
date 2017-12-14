@@ -5,6 +5,7 @@ import traceback
 from copy import copy
 from datetime import datetime
 from tempfile import NamedTemporaryFile
+from textwrap import dedent
 from time import sleep, time
 from urlparse import urlparse
 
@@ -242,7 +243,6 @@ class IPAppliance(object):
     def __init__(
             self, hostname, ui_protocol='https', ui_port=None, browser_steal=False,
             container=None, openshift_creds=None, db_host=None, db_port=None, ssh_port=None):
-        self._server = None
         if not isinstance(hostname, six.string_types):
             raise TypeError('Appliance\'s hostname must be a string!')
         self.hostname = hostname
@@ -296,13 +296,10 @@ class IPAppliance(object):
 
     @property
     def server(self):
-        if self._server is None:
-            self._server = self.collections.servers.get_master()
-        return self._server
+        return self.collections.servers.get_master()
 
     @property
     def user(self):
-        from cfme.configure.access_control import User
         from cfme.base.credential import Credential
         if self._user is None:
             # Admin by default
@@ -312,7 +309,10 @@ class IPAppliance(object):
                 '%r.user was set to None before, therefore generating an admin user: %s/%s',
                 self, username, password)
             cred = Credential(principal=username, secret=password)
-            self._user = User(credential=cred, appliance=self, name='Administrator')
+            user = self.collections.users.instantiate(
+                credential=cred, name='Administrator'
+            )
+            self._user = user
         return self._user
 
     @user.setter
@@ -427,6 +427,7 @@ class IPAppliance(object):
             loosen_pgssl: Loosens postgres connections if ``True`` (default ``True``)
             key_address: Fetch encryption key from this address if set, generate a new key if
                          ``None`` (default ``None``)
+            on_openstack: If appliance is running on Openstack provider (default ``False``)
 
         """
 
@@ -435,6 +436,7 @@ class IPAppliance(object):
         fix_ntp_clock = kwargs.pop('fix_ntp_clock', True)
         region = kwargs.pop('region', 0)
         key_address = kwargs.pop('key_address', None)
+        on_openstack = kwargs.pop('on_openstack', False)
         with self as ipapp:
             ipapp.wait_for_ssh()
 
@@ -452,6 +454,10 @@ class IPAppliance(object):
             if fix_ntp_clock:
                 self.fix_ntp_clock(log_callback=log_callback)
                 # TODO: Handle external DB setup
+            # This is workaround for Openstack appliances to use only one disk for the VMDB
+            if on_openstack:
+                self.configure_rhos_db_disk()
+
             self.db.setup(region=region, key_address=key_address)
             self.wait_for_evm_service(timeout=1200, log_callback=log_callback)
 
@@ -467,6 +473,84 @@ class IPAppliance(object):
             if restart_evm:
                 self.restart_evm_service(log_callback=log_callback)
             self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+
+    def configure_rhos_db_disk(self):
+        loopback_script_path = "/usr/local/sbin/loopbacks"
+        loopback_script_content = dedent("""
+        EOF
+        #!/bin/bash
+        DB_PATH="/var/opt/rh/rh-postgresql95/db"
+        DB="vmdb_db.img"
+        DB_IMG="\\${DB_PATH}/\\${DB}"
+        DB_SIZE="5GB"
+
+        if [ ! -f \\${DB_IMG} ]; then
+            fallocate -l \\${DB_SIZE} \\${DB_IMG}
+        fi
+
+        if  ! losetup -l | grep \\${DB} 1> /dev/null ; then
+            losetup -f \\${DB_IMG}
+            partprobe /dev/vdb
+            partprobe /dev/vdc
+            systemctl restart lvm2-lvmetad.service
+            vgchange -a y vg_pg
+        fi
+        EOF
+        """).strip()
+
+        loopback_unit_path = "/etc/systemd/system/multi-user.target.wants/loopback.service"
+        loopback_unit_content = dedent("""
+        EOF
+        [Unit]
+        Description=Setup loop devices
+        DefaultDependencies=false
+        ConditionFileIsExecutable=/usr/local/sbin/loopbacks
+        After=var.mount
+        Requires=systemd-remount-fs.service
+
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/sbin/loopbacks
+        TimeoutSec=60
+        RemainAfterExit=yes
+
+        [Install]
+        WantedBy=local-fs.target
+        Also=systemd-udev-settle.service
+        EOF
+        """).strip()
+
+        udev_rule_path = "/etc/udev/rules.d/75-persistent-disk.rules"
+        udev_rule_content = dedent("""
+        EOF
+        KERNEL=="loop0", SYMLINK+="vdb"
+        KERNEL=="loop0p1", SYMLINK+="vdb1"
+        EOF
+        """).strip()
+
+        content = [
+            (loopback_script_path, loopback_script_content),
+            (loopback_unit_path, loopback_unit_content),
+            (udev_rule_path, udev_rule_content)
+        ]
+
+        client = self.ssh_client
+
+        commands_to_run = [
+            "chmod ug+x /usr/local/sbin/loopbacks",
+            "chown root:root /usr/local/sbin/loopbacks",
+            "systemctl daemon-reload",
+            "udevadm control --reload-rules && udevadm trigger",
+            "/usr/local/sbin/loopbacks"
+        ]
+
+        logging.info("Creating loopback script, unit file and udev rule")
+        for path, content in content:
+            client.run_command("cat > {path} << {content}".format(path=path, content=content))
+
+        for command in commands_to_run:
+            logging.info("Running command: {}".format(command))
+            client.run_command(command)
 
     # TODO: this method eventually needs to be moved to provider class..
     @logger_wrap("Configure GCE IPAppliance: {}")
@@ -661,7 +745,7 @@ class IPAppliance(object):
     def unpartitioned_disks(self):
         """Returns a list of disk devices that are not mounted."""
         disks_and_partitions = self.ssh_client.run_command(
-            "cat /proc/partitions | awk '{ print $4 }' | egrep '^[sv]d[a-z][0-9]?'").output.strip()
+            "ls -1 /dev/ | egrep '^[sv]d[a-z][0-9]?'").output.strip()
         disks_and_partitions = re.split(r'\s+', disks_and_partitions)
         partition_regexp = re.compile('^[sv]d[a-z][0-9]$')
         disks = set()
@@ -1405,7 +1489,6 @@ class IPAppliance(object):
                 self.evmserverd.start()
             else:
                 self.evmserverd.restart()
-        self.server_details_changed()
 
     @logger_wrap("Waiting for EVM service: {}")
     def wait_for_evm_service(self, timeout=900, log_callback=None):
@@ -1794,96 +1877,10 @@ class IPAppliance(object):
         self.server_roles = server_roles
         return server_roles == self.server_roles
 
-    @cached_property
-    def configuration_details(self):
-        """Return details that are necessary to navigate through Configuration accordions.
-
-        Args:
-            ip_address: IP address of the server to match. If None, uses hostname from
-                ``conf.env['base_url']``
-
-        Returns:
-            If the data weren't found in the DB, :py:class:`NoneType`
-            If the data were found, it returns tuple ``(region, server name,
-            server id, server zone id)``
-        """
-        try:
-            servers = self.rest_api.collections.servers.all
-            chosen_server = None
-            if len(servers) == 1:
-                chosen_server = servers[0]
-            else:
-                for server in servers:
-                    if self.guid == server.guid:
-                        chosen_server = server
-            if chosen_server:
-                chosen_server.reload(attributes=['region_number'])
-                return (chosen_server.region_number, chosen_server.name,
-                        chosen_server.id, chosen_server.zone_id)
-            else:
-                return None, None, None, None
-        except:
-            return None
-
-    @cached_property
-    def configuration_details_old(self):
-        try:
-            miq_servers = self.db.client['miq_servers']
-            for region in self.db.client.session.query(self.db.client['miq_regions']):
-                reg_min = region.region * SEQ_FACT
-                reg_max = reg_min + SEQ_FACT
-                all_servers = self.db.client.session.query(miq_servers).all()
-                server = None
-                if len(all_servers) == 1:
-                    # If there's only one server, it's the one we want
-                    server = all_servers[0]
-                else:
-                    # Otherwise, filter based on id and ip/guid
-                    def server_filter(server):
-                        return all([
-                            server.id >= reg_min,
-                            server.id < reg_max,
-                            # second check because of openstack ip addresses
-                            server.ipaddress == self.db.address or server.guid == self.guid
-                        ])
-                    servers = filter(server_filter, all_servers)
-                    if servers:
-                        server = servers[0]
-                if server:
-                    return region.region, server.name, server.id, server.zone_id
-                else:
-                    return None, None, None, None
-            else:
-                return None
-
-        except KeyError:
-            return None
-
     def server_id(self):
         try:
-            return self.configuration_details[2]
-        except TypeError:
-            return None
-
-    @removals.remove(message='This call is being deprecated in 17.18')
-    def server_region(self):
-        try:
-            return self.configuration_details[0]
-        except TypeError:
-            return None
-
-    @removals.remove(message='This call is being deprecated in 17.18')
-    def server_name(self):
-        try:
-            return self.configuration_details[1]
-        except TypeError:
-            return None
-
-    @removals.remove(message='This call is being deprecated in 17.18')
-    def server_zone_id(self):
-        try:
-            return self.configuration_details[3]
-        except TypeError:
+            return self.server.sid
+        except IndexError:
             return None
 
     def server_region_string(self):
@@ -1891,47 +1888,9 @@ class IPAppliance(object):
         return "{} Region: Region {} [{}]".format(
             self.product_name, r, r)
 
-    @removals.remove(message='This call is being deprecated in 17.18')
-    def slave_server_zone_id(self):
-        table = self.db.client["miq_servers"]
-        try:
-            return self.db.client.session.query(table.id).filter(
-                table.is_master == 'false').first()[0]
-        except TypeError:
-            return None
-
-    @removals.remove(message='This call is being deprecated in 17.18')
-    def slave_server_name(self):
-        table = self.db.client["miq_servers"]
-        try:
-            return self.db.client.session.query(table.name).filter(
-                table.id == self.slave_server.zone.id).first()[0]
-        except TypeError:
-            return None
-
     @cached_property
     def company_name(self):
         return self.get_yaml_config()["server"]["company"]
-
-    @cached_property
-    def zone_description(self):
-        if self.appliance.version < '5.8':
-            zone_id = self.server.zone.id
-            zones = list(
-                self.db.client.session.query(self.db.client["zones"]).filter(
-                    self.db.client["zones"].id == zone_id
-                )
-            )
-            if zones:
-                return zones[0].description
-            else:
-                return None
-        else:
-            zones = self.rest_api.collections.zones.find_by(id=self.server.zone.id)
-            if zones:
-                return zones[0].description
-            else:
-                return None
 
     def host_id(self, hostname):
         hosts = list(
@@ -1985,9 +1944,7 @@ class IPAppliance(object):
 
         # Run it
         result = self.ssh_client.run_rails_command(dest_ruby)
-        if result:
-            self.server_details_changed()
-        else:
+        if not result:
             raise Exception('Unable to set config: {!r}:{!r}'.format(result.rc, result.output))
 
     def set_session_timeout(self, timeout=86400, quiet=True):
@@ -2123,9 +2080,6 @@ class IPAppliance(object):
             logger.error('Could not detect MIQ Server workers started in {}s.'.format(
                 poll_interval * max_attempts))
         evm_tail.close()
-
-    def server_details_changed(self):
-        clear_property_cache(self, 'configuration_details', 'zone_description')
 
     @logger_wrap("Setting dev branch: {}")
     def use_dev_branch(self, repo, branch, log_callback=None):

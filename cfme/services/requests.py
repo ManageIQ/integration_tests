@@ -7,6 +7,7 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Table, Checkbox, View
 from widgetastic_manageiq import BreadCrumb, SummaryForm, SummaryFormItem, PaginationPane, Button
 from widgetastic_patternfly import Input, Tab, BootstrapTreeview
+from widgetastic.utils import Version, VersionPick
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm_views import ProvisionView, BasicProvisionFormView
@@ -232,7 +233,8 @@ class RequestCollection(BaseCollection):
 
 class RequestsToolbar(View):
     """Toolbar on the requests view"""
-    reload = Button(title='Reload the current display')
+    reload = VersionPick({Version.lowest(): Button(title='Reload the current display'),
+                         '5.9': Button(title='Refresh this page')})
 
 
 class RequestBasicView(BaseLoggedInPage):

@@ -57,7 +57,7 @@ def pytest_exception_interact(node, call, report):
         slaveid=store.slaveid)
     exception_name = call.excinfo.type.__name__
     exception_lineno = call.excinfo.traceback[-1].lineno
-    exception_filename = call.excinfo.traceback[-1].path.strpath.replace(
+    exception_filename = str(call.excinfo.traceback[-1].path).replace(
         project_path.strpath + "/", ''
     )
     exception_location = "{}:{}".format(exception_filename, exception_lineno)

@@ -1,28 +1,26 @@
 # -*- coding: utf-8 -*-
-import fauxfactory
-import pytest
 import traceback
 
-from cfme.configure.access_control import User, Role
-from cfme.utils import error
+import fauxfactory
+import pytest
+
 import cfme.fixtures.pytest_selenium as sel
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.automate.explorer import AutomateExplorer  # NOQA
-from cfme.control.explorer import ControlExplorer  # NOQA
-from cfme.exceptions import RBACOperationBlocked
 from cfme.common.provider import base_types
+from cfme.configure import tasks
+from cfme.exceptions import RBACOperationBlocked
 from cfme.infrastructure import virtual_machines as vms
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
-from cfme.configure import tasks
-from fixtures.provider import setup_one_or_skip
+from cfme.utils import error
+from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.update import update
-from cfme.utils import version
+from fixtures.provider import setup_one_or_skip
 
 pytestmark = test_requirements.rbac
 
@@ -42,13 +40,15 @@ def new_credential():
     return Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret='redhat')
 
 
-def new_user(group):
+def new_user(appliance, group, name=None):
     from fixtures.blockers import bug
 
     uppercase_username_bug = bug(1487199)
 
-    user = User(
-        name='user{}'.format(fauxfactory.gen_alphanumeric()),
+    name = name or 'user{}'.format(fauxfactory.gen_alphanumeric())
+
+    user = appliance.collections.users.create(
+        name=name,
         credential=new_credential(),
         email='xyz@redhat.com',
         group=group,
@@ -62,9 +62,10 @@ def new_user(group):
     return user
 
 
-def new_role():
-    return Role(
-        name='rol{}'.format(fauxfactory.gen_alphanumeric()),
+def new_role(appliance, name=None):
+    name = name or 'rol{}'.format(fauxfactory.gen_alphanumeric())
+    return appliance.collections.roles.create(
+        name=name,
         vm_restriction='None')
 
 
@@ -84,12 +85,11 @@ def check_item_visibility(tag):
 
 # User test cases
 @pytest.mark.tier(2)
-def test_user_crud(group_collection):
+def test_user_crud(appliance, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
-    user = new_user(group)
-    user.create()
+    user = new_user(appliance, group)
     with update(user):
         user.name = "{}edited".format(user.name)
     copied_user = user.copy()
@@ -103,8 +103,7 @@ def test_user_login(appliance, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
-    user = new_user(group)
-    user.create()
+    user = new_user(appliance, group)
     try:
         with user:
             navigate_to(appliance.server, 'Dashboard')
@@ -113,14 +112,15 @@ def test_user_login(appliance, group_collection):
 
 
 @pytest.mark.tier(3)
-def test_user_duplicate_name(group_collection):
+def test_user_duplicate_name(appliance, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
-    nu = new_user(group)
-    nu.create()
+    name = 'user{}'.format(fauxfactory.gen_alphanumeric())
+
+    nu = new_user(appliance, group, name=name)
     with pytest.raises(RBACOperationBlocked):
-        nu.create()
+        nu = new_user(appliance, group, name=name)
 
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
@@ -128,103 +128,94 @@ def test_user_duplicate_name(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_username_required_error_validation(group_collection):
+def test_username_required_error_validation(appliance, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
-    user = User(
-        name="",
-        credential=new_credential(),
-        email='xyz@redhat.com',
-        group=group)
     with error.expected("Name can't be blank"):
-        user.create()
+        appliance.collections.users.create(
+            name="",
+            credential=new_credential(),
+            email='xyz@redhat.com',
+            group=group
+        )
 
 
 @pytest.mark.tier(3)
-def test_userid_required_error_validation(group_collection):
+def test_userid_required_error_validation(appliance, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
-    user = User(
-        name='user{}'.format(fauxfactory.gen_alphanumeric()),
-        credential=Credential(principal='', secret='redhat'),
-        email='xyz@redhat.com',
-        group=group)
     with error.expected("Userid can't be blank"):
-        user.create()
-
+        appliance.collections.users.create(
+            name='user{}'.format(fauxfactory.gen_alphanumeric()),
+            credential=Credential(principal='', secret='redhat'),
+            email='xyz@redhat.com',
+            group=group
+        )
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
-    navigate_to(user.appliance.server, 'Dashboard')
+    navigate_to(group.appliance.server, 'Dashboard')
 
 
 @pytest.mark.tier(3)
-def test_user_password_required_error_validation(group_collection):
+def test_user_password_required_error_validation(appliance, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
-
-    user = User(
-        name='user{}'.format(fauxfactory.gen_alphanumeric()),
-        credential=Credential(
-            principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret=None),
-        email='xyz@redhat.com',
-        group=group)
 
     check = "Password can't be blank"
 
     with error.expected(check):
-        user.create()
-
+        user = appliance.collections.users.create(
+            name='user{}'.format(fauxfactory.gen_alphanumeric()),
+            credential=Credential(
+                principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret=None),
+            email='xyz@redhat.com',
+            group=group)
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
     navigate_to(user.appliance.server, 'Dashboard')
 
 
 @pytest.mark.tier(3)
-def test_user_group_error_validation():
-    user = User(
-        name='user{}'.format(fauxfactory.gen_alphanumeric()),
-        credential=new_credential(),
-        email='xyz@redhat.com',
-        group='')
+def test_user_group_error_validation(appliance):
     with error.expected("A User must be assigned to a Group"):
-        user.create()
+        appliance.collections.users.create(
+            name='user{}'.format(fauxfactory.gen_alphanumeric()),
+            credential=new_credential(),
+            email='xyz@redhat.com',
+            group='')
 
 
 @pytest.mark.tier(3)
-def test_user_email_error_validation(group_collection):
-    group_name = 'EvmGroup-user'
-    group = group_collection.instantiate(description=group_name)
+def test_user_email_error_validation(appliance, group_collection):
+    group = group_collection.instantiate(description='EvmGroup-user')
 
-    user = User(
-        name='user{}'.format(fauxfactory.gen_alphanumeric()),
-        credential=new_credential(),
-        email='xyzdhat.com',
-        group=group)
     with error.expected("Email must be a valid email address"):
-        user.create()
+        appliance.collections.users.create(
+            name='user{}'.format(fauxfactory.gen_alphanumeric()),
+            credential=new_credential(),
+            email='xyzdhat.com',
+            group=group)
 
 
 @pytest.mark.tier(2)
-def test_user_edit_tag(group_collection):
+def test_user_edit_tag(appliance, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
-    user = new_user(group)
-    user.create()
+    user = new_user(appliance, group)
     user.edit_tags("Cost Center *", "Cost Center 001")
     assert ('Cost Center *', 'Cost Center 001') in user.get_tags(), "User edit tag failed"
     user.delete()
 
 
 @pytest.mark.tier(3)
-def test_user_remove_tag(group_collection):
+def test_user_remove_tag(appliance, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
-    user = new_user(group)
-    user.create()
+    user = new_user(appliance, group)
     user.edit_tags("Department", "Engineering")
     user.remove_tag("Department", "Engineering")
     navigate_to(user, 'Details')
@@ -233,14 +224,14 @@ def test_user_remove_tag(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_delete_default_user():
+def test_delete_default_user(appliance):
     """Test for deleting default user Administrator.
 
     Steps:
         * Login as Administrator user
         * Try deleting the user
     """
-    user = User(name='Administrator')
+    user = appliance.collections.users.instantiate(name='Administrator')
     with pytest.raises(RBACOperationBlocked):
         user.delete()
 
@@ -260,8 +251,7 @@ def test_current_user_login_delete(appliance, request):
     group_name = "EvmGroup-super_administrator"
     group = group_collection(appliance).instantiate(description=group_name)
 
-    user = new_user(group)
-    user.create()
+    user = new_user(appliance, group)
     request.addfinalizer(user.delete)
     request.addfinalizer(user.appliance.server.login_admin)
     with user:
@@ -389,14 +379,13 @@ def test_delete_default_group(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_delete_group_with_assigned_user(group_collection):
+def test_delete_group_with_assigned_user(appliance, group_collection):
     """Test that CFME prevents deletion of a group that has users assigned
     """
     role = 'EvmRole-approver'
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role)
-    user = new_user(group=group)
-    user.create()
+    new_user(appliance, group=group)
     with pytest.raises(RBACOperationBlocked):
         group.delete()
 
@@ -452,8 +441,7 @@ def test_tagvis_group(user_restricted, group_with_tag, check_item_visibility):
 # Role test cases
 @pytest.mark.tier(2)
 def test_role_crud(appliance):
-    role = new_role()
-    role.create()
+    role = new_role(appliance)
     with update(role):
         role.name = "{}edited".format(role.name)
     copied_role = role.copy()
@@ -462,20 +450,20 @@ def test_role_crud(appliance):
 
 
 @pytest.mark.tier(3)
-def test_rolename_required_error_validation():
-    role = Role(
-        name=None,
-        vm_restriction='Only User Owned')
+def test_rolename_required_error_validation(appliance):
     with error.expected("Name can't be blank"):
-        role.create()
+        appliance.collections.roles.create(
+            name=None,
+            vm_restriction='Only User Owned'
+        )
 
 
 @pytest.mark.tier(3)
-def test_rolename_duplicate_validation():
-    role = new_role()
-    role.create()
+def test_rolename_duplicate_validation(appliance):
+    name = 'rol{}'.format(fauxfactory.gen_alphanumeric())
+    role = new_role(appliance, name=name)
     with pytest.raises(RBACOperationBlocked):
-        role.create()
+        new_role(appliance, name=name)
 
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
@@ -483,7 +471,7 @@ def test_rolename_duplicate_validation():
 
 
 @pytest.mark.tier(3)
-def test_delete_default_roles():
+def test_delete_default_roles(appliance):
     """Test that CFME prevents a user from deleting a default role
     when selecting it from the Access Control EVM Role checklist
 
@@ -492,13 +480,13 @@ def test_delete_default_roles():
         * Navigate to Configuration -> Role
         * Try editing the group EvmRole-approver
     """
-    role = Role(name='EvmRole-approver')
+    role = appliance.collections.roles.instantiate(name='EvmRole-approver')
     with pytest.raises(RBACOperationBlocked):
         role.delete()
 
 
 @pytest.mark.tier(3)
-def test_edit_default_roles():
+def test_edit_default_roles(appliance):
     """Test that CFME prevents a user from editing a default role
     when selecting it from the Access Control EVM Role checklist
 
@@ -507,7 +495,7 @@ def test_edit_default_roles():
         * Navigate to Configuration -> Role
         * Try editing the group EvmRole-auditor
     """
-    role = Role(name='EvmRole-auditor')
+    role = appliance.collections.roles.instantiate(name='EvmRole-auditor')
     newrole_name = "{}-{}".format(role.name, fauxfactory.gen_alphanumeric())
     role_updates = {'name': newrole_name}
 
@@ -516,9 +504,8 @@ def test_edit_default_roles():
 
 
 @pytest.mark.tier(3)
-def test_delete_roles_with_assigned_group(group_collection):
-    role = new_role()
-    role.create()
+def test_delete_roles_with_assigned_group(appliance, group_collection):
+    role = new_role(appliance)
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group_collection.create(description=group_description, role=role.name)
 
@@ -527,15 +514,13 @@ def test_delete_roles_with_assigned_group(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_assign_user_to_new_group(group_collection):
-    role = new_role()  # call function to get role
-    role.create()
+def test_assign_user_to_new_group(appliance, group_collection):
+    role = new_role(appliance)  # call function to get role
 
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role.name)
 
-    user = new_user(group=group)
-    user.create()
+    new_user(appliance, group=group)
 
 
 def _test_vm_provision(appliance):
@@ -581,15 +566,13 @@ def test_permission_edit(appliance, request, product_features, action):
     product_features = version.pick(product_features)
     request.addfinalizer(appliance.server.login_admin)
     role_name = fauxfactory.gen_alphanumeric()
-    role = Role(name=role_name,
+    role = appliance.collections.roles.create(name=role_name,
                 vm_restriction=None,
                 product_features=[(['Everything'], False)] +  # role_features
                                  [(k, True) for k in product_features])
-    role.create()
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection(appliance).create(description=group_description, role=role.name)
-    user = new_user(group=group)
-    user.create()
+    user = new_user(appliance, group=group)
     with user:
         try:
             action()
@@ -604,18 +587,20 @@ def test_permission_edit(appliance, request, product_features, action):
             with error.expected(Exception):
                 action()
         except error.UnexpectedSuccessException:
-            pytest.Fails('Permissions have not been updated')
+            pytest.fail('Permissions have not been updated')
 
 
-def _mk_role(name=None, vm_restriction=None, product_features=None):
+def _mk_role(appliance, name=None, vm_restriction=None, product_features=None):
     """Create a thunk that returns a Role object to be used for perm
        testing.  name=None will generate a random name
 
     """
     name = name or fauxfactory.gen_alphanumeric()
-    return lambda: Role(name=name,
-                        vm_restriction=vm_restriction,
-                        product_features=product_features)
+    return appliance.collections.roles.instantiate(
+        name=name,
+        vm_restriction=vm_restriction,
+        product_features=product_features
+    )
 
 
 def _go_to(cls_or_obj, dest='All'):
@@ -630,28 +615,43 @@ def _go_to(cls_or_obj, dest='All'):
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize(
-    'role,allowed_actions,disallowed_actions',
-    [[_mk_role(product_features=[[['Everything'], False],  # minimal permission
-                                 [['Everything', 'Settings', 'Tasks'], True]]),
-      {'tasks': lambda appliance: sel.click(tasks.buttons.default)},  # can only access one thing
-      {
-          'my services': _go_to(MyService),
-          'chargeback': _go_to('server', 'Chargeback'),
-          'clouds providers': _go_to(base_types()['cloud']),
-          'infrastructure providers': _go_to(base_types()['infra']),
-          'control explorer': _go_to('server', 'ControlExplorer'),
-          'automate explorer': _go_to('server', 'AutomateExplorer')}],
-     [_mk_role(product_features=[[['Everything'], True]]),  # full permissions
-      {
-          'my services': _go_to(MyService),
-          'chargeback': _go_to('server', 'Chargeback'),
-          'clouds providers': _go_to(base_types()['cloud']),
-          'infrastructure providers': _go_to(base_types()['infra']),
-          'control explorer': _go_to('server', 'ControlExplorer'),
-          'automate explorer': _go_to('server', 'AutomateExplorer')},
-      {}]])
+    'product_features,allowed_actions,disallowed_actions',
+    [
+        [  # Param Set 1
+            [  # product_features
+                [['Everything'], False],  # minimal permission
+                [['Everything', 'Settings', 'Tasks'], True]
+            ],
+            {  # allowed_actions
+                'tasks': lambda appliance: sel.click(tasks.buttons.default)
+            },
+            {  # disallowed actions
+                'my services': _go_to(MyService),
+                'chargeback': _go_to('server', 'Chargeback'),
+                'clouds providers': _go_to(base_types()['cloud']),
+                'infrastructure providers': _go_to(base_types()['infra']),
+                'control explorer': _go_to('server', 'ControlExplorer'),
+                'automate explorer': _go_to('server', 'AutomateExplorer')
+            }
+        ],
+        [  # Param Set 2
+            [  # product_features
+                [['Everything'], True]  # full permissions
+            ],
+            {  # allowed_actions
+                'my services': _go_to(MyService),
+                'chargeback': _go_to('server', 'Chargeback'),
+                'clouds providers': _go_to(base_types()['cloud']),
+                'infrastructure providers': _go_to(base_types()['infra']),
+                'control explorer': _go_to('server', 'ControlExplorer'),
+                'automate explorer': _go_to('server', 'AutomateExplorer')
+            },
+            {}  # disallowed_actions
+        ]
+    ]
+)
 @pytest.mark.meta(blockers=[1262759])
-def test_permissions(appliance, role, allowed_actions, disallowed_actions):
+def test_permissions(appliance, product_features, allowed_actions, disallowed_actions):
     """ Test that that under the specified role the allowed acctions succeed
         and the disallowed actions fail
 
@@ -667,12 +667,10 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions):
             object: [ { "Action Name": function_reference_action }, ...]
     """
     # create a user and role
-    role = role()  # call function to get role
-    role.create()
+    role = _mk_role(appliance, product_features=product_features)
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection(appliance).create(description=group_description, role=role.name)
-    user = new_user(group=group)
-    user.create()
+    user = new_user(appliance, group=group)
     fails = {}
     try:
         with user:
@@ -705,7 +703,7 @@ def single_task_permission_test(appliance, product_features, actions):
        fail when everything but product_features are enabled"""
     # Enable only specified product features
     test_prod_features = [(['Everything'], False)] + [(f, True) for f in product_features]
-    test_permissions(appliance, _mk_role(name=fauxfactory.gen_alphanumeric(),
+    test_permissions(appliance, _mk_role(appliance, name=fauxfactory.gen_alphanumeric(),
                                          product_features=test_prod_features), actions, {})
 
     # Enable everything but specified product features
@@ -717,7 +715,7 @@ def single_task_permission_test(appliance, product_features, actions):
         test_prod_features = [(['Everything'], False)] + test_prod_features
 
     test_prod_features += [(f, False) for f in product_features]
-    test_permissions(appliance, _mk_role(name=fauxfactory.gen_alphanumeric(),
+    test_permissions(appliance, _mk_role(appliance, name=fauxfactory.gen_alphanumeric(),
                                          product_features=test_prod_features), {}, actions)
 
 
@@ -784,9 +782,8 @@ def test_user_change_password(appliance, request):
     group_name = 'EvmGroup-user'
     group = group_collection(appliance).instantiate(description=group_name)
 
-    user = new_user(group=group)
+    user = new_user(appliance, group=group)
 
-    user.create()
     request.addfinalizer(user.delete)
     request.addfinalizer(appliance.server.login_admin)
     with user:

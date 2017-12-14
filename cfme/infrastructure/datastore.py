@@ -2,18 +2,22 @@
 """
 import attr
 from lxml.html import document_fromstring
-
 from navmazing import NavigateToAttribute
+from widgetastic.exceptions import NoSuchElementException
+from widgetastic.utils import Version, VersionPick
+from widgetastic.widget import ParametrizedView
 from widgetastic.widget import View, Text
+from widgetastic_patternfly import Dropdown, Accordion
+
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
 from cfme.common.host_views import HostsView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
-from widgetastic.exceptions import NoSuchElementException
 from widgetastic_manageiq import (ManageIQTree,
                                   SummaryTable,
                                   ItemsToolBarViewSelector,
@@ -23,9 +27,6 @@ from widgetastic_manageiq import (ManageIQTree,
                                   BaseQuadIconEntity,
                                   BaseTileIconEntity,
                                   JSBaseEntity)
-from widgetastic.widget import ParametrizedView
-from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
-from widgetastic.utils import Version, VersionPick
 
 
 class DatastoreToolBar(View):
@@ -117,8 +118,6 @@ class DatastoresView(BaseLoggedInPage):
     """
     represents whole All Datastores page
     """
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(DatastoreToolBar)
     sidebar = View.nested(DatastoreSideBar)
     including_entities = View.include(DatastoreEntities, use_parent=True)
@@ -162,8 +161,6 @@ class DatastoreDetailsView(BaseLoggedInPage):
     represents Datastore Details page
     """
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(DatastoreToolBar)
     sidebar = View.nested(DatastoreSideBar)
 
@@ -206,6 +203,7 @@ class Datastore(Pretty, BaseEntity, WidgetasticTaggable):
     """
 
     pretty_attrs = ['name', 'provider_key']
+    _param_name = ParamClassName('name')
 
     name = attr.ib()
     provider = attr.ib()
@@ -320,7 +318,7 @@ class DatastoreCollection(BaseCollection):
 
         if set(datastores) == set(checked_datastores):
             view.toolbar.configuration.item_select('Remove Datastores', handle_alert=True)
-            view.entities.flash.assert_success_message(
+            view.flash.assert_success_message(
                 'Delete initiated for Datastore from the CFME Database')
 
             for datastore in datastores:

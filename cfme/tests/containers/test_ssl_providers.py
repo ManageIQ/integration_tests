@@ -5,7 +5,6 @@ from fauxfactory import gen_alphanumeric, gen_integer
 import pytest
 
 from cfme.containers.provider import ContainersProvider
-from cfme.exceptions import FlashMessageException
 from cfme.utils.version import current_version
 from cfme.common.provider_views import ContainerProvidersView
 
@@ -71,7 +70,7 @@ def test_add_provider_naming_conventions(provider, appliance, soft_assert):
             view = appliance.browser.create_view(ContainerProvidersView)
             view.flash.assert_success_message(
                 'Containers Providers "' + provider_name + '" was saved')
-        except FlashMessageException:
+        except AssertionError:
             soft_assert(False, provider_name + ' wasn\'t added successfully')
         ContainersProvider.clear_providers()
 
@@ -92,7 +91,7 @@ def test_add_provider_ssl(provider, default_sec_protocol, soft_assert):
     new_provider.endpoints['default'].sec_protocol = default_sec_protocol
     try:
         new_provider.setup()
-    except FlashMessageException:
+    except AssertionError:
         soft_assert(False, provider.name + ' wasn\'t added successfully using ' +
                     default_sec_protocol + ' security protocol')
     ContainersProvider.clear_providers()
@@ -123,7 +122,7 @@ def test_add_hawkular_provider_ssl(provider, appliance, test_item, soft_assert):
         view = appliance.browser.create_view(ContainerProvidersView)
         view.flash.assert_success_message(
             'Containers Providers "' + provider.name + '" was saved')
-    except FlashMessageException:
+    except AssertionError:
         soft_assert(False, provider.name + ' wasn\'t added successfully using ' +
                     test_item.default_sec_protocol + ' security protocol and ' +
                     test_item.hawkular_sec_protocol + ' hawkular security protocol')

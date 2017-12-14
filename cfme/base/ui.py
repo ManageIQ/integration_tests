@@ -4,7 +4,6 @@ import time
 
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
-
 from selenium.webdriver.common.keys import Keys
 from widgetastic.widget import View, Table, Text, Image, FileInput
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
@@ -63,8 +62,9 @@ class LoginPage(View):
         username = conf.credentials['default']['username']
         password = conf.credentials['default']['password']
         cred = Credential(principal=username, secret=password)
-        from cfme.configure.access_control import User
-        user = User(credential=cred, name='Administrator')
+        user = self.extra.appliance.collections.users.instantiate(
+            credential=cred, name='Administrator'
+        )
         return self.log_in(user, **kwargs)
 
     def submit_login(self, method='click_on_login'):
@@ -160,8 +160,7 @@ def login(self, user=None, method=LOGIN_METHODS[-1]):
         username = conf.credentials['default']['username']
         password = conf.credentials['default']['password']
         cred = Credential(principal=username, secret=password)
-        from cfme.configure.access_control import User
-        user = User(credential=cred, name='Administrator')
+        user = self.appliance.collections.users.instantiate(credential=cred, name='Administrator')
 
     logged_in_view = self.appliance.browser.create_view(BaseLoggedInPage)
 
@@ -199,9 +198,7 @@ def login_admin(self, **kwargs):
     username = conf.credentials['default']['username']
     password = conf.credentials['default']['password']
     cred = Credential(principal=username, secret=password)
-    from cfme.configure.access_control import User
-    user = User(credential=cred)
-    user.name = 'Administrator'
+    user = self.appliance.collections.users.instantiate(credential=cred, name='Administrator')
     logged_in_page = self.login(user, **kwargs)
     return logged_in_page
 
@@ -272,8 +269,6 @@ class LoggedIn(CFMENavigateStep):
 
 
 class ConfigurationView(BaseLoggedInPage):
-    flash = FlashMessages(
-        './/div[starts-with(@id, "flash_text_div") or starts-with(@class, "flash_text_div")]')
     title = Text('#explorer_title_text')
 
     @View.nested
@@ -493,7 +488,7 @@ class Details(CFMENavigateStep):
         self.prerequisite_view.accordions.settings.tree.click_path(
             self.obj.zone.region.settings_string,
             "Zones",
-            "Zone: {} (current)".format(self.obj.appliance.zone_description),
+            "Zone: {} (current)".format(self.obj.appliance.server.zone.description),
             "Server: {} [{}] (current)".format(self.obj.appliance.server.name,
                 self.obj.sid))
 
@@ -1259,6 +1254,8 @@ class AutomateSimulation(CFMENavigateStep):
 
 
 class AutomateImportExportBaseView(BaseLoggedInPage):
+    # TODO This is currently overiding the base flash and should be renamed and efforts made
+    # to update assocaited tests
     flash = FlashMessages('div.import-flash-message')
     title = Text('.//div[@id="main-content"]//h1')
 

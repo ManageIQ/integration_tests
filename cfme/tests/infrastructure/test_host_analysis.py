@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import pytest
+from widgetastic.exceptions import NoSuchElementException
 
 from cfme import test_requirements
-from cfme.configure.tasks import is_host_analysis_finished
-from cfme.exceptions import ListAccordionLinkNotFound
+from cfme.configure.tasks import is_host_analysis_finished, TasksView
 from cfme.infrastructure import host
 from cfme.infrastructure.provider import InfraProvider
-from cfme.web_ui import listaccordion as list_acc, toolbar, InfoBlock
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils import conf, testgen, version
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
@@ -52,6 +52,11 @@ def get_host_data_by_name(provider_key, host_name):
     return None
 
 
+def reload_tasks_page(appliance):
+    view = appliance.browser.create_view(TasksView)
+    view.reload.click()
+
+
 @pytest.mark.uncollectif(
     lambda provider: version.current_version() == version.UPSTREAM and provider.type == 'rhevm')
 def test_run_host_analysis(appliance, request, setup_provider, provider, host_type, host_name,
@@ -88,7 +93,7 @@ def test_run_host_analysis(appliance, request, setup_provider, provider, host_ty
     test_host.run_smartstate_analysis()
 
     wait_for(lambda: is_host_analysis_finished(host_name),
-             delay=15, timeout="10m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="10m", fail_func=lambda: reload_tasks_page(appliance))
 
     # Check results of the analysis
     drift_history = test_host.get_detail('Relationships', 'Drift History')
@@ -99,28 +104,25 @@ def test_run_host_analysis(appliance, request, setup_provider, provider, host_ty
             'No services found in host detail')
 
     if host_type in ('rhel', 'rhev'):
-        soft_assert(InfoBlock.text('Security', 'Users') != '0',
-            'No users found in host detail')
-        soft_assert(InfoBlock.text('Security', 'Groups') != '0',
-            'No groups found in host detail')
-        soft_assert(InfoBlock.text('Security', 'SSH Root') != '',
+        view = navigate_to(test_host, 'Details')
+        # will return list of values if some of them are active
+        accordion_info = view.security_accordion.navigation.read()
+        soft_assert(not accordion_info)
+        soft_assert(test_host.get_detail('Configuration', 'Packages') != '0',
             'No packages found in host detail')
-        soft_assert(InfoBlock.text('Configuration', 'Packages') != '0',
-            'No packages found in host detail')
-        soft_assert(InfoBlock.text('Configuration', 'Files') != '0',
+        soft_assert(test_host.get_detail('Configuration', 'Files') != '0',
             'No files found in host detail')
-        soft_assert(InfoBlock.text('Security', 'Firewall Rules') != '0',
-            'No firewall rules found in host detail')
 
     elif host_type in ('esx', 'esxi'):
-        soft_assert(InfoBlock.text('Configuration', 'Advanced Settings') != '0',
+        soft_assert(test_host.get_detail('Configuration', 'Advanced Settings') != '0',
             'No advanced settings found in host detail')
 
         if not(provider.type == "virtualcenter" and provider.version < "5"):
             # If the Firewall Rules are 0, the element can't be found (it's not a link)
             try:
                 # This fails for vsphere4...  https://bugzilla.redhat.com/show_bug.cgi?id=1055657
-                list_acc.select('Security', 'Show the firewall rules on this Host')
-            except ListAccordionLinkNotFound:
+                view = navigate_to(test_host, 'Details')
+                view.security_accordion.navigation.select('Firewall Rules')
+            except NoSuchElementException:
                 # py.test's .fail would wipe the soft_assert data
                 soft_assert(False, "No firewall rules found in host detail accordion")

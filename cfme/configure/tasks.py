@@ -6,14 +6,14 @@ import re
 from navmazing import NavigateToAttribute
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
-from widgetastic_manageiq import BootstrapSelect, Button, CheckboxSelect, Table
-from widgetastic_patternfly import Dropdown, Tab, FlashMessages
+from widgetastic_patternfly import Dropdown, Tab
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError
+from widgetastic_manageiq import BootstrapSelect, Button, CheckboxSelect, Table
 
 table_loc = '//div[@id="gtl_div"]//table'
 
@@ -106,7 +106,6 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
 
 
 class TasksView(BaseLoggedInPage):
-    flash = FlashMessages('.//div[starts-with(@id, "flash_text_div")]')
     # Toolbar
     delete = Dropdown('Delete Tasks')  # dropdown just has icon, use element title
     reload = Button(title='Reload the current display')

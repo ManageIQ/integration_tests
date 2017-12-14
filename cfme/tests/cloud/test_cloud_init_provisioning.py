@@ -26,9 +26,7 @@ pytestmark = [
 @pytest.fixture(scope="module")
 def setup_ci_template(provider):
     cloud_init_template_name = provider.data['provisioning']['ci-template']
-    cloud_init_template = get_template_from_config(cloud_init_template_name)
-    if not cloud_init_template.exists():
-        cloud_init_template.create()
+    get_template_from_config(cloud_init_template_name, create=True)
 
 
 @pytest.fixture(scope="function")
@@ -77,9 +75,10 @@ def test_provision_cloud_init(request, setup_provider, provider, provisioning,
     logger.info('Instance args: {}'.format(inst_args))
 
     instance.create(**inst_args)
-
-    connect_ip, tc = wait_for(mgmt_system.get_ip_address, [vm_name], num_sec=300,
-                              handle_exception=True)
+    provision_request = provider.appliance.collections.requests.instantiate(vm_name,
+                                                                   partial_check=True)
+    provision_request.wait_for_request()
+    connect_ip = mgmt_system.get_ip_address(vm_name)
 
     # Check that we can at least get the uptime via ssh this should only be possible
     # if the username and password have been set via the cloud-init script so

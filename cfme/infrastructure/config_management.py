@@ -3,15 +3,13 @@ from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Checkbox, TextInput, Text, View
-from widgetastic_manageiq import (
-    Accordion, BaseEntitiesView, Button, ItemsToolBarViewSelector, ManageIQTree, SummaryTable,
-    Table, Version, VersionPick)
-from widgetastic_patternfly import BootstrapSelect, Dropdown, FlashMessages, Tab
+from widgetastic_patternfly import BootstrapSelect, Dropdown, Tab
 
 from cfme.base.credential import Credential as BaseCredential
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.configure.configuration.region_settings import Category, Tag
+from cfme.utils import ParamClassName
 from cfme.utils import version, conf
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -19,11 +17,15 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import (
+    Accordion, BaseEntitiesView, Button, ItemsToolBarViewSelector, ManageIQTree, SummaryTable,
+    Version, VersionPick, Table)
 
 
 class ConfigManagementToolbar(View):
     """Toolbar"""
-    refresh = Button(title='Reload current display')
+    refresh = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                '5.9': 'Refresh this page'}))
     configuration = Dropdown('Configuration')
     lifecycle = Dropdown('Lifecycle')
     policy = Dropdown('Policy')
@@ -34,7 +36,8 @@ class ConfigManagementToolbar(View):
 class ConfigManagementDetailsToolbar(View):
     """Toolbar on the details page"""
     history = Dropdown(title='History')
-    refresh = Button(title='Reload current display')
+    refresh = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                '5.9': 'Refresh this page'}))
     lifecycle = Dropdown('Lifecycle')
     policy = Dropdown('Policy')
     download = Button(title='Download summary in PDF format')
@@ -119,10 +122,6 @@ class ConfigManagementAddEntities(View):
     add = Button('Add')
     cancel = Button('Cancel')
 
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
-
 
 class ConfigManagementEditEntities(View):
     """The entities on the edit page"""
@@ -131,10 +130,6 @@ class ConfigManagementEditEntities(View):
     save = Button('Save')
     reset = Button('Reset')
     cancel = Button('Cancel')
-
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
 
 
 class ConfigManagementView(BaseLoggedInPage):
@@ -234,6 +229,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
     """
 
     pretty_attr = ['name', 'url']
+    _param_name = ParamClassName('name')
     type = None
     refresh_flash_msg = 'Refresh Provider initiated for 1 provider'
 
@@ -251,7 +247,10 @@ class ConfigManager(Updateable, Pretty, Navigatable):
     @property
     def ui_name(self):
         """Return the name used in the UI"""
-        return '{name} Automation Manager'.format(name=self.name)
+        if self.type == 'Ansible Tower':
+            return '{} Automation Manager'.format(self.name)
+        else:
+            return '{} Configuration Manager'.format(self.name)
 
     def create(self, cancel=False, validate_credentials=True, validate=True, force=False):
         """Creates the manager through UI
@@ -285,15 +284,15 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         view.entities.form.fill(form_dict)
         if validate_credentials:
             view.entities.form.validate.click()
-            view.entities.flash.assert_success_message('Credential validation was successful')
+            view.flash.assert_success_message('Credential validation was successful')
         if cancel:
             view.entities.cancel.click()
-            view.entities.flash.assert_success_message('Add of Provider was cancelled by the user')
+            view.flash.assert_success_message('Add of Provider was cancelled by the user')
         else:
             view.entities.add.click()
             success_message = '{} Provider "{}" was added'.format(self.type, self.name)
-            view.entities.flash.assert_success_message(success_message)
-            view.entities.flash.assert_success_message(self.refresh_flash_msg)
+            view.flash.assert_success_message(success_message)
+            view.flash.assert_success_message(self.refresh_flash_msg)
             if validate:
                 try:
                     self.yaml_data['config_profiles']
@@ -324,13 +323,13 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         view.entities.form.fill(updates)
         if validate_credentials:
             view.entities.form.validate.click()
-            view.entities.flash.assert_success_message('Credential validation was successful')
+            view.flash.assert_success_message('Credential validation was successful')
         if cancel:
             view.entities.cancel.click()
-            view.entities.flash.assert_success_message('Edit of Provider was cancelled by the user')
+            view.flash.assert_success_message('Edit of Provider was cancelled by the user')
         else:
             view.entities.save.click()
-            view.entities.flash.assert_success_message(
+            view.flash.assert_success_message(
                 '{} Provider "{}" was updated'.format(self.type, updates['name'] or self.name))
             self.__dict__.update(**updates)
 
@@ -352,9 +351,13 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         row = view.entities.paginator.find_row_on_pages(view.entities.elements,
                                                         provider_name=self.ui_name)
         row[0].check()
-        view.toolbar.configuration.item_select('Remove selected items', handle_alert=not cancel)
+        remove_item = VersionPick({
+            '5.8': 'Remove selected items',
+            '5.9': 'Remove selected items from Inventory'
+        }).pick(self.appliance.version)
+        view.toolbar.configuration.item_select(remove_item, handle_alert=not cancel)
         if not cancel:
-            view.entities.flash.assert_success_message('Delete initiated for 1 Provider')
+            view.flash.assert_success_message('Delete initiated for 1 Provider')
             if wait_deleted:
                 wait_for(func=lambda: self.exists, fail_condition=True, delay=15, num_sec=60)
 
@@ -382,7 +385,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
             view.toolbar.configuration.item_select('Refresh Relationships and Power states',
                                                    handle_alert=not cancel)
         if not cancel:
-            view.entities.flash.assert_success_message(self.refresh_flash_msg)
+            view.flash.assert_success_message(self.refresh_flash_msg)
 
     @property
     def config_profiles(self):

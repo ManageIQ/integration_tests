@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 """Page model for Automation/Anisble/Credentials"""
 import attr
-
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import ParametrizedLocator, VersionPick
 from widgetastic.widget import ConditionalSwitchableView, ParametrizedView, Text, TextInput, View
-from widgetastic_manageiq import SummaryTable, Table
-from widgetastic_patternfly import BootstrapSelect, Button, Dropdown, FlashMessages, Input
+from widgetastic_patternfly import BootstrapSelect, Button, Dropdown, Input
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
@@ -16,10 +14,10 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import SummaryTable, Table
 
 
 class CredentialsBaseView(BaseLoggedInPage):
-    flash = FlashMessages('.//div[starts-with(@class, "flash_text_div") or @id="flash_text_div"]')
     title = Text(locator=".//div[@id='main-content']//h1")
 
     @property

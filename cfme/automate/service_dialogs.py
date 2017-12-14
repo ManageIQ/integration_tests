@@ -44,8 +44,8 @@ class Dialog(BaseEntity, Fillable):
     """A class representing one Domain in the UI."""
     label = attr.ib()
     description = attr.ib(default=None)
-    submit = attr.ib(default=False)
-    cancel = attr.ib(default=False)
+    submit_btn = attr.ib(default=True)
+    cancel_btn = attr.ib(default=True)
 
     _collections = {'tabs': TabCollection}
 
@@ -113,19 +113,17 @@ class DialogCollection(BaseCollection):
     tree_path = ['All Dialogs']
     ENTITY = Dialog
 
-    def create(self, label=None, description=None, submit=False, cancel=False):
+    def create(self, label=None, description=None, submit_btn=True, cancel_btn=True):
         """ Create dialog label method """
         view = navigate_to(self, 'Add')
         # filling label twice to avoid the selenium field bug
-        fill_dict = {
-            k: v
-            for k, v in {'label': label, 'description': description,
-                         'submit_button': submit, 'cancel_button': cancel}.items()
-            if v is not None}
-        view.fill(fill_dict)
+        view.fill({'label': label,
+                   'description': description,
+                   'submit_btn': submit_btn,
+                   'cancel_btn': cancel_btn})
         view.fill({'label': label})
         return self.instantiate(
-            label=label, description=description, submit=submit, cancel=cancel)
+            label=label, description=description, submit_btn=submit_btn, cancel_btn=cancel_btn)
 
 
 @navigator.register(DialogCollection)

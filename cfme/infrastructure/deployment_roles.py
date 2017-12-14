@@ -1,12 +1,21 @@
 """ A model of an Infrastructure Deployment roles in CFME"""
-import attr
-
 from functools import partial
 
+import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import ParametrizedView, View
+from widgetastic_patternfly import (BootstrapNav,
+                                    Button,
+                                    Dropdown
+                                    )
+
+from cfme.base.ui import BaseLoggedInPage
+from cfme.common import PolicyProfileAssignable
+from cfme.exceptions import ItemNotFound, RoleNotFound
+from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from widgetastic_manageiq import (Accordion,
                                   BaseEntitiesView,
                                   BaseListEntity,
@@ -22,17 +31,6 @@ from widgetastic_manageiq import (Accordion,
                                   Table,
                                   Text
                                   )
-from widgetastic_patternfly import (BootstrapNav,
-                                    Button,
-                                    Dropdown,
-                                    FlashMessages
-                                    )
-
-from cfme.base.ui import BaseLoggedInPage
-from cfme.common import PolicyProfileAssignable
-from cfme.exceptions import ItemNotFound, RoleNotFound
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.modeling.base import BaseCollection, BaseEntity
 
 
 class DeploymentRoleToolbar(View):
@@ -123,9 +121,6 @@ class DeploymentRoleComparisonEntities(View):
 class DeploymentRoleView(BaseLoggedInPage):
     """A base view for all the Deployment Role pages"""
     title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
-    flash = FlashMessages(
-        './/div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-        'contains(@class, "flash_text_div")]')
 
     @property
     def in_dep_role(self):

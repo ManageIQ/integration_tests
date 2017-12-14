@@ -3,19 +3,19 @@
 # in selenium (the group is selected then immediately reset)
 import fauxfactory
 import pytest
+from widgetastic.exceptions import RowNotFound, NoSuchElementException
 
 from cfme import test_requirements
 from cfme.common.vm import VM, Template
 from cfme.common.provider import cleanup_vm
+from cfme.common.vm_views import DriftAnalysis, DriftHistory
 from cfme.cloud.provider import CloudProvider
 from cfme.configure import configuration
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
-from cfme.configure.tasks import is_vm_analysis_finished
+from cfme.configure.tasks import is_vm_analysis_finished, TasksView
 from cfme.control.explorer.policies import VMControlPolicy
-from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.web_ui import InfoBlock, DriftGrid, toolbar
 from cfme.utils import testgen, ssh, safe_string, error
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
@@ -331,6 +331,20 @@ def detect_system_type(vm):
         return WINDOWS
 
 
+def is_details_row_present(view, *filters):
+    view.paginator.set_items_per_page(1000)
+    try:
+        view.table.row(*filters)
+    except (RowNotFound, NameError):
+        return False
+    return True
+
+
+def reload_tasks_page(appliance):
+    view = appliance.browser.create_view(TasksView)
+    view.reload.click()
+
+
 @pytest.mark.tier(1)
 @pytest.mark.long_running
 def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_analysis_data,
@@ -367,20 +381,20 @@ def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_a
 
     template.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(template_name),
-             delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="35m", fail_func=lambda: reload_tasks_page(appliance))
 
     # Check release and quadricon
     quadicon_os_icon = template.find_quadicon().data['os']
     details_os_icon = template.get_detail(
-        properties=('Properties', 'Operating System'), icon_href=True)
+        properties=('Properties', 'Operating System'))
     logger.info("Icons: {}, {}".format(details_os_icon, quadicon_os_icon))
 
     # We shouldn't use get_detail anymore - it takes too much time
-    c_users = InfoBlock.text('Security', 'Users')
-    c_groups = InfoBlock.text('Security', 'Groups')
+    c_users = template.get_detail(properties=('Security', 'Users'))
+    c_groups = template.get_detail(properties=('Security', 'Groups'))
     c_packages = 0
     if vm_analysis_data['fs-type'] not in ['ntfs', 'fat32']:
-        c_packages = InfoBlock.text('Configuration', 'Packages')
+        c_packages = template.get_detail(properties=('Configuration', 'Packages'))
 
     logger.info("SSA shows {} users, {} groups and {} packages".format(
         c_users, c_groups, c_packages))
@@ -391,11 +405,11 @@ def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_a
         soft_assert(c_packages != '0', "packages: '{}' != '0'".format(c_packages))
     else:
         # Make sure windows-specific data is not empty
-        c_patches = InfoBlock.text('Security', 'Patches')
-        c_applications = InfoBlock.text('Configuration', 'Applications')
-        c_win32_services = InfoBlock.text('Configuration', 'Win32 Services')
-        c_kernel_drivers = InfoBlock.text('Configuration', 'Kernel Drivers')
-        c_fs_drivers = InfoBlock.text('Configuration', 'File System Drivers')
+        c_patches = template.get_detail(properties=('Security', 'Patches'))
+        c_applications = template.get_detail(properties=('Configuration', 'Applications'))
+        c_win32_services = template.get_detail(properties=('Configuration', 'Win32 Services'))
+        c_kernel_drivers = template.get_detail(properties=('Configuration', 'Kernel Drivers'))
+        c_fs_drivers = template.get_detail(properties=('Configuration', 'File System Drivers'))
 
         soft_assert(c_patches != '0', "patches: '{}' != '0'".format(c_patches))
         soft_assert(c_applications != '0', "applications: '{}' != '0'".format(c_applications))
@@ -406,7 +420,7 @@ def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_a
 
 @pytest.mark.tier(2)
 @pytest.mark.long_running
-def test_ssa_vm(provider, instance, soft_assert):
+def test_ssa_vm(provider, instance, soft_assert, appliance):
     """ Tests SSA can be performed and returns sane results
 
     Metadata:
@@ -436,23 +450,23 @@ def test_ssa_vm(provider, instance, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="35m", fail_func=lambda: reload_tasks_page(appliance))
 
     # Check release and quadricon
     quadicon_os_icon = instance.find_quadicon().data['os']
     details_os_icon = instance.get_detail(
-        properties=('Properties', 'Operating System'), icon_href=True)
+        properties=('Properties', 'Operating System'))
     logger.info("Icons: %s, %s", details_os_icon, quadicon_os_icon)
 
     # We shouldn't use get_detail anymore - it takes too much time
-    c_lastanalyzed = InfoBlock.text('Lifecycle', 'Last Analyzed')
-    c_users = InfoBlock.text('Security', 'Users')
-    c_groups = InfoBlock.text('Security', 'Groups')
+    c_lastanalyzed = instance.get_detail(properties=('Lifecycle', 'Last Analyzed'))
+    c_users = instance.get_detail(properties=('Security', 'Users'))
+    c_groups = instance.get_detail(properties=('Security', 'Groups'))
     c_packages = 0
     c_services = 0
     if instance.system_type != WINDOWS:
-        c_packages = InfoBlock.text('Configuration', 'Packages')
-        c_services = InfoBlock.text('Configuration', 'Init Processes')
+        c_packages = instance.get_detail(properties=('Configuration', 'Packages'))
+        c_services = instance.get_detail(properties=('Configuration', 'Init Processes'))
 
     logger.info("SSA shows {} users, {} groups {} packages and {} services".format(
         c_users, c_groups, c_packages, c_services))
@@ -472,11 +486,11 @@ def test_ssa_vm(provider, instance, soft_assert):
                     "services: '{}' != '{}'".format(c_services, e_services))
     else:
         # Make sure windows-specific data is not empty
-        c_patches = InfoBlock.text('Security', 'Patches')
-        c_applications = InfoBlock.text('Configuration', 'Applications')
-        c_win32_services = InfoBlock.text('Configuration', 'Win32 Services')
-        c_kernel_drivers = InfoBlock.text('Configuration', 'Kernel Drivers')
-        c_fs_drivers = InfoBlock.text('Configuration', 'File System Drivers')
+        c_patches = instance.get_detail(properties=('Security', 'Patches'))
+        c_applications = instance.get_detail(properties=('Configuration', 'Applications'))
+        c_win32_services = instance.get_detail(properties=('Configuration', 'Win32 Services'))
+        c_kernel_drivers = instance.get_detail(properties=('Configuration', 'Kernel Drivers'))
+        c_fs_drivers = instance.get_detail(properties=('Configuration', 'File System Drivers'))
 
         soft_assert(c_patches != '0', "patches: '{}' != '0'".format(c_patches))
         soft_assert(c_applications != '0', "applications: '{}' != '0'".format(c_applications))
@@ -490,13 +504,13 @@ def test_ssa_vm(provider, instance, soft_assert):
     #     image_label = 'VM Template'
     # 5.4 doesn't have Parent VM field
     # if version.current_version() > "5.5" and provider.type != 'openstack':
-    #     c_image = InfoBlock.text('Relationships', image_label)
+    #     c_image = template.get_detail(properties=('Relationships', image_label))
     #     soft_assert(c_image == instance.image,
     #                 "image: '{}' != '{}'".format(c_image, instance.image))
 
 
 @pytest.mark.long_running
-def test_ssa_users(provider, instance, soft_assert):
+def test_ssa_users(provider, instance, soft_assert, appliance):
     """ Tests SSA fetches correct results for users list
 
     Metadata:
@@ -516,7 +530,7 @@ def test_ssa_users(provider, instance, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="35m", fail_func=lambda: reload_tasks_page(appliance))
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Security', 'Users'))
@@ -524,14 +538,14 @@ def test_ssa_users(provider, instance, soft_assert):
         assert current == expected
 
     # Make sure created user is in the list
-    instance.open_details(("Security", "Users"))
+    view = instance.open_details(("Security", "Users"))
     if instance.system_type != WINDOWS:
-        if not instance.paged_table.find_row_on_all_pages('Name', username):
+        if not is_details_row_present(view, ('Name', username)):
             pytest.fail("User {0} was not found".format(username))
 
 
 @pytest.mark.long_running
-def test_ssa_groups(provider, instance, soft_assert):
+def test_ssa_groups(provider, instance, soft_assert, appliance):
     """ Tests SSA fetches correct results for groups
 
     Metadata:
@@ -549,7 +563,7 @@ def test_ssa_groups(provider, instance, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="35m", fail_func=lambda: reload_tasks_page(appliance))
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Security', 'Groups'))
@@ -557,14 +571,14 @@ def test_ssa_groups(provider, instance, soft_assert):
         assert current == expected
 
     # Make sure created group is in the list
-    instance.open_details(("Security", "Groups"))
+    view = instance.open_details(("Security", "Groups"))
     if instance.system_type != WINDOWS:
-        if not instance.paged_table.find_row_on_all_pages('Name', group):
+        if not is_details_row_present(view, ('Name', group)):
             pytest.fail("Group {0} was not found".format(group))
 
 
 @pytest.mark.long_running
-def test_ssa_packages(provider, instance, soft_assert):
+def test_ssa_packages(provider, instance, soft_assert, appliance):
     """ Tests SSA fetches correct results for packages
 
     Metadata:
@@ -592,21 +606,21 @@ def test_ssa_packages(provider, instance, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="35m", fail_func=lambda: reload_tasks_page(appliance))
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Configuration', 'Packages'))
     assert current == expected
 
     # Make sure new package is listed
-    instance.open_details(("Configuration", "Packages"))
-    if not instance.paged_table.find_row_on_all_pages('Name', package_name):
+    view = instance.open_details(("Configuration", "Packages"))
+    if not is_details_row_present(view, ('Name', package_name)):
         pytest.fail("Package {0} was not found".format(package_name))
 
 
 @pytest.mark.long_running
 @pytest.mark.uncollectif(BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576')
-def test_ssa_files(provider, instance, policy_profile, soft_assert):
+def test_ssa_files(provider, instance, policy_profile, soft_assert, appliance):
     """Tests that instances can be scanned for specific file."""
 
     if instance.system_type == WINDOWS:
@@ -614,20 +628,20 @@ def test_ssa_files(provider, instance, policy_profile, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="35m", fail_func=lambda: reload_tasks_page(appliance))
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Configuration', 'Files'))
     assert current != '0', "No files were scanned"
 
-    instance.open_details(("Configuration", "Files"))
-    if not instance.paged_table.find_row_on_all_pages('Name', ssa_expect_file):
+    view = instance.open_details(("Configuration", "Files"))
+    if not is_details_row_present(view, ('Name', ssa_expect_file)):
         pytest.fail("File {0} was not found".format(ssa_expect_file))
 
 
 @pytest.mark.tier(2)
 @pytest.mark.long_running
-def test_drift_analysis(request, provider, instance, soft_assert):
+def test_drift_analysis(request, provider, instance, soft_assert, appliance):
     """ Tests drift analysis is correct
 
     Metadata:
@@ -636,21 +650,22 @@ def test_drift_analysis(request, provider, instance, soft_assert):
 
     instance.load_details()
     drift_num_orig = 0
-    drift_orig = InfoBlock("Relationships", "Drift History").text
+    drift_orig = instance.get_detail(properties=("Relationships", "Drift History"))
     if drift_orig != 'None':
         drift_num_orig = int(drift_orig)
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="35m", fail_func=lambda: reload_tasks_page(appliance))
     instance.load_details()
     wait_for(
-        lambda: int(InfoBlock("Relationships", "Drift History").text) == drift_num_orig + 1,
+        lambda: instance.get_detail(
+            properties=("Relationships", "Drift History")) == str(drift_num_orig + 1),
         delay=20,
         num_sec=120,
         message="Waiting for Drift History count to increase",
-        fail_func=sel.refresh
+        fail_func=appliance.server.browser.refresh
     )
-    drift_new = int(InfoBlock("Relationships", "Drift History").text)
+    drift_new = int(instance.get_detail(properties=("Relationships", "Drift History")))
 
     # add a tag and a finalizer to remove it
     instance.add_tag('Department', 'Accounting')
@@ -658,28 +673,31 @@ def test_drift_analysis(request, provider, instance, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="35m", fail_func=lambda: reload_tasks_page(appliance))
     instance.load_details()
     wait_for(
-        lambda: int(InfoBlock("Relationships", "Drift History").text) == drift_new + 1,
+        lambda: instance.get_detail(
+            properties=("Relationships", "Drift History")) == str(drift_new + 1),
         delay=20,
         num_sec=120,
         message="Waiting for Drift History count to increase",
-        fail_func=sel.refresh
+        fail_func=appliance.server.browser.refresh
     )
 
     # check drift difference
     soft_assert(not instance.equal_drift_results('Department (1)', 'My Company Tags', 0, 1),
                 "Drift analysis results are equal when they shouldn't be")
 
+    # TODO move it to one view
     # Test UI features that modify the drift grid
-    d_grid = DriftGrid()
+    drift_analysys_view = appliance.browser.create_view(DriftAnalysis)
+    drift_history_view = appliance.browser.create_view(DriftHistory)
 
     # Accounting tag should not be displayed, because it was changed to True
-    toolbar.select("Attributes with same values")
-    with error.expected(sel.NoSuchElementException):
-        d_grid.get_cell('Accounting', 0)
+    drift_analysys_view.toolbar.different_values_attributes.click()
+    with error.expected(NoSuchElementException):
+        drift_history_view.history_table.row((0, 'Accounting'))
 
     # Accounting tag should be displayed now
-    toolbar.select("Attributes with different values")
-    d_grid.get_cell('Accounting', 0)
+    drift_analysys_view.toolbar.different_values_attributes.click()
+    drift_history_view.history_table.row((0, 'Accounting'))

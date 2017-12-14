@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 from cfme import test_requirements
+from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.provisioning import do_vm_provisioning
@@ -62,6 +63,15 @@ def catalog_item(provider, provisioning, template_name, dialog, catalog, prov_da
         prov_data=prov_data,
         vm_name=prov_data['catalog']['vm_name']
     )
+
+
+@pytest.fixture(scope='module')
+def small_vm(provider, small_template_modscope):
+    vm = VM.factory(random_vm_name(context='reconfig'), provider, small_template_modscope.name)
+    vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+    vm.refresh_relationships()
+    yield vm
+    vm.delete_from_provider()
 
 
 # first arg of parametrize is the list of fixtures or parameters,
@@ -132,3 +142,26 @@ def test_tenant_quota_enforce_via_service(request, appliance, provider, setup_pr
     def delete():
         provision_request.remove_request()
         catalog_item.delete()
+
+
+# first arg of parametrize is the list of fixtures or parameters,
+# second arg is a list of lists, with each one a test is to be generated
+# sequence is important here
+# indirect is the list where we define which fixtures are to be passed values indirectly.
+@pytest.mark.parametrize(
+    ['set_roottenant_quota', 'custom_prov_data'],
+    [
+        [('cpu', 2), {'change': 'cores_per_socket', 'value': 4}],
+        [('cpu', 2), {'change': 'sockets', 'value': 4}],
+        [('memory', 2), {'change': 'mem_size', 'value': 4096}]
+    ],
+    indirect=['set_roottenant_quota'],
+    ids=['max_cores', 'max_sockets', 'max_memory']
+)
+def test_tenant_quota_vm_reconfigure(appliance, provider, setup_provider, set_roottenant_quota,
+                                     small_vm, custom_prov_data):
+    original_config = small_vm.configuration.copy()
+    new_config = small_vm.configuration.copy()
+    setattr(new_config.hw, custom_prov_data['change'], custom_prov_data['value'])
+    small_vm.reconfigure(new_config)
+    assert small_vm.configuration != original_config

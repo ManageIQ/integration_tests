@@ -24,7 +24,7 @@ class EditBoxView(BoxForm):
 class Box(BaseEntity):
     """A class representing one Box of dialog."""
     box_label = attr.ib()
-    box_desc = attr.ib()
+    box_desc = attr.ib(default=None)
 
     _collections = {'elements': ElementCollection}
 
@@ -57,11 +57,7 @@ class BoxCollection(BaseCollection):
              box_label and box_description.
         """
         view = navigate_to(self, "Add")
-        fill_dict = {
-            k: v
-            for k, v in {'box_label': box_label, 'box_desc': box_desc}.items()
-            if v is not None}
-        view.fill(fill_dict)
+        view.fill({'box_label': box_label, 'box_desc': box_desc})
         return self.instantiate(box_label=box_label, box_desc=box_desc)
 
 

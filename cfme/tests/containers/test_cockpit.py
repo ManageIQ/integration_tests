@@ -21,7 +21,7 @@ def test_cockpit_button_access(provider, appliance, soft_assert):
         will not work until the single sign-on bug is fixed.
     """
 
-    collection = appliance.collections.nodes
+    collection = appliance.collections.container_nodes
     nodes = collection.all()
     node = [node for node in nodes if 'master' in node.name][0]
     view = navigate_to(node, 'Details')

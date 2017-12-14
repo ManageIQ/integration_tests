@@ -64,8 +64,8 @@ class DialogForm(AutomateCustomizationView):
     label = Input(name='label')
     description = Input(name="description")
 
-    submit_button = Checkbox(name='chkbx_submit')
-    cancel_button = Checkbox(name='chkbx_cancel')
+    submit_btn = Checkbox(name='chkbx_submit')
+    cancel_btn = Checkbox(name='chkbx_cancel')
 
 
 class AddDialogView(DialogForm):

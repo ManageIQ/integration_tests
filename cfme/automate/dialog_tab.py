@@ -35,7 +35,7 @@ class DetailsTabView(TabForm):
 class Tab(BaseEntity):
     """A class representing one Tab in the UI."""
     tab_label = attr.ib()
-    tab_desc = attr.ib()
+    tab_desc = attr.ib(default=None)
 
     _collections = {'boxes': BoxCollection}
 
@@ -70,11 +70,9 @@ class TabCollection(BaseCollection):
     def create(self, tab_label=None, tab_desc=None):
         """ Create tab method"""
         view = navigate_to(self, "Add")
-        fill_dict = {
-            k: v
-            for k, v in {'tab_label': tab_label, 'tab_desc': tab_desc}.items()
-            if v is not None}
-        view.fill(fill_dict)
+        view.fill({'tab_label': tab_label, 'tab_desc': tab_desc})
+        # automation bug ,so filling again.
+        view.fill({'tab_label': tab_label})
         return self.instantiate(tab_label=tab_label, tab_desc=tab_desc)
 
 

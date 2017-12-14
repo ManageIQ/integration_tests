@@ -92,9 +92,7 @@ def dialog_ui(appliance):
     )
     service_dialog = service_dialogs.create(
         label=uid,
-        description="my dialog {}".format(uid),
-        submit=True,
-        cancel=True
+        description="my dialog {}".format(uid)
     )
     tab = service_dialog.tabs.create(
         tab_label="tab_{}".format(uid),
@@ -160,10 +158,7 @@ def dialog(request, appliance):
     service_dialogs = appliance.collections.service_dialogs
     service_dialog = service_dialogs.instantiate(
         label=rest_resource.label,
-        description=rest_resource.description,
-        submit=True,
-        cancel=True
-    )
+        description=rest_resource.description)
     return service_dialog
 
 

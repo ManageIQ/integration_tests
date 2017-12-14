@@ -3,11 +3,14 @@ import importscan
 import sentaku
 
 from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils import ParamClassName
 from cfme.utils.pretty import Pretty
 
 
 @attr.s
 class Server(BaseEntity, sentaku.modeling.ElementMixin):
+    _param_name = ParamClassName('name')
+
     name = attr.ib()
     sid = attr.ib(default=1)
 

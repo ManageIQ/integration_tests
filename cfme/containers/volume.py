@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import attr
 import random
 import itertools
 from cached_property import cached_property
@@ -7,10 +8,10 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from wrapanapi.containers.volume import Volume as ApiVolume
 
 from cfme.common import WidgetasticTaggable, TagPageView
-from cfme.containers.provider import (ContainerObjectAllBaseView,
+from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView)
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
-from cfme.utils.appliance import Navigatable
 
 
 class VolumeAllView(ContainerObjectAllBaseView):
@@ -21,16 +22,15 @@ class VolumeDetailsView(ContainerObjectDetailsBaseView):
     SUMMARY_TEXT = "Persistent Volumes"
 
 
-class Volume(WidgetasticTaggable, Navigatable):
+@attr.s
+class Volume(BaseEntity, WidgetasticTaggable, Labelable):
 
     PLURAL = 'Volumes'
     all_view = VolumeAllView
     details_view = VolumeDetailsView
 
-    def __init__(self, name, provider, appliance=None):
-        self.name = name
-        self.provider = provider
-        Navigatable.__init__(self, appliance=appliance)
+    name = attr.ib()
+    provider = attr.ib()
 
     @cached_property
     def mgmt(self):
@@ -45,7 +45,14 @@ class Volume(WidgetasticTaggable, Navigatable):
                 for vol in itertools.islice(volumes, count)]
 
 
-@navigator.register(Volume, 'All')
+@attr.s
+class VolumeCollection(BaseCollection):
+    """Collection object for :py:class:`Volume`."""
+
+    ENTITY = Volume
+
+
+@navigator.register(VolumeCollection, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
     VIEW = VolumeAllView
@@ -61,7 +68,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(Volume, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = VolumeDetailsView
 
     def step(self):

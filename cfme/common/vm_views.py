@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
-from lxml.html import document_fromstring
-import os
 from time import sleep
 
+import os
+from lxml.html import document_fromstring
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import View, Text, TextInput, ParametrizedView
+from widgetastic.utils import ParametrizedLocator
+from widgetastic.widget import (
+    View, Text, TextInput, ParametrizedView, Image, ConditionalSwitchableView)
 from widgetastic_patternfly import (
-    Dropdown, BootstrapSelect, Tab, FlashMessages, Input, CheckableBootstrapTreeview)
+    Dropdown, BootstrapSelect, Tab, Input, CheckableBootstrapTreeview)
+
+from cfme.base.login import BaseLoggedInPage
+from cfme.exceptions import TemplateNotFound
 from widgetastic_manageiq import (Calendar,
                                   Checkbox,
                                   SummaryTable,
@@ -26,10 +31,6 @@ from widgetastic_manageiq import (Calendar,
                                   BaseNonInteractiveEntitiesView,
                                   BreadCrumb,
                                   PaginationPane)
-
-
-from cfme.base.login import BaseLoggedInPage
-from cfme.exceptions import TemplateNotFound
 
 
 class InstanceQuadIconEntity(BaseQuadIconEntity):
@@ -172,7 +173,8 @@ class VMToolbar(View):
     """
     Toolbar view for vms/instances collection destinations
     """
-    reload = Button(title='Reload current display')
+    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                '5.9': 'Refresh this page'}))
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     lifecycle = Dropdown('Lifecycle')
@@ -236,8 +238,6 @@ class VMDetailsEntities(View):
     VM's have 3-4 more tables, should inherit and add them there.
     """
     title = Text('//div[@id="main-content"]//h1//span[@id="explorer_title_text"]')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
     properties = SummaryTable(title='Properties')
     lifecycle = SummaryTable(title='Lifecycle')
     relationships = SummaryTable(title='Relationships')
@@ -250,6 +250,12 @@ class VMDetailsEntities(View):
     diagnostics = SummaryTable(title='Diagnostics')
     smart_management = SummaryTable(title='Smart Management')
 
+
+class VMPropertyDetailView(View):
+    title = Text('//div[@id="main-content"]//h1//span[@id="explorer_title_text"]')
+    table = Table('//div[@id="miq-gtl-view"]//table')
+
+    paginator = PaginationPane()
 
 class BasicProvisionFormView(View):
     @View.nested
@@ -426,24 +432,49 @@ class RetirementView(BaseLoggedInPage):
     Set Retirement date view for vms/instances
     The title actually as Instance|VM.VM_TYPE string in it, otherwise the same
     """
-
     title = Text('#explorer_title_text')
 
     @View.nested
     class form(View):  # noqa
-        """The form portion of the view"""
         retirement_date = Calendar(name='retirementDate')
-        # TODO This is just an anchor with an image, weaksauce
-        # remove_date = Button()
+        remove_date = Image(locator='.//div[@id="retirement_date_div"]//a/img[@alt="Set to blank"]')
         retirement_warning = BootstrapSelect(id='retirementWarning')
         entities = View.nested(BaseNonInteractiveEntitiesView)
-        save_button = Button('Save')
-        cancel_button = Button('Cancel')
+        save = Button('Save')
+        cancel = Button('Cancel')
 
     @property
     def is_displayed(self):
         # TODO match quadicon and title
         return False
+
+
+class RetirementViewWithOffset(RetirementView):
+    """The form portion, with 59z+ offset mode selection"""
+    @View.nested
+    class form(View):  # noqa
+        retirement_mode = BootstrapSelect(id='formMode')
+        retirement_date = ConditionalSwitchableView(reference='retirement_mode')
+
+        @retirement_date.register('Specific Date and Time', default=True)
+        class RetirementDateSelectionView(View):
+            datetime_select = TextInput(id='retirement_date_datepicker')
+
+        @retirement_date.register('Time Delay from Now')
+        class RetirementOffsetSelectionView(View):
+            # TODO unique widget for these touchspin elements, with singular fill method
+            # will allow for consistent fill of view.form
+            months = TextInput(name='months')
+            weeks = TextInput(name='weeks')
+            days = TextInput(name='days')
+            hours = TextInput(name='hours')
+            retirement_offset_datetime = Text(
+                locator='.//div[@id="retirement_date_result_div"]/input[@id="retirement_date"]')
+
+        retirement_warning = BootstrapSelect(id='retirementWarning')
+        entities = View.nested(BaseNonInteractiveEntitiesView)
+        save = Button('Save')
+        cancel = Button('Cancel')
 
 
 class EditView(BaseLoggedInPage):
@@ -497,6 +528,7 @@ class ManagementEngineView(BaseLoggedInPage):
     Edit management engine relationship page
     The title actually as Instance|VM.VM_TYPE string in it, otherwise the same
     """
+
     @View.nested
     class form(View):  # noqa
         server = BootstrapSelect('server_id')
@@ -538,3 +570,50 @@ class RightSizeView(BaseLoggedInPage):
     def is_displayed(self):
         # Only name is displayed
         return False
+
+
+class DriftHistory(BaseLoggedInPage):
+    breadcrumb = BreadCrumb(locator='.//ol[@class="breadcrumb"]')
+    history_table = Table(locator='.//div[@id="main_div"]/table')
+    analyze_button = Button(title="Select up to 10 timestamps for Drift Analysis")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_compute_infrastructure_hosts and
+            self.title.text == "Drift History" and
+            self.history_table.is_displayed
+        )
+
+
+class DriftAnalysis(BaseLoggedInPage):
+    apply_button = Button("Apply")
+    drift_sections = CheckableBootstrapTreeview(tree_id="all_sectionsbox")
+
+    @ParametrizedView.nested
+    class drift_analysis(ParametrizedView):  # noqa
+        PARAMETERS = ("drift_section", )
+        CELLS = "../td//i"
+        row = Text(ParametrizedLocator(".//div[@id='compare-grid']/"
+                                       "/th[normalize-space(.)={drift_section|quote}]"))
+
+        @property
+        def is_changed(self):
+            cells = self.browser.elements(self.CELLS, parent=self.row)
+            attrs = [self.browser.get_attribute("class", cell) for cell in cells]
+            return "drift-delta" in attrs
+
+    @View.nested
+    class toolbar(View):  # noqa
+        all_attributes = Button(title="All attributes")
+        different_values_attributes = Button(title="Attributes with different")
+        same_values_attributes = Button(title="Attributes with same values")
+        details_mode = Button(title="Details Mode")
+        exists_mode = Button(title="Exists Mode")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_compute_infrastructure_hosts and
+            self.title.text == "'{}' Drift Analysis".format(self.context["object"].name)
+        )

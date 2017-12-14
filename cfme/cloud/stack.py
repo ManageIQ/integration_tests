@@ -1,12 +1,8 @@
 import attr
-
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic.widget import View
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic_patternfly import Button, Dropdown, FlashMessages, BootstrapNav
-from widgetastic_manageiq import (
-    Accordion, BreadCrumb, ItemsToolBarViewSelector, PaginationPane,
-    SummaryTable, Table, Text, BaseEntitiesView)
+from widgetastic.widget import View
+from widgetastic_patternfly import Button, Dropdown, BootstrapNav
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
@@ -15,6 +11,9 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import (
+    Accordion, BreadCrumb, ItemsToolBarViewSelector, PaginationPane,
+    SummaryTable, Table, Text, BaseEntitiesView)
 
 
 class StackToolbar(View):
@@ -69,8 +68,6 @@ class StackDetailsEntities(View):
     relationships = SummaryTable(title='Relationships')
     smart_management = SummaryTable(title='Smart Management')
     # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
 
 
 class StackSecurityGroupsEntities(View):
@@ -78,9 +75,6 @@ class StackSecurityGroupsEntities(View):
     breadcrumb = BreadCrumb()
     title = Text('//div[@id="main-content"]//h1')
     security_groups = Table('//div[@id="list_grid"]//table')
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
 
 
 class StackParametersEntities(View):
@@ -88,9 +82,6 @@ class StackParametersEntities(View):
     breadcrumb = BreadCrumb()
     title = Text('//div[@id="main-content"]//h1')
     parameters = Table('//div[@id="list_grid"]//table')
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
 
 
 class StackOutputsEntities(View):
@@ -98,9 +89,6 @@ class StackOutputsEntities(View):
     breadcrumb = BreadCrumb()
     title = Text('//div[@id="main-content"]//h1')
     outputs = Table('//div[@id="list_grid"]//table')
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
 
 
 class StackResourcesEntities(View):
@@ -108,9 +96,6 @@ class StackResourcesEntities(View):
     breadcrumb = BreadCrumb()
     title = Text('//div[@id="main-content"]//h1')
     resources = Table('//div[@id="list_grid"]//table')
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
 
 
 class StackView(BaseLoggedInPage):
@@ -252,7 +237,7 @@ class Stack(Pretty, BaseEntity, WidgetasticTaggable):
         """Delete the stack from detail view"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Remove this Orchestration Stack', handle_alert=True)
-        view.entities.flash.assert_success_message('The selected Orchestration Stacks was deleted')
+        view.flash.assert_success_message('The selected Orchestration Stacks was deleted')
 
         def refresh():
             """Refresh the view"""
@@ -285,7 +270,7 @@ class Stack(Pretty, BaseEntity, WidgetasticTaggable):
         row[0].check()
         view.toolbar.lifecycle.item_select('Retire selected Orchestration Stacks',
                                            handle_alert=True)
-        view.entities.flash.assert_success_message('Retirement initiated for 1 Orchestration'
+        view.flash.assert_success_message('Retirement initiated for 1 Orchestration'
                                                    ' Stack from the CFME Database')
         if wait:
             def refresh():
@@ -322,11 +307,11 @@ class StackCollection(BaseCollection):
 
         if set(stacks) == set(checked_stacks):
             view.toolbar.configuration.item_select('Remove Orchestration Stacks', handle_alert=True)
-            view.entities.flash.assert_no_error()
+            view.flash.assert_no_error()
             flash_msg = \
                 'Delete initiated for {} Orchestration Stacks from the CFME Database'.format(
                     len(stacks))
-            view.entities.flash.assert_success_message(flash_msg)
+            view.flash.assert_success_message(flash_msg)
 
             for stack in stacks:
                 wait_for(lambda: not stack.exists, num_sec=15 * 60,

@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 """This module contains tests that exercise the canned VMware Automate stuff."""
+from textwrap import dedent
+
 import fauxfactory
 import pytest
-
-from textwrap import dedent
 
 from cfme import test_requirements
 from cfme.automate.buttons import ButtonGroup, Button
 from cfme.automate.explorer.domain import DomainCollection
+from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.web_ui import flash, toolbar
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
+from cfme.web_ui import toolbar
 
 pytestmark = [
     test_requirements.automate,
@@ -81,7 +82,7 @@ def testing_vm(request, setup_provider, provider):
 
 @pytest.mark.meta(blockers=[1211627, BZ(1311221, forced_streams=['5.5'])])
 def test_vmware_vimapi_hotadd_disk(
-        request, testing_group, provider, testing_vm, domain, cls):
+        appliance, request, testing_group, provider, testing_vm, domain, cls):
     """ Tests hot adding a disk to vmware vm.
 
     This test exercises the ``VMware_HotAdd_Disk`` method, located in ``/Integration/VMware/VimApi``
@@ -133,7 +134,8 @@ def test_vmware_vimapi_hotadd_disk(
     original_disk_capacity = _get_disk_capacity()
     logger.info('Initial disk allocation: %s', original_disk_capacity)
     toolbar.select(testing_group.text, button.text)
-    flash.assert_no_errors()
+    view = appliance.browser.create_view(BaseLoggedInPage)
+    view.flash.assert_no_error()
     try:
         wait_for(
             lambda: _get_disk_capacity() > original_disk_capacity, num_sec=180, delay=5)

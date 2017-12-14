@@ -18,9 +18,10 @@ IMAGE_SPEC = [
 @pytest.fixture(autouse=True, scope='module')
 def check_docker():
     try:
-        subprocess.call("docker info", shell=True)
+        subprocess.check_call("docker info", shell=True)
     except Exception:
-        pytest.xfail('docker missing - testing quickstart needs docker')
+        pytest.xfail('docker missing or missconfigured\n'
+                     ' - testing quickstart needs a functional docker cli')
 
 
 @pytest.fixture

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """A model of an Infrastructure Host in CFME."""
 import attr
-
-from navmazing import NavigateToSibling, NavigateToAttribute
 from manageiq_client.api import APIException
+from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 
 from cfme.base.credential import Credential as BaseCredential
@@ -20,8 +19,8 @@ from cfme.common.host_views import (
 )
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.datastore import HostAllDatastoresView
-from cfme.utils import conf
 from cfme.modeling.base import BaseEntity, BaseCollection
+from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from cfme.utils.ipmi import IPMI
 from cfme.utils.log import logger
@@ -468,7 +467,7 @@ class HostCollection(BaseCollection):
         """Deletes this host from CFME."""
         view = self.check_hosts(hosts)
         view.toolbar.configuration.item_select('Remove items from Inventory', handle_alert=True)
-        view.entities.flash.assert_success_message('The selected Hosts / Nodes was deleted')
+        view.flash.assert_success_message('The selected Hosts / Nodes was deleted')
         for host in hosts:
             wait_for(lambda: not host.exists, num_sec=600, delay=30,
                      message='Wait for Host to be deleted')

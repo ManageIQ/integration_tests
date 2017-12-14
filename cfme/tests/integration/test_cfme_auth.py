@@ -2,7 +2,6 @@
 import pytest
 
 from cfme.base.credential import Credential
-from cfme.configure.access_control import User
 from cfme.utils.conf import cfme_data
 
 
@@ -54,7 +53,7 @@ def group(request, data, auth_mode, add_group, appliance):
 
 
 @pytest.fixture()
-def user(request, data, add_group):
+def user(request, data, add_group, appliance):
     if not data:
         pytest.skip("No data specified for user")
     username, password = data["username"], data["password"]
@@ -66,7 +65,9 @@ def user(request, data, add_group):
         secret=password,
         verify_secret=password,
     )
-    user_obj = User(name=data['fullname'], credential=credentials)
+    user_obj = appliance.collections.users.instantiate(
+        name=data['fullname'], credential=credentials
+    )
     request.addfinalizer(user_obj.delete)
     return user_obj
 

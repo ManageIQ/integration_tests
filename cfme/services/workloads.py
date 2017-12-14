@@ -3,7 +3,8 @@
 """
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View, Text
-from widgetastic_manageiq import Accordion, ManageIQTree, Search
+from widgetastic_manageiq import Accordion, ManageIQTree, Search, ItemsToolBarViewSelector
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.utils.appliance import Navigatable
@@ -48,6 +49,17 @@ class WorkloadsView(BaseLoggedInPage):
         def clear_filter(self):
             self.parent.search.clear_simple_search()
             self.tree.click_path("All Templates & Images")
+
+    @View.nested
+    class toolbar(View):  # noqa
+        """
+         represents workloads toolbar and its controls
+        """
+        configuration = Dropdown(text='Configuration')
+        policy = Dropdown(text='Policy')
+        lifecycle = Dropdown(text='Lifecycle')
+        download = Dropdown(text='Download')
+        view_selector = View.nested(ItemsToolBarViewSelector)
 
 
 class WorkloadsVM(WorkloadsView):

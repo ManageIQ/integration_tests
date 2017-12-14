@@ -2,15 +2,14 @@
 import atexit
 import json
 import math
-import os
-import re
-import six
 from collections import namedtuple
 from datetime import date
 from math import ceil
 from tempfile import NamedTemporaryFile
-from wait_for import TimedOutError, wait_for
 
+import os
+import re
+import six
 from cached_property import cached_property
 from jsmin import jsmin
 from lxml.html import document_fromstring
@@ -18,7 +17,7 @@ from selenium.common.exceptions import (
     WebDriverException,
     ElementNotVisibleException,
     StaleElementReferenceException)
-from cfme.utils.blockers import BZ
+from wait_for import TimedOutError, wait_for
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.log import logged
 from widgetastic.utils import (
@@ -38,7 +37,6 @@ from widgetastic.widget import (
     TextInput,
     Text,
     Checkbox,
-    Image,
     ParametrizedView,
     FileInput as BaseFileInput,
     ClickableMixin,
@@ -48,10 +46,10 @@ from widgetastic.xpath import quote
 from widgetastic_patternfly import (
     Accordion as PFAccordion, BootstrapSwitch, BootstrapTreeview,
     BootstrapSelect, Button, CheckableBootstrapTreeview,
-    Dropdown, Input, FlashMessages,
-    VerticalNavigation, Tab)
+    Dropdown, Input, VerticalNavigation, Tab)
 
 from cfme.exceptions import ItemNotFound
+from cfme.utils.blockers import BZ
 
 
 class DynamicTableAddError(Exception):
@@ -162,14 +160,6 @@ class MultiBoxSelect(View):
 
     This view can be found in policy profile, alert profiles adding screens; assigning actions to an
     event, assigning conditions to a policy screens and so on.
-    TODO When CFME 5.7.1 will become deprecated `_move_into_image_button` and
-    `_move_from_image_button` can be removed.
-
-    Attributes:
-        AVAILABLE_ITEMS_ID (str): default value of `<select>` id for available items
-        CHOSEN_ITEMS_ID (str): default value of `<select>` id for chosen items
-        MOVE_FROM (str): default value of `data-submit` attribute for 'move_from' button
-        MOVE_INTO (str): default value of `data-submit` attribute for 'move_into' button
 
     Args:
         available_items (str): provided value of `<select>` id for available items
@@ -179,41 +169,18 @@ class MultiBoxSelect(View):
 
     """
 
-    AVAILABLE_ITEMS_ID = "choices_chosen"
-    CHOSEN_ITEMS_ID = "members_chosen"
-    MOVE_INTO = "choices_chosen_div"
-    MOVE_FROM = "members_chosen_div"
-
     available_options = Select(id=Parameter("@available_items"))
     chosen_options = Select(id=Parameter("@chosen_items"))
-    _move_into_image_button = Image(ParametrizedLocator(
-        ".//a[@data-submit={@move_into|quote}]/img"))
-    _move_from_image_button = Image(ParametrizedLocator(
-        ".//a[@data-submit={@move_from|quote}]/img"))
-    _move_into_native_button = Button(**{"data-submit": Parameter("@move_into")})
-    _move_from_native_button = Button(**{"data-submit": Parameter("@move_from")})
+    move_into_button = Button(**{"data-submit": Parameter("@move_into")})
+    move_from_button = Button(**{"data-submit": Parameter("@move_from")})
 
-    def __init__(self, parent, move_into=None, move_from=None, available_items=None,
-            chosen_items=None, logger=None):
+    def __init__(self, parent, move_into="choices_chosen_div", move_from="members_chosen_div",
+            available_items="choices_chosen", chosen_items="members_chosen", logger=None):
         View.__init__(self, parent, logger=logger)
-        self.available_items = available_items or self.AVAILABLE_ITEMS_ID
-        self.chosen_items = chosen_items or self.CHOSEN_ITEMS_ID
-        self.move_into = move_into or self.MOVE_INTO
-        self.move_from = move_from or self.MOVE_FROM
-
-    @cached_property
-    def move_into_button(self):
-        if self._move_into_image_button.is_displayed:
-            return self._move_into_image_button
-        else:
-            return self._move_into_native_button
-
-    @cached_property
-    def move_from_button(self):
-        if self._move_from_image_button.is_displayed:
-            return self._move_from_image_button
-        else:
-            return self._move_from_native_button
+        self.available_items = available_items
+        self.chosen_items = chosen_items
+        self.move_into = move_into
+        self.move_from = move_from
 
     def _values_to_remove(self, values):
         return list(set(self.all_options) - set(values))
@@ -1081,6 +1048,106 @@ class Notification(Widget, ClickableMixin):
             return True
         except NoSuchElementException:
             return False
+
+
+class DialogButton(Button):
+    """Multiple buttons with same name are present in Dialog UI.
+       So need to specify the div too.
+    """
+    def __locator__(self):
+        return (
+            './/div[@class="modal-footer"]/*[(self::a or self::button or'
+            '(self::input and (@type="button" or @type="submit")))'
+            ' and contains(@class, "btn") {}]'.format(self.locator_conditions))
+
+
+class DragandDropElements(View):
+    """Drag elements to a drop place."""
+    @ParametrizedView.nested
+    class dialog_element(ParametrizedView):  # noqa
+        PARAMETERS = ("drag_item", "drop_item")
+
+        dragged_element = ParametrizedLocator('.//*[@id="toolbox"]/div/dialog-editor-field-static'
+                                              '/ul/li[normalize-space(.)={drag_item|quote}]')
+
+        dropped_element = ParametrizedLocator('.//div[normalize-space(.)={drop_item|quote}]')
+
+        @property
+        def drag_div(self):
+            return self.browser.element(self.dragged_element)
+
+        @property
+        def drop_div(self):
+            return self.browser.element(self.dropped_element)
+
+    def __init__(self, parent, logger=None):
+        View.__init__(self, parent=parent, logger=logger)
+
+    def drag_and_drop(self, dragged_widget, dropped_widget):
+        dragged_widget_el = self.dialog_element(dragged_widget, dropped_widget).drag_div
+        dropped_widget_el = self.dialog_element(dragged_widget, dropped_widget).drop_div
+        self.browser.drag_and_drop(dragged_widget_el, dropped_widget_el)
+        self.browser.plugin.ensure_page_safe()
+
+
+class DialogBootstrapSwitch(BootstrapSwitch):
+    """New dialog editor has different locator than BootstrapSwitch"""
+    ROOT = ParametrizedLocator(
+        './/div[./preceding-sibling::label[normalize-space(.)={@label|quote}]]'
+        '/span/div/div[contains(@class, "bootstrap-switch-container")]//input')
+
+
+class DragandDrop(View):
+
+    def __init__(self, parent, logger=None):
+        View.__init__(self, parent=parent, logger=logger)
+
+    def drag_and_drop(self, dragged_widget, dropped_widget):
+        self.browser.drag_and_drop(dragged_widget, dropped_widget)
+        self.browser.plugin.ensure_page_safe()
+
+
+class DialogElement(Widget, ClickableMixin):
+    """Represents the element in new dialog editor"""
+
+    @ParametrizedView.nested
+    class element(ParametrizedView):  # noqa
+        PARAMETERS = ("element_name", )
+
+        ele_label = Text(ParametrizedLocator(
+            './/dialog-editor-field/div[@class="form-group"]'
+            '/label[normalize-space(.)={element_name|quote}]'))
+
+        edit_icon = Text(ParametrizedLocator(
+            './/div[contains(normalize-space(.), {element_name|quote})]'
+            '/div/button/span/i[contains(@class, "pficon-edit")]'))
+
+        def edit_icon_click(self):
+            """Clicks the edit icon with this name."""
+            wait_for(
+                lambda: self.ele_label.is_displayed, delay=5, num_sec=30,
+                message="waiting for element to be displayed"
+            )
+            self.ele_label.click()
+            wait_for(
+                lambda: self.edit_icon.is_displayed, delay=5, num_sec=30,
+                message="waiting for element to be displayed"
+            )
+            return self.edit_icon.click()
+
+    def edit_element(self, element_name):
+        """Clicks the edit_icon_click.
+
+        Args:
+            element_name: Name of the element
+        """
+        return self.element(element_name).edit_icon_click()
+
+    def drag_and_drop(self, dragged_widget, dropped_widget):
+        dragged_widget_el = self.element(dragged_widget).drag_drop_div
+        dropped_widget_el = self.element(dropped_widget).drag_drop_div
+        self.browser.drag_and_drop(dragged_widget_el, dropped_widget_el)
+        self.browser.plugin.ensure_page_safe()
 
 
 class Paginator(Widget):
@@ -2830,8 +2897,6 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
     title = Text('//div[@id="main-content"]//h1')
     search = View.nested(Search)
     paginator = PaginationPane()
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
 
     @property
     def _current_page_elements(self):

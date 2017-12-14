@@ -4,10 +4,10 @@ import pytest
 
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.explorer.domain import DomainCollection
-from cfme.automate.service_dialogs import DialogCollection
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme import test_requirements
+from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.long_running,
@@ -40,21 +40,28 @@ log(:info, "===========================================") if @debug
 
 @pytest.yield_fixture(scope="function")
 def dialog(appliance, copy_instance, create_method):
-    service_dialogs = DialogCollection(appliance)
+    service_dialogs = appliance.collections.service_dialogs
     dialog = "dialog_" + fauxfactory.gen_alphanumeric()
-    element_data = {
-        'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
-        'ele_name': fauxfactory.gen_alphanumeric(),
-        'ele_desc': fauxfactory.gen_alphanumeric(),
-        'choose_type': "Drop Down List",
-        'dynamic_chkbox': True
-    }
-    sd = service_dialogs.create(label=dialog,
-        description="my dialog", submit=True, cancel=True,)
+    sd = service_dialogs.create(label=dialog, description="my dialog")
+    if appliance.version >= "5.9":
+        choose_type = "Dropdown"
+    else:
+        choose_type = "Drop Down List"
     tab = sd.tabs.create(tab_label='tab_' + fauxfactory.gen_alphanumeric(),
         tab_desc="my tab desc")
     box = tab.boxes.create(box_label='box_' + fauxfactory.gen_alphanumeric(),
         box_desc="my box desc")
+    element_data = {
+        'element_information': {
+            'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
+            'ele_name': fauxfactory.gen_alphanumeric(),
+            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'choose_type': choose_type
+        },
+        'options': {
+            'dynamic_chkbox': True
+        }
+    }
     box.elements.create(element_data=[element_data])
     yield sd
 
@@ -97,6 +104,7 @@ def copy_instance(request, copy_domain, appliance):
 
 
 @pytest.mark.tier(3)
+@pytest.mark.meta(blockers=[BZ(1514584, forced_streams=["5.7", "5.8", "5.9"])])
 def test_dynamicdropdown_dialog(appliance, dialog, catalog):
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Generic", name=item_name,

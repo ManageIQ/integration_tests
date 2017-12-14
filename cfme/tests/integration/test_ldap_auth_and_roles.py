@@ -1,6 +1,5 @@
 import pytest
 
-from cfme.configure.access_control import simple_user
 from cfme.utils.conf import credentials
 from cfme.utils.testgen import auth_groups, generate
 
@@ -35,5 +34,6 @@ def test_group_roles(
     except KeyError:
         pytest.fail('No match in credentials file for group "{}"'.format(group_name))
 
-    appliance.server.login(simple_user(username, password))
+    user = appliance.collections.users.simple_user(username, password)
+    appliance.server.login(user)
     # assert set(menu.nav.visible_pages()) == set(group_data)

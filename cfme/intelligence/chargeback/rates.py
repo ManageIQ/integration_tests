@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
 # Page model for Intel->Chargeback->Rates.
 
-from . import ChargebackView
 from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.utils import ParametrizedLocator, ParametrizedString
+from widgetastic.widget import Text, ParametrizedView
+from widgetastic_patternfly import Button, Input, Dropdown
+
+from cfme.utils import ParamClassName
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from widgetastic.utils import ParametrizedLocator, ParametrizedString
-from widgetastic.widget import Text, ParametrizedView
 from widgetastic_manageiq import Select
-from widgetastic_patternfly import Button, Input, Dropdown
+from . import ChargebackView
 
 
 class RatesView(ChargebackView):
@@ -154,6 +156,7 @@ class ComputeRate(Updateable, Pretty, Navigatable):
     """
 
     pretty_attrs = ['description']
+    _param_name = ParamClassName('description')
 
     def __init__(self, description=None,
                  currency=None,

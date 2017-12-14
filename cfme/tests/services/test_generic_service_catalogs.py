@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.automate.service_dialogs import DialogCollection
 from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.catalogs.catalog_item import CatalogItem
@@ -110,7 +109,7 @@ def test_bundles_in_bundle(appliance, catalog_item):
 
 
 def test_delete_dialog_before_parent_item(appliance, catalog_item):
-    service_dialog = DialogCollection(appliance)
+    service_dialog = appliance.collections.service_dialogs
     dialog = service_dialog.instantiate(label=catalog_item.dialog.label)
     error_message = ('Dialog \"{}\": Error during delete: Dialog cannot be'
         ' deleted because it is connected to other components.').format(catalog_item.dialog.label)

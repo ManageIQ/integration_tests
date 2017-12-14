@@ -76,7 +76,9 @@ def test_vm_reconfig_add_remove_hw_cold(
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
 @pytest.mark.parametrize(
     'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
-@pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider))
+@pytest.mark.uncollectif(
+    # Disk modes cannot be specified when adding disk to VM in RHV provider
+    lambda disk_mode, provider: disk_mode != 'persistent' and provider.one_of(RHEVMProvider))
 def test_vm_reconfig_add_remove_disk_cold(
         provider, small_vm, ensure_vm_stopped, disk_type, disk_mode):
 
