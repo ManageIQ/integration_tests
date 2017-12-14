@@ -2,6 +2,7 @@
 import attr
 
 from navmazing import NavigateToAttribute
+from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View, NoSuchElementException, Text
 from widgetastic_manageiq import (
     Accordion,
@@ -32,7 +33,8 @@ class StorageManagerToolbar(View):
 
 class StorageManagerDetailsToolbar(View):
     """The toolbar on the Storage Manager or Provider detail page"""
-    reload = Button(title='Reload Current Display')
+    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                                       '5.9': 'Refresh this page'}))
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     monitoring = Dropdown('Monitoring')

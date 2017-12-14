@@ -47,7 +47,7 @@ class MyServicesView(BaseLoggedInPage):
 
     # TODO drop '_btn' suffix
     reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                '5.9': 'Refresh this page'}))
+                                       '5.9': 'Refresh this page'}))
     configuration = Dropdown('Configuration')
     policy_btn = Dropdown('Policy')
     lifecycle_btn = Dropdown('Lifecycle')
@@ -78,7 +78,7 @@ class SetOwnershipForm(MyServicesView):
 class MyServiceDetailsToolbar(View):
     """View of toolbar widgets to nest"""
     reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                    '5.9': 'Refresh this page'}))
+                                       '5.9': 'Refresh this page'}))
 
     @ParametrizedView.nested
     class custom_button(ParametrizedView):  # noqa

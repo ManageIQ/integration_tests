@@ -221,6 +221,7 @@ RELOAD_LOC = (
     ".//div[@title='Reload current display']|"
     ".//button[@title='Reload Current Display' or "
     "@title='Reload current display' or "
+    "@title='Refresh this page' or "
     "@id='miq_request_reload']"
 )
 
