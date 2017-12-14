@@ -2,12 +2,13 @@
 import fauxfactory
 import pytest
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils.generators import random_vm_name
 from cfme.utils.update import update
 
 pytestmark = [
-    pytest.mark.provider([RHEVMProvider], scope="module")
+    pytest.mark.provider([RHEVMProvider, VMwareProvider], scope="module")
 ]
 
 
@@ -17,8 +18,11 @@ def vm_name():
 
 
 @pytest.fixture
-def template_name(provisioning):
-    return provisioning["template"]
+def template_name(provider):
+    if provider.type == 'rhevm':
+        return provider.data.templates.get('full_template')['name']
+    elif provider.type == 'virtualcenter':
+        return provider.data.templates.get('big_template')['name']
 
 
 @pytest.fixture()
@@ -70,7 +74,10 @@ def set_entity_quota_source(max_quota_test_instance, entity):
         max_quota_test_instance.fields = {'quota_source_type': {'value': entity}}
 
 
-@pytest.fixture(params=[('groups', 'group', 'EvmGroup-super_administrator')], scope='module')
+@pytest.fixture(params=[('groups', 'group', 'EvmGroup-super_administrator'),
+                        ('users', 'user', 'Administrator')],
+                ids=['group', 'user'],
+                scope='module')
 def entities(appliance, request, max_quota_test_instance):
     collection, entity, description = request.param
     set_entity_quota_source(max_quota_test_instance, entity)
@@ -93,10 +100,10 @@ def set_entity_quota_tag(request, entities):
         [('Quota - Max CPUs *', '1'), {'hardware': {'num_sockets': '8'}}]
     ],
     indirect=['set_entity_quota_tag'],
-    ids=['max_cpu', 'max_storage', 'max_memory']
+    ids=['max_memory', 'max_storage', 'max_cpu']
 )
 def test_quota_tagging(appliance, provider, setup_provider, set_entity_quota_tag,
-                            custom_prov_data, vm_name, template_name, prov_data):
+                       custom_prov_data, vm_name, template_name, prov_data):
     prov_data.update(custom_prov_data)
     prov_data['catalog']['vm_name'] = vm_name
     do_vm_provisioning(appliance, template_name=template_name, provider=provider, vm_name=vm_name,
