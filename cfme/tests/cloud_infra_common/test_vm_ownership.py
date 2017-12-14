@@ -106,10 +106,13 @@ def new_user(group_only_user_owned):
 
 
 def check_vm_exists(vm_ownership):
-    """
-        Checks if VM exists through All Instances tab.
-        Args:
-            vm_ownership: VM object for ownership test
+    """ Checks if VM exists through All Instances tab.
+
+    Args:
+        vm_ownership: VM object for ownership test
+
+    Returns:
+        :py:class:`bool`
     """
     try:
         vm_ownership.find_quadicon(from_any_provider=True)
