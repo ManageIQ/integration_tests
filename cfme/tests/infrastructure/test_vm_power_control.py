@@ -40,7 +40,8 @@ def testing_vm(request, provider, vm_name):
 
     @request.addfinalizer
     def _cleanup():
-        vm.delete_from_provider()
+        if provider.mgmt.does_vm_exist(vm.name):
+            vm.delete_from_provider()
         if_scvmm_refresh_provider(provider)
 
     if not provider.mgmt.does_vm_exist(vm.name):
