@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import cfme.configure.access_control as ac
+# import cfme.configure.access_control as ac
 import fauxfactory
 import math
 import pytest
@@ -42,6 +42,7 @@ def clean_setup_provider(request, provider):
     BaseProvider.clear_providers()
     setup_or_skip(request, provider)
     yield
+    logger.info('In clean_setup_provider')
     BaseProvider.clear_providers()
 
 
@@ -53,6 +54,7 @@ def new_credential():
 def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
     # In these tests, chargeback reports are filtered on VM owner.So,VMs have to be
     # assigned ownership.
+
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
     if not provider.mgmt.does_vm_exist(vm_name):
@@ -60,27 +62,32 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
     if not provider.mgmt.is_vm_running(vm_name):
         provider.mgmt.start_vm(vm_name)
         provider.mgmt.wait_vm_running(vm_name)
-
+    """
     group_collection = appliance.collections.groups
     cb_group = group_collection.instantiate(description='EvmGroup-user')
-    user = ac.User(name=provider.name + fauxfactory.gen_alphanumeric(),
+    user = appliance.collections.users.create(
+        name=fauxfactory.gen_alphanumeric(),
         credential=new_credential(),
         email='abc@example.com',
         group=cb_group,
         cost_center='Workload',
         value_assign='Database')
+    """
 
     vm = VM.factory(vm_name, provider)
 
     try:
-        user.create()
-        vm.set_ownership(user=user.name)
-        logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
+        # user.create()
+        vm.set_ownership(user='Administrator')
+        # vm.set_ownership(user=user.name)
+        # logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
 
-        yield user.name
+        # yield user.name
+        yield 'Administrator'
     finally:
         vm.unset_ownership()
-        user.delete()
+        # user.delete()
+        logger.info('In vm_ownership')
 
 
 @pytest.yield_fixture(scope="module")
@@ -351,3 +358,7 @@ def test_validate_storage_usage(resource_usage,
             assert estimated_storage_usage - 1.0 <= float(usage) \
                 <= estimated_storage_usage + 1.0, 'Estimated cost and report cost do not match'
             break
+
+
+def test_nan(vm_ownership, provider):
+    logger.info('In test_nan')
