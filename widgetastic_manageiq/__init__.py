@@ -3038,6 +3038,27 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
 
         raise ItemNotFound("No Entities found on this page")
 
+    def apply(self, func, conditions, surf_pages=False):
+        """ looks for entities matching to conditions and applies passed func
+        :param func:  function to apply
+        :param conditions: entities should match to
+        :param surf_pages: current page entities if False, all entities otherwise
+        :return: list of entities
+        """
+
+        if isinstance(conditions, dict):
+            conditions = [conditions]
+        elif isinstance(conditions, (list, tuple)):
+            conditions = conditions[:]
+        else:
+            raise ValueError('Wrong conditions passed')
+
+        all_found_entities = []
+        for _ in self.paginator.pages():
+            cur_page_entities = []
+            for keys in conditions:
+
+
 
 class BaseEntitiesView(View):
     """
