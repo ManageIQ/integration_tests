@@ -68,7 +68,7 @@ def find_path(tree, text, parent_item=None):
 
 class InfraGenericDetailsToolbar(View):
     reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                    '5.9': 'Refresh this page'}))
+                                       '5.9': 'Refresh this page'}))
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     monitoring = Dropdown("Monitoring")
@@ -290,7 +290,7 @@ class InfraVmSnapshotToolbar(View):
     """The toolbar on the snapshots page"""
     history = Dropdown('history')
     reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                    '5.9': 'Refresh this page'}))
+                                       '5.9': 'Refresh this page'}))
     create = Button(title='Create a new snapshot for this VM')
     delete = Dropdown('Delete Snapshots')
     revert = Button(title='Revert to selected snapshot')
@@ -335,7 +335,7 @@ class InfraVmGenealogyToolbar(View):
     """The toolbar on the genalogy page"""
     history = Dropdown(title='history')
     reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                    '5.9': 'Refresh this page'}))
+                                       '5.9': 'Refresh this page'}))
     edit_tags = Button(title='Edit Tags for this VM')
     compare = Button(title='Compare selected VMs')
 

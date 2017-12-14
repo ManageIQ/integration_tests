@@ -233,8 +233,8 @@ class RequestCollection(BaseCollection):
 
 class RequestsToolbar(View):
     """Toolbar on the requests view"""
-    reload = VersionPick({Version.lowest(): Button(title='Reload the current display'),
-                         '5.9': Button(title='Refresh this page')})
+    reload = Button(title=VersionPick({Version.lowest(): 'Reload the current display',
+                                       '5.9': 'Refresh this page'}))
 
 
 class RequestBasicView(BaseLoggedInPage):

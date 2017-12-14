@@ -108,7 +108,8 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
 class TasksView(BaseLoggedInPage):
     # Toolbar
     delete = Dropdown('Delete Tasks')  # dropdown just has icon, use element title
-    reload = Button(title='Reload the current display')
+    reload = Button(title=VersionPick({Version.lowest(): 'Reload the current display',
+                                       '5.9': 'Refresh this page'}))
 
     @View.nested
     class tabs(View):  # noqa
