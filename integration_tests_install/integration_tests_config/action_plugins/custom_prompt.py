@@ -33,7 +33,7 @@ except ImportError:
 class ActionModule(ActionBase):
     ''' Ask the user to input a key '''
 
-    VALID_ARGS = set(["prompt", "accepted_keys"])
+    VALID_ARGS = set(["prompt", "accepted_keys", "help_message"])
     REQUIRED_ARGS = set(["prompt"])
 
     BYPASS_HOST_LOOP = True
@@ -75,11 +75,15 @@ class ActionModule(ActionBase):
             return {"failed": True,
                 "msg": "For some reason, we couldn't access the connection tty."}
 
-        display.display(self._task.args["prompt"] + "\r")
+        if "help_message" in self._task.args:
+            display.display(self._task.args["prompt"] + "   (Press '?' for help)" + "\r")
+        else:
+            display.display(self._task.args["prompt"] + "\r")
 
         if "accepted_keys" in self._task.args:
             while True:
-                key = self._connection._new_stdin.read(1)
+                key = self._connection._new_stdin.read(1).strip('\n')
+                # print('This is pressed key:', key)
                 if key == '\x03':
                     result["failed"] = True
                     result["msg"] = "User requested to cancel."
@@ -91,15 +95,23 @@ class ActionModule(ActionBase):
                     int(key)
                     result["key"] = key
                     break
+                elif "help_message" in self._task.args and key == '?':
+                    print(self._task.args["help_message"])
         elif "accepted_keys "not in self._task.args:
-            key = self._connection._new_stdin.readline().strip('\n')
-            if key == '\x03':
-                result["failed"] = True
-                result["msg"] = "User requested to cancel."
-            elif key == '\n':
-                result["key"] = ""
-            else:
-                result["key"] = key
+            while True:
+                key = self._connection._new_stdin.readline().strip('\n')
+                if key == '\x03':
+                    result["failed"] = True
+                    result["msg"] = "User requested to cancel."
+                    break
+                elif key == '\n':
+                    result["key"] = ""
+                    break
+                elif "help_message" in self._task.args and key == '?':
+                    print(self._task.args["help_message"])
+                else:
+                    result["key"] = key
+                    break
 
         if old_settings is not None and isatty(fd):
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)

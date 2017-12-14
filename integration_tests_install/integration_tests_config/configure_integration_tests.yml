@@ -99,50 +99,50 @@
     - name: "1)"
       # https://gist.githubusercontent.com/confiks/6d7b0ee3e137df01b758/raw/6b31d61151c4199e5121c34c841f7168850a6071/ask_key.py
       # action: custom_prompt prompt="{{ pull_requests_question }} - [{{ pull_requests }}]:" accepted_keys="{{ accepted_keys_yn }}"
-      action: custom_prompt prompt="{{ pull_requests_question }} - [{{ pull_requests }}]:" accepted_keys="{{ accepted_keys_yn }}"
+      action: custom_prompt prompt="{{ pull_requests_question }} - [{{ pull_requests }}]:" accepted_keys="{{ accepted_keys_yn }}" help_message="{{ pull_requests_help }}"
       register: pull_requests_p
 
     - name: "2)"
       #action: custom_prompt prompt="SSH username - [ {{ ssh_user }} ]:" accepted_keys="['y', 'n', 'r']"
-      action: custom_prompt prompt="{{ git_account_username_question }} - [{{ git_account_username }}]:"
+      action: custom_prompt prompt="{{ git_account_username_question }} - [{{ git_account_username }}]:" help_message="{{ git_account_username_help }}"
       register: git_account_username_p
       when: pull_requests_p.key != "n"
 
     - name: "3)"
-      action: custom_prompt prompt="{{ git_full_name_question }} - [{{ git_full_name }}]:"
+      action: custom_prompt prompt="{{ git_full_name_question }} - [{{ git_full_name }}]:" help_message="{{ git_full_name_help }}"
       register: git_full_name_p
       when: pull_requests_p.key != "n"
     
     - name: "4)"
-      action: custom_prompt prompt="{{ git_email_question }} - [{{ git_email }}]:"
+      action: custom_prompt prompt="{{ git_email_question }} - [{{ git_email }}]:" help_message="{{ git_email_help }}"
       register: git_email_p
       when: pull_requests_p.key != "n"
     
     - name: "5)"
-      action: custom_prompt prompt="{{ gpg_public_key_question }} - [{{ gpg_public_key }}]:"
+      action: custom_prompt prompt="{{ gpg_public_key_question }} - [{{ gpg_public_key }}]:" help_message="{{ gpg_public_key_help }}"
       register: gpg_public_key_p
       when: pull_requests_p.key != "n"
     
     - name: "6)" 
-      action: custom_prompt prompt="{{ any_yaml_question }} - [{{ any_yaml }}]:" accepted_keys="{{ accepted_keys_yn }}"
+      action: custom_prompt prompt="{{ any_yaml_question }} - [{{ any_yaml }}]:" accepted_keys="{{ accepted_keys_yn }}" help_message="{{ any_yaml_help }}"
       register: any_yaml_p
     
       #  Ask user if he wants to use YAML files from remote repository 
     - name: "6.1)"
-      action: custom_prompt prompt="{{ yaml_remote_repo_yn_question }} - [{{ yaml_remote_repo_yn }}]:" accepted_keys="{{ accepted_keys_yn }}"
+      action: custom_prompt prompt="{{ yaml_remote_repo_yn_question }} - [{{ yaml_remote_repo_yn }}]:" accepted_keys="{{ accepted_keys_yn }}" help_message="{{ yaml_remote_repo_yn_help }}"
       register: yaml_remote_repo_yn_p
 #      when: any_yaml_p.key == "y" and pull_requests_p.key != "n"
 
       # Ask for URL for remote YAML repo 
     - name: "6.2)"
-      action: custom_prompt prompt="{{ yaml_remote_repo_question }} - [{{ yaml_remote_repo }}]:"
+      action: custom_prompt prompt="{{ yaml_remote_repo_question }} - [{{ yaml_remote_repo }}]:" help_message="{{ yaml_remote_repo_help }}"
       register: yaml_remote_repo_p
  #     when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y")
       when: any_yaml_p.key == "y" and yaml_remote_repo_yn_p.key == "y"
 
       # Ask for username for remote YAML repo 
     - name: "6.2)"
-      action: custom_prompt prompt="{{ yaml_remote_repo_username_question }} - [{{ yaml_remote_repo_username }}]:"
+      action: custom_prompt prompt="{{ yaml_remote_repo_username_question }} - [{{ yaml_remote_repo_username }}]:" help_message="{{ yaml_remote_repo_username_help }}"
       register: yaml_remote_repo_username_p
 #      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y")
       when: any_yaml_p.key == "y" and yaml_remote_repo_yn_p.key == "y"
@@ -150,7 +150,7 @@
       
       # Ask for password if YAMLs are encrypted
     - name: "6.3)"
-      action: custom_prompt prompt="{{ yaml_remote_key_password_question }} - [{{ yaml_remote_key_password }}]:"
+      action: custom_prompt prompt="{{ yaml_remote_key_password_question }} - [{{ yaml_remote_key_password }}]:" help_message="{{ yaml_remote_key_password_help }}"
       register: yaml_remote_key_password_p
       # when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
 #      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y")
@@ -158,7 +158,7 @@
   
       # Ask user if he wants to use local files from his PC
     - name: "7.1)"   
-      action: custom_prompt prompt="{{ yaml_local_repo_yn_question }} - [{{ yaml_local_repo_yn }}]:" accepted_keys="{{ accepted_keys_yn }}"
+      action: custom_prompt prompt="{{ yaml_local_repo_yn_question }} - [{{ yaml_local_repo_yn }}]:" accepted_keys="{{ accepted_keys_yn }}" help_message="{{ yaml_local_repo_yn_help }}"
       register: yaml_local_repo_yn_p
       # when: pull_requests_p.key != "n"
 #      when: any_yaml_p.key == "y" and pull_requests_p.key != "n"
@@ -166,17 +166,17 @@
 
       # Ask for path where local YAML files can be found
     - name: "7.2)"   
-      action: custom_prompt prompt="{{ yaml_local_repo_question }} - [{{ yaml_local_repo }}]:"
+      action: custom_prompt prompt="{{ yaml_local_repo_question }} - [{{ yaml_local_repo }}]:" help_message="{{ yaml_local_repo_help }}"
       register: yaml_local_repo_p
 #      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_local_repo_yn_p.key == "y")
       when: any_yaml_p.key == "y" and yaml_local_repo_yn_p.key == "y"
     
     - name: "10)"
-      action: custom_prompt prompt="{{ base_url_question }} - [{{ base_url }}]:"
+      action: custom_prompt prompt="{{ base_url_question }} - [{{ base_url }}]:" help_message="{{ base_url_help }}"
       register: base_url_p 
 
     - name: "11)"
-      action: custom_prompt prompt="{{ browser_question }} - [{{ browser }}]" accepted_keys="{{browser_accepted_keys}}" 
+      action: custom_prompt prompt="{{ browser_question }} - [{{ browser }}]" accepted_keys="{{browser_accepted_keys}}" help_message="{{ browser_help }}"
       register: browser_p
  
     - name: Set facts 
