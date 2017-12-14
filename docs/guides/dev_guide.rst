@@ -261,7 +261,6 @@ Layout
 
 * ``cfme/`` Page modeling and tests
 
-  * ``web_ui/`` The new web framework
   * ``fixtures/`` The new fixtures
   * ``tests/`` Tests container
   * ``utils/`` Utility functions that can be called inside our outside the
