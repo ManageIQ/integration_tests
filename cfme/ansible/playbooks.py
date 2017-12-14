@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 """Page model for Automation/Anisble/Playbooks"""
 import attr
-
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, View
+from widgetastic_patternfly import Button, Dropdown
+
+from cfme.base import Server
+from cfme.base.login import BaseLoggedInPage
+from cfme.exceptions import ItemNotFound
+from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from widgetastic_manageiq import (
     BaseEntitiesView,
     BaseListEntity,
@@ -15,17 +21,9 @@ from widgetastic_manageiq import (
     PaginationPane,
     SummaryTable,
 )
-from widgetastic_patternfly import Button, Dropdown, FlashMessages
-
-from cfme.base import Server
-from cfme.base.login import BaseLoggedInPage
-from cfme.exceptions import ItemNotFound
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 
 
 class PlaybookBaseView(BaseLoggedInPage):
-    flash = FlashMessages('.//div[starts-with(@class, "flash_text_div") or @id="flash_text_div"]')
     title = Text(locator='.//div[@id="main-content"]//h1')
 
     @property

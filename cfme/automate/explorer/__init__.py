@@ -1,21 +1,17 @@
 # -*- coding: utf-8 -*-
 import re
-
 from navmazing import NavigateToSibling
 from widgetastic.widget import View
-from widgetastic_manageiq import Accordion, ManageIQTree
-from widgetastic_patternfly import Dropdown, FlashMessages
+from widgetastic_patternfly import Dropdown
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import automate_menu_name
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from widgetastic_manageiq import Accordion, ManageIQTree
 
 
 class AutomateExplorerView(BaseLoggedInPage):
-    flash = FlashMessages(
-        './/div[starts-with(@id, "flash_text_div") or starts-with(@class, "flash_text_div")]')
-
     @property
     def in_explorer(self):
         return (

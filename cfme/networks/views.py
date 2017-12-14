@@ -1,10 +1,10 @@
-from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
-                                  BaseEntitiesView)
-from widgetastic_patternfly import (Dropdown, Accordion, FlashMessages, Button, TextInput,
-                                    BootstrapSwitch)
 from widgetastic.widget import View, Text, Select
+from widgetastic_patternfly import (Dropdown, Accordion, Button, TextInput,
+                                    BootstrapSwitch)
 
 from cfme.base.login import BaseLoggedInPage
+from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
+                                  BaseEntitiesView)
 
 
 class NetworkProviderToolBar(View):
@@ -46,8 +46,6 @@ class NetworkProviderEntities(BaseEntitiesView):
 
 class NetworkProviderView(BaseLoggedInPage):
     """ Represents whole All NetworkProviders page """
-    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(NetworkProviderToolBar)
     sidebar = View.nested(NetworkProviderSideBar)
     including_entities = View.include(NetworkProviderEntities, use_parent=True)
@@ -62,8 +60,6 @@ class NetworkProviderView(BaseLoggedInPage):
 class NetworkProviderDetailsView(BaseLoggedInPage):
     """ Represents detail view of network provider """
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(NetworkProviderDetailsToolBar)
     sidebar = View.nested(NetworkProviderDetailsSideBar)
 
@@ -120,8 +116,6 @@ class BalancerEntities(BaseEntitiesView):
 
 class BalancerView(BaseLoggedInPage):
     """ Represents whole All NetworkProviders page """
-    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(BalancerToolBar)
     sidebar = View.nested(BalancerSideBar)
     including_entities = View.include(NetworkProviderEntities, use_parent=True)
@@ -136,8 +130,6 @@ class BalancerView(BaseLoggedInPage):
 class BalancerDetailsView(BaseLoggedInPage):
     """ Represents detail view of network provider """
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(BalancerDetailsToolBar)
     sidebar = View.nested(BalancerDetailsSideBar)
 
@@ -194,8 +186,6 @@ class CloudNetworkEntities(BaseEntitiesView):
 
 class CloudNetworkView(BaseLoggedInPage):
     """ Represents whole All Cloud network page """
-    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(CloudNetworkToolBar)
     sidebar = View.nested(CloudNetworkSideBar)
     including_entities = View.include(NetworkProviderEntities, use_parent=True)
@@ -210,8 +200,6 @@ class CloudNetworkView(BaseLoggedInPage):
 class CloudNetworkDetailsView(BaseLoggedInPage):
     """ Represents detail view of cloud network """
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(NetworkProviderDetailsToolBar)
     sidebar = View.nested(NetworkProviderDetailsSideBar)
 
@@ -232,8 +220,6 @@ class CloudNetworkDetailsView(BaseLoggedInPage):
 class CloudNetworkAddView(BaseLoggedInPage):
     """ Represents Add view of cloud network """
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     network_manager = Select(id='ems_id')
     cloud_tenant = Select(name='cloud_tenant_id')
     network_type = Select(name='provider_network_type')
@@ -251,8 +237,6 @@ class CloudNetworkAddView(BaseLoggedInPage):
 class CloudNetworkEditView(BaseLoggedInPage):
     """ Represents Edit view of cloud network """
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     network_name = TextInput(name='name')
     ext_router = BootstrapSwitch(id='cloud_network_external_facing')
     administrative_state = BootstrapSwitch(id='cloud_network_enabled')
@@ -302,8 +286,6 @@ class NetworkPortEntities(BaseEntitiesView):
 
 class NetworkPortView(BaseLoggedInPage):
     """ Represents whole All NetworkPorts page """
-    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(NetworkPortToolBar)
     sidebar = View.nested(NetworkPortSideBar)
     including_entities = View.include(NetworkPortEntities, use_parent=True)
@@ -318,8 +300,6 @@ class NetworkPortView(BaseLoggedInPage):
 class NetworkPortDetailsView(BaseLoggedInPage):
     """ Represents detail view of network provider """
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(NetworkPortDetailsToolBar)
     sidebar = View.nested(NetworkPortDetailsSideBar)
 
@@ -377,8 +357,6 @@ class NetworkRouterEntities(BaseEntitiesView):
 
 class NetworkRouterView(BaseLoggedInPage):
     """ Represents whole All NetworkRouters page """
-    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(NetworkRouterToolBar)
     sidebar = View.nested(NetworkRouterSideBar)
     including_entities = View.include(NetworkRouterEntities, use_parent=True)
@@ -393,8 +371,6 @@ class NetworkRouterView(BaseLoggedInPage):
 class NetworkRouterDetailsView(BaseLoggedInPage):
     """ Represents detail view of network provider """
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(NetworkRouterDetailsToolBar)
     sidebar = View.nested(NetworkRouterDetailsSideBar)
 
@@ -414,8 +390,6 @@ class NetworkRouterDetailsView(BaseLoggedInPage):
 
 class NetworkRouterAddView(BaseLoggedInPage):
     """ Represents Add NetworkRouters page """
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     network_manager = Select(id='ems_id')
     router_name = TextInput(name='name')
     ext_gateway = BootstrapSwitch(id='network_router_external_gateway')
@@ -431,8 +405,6 @@ class NetworkRouterAddView(BaseLoggedInPage):
 
 class NetworkRouterEditView(BaseLoggedInPage):
     """ Represents Edit NetworkRouters page """
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     router_name = TextInput(name='name')
     ext_gateway = BootstrapSwitch(id='network_router_external_gateway')
     network_name = Select(name='cloud_network_id')
@@ -446,8 +418,6 @@ class NetworkRouterEditView(BaseLoggedInPage):
 
 class NetworkRouterAddInterfaceView(BaseLoggedInPage):
     """ Represents Add Interface to Network Router page """
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     subnet_name = Select(id='cloud_subnet_id')
     add = Button('Add')
 
@@ -496,8 +466,6 @@ class SecurityGroupEntities(BaseEntitiesView):
 
 class SecurityGroupView(BaseLoggedInPage):
     """ Represents whole All SecurityGroups page """
-    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(SecurityGroupToolBar)
     sidebar = View.nested(SecurityGroupSideBar)
     including_entities = View.include(SecurityGroupEntities, use_parent=True)
@@ -524,8 +492,6 @@ class ProviderSecurityGroupAllView(SecurityGroupView):
 class SecurityGroupDetailsView(BaseLoggedInPage):
     """ Represents detail view of network provider """
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(SecurityGroupDetailsToolBar)
     sidebar = View.nested(SecurityGroupDetailsSideBar)
 
@@ -561,8 +527,6 @@ class SubnetDetailsToolBar(View):
 class SubnetAddView(BaseLoggedInPage):
     """ Represents Add view of subnet """
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     network_manager = Select(id='ems_id')
     cloud_tenant = Select(name='cloud_tenant_id')
     network = Select(name='cloud_network_id')
@@ -579,8 +543,6 @@ class SubnetAddView(BaseLoggedInPage):
 class SubnetEditView(BaseLoggedInPage):
     """ Represents Edit view of subnet """
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     subnet_name = TextInput(name='name')
     gateway = TextInput(name='gateway_ip')
     save = Button('Save')
@@ -615,8 +577,6 @@ class SubnetEntities(BaseEntitiesView):
 
 class SubnetView(BaseLoggedInPage):
     """ Represents whole All Subnets page """
-    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(SubnetToolBar)
     sidebar = View.nested(SubnetSideBar)
     including_entities = View.include(SubnetEntities, use_parent=True)
@@ -631,8 +591,6 @@ class SubnetView(BaseLoggedInPage):
 class SubnetDetailsView(BaseLoggedInPage):
     """ Represents detail view of network provider """
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(SubnetDetailsToolBar)
     sidebar = View.nested(SubnetDetailsSideBar)
 
@@ -659,8 +617,6 @@ class OneProviderComponentsToolbar(View):
 
 class OneProviderSubnetView(BaseLoggedInPage):
     """ Represents whole All Subnets page """
-    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(SubnetSideBar)
     including_entities = View.include(SubnetEntities, use_parent=True)
@@ -675,8 +631,6 @@ class OneProviderSubnetView(BaseLoggedInPage):
 
 class OneProviderBalancerView(BaseLoggedInPage):
     """ Represents whole All Subnets page """
-    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(BalancerSideBar)
     including_entities = View.include(BalancerEntities, use_parent=True)
@@ -691,8 +645,6 @@ class OneProviderBalancerView(BaseLoggedInPage):
 
 class OneProviderNetworkPortView(BaseLoggedInPage):
     """ Represents whole All Subnets page """
-    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(NetworkPortSideBar)
     including_entities = View.include(NetworkPortEntities, use_parent=True)
@@ -707,8 +659,6 @@ class OneProviderNetworkPortView(BaseLoggedInPage):
 
 class OneProviderCloudNetworkView(BaseLoggedInPage):
     """ Represents whole All Subnets page """
-    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(CloudNetworkSideBar)
     including_entities = View.include(CloudNetworkEntities, use_parent=True)
@@ -723,8 +673,6 @@ class OneProviderCloudNetworkView(BaseLoggedInPage):
 
 class OneProviderNetworkRouterView(BaseLoggedInPage):
     """ Represents whole All Subnets page """
-    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(NetworkRouterSideBar)
     including_entities = View.include(NetworkRouterEntities, use_parent=True)
@@ -739,8 +687,6 @@ class OneProviderNetworkRouterView(BaseLoggedInPage):
 
 class OneProviderSecurityGroupView(BaseLoggedInPage):
     """ Represents whole All Subnets page """
-    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(SecurityGroupSideBar)
     including_entities = View.include(SecurityGroupEntities, use_parent=True)

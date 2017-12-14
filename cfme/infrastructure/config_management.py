@@ -3,7 +3,7 @@ from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Checkbox, TextInput, Text, View
-from widgetastic_patternfly import BootstrapSelect, Dropdown, FlashMessages, Tab
+from widgetastic_patternfly import BootstrapSelect, Dropdown, Tab
 
 from cfme.base.credential import Credential as BaseCredential
 from cfme.base.login import BaseLoggedInPage
@@ -122,10 +122,6 @@ class ConfigManagementAddEntities(View):
     add = Button('Add')
     cancel = Button('Cancel')
 
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
-
 
 class ConfigManagementEditEntities(View):
     """The entities on the edit page"""
@@ -134,10 +130,6 @@ class ConfigManagementEditEntities(View):
     save = Button('Save')
     reset = Button('Reset')
     cancel = Button('Cancel')
-
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
 
 
 class ConfigManagementView(BaseLoggedInPage):
@@ -292,15 +284,15 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         view.entities.form.fill(form_dict)
         if validate_credentials:
             view.entities.form.validate.click()
-            view.entities.flash.assert_success_message('Credential validation was successful')
+            view.flash.assert_success_message('Credential validation was successful')
         if cancel:
             view.entities.cancel.click()
-            view.entities.flash.assert_success_message('Add of Provider was cancelled by the user')
+            view.flash.assert_success_message('Add of Provider was cancelled by the user')
         else:
             view.entities.add.click()
             success_message = '{} Provider "{}" was added'.format(self.type, self.name)
-            view.entities.flash.assert_success_message(success_message)
-            view.entities.flash.assert_success_message(self.refresh_flash_msg)
+            view.flash.assert_success_message(success_message)
+            view.flash.assert_success_message(self.refresh_flash_msg)
             if validate:
                 try:
                     self.yaml_data['config_profiles']
@@ -331,13 +323,13 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         view.entities.form.fill(updates)
         if validate_credentials:
             view.entities.form.validate.click()
-            view.entities.flash.assert_success_message('Credential validation was successful')
+            view.flash.assert_success_message('Credential validation was successful')
         if cancel:
             view.entities.cancel.click()
-            view.entities.flash.assert_success_message('Edit of Provider was cancelled by the user')
+            view.flash.assert_success_message('Edit of Provider was cancelled by the user')
         else:
             view.entities.save.click()
-            view.entities.flash.assert_success_message(
+            view.flash.assert_success_message(
                 '{} Provider "{}" was updated'.format(self.type, updates['name'] or self.name))
             self.__dict__.update(**updates)
 
@@ -365,7 +357,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         }).pick(self.appliance.version)
         view.toolbar.configuration.item_select(remove_item, handle_alert=not cancel)
         if not cancel:
-            view.entities.flash.assert_success_message('Delete initiated for 1 Provider')
+            view.flash.assert_success_message('Delete initiated for 1 Provider')
             if wait_deleted:
                 wait_for(func=lambda: self.exists, fail_condition=True, delay=15, num_sec=60)
 
@@ -393,7 +385,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
             view.toolbar.configuration.item_select('Refresh Relationships and Power states',
                                                    handle_alert=not cancel)
         if not cancel:
-            view.entities.flash.assert_success_message(self.refresh_flash_msg)
+            view.flash.assert_success_message(self.refresh_flash_msg)
 
     @property
     def config_profiles(self):

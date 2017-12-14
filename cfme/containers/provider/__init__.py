@@ -7,7 +7,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Text, View, TextInput
 from widgetastic_patternfly import (
-    SelectorDropdown, Dropdown, BootstrapSelect, Input, Button, Tab, FlashMessages
+    SelectorDropdown, Dropdown, BootstrapSelect, Input, Button, Tab
 )
 from wrapanapi.utils import eval_strings
 
@@ -483,9 +483,6 @@ class ContainerObjectDetailsBaseView(BaseLoggedInPage, LoggingableView):
     title = Text('//div[@id="main-content"]//h1')
     breadcrumb = BreadCrumb(locator='//ol[@class="breadcrumb"]')
     toolbar = View.nested(ProviderDetailsToolBar)
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
-
     entities = View.nested(ContainerObjectDetailsEntities)
 
     @View.nested

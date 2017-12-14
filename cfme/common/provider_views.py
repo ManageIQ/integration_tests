@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
-
-from cfme.base.login import BaseLoggedInPage
-from cfme.common.host_views import HostEntitiesView
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View, Text, ConditionalSwitchableView, ParametrizedView
-from widgetastic_patternfly import Dropdown, BootstrapSelect, FlashMessages
+from widgetastic_patternfly import Dropdown, BootstrapSelect
+
+from cfme.base.login import BaseLoggedInPage
+from cfme.common.host_views import HostEntitiesView
 from widgetastic_manageiq import (BreadCrumb,
                                   SummaryTable,
                                   Button,
@@ -104,8 +104,6 @@ class ProviderDetailsView(BaseLoggedInPage):
     """
     title = Text('//div[@id="main-content"]//h1')
     breadcrumb = BreadCrumb(locator='//ol[@class="breadcrumb"]')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(ProviderDetailsToolBar)
 
     entities = ConditionalSwitchableView(reference='toolbar.view_selector',
@@ -422,9 +420,6 @@ class ProviderAddView(BaseLoggedInPage):
     name = Input('name')
     prov_type = BootstrapSelect(id='emstype')
     zone = Input('zone')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
-
     add = Button('Add')
     cancel = Button('Cancel')
 
@@ -529,9 +524,6 @@ class ProviderEditView(ProviderAddView):
     # only in edit view
     vnc_start_port = Input('host_default_vnc_port_start')
     vnc_end_port = Input('host_default_vnc_port_end')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
-
     save = Button('Save')
     reset = Button('Reset')
     cancel = Button('Cancel')

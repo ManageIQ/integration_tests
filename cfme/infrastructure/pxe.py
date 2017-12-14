@@ -5,7 +5,7 @@ import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 from widgetastic.widget import View, Text, Checkbox
-from widgetastic_patternfly import Dropdown, Accordion, FlashMessages, BootstrapSelect, Button
+from widgetastic_patternfly import Dropdown, Accordion, BootstrapSelect, Button
 
 from cfme.base import BaseEntity, BaseCollection
 from cfme.base.login import BaseLoggedInPage
@@ -59,8 +59,6 @@ class PXEMainView(BaseLoggedInPage):
     """
     represents whole All PXE Servers page
     """
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(PXEToolBar)
     sidebar = View.nested(PXESideBar)
     title = Text('//div[@id="main-content"]//h1')
@@ -107,8 +105,6 @@ class PXEServerDetailsView(PXEMainView):
 
 class PXEServerForm(View):
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     # common fields
     name = Input(id='name')
     depot_type = BootstrapSelect(id='log_protocol')
@@ -153,8 +149,6 @@ class PXEImageEditView(View):
     it can be found when some image is clicked in PXE Server Tree
     """
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     default_for_windows = Checkbox(id='default_for_windows')
     type = BootstrapSelect(id='image_typ')
 
@@ -426,8 +420,6 @@ class PXECustomizationTemplateDetailsView(PXEMainView):
 
 class PXECustomizationTemplateForm(View):
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     name = Input(id='name')
     description = Input(id='description')
     image_type = BootstrapSelect(id='img_typ')
@@ -629,8 +621,6 @@ class PXESystemImageTypeDetailsView(PXEMainView):
 
 class PXESystemImageTypeForm(View):
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     name = Input(id='name')
     type = BootstrapSelect(id='provision_type')
 
@@ -795,8 +785,6 @@ class PXEDatastoreDetailsView(PXEMainView):
 
 class PXEDatastoreForm(View):
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     provider = BootstrapSelect(id='ems_id')
 
     @property

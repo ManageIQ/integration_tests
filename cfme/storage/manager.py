@@ -1,8 +1,17 @@
 # -*- coding: utf-8 -*-
 import attr
-
 from navmazing import NavigateToAttribute
 from widgetastic.widget import View, NoSuchElementException, Text
+from widgetastic_patternfly import (
+    Button,
+    Dropdown
+)
+
+from cfme.base.ui import BaseLoggedInPage
+from cfme.common import WidgetasticTaggable, PolicyProfileAssignable
+from cfme.exceptions import ItemNotFound
+from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from widgetastic_manageiq import (
     Accordion,
     BreadCrumb,
@@ -11,17 +20,6 @@ from widgetastic_manageiq import (
     SummaryTable,
     Table
 )
-from widgetastic_patternfly import (
-    Button,
-    Dropdown,
-    FlashMessages
-)
-
-from cfme.base.ui import BaseLoggedInPage
-from cfme.common import WidgetasticTaggable, PolicyProfileAssignable
-from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.modeling.base import BaseCollection, BaseEntity
 
 
 class StorageManagerToolbar(View):
@@ -67,10 +65,6 @@ class StorageManagerDetailsAccordion(View):
 class StorageManagerView(BaseLoggedInPage):
     """A base view for all the Storage Manager or Provider pages"""
     title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
-
-    flash = FlashMessages(
-        './/div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-        'contains(@class, "flash_text_div")]')
 
     @property
     def in_manager(self):
