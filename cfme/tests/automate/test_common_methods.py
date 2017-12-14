@@ -6,15 +6,15 @@ import pytest
 from datetime import timedelta, date
 
 from cfme import test_requirements
+from cfme.infrastructure.virtual_machines import InfraVmSummaryView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.automate.buttons import ButtonGroup, Button
 from cfme.common.vm import VM
-from cfme.web_ui import toolbar
 from cfme.utils.blockers import BZ
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-from cfme.utils.version import pick
-
+from widgetastic_manageiq import Dropdown
 
 pytestmark = [
     test_requirements.automate,
@@ -47,33 +47,6 @@ def testing_vm(request, vm_name, setup_provider, provider, provisioning):
     return vm_obj
 
 
-@pytest.fixture(scope="function")
-def retire_extend_button(request):
-    """
-    Add an automate button that will extend the vm retirement date
-    """
-    grp_name = "grp_{}".format(fauxfactory.gen_alphanumeric())
-    grp = ButtonGroup(
-        text=grp_name,
-        hover=grp_name,
-        type=ButtonGroup.VM_INSTANCE
-    )
-    request.addfinalizer(lambda: grp.delete_if_exists())
-    grp.create()
-    btn_name = "btn_{}".format(fauxfactory.gen_alphanumeric())
-    button = Button(
-        group=grp,
-        text=btn_name,
-        hover=btn_name,
-        system="Request",
-        request="vm_retire_extend"
-    )
-    request.addfinalizer(lambda: button.delete_if_exists())
-    button.create()
-
-    return lambda: toolbar.select(grp.text, button.text)
-
-
 def generate_retirement_date(delta=None):
     gen_date = date.today()
     if delta:
@@ -82,7 +55,7 @@ def generate_retirement_date(delta=None):
 
 
 @pytest.mark.tier(3)
-def test_vm_retire_extend(request, testing_vm, soft_assert, retire_extend_button):
+def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
     """ Tests extending a retirement using an AE method.
 
     Prerequisities:
@@ -104,13 +77,40 @@ def test_vm_retire_extend(request, testing_vm, soft_assert, retire_extend_button
     testing_vm.set_retirement_date(retirement_date)
     wait_for(lambda: testing_vm.retirement_date != 'Never', message="retirement date set")
     set_date = testing_vm.retirement_date
+    vm_retire_date_fmt = VM.RETIRE_DATE_FMT.pick(appliance.version)
+
     if not BZ(1419150, forced_streams='5.6').blocks:
-        soft_assert(set_date == retirement_date.strftime(pick(VM.RETIRE_DATE_FMT)),
+        soft_assert(set_date == retirement_date.strftime(vm_retire_date_fmt),
                     "The retirement date '{}' did not match expected date '{}'"
-                    .format(set_date, retirement_date.strftime(pick(VM.RETIRE_DATE_FMT))))
+                    .format(set_date, retirement_date.strftime(vm_retire_date_fmt)))
 
     # Create the vm_retire_extend button and click on it
-    retire_extend_button()
+    grp_name = "grp_{}".format(fauxfactory.gen_alphanumeric())
+    grp = ButtonGroup(
+        text=grp_name,
+        hover=grp_name,
+        type=ButtonGroup.VM_INSTANCE
+    )
+    request.addfinalizer(lambda: grp.delete_if_exists())
+    grp.create()
+    btn_name = "btn_{}".format(fauxfactory.gen_alphanumeric())
+    button = Button(
+        group=grp,
+        text=btn_name,
+        hover=btn_name,
+        system="Request",
+        request="vm_retire_extend"
+    )
+    request.addfinalizer(lambda: button.delete_if_exists())
+    button.create()
+
+    navigate_to(testing_vm, 'Details')
+
+    class TestDropdownView(InfraVmSummaryView):
+        group = Dropdown(grp.text)
+
+    view = appliance.browser.create_view(TestDropdownView)
+    view.group.item_select(button.text)
 
     # CFME automate vm_retire_extend method defaults to extending the date by 14 days
     extend_duration_days = 14
@@ -118,8 +118,7 @@ def test_vm_retire_extend(request, testing_vm, soft_assert, retire_extend_button
 
     # Check that the WebUI updates with the correct date
     wait_for(
-        lambda: testing_vm.retirement_date >= extended_retirement_date.strftime(
-            pick(VM.RETIRE_DATE_FMT)),
+        lambda: testing_vm.retirement_date >= extended_retirement_date.strftime(vm_retire_date_fmt),
         num_sec=60,
         message="Check for extension of the VM retirement date by {} days".format(
             extend_duration_days)
