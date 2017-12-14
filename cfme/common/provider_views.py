@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
+
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View, Text, ConditionalSwitchableView, ParametrizedView
-from widgetastic_patternfly import Dropdown, BootstrapSelect
+from widgetastic_patternfly import Dropdown, BootstrapSelect, Tab
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.host_views import HostEntitiesView
@@ -469,6 +470,30 @@ class CloudProviderAddView(ProviderAddView):
                 self.title.text == 'Add New Cloud Provider')
 
 
+class ContainerProviderSettingView(ProvidersView):
+    """
+       Settings view for builds 5.9 and up
+      """
+
+    @View.nested
+    class proxy(Tab, BeforeFillMixin):  # NOQA
+
+        TAB_NAME = 'Proxy'
+        http_proxy = Input('provider_options_proxy_settings_http_proxy')
+
+    @View.nested
+    class advanced(Tab, BeforeFillMixin):  # NOQA
+
+        TAB_NAME = 'Advanced'
+        adv_http = Input('provider_options_image_inspector_options_http_proxy')
+        adv_https = Input('provider_options_image_inspector_options_https_proxy')
+        no_proxy = Input('provider_options_image_inspector_options_no_proxy')
+        image_repo = Input('provider_options_image_inspector_options_repository')
+        image_reg = Input('provider_options_image_inspector_options_registry')
+        image_tag = Input('provider_options_image_inspector_options_image_tag')
+        cve_loc = Input('provider_options_image_inspector_options_cve_url')
+
+
 class ContainerProviderAddView(ProviderAddView):
     """
      represents Container Provider Add View
@@ -482,13 +507,18 @@ class ContainerProviderAddView(ProviderAddView):
                 self.title.text == 'Add New Containers Provider')
 
 
-class ContainerProviderAddViewUpdated(ContainerProviderAddView):
+class ContainerProviderAddViewUpdated(ContainerProviderAddView, ContainerProviderSettingView):
     """
      Additional widgets for builds 5.9 and up
     """
+    COND_WIDGETS = ['prov_type', 'metrics_type', 'alerts_type']
 
     metrics_type = BootstrapSelect(id='metrics_selection')
     alerts_type = BootstrapSelect(id='alerts_selection')
+
+    def before_fill(self, values):
+        for widget in self.COND_WIDGETS:
+            getattr(self, widget).fill(values.get(widget))
 
 
 class MiddlewareProviderAddView(ProviderAddView):
@@ -567,13 +597,19 @@ class ContainerProviderEditView(ProviderEditView):
                 'Edit Containers Provider' in self.title.text)
 
 
-class ContainerProviderEditViewUpdated(ContainerProviderEditView):
+class ContainerProviderEditViewUpdated(ContainerProviderEditView, ContainerProviderSettingView):
     """
      Additional widgets for builds 5.9 and up
     """
 
+    COND_WIDGETS = ['prov_type', 'metrics_type', 'alerts_type']
+
     metrics_type = BootstrapSelect(id='metrics_selection')
     alerts_type = BootstrapSelect(id='alerts_selection')
+
+    def before_fill(self, values):
+        for widget in self.COND_WIDGETS:
+            getattr(self, widget).fill(values.get(widget))
 
 
 class MiddlewareProviderEditView(ProviderEditView):
