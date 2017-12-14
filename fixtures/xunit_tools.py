@@ -12,6 +12,25 @@ from cfme.utils.conf import xunit, cfme_data
 from cfme.utils.pytest_shortcuts import extract_fixtures_values
 
 
+whitelist = [
+    r'cfme/tests/infrastructure/test_quota_tagging.py::test_.*\[.*rhe?v',
+    r'cfme/tests/infrastructure/test_tenant_quota.py::test_.*\[.*rhe?v'
+]
+compiled_whitelist = re.compile('(' + ')|('.join(whitelist) + ')')
+
+
+blacklist = [
+    'cfme/tests/containers/',
+    'cfme/tests/middleware/',
+    'cfme/tests/openstack/',
+    'hawkular',
+    r'\[.*rhos',
+    r'\[.*rhev',
+    r'\[.*rhv',
+]
+compiled_blacklist = re.compile('(' + ')|('.join(blacklist) + ')')
+
+
 default_custom_fields = {
     "caseautomation": "automated",
     "caseimportance": "high",
@@ -29,18 +48,6 @@ caselevels = {
     '2': 'system',
     '3': 'acceptance'
 }
-
-
-blacklist = [
-    'cfme/tests/containers/',
-    'cfme/tests/middleware/',
-    'cfme/tests/openstack/',
-    'hawkular',
-    r'\[.*rhos',
-    r'\[.*rhev',
-    r'\[.*rhv',
-]
-compiled_blacklist = re.compile('(' + ')|('.join(blacklist) + ')')
 
 
 def pytest_addoption(parser):
@@ -326,7 +333,9 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if 'cfme/tests' not in item.nodeid:
             continue
-        if not no_blacklist and compiled_blacklist.search(item.nodeid):
+        if (not no_blacklist and
+                compiled_blacklist.search(item.nodeid) and
+                not compiled_whitelist.search(item.nodeid)):
             continue
         get_testcase_data(tc_data, tc_names, item, legacy)
         get_testresult_data(tr_data, tr_names, item, legacy)
