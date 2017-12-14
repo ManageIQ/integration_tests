@@ -1,11 +1,10 @@
-import pytest
 from distutils.version import LooseVersion
+
+import pytest
 
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter, list_providers
-
 from markers.env import EnvironmentMarker
-
 
 ONE = 'one'
 ALL = 'all'
@@ -110,7 +109,10 @@ def providers(metafunc, filters=None, selector=ALL):
     potential_providers = list_providers(filters)
 
     if selector == ONE:
-        allowed_providers = [potential_providers[0]]
+        if potential_providers:
+            allowed_providers = [potential_providers[0]]
+        else:
+            allowed_providers = []
     elif selector == LATEST:
         allowed_providers = [sorted(
             potential_providers, key=lambda k:LooseVersion(
