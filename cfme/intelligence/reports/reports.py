@@ -3,7 +3,7 @@
 from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import ParametrizedLocator, VersionPick, Version
 from widgetastic.widget import Text, Checkbox, View, ParametrizedView, Table as VanillaTable
 from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab, CandidateNotFound
 
@@ -117,7 +117,8 @@ class EditCustomReportView(CustomReportFormCommon):
 
 class CustomReportDetailsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
-    reload_button = Button(title="Reload current display")
+    reload_button = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                    '5.9': 'Refresh this page'}))
     paginator = PaginationPane()
 
     @View.nested

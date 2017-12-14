@@ -1,5 +1,5 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import Parameter
+from widgetastic.utils import Parameter, VersionPick, Version
 from widgetastic.widget import ParametrizedView, Text, View
 from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Tab
 
@@ -46,7 +46,8 @@ class MyServicesView(BaseLoggedInPage):
         view_selector = View.nested(ItemsToolBarViewSelector)
 
     # TODO drop '_btn' suffix
-    reload = Button(title='Reload current display')
+    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                '5.9': 'Refresh this page'}))
     configuration = Dropdown('Configuration')
     policy_btn = Dropdown('Policy')
     lifecycle_btn = Dropdown('Lifecycle')
@@ -76,7 +77,8 @@ class SetOwnershipForm(MyServicesView):
 
 class MyServiceDetailsToolbar(View):
     """View of toolbar widgets to nest"""
-    reload = Button(title='Reload current display')
+    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                    '5.9': 'Refresh this page'}))
 
     @ParametrizedView.nested
     class custom_button(ParametrizedView):  # noqa

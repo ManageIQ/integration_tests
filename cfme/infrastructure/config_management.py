@@ -24,7 +24,8 @@ from widgetastic_manageiq import (
 
 class ConfigManagementToolbar(View):
     """Toolbar"""
-    refresh = Button(title='Reload current display')
+    refresh = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                '5.9': 'Refresh this page'}))
     configuration = Dropdown('Configuration')
     lifecycle = Dropdown('Lifecycle')
     policy = Dropdown('Policy')
@@ -35,7 +36,8 @@ class ConfigManagementToolbar(View):
 class ConfigManagementDetailsToolbar(View):
     """Toolbar on the details page"""
     history = Dropdown(title='History')
-    refresh = Button(title='Reload current display')
+    refresh = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                '5.9': 'Refresh this page'}))
     lifecycle = Dropdown('Lifecycle')
     policy = Dropdown('Policy')
     download = Button(title='Download summary in PDF format')
