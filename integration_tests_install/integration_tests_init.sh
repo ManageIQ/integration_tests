@@ -173,7 +173,7 @@ function run_command {
     -v /var/tmp/bashrc:${HOME}/.bashrc \
     ${ENV_VARS} \
     ${DOCK_IMG} \
-    bash -c ". /etc/bashrc; su - root -c 'pip install -e .'; $1"
+    bash -c ". /etc/bashrc; pip install -e .; $1"
 }
     # bash -c ". /etc/bashrc; deactivate; source ../cfme_venv/bin/activate; cp ../../bin/chromedriver ../cfme_venv/bin; $1"
     # -v /home/patchkez/projects/integration_tests_files/wrapanapi/wrapanapi/:/projects/cfme_vol/cfme_venv/lib/python2.7/site-packages/wrapanapi/ \

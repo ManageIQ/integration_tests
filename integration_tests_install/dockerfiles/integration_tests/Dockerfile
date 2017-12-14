@@ -97,4 +97,11 @@ EXPOSE 5999
 
 # ENTRYPOINT ["/entry.sh"]
  
-CMD vncserver :99 -xstartup /usr/local/bin/xstartup -SecurityTypes None && tail -F ~/.vnc/*.log
+# RUN echo "ALL ALL=NOPASSWD: /projects/cfme_env/bin/pip install -e ." >> /etc/sudoers
+
+RUN chmod a+w ${CFME_ENV}/lib/python2.7/site-packages/
+RUN chmod a+w ${CFME_ENV}/bin
+
+CMD useradd ${USERNAME} -g ${GOUP_ID} -M -u ${USER_ID} && \
+    vncserver :99 -xstartup /usr/local/bin/xstartup -SecurityTypes None && \
+    tail -F ~/.vnc/*.log
