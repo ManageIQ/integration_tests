@@ -16,7 +16,7 @@ def test_topology_search(provider, appliance):
     top_collection = TopologyCollection(appliance)
     topology_object = top_collection.instantiate()
     view = navigate_to(topology_object, 'All')
-    topology_object.display_names.enable(True)
+    topology_object.display_names.enable()
 
     elements = topology_object.elements
     assert elements, 'No elements to test topology'

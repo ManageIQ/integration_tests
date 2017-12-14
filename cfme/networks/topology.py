@@ -56,12 +56,15 @@ class TopologyDisplayNames(BaseEntity):
     def is_enabled(self):
         return self.element.is_selected()
 
-    def enable(self, enable=True):
-        if self.is_enabled != enable:
+    def _switch_state(self, state):
+        if self.is_enabled != state:
             self.element.click()
 
+    def enable(self):
+        self._switch_state(True)
+
     def disable(self):
-        self.enable(enable=False)
+        self._switch_state(False)
 
 
 @attr.s
