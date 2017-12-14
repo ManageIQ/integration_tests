@@ -567,9 +567,9 @@ class VM(BaseVM):
             view = navigate_to(self, "All")
             entity = self.find_quadicon()
             entity.check()
-        try:
-            return not view.toolbar.power.item_enabled(option)
-        except NoSuchElementException:
+        if view.toolbar.power.has_item(option):
+            return view.toolbar.power.item_enabled(option)
+        else:
             return False
 
     def delete_from_provider(self):
