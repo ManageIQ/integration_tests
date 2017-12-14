@@ -9,7 +9,7 @@ from wrapanapi.containers.image import Image as ApiImage
 
 from cfme.common import (WidgetasticTaggable, PolicyProfileAssignable,
                          TagPageView)
-from cfme.containers.provider import (ContainersProvider, Labelable, navigate_and_get_rows,
+from cfme.containers.provider import (Labelable, navigate_and_get_rows,
                                       ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView, LoadDetailsMixin,
                                       refresh_and_navigate, ContainerObjectDetailsEntities)
@@ -19,6 +19,7 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.wait import wait_for, TimedOutError
 from widgetastic_manageiq import SummaryTable, BaseEntitiesView
 from widgetastic.widget import View
+from cfme.utils.providers import get_crud_by_name
 
 
 class ImageAllView(ContainerObjectAllBaseView):
@@ -133,18 +134,22 @@ class ImageCollection(BaseCollection):
     ENTITY = Image
 
     def all(self):
-
+        # container_images has ems_id, join with ext_mgmgt_systems on id for provider name
         image_table = self.appliance.db.client['container_images']
         ems_table = self.appliance.db.client['ext_management_systems']
-        image_query = self.appliance.db.client.session.query(
-            image_table.name, image_table.image_ref, ems_table.name).join(
-            ems_table, image_table.ems_id == ems_table.id)
+        image_query = (
+            self.appliance.db.client.session
+                .query(image_table.name, image_table.image_ref, ems_table.name)
+                .join(ems_table, image_table.ems_id == ems_table.id))
+        provider = None
+        # filtered
+        if self.filters.get('provider'):
+            provider = self.filters.get('provider')
+            image_query = image_query.filter(ems_table.name == provider.name)
         images = []
-
-        for name, id, provider_name in image_query.all():
-            images.append(self.instantiate(name=name, id=id,
-                          provider=ContainersProvider(
-                              name=provider_name, appliance=self.appliance)))
+        for name, image_ref, ems_name in image_query.all():
+            images.append(self.instantiate(name=name, id=image_ref,
+                                           provider=provider or get_crud_by_name(ems_name)))
         return images
 
 

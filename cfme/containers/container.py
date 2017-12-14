@@ -14,6 +14,7 @@ from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils.providers import get_crud_by_name
 
 
 class ContainerAllView(ContainerObjectAllBaseView):
@@ -51,8 +52,8 @@ class Container(BaseEntity, WidgetasticTaggable, Labelable):
     details_view = ContainerDetailsView
 
     name = attr.ib()
-    provider = attr.ib()
     pod = attr.ib()
+    provider = attr.ib()
 
     @property
     def project_name(self):
@@ -72,6 +73,30 @@ class ContainerCollection(BaseCollection):
     """Collection object for :py:class:`Container`."""
 
     ENTITY = Container
+
+    def all(self):
+        # containers table has ems_id, join with ext_mgmgt_systems on id for provider name
+        # Then join with container_groups on the id for the pod
+        container_table = self.appliance.db.client['containers']
+        ems_table = self.appliance.db.client['ext_management_systems']
+        pod_table = self.appliance.db.client['container_groups']
+        container_query = (
+            self.appliance.db.client.session
+                .query(container_table.name, pod_table.name, ems_table.name)
+                .join(ems_table, container_table.ems_id == ems_table.id)
+                .join(pod_table, container_table.container_group_id == pod_table.id))
+        provider = None
+        # filtered
+        if self.filters.get('provider'):
+            provider = self.filters.get('provider')
+            container_query = container_query.filter(ems_table.name == provider.name)
+        containers = []
+        for name, pod_name, ems_name in container_query.all():
+            containers.append(
+                self.instantiate(name=name, pod=pod_name,
+                                 provider=provider or get_crud_by_name(ems_name)))
+
+        return containers
 
 
 @navigator.register(ContainerCollection, 'All')

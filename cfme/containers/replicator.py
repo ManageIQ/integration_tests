@@ -12,6 +12,7 @@ from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
     ContainerObjectDetailsBaseView)
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.providers import get_crud_by_name
 
 
 class ReplicatorAllView(ContainerObjectAllBaseView):
@@ -51,6 +52,31 @@ class ReplicatorCollection(BaseCollection):
     """Collection object for :py:class:`Replicator`."""
 
     ENTITY = Replicator
+
+    def all(self):
+        # container_replicators table has ems_id,
+        # join with ext_mgmgt_systems on id for provider name
+        # Then join with container_projects on the id for the project
+        replicator_table = self.appliance.db.client['container_replicators']
+        ems_table = self.appliance.db.client['ext_management_systems']
+        project_table = self.appliance.db.client['container_projects']
+        replicator_query = (
+            self.appliance.db.client.session
+                .query(replicator_table.name, project_table.name, ems_table.name)
+                .join(ems_table, replicator_table.ems_id == ems_table.id)
+                .join(project_table,
+                      replicator_table.container_project_id == project_table.id))
+        provider = None
+        # filtered
+        if self.filters.get('provider'):
+            provider = self.filters.get('provider')
+            replicator_query = replicator_query.filter(ems_table.name == provider.name)
+        replicators = []
+        for name, project_name, ems_name in replicator_query.all():
+            replicators.append(self.instantiate(name=name, project_name=project_name,
+                                                provider=provider or get_crud_by_name(ems_name)))
+
+        return replicators
 
 
 @navigator.register(ReplicatorCollection, 'All')

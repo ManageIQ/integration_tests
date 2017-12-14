@@ -12,6 +12,7 @@ from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView)
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils.providers import get_crud_by_name
 
 
 class ProjectAllView(ContainerObjectAllBaseView):
@@ -50,6 +51,26 @@ class ProjectCollection(BaseCollection):
     """Collection object for :py:class:`Project`."""
 
     ENTITY = Project
+
+    def all(self):
+        # container_projects table has ems_id, join with ext_mgmgt_systems on id for provider name
+        project_table = self.appliance.db.client['container_projects']
+        ems_table = self.appliance.db.client['ext_management_systems']
+        project_query = (
+            self.appliance.db.client.session
+                .query(project_table.name, ems_table.name)
+                .join(ems_table, project_table.ems_id == ems_table.id))
+        provider = None
+        # filtered
+        if self.filters.get('provider'):
+            provider = self.filters.get('provider')
+            project_query = project_query.filter(ems_table.name == provider.name)
+        projects = []
+        for name, ems_name in project_query.all():
+            projects.append(self.instantiate(name=name,
+                                             provider=provider or get_crud_by_name(ems_name)))
+
+        return projects
 
 
 @navigator.register(ProjectCollection, 'All')

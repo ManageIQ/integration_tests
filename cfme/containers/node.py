@@ -13,13 +13,14 @@ from widgetastic.widget import View
 from widgetastic_manageiq import Button, Text, TimelinesView, BreadCrumb
 
 from cfme.common import WidgetasticTaggable, TagPageView, PolicyProfileAssignable
-from cfme.containers.provider import (ContainersProvider, Labelable,
+from cfme.containers.provider import (Labelable,
     ContainerObjectAllBaseView, LoggingableView, ContainerObjectDetailsBaseView)
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import (CFMENavigateStep, navigator,
                                                      navigate_to)
 from cfme.utils.appliance import current_appliance
 from cfme.common.provider_views import ProviderDetailsToolBar
+from cfme.utils.providers import get_crud_by_name
 
 
 class NodeDetailsToolBar(ProviderDetailsToolBar):
@@ -99,15 +100,19 @@ class NodeCollection(BaseCollection):
         # container_nodes table has ems_id, join with ext_mgmgt_systems on id for provider name
         node_table = self.appliance.db.client['container_nodes']
         ems_table = self.appliance.db.client['ext_management_systems']
-        node_query = self.appliance.db.client.session.query(node_table.name, ems_table.name)\
-            .join(ems_table, node_table.ems_id == ems_table.id)
+        node_query = (
+            self.appliance.db.client.session
+                .query(node_table.name, ems_table.name)
+                .join(ems_table, node_table.ems_id == ems_table.id))
+        provider = None
+        # filtered
+        if self.filters.get('provider'):
+            provider = self.filters.get('provider')
+            node_query = node_query.filter(ems_table.name == provider.name)
         nodes = []
-        for name, provider_name in node_query.all():
-            # Hopefully we can get by with just provider name?
-            nodes.append(
-                self.instantiate(
-                    name=name, provider=ContainersProvider(
-                        name=provider_name, appliance=self.appliance)))
+        for name, ems_name in node_query.all():
+            nodes.append(self.instantiate(name=name,
+                                          provider=provider or get_crud_by_name(ems_name)))
         return nodes
 
 

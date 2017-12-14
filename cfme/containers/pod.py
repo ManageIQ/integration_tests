@@ -15,6 +15,7 @@ from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
                                       ContainerObjectDetailsEntities)
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.providers import get_crud_by_name
 
 
 class PodAllView(ContainerObjectAllBaseView):
@@ -37,8 +38,8 @@ class Pod(BaseEntity, WidgetasticTaggable, Labelable):
     details_view = PodDetailsView
 
     name = attr.ib()
-    provider = attr.ib()
     project_name = attr.ib()
+    provider = attr.ib()
 
     @cached_property
     def mgmt(self):
@@ -58,6 +59,30 @@ class PodCollection(BaseCollection):
     """Collection object for :py:class:`Pod`."""
 
     ENTITY = Pod
+
+    def all(self):
+        # container_groups table has ems_id, join with ext_mgmgt_systems on id for provider name
+        # Then join with container_projects on the id for the project
+        pod_table = self.appliance.db.client['container_groups']
+        ems_table = self.appliance.db.client['ext_management_systems']
+        project_table = self.appliance.db.client['container_projects']
+        pod_query = (
+            self.appliance.db.client.session
+                .query(pod_table.name, project_table.name, ems_table.name)
+                .join(ems_table, pod_table.ems_id == ems_table.id)
+                .join(project_table, pod_table.container_project_id == project_table.id))
+        provider = None
+        # filtered
+        if self.filters.get('provider'):
+            provider = self.filters.get('provider')
+            pod_query = pod_query.filter(ems_table.name == provider.name)
+        pods = []
+        for name, project_name, ems_name, in pod_query.all():
+            pods.append(self.instantiate(name=name,
+                                         project_name=project_name,
+                                         provider=provider or get_crud_by_name(ems_name)))
+
+        return pods
 
 
 @navigator.register(PodCollection, 'All')

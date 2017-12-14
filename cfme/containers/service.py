@@ -13,6 +13,7 @@ from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
     ContainerObjectDetailsBaseView)
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.providers import get_crud_by_name
 
 
 class ServiceAllView(ContainerObjectAllBaseView):
@@ -52,6 +53,29 @@ class ServiceCollection(BaseCollection):
     """Collection object for :py:class:`Service`."""
 
     ENTITY = Service
+
+    def all(self):
+        # container_services table has ems_id, join with ext_mgmgt_systems on id for provider name
+        # Then join with container_projects on the id for the project
+        service_table = self.appliance.db.client['container_services']
+        ems_table = self.appliance.db.client['ext_management_systems']
+        project_table = self.appliance.db.client['container_projects']
+        service_query = (
+            self.appliance.db.client.session
+                .query(service_table.name, project_table.name, ems_table.name)
+                .join(ems_table, service_table.ems_id == ems_table.id)
+                .join(project_table, service_table.container_project_id == project_table.id))
+        provider = None
+        # filtered
+        if self.filters.get('provider'):
+            provider = self.filters.get('provider')
+            service_query = service_query.filter(ems_table.name == provider.name)
+        services = []
+        for name, project_name, ems_name in service_query.all():
+            services.append(self.instantiate(name=name, project_name=project_name,
+                                             provider=provider or get_crud_by_name(ems_name)))
+
+        return services
 
 
 @navigator.register(ServiceCollection, 'All')

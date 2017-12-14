@@ -12,6 +12,7 @@ from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView)
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils.providers import get_crud_by_name
 
 
 class VolumeAllView(ContainerObjectAllBaseView):
@@ -50,6 +51,26 @@ class VolumeCollection(BaseCollection):
     """Collection object for :py:class:`Volume`."""
 
     ENTITY = Volume
+
+    def all(self):
+        # container_volumes table has ems_id, join with ext_mgmgt_systems on id for provider name
+        volume_table = self.appliance.db.client['container_volumes']
+        ems_table = self.appliance.db.client['ext_management_systems']
+        volume_query = (
+            self.appliance.db.client.session
+                .query(volume_table.name, ems_table.name)
+                .join(ems_table, volume_table.parent_id == ems_table.id))
+        provider = None
+        # filtered
+        if self.filters.get('provider'):
+            provider = self.filters.get('provider')
+            volume_query = volume_query.filter(ems_table.name == provider.name)
+        volumes = []
+        for name, ems_name in volume_query.all():
+            volumes.append(self.instantiate(name=name,
+                                            provider=provider or get_crud_by_name(ems_name)))
+
+        return volumes
 
 
 @navigator.register(VolumeCollection, 'All')
