@@ -109,7 +109,8 @@ class TasksView(BaseLoggedInPage):
     flash = FlashMessages('.//div[starts-with(@id, "flash_text_div")]')
     # Toolbar
     delete = Dropdown('Delete Tasks')  # dropdown just has icon, use element title
-    reload = Button(title='Reload the current display')
+    reload = Button(title=VersionPick({Version.lowest(): 'Reload the current display',
+                                       '5.9': 'Refresh this page'}))
 
     @View.nested
     class tabs(View):  # noqa
