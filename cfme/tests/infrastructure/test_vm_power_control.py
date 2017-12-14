@@ -105,15 +105,16 @@ def check_power_options(provider, soft_assert, vm, power_state):
         must_be_available['on'].remove(vm.RESET)
 
     view = navigate_to(vm, 'Details')
+    power_dropdown = view.toolbar.power
     for pwr_option in must_be_available[power_state]:
-        soft_assert(view.toolbar.power.item_enabled(pwr_option),
+        soft_assert(power_dropdown.item_enabled(pwr_option),
                     "'{}' must be available in current power state - '{}' ".format(pwr_option,
                                                                                    power_state))
     for pwr_option in mustnt_be_available[power_state]:
-        soft_assert(
-            not view.toolbar.power.item_enabled(pwr_option),
-            "'{}' must not be available in current power state - '{}' ".format(pwr_option,
-                                                                               power_state))
+        pwr_state = power_dropdown.has_item(pwr_option) and power_dropdown.item_enabled(pwr_option)
+        soft_assert(not pwr_state,
+                    "'{}' must not be available in current power state - '{}' ".format(pwr_option,
+                                                                                       power_state))
 
 
 def wait_for_last_boot_timestamp_refresh(vm, boot_time, timeout=300):
