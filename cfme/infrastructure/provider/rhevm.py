@@ -53,6 +53,13 @@ class RHEVMProvider(InfraProvider):
     _fullscreen_xpath = '//*[@id="fullscreen"]'
     bad_credentials_error_msg = 'Cannot complete login due to an incorrect user name or password.'
 
+    ems_events = [
+        ('vm_create', {'event_type': 'USER_ADD_VM_FINISHED_SUCCESS', 'vm_or_template_id': None}),
+        ('vm_stop', {'event_type': 'USER_STOP_VM', 'vm_or_template_id': None}),
+        ('vm_start', {'event_type': 'USER_RUN_VM', 'vm_or_template_id': None}),
+        ('vm_delete', {'event_type': 'USER_REMOVE_VM_FINISHED', 'vm_or_template_id': None})
+    ]
+
     def __init__(self, name=None, endpoints=None, zone=None, key=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None, appliance=None):
         super(RHEVMProvider, self).__init__(

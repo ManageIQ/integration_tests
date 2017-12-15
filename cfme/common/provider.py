@@ -56,6 +56,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
     _param_name = ParamClassName('name')
     STATS_TO_MATCH = []
     db_types = ["Providers"]
+    ems_events = []
 
     def __hash__(self):
         return hash(self.key) ^ hash(type(self))

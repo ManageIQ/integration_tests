@@ -18,7 +18,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.version import current_version
-from cfme.utils.wait import wait_for, wait_for_decorator
+from cfme.utils.wait import wait_for, wait_for_decorator, TimedOutError
 from fixtures.provider import setup_one_or_skip
 from fixtures.pytest_store import store
 
@@ -40,6 +40,11 @@ def api_version(appliance):
 
 @pytest.fixture(scope="function")
 def vm(request, a_provider, appliance):
+    return _vm(request, a_provider, appliance.rest_api)
+
+
+@pytest.fixture(scope="module")
+def vm_modscope(request, a_provider, appliance):
     return _vm(request, a_provider, appliance.rest_api)
 
 
@@ -906,3 +911,49 @@ class TestNotificationsRESTAPI(object):
         collection.reload()
         notifications = [collection[-i] for i in range(1, 3)]
         delete_resources_from_collection(collection, notifications)
+
+
+class TestEventStreamsRESTAPI(object):
+    @pytest.fixture(scope='module')
+    def gen_events(self, appliance, vm_modscope, a_provider):
+        vm_name = vm_modscope
+        # generating events for some vm
+        # create vm and start vm events are produced by vm fixture
+        # stop vm event
+        a_provider.mgmt.stop_vm(vm_name)
+        # remove vm event
+        a_provider.mgmt.delete_vm(vm_name)
+
+    @pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.9')
+    def test_find_created_events(self, appliance, vm_modscope, gen_events, a_provider, soft_assert):
+        """Tests find_by and get functions of event_streams collection
+
+        Metadata:
+            test_flag: rest
+        """
+        vm_name = vm_modscope
+        collections = appliance.rest_api.collections
+        vm_id = collections.vms.get(name=vm_name).id
+
+        ems_event_type = 'EmsEvent'
+
+        evt_col = collections.event_streams
+        for evt, params in a_provider.ems_events:
+            if 'dest_vm_or_template_id' in params:
+                params.update({'dest_vm_or_template_id': vm_id})
+            elif 'vm_or_template_id' in params:
+                params.update({'vm_or_template_id': vm_id})
+
+            try:
+                msg = ("vm's {v} event {evt} of {t} type is not found in "
+                       "event_streams collection".format(v=vm_name, evt=evt, t=ems_event_type))
+                found_evts, _ = wait_for(lambda: [e for e in evt_col.find_by(type=ems_event_type,
+                                                                             **params)],
+                                         num_sec=30, delay=5, message=msg, fail_condition=[])
+            except TimedOutError as exc:
+                soft_assert(False, str(exc))
+
+            try:
+                evt_col.get(id=found_evts[-1].id)
+            except (IndexError, ValueError):
+                soft_assert(False, "Couldn't get event {} for vm {}".format(evt, vm_name))
