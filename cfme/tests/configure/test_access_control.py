@@ -838,7 +838,6 @@ def test_superadmin_tenant_crud(request, appliance):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1387088, forced_streams=['5.7', 'upstream'])])
 def test_superadmin_tenant_project_crud(request, appliance):
     """Test suppose to verify CRUD operations for CFME projects
 
@@ -874,7 +873,7 @@ def test_superadmin_tenant_project_crud(request, appliance):
     with update(project):
         project.description = "{}edited".format(project.description)
     with update(project):
-        project.name = "{}edited".format(project.name)
+        project.name = "{}_edited".format(project.name)
     project.delete()
     tenant.delete()
 
@@ -919,7 +918,7 @@ def test_superadmin_child_tenant_crud(request, appliance, number_of_childrens):
         tenant_update.name = "{}edited".format(tenant_update.name)
 
 
-def tenant_unique_tenant_project_name_on_parent_level(request, object_type):
+def tenant_unique_tenant_project_name_on_parent_level(request, appliance, object_type):
     """Tenant or Project has always unique name on parent level. Same name cannot be used twice.
 
     Prerequisities:
@@ -939,8 +938,11 @@ def tenant_unique_tenant_project_name_on_parent_level(request, object_type):
         name=name_of_tenant,
         description=tenant_description,
         parent=object_type.get_root_tenant())
-
-    with error.expected("Validation failed: Name should be unique per parent"):
+    if appliance.version < '5.9':
+        msg = 'Error when adding a new tenant: Validation failed: Name should be unique per parent'
+    else:
+        msg = 'Failed to add a new tenant resource - Name should be unique per parent'
+    with error.expected(msg):
         tenant2 = object_type.create(
             name=name_of_tenant,
             description=tenant_description,
@@ -961,13 +963,13 @@ def tenant_unique_tenant_project_name_on_parent_level(request, object_type):
 
 @pytest.mark.tier(3)
 def test_unique_tenant_name_on_parent_level(request, appliance):
-    tenant_unique_tenant_project_name_on_parent_level(request,
+    tenant_unique_tenant_project_name_on_parent_level(request, appliance,
                                                       appliance.collections.tenants)
 
 
 @pytest.mark.tier(3)
 def test_unique_project_name_on_parent_level(request, appliance):
-    tenant_unique_tenant_project_name_on_parent_level(request,
+    tenant_unique_tenant_project_name_on_parent_level(request, appliance,
                                                       appliance.collections.projects)
 
 
