@@ -60,7 +60,7 @@ def configure_aws_iam_auth_mode(appliance, available_auth_modes):
     """Configure AWS IAM authentication mode"""
     if 'miq_aws_iam' in available_auth_modes:
         auth_mode = appliance.server.authentication
-        fill_data = cfme_data.auth_modes.miq_aws_iam
+        fill_data = cfme_data.auth_modes.miq_aws_iam.copy()
         creds = credentials[fill_data.pop('credentials')]  # remove cred key from fill_data with pop
         fill_data.update(
             {'access_key': creds['username'],
