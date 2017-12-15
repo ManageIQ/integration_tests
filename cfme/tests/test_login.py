@@ -2,6 +2,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
+from cfme.base.ui import LoginPage
 from cfme.utils.appliance import ViaSSUI, ViaUI
 from cfme.utils import conf, error, version
 
@@ -51,3 +52,6 @@ def test_bad_password(context, request, appliance):
     with appliance.context.use(context):
         with error.expected(error_message):
             appliance.server.login(user)
+        if appliance.version >= '5.9':
+            view = appliance.browser.create_view(LoginPage)
+            assert view.password.read() == '' and view.username.read() == ''
