@@ -45,14 +45,12 @@ class TopologyEntities(BaseEntitiesView):
 
 class TopologyView(BaseLoggedInPage):
     """ Represents whole All NetworkProviders page """
-    LEGENDS = '//kubernetes-topology-icon'
+    LEGENDS = './/div[@id="main-content"]//kubernetes-topology-icon'
     ELEMENTS = '//kubernetes-topology-graph//*[name()="g"]'
     LINES = '//kubernetes-topology-graph//*[name()="lines_obj"]'
     DISPLAY_NAME = '|'.join([
         "//*[contains(@class, 'container_topology')]//label[contains(., 'Display Names')]/input",
         '//*[@id="box_display_names"]'])  # [0] is not working on containers topology
-    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
 
     toolbar = View.nested(TopologyToolbar)
     including_entities = View.include(TopologyEntities, use_parent=True)
