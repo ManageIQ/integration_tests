@@ -14,7 +14,6 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.timeutil import parsetime
-from cfme.utils.version import pick
 from cfme.utils.wait import wait_for
 from markers.env_markers.provider import providers
 
@@ -84,7 +83,7 @@ def verify_retirement_state(retire_vm):
     """
     # wait for the info block showing a date as retired date
     # Use lambda for is_retired since its a property
-    view_cls = navigator.get_class(retire_vm, 'Details')
+    view_cls = navigator.get_class(retire_vm, 'Details').VIEW
     view = retire_vm.appliance.browser.create_view(view_cls)
     assert wait_for(lambda: retire_vm.is_retired, delay=5, num_sec=10 * 60,
                     fail_func=view.toolbar.reload.click,
@@ -103,9 +102,9 @@ def verify_retirement_date(retire_vm, expected_date='Never'):
     """
     if isinstance(expected_date, dict):
         # convert to a parsetime object for comparsion, function depends on version
-        if 'UTC' in pick(VM.RETIRE_DATE_FMT):
+        if 'UTC' in VM.RETIRE_DATE_FMT.pick(retire_vm.appliance.version):
             convert_func = parsetime.from_american_minutes_with_utc
-        elif pick(VM.RETIRE_DATE_FMT).endswith('+0000'):
+        elif VM.RETIRE_DATE_FMT.pick(retire_vm.appliance.version).endswith('+0000'):
             convert_func = parsetime.from_saved_report_title_format
         else:
             convert_func = parsetime.from_american_date_only
@@ -118,7 +117,8 @@ def verify_retirement_date(retire_vm, expected_date='Never'):
         assert expected_date['start'] <= expected_date['retire'] <= expected_date['end']
 
     elif isinstance(expected_date, (parsetime, datetime, date)):
-        assert retire_vm.retirement_date == expected_date.strftime(pick(VM.RETIRE_DATE_FMT))
+        assert retire_vm.retirement_date == expected_date.strftime(
+            VM.RETIRE_DATE_FMT.pick(retire_vm.appliance.version))
     else:
         assert retire_vm.retirement_date == expected_date
 
