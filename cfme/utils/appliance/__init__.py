@@ -202,6 +202,7 @@ class IPAppliance(object):
         browser_steal: If True then then current browser is killed and the new appliance
             is used to generate a new session.
         container: If the appliance is running as a container or as a pod, specifies its name.
+        project: openshift's project where the appliance is deployed
         openshift_creds: If the appliance runs as a project on openshift, provides credentials for
             the openshift host so the framework can interact with the project.
         db_host: If the database is located somewhere else than on the appliance itself, specify
@@ -225,6 +226,8 @@ class IPAppliance(object):
         'db_host': 'db_host',
         'db_port': 'db_port',
         'ssh_port': 'ssh_port',
+        'project': 'project',
+        'ui_protocol': 'ui_protocol',
     }
     CONFIG_NONGLOBAL = {'hostname'}
     PROTOCOL_PORT_MAPPING = {'http': 80, 'https': 443}
@@ -241,7 +244,7 @@ class IPAppliance(object):
         return cls(**json.loads(json_string))
 
     def __init__(
-            self, hostname, ui_protocol='https', ui_port=None, browser_steal=False,
+            self, hostname, ui_protocol='https', ui_port=None, browser_steal=False, project=None,
             container=None, openshift_creds=None, db_host=None, db_port=None, ssh_port=None):
         if not isinstance(hostname, six.string_types):
             raise TypeError('Appliance\'s hostname must be a string!')
@@ -266,6 +269,7 @@ class IPAppliance(object):
         self.collections = EntityCollections.for_appliance(self)
         self.browser_steal = browser_steal
         self.container = container
+        self.project = project
         self.openshift_creds = openshift_creds or {}
         self._user = None
         self.appliance_console = ApplianceConsole(self)
@@ -436,6 +440,7 @@ class IPAppliance(object):
         fix_ntp_clock = kwargs.pop('fix_ntp_clock', True)
         region = kwargs.pop('region', 0)
         key_address = kwargs.pop('key_address', None)
+        db_address = kwargs.pop('db_address', None)
         on_openstack = kwargs.pop('on_openstack', False)
         with self as ipapp:
             ipapp.wait_for_ssh()
@@ -451,14 +456,15 @@ class IPAppliance(object):
             self.ssh_client.run_command("service auditd restart", ensure_host=True)
 
             self.deploy_merkyl(start=True, log_callback=log_callback)
-            if fix_ntp_clock:
+            if fix_ntp_clock and not self.is_pod:
                 self.fix_ntp_clock(log_callback=log_callback)
                 # TODO: Handle external DB setup
             # This is workaround for Openstack appliances to use only one disk for the VMDB
             if on_openstack:
                 self.configure_rhos_db_disk()
 
-            self.db.setup(region=region, key_address=key_address)
+            self.db.setup(region=region, key_address=key_address,
+                          db_address=db_address, is_pod=self.is_pod)
             self.wait_for_evm_service(timeout=1200, log_callback=log_callback)
 
             # Some conditionally ran items require the evm service be
@@ -874,11 +880,14 @@ class IPAppliance(object):
         if self.openshift_creds:
             connect_kwargs = {
                 'hostname': self.openshift_creds['hostname'],
-                'username': self.openshift_creds['username'],
-                'password': self.openshift_creds['password'],
+                'username': self.openshift_creds['ssh']['username'],
+                'password': self.openshift_creds['ssh']['password'],
+                'oc_username': self.openshift_creds['username'],
+                'oc_password': self.openshift_creds['password'],
                 'container': self.container,
                 'is_pod': True,
                 'port': self.ssh_port,
+                'project': self.project
             }
             self.is_pod = True
         else:
@@ -1333,10 +1342,7 @@ class IPAppliance(object):
                 urls.extend(os.environ['update_urls'].split())
             else:
                 # fall back to cfme_data
-                if self.version >= "5.5":
-                    updates_url = basic_info.get('rhel7_updates_url')
-                else:
-                    updates_url = basic_info.get('rhel_updates_url')
+                updates_url = basic_info.get('rhel7_updates_url')
 
                 if updates_url:
                     urls.append(updates_url)
@@ -1741,7 +1747,11 @@ class IPAppliance(object):
 
     @property
     def is_ssh_running(self):
-        return net_check(ports.SSH, self.hostname, force=True)
+        if self.openshift_creds and 'hostname' in self.openshift_creds:
+            hostname = self.openshift_creds['hostname']
+        else:
+            hostname = self.hostname
+        return net_check(ports.SSH, hostname, force=True)
 
     @property
     def has_cli(self):
