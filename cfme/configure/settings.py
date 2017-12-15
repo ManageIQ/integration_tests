@@ -127,6 +127,7 @@ class TimeprofileAll(CFMENavigateStep):
 
 
 class Visual(Updateable, Navigatable):
+
     @property
     def grid_view_limit(self):
         view = navigate_to(self, 'All')
@@ -294,9 +295,6 @@ class Visual(Updateable, Navigatable):
         values = view.visualitem.reports.all_options
         text = [value.text for value in values]
         return text
-
-
-visual = Visual()
 
 
 class VisualTabForm(MySettingsView):

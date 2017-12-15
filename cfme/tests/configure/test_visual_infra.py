@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-
-from copy import copy
 import pytest
 
+from copy import copy
+
 from cfme import test_requirements
-from cfme.configure.settings import visual
+from cfme.configure.settings import Visual
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.infrastructure import virtual_machines as vms  # NOQA
 from cfme.infrastructure.datastore import DatastoreCollection
@@ -17,6 +17,11 @@ pytestmark = [pytest.mark.tier(3),
 
 # todo: infrastructure hosts, pools, stores, cluster are removed due to changing
 # navigation to navmazing. all items have to be put back once navigation change is fully done
+
+
+@pytest.fixture(scope="module")
+def visual(appliance):
+    return Visual(appliance=appliance)
 
 
 @pytest.fixture(scope='module', params=[InfraProvider, vms.Vm])
@@ -51,34 +56,34 @@ LANDING_PAGES = [
 
 
 @pytest.yield_fixture(scope="module")
-def set_grid():
+def set_grid(visual):
     gridlimit = visual.grid_view_limit
     yield
     visual.grid_view_limit = gridlimit
 
 
 @pytest.yield_fixture(scope="module")
-def set_tile():
+def set_tile(visual):
     tilelimit = visual.tile_view_limit
     yield
     visual.tile_view_limit = tilelimit
 
 
 @pytest.yield_fixture(scope="module")
-def set_list():
+def set_list(visual):
     listlimit = visual.list_view_limit
     yield
     visual.list_view_limit = listlimit
 
 
 @pytest.yield_fixture(scope="module")
-def set_report():
+def set_report(visual):
     reportlimit = visual.report_view_limit
     yield
     visual.report_view_limit = reportlimit
 
 
-def set_default_page():
+def set_default_page(visual):
     visual.set_login_page = "Cloud Intelligence / Dashboard"
 
 
@@ -88,42 +93,42 @@ def go_to_grid(page):
 
 
 @pytest.yield_fixture(scope="module")
-def set_infra_provider_quad():
+def set_infra_provider_quad(visual):
     visual.infra_provider_quad = False
     yield
     visual.infra_provider_quad = True
 
 
 @pytest.yield_fixture(scope="module")
-def set_host_quad():
+def set_host_quad(visual):
     visual.host_quad = False
     yield
     visual.host_quad = True
 
 
 @pytest.yield_fixture(scope="module")
-def set_datastore_quad():
+def set_datastore_quad(visual):
     visual.datastore_quad = False
     yield
     visual.datastore_quad = True
 
 
 @pytest.yield_fixture(scope="module")
-def set_vm_quad():
+def set_vm_quad(visual):
     visual.vm_quad = False
     yield
     visual.vm_quad = True
 
 
 @pytest.yield_fixture(scope="module")
-def set_template_quad():
+def set_template_quad(visual):
     visual.template_quad = False
     yield
     visual.template_quad = True
 
 
 @pytest.mark.meta(blockers=[1267148])
-def test_infra_grid_page_per_item(request, page, value, set_grid):
+def test_infra_grid_page_per_item(visual, request, page, value, set_grid):
     """ Tests grid items per page
 
     Metadata:
@@ -143,7 +148,7 @@ def test_infra_grid_page_per_item(request, page, value, set_grid):
 
 
 @pytest.mark.meta(blockers=[1267148])
-def test_infra_tile_page_per_item(request, page, value, set_tile):
+def test_infra_tile_page_per_item(visual, request, page, value, set_tile):
     """ Tests tile items per page
 
     Metadata:
@@ -163,7 +168,7 @@ def test_infra_tile_page_per_item(request, page, value, set_tile):
 
 
 @pytest.mark.meta(blockers=[1267148])
-def test_infra_list_page_per_item(request, page, value, set_list):
+def test_infra_list_page_per_item(visual, request, page, value, set_list):
     """ Tests list items per page
 
     Metadata:
@@ -183,7 +188,7 @@ def test_infra_list_page_per_item(request, page, value, set_list):
 
 
 @pytest.mark.meta(blockers=[1267148, 1273529])
-def test_infra_report_page_per_item(value, set_report):
+def test_infra_report_page_per_item(visual, value, set_report):
     """ Tests report items per page
 
     Metadata:
@@ -204,7 +209,7 @@ def test_infra_report_page_per_item(value, set_report):
 @pytest.mark.uncollect('Needs to be fixed after menu removed')
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('start_page', LANDING_PAGES, scope="module")
-def test_infra_start_page(request, appliance, start_page):
+def test_infra_start_page(visual, request, appliance, start_page):
     """ Tests start page
 
     Metadata:

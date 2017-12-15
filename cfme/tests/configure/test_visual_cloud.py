@@ -2,7 +2,7 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.configure.settings import visual
+from cfme.configure.settings import Visual
 from cfme.cloud.availability_zone import AvailabilityZone, AvailabilityZoneAllView
 from cfme.cloud.provider import CloudProvider, CloudProvidersView
 from cfme.cloud.flavor import Flavor, FlavorAllView
@@ -38,8 +38,13 @@ landing_pages = {
 }
 
 
+@pytest.fixture(scope="module")
+def visual(appliance):
+    return Visual(appliance=appliance)
+
+
 @pytest.yield_fixture(scope="module")
-def set_grid():
+def set_grid(visual):
     gridlimit = visual.grid_view_limit
     visual.grid_view_limit = 5
     yield
@@ -47,7 +52,7 @@ def set_grid():
 
 
 @pytest.yield_fixture(scope="module")
-def set_tile():
+def set_tile(visual):
     tilelimit = visual.tile_view_limit
     visual.tile_view_limit = 5
     yield
@@ -55,15 +60,15 @@ def set_tile():
 
 
 @pytest.yield_fixture(scope="module")
-def set_list():
+def set_list(visual):
     listlimit = visual.list_view_limit
     visual.list_view_limit = 5
     yield
     visual.list_view_limit = listlimit
 
 
-def set_default_page():
-    visual.set_login_page = "Cloud Intelligence / Dashboard"
+def set_default_page(visual):
+    visual.login_page = "Cloud Intel / Dashboard"
 
 
 def go_to_grid(page):
@@ -72,14 +77,14 @@ def go_to_grid(page):
 
 
 @pytest.yield_fixture(scope="module")
-def set_cloud_provider_quad():
+def set_cloud_provider_quad(visual):
     visual.cloud_provider_quad = False
     yield
     visual.cloud_provider_quad = True
 
 
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_cloud_grid_page_per_item(request, page, set_grid, appliance):
+def test_cloud_grid_page_per_item(visual, request, page, set_grid, appliance):
     """ Tests grid items per page
 
     Metadata:
@@ -99,7 +104,7 @@ def test_cloud_grid_page_per_item(request, page, set_grid, appliance):
 
 
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_cloud_tile_page_per_item(request, page, set_tile, appliance):
+def test_cloud_tile_page_per_item(visual, request, page, set_tile, appliance):
     """ Tests tile items per page
 
     Metadata:
@@ -119,7 +124,7 @@ def test_cloud_tile_page_per_item(request, page, set_tile, appliance):
 
 
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_cloud_list_page_per_item(request, page, set_list, appliance):
+def test_cloud_list_page_per_item(visual, request, page, set_list, appliance):
     """ Tests list items per page
 
     Metadata:
@@ -139,7 +144,7 @@ def test_cloud_list_page_per_item(request, page, set_list, appliance):
 
 
 @pytest.mark.parametrize('start_page', landing_pages, scope="module")
-def test_cloud_start_page(request, appliance, start_page):
+def test_cloud_start_page(visual, request, appliance, start_page):
     # TODO: Need to dynamically fetch this value and move this test case to common.
     """ Tests start page
 
@@ -148,7 +153,7 @@ def test_cloud_start_page(request, appliance, start_page):
     """
     start = "" if appliance.version < '5.8' else "Compute / "
     new_start_page = "{}{}".format(start, start_page)
-    request.addfinalizer(set_default_page)
+    request.addfinalizer(lambda: set_default_page(visual))
     visual.login_page = new_start_page
     appliance.server.logout()
     appliance.server.login_admin()

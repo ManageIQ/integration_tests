@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-
 import pytest
+
 from cfme import test_requirements
-from cfme.configure.settings import visual
+from cfme.configure.settings import Visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.utils.appliance import current_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -22,8 +22,13 @@ colors = [
 ]
 
 
+@pytest.fixture(scope="module")
+def visual(appliance):
+    return Visual(appliance=appliance)
+
+
 @pytest.yield_fixture(scope="module")
-def set_timezone():
+def set_timezone(visual):
     time_zone = visual.timezone
     visual.timezone = "(GMT-10:00) Hawaii"
     yield
