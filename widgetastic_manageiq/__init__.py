@@ -2924,10 +2924,11 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                 return el['entity_id']
         return None
 
-    def get_entity_by_keys(self, **keys):
+    def get_entities_by_keys(self, **keys):
         # some fields aren't available in Tile or Grid View.
         # So, we decided to switch to List View mode if several keys are passed
         # btw, it isn't necessary in 5.9+
+        found_entities = []
         if self.browser.product_version < '5.9':
             # todo: fix this ugly hack somehow else
             view_selector = getattr(self.parent.parent.toolbar, 'view_selector', None)
@@ -2948,11 +2949,11 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                     except KeyError:
                         break
                 else:
-                    return entity
+                    found_entities.append(entity)
         else:
             entity_id = keys.pop('entity_id', None)
             if entity_id:
-                return self.parent.entity_class(parent=self, entity_id=entity_id)
+                found_entities.append(self.parent.entity_class(parent=self, entity_id=entity_id))
             elif 'id' in keys:
                 # it turned out that there are some views which have entities with internal id
                 # which override entity id in JS code. this is workaround for such case
@@ -2966,11 +2967,11 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                         except KeyError:
                             break
                     else:
-                        return entity
-                pass
+                        found_entities.append(entity)
             else:
-                return self.parent.entity_class(parent=self, entity_id=self.get_id_by_keys(**keys))
-        return None
+                found_entities.append(self.parent.entity_class(
+                    parent=self, entity_id=self.get_id_by_keys(**keys)))
+        return found_entities
 
     @property
     def all_entity_names(self):
@@ -3015,7 +3016,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                 entity_id = keys['entity_id']
             else:
                 entity_id = None
-                entity = self.get_entity_by_keys(**keys)
+                entity = self.get_entities_by_keys(**keys)
                 if entity:
                     return entity
 
@@ -3055,8 +3056,8 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
 
         all_found_entities = []
         for _ in self.paginator.pages():
-            cur_page_entities = []
             for keys in conditions:
+
 
 
 
