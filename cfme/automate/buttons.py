@@ -3,8 +3,8 @@ import re
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from widgetastic.utils import VersionPick
-from widgetastic.widget import Text, Checkbox
+from widgetastic.utils import ParametrizedString, VersionPick
+from widgetastic.widget import Text, Checkbox, ParametrizedView
 from widgetastic_manageiq import SummaryFormItem, FonticonPicker, PotentiallyInvisibleTab
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
@@ -274,9 +274,13 @@ class ButtonFormCommon(AutomateCustomizationView):
         system = BootstrapSelect('instance_name')
         message = Input(name='object_message')
         request = Input(name='object_request')
-        # TODO: AVP and Visibility
-        attribute_1 = Input(name='attribute_1')
-        value_1 = Input(name='value_1')
+
+        @ParametrizedView.nested
+        class attribute(ParametrizedView):  # noqa
+            PARAMETERS = ('number', )
+            key = Input(name=ParametrizedString('attribute_{number}'))
+            value = Input(name=ParametrizedString('value_{number}'))
+
         # TODO: Role Access
 
     cancel = Button('Cancel')
@@ -371,9 +375,8 @@ class Button(Updateable, Navigatable):
         'request': 'advanced',
     }
 
-    def __init__(self, group=None, text=None,
-                 hover=None, dialog=None,
-                 system=None, request=None, image=None, open_url=None, appliance=None):
+    def __init__(self, group=None, text=None, hover=None, dialog=None, system=None, request=None,
+                 image=None, open_url=None, attributes=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.group = group
         self.text = text
@@ -388,6 +391,7 @@ class Button(Updateable, Navigatable):
         else:
             self.image = 'fa-user'
         self.open_url = open_url
+        self.attributes = attributes
 
     @classmethod
     def _categorize_fill_dict(cls, d):
@@ -415,8 +419,11 @@ class Button(Updateable, Navigatable):
             'image': self.image,
             'open_url': self.open_url,
             'system': self.system,
-            'request': self.request,
+            'request': self.request
         }))
+        if self.attributes is not None:
+            for i, dict_ in enumerate(self.attributes, 1):
+                view.advanced.attribute(i).fill(dict_)
         view.add_button.click()
         view = self.create_view(ButtonGroupDetailView, self.group)
         # TODO: Enable this
