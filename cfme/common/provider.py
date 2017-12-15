@@ -146,7 +146,8 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
 
             if not cancel or (cancel and any(self.view_value_mapping.values())):
                 # Workaround for BZ#1526050
-                if self.appliance.version == '5.8.3.0':
+                from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+                if self.appliance.version == '5.8.3.0' and self.one_of(VMwareProvider):
                     add_view.fill({'prov_type': 'Red Hat Virtualization'})
                 elif '5.8.3.0' < self.appliance.version < '5.9':
                     import warnings
