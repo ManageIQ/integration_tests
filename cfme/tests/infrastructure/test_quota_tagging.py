@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils.generators import random_vm_name
 from cfme.utils.update import update
+from cfme.services.catalogs.catalog_item import CatalogItem
+from cfme.services.service_catalogs import ServiceCatalogs
 
 pytestmark = [
     pytest.mark.provider([RHEVMProvider, VMwareProvider], scope="module")
@@ -69,6 +72,22 @@ def max_quota_test_instance(appliance, test_domain):
     yield instance
 
 
+@pytest.fixture
+def catalog_item(provider, provisioning, template_name, dialog, catalog, prov_data):
+    yield CatalogItem(
+        item_type=provisioning['catalog_item_type'],
+        name='test_{}'.format(fauxfactory.gen_alphanumeric()),
+        description="test catalog",
+        display_in=True,
+        provider=provider,
+        catalog=catalog,
+        catalog_name=template_name,
+        dialog=dialog,
+        prov_data=prov_data,
+        vm_name=prov_data['catalog']['vm_name']
+    )
+
+
 def set_entity_quota_source(max_quota_test_instance, entity):
     with update(max_quota_test_instance):
         max_quota_test_instance.fields = {'quota_source_type': {'value': entity}}
@@ -111,6 +130,32 @@ def test_quota_tagging(appliance, provider, setup_provider, set_entity_quota_tag
 
     # nav to requests page to check quota validation
     request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
+    provision_request = appliance.collections.requests.instantiate(request_description)
+    provision_request.wait_for_request(method='ui')
+    assert provision_request.row.reason.text == "Quota Exceeded"
+
+
+@pytest.mark.parametrize(
+    ['set_entity_quota_tag', 'custom_prov_data'],
+    [
+        [('Quota - Max Memory *', '1GB'), {'hardware': {'memory': '4096'}}],
+        [('Quota - Max Storage *', '10GB'), {}],
+        [('Quota - Max CPUs *', '1'), {'hardware': {'num_sockets': '8'}}]
+    ],
+    indirect=['set_entity_quota_tag'],
+    ids=['max_memory', 'max_storage', 'max_cpu']
+)
+def test_quota_tagging_via_service(appliance, provider, setup_provider, set_entity_quota_tag,
+                       custom_prov_data, vm_name, template_name, prov_data, catalog_item):
+    """Test user and group tagging quota in UI"""
+    catalog_item.provisioning_data.update(custom_prov_data)
+    catalog_item.provisioning_data['catalog']['vm_name'] = catalog_item.vm_name
+    catalog_item.create()
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
+                                       catalog_item.name)
+    service_catalogs.order()
+    # nav to requests page to check quota validation
+    request_description = 'Provisioning Service [{0}] from [{0}]'.format(catalog_item.name)
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     assert provision_request.row.reason.text == "Quota Exceeded"
