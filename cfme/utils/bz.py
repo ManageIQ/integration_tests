@@ -147,6 +147,7 @@ class Bugzilla(object):
             version = current_version()
         if version == LATEST:
             version = bug.product.latest_version
+        is_upstream = version == bug.product.latest_version
         variants = self.get_bug_variants(bug)
         filtered = set([])
         version_series = ".".join(str(version).split(".")[:2])
@@ -160,13 +161,18 @@ class Bugzilla(object):
                 filtered.clear()
                 filtered.add(variant)
                 break
+            elif is_upstream and variant.release_flag == 'future':
+                # It is an upstream bug
+                logger.info('Found a matching upstream bug #%d for bug #%d', variant.id, bug.id)
+                return variant
             elif ((variant.version is not None and variant.target_release is not None) and
                     (
                         variant.version.is_in_series(version_series) or
                         variant.target_release.is_in_series(version_series))):
                     filtered.add(variant)
             else:
-                logger.info("No release flags, wrong versions, ignoring %s", variant.id)
+                logger.warning(
+                    "ATTENTION!!: No release flags, wrong versions, ignoring %s", variant.id)
         if not filtered:
             # No appropriate bug was found
             for forced_stream in force_block_streams:
