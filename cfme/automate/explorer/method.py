@@ -378,8 +378,7 @@ class MethodCollection(BaseCollection):
             return None
         else:
             add_page.add_button.click()
-            msg = 'Automate Method "{}" was added'.format(name)
-            add_page.flash.assert_success_message(msg)
+            add_page.flash.assert_no_error()
             return self.instantiate(
                 name=name,
                 display_name=display_name,

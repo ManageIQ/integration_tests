@@ -83,7 +83,10 @@ def ansible_repository(appliance):
         fauxfactory.gen_alpha(),
         REPOSITORIES[0],
         description=fauxfactory.gen_alpha())
-
+    wait_for(
+        lambda: repository.get_detail("Properties", "Status", refresh=True) == "successful",
+        timeout=60
+    )
     yield repository
 
     if repository.exists:
