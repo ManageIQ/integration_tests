@@ -772,10 +772,9 @@ class SystemImageTypeCollection(BaseCollection):
         view = navigate_to(self, 'All')
         for sys_obj in sys_objs:
             view.entities.row(Name=sys_obj.name)[0].click()
-        view.toolbar.configuration.item_select("Remove System Image Types", handle_alert=cancel)
+        view.toolbar.configuration.item_select("Remove System Image Types", handle_alert=not cancel)
 
-        if not cancel:
-            main_view = self.create_view(PXESystemImageTypesView)
+        main_view = self.create_view(PXESystemImageTypesView)
         main_view.flash.assert_no_error()
 
 
