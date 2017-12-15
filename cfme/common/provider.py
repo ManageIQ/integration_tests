@@ -145,6 +145,12 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
             add_view = navigate_to(self, 'Add')
 
             if not cancel or (cancel and any(self.view_value_mapping.values())):
+                # Workaround for BZ#1526050
+                if self.appliance.version == '5.8.3.0':
+                    add_view.fill({'prov_type': 'Red Hat Virtualization'})
+                elif '5.8.3.0' < self.appliance.version < '5.9':
+                    import warnings
+                    warnings.warn('REMOVE ME: BZ#1526050')
                 # filling main part of dialog
                 add_view.fill(self.view_value_mapping)
 
@@ -188,14 +194,14 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
                 cancel_text = ('Add of {} Provider was '
                                'cancelled by the user'.format(self.string_name))
 
-                main_view.entities.flash.assert_message(cancel_text)
-                main_view.entities.flash.assert_no_error()
+                main_view.flash.assert_message(cancel_text)
+                main_view.flash.assert_no_error()
             else:
                 add_view.add.click()
                 if main_view.is_displayed:
                     success_text = '{} Providers "{}" was saved'.format(self.string_name,
                                                                         self.name)
-                    main_view.entities.flash.assert_message(success_text)
+                    main_view.flash.assert_message(success_text)
                 else:
                     add_view.flash.assert_no_error()
                     raise AssertionError("Provider wasn't added. It seems form isn't accurately"
@@ -432,8 +438,8 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
             cancel_text = 'Edit of {type} Provider "{name}" ' \
                           'was cancelled by the user'.format(type=self.string_name,
                                                              name=self.name)
-            main_view.entities.flash.assert_message(cancel_text)
-            main_view.entities.flash.assert_no_error()
+            main_view.flash.assert_message(cancel_text)
+            main_view.flash.assert_no_error()
         else:
             edit_view.save.click()
             if endpoints:

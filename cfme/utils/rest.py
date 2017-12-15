@@ -44,6 +44,7 @@ def assert_response(
         # check the corresponding resource in /api/task/:task_id
         if task_wait and 'task_id' in result and result.get('success') and last_response:
             task = rest_api.get_entity('tasks', result['task_id'])
+            task.wait_exists(num_sec=5)
             wait_for(
                 lambda: task.state.lower() == 'finished',
                 fail_func=task.reload,
@@ -104,9 +105,14 @@ def create_resource(rest_api, col_name, col_data, col_action='create', substr_se
     return entities
 
 
-def delete_resources_from_collection(collection, resources, not_found=False, num_sec=10, delay=2):
+def delete_resources_from_collection(
+        collection, resources, not_found=False, num_sec=10, delay=2, check_response=True):
+    def _assert_response(*args, **kwargs):
+        if check_response:
+            assert_response(collection._api, *args, **kwargs)
+
     collection.action.delete(*resources)
-    assert_response(collection._api)
+    _assert_response()
 
     for resource in resources:
         resource.wait_not_exists(num_sec=num_sec, delay=delay)
@@ -115,7 +121,7 @@ def delete_resources_from_collection(collection, resources, not_found=False, num
     if not_found or current_version < '5.9':
         with error.expected('ActiveRecord::RecordNotFound'):
             collection.action.delete(*resources)
-        assert_response(collection._api, http_status=404)
+        _assert_response(http_status=404)
     else:
         collection.action.delete(*resources)
-        assert_response(collection._api, success=False)
+        _assert_response(success=False)

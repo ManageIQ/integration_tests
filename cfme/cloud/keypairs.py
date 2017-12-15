@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
 import attr
-
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View
-from widgetastic_patternfly import Dropdown, Button, FlashMessages
+from widgetastic_patternfly import Dropdown, Button
+
+from cfme.base.ui import BaseLoggedInPage
+from cfme.common import WidgetasticTaggable
+from cfme.exceptions import KeyPairNotFound
+from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     ItemsToolBarViewSelector, Text, TextInput, Accordion, ManageIQTree, BreadCrumb,
     SummaryTable, BootstrapSelect, ItemNotFound, BaseEntitiesView, PaginationPane)
-
-from cfme.common import WidgetasticTaggable
-from cfme.base.ui import BaseLoggedInPage
-from cfme.exceptions import KeyPairNotFound
-
-from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.wait import wait_for
 
 
 class KeyPairToolbar(View):
@@ -44,8 +42,6 @@ class KeyPairDetailsAccordion(View):
 class KeyPairDetailsEntities(View):
     breadcrumb = BreadCrumb()
     title = Text('//div[@id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
     properties = SummaryTable(title='Properties')
     relationships = SummaryTable(title='Relationships')
     smart_management = SummaryTable(title='Smart Management')
@@ -139,8 +135,8 @@ class KeyPair(BaseEntity, WidgetasticTaggable):
 
         # flash message only displayed if it was deleted
         if not cancel:
-            view.entities.flash.assert_no_error()
-            view.entities.flash.assert_success_message('Delete initiated for 1 Key Pair')
+            view.flash.assert_no_error()
+            view.flash.assert_success_message('Delete initiated for 1 Key Pair')
 
         if wait:
             def refresh():
@@ -202,7 +198,7 @@ class KeyPairCollection(BaseCollection):
         wait_for(lambda: view.is_displayed, num_sec=240, delay=2,
                  fail_func=view.flush_widget_cache, handle_exception=True)
         assert view.is_displayed
-        view.entities.flash.assert_success_message(flash_message)
+        view.flash.assert_success_message(flash_message)
         return self.instantiate(name, provider, public_key=public_key)
 
 

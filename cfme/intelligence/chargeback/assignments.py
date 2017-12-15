@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 # Page model for Intel->Chargeback->Assignments.
 
-from . import ChargebackView
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import Text
-from widgetastic_manageiq import Table
-from widgetastic_manageiq.hacks import BootstrapSelectByLocator
-from widgetastic_patternfly import BootstrapSelect, Button, FlashMessages
+from widgetastic_patternfly import BootstrapSelect, Button
+
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from widgetastic_manageiq import Table
+from widgetastic_manageiq.hacks import BootstrapSelectByLocator
+from . import ChargebackView
 
 
 class AssignmentsAllView(ChargebackView):
@@ -26,8 +27,6 @@ class AssignmentsAllView(ChargebackView):
 
 class AssignmentsView(ChargebackView):
     title = Text("#explorer_title_text")
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     save_button = Button("Save")
     reset_button = Button("Reset")
 

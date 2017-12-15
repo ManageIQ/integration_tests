@@ -4,7 +4,6 @@ import time
 
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
-
 from selenium.webdriver.common.keys import Keys
 from widgetastic.widget import View, Table, Text, Image, FileInput
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
@@ -270,8 +269,6 @@ class LoggedIn(CFMENavigateStep):
 
 
 class ConfigurationView(BaseLoggedInPage):
-    flash = FlashMessages(
-        './/div[starts-with(@id, "flash_text_div") or starts-with(@class, "flash_text_div")]')
     title = Text('#explorer_title_text')
 
     @View.nested
@@ -1257,6 +1254,8 @@ class AutomateSimulation(CFMENavigateStep):
 
 
 class AutomateImportExportBaseView(BaseLoggedInPage):
+    # TODO This is currently overiding the base flash and should be renamed and efforts made
+    # to update assocaited tests
     flash = FlashMessages('div.import-flash-message')
     title = Text('.//div[@id="main-content"]//h1')
 

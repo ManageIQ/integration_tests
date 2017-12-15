@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """Provides custom exceptions for the ``cfme`` module. """
-import pytest
-from cfme.utils.log import logger
 
 
 class CFMEException(Exception):
@@ -47,17 +45,8 @@ class ConsoleTypeNotSupported(CFMEException):
         return "Console type not supported: {}".format(self.console_type)
 
 
-class FlashMessageException(CFMEException):
-    """Raised by functions in :py:mod:`cfme.web_ui.flash`"""
-
-    def skip_and_log(self, message="Skipping due to flash message"):
-        logger.error("Flash message error: %s", str(self))
-        pytest.skip("{}: {}".format(message, str(self)))
-
-
 class CFMEExceptionOccured(CFMEException):
-    """Raised by :py:func:`cfme.web_ui.cfme_exception.assert_no_cfme_exception` when there is
-    a Rails exception currently on page."""
+    """Raised by when there is a Rails exception currently on page."""
     pass
 
 
@@ -83,17 +72,9 @@ class AutomateImportError(CFMEException):
     pass
 
 
-class BlockTypeUnknown(CFMEException):
-    """
-    Raised if the block type requested to :py:class:`cfme.web_ui.InfoBlock`.
-    """
-    pass
-
-
 class CandidateNotFound(CFMEException):
     """
-    Raised if there is no candidate found whilst trying to traverse a tree in
-    :py:meth:`cfme.web_ui.Tree.click_path`.
+    Raised if there is no candidate found whilst trying to traverse a tree
     """
     def __init__(self, d):
         self.d = d
@@ -106,17 +87,9 @@ class CandidateNotFound(CFMEException):
         return self.message
 
 
-class TreeNotFound(CFMEException):
-    """
-    Raised if the tree used for  :py:meth:`cfme.web_ui.Tree.expand_path` cannot be found
-    """
-    pass
-
-
 class ElementOrBlockNotFound(CFMEException):
     """
-    Raised if an Element or a Block is not found whilst locating in
-    :py:meth:`cfme.web_ui.InfoBlock`.
+    Raised if an Element or a Block is not found whilst locating
     """
     pass
 
@@ -148,39 +121,6 @@ class CannotContinueWithNavigation(CFMEException):
     pass
 
 
-class NoElementsInsideValue(CFMEException):
-    """
-    Raised if the value part of key/value contains no elements during
-    :py:meth:`cfme.web_ui.InfoBlock.get_el_or_els`.
-    """
-    pass
-
-
-class NotAllItemsClicked(CFMEException):
-    """
-    Raised if not all the items could be clicked during :py:meth:`cfme.web_ui.Table.click_cell`.
-    """
-    def __init__(self, failed_clicks):
-        self.failed_clicks = failed_clicks
-
-    def __str__(self):
-        return "Not all the required data elements were clicked [{}]".format(
-            ",".join(self.failed_clicks))
-
-
-class NotAllCheckboxesFound(CFMEException):
-    """
-    Raised if not all the checkboxes could be found during e.g.
-    :py:meth:`cfme.web_ui.CheckboxTable.select_rows` and other methods of this class.
-    """
-    def __init__(self, failed_selects):
-        self.failed_selects = failed_selects
-
-    def __str__(self):
-        return "Not all the required data elements were selected/deselected [{}]".format(
-            ",".join(self.failed_selects))
-
-
 class ProviderHasNoKey(CFMEException):
     """
     Raised if the :py:meth:`cfme.cloud.provider.Provider.get_mgmt_system` method is called
@@ -209,21 +149,6 @@ class RequestException(CFMEException):
     """
     Raised if a request was not found or multiple rows matched during _request functions in
     :py:mod:`cfme.services.requests`
-    """
-    pass
-
-
-class TreeTypeUnknown(CFMEException):
-    """
-    Raised if the tree type is known whilst detection in :py:class:`cfme.web_ui.Tree`
-    """
-    pass
-
-
-class UnidentifiableTagType(CFMEException):
-    """
-    Raised if a tag type is not identifiable when processing a form in
-    :py:meth:`cfme.web_ui.Form.fill_fields`.
     """
     pass
 
@@ -345,13 +270,6 @@ class OptionNotAvailable(CFMEException):
     pass
 
 
-class ListAccordionLinkNotFound(CFMEException):
-    """
-    Raised when active link containing specific text could not be found in
-    expended :py:mod:`cfme.web_ui.listaccordion` content section.
-    """
-    pass
-
 
 class ZoneNotFound(CFMEException):
     """
@@ -385,12 +303,6 @@ class StorageManagerNotFound(CFMEException):
 
 class CUCommandException(CFMEException):
     """Raised when one of the commands run to set up a CU VM fails """
-    pass
-
-
-class PaginatorException(CFMEException):
-    """Raised by functions in :py:mod:`cfme.web_ui.paginator`"""
-
     pass
 
 
@@ -454,10 +366,6 @@ class DbAllocatorConfigNotFound(CFMEException):
 class LabelNotFoundException(Exception):
     "Raises when failed to remove label from object via cli"
     pass
-
-
-class UsingSharedTables(CFMEException):
-    """Raised if the :py:class:`cfme.web_ui.Table` suspects there is a use of shared tables."""
 
 
 class MenuItemNotFound(CFMEException):

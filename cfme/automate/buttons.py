@@ -145,12 +145,14 @@ class ButtonGroup(Updateable, Navigatable):
         })
         view.add_button.click()
         view = self.create_view(ButtonGroupObjectTypeView)
-        if not BZ(1500176, forced_streams=['5.9', 'upstream']).blocks:
-            assert view.is_displayed
+
         view.flash.assert_no_error()
         if self.appliance.version < '5.9':
             view.flash.assert_message('Buttons Group "{}" was added'.format(self.hover))
         else:
+            # checks only when bug is fixed AND version is >5.8
+            if not BZ(1500176, forced_streams=['5.9', 'upstream']).blocks:
+                assert view.is_displayed
             view.flash.assert_message('Button Group "{}" was added'.format(self.hover))
 
     def update(self, updates):

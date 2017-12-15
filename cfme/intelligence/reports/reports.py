@@ -3,7 +3,7 @@
 from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import ParametrizedLocator, VersionPick, Version
 from widgetastic.widget import Text, Checkbox, View, ParametrizedView, Table as VanillaTable
 from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab, CandidateNotFound
 
@@ -107,7 +107,7 @@ class EditCustomReportView(CustomReportFormCommon):
             self.reports.is_opened and
             self.reports.tree.currently_selected == [
                 "All Reports",
-                "My Company (All EVM Groups)",
+                self.mycompany_title,
                 "Custom",
                 self.context["object"].menu_name
             ] and
@@ -117,7 +117,8 @@ class EditCustomReportView(CustomReportFormCommon):
 
 class CustomReportDetailsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
-    reload_button = Button(title="Reload current display")
+    reload_button = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                    '5.9': 'Refresh this page'}))
     paginator = PaginationPane()
 
     @View.nested
@@ -139,7 +140,7 @@ class CustomReportDetailsView(CloudIntelReportsView):
             self.report_info.is_active() and
             self.reports.tree.currently_selected == [
                 "All Reports",
-                "My Company (All EVM Groups)",
+                self.mycompany_title,
                 "Custom",
                 self.context["object"].menu_name
             ] and
@@ -172,7 +173,7 @@ class AllCustomReportsView(CloudIntelReportsView):
             self.reports.is_opened and
             self.reports.tree.currently_selected == [
                 "All Reports",
-                "My Company (All EVM Groups)",
+                self.mycompany_title,
                 "Custom"
             ] and
             self.title.text == "Custom Reports"
@@ -253,7 +254,7 @@ class CustomReport(Updateable, Navigatable):
 
     def delete(self, cancel=False):
         view = navigate_to(self, "Details")
-        node = view.reports.tree.expand_path("All Reports", "My Company (All EVM Groups)", "Custom")
+        node = view.reports.tree.expand_path("All Reports", view.mycompany_title, "Custom")
         custom_reports_number = len(view.reports.tree.child_items(node))
         view.configuration.item_select("Delete this Report from the Database",
             handle_alert=not cancel)
@@ -336,7 +337,7 @@ class CustomSavedReportDetailsView(CloudIntelReportsView):
             self.reports.is_opened and
             self.reports.tree.currently_selected == [
                 "All Reports",
-                "My Company (All EVM Groups)",
+                self.mycompany_title,
                 "Custom",
                 self.context["object"].report.menu_name,
                 self.context["object"].datetime_in_tree
@@ -606,7 +607,7 @@ class CustomReportDetails(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.reports.tree.click_path(
             "All Reports",
-            "My Company (All EVM Groups)",
+            self.view.mycompany_title,
             "Custom",
             self.obj.menu_name
         )
@@ -621,7 +622,7 @@ class CustomSavedReportDetails(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.reports.tree.click_path(
             "All Reports",
-            "My Company (All EVM Groups)",
+            self.view.mycompany_title,
             "Custom",
             self.obj.report.menu_name,
             self.obj.datetime_in_tree

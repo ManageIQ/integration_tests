@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
-from lxml.html import document_fromstring
-import os
 from time import sleep
 
+import os
+from lxml.html import document_fromstring
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import (
     View, Text, TextInput, ParametrizedView, Image, ConditionalSwitchableView)
 from widgetastic_patternfly import (
-    Dropdown, BootstrapSelect, Tab, FlashMessages, Input, CheckableBootstrapTreeview)
+    Dropdown, BootstrapSelect, Tab, Input, CheckableBootstrapTreeview)
+
+from cfme.base.login import BaseLoggedInPage
+from cfme.exceptions import TemplateNotFound
 from widgetastic_manageiq import (Calendar,
                                   Checkbox,
                                   SummaryTable,
@@ -28,10 +31,6 @@ from widgetastic_manageiq import (Calendar,
                                   BaseNonInteractiveEntitiesView,
                                   BreadCrumb,
                                   PaginationPane)
-
-
-from cfme.base.login import BaseLoggedInPage
-from cfme.exceptions import TemplateNotFound
 
 
 class InstanceQuadIconEntity(BaseQuadIconEntity):
@@ -174,7 +173,9 @@ class VMToolbar(View):
     """
     Toolbar view for vms/instances collection destinations
     """
-    reload = Button(title='Reload current display')
+    "Refresh this page"
+    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                                       '5.9': 'Refresh this page'}))
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     lifecycle = Dropdown('Lifecycle')
@@ -238,8 +239,6 @@ class VMDetailsEntities(View):
     VM's have 3-4 more tables, should inherit and add them there.
     """
     title = Text('//div[@id="main-content"]//h1//span[@id="explorer_title_text"]')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
     properties = SummaryTable(title='Properties')
     lifecycle = SummaryTable(title='Lifecycle')
     relationships = SummaryTable(title='Relationships')
@@ -530,8 +529,6 @@ class ManagementEngineView(BaseLoggedInPage):
     Edit management engine relationship page
     The title actually as Instance|VM.VM_TYPE string in it, otherwise the same
     """
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
 
     @View.nested
     class form(View):  # noqa

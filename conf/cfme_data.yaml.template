@@ -171,6 +171,62 @@ management_systems:
                 credentials: lenovo
                 ipaddress: 10.0.0.1
                 api_port: 3000
+    openshift:
+        name: openshift
+        type: openshift
+        version: x.x
+        tags:
+            - tag
+        excluded_test_flags:
+        since_version:
+        server_zone:
+        hostname:
+        ipaddress:
+        port:
+        credentials:
+        ssh_creds:
+        authenticate:
+        rest_protocol:
+        sec_protocol:
+        metrics_type:
+        alerts_type :
+        provisioning:
+            node:
+            image:
+        cleanup:
+        cap_and_util:
+            resource_pool:
+            test_chargeback:
+            chargeback_vm:
+            capandu_vm:
+        hosts:
+            - name: name1
+            - name: name2
+        endpoints:
+            default:
+                hostname:
+                api_port:
+                sec_protocol:
+                credentials:
+            hawkular:
+                hostname:
+                api_port:
+                sec_protocol:
+            alerts:
+                hostname:
+                api_port:
+                sec_protocol:
+        settings:
+            proxy:
+                http_proxy:
+            advanced:
+                adv_http:
+                adv_https:
+                no_proxy:
+                image_repo:
+                image_reg:
+                image_tag:
+                cve_loc:
 
 configuration_managers:
     sat6:

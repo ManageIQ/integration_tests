@@ -2,7 +2,6 @@
 
 from widgetastic.widget import View, Text, TextInput, Select
 from widgetastic_patternfly import (Dropdown,
-                                    FlashMessages,
                                     BootstrapSwitch,
                                     BootstrapNav,
                                     Tab)
@@ -19,11 +18,7 @@ from widgetastic_manageiq import (Accordion,
                                   FileInput,
                                   Search)
 
-
 LIST_TABLE_LOCATOR = '//div[@id="list_grid" or contains(@class, "miq-data-table")]//table'
-TITLE_LOCATOR = '//div[@id="main-content"]//h1'
-FLASH_MESSAGE_LOCATOR = './/div[@id="flash_msg_div"]'\
-                        '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]'
 TITLE_LOCATOR = '//div[@id="main-content"]//h1'
 
 
@@ -58,8 +53,6 @@ class JDREntitiesView(View):
     """Entities on the JDR Reports list"""
     title = Text('//div[@id="mw_dr_header"]//h3')
     table = Table('//div[@id="mw_dr_section"]//table')
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class JDRAllView(View):
@@ -88,8 +81,6 @@ class ServerEntitiesView(BaseEntitiesView):
     title = Text(TITLE_LOCATOR)
     table = Table(LIST_TABLE_LOCATOR)
     search = View.nested(Search)
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class ServerDetailsEntities(View):
@@ -100,7 +91,6 @@ class ServerDetailsEntities(View):
     relationships = SummaryTable(title='Relationships')
     smart_management = SummaryTable(title='Smart Management')
     compliance = SummaryTable(title='Compliance')
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class PowerOperationForm(View):
@@ -179,7 +169,6 @@ class ServerDetailsView(ServerView):
     sidebar = View.nested(ServerDetailsAccordion)
     entities = View.nested(ServerDetailsEntities)
     power_operation_form = View.nested(PowerOperationForm)
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
     jdr_reports = View.nested(JDRAllView)
 
 
@@ -220,8 +209,6 @@ class DatasourceEntitiesView(BaseEntitiesView):
     title = Text(TITLE_LOCATOR)
     table = Table(LIST_TABLE_LOCATOR)
     search = View.nested(Search)
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class DatasourceDetailsEntities(View):
@@ -231,7 +218,6 @@ class DatasourceDetailsEntities(View):
     properties = SummaryTable(title='Properties')
     relationships = SummaryTable(title='Relationships')
     smart_management = SummaryTable(title='Smart Management')
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class DatasourceView(BaseLoggedInPage):
@@ -270,7 +256,6 @@ class DatasourceDetailsView(DatasourceView):
     toolbar = View.nested(DatasourceDetailsToolbar)
     sidebar = View.nested(DatasourceDetailsAccordion)
     entities = View.nested(DatasourceDetailsEntities)
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class ServerDatasourceAllView(DatasourceView):
@@ -338,7 +323,6 @@ class AddDatasourceView(DatasourceView):
         return False
 
     form = View.nested(AddDatasourceForm)
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class AddJDBCDriverForm(View):
@@ -363,7 +347,6 @@ class AddJDBCDriverView(View):
         return False
 
     form = View.nested(AddJDBCDriverForm)
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class DeploymentAllToolbar(View):
@@ -403,8 +386,6 @@ class DeploymentEntitiesView(BaseEntitiesView):
     title = Text(TITLE_LOCATOR)
     table = Table(LIST_TABLE_LOCATOR)
     search = View.nested(Search)
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class DeploymentDetailsEntities(View):
@@ -414,7 +395,6 @@ class DeploymentDetailsEntities(View):
     properties = SummaryTable(title='Properties')
     relationships = SummaryTable(title='Relationships')
     smart_management = SummaryTable(title='Smart Management')
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class DeploymentView(BaseLoggedInPage):
@@ -453,7 +433,6 @@ class DeploymentDetailsView(DeploymentView):
     toolbar = View.nested(DeploymentDetailsToolbar)
     sidebar = View.nested(DeploymentDetailsAccordion)
     entities = View.nested(DeploymentDetailsEntities)
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class ServerDeploymentAllView(DeploymentView):
@@ -503,7 +482,6 @@ class AddDeploymentView(DeploymentView):
         return False
 
     form = View.nested(AddDeploymentForm)
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class DomainToolbar(View):
@@ -541,8 +519,6 @@ class DomainEntitiesView(BaseEntitiesView):
     title = Text(TITLE_LOCATOR)
     table = Table(LIST_TABLE_LOCATOR)
     search = View.nested(Search)
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class DomainDetailsEntities(View):
@@ -552,7 +528,6 @@ class DomainDetailsEntities(View):
     properties = SummaryTable(title='Properties')
     relationships = SummaryTable(title='Relationships')
     smart_management = SummaryTable(title='Smart Management')
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class DomainView(BaseLoggedInPage):
@@ -657,8 +632,6 @@ class MessagingEntitiesView(BaseEntitiesView):
     title = Text(TITLE_LOCATOR)
     table = Table(LIST_TABLE_LOCATOR)
     search = View.nested(Search)
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class MessagingDetailsEntities(View):
@@ -668,7 +641,6 @@ class MessagingDetailsEntities(View):
     properties = SummaryTable(title='Properties')
     relationships = SummaryTable(title='Relationships')
     smart_management = SummaryTable(title='Smart Management')
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class MessagingView(BaseLoggedInPage):
@@ -772,8 +744,6 @@ class ServerGroupEntitiesView(BaseEntitiesView):
     title = Text(TITLE_LOCATOR)
     table = Table(LIST_TABLE_LOCATOR)
     search = View.nested(Search)
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class ServerGroupDetailsEntities(View):
@@ -783,7 +753,6 @@ class ServerGroupDetailsEntities(View):
     properties = SummaryTable(title='Properties')
     relationships = SummaryTable(title='Relationships')
     smart_management = SummaryTable(title='Smart Management')
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class ServerGroupView(BaseLoggedInPage):
@@ -804,7 +773,6 @@ class ServerGroupDetailsView(ServerGroupView):
     sidebar = View.nested(ServerGroupDetailsAccordion)
     entities = View.nested(ServerGroupDetailsEntities)
     power_operation_form = View.nested(PowerOperationForm)
-    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
 
 
 class DomainServerGroupAllView(DomainView):

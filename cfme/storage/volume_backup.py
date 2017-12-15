@@ -1,18 +1,11 @@
 # -*- coding: utf-8 -*-
-import attr
 import random
 
+import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_manageiq import (
-    Accordion,
-    BaseEntitiesView,
-    BreadCrumb,
-    ItemsToolBarViewSelector,
-    ManageIQTree,
-    SummaryTable
-)
-from widgetastic_patternfly import BootstrapSelect, Button, Dropdown, FlashMessages
+
 from widgetastic.widget import View, Text, NoSuchElementException
+from widgetastic_patternfly import BootstrapSelect, Button, Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
@@ -21,6 +14,14 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import (
+    Accordion,
+    BaseEntitiesView,
+    BreadCrumb,
+    ItemsToolBarViewSelector,
+    ManageIQTree,
+    SummaryTable
+)
 
 
 class VolumeBackupToolbar(View):
@@ -60,9 +61,6 @@ class VolumeBackupDetailSidebar(View):
 class VolumeBackupView(BaseLoggedInPage):
     """A base view for all the Volume Backup pages"""
     title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
-    flash = FlashMessages(
-        './/div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-        'contains(@class, "flash_text_div")]')
 
     @property
     def in_volume_backup(self):
@@ -125,7 +123,7 @@ class VolumeBackup(BaseEntity, WidgetasticTaggable):
         provider: provider
     """
     name = attr.ib()
-    provider = attr.ib(default=None)
+    provider = attr.ib()
 
     def restore(self, name):
         """Restore the volume backup. this feature included in 5.9 and above.
@@ -228,7 +226,7 @@ class VolumeBackupCollection(BaseCollection):
 
             wait_for(
                 lambda: not bool({backup.name for backup in backups} &
-                             set(view.entities.all_entity_names)),
+                                 set(view.entities.all_entity_names)),
                 message="Wait backups to disappear",
                 delay=20,
                 timeout=800,

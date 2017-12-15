@@ -88,7 +88,6 @@ import pytest
 
 from cfme.common.provider import BaseProvider
 from cfme.infrastructure.config_management import get_config_manager_from_config
-from cfme.infrastructure.pxe import get_pxe_server_from_config
 from cfme.roles import group_data
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
@@ -344,20 +343,10 @@ def config_managers(metafunc):
 
 
 def pxe_servers(metafunc):
-    """Provides pxe data based on the server_type
-
-    Args:
-        server_name: One of the server names to filter by, or 'all'.
-
+    """Provides pxe data
     """
-    argnames = ['pxe_name', 'pxe_server_crud']
-    argvalues = []
-    idlist = []
+    argnames = ['pxe_name']
 
-    data = cfme_data.get('pxe_servers', {})
+    items = cfme_data.get('pxe_servers', {}).keys()
 
-    for pxe_server in data:
-        argvalues.append([data[pxe_server]['name'],
-                          get_pxe_server_from_config(pxe_server)])
-        idlist.append(pxe_server)
-    return argnames, argvalues, idlist
+    return argnames, items, items

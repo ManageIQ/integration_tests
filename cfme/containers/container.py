@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import attr
 import random
 import itertools
 
@@ -7,12 +8,13 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import Accordion, ManageIQTree, View, Table
 from widgetastic_patternfly import VerticalNavigation
 from widgetastic.widget import Text
-from widgetastic.xpath import quote
 
-from cfme.containers.provider import (ContainerObjectAllBaseView, ContainerObjectDetailsBaseView)
+from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
+                                      ContainerObjectDetailsBaseView)
 from cfme.common import WidgetasticTaggable, TagPageView
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils.providers import get_crud_by_name
 
 
 class ContainerAllView(ContainerObjectAllBaseView):
@@ -42,16 +44,16 @@ class ContainerDetailsView(ContainerObjectDetailsBaseView):
     pass
 
 
-class Container(WidgetasticTaggable, Navigatable):
-
+@attr.s
+class Container(BaseEntity, WidgetasticTaggable, Labelable):
+    """Container Class"""
     PLURAL = 'Containers'
     all_view = ContainerAllView
     details_view = ContainerDetailsView
 
-    def __init__(self, name, pod, appliance=None):
-        self.name = name
-        self.pod = pod
-        Navigatable.__init__(self, appliance=appliance)
+    name = attr.ib()
+    pod = attr.ib()
+    provider = attr.ib()
 
     @property
     def project_name(self):
@@ -66,7 +68,38 @@ class Container(WidgetasticTaggable, Navigatable):
                 for obj in itertools.islice(containers_list, count)]
 
 
-@navigator.register(Container, 'All')
+@attr.s
+class ContainerCollection(BaseCollection):
+    """Collection object for :py:class:`Container`."""
+
+    ENTITY = Container
+
+    def all(self):
+        # containers table has ems_id, join with ext_mgmgt_systems on id for provider name
+        # Then join with container_groups on the id for the pod
+        container_table = self.appliance.db.client['containers']
+        ems_table = self.appliance.db.client['ext_management_systems']
+        pod_table = self.appliance.db.client['container_groups']
+        container_query = (
+            self.appliance.db.client.session
+                .query(container_table.name, pod_table.name, ems_table.name)
+                .join(ems_table, container_table.ems_id == ems_table.id)
+                .join(pod_table, container_table.container_group_id == pod_table.id))
+        provider = None
+        # filtered
+        if self.filters.get('provider'):
+            provider = self.filters.get('provider')
+            container_query = container_query.filter(ems_table.name == provider.name)
+        containers = []
+        for name, pod_name, ems_name in container_query.all():
+            containers.append(
+                self.instantiate(name=name, pod=pod_name,
+                                 provider=provider or get_crud_by_name(ems_name)))
+
+        return containers
+
+
+@navigator.register(ContainerCollection, 'All')
 class ContainerAll(CFMENavigateStep):
     VIEW = ContainerAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -84,7 +117,7 @@ class ContainerAll(CFMENavigateStep):
 @navigator.register(Container, 'Details')
 class ContainerDetails(CFMENavigateStep):
     VIEW = ContainerDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name,

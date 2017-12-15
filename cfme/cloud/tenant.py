@@ -5,10 +5,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick
 from widgetastic.widget import View
-from widgetastic_patternfly import BootstrapNav, Button, Dropdown, FlashMessages, Input
-from widgetastic_manageiq import (
-    Accordion, BootstrapSelect, BreadCrumb, ItemsToolBarViewSelector, PaginationPane,
-    SummaryTable, Table, Text, BaseNonInteractiveEntitiesView, BaseEntitiesView)
+from widgetastic_patternfly import BootstrapNav, Button, Dropdown, Input
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
@@ -16,8 +13,11 @@ from cfme.exceptions import TenantNotFound, DestinationNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for, TimedOutError
 from cfme.utils.version import Version
+from cfme.utils.wait import wait_for, TimedOutError
+from widgetastic_manageiq import (
+    Accordion, BootstrapSelect, BreadCrumb, ItemsToolBarViewSelector, PaginationPane,
+    SummaryTable, Table, Text, BaseNonInteractiveEntitiesView, BaseEntitiesView)
 
 
 class TenantToolbar(View):
@@ -49,7 +49,7 @@ class TenantDetailsAccordion(View):
 
 class TenantEntities(BaseEntitiesView):
     """The entities on the main list page"""
-    table = Table('//div[@id="list_grid"]//table')
+    table = Table('//div[@id="gtl_div"]//table')
     # todo: remove stuff about and use the same widgets from entities view ^^
 
 
@@ -60,9 +60,6 @@ class TenantDetailsEntities(View):
     relationships = SummaryTable(title='Relationships')
     quotas = SummaryTable(title='Quotas')
     smart_management = SummaryTable(title='Smart Management')
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
 
 
 class TenantEditEntities(View):
@@ -215,7 +212,7 @@ class Tenant(BaseEntity, WidgetasticTaggable):
                 'Exception while navigating to Tenant details: {}'.format(ex))
         view.toolbar.configuration.item_select('Delete Cloud Tenant')
 
-        result = view.entities.flash.assert_success_message(
+        result = view.flash.assert_success_message(
             'Delete initiated for 1 Cloud Tenant.')
         if wait:
             self.provider.refresh_provider_relationships()
@@ -259,9 +256,9 @@ class TenantCollection(BaseCollection):
                 msg = 'Add of Cloud Tenant was cancelled by the user'
             else:
                 msg = 'Add of new Cloud Tenant was cancelled by the user'
-            all_view.entities.flash.assert_success_message(msg)
+            all_view.flash.assert_success_message(msg)
         else:
-            all_view.entities.flash.assert_success_message(
+            all_view.flash.assert_success_message(
                 'Cloud Tenant "{}" created'.format(name))
 
         tenant = self.instantiate(name, provider)
@@ -306,7 +303,7 @@ class TenantCollection(BaseCollection):
         view.toolbar.configuration.item_select('Delete Cloud Tenants', handle_alert=True)
         for tenant in tenants:
             tenant.wait_for_disappear()
-        view.entities.flash.assert_no_error()
+        view.flash.assert_no_error()
 
         # TODO: Assert deletion flash message for selected tenants
         # it is not shown in current UI, so not asserting

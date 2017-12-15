@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
+import attr
 import random
 import itertools
 from cached_property import cached_property
+
+from navmazing import NavigateToAttribute, NavigateToSibling
 
 from wrapanapi.containers.service import Service as ApiService
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
     ContainerObjectDetailsBaseView)
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
-from navmazing import NavigateToAttribute, NavigateToSibling
+from cfme.utils.providers import get_crud_by_name
 
 
 class ServiceAllView(ContainerObjectAllBaseView):
@@ -21,17 +24,16 @@ class ServiceDetailsView(ContainerObjectDetailsBaseView):
     pass
 
 
-class Service(WidgetasticTaggable, Labelable, Navigatable):
+@attr.s
+class Service(BaseEntity, WidgetasticTaggable, Labelable):
 
     PLURAL = 'Container Services'
     all_view = ServiceAllView
     details_view = ServiceDetailsView
 
-    def __init__(self, name, project_name, provider, appliance=None):
-        self.name = name
-        self.provider = provider
-        self.project_name = project_name
-        Navigatable.__init__(self, appliance=appliance)
+    name = attr.ib()
+    project_name = attr.ib()
+    provider = attr.ib()
 
     @cached_property
     def mgmt(self):
@@ -46,7 +48,37 @@ class Service(WidgetasticTaggable, Labelable, Navigatable):
                 for obj in itertools.islice(service_list, count)]
 
 
-@navigator.register(Service, 'All')
+@attr.s
+class ServiceCollection(BaseCollection):
+    """Collection object for :py:class:`Service`."""
+
+    ENTITY = Service
+
+    def all(self):
+        # container_services table has ems_id, join with ext_mgmgt_systems on id for provider name
+        # Then join with container_projects on the id for the project
+        service_table = self.appliance.db.client['container_services']
+        ems_table = self.appliance.db.client['ext_management_systems']
+        project_table = self.appliance.db.client['container_projects']
+        service_query = (
+            self.appliance.db.client.session
+                .query(service_table.name, project_table.name, ems_table.name)
+                .join(ems_table, service_table.ems_id == ems_table.id)
+                .join(project_table, service_table.container_project_id == project_table.id))
+        provider = None
+        # filtered
+        if self.filters.get('provider'):
+            provider = self.filters.get('provider')
+            service_query = service_query.filter(ems_table.name == provider.name)
+        services = []
+        for name, project_name, ems_name in service_query.all():
+            services.append(self.instantiate(name=name, project_name=project_name,
+                                             provider=provider or get_crud_by_name(ems_name)))
+
+        return services
+
+
+@navigator.register(ServiceCollection, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
     VIEW = ServiceAllView
@@ -62,7 +94,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(Service, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = ServiceDetailsView
 
     def step(self):

@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
 
-from cfme.base.login import BaseLoggedInPage
-from cfme.common.host_views import HostEntitiesView
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View, Text, ConditionalSwitchableView, ParametrizedView
-from widgetastic_patternfly import Dropdown, BootstrapSelect, FlashMessages
+from widgetastic_patternfly import Dropdown, BootstrapSelect, Tab
+
+from cfme.base.login import BaseLoggedInPage
+from cfme.common.host_views import HostEntitiesView
 from widgetastic_manageiq import (BreadCrumb,
                                   SummaryTable,
                                   Button,
@@ -90,7 +91,8 @@ class ProviderDetailsToolBar(View):
     """
     monitoring = Dropdown(text='Monitoring')
     configuration = Dropdown(text='Configuration')
-    reload = Button(title='Reload Current Display')
+    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                                       '5.9': 'Refresh this page'}))
     policy = Dropdown(text='Policy')
     authentication = Dropdown(text='Authentication')
     download = Button(title='Download summary in PDF format')
@@ -104,8 +106,6 @@ class ProviderDetailsView(BaseLoggedInPage):
     """
     title = Text('//div[@id="main-content"]//h1')
     breadcrumb = BreadCrumb(locator='//ol[@class="breadcrumb"]')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(ProviderDetailsToolBar)
 
     entities = ConditionalSwitchableView(reference='toolbar.view_selector',
@@ -279,6 +279,28 @@ class ProviderNodesView(BaseLoggedInPage):
                 self.title.text == title)
 
 
+class ProviderTemplatesView(BaseLoggedInPage):
+    """
+     represents Templates view (exists for Infra providers)
+    """
+    title = Text('//div[@id="main-content"]//h1')
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
+
+    @View.nested
+    class toolbar(View):  # noqa
+        configuration = Dropdown(text='Configuration')
+        policy = Dropdown(text='Policy')
+        download = Dropdown(text='Download')
+        view_selector = View.nested(ItemsToolBarViewSelector)
+
+    @property
+    def is_displayed(self):
+        title = '{name} (All Miq Templates)'.format(name=self.context['object'].name)
+        return (self.logged_in_as_current_user and
+                self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
+                self.title.text == title)
+
+
 class ProviderToolBar(View):
     """
      represents provider toolbar and its controls
@@ -400,9 +422,6 @@ class ProviderAddView(BaseLoggedInPage):
     name = Input('name')
     prov_type = BootstrapSelect(id='emstype')
     zone = Input('zone')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
-
     add = Button('Add')
     cancel = Button('Cancel')
 
@@ -451,6 +470,30 @@ class CloudProviderAddView(ProviderAddView):
                 self.title.text == 'Add New Cloud Provider')
 
 
+class ContainerProviderSettingView(ProvidersView):
+    """
+       Settings view for builds 5.9 and up
+      """
+
+    @View.nested
+    class proxy(Tab, BeforeFillMixin):  # NOQA
+
+        TAB_NAME = 'Proxy'
+        http_proxy = Input('provider_options_proxy_settings_http_proxy')
+
+    @View.nested
+    class advanced(Tab, BeforeFillMixin):  # NOQA
+
+        TAB_NAME = 'Advanced'
+        adv_http = Input('provider_options_image_inspector_options_http_proxy')
+        adv_https = Input('provider_options_image_inspector_options_https_proxy')
+        no_proxy = Input('provider_options_image_inspector_options_no_proxy')
+        image_repo = Input('provider_options_image_inspector_options_repository')
+        image_reg = Input('provider_options_image_inspector_options_registry')
+        image_tag = Input('provider_options_image_inspector_options_image_tag')
+        cve_loc = Input('provider_options_image_inspector_options_cve_url')
+
+
 class ContainerProviderAddView(ProviderAddView):
     """
      represents Container Provider Add View
@@ -464,13 +507,18 @@ class ContainerProviderAddView(ProviderAddView):
                 self.title.text == 'Add New Containers Provider')
 
 
-class ContainerProviderAddViewUpdated(ContainerProviderAddView):
+class ContainerProviderAddViewUpdated(ContainerProviderAddView, ContainerProviderSettingView):
     """
      Additional widgets for builds 5.9 and up
     """
+    COND_WIDGETS = ['prov_type', 'metrics_type', 'alerts_type']
 
     metrics_type = BootstrapSelect(id='metrics_selection')
     alerts_type = BootstrapSelect(id='alerts_selection')
+
+    def before_fill(self, values):
+        for widget in self.COND_WIDGETS:
+            getattr(self, widget).fill(values.get(widget))
 
 
 class MiddlewareProviderAddView(ProviderAddView):
@@ -507,9 +555,6 @@ class ProviderEditView(ProviderAddView):
     # only in edit view
     vnc_start_port = Input('host_default_vnc_port_start')
     vnc_end_port = Input('host_default_vnc_port_end')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
-
     save = Button('Save')
     reset = Button('Reset')
     cancel = Button('Cancel')
@@ -552,13 +597,19 @@ class ContainerProviderEditView(ProviderEditView):
                 'Edit Containers Provider' in self.title.text)
 
 
-class ContainerProviderEditViewUpdated(ContainerProviderEditView):
+class ContainerProviderEditViewUpdated(ContainerProviderEditView, ContainerProviderSettingView):
     """
      Additional widgets for builds 5.9 and up
     """
 
+    COND_WIDGETS = ['prov_type', 'metrics_type', 'alerts_type']
+
     metrics_type = BootstrapSelect(id='metrics_selection')
     alerts_type = BootstrapSelect(id='alerts_selection')
+
+    def before_fill(self, values):
+        for widget in self.COND_WIDGETS:
+            getattr(self, widget).fill(values.get(widget))
 
 
 class MiddlewareProviderEditView(ProviderEditView):

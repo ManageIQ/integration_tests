@@ -1,10 +1,9 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 from riggerlib import recursive_update
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import View
 from widgetastic.utils import VersionPick, Version
+from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown, Button
-from widgetastic_manageiq import ManageIQTree, TimelinesView, Accordion
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM
@@ -18,13 +17,15 @@ from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import ManageIQTree, TimelinesView, Accordion, CompareToolBarActionsView
 
 
 class InstanceDetailsToolbar(View):
     """
     The toolbar on the details screen for an instance
     """
-    reload = Button(title='Reload current display')
+    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                                       '5.9': 'Refresh this page'}))
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     lifecycle = Dropdown('Lifecycle')
@@ -80,6 +81,7 @@ class InstanceAllView(CloudInstanceView):
             self.entities.title.text == 'All Instances' and
             self.sidebar.instances.is_opened)
 
+    actions = View.nested(CompareToolBarActionsView)
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(InstanceAccordion)
     including_entities = View.include(VMEntities, use_parent=True)
@@ -188,8 +190,8 @@ class Instance(VM, Navigatable):
             # Redirects to Instance All
             view = self.browser.create_view(InstanceAllView)
             wait_for(lambda: view.is_displayed, timeout=10, delay=2, message='wait for redirect')
-            view.entities.flash.assert_success_message(self.PROVISION_CANCEL)
-            view.entities.flash.assert_no_error()
+            view.flash.assert_success_message(self.PROVISION_CANCEL)
+            view.flash.assert_no_error()
         else:
             view.form.submit_button.click()
 

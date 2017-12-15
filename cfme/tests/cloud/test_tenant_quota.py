@@ -1,20 +1,19 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from widgetastic.utils import partial_match
+
 from cfme import test_requirements
-from cfme.common.vm import VM
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.provisioning import do_vm_provisioning
+from cfme.cloud.instance import Instance
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.generators import random_vm_name
 
 pytestmark = [
     test_requirements.quota,
-    pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('uses_infra_providers'),
-    pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
+    pytest.mark.provider([OpenStackProvider], required_fields=[['provisioning', 'image']],
+                         scope="module")
 ]
 
 
@@ -25,7 +24,7 @@ def vm_name():
 
 @pytest.fixture
 def template_name(provisioning):
-    return provisioning["template"]
+    return provisioning["image"]["name"]
 
 
 @pytest.fixture(scope="module")
@@ -52,7 +51,7 @@ def set_roottenant_quota(request, roottenant):
 @pytest.fixture
 def catalog_item(provider, provisioning, template_name, dialog, catalog, prov_data):
     yield CatalogItem(
-        item_type=provisioning['catalog_item_type'],
+        item_type=provisioning['item_type'],
         name='test_{}'.format(fauxfactory.gen_alphanumeric()),
         description="test catalog",
         display_in=True,
@@ -65,15 +64,6 @@ def catalog_item(provider, provisioning, template_name, dialog, catalog, prov_da
     )
 
 
-@pytest.fixture(scope='module')
-def small_vm(provider, small_template_modscope):
-    vm = VM.factory(random_vm_name(context='reconfig'), provider, small_template_modscope.name)
-    vm.create_on_provider(find_in_cfme=True, allow_skip="default")
-    vm.refresh_relationships()
-    yield vm
-    vm.delete_from_provider()
-
-
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here
@@ -81,22 +71,25 @@ def small_vm(provider, small_template_modscope):
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data', 'extra_msg', 'approve'],
     [
-        [('cpu', 2), {'hardware': {'num_sockets': '8'}}, '', False],
-        [('storage', 0.01), {}, '', False],
-        [('memory', 2), {'hardware': {'memory': '4096'}}, '', False],
+        [('cpu', 2), {}, '', False],
+        [('storage', 0.001), {}, '', False],
+        [('memory', 2), {}, '', False],
         [('vm', 1), {'catalog': {'num_vms': '4'}}, '###', True]
     ],
     indirect=['set_roottenant_quota'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
 )
-def test_tenant_quota_enforce_via_lifecycle(appliance, provider, setup_provider,
+def test_tenant_quota_enforce_via_lifecycle(request, appliance, provider, setup_provider,
                                             set_roottenant_quota, extra_msg, custom_prov_data,
                                             approve, prov_data, vm_name, template_name):
     """Test Tenant Quota in UI"""
     prov_data.update(custom_prov_data)
     prov_data['catalog']['vm_name'] = vm_name
-    do_vm_provisioning(appliance, template_name=template_name, provider=provider, vm_name=vm_name,
-                       provisioning_data=prov_data, smtp_test=False, wait=False, request=None)
+    prov_data.update({
+        'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())},
+        'properties': {'instance_type': partial_match('m1.large')}})
+    instance = Instance.factory(vm_name, provider, template_name)
+    instance.create(**prov_data)
 
     # nav to requests page to check quota validation
     request_description = 'Provision from [{}] to [{}{}]'.format(template_name, vm_name, extra_msg)
@@ -106,6 +99,8 @@ def test_tenant_quota_enforce_via_lifecycle(appliance, provider, setup_provider,
     provision_request.wait_for_request(method='ui')
     assert provision_request.row.reason.text == "Quota Exceeded"
 
+    request.addfinalizer(provision_request.remove_request)
+
 
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated
@@ -114,9 +109,9 @@ def test_tenant_quota_enforce_via_lifecycle(appliance, provider, setup_provider,
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data', 'extra_msg'],
     [
-        [('cpu', 2), {'hardware': {'num_sockets': '8'}}, ''],
-        [('storage', 0.01), {}, ''],
-        [('memory', 2), {'hardware': {'memory': '4096'}}, ''],
+        [('cpu', 2), {}, ''],
+        [('storage', 0.001), {}, ''],
+        [('memory', 2), {}, ''],
         [('vm', 1), {'catalog': {'num_vms': '4'}}, '###']
     ],
     indirect=['set_roottenant_quota'],
@@ -128,6 +123,8 @@ def test_tenant_quota_enforce_via_service(request, appliance, provider, setup_pr
     """Test Tenant Quota in UI"""
     catalog_item.provisioning_data.update(custom_prov_data)
     catalog_item.provisioning_data['catalog']['vm_name'] = catalog_item.vm_name
+    catalog_item.provisioning_data.update({'properties': {
+        'instance_type': partial_match('m1.large')}})
     catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
                                        catalog_item.name)
@@ -142,26 +139,3 @@ def test_tenant_quota_enforce_via_service(request, appliance, provider, setup_pr
     def delete():
         provision_request.remove_request()
         catalog_item.delete()
-
-
-# first arg of parametrize is the list of fixtures or parameters,
-# second arg is a list of lists, with each one a test is to be generated
-# sequence is important here
-# indirect is the list where we define which fixtures are to be passed values indirectly.
-@pytest.mark.parametrize(
-    ['set_roottenant_quota', 'custom_prov_data'],
-    [
-        [('cpu', 2), {'change': 'cores_per_socket', 'value': 4}],
-        [('cpu', 2), {'change': 'sockets', 'value': 4}],
-        [('memory', 2), {'change': 'mem_size', 'value': 4096}]
-    ],
-    indirect=['set_roottenant_quota'],
-    ids=['max_cores', 'max_sockets', 'max_memory']
-)
-def test_tenant_quota_vm_reconfigure(appliance, provider, setup_provider, set_roottenant_quota,
-                                     small_vm, custom_prov_data):
-    original_config = small_vm.configuration.copy()
-    new_config = small_vm.configuration.copy()
-    setattr(new_config.hw, custom_prov_data['change'], custom_prov_data['value'])
-    small_vm.reconfigure(new_config)
-    assert small_vm.configuration != original_config

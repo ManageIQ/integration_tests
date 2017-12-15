@@ -19,10 +19,10 @@ def test_nodes_navigate(soft_assert, appliance):
     for dest in TEST_DEST:
 
         if dest == 'All':
-            test_item = appliance.collections.nodes
+            test_item = appliance.collections.container_nodes
         elif dest == 'Details':
             try:
-                test_item = appliance.collections.nodes.all()[0]
+                test_item = appliance.collections.container_nodes.all()[0]
             except IndexError:
                 pytest.skip('No Nodes available, skipping test')
 

@@ -33,7 +33,6 @@ def pytest_generate_tests(metafunc):
             ['host_provisioning', 'dns'],
         ])
     pargnames, pargvalues, pidlist = testgen.pxe_servers(metafunc)
-    argnames = argnames + ['pxe_server', 'pxe_cust_template']
     pxe_server_names = [pval[0] for pval in pargvalues]
 
     new_idlist = []
@@ -58,12 +57,24 @@ def pytest_generate_tests(metafunc):
         if pxe_cust_template not in cfme_data.get('customization_templates', {}).keys():
             continue
 
-        argvalues[i].append(get_pxe_server_from_config(pxe_server_name))
-        argvalues[i].append(get_template_from_config(pxe_cust_template))
         new_idlist.append(idlist[i])
         new_argvalues.append(argvalues[i])
 
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+
+
+@pytest.fixture(scope='module')
+def pxe_server(appliance, provider):
+    provisioning_data = provider.data['provisioning']
+    pxe_server_name = provisioning_data['pxe_server']
+    return get_pxe_server_from_config(pxe_server_name, appliance=appliance)
+
+
+@pytest.fixture(scope='module')
+def pxe_cust_template(appliance, provider):
+    provisioning_data = provider.data['provisioning']
+    pxe_cust_template = provisioning_data['pxe_kickstart']
+    return get_template_from_config(pxe_cust_template, appliance=appliance)
 
 
 @pytest.fixture(scope="module")

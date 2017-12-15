@@ -10,6 +10,7 @@ boto
 bottle
 bottle-sqlite
 cached-property
+deepdiff
 diaper
 docker-py
 dump2polarion
@@ -64,7 +65,7 @@ tornado
 tzlocal
 wait_for
 widgetastic.core>=0.3.2
-widgetastic.patternfly>=0.0.15
+widgetastic.patternfly>=0.0.26
 yaycl
 yaycl-crypt
 

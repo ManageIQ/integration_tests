@@ -3,20 +3,9 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import Table
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils import version
-
 
 pytestmark = [test_requirements.service, pytest.mark.tier(3), pytest.mark.ignore_stream("upstream")]
-
-dialogs_table = Table(
-    version.pick({
-        version.LOWEST: ".//div[@id='list_grid']/table",
-        "5.9": ".//div[@class='miq-data-table']/table"
-    })
-)
 
 
 @pytest.fixture(scope="module")
@@ -48,7 +37,7 @@ def some_dialogs(appliance, request):
 def get_relevant_rows(table):
     result = []
     for row in table.rows():
-        text = sel.text(row.label).encode("utf-8").strip()
+        text = row.label.text
         if text.startswith("test_paginator_"):
             result.append(text)
     return result
@@ -77,7 +66,7 @@ def test_paginator(some_dialogs, soft_assert, appliance):
     view.paginator.set_items_per_page(50)
     view.paginator.set_items_per_page(5)
     # Now we must have only 5
-    soft_assert(len(list(dialogs_table.rows())) == 5, "Changing number of rows failed!")
+    soft_assert(len(list(view.table.rows())) == 5, "Changing number of rows failed!")
     # try to browse
     current_rec_offset = None
     dialogs_found = set()
@@ -85,9 +74,7 @@ def test_paginator(some_dialogs, soft_assert, appliance):
         if view.paginator.min_item == current_rec_offset:
             soft_assert(False, "Paginator is locked, it does not advance to next page")
             break
-        if current_rec_offset is None:
-            current_rec_offset = view.paginator.min_item
-        for text in get_relevant_rows(dialogs_table):
+        for text in get_relevant_rows(view.table):
             dialogs_found.add(text)
 
         current_total = view.paginator.items_amount

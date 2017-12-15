@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
 import attr
-from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic.widget import View
+from navmazing import NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
+from widgetastic.widget import View
 from widgetastic_patternfly import Button, Dropdown
-from widgetastic_manageiq import BaseEntitiesView
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
-from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.exceptions import ResourcePoolNotFound, ItemNotFound
+from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
-from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import (
     ItemsToolBarViewSelector, ManageIQTree, Text, Table, BreadCrumb, SummaryTable, Accordion)
 
@@ -146,7 +145,7 @@ class ResourcePool(Pretty, BaseEntity, WidgetasticTaggable):
         # flash message only displayed if it was deleted
         if not cancel:
             msg = 'The selected Resource Pools was deleted'
-            view.entities.flash.assert_success_message(msg)
+            view.flash.assert_success_message(msg)
 
         if wait:
             def refresh():

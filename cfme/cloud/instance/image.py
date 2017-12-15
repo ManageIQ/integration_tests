@@ -1,15 +1,16 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View, Text
-from widgetastic_patternfly import Button, Dropdown, FlashMessages
-from widgetastic_manageiq import ItemsToolBarViewSelector, SummaryTable, ItemNotFound
+from widgetastic_patternfly import Button, Dropdown
 
-from cfme.exceptions import ImageNotFound
 from cfme.common.vm import Template
 from cfme.common.vm_views import (
     EditView, SetOwnershipView, PolicySimulationView, BasicProvisionFormView,
     VMEntities)
+from cfme.exceptions import ImageNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
+from widgetastic_manageiq import ItemsToolBarViewSelector, SummaryTable, ItemNotFound
 from . import CloudInstanceView, InstanceAccordion
 
 
@@ -17,7 +18,8 @@ class ImageToolbar(View):
     """
     Toolbar view for image collection
     """
-    reload = Button(title='Reload current display')
+    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                                       '5.9': 'Refresh this page'}))
     configuration = Dropdown('Configuration')
     lifecycle = Dropdown('Lifecycle')
     policy = Dropdown('Policy')
@@ -30,7 +32,8 @@ class ImageDetailsToolbar(View):
     """
         Toolbar view for image collection
         """
-    reload = Button(title='Reload current display')
+    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                                       '5.9': 'Refresh this page'}))
     configuration = Dropdown('Configuration')
     lifecycle = Dropdown('Lifecycle')
     policy = Dropdown('Policy')
@@ -39,8 +42,6 @@ class ImageDetailsToolbar(View):
 
 class ImageDetailsEntities(View):
     title = Text('//div[@id="main-content"]//h1//span[@id="explorer_title_text"]')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
     properties = SummaryTable(title='Properties')
     lifecycle = SummaryTable(title='Lifecycle')
     relationships = SummaryTable(title='Relationships')
