@@ -1322,7 +1322,7 @@ class AllTenantView(ConfigurationView):
         )
 
 
-class AddTenantView(View):
+class AddTenantView(ConfigurationView):
     """ Add Tenant View """
     form = View.nested(TenantForm)
 
@@ -1330,7 +1330,8 @@ class AddTenantView(View):
     def is_displayed(self):
         return (
             self.accordions.accesscontrol.is_opened and
-            self.title.text == 'Adding a new {}'.format(self.context['object'].obj_type)
+            self.form.description.is_displayed and
+            self.title.text in ('Adding a new Project', 'Adding a new Tenant')
         )
 
 
@@ -1373,6 +1374,7 @@ class EditTenantView(View):
     def is_displayed(self):
         return (
             self.form.accordions.accesscontrol.is_opened and
+            self.form.description.is_displayed and
             self.form.title.text == 'Editing {} "{}"'.format(self.context['object'].obj_type,
                                                              self.context['object'].name)
         )
@@ -1414,16 +1416,16 @@ class Tenant(Updateable, BaseEntity):
             if self.appliance.version < '5.9':
                 flash_message = 'Project "{}" was saved'.format(updates.get('name', self.name))
             else:
-                flash_message = 'Tenant "{}" has been successfully saved.'.format(
-                    updates.get('name', self.name))
+                flash_message = '{} "{}" has been successfully saved.'.format(
+                    self.obj_type, updates.get('name', self.name))
         else:
             view.cancel_button.click()
             if self.appliance.version < '5.9':
                 flash_message = 'Edit of Project "{}" was cancelled by the user'.format(
                     updates.get('name', self.name))
             else:
-                flash_message = 'Edit of Tenant "{}" was canceled by the user.'.format(
-                    updates.get('name', self.name))
+                flash_message = 'Edit of {} "{}" was canceled by the user.'.format(
+                    self.obj_type, updates.get('name', self.name))
         view = self.create_view(DetailsTenantView, override=updates)
         view.flash.assert_message(flash_message)
 
@@ -1531,9 +1533,8 @@ class TenantCollection(BaseCollection):
 
         view = navigate_to(tenant.parent_tenant, 'Details')
         view.toolbar.configuration.item_select('Add child Tenant to this Tenant')
-
         view = self.create_view(AddTenantView)
-        wait_for(lambda: view.form.is_displayed, timeout=5)
+        wait_for(lambda: view.is_displayed, timeout=5)
         changed = view.form.fill({'name': name,
                                   'description': description})
         if changed:
@@ -1642,6 +1643,7 @@ class ProjectCollection(TenantCollection):
         view.toolbar.configuration.item_select('Add Project to this Tenant')
 
         view = self.create_view(AddTenantView)
+        wait_for(lambda: view.is_displayed, timeout=5)
         changed = view.form.fill({'name': name,
                                   'description': description})
         if changed:
