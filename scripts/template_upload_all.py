@@ -416,6 +416,7 @@ def main():
 
         logger.info("TEMPLATE_UPLOAD_ALL:------End of %r upload on: %r--------",
             kwargs['template_name'], provider_type)
+        return 0
 
 
 if __name__ == "__main__":

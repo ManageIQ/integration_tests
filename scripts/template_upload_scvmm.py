@@ -141,19 +141,19 @@ def make_kwargs_scvmm(cfme_data, provider, image_url, template_name):
 def run(**kwargs):
 
     for provider in list_provider_keys("scvmm"):
+        mgmt_sys = cfme_data['management_systems'][provider]
+        host_fqdn = mgmt_sys['hostname_fqdn']
+        creds = credentials[mgmt_sys['credentials']]
 
         # skip provider if block_upload is set
-        if (cfme_data[provider].get('template_upload') and
-                cfme_data[provider]['template_upload'].get('block_upload')):
+        if (mgmt_sys.get('template_upload') and
+                mgmt_sys['template_upload'].get('block_upload')):
             logger.info('Skipping upload on {} due to block_upload'.format(provider))
             continue
 
         kwargs = make_kwargs_scvmm(cfme_data, provider,
                                    kwargs.get('image_url'), kwargs.get('template_name'))
         check_kwargs(**kwargs)
-        mgmt_sys = cfme_data['management_systems'][provider]
-        host_fqdn = mgmt_sys['hostname_fqdn']
-        creds = credentials[mgmt_sys['credentials']]
 
         # For powershell to work, we need to extract the User Name from the Domain
         user = creds['username'].split('\\')
