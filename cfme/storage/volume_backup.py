@@ -3,7 +3,8 @@ import random
 
 import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic.widget import View, Text
+
+from widgetastic.widget import View, Text, NoSuchElementException
 from widgetastic_patternfly import BootstrapSelect, Button, Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
@@ -11,6 +12,7 @@ from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import BackupNotFoundError, ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     Accordion,
@@ -188,11 +190,21 @@ class VolumeBackupCollection(BaseCollection):
         view.toolbar.view_selector.select("List View")
         backups = []
 
-        for item in view.entities.elements.read():
-            if self.filters.get('provider').name in item['Cloud Provider']:
-                backups.append(self.instantiate(name=item['Name'],
-                                                provider=self.filters.get('provider')))
-        return backups
+        try:
+            if 'provider' in self.filters:
+                for item in view.entities.elements.read():
+                    if self.filters.get('provider').name in item['Storage Manager']:
+                        backups.append(self.instantiate(name=item['Name'],
+                                                        provider=self.filters.get('provider')))
+            else:
+                for item in view.entities.elements.read():
+                    provider_name = item['Storage Manager'].split()[0]
+                    provider = get_crud_by_name(provider_name)
+                    backups.append(self.instantiate(name=item['Name'], provider=provider))
+            return backups
+
+        except NoSuchElementException:
+            return None
 
     def delete(self, *backups):
         """Delete one or more backups
@@ -214,7 +226,7 @@ class VolumeBackupCollection(BaseCollection):
 
             wait_for(
                 lambda: not bool({backup.name for backup in backups} &
-                             set(view.entities.all_entity_names)),
+                                 set(view.entities.all_entity_names)),
                 message="Wait backups to disappear",
                 delay=20,
                 timeout=800,
