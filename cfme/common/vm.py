@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 """Module containing classes with common behaviour for both VMs and Instances of all types."""
 from datetime import datetime, date, timedelta
-from functools import partial
 
 from wrapanapi import exceptions
-from widgetastic.exceptions import NoSuchElementException
 
 from cfme.common import WidgetasticTaggable
 from cfme.common.vm_console import VMConsole
@@ -21,7 +19,6 @@ from cfme.utils.update import Updateable
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import VersionPick
-
 from . import PolicyProfileAssignable, SummaryMixin
 
 
@@ -218,7 +215,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
 
         if from_details:
             view = navigate_to(self, 'Details')
-            view.toolbar.configuration.item_select(self.REMOVE_SINGLE.pick(self.appliance.version),
+            view.toolbar.configuration.item_select(self.REMOVE_SINGLE,
                                                    handle_alert=not cancel)
         else:
             view = navigate_to(self, 'All')
