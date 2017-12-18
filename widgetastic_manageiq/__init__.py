@@ -1218,7 +1218,7 @@ class ReportDataControllerMixin(object):
         self.browser.plugin.ensure_page_safe()
         return result
 
-    def get_id_by_keys(self, **keys):
+    def get_ids_by_keys(self, **keys):
         updated_keys = keys.copy()
         for key in updated_keys:
             # js api compares values in lower case but don't replace space with underscore
@@ -1234,7 +1234,7 @@ class ReportDataControllerMixin(object):
         result = self.browser.execute_script(js_cmd)
         self.browser.plugin.ensure_page_safe()
         try:
-            return int(result[0]['id'])
+            return [int(eid['id']) for eid in result]
         except (TypeError, IndexError):
             return None
 
@@ -2969,8 +2969,9 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                     else:
                         found_entities.append(entity)
             else:
-                found_entities.append(self.parent.entity_class(
-                    parent=self, entity_id=self.get_id_by_keys(**keys)))
+                entities = [self.parent.entity_class(parent=self, entity_id=eid)
+                            for eid in self.get_ids_by_keys(**keys)]
+                found_entities.extend(entities)
         return found_entities
 
     @property
@@ -3016,9 +3017,10 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                 entity_id = keys['entity_id']
             else:
                 entity_id = None
-                entity = self.get_entities_by_keys(**keys)
-                if entity:
-                    return entity
+                try:
+                    return self.get_entities_by_keys(**keys)[0]
+                except IndexError:
+                    pass
 
             if entity_id:
                 return self.parent.entity_class(parent=self, entity_id=entity_id)
@@ -3057,8 +3059,10 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         all_found_entities = []
         for _ in self.paginator.pages():
             for keys in conditions:
-
-
+                entities = self.get_entities_by_keys(**keys)
+                map(func, entities)
+                all_found_entities.extend(entities)
+        return all_found_entities
 
 
 class BaseEntitiesView(View):
@@ -3569,7 +3573,10 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
             if entity_id:
                 return self.entity_class(parent=self, entity_id=entity_id)
             else:
-                return self.entity_class(parent=self, entity_id=self.get_id_by_keys(**keys))
+                try:
+                    return self.entity_class(parent=self, entity_id=self.get_ids_by_keys(**keys)[0])
+                except IndexError:
+                    pass
         return None
 
     @property
