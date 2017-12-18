@@ -201,8 +201,8 @@ class CFMENavigateStep(NavigateStep):
             # self.log_message('Op is a Nop! ({})'.format(fn.__name__))
             return
 
-        if self.VIEW:
-            self.view.flush_widget_cache()
+        # if self.VIEW:
+        #     self.view.flush_widget_cache()
         go_kwargs = kwargs.copy()
         go_kwargs.update(nav_args)
         self.appliance.browser.open_browser(url_key=self.obj.appliance.server.address())
