@@ -22,7 +22,7 @@ class CloudNetwork(WidgetasticTaggable, BaseEntity):
     db_types = ['CloudNetwork']
 
     name = attr.ib()
-    provider_obj = attr.ib()
+    provider_obj = attr.ib(default=None)
 
     @property
     def provider(self):
