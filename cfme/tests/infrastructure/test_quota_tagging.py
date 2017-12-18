@@ -157,5 +157,5 @@ def test_quota_tagging_via_service(appliance, provider, setup_provider, set_enti
     # nav to requests page to check quota validation
     request_description = 'Provisioning Service [{0}] from [{0}]'.format(catalog_item.name)
     provision_request = appliance.collections.requests.instantiate(request_description)
-    provision_request.wait_for_request(method='ui')
+    provision_request.wait_for_request()
     assert provision_request.row.reason.text == "Quota Exceeded"
