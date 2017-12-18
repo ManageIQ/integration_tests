@@ -86,8 +86,16 @@ def uncollectif(item):
             logger.debug(log_msg)
             return not bool(marker.args[0])
 
+        holder = item.config.pluginmanager.getplugin('appliance-holder')
+        if holder:
+            global_vars = {'appliance': holder.held_appliance}
+        else:
+            logger.info("while uncollecting %s - appliance not known", item)
+            global_vars = {}
+
         try:
             values = extract_fixtures_values(item)
+            values.update(global_vars)
             # The test has already been uncollected
             if arg_names and not values:
                 return
