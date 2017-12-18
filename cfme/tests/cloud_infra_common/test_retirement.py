@@ -177,8 +177,10 @@ def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged):
     retire_times = dict()
     retire_times['start'] = generate_retirement_date_now() + timedelta(minutes=-5)
     retire_ec2_s3_vm.retire()
+    view_cls = navigator.get_class(retire_ec2_s3_vm, 'Details').VIEW
+    reload = retire_ec2_s3_vm.appliance.browser.create_view(view_cls).toolbar.reload
     assert wait_for(lambda: retire_ec2_s3_vm.is_retired,
-                    delay=5, num_sec=10 * 60, fail_func=tb.refresh,
+                    delay=5, num_sec=10 * 60, fail_func=reload.click,
                     message="Wait for VM '{}' to enter retired state"
                     .format(retire_ec2_s3_vm.name))
     assert retire_ec2_s3_vm.summary.power_management.power_state.text_value in expected_power_state
