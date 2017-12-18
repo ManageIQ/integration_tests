@@ -267,15 +267,17 @@ class ClusterCollection(BaseCollection):
         if not view.entities.elements.is_displayed:
             raise ValueError('No Clusters found')
 
+        cluster_names = [cluster.name for cluster in clusters]
+
         for row in view.entities.elements:
             for cluster in clusters:
                 if cluster.name == row.name.text:
                     checked_clusters.append(cluster)
                     row[0].check()
                     break
-            if set(clusters) == set(checked_clusters):
+            if set(cluster_names) == set(checked_clusters):
                 break
-        if set(clusters) != set(checked_clusters):
+        if set(cluster_names) != set(checked_clusters):
             raise ValueError('Some Clusters were not found in the UI')
         view.toolbar.configuration.item_select('Remove selected items', handle_alert=True)
         view.flash.assert_no_error()
