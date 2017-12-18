@@ -10,6 +10,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm  # For Vm.Snapshot
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.blockers import GH
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
@@ -66,11 +67,13 @@ def full_test_vm(setup_provider_modscope, provider, full_template_modscope, requ
         logger.exception('Exception deleting test vm "%s" on %s', vm.name, provider.name)
 
 
-def new_snapshot(test_vm, has_name=True, memory=False):
+def new_snapshot(test_vm, has_name=True, memory=False, description=True):
     return Vm.Snapshot(
         name="snpshot_{}".format(fauxfactory.gen_alphanumeric(8)) if has_name else None,
-        description="snapshot_{}".format(fauxfactory.gen_alphanumeric(8)),
-        memory=memory, parent_vm=test_vm)
+        description="snapshot_{}".format(fauxfactory.gen_alphanumeric(8)) if description else None,
+        memory=memory,
+        parent_vm=test_vm
+    )
 
 
 @pytest.mark.uncollectif(lambda provider:
@@ -111,6 +114,20 @@ def test_snapshot_crud(small_test_vm, provider):
     snapshot = new_snapshot(small_test_vm, has_name=(not provider.one_of(RHEVMProvider)))
     snapshot.create()
     snapshot.delete()
+
+
+@pytest.mark.uncollectif(lambda provider: provider.one_of(VMwareProvider))
+@pytest.mark.meta(automates=[BZ(1384517)])
+def test_create_without_description(small_test_vm):
+    """
+    Test that we get an error message when we try to create a snapshot with
+    blank description on RHV provider.
+
+    Metadata:
+        test_flag: snapshot, provision
+    """
+    snapshot = new_snapshot(small_test_vm, has_name=False, description=False)
+    snapshot.create()
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider),
