@@ -1,14 +1,12 @@
 import fauxfactory
 import pytest
 
-import cfme.configure.access_control as ac
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
 from cfme.exceptions import VmOrInstanceNotFound
 from cfme.utils.blockers import BZ
-
 
 pytestmark = [
     test_requirements.ownership,
@@ -35,7 +33,7 @@ def group_only_user_owned(appliance, role_only_user_owned):
     group_collection = appliance.collections.groups
     group = group_collection.create(
         description='group_only_user_owned_{}'.format(fauxfactory.gen_alphanumeric()),
-        role=role_only_user_owned.name)
+        role=role_only_user_owned)
     yield group
     appliance.server.login_admin()
     group.delete()
@@ -58,7 +56,7 @@ def group_user_or_group_owned(appliance, role_user_or_group_owned):
     group_collection = appliance.collections.groups
     group = group_collection.create(
         description='group_user_or_group_owned_{}'.format(fauxfactory.gen_alphanumeric()),
-        role=role_user_or_group_owned.name)
+        role=role_user_or_group_owned)
     yield group
     appliance.server.login_admin()
     group.delete()
@@ -101,10 +99,7 @@ def new_user(appliance, group_only_user_owned):
         name='user_' + fauxfactory.gen_alphanumeric(),
         credential=new_credential(),
         email='abc@redhat.com',
-        group=group_only_user_owned,
-        cost_center='Workload',
-        value_assign='Database'
-    )
+        group=group_only_user_owned)
     return user
 
 

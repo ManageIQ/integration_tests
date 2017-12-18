@@ -269,7 +269,7 @@ class IPAppliance(object):
         self.rest_context = ViaREST(owner=self)
         self.rest_context.strict_calls = False
         self.context = MiqImplementationContext.from_instances(
-            [self.browser, self.ssui, self.rest_context])
+            [self.rest_context, self.browser, self.ssui])
 
         from cfme.modeling.base import EntityCollections
         self.collections = EntityCollections.for_appliance(self)
