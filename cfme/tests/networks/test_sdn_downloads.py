@@ -1,16 +1,9 @@
 import pytest
+
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.exceptions import ManyEntitiesFound
-from cfme.networks.balancer import BalancerCollection
-from cfme.networks.cloud_network import CloudNetworkCollection
-from cfme.networks.network_port import NetworkPortCollection
-from cfme.networks.network_router import NetworkRouterCollection
-from cfme.networks.provider import NetworkProviderCollection
-from cfme.networks.security_group import SecurityGroupCollection
-from cfme.networks.subnet import SubnetCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -19,9 +12,15 @@ pytestmark = [
 ]
 FILETYPES = ["txt", "csv", "pdf"]
 extensions_mapping = {'txt': 'Text', 'csv': 'CSV', 'pdf': 'PDF'}
-OBJECTCOLLECTIONS = [NetworkProviderCollection, BalancerCollection, CloudNetworkCollection,
-                     NetworkPortCollection, SecurityGroupCollection, SubnetCollection,
-                     NetworkRouterCollection]
+OBJECTCOLLECTIONS = [
+    'network_providers',
+    'balancers',
+    'cloud_networks',
+    'network_ports',
+    'network_security_groups',
+    'network_subnets',
+    'network_routers'
+]
 
 
 def download(objecttype, extension):
@@ -35,20 +34,21 @@ def download_summary(spec_object):
 
 
 @pytest.mark.parametrize("filetype", FILETYPES)
-@pytest.mark.parametrize("objecttype", OBJECTCOLLECTIONS)
-def test_download_lists_base(filetype, objecttype, appliance):
+@pytest.mark.parametrize("collection_type", OBJECTCOLLECTIONS)
+def test_download_lists_base(filetype, collection_type, appliance):
     """ Download the items from base lists. """
-    download(appliance.get(objecttype), filetype)
+    collection = getattr(appliance.collections, collection_type)
+    download(collection, filetype)
 
 
-@pytest.mark.parametrize("collection", OBJECTCOLLECTIONS)
-def test_download_pdf_summary(appliance, collection, provider):
+@pytest.mark.parametrize("collection_type", OBJECTCOLLECTIONS)
+def test_download_pdf_summary(appliance, collection_type, provider):
     """ Download the summary details of specific object """
-    instance = collection(appliance)
-    if instance.all():
-        random_obj = instance.all()[0].name
+    collection = collection_type(appliance)
+    if collection.all():
+        random_obj = collection.all()[0].name
         try:
-            obj = instance.instantiate(random_obj)
+            obj = collection.instantiate(random_obj)
             download_summary(obj)
         except ManyEntitiesFound:
             pass
