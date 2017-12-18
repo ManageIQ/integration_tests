@@ -149,7 +149,7 @@ def test_quota_tagging_via_service(appliance, provider, setup_provider, set_enti
                        custom_prov_data, vm_name, template_name, prov_data, catalog_item):
     """Test user and group tagging quota in UI"""
     catalog_item.provisioning_data.update(custom_prov_data)
-    catalog_item.provisioning_data['catalog']['vm_name'] = catalog_item.vm_name
+    catalog_item.provisioning_data['catalog']['vm_name'] = vm_name
     catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
                                        catalog_item.name)
