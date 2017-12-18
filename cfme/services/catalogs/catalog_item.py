@@ -379,6 +379,11 @@ class Add(CFMENavigateStep):
     VIEW = AddCatalogItemView
     prerequisite = NavigateToSibling('All')
 
+    def am_i_here(self):
+        # Going to an Add page should always be done from first principles incase a previous Add
+        # failed
+        return False
+
     def step(self):
         self.prerequisite_view.configuration.item_select('Add a New Catalog Item')
 
