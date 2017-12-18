@@ -8,21 +8,17 @@ from copy import copy
 import fauxfactory
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.utils import partial_match, Parameter, VersionPick, Version
 from widgetastic.widget import (
     Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
 from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, Tab)
-from widgetastic_manageiq import (
-    Accordion, ConditionalSwitchableView, ManageIQTree, CheckableManageIQTree, NonJSPaginationPane,
-    SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
-from widgetastic_manageiq.vm_reconfigure import DisksTable
-from widgetastic.utils import partial_match, Parameter, VersionPick, Version
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, Template as BaseTemplate
 from cfme.common.vm_views import (
     ManagementEngineView, CloneVmView, ProvisionView, EditView, RetirementView,
-    RetirementViewWithOffset, VMDetailsEntities, VMToolbar, VMEntities)
+    RetirementViewWithOffset, VMDetailsEntities, VMToolbar, VMEntities, SetOwnershipView)
 from cfme.exceptions import (
     VmNotFound, OptionNotAvailable, DestinationNotFound, ItemNotFound,
     VmOrInstanceNotFound)
@@ -33,6 +29,10 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import (
+    Accordion, ConditionalSwitchableView, ManageIQTree, CheckableManageIQTree, NonJSPaginationPane,
+    SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
+from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 
 def has_child(tree, text, parent_item=None):
@@ -1446,3 +1446,14 @@ class VmEngineRelationship(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select(
             'Edit Management Engine Relationship')
+
+
+@navigator.register(Template, 'SetOwnership')
+@navigator.register(Vm, 'SetOwnership')
+class SetOwnership(CFMENavigateStep):
+    VIEW = SetOwnershipView
+    prerequisite = NavigateToSibling('Details')
+
+    # No am_i_here because the page only indicates name and not provider
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select('Set Ownership')
