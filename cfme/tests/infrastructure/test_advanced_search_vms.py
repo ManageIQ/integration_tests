@@ -1,9 +1,11 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """This testing module tests the behaviour of the view.entities.search box in the VMs section"""
+from random import sample
+
 import fauxfactory
 import pytest
-from random import sample
+from widgetastic.exceptions import NoSuchElementException
 
 from cfme.infrastructure import virtual_machines
 from cfme.infrastructure.provider import InfraProvider
@@ -102,7 +104,7 @@ def test_filter_save_cancel(vm_advanced_search, vms, subset_of_vms, expression_f
         cancel=True
     )
     vm_advanced_search.flash.assert_no_error()
-    with pytest.raises(vm_advanced_search.entities.search.NoSuchElementException):
+    with pytest.raises(NoSuchElementException):
         vm_advanced_search.entities.search.load_filter(filter_name)  # does not exist
 
 
