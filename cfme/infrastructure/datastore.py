@@ -88,9 +88,9 @@ class JSDatastoreEntity(JSBaseEntity):
         try:
             if 'quadicon' in data_dict and data_dict['quadicon']:
                 quad_data = document_fromstring(data_dict['quadicon'])
-                data_dict['type'] = quad_data.xpath(self.QUADRANT.format(pos="a"))[0].text
-                data_dict['no_vm'] = quad_data.xpath(self.QUADRANT.format(pos="b"))[0].get()
-                data_dict['no_host'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get()
+                data_dict['type'] = quad_data.xpath(self.QUADRANT.format(pos="a"))[0].get('alt')
+                data_dict['no_vm'] = quad_data.xpath(self.QUADRANT.format(pos="b"))[0].text
+                data_dict['no_host'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].text
             return data_dict
         except IndexError:
             return {}
