@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # added new list_tbl definition
 import attr
-import random
-import itertools
 from cached_property import cached_property
 
 from wrapanapi.containers.node import Node as ApiNode
@@ -14,11 +12,11 @@ from widgetastic_manageiq import Button, Text, TimelinesView, BreadCrumb
 
 from cfme.common import WidgetasticTaggable, TagPageView, PolicyProfileAssignable
 from cfme.containers.provider import (Labelable,
-    ContainerObjectAllBaseView, LoggingableView, ContainerObjectDetailsBaseView)
+    ContainerObjectAllBaseView, LoggingableView, ContainerObjectDetailsBaseView,
+    GetRandomInstancesMixin)
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import (CFMENavigateStep, navigator,
                                                      navigate_to)
-from cfme.utils.appliance import current_appliance
 from cfme.common.provider_views import ProviderDetailsToolBar
 from cfme.utils.providers import get_crud_by_name
 
@@ -68,16 +66,6 @@ class Node(BaseEntity, WidgetasticTaggable, Labelable, PolicyProfileAssignable):
         """API to use for Nodes"""
         return ApiNode(self.provider.mgmt, self.name)
 
-    @classmethod
-    def get_random_instances(cls, provider, count=1, appliance=None):
-        """Generating random instances."""
-        appliance = appliance or current_appliance()
-        node_list = provider.mgmt.list_node()
-        random.shuffle(node_list)
-        collection = NodeCollection(appliance)
-        return [collection.instantiate(obj.name, provider)
-                for obj in itertools.islice(node_list, count)]
-
     @property
     def exists(self):
         """Return True if the Node exists"""
@@ -91,7 +79,7 @@ class Node(BaseEntity, WidgetasticTaggable, Labelable, PolicyProfileAssignable):
 
 
 @attr.s
-class NodeCollection(BaseCollection):
+class NodeCollection(GetRandomInstancesMixin, BaseCollection):
     """Collection object for :py:class:`Node`."""
 
     ENTITY = Node

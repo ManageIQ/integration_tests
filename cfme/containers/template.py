@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import attr
-import random
-import itertools
 from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
@@ -9,7 +7,7 @@ from wrapanapi.containers.template import Template as ApiTemplate
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
-    ContainerObjectDetailsBaseView)
+    ContainerObjectDetailsBaseView, GetRandomInstancesMixin)
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 from cfme.utils.providers import get_crud_by_name
@@ -38,17 +36,9 @@ class Template(BaseEntity, WidgetasticTaggable, Labelable):
     def mgmt(self):
         return ApiTemplate(self.provider.mgmt, self.name, self.project_name)
 
-    @classmethod
-    def get_random_instances(cls, provider, count=1, appliance=None):
-        """Generating random instances."""
-        template_list = provider.mgmt.list_template()
-        random.shuffle(template_list)
-        return [cls(obj.name, obj.project_name, provider, appliance=appliance)
-                for obj in itertools.islice(template_list, count)]
-
 
 @attr.s
-class TemplateCollection(BaseCollection):
+class TemplateCollection(GetRandomInstancesMixin, BaseCollection):
     """Collection object for :py:class:`Template`."""
 
     ENTITY = Template
@@ -98,7 +88,8 @@ class Details(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
-                                                   project_name=self.obj.project_name).click()
+                                                   project_name=self.obj.project_name,
+                                                   use_search=True).click()
 
 
 @navigator.register(Template, 'EditTags')

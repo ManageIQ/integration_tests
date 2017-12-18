@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import attr
-import itertools
-import random
 from cached_property import cached_property
 
 from navmazing import NavigateToSibling, NavigateToAttribute
@@ -9,10 +7,11 @@ from wrapanapi.containers.image import Image as ApiImage
 
 from cfme.common import (WidgetasticTaggable, PolicyProfileAssignable,
                          TagPageView)
-from cfme.containers.provider import (Labelable, navigate_and_get_rows,
+from cfme.containers.provider import (Labelable,
                                       ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView, LoadDetailsMixin,
-                                      refresh_and_navigate, ContainerObjectDetailsEntities)
+                                      refresh_and_navigate, ContainerObjectDetailsEntities,
+                                      GetRandomInstancesMixin)
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.configure import tasks
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -76,19 +75,6 @@ class Image(BaseEntity, WidgetasticTaggable, Labelable, LoadDetailsMixin, Policy
                 raise TimedOutError('Timeout exceeded, Waited too much time for SSA to finish ({}).'
                                     .format(timeout))
 
-    @classmethod
-    def get_random_instances(cls, provider, count=1, appliance=None, docker_only=False):
-        """Generating random instances. (docker_only: means for docker images only)"""
-        # Grab the images from the UI since we have no way to calculate the name by API attributes
-        rows = navigate_and_get_rows(provider, cls, count=1000)
-        if docker_only:
-            docker_image_ids = [img.id for img in provider.mgmt.list_docker_image()]
-            rows = filter(lambda r: r.id.text.split('@')[-1] in docker_image_ids,
-                          rows)
-        random.shuffle(rows)
-        return [cls(row.name.text, row.id.text, provider, appliance=appliance)
-                for row in itertools.islice(rows, count)]
-
     def check_compliance(self, wait_for_finish=True, timeout=240):
         """Initiates compliance check and waits for it to finish."""
         view = navigate_to(self, 'Details')
@@ -128,7 +114,7 @@ class Image(BaseEntity, WidgetasticTaggable, Labelable, LoadDetailsMixin, Policy
 
 
 @attr.s
-class ImageCollection(BaseCollection):
+class ImageCollection(GetRandomInstancesMixin, BaseCollection):
     """Collection object for :py:class:`Image`."""
 
     ENTITY = Image

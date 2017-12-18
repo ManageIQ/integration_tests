@@ -2,16 +2,17 @@ from random import randrange
 
 import pytest
 
-from cfme.containers.pod import Pod
+from cfme.containers.pod import Pod, PodCollection
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
-from cfme.containers.service import Service
-from cfme.containers.replicator import Replicator
-from cfme.containers.image import Image
-from cfme.containers.project import Project
-from cfme.containers.template import Template
-from cfme.containers.container import Container
-from cfme.containers.image_registry import ImageRegistry
-from cfme.containers.volume import Volume
+from cfme.containers.service import Service, ServiceCollection
+from cfme.containers.replicator import Replicator, ReplicatorCollection
+from cfme.containers.image import Image, ImageCollection
+from cfme.containers.project import Project, ProjectCollection
+from cfme.containers.template import Template, TemplateCollection
+from cfme.containers.container import Container, ContainerCollection
+from cfme.containers.image_registry import ImageRegistry, ImageRegistryCollection
+from cfme.containers.node import Node, NodeCollection
+from cfme.containers.volume import Volume, VolumeCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
@@ -27,18 +28,28 @@ pytestmark = [
 
 
 TEST_ITEMS = [
-    pytest.mark.polarion('CMP-9851')(ContainersTestItem(ContainersProvider, 'CMP-9851')),
-    pytest.mark.polarion('CMP-9947')(ContainersTestItem(Container, 'CMP-9947')),
-    pytest.mark.polarion('CMP-9929')(ContainersTestItem(Pod, 'CMP-9929')),
-    pytest.mark.polarion('CMP-10564')(ContainersTestItem(Service, 'CMP-10564')),
-    # TODO Add Node back into the list when other classes are updated to use WT views and widgets.
-    # pytest.mark.polarion('CMP-9962')(ContainersTestItem(Node, 'CMP-9962')),
-    pytest.mark.polarion('CMP-10565')(ContainersTestItem(Replicator, 'CMP-10565')),
-    pytest.mark.polarion('CMP-9980')(ContainersTestItem(Image, 'CMP-9980')),
-    pytest.mark.polarion('CMP-9994')(ContainersTestItem(ImageRegistry, 'CMP-9994')),
-    pytest.mark.polarion('CMP-9868')(ContainersTestItem(Project, 'CMP-9868')),
-    pytest.mark.polarion('CMP-10319')(ContainersTestItem(Template, 'CMP-10319')),
-    pytest.mark.polarion('CMP-10410')(ContainersTestItem(Volume, 'CMP-10410'))
+    pytest.mark.polarion('CMP-9851')(ContainersTestItem(
+        ContainersProvider, 'CMP-9851', collection_obj=None)),
+    pytest.mark.polarion('CMP-9947')(ContainersTestItem(
+        Container, 'CMP-9947', collection_obj=ContainerCollection)),
+    pytest.mark.polarion('CMP-9929')(ContainersTestItem(
+        Pod, 'CMP-9929', collection_obj=PodCollection)),
+    pytest.mark.polarion('CMP-10564')(ContainersTestItem(
+        Service, 'CMP-10564', collection_obj=ServiceCollection)),
+    pytest.mark.polarion('CMP-9962')(ContainersTestItem(
+        Node, 'CMP-9962', collection_obj=NodeCollection)),
+    pytest.mark.polarion('CMP-10565')(ContainersTestItem(
+        Replicator, 'CMP-10565', collection_obj=ReplicatorCollection)),
+    pytest.mark.polarion('CMP-9980')(ContainersTestItem(
+        Image, 'CMP-9980', collection_obj=ImageCollection)),
+    pytest.mark.polarion('CMP-9994')(ContainersTestItem(
+        ImageRegistry, 'CMP-9994', collection_obj=ImageRegistryCollection)),
+    pytest.mark.polarion('CMP-9868')(ContainersTestItem(
+        Project, 'CMP-9868', collection_obj=ProjectCollection)),
+    pytest.mark.polarion('CMP-10319')(ContainersTestItem(
+        Template, 'CMP-10319', collection_obj=TemplateCollection)),
+    pytest.mark.polarion('CMP-10410')(ContainersTestItem(
+        Volume, 'CMP-10410', collection_obj=VolumeCollection))
 ]
 
 
@@ -55,7 +66,7 @@ def test_relationships_tables(provider, has_persistent_volume, appliance, test_i
     that is displayed in the Relationships table.
     """
     instance = (provider if test_item.obj is ContainersProvider
-                else test_item.obj.get_random_instances(provider, 1, appliance).pop())
+                else test_item.collection_obj(appliance).get_random_instances().pop())
     # Check the relationships linking & data integrity
     view = navigate_to(instance, 'Details')
     relations = [key for key, val in view.entities.relationships.read().items() if val != '0']
@@ -66,7 +77,7 @@ def test_relationships_tables(provider, has_persistent_volume, appliance, test_i
     if text.isdigit():
         view = appliance.browser.create_view(test_item.obj.all_view)
         value = int(text)
-        items_amount = int(view.paginator.items_amount)
+        items_amount = int(view.paginator.max_item)
         assert items_amount == value, (
             'Difference between the value({}) in the relationships table in {}'
             'to number of records ({}) in the target page'
@@ -74,7 +85,7 @@ def test_relationships_tables(provider, has_persistent_volume, appliance, test_i
         )
     else:
         view = appliance.browser.create_view(test_item.obj.details_view)
-        assert view.title.text == '{} (Summary)'.format(text)
+        assert text in view.breadcrumb.active_location
 
 
 @pytest.mark.polarion('CMP-9934')
@@ -84,7 +95,7 @@ def test_container_status_relationships_data_integrity(provider, appliance, soft
         in the status summary table
         is the same number that appears in the Relationships table containers field
     """
-    for obj in Pod.get_random_instances(provider, count=3, appliance=appliance):
+    for obj in PodCollection(appliance).get_random_instances(count=3):
         view = navigate_to(obj, 'Details')
         soft_assert(
             (int(view.entities.relationships.read()['Containers']) ==

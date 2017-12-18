@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import attr
-import random
-import itertools
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
@@ -10,11 +8,13 @@ from widgetastic_patternfly import VerticalNavigation
 from widgetastic.widget import Text
 
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
-                                      ContainerObjectDetailsBaseView)
+                                      ContainerObjectDetailsBaseView,
+                                      GetRandomInstancesMixin)
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from cfme.utils.providers import get_crud_by_name
+from widgetastic.utils import VersionPick, Version
 
 
 class ContainerAllView(ContainerObjectAllBaseView):
@@ -59,17 +59,9 @@ class Container(BaseEntity, WidgetasticTaggable, Labelable):
     def project_name(self):
         return self.pod.project_name
 
-    @classmethod
-    def get_random_instances(cls, provider, count=1, appliance=None):
-        """Generating random instances."""
-        containers_list = provider.mgmt.list_container()
-        random.shuffle(containers_list)
-        return [cls(obj.name, obj.cg_name, appliance=appliance)
-                for obj in itertools.islice(containers_list, count)]
-
 
 @attr.s
-class ContainerCollection(BaseCollection):
+class ContainerCollection(GetRandomInstancesMixin, BaseCollection):
     """Collection object for :py:class:`Container`."""
 
     ENTITY = Container
@@ -80,11 +72,16 @@ class ContainerCollection(BaseCollection):
         container_table = self.appliance.db.client['containers']
         ems_table = self.appliance.db.client['ext_management_systems']
         pod_table = self.appliance.db.client['container_groups']
+        container_pod_id = (
+            VersionPick({
+                Version.lowest(): getattr(container_table, 'container_definition_id', None),
+                '5.9': getattr(container_table, 'container_group_id', None)})
+            .pick(self.appliance.version))
         container_query = (
             self.appliance.db.client.session
                 .query(container_table.name, pod_table.name, ems_table.name)
                 .join(ems_table, container_table.ems_id == ems_table.id)
-                .join(pod_table, container_table.container_group_id == pod_table.id))
+                .join(pod_table, container_pod_id == pod_table.id))
         provider = None
         # filtered
         if self.filters.get('provider'):

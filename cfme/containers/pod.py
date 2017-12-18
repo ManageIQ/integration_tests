@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import attr
-import random
-import itertools
 from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
@@ -12,7 +10,8 @@ from widgetastic.widget import View
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
-                                      ContainerObjectDetailsEntities)
+                                      ContainerObjectDetailsEntities,
+                                      GetRandomInstancesMixin)
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 from cfme.utils.providers import get_crud_by_name
@@ -45,17 +44,9 @@ class Pod(BaseEntity, WidgetasticTaggable, Labelable):
     def mgmt(self):
         return ApiPod(self.provider.mgmt, self.name, self.project_name)
 
-    @classmethod
-    def get_random_instances(cls, provider, count=1, appliance=None):
-        """Generating random instances."""
-        pod_list = provider.mgmt.list_container_group()
-        random.shuffle(pod_list)
-        return [cls(obj.name, obj.project_name, provider, appliance=appliance)
-                for obj in itertools.islice(pod_list, count)]
-
 
 @attr.s
-class PodCollection(BaseCollection):
+class PodCollection(GetRandomInstancesMixin, BaseCollection):
     """Collection object for :py:class:`Pod`."""
 
     ENTITY = Pod
@@ -107,6 +98,10 @@ class Details(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                    project_name=self.obj.project_name).click()
+
+    def resetter(self):
+        # Reset view and selection
+        self.view.toolbar.view_selector.select("Summary View")
 
 
 @navigator.register(Pod, 'EditTags')
