@@ -149,7 +149,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
         """
         view = navigate_to(self, "Details")
         view.browser.refresh()
-        return self.get_detail("Compliance", "Status")
+        return self.get_detail(properties=("Compliance", "Status"))
 
     @property
     def compliant(self):
