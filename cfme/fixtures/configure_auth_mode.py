@@ -55,7 +55,7 @@ def configure_openldap_auth_mode_default_groups(browser, available_auth_modes):
         yield
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.yield_fixture(scope='module')
 def configure_aws_iam_auth_mode(appliance, available_auth_modes):
     """Configure AWS IAM authentication mode"""
     if 'miq_aws_iam' in available_auth_modes:

@@ -320,7 +320,7 @@ role_access_ui_59z = {
         'Automation': {
             'Ansible': ['Credentials', 'Repositories', 'Playbooks'],
             'Ansible Tower': ['Jobs', 'Explorer'],
-            'Automate': ['Log', 'Generic Objects', 'Simulation', 'Import / Export', 'Customization',
+            'Automate': ['Log', 'Simulation', 'Import / Export', 'Customization',
                          'Requests', 'Explorer']},
         'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
         'Compute': {
@@ -340,7 +340,7 @@ role_access_ui_59z = {
         'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
         'Services': ['Requests', 'Workloads', 'Catalogs', 'My Services'],
         'Storage': {
-            'Object Storage': ['Managers', 'Object Store Containers', 'Object Store Objects']}
+            'Object Storage': ['Object Store Containers', 'Object Store Objects']}
     },
     'evmgroup-approver': {
         'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
@@ -351,7 +351,7 @@ role_access_ui_59z = {
             'Physical Infrastructure': ['Servers', 'Providers']},
         'Control': ['Log', 'Simulation'],
         'Middleware': ['Servers'],
-        'Services': ['Requests', 'Workloads'],
+        'Services': ['Requests', 'Workloads', 'My Services'],
     },
     'evmgroup-auditor': {
         'Automation': {
@@ -366,7 +366,7 @@ role_access_ui_59z = {
         'Control': ['Log', 'Simulation'],
         'Middleware': ['Servers'],
         'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
-        'Services': ['Workloads']},
+        'Services': ['Workloads', 'My Services']},
     'evmgroup-desktop': {
         'Automation': {
             'Ansible Tower': ['Explorer']},
@@ -389,7 +389,7 @@ role_access_ui_59z = {
             'Physical Infrastructure': ['Servers', 'Providers']},
         'Configuration': ['Management'],
         'Middleware': ['Servers'],
-        'Services': ['Workloads']
+        'Services': ['Workloads', 'My Services']
     },
     'evmgroup-security': {
         'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
@@ -456,8 +456,6 @@ role_access_ui_58z = {
         'Control': ['Import / Export', 'Log', 'Explorer', 'Simulation'],
         'Middleware': ['Datasources', 'Providers', 'Messagings', 'Servers', 'Domains', 'Topology',
                        'Deployments'],
-        'Monitor': {
-            'Alerts': ['Overview', 'All Alerts', 'Most Recent Alerts']},
         'Networks': ['Subnets', 'Load Balancers', 'Providers', 'Security Groups', 'Floating IPs',
                      'Network Ports', 'Topology', 'Networks', 'Network Routers'],
         'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
@@ -488,7 +486,7 @@ role_access_ui_58z = {
         'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
         'Services': ['Requests', 'Workloads', 'Catalogs', 'My Services'],
         'Storage': {
-            'Object Storage': ['Managers', 'Object Store Containers', 'Object Store Objects']}
+            'Object Storage': ['Object Store Containers', 'Object Store Objects']}
     },
     'evmgroup-approver': {
         'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
