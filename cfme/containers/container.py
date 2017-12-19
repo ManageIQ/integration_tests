@@ -15,6 +15,7 @@ from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from cfme.utils.providers import get_crud_by_name
+from widgetastic.utils import VersionPick, Version
 
 
 class ContainerAllView(ContainerObjectAllBaseView):
@@ -80,11 +81,16 @@ class ContainerCollection(BaseCollection):
         container_table = self.appliance.db.client['containers']
         ems_table = self.appliance.db.client['ext_management_systems']
         pod_table = self.appliance.db.client['container_groups']
+        container_pod_id = (
+            VersionPick({
+                Version.lowest(): getattr(container_table, 'container_definition_id', None),
+                '5.9': getattr(container_table, 'container_group_id', None)})
+            .pick(self.appliance.version))
         container_query = (
             self.appliance.db.client.session
                 .query(container_table.name, pod_table.name, ems_table.name)
                 .join(ems_table, container_table.ems_id == ems_table.id)
-                .join(pod_table, container_table.container_group_id == pod_table.id))
+                .join(pod_table, container_pod_id == pod_table.id))
         provider = None
         # filtered
         if self.filters.get('provider'):
