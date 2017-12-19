@@ -90,6 +90,7 @@ class InfraVmDetailsToolbar(InfraGenericDetailsToolbar):
     """
     access = Dropdown("Access")
     power = Dropdown('VM Power Functions')
+    reload = Button(title='Reload current display')
 
 
 class VmsTemplatesAccordion(View):
