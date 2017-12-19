@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Module containing classes with common behaviour for both VMs and Instances of all types."""
 from datetime import datetime, date, timedelta
-
 from wrapanapi import exceptions
 
 from cfme.infrastructure.provider import InfraProvider
@@ -151,7 +150,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
         """
         view = navigate_to(self, "Details")
         view.toolbar.reload.click()
-        return view.entity("Compliance").get_text_of("Status")
+        return view.entities.summary("Compliance").get_text_of("Status")
 
     @property
     def compliant(self):
@@ -331,7 +330,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
         """Returns the contents of the ``Last Analysed`` field in summary"""
         view = navigate_to(self, "Details")
         view.toolbar.reload.click()
-        return view.entity("Lifecycle").get_text_of("Last Analyzed").strip()
+        return view.entities.summary("Lifecycle").get_text_of("Last Analyzed").strip()
 
     def load_details(self, refresh=False, from_any_provider=False):
         """Navigates to an VM's details page.
@@ -388,7 +387,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
             cancel: Whether or not to cancel the refresh relationships action
         """
         if from_details:
-            view = self.load_details()
+            view = navigate_to(self, 'Details', use_resetter=False)
         else:
             view = navigate_to(self, 'All')
             self.find_quadicon(from_any_provider=from_any_provider).check()
@@ -402,7 +401,8 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
         Returns:
             :py:class:`str` object
         """
-        return self.get_detail(properties=("Lifecycle", "Retirement Date")).strip()
+        view = navigate_to(self, "Details")
+        return view.entities.summary("Lifecycle").get_text_of("Retirement Date").strip()
 
     def smartstate_scan(self, cancel=False, from_details=False, wait_for_task_result=False):
         """Initiates fleecing from the UI.
@@ -412,7 +412,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
             from_details: Whether or not to perform action from instance details page
         """
         if from_details:
-            view = self.load_details()
+            view = navigate_to(self, 'Details', use_resetter=False)
         else:
             view = navigate_to(self, 'All')
             self.find_quadicon().check()
@@ -452,7 +452,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
             num_sec=timeout, delay=5, fail_func=_refresh,
             message="wait for vm to appear")
         if load_details:
-            self.load_details()
+            navigate_to(self, "Details", use_resetter=False)
 
     def set_ownership(self, user=None, group=None, click_cancel=False, click_reset=False):
         """Set instance ownership
@@ -512,7 +512,8 @@ class VM(BaseVM):
     TO_RETIRE = None
 
     def retire(self):
-        view = self.load_details(refresh=True)
+        view = navigate_to(self, 'Details', use_resetter=False)
+        view.toolbar.reload.click()
         view.toolbar.lifecycle.item_select(self.TO_RETIRE, handle_alert=True)
         view.flash.assert_no_error()
 
@@ -531,7 +532,7 @@ class VM(BaseVM):
             OptionNotAvailable: option param is not visible or enabled
         """
         if from_details:
-            view = self.load_details()
+            view = navigate_to(self, 'Details', use_resetter=False)
         else:
             view = navigate_to(self, 'All')
 
@@ -550,7 +551,8 @@ class VM(BaseVM):
         Args:
             timeout: Timeout passed to :py:func:`utils.wait.wait_for`
         """
-        view = self.load_details(refresh=True)
+        view = navigate_to(self, 'Details', use_resetter=False)
+        view.toolbar.reload.click()
         wait_for(
             lambda: view.toolbar.monitoring.item_enabled("Utilization"),
             delay=10, handle_exception=True, num_sec=timeout,
@@ -573,12 +575,13 @@ class VM(BaseVM):
             InstanceNotFound:
                 When unable to find the instance passed
         """
-        detail_t = ("Power Management", "Power State")
 
         def _looking_for_state_change():
             if from_details:
-                self.load_details(refresh=True)
-                return self.get_detail(properties=detail_t) == desired_state
+                view = navigate_to(self, "Details", use_resetter=False)
+                view.toolbar.reload.click()
+                current_state = view.entities.summary("Power Management").get_text_of("Power State")
+                return current_state == desired_state
             else:
                 return 'currentstate-' + desired_state in self.find_quadicon(
                     from_any_provider=from_any_provider).data['state']
@@ -600,7 +603,8 @@ class VM(BaseVM):
             from_details: Whether or not to perform action from instance details page
         """
         if from_details:
-            view = self.load_details(refresh=True)
+            view = navigate_to(self, 'Details', use_resetter=False)
+            view.toolbar.reload.click()
         else:
             view = navigate_to(self, "All")
             entity = self.find_quadicon()
@@ -812,7 +816,7 @@ class VM(BaseVM):
 
         # mark by indexes or mark all
         details_view = navigate_to(self, "Details")
-        details_view.entities.relationships.click_at("Drift History")
+        details_view.entities.summary("Relationships").click_at("Drift History")
         drift_history_view = self.create_view(DriftHistory)
         assert drift_history_view.is_displayed
         if indexes:

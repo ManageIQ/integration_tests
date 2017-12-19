@@ -770,7 +770,8 @@ class Vm(VM):
     @property
     def total_snapshots(self):
         """Returns the number of snapshots for this VM. If it says ``None``, returns ``0``."""
-        snapshots = self.get_detail(properties=("Properties", "Snapshots")).strip().lower()
+        view = navigate_to(self, "Details", use_resetter=False)
+        snapshots = view.entities.summary("Properties").get_text_of("Snapshots").strip().lower()
         if snapshots == "none":
             return 0
         else:
