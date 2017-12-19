@@ -175,7 +175,8 @@ class VMToolbar(View):
     """
     "Refresh this page"
     reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                       '5.9': 'Refresh this page'}))
+                                       '5.9': 'Refresh this page',
+                                       Version.latest(): 'Refresh this page'}))
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     lifecycle = Dropdown('Lifecycle')
