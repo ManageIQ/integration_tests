@@ -180,7 +180,8 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_na
 
     # Go to the VM info
     view = navigate_to(vm, 'Details')
-    thin = view.entities.datastore_allocation.get_text_of('Thin Provisioning Used').strip().lower()
+    thin = view.entities.summary('Datastore Allocation Summary').get_text_of(
+        'Thin Provisioning Used').strip().lower()
     vm.load_details(refresh=True)
     if disk_format == "Thin":
         assert thin == 'true', "The disk format should be Thin"

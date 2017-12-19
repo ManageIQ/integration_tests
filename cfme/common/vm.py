@@ -150,8 +150,8 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
             :py:class:`NoneType` if no title is present (no compliance checks before), otherwise str
         """
         view = navigate_to(self, "Details")
-        view.browser.refresh()
-        return self.get_detail(properties=("Compliance", "Status"))
+        view.toolbar.reload.click()
+        return view.entity("Compliance").get_text_of("Status")
 
     @property
     def compliant(self):
@@ -329,7 +329,9 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
     @property
     def last_analysed(self):
         """Returns the contents of the ``Last Analysed`` field in summary"""
-        return self.get_detail(properties=('Lifecycle', 'Last Analyzed')).strip()
+        view = navigate_to(self, "Details")
+        view.toolbar.reload.click()
+        return view.entity("Lifecycle").get_text_of("Last Analyzed").strip()
 
     def load_details(self, refresh=False, from_any_provider=False):
         """Navigates to an VM's details page.

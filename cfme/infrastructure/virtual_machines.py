@@ -11,6 +11,10 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.utils import partial_match, Parameter, VersionPick, Version
 from widgetastic.widget import (
     Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
+from widgetastic_manageiq import (
+    Accordion, ConditionalSwitchableView, ManageIQTree, CheckableManageIQTree, NonJSPaginationPane,
+    Table, TimelinesView, CompareToolBarActionsView)
+from widgetastic_manageiq.vm_reconfigure import DisksTable
 from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, CheckableBootstrapTreeview)
 
@@ -29,10 +33,6 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (
-    Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
-    SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
-from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 
 def has_child(tree, text, parent_item=None):
@@ -218,12 +218,6 @@ class HostTemplatesOnlyAllView(TemplatesOnlyAllView):
         )
 
 
-class InfraVmSummaryView(VMDetailsEntities):
-    operating_ranges = SummaryTable(title="Normal Operating Ranges (over 30 days)")
-    datastore_allocation = SummaryTable(title="Datastore Allocation Summary")
-    datastore_usage = SummaryTable(title="Datastore Actual Usage Summary")
-
-
 class InfraVmDetailsView(InfraVmView):
     title = Text('#explorer_title_text')
     toolbar = ConditionalSwitchableView(reference='entities.title')
@@ -237,15 +231,15 @@ class InfraVmDetailsView(InfraVmView):
         pass
 
     sidebar = View.nested(VmsTemplatesAccordion)
-    entities = View.nested(InfraVmSummaryView)
+    entities = View.nested(VMDetailsEntities)
 
     @property
     def is_displayed(self):
         expected_name = self.context['object'].name
         expected_provider = self.context['object'].provider.name
         try:
-            relationship_provider_name = self.entities.relationships.get_text_of('Infrastructure '
-                                                                                 'Provider')
+            relationship_provider_name = self.entities.summary(
+                'Relationships').get_text_of('Infrastructure Provider')
         except NameError:
             currently_selected = self.sidebar.vmstemplates.tree.currently_selected[-1]
             if currently_selected in ['<Archived>', '<Orphaned>']:
@@ -1309,7 +1303,7 @@ class VmSnapshotsAll(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.entities.properties.click_at('Snapshots')
+        self.prerequisite_view.entities.summary('Properties').click_at('Snapshots')
 
 
 @navigator.register(Vm, 'SnapshotsAdd')
@@ -1330,7 +1324,7 @@ class VmGenealogyAll(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.entities.relationships.click_at('Genealogy')
+        self.prerequisite_view.entities('Relationships').click_at('Genealogy')
 
 
 @navigator.register(Vm, 'Migrate')

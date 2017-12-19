@@ -6,7 +6,6 @@ import pytest
 from datetime import timedelta, date
 
 from cfme import test_requirements
-from cfme.infrastructure.virtual_machines import InfraVmSummaryView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.automate.buttons import ButtonGroup, Button
 from cfme.common.vm import VM
@@ -104,9 +103,11 @@ def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
     request.addfinalizer(lambda: button.delete_if_exists())
     button.create()
 
-    navigate_to(testing_vm, 'Details')
+    view = navigate_to(testing_vm, 'Details')
+    view_klass = type(view)
 
-    class TestDropdownView(InfraVmSummaryView):
+    # TODO this doesn't look good, must be replaced by the custom button in the toolbar
+    class TestDropdownView(view_klass):
         group = Dropdown(grp.text)
 
     view = appliance.browser.create_view(TestDropdownView)
