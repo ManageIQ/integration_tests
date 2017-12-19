@@ -10,6 +10,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm  # For Vm.Snapshot
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.blockers import GH
 from cfme.utils.conf import credentials
@@ -116,7 +117,7 @@ def test_snapshot_crud(small_test_vm, provider):
     snapshot.delete()
 
 
-@pytest.mark.uncollectif(lambda provider: provider.one_of(VMwareProvider))
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(RHEVMProvider))
 @pytest.mark.meta(automates=[BZ(1384517)])
 def test_create_without_description(small_test_vm):
     """
@@ -241,6 +242,22 @@ def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_ev
     """
     verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request,
                            active_snapshot=True)
+
+
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(RHEVMProvider))
+@pytest.mark.meta(automates=[BZ(1375544)])
+def test_revert_on_running_vm(small_test_vm):
+    """
+    Test that revert button is not clickable on powered on VM.
+
+    Metadata:
+        test_flag: snapshot, provision
+    """
+    snapshot = new_snapshot(small_test_vm, has_name=False)
+    snapshot.create()
+    small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_ON, cancel=False)
+    with error.expected('Could not find an element.*@title="Revert to selected snapshot"'):
+        snapshot.revert_to()
 
 
 def setup_snapshot_env(test_vm, memory):
