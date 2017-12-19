@@ -14,6 +14,7 @@ Docs and guides
 - [Selenium over VNC](http://cfme-tests.readthedocs.org/guides/vnc_selenium.html)
 - [Setting up Sublime Text Editor](http://cfme-tests.readthedocs.org/guides/editors.html)
 - [Setting up Emacs](http://cfme-tests.readthedocs.org/guides/editors.html)
+- [PR Review Process](https://github.com/ManageIQ/integration_tests/wiki/PR-Process)
 
 Legal
 -----
