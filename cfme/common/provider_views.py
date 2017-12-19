@@ -560,11 +560,12 @@ class PhysicalProviderEditView(ProviderEditView):
     """
     @property
     def is_displayed(self):
+        expected_title = ("Edit Physical Infrastructure Providers '{name}'"
+                          .format(name=self.context['object'].name))
         return (super(PhysicalProviderEditView, self).is_displayed and
                 self.navigation.currently_selected ==
-                ['Compute''Physical Infrastructure', 'Providers'] and
-                self.title.text == 'Edit Infrastructure Provider' and
-                self.context['object'].name == 'lenovo')
+                ['Compute', 'Physical Infrastructure', 'Providers'] and
+                self.title.text == expected_title)
 
 
 class CloudProviderEditView(ProviderEditView):

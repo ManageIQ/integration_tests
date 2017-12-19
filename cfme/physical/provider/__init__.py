@@ -1,5 +1,6 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import Fillable
+from widgetastic.exceptions import NoSuchElementException
 
 from cfme.base.ui import Server
 
@@ -14,9 +15,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
 from cfme.utils.appliance.implementations.ui import navigate_to
-
 from cfme.utils.log import logger
-from cfme.fixtures import pytest_selenium as sel
 
 class PhysicalProvider(Pretty, BaseProvider, Fillable):
     """
@@ -41,7 +40,7 @@ class PhysicalProvider(Pretty, BaseProvider, Fillable):
     def num_server(self):
         try:
             num = self.get_detail('Relationships', 'Physical Servers')
-        except sel.NoSuchElementException:
+        except NoSuchElementException:
             logger.error("Couldn't find number of servers")
         return int(num)
 
@@ -58,9 +57,7 @@ class PhysicalProvider(Pretty, BaseProvider, Fillable):
         view.toolbar.configuration.item_select(item_title.format("Infrastructure"),
                                                handle_alert=not cancel)
         if not cancel:
-            msg = ('Delete initiated for 1 {} Provider from '
-                   'the {} Database'.format("Physical Infrastructure", self.appliance.product_name))
-            view.flash.assert_success_message(msg)
+            view.flash.assert_no_error()
 
 @navigator.register(Server, 'PhysicalProviders')
 @navigator.register(PhysicalProvider, 'All')
