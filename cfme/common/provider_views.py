@@ -563,7 +563,8 @@ class PhysicalProviderEditView(ProviderEditView):
         return (super(PhysicalProviderEditView, self).is_displayed and
                 self.navigation.currently_selected ==
                 ['Compute''Physical Infrastructure', 'Providers'] and
-                self.title.text == 'Edit Infrastructure Provider')
+                self.title.text == 'Edit Infrastructure Provider' and
+                self.context['object'].name == 'lenovo')
 
 
 class CloudProviderEditView(ProviderEditView):
