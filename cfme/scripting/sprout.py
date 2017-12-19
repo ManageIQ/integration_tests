@@ -111,6 +111,7 @@ def populate_config_from_appliances(appliance_data):
         app_config = dict(
             hostname=app['ip_address'],
             ui_protocol="https",
+            version=str(app['template_version']),
         )
         y_data['appliances'].append(app_config)
     with open(file_name, 'w') as f:

@@ -18,9 +18,10 @@ warnings.simplefilter('error', ApplianceSummoningWarning)
 def pytest_addoption(parser):
     parser.addoption('--dummy-appliance', action='store_true')
     parser.addoption('--dummy-appliance-version', default=None)
+    parser.addoption('--appliance-version', default=None)
 
 
-def appliances_from_cli(cli_appliances):
+def appliances_from_cli(cli_appliances, appliance_version):
     appliance_config = dict(appliances=[])
     for appliance_data in cli_appliances:
         parsed_url = six.moves.urllib.parse.urlparse(appliance_data['hostname'])
@@ -51,7 +52,7 @@ def pytest_configure(config):
     elif stack.top:
         appliances = [stack.top]
     elif config.option.appliances:
-        appliances = appliances_from_cli(config.option.appliances)
+        appliances = appliances_from_cli(config.option.appliances, config.option.appliance_version)
         reporter.write_line('Retrieved these appliances from the --appliance parameters', red=True)
     elif config.getoption('--use-sprout'):
         from .sprout.plugin import mangle_in_sprout_appliances
@@ -60,7 +61,7 @@ def pytest_configure(config):
         appliances = appliances_from_cli(config.option.appliances)
         reporter.write_line('Retrieved these appliances from the --sprout-* parameters', red=True)
     else:
-        appliances = load_appliances_from_config(conf.env)
+        appliances = load_appliances_from_config(conf.env, config.option.appliance_version)
         reporter.write_line('Retrieved these appliances from the conf.env', red=True)
 
     if not stack.top:
