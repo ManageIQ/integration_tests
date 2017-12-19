@@ -5,16 +5,16 @@ from cfme.infrastructure.cluster import ClusterCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
 from fixtures.provider import setup_one_or_skip
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.update import update
-
 
 pytestmark = [test_requirements.tag, pytest.mark.tier(2)]
 
 test_items = [
     ('clusters', ClusterCollection),
-    ('vms', Vm),
-    ('templates', Template)
+    ('VMs', Vm),
+    ('Templates', Template)
 ]
 
 
@@ -33,19 +33,26 @@ def testing_vis_object(request, a_provider, appliance):
     Returns: class object of certain type
     """
     collection_name, param_class = request.param
-    collection_rest = getattr(appliance.rest_api.collections, collection_name)
 
     if not test_items:
         pytest.skip('No content found for test!')
 
-    if collection_name in ['templates', 'vms']:
-        item_type = a_provider.data['provisioning']['catalog_item_type'].lower()
-        for resource in collection_rest:
-            if resource.vendor == item_type:
-                return param_class(name=resource.name, provider=a_provider)
+    if collection_name in ['Templates', 'VMs']:
+        destination = collection_name + 'Only'
+        view = navigate_to(param_class, destination)
+        names = view.entities.entity_names
+        if names:
+            return param_class(name=names[0], provider=a_provider)
+        else:
+            pytest.fail('No {} found for test'.format(collection_name))
     else:
-        return param_class(appliance).instantiate(
-            name='{} in Datacenter'.format(collection_rest[0].name), provider=a_provider)
+        collection = getattr(appliance.collections, collection_name)
+        view = navigate_to(collection, 'All')
+        names = view.entities.entity_names
+        if names:
+            return param_class(appliance).instantiate(name=names[0], provider=a_provider)
+        else:
+            pytest.fail('No {} found for test'.format(collection_name))
 
 
 @pytest.fixture(scope='module')
