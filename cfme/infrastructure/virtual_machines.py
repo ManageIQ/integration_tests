@@ -168,7 +168,7 @@ class VmsOnlyAllView(InfraVmView):
     def is_displayed(self):
         return (
             self.in_infra_vms and
-            self.sidebar.vms.tree.currently_selected == 'All VMs' and
+            self.sidebar.vms.tree.currently_selected == ['All VMs'] and
             self.entities.title.text == 'All VMs')
 
     def reset_page(self):
@@ -184,7 +184,7 @@ class TemplatesOnlyAllView(InfraVmView):
     def is_displayed(self):
         return (
             self.in_infra_vms and
-            self.sidebar.templates.tree.currently_selected == 'All Templates' and
+            self.sidebar.templates.tree.currently_selected == ['All Templates'] and
             self.entities.title.text == 'All Templates')
 
 
