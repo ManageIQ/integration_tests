@@ -58,7 +58,8 @@ def pytest_configure(config):
         from .sprout.plugin import mangle_in_sprout_appliances
 
         mangle_in_sprout_appliances(config)
-        appliances = appliances_from_cli(config.option.appliances)
+        # TODO : handle direct sprout pass on?
+        appliances = appliances_from_cli(config.option.appliances, None)
         reporter.write_line('Retrieved these appliances from the --sprout-* parameters', red=True)
     else:
         appliances = load_appliances_from_config(conf.env, config.option.appliance_version)
