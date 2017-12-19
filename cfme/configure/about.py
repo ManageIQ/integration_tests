@@ -3,7 +3,6 @@ from widgetastic.widget import View
 from widgetastic_patternfly import AboutModal
 
 from cfme.exceptions import ElementOrBlockNotFound
-from cfme.utils.appliance import current_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 # MIQ/CFME about field names
@@ -27,7 +26,7 @@ class AboutView(View):
     modal = AboutModal(id='aboutModal')
 
 
-def get_detail(field):
+def get_detail(field, server):
     """
     Open the about modal and fetch the value for one of the fields
     'title' and 'trademark' fields are allowed and get the header/footer values
@@ -35,7 +34,8 @@ def get_detail(field):
     :param field: string label for the detail field
     :return: string value from the requested field
     """
-    view = navigate_to(current_appliance().server, 'About')
+
+    view = navigate_to(server, 'About')
 
     try:
         if field.lower() in ['title', 'trademark']:
