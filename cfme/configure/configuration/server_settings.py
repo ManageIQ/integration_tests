@@ -1,25 +1,23 @@
 # -*- coding: utf-8 -*-
 from copy import copy
 
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, Checkbox, View
+from widgetastic.widget import Text, Checkbox, View, ConditionalSwitchableView
 from widgetastic_patternfly import Input, Button, BootstrapSelect, BootstrapSwitch
 
-from cfme.base.ui import ServerView
 from cfme.exceptions import ConsoleNotSupported, ConsoleTypeNotSupported
 from cfme.utils import conf
 from cfme.utils.appliance import NavigatableMixin
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 
 
-class ServerInformationView(ServerView):
+class ServerInformationView(View):
     """ Class represents full Server tab view"""
     title = Text("//div[@id='settings_server']/h3[1]")
-    save_button = Button('Save')
-    reset_button = Button('Reset')
+    save = Button('Save')
+    reset = Button('Reset')
 
     @View.nested
     class basic_information(View):    # noqa
@@ -120,13 +118,12 @@ class ServerInformationView(ServerView):
 
     @property
     def is_displayed(self):
-        return {
-            self.server.is_active and
-            self.title.text == 'Basic Information'
-        }
+        return (
+            self.basic_information.appliance_name.is_displayed and
+            self.title.text == 'Basic Information')
 
 
-class ServerInformation(Updateable, Pretty, NavigatableMixin):
+class ServerInformation(Updateable, Pretty):
     """ This class represents the Server tab in Server Settings
 
     Different Forms take different values for their operations
@@ -226,7 +223,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
              regarding updates.
              reset: By default(False) changes will not be reset, if True changes will be reset
         """
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server, 'Server')
 
         updated = view.basic_information.fill(updates)
         self._save_action(view, updated, reset)
@@ -234,7 +231,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
     @property
     def basic_information_values(self):
         """ Returns(dict): basic_information fields values"""
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server, 'Server')
         return view.basic_information.read()
 
 # =============================== Server Roles Form ===================================
@@ -247,7 +244,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
              reset: By default(False) changes will not be reset, if True changes will be reset
 
         """
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server, 'Server')
         # embedded_ansible server role available from 5.8 version
         if self.appliance.version < '5.8' and 'embedded_ansible' in updates:
             updates.pop('embedded_ansible')
@@ -280,7 +277,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
 
     @property
     def server_roles_ui(self):
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server, 'Server')
         roles = view.server_roles.read()
         # default_smart_proxy is not a role, but text info
         roles.pop('default_smart_proxy')
@@ -336,14 +333,14 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
                         .format(conf.cfme_data.vm_console.webmks_console.
                             webmks_sdk_extract_location))
 
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server, 'Server')
         updated = view.vmware_console.fill(updates)
         self._save_action(view, updated, reset)
 
     @property
     def vmware_console_values(self):
         """ Returns(dict): vmware_console fields values"""
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server, 'Server')
         return view.vmware_console.read()
 
 # ============================= NTP Servers Form =================================
@@ -356,14 +353,14 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
              reset: By default(False) changes will not be reset, if True changes will be reset
 
         """
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server, 'Server')
         updated = view.ntp_servers.fill(updates)
         self._save_action(view, updated, reset)
 
     @property
     def ntp_servers_values(self):
         """ Returns(dict): ntp_servers fields values"""
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server, 'Server')
         return view.ntp_servers.read()
 
     @property
@@ -381,12 +378,12 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
              updates: dict, widgets will be updated regarding updates.
              reset: By default(False) changes will not be reset, if True changes will be reset
         """
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server, 'Server')
         try:
             updated = view.smtp_server.fill(updates)
         except Exception:
             # workaround for 5.7 version as sometimes throws Exception
-            view = navigate_to(self, 'Details', use_resetter=True)
+            view = navigate_to(self.appliance.server, 'Server', use_resetter=True)
             updated = view.smtp_server.fill(updates)
         if view.smtp_server.verify.active:
             view.smtp_server.verify.click()
@@ -394,7 +391,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
 
     def send_test_email(self, email=None):
         """ Send a testing e-mail on specified address. Needs configured SMTP. """
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server, 'Server')
         if not email:
             email = self.to_email
         view.smtp_server.fill({'to_email': email})
@@ -403,7 +400,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
     @property
     def smtp_server_values(self):
         """ Returns(dict): smtp_server fields values"""
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server, 'Server')
         return view.smtp_server.read()
 
 # ============================= Web Services Form =================================
@@ -415,14 +412,14 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
              updates: dict, widgets will be updated regarding updates.
              reset: By default(False) changes will not be reset, if True changes will be reset
         """
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server, 'Server')
         updated = view.web_services.fill(updates)
         self._save_action(view, updated, reset)
 
     @property
     def web_services_values(self):
         """ Returns(dict): web_services fields values"""
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server, 'Server')
         return view.web_services.read()
 
 # ============================= Logging Form =================================
@@ -434,14 +431,14 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
              updates: dict, widgets will be updated regarding updates.
              reset: By default(False) changes will not be reset, if True changes will be reset
         """
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server, 'Server')
         updated = view.web_services.fill(updates)
         self._save_action(view, updated, reset)
 
     @property
     def logging_values(self):
         """ Returns(dict): logging fields values"""
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server, 'Server')
         return view.logging_form.read()
 
 # ============================= Custom Support Url Form =================================
@@ -453,77 +450,39 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
              updates: dict, widgets will be updated regarding updates.
              reset: By default(False) changes will not be reset, if True changes will be reset
         """
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server, 'Server')
         updated = view.custom_support_url.fill(updates)
         self._save_action(view, updated, reset)
 
     @property
     def custom_support_url_values(self):
         """ Returns(dict): custom_support_url fields values"""
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server, 'Server')
         return view.custom_support_url.read()
 
     def _save_action(self, view, updated_result, reset):
         """ Take care of actions to do after updates """
         if reset:
             try:
-                view.reset_button.click()
+                view.reset.click()
                 view.flash.assert_message('All changes have been reset')
             except Exception:
                 logger.warning('No values was changed')
         elif updated_result:
-            view.save_button.click()
+            view.save.click()
             view.flash.assert_no_error()
         else:
             logger.info('Settings were not changed')
 
 
-@navigator.register(ServerInformation, 'Details')
-class DetailsServer(CFMENavigateStep):
-    VIEW = ServerInformationView
-    prerequisite = NavigateToAttribute('appliance.server', 'Details')
-
-    def step(self):
-        self.prerequisite_view.server.select()
-
-    def resetter(self):
-        self.view.authentication.select()
-        self.view.server.select()
-
-
 # ============================= AUTHENTICATION TAB ===================================
 
-
-class ServerAuthenticationView(ServerView):
-    """ Server Authentication View."""
-    title = Text("//div[@id='settings_authentication']/h3[1]")
-    save_button = Button('Save')
-    reset_button = Button('Reset')
-
-    hours_timeout = BootstrapSelect(id='session_timeout_hours')
-    minutes_timeout = BootstrapSelect(id='session_timeout_mins')
-    authentication_mode = BootstrapSelect(id='authentication_mode')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.authentication_mode.is_displayed and
-            self.title.text == 'Authentication'
-        )
+class DatabaseAuthenticationView(View):
+    """ Database Authentication View, empty"""
+    pass
 
 
-class DatabaseAuthenticationView(ServerAuthenticationView):
-    """ Database Authentication View """
-    @property
-    def is_displayed(self):
-        return (
-            self.authentication_mode.is_displayed and
-            self.authentication_mode.selected_option == 'Database'
-        )
-# TODO create ConditionalView, since there is dependence on authentication_mode widget selection
-
-
-class LdapAuthenticationView(ServerAuthenticationView):
+class LdapAuthenticationView(View):
     """ Ldap Authentication View """
 
     ldap_host_1 = Input(name='authentication_ldaphost_1')
@@ -542,56 +501,60 @@ class LdapAuthenticationView(ServerAuthenticationView):
     bind_password = Input(name='authentication_bind_pwd')
     validate = Button('Validate')
 
-    @property
-    def is_displayed(self):
-        return (
-            self.authentication_mode.is_displayed and
-            self.authentication_mode.selected_option == 'LDAP'
-        )
-
 
 class LdapsAuthenticationView(LdapAuthenticationView):
     """ Ldaps Authentication View """
-
-    @property
-    def is_displayed(self):
-        return (
-            self.authentication_mode.is_displayed and
-            self.authentication_mode.selected_option == 'LDAPS'
-        )
+    pass
 
 
-class AmazonAuthenticationView(ServerAuthenticationView):
+class AmazonAuthenticationView(View):
     """ Amazon Authentication View """
 
     access_key = Input(name='authentication_amazon_key')
     secret_key = Input(name='authentication_amazon_secret')
-
     get_groups = Checkbox(name='amazon_role')
     validate = Button('Validate')
 
-    @property
-    def is_displayed(self):
-        return (
-            self.authentication_mode.is_displayed and
-            self.authentication_mode.selected_option == 'Amazon'
-        )
 
-
-class ExternalAuthenticationView(ServerAuthenticationView):
+class ExternalAuthenticationView(View):
     """ External Authentication View """
 
     enable_sso = Checkbox(name='sso_enabled')
     enable_saml = Checkbox(name='saml_enabled')
-
     get_groups = Checkbox(name='httpd_role')
+
+
+class ServerAuthenticationView(View):
+    """ Server Authentication View."""
+    title = Text("//div[@id='settings_authentication']/h3[1]")
+    hours_timeout = BootstrapSelect(id='session_timeout_hours')
+    minutes_timeout = BootstrapSelect(id='session_timeout_mins')
+    # TODO new button widget to handle buttons_on buttons_off divs
+    save = Button(title='Save Changes')  # in buttons_on div
+    reset = Button(title='Reset Changes')  # in buttons_on div
+
+    @View.nested
+    class form(View):  # noqa
+        auth_mode = BootstrapSelect(id='authentication_mode')
+        auth_settings = ConditionalSwitchableView(reference='auth_mode')
+
+        auth_settings.register('Database', default=True, widget=DatabaseAuthenticationView)
+        auth_settings.register('LDAP', widget=LdapAuthenticationView)
+        auth_settings.register('LDAPS', widget=LdapsAuthenticationView)
+        auth_settings.register('Amazon', widget=AmazonAuthenticationView)
+        auth_settings.register('External (httpd)', widget=ExternalAuthenticationView)
 
     @property
     def is_displayed(self):
+        """should be paired with a ServerView.in_server_settings in a nav.am_i_here"""
         return (
-            self.authentication_mode.is_displayed and
-            self.authentication_mode.selected_option == 'External (httpd)'
-        )
+            self.form.auth_mode.is_displayed and
+            self.title.text == 'Authentication')
+
+    def before_fill(self, values):
+        """Select the auth mode first"""
+        if values.get('auth_mode'):
+            self.form.auth_mode.fill(values.get('auth_mode'))
 
 
 class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
@@ -621,13 +584,14 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
                 minutes(str): timeout minutes value
             ex. auth_settings.set_session_timeout('0', '30')
         """
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self.appliance.server.settings, 'Authentication', wait_for_view=True)
         updated = view.fill({
             "hours_timeout": hours,
             "minutes_timeout": minutes
         })
         if updated:
-            view.save_button.click()
+            view.save.click()
+            # TODO move this flash message assert into new test and only assert no error
             flash_message = (
                 'Authentication settings saved for {} Server "{} [{}]" in Zone "{}"'.format(
                     self.appliance.product_name,
@@ -635,161 +599,67 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
                     self.appliance.server.sid,
                     self.appliance.server.zone.name))
             view.flash.assert_message(flash_message)
-
-    def _update_form(self, updates, reset=False):
-        """
-            Fill auth form view
-            Args:
-                updates: dict with field: value type
-                reset: Set True, to reset all changes for the page. Default value: False
-            ex. auth_settings.update_form({"hours_timeout": hours, "mode": "Amazon"}, reset=True)
-        """
-        view = navigate_to(self, self.auth_mode)
-        changed = view.fill(updates)
-        try:
-            view.validate.click()
-            view.flash.assert_message(
-                '{} Settings validation was successful'.format(
-                    view.authentication_mode.selected_option))
-        except AttributeError:
-            logger.info("View doesn't have validate button")
-        if reset:
-            view.reset_button.click()
-            view.flash.assert_message('All changes have been reset')
-        # Can't save the form if nothing was changed
-        elif changed:
-            view.save_button.click()
-            flash_message = (
-                'Authentication settings saved for {} Server "{} [{}]" in Zone "{}"'.format(
-                    self.appliance.product_name,
-                    self.appliance.server.name,
-                    self.appliance.server.sid,
-                    self.appliance.server.zone.name))
-            view.flash.assert_message(flash_message)
-        else:
-            logger.info('No authentication settings changed, not saving form.')
 
     @property
     def auth_settings(self):
         """ Authentication view fields values """
-        view = navigate_to(self, self.auth_mode)
+        view = navigate_to(self.appliance.server.settings, 'Authentication')
         return view.read()
 
-    def set_auth_mode(self, reset=False, **kwargs):
+    def set_auth_mode(self, reset=False, auth_mode='Database', **kwargs):
         """ Set up authentication mode
 
         Args:
             reset: Set True, to reset all changes for the page. Default value: False
-
-        kwargs: A dict of keyword arguments used to initialize auth mode
+            auth_mode: The authentication mode - Database, Amazon, LDAP, LDAPS, External (httpd)
+            kwargs: A dict of keyword arguments used to initialize auth mode
                 if you want not to use yamls settings,
-                mode='your_mode_type_here' key/value should be a mandatory in your kwargs
+                auth_mode='your_mode_type_here' should be a mandatory in your kwargs
                 ex. auth_settings.set_auth_mode(
                 reset= True, mode='Amazon', access_key=key, secret_key=secret_key)
         """
-        form_to_fill = {}
-        if kwargs:
-            self.auth_mode = kwargs['mode'].capitalize()
+        self.auth_mode = auth_mode
+        fill_data = {'auth_mode': auth_mode}
+        settings = {}  # for auth_settings
+        if kwargs and auth_mode != 'Database':
             for key, value in kwargs.items():
-                if key not in ['mode', 'default_groups']:
+                if key not in ['default_groups']:
                     if key == 'hosts':
                         assert len(value) <= 3, "You can specify only 3 LDAP hosts"
                         for enum, host in enumerate(value):
-                            form_to_fill["ldap_host_{}".format(enum + 1)] = host
+                            settings["ldap_host_{}".format(enum + 1)] = host
                     elif key == 'user_type':
-                        form_to_fill[key] = self.user_type_dict[value]
+                        settings[key] = self.user_type_dict[value]
                     else:
-                        form_to_fill[key] = value
+                        settings[key] = value
+                else:
+                    settings[key] = value
         else:
-            self.auth_mode = 'Database'
-        self._update_form(form_to_fill, reset)
+            logger.warning('set_auth_mode called with kwargs and Database, ignoring kwargs')
+        fill_data['auth_settings'] = settings
 
+        view = navigate_to(self.appliance.server.settings, 'Authentication', wait_for_view=True)
+        changed = view.fill(fill_data)
+        if reset:
+            view.reset.click()
+            view.flash.assert_message('All changes have been reset')
+            # Can't save the form if nothing was changed
+            logger.info('Authentication form reset, returning')
+            return
+        elif changed:
+            try:
+                view.validate.click()
+                view.flash.assert_message('{} Settings validation was successful'
+                                          .format(view.auth_mode.selected_option))
+            except AttributeError:
+                logger.info("View doesn't have validate button")
 
-@navigator.register(AuthenticationSetting, 'Details')
-class DetailsAuth(CFMENavigateStep):
-    VIEW = ServerAuthenticationView
-    prerequisite = NavigateToAttribute('appliance.server', 'Details')
-
-    def step(self):
-        self.prerequisite_view.authentication.select()
-
-
-@navigator.register(AuthenticationSetting)
-class Database(CFMENavigateStep):
-    VIEW = DatabaseAuthenticationView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.view.authentication_mode.fill('Database')
-
-
-@navigator.register(AuthenticationSetting, 'Ldap')
-class Ldap(CFMENavigateStep):
-    VIEW = LdapAuthenticationView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.authentication_mode.fill('LDAP')
-
-
-@navigator.register(AuthenticationSetting)
-class Ldaps(CFMENavigateStep):
-    VIEW = LdapsAuthenticationView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.authentication_mode.fill('LDAPS')
-
-
-@navigator.register(AuthenticationSetting)
-class Amazon(CFMENavigateStep):
-    VIEW = AmazonAuthenticationView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.authentication_mode.fill('Amazon')
-
-
-@navigator.register(AuthenticationSetting)
-class External(CFMENavigateStep):
-    VIEW = ExternalAuthenticationView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.authentication_mode.fill('External (httpd)')
-
-
-@navigator.register(ServerInformation)
-class Authentication(CFMENavigateStep):
-    # VIEW = Todo
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.authentication.select()
-
-
-@navigator.register(ServerInformation)
-class Workers(CFMENavigateStep):
-    # VIEW = Todo
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.workers.select()
-
-
-@navigator.register(ServerInformation)
-class CustomLogos(CFMENavigateStep):
-    # VIEW = Todo
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.custom_logos.select()
-
-
-@navigator.register(ServerInformation)
-class Advanced(CFMENavigateStep):
-    # VIEW = Todo
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.advanced.select()
+            view.save.click()
+            # TODO move this flash message assert into test and only assert no error
+            flash_message = (
+                'Authentication settings saved for {} Server "{} [{}]" in Zone "{}"'.format(
+                    self.appliance.product_name, self.appliance.server.name,
+                    self.appliance.server.sid, self.appliance.server.zone.name))
+            view.flash.assert_message(flash_message)
+        else:
+            logger.info('No authentication settings changed, not saving form.')
