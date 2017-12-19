@@ -22,7 +22,6 @@ There are two ways to request a setup provider depending on what kind of test we
    functionality. For that, we can leverage one of the following fixtures:
    - ``infra_provider``
    - ``cloud_provider``
-   - ``middleware_provider``
    - ``containers_provider``
    - ...and others
 

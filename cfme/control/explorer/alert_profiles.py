@@ -289,11 +289,6 @@ class HostAlertProfile(BaseAlertProfile):
     TYPE = "Host / Node"
 
 
-class MiddlewareServerAlertProfile(BaseAlertProfile):
-
-    TYPE = "Middleware Server"
-
-
 class ProviderAlertProfile(BaseAlertProfile):
 
     TYPE = "Provider"

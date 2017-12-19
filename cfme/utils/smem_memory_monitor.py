@@ -62,7 +62,6 @@ miq_workers = [
     'ManageIQ::Providers::Openshift::ContainerManager::RefreshWorker',
     'ManageIQ::Providers::OpenshiftEnterprise::ContainerManager::RefreshWorker',
 
-    'ManageIQ::Providers::Hawkular::MiddlewareManager::RefreshWorker',
     'ManageIQ::Providers::StorageManager::CinderManager::RefreshWorker',
     'ManageIQ::Providers::StorageManager::SwiftManager::RefreshWorker',
 
@@ -96,8 +95,6 @@ miq_workers = [
     'ManageIQ::Providers::Kubernetes::ContainerManager::EventCatcher',
     'ManageIQ::Providers::Openshift::ContainerManager::EventCatcher',
     'ManageIQ::Providers::OpenshiftEnterprise::ContainerManager::EventCatcher',
-
-    'ManageIQ::Providers::Hawkular::MiddlewareManager::EventCatcher',
 
     'ManageIQ::Providers::Openstack::NetworkManager::EventCatcher',
 
