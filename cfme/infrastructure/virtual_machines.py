@@ -633,7 +633,7 @@ class Vm(VM):
             if self.name is not None:
                 snapshot_dict['name'] = self.name
             if force_check_memory or self.vm.provider.mgmt.is_vm_running(self.vm.name):
-                snapshot_dict["snapshot_memory"] = self.memory
+                snapshot_dict["snapshot_vm_memory"] = self.memory
             view.fill(snapshot_dict)
             view.create.click()
             list_view = self.vm.create_view(InfraVmSnapshotView)
