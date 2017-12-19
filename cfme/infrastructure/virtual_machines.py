@@ -588,6 +588,8 @@ class Vm(VM):
                 snapshot_dict['name'] = self.name
             if force_check_memory or self.vm.provider.mgmt.is_vm_running(self.vm.name):
                 snapshot_dict["snapshot_vm_memory"] = self.memory
+            if force_check_memory and not view.snapshot_vm_memory.is_displayed:
+                raise NoSuchElementException('Snapshot VM memory checkbox not present')
             view.fill(snapshot_dict)
             view.create.click()
             if not self.description:
