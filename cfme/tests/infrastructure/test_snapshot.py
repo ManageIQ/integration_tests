@@ -256,6 +256,7 @@ def test_revert_on_running_vm(small_test_vm):
     snapshot = new_snapshot(small_test_vm, has_name=False)
     snapshot.create()
     small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_ON, cancel=False)
+    small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_ON)
     with error.expected('Could not find an element.*@title="Revert to selected snapshot"'):
         snapshot.revert_to()
 
