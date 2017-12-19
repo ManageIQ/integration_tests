@@ -7,42 +7,6 @@ from cfme.utils.wait import wait_for
 
 
 @attr.s
-class TopologyLegend(BaseEntity):
-    """ Class representing Topology Legend
-        Consists of Browser element and its name
-    """
-    element = attr.ib()
-    legend_name = attr.ib()
-
-    @property
-    def name(self):
-        return self.legend_name
-
-    @property
-    def is_active(self):
-        return 'active' in self.element.get_attribute('class')
-
-    def set_active(self, active=True):
-        if active != self.is_active:
-            self.element.click()
-
-
-@attr.s
-class TopologyLegendCollection(BaseCollection):
-    """Collection object for legends in topology"""
-    ENTITY = TopologyLegend
-
-    def filter(self, topology):
-        view = navigate_to(topology, 'All')
-        final_legends = []
-        legends = topology.browser.elements(view.LEGENDS)
-        for element in legends:
-            legend_name = topology.browser.text(element.find_element_by_tag_name('label'))
-            final_legends.append(self.instantiate(element, legend_name))
-        return final_legends
-
-
-@attr.s
 class TopologyDisplayNames(BaseEntity):
     """ Class representing Displaying buttons of legends
         Consists of Browser element
@@ -130,33 +94,33 @@ class TopologyElementCollection(BaseCollection):
         return [self.instantiate(element, obj) for element in elements]
 
 
-@attr.s
-class TopologyLine(BaseEntity):
-    """ Class representing line connecting 2 nodes in Topology
-        Consists of Browser element
-    """
-    element = attr.ib()
+# @attr.s
+# class TopologyLine(BaseEntity):
+#     """ Class representing line connecting 2 nodes in Topology
+#         Consists of Browser element
+#     """
+#     element = attr.ib()
 
 
-@attr.s
-class TopologyLineCollection(BaseCollection):
-    """Collection object for lines in topology"""
-    ENTITY = TopologyLine
+# @attr.s
+# class TopologyLineCollection(BaseCollection):
+#     """Collection object for lines in topology"""
+#     ENTITY = TopologyLine
 
-    def instantiate(self, *args, **kwargs):
-        line = super(TopologyLineCollection, self).instantiate(*args, **kwargs)
-        assert line.element, 'Element should not be None'
-        line.connection = line.element.get_attribute('class')
-        line.x1 = round(float(line.element.get_attribute('x1')), 1)
-        line.x2 = round(float(line.element.get_attribute('x2')), 1)
-        line.y1 = round(float(line.element.get_attribute('y1')), 1)
-        line.y2 = round(float(line.element.get_attribute('y2')), 1)
-        return line
+#     def instantiate(self, *args, **kwargs):
+#         line = super(TopologyLineCollection, self).instantiate(*args, **kwargs)
+#         assert line.element, 'Element should not be None'
+#         line.connection = line.element.get_attribute('class')
+#         line.x1 = round(float(line.element.get_attribute('x1')), 1)
+#         line.x2 = round(float(line.element.get_attribute('x2')), 1)
+#         line.y1 = round(float(line.element.get_attribute('y1')), 1)
+#         line.y2 = round(float(line.element.get_attribute('y2')), 1)
+#         return line
 
-    def filter(self, topology):
-        view = navigate_to(topology, 'All')
-        lines = topology.browser.elements(view.LINES)
-        return [self.instantiate(element=line) for line in lines]
+#     def filter(self, topology):
+#         view = navigate_to(topology, 'All')
+#         lines = topology.browser.elements(view.LINES)
+#         return [self.instantiate(element=line) for line in lines]
 
 
 @attr.s
@@ -171,8 +135,24 @@ class BaseTopology(BaseEntity):
         return False
 
     @property
-    def legends_collection(self):
-        return TopologyLegendCollection(self)
+    def legends(self):
+        view = navigate_to(self, 'All')
+        return [value[0] for value in list(view.legend)]
+
+    def is_legend_enabled(self, legend_name):
+        view = navigate_to(self, 'All')
+        return view.legend(legend_name).is_enabled
+
+    def enable_legend(self, legend_name):
+        view = navigate_to(self, 'All')
+        if not view.legend(legend_name).is_enabled:
+            view.legend(legend_name).enable()
+
+    def disable_legend(self, legend_name):
+        view = navigate_to(self, 'All')
+        if view.legend(legend_name).is_enabled:
+            view.legend(legend_name).disable()
+
 
     @property
     def elements_collection(self):
@@ -182,9 +162,6 @@ class BaseTopology(BaseEntity):
     def lines_collection(self):
         return TopologyLineCollection(self)
 
-    @property
-    def legends(self):
-        return self.legends_collection.filter(self)
 
     @property
     def elements(self):

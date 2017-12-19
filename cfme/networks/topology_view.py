@@ -1,6 +1,7 @@
-from widgetastic.widget import View, Text, Checkbox
+from widgetastic.utils import ParametrizedLocator
+from widgetastic.widget import View, Text, Checkbox, ParametrizedView
 from widgetastic_manageiq import BaseEntitiesView
-from widgetastic_patternfly import FlashMessages, Button, Input
+from widgetastic_patternfly import Button, Input
 
 from cfme.base.login import BaseLoggedInPage
 
@@ -45,7 +46,6 @@ class TopologyEntities(BaseEntitiesView):
 
 class TopologyView(BaseLoggedInPage):
     """ Represents whole All NetworkProviders page """
-    LEGENDS = './/div[@id="main-content"]//kubernetes-topology-icon'
     ELEMENTS = '//kubernetes-topology-graph//*[name()="g"]'
     LINES = '//kubernetes-topology-graph//*[name()="lines_obj"]'
     DISPLAY_NAME = '|'.join([
@@ -55,7 +55,25 @@ class TopologyView(BaseLoggedInPage):
     toolbar = View.nested(TopologyToolbar)
     including_entities = View.include(TopologyEntities, use_parent=True)
 
-    @property
-    def is_displayed(self):
-        return (self.logged_in_as_current_user and
-                self.navigation.currently_selected == ['Networks', 'Topology'])
+    @ParametrizedView.nested
+    class legend(ParametrizedView):  # noqa
+        PARAMETERS = ('name', )
+        ALL_LEGENDS = './/div[@id="main-content"]//kubernetes-topology-icon'
+        el = Text(
+            ParametrizedLocator('{}//label[normalize-space(.)={@name|quote}]'.format(ALL_LEGENDS)))
+
+        @property
+        def is_enabled(self):
+            return 'active' in self.el.get_attribute('class')
+
+        def enable(self):
+            if not self.is_enabled:
+                self.el.click()
+
+        def disable(self):
+            if self.is_enabled:
+                self.el.click()
+
+        @classmethod
+        def all(cls, browser):
+            return [(browser.text(e), ) for e in browser.elements(cls.ALL_LEGENDS)]
