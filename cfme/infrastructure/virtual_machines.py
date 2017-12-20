@@ -38,7 +38,7 @@ from widgetastic_manageiq.vm_reconfigure import DisksTable
 def has_child(tree, text, parent_item=None):
     """Check if a tree has an item with text"""
     if not parent_item:
-        parent_item = tree.parent_item
+        parent_item = tree.root_item
     if tree.child_items_with_text(parent_item, text):
         return True
     else:
@@ -51,19 +51,20 @@ def has_child(tree, text, parent_item=None):
 def find_path(tree, text, parent_item=None):
     """Find the path to an item with text"""
     if not parent_item:
-        parent_item = tree.parent_item
+        parent_item = tree.root_item
+    path = [parent_item.text]
     tree.expand_node(tree.get_nodeid(parent_item))
     children = tree.child_items_with_text(parent_item, text)
     if children:
         for child in children:
             if child.text:
-                return [child.text]
+                return path + [child.text]
         return []
     else:
         for item in tree.child_items(parent_item):
-            path = find_path(tree, text, item)
-            if path:
-                return [item.text] + path
+            child_path = find_path(tree, text, item)
+            if child_path:
+                return path + child_path
     return []
 
 
@@ -319,8 +320,7 @@ class InfraVmSnapshotView(InfraVmView):
     @property
     def is_displayed(self):
         """Is this view being displayed"""
-        expected_title = '"Snapshots" for Virtual Machine "{}"'.format(self.context['object'].name)
-        return self.in_infra_vms and self.title.text == expected_title
+        return False
 
 
 class InfraVmSnapshotAddView(InfraVmView):
@@ -335,10 +335,7 @@ class InfraVmSnapshotAddView(InfraVmView):
     @property
     def is_displayed(self):
         """Is this view being displayed"""
-        return (
-            self.in_infra_vms and
-            self.title.text == 'Adding a new Snapshot' and
-            self.name.is_displayed)
+        return False
 
 
 class InfraVmGenealogyToolbar(View):
@@ -649,7 +646,6 @@ class Vm(VM):
             if not snapshot_path:
                 raise Exception('Could not find snapshot with name "{}"'.format(title))
             else:
-                snapshot_path = [self.vm.name] + snapshot_path
                 view.tree.click_path(*snapshot_path)
 
             view.toolbar.delete.item_select('Delete Selected Snapshot', handle_alert=not cancel)
@@ -688,7 +684,6 @@ class Vm(VM):
             if not snapshot_path:
                 raise Exception('Could not find snapshot with name "{}"'.format(title))
             else:
-                snapshot_path = [self.vm.name] + snapshot_path
                 view.tree.click_path(*snapshot_path)
 
             view.toolbar.revert.click(handle_alert=not cancel)
