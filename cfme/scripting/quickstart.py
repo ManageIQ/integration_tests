@@ -268,6 +268,9 @@ def ensure_pycurl_works(venv_path):
 
 
 def main(args):
+    if __package__ is None:
+        print("ERROR: quickstart must be invoked as module")
+        sys.exit(1)
     if not IN_VIRTUALENV:
         # invoked from outside, its ok to be slow
         install_system_packages()
