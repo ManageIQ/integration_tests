@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-from widgetastic.exceptions import NoSuchElementException
 
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
@@ -10,6 +9,7 @@ from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm  # For Vm.Snapshot
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -76,6 +76,11 @@ def new_snapshot(test_vm, has_name=True, memory=False):
                          (provider.one_of(RHEVMProvider) and provider.version < 4) or
                          current_version() < '5.8', 'Must be RHEVM provider version >= 4')
 def test_memory_checkbox(small_test_vm, provider, soft_assert):
+    """Tests snapshot memory checkbox
+
+    Memory checkbox should be displayed and active when VM is running ('Power On').
+    Memory checkbox should not be displayed when VM is stopped ('Power Off').
+    """
     # Make sure the VM is powered on
     small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_ON, cancel=False)
     # Try to create snapshot with memory on powered on VM
@@ -87,15 +92,10 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
     small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_OFF, cancel=False)
     small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_OFF)
     soft_assert(small_test_vm.provider.mgmt.is_vm_stopped(small_test_vm.name), "VM is not stopped!")
-    # Try to create snapshot with memory on powered off VM
-    snapshot2 = new_snapshot(small_test_vm, has_name=has_name, memory=True)
-    try:
-        snapshot2.create(force_check_memory=True)
-    except NoSuchElementException:
-        logger.info("Memory checkbox is not present on powered off VM.")
-    # Make sure that snapshot with memory was not created
-    wait_for(lambda: not snapshot2.exists, num_sec=40, delay=20, fail_func=provider.browser.refresh,
-             handle_exception=True)
+    # Check that checkbox is not displayed
+    view = navigate_to(small_test_vm, 'SnapshotsAdd')
+    assert not view.snapshot_vm_memory.is_displayed, (
+        "Memory checkbox is displayed when VM is stopped")
 
 
 @pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
