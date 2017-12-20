@@ -4,7 +4,6 @@ import traceback
 import fauxfactory
 import pytest
 
-import cfme.fixtures.pytest_selenium as sel
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.provider import base_types
@@ -653,7 +652,9 @@ def _go_to(cls_or_obj, dest='All'):
                 [['Everything', 'Settings', 'Tasks'], True]
             ],
             {  # allowed_actions
-                'tasks': lambda appliance: sel.click(tasks.buttons.default)
+                'tasks': lambda appliance: appliance.browser.widgetastic.click(
+                    tasks.buttons.default
+                )
             },
             {  # disallowed actions
                 'my services': _go_to(MyService),

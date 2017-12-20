@@ -2,7 +2,6 @@
 import pytest
 import requests
 
-import cfme.fixtures.pytest_selenium as sel
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 

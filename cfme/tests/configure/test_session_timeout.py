@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-import pytest
-
 import time
 
-import cfme.fixtures.pytest_selenium as sel
+import pytest
+
 from cfme.utils.browser import ensure_browser_open, quit
 from cfme.utils.wait import wait_for
 
@@ -27,10 +26,12 @@ def test_session_timeout(request, appliance):
     # Try getting timeout
     # I had to use wait_for because on 5.4 and upstream builds it made weird errors
     wait_for(
-        lambda: sel.elements(
+        lambda: appliance.browser.widgetastic.selenium.elements(
             "//div[(@id='flash_div' or @id='login_div') and contains(normalize-space(.), "
             "'Session was timed out due to inactivity')]"),
         num_sec=60,
         delay=5,
-        fail_func=lambda: sel.click("//a[normalize-space(text())='Cloud Intelligence']")
+        fail_func=lambda: appliance.browser.widgetastic.selenium.click(
+            "//a[normalize-space(text())='Cloud Intelligence']"
+        )
     )
