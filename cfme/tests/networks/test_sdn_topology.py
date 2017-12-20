@@ -2,38 +2,32 @@ import pytest
 from random import choice
 
 from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.networks.topology import TopologyCollection
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
-pytest_generate_tests = testgen.generate(classes=[EC2Provider], scope='module')
-pytestmark = pytest.mark.usefixtures('setup_provider')
+pytestmark = [
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.provider([EC2Provider], scope='module')
+]
 
 
 def test_topology_search(provider, appliance):
     """Testing search functionality in Topology view """
-    top_collection = TopologyCollection(appliance)
-    topology_object = top_collection.instantiate()
-    view = navigate_to(topology_object, 'All')
-    topology_object.display_names.enable()
-
-    elements = topology_object.elements
-    assert elements, 'No elements to test topology'
-
+    elements_collection = appliance.collections.network_topology_elements
+    elements = elements_collection.all()
+    assert elements_collection.all(), 'No elements to test topology'
     element_to_search = choice(elements)
     search_term = element_to_search.name[:len(element_to_search.name) / 2]
-    view.toolbar.search_box.search(text=search_term)
-
-    for element in topology_object.elements:
+    elements_collection.search(search_term)
+    for element in elements:
         if search_term in element.name:
-            assert not element.is_hidden, 'Element should be visible.\
-                                           search: "{}", found: "{}"'.format(search_term,
-                                                                             element.name)
+            assert not element.is_opaqued, 'Element should be not opaqued.\
+                                            search: "{}", found: "{}"'.format(search_term,
+                                                                              element.name)
         else:
-            assert element.is_hidden, 'Element should not be visible.\
-                                       search: "{}", found: "{}"'.format(search_term, element.name)
-
+            assert element.is_opaqued, 'Element should be opaqued.\
+                                        search: "{}", found: "{}"'.format(search_term, element.name)
+    view = navigate_to(elements_collection, 'All')
     view.toolbar.search_box.clear_search()
 
 

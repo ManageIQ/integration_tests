@@ -1,7 +1,6 @@
 import attr
 import re
-from cached_property import cached_property
-from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import ParametrizedLocator, VersionPick, Version
 from widgetastic.widget import Checkbox, ParametrizedView, Text, View
 from widgetastic_patternfly import Button, Input
 
@@ -14,38 +13,30 @@ from cfme.utils.wait import wait_for
 class TopologySearch(View):
     """Represents search_text control of TopologyView."""
 
-    _search_text_old = Input(id='search')
-    _search_text = Input(id='search_topology')
-    _search_btn_old = Button(**{'ng-click': 'searchNode()'})
-    _search_btn = Button(**{
-        'data-function-data': '"{"service":"topologyService","name":"searchNode"}"'
+    search_input = VersionPick({
+        Version.lowest(): Input(id='search'),
+        '5.9': Input(id='search_topology')
     })
-    _clear_btn_old = Button(**{'ng-click': 'resetSearch()'})
-    _clear_btn = Button(**{
-        'data-function-data': '"{"service":"topologyService","name":"resetSearch"}"'
+    search = VersionPick({
+        Version.lowest(): Button(**{'ng-click': 'searchNode()'}),
+        '5.9': Button(**{
+            'data-function-data': '{"service":"topologyService","name":"searchNode"}'
+        })
     })
-
-    @cached_property
-    def search_text(self):
-        if self.browser.product_version < '5.9':
-            return self._search_text_old
-        else:
-            return self.search_text
-
-    @cached_property
-    def clear(self):
-        if self.browser.product_version < '5.9':
-            return self._clear_text_old
-        else:
-            return self.search_text
+    clear = VersionPick({
+        Version.lowest(): Button(**{'ng-click': 'resetSearch()'}),
+        '5.9': Button(**{
+            'data-function-data': '{"service":"topologyService","name":"resetSearch"}'
+        })
+    })
 
     def clear_search(self):
         self.clear.click()
         self.search("")
 
     def search(self, text):
-        self.search_text.fill(text)
-        self.search_btn.click()
+        self.search_input.fill(text)
+        self.search.click()
 
 
 class TopologyToolbar(View):
@@ -54,7 +45,7 @@ class TopologyToolbar(View):
     refresh = Button("Refresh")
 
 
-class TopologyView(BaseLoggedInPage):
+class BaseTopologyView(BaseLoggedInPage):
     """Represents a topology page."""
 
     toolbar = View.nested(TopologyToolbar)
@@ -63,12 +54,12 @@ class TopologyView(BaseLoggedInPage):
     class legends(ParametrizedView):  # noqa
         PARAMETERS = ('name', )
         ALL_LEGENDS = './/kubernetes-topology-icon'
-        el = Text(
-            ParametrizedLocator('{}//label[normalize-space(.)={@name|quote}]'.format(ALL_LEGENDS)))
+        el = Text(ParametrizedLocator(
+            './/kubernetes-topology-icon//label[normalize-space(.)={name|quote}]'))
 
         @property
         def is_enabled(self):
-            return 'active' in self.el.get_attribute('class')
+            return 'active' in self.browser.get_attribute('class', self.el)
 
         def enable(self):
             if not self.is_enabled:
@@ -85,35 +76,46 @@ class TopologyView(BaseLoggedInPage):
     @ParametrizedView.nested
     class elements(ParametrizedView):
         PARAMETERS = ('name', 'type')
+        EXPRESSION = 'Name: (.*) Type: (.*) Status: (.*)'
         ALL_ELEMENTS = './/kubernetes-topology-graph//*[name()="g"]'
         el = Text(ParametrizedLocator(
             './/kubernetes-topology-graph/'
-            '/*[name()="g" and @class={@type|quote}]/'
-            '*[name()="text" and contains(text(), {@name|quote})]/..'
+            '/*[name()="g" and @class={type|quote}]/'
+            '*[name()="text" and contains(text(), {name|quote})]/..'
         ))
 
         @property
         def is_opaqued(self):
-            return 'opacity: 0.2' in self.el.get_attribute('style')
+            return 'opacity: 0.2' in self.browser.get_attribute('style', self.el)
 
         def double_click(self):
             self.browser.double_click(self.el)
 
         @property
         def x(self):
-            return round(float(self.el.get_attribute('cx')), 1)
+            return round(float(self.browser.get_attribute('cx', self.el)), 1)
 
         @property
         def y(self):
-            return round(float(self.el.get_attribute('cy')), 1)
+            return round(float(self.browser.get_attribute('cy', self.el)), 1)
+
+        @property
+        def name(self):
+            text = self.browser.text(self.browser.element('./*[name()="title"]', self.el))
+            return re.search(self.EXPRESSION, text).group(1)
+
+        @property
+        def type(self):
+            return self.browser.get_attribute('class', self.el)
 
         @classmethod
         def all(cls, browser):
             result = []
             for e in browser.elements(cls.ALL_ELEMENTS):
-                text = browser.element('./*[name()="title"]', parent=e)
-                e_data = re.search('Name: (.*) Type: (.*)', text)
-                result.append((e_data.group(1), e_data.group(2)))
+                text = browser.text(browser.element('./*[name()="title"]', parent=e))
+                name = re.search(cls.EXPRESSION, text).group(1)
+                type_ = browser.get_attribute('class', e)
+                result.append((name, type_))
             return result
 
 
@@ -123,27 +125,28 @@ class BaseTopologyElement(BaseEntity):
        Consists of Browser element and its parent Topology
     """
     name = attr.ib()
-    type_ = attr.ib()
+    type = attr.ib()
 
     def double_click(self):
-        self.parent._view.elements(self.name, self.type_).double_click()
+        self.parent._view.elements(self.name, self.type).double_click()
 
     @property
     def is_opaqued(self):
-        return self.parent._view.elements(self.name, self.type_).is_opaqued
+        return self.parent._view.elements(self.name, self.type).is_opaqued
 
     @property
     def x(self):
-        return self.parent._view.elements(self.name, self.type_).x
+        return self.parent._view.elements(self.name, self.type).x
 
     @property
     def y(self):
-        return self.parent._view.elements(self.name, self.type_).y
+        return self.parent._view.elements(self.name, self.type).y
 
 
 @attr.s
 class BaseTopologyElementsCollection(BaseCollection):
     """Collection object for elements in topology"""
+
     ENTITY = BaseTopologyElement
 
     @property
@@ -178,6 +181,7 @@ class BaseTopologyElementsCollection(BaseCollection):
 
     def search(self, text):
         self._view.toolbar.search_box.search(text)
+        return [el for el in self.all() if not el.is_opaqued]
 
     def wait_until_movement_stopped(self):
         element = self.all()[-1]
@@ -189,11 +193,11 @@ class BaseTopologyElementsCollection(BaseCollection):
                 coordinates = [element.x, element.y]
 
         wait_for(
-            lambda: _compare_coordinates
-            func_args=[element]
+            _compare_coordinates,
+            func_args=[element],
             timeout=10,
             delay=2
         )
 
     def all(self):
-        return [self.instantiate(name, type_) for name, type_ in list(self._view.elements)]
+        return [self.instantiate(el.name, el.type) for el in list(self._view.elements)]
