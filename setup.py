@@ -31,6 +31,7 @@ setup(
             'middleware = cfme.middleware.provider:MiddlewareProvider',
             'containers = cfme.containers.provider:ContainersProvider',
             'physical = cfme.physical.provider:PhysicalProvider',
+            'networks = cfme.networks.provider:NetworkProvider',
         ],
         'manageiq.provider_types.infra': [
             'virtualcenter = cfme.infrastructure.provider.virtualcenter:VMwareProvider',
@@ -53,6 +54,9 @@ setup(
         ],
         'manageiq.provider_types.physical': [
             'lenovo = cfme.physical.provider.lenovo:LenovoProvider'
+        ],
+        'manageiq.provider_types.networks': [
+            'nuage = cfme.networks.provider.nuage:NuageProvider'
         ],
         'manageiq.vm_categories':
         [

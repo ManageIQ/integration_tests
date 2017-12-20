@@ -1,8 +1,9 @@
 from widgetastic.widget import View, Text, Select
 from widgetastic_patternfly import (Dropdown, Accordion, Button, TextInput,
-                                    BootstrapSwitch)
+                                    BootstrapSwitch, BootstrapSelect)
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common.provider_views import ProviderAddView
 from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
                                   BaseEntitiesView)
 
@@ -42,6 +43,20 @@ class NetworkProviderDetailsSideBar(View):
 class NetworkProviderEntities(BaseEntitiesView):
     """ Represents central view where all QuadIcons, etc are displayed """
     pass
+
+
+class NetworkProviderAddView(ProviderAddView):
+    """
+     represents Network Provider Add View
+    """
+    prov_type = BootstrapSelect(id='ems_type')
+
+    @property
+    def is_displayed(self):
+        return (super(NetworkProviderAddView, self).is_displayed and
+                self.navigation.currently_selected == [
+                    'Networks', 'Providers'] and
+                self.title.text == 'Add New Network Provider')
 
 
 class NetworkProviderView(BaseLoggedInPage):
