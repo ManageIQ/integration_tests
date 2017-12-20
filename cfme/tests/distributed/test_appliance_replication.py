@@ -138,14 +138,14 @@ def test_appliance_replicate_between_regions(request, virtualcenter_provider):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_external_database_appliance(request, virtualcenter_provider, apppliance):
+def test_external_database_appliance(request, virtualcenter_provider, appliance):
     """Tests that one appliance can externally
        connect to the database of another appliance.
 
     Metadata:
         test_flag: replication
     """
-    appl1, appl2 = get_distributed_appliances(apppliance)
+    appl1, appl2 = get_distributed_appliances(appliance)
 
     def finalize():
         appl1.destroy()
