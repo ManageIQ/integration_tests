@@ -1,6 +1,7 @@
 # pylint: disable=broad-except
 
 import re
+import datetime
 
 from collections import defaultdict
 from lxml import etree
@@ -29,6 +30,9 @@ blacklist = [
     r'\[.*rhv',
 ]
 compiled_blacklist = re.compile('(' + ')|('.join(blacklist) + ')')
+
+
+timestamp = '{:%Y%m%d%H%M%S}'.format(datetime.datetime.now())
 
 
 default_custom_fields = {
@@ -154,8 +158,11 @@ def get_testcase_data(tests, test_names, item, legacy=False):
         )
         custom_fields['caseautomation'] = "automated"
         custom_fields['automation_script'] = automation_script
-        description = '{0}<br/><br/><a href="{1}">Test Source</a>'.format(
-            description, automation_script)
+        # Description with timestamp and link to test case source.
+        # The timestamp will not be visible in Polarion, but will cause Polarion
+        # to update the "Updated" field even when there's no other change.
+        description = '{0}<br id="{1}"/><br/><a href="{2}">Test Source</a>'.format(
+            description, timestamp, automation_script)
     else:
         custom_fields['caseautomation'] = "manualonly"
         description = '{}'.format(description)
