@@ -13,7 +13,6 @@ from cfme.automate.explorer.domain import DomainCollection
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -136,13 +135,11 @@ def test_vmware_vimapi_hotadd_disk(
     original_disk_capacity = _get_disk_capacity()
     logger.info('Initial disk allocation: %s', original_disk_capacity)
 
-    class CustomButtonView(navigator.get_class(testing_vm, 'Details').VIEW):
-        @View.nested
-        class toolbar:  # noqa
-            custom_button = Dropdown(testing_group.text)
+    class CustomButtonView(View):
+        custom_button = Dropdown(testing_group.text)
 
     view = appliance.browser.create_view(CustomButtonView)
-    view.toolbar.custom_button.item_select(button.text)
+    view.custom_button.item_select(button.text)
 
     view = appliance.browser.create_view(BaseLoggedInPage)
     view.flash.assert_no_error()
