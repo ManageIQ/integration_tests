@@ -129,15 +129,17 @@ def dependent(default_function):
     return m
 
 
-def pick(v_dict):
+def pick(v_dict, active_version=None):
     """
     Collapses an ambiguous series of objects bound to specific versions
     by interrogating the CFME Version and returning the correct item.
     """
     # convert keys to Versions
+    active_version = active_version or current_version()
+
     v_dict = {get_version(k): v for (k, v) in v_dict.items()}
     versions = v_dict.keys()
-    sorted_matching_versions = sorted(filter(lambda v: v <= current_version(), versions),
+    sorted_matching_versions = sorted((v for v in versions if v <= active_version),
                                       reverse=True)
     return v_dict.get(sorted_matching_versions[0]) if sorted_matching_versions else None
 
