@@ -9,6 +9,8 @@ from os import path as os_path
 from subprocess import check_call
 from urlparse import urlparse
 
+
+from cached_property import cached_property
 import paramiko
 from scp import SCPClient
 import diaper
@@ -16,6 +18,7 @@ import diaper
 from cfme.utils import conf, ports, version
 from cfme.utils.log import logger
 from cfme.utils.net import net_check
+from cfme.utils.version import Version
 from fixtures.pytest_store import store
 from cfme.utils.path import project_path
 from cfme.utils.quote import quote
@@ -145,6 +148,14 @@ class SSHClient(paramiko.SSHClient):
     def is_container(self):
         return self._container is not None and not self.is_pod
 
+    @cached_property
+    def vmdb_version(self):
+        res = self.run_command('cat /var/www/miq/vmdb/VERSION')
+        if res.rc != 0:
+            raise RuntimeError('Unable to retrieve appliance VMDB version')
+        version_string = res.output
+        return Version(version_string)
+
     @property
     def username(self):
         return self._connect_kwargs.get('username')
@@ -261,7 +272,7 @@ class SSHClient(paramiko.SSHClient):
             A :py:class:`SSHResult` instance.
         """
         if isinstance(command, dict):
-            command = version.pick(command)
+            command = version.pick(command, active_version=self.vmdb_version)
         original_command = command
         uses_sudo = False
         logger.info("Running command %r", command)
@@ -614,7 +625,7 @@ class SSHClient(paramiko.SSHClient):
                 _process_dict(wrk)
                 # ansible worker doesn't work in pod in 5.8
                 if (wrk['Worker Type'] == 'EmbeddedAnsibleWorker' and
-                        "5.8" in version.current_version() and
+                        "5.8" in self.vmdb_version and
                         self.run_command('[[ -f Dockerfile ]]').success):
                     continue
                 workers.append(wrk)
