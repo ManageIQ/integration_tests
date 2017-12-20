@@ -1,16 +1,17 @@
 import tempfile
+
 import pytest
 
-from cfme.test_framework.sprout.client import SproutClient, SproutException
-from fixtures.pytest_store import store
-from scripts.repo_gen import process_url, build_file
 from cfme.configure.configuration.region_settings import RedHatUpdates
-from cfme.utils.wait import wait_for
-from cfme.utils.version import Version
-from cfme.utils.log import logger
+from cfme.test_framework.sprout.client import SproutClient, SproutException
 from cfme.utils import conf
 from cfme.utils import os
 from cfme.utils.appliance import get_or_create_current_appliance
+from cfme.utils.log import logger
+from cfme.utils.version import Version
+from cfme.utils.wait import wait_for
+from fixtures.pytest_store import store
+from scripts.repo_gen import process_url, build_file
 
 
 def pytest_generate_tests(metafunc):
@@ -27,7 +28,7 @@ def pytest_generate_tests(metafunc):
     except IndexError:
         logger.exception('Caught IndexError generating for test_appliance_update, skipping')
     except AssertionError:
-        logger.exception('Caught AssertionError: No previous z-stream version to update from')
+        logger.debug('Caught AssertionError: No previous z-stream version to update from')
         versions.append(pytest.param("bad:{!r}".format(version), marks=pytest.mark.skip(
             'Could not parse minor_build version from: {}'.format(version)
         )))
