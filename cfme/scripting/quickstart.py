@@ -235,7 +235,7 @@ def print_packages_diff(old, new):
 
 
 def version_changes(old, new):
-    names = sorted(set(old) & set(new))
+    names = sorted(set(old) | set(new))
     for name in names:
         initial = old.get(name, 'missing')
         afterwards = new.get(name, 'removed')
