@@ -120,7 +120,7 @@ class TenantAddForm(View):
     name = Input('name')
     save_button = VersionPick({
         Version.lowest(): Button('Save'),
-        Version.latest(): Button('Add')
+        '5.9': Button('Add')
     })
     reset_button = Button('Reset')
     cancel_button = Button('Cancel')
