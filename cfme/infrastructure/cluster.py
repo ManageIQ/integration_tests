@@ -241,9 +241,10 @@ class Cluster(Pretty, BaseEntity, WidgetasticTaggable):
     def run_smartstate_analysis(self):
         """Run SmartState analysis"""
         view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Perform SmartState Analysis', invokes_alert=True)
-        view.flash.assert_message_contain('Cluster / Deployment Role: scan successfully '
-                                                   'initiated')
+        view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
+        view.flash.assert_message_contain(
+            'Cluster / Deployment Role: scan successfully initiated'
+        )
 
 
 @attr.s
