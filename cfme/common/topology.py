@@ -17,26 +17,25 @@ class TopologySearch(View):
         Version.lowest(): Input(id='search'),
         '5.9': Input(id='search_topology')
     })
-    search = VersionPick({
+    search_button = VersionPick({
         Version.lowest(): Button(**{'ng-click': 'searchNode()'}),
         '5.9': Button(**{
             'data-function-data': '{"service":"topologyService","name":"searchNode"}'
         })
     })
-    clear = VersionPick({
-        Version.lowest(): Button(**{'ng-click': 'resetSearch()'}),
-        '5.9': Button(**{
-            'data-function-data': '{"service":"topologyService","name":"resetSearch"}'
-        })
+    # Text widget is used here due missing 'btn' class
+    clear_button = VersionPick({
+        Version.lowest(): Text(".//button[@ng-click='resetSearch()']"),
+        '5.9': Text(".//button[@data-function-data="
+                    "'{\"service\":\"topologyService\",\"name\":\"resetSearch\"}']")
     })
 
     def clear_search(self):
-        self.clear.click()
-        self.search("")
+        self.clear_button.click()
 
     def search(self, text):
         self.search_input.fill(text)
-        self.search.click()
+        self.search_button.click()
 
 
 class TopologyToolbar(View):
@@ -53,7 +52,7 @@ class BaseTopologyView(BaseLoggedInPage):
     @ParametrizedView.nested
     class legends(ParametrizedView):  # noqa
         PARAMETERS = ('name', )
-        ALL_LEGENDS = './/kubernetes-topology-icon'
+        ALL_LEGENDS = './/kubernetes-topology-icon//label'
         el = Text(ParametrizedLocator(
             './/kubernetes-topology-icon//label[normalize-space(.)={name|quote}]'))
 
@@ -69,12 +68,16 @@ class BaseTopologyView(BaseLoggedInPage):
             if self.is_enabled:
                 self.el.click()
 
+        @property
+        def name(self):
+            return self.el.text
+
         @classmethod
         def all(cls, browser):
             return [(browser.text(e), ) for e in browser.elements(cls.ALL_LEGENDS)]
 
     @ParametrizedView.nested
-    class elements(ParametrizedView):
+    class elements(ParametrizedView):  # noqa
         PARAMETERS = ('name', 'type')
         EXPRESSION = 'Name: (.*) Type: (.*) Status: (.*)'
         ALL_ELEMENTS = './/kubernetes-topology-graph//*[name()="g"]'
@@ -142,6 +145,10 @@ class BaseTopologyElement(BaseEntity):
     def y(self):
         return self.parent._view.elements(self.name, self.type).y
 
+    @property
+    def is_displayed(self):
+        return self.parent._view.elements(self.name, self.type).is_displayed
+
 
 @attr.s
 class BaseTopologyElementsCollection(BaseCollection):
@@ -155,7 +162,7 @@ class BaseTopologyElementsCollection(BaseCollection):
 
     @property
     def legends(self):
-        return [value[0] for value in list(self._view.legends)]
+        return [legend_el.name for legend_el in list(self._view.legends)]
 
     def is_legend_enabled(self, legend_name):
         return self._view.legends(legend_name).is_enabled
@@ -183,7 +190,10 @@ class BaseTopologyElementsCollection(BaseCollection):
         self._view.toolbar.search_box.search(text)
         return [el for el in self.all() if not el.is_opaqued]
 
-    def wait_until_movement_stopped(self):
+    def clear_search(self):
+        self._view.toolbar.search_box.clear_search()
+
+    def wait_until_movement_not_stopped(self):
         element = self.all()[-1]
 
         def _compare_coordinates(element, coordinates=[]):

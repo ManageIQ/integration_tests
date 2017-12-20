@@ -25,4 +25,3 @@ class All(CFMENavigateStep):
 
     def step(self):
         self.view.navigation.select("Networks", "Topology")
-        self.obj.wait_until_movement_stopped()
