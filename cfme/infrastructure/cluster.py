@@ -260,7 +260,7 @@ class ClusterCollection(BaseCollection):
             list of the `cfme.infrastructure.cluster.Cluster` objects
         """
         clusters = list(clusters)
-        checked_clusters = []
+        checked_cluster_names = set()
         view = navigate_to(self, 'All')
         view.toolbar.view_selector.select('List View')
 
@@ -268,19 +268,25 @@ class ClusterCollection(BaseCollection):
         if not view.entities.elements.is_displayed:
             raise ValueError('No Clusters found')
 
-        cluster_names = [cluster.name for cluster in clusters]
+        cluster_names = {cluster.name for cluster in clusters}
 
         for row in view.entities.elements:
             for cluster in clusters:
                 if cluster.name == row.name.text:
-                    checked_clusters.append(cluster)
+                    checked_cluster_names.add(cluster.name)
                     row[0].check()
                     break
-            if set(cluster_names) == set(checked_clusters):
+            if cluster_names == checked_cluster_names:
                 break
-        if set(cluster_names) != set(checked_clusters):
-            raise ValueError('Some Clusters were not found in the UI')
-        view.toolbar.configuration.item_select('Remove selected items', handle_alert=True)
+        if cluster_names != checked_cluster_names:
+            raise ValueError(
+                'Some Clusters {!r} were not found in the UI'.format(
+                    cluster_names - checked_cluster_names))
+        if self.appliance.version < '5.9':
+            view.toolbar.configuration.item_select('Remove selected items', handle_alert=True)
+        else:
+            view.toolbar.configuration.item_select(
+                'Remove selected items from Inventory', handle_alert=True)
         view.flash.assert_no_error()
         flash_msg = ('Delete initiated for {} Clusters / Deployment Roles from the CFME Database'.
             format(len(clusters)))

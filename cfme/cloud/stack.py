@@ -292,7 +292,8 @@ class StackCollection(BaseCollection):
 
     def delete(self, *stacks):
         stacks = list(stacks)
-        checked_stacks = list()
+        stack_names = {stack.name for stack in stacks}
+        checked_stack_names = set()
 
         view = navigate_to(self, 'All')
         view.toolbar.view_selector.select('List View')
@@ -301,12 +302,17 @@ class StackCollection(BaseCollection):
             try:
                 row = view.paginator.find_row_on_pages(view.table, name=stack.name)
                 row[0].check()
-                checked_stacks.append(stack)
+                checked_stack_names.add(stack.name)
             except NoSuchElementException:
                 break
 
-        if set(stacks) == set(checked_stacks):
-            view.toolbar.configuration.item_select('Remove Orchestration Stacks', handle_alert=True)
+        if stack_names == checked_stack_names:
+            if self.appliance.version < '5.9':
+                view.toolbar.configuration.item_select(
+                    'Remove Orchestration Stacks', handle_alert=True)
+            else:
+                view.toolbar.configuration.item_select(
+                    'Remove Orchestration Stacks from Inventory', handle_alert=True)
             view.flash.assert_no_error()
             flash_msg = \
                 'Delete initiated for {} Orchestration Stacks from the CFME Database'.format(
@@ -317,7 +323,8 @@ class StackCollection(BaseCollection):
                 wait_for(lambda: not stack.exists, num_sec=15 * 60,
                      delay=30, message='Wait for stack to be deleted')
         else:
-            raise ValueError('Some Stacks not found in the UI')
+            raise ValueError(
+                'Some Stacks ({!r}) not found in the UI'.format(stack_names - checked_stack_names))
 
 
 @navigator.register(StackCollection, 'All')
