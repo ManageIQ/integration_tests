@@ -7,7 +7,6 @@ from urlparse import urlparse
 from cfme.base.ui import ServerView
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import wait_for_a_provider
-from cfme.utils import version
 from cfme.utils.appliance import provision_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
@@ -53,11 +52,11 @@ def get_replication_appliances(appliance):
     return appl1, appl2
 
 
-def get_distributed_appliances():
+def get_distributed_appliances(appliance):
     """Returns one database-owning appliance, and a second appliance
        that connects to the database of the first.
     """
-    ver_to_prov = str(version.current_version())
+    ver_to_prov = str(appliance.version)
     appl1 = provision_appliance(ver_to_prov, 'long-test_childDB_A')
     appl2 = provision_appliance(ver_to_prov, 'long-test_childDB_B')
     appl1.configure(region=1, patch_ajax_wait=False)
@@ -139,14 +138,14 @@ def test_appliance_replicate_between_regions(request, virtualcenter_provider):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_external_database_appliance(request, virtualcenter_provider):
+def test_external_database_appliance(request, virtualcenter_provider, appliance):
     """Tests that one appliance can externally
        connect to the database of another appliance.
 
     Metadata:
         test_flag: replication
     """
-    appl1, appl2 = get_distributed_appliances()
+    appl1, appl2 = get_distributed_appliances(appliance)
 
     def finalize():
         appl1.destroy()

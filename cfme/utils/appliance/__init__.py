@@ -804,14 +804,10 @@ class IPAppliance(object):
     @cached_property
     def version(self):
         try:
-            version_string = self.rest_api.server_info['version']
+            return Version(self.rest_api.server_info['version'])
         except (AttributeError, KeyError, IOError, APIException):
             self.log.exception('appliance.version could not be retrieved from REST, falling back')
-            res = self.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
-            if res.rc != 0:
-                raise RuntimeError('Unable to retrieve appliance VMDB version')
-            version_string = res.output
-        return Version(version_string)
+            return self.ssh_client.vmdb_version
 
     @cached_property
     def build(self):

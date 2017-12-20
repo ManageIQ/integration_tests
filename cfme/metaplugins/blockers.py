@@ -42,7 +42,6 @@ from kwargify import kwargify as _kwargify
 
 from fixtures.artifactor_plugin import fire_art_test_hook
 from markers.meta import plugin
-from cfme.utils import version
 from cfme.utils.blockers import Blocker
 from cfme.utils.pytest_shortcuts import extract_fixtures_values
 
@@ -69,9 +68,10 @@ def resolve_blockers(item, blockers):
         raise ValueError("Type of the 'blockers' parameter must be one of: list, tuple, set")
 
     # Prepare the global env for the kwarg insertion
+    appliance = item.config.pluginmanager.get_plugin('appliance-holder').held_appliance
     global_env = dict(
-        appliance_version=version.current_version(),
-        appliance_downstream=version.appliance_is_downstream(),
+        appliance_version=appliance.version,
+        appliance_downstream=appliance.is_downstream,
         item=item,
         blockers=blockers,
     )
