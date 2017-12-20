@@ -6,7 +6,7 @@ from datetime import datetime
 from tabulate import tabulate
 
 from cfme.utils.path import log_path
-from cfme.utils.providers import list_provider_keys, get_mgmt
+from cfme.utils.providers import list_provider_keys, get_crud
 
 
 def parse_cmd_line():
@@ -33,18 +33,23 @@ def azure_cleanup(nic_template, pip_template, days_old):
         logger.info("Date: {}".format(datetime.now()))
         try:
             for prov_key in list_provider_keys('azure'):
-                mgmt = get_mgmt(prov_key)
                 logger.info("----- Provider: {} -----".format(prov_key))
+                prov = get_crud(prov_key)
+                mgmt = prov.mgmt
+                for name, scr_id in mgmt.list_subscriptions():
+                    logger.info("subscription {s}".format(s=name))
+                    prov.subscription_id = scr_id
+                    mgmt = prov.mgmt
 
-                # removing stale nics
-                nic_list = mgmt.list_free_nics(nic_template)
-                if nic_list:
-                    logger.info("Removing Nics with the name '{}':".format(nic_template))
-                    logger.info(tabulate(tabular_data=[[nic] for nic in nic_list], headers=[
-                        "Name"], tablefmt='orgtbl'))
-                    mgmt.remove_nics_by_search(nic_template)
-                else:
-                    logger.info("No '{}' NICs were found".format(nic_template))
+                    # removing stale nics
+                    nic_list = mgmt.list_free_nics(nic_template)
+                    if nic_list:
+                        logger.info("Removing Nics with the name '{}':".format(nic_template))
+                        logger.info(tabulate(tabular_data=[[nic] for nic in nic_list], headers=[
+                            "Name"], tablefmt='orgtbl'))
+                        mgmt.remove_nics_by_search(nic_template)
+                    else:
+                        logger.info("No '{}' NICs were found".format(nic_template))
 
                 # removing public ips
                 pip_list = mgmt.list_free_pip(pip_template)
