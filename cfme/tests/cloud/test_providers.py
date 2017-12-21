@@ -20,6 +20,7 @@ from cfme import test_requirements
 
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
@@ -32,16 +33,17 @@ pytestmark = [pytest.mark.provider([CloudProvider], scope="function")]
 @test_requirements.discovery
 def test_empty_discovery_form_validation(appliance):
     """ Tests that the flash message is correct when discovery form is empty."""
-    discover(None, EC2Provider)
+    discover(None, AzureProvider)
     view = appliance.browser.create_view(CloudProvidersDiscoverView)
-    view.flash.assert_message('Username is required')
+    view.flash.assert_message('Client ID, Client Key, Azure Tenant ID and Subscription ID are '
+                              'required')
 
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
 def test_discovery_cancelled_validation(appliance):
     """ Tests that the flash message is correct when discovery is cancelled."""
-    discover(None, EC2Provider, cancel=True)
+    discover(None, AzureProvider, cancel=True)
     view = appliance.browser.create_view(CloudProvidersView)
     view.flash.assert_success_message('Cloud Providers Discovery was cancelled by the user')
 
@@ -50,7 +52,7 @@ def test_discovery_cancelled_validation(appliance):
 @test_requirements.discovery
 def test_add_cancelled_validation(request):
     """Tests that the flash message is correct when add is cancelled."""
-    prov = EC2Provider()
+    prov = AzureProvider()
     request.addfinalizer(prov.delete_if_exists)
     prov.create(cancel=True)
     view = prov.browser.create_view(CloudProvidersView)
@@ -58,6 +60,7 @@ def test_add_cancelled_validation(request):
 
 
 @pytest.mark.tier(3)
+@pytest.mark.uncollectif(version.current_version() > '5.8')
 def test_password_mismatch_validation(appliance):
     cred = Credential(
         principal=fauxfactory.gen_alphanumeric(5),
@@ -123,6 +126,7 @@ def test_provider_add_with_bad_credentials(provider):
 @pytest.mark.smoke
 @pytest.mark.usefixtures('has_no_cloud_providers')
 @test_requirements.discovery
+@pytest.mark.meta(blockers=[BZ(1517061, forced_streams=["5.9"])])
 def test_provider_crud(provider):
     """ Tests provider add with good credentials
 
@@ -217,12 +221,14 @@ def test_api_port_blank_validation(request):
 
 
 @pytest.mark.tier(3)
+@pytest.mark.uncollectif(version.current_version() > '5.8')
 def test_user_id_max_character_validation():
     cred = Credential(principal=fauxfactory.gen_alphanumeric(51), secret='')
     discover(cred, EC2Provider)
 
 
 @pytest.mark.tier(3)
+@pytest.mark.uncollectif(version.current_version() > '5.8')
 def test_password_max_character_validation():
     password = fauxfactory.gen_alphanumeric(51)
     cred = Credential(
