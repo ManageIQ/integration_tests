@@ -241,7 +241,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
         view = self.load_details(refresh=True)
         if view.entities.lifecycle.get_text_of('Retirement Date').lower() != 'never':
             try:
-                return view.entities.lifecycle.get_text_of('Retirement State').lower() == 'retired'
+                return view.entities.lifecycle.get_text_of('Retirement state').lower() == 'retired'
             except AttributeError:
                 return False
         else:

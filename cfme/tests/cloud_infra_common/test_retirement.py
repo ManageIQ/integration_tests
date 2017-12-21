@@ -90,7 +90,7 @@ def verify_retirement_state(retire_vm):
              message="Wait for VM '{}' to enter retired state".format(retire_vm.name))
 
     retirement_states = ['off', 'suspended', 'unknown', 'terminated']
-    view = retire_vm.load_datails()
+    view = retire_vm.load_details()
     assert view.entities.power_management.get_text_of('Power State') in retirement_states
 
 
@@ -183,7 +183,7 @@ def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged):
                     delay=5, num_sec=10 * 60, fail_func=reload.click,
                     message="Wait for VM '{}' to enter retired state"
                     .format(retire_ec2_s3_vm.name))
-    view = retire_ec2_s3_vm.load_datails()
+    view = retire_ec2_s3_vm.load_details()
     assert view.entities.power_management.get_text_of('Power State') in expected_power_state
     retire_times['end'] = generate_retirement_date_now() + timedelta(minutes=5)
     verify_retirement_date(retire_ec2_s3_vm, expected_date=retire_times)

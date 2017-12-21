@@ -1,20 +1,14 @@
 # -*- coding: utf-8 -*-
 from navmazing import NavigateToSibling
-from urlparse import urlparse
 from widgetastic.exceptions import NoSuchElementException, RowNotFound
 from widgetastic_patternfly import BootstrapSelect, Button
 from widgetastic.widget import Table, Text, View
-from widgetastic_manageiq import BaseNonInteractiveEntitiesView, CheckableManageIQTree, BreadCrumb
 
-from cached_property import cached_property
 from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.configure.configuration.region_settings import Category, Tag
-from cfme.fixtures import pytest_selenium as sel
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
-from cfme.utils import attributize_string
-from cfme.utils.units import Unit
-from cfme.utils.log import logger
+from widgetastic_manageiq import BaseNonInteractiveEntitiesView, CheckableManageIQTree, BreadCrumb
 
 
 class ManagePoliciesView(BaseLoggedInPage):
@@ -311,85 +305,6 @@ class EditTagsFromListCollection(CFMENavigateStep):
             self.prerequisite_view.entities.get_entity(surf_pages=True, name=self.obj.name).check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
-
-# class SummaryMixin(object):
-#     """Use this mixin to have simple access to the Summary informations of an object.
-#
-#     Requires that the class has ``load_details(refresh)`` method defined.
-#
-#     All the names from the UI are "attributized".
-#
-#     Sample usage:
-#
-#     .. code-block:: python
-#
-#         # You can retrieve the text value as it is in the UI
-#         provider.summary.properties.host_name.text_value  # => 'hostname'
-#         # Or let it guess if it is a number and return float or int
-#         provider.summary.properties.aggregate_host_cpus.value  # => 12
-#         # You can get the image address
-#         provider.summary.foo.bar.img  # => value parsed by urlparse()
-#         # Or the onclick link
-#         provider.summary.foo.bar.link  # => 'http://foo/bar'
-#         # Check if it is clickable
-#         assert provider.summary.xyz.qwer.clickable
-#
-#         # You can iterate like it was a dictionary
-#         for table_name, table in provider.summary:
-#             # table_name contains title of the table
-#             for key, value in table:
-#                 # key contains the left cell text, value contains the value holder
-#                 print('{}: {}'.format(key, value.text_value))
-#
-#
-#     """
-#     @cached_property
-#     def summary(self):
-#         return Summary(self)
-#
-#
-# class Summary(object):
-#     """Summary container class. An entry point to the summary listing"""
-#     HEADERS = '//th[@align="left"]'
-#
-#     def __init__(self, o):
-#         self._object = o
-#         self._keys = []
-#         self.reload()
-#
-#     def __repr__(self):
-#         return "<Summary {}>".format(" ".join(self._keys))
-#
-#     def reload(self):
-#         for key in self._keys:
-#             try:
-#                 delattr(self, key)
-#             except AttributeError:
-#                 pass
-#         self._keys = []
-#         self._object.load_details(refresh=True)
-#         for header in sel.elements(self.HEADERS):
-#             header_text = sel.text_sane(header)
-#             header_id = attributize_string(header_text)
-#             table_object = SummaryTable(self._object, header_text, header)
-#             setattr(self, header_id, table_object)
-#             self._keys.append(header_id)
-#
-#     def __iter__(self):
-#         """This enables you to iterate through like it was a dictionary, just without .iteritems"""
-#         for key in self._keys:
-#             yield (key, getattr(self, key))
-#
-#     def groups(self):
-#         """Returns a dictionary of keys (table titles) and table objects."""
-#         return dict(iter(self))
-#
-#     @property
-#     def group_names(self):
-#         """Returns names of the tables."""
-#         return self._keys
-#
-#
 
 class Validatable(object):
     """Mixin for various validations. Requires the class to be also :py:class:`Taggable`.
