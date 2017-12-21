@@ -14,7 +14,6 @@ from cfme.rest.gen_data import (
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 from cfme.utils.rest import assert_response, delete_resources_from_collection
-from cfme.utils.version import current_version
 from cfme.utils.blockers import BZ
 from cfme.utils import error
 
@@ -225,7 +224,6 @@ class TestTagsViaREST(object):
         entity.reload()
         assert tag.id not in [t.id for t in entity.tags.all]
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         "collection_name", COLLECTIONS_BULK_TAGS)
@@ -275,7 +273,6 @@ class TestTagsViaREST(object):
             entity.tags.reload()
             assert len({t.id for t in entity.tags.all} - tags_ids) == entity.tags.subcount
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         "collection_name", COLLECTIONS_BULK_TAGS)
@@ -310,7 +307,7 @@ class TestTagsViaREST(object):
         assert_response(appliance, success=False, results_num=tags_count)
         _check_tags_counts()
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.9')
+    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
     @pytest.mark.tier(3)
     def test_query_by_multiple_tags(self, appliance, tags, services):
         """Tests support for multiple tag specification in query.
