@@ -46,7 +46,7 @@ def chargeback_storage_rate():
             'Fixed Storage Cost 1': with_random_per_time(fixed_rate='100'),
             'Fixed Storage Cost 2': with_random_per_time(fixed_rate='300'),
             'Allocated Disk Storage': with_random_per_time(fixed_rate='6000'),
-            'Used Disk Storage': with_random_per_time(variable_rate='0.1'),
+            'Used Disk Storage': with_random_per_time(fixed_rate='0.1'),
         })
 
 
