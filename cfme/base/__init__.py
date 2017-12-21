@@ -50,7 +50,7 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
         server.reload(attributes=['zone'])
         zone = server.zone
         zone_obj = self.appliance.collections.zones.instantiate(
-            name=zone.name, description=zone.description, id=zone.id
+            name=zone['name'], description=zone['description'], id=zone['id']
         )
         return zone_obj
 
