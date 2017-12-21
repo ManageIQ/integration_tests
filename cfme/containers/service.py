@@ -9,8 +9,9 @@ from wrapanapi.containers.service import Service as ApiService
 from cfme.common import Taggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
     ContainerObjectDetailsBaseView, GetRandomInstancesMixin)
+from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.providers import get_crud_by_name
 
 
@@ -36,6 +37,17 @@ class Service(BaseEntity, Taggable, Labelable):
     @cached_property
     def mgmt(self):
         return ApiService(self.provider.mgmt, self.name, self.project_name)
+
+    @property
+    def exists(self):
+        """Return True if the Service exists"""
+        # TODO: move this to some ContainerObjectBase so it'll be shared among all objects
+        try:
+            navigate_to(self, 'Details')
+        except ItemNotFound:
+            return False
+        else:
+            return True
 
 
 @attr.s
