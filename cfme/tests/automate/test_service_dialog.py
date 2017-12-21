@@ -60,10 +60,10 @@ def test_service_dialog_duplicate_name(appliance, request):
     dialog = create_dialog(appliance, element_data, label=label)
     request.addfinalizer(dialog.delete_if_exists)
     error_message = version.pick({
-        'version.LOWEST': 'Validation failed: Label is not unique within region 0',
-        '5.9': 'There was an error editing this dialog: Failed to '
-               'create a new dialog - Validation failed: Label '
-               'is not unique within region 0'})
+        '5.8': 'Validation failed: Label is not unique within region 0',
+        '5.9': 'There was an error editing this dialog: '
+               'Failed to create a new dialog - Validation failed: '
+               'Name is not unique within region 0'})
     with error.expected(error_message):
         create_dialog(appliance, element_data, label=label)
 
