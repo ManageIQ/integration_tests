@@ -192,6 +192,7 @@ class Volume(BaseEntity):
 
     def create_backup(self, name, incremental=None, force=None):
         """create backup of cloud volume"""
+        initial_backup_count = self.backups_count
         view = navigate_to(self, 'Backup')
         view.backup_name.fill(name)
         view.incremental.fill(incremental)
@@ -200,7 +201,10 @@ class Volume(BaseEntity):
         view.save.click()
         view.flash.assert_success_message('Backup for Cloud Volume "{}" created'.format(self.name))
 
-        wait_for(lambda: self.backups > 0, delay=20, timeout=1000, fail_func=self.refresh)
+        wait_for(lambda: self.backups_count > initial_backup_count,
+                 delay=20,
+                 timeout=1000,
+                 fail_func=self.refresh)
 
     @property
     def exists(self):
@@ -209,6 +213,19 @@ class Volume(BaseEntity):
             return True
         except VolumeNotFoundError:
             return False
+
+    @property
+    def status(self):
+        """ status of cloud volume.
+        Returns:
+            :py:class:`str` Status of volume.
+        """
+        view = navigate_to(self.parent, 'All')
+        view.toolbar.view_selector.select("List View")
+
+        for item in view.entities.elements.read():
+            if self.name in item['Name']:
+                return str(item['Status'])
 
     @property
     def size(self):
@@ -231,7 +248,7 @@ class Volume(BaseEntity):
         return view.entities.relationships.get_text_of('Cloud Tenants')
 
     @property
-    def backups(self):
+    def backups_count(self):
         """ number of available backups for volume.
 
         Returns:

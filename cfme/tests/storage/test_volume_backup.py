@@ -28,11 +28,13 @@ def backup(appliance, provider):
                                       provider=provider)
 
     # create new backup for crated volume
-    backup_name = fauxfactory.gen_alpha()
-    volume.create_backup(backup_name)
-    backup = backup_collection.instantiate(backup_name, provider)
-
-    yield backup
+    if volume.status == 'available':
+        backup_name = fauxfactory.gen_alpha()
+        volume.create_backup(backup_name)
+        backup = backup_collection.instantiate(backup_name, provider)
+        yield backup
+    else:
+        pytest.skip('Skipping volume backup tests, provider side volume creation fails')
 
     try:
         if backup.exists:
