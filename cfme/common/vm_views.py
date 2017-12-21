@@ -250,6 +250,7 @@ class VMDetailsEntities(View):
     configuration = SummaryTable(title='Configuration')
     diagnostics = SummaryTable(title='Diagnostics')
     smart_management = SummaryTable(title='Smart Management')
+    datastore_allocation_summary = SummaryTable(title='Datastore Allocation Summary')
 
 
 class VMPropertyDetailView(View):

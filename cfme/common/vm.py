@@ -239,10 +239,10 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
     @property
     def is_retired(self):
         """"Check retirement status of vm"""
-        self.summary.reload()
-        if self.summary.lifecycle.retirement_date.text_value.lower() != 'never':
+        view = self.load_details(refresh=True)
+        if view.entities.lifecycle.get_text_of('Retirement Date').lower() != 'never':
             try:
-                return self.summary.lifecycle.retirement_state.text_value.lower() == 'retired'
+                return view.entities.lifecycle.get_text_of('Retirement State').lower() == 'retired'
             except AttributeError:
                 return False
         else:
