@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Start the selenium server
+vncserver :99 -SecurityTypes None
+
+source /cfme_venv/bin/activate
+miq-runtest --disablemetaplugins blockers -m sauce
