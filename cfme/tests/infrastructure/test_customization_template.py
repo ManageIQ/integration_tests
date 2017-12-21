@@ -23,7 +23,6 @@ def test_customization_template_crud(collection):
                                       image_type='RHEL-6',
                                       script_type='Kickstart',
                                       script_data='Testing the script')
-
     with update(template_crud):
         template_crud.name = template_crud.name + "_update"
     collection.delete(False, template_crud)
@@ -103,3 +102,16 @@ def test_name_max_character_validation(collection):
     view = navigate_to(template_name, 'Details')
     assert len(view.entities.basic_information.get_text_of('Name')) < 256
     collection.delete(False, template_name)
+
+
+def test_customization_template_copy(collection):
+    """
+    Test to check the copy operation of customization templates.
+    """
+    template_crud = collection.create(name=fauxfactory.gen_alphanumeric(8),
+                                      description=fauxfactory.gen_alphanumeric(16),
+                                      image_type='RHEL-6',
+                                      script_type='Kickstart',
+                                      script_data='Testing the script')
+    copy_template_crud = template_crud.copy()
+    collection.delete(False, template_crud, copy_template_crud)

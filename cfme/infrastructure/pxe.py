@@ -442,6 +442,12 @@ class PXECustomizationTemplateEditView(PXECustomizationTemplateForm):
     cancel = Button('Cancel')
 
 
+class PXECustomizationTemplateCopyView(PXECustomizationTemplateForm):
+    toolbar = View.nested(PXEDetailsToolBar)
+    add = Button('Add')
+    cancel = Button('Cancel')
+
+
 @attr.s
 class CustomizationTemplate(Updateable, Pretty, BaseEntity):
     """
@@ -500,6 +506,32 @@ class CustomizationTemplate(Updateable, Pretty, BaseEntity):
             view.save.click()
         main_view.flash.assert_no_error()
 
+    def copy(self, name=None, description=None, cancel=False):
+        """
+         This method is used to copy a Customization Template server via UI.
+
+         Args:
+             name (str): This field contains the name of the newly copied Customization Template.
+             description (str) : This field contains the description of the newly
+              copied Customization Template.
+             cancel (bool): It's used for flag to cancel or not the copy operation.
+        """
+        view = navigate_to(self, 'Copy')
+        name = name or 'Copy of {}'.format(self.name)
+        description = description or 'Copy of {}'.format(self.description)
+        view.fill({'name': name, 'description': description})
+
+        customization_template = self.parent.instantiate(name, description, self.script_data,
+                                                         self.image_type, self.script_type)
+
+        if cancel:
+            view.cancel.click()
+        else:
+            view.add.click()
+        main_view = self.create_view(PXECustomizationTemplatesView)
+        main_view.flash.assert_no_error()
+        return customization_template
+
 
 @attr.s
 class CustomizationTemplateCollection(BaseCollection):
@@ -550,11 +582,8 @@ class CustomizationTemplateCollection(BaseCollection):
             view = navigate_to(ct_obj, 'Details')
             view.toolbar.configuration.item_select('Remove this Customization Template',
                                                    handle_alert=not cancel)
-            if not cancel:
-                main_view = ct_obj.create_view(PXECustomizationTemplatesView)
-                main_view.flash.assert_no_error()
-            else:
-                navigate_to(ct_obj, 'Details')
+            view = ct_obj.create_view(PXECustomizationTemplatesView)
+            view.flash.assert_no_error()
 
 
 @navigator.register(CustomizationTemplateCollection, 'All')
@@ -585,6 +614,15 @@ class CustomizationTemplateDetails(CFMENavigateStep):
         tree = self.view.sidebar.templates.tree
         tree.click_path('All Customization Templates - System Image Types', self.obj.image_type,
                         self.obj.name)
+
+
+@navigator.register(CustomizationTemplate, 'Copy')
+class CustomizationTemplateCopy(CFMENavigateStep):
+    VIEW = PXECustomizationTemplateCopyView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.view.toolbar.configuration.item_select("Copy this Customization Template")
 
 
 @navigator.register(CustomizationTemplate, 'Edit')
@@ -721,6 +759,23 @@ class SystemImageTypeCollection(BaseCollection):
         main_view = self.create_view(PXESystemImageTypesView)
         main_view.flash.assert_success_message(msg)
         return system_image_type
+
+    def delete(self, cancel=False, *sys_objs):
+        """
+        This methods deletes the System Image Type using select option,
+         hence can be used for multiple delete.
+
+        Args:
+            cancel: This is the boolean argument required for handle_alert
+            sys_objs: It's System Image Types object
+        """
+        view = navigate_to(self, 'All')
+        for sys_obj in sys_objs:
+            view.entities.row(Name=sys_obj.name)[0].click()
+        view.toolbar.configuration.item_select("Remove System Image Types", handle_alert=not cancel)
+
+        main_view = self.create_view(PXESystemImageTypesView)
+        main_view.flash.assert_no_error()
 
 
 @navigator.register(SystemImageTypeCollection, 'All')
