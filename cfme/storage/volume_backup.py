@@ -12,6 +12,7 @@ from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import BackupNotFoundError, ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
@@ -201,10 +202,16 @@ class VolumeBackupCollection(BaseCollection):
                     provider_name = item['Storage Manager'].split()[0]
                     provider = get_crud_by_name(provider_name)
                     backups.append(self.instantiate(name=item['Name'], provider=provider))
-            return backups
-
         except NoSuchElementException:
-            return None
+            if backups:
+                # In the middle of reading, that may be bad
+                logger.error(
+                    'VolumeBackupCollection: NoSuchElementException in the middle of entities read')
+                raise
+            else:
+                # This is probably fine, just warn
+                logger.warning('The volume backup table is probably not present (=empty)')
+        return backups
 
     def delete(self, *backups):
         """Delete one or more backups
