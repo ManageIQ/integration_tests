@@ -123,7 +123,8 @@ fi
 
 # Put a basic config file so that the db module doesn't fall over
 cat > $CFME_REPO_DIR/conf/env.local.yaml <<EOF
-base_url: https://0.0.0.0
+appliances:
+  - hostname: 0.0.0.0
 $BROWSER_SECTION
 
 trackerbot:
@@ -187,7 +188,8 @@ log "use_sprout: $USE_SPROUT"
 
 # Now fill out the env yaml with ALL THE THINGS
 cat > $CFME_REPO_DIR/conf/env.local.yaml <<EOF
-base_url: $APPLIANCE
+appliances:
+  - base_url: $APPLIANCE
 $BROWSER_SECTION
 
 artifactor:
