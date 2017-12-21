@@ -8,19 +8,29 @@ import json
 import hashlib
 from pipes import quote
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--mk-virtualenv", default="../cfme_venv")
-parser.add_argument("--system-site-packages", action="store_true")
-parser.add_argument("--config-path", default="../cfme-qe-yamls/complete/")
+LEGACY_BASENAMES = ('cfme_tests', 'integration_tests')
 
 IS_SCRIPT = sys.argv[0] == __file__
 CWD = os.getcwd()  # we expect to be in the workdir
+
+USE_LEGACY_VENV_PATH = os.path.basename(CWD) in LEGACY_BASENAMES
+
 IS_ROOT = os.getuid() == 0
 REDHAT_RELEASE_FILE = '/etc/redhat-release'
 CREATED = object()
 REQUIREMENT_FILE = 'requirements/frozen.txt'
 HAS_DNF = os.path.exists('/usr/bin/dnf')
 IN_VIRTUALENV = getattr(sys, 'real_prefix', None) is not None
+
+
+def mk_parser(default_venv_path):
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--mk-virtualenv",
+        default=default_venv_path)
+    parser.add_argument("--system-site-packages", action="store_true")
+    parser.add_argument("--config-path", default="../cfme-qe-yamls/complete/")
+    return parser
 
 PRISTINE_ENV = dict(os.environ)
 
@@ -289,4 +299,5 @@ def main(args):
 
 
 if IS_SCRIPT:
+    parser = mk_parser("../cfme_venv" if USE_LEGACY_VENV_PATH else '.cfme_venv')
     main(parser.parse_args())
