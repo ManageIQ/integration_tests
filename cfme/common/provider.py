@@ -106,14 +106,18 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
             raise ProviderHasNoKey(
                 'Provider {} has no key, so cannot get yaml data'.format(self.name))
 
-    def get_mgmt_system(self):
+    def get_mgmt_system(self, providers=None):
         """ Returns the mgmt_system using the :py:func:`utils.providers.get_mgmt` method.
+
+            providers: A set of data in the same format as the ``management_systems`` section in the
+            configuration yamls. If ``None`` then the configuration is loaded from the default
+            locations. Expects a dict.
         """
         # gotta stash this in here to prevent circular imports
         from cfme.utils.providers import get_mgmt
 
         if self.key:
-            return get_mgmt(self.key)
+            return get_mgmt(self.key, providers=providers)
         elif getattr(self, 'provider_data', None):
             return get_mgmt(self.provider_data)
         else:

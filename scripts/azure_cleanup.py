@@ -37,30 +37,28 @@ def azure_cleanup(nic_template, pip_template, days_old):
                 prov = get_crud(prov_key)
                 mgmt = prov.mgmt
                 for name, scr_id in mgmt.list_subscriptions():
-                    logger.info("subscription {s}".format(s=name))
-                    prov.subscription_id = scr_id
-                    mgmt = prov.mgmt
+                    logger.info("subscription {s} is chosen".format(s=name))
+                    prov_data = prov.data
+                    prov_data['subscription_id'] = scr_id
+                    mgmt = prov.get_mgmt_system(providers={prov.key: prov_data})
 
                     # removing stale nics
-                    nic_list = mgmt.list_free_nics(nic_template)
-                    if nic_list:
-                        logger.info("Removing Nics with the name '{}':".format(nic_template))
-                        logger.info(tabulate(tabular_data=[[nic] for nic in nic_list], headers=[
-                            "Name"], tablefmt='orgtbl'))
-                        mgmt.remove_nics_by_search(nic_template)
+                    removed_nics = mgmt.remove_nics_by_search(nic_template)
+                    if removed_nics:
+                        logger.info('following nics were removed:')
+                        for nic in removed_nics:
+                            logger.info(nic[0])
                     else:
                         logger.info("No '{}' NICs were found".format(nic_template))
 
-                # removing public ips
-                pip_list = mgmt.list_free_pip(pip_template)
-                if pip_list:
-                    logger.info("Removing Public IPs with the name '{}':".
-                                 format(pip_template))
-                    logger.info(tabulate(tabular_data=[[pip] for pip in pip_list], headers=[
-                        "Name"], tablefmt='orgtbl'))
-                    mgmt.remove_pips_by_search(pip_template)
-                else:
-                    logger.info("No '{}' Public IPs were found".format(pip_template))
+                    # removing public ips
+                    removed_pips = mgmt.remove_pips_by_search(pip_template)
+                    if removed_pips:
+                        logger.info('following pips were removed:')
+                        for pip in removed_pips:
+                            logger.info(pip[0])
+                    else:
+                        logger.info("No '{}' Public IPs were found".format(pip_template))
 
                 # removing stale stacks
                 stack_list = mgmt.list_stack(days_old=days_old)
@@ -71,8 +69,10 @@ def azure_cleanup(nic_template, pip_template, days_old):
                         if mgmt.is_stack_empty(stack):
                             removed_stacks.append(stack)
                             mgmt.delete_stack(stack)
-                    logger.info(tabulate(tabular_data=[[st] for st in removed_stacks], headers=[
-                        "Name"], tablefmt='orgtbl')) if len(removed_stacks) > 0 else None
+
+                    logger.info('following stacks were removed:')
+                    for stack in removed_stacks:
+                        logger.info([stack])
                 else:
                     logger.info("No stacks older than '{}' days were found".format(
                         days_old))
@@ -80,28 +80,31 @@ def azure_cleanup(nic_template, pip_template, days_old):
                 """
                 Blob removal section
                 """
-                logger.info("\nRemoving 'bootdiagnostics-test*' containers\n")
+                # TODO: update it later to use different subscriptions and resource groups
+                logger.info("Removing 'bootdiagnostics-test*' containers")
                 bootdiag_list = []
                 for container in mgmt.container_client.list_containers():
                     if container.name.startswith('bootdiagnostics-test'):
                         bootdiag_list.append(container.name)
                         mgmt.container_client.delete_container(
                             container_name=container.name)
-                logger.info(tabulate(tabular_data=[[disk] for disk in bootdiag_list], headers=[
-                    "Name"], tablefmt='orgtbl'))
+
+                logger.info('following disks were removed:')
+                for disk in bootdiag_list:
+                    logger.info([disk])
+
                 logger.info("Removing unused blobs and disks")
                 removed_disks = mgmt.remove_unused_blobs()
                 if len(removed_disks['Managed']) > 0:
                     logger.info('Managed disks:')
-                    logger.info(tabulate(tabular_data=removed_disks['Managed'], headers="keys",
-                                          tablefmt='orgtbl'))
+                    logger.info(removed_disks['Managed'])
+
                 if len(removed_disks['Unmanaged']) > 0:
                     logger.info('Unmanaged blobs:')
-                    logger.info(tabulate(tabular_data=removed_disks['Unmanaged'], headers="keys",
-                                          tablefmt='orgtbl'))
+                    logger.info(removed_disks['Unmanaged'])
             return 0
         except Exception:
-            logger.info("Something bad happened during Azure cleanup\n")
+            logger.info("Something bad happened during Azure cleanup")
             logger.info(tb.format_exc())
             return 1
 
