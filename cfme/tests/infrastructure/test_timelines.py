@@ -83,14 +83,12 @@ class VMEvent(object):
         return self.vm.create_on_provider(find_in_cfme=True)
 
     def _power_on(self):
-        logger.info('%r will start.', self.vm.name)
         return self.vm.provider.mgmt.start_vm(self.vm.name)
 
     def _power_off(self):
         return self.vm.provider.mgmt.stop_vm(self.vm.name)
 
     def _suspend(self):
-        logger.info('%r will suspend.', self.vm.name)
         return self.vm.provider.mgmt.suspend_vm(self.vm.name)
 
     def _rename_vm(self):
@@ -99,7 +97,6 @@ class VMEvent(object):
         logger.info('%r new name is %r', self.vm.name, new_name)
         self.vm.name = new_name
         self.vm.provider.mgmt.restart_vm(self.vm.name)
-        logger.info('self.vm.name is now %r', self.vm.name)
         return self.vm.name
 
     def _check_timelines(self, target):
@@ -153,15 +150,6 @@ class VMEvent(object):
         return len(found_events)
 
     def catch_in_timelines(self, soft_assert):
-        """Will execute self._check_timelines on multiple targets .
-
-
-        Returns:
-            Boolean
-
-        Raises:
-             :py:class:`TimedOutError` and message with category of failed event on its host.
-        """
         targets = (self.vm, self.vm.cluster, self.vm.host, self.vm.provider)
         for target in targets:
             try:
