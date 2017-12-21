@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import pytest
+from widgetastic_patternfly import CandidateNotFound
 
 from cfme.base.credential import Credential
 from cfme.utils.conf import cfme_data
-
+from cfme.utils.log import logger
 
 RETRIEVE_GROUP = 'retrieve_group'
 CREATE_GROUP = 'create_group'
@@ -68,7 +69,10 @@ def user(request, data, add_group, appliance):
     user_obj = appliance.collections.users.instantiate(
         name=data['fullname'], credential=credentials
     )
-    request.addfinalizer(user_obj.delete)
+    try:
+        request.addfinalizer(user_obj.delete)
+    except CandidateNotFound:
+        logger.warning('User was not found during deletion')
     return user_obj
 
 
