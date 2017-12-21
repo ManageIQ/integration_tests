@@ -32,7 +32,7 @@ def test_server_name(request, appliance):
     navigate_to(appliance.server, 'Dashboard')
 
     # opens and closes about modal
-    current_server_name = about.get_detail(about.SERVER)
+    current_server_name = about.get_detail(about.SERVER, server=appliance.server)
 
     assert new_server_name == current_server_name, (
         "Server name in About section does not match the new name")
