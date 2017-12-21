@@ -69,7 +69,8 @@ def find_path(tree, text, parent_item=None):
 
 class InfraGenericDetailsToolbar(View):
     reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                       '5.9': 'Refresh this page'}))
+                                       '5.9': 'Refresh this page',
+                                       '6.0': 'Reload current display'}))
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     monitoring = Dropdown("Monitoring")
