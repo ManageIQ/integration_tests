@@ -169,7 +169,10 @@ class Cluster(Pretty, BaseEntity, WidgetasticTaggable):
             wait: Whether or not to wait for the delete to complete, defaults to False
         """
         view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Remove item', handle_alert=not cancel)
+        msg = 'Remove item'
+        if self.appliance.version >= '5.9':
+            msg = 'Remove item from Inventory'
+        view.toolbar.configuration.item_select(msg, handle_alert=not cancel)
 
         # cancel doesn't redirect, confirmation does
         view.flush_widget_cache()
