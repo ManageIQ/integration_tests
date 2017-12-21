@@ -1,18 +1,19 @@
 #!/usr/bin/env python
-from datetime import datetime
-import logging
-import fauxfactory
-import traceback
-import dockerbot
 import json
-import requests
+import logging
+import traceback
+from datetime import datetime
+
+import fauxfactory
 import pika
-from cfme.utils.conf import docker as docker_conf
-from cfme.utils.appliance import Appliance
-from cfme.utils.trackerbot import api
-from cfme.utils.log import setup_logger
+import requests
 from slumber.exceptions import HttpClientError
 
+import dockerbot
+from cfme.utils.appliance import Appliance
+from cfme.utils.conf import docker as docker_conf
+from cfme.utils.log import setup_logger
+from cfme.utils.trackerbot import api
 
 token = docker_conf['gh_token']
 owner = docker_conf['gh_owner']
@@ -124,12 +125,18 @@ def check_prs():
 
     Iterates over each PR and runs the check_pr functon on it.
     """
-    json_data = perform_request('pulls?per_page=100')
+    page = 1
+
     numbers = []
-    for pr in json_data:
-        numbers.append(pr['number'])
-        if pr['state'] == 'open':
-            check_pr(pr)
+    while True:
+        json_data = perform_request('pulls?per_page=100&page={}'.format(page))
+        if not json_data:
+            break
+        for pr in json_data:
+            numbers.append(pr['number'])
+            if pr['state'] == 'open':
+                check_pr(pr)
+        page += 1
 
     prs = tapi.pr.get(closed=False, limit=0)['objects']
     for pr in prs:
