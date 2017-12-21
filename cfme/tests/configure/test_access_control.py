@@ -155,7 +155,7 @@ def test_userid_required_error_validation(appliance, group_collection):
         )
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
-    navigate_to(group.appliance.server, 'Dashboard')
+    navigate_to(appliance.server, 'Dashboard')
 
 
 @pytest.mark.tier(3)
@@ -174,7 +174,7 @@ def test_user_password_required_error_validation(appliance, group_collection):
             group=group)
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
-    navigate_to(user.appliance.server, 'Dashboard')
+    navigate_to(appliance.server, 'Dashboard')
 
 
 @pytest.mark.tier(3)
