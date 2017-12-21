@@ -19,7 +19,7 @@ def no_iso_dss(provider):
 
 
 @pytest.mark.meta(blockers=[1200783])
-def test_iso_datastore_crud(setup_provider, no_iso_dss, provider):
+def test_iso_datastore_crud(appliance, setup_provider, no_iso_dss, provider):
     """
     Basic CRUD test for ISO datastores.
 
@@ -29,6 +29,7 @@ def test_iso_datastore_crud(setup_provider, no_iso_dss, provider):
     Metadata:
         test_flag: iso
     """
-    template_crud = pxe.ISODatastore(provider.name)
-    template_crud.create()
+    collection = appliance.collections.iso_datastores
+    # template_crud = collection(provider.name)
+    template_crud = collection.create(provider.name)
     template_crud.delete(cancel=False)

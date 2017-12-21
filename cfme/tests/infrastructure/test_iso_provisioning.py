@@ -60,9 +60,10 @@ def iso_datastore(provider, appliance):
 
 
 @pytest.fixture
-def datastore_init(iso_cust_template, iso_datastore, provisioning):
+def datastore_init(appliance, iso_cust_template, iso_datastore, provisioning):
     if not iso_datastore.exists():
-        iso_datastore.create()
+        collection = appliance.collections.iso_datastores
+        collection.create(iso_datastore)
     # Fails on upstream, BZ1109256
     iso_datastore.set_iso_image_type(provisioning['iso_file'], provisioning['iso_image_type'])
     if not iso_cust_template.exists():

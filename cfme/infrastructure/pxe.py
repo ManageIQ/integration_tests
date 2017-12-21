@@ -858,7 +858,8 @@ class PXEDatastoreEditView(PXEDatastoreForm):
     cancel = Button('Cancel')
 
 
-class ISODatastore(Updateable, Pretty, Navigatable):
+@attr.s
+class ISODatastore(Updateable, Pretty, Navigatable, BaseEntity):
     """Model of a PXE Server object in CFME
 
     Args:
@@ -867,33 +868,21 @@ class ISODatastore(Updateable, Pretty, Navigatable):
     _param_name = ParamClassName('ds_name')
     pretty_attrs = ['provider']
 
-    def __init__(self, provider=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.provider = provider
+    provider = attr.ib(default=None)
 
-    def create(self, cancel=False, refresh=True, refresh_timeout=120):
+    def refresh(self, wait=True, timeout=120):
+        """ Refreshes the PXE relationships and waits for it to be updated
         """
-        Creates an ISO datastore object
-
-        Args:
-            cancel (boolean): Whether to cancel out of the creation.  The cancel is done
-                after all the information present in the ISO datastore has been filled in the UI.
-            refresh (boolean): Whether to run the refresh operation on the ISO datastore after
-                the add has been completed.
-        """
-        view = navigate_to(self, 'Add')
-        view.fill({'provider': self.provider})
-        main_view = self.create_view(PXEDatastoresView)
-        if cancel:
-            view.cancel.click()
-            msg = 'Add of new ISO Datastore was cancelled by the user'
-        else:
-            view.add.click()
-            msg = 'ISO Datastore "{}" was added'.format(self.provider)
-        main_view.flash.assert_success_message(msg)
-
-        if refresh:
-            self.refresh(timeout=refresh_timeout)
+        view = navigate_to(self, 'Details')
+        basic_info = view.entities.basic_information
+        last_time = basic_info.get_text_of('Last Refreshed On')
+        view.toolbar.configuration.item_select('Refresh Relationships', handle_alert=True)
+        view.flash.assert_success_message(('ISO Datastore "{}": Refresh Relationships successfully '
+                                           'initiated'.format(self.provider)))
+        if wait:
+            wait_for(lambda lt: lt != basic_info.get_text_of('Last Refreshed On'),
+                     func_args=[last_time], fail_func=view.toolbar.reload.click, num_sec=timeout,
+                     message="iso refresh")
 
     @variable(alias='db')
     def exists(self):
@@ -931,27 +920,15 @@ class ISODatastore(Updateable, Pretty, Navigatable):
         """
 
         view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Remove this ISO Datastore', handle_alert=not cancel)
+        button = 'Remove this ISO Datastore' if self.appliance.version < 5.9 else\
+            'Remove this ISO Datastore from Inventory'
+        view.toolbar.configuration.item_select(button, handle_alert=not cancel)
         if not cancel:
             main_view = self.create_view(PXEDatastoresView)
             msg = 'ISO Datastore "{}": Delete successful'.format(self.provider)
             main_view.flash.assert_success_message(msg)
         else:
             navigate_to(self, 'Details')
-
-    def refresh(self, wait=True, timeout=120):
-        """ Refreshes the PXE relationships and waits for it to be updated
-        """
-        view = navigate_to(self, 'Details')
-        basic_info = view.entities.basic_information
-        last_time = basic_info.get_text_of('Last Refreshed On')
-        view.toolbar.configuration.item_select('Refresh Relationships', handle_alert=True)
-        view.flash.assert_success_message(('ISO Datastore "{}": Refresh Relationships successfully '
-                                           'initiated'.format(self.provider)))
-        if wait:
-            wait_for(lambda lt: lt != basic_info.get_text_of('Last Refreshed On'),
-                     func_args=[last_time], fail_func=view.toolbar.reload.click, num_sec=timeout,
-                     message="iso refresh")
 
     def set_iso_image_type(self, image_name, image_type):
         """
@@ -969,6 +946,42 @@ class ISODatastore(Updateable, Pretty, Navigatable):
             view.cancel.click()
 
 
+@attr.s
+class ISODatastoreCollection(BaseCollection):
+
+    ENTITY = ISODatastore
+
+    def create(self, provider=None, cancel=False, refresh=True, refresh_timeout=120):
+        """
+        Creates an ISO datastore object
+
+        Args:
+            cancel (boolean): Whether to cancel out of the creation.  The cancel is done
+                after all the information present in the ISO datastore has been filled in the UI.
+            refresh (boolean): Whether to run the refresh operation on the ISO datastore after
+                the add has been completed.
+            provider: It's the name of the provider for which we need to create ISO datastore.
+            refresh_timeout: Time in seconds after which refresh operation is performed on ISO data.
+        """
+        iso_datastore = self.instantiate(provider)
+        view = navigate_to(self, 'Add')
+        view.fill({'provider': provider})
+        main_view = self.create_view(PXEDatastoresView)
+        if cancel:
+            view.cancel.click()
+            msg = 'Add of new ISO Datastore was cancelled by the user'
+        else:
+            view.add.click()
+            msg = 'ISO Datastore "{}" was added'.format(provider)
+        main_view.flash.assert_success_message(msg)
+
+        if refresh:
+            iso_datastore.refresh(timeout=refresh_timeout)
+
+        return iso_datastore
+
+
+@navigator.register(ISODatastoreCollection, 'All')
 @navigator.register(ISODatastore, 'All')
 class ISODatastoreAll(CFMENavigateStep):
     VIEW = PXEDatastoresView
@@ -978,7 +991,7 @@ class ISODatastoreAll(CFMENavigateStep):
         self.view.sidebar.datastores.tree.click_path("All ISO Datastores")
 
 
-@navigator.register(ISODatastore, 'Add')
+@navigator.register(ISODatastoreCollection, 'Add')
 class ISODatastoreAdd(CFMENavigateStep):
     VIEW = PXEDatastoreAddView
     prerequisite = NavigateToSibling('All')
@@ -999,6 +1012,7 @@ class ISODatastoreDetails(CFMENavigateStep):
 @navigator.register(PXEServer, 'PXEMainPage')
 @navigator.register(CustomizationTemplateCollection, 'PXEMainPage')
 @navigator.register(SystemImageTypeCollection, 'PXEMainPage')
+@navigator.register(ISODatastoreCollection, 'PXEMainPage')
 @navigator.register(ISODatastore, 'PXEMainPage')
 class PXEMainPage(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
