@@ -129,7 +129,10 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
             cancel (bool): Whether to cancel the deletion, defaults to True
         """
         view = navigate_to(self, "Details")
-        view.toolbar.configuration.item_select("Remove item", handle_alert=not cancel)
+        msg = 'Remove item'
+        if self.appliance.version >= '5.9':
+            msg = 'Remove item from Inventory'
+        view.toolbar.configuration.item_select(msg, handle_alert=not cancel)
         if not cancel:
             view = self.create_view(HostsView)
             assert view.is_displayed

@@ -268,7 +268,10 @@ class Datastore(Pretty, BaseEntity, WidgetasticTaggable):
         hosts_view = view.browser.create_view(RegisteredHostsView)
         for entity in hosts_view.entities.get_all():
             entity.check()
-        view.toolbar.configuration.item_select("Remove items", handle_alert=True)
+        msg = 'Remove items'
+        if self.appliance.version >= '5.9':
+            msg = 'Remove items from Inventory'
+        view.toolbar.configuration.item_select(msg, handle_alert=True)
         wait_for(lambda: bool(len(hosts_view.entities.get_all())), fail_condition=True,
                  message="Wait datastore hosts to disappear", num_sec=1000,
                  fail_func=self.browser.refresh)
