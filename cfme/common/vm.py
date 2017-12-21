@@ -19,7 +19,7 @@ from cfme.utils.update import Updateable
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import VersionPick
-from . import PolicyProfileAssignable, SummaryMixin
+from . import PolicyProfileAssignable
 
 
 def base_types(template=False):
@@ -50,8 +50,7 @@ class _TemplateMixin(object):
     pass
 
 
-class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
-             SummaryMixin, Navigatable):
+class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, Navigatable):
     """Base VM and Template class that holds the largest common functionality between VMs,
     instances, templates and images.
 
