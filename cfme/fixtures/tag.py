@@ -103,7 +103,7 @@ def check_item_visibility(tag, user_restricted):
             vis_object.add_tag(tag=tag)
         else:
             tags = vis_object.get_tags()
-            tag_assigned = (
+            tag_assigned = any(
                 object_tags.category.display_name == tag.category.display_name and
                 object_tags.display_name == tag.display_name for object_tags in tags
             )
