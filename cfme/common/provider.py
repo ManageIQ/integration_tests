@@ -20,7 +20,7 @@ from cfme.utils.stats import tol_check
 from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for, RefreshTimer
-from . import PolicyProfileAssignable, SummaryMixin
+from . import PolicyProfileAssignable
 
 
 # TODO: Move to collection when it happens
@@ -51,7 +51,7 @@ def provider_db_mapping():
     return {v.db_types[0]: v for k, v in all_types().items()}
 
 
-class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
+class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
     # List of constants that every non-abstract subclass must have defined
     _param_name = ParamClassName('name')
     STATS_TO_MATCH = []

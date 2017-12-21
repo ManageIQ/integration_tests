@@ -6,7 +6,7 @@ import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 
-from cfme.common import Validatable, SummaryMixin, TagPageView
+from cfme.common import Validatable, TagPageView
 from cfme.common.provider import BaseProvider
 from cfme.common.provider_views import (
     MiddlewareProviderAddView,
@@ -256,7 +256,7 @@ def get_server_name(path):
         return re.sub(r'~~$', '', path.resource_id[0])
 
 
-class Container(SummaryMixin):
+class Container(object):
 
     def add_deployment(self, filename, runtime_name=None, enable_deploy=True,
                        overwrite=False, cancel=False):
@@ -376,7 +376,7 @@ class Container(SummaryMixin):
                     view.toolbar.datasources.is_displayed)
 
 
-class Deployable(SummaryMixin):
+class Deployable(object):
 
     def undeploy(self):
         """
@@ -411,7 +411,7 @@ class Deployable(SummaryMixin):
         view.flash.assert_success_message('Enable initiated for selected deployment(s)')
 
 
-class Reportable(SummaryMixin):
+class Reportable(object):
     def generate_jdr(self):
         view = self.load_details()
         view.toolbar.generate_jdr.click()

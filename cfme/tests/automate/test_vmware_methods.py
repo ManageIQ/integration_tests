@@ -129,8 +129,8 @@ def test_vmware_vimapi_hotadd_disk(
     button.create()
 
     def _get_disk_capacity():
-        testing_vm.summary.reload()
-        return testing_vm.summary.datastore_allocation_summary.total_allocation.value
+        view = testing_vm.load_details(refresh=True)
+        return view.entities.datastore_allocation_summary.get_text_of('Total Allocation')
 
     original_disk_capacity = _get_disk_capacity()
     logger.info('Initial disk allocation: %s', original_disk_capacity)

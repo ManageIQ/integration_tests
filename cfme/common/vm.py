@@ -19,7 +19,7 @@ from cfme.utils.update import Updateable
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import VersionPick
-from . import PolicyProfileAssignable, SummaryMixin
+from . import PolicyProfileAssignable
 
 
 def base_types(template=False):
@@ -50,8 +50,7 @@ class _TemplateMixin(object):
     pass
 
 
-class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
-             SummaryMixin, Navigatable):
+class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, Navigatable):
     """Base VM and Template class that holds the largest common functionality between VMs,
     instances, templates and images.
 
@@ -239,10 +238,10 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
     @property
     def is_retired(self):
         """"Check retirement status of vm"""
-        self.summary.reload()
-        if self.summary.lifecycle.retirement_date.text_value.lower() != 'never':
+        view = self.load_details(refresh=True)
+        if view.entities.lifecycle.get_text_of('Retirement Date').lower() != 'never':
             try:
-                return self.summary.lifecycle.retirement_state.text_value.lower() == 'retired'
+                return view.entities.lifecycle.get_text_of('Retirement state').lower() == 'retired'
             except AttributeError:
                 return False
         else:
