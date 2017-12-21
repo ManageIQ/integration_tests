@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# rm /tmp/.X1-lock /tmp/.X11-unix/X1
+
+# Start the window manager
+fluxbox &
+
+# Start the selenium server
+# xterm -maximized -e java -jar $SELENIUM_PATH/selenium_latest.jar -ensureCleanSession -trustAllSSLCertificates &
+xterm -maximized -e java -jar $SELENIUM_PATH/selenium_latest.jar &
