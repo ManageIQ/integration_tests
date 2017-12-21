@@ -265,7 +265,7 @@ class Add(CFMENavigateStep):
 @navigator.register(Namespace)
 class Details(CFMENavigateStep):
     VIEW = NamespaceDetailsView
-    prerequisite = NavigateToAttribute('domain', 'Details')
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateExplorer')
 
     def step(self):
         self.prerequisite_view.datastore.tree.click_path(*self.obj.tree_path)
