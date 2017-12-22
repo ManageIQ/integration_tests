@@ -250,9 +250,11 @@ else
     gate "collectonly.txt" "py.test --collectonly --use-provider complete"
 fi
 
-log "smoke testing"
-gate "smoke.txt" "py.test -m smoke"
-
+if [ "$GATE_RHEV" = "yes" ]
+then
+	log "smoke testing"
+	gate "smoke.txt" "py.test -m smoke"
+fi
 # Finally, run the py.test
 log "$PYTEST"
 
