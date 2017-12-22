@@ -25,6 +25,11 @@ def roles(request, all_possible_roles, appliance):
     # ansible role introduced in CFME 5.8
     if appliance.version < '5.8' and result.get('embedded_ansible'):
         del result['embedded_ansible']
+
+    # RHN Mirror role removed from CFME 5.9
+    if appliance.version > '5.9':
+        del result['rhn_mirror']
+
     return result
 
 

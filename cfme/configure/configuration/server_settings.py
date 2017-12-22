@@ -251,8 +251,9 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
         # embedded_ansible server role available from 5.8 version
         if self.appliance.version < '5.8' and 'embedded_ansible' in updates:
             updates.pop('embedded_ansible')
-        # cockpit_ws element is not present for downstream version
-        if self.appliance.version != self.appliance.version.latest() and 'cockpit_ws' in updates:
+
+        # cockpit_ws element introduced in 5.9 version
+        if self.appliance.version < 5.9 and 'cockpit_ws' in updates:
             updates.pop('cockpit_ws')
         updated = view.server_roles.fill(updates)
         self._save_action(view, updated, reset)
