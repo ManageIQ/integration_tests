@@ -35,12 +35,13 @@ def azure_cleanup(nic_template, pip_template, days_old):
                 logger.info("----- Provider: {} -----".format(prov_key))
                 prov = get_crud(prov_key)
                 mgmt = prov.mgmt
+                mgmt.logger = logger
                 for name, scr_id in mgmt.list_subscriptions():
                     logger.info("subscription {s} is chosen".format(s=name))
                     prov_data = prov.data
                     prov_data['subscription_id'] = scr_id
                     mgmt = get_mgmt(prov.key, providers={prov.key: prov_data})
-
+                    mgmt.logger = logger
                     # removing stale nics
                     removed_nics = mgmt.remove_nics_by_search(nic_template)
                     if removed_nics:
