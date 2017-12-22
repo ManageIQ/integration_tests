@@ -46,7 +46,7 @@ def chargeback_storage_rate():
             'Fixed Storage Cost 1': with_random_per_time(fixed_rate='100'),
             'Fixed Storage Cost 2': with_random_per_time(fixed_rate='300'),
             'Allocated Disk Storage': with_random_per_time(fixed_rate='6000'),
-            'Used Disk Storage': with_random_per_time(variable_rate='0.1'),
+            'Used Disk Storage': with_random_per_time(fixed_rate='0.1'),
         })
 
 
@@ -56,10 +56,12 @@ def test_add_new_compute_chargeback(chargeback_compute_rate):
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1441152, forced_streams=["5.8"])])
-def test_compute_chargeback_duplicate_disallowed(chargeback_compute_rate):
+def test_compute_chargeback_duplicate_disallowed(appliance, request, chargeback_compute_rate):
     chargeback_compute_rate.create()
     with error.expected('Description has already been taken'):
         chargeback_compute_rate.create()
+    request.addfinalizer(
+        lambda: appliance.browser.create_view(cb.AddComputeChargebackView).cancel_button.click())
 
 
 @pytest.mark.tier(3)
@@ -165,7 +167,7 @@ class TestRatesViaREST(object):
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
-    def test_delete_rates_from_detil(self, appliance, rates, method):
+    def test_delete_rates_from_detail(self, appliance, rates, method):
         """Tests deleting rates from detail.
 
         Metadata:

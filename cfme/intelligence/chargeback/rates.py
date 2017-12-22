@@ -89,10 +89,7 @@ class AddComputeChargebackView(RatesView):
 
     @property
     def is_displayed(self):
-        return (
-            self.in_chargeback and
-            self.title.text == 'Compute Chargeback Rates' and
-            self.description.is_displayed)
+        return False
 
 
 class EditComputeChargebackView(AddComputeChargebackView):
@@ -116,12 +113,7 @@ class StorageChargebackView(RatesView):
 
 
 class AddStorageChargebackView(AddComputeChargebackView):
-    @property
-    def is_displayed(self):
-        return (
-            self.in_chargeback and
-            self.title.text == 'Storage Chargeback Rates' and
-            self.description.is_displayed)
+    pass
 
 
 class EditStorageChargebackView(EditComputeChargebackView):
