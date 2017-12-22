@@ -3,10 +3,9 @@ import logging
 import sys
 import traceback as tb
 from datetime import datetime
-from tabulate import tabulate
 
 from cfme.utils.path import log_path
-from cfme.utils.providers import list_provider_keys, get_crud
+from cfme.utils.providers import list_provider_keys, get_crud, get_mgmt
 
 
 def parse_cmd_line():
@@ -40,7 +39,7 @@ def azure_cleanup(nic_template, pip_template, days_old):
                     logger.info("subscription {s} is chosen".format(s=name))
                     prov_data = prov.data
                     prov_data['subscription_id'] = scr_id
-                    mgmt = prov.get_mgmt_system(providers={prov.key: prov_data})
+                    mgmt = get_mgmt(prov.key, providers={prov.key: prov_data})
 
                     # removing stale nics
                     removed_nics = mgmt.remove_nics_by_search(nic_template)
