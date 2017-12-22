@@ -463,12 +463,12 @@ def test_sorting_by_attributes(appliance):
 
     id_last = 0
     for resource in response_asc['resources']:
-        assert resource['id'] > id_last
-        id_last = resource['id']
+        assert int(resource['id']) > int(id_last)
+        id_last = int(resource['id'])
     id_last += 1
     for resource in response_desc['resources']:
-        assert resource['id'] < id_last
-        id_last = resource['id']
+        assert int(resource['id']) < int(id_last)
+        id_last = int(resource['id'])
 
 
 PAGING_DATA = [
