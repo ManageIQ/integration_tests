@@ -32,16 +32,17 @@ pytestmark = [pytest.mark.provider([CloudProvider], scope="function")]
 @test_requirements.discovery
 def test_empty_discovery_form_validation(appliance):
     """ Tests that the flash message is correct when discovery form is empty."""
-    discover(None, EC2Provider)
+    discover(None, AzureProvider)
     view = appliance.browser.create_view(CloudProvidersDiscoverView)
-    view.flash.assert_message('Username is required')
+    view.flash.assert_message('Client ID, Client Key, Azure Tenant ID and '
+                              'Subscription ID are required')
 
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
 def test_discovery_cancelled_validation(appliance):
     """ Tests that the flash message is correct when discovery is cancelled."""
-    discover(None, EC2Provider, cancel=True)
+    discover(None, AzureProvider, cancel=True)
     view = appliance.browser.create_view(CloudProvidersView)
     view.flash.assert_success_message('Cloud Providers Discovery was cancelled by the user')
 
@@ -58,6 +59,7 @@ def test_add_cancelled_validation(request):
 
 
 @pytest.mark.tier(3)
+@pytest.mark.uncollectif(version.current_version() > '5.8', reason='EC2 option not available')
 def test_password_mismatch_validation(appliance):
     cred = Credential(
         principal=fauxfactory.gen_alphanumeric(5),
