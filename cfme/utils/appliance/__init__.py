@@ -274,7 +274,6 @@ class IPAppliance(object):
         self._user = None
         self.appliance_console = ApplianceConsole(self)
         self.appliance_console_cli = ApplianceConsoleCli(self)
-        self.is_pod = False
 
     def unregister(self):
         """ unregisters appliance from RHSM/SAT6 """
@@ -854,6 +853,10 @@ class IPAppliance(object):
         return ssh_client
 
     @cached_property
+    def is_pod(self):
+        return self.ssh_client.is_pod
+
+    @cached_property
     def ssh_client(self):
         """Creates an ssh client connected to this appliance
 
@@ -885,7 +888,6 @@ class IPAppliance(object):
                 'port': self.ssh_port,
                 'project': self.project
             }
-            self.is_pod = True
         else:
             connect_kwargs = {
                 'hostname': self.hostname,
