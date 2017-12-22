@@ -836,17 +836,19 @@ class CANDUCollection(BaseCollection):
                 reset: Reset changes, default is 'False' - changes will not be reset
         """
         view = navigate_to(self, 'Details')
-        view.fill({
+        changed = view.fill({
             'all_clusters_cb': enable,
             'all_datastores_cb': enable
         })
-        if reset:
-            view.reset_button.click()
-            flash_message = 'All changes have been reset'
-        else:
-            view.save_button.click()
-            flash_message = 'Capacity and Utilization Collection settings saved'
-        view.flash.assert_success_message(flash_message)
+        # Save and Reset buttons are active only if view was changed
+        if changed:
+            if reset:
+                view.reset_button.click()
+                flash_message = 'All changes have been reset'
+            else:
+                view.save_button.click()
+                flash_message = 'Capacity and Utilization Collection settings saved'
+            view.flash.assert_success_message(flash_message)
 
     def enable_all(self, reset=False):
         """ Enable C and U
