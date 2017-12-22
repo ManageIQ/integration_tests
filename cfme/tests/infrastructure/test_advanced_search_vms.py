@@ -222,7 +222,8 @@ def test_delete_button_should_appear_after_save(request, vm_advanced_search):
 
     @request.addfinalizer
     def cleanup():
-        vm_advanced_search.entities.search.load_filter(filter_name)
+        # Now delete button is available without load in the UI.
+        # vm_advanced_search.entities.search.load_filter(filter_name)
         vm_advanced_search.entities.search.delete_filter()
 
     # Returns False if the button is not present
