@@ -2801,10 +2801,15 @@ class NonJSBaseEntity(View):
         return getattr(item, name)
 
     def __str__(self):
-        return str(self._get_existing_entity())
+        return str(self.__repr__())
 
     def __repr__(self):
-        return repr(self._get_existing_entity())
+        try:
+            return repr(self._get_existing_entity())
+        except NoSuchElementException:
+            return '{c} name {n}, id {id}'.format(c=self.__class__,
+                                                  n=self.name or "",
+                                                  id=self.entity_id or "")
 
     @property
     def is_displayed(self):
@@ -2941,7 +2946,8 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                 elements = self._current_page_elements
 
             for el in elements:
-                entity = self.parent.entity_class(parent=self, entity_id=el['entity_id'])
+                entity = self.parent.entity_class(parent=self, entity_id=el['entity_id'],
+                                                  name=el['name'])
                 for key, value in keys.items():
                     try:
                         if entity.data[key] != str(value):
@@ -2988,7 +2994,8 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         Returns: all entities (QuadIcon/etc.) displayed by view
         """
         if not surf_pages:
-            return [self.parent.entity_class(parent=self, entity_id=eid) for eid in self.entity_ids]
+            return [self.parent.entity_class(parent=self, entity_id=el['entity_id'],
+                                             name=el['name']) for el in self._current_page_elements]
         else:
             entities = []
             for _ in self.paginator.pages():
@@ -3047,6 +3054,14 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         :param conditions: entities should match to
         :param surf_pages: current page entities if False, all entities otherwise
         :return: list of entities
+
+        Ex:
+            from cfme.infrastructure.virtual_machines import Vm
+            view = navigate_to(Vm, 'All')
+            entities = view.entities.apply(func=lambda e: e.check(),
+                                           conditions=[{'name': 'cu-24x7'},
+                                                       {'name': 'env-win81-ie11'},
+                                                       {'name': 'nachandr-59013-cback001'}])
         """
 
         if isinstance(conditions, dict):
@@ -3056,12 +3071,18 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         else:
             raise ValueError('Wrong conditions passed')
 
-        all_found_entities = []
-        for _ in self.paginator.pages():
+        def apply_to_current_page(conditions):
             for keys in conditions:
                 entities = self.get_entities_by_keys(**keys)
                 map(func, entities)
-                all_found_entities.extend(entities)
+                return entities
+
+        all_found_entities = []
+        if not surf_pages:
+            all_found_entities.extend(apply_to_current_page(conditions))
+        else:
+            for _ in self.paginator.pages():
+                all_found_entities.extend(apply_to_current_page(conditions))
         return all_found_entities
 
 
@@ -3559,7 +3580,7 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
     def get_entity_by_keys(self, **keys):
         if self.browser.product_version < '5.9':
             for el in self._current_page_elements:
-                entity = self.entity_class(parent=self, entity_id=el['entity_id'])
+                entity = self.entity_class(parent=self, entity_id=el['entity_id'], name=el['name'])
                 for key, value in keys.items():
                     try:
                         if entity.data[key] != str(value):
