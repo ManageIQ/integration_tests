@@ -336,7 +336,7 @@ class InfraVmSnapshotAddView(InfraVmView):
     @property
     def is_displayed(self):
         """Is this view being displayed"""
-        return False
+        return self.in_infra_vms and self.title.text == 'Adding a new Snapshot'
 
 
 class InfraVmGenealogyToolbar(View):
@@ -592,13 +592,11 @@ class Vm(VM):
                 raise NoSuchElementException('Snapshot VM memory checkbox not present')
             view.fill(snapshot_dict)
             view.create.click()
-            if not self.description:
-                view.flash.assert_message('Description is required')
-                view.cancel.click()
-            else:
-                list_view = self.vm.create_view(InfraVmSnapshotView)
-                wait_for(lambda: self.exists, num_sec=300, delay=20,
-                        fail_func=list_view.toolbar.reload.click, handle_exception=True)
+            view.flash.assert_no_error()
+            list_view = self.vm.create_view(InfraVmSnapshotView)
+            wait_for(lambda: self.exists, num_sec=300, delay=20,
+                     fail_func=list_view.toolbar.reload.click, handle_exception=True,
+                     message="Waiting for snapshot create")
 
         def delete(self, cancel=False):
             title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name

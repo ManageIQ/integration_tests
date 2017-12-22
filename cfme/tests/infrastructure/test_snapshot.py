@@ -8,7 +8,7 @@ from cfme.automate.simulation import simulate
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.virtual_machines import Vm  # For Vm.Snapshot
+from cfme.infrastructure.virtual_machines import InfraVmSnapshotAddView, Vm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils import error
 from cfme.utils.blockers import BZ
@@ -128,7 +128,11 @@ def test_create_without_description(small_test_vm):
         test_flag: snapshot, provision
     """
     snapshot = new_snapshot(small_test_vm, has_name=False, description=False)
-    snapshot.create()
+    with pytest.raises(AssertionError):
+        snapshot.create()
+    view = snapshot.vm.create_view(InfraVmSnapshotAddView)
+    assert view.is_displayed
+    view.flash.assert_message('Description is required')
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider),
@@ -257,7 +261,7 @@ def test_revert_on_running_vm(small_test_vm):
     snapshot.create()
     small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_ON, cancel=False)
     small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_ON)
-    with error.expected('Could not find an element.*@title="Revert to selected snapshot"'):
+    with error.expected('Could not find an element'):
         snapshot.revert_to()
 
 
