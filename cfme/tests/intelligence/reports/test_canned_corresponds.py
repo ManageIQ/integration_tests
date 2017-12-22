@@ -53,9 +53,8 @@ def test_cluster_relationships(soft_assert):
             continue
         provider = get_crud_by_name(provider_name).mgmt
         host_name = relation["Host Name"].strip()
-        soft_assert(name in provider.list_cluster(), "Cluster {} not found in {}".format(
-            name, provider_name
-        ))
+        verified_cluster = [item for item in provider.list_cluster() if name in item]
+        soft_assert(verified_cluster, "Cluster {} not found in {}".format(name, provider_name))
         if not host_name:
             continue  # No host name
         host_ip = resolve_hostname(host_name, force=True)
