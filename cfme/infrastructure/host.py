@@ -372,7 +372,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
         drift_analysis_view.apply_button.click()
         if not drift_analysis_view.toolbar.all_attributes.active:
             drift_analysis_view.toolbar.all_attributes.click()
-        return drift_analysis_view.drift_analysis(drift_section).is_changed
+        return drift_analysis_view.drift_analysis.is_changed(drift_section)
 
     def wait_to_appear(self):
         """Waits for the host to appear in the UI."""
