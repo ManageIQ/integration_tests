@@ -284,10 +284,9 @@ class AlertCollection(BaseCollection):
 
     ENTITY = Alert
 
-    def create(self, description, severity="Info", active=None, based_on=None, evaluate=None,
+    def create(self, description, severity=None, active=None, based_on=None, evaluate=None,
             driving_event=None, notification_frequency=None, snmp_trap=None, emails=None,
             timeline_event=None, mgmt_event=None):
-        severity = None if self.appliance.version < "5.9" else severity
         alert = self.instantiate(description, severity=severity, active=active, based_on=based_on,
             evaluate=evaluate, driving_event=driving_event,
             notification_frequency=notification_frequency, snmp_trap=snmp_trap, emails=emails,
