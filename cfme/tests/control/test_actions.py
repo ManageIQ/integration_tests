@@ -215,14 +215,16 @@ def action_collection(appliance):
     return appliance.collections.actions
 
 
-@pytest.fixture(scope="module")
+@pytest.yield_fixture(scope="module")
 def compliance_condition(appliance):
     condition_collection = appliance.collections.conditions
-    return condition_collection.create(
+    _compliance_condition = condition_collection.create(
         conditions.VMCondition,
         fauxfactory.gen_alpha(),
         expression="fill_tag(VM and Instance.My Company Tags : Service Level, Gold)"
     )
+    yield _compliance_condition
+    _compliance_condition.delete()
 
 
 @pytest.fixture(scope="module")
@@ -231,13 +233,12 @@ def policy_collection(appliance):
 
 
 @pytest.fixture(scope="module")
-def compliance_policy(vm_name, policy_name, compliance_condition, policy_collection):
+def compliance_policy(vm_name, policy_name, policy_collection):
     compliance_policy = policy_collection.create(
         policies.VMCompliancePolicy,
         "complaince_{}".format(policy_name),
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
     )
-    compliance_policy.assign_conditions(compliance_condition)
     return compliance_policy
 
 
@@ -258,8 +259,6 @@ def policy_for_testing(provider, vm_name, policy_name, policy_profile_name, comp
     yield control_policy
     provider.unassign_policy_profiles(policy_profile_name)
     policy_profile.delete()
-    compliance_policy.assign_conditions()
-    compliance_condition.delete()
     compliance_policy.delete()
     control_policy.delete()
 
@@ -763,13 +762,17 @@ def test_action_untag(request, vm, vm_off, policy_for_testing, action_collection
 
 @pytest.mark.provider([VMwareProvider], scope="module")
 @pytest.mark.meta(blockers=[1381255])
-def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, policy_for_testing):
+def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, policy_for_testing,
+        compliance_policy):
     """This test checks if 'Cancel vCenter task' action works.
     For this test we need big template otherwise CFME won't have enough time
     to cancel the task https://bugzilla.redhat.com/show_bug.cgi?id=1383372#c9
     """
     with update(policy_for_testing):
         policy_for_testing.scope = (
+            "fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_big.name))
+    with update(compliance_policy):
+        compliance_policy.scope = (
             "fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_big.name))
     policy_for_testing.assign_events("VM Clone Start")
     policy_for_testing.assign_actions_to_event(
@@ -781,6 +784,9 @@ def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, poli
         policy_for_testing.assign_events()
         with update(policy_for_testing):
             policy_for_testing.scope = (
+                "fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name))
+        with update(compliance_policy):
+            compliance_policy.scope = (
                 "fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name))
         cleanup_vm(clone_vm_name, provider)
 
@@ -796,17 +802,20 @@ def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, poli
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
 )
-def test_action_check_compliance(request, provider, vm, vm_name, policy_for_testing):
+def test_action_check_compliance(request, provider, vm, vm_name, policy_for_testing,
+        compliance_policy, compliance_condition):
     """Tests action "Check Host or VM Compliance". Policy profile should have control and compliance
     policies. Control policy initiates compliance check and compliance policy determines is the vm
     compliant or not. After reloading vm details screen the compliance status should be changed.
     """
+    compliance_policy.assign_conditions(compliance_condition)
     if any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
            for tag in vm.crud.get_tags()):
         vm.crud.remove_tag("Service Level", "Gold")
 
     @request.addfinalizer
     def _remove_tag():
+        compliance_policy.assign_conditions()
         if any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
                for tag in vm.crud.get_tags()):
             vm.crud.remove_tag("Service Level", "Gold")

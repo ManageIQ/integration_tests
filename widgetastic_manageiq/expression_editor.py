@@ -140,6 +140,10 @@ class ExpressionEditor(View, Pretty):
     def _expressions_root(self):
         return self.browser.element(self.EXPRESSIONS_ROOT)
 
+    @property
+    def expression_text(self):
+        return self.browser.text("//a[contains(@id,'exp_')]", parent=self._expressions_root)
+
     def select_first_expression(self):
         """There is always at least one (???), so no checking of bounds."""
         self.browser.elements("//a[contains(@id,'exp_')]", parent=self._expressions_root)[0].click()
@@ -175,7 +179,7 @@ class ExpressionEditor(View, Pretty):
 
     def read(self):
         """Returns whole expression as represented visually."""
-        return self._expressions_root.text.encode("utf-8").strip()
+        return self.expression_text.encode("utf-8").strip()
 
     def enable_editor(self):
         try:
@@ -189,9 +193,9 @@ class ExpressionEditor(View, Pretty):
         if self.show_loc is not None:
             self.enable_editor()
         prog = create_program(expression, self)
-        before = self._expressions_root.text.encode("utf-8").strip()
+        before = self.expression_text.encode("utf-8").strip()
         prog()
-        after = self._expressions_root.text.encode("utf-8").strip()
+        after = self.expression_text.encode("utf-8").strip()
         return before != after
 
     def fill_count(self, count=None, key=None, value=None):
