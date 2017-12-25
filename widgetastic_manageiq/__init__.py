@@ -2807,9 +2807,9 @@ class NonJSBaseEntity(View):
         try:
             return repr(self._get_existing_entity())
         except NoSuchElementException:
-            return '{c} name {n}, id {id}'.format(c=self.__class__,
-                                                  n=self.name or "",
-                                                  id=self.entity_id or "")
+            return '< {c} name {n}, id {id} >'.format(c=self.__class__,
+                                                      n=self.name or "",
+                                                      id=self.entity_id or "")
 
     @property
     def is_displayed(self):
