@@ -36,68 +36,32 @@ def azure_cleanup(nic_template, pip_template, days_old):
                 mgmt = get_mgmt(prov_key)
                 mgmt.logger = logger
                 for name, scr_id in mgmt.list_subscriptions():
-                    logger.info("subscription {s} is chosen".format(s=name))
+                    logger.info("Subscription '{s}' is chosen".format(s=name))
                     setattr(mgmt, 'subscription_id', scr_id)
-                    # removing stale nics
-                    removed_nics = mgmt.remove_nics_by_search(nic_template)
-                    if removed_nics:
-                        logger.info('following nics were removed:')
-                        for nic in removed_nics:
-                            logger.info(nic[0])
-                    else:
-                        logger.info("No '{}' NICs were found".format(nic_template))
+                    for resource_group in mgmt.list_resource_groups():
+                        mgmt.logger.info('Checking "{}" resource group:'.format(resource_group))
 
-                    # removing public ips
-                    removed_pips = mgmt.remove_pips_by_search(pip_template)
-                    if removed_pips:
-                        logger.info('following pips were removed:')
-                        for pip in removed_pips:
-                            logger.info(pip[0])
-                    else:
-                        logger.info("No '{}' Public IPs were found".format(pip_template))
+                        # removing stale nics
+                        mgmt.remove_nics_by_search(nic_template, resource_group)
 
-                # removing stale stacks
-                stack_list = mgmt.list_stack(days_old=days_old)
-                if stack_list:
-                    logger.info("Removing empty Stacks:")
-                    removed_stacks = []
-                    for stack in stack_list:
-                        if mgmt.is_stack_empty(stack):
-                            removed_stacks.append(stack)
-                            mgmt.delete_stack(stack)
+                        # removing public ips
+                        mgmt.remove_pips_by_search(pip_template, resource_group)
 
-                    logger.info('following stacks were removed:')
-                    for stack in removed_stacks:
-                        logger.info([stack])
-                else:
-                    logger.info("No stacks older than '{}' days were found".format(
-                        days_old))
+                        # removing stale stacks
+                        stack_list = mgmt.list_stack(resource_group=resource_group,
+                                                     days_old=days_old)
+                        if stack_list:
+                            removed_stacks = []
+                            for stack in stack_list:
+                                if mgmt.is_stack_empty(stack, resource_group=resource_group):
+                                    removed_stacks.append(stack)
+                                    mgmt.delete_stack(stack, resource_group)
 
-                """
-                Blob removal section
-                """
-                # TODO: update it later to use different subscriptions and resource groups
-                logger.info("Removing 'bootdiagnostics-test*' containers")
-                bootdiag_list = []
-                for container in mgmt.container_client.list_containers():
-                    if container.name.startswith('bootdiagnostics-test'):
-                        bootdiag_list.append(container.name)
-                        mgmt.container_client.delete_container(
-                            container_name=container.name)
+                            if not removed_stacks:
+                                logger.info("No empty stacks older '{}' days were found".format(
+                                    days_old))
+                        mgmt.remove_unused_blobs(resource_group)
 
-                logger.info('following disks were removed:')
-                for disk in bootdiag_list:
-                    logger.info([disk])
-
-                logger.info("Removing unused blobs and disks")
-                removed_disks = mgmt.remove_unused_blobs()
-                if len(removed_disks['Managed']) > 0:
-                    logger.info('Managed disks:')
-                    logger.info(removed_disks['Managed'])
-
-                if len(removed_disks['Unmanaged']) > 0:
-                    logger.info('Unmanaged blobs:')
-                    logger.info(removed_disks['Unmanaged'])
             return 0
         except Exception:
             logger.info("Something bad happened during Azure cleanup")
