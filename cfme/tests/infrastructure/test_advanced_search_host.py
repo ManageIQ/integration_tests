@@ -228,8 +228,6 @@ def test_delete_button_should_appear_after_save(host_collection, hosts_advanced_
 
     @request.addfinalizer
     def cleanup():
-        # Now delete button is available without load in the UI.
-        # hosts_advanced_search.entities.search.load_filter(filter_name)
         hosts_advanced_search.entities.search.delete_filter()
 
     if not hosts_advanced_search.entities.search.delete_filter():
