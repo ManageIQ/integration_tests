@@ -400,13 +400,14 @@ class Table(VanillaTable):
         # Old one
         './thead/tr/th[contains(@class, "sorting_asc") or contains(@class, "sorting_desc")]',
         # New one
-        './thead/tr/th[./div/i[contains(@class, "fa-sort-")]]/a'])
+        './thead/tr/th[./div/i[contains(@class, "fa-sort-")]]/a',
+        './thead/tr/th[contains(@class, "ng-binding ng-scope")]'])
     SORTED_BY_CLASS_LOC = '|'.join([
         # Old one
         './thead/tr/th[contains(@class, "sorting_asc") or contains(@class, "sorting_desc")]',
         # New one
         './thead/tr/th/div/i[contains(@class, "fa-sort-")]'])
-    SORT_LINK = './thead/tr/th[{}]/a'
+    SORT_LINK = './thead/tr/th[{}]'
     Row = TableRow
 
     @property
