@@ -589,7 +589,8 @@ def test_provision_with_boot_volume(request, testing_instance, provider, soft_as
 # Not collected for EC2 in generate_tests above
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
 def test_provision_with_additional_volume(request, testing_instance, provider, small_template,
-                                          soft_assert, copy_domains, modified_request_class):
+                                          soft_assert, copy_domains, modified_request_class,
+                                          appliance):
     """ Tests provisioning with setting specific image from AE and then also making it create and
     attach an additional 3G volume.
 
@@ -628,6 +629,18 @@ def test_provision_with_additional_volume(request, testing_instance, provider, s
     request.addfinalizer(_finish_method)
 
     instance.create(**inst_args)
+
+    request_description = 'Provision from [{}] to [{}]'.format(small_template.name, instance.name)
+    provision_request = appliance.collections.requests.instantiate(request_description)
+    try:
+        provision_request.wait_for_request(method='ui')
+    except Exception as e:
+        logger.info(
+            "Provision failed {}: {}".format(e, provision_request.request_state))
+        raise e
+    assert provision_request.is_succeeded(method='ui'), (
+        "Provisioning failed with the message {}".format(
+            provision_request.row.last_message.text))
 
     prov_instance = provider.mgmt._find_instance_by_name(instance.name)
     try:
