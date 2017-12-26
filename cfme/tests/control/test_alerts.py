@@ -149,7 +149,7 @@ def setup_for_alerts(alert_profile_collection, action_collection, policy_collect
             action = action_collection.create(
                 "Evaluate Alerts for {}".format(vm_name),
                 "Evaluate Alerts",
-                action_values={"alerts_to_evaluate": alerts_list}
+                action_values={"alerts_to_evaluate": [str(alert) for alert in alerts_list]}
             )
             request.addfinalizer(action.delete)
             policy = policy_collection.create(
@@ -247,13 +247,13 @@ def setup_snmp(appliance):
 
 @pytest.mark.provider(gen_func=providers, filters=[pf1, pf2], scope="module")
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider, vm, smtp_test,
-        register_event, alert_collection, setup_for_alerts):
+        alert_collection, setup_for_alerts):
     """ Tests alerts for vm turned on more than twice in 15 minutes
 
     Metadata:
         test_flag: alerts, provision
     """
-    alert = alert_collection.create("VM Power On > 2 in last 15 min")
+    alert = alert_collection.instantiate("VM Power On > 2 in last 15 min")
     with update(alert):
         alert.active = True
         alert.emails = fauxfactory.gen_email()
@@ -263,26 +263,12 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider
     if not provider.mgmt.is_vm_stopped(vm.name):
         provider.mgmt.stop_vm(vm.name)
     provider.refresh_provider_relationships()
-
-    # preparing events to listen to
-    register_event(target_type='VmOrTemplate', target_name=vm.name,
-                   event_type='request_vm_poweroff')
-    register_event(target_type='VmOrTemplate', target_name=vm.name, event_type='vm_poweoff')
-
     vm.wait_for_vm_state_change(vm.STATE_OFF)
     for i in range(5):
         vm.power_control_from_cfme(option=vm.POWER_ON, cancel=False)
-        register_event(target_type='VmOrTemplate', target_name=vm.name,
-                       event_type='request_vm_start')
-        register_event(target_type='VmOrTemplate', target_name=vm.name, event_type='vm_start')
-
         wait_for(lambda: provider.mgmt.is_vm_running(vm.name), num_sec=300)
         vm.wait_for_vm_state_change(vm.STATE_ON)
         vm.power_control_from_cfme(option=vm.POWER_OFF, cancel=False)
-        register_event(target_type='VmOrTemplate', target_name=vm.name,
-                       event_type='request_vm_poweroff')
-        register_event(target_type='VmOrTemplate', target_name=vm.name, event_type='vm_poweroff')
-
         wait_for(lambda: provider.mgmt.is_vm_stopped(vm.name), num_sec=300)
         vm.wait_for_vm_state_change(vm.STATE_OFF)
 
