@@ -596,7 +596,7 @@ def _mk_role(appliance, name=None, vm_restriction=None, product_features=None):
 
     """
     name = name or fauxfactory.gen_alphanumeric()
-    return appliance.collections.roles.instantiate(
+    return appliance.collections.roles.create(
         name=name,
         vm_restriction=vm_restriction,
         product_features=product_features
