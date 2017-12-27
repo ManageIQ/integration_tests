@@ -1,7 +1,10 @@
+from widgetastic.widget import View
+from widgetastic_patternfly import Tab, Input, Button
 from wrapanapi.ec2 import EC2System
 
 from . import CloudProvider
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
+from cfme.common.provider_views import BeforeFillMixin
 
 
 class EC2Endpoint(DefaultEndpoint):
@@ -13,11 +16,22 @@ class EC2Endpoint(DefaultEndpoint):
         return {}
 
 
-class EC2EndpointForm(DefaultEndpointForm):
+class EC2EndpointForm(View):
     """
      represents default Amazon endpoint form in UI (Add/Edit dialogs)
     """
-    pass
+    @View.nested
+    class default(Tab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
+        TAB_NAME = 'Default'
+
+    @View.nested
+    class smart_state_docker(Tab, BeforeFillMixin):  # NOQA
+        TAB_NAME = 'SmartState Docker'
+
+        username = Input(id='smartstate_docker_userid')
+        password = Input(id='smartstate_docker_password')
+
+        validate = Button('Validate')
 
 
 class EC2Provider(CloudProvider):

@@ -20,6 +20,7 @@ from cfme import test_requirements
 
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
@@ -59,7 +60,8 @@ def test_add_cancelled_validation(request):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(version.current_version() > '5.8', reason='EC2 option not available')
+@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
+                         reason='EC2 option not available')
 def test_password_mismatch_validation(appliance):
     cred = Credential(
         principal=fauxfactory.gen_alphanumeric(5),
@@ -124,6 +126,8 @@ def test_provider_add_with_bad_credentials(provider):
 @pytest.mark.tier(1)
 @pytest.mark.smoke
 @pytest.mark.usefixtures('has_no_cloud_providers')
+@pytest.mark.uncollectif(lambda provider: BZ(1529174, forced_streams=['5.9']).blocks and
+                         provider.one_of(EC2Provider))
 @test_requirements.discovery
 def test_provider_crud(provider):
     """ Tests provider add with good credentials
@@ -219,12 +223,16 @@ def test_api_port_blank_validation(request):
 
 
 @pytest.mark.tier(3)
+@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
+                         reason='EC2 option not available')
 def test_user_id_max_character_validation():
     cred = Credential(principal=fauxfactory.gen_alphanumeric(51), secret='')
     discover(cred, EC2Provider)
 
 
 @pytest.mark.tier(3)
+@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
+                         reason='EC2 option not available')
 def test_password_max_character_validation():
     password = fauxfactory.gen_alphanumeric(51)
     cred = Credential(
