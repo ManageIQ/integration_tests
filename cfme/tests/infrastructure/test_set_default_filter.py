@@ -25,7 +25,7 @@ def test_set_default_host_filter(request, appliance):
     appliance.server.logout()
     appliance.server.login_admin()
     navigate_to(host_collection, 'All')
-    assert view.filters.navigation.currently_selected == ['Status / Running (Default)']
+    assert view.filters.navigation.currently_selected[0] == 'Status / Running (Default)'
 
 
 def test_clear_host_filter_results(appliance):

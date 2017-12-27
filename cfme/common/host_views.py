@@ -99,7 +99,7 @@ class JSHostEntity(JSBaseEntity):
 
 class AccordionNavigationWithoutRoot(VerticalNavigation):
     DIV_LINKS_MATCHING = './/div/ul/li/a[contains(text(), {txt})]'
-    CURRENTLY_SELECTED = './/li[(@class = "active")]/a'
+    CURRENTLY_SELECTED = './/li[contains(@class, "active")]/a'
 
 
 def HostEntity():  # noqa
