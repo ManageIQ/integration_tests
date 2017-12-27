@@ -60,7 +60,8 @@ def test_add_cancelled_validation(request):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(version.current_version() > '5.8', reason='EC2 option not available')
+@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
+                         reason='EC2 option not available')
 def test_password_mismatch_validation(appliance):
     cred = Credential(
         principal=fauxfactory.gen_alphanumeric(5),
@@ -222,12 +223,16 @@ def test_api_port_blank_validation(request):
 
 
 @pytest.mark.tier(3)
+@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
+                         reason='EC2 option not available')
 def test_user_id_max_character_validation():
     cred = Credential(principal=fauxfactory.gen_alphanumeric(51), secret='')
     discover(cred, EC2Provider)
 
 
 @pytest.mark.tier(3)
+@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
+                         reason='EC2 option not available')
 def test_password_max_character_validation():
     password = fauxfactory.gen_alphanumeric(51)
     cred = Credential(
