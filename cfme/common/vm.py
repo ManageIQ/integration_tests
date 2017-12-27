@@ -242,7 +242,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
         if view.entities.lifecycle.get_text_of('Retirement Date').lower() != 'never':
             try:
                 return view.entities.lifecycle.get_text_of('Retirement state').lower() == 'retired'
-            except AttributeError:
+            except NameError:
                 return False
         else:
             return False
