@@ -6,6 +6,7 @@ import time
 
 from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
@@ -136,7 +137,8 @@ def query_metric_db(appliance, provider, metric, vm_name=None, host_name=None):
 
 
 # Tests to check that specific metrics are being collected
-@pytest.mark.meta(blockers=[BZ(1525296, unblock=lambda provider: provider.category != 'cloud')])
+@pytest.mark.meta(blockers=[BZ(1525296,
+                               unblock=lambda provider: not provider.one_of(CloudProvider))])
 def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
     if provider.category == "infra":
@@ -155,8 +157,9 @@ def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
 
 
 @pytest.mark.uncollectif(
-    lambda provider: provider.type == 'ec2' or provider.type == 'gce')
-@pytest.mark.meta(blockers=[BZ(1525296, unblock=lambda provider: provider.category != 'cloud')])
+    lambda provider: provider.one_of(EC2Provider) or provider.one_of(GCEProvider))
+@pytest.mark.meta(blockers=[BZ(1525296,
+                               unblock=lambda provider: not provider.one_of(CloudProvider))])
 def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
 
@@ -177,9 +180,10 @@ def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
 
 @pytest.mark.meta(
     blockers=[BZ(1408963, forced_streams=["5.7", "5.8", "upstream"],
-        unblock=lambda provider: provider.type != 'rhevm')]
+        unblock=lambda provider: not provider.one_of(RHEVMProvider))]
 )
-@pytest.mark.meta(blockers=[BZ(1525296, unblock=lambda provider: provider.category != 'cloud')])
+@pytest.mark.meta(blockers=[BZ(1525296,
+                               unblock=lambda provider: not provider.one_of(CloudProvider))])
 def test_raw_metric_vm_network(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
     query = query_metric_db(appliance, provider, 'net_usage_rate_average',
@@ -192,12 +196,13 @@ def test_raw_metric_vm_network(metrics_collection, appliance, provider):
 
 
 @pytest.mark.uncollectif(
-    lambda provider: provider.type == 'ec2')
+    lambda provider: provider.one_of(EC2Provider))
 @pytest.mark.meta(
     blockers=[BZ(1322094, forced_streams=["5.6", "5.7"],
-        unblock=lambda provider: provider.type != 'rhevm')]
+        unblock=lambda provider: not provider.one_of(RHEVMProvider))]
 )
-@pytest.mark.meta(blockers=[BZ(1525296, unblock=lambda provider: provider.category != 'cloud')])
+@pytest.mark.meta(blockers=[BZ(1525296,
+                               unblock=lambda provider: not provider.one_of(CloudProvider))])
 def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
     query = query_metric_db(appliance, provider, 'disk_usage_rate_average',
@@ -210,7 +215,7 @@ def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
 
 
 @pytest.mark.uncollectif(
-    lambda provider: provider.category == 'cloud')
+    lambda provider: provider.one_of(CloudProvider))
 def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
     host_name = get_host_name(provider)
     query = query_metric_db(appliance, provider, 'cpu_usagemhz_rate_average',
@@ -223,7 +228,7 @@ def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
 
 
 @pytest.mark.uncollectif(
-    lambda provider: provider.category == 'cloud')
+    lambda provider: provider.one_of(CloudProvider))
 def test_raw_metric_host_memory(metrics_collection, appliance, provider):
     host_name = get_host_name(provider)
     query = query_metric_db(appliance, provider, 'derived_memory_used',
@@ -236,7 +241,7 @@ def test_raw_metric_host_memory(metrics_collection, appliance, provider):
 
 
 @pytest.mark.uncollectif(
-    lambda provider: provider.category == 'cloud')
+    lambda provider: provider.one_of(CloudProvider))
 def test_raw_metric_host_network(metrics_collection, appliance, provider):
     host_name = get_host_name(provider)
     query = query_metric_db(appliance, provider, 'net_usage_rate_average',
@@ -249,10 +254,10 @@ def test_raw_metric_host_network(metrics_collection, appliance, provider):
 
 
 @pytest.mark.uncollectif(
-    lambda provider: provider.category == 'cloud')
+    lambda provider: provider.one_of(CloudProvider))
 @pytest.mark.meta(
     blockers=[BZ(1424589, forced_streams=["5.7", "5.8", "upstream"],
-        unblock=lambda provider: provider.type != 'rhevm')]
+        unblock=lambda provider: not provider.one_of(RHEVMProvider))]
 )
 def test_raw_metric_host_disk(metrics_collection, appliance, provider):
     host_name = get_host_name(provider)
