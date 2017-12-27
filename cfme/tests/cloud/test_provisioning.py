@@ -544,7 +544,7 @@ def test_provision_from_template_with_attached_disks(request, testing_instance, 
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_provision_with_boot_volume(request, testing_instance, provider, soft_assert, copy_domains,
+def test_provision_with_boot_volume(request, testing_instance, provider, soft_assert, appliance,
                                     modified_request_class):
     """ Tests provisioning from a template and attaching one booting volume.
 
@@ -579,6 +579,19 @@ def test_provision_with_boot_volume(request, testing_instance, provider, soft_as
                 method.script = """prov = $evm.root["miq_provision"]"""
 
         instance.create(**inst_args)
+
+        request_description = 'Provision from [{}] to [{}]'.format(image,
+                                                                   instance.name)
+        provision_request = appliance.collections.requests.instantiate(request_description)
+        try:
+            provision_request.wait_for_request(method='ui')
+        except Exception as e:
+            logger.info(
+                "Provision failed {}: {}".format(e, provision_request.request_state))
+            raise e
+        assert provision_request.is_succeeded(method='ui'), (
+            "Provisioning failed with the message {}".format(
+                provision_request.row.last_message.text))
 
         soft_assert(vm_name in provider.mgmt.volume_attachments(volume))
         soft_assert(provider.mgmt.volume_attachments(volume)[vm_name] == "vda")
