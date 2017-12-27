@@ -158,7 +158,7 @@ class ProvisioningDialog(Updateable, Pretty, Navigatable):
             flash_msg = 'Add of new Dialog was cancelled by the user'
             btn = view.form.cancel
         else:
-            flash_msg = 'Dialog "{}" was added'.format(self.name)
+            flash_msg = 'Dialog "{}" was added'.format(self.description)
             btn = view.form.add
 
         btn.click()
@@ -174,10 +174,11 @@ class ProvisioningDialog(Updateable, Pretty, Navigatable):
             view.form.reset.click()
             view.flash.assert_message('All changes have been reset')
         if cancel:
-            flash_msg = 'Edit of Dialog "{}" was cancelled by the user'.format(self.name)
+            flash_msg = 'Edit of Dialog "{}" was cancelled by the user'.format(self.description)
             btn = view.form.cancel
         else:
-            flash_msg = ('Dialog "{}" was saved'.format(updates.get('name') or self.name))
+            flash_msg = ('Dialog "{}" was saved'.format(updates.get('description') or
+                                                        self.description))
             btn = view.form.save
 
         btn.click()
