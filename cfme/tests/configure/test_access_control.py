@@ -40,15 +40,16 @@ def new_credential():
     return Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret='redhat')
 
 
-def new_user(appliance, group, credential=None):
+def new_user(appliance, group, name=None, credential=None):
     from fixtures.blockers import bug
 
     uppercase_username_bug = bug(1487199)
 
+    name = name or 'user{}'.format(fauxfactory.gen_alphanumeric())
     credential = credential or new_credential()
 
     user = appliance.collections.users.create(
-        name='user{}'.format(fauxfactory.gen_alphanumeric()),
+        name=name,
         credential=credential,
         email='xyz@redhat.com',
         group=group,
@@ -113,6 +114,15 @@ def test_user_login(appliance, group_collection):
 
 @pytest.mark.tier(3)
 def test_user_duplicate_username(appliance, group_collection):
+    """
+    Tests that creating user with existing username is forbidden.
+
+    Steps:
+        1. Generate credential
+        2. Create a user with this credential
+        3. Create another user with same credential
+
+    Should raise an exception."""
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
@@ -125,6 +135,30 @@ def test_user_duplicate_username(appliance, group_collection):
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
     navigate_to(nu.appliance.server, 'Dashboard')
+
+
+@pytest.mark.tier(3)
+def test_user_allow_duplicate_name(appliance, group_collection):
+    """
+    Tests that creating user with existing full name is allowed.
+
+    Steps:
+        1. Generate full name
+        2. Create a user with this full name
+        3. Create another user with same full name
+
+    Should NOT raise an exception and create the second user"""
+    group_name = 'EvmGroup-user'
+    group = group_collection.instantiate(description=group_name)
+
+    name = 'user{}'.format(fauxfactory.gen_alphanumeric())
+
+    # Create first user
+    new_user(appliance, group, name=name)
+    # Create second user with same full name
+    nu = new_user(appliance, group, name=name)
+
+    assert nu.exists
 
 
 @pytest.mark.tier(3)
