@@ -5,7 +5,7 @@ import cfme.fixtures.pytest_selenium as sel
 
 @pytest.fixture(scope='module')
 def test_page(browser, datafile):
-    test_page_html = datafile('/utils/tests/test_simple_locators/elements.html').read()
+    test_page_html = datafile('/utils/test_simple_locators/elements.html').read()
     sel.get('data:text/html;base64,{}'.format(test_page_html.encode('base64')))
 
 
