@@ -79,10 +79,10 @@ class OrderForm(ServicesCatalogView):
     role_arn = Input(locator='.//input[../../../div[contains(normalize-space(.), "Role ARN")]]')
     ssh_location = Input(name="param_SSHLocation")
 
-    flavor = Input(name='param_flavor')
-    image = Input(name="param_image")
-    key = Input(name='param_key')
-    private_network = Input(name="param_private_network")
+    flavor = Input(id='param_flavor')
+    image = Input(id="param_image")
+    key = Input(id='param_key')
+    private_network = Input(id="param_private_network")
     default_select_value = VersionPick({
         '5.9': Select(locator='.//select[../../'
                               'div[contains(normalize-space(.), "Service Level")]]'),
