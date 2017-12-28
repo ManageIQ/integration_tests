@@ -1249,7 +1249,7 @@ class RoleDetails(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
-        self.prerequisite_view.browser.refresh() # workaround for 5.9 issue of role now shown
+        self.prerequisite_view.browser.refresh()  # workaround for 5.9 issue of role now shown
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Roles', self.obj.name)
 
