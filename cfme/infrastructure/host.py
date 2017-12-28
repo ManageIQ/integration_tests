@@ -236,7 +236,10 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
         """
         view = navigate_to(self.parent, "All")
         entity = view.entities.get_entity(name=self.name, surf_pages=True)
-        return entity.data['creds'].strip().lower() == "checkmark"
+        try:
+            return entity.data['creds'].strip().lower() == "checkmark"
+        except KeyError:
+            return False
 
     def update_credentials_rest(self, credentials):
         """ Updates host's credentials via rest api
