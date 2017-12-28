@@ -9,7 +9,9 @@ from cfme.services.catalogs.catalog import Catalog
 from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
-from cfme.utils.version import current_version
+
+from fixtures.pytest_store import store
+
 
 pytestmark = [test_requirements.service, pytest.mark.tier(2)]
 
@@ -35,7 +37,7 @@ def test_catalog_duplicate_name():
 
 
 # Un-collecting for 5.8 because of BZ: 1486041
-@pytest.mark.uncollectif(lambda: current_version() < '5.9')
+@pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.9')
 @pytest.mark.meta(blockers=[BZ(1529079, forced_streams=['upstream'])])
 @pytest.mark.sauce
 def test_permissions_catalog_add(appliance):
