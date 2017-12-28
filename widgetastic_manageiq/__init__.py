@@ -1304,7 +1304,7 @@ class JSPaginationPane(View, ReportDataControllerMixin):
 
     @property
     def items_amount(self):
-        return len(self._invoke_cmd('get_all_items'))
+        return self._invoke_cmd('pagination_range')['total']
 
     def pages(self):
         """Generator to iterate over pages, yielding after moving to the next page"""
