@@ -13,7 +13,7 @@ pytestmark = [
 ]
 
 
-def test_run_cluster_analysis(request, setup_provider, provider, soft_assert, appliance):
+def test_run_cluster_analysis(setup_provider, provider, appliance):
     """Tests smarthost analysis
 
     Metadata:
@@ -22,24 +22,12 @@ def test_run_cluster_analysis(request, setup_provider, provider, soft_assert, ap
     cluster_name = provider.data['remove_test']['cluster']
     cluster_col = appliance.collections.clusters
     test_cluster = cluster_col.instantiate(name=cluster_name, provider=provider)
-    # wait_for(lambda: test_cluster.exists, delay=10, num_sec=120, fail_func=sel.refresh)
     test_cluster.wait_for_exists()
 
     # Initiate analysis
     test_cluster.run_smartstate_analysis()
 
-    # wait_for(lambda: is_cluster_analysis_finished(test_cluster.name),
-    # delay=15, timeout="10m", fail_func=lambda: toolbar.select('Reload'))
-    # BZ 1216198
-    # When SmartState analysis is performed on a cluster,the task is not listed under
-    # Configure->Tasks->My other UI tasks
-
-    # TODO:
-    # Temporary adding wait_for so data get populated until this BZ 1216198 is resolved
-    c_cluster, _ = wait_for(
-        lambda: test_cluster.get_detail('Relationships', 'Drift History'),
-        delay=20,
-        timeout='5m',
-        fail_func=sel.refresh,
-        fail_condition='None')
-    soft_assert(c_cluster != '0', 'No drift history change found')
+    drift_num = wait_for(lambda: test_cluster.get_detail('Relationships', 'Drift History'),
+                         delay=20, timeout='5m', fail_func=appliance.browser.reload,
+                         fail_condition='None')
+    assert drift_num != '0', 'No drift history change found'
