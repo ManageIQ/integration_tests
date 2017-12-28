@@ -70,7 +70,6 @@ def test_paginator(some_dialogs, soft_assert, appliance):
     # try to browse
     current_rec_offset = None
     dialogs_found = set()
-    current_total = 0
     for _ in view.paginator.pages():
         if view.paginator.min_item == current_rec_offset:
             soft_assert(False, "Paginator is locked, it does not advance to next page")
@@ -78,7 +77,7 @@ def test_paginator(some_dialogs, soft_assert, appliance):
         for text in get_relevant_rows(view.table):
             dialogs_found.add(text)
 
-        current_total += view.paginator.items_amount
+        current_total = view.paginator.items_amount
         current_rec_offset = view.paginator.min_item
         current_rec_end = view.paginator.max_item
 
