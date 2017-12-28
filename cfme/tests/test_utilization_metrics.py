@@ -152,7 +152,7 @@ def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
 
     for record in query:
         if average_rate(record) is not None:
-            assert average_rate(record) > 0, 'Zero VM CPU Usage'
+            assert float(average_rate(record)) > 0.0, 'Zero VM CPU Usage'
             break
 
 
@@ -174,7 +174,7 @@ def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
 
     for record in query:
         if average_rate(record) is not None:
-            assert average_rate(record) > 0, 'Zero VM Memory Usage'
+            assert float(average_rate(record)) > 0.0, 'Zero VM Memory Usage'
             break
 
 
@@ -191,7 +191,7 @@ def test_raw_metric_vm_network(metrics_collection, appliance, provider):
 
     for record in query:
         if record.net_usage_rate_average is not None:
-            assert record.net_usage_rate_average > 0, 'Zero VM Network IO'
+            assert float(record.net_usage_rate_average) > 0.0, 'Zero VM Network IO'
             break
 
 
@@ -223,7 +223,7 @@ def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
 
     for record in query:
         if record.cpu_usagemhz_rate_average is not None:
-            assert record.cpu_usagemhz_rate_average > 0, 'Zero Host CPU Usage'
+            assert float(record.cpu_usagemhz_rate_average) > 0.0, 'Zero Host CPU Usage'
             break
 
 
@@ -236,7 +236,7 @@ def test_raw_metric_host_memory(metrics_collection, appliance, provider):
 
     for record in query:
         if record.derived_memory_used is not None:
-            assert record.derived_memory_used > 0, 'Zero Host Memory Usage'
+            assert float(record.derived_memory_used) > 0.0, 'Zero Host Memory Usage'
             break
 
 
@@ -249,7 +249,7 @@ def test_raw_metric_host_network(metrics_collection, appliance, provider):
 
     for record in query:
         if record.net_usage_rate_average is not None:
-            assert record.net_usage_rate_average > 0, 'Zero Host Network IO'
+            assert float(record.net_usage_rate_average) > 0.0, 'Zero Host Network IO'
             break
 
 
@@ -266,5 +266,5 @@ def test_raw_metric_host_disk(metrics_collection, appliance, provider):
 
     for record in query:
         if record.disk_usage_rate_average is not None:
-            assert record.disk_usage_rate_average > 0, 'Zero Host Disk IO'
+            assert float(record.disk_usage_rate_average) > 0.0, 'Zero Host Disk IO'
             break
