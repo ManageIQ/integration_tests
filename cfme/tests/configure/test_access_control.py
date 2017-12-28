@@ -114,15 +114,13 @@ def test_user_login(appliance, group_collection):
 
 @pytest.mark.tier(3)
 def test_user_duplicate_username(appliance, group_collection):
-    """
-    Tests that creating user with existing username is forbidden.
+    """ Tests that creating user with existing username is forbidden.
 
     Steps:
-        1. Generate credential
-        2. Create a user with this credential
-        3. Create another user with same credential
-
-    Should raise an exception."""
+        * Generate some credential
+        * Create a user with this credential
+        * Create another user with same credential
+    """
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
@@ -139,15 +137,13 @@ def test_user_duplicate_username(appliance, group_collection):
 
 @pytest.mark.tier(3)
 def test_user_allow_duplicate_name(appliance, group_collection):
-    """
-    Tests that creating user with existing full name is allowed.
+    """ Tests that creating user with existing full name is allowed.
 
     Steps:
-        1. Generate full name
-        2. Create a user with this full name
-        3. Create another user with same full name
-
-    Should NOT raise an exception and create the second user"""
+        * Generate full name
+        * Create a user with this full name
+        * Create another user with same full name
+    """
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
