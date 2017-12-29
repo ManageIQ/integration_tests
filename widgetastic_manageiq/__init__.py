@@ -1486,8 +1486,6 @@ class NonJSPaginationPane(View):
                 else:
                     self.logger.debug('Paginator advancing to next page')
                     self.next_page()
-        elif BZ.bugzilla.get_bug('1460377').is_opened:
-            yield
         else:
             return
 
