@@ -1,0 +1,22 @@
+--- cfme-template.yaml.backup	2018-01-05 17:08:42.000000000 +0200
++++ cfme-template.yaml	2018-01-29 17:39:22.821903379 +0200
+@@ -859,6 +859,19 @@
+                 - "/usr/bin/save-container-environment"
+         serviceAccount: cfme-httpd
+         serviceAccountName: cfme-httpd
++
++- apiVersion: v1
++  kind: Service
++  metadata:
++    name: common-service
++  spec:
++    ports:
++      - name: postgresql
++        port: 5432
++    type: LoadBalancer
++    selector:
++      name: "${DATABASE_SERVICE_NAME}"
++
+ parameters:
+ - name: NAME
+   displayName: Name
