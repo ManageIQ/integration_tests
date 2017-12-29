@@ -20,6 +20,8 @@ def test_run_cluster_analysis(setup_provider, provider, appliance):
         test_flag: cluster_analysis
     """
     cluster_name = provider.data.remove_test.cluster
+    if cluster_name in 'Cluster in Datacenter':
+        cluster_name = 'Cluster in Datacenter'
     cluster_col = appliance.collections.clusters
     test_cluster = cluster_col.instantiate(name=cluster_name, provider=provider)
     test_cluster.wait_for_exists()
