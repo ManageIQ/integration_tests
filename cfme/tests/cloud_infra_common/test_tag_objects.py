@@ -10,12 +10,13 @@ from cfme.cloud.keypairs import KeyPair
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
-from fixtures.provider import setup_one_or_skip
-from cfme.utils.providers import ProviderFilter
+from cfme.common.provider import CloudInfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from markers.env_markers.provider import ONE_PER_CATEGORY
 
 pytestmark = [
-    pytest.mark.tier(2)
+    pytest.mark.tier(2),
+    pytest.mark.provider([CloudInfraProvider], scope='module', selector=ONE_PER_CATEGORY)
 ]
 
 
@@ -36,20 +37,7 @@ cloud_test_items = [
     ('cloud_tenants', None),
     ('keypairs', None),
     ('templates', Image)
-]
-
-
-@pytest.fixture(scope='module')
-def infra_provider(request):
-    prov_filter = ProviderFilter(classes=[InfraProvider])
-    return setup_one_or_skip(request, filters=[prov_filter])
-
-
-@pytest.fixture(scope='module')
-def cloud_provider(request):
-    prov_filter = ProviderFilter(classes=[CloudProvider],
-                                 required_fields=[['provisioning', 'stacks']])
-    return setup_one_or_skip(request, filters=[prov_filter])
+    ]
 
 
 def get_collection_entity(appliance, collection_name, param_class, provider):
@@ -85,16 +73,16 @@ def _tag_cleanup(test_item, tag):
 
 @pytest.fixture(params=cloud_test_items, ids=([item[0] for item in cloud_test_items]),
                 scope='module')
-def cloud_test_item(request, appliance, cloud_provider):
+def cloud_test_item(request, appliance, provider):
     collection_name, param_class = request.param
-    return get_collection_entity(appliance, collection_name, param_class, cloud_provider)
+    return get_collection_entity(appliance, collection_name, param_class, provider)
 
 
 @pytest.fixture(params=infra_test_items, ids=[item[0] for item in infra_test_items],
                 scope='module')
-def infra_test_item(request, appliance, infra_provider):
+def infra_test_item(request, appliance, provider):
     collection_name, param_class = request.param
-    return get_collection_entity(appliance, collection_name, param_class, infra_provider)
+    return get_collection_entity(appliance, collection_name, param_class, provider)
 
 
 @pytest.fixture(scope='function')
@@ -121,18 +109,21 @@ def tagging_check(tag):
     return _tagging_check
 
 
+@pytest.mark.uncollectif(lambda provider: provider.one_of(InfraProvider))
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
 def test_tag_cloud_objects(tagging_check, cloud_test_item, tag_place):
     """ Test for cloud items tagging action from list and details pages """
     tagging_check(cloud_test_item, tag_place)
 
 
+@pytest.mark.uncollectif(lambda provider: provider.one_of(CloudProvider))
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
 def test_tag_infra_objects(tagging_check, infra_test_item, tag_place):
     """ Test for infrastructure items tagging action from list and details pages """
     tagging_check(infra_test_item, tag_place)
 
 
+@pytest.mark.uncollectif(lambda provider: provider.one_of(InfraProvider))
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
 def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility,
                              appliance):
@@ -152,6 +143,7 @@ def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility,
         check_item_visibility(cloud_test_item, visibility)
 
 
+@pytest.mark.uncollectif(lambda provider: provider.one_of(CloudProvider))
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
 def test_tagvis_infra_object(infra_test_item, check_item_visibility,
                              visibility):
