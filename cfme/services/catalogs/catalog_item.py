@@ -1,9 +1,11 @@
 import time
+import fauxfactory
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from types import NoneType
 from widgetastic.widget import Text, Checkbox, View
 from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound, Tab
+from widgetastic.utils import VersionPick, Version
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.common.vm_views import BasicProvisionFormView
@@ -12,7 +14,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import ManageIQTree, FonticonPicker
 from . import ServicesCatalogView
 
 
@@ -47,7 +49,10 @@ class ButtonGroupForm(ServicesCatalogView):
 
     btn_group_text = Input(name='name')
     btn_group_hvr_text = Input(name='description')
-    btn_image = BootstrapSelect('button_image')
+    btn_image = VersionPick({
+        Version.lowest(): BootstrapSelect('button_image'),
+        "5.9": FonticonPicker("button_icon")
+    })
 
 
 class ButtonForm(ServicesCatalogView):
@@ -55,10 +60,26 @@ class ButtonForm(ServicesCatalogView):
 
     btn_text = Input(name='name')
     btn_hvr_text = Input(name='description')
+    btn_image = BootstrapSelect('button_image')
     select_dialog = BootstrapSelect('dialog_id')
     system_process = BootstrapSelect('instance_name')
     request = Input(name='object_request')
-    btn_image = BootstrapSelect('button_image')
+
+    @View.nested
+    class options(Tab):    # noqa
+        TAB_NAME = 'Options'
+
+        btn_text = Input(name='name')
+        btn_hvr_text = Input(name='description')
+        select_dialog = BootstrapSelect('dialog_id')
+        btn_image = FonticonPicker("button_icon")
+
+    @View.nested
+    class advanced(Tab):   # noqa
+        TAB_NAME = 'Advanced'
+
+        system_process = BootstrapSelect('instance_name')
+        request = Input(name='object_request')
 
 
 class AllCatalogItemView(ServicesCatalogView):
@@ -265,28 +286,39 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
         view.flash.assert_success_message('The selected Catalog Item was deleted')
 
     def add_button_group(self):
+        button_name = fauxfactory.gen_alpha()
         view = navigate_to(self, 'AddButtonGroup')
         view.fill({'btn_group_text': "group_text",
-                   'btn_group_hvr_text': "descr",
-                   'btn_image': "Button Image 1"})
+                   'btn_group_hvr_text': button_name,
+                   'btn_image': "Button Image 1" if self.appliance.version < '5.9' else 'broom'})
         view.add_button.click()
         view = self.create_view(DetailsCatalogItemView)
         assert view.is_displayed
-        view.flash.assert_success_message('Buttons Group "descr" was added')
+        return button_name
 
     def add_button(self):
+        button_name = fauxfactory.gen_alpha()
         view = navigate_to(self, 'AddButton')
-        view.fill({'btn_text': "btn_text",
-                   'btn_hvr_text': "btn_descr",
-                   'btn_image': "Button Image 1",
-                   'select_dialog': self.dialog,
-                   'system_process': "Request",
-                   'request': "InspectMe"})
+        if self.appliance.version < '5.9':
+            view.fill({'btn_text': "btn_text",
+                'btn_hvr_text': button_name,
+                'btn_image': "Button Image 1",
+                'select_dialog': self.dialog,
+                'system_process': "Request",
+                'request': "InspectMe"})
+        else:
+            view.fill({'options': {'btn_text': "btn_text",
+                                   'btn_hvr_text': button_name,
+                                   'select_dialog': self.dialog,
+                                   'btn_image': 'broom'},
+                       'advanced': {'system_process': "Request",
+                                    'request': "InspectMe"}})
         view.add_button.click()
         view = self.create_view(DetailsCatalogItemView)
         time.sleep(5)
         assert view.is_displayed
-        view.flash.assert_success_message('Button "btn_descr" was added')
+        view.flash.assert_no_error()
+        return button_name
 
     @property
     def exists(self):
