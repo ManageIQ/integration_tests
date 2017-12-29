@@ -124,7 +124,7 @@ class KeyPair(BaseEntity, WidgetasticTaggable):
 
     def delete(self, cancel=False, wait=False):
         view = navigate_to(self, 'Details')
-        # TODO: get rid of this resolve
+        # TODO: get rid of this resolve when widgetastic.core/pull/68 is merged
         item_name = VersionPick({Version.lowest(): 'Remove this Key Pair',
                                 '5.9': 'Remove this Key Pair from Inventory'}
                                 ).pick(self.appliance.version)
