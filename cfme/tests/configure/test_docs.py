@@ -103,7 +103,7 @@ def test_contents(appliance, soft_assert):
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9')
+@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9')  # no sense in 5.9
 def test_info(appliance, soft_assert):
     """
     Test the alt/title and href attributes.
