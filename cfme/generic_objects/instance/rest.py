@@ -89,7 +89,7 @@ def delete(self):
     self.rest_response = self.appliance.rest_api.response
 
 
-@MiqImplementationContext.external_for(GenericObjectInstance.exists, ViaREST)
+@MiqImplementationContext.external_for(GenericObjectInstance.exists.getter, ViaREST)
 def exists(self):
     return bool(
         self.appliance.rest_api.collections.generic_objects.find_by(name=self.name))
