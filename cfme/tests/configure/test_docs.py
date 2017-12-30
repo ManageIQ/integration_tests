@@ -16,6 +16,7 @@ from pdfminer.pdfinterp import PDFPageInterpreter, PDFResourceManager
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
+from fixtures.pytest_store import store
 
 # This is list of tested links expected to be on the documentation page
 # Keys here correspond to nested view names from configure.documentation.LinksView
@@ -102,6 +103,7 @@ def test_contents(appliance, soft_assert):
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 @pytest.mark.ignore_stream("upstream")
+@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9')
 def test_info(appliance, soft_assert):
     """
     Test the alt/title and href attributes.

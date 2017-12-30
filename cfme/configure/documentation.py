@@ -1,4 +1,5 @@
 from widgetastic.widget import Text, Image, View
+from widgetastic.utils import VersionPick, Version
 
 
 class LinksView(View):
@@ -7,68 +8,78 @@ class LinksView(View):
     Each doc link is an anchor with a child image element, then an anchor with text
     Both the image and the text anchor should link to the same PDF
     """
+    # todo: update this view. it contains too much duplicate code
     @View.nested
     class policies(View):  # noqa
         TEXT = 'Defining Policies Profiles Guide'
         img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
         img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
-        link = Text('//a[normalize-space(.)="{}"]'.format(TEXT))
+        link = VersionPick({Version.lowest(): Text('//a[normalize-space(.)="{}"]'.format(TEXT)),
+                            '5.9': img_anchor})
 
     @View.nested
     class general(View):  # noqa
         TEXT = 'General Configuration Guide'
         img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
         img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
-        link = Text('//a[normalize-space(.)="{}"]'.format(TEXT))
+        link = VersionPick({Version.lowest(): Text('//a[normalize-space(.)="{}"]'.format(TEXT)),
+                            '5.9': img_anchor})
 
     @View.nested
     class inventory(View):  # noqa
         TEXT = 'Infrastructure Inventory Guide'
         img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
         img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
-        link = Text('//a[normalize-space(.)="{}"]'.format(TEXT))
+        link = VersionPick({Version.lowest(): Text('//a[normalize-space(.)="{}"]'.format(TEXT)),
+                            '5.9': img_anchor})
 
     @View.nested
     class automation(View):  # noqa
         TEXT = 'Methods For Automation Guide'
         img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
         img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
-        link = Text('//a[normalize-space(.)="{}"]'.format(TEXT))
+        link = VersionPick({Version.lowest(): Text('//a[normalize-space(.)="{}"]'.format(TEXT)),
+                            '5.9': img_anchor})
 
     @View.nested
     class monitoring(View):  # noqa
         TEXT = 'Monitoring Alerts Reporting Guide'
         img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
         img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
-        link = Text('//a[normalize-space(.)="{}"]'.format(TEXT))
+        link = VersionPick({Version.lowest(): Text('//a[normalize-space(.)="{}"]'.format(TEXT)),
+                            '5.9': img_anchor})
 
     @View.nested
     class providers(View):  # noqa
         TEXT = 'Providers Guide'
         img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
         img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
-        link = Text('//a[normalize-space(.)="{}"]'.format(TEXT))
+        link = VersionPick({Version.lowest(): Text('//a[normalize-space(.)="{}"]'.format(TEXT)),
+                            '5.9': img_anchor})
 
     @View.nested
     class rest(View):  # noqa
         TEXT = 'Rest Api Guide'
         img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
         img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
-        link = Text('//a[normalize-space(.)="{}"]'.format(TEXT))
+        link = VersionPick({Version.lowest(): Text('//a[normalize-space(.)="{}"]'.format(TEXT)),
+                            '5.9': img_anchor})
 
     @View.nested
     class scripting(View):  # noqa
         TEXT = 'Scripting Actions Guide'
         img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
         img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
-        link = Text('//a[normalize-space(.)="{}"]'.format(TEXT))
+        link = VersionPick({Version.lowest(): Text('//a[normalize-space(.)="{}"]'.format(TEXT)),
+                            '5.9': img_anchor})
 
     @View.nested
     class vm_hosts(View):  # noqa
         TEXT = 'Virtual Machines Hosts Guide'
         img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
         img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
-        link = Text('//a[normalize-space(.)="{}"]'.format(TEXT))
+        link = VersionPick({Version.lowest(): Text('//a[normalize-space(.)="{}"]'.format(TEXT)),
+                            '5.9': img_anchor})
 
     @View.nested
     class customer_portal(View):  # noqa
