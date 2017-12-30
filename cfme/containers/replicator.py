@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import attr
-import random
-import itertools
 from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
@@ -9,7 +7,7 @@ from wrapanapi.containers.replicator import Replicator as ApiReplicator
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
-    ContainerObjectDetailsBaseView)
+    ContainerObjectDetailsBaseView, GetRandomInstancesMixin)
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 from cfme.utils.providers import get_crud_by_name
@@ -38,17 +36,9 @@ class Replicator(BaseEntity, WidgetasticTaggable, Labelable):
     def mgmt(self):
         return ApiReplicator(self.provider.mgmt, self.name, self.project_name)
 
-    @classmethod
-    def get_random_instances(cls, provider, count=1, appliance=None):
-        """Generating random instances."""
-        rc_list = provider.mgmt.list_replication_controller()
-        random.shuffle(rc_list)
-        return [cls(obj.name, obj.project_name, provider, appliance=appliance)
-                for obj in itertools.islice(rc_list, count)]
-
 
 @attr.s
-class ReplicatorCollection(BaseCollection):
+class ReplicatorCollection(GetRandomInstancesMixin, BaseCollection):
     """Collection object for :py:class:`Replicator`."""
 
     ENTITY = Replicator

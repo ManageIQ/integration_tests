@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import attr
-import random
-import itertools
 from cached_property import cached_property
 
 from navmazing import NavigateToSibling, NavigateToAttribute
@@ -9,7 +7,8 @@ from wrapanapi.containers.volume import Volume as ApiVolume
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
-                                      ContainerObjectDetailsBaseView)
+                                      ContainerObjectDetailsBaseView,
+                                      GetRandomInstancesMixin)
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from cfme.utils.providers import get_crud_by_name
@@ -37,17 +36,9 @@ class Volume(BaseEntity, WidgetasticTaggable, Labelable):
     def mgmt(self):
         return ApiVolume(self.provider.mgmt, self.name)
 
-    @classmethod
-    def get_random_instances(cls, provider, count=1, appliance=None):
-        """Generating random instances."""
-        volumes = provider.mgmt.list_volume()
-        random.shuffle(volumes)
-        return [cls(vol.name, provider, appliance=appliance)
-                for vol in itertools.islice(volumes, count)]
-
 
 @attr.s
-class VolumeCollection(BaseCollection):
+class VolumeCollection(GetRandomInstancesMixin, BaseCollection):
     """Collection object for :py:class:`Volume`."""
 
     ENTITY = Volume

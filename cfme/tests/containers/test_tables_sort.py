@@ -1,7 +1,7 @@
 import pytest
 
-from cfme.containers.replicator import Replicator
-from cfme.containers.route import Route
+from cfme.containers.replicator import Replicator, ReplicatorCollection
+from cfme.containers.route import Route, RouteCollection
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
 from cfme.utils.appliance.implementations.ui import navigate_to
 
@@ -19,9 +19,12 @@ pytestmark = [
 
 
 TEST_ITEMS = [
-    pytest.mark.polarion('CMP-9924')(ContainersTestItem(ContainersProvider, 'CMP-9924')),
-    pytest.mark.polarion('CMP-9926')(ContainersTestItem(Route, 'CMP-9926')),
-    pytest.mark.polarion('CMP-9928')(ContainersTestItem(Replicator, 'CMP-9928'))
+    pytest.mark.polarion('CMP-9924')(ContainersTestItem(
+        ContainersProvider, 'CMP-9924', collection_obj=None)),
+    pytest.mark.polarion('CMP-9926')(ContainersTestItem(
+        Route, 'CMP-9926', collection_obj=RouteCollection)),
+    pytest.mark.polarion('CMP-9928')(ContainersTestItem(
+        Replicator, 'CMP-9928', collection_obj=ReplicatorCollection))
 ]
 
 
@@ -29,7 +32,7 @@ TEST_ITEMS = [
                          ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
 def test_tables_sort(test_item, soft_assert):
 
-    current_view = navigate_to(test_item.obj, 'All')
+    current_view = navigate_to(test_item.collection_obj, 'All')
     current_view.toolbar.view_selector.select('List View')
 
     for col, header_text in enumerate(current_view.table.headers):

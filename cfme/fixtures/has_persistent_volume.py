@@ -1,5 +1,6 @@
 import pytest
 
+from wrapanapi.containers.volume import Volume as VolumeApi
 from cfme.containers.volume import Volume
 
 
@@ -19,9 +20,6 @@ def has_persistent_volume(provider, appliance):
         },
         'persistentVolumeReclaimPolicy': 'Retain'
     }
-    assert provider.mgmt.api.post('persistentvolume', payload)[0] in [200, 201]
-    # TODO: switch to below once wrapanapi version > 2.4.4:
-    #     from wrapanapi.containers.volume import Volume as VolumeApi
-    #     volume = VolumeApi.create(provider, payload)
-    yield Volume(name, provider, appliance)
-    provider.mgmt.api.delete('persistentvolume', name)
+    volume = VolumeApi.create(provider.mgmt, payload)
+    yield Volume(volume.name, provider, appliance)
+    volume.delete()

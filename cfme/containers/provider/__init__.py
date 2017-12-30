@@ -662,3 +662,10 @@ def refresh_and_navigate(*args, **kwargs):
     view = navigate_to(*args, **kwargs)
     view.browser.refresh()
     return view
+
+
+class GetRandomInstancesMixin(object):
+
+    def get_random_instances(self, count=1):
+        all_instances = self.all()
+        return random.sample(all_instances, count)
