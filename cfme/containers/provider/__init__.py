@@ -674,3 +674,9 @@ class GetRandomInstancesMixin(object):
     def get_random_instances(self, count=1):
         all_instances = self.all()
         return random.sample(all_instances, count)
+
+    def get_specific_instance(self, instance_name):
+        all_instances = self.all()
+        for instance in all_instances:
+            if instance_name == instance.name:
+                return instance

@@ -22,12 +22,17 @@ class ProjectDetailsView(ContainerObjectDetailsBaseView):
     pass
 
 
+class ProjectDashboardView(ContainerObjectDetailsBaseView):
+    pass
+
+
 @attr.s
 class Project(BaseEntity, WidgetasticTaggable, Labelable):
 
     PLURAL = 'Projects'
     all_view = ProjectAllView
     details_view = ProjectDetailsView
+    dashboard_view = ProjectDashboardView
 
     name = attr.ib()
     provider = attr.ib()
@@ -94,6 +99,18 @@ class Details(CFMENavigateStep):
 
     def resetter(self):
         self.view.toolbar.view_selector.select("Summary View")
+
+
+@navigator.register(Project, 'Dashboard')
+class Dashboard(CFMENavigateStep):
+    VIEW = ProjectDetailsView
+    prerequisite = NavigateToAttribute('parent', 'All')
+
+    def step(self):
+        self.prerequisite_view.entities.get_entity(name=self.obj.name).click()
+
+    def resetter(self):
+        self.view.toolbar.view_selector.select("Dashboard View")
 
 
 @navigator.register(Project, 'EditTags')

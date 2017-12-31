@@ -1,10 +1,10 @@
 import pytest
 
-from cfme.containers.provider import ContainersProvider
+from cfme.containers.provider import ContainersProvider, ContainersTestItem
 from cfme.containers.container import Container
 from cfme.containers.image import Image
 from cfme.containers.service import Service
-from cfme.containers.project import Project
+from cfme.containers.project import Project, ProjectCollection
 
 from cfme.utils.appliance.implementations.ui import navigate_to
 
@@ -15,8 +15,16 @@ pytestmark = [
     pytest.mark.provider([ContainersProvider], scope='function')
 ]
 
-tested_objects = [Container, Image, Service]
+tested_objects = [Container, Service]
 project_name = 'default'  # Selected because it's in every Openshift installation
+
+TEST_ITEMS = [pytest.mark.polarion('CMP-10806')(
+        ContainersTestItem(
+            Project,
+            'CMP-10806',
+            collection_object=ProjectCollection
+        )
+    )]
 
 
 def get_api_object_counts(appliance, project_name):
@@ -24,13 +32,13 @@ def get_api_object_counts(appliance, project_name):
     out = {
         Container: 0,
         Service: 0,
-        Image: 0
+        # Image: 0 TODO this doesn't work any more
     }
     for provider in appliance.managed_known_providers:
         if isinstance(provider, ContainersProvider):
             out[Container] += len(provider.mgmt.list_container_group(project_name))
             out[Service] += len(provider.mgmt.list_service(project_name))
-            out[Image] += len(get_container_images_amt(provider, project_name))
+            # out[Image] += len(get_container_images_amt(provider, project_name)) TODO
     return out
 
 
@@ -52,8 +60,10 @@ def get_api_pods_names(provider):
     return pod_name
 
 
+@pytest.mark.parametrize('test_item', TEST_ITEMS,
+                         ids=[ContainersTestItem.get_pretty_id(ti) for ti in TEST_ITEMS])
 @pytest.mark.polarion('CMP-10806')
-def test_projects_dashboard_pods(provider, soft_assert):
+def test_projects_dashboard_pods(provider, appliance, soft_assert, test_item):
     """Tests data integrity of Pods names in Pods status box in Projects Dashboard.
     Steps:
         * Go to Projects / Dashboard View
@@ -61,8 +71,8 @@ def test_projects_dashboard_pods(provider, soft_assert):
         Pods names
     """
     api_pod_names = get_api_pods_names(provider)
-    inst = Project.get_project_entity(provider, project_name)
-    view = navigate_to(inst, 'Details')
+    inst = test_item.collection_object(appliance).get_specific_instance('default')
+    view = navigate_to(inst, 'Dashboard')
     for field in view.pods.fields:
         soft_assert(
             field in api_pod_names,
@@ -72,8 +82,9 @@ def test_projects_dashboard_pods(provider, soft_assert):
         )
 
 
-@pytest.mark.polarion('CMP-10805')
-def test_projects_dashboard_icons(provider, appliance, soft_assert):
+@pytest.mark.parametrize('test_item', TEST_ITEMS,
+                         ids=[ContainersTestItem.get_pretty_id(ti) for ti in TEST_ITEMS])
+def test_projects_dashboard_icons(appliance, soft_assert, test_item):
     """Tests data integrity of Containers/Images/Services number in
     Projects Dashboard's status boxes.
     Steps:
@@ -81,9 +92,9 @@ def test_projects_dashboard_icons(provider, appliance, soft_assert):
         * Compare the data in the status boxes to API data forz
         Containers/Images/Services numbers
     """
-    inst = Project.get_project_entity(provider, project_name)
     api_values = get_api_object_counts(appliance, project_name)
-    view = navigate_to(inst, 'Details')
+    inst = test_item.collection_object(appliance).get_specific_instance('default')
+    view = navigate_to(inst, 'Dashboard')
     for object in tested_objects:
         statusbox_value = getattr(view, object.PLURAL.split(' ')[-1].lower()).value
         soft_assert(
