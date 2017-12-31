@@ -601,7 +601,7 @@ class NestedSummaryTable(SummaryTable):
 
 
 class ContainerSummaryTable(SummaryTable):
-     BASELOC = './/div[@head-title={}]//table'
+    BASELOC = './/div[@head-title={}]//table'
 
 
 class StatusBox(Widget, ClickableMixin):
