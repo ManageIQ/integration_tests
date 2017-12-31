@@ -32,13 +32,13 @@ def get_api_object_counts(appliance, project_name):
     out = {
         Container: 0,
         Service: 0,
-        # Image: 0 TODO this doesn't work any more
+        Image: 0
     }
     for provider in appliance.managed_known_providers:
         if isinstance(provider, ContainersProvider):
             out[Container] += len(provider.mgmt.list_container_group(project_name))
             out[Service] += len(provider.mgmt.list_service(project_name))
-            # out[Image] += len(get_container_images_amt(provider, project_name)) TODO
+            out[Image] += len(get_container_images_amt(provider, project_name))
     return out
 
 
