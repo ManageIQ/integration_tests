@@ -16,7 +16,7 @@ pytestmark = [
 ]
 
 tested_objects = [Container, Image, Service]
-project_name = 'default'  # Selected because it's in every Openshift installation
+project_name = 'default'  # Selected because it's  in every Openshift installation
 
 
 def get_api_object_counts(appliance, project_name):
