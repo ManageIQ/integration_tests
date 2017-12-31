@@ -4,6 +4,7 @@ from traceback import format_exc
 
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic_manageiq import StatusBox, ContainerSummaryTable
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Text, View, TextInput
 from widgetastic_patternfly import (
@@ -498,6 +499,10 @@ class ContainerObjectDetailsBaseView(BaseLoggedInPage, LoggingableView):
     breadcrumb = BreadCrumb(locator='//ol[@class="breadcrumb"]')
     toolbar = View.nested(ProviderDetailsToolBar)
     entities = View.nested(ContainerObjectDetailsEntities)
+    containers = StatusBox('Containers')
+    services = StatusBox('Services')
+    images = StatusBox('Images')
+    pods = ContainerSummaryTable(title='Pods')
 
     @View.nested
     class sidebar(ProviderSideBar):  # noqa

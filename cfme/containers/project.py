@@ -36,6 +36,11 @@ class Project(BaseEntity, WidgetasticTaggable, Labelable):
     def mgmt(self):
         return ApiProject(self.provider.mgmt, self.name)
 
+    @classmethod
+    def get_project_entity(cls, provider, provider_name):
+        selected_provider = provider.mgmt.get_project_by_name(provider_name)
+        return cls(selected_provider.name, provider)
+
 
 @attr.s
 class ProjectCollection(GetRandomInstancesMixin, BaseCollection):
