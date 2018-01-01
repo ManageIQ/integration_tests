@@ -20,10 +20,10 @@ project_name = 'default'  # Selected because it's in every Openshift installatio
 
 TEST_ITEMS = [pytest.mark.polarion('CMP-10806')(
     ContainersTestItem(
-            Project,
-            'CMP-10806',
-            collection_object=ProjectCollection
-        )
+        Project,
+        'CMP-10806',
+        collection_object=ProjectCollection
+    )
 )]
 
 
@@ -62,7 +62,6 @@ def get_api_pods_names(provider):
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
                          ids=[ContainersTestItem.get_pretty_id(ti) for ti in TEST_ITEMS])
-@pytest.mark.polarion('CMP-10806')
 def test_projects_dashboard_pods(provider, appliance, soft_assert, test_item):
     """Tests data integrity of Pods names in Pods status box in Projects Dashboard.
     Steps:
