@@ -15,16 +15,16 @@ pytestmark = [
     pytest.mark.provider([ContainersProvider], scope='function')
 ]
 
-tested_objects = [Container, Service]
+tested_objects = [Container, Image, Service]
 project_name = 'default'  # Selected because it's in every Openshift installation
 
 TEST_ITEMS = [pytest.mark.polarion('CMP-10806')(
-        ContainersTestItem(
+    ContainersTestItem(
             Project,
             'CMP-10806',
             collection_object=ProjectCollection
         )
-    )]
+)]
 
 
 def get_api_object_counts(appliance, project_name):
