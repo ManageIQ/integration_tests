@@ -2,12 +2,10 @@ import pytest
 import requests
 from cfme.utils.log import logger
 from cfme.containers.provider import ContainersProvider
-from cfme.utils.version import current_version
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda provider: current_version() < "5.8"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1),
     pytest.mark.provider([ContainersProvider], scope='function')]

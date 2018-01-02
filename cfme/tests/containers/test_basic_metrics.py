@@ -1,11 +1,9 @@
 import pytest
 import re
 from cfme.containers.provider import ContainersProvider
-from cfme.utils.version import current_version
 
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda provider: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1),
     pytest.mark.provider([ContainersProvider], scope='function')]
