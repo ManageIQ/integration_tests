@@ -7,7 +7,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
 
 
-pytestmark = [pytest.mark.provider([ContainersProvider], scope='function')]
+pytestmark = [pytest.mark.provider([ContainersProvider], scope='function'),
+              pytest.mark.stressing]
 
 providers_values_to_update = {
     'provider_api_hostname': 'something_different.redhat.com'

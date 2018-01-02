@@ -7,7 +7,8 @@ from cfme.containers.provider import ContainersProvider
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1),
-    pytest.mark.provider([ContainersProvider], scope='function')
+    pytest.mark.provider([ContainersProvider], scope='function'),
+    pytest.mark.stressing
 ]
 
 
