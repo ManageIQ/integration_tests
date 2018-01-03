@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 
+import pytest
+
 from cfme import test_requirements
 from cfme.configure.tasks import is_datastore_analysis_finished
-from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import datastore, host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf, testgen
+from cfme.utils.appliance import get_or_create_current_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.appliance import get_or_create_current_appliance
 from cfme.utils.wait import wait_for
-import pytest
 
 pytestmark = [test_requirements.smartstate]
 DATASTORE_TYPES = ('vmfs', 'nfs', 'iscsi')
@@ -103,7 +103,8 @@ def test_run_datastore_analysis(appliance, request, setup_provider, provider, da
             test_host = host_collection.instantiate(name=host_entity.name, provider=provider)
 
             # Add them to the host
-            wait_for(lambda: test_host.exists, delay=10, num_sec=120, fail_func=sel.refresh)
+            wait_for(lambda: test_host.exists, delay=10, num_sec=120,
+                     fail_func=appliance.browser.widgetastic.refresh)
             if not test_host.has_valid_credentials:
                 test_host.update(
                     updates={
@@ -113,7 +114,7 @@ def test_run_datastore_analysis(appliance, request, setup_provider, provider, da
                     lambda: test_host.has_valid_credentials,
                     delay=10,
                     num_sec=120,
-                    fail_func=sel.refresh
+                    fail_func=appliance.browser.widgetastic.refresh
                 )
 
                 # And remove them again when the test is finished

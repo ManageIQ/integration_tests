@@ -364,7 +364,7 @@ class IPAppliance(object):
 
         if (
                 exc_type is not None and not RUNNING_UNDER_SPROUT):
-            from cfme.fixtures.pytest_selenium import take_screenshot
+            from cfme.utils.browser import take_screenshot
             logger.info("Before we pop this appliance, a screenshot and a traceback will be taken.")
             ss, ss_error = take_screenshot()
             full_tb = "".join(traceback.format_tb(exc_tb))

@@ -9,7 +9,6 @@ import pytest
 # from cfme.infrastructure.virtual_machines import Vm
 # from cfme.intelligence.chargeback.rates import ComputeRate
 # from cfme.intelligence.reports.reports import CustomReport
-import cfme.fixtures.pytest_selenium as sel
 from cfme.base.ui import Server
 from cfme.exceptions import CannotScrollException
 from cfme.infrastructure.networking import InfraNetworking
@@ -73,7 +72,8 @@ def test_pull_splitter_persistence(request, appliance, model_object, destination
         pass
 
     # Then we check hidden position splitter
-    if not sel.elements("//div[@id='left_div'][contains(@class, 'hidden-md')]"):
+    selenium = appliance.browser.widgetastic.selenium
+    if not selenium.elements("//div[@id='left_div'][contains(@class, 'hidden-md')]"):
         pytest.fail("Splitter did not persist when on hidden position!")
     # Then we iterate over all the other positions
     for position in ["col-md-2", "col-md-3", "col-md-4", "col-md-5"]:
@@ -82,7 +82,7 @@ def test_pull_splitter_persistence(request, appliance, model_object, destination
         navigate_to(appliance.server, 'Dashboard')
         navigate_to(model_object, destination)
         # Then check its position
-        if not sel.elements(
+        if not selenium.elements(
                 "//div[@id='left_div'][contains(@class, {})]".format(
                     unescape(quoteattr(position)))):
             pytest.fail("Splitter did not persist when on " + str(position) + " position!")

@@ -1,34 +1,32 @@
 """Core functionality for starting, restarting, and stopping a selenium browser."""
 import atexit
 import json
-import os
-import urllib2
-import time
 import threading
+import time
+import urllib2
+from collections import namedtuple
 from shutil import rmtree
 from string import Template
 from tempfile import mkdtemp
-import warnings
 
-# import logging
-
-from werkzeug.local import LocalProxy
-
+import os
 import requests
+import warnings
+from cached_property import cached_property
 from selenium import webdriver
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common import keys
 from selenium.common.exceptions import UnexpectedAlertPresentException, WebDriverException
+from selenium.webdriver.common import keys
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.remote.file_detector import UselessFileDetector
+from werkzeug.local import LocalProxy
 
-from cached_property import cached_property
-
-from fixtures.pytest_store import store, write_line
 from cfme.utils import conf, tries
-from cfme.utils.path import data_path
-
 from cfme.utils.log import logger as log  # TODO remove after artifactor handler
+from cfme.utils.path import data_path
+from fixtures.pytest_store import store, write_line
+
+# import logging
 # log = logging.getLogger('cfme.browser')
 
 
@@ -400,6 +398,27 @@ def quit():
 
     """
     manager.quit()
+
+
+ScreenShot = namedtuple("screenshot", ['png', 'error'])
+
+
+def take_screenshot():
+    screenshot = None
+    screenshot_error = None
+    try:
+        screenshot = browser().get_screenshot_as_base64()
+    except (AttributeError, WebDriverException):
+        # See comments utils.browser.ensure_browser_open for why these two exceptions
+        screenshot_error = 'browser error'
+    except Exception as ex:
+        # If this fails for any other reason,
+        # leave out the screenshot but record the reason
+        if str(ex):
+            screenshot_error = '{}: {}'.format(type(ex).__name__, str(ex))
+        else:
+            screenshot_error = type(ex).__name__
+    return ScreenShot(screenshot, screenshot_error)
 
 
 atexit.register(manager.quit)

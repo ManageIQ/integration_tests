@@ -16,7 +16,6 @@ from cfme.common.provider_views import (InfraProviderAddView,
                                         ProviderNodesView,
                                         ProviderTemplatesView)
 from cfme.exceptions import DestinationNotFound
-from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import ClusterView, ClusterToolbar
 from cfme.infrastructure.host import Host
 from cfme.utils import conf
@@ -26,7 +25,7 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import BreadCrumb, BaseEntitiesView, View
+from widgetastic_manageiq import BreadCrumb, BaseEntitiesView, View, NoSuchElementException
 
 
 class ProviderClustersView(ClusterView):
@@ -122,7 +121,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     def num_host_ui(self):
         try:
             num = self.get_detail("Relationships", 'Hosts')
-        except sel.NoSuchElementException:
+        except NoSuchElementException:
             logger.error("Couldn't find number of hosts using key [Hosts] trying Nodes")
             num = self.get_detail("Relationships", 'Nodes')
         return int(num)

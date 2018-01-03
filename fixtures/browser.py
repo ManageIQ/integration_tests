@@ -2,12 +2,13 @@ import pytest
 from py.error import ENOENT
 
 import cfme.utils.browser
-from cfme.fixtures.pytest_selenium import ensure_browser_open, take_screenshot
-from fixtures.artifactor_plugin import fire_art_test_hook
-from cfme.utils.datafile import template_env
-from cfme.utils.path import log_path, project_path
 from cfme.utils import browser as browser_module, safe_string
+from cfme.utils.browser import take_screenshot
+from cfme.utils.datafile import template_env
 from cfme.utils.log import logger
+from cfme.utils.path import log_path, project_path
+from fixtures.artifactor_plugin import fire_art_test_hook
+
 browser_fixtures = {'browser'}
 
 failed_test_tracking = {
@@ -133,11 +134,3 @@ def browser(appliance):
     if isinstance(appliance, DummyAppliance):
         pytest.xfail("browser not supported with DummyAppliance")
     return browser_module.browser
-
-
-@pytest.yield_fixture(scope="function")
-def nuke_browser_after_test():
-    """Some more disruptive tests have to take this measure."""
-    yield
-    browser_module.quit()
-    ensure_browser_open()
