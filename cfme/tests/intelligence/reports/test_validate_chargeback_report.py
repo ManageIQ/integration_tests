@@ -64,7 +64,7 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
     cb_group = group_collection.instantiate(description='EvmGroup-user')
 
     vm = VM.factory(vm_name, provider)
-
+    user = None
     try:
         user = appliance.collections.users.create(
             name=provider.name + fauxfactory.gen_alphanumeric(),
@@ -79,7 +79,8 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
         yield user.name
     finally:
         vm.unset_ownership()
-        user.delete()
+        if user:
+            user.delete()
 
 
 @pytest.yield_fixture(scope="module")
