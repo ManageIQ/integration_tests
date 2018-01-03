@@ -825,26 +825,18 @@ class Vm(VM):
     def current_snapshot_name(self):
         """Returns the current snapshot name."""
         view = navigate_to(self, 'SnapshotsAll')
-        if not view.tree.is_displayed:
-            return None
-        root_item = view.tree.expand_path(self.name)
-        active_items = view.tree.child_items_with_text(root_item, '(Active)')
-        if active_items:
-            return active_items[0].text.split(' (Active')[0]
+        active_snapshot = view.tree.selected_item if view.tree.is_displayed else None
+        if active_snapshot:
+            return active_snapshot.text.split(' (Active')[0]
 
     @property
     def current_snapshot_description(self):
         """Returns the current snapshot description."""
         view = navigate_to(self, 'SnapshotsAll')
-        if not view.tree.is_displayed:
-            return None
-        root_item = view.tree.expand_path(self.name)
-        active_items = view.tree.child_items_with_text(root_item, '(Active)')
-        if active_items:
-            active_items[0].click()
+        active_snapshot = view.tree.selected_item if view.tree.is_displayed else None
+        if active_snapshot:
+            active_snapshot.click()
             return view.description.text
-        else:
-            return None
 
     @property
     def genealogy(self):
