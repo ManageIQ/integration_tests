@@ -1219,7 +1219,7 @@ class ReportDataControllerMixin(object):
         self.browser.plugin.ensure_page_safe()
         return result
 
-    def get_id_by_keys(self, **keys):
+    def get_ids_by_keys(self, **keys):
         updated_keys = keys.copy()
         for key in updated_keys:
             # js api compares values in lower case but don't replace space with underscore
@@ -1235,7 +1235,7 @@ class ReportDataControllerMixin(object):
         result = self.browser.execute_script(js_cmd)
         self.browser.plugin.ensure_page_safe()
         try:
-            return int(result[0]['id'])
+            return [int(eid['id']) for eid in result]
         except (TypeError, IndexError):
             return None
 
@@ -2803,10 +2803,15 @@ class NonJSBaseEntity(View):
         return getattr(item, name)
 
     def __str__(self):
-        return str(self._get_existing_entity())
+        return str(self.__repr__())
 
     def __repr__(self):
-        return repr(self._get_existing_entity())
+        try:
+            return repr(self._get_existing_entity())
+        except NoSuchElementException:
+            return '< {c} name {n}, id {id} >'.format(c=self.__class__,
+                                                      n=self.name or "",
+                                                      id=self.entity_id or "")
 
     @property
     def is_displayed(self):
@@ -2926,10 +2931,11 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                 return el['entity_id']
         return None
 
-    def get_entity_by_keys(self, **keys):
+    def get_entities_by_keys(self, **keys):
         # some fields aren't available in Tile or Grid View.
         # So, we decided to switch to List View mode if several keys are passed
         # btw, it isn't necessary in 5.9+
+        found_entities = []
         if self.browser.product_version < '5.9':
             # todo: fix this ugly hack somehow else
             view_selector = getattr(self.parent.parent.toolbar, 'view_selector', None)
@@ -2942,7 +2948,8 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                 elements = self._current_page_elements
 
             for el in elements:
-                entity = self.parent.entity_class(parent=self, entity_id=el['entity_id'])
+                entity = self.parent.entity_class(parent=self, entity_id=el['entity_id'],
+                                                  name=el['name'])
                 for key, value in keys.items():
                     try:
                         if entity.data[key] != str(value):
@@ -2950,11 +2957,11 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                     except KeyError:
                         break
                 else:
-                    return entity
+                    found_entities.append(entity)
         else:
             entity_id = keys.pop('entity_id', None)
             if entity_id:
-                return self.parent.entity_class(parent=self, entity_id=entity_id)
+                found_entities.append(self.parent.entity_class(parent=self, entity_id=entity_id))
             elif 'id' in keys:
                 # it turned out that there are some views which have entities with internal id
                 # which override entity id in JS code. this is workaround for such case
@@ -2968,11 +2975,12 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                         except KeyError:
                             break
                     else:
-                        return entity
-                pass
+                        found_entities.append(entity)
             else:
-                return self.parent.entity_class(parent=self, entity_id=self.get_id_by_keys(**keys))
-        return None
+                entities = [self.parent.entity_class(parent=self, entity_id=eid)
+                            for eid in self.get_ids_by_keys(**keys)]
+                found_entities.extend(entities)
+        return found_entities
 
     @property
     def all_entity_names(self):
@@ -2988,7 +2996,8 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         Returns: all entities (QuadIcon/etc.) displayed by view
         """
         if not surf_pages:
-            return [self.parent.entity_class(parent=self, entity_id=eid) for eid in self.entity_ids]
+            return [self.parent.entity_class(parent=self, entity_id=el['entity_id'],
+                                             name=el['name']) for el in self._current_page_elements]
         else:
             entities = []
             for _ in self.paginator.pages():
@@ -3017,9 +3026,10 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                 entity_id = keys['entity_id']
             else:
                 entity_id = None
-                entity = self.get_entity_by_keys(**keys)
-                if entity:
-                    return entity
+                try:
+                    return self.get_entities_by_keys(**keys)[0]
+                except IndexError:
+                    pass
 
             if entity_id:
                 return self.parent.entity_class(parent=self, entity_id=entity_id)
@@ -3039,6 +3049,43 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
             return self.parent.entity_class(parent=self, entity_id=entity_id)
 
         raise ItemNotFound("No Entities found on this page")
+
+    def apply(self, func, conditions, surf_pages=False):
+        """ looks for entities matching to conditions and applies passed func
+        :param func:  function to apply
+        :param conditions: entities should match to
+        :param surf_pages: current page entities if False, all entities otherwise
+        :return: list of entities
+
+        Ex:
+            from cfme.infrastructure.virtual_machines import Vm
+            view = navigate_to(Vm, 'All')
+            entities = view.entities.apply(func=lambda e: e.check(),
+                                           conditions=[{'name': 'cu-24x7'},
+                                                       {'name': 'env-win81-ie11'},
+                                                       {'name': 'nachandr-59013-cback001'}])
+        """
+
+        if isinstance(conditions, dict):
+            conditions = [conditions]
+        elif isinstance(conditions, (list, tuple)):
+            conditions = conditions[:]
+        else:
+            raise ValueError('Wrong conditions passed')
+
+        def apply_to_current_page(conditions):
+            for keys in conditions:
+                entities = self.get_entities_by_keys(**keys)
+                map(func, entities)
+                return entities
+
+        all_found_entities = []
+        if not surf_pages:
+            all_found_entities.extend(apply_to_current_page(conditions))
+        else:
+            for _ in self.paginator.pages():
+                all_found_entities.extend(apply_to_current_page(conditions))
+        return all_found_entities
 
 
 class BaseEntitiesView(View):
@@ -3535,7 +3582,7 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
     def get_entity_by_keys(self, **keys):
         if self.browser.product_version < '5.9':
             for el in self._current_page_elements:
-                entity = self.entity_class(parent=self, entity_id=el['entity_id'])
+                entity = self.entity_class(parent=self, entity_id=el['entity_id'], name=el['name'])
                 for key, value in keys.items():
                     try:
                         if entity.data[key] != str(value):
@@ -3549,7 +3596,10 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
             if entity_id:
                 return self.entity_class(parent=self, entity_id=entity_id)
             else:
-                return self.entity_class(parent=self, entity_id=self.get_id_by_keys(**keys))
+                try:
+                    return self.entity_class(parent=self, entity_id=self.get_ids_by_keys(**keys)[0])
+                except IndexError:
+                    pass
         return None
 
     @property
