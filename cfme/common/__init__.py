@@ -81,7 +81,12 @@ class PolicyProfileAssignable(object):
                 view.policy_profiles.check_node(policy_profile)
             else:
                 view.policy_profiles.uncheck_node(policy_profile)
-        view.save.click()
+        # Save button will be disabled in case of no changes done to policy,
+        # In this case click on Cancel
+        if view.save.disabled:
+            view.cancel.click()
+        else:
+            view.save.click()
         details_view = self.create_view(navigator.get_class(self, 'Details').VIEW)
         details_view.flash.assert_no_error()
 
