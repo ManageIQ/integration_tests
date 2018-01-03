@@ -168,7 +168,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         """
         result = []
         host_collection = self.appliance.collections.hosts
-        for host in self.get_yaml_data().get("hosts", []):
+        for host in self.data.get("hosts", []):
             creds = conf.credentials.get(host["credentials"], {})
             cred = Host.Credential(
                 principal=creds["username"],

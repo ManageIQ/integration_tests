@@ -50,7 +50,7 @@ def test_assign_compute_provider(appliance, virtualcenter_provider):
 def test_assign_compute_cluster(appliance, virtualcenter_provider):
     view = navigate_to(appliance.server, 'Chargeback')
 
-    cluster_name = random.choice(virtualcenter_provider.get_yaml_data()["clusters"])
+    cluster_name = random.choice(virtualcenter_provider.data["clusters"])
 
     cluster = cb.Assign(
         assign_to='Selected Cluster / Deployment Roles',
@@ -103,7 +103,7 @@ def test_assign_storage_enterprise(appliance, virtualcenter_provider):
 def test_assign_storage_datastores(appliance, virtualcenter_provider):
     view = navigate_to(appliance.server, 'Chargeback')
 
-    datastore = random.choice(virtualcenter_provider.get_yaml_data()["datastores"])["name"]
+    datastore = random.choice(virtualcenter_provider.data["datastores"])["name"]
 
     sel_datastore = cb.Assign(
         assign_to="Selected Datastores",

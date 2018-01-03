@@ -123,7 +123,7 @@ class CannotContinueWithNavigation(CFMEException):
 
 class ProviderHasNoKey(CFMEException):
     """
-    Raised if the :py:meth:`cfme.cloud.provider.Provider.get_mgmt_system` method is called
+    Raised if the :py:meth:`cfme.cloud.provider.Provider.mgmt` method is called
     but the Provider instance has no key.
     """
     pass

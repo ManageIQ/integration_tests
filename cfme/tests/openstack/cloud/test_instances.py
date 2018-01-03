@@ -21,7 +21,7 @@ pytestmark = [
 
 @pytest.yield_fixture(scope='function')
 def new_instance(provider):
-    prov_data = provider.get_yaml_data()['provisioning']
+    prov_data = provider.data['provisioning']
     instance = OpenStackInstance(fauxfactory.gen_alpha(), provider,
                                  template_name=prov_data['image']['name'])
     prov_form_data = {
@@ -46,7 +46,7 @@ def new_instance(provider):
 def test_create_instance(new_instance, soft_assert):
     """Creates an instance and verifies it appears on UI"""
     navigate_to(new_instance, 'Details')
-    prov_data = new_instance.provider.get_yaml_data()['provisioning']
+    prov_data = new_instance.provider.data['provisioning']
     power_state = new_instance.get_detail(properties=('Power Management',
                                                       'Power State'))
     assert power_state == OpenStackInstance.STATE_ON

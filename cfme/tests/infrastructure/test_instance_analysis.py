@@ -221,20 +221,18 @@ def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data,
 
     logger.info("VM %s provisioned, waiting for IP address to be assigned", vm_name)
 
-    mgmt_system = provider.get_mgmt_system()
-
     @wait_for_decorator(timeout="20m", delay=5)
     def get_ip_address():
         logger.info("Power state for {} vm: {}, is_vm_stopped: {}".format(
-            vm_name, mgmt_system.vm_status(vm_name), mgmt_system.is_vm_stopped(vm_name)))
-        if mgmt_system.is_vm_stopped(vm_name):
-            mgmt_system.start_vm(vm_name)
+            vm_name, provider.mgmt.vm_status(vm_name), provider.mgmt.is_vm_stopped(vm_name)))
+        if provider.mgmt.is_vm_stopped(vm_name):
+            provider.mgmt.start_vm(vm_name)
 
-        ip = mgmt_system.current_ip_address(vm_name)
+        ip = provider.mgmt.current_ip_address(vm_name)
         logger.info("Fetched IP for %s: %s", vm_name, ip)
         return ip is not None
 
-    connect_ip = mgmt_system.get_ip_address(vm_name)
+    connect_ip = provider.mgmt.get_ip_address(vm_name)
     assert connect_ip is not None
 
     # Check that we can at least get the uptime via ssh this should only be possible
