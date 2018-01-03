@@ -28,6 +28,16 @@ Then you can run your test with -s parameter: ``pytest -s cfme/tests/test_foo.py
 Once the execution reaches the "breakpoint", you will be presented with IPython's
 interactive prompt.
 
+Another way is to use the python debugger - `pdb <https://docs.python.org/2/library/pdb.html>`_.
+
+.. code-block:: python
+
+    def test_foo(bar):
+        x = do_something()
+        import pdb; pdb.set_trace()
+        assert x
+
+
 How do I build this documentation?
 """"""""""""""""""""""""""""""""""
 Go to cfme_tests/integration_tests/docs and run ``make clean && make html``.
