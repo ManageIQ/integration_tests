@@ -67,7 +67,6 @@ def test_group_roles(appliance, configure_aws_iam_auth_mode, group_name, context
             diff = DeepDiff(group_access[area], nav_visbility.get(area, {}),
                             verbose_level=0,  # If any higher, will flag string vs unicode
                             ignore_order=True)
-            soft_assert(diff == {}, 'Possible BZs: 1525598, 1525657\n'
-                                    '{g} RBAC mismatch for {a}: {d}'.format(g=group_name,
+            soft_assert(diff == {}, '{g} RBAC mismatch for {a}: {d}'.format(g=group_name,
                                                                             a=area,
                                                                             d=diff))

@@ -2,7 +2,7 @@
 from copy import copy
 
 from widgetastic.widget import Text, Checkbox, View, ConditionalSwitchableView
-from widgetastic_patternfly import Input, Button, BootstrapSelect, BootstrapSwitch
+from widgetastic_patternfly import Input, Button, BootstrapSelect, BootstrapSwitch, FlashMessages
 
 from cfme.exceptions import ConsoleNotSupported, ConsoleTypeNotSupported
 from cfme.utils import conf
@@ -527,6 +527,10 @@ class ExternalAuthenticationView(View):
 class ServerAuthenticationView(View):
     """ Server Authentication View."""
     title = Text("//div[@id='settings_authentication']/h3[1]")
+    # Local Flash widget for validation since class nested under a class inheriting BaseLoggedInPage
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")] | '
+                          './/div[starts-with(@class, "flash_text_div") or @id="flash_text_div"]')
     hours_timeout = BootstrapSelect(id='session_timeout_hours')
     minutes_timeout = BootstrapSelect(id='session_timeout_mins')
     # TODO new button widget to handle buttons_on buttons_off divs
@@ -553,8 +557,11 @@ class ServerAuthenticationView(View):
 
     def before_fill(self, values):
         """Select the auth mode first"""
-        if values.get('auth_mode'):
-            self.form.auth_mode.fill(values.get('auth_mode'))
+        new_mode = values.get('auth_mode')
+        if new_mode:
+            # view context's object is a Server, if no AUTH_MODE_MAP match is found use passed value
+            self.form.auth_mode.fill(
+                self.context['object'].authentication.AUTH_MODE_MAP.get(new_mode, new_mode))
 
 
 class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
@@ -563,6 +570,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
 
         Args:
             auth_mode: authorization mode, default value 'Database'
+                One of: 'Database', 'Ldap', 'Ldaps', 'Amazon', 'External'
     """
 
     pretty_attrs = ['auth_mode']
@@ -572,8 +580,16 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
         'dn-uid': 'Distinguished Name (UID=<user>)'
     }
 
+    AUTH_MODE_MAP = {
+        'Database': 'Database',
+        'Ldap': 'LDAP',
+        'Ldaps': 'LDAPS',
+        'Amazon': 'Amazon',
+        'External': 'External (httpd)'
+    }
+
     def __init__(self, appliance, auth_mode=None):
-        self.auth_mode = auth_mode.capitalize() if auth_mode else 'Database'
+        self.auth_mode = auth_mode or 'Database'
         self.appliance = appliance
 
     def set_session_timeout(self, hours=None, minutes=None):
@@ -584,7 +600,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
                 minutes(str): timeout minutes value
             ex. auth_settings.set_session_timeout('0', '30')
         """
-        view = navigate_to(self.appliance.server.settings, 'Authentication', wait_for_view=True)
+        view = navigate_to(self.appliance.server, 'Authentication', wait_for_view=True)
         updated = view.fill({
             "hours_timeout": hours,
             "minutes_timeout": minutes
@@ -603,7 +619,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
     @property
     def auth_settings(self):
         """ Authentication view fields values """
-        view = navigate_to(self.appliance.server.settings, 'Authentication')
+        view = navigate_to(self.appliance.server, 'Authentication')
         return view.read()
 
     def set_auth_mode(self, reset=False, auth_mode='Database', **kwargs):
@@ -638,8 +654,8 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
             logger.warning('set_auth_mode called with kwargs and Database, ignoring kwargs')
         fill_data['auth_settings'] = settings
 
-        view = navigate_to(self.appliance.server.settings, 'Authentication', wait_for_view=True)
-        changed = view.fill(fill_data)
+        view = navigate_to(self.appliance.server, 'Authentication', wait_for_view=True)
+        changed = view.form.fill(fill_data)
         if reset:
             view.reset.click()
             view.flash.assert_message('All changes have been reset')
@@ -647,12 +663,9 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
             logger.info('Authentication form reset, returning')
             return
         elif changed:
-            try:
-                view.validate.click()
-                view.flash.assert_message('{} Settings validation was successful'
-                                          .format(view.auth_mode.selected_option))
-            except AttributeError:
-                logger.info("View doesn't have validate button")
+            if self.auth_mode == 'Amazon':
+                view.form.auth_settings.validate.click()
+                view.flash.assert_no_error()
 
             view.save.click()
             # TODO move this flash message assert into test and only assert no error
