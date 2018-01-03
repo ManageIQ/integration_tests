@@ -21,7 +21,7 @@ def test_sdn_crud(provider, appliance):
 
     view = navigate_to(provider, 'Details')
     net_prov_name = view.entities.relationships.get_text_of("Network Manager")
-    collection = NetworkProviderCollection(appliance)
+    collection = appliance.collections.network_providers
     network_provider = collection.instantiate(name=net_prov_name)
 
     view = navigate_to(network_provider, 'Details')
