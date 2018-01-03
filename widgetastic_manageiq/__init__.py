@@ -14,6 +14,7 @@ from cached_property import cached_property
 from jsmin import jsmin
 from lxml.html import document_fromstring
 from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.common.keys import Keys
 from wait_for import TimedOutError, wait_for
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.log import logged
@@ -3821,3 +3822,69 @@ class DriftComparison(Widget):
 
     def read(self):
         return self.section_values
+
+
+class DialogFieldDropDownList(Widget, ClickableMixin):
+    """This class represents a new implementation of BootstrapSelect widget.
+    First time it was introduced in Service Catalog order form.
+
+    Args:
+        locator: a full locator to the widget.
+    """
+
+    ROOT = ParametrizedLocator('{@locator}')
+    BY_VISIBLE_TEXT = (
+        './/span[@class="ui-select-choices-row-inner" and normalize-space(.)={}]')
+
+    def __init__(self, parent, locator, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.locator = locator
+
+    @property
+    def is_opened(self):
+        return 'open' in self.browser.classes(self)
+
+    def open(self):
+        if not self.is_opened:
+            self.click()
+            self.logger.debug('opened')
+
+    def close(self):
+        if self.is_opened:
+            self.browser.send_keys_to_focused_element(Keys.ESCAPE)
+            self.logger.debug('closed')
+
+    def select_by_visible_text(self, item):
+        self.open()
+        self.logger.info('selecting by visible text: %r', item)
+        self.browser.click(self.BY_VISIBLE_TEXT.format(quote(item)), parent=self)
+
+    @property
+    def selected_option(self):
+        e = self.browser.element('.//*[contains(@class, "ui-select-toggle")]'
+                                 '/span[contains(@class, "ui-select-match-text")]')
+        return self.browser.text(e)
+
+    @property
+    def all_options(self):
+        self.open()
+        b = self.browser
+        result = [
+            b.text(b.element('.//span', parent=e))
+            for e in b.elements('.//div[contains(@class, "ui-select-choices-row")]', parent=self)
+        ]
+        self.close()
+        return result
+
+    def read(self):
+        return self.selected_option
+
+    def fill(self, item):
+        if self.selected_option == item:
+            return False
+        else:
+            self.select_by_visible_text(item)
+            return True
+
+    def __repr__(self):
+        return '{}(locator={!r})'.format(type(self).__name__, self.locator)

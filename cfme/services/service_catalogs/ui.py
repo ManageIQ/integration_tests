@@ -1,8 +1,8 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import VersionPick
-from widgetastic.widget import Text, View, Select
+from widgetastic.utils import ParametrizedString, VersionPick
+from widgetastic.widget import ParametrizedView, Text, View, Select
 from widgetastic_patternfly import Button, Input, BootstrapSelect
 
 from cfme.base import Server
@@ -14,7 +14,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.blockers import BZ
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import Accordion, ManageIQTree
+from widgetastic_manageiq import Accordion, ManageIQTree, DialogFieldDropDownList
 
 
 class ServicesCatalogView(BaseLoggedInPage):
@@ -87,9 +87,34 @@ class OrderForm(ServicesCatalogView):
         '5.9': Select(locator='.//select[../../'
                               'div[contains(normalize-space(.), "Service Level")]]'),
         Version.lowest(): BootstrapSelect('service_level')})
+    # Ansible dialog fields
+    machine_credential = VersionPick({
+        Version.lowest(): BootstrapSelect("credential"),
+        '5.9': DialogFieldDropDownList(".//div[@input-id='credential']")})
+    hosts = VersionPick({
+        Version.lowest(): Input(name="hosts"),
+        '5.9': Input(id="hosts")})
 
-    machine_credential = BootstrapSelect("credential")
-    hosts = Input(name="hosts")
+    @ParametrizedView.nested
+    class variable(ParametrizedView):  # noqa
+        PARAMETERS = ("key",)
+        value_input = Input(id=ParametrizedString("param_{key}"))
+
+        @property
+        def value(self):
+            return self.browser.get_attribute("value", self.value_input)
+
+        def read(self):
+            return self.value_input.value
+
+        def fill(self, value):
+            current_value = self.value_input.value
+            if value == current_value:
+                return False
+            self.browser.click(self.value_input)
+            self.browser.clear(self.value_input)
+            self.browser.send_keys(value, self.value_input)
+            return True
 
 
 class ServiceCatalogsView(ServicesCatalogView):
