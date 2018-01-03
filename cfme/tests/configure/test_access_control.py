@@ -1023,3 +1023,44 @@ def test_delete_default_tenant(appliance):
             row[0].check()
     with error.handler('Default Tenant "{}" can not be deleted'.format(roottenant.name)):
         view.toolbar.configuration.item_select('Delete selected items', handle_alert=True)
+
+
+@pytest.fixture(scope='module')
+def first_level_tenant(appliance):
+    root_tenant = appliance.collections.tenants.get_root_tenant()
+    tenant = appliance.collections.tenants.create(
+        name='Tenant_{}'.format(fauxfactory.gen_alphanumeric()),
+        description=fauxfactory.gen_alphanumeric(),
+        parent=root_tenant)
+    yield tenant
+    if tenant.exists:
+        tenant.delete()
+
+
+@pytest.fixture(params=["projects", "tenants"], ids=['tenant-project', 'tenant-tenant'],
+                scope='module')
+def tenants(appliance, request, first_level_tenant):
+    collections = (appliance.collections.tenants, getattr(appliance.collections, request.param))
+    tenants = [first_level_tenant]
+    for collection in collections:
+        tenants.append(collection.create(name=fauxfactory.gen_alphanumeric(),
+                                         description=fauxfactory.gen_alphanumeric(),
+                                         parent=tenants[-1]))
+    yield tenants
+
+
+@pytest.mark.parametrize(
+    ['field', 'value'],
+    [('cpu', 2), ('storage', 1), ('memory', 2), ('vm', 1)],
+    ids=['cpu', 'storage', 'memory', 'vm']
+)
+@pytest.mark.parametrize(
+    'seq',
+    [(1, 2), (2, 1)],
+    ids=['child_more_then_parent', 'parent_less_then_child']
+)
+def test_child_tenant_quota_validation(appliance, request, tenants,
+                                       seq, field, value):
+    tenants[seq[0]].set_quota(**{'{}_cb'.format(field): True, field: value + seq[0]})
+    with error.handler('Error when saving tenant quota'):
+        tenants[seq[1]].set_quota(**{'{}_cb'.format(field): True, field: value + seq[1]})
