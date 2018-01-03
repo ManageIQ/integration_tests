@@ -18,7 +18,6 @@ from cfme.common.provider_views import (CloudProviderAddView,
                                         CloudProvidersDiscoverView)
 from cfme import test_requirements
 
-from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
@@ -244,6 +243,8 @@ def test_password_max_character_validation():
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
+@pytest.mark.uncollectif(lambda provider: BZ(1526950, forced_streams=['5.9']).blocks and
+                         provider.one_of(EC2Provider))
 def test_name_max_character_validation(request, cloud_provider):
     """Test to validate that provider can have up to 255 characters in name"""
     request.addfinalizer(lambda: cloud_provider.delete_if_exists(cancel=False))
