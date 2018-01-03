@@ -320,65 +320,6 @@ class Instance(VM, Navigatable):
         view.toolbar.power.item_select(kwargs.get('option'),
                                        handle_alert=not kwargs.get('cancel', False))
 
-    def set_ownership(self, user=None, group=None, click_cancel=False, click_reset=False):
-        """Set instance ownership
-
-        TODO: collapse this back to common.vm after both subclasses converted to widgetastic
-        Args:
-            user (str): username for ownership
-            group (str): groupname for ownership
-            click_cancel (bool): Whether to cancel form submission
-            click_reset (bool): Whether to reset form after filling
-        """
-        view = navigate_to(self, 'SetOwnership')
-        fill_result = view.form.fill({
-            'user_name': user,
-            'group_name': group})
-        if not fill_result:
-            view.flash.assert_no_error()
-            view.form.cancel_button.click()
-            view = self.create_view(InstanceDetailsView)
-            view.flash.assert_success_message('Set Ownership was cancelled by the user')
-            view.flash.assert_no_error()
-            return
-
-        # Only if form changed
-        if click_reset:
-            view.form.reset_button.click()
-            view.flash.assert_message('All changes have been reset', 'warning')
-            # Cancel after reset
-            assert view.form.is_displayed
-            view.form.cancel_button.click()
-        elif click_cancel:
-            view.form.cancel_button.click()
-            view.flash.assert_success_message('Set Ownership was cancelled by the user')
-            view.flash.assert_no_error()
-        else:
-            # save the form
-            view.form.save_button.click()
-            view = self.create_view(InstanceDetailsView)
-            view.flash.assert_success_message('Ownership saved for selected {}'
-                                              .format(self.VM_TYPE))
-            view.flash.assert_no_error()
-
-    def unset_ownership(self):
-        """Remove user ownership and return group to EvmGroup-Administrator"""
-        view = navigate_to(self, 'SetOwnership')
-        fill_result = view.form.fill({
-            'user_name': '<No Owner>', 'group_name': 'EvmGroup-administrator'
-        })
-        if fill_result:
-            view.form.save_button.click()
-            msg = 'Ownership saved for selected {}'.format(self.VM_TYPE)
-        else:
-            view.form.cancel_button.click()
-            logger.warning('No change during unset_ownership')
-            msg = 'Set Ownership was cancelled by the user'
-
-        view = self.create_view(InstanceDetailsView)
-        view.flash.assert_no_error()
-        view.flash.assert_success_message(msg)
-
 
 @navigator.register(Instance, 'All')
 class All(CFMENavigateStep):

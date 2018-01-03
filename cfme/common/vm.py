@@ -11,7 +11,7 @@ from cfme.exceptions import (
     VmOrInstanceNotFound, ItemNotFound, OptionNotAvailable, UnknownProviderType)
 from cfme.utils import ParamClassName
 from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to, navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.timeutil import parsetime
@@ -445,24 +445,57 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
             self.load_details()
 
     def set_ownership(self, user=None, group=None, click_cancel=False, click_reset=False):
-        """Set ownership of the VM/Instance or Template/Image"""
-        view = navigate_to(self, "SetOwnership")
-        view.form.fill({'user_name': user, 'group_name': group})
+        """Set instance ownership
+
+        Args:
+            user (str): username for ownership
+            group (str): groupname for ownership
+            click_cancel (bool): Whether to cancel form submission
+            click_reset (bool): Whether to reset form after filling
+        """
+        view = navigate_to(self, 'SetOwnership')
+        fill_result = view.form.fill({
+            'user_name': user,
+            'group_name': group})
+        if not fill_result:
+            view.form.cancel_button.click()
+            view = self.create_view(navigator.get_class(self, 'Details').VIEW)
+            view.flash.assert_success_message('Set Ownership was cancelled by the user')
+            return
+
+        # Only if the form changed
         if click_reset:
             view.form.reset_button.click()
+            view.flash.assert_message('All changes have been reset', 'warning')
+            # Cancel after reset
+            assert view.form.is_displayed
+            view.form.cancel_button.click()
         elif click_cancel:
             view.form.cancel_button.click()
+            view.flash.assert_success_message('Set Ownership was cancelled by the user')
         else:
+            # save the form
             view.form.save_button.click()
-        view.flash.assert_no_error()
+            view = self.create_view(navigator.get_class(self, 'Details').VIEW)
+            view.flash.assert_success_message('Ownership saved for selected {}'
+                                              .format(self.VM_TYPE))
 
     def unset_ownership(self):
-        """Unset ownership of the VM/Instance or Template/Image"""
-        # choose the vm code comes here
-        view = navigate_to(self, "SetOwnership")
-        view.form.fill({'user_name': '<No Owner>', 'group_name': 'EvmGroup-administrator'})
-        view.form.save_button.click()
-        view.flash.assert_no_error()
+        """Remove user ownership and return group to EvmGroup-Administrator"""
+        view = navigate_to(self, 'SetOwnership')
+        fill_result = view.form.fill({
+            'user_name': '<No Owner>', 'group_name': 'EvmGroup-administrator'
+        })
+        if fill_result:
+            view.form.save_button.click()
+            msg = 'Ownership saved for selected {}'.format(self.VM_TYPE)
+        else:
+            view.form.cancel_button.click()
+            logger.warning('No change during unset_ownership')
+            msg = 'Set Ownership was cancelled by the user'
+
+        view = self.create_view(navigator.get_class(self, 'Details').VIEW)
+        view.flash.assert_success_message(msg)
 
 
 class VM(BaseVM):
@@ -470,8 +503,7 @@ class VM(BaseVM):
 
     def retire(self):
         view = self.load_details(refresh=True)
-        view.toolbar.lifecycle.item_select(self.TO_RETIRE,
-                                               handle_alert=True)
+        view.toolbar.lifecycle.item_select(self.TO_RETIRE, handle_alert=True)
         view.flash.assert_no_error()
 
     def power_control_from_provider(self):
