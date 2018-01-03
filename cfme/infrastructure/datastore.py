@@ -12,12 +12,13 @@ from widgetastic_patternfly import Dropdown, Accordion
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
 from cfme.common.host_views import HostsView
-from cfme.exceptions import ItemNotFound
+from cfme.configure.tasks import is_datastore_analysis_finished, TasksView
+from cfme.exceptions import ItemNotFound, MenuItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
-from cfme.utils.wait import wait_for
+from cfme.utils.wait import wait_for, TimedOutError
 from widgetastic_manageiq import (ManageIQTree,
                                   SummaryTable,
                                   ItemsToolBarViewSelector,
@@ -231,7 +232,7 @@ class Datastore(Pretty, BaseEntity, WidgetasticTaggable):
 
         Returns: List of strings with names or `[]` if no hosts found.
         """
-        view = navigate_to(self, 'Details')
+        view = navigate_to(self, 'DetailsFromProvider')
         view.entities.relationships.click_at('Hosts')
         hosts_view = view.browser.create_view(RegisteredHostsView)
         return hosts_view.entities.get_all()
@@ -284,18 +285,26 @@ class Datastore(Pretty, BaseEntity, WidgetasticTaggable):
         except ItemNotFound:
             return False
 
-    def run_smartstate_analysis(self):
+    def run_smartstate_analysis(self, wait_for_task_result=False):
         """ Runs smartstate analysis on this host
 
         Note:
             The host must have valid credentials already set up for this to work.
         """
-        view = navigate_to(self, 'Details')
-        wait_for(lambda: view.toolbar.configuration.item_enabled('Perform SmartState Analysis'),
-                 fail_condition=False, num_sec=10)
+        view = navigate_to(self, 'DetailsFromProvider')
+        try:
+            wait_for(lambda: view.toolbar.configuration.item_enabled('Perform SmartState Analysis'),
+                     fail_condition=False, num_sec=10)
+        except TimedOutError:
+            raise MenuItemNotFound('Smart State analysis is disabled for this datastore')
         view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
         view.flash.assert_success_message(('"{}": scan successfully '
                                            'initiated'.format(self.name)))
+        if wait_for_task_result:
+            view = self.appliance.browser.create_view(TasksView)
+            wait_for(lambda: is_datastore_analysis_finished(self.name),
+                     delay=15, timeout="15m",
+                     fail_func=view.reload.click)
 
 
 @attr.s
@@ -381,9 +390,13 @@ class Details(CFMENavigateStep):
 class DetailsFromProvider(CFMENavigateStep):
     VIEW = DatastoreDetailsView
 
-    def step(self):
+    def prerequisite(self):
         prov_view = navigate_to(self.obj.provider, 'Details')
         prov_view.entities.relationships.click_at('Datastores')
+        return self.obj.create_view(DatastoresView)
+
+    def step(self):
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
 def get_all_datastores():
