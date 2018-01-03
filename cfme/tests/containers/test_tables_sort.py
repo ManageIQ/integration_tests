@@ -1,10 +1,9 @@
 import pytest
 
-from cfme.containers.replicator import Replicator, ReplicatorCollection
-from cfme.containers.route import Route, RouteCollection
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
+from cfme.containers.replicator import Replicator
+from cfme.containers.route import Route
 from cfme.utils.appliance.implementations.ui import navigate_to
-
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -22,17 +21,20 @@ TEST_ITEMS = [
     pytest.mark.polarion('CMP-9924')(ContainersTestItem(
         ContainersProvider, 'CMP-9924', collection_obj=None)),
     pytest.mark.polarion('CMP-9926')(ContainersTestItem(
-        Route, 'CMP-9926', collection_obj=RouteCollection)),
+        Route, 'CMP-9926', collection_obj='container_routes')),
     pytest.mark.polarion('CMP-9928')(ContainersTestItem(
-        Replicator, 'CMP-9928', collection_obj=ReplicatorCollection))
+        Replicator, 'CMP-9928', collection_obj='container_replicators'))
 ]
 
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
                          ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
-def test_tables_sort(test_item, soft_assert):
+def test_tables_sort(test_item, soft_assert, appliance):
 
-    current_view = navigate_to(test_item.collection_obj, 'All')
+    if test_item.collection_obj:
+        nav_obj = getattr(appliance, test_item.collection_obj)
+
+    current_view = navigate_to(nav_obj, 'All')
     current_view.toolbar.view_selector.select('List View')
 
     for col, header_text in enumerate(current_view.table.headers):
