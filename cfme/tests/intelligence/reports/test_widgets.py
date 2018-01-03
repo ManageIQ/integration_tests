@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 
-from cfme.dashboard import Widget
 from cfme.intelligence.reports.widgets.menu_widgets import MenuWidget
 from cfme.intelligence.reports.widgets.report_widgets import ReportWidget
 from cfme.intelligence.reports.widgets.chart_widgets import ChartWidget
@@ -24,8 +23,8 @@ def dashboard(default_widgets):
     return DefaultDashboard(widgets=default_widgets)
 
 
-@pytest.fixture(scope="function")
-def custom_widgets(request):
+@pytest.yield_fixture(scope="function")
+def custom_widgets():
     ws = [
         MenuWidget(
             fauxfactory.gen_alphanumeric(),
@@ -33,7 +32,7 @@ def custom_widgets(request):
             active=True,
             shortcuts={
                 "Services / Catalogs": fauxfactory.gen_alphanumeric(),
-                "Clouds / Providers": fauxfactory.gen_alphanumeric(),
+                "Compute / Clouds / Providers": fauxfactory.gen_alphanumeric(),
             },
             visibility="<To All Users>"),
         ReportWidget(
@@ -61,9 +60,9 @@ def custom_widgets(request):
             rows="8",
             visibility="<To All Users>"),
     ]
-    map(lambda w: w.create(), ws)  # create all widgets
-    request.addfinalizer(lambda: map(lambda w: w.delete(), ws))  # Delete them after test
-    return ws
+    map(lambda w: w.create(), ws)
+    yield ws
+    map(lambda w: w.delete(), ws)
 
 
 @test_requirements.dashboard
@@ -79,12 +78,12 @@ def test_widgets_on_dashboard(appliance, request, dashboard, default_widgets,
     request.addfinalizer(_finalize)
     view = navigate_to(appliance.server, "Dashboard")
     view.reset_widgets()
-    soft_assert(len(Widget.all()) == len(custom_widgets), "Count of the widgets differ")
+    dashboard_view = view.dashboards("Default Dashboard")
+    soft_assert(len(dashboard_view.widgets.read()) == len(custom_widgets),
+                "Count of the widgets differ")
     for custom_w in custom_widgets:
-        try:
-            Widget.by_name(custom_w.title)
-        except NameError:
-            soft_assert(False, "Widget {} not found on dashboard".format(custom_w.title))
+        soft_assert(dashboard_view.widgets(custom_w.title).is_displayed,
+                    "Widget {} not found on dashboard".format(custom_w.title))
 
 
 @test_requirements.dashboard

@@ -181,6 +181,8 @@ class Dashboard(Updateable, Pretty, Navigatable):
             updates: Provided by update() context manager.
         """
         view = navigate_to(self, "Edit")
+        if "widgets" in updates:
+            updates["widget_picker"] = updates.pop("widgets")
         changed = view.fill(updates)
         if changed:
             view.save_button.click()
@@ -243,6 +245,8 @@ class DefaultDashboard(Updateable, Pretty, Navigatable):
             updates: Provided by update() context manager.
         """
         view = navigate_to(self, "Edit")
+        if "widgets" in updates:
+            updates["widget_picker"] = updates.pop("widgets")
         changed = view.fill(updates)
         if changed:
             view.save_button.click()
@@ -250,11 +254,13 @@ class DefaultDashboard(Updateable, Pretty, Navigatable):
             view.cancel_button.click()
         view = self.create_view(DefaultDashboardDetailsView)
         assert view.is_displayed
-        if changed:
-            view.flash.assert_success_message('Dashboard "{}" was saved'.format(self.name))
-        else:
-            view.flash.assert_success_message(
-                'Edit of Dashboard "{}" was cancelled by the user'.format(self.name))
+        # TODO move these checks to certain tests
+        # if changed:
+        #     view.flash.assert_success_message('Dashboard "{}" was saved'.format(self.name))
+        # else:
+        #     view.flash.assert_success_message(
+        #         'Edit of Dashboard "{}" was cancelled by the user'.format(self.name))
+        view.flash.assert_no_error()
 
 
 @navigator.register(Dashboard, "Add")
