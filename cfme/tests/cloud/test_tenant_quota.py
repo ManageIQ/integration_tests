@@ -41,10 +41,12 @@ def prov_data(vm_name):
 
 
 @pytest.fixture
-def set_roottenant_quota(request, roottenant):
+def set_roottenant_quota(request, roottenant, appliance):
     field, value = request.param
     roottenant.set_quota(**{'{}_cb'.format(field): True, field: value})
     yield
+    # will refresh page as navigation to configuration is blocked if alert are on requests page
+    appliance.server.browser.refresh()
     roottenant.set_quota(**{'{}_cb'.format(field): False})
 
 
