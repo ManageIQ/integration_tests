@@ -118,7 +118,8 @@ class ContainerDetails(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
-                                                   pod_name=self.obj.pod).click()
+                                                   pod_name=self.obj.pod,
+                                                   use_search=True).click()
 
 
 @navigator.register(Container, 'EditTags')

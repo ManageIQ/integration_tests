@@ -85,10 +85,12 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(name=self.obj.name).click()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name,
+                                                   use_search=True).click()
 
     def resetter(self):
-        self.view.toolbar.view_selector.select("Summary View")
+        if self.appliance.version == '5.9':
+            self.view.toolbar.view_selector.select("Summary View")
 
 
 @navigator.register(Project, 'EditTags')

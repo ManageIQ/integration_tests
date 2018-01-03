@@ -4,7 +4,6 @@ import pytest
 
 from cfme.containers.service import Service, ServiceCollection
 from cfme.containers.route import Route, RouteCollection
-from cfme.containers.project import Project, ProjectCollection
 from cfme.containers.pod import Pod, PodCollection
 from cfme.containers.image_registry import (ImageRegistry,
                                             ImageRegistryCollection)
@@ -12,14 +11,12 @@ from cfme.containers.image import Image, ImageCollection
 from cfme.containers.node import Node, NodeCollection
 from cfme.containers.replicator import Replicator, ReplicatorCollection
 from cfme.containers.template import Template, TemplateCollection
-from cfme.containers.volume import Volume, VolumeCollection
 from cfme.containers.provider import ContainersProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider_modscope'),
-    pytest.mark.usefixtures('has_persistent_volume'),
     pytest.mark.tier(1),
     pytest.mark.provider([ContainersProvider], scope='module')]
 
@@ -30,15 +27,16 @@ DataSet = namedtuple('DataSet', ['obj', 'collection_obj'])
 TESTED_OBJECTS = [
     DataSet(Service, ServiceCollection),
     DataSet(Route, RouteCollection),
-    DataSet(Project, ProjectCollection),
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1530610
+    # from cfme.containers.project import Project, ProjectCollection
+    # DataSet(Project, ProjectCollection),
     DataSet(Pod, PodCollection),
     DataSet(Image, ImageCollection),
     DataSet(ContainersProvider, None),
     DataSet(ImageRegistry, ImageRegistryCollection),
     DataSet(Node, NodeCollection),
     DataSet(Replicator, ReplicatorCollection),
-    DataSet(Template, TemplateCollection),
-    DataSet(Volume, VolumeCollection)
+    DataSet(Template, TemplateCollection)
 ]
 
 

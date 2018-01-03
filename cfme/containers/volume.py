@@ -84,7 +84,8 @@ class Details(CFMENavigateStep):
     VIEW = VolumeDetailsView
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(name=self.obj.name).click()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name,
+                                                   use_search=True).click()
 
 
 @navigator.register(Volume, 'EditTags')
