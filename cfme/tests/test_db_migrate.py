@@ -161,6 +161,8 @@ def test_db_migrate(app_creds, temp_appliance_extended_db, db_url, db_version, d
     app.server.login(app.user)
 
 
+@pytest.mark.uncollectif(
+    lambda dbversion: dbversion == 'ec2_5540' and version.current_version() < "5.9")
 @pytest.mark.parametrize('dbversion', ['ec2_5540', 'azure_5620', 'rhev_57', 'scvmm_58'],
         ids=['55', '56', '57', '58'])
 def test_db_migrate_replication(app_creds, temp_appliance_remote, dbversion,
