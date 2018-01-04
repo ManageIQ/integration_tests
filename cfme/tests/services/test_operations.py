@@ -26,7 +26,7 @@ def a_provider(request):
 
 @pytest.fixture(scope="module")
 def provider_data(a_provider):
-    return a_provider.get_yaml_data()
+    return a_provider.data
 
 
 @pytest.fixture(scope="module")

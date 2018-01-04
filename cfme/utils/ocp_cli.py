@@ -8,9 +8,8 @@ class OcpCli(object):
     """
     def __init__(self, provider):
 
-        provider_cfme_data = provider.get_yaml_data()
-        self.hostname = provider_cfme_data['hostname']
-        creds = provider_cfme_data.get('ssh_creds')
+        self.hostname = provider.data['hostname']
+        creds = provider.data.get('ssh_creds')
 
         if not creds:
             raise Exception('Could not find ssh_creds in provider\'s cfme data.')

@@ -47,8 +47,6 @@ def test_provision_cloud_init(appliance, setup_provider, provider, setup_ci_temp
     template = provisioning.get('ci-image') or provisioning['image']['name']
     host, datastore, vlan = map(provisioning.get, ('host', 'datastore', 'vlan'))
 
-    mgmt_system = provider.get_mgmt_system()
-
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
 
     provisioning_data = {
@@ -67,7 +65,7 @@ def test_provision_cloud_init(appliance, setup_provider, provider, setup_ci_temp
     do_vm_provisioning(appliance, template, provider, vm_name, provisioning_data, request,
                        smtp_test, num_sec=900)
 
-    connect_ip, tc = wait_for(mgmt_system.get_ip_address, [vm_name], num_sec=300,
+    connect_ip, tc = wait_for(provider.mgmt.get_ip_address, [vm_name], num_sec=300,
                               handle_exception=True)
 
     # Check that we can at least get the uptime via ssh this should only be possible
