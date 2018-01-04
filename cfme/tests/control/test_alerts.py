@@ -341,7 +341,7 @@ def test_alert_timeline_cpu(request, vm, set_performance_capture_threshold, prov
     timeline = vm.open_timelines()
     timeline.filter.fill({
         "event_category": "Alarm/Status Change/Errors",
-        "time_range": "Days",
+        "time_range": "Weeks",
         "calendar": "{dt.month}/{dt.day}/{dt.year}".format(dt=datetime.now() + timedelta(days=1))
     })
     timeline.filter.apply.click()
