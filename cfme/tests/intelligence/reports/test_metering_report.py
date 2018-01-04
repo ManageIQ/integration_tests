@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# import cfme.configure.access_control as ac
 import fauxfactory
 import math
 import pytest
@@ -25,10 +24,8 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.tier(2),
-    pytest.mark.uncollectif(lambda: current_version() < "5.9"),
-    pytest.mark.meta(blockers=[BZ(1433984, forced_streams=["5.7", "5.8", "upstream"]),
-                               BZ(1468729, forced_streams=["5.9"]),
-                               BZ(1511099, forced_streams=["5.7", "5.8"],
+    pytest.mark.uncollectif(lambda: current_version() < '5.9'),
+    pytest.mark.meta(blockers=[BZ(1511099, forced_streams=["5.7", "5.8"],
                                   unblock=lambda provider: not provider.one_of(GCEProvider))]),
     pytest.mark.provider([VMwareProvider, RHEVMProvider, AzureProvider, GCEProvider],
                          scope='module',
@@ -62,7 +59,7 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
     if not provider.mgmt.is_vm_running(vm_name):
         provider.mgmt.start_vm(vm_name)
         provider.mgmt.wait_vm_running(vm_name)
-    """
+
     group_collection = appliance.collections.groups
     cb_group = group_collection.instantiate(description='EvmGroup-user')
     user = appliance.collections.users.create(
@@ -72,21 +69,17 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
         group=cb_group,
         cost_center='Workload',
         value_assign='Database')
-    """
 
     vm = VM.factory(vm_name, provider)
 
     try:
-        # user.create()
-        vm.set_ownership(user='Administrator')
-        # vm.set_ownership(user=user.name)
+        vm.set_ownership(user=user.name)
         # logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
 
-        # yield user.name
-        yield 'Administrator'
+        yield user.name
     finally:
         vm.unset_ownership()
-        # user.delete()
+        user.delete()
         logger.info('In vm_ownership')
 
 
@@ -298,8 +291,7 @@ def test_validate_cpu_usage(resource_usage, metering_report):
 
 @pytest.mark.uncollectif(
     lambda provider: provider.one_of(GCEProvider))
-def test_validate_memory_usage(resource_usage,
-        metering_report):
+def test_validate_memory_usage(resource_usage, metering_report):
     """Test to validate memory usage.
        Calculation is based on default Chargeback rate.
 
@@ -314,8 +306,7 @@ def test_validate_memory_usage(resource_usage,
             break
 
 
-def test_validate_network_usage(resource_usage,
-        metering_report):
+def test_validate_network_usage(resource_usage, metering_report):
     """Test to validate network usage cost.
        Calculation is based on default Chargeback rate.
 
@@ -345,8 +336,7 @@ def test_validate_disk_usage(resource_usage, metering_report):
             break
 
 
-def test_validate_storage_usage(resource_usage,
-        metering_report):
+def test_validate_storage_usage(resource_usage, metering_report):
     """Test to validate stoarge usage cost.
        Calculation is based on default Chargeback rate.
     """
@@ -360,5 +350,5 @@ def test_validate_storage_usage(resource_usage,
             break
 
 
-def test_nan(vm_ownership, provider):
+def test_nan(resource_usage, provider):
     logger.info('In test_nan')
