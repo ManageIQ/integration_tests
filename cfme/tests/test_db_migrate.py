@@ -35,6 +35,16 @@ def temp_appliance_extended_db(temp_appliance_preconfig):
 
 
 @pytest.fixture(scope="function")
+def temp_appliance_remote(temp_appliance_preconfig_funcscope):
+    '''Needed for db_migrate_replication as you can't drop a remote db due to subscription'''
+    app = temp_appliance_preconfig_funcscope
+    app.evmserverd.stop()
+    app.db.extend_partition()
+    app.start_evm_service()
+    return app
+
+
+@pytest.fixture(scope="function")
 def temp_appliance_global_region(temp_appliance_unconfig_funcscope):
     temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_internal(
         99, 'localhost', credentials['database']['username'], credentials['database']['password'],
@@ -153,14 +163,10 @@ def test_db_migrate(app_creds, temp_appliance_extended_db, db_url, db_version, d
 
 @pytest.mark.parametrize('dbversion', ['ec2_5540', 'azure_5620', 'rhev_57', 'scvmm_58'],
         ids=['55', '56', '57', '58'])
-def test_db_migrate_replication(app_creds, temp_appliance_extended_db, dbversion,
+def test_db_migrate_replication(app_creds, temp_appliance_remote, dbversion,
         temp_appliance_global_region):
-    app = temp_appliance_extended_db
+    app = temp_appliance_remote
     app2 = temp_appliance_global_region
-
-    # Make sure replication is disabled before migration
-    app.set_pglogical_replication(replication_type=':none')
-    app2.set_pglogical_replication(replication_type=':none')
 
     # Download the database
     logger.info("Downloading database: {}".format(dbversion))
