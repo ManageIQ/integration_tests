@@ -1,6 +1,7 @@
 # pylint: disable=broad-except
 
 import re
+import datetime
 
 from collections import defaultdict
 from lxml import etree
@@ -10,6 +11,28 @@ import pytest
 # pylint: disable=no-name-in-module
 from cfme.utils.conf import xunit, cfme_data
 from cfme.utils.pytest_shortcuts import extract_fixtures_values
+
+
+whitelist = [
+    r'cfme/tests/infrastructure/test_quota_tagging.py::test_.*\[.*rhe?v',
+    r'cfme/tests/infrastructure/test_tenant_quota.py::test_.*\[.*rhe?v'
+]
+compiled_whitelist = re.compile('(' + ')|('.join(whitelist) + ')')
+
+
+blacklist = [
+    'cfme/tests/containers/',
+    'cfme/tests/middleware/',
+    'cfme/tests/openstack/',
+    'hawkular',
+    r'\[.*rhos',
+    r'\[.*rhev',
+    r'\[.*rhv',
+]
+compiled_blacklist = re.compile('(' + ')|('.join(blacklist) + ')')
+
+
+timestamp = '{:%Y%m%d%H%M%S}'.format(datetime.datetime.now())
 
 
 default_custom_fields = {
@@ -29,18 +52,6 @@ caselevels = {
     '2': 'system',
     '3': 'acceptance'
 }
-
-
-blacklist = [
-    'cfme/tests/containers/',
-    'cfme/tests/middleware/',
-    'cfme/tests/openstack/',
-    'hawkular',
-    r'\[.*rhos',
-    r'\[.*rhev',
-    r'\[.*rhv',
-]
-compiled_blacklist = re.compile('(' + ')|('.join(blacklist) + ')')
 
 
 def pytest_addoption(parser):
@@ -147,8 +158,11 @@ def get_testcase_data(tests, test_names, item, legacy=False):
         )
         custom_fields['caseautomation'] = "automated"
         custom_fields['automation_script'] = automation_script
-        description = '{0}<br/><br/><a href="{1}">Test Source</a>'.format(
-            description, automation_script)
+        # Description with timestamp and link to test case source.
+        # The timestamp will not be visible in Polarion, but will cause Polarion
+        # to update the "Updated" field even when there's no other change.
+        description = '{0}<br id="{1}"/><br/><a href="{2}">Test Source</a>'.format(
+            description, timestamp, automation_script)
     else:
         custom_fields['caseautomation'] = "manualonly"
         description = '{}'.format(description)
@@ -326,7 +340,9 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if 'cfme/tests' not in item.nodeid:
             continue
-        if not no_blacklist and compiled_blacklist.search(item.nodeid):
+        if (not no_blacklist and
+                compiled_blacklist.search(item.nodeid) and
+                not compiled_whitelist.search(item.nodeid)):
             continue
         get_testcase_data(tc_data, tc_names, item, legacy)
         get_testresult_data(tr_data, tr_names, item, legacy)
