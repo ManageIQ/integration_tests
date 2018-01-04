@@ -50,7 +50,8 @@ class VolumeCollection(GetRandomInstancesMixin, BaseCollection):
         volume_query = (
             self.appliance.db.client.session
                 .query(volume_table.name, ems_table.name)
-                .join(ems_table, volume_table.parent_id == ems_table.id))
+                .join(ems_table, volume_table.parent_id == ems_table.id)
+                .filter(volume_table.type == 'PersistentVolume'))
         provider = None
         # filtered
         if self.filters.get('provider'):
