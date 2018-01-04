@@ -613,7 +613,7 @@ class Group(BaseEntity):
         """ Retrive ldap user groups
             return: AddGroupView
         """
-        view = navigate_to(self, 'Add')
+        view = navigate_to(self.parent, 'Add')
         view.fill({'lookup_ldap_groups_chk': True,
                    'user_to_look_up': self.user_to_lookup,
                    'username': self.ldap_credentials.principal,
@@ -625,7 +625,7 @@ class Group(BaseEntity):
         """ Retrive external authorization user groups
             return: AddGroupView
         """
-        view = navigate_to(self, 'Add')
+        view = navigate_to(self.parent, 'Add')
         view.fill({'lookup_ldap_groups_chk': True,
                    'user_to_look_up': self.user_to_lookup})
         view.retrieve_button.click()
