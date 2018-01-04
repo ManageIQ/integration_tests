@@ -479,12 +479,16 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
                    'the {} Database'.format(self.string_name, self.appliance.product_name))
             view.flash.assert_success_message(msg)
 
-    def setup(self, rest=False):
+    def setup(self):
         """
         Sets up the provider robustly
         """
-        return self.create(
-            cancel=False, validate_credentials=True, check_existing=True, validate_inventory=True)
+        # TODO: Eventually this will become Sentakuified, but only after providers is CEMv3
+        if self.category in ['cloud', 'infra']:
+            return self.create_rest(check_existing=True, validate_inventory=True)
+        else:
+            return self.create(cancel=False, validate_credentials=True,
+                               check_existing=True, validate_inventory=True)
 
     def delete_if_exists(self, *args, **kwargs):
         """Combines ``.exists`` and ``.delete()`` as a shortcut for ``request.addfinalizer``
