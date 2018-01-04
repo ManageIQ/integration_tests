@@ -152,7 +152,7 @@ class SubnetCollection(BaseCollection):
             view = navigate_to(self.filters.get('parent'), 'CloudSubnets')
         else:
             view = navigate_to(self, 'All')
-        list_networks_obj = view.entities.get_all(surf_page=True)
+        list_networks_obj = view.entities.get_all(surf_pages=True)
         return [self.instantiate(name=p.name) for p in list_networks_obj]
 
 
