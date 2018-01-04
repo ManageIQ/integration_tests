@@ -9,7 +9,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.provider import CloudInfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.common.vm import VM
-from cfme.utils import version, ssh
+from cfme.utils import ssh
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.conf import credentials
@@ -47,9 +47,10 @@ def vm_obj(request, provider, setup_provider, console_template, vm_name):
 
     vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip="default")
     if provider.one_of(OpenStackProvider):
-        # Assign FloatingIP to Openstack Instance from pool 'public'
+        # Assign FloatingIP to Openstack Instance from pool
         # so that we can SSH to it
-        provider.mgmt.assign_floating_ip(vm_obj.name, 'public')
+        public_net = provider.data['public_network']
+        provider.mgmt.assign_floating_ip(vm_obj.name, public_net)
     return vm_obj
 
 

@@ -10,6 +10,7 @@ from cfme.common.vm import VM, Template
 from cfme.common.provider import cleanup_vm
 from cfme.common.vm_views import DriftAnalysis, DriftHistory
 from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.configure import configuration
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.configure.tasks import is_vm_analysis_finished, TasksView
@@ -216,8 +217,9 @@ def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data,
     del provision_data['image']
     vm.create_on_provider(find_in_cfme=True, **provision_data)
 
-    if provider.type == "openstack":
-        vm.provider.mgmt.assign_floating_ip(vm.name, 'public')
+    if provider.one_of(OpenStackProvider):
+        public_net = provider.data['public_network']
+        vm.provider.mgmt.assign_floating_ip(vm.name, public_net)
 
     logger.info("VM %s provisioned, waiting for IP address to be assigned", vm_name)
 
