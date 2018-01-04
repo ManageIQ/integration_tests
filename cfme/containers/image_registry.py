@@ -91,7 +91,8 @@ class ImageRegistryDetails(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(host=self.obj.host).click()
+        self.prerequisite_view.entities.get_entity(host=self.obj.host,
+                                                   use_search=True).click()
 
 
 @navigator.register(ImageRegistry, 'EditTags')

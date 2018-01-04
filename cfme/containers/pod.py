@@ -97,11 +97,13 @@ class Details(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
-                                                   project_name=self.obj.project_name).click()
+                                                   project_name=self.obj.project_name,
+                                                   use_search=True).click()
 
     def resetter(self):
         # Reset view and selection
-        self.view.toolbar.view_selector.select("Summary View")
+        if self.appliance.version == '5.9':
+            self.view.toolbar.view_selector.select("Summary View")
 
 
 @navigator.register(Pod, 'EditTags')

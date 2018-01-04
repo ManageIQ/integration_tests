@@ -125,7 +125,8 @@ class Details(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
-                                                   provider=self.obj.provider.name).click()
+                                                   provider=self.obj.provider.name,
+                                                   use_search=True).click()
 
 
 @navigator.register(Node, 'EditTags')
