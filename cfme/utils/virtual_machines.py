@@ -56,10 +56,13 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
 
     if template_name is None:
         try:
-            deploy_args.update(template=provider_crud.data['small_template'])
+            deploy_args.update(template=provider_crud.data['templates']['small_template']['name'])
         except KeyError:
-            raise ValueError('small_template not defined for Provider {} in cfme_data.yaml'.format(
-                provider_key))
+            try:
+                deploy_args.update(template=provider_crud.data['small_template'])
+            except KeyError:
+                raise ValueError('small_template not defined for Provider {} in cfme_data.yaml'
+                    .format(provider_key))
     else:
         deploy_args.update(template=template_name)
 
