@@ -100,11 +100,6 @@ class Details(CFMENavigateStep):
                                                    project_name=self.obj.project_name,
                                                    use_search=True).click()
 
-    def resetter(self):
-        # Reset view and selection
-        if self.appliance.version == '5.9':
-            self.view.toolbar.view_selector.select("Summary View")
-
 
 @navigator.register(Pod, 'EditTags')
 class ImageRegistryEditTags(CFMENavigateStep):
