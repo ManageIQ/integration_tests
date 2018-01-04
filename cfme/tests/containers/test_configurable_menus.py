@@ -9,7 +9,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.uncollectif(lambda: current_version() < "5.8"),
-    pytest.mark.provider([ContainersProvider], scope='function')
+    pytest.mark.provider([ContainersProvider], scope='function'),
+    pytest.mark.stressing
 ]
 
 
