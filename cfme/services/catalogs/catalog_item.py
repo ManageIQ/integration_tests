@@ -12,7 +12,8 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import ManageIQTree
+from widgetastic.utils import VersionPick
+from widgetastic_manageiq import ManageIQTree, FonticonPicker, PotentiallyInvisibleTab
 from . import ServicesCatalogView
 
 
@@ -47,18 +48,28 @@ class ButtonGroupForm(ServicesCatalogView):
 
     btn_group_text = Input(name='name')
     btn_group_hvr_text = Input(name='description')
-    btn_image = BootstrapSelect('button_image')
+    btn_image = VersionPick({
+        '5.8': BootstrapSelect('button_image'),
+        '5.9': FonticonPicker('button_icon')})
 
 
-class ButtonForm(ServicesCatalogView):
+class ButtonFormCommon(ServicesCatalogView):
     title = Text('#explorer_title_text')
 
-    btn_text = Input(name='name')
-    btn_hvr_text = Input(name='description')
-    select_dialog = BootstrapSelect('dialog_id')
-    system_process = BootstrapSelect('instance_name')
-    request = Input(name='object_request')
-    btn_image = BootstrapSelect('button_image')
+    class options(PotentiallyInvisibleTab):  # noqa
+
+        btn_text = Input(name='name')
+        btn_hvr_text = Input(name='description')
+        btn_image = VersionPick({
+            '5.8': BootstrapSelect('button_image'),
+            '5.9': FonticonPicker('button_icon')})
+        select_dialog = BootstrapSelect('dialog_id')
+
+    class advanced(PotentiallyInvisibleTab):  # noqa
+
+        system_process = BootstrapSelect('instance_name')
+        message = Input(name='object_message')
+        request = Input(name='object_request')
 
 
 class AllCatalogItemView(ServicesCatalogView):
@@ -135,9 +146,10 @@ class AddButtonGroupView(ButtonGroupForm):
             self.title.text == "Adding a new Button Group"
 
 
-class AddButtonView(ButtonForm):
+class AddButtonView(ButtonFormCommon):
 
     add_button = Button("Add")
+    cancel = Button('Cancel')
 
     @property
     def is_displayed(self):
@@ -197,6 +209,33 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
         self.provider_type = provider_type
         self.provisioning_data = prov_data
         self.domain = domain
+
+    TAB_MAPPING = {
+        # Options
+        'btn_text': 'options',
+        'btn_hvr_text': 'options',
+        'select_dialog': 'options',
+        'btn_image': 'options',
+        # Advanced
+        'system_process': 'advanced',
+        'request': 'advanced',
+    }
+
+    @classmethod
+    def _categorize_fill_dict(cls, d):
+        """This method uses ``TAB_MAPPING`` to categorize fields to appropriate tabs.
+        For DRY purposes.
+        """
+        result = {}
+        for key, value in d.items():
+            try:
+                placement = cls.TAB_MAPPING[key]
+            except KeyError:
+                raise KeyError('Unknown key name {} for Button'.format(key))
+            if placement not in result:
+                result[placement] = {}
+            result[placement][key] = value
+        return result
 
     def create(self):
         view = navigate_to(self, 'Add')
@@ -266,27 +305,40 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
 
     def add_button_group(self):
         view = navigate_to(self, 'AddButtonGroup')
+        if self.appliance.version >= '5.9':
+            image = 'fa-user'
+            flash_msg = 'Button Group "descr" was added'
+        else:
+            image = 'Button Image 1'
+            flash_msg = 'Buttons Group "descr" was added'
         view.fill({'btn_group_text': "group_text",
                    'btn_group_hvr_text': "descr",
-                   'btn_image': "Button Image 1"})
+                   'btn_image': image})
         view.add_button.click()
         view = self.create_view(DetailsCatalogItemView)
         assert view.is_displayed
-        view.flash.assert_success_message('Buttons Group "descr" was added')
+        view.flash.assert_success_message(flash_msg)
 
     def add_button(self):
         view = navigate_to(self, 'AddButton')
-        view.fill({'btn_text': "btn_text",
-                   'btn_hvr_text': "btn_descr",
-                   'btn_image': "Button Image 1",
-                   'select_dialog': self.dialog,
-                   'system_process': "Request",
-                   'request': "InspectMe"})
+        if self.appliance.version >= '5.9':
+            image = 'fa-user'
+            flash_msg = 'Custom Button "btn_descr" was added'
+        else:
+            image = 'Button Image 1'
+            flash_msg = 'Button "btn_descr" was added'
+        view.fill(self._categorize_fill_dict({
+            'btn_text': "btn_text",
+            'btn_hvr_text': "btn_descr",
+            'btn_image': image,
+            'select_dialog': self.dialog,
+            'system_process': "Request",
+            'request': "InspectMe"}))
         view.add_button.click()
         view = self.create_view(DetailsCatalogItemView)
         time.sleep(5)
         assert view.is_displayed
-        view.flash.assert_success_message('Button "btn_descr" was added')
+        view.flash.assert_success_message(flash_msg)
 
     @property
     def exists(self):
