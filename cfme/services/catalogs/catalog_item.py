@@ -18,10 +18,6 @@ from widgetastic_manageiq import ManageIQTree, FonticonPicker
 from . import ServicesCatalogView
 
 
-BUTTON_ICON_NAME = VersionPick({Version.lowest(): "Button Image 1",
-                                '5.9': "broom"})
-
-
 class BasicInfoForm(ServicesCatalogView):
     title = Text('#explorer_title_text')
 
@@ -202,6 +198,9 @@ class EditCatalogBundleView(CatalogBundleFormView):
 
 class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
 
+    BUTTON_ICON_NAME = VersionPick({Version.lowest(): "Button Image 1",
+                                    '5.9': "broom"})
+
     def __init__(self, name=None, description=None, item_type=None,
                  vm_name=None, display_in=False, catalog=None, dialog=None,
                  catalog_name=None, orch_template=None, provider_type=None,
@@ -294,7 +293,7 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
         view = navigate_to(self, 'AddButtonGroup')
         view.fill({'btn_group_text': "group_text",
                    'btn_group_hvr_text': button_name,
-                   'btn_image': BUTTON_ICON_NAME})
+                   'btn_image': self.BUTTON_ICON_NAME})
         view.add_button.click()
         view = self.create_view(DetailsCatalogItemView)
         assert view.is_displayed
@@ -307,7 +306,7 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
         if self.appliance.version < '5.9':
             view.fill({'btn_text': "btn_text",
                 'btn_hvr_text': button_name,
-                'btn_image': BUTTON_ICON_NAME,
+                'btn_image': self.BUTTON_ICON_NAME,
                 'select_dialog': self.dialog,
                 'system_process': "Request",
                 'request': "InspectMe"})
@@ -315,7 +314,7 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
             view.fill({'options': {'btn_text': "btn_text",
                                    'btn_hvr_text': button_name,
                                    'select_dialog': self.dialog,
-                                   'btn_image': BUTTON_ICON_NAME},
+                                   'btn_image': self.BUTTON_ICON_NAME},
                        'advanced': {'system_process': "Request",
                                     'request': "InspectMe"}})
         view.add_button.click()
