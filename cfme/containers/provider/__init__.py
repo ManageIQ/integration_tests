@@ -480,7 +480,8 @@ class ContainerObjectAllBaseView(ProvidersView):
 
     @property
     def is_displayed(self):
-        return self.summary.text == self.SUMMARY_TEXT
+        # We use 'in' for this condition since when we use search it'll include (Names with "...")
+        return self.SUMMARY_TEXT in self.summary.text
 
 
 class ContainerObjectDetailsEntities(View):
@@ -515,7 +516,9 @@ class ContainerObjectDetailsBaseView(BaseLoggedInPage, LoggingableView):
         return (
             self.title.is_displayed and
             self.breadcrumb.is_displayed and
-            self.breadcrumb.active_location == '{} (Summary)'.format(self.context['object'].name)
+            # We use 'in' for this condition because when we use search the
+            # text will include include (Names with "...")
+            '{} (Summary)'.format(self.context['object'].name) in self.breadcrumb.active_location
         )
 
 
