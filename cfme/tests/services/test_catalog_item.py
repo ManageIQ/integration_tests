@@ -5,6 +5,7 @@ import pytest
 from selenium.common.exceptions import NoSuchElementException
 
 import cfme.tests.configure.test_access_control as tac
+from cfme.base.login import BaseLoggedInPage
 from cfme import test_requirements
 from cfme.services.catalogs.catalog_item import CatalogItem, CatalogBundle
 from cfme.utils import error
@@ -81,14 +82,26 @@ def test_update_catalog_item(catalog_item):
         catalog_item.description = "my edited item description"
 
 
-def test_add_button_group(catalog_item):
+def test_add_button_group(catalog_item, appliance):
     catalog_item.create()
-    catalog_item.add_button_group()
+    button_name = catalog_item.add_button_group()
+    view = appliance.browser.create_view(BaseLoggedInPage)
+    if appliance.version.is_in_series('5.8'):
+        message = 'Buttons Group "{}" was added'.format(button_name)
+    else:
+        message = 'Button Group "{}" was added'.format(button_name)
+    view.flash.assert_success_message(message)
 
 
-def test_add_button(catalog_item):
+def test_add_button(catalog_item, appliance):
     catalog_item.create()
-    catalog_item.add_button()
+    button_name = catalog_item.add_button()
+    view = appliance.browser.create_view(BaseLoggedInPage)
+    if appliance.version.is_in_series('5.8'):
+        message = 'Button "{}" was added'.format(button_name)
+    else:
+        message = 'Custom Button "{}" was added'.format(button_name)
+    view.flash.assert_success_message(message)
 
 
 def test_edit_tags(catalog_item):

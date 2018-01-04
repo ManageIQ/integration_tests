@@ -1953,6 +1953,9 @@ class AdvancedFilterUserInput(View):
         '//div[@id="user_input_filter"]//div[contains(normalize-space(.), {})]/input')
     user_input_cancel = Button('Cancel')
     user_input_apply = Button(title='Apply the current filter (Enter)')
+    # We have different close button for user input
+    close_button = Text(
+        locator='//div[@id="quicksearchbox"]//button[@data-dismiss="modal"]')
 
     @property
     def is_displayed(self):
@@ -2193,7 +2196,11 @@ class Search(View):
     def close_advanced_search(self):
         """Checks if the advanced search box is open and if it does, closes it."""
         if self.is_advanced_search_opened:
-            self.advanced_search_form.close_button.click()
+            # the reason for this check that both buttons() are present in DOM
+            if self.advanced_search_form.close_button.is_displayed:
+                self.advanced_search_form.close_button.click()
+            else:
+                self.advanced_search_form.filter_user_input_form.close_button.click()
             wait_for(lambda: self.is_advanced_search_opened, fail_condition=True,
                      num_sec=10, delay=2, message='Waiting for advanced search to close')
 
