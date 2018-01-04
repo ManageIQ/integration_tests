@@ -18,6 +18,10 @@ from widgetastic_manageiq import ManageIQTree, FonticonPicker
 from . import ServicesCatalogView
 
 
+BUTTON_ICON_NAME = VersionPick({Version.lowest(): "Button Image 1",
+                                '5.9': "broom"})
+
+
 class BasicInfoForm(ServicesCatalogView):
     title = Text('#explorer_title_text')
 
@@ -290,10 +294,11 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
         view = navigate_to(self, 'AddButtonGroup')
         view.fill({'btn_group_text': "group_text",
                    'btn_group_hvr_text': button_name,
-                   'btn_image': "Button Image 1" if self.appliance.version < '5.9' else 'broom'})
+                   'btn_image': BUTTON_ICON_NAME})
         view.add_button.click()
         view = self.create_view(DetailsCatalogItemView)
         assert view.is_displayed
+        view.flash.assert_no_error()
         return button_name
 
     def add_button(self):
@@ -302,7 +307,7 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
         if self.appliance.version < '5.9':
             view.fill({'btn_text': "btn_text",
                 'btn_hvr_text': button_name,
-                'btn_image': "Button Image 1",
+                'btn_image': BUTTON_ICON_NAME,
                 'select_dialog': self.dialog,
                 'system_process': "Request",
                 'request': "InspectMe"})
@@ -310,7 +315,7 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
             view.fill({'options': {'btn_text': "btn_text",
                                    'btn_hvr_text': button_name,
                                    'select_dialog': self.dialog,
-                                   'btn_image': 'broom'},
+                                   'btn_image': BUTTON_ICON_NAME},
                        'advanced': {'system_process': "Request",
                                     'request': "InspectMe"}})
         view.add_button.click()
