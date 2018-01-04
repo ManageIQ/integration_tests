@@ -72,7 +72,9 @@ def test_add_provider_naming_conventions(provider, appliance, soft_assert):
                 'Containers Providers "' + provider_name + '" was saved')
         except AssertionError:
             soft_assert(False, provider_name + ' wasn\'t added successfully')
-        ContainersProvider.clear_providers()
+        else:
+            new_provider.delete(cancel=False)
+            new_provider.wait_for_delete()
 
 
 @pytest.mark.parametrize('default_sec_protocol', DEFAULT_SEC_PROTOCOLS)
@@ -94,7 +96,9 @@ def test_add_provider_ssl(provider, default_sec_protocol, soft_assert):
     except AssertionError:
         soft_assert(False, provider.name + ' wasn\'t added successfully using ' +
                     default_sec_protocol + ' security protocol')
-    ContainersProvider.clear_providers()
+    else:
+        new_provider.delete(cancel=False)
+        new_provider.wait_for_delete()
 
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS, ids=[
@@ -126,3 +130,6 @@ def test_add_hawkular_provider_ssl(provider, appliance, test_item, soft_assert):
         soft_assert(False, provider.name + ' wasn\'t added successfully using ' +
                     test_item.default_sec_protocol + ' security protocol and ' +
                     test_item.hawkular_sec_protocol + ' hawkular security protocol')
+    else:
+        new_provider.delete(cancel=False)
+        new_provider.wait_for_delete()
