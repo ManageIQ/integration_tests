@@ -227,31 +227,30 @@ class ActionCollection(BaseCollection):
 
     def create(self, description, action_type, action_values=None):
         """Create an Action in the UI."""
-        action_values = action_values or {}
+        action = self.instantiate(description, action_type, action_values=action_values)
         view = navigate_to(self, "Add")
         view.fill({
-            "description": description,
-            "action_type": action_type,
-            "snapshot_name": action_values.get("snapshot_name"),
-            "analysis_profile": action_values.get("analysis_profile"),
-            "snapshot_age": action_values.get("snapshot_age"),
-            "alerts_to_evaluate": action_values.get("alerts_to_evaluate"),
-            "parent_type": action_values.get("parent_type"),
-            "categories": action_values.get("categories"),
-            "cpu_number": action_values.get("cpu_number"),
-            "memory_amount": action_values.get("memory_amount"),
-            "email_sender": action_values.get("email_sender"),
-            "email_recipient": action_values.get("email_recipient"),
-            "vcenter_attr_name": action_values.get("vcenter_attr_name"),
-            "vcenter_attr_value": action_values.get("vcenter_attr_value"),
-            "tag": action_values.get("tag"),
-            "remove_tag": action_values.get("remove_tag"),
-            "run_ansible_playbook": action_values.get("run_ansible_playbook")
+            "description": action.description,
+            "action_type": action.action_type,
+            "snapshot_name": action.snapshot_name,
+            "analysis_profile": action.analysis_profile,
+            "snapshot_age": action.snapshot_age,
+            "alerts_to_evaluate": action.alerts_to_evaluate,
+            "parent_type": action.parent_type,
+            "categories": action.categories,
+            "cpu_number": action.cpu_number,
+            "memory_amount": action.memory_amount,
+            "email_sender": action.email_sender,
+            "email_recipient": action.email_recipient,
+            "vcenter_attr_name": action.vcenter_attr_name,
+            "vcenter_attr_value": action.vcenter_attr_value,
+            "tag": action.tag,
+            "remove_tag": action.remove_tag,
+            "run_ansible_playbook": action.run_ansible_playbook
         })
         # todo: check whether we can remove ensure_page_safe later
         self.browser.plugin.ensure_page_safe()
         view.add_button.click()
-        action = self.instantiate(description, action_type, action_values=action_values)
         view = action.create_view(ActionDetailsView)
         assert view.is_displayed
         view.flash.assert_success_message('Action "{}" was added'.format(action.description))
