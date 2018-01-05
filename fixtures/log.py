@@ -37,7 +37,7 @@ def pytest_runtest_logreport(report):
     #      test_tracking['test_name']['teardown'] = 'failed'
     yield
     test_tracking[_format_nodeid(report.nodeid, False)][report.when] = report.outcome
-    if report.when == 'teardown' and pytest.store.parallelizer_role == 'master':
+    if report.when == 'teardown' and pytest.store.parallel_session is None:
         path, lineno, domaininfo = report.location
         test_status = _test_status(_format_nodeid(report.nodeid, False))
         if test_status == "failed":
