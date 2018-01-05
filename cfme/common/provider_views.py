@@ -281,7 +281,7 @@ class ProviderNodesView(BaseLoggedInPage):
                 self.title.text == title)
 
 
-class ProviderTemplatesView(BaseLoggedInPage):
+class ProviderVmsTemplatesView(BaseLoggedInPage):
     """
      represents Templates view (exists for Infra providers)
     """
@@ -295,6 +295,9 @@ class ProviderTemplatesView(BaseLoggedInPage):
         download = Dropdown(text='Download')
         view_selector = View.nested(ItemsToolBarViewSelector)
 
+
+class ProviderTemplatesView(ProviderVmsTemplatesView):
+
     @property
     def is_displayed(self):
         title = '{name} (All Miq Templates)'.format(name=self.context['object'].name)
@@ -302,6 +305,15 @@ class ProviderTemplatesView(BaseLoggedInPage):
                 self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
                 self.title.text == title)
 
+
+class ProviderVmsView(ProviderVmsTemplatesView):
+
+    @property
+    def is_displayed(self):
+        title = '{name} (All Direct VMs)'.format(name=self.context['object'].name)
+        return (self.logged_in_as_current_user and
+                self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
+                self.title.text == title)
 
 class ProviderToolBar(View):
     """

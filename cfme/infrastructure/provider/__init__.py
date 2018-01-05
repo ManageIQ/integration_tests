@@ -14,7 +14,8 @@ from cfme.common.provider_views import (InfraProviderAddView,
                                         InfraProvidersDiscoverView,
                                         InfraProvidersView,
                                         ProviderNodesView,
-                                        ProviderTemplatesView)
+                                        ProviderTemplatesView,
+                                        ProviderVmsView)
 from cfme.exceptions import DestinationNotFound
 from cfme.infrastructure.cluster import ClusterView, ClusterToolbar
 from cfme.infrastructure.host import Host
@@ -330,6 +331,15 @@ class ProviderTemplates(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.relationships.click_at('Templates')
+
+
+@navigator.register(InfraProvider, 'ProviderVms')
+class ProviderVms(CFMENavigateStep):
+    VIEW = ProviderVmsView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.entities.relationships.click_at('Virtual Machines')
 
 
 def get_all_providers():

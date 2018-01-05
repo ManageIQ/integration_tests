@@ -1,10 +1,11 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.infrastructure.cluster import ClusterCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
 from fixtures.provider import setup_one_or_skip
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.update import update
 
@@ -12,7 +13,7 @@ from cfme.utils.update import update
 pytestmark = [test_requirements.tag, pytest.mark.tier(2)]
 
 test_items = [
-    ('clusters', ClusterCollection),
+    ('clusters', None),
     ('vms', Vm),
     ('templates', Template)
 ]
@@ -33,19 +34,21 @@ def testing_vis_object(request, a_provider, appliance):
     Returns: class object of certain type
     """
     collection_name, param_class = request.param
-    collection_rest = getattr(appliance.rest_api.collections, collection_name)
-
-    if not test_items:
-        pytest.skip('No content found for test!')
-
-    if collection_name in ['templates', 'vms']:
-        item_type = a_provider.data['provisioning']['catalog_item_type'].lower()
-        for resource in collection_rest:
-            if resource.vendor == item_type:
-                return param_class(name=resource.name, provider=a_provider)
+    if not param_class:
+        param_class = getattr(appliance.collections, collection_name)
+    if collection_name == 'clusters':
+        view = navigate_to(param_class, 'All')
+    elif collection_name == 'vms':
+        view = navigate_to(a_provider, "ProviderVms")
     else:
-        return param_class(appliance).instantiate(
-            name='{} in Datacenter'.format(collection_rest[0].name), provider=a_provider)
+        view = navigate_to(param_class, 'TemplatesOnly')
+    names = view.entities.entity_names
+    if not names:
+        pytest.skip("No content found for test")
+    try:
+        return param_class.instantiate(name=names[0], provider=a_provider)
+    except AttributeError:
+        return param_class(name=names[0], provider=a_provider)
 
 
 @pytest.fixture(scope='module')
@@ -54,6 +57,7 @@ def group_tag_datacenter_combination(group_with_tag, a_provider):
         group_with_tag.host_cluster = [a_provider.data['name'], a_provider.data['datacenters'][0]]
 
 
+@pytest.mark.meta(blockers=[BZ(1533391, forced_streams=["5.9", "upstream"])])
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'not_visible'])
 def test_tagvis_tag_datacenter_combination(testing_vis_object, group_tag_datacenter_combination,
                                 check_item_visibility, visibility):
