@@ -13,7 +13,6 @@ from cfme.infrastructure import virtual_machines as vms
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
 from cfme.utils import error
-from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
@@ -558,6 +557,10 @@ def _test_vm_provision(appliance):
     vms.lcl_btn("Provision VMs")
 
 
+def _test_vm_view(appliance):
+    logger.info("Checking for vms view access")
+    navigate_to(vms.Vm, 'VMsOnly')
+
 # this fixture is used in disabled tests. it should be updated along with tests
 # def _test_vm_power_on():
 #     """Ensures power button is shown for a VM"""
@@ -578,11 +581,9 @@ def _test_vm_removal():
 @pytest.mark.tier(3)
 @pytest.mark.parametrize(
     'product_features, action',
-    [({version.LOWEST: [
-        ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-        ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
-         'Provision VMs']], },
-      _test_vm_provision)])
+    [([['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'View'],
+       ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions']],
+      _test_vm_view)])
 def test_permission_edit(appliance, request, product_features, action):
     """
     Ensures that changes in permissions are enforced on next login
@@ -592,8 +593,6 @@ def test_permission_edit(appliance, request, product_features, action):
         product_features: product features to set for test role
         action: reference to a function to execute under the test user context
     """
-    product_features = version.pick(product_features)
-    request.addfinalizer(appliance.server.login_admin)
     role_name = fauxfactory.gen_alphanumeric()
     role = appliance.collections.roles.create(name=role_name,
                 vm_restriction=None,
@@ -604,7 +603,7 @@ def test_permission_edit(appliance, request, product_features, action):
     user = new_user(appliance, group=group)
     with user:
         try:
-            action()
+            action(appliance)
         except Exception:
             pytest.fail('Incorrect permissions set')
     appliance.server.login_admin()
@@ -614,9 +613,14 @@ def test_permission_edit(appliance, request, product_features, action):
     with user:
         try:
             with error.expected(Exception):
-                action()
+                action(appliance)
         except error.UnexpectedSuccessException:
             pytest.fail('Permissions have not been updated')
+
+    @request.addfinalizer
+    def _delete_user_group_role():
+        for item in [user, group, role]:
+            item.delete()
 
 
 def _mk_role(appliance, name=None, vm_restriction=None, product_features=None):
