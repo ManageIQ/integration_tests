@@ -7,6 +7,7 @@ from wrapanapi import exceptions
 from cfme.common import WidgetasticTaggable
 from cfme.common.vm_console import VMConsole
 from cfme.common.vm_views import DriftAnalysis, DriftHistory, VMPropertyDetailView
+from cfme.configure.tasks import is_vm_analysis_finished, TasksView
 from cfme.exceptions import (
     VmOrInstanceNotFound, ItemNotFound, OptionNotAvailable, UnknownProviderType)
 from cfme.utils import ParamClassName
@@ -399,7 +400,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
         """
         return self.get_detail(properties=("Lifecycle", "Retirement Date")).strip()
 
-    def smartstate_scan(self, cancel=False, from_details=False):
+    def smartstate_scan(self, cancel=False, from_details=False, wait_for_task_result=False):
         """Initiates fleecing from the UI.
 
         Args:
@@ -413,6 +414,10 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
             self.find_quadicon().check()
         view.toolbar.configuration.item_select('Perform SmartState Analysis',
                                                handle_alert=not cancel)
+        if wait_for_task_result:
+            view = self.appliance.browser.create_view(TasksView)
+            wait_for(lambda: is_vm_analysis_finished(self.name),
+                     delay=15, timeout="10m", fail_func=view.reload.click)
 
     def wait_to_disappear(self, timeout=600):
         """Wait for a VM to disappear within CFME
@@ -811,7 +816,7 @@ class VM(BaseVM):
         drift_analysis_view.apply_button.click()
         if not drift_analysis_view.toolbar.all_attributes.active:
             drift_analysis_view.toolbar.all_attributes.click()
-        return drift_analysis_view.drift_analysis(drift_section).is_changed
+        return drift_analysis_view.drift_analysis.is_changed(drift_section)
 
 
 class Template(BaseVM, _TemplateMixin):
