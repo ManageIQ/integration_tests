@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+import numbers
 import pytest
 
 from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
 from cfme.utils.net import ip_address, resolve_hostname
 from cfme.utils.providers import get_crud_by_name
 from cfme import test_requirements
@@ -138,8 +140,8 @@ def test_datastores_summary(soft_assert, appliance):
 
     assert len(storages_in_db) == len(list(report.data.rows))
 
-    storages_in_db_list = []
-    report_rows_list = []
+    all_storages_in_db = {}
+    all_storages_in_report = {}
 
     for store in storages_in_db:
 
@@ -159,18 +161,35 @@ def test_datastores_summary(soft_assert, appliance):
             'Number of VMs': int(number_of_vms)
         }
 
-        storages_in_db_list.append(store_dict)
+        all_storages_in_db[store_dict['Datastore Name']] = store_dict
 
     for row in report.data.rows:
+        report_dict = {
+            'Datastore Name': row['Datastore Name'],
+            'Type': row['Type'],
+            'Free Space': extract_num(row['Free Space']),
+            'Total Space': extract_num(row['Total Space']),
+            'Number of Hosts': int(row['Number of Hosts']),
+            'Number of VMs': int(row['Number of VMs'])
+        }
 
-        row['Free Space'] = extract_num(row['Free Space'])
-        row['Total Space'] = extract_num(row['Total Space'])
-        row['Number of Hosts'] = int(row['Number of Hosts'])
-        row['Number of VMs'] = int(row['Number of VMs'])
+        all_storages_in_report[report_dict['Datastore Name']] = report_dict
 
-        report_rows_list.append(row)
+    assert sorted(all_storages_in_db.keys()) == sorted(all_storages_in_report.keys())
 
-    assert sorted(storages_in_db_list) == sorted(report_rows_list)
+    # since we use shared datastores and shared providers. db and report values may slightly vary
+    # so, in that case we have to calculate similarity instead of equal match
+    for datastore in all_storages_in_report.keys():
+        report_record = all_storages_in_report[datastore]
+        db_record = all_storages_in_db[datastore]
+        similarity_index = similarity(report_record, db_record)
+        logger.info("similarity index {i} for "
+                    "report {r} and db record {db}".format(i=similarity_index,
+                                                           r=report_record,
+                                                           db=db_record))
+        soft_assert(similarity_index >= 0.99,
+                    "Report has {r} whereas DB has {db}".format(r=report_record,
+                                                                db=db_record))
 
 
 def round_num(column):
@@ -184,3 +203,23 @@ def round_num(column):
 
 def extract_num(column):
     return float(column.split(' ')[0])
+
+
+def similarity(dict1, dict2):
+    # rough way to calculate similarity for numbers
+    similarities = []
+    common_keys = set(dict1.keys()) & set(dict2.keys())
+    for key in common_keys:
+        val1 = dict1[key]
+        val2 = dict2[key]
+        if val1 == val2:
+            similarities.append(1)
+        else:
+            if isinstance(val1, numbers.Number) and isinstance(val2, numbers.Number):
+                val1, val2 = float(val1), float(val2)
+                divider = max(val1, val2) if max(val1, val2) != 0 else 1.0
+                similarities.append(min(val1, val2) / divider)
+            else:
+                similarities.append(0)
+
+    return sum(similarities) / len(similarities)
