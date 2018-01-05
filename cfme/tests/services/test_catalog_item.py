@@ -110,7 +110,7 @@ def test_edit_tags(catalog_item):
     catalog_item.remove_tag("Cost Center *", "Cost Center 001")
 
 
-@pytest.mark.meta(blockers=[BZ(1313510, forced_streams=["5.7", "5.8", "upstream"])])
+@pytest.mark.meta(blockers=[BZ(1531512, forced_streams=["5.7", "5.8", "5.9", "upstream"])])
 def test_catalog_item_duplicate_name(catalog_item):
     catalog_item.create()
     with error.expected("Name has already been taken"):
