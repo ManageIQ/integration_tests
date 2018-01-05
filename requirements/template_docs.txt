@@ -64,7 +64,7 @@ tabulate==0.7.7
 tornado
 tzlocal
 wait_for
-widgetastic.core>=0.3.2
+widgetastic.core>=0.20.0
 widgetastic.patternfly>=0.0.26
 yaycl
 yaycl-crypt
