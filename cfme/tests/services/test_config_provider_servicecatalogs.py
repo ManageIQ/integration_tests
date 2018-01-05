@@ -12,7 +12,8 @@ from cfme.utils.log import logger
 
 pytestmark = [
     test_requirements.service,
-    pytest.mark.tier(2)]
+    pytest.mark.tier(2),
+    pytest.mark.meta(blockers=[1491704])]
 
 
 def pytest_generate_tests(metafunc):
