@@ -21,8 +21,8 @@ class Subnet(WidgetasticTaggable, BaseEntity):
     db_types = ['NetworkSubnet']
 
     name = attr.ib()
-    provider_obj = attr.ib()
-    network = attr.ib()
+    provider_obj = attr.ib(default=None)
+    network = attr.ib(default=None)
 
     @property
     def exists(self):
@@ -152,7 +152,7 @@ class SubnetCollection(BaseCollection):
             view = navigate_to(self.filters.get('parent'), 'CloudSubnets')
         else:
             view = navigate_to(self, 'All')
-        list_networks_obj = view.entities.get_all()
+        list_networks_obj = view.entities.get_all(surf_pages=True)
         return [self.instantiate(name=p.name) for p in list_networks_obj]
 
 

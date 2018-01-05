@@ -48,7 +48,7 @@ def test_download_pdf_summary(appliance, collection_type, provider):
     if collection.all():
         random_obj = collection.all()[0].name
         try:
-            obj = collection.instantiate(random_obj)
+            obj = collection.instantiate(name=random_obj)
             download_summary(obj)
         except ManyEntitiesFound:
             pass
