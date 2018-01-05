@@ -509,8 +509,7 @@ def test_ssa_packages(ssa_vm, soft_assert, appliance, ssa_profile):
         pytest.fail('Package {} was not found in details table after SSA run'.format(package_name))
 
 
-@pytest.mark.uncollectif(BZ('1528419', forced_streams=['5.8', '5.9']).blocks,
-                         'File are not collected')
+@pytest.mark.meta(blockers=[BZ(1528419, forced_streams=['5.8', '5.9'])])
 @pytest.mark.long_running
 def test_ssa_files(appliance, ssa_vm, soft_assert):
     """Tests that instances can be scanned for specific file."""
