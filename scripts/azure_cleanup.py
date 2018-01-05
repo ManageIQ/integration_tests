@@ -30,79 +30,57 @@ def parse_cmd_line():
 def azure_cleanup(nic_template, pip_template, days_old):
         logger.info('azure_cleanup.py, NICs, PIPs, Disks and Stack Cleanup')
         logger.info("Date: {}".format(datetime.now()))
-        try:
-            for prov_key in list_provider_keys('azure'):
-                logger.info("----- Provider: {} -----".format(prov_key))
-                mgmt = get_mgmt(prov_key)
-                mgmt.logger = logger
-                for name, scr_id in mgmt.list_subscriptions():
-                    logger.info("subscription {s} is chosen".format(s=name))
-                    setattr(mgmt, 'subscription_id', scr_id)
+        errors = []
+        for prov_key in list_provider_keys('azure'):
+            logger.info("----- Provider: '%s' -----", prov_key)
+            mgmt = get_mgmt(prov_key)
+            mgmt.logger = logger
+            for name, scr_id in mgmt.list_subscriptions():
+                logger.info("Subscription '%s' is chosen", name)
+                setattr(mgmt, 'subscription_id', scr_id)
+                for resource_group in mgmt.list_resource_groups():
+                    mgmt.logger.info('Checking "%s" resource group:', resource_group)
+
                     # removing stale nics
-                    removed_nics = mgmt.remove_nics_by_search(nic_template)
-                    if removed_nics:
-                        logger.info('following nics were removed:')
-                        for nic in removed_nics:
-                            logger.info(nic[0])
-                    else:
-                        logger.info("No '{}' NICs were found".format(nic_template))
+                    try:
+                        mgmt.remove_nics_by_search(nic_template, resource_group)
+                    except Exception as e:
+                        logger.warning("NIC cleanup failed")
+                        errors.append(e)
 
                     # removing public ips
-                    removed_pips = mgmt.remove_pips_by_search(pip_template)
-                    if removed_pips:
-                        logger.info('following pips were removed:')
-                        for pip in removed_pips:
-                            logger.info(pip[0])
-                    else:
-                        logger.info("No '{}' Public IPs were found".format(pip_template))
+                    try:
+                        mgmt.remove_pips_by_search(pip_template, resource_group)
+                    except Exception as e:
+                        logger.warning("Public IP cleanup failed")
+                        errors.append(e)
 
-                # removing stale stacks
-                stack_list = mgmt.list_stack(days_old=days_old)
-                if stack_list:
-                    logger.info("Removing empty Stacks:")
-                    removed_stacks = []
-                    for stack in stack_list:
-                        if mgmt.is_stack_empty(stack):
-                            removed_stacks.append(stack)
-                            mgmt.delete_stack(stack)
+                    # removing stale stacks
+                    try:
+                        stack_list = mgmt.list_stack(resource_group=resource_group,
+                                                 days_old=days_old)
+                        if stack_list:
+                            removed_stacks = []
+                            for stack in stack_list:
+                                if mgmt.is_stack_empty(stack, resource_group=resource_group):
+                                    removed_stacks.append(stack)
+                                    mgmt.delete_stack(stack, resource_group)
 
-                    logger.info('following stacks were removed:')
-                    for stack in removed_stacks:
-                        logger.info([stack])
-                else:
-                    logger.info("No stacks older than '{}' days were found".format(
-                        days_old))
-
-                """
-                Blob removal section
-                """
-                # TODO: update it later to use different subscriptions and resource groups
-                logger.info("Removing 'bootdiagnostics-test*' containers")
-                bootdiag_list = []
-                for container in mgmt.container_client.list_containers():
-                    if container.name.startswith('bootdiagnostics-test'):
-                        bootdiag_list.append(container.name)
-                        mgmt.container_client.delete_container(
-                            container_name=container.name)
-
-                logger.info('following disks were removed:')
-                for disk in bootdiag_list:
-                    logger.info([disk])
-
-                logger.info("Removing unused blobs and disks")
-                removed_disks = mgmt.remove_unused_blobs()
-                if len(removed_disks['Managed']) > 0:
-                    logger.info('Managed disks:')
-                    logger.info(removed_disks['Managed'])
-
-                if len(removed_disks['Unmanaged']) > 0:
-                    logger.info('Unmanaged blobs:')
-                    logger.info(removed_disks['Unmanaged'])
-            return 0
-        except Exception:
-            logger.info("Something bad happened during Azure cleanup")
-            logger.info(tb.format_exc())
+                            if not removed_stacks:
+                                logger.info("No empty stacks older '%s' days were found", days_old)
+                    except Exception as e:
+                        logger.warning("Removing Stacks failed")
+                        errors.append(e)
+                    try:
+                        mgmt.remove_unused_blobs(resource_group)
+                    except Exception as e:
+                        logger.warning("Removing unused blobs failed")
+                        errors.append(e)
+        if errors:
+            tb.format_exc()
             return 1
+        else:
+            return 0
 
 
 if __name__ == "__main__":
