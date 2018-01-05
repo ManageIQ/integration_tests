@@ -7,7 +7,7 @@ from cfme.utils.log import logger
 
 
 @pytest.fixture(scope="module")
-def custom_db_migrate(app_creds, temp_appliance_preconfig):
+def customer_db_migrate(app_creds, temp_appliance_preconfig):
     app = temp_appliance_preconfig
     app.evmserverd.stop()
     app.db.extend_partition()
@@ -28,37 +28,14 @@ def custom_db_migrate(app_creds, temp_appliance_preconfig):
     # Stop EVM service and drop vmdb_production DB
     app.evmserverd.stop()
     app.db.drop()
+    app.db.create()
 
     # restore new DB and migrate it
     with app.ssh_client as ssh:
-        rc, out = ssh.run_command('createdb vmdb_production', timeout=30)
-        assert rc == 0, "Failed to create clean database: {}".format(out)
         rc, out = ssh.run_command(
             'pg_restore -v --dbname=vmdb_production /{}'.format(url_basename), timeout=600)
         assert rc == 0, "Failed to restore new database: {}".format(out)
-        rc, out = ssh.run_rake_command("db:migrate", timeout=300)
-        assert rc == 0, "Failed to migrate new database: {}".format(out)
-        rc, out = ssh.run_rake_command(
-            'db:migrate:status 2>/dev/null | grep "^\s*down"', timeout=30)
-        assert rc != 0, "Migration failed; migrations in 'down' state found: {}".format(out)
-        # fetch GUID and REGION from the DB and use it to replace data in /var/www/miq/vmdb/GUID
-        # and /var/www/miq/vmdb/REGION respectively
-        data_query = {
-            'guid': 'select guid from miq_servers',
-            'region': 'select region from miq_regions'
-        }
-        for data_type, db_query in data_query.items():
-            data_filepath = '/var/www/miq/vmdb/{}'.format(data_type.upper())
-            rc, out = ssh.run_command(
-                'psql -d vmdb_production -t -c "{}"'.format(db_query), timeout=15)
-            assert rc == 0, "Failed to fetch {}: {}".format(data_type, out)
-            db_data = out.strip()
-            assert db_data, "No {} found in database; query '{}' returned no records".format(
-                data_type, db_query)
-            rc, out = ssh.run_command(
-                "echo -n '{}' > {}".format(db_data, data_filepath), timeout=15)
-            assert rc == 0, "Failed to replace data in {} with '{}': {}".format(
-                data_filepath, db_data, out)
+        app.db.migrate_db()
         # fetch v2_key
         try:
             rc, out = ssh.run_command(

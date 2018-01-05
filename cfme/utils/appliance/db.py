@@ -88,6 +88,41 @@ class ApplianceDB(AppliancePlugin):
             return rc == 0
         wait_for(_db_dropped, delay=5, timeout=60, message="drop the vmdb_production DB")
 
+    def create(self):
+        """ Creates new vmdb_production database
+
+            Note: EVM service has to be stopped for this to work.
+        """
+        rc, out = self.ssh_client.run_command('createdb vmdb_production', timeout=30)
+        assert rc == 0, "Failed to create clean database: {}".format(out)
+
+    def migrate_db(self):
+        """migrates a given database and updates REGION/GUID files"""
+        ssh = self.ssh_client
+        rc, out = ssh.run_rake_command("db:migrate", timeout=300)
+        assert rc == 0, "Failed to migrate new database: {}".format(out)
+        rc, out = ssh.run_rake_command(
+            'db:migrate:status 2>/dev/null | grep "^\s*down"', timeout=30)
+        assert rc != 0, "Migration failed; migrations in 'down' state found: {}".format(out)
+        # fetch GUID and REGION from the DB and use it to replace data in /var/www/miq/vmdb/GUID
+        # and /var/www/miq/vmdb/REGION respectively
+        data_query = {
+            'guid': 'select guid from miq_servers',
+            'region': 'select region from miq_regions'
+        }
+        for data_type, db_query in data_query.items():
+            data_filepath = '/var/www/miq/vmdb/{}'.format(data_type.upper())
+            rc, out = ssh.run_command(
+                'psql -d vmdb_production -t -c "{}"'.format(db_query), timeout=15)
+            assert rc == 0, "Failed to fetch {}: {}".format(data_type, out)
+            db_data = out.strip()
+            assert db_data, "No {} found in database; query '{}' returned no records".format(
+                data_type, db_query)
+            rc, out = ssh.run_command(
+                "echo -n '{}' > {}".format(db_data, data_filepath), timeout=15)
+            assert rc == 0, "Failed to replace data in {} with '{}': {}".format(
+                data_filepath, db_data, out)
+
     @property
     def ssh_client(self, **connect_kwargs):
         # Not lazycached to allow for the db address changing
