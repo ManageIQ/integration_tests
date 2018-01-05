@@ -45,7 +45,7 @@ from .services import SystemdService
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # EMS types recognized by IP or credentials
 RECOGNIZED_BY_IP = [
-    "InfraManager", "ContainerManager", "MiddlewareManager", "Openstack::CloudManager"
+    "InfraManager", "ContainerManager", "Openstack::CloudManager"
 ]
 RECOGNIZED_BY_CREDS = ["CloudManager"]
 

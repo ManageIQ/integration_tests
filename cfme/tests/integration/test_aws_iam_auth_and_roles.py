@@ -8,7 +8,6 @@ from cfme.utils.conf import cfme_data, credentials
 from cfme.roles import role_access_ui_58z, role_access_ui_59z, role_access_ssui
 
 ONLY_IN_59 = ['Physical Infrastructure', 'Object Storage']
-AREA_MIDDLEWARE = 'Middleware'
 
 
 def auth_groups():

@@ -22,7 +22,6 @@ compiled_whitelist = re.compile('(' + ')|('.join(whitelist) + ')')
 
 blacklist = [
     'cfme/tests/containers/',
-    'cfme/tests/middleware/',
     'cfme/tests/openstack/',
     'hawkular',
     r'\[.*rhos',

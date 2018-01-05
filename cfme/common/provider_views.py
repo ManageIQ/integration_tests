@@ -166,16 +166,6 @@ class CloudProviderDetailsView(ProviderDetailsView):
                 self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'])
 
 
-class MiddlewareProviderDetailsView(ProviderDetailsView):
-    """
-     Middleware Details page
-    """
-    @property
-    def is_displayed(self):
-        return (super(MiddlewareProviderDetailsView, self).is_displayed and
-                self.navigation.currently_selected == ['Middleware', 'Providers'])
-
-
 class ProviderTimelinesView(TimelinesView, BaseLoggedInPage):
     """
      represents Timelines page
@@ -382,17 +372,6 @@ class CloudProvidersView(ProvidersView):
                 self.entities.title.text == 'Cloud Providers')
 
 
-class MiddlewareProvidersView(ProvidersView):
-    """
-     represents Main view displaying all Middleware providers
-    """
-    @property
-    def is_displayed(self):
-        return (super(MiddlewareProvidersView, self).is_displayed and
-                self.navigation.currently_selected == ['Middleware', 'Providers'] and
-                self.entities.title.text == 'Middleware Providers')
-
-
 class PhysicalProvidersView(ProvidersView):
     """
      represents Main view displaying all Infra providers
@@ -521,21 +500,9 @@ class ContainerProviderAddViewUpdated(ContainerProviderAddView, ContainerProvide
             getattr(self, widget).fill(values.get(widget))
 
 
-class MiddlewareProviderAddView(ProviderAddView):
-    """
-     represents Middleware Provider Add View
-    """
-
-    @property
-    def is_displayed(self):
-        return (super(MiddlewareProviderAddView, self).is_displayed and
-                self.navigation.currently_selected == ['Middleware', 'Providers'] and
-                self.title.text == 'Add New Middleware Provider')
-
-
 class PhysicalProviderAddView(ProviderAddView):
     """
-     represents Middleware Provider Add View
+     represents Provider Add View
     """
 
     @property
@@ -610,16 +577,3 @@ class ContainerProviderEditViewUpdated(ContainerProviderEditView, ContainerProvi
     def before_fill(self, values):
         for widget in self.COND_WIDGETS:
             getattr(self, widget).fill(values.get(widget))
-
-
-class MiddlewareProviderEditView(ProviderEditView):
-    """
-     represents Middleware Provider Edit View
-    """
-    @property
-    def is_displayed(self):
-        expected_title = ("Edit Middleware Providers '{name}'"
-            .format(name=self.context['object'].name))
-        return (super(MiddlewareProviderEditView, self).is_displayed and
-                self.navigation.currently_selected == ['Middleware', 'Providers'] and
-                self.title.text == expected_title)

@@ -218,7 +218,6 @@ ALERT_PROFILES = [
     alert_profiles.ClusterAlertProfile,
     alert_profiles.DatastoreAlertProfile,
     alert_profiles.HostAlertProfile,
-    alert_profiles.MiddlewareServerAlertProfile,
     alert_profiles.ProviderAlertProfile,
     alert_profiles.ServerAlertProfile,
     alert_profiles.VMInstanceAlertProfile

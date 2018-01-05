@@ -592,13 +592,6 @@ class HostControlPolicy(BasePolicy):
     PRETTY = "Host / Node"
 
 
-class MiddlewareServerCompliancePolicy(BasePolicy):
-
-    TYPE = "Compliance"
-    TREE_NODE = "Middleware Server"
-    PRETTY = "Middleware Server"
-
-
 class VMControlPolicy(BasePolicy):
 
     TYPE = "Control"

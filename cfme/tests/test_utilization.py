@@ -8,7 +8,6 @@ from fixtures.pytest_store import store
 
 from cfme.common.provider import BaseProvider
 from cfme.containers.provider import ContainersProvider
-from cfme.middleware.provider import MiddlewareProvider
 from fixtures.provider import setup_or_skip
 from cfme.utils import conf
 from cfme.utils.log import logger
@@ -26,7 +25,7 @@ from cfme.utils.version import current_version
 pytestmark = [
     pytest.mark.tier(1),
     test_requirements.c_and_u,
-    pytest.mark.provider([ContainersProvider, MiddlewareProvider], scope="module")
+    pytest.mark.provider([ContainersProvider], scope="module")
 ]
 
 
