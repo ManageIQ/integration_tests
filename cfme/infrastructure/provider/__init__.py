@@ -216,8 +216,13 @@ class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.toolbar.configuration.item_select('Add a New '
-                                                                 'Infrastructure Provider')
+        try:
+            self.prerequisite_view.toolbar.configuration.item_select('Add a New '
+                                                                     'Infrastructure Provider')
+        except MoveTargetOutOfBoundsException:
+            # TODO: Remove once fixed 1475303
+            self.prerequisite_view.toolbar.configuration.item_select('Add a New '
+                                                                     'Infrastructure Provider')
 
 
 @navigator.register(InfraProvider, 'Discover')
@@ -226,8 +231,13 @@ class Discover(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.toolbar.configuration.item_select('Discover '
-                                                                 'Infrastructure Providers')
+        try:
+            self.prerequisite_view.toolbar.configuration.item_select('Discover '
+                                                                     'Infrastructure Providers')
+        except MoveTargetOutOfBoundsException:
+            # TODO: Remove once fixed 1475303
+            self.prerequisite_view.toolbar.configuration.item_select('Discover '
+                                                                     'Infrastructure Providers')
 
 
 @navigator.register(InfraProvider, 'Details')
