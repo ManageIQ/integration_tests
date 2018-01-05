@@ -92,7 +92,8 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
     TO_OPEN_EDIT = None  # Name of the item in Configuration that puts you in the form
     QUADICON_TYPE = "vm"
     # Titles of the delete buttons in configuration
-    REMOVE_SELECTED = 'Remove selected items'
+    REMOVE_SELECTED = VersionPick({'5.8': 'Remove selected items',
+                                   '5.9': 'Remove selected items from Inventory'})
     REMOVE_SINGLE = VersionPick({'5.8': 'Remove Virtual Machine',
                                  '5.9': 'Remove Virtual Machine from Inventory'})
     RETIRE_DATE_FMT = VersionPick({'5.8': parsetime.american_minutes_with_utc,
