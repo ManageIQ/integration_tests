@@ -35,7 +35,12 @@ def a_provider(request):
 
 
 def new_credential():
-    return Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret='redhat')
+    if BZ(1487199, forced_streams=['5.8']).blocks:
+        return Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric().lower()),
+                          secret='redhat')
+    else:
+        return Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()),
+                          secret='redhat')
 
 
 def new_user(appliance, group, name=None, credential=None):
