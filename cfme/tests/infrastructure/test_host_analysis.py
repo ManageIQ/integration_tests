@@ -77,8 +77,9 @@ def test_run_host_analysis(setup_provider_modscope, provider, host_type, host_na
 
     view = navigate_to(host_with_credentials, 'Details')
     view.security_accordion.navigation.select('Firewall Rules')
-    selected_info = view.security_accordion.navigation.currently_selected
-    soft_assert(selected_info, "No firewall rules found in host detail accordion")
+    # Page get updated if rules value is not 0, and title is updated
+    soft_assert("(Firewall Rules)" in view.title.text, (
+        "No firewall rules found in host detail"))
 
     if host_type in ('rhel', 'rhev'):
         soft_assert(host_with_credentials.get_detail('Configuration', 'Packages') != '0',
