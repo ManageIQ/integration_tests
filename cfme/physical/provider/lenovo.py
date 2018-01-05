@@ -1,4 +1,5 @@
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
+from wrapanapi.lenovo import LenovoSystem
 
 from . import PhysicalProvider
 
@@ -14,7 +15,9 @@ class LenovoEndpointForm(DefaultEndpointForm):
 class LenovoProvider(PhysicalProvider):
     type_name = 'lenovo'
     endpoints_form = LenovoEndpointForm
-    string_name = "Ems Physical Infras"
+    string_name = 'Physical Infrastructure'
+    mgmt_class = LenovoSystem
+    refresh_text = "Refresh Relationships and Power States"
 
     def __init__(self, appliance, name=None, key=None, endpoints=None):
         super(LenovoProvider, self).__init__(

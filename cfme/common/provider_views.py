@@ -166,6 +166,18 @@ class CloudProviderDetailsView(ProviderDetailsView):
                 self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'])
 
 
+class PhysicalProviderDetailsView(ProviderDetailsView):
+    """
+     Physical  Details page
+    """
+    @property
+    def is_displayed(self):
+        return (super(PhysicalProviderDetailsView, self).is_displayed and
+                self.navigation.currently_selected == ['Compute',
+                                                       'Physical Infrastructure',
+                                                       'Providers'])
+
+
 class ProviderTimelinesView(TimelinesView, BaseLoggedInPage):
     """
      represents Timelines page
@@ -540,6 +552,20 @@ class InfraProviderEditView(ProviderEditView):
         return (super(InfraProviderEditView, self).is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
                 self.title.text == 'Edit Infrastructure Provider')
+
+
+class PhysicalProviderEditView(ProviderEditView):
+    """
+     represents Provider Edit View
+    """
+    @property
+    def is_displayed(self):
+        expected_title = ("Edit Physical Infrastructure Providers '{name}'"
+                          .format(name=self.context['object'].name))
+        return (super(PhysicalProviderEditView, self).is_displayed and
+                self.navigation.currently_selected ==
+                ['Compute', 'Physical Infrastructure', 'Providers'] and
+                self.title.text == expected_title)
 
 
 class CloudProviderEditView(ProviderEditView):
