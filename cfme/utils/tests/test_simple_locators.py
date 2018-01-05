@@ -4,7 +4,7 @@ import pytest
 @pytest.fixture(scope='module')
 def test_page(browser, datafile, appliance):
     selenium = appliance.browser.widgetastic.selenium
-    test_page_html = datafile('/utils/tests/test_simple_locators/elements.html').read()
+    test_page_html = datafile('/utils/test_simple_locators/elements.html').read()
     selenium.get('data:text/html;base64,{}'.format(test_page_html.encode('base64')))
 
 
@@ -13,7 +13,13 @@ def assert_len(appliance):
     sel = appliance.browser.widgetastic.selenium
 
     def f(locator, required_len):
-        assert len(sel.elements(locator)) == required_len
+        elements_count = 0
+        if isinstance(locator, list):
+            for loc in locator:
+                elements_count += len(sel.find_elements_by_css_selector(loc))
+        else:
+            elements_count += len(sel.find_elements_by_css_selector(locator))
+        assert elements_count == required_len
     return f
 
 
