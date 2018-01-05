@@ -44,8 +44,12 @@ def pytest_exception_interact(node, call, report):
         from cfme.utils.browser import manager
         manager.start()  # start will quit first and cycle wharf as well
 
-    short_tb = '{}\n{}'.format(
-        call.excinfo.type.__name__, val.encode('ascii', 'xmlcharrefreplace'))
+    last_lines = "\n".join(report.longreprtext.split("\n")[-4:])
+
+    short_tb = '{}\n{}\n{}'.format(
+        last_lines, call.excinfo.type.__name__,
+        val.encode('ascii', 'xmlcharrefreplace')
+    )
     fire_art_test_hook(
         node, 'filedump',
         description="Traceback", contents=report.longreprtext, file_type="traceback",
