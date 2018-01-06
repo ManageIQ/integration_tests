@@ -554,8 +554,8 @@ def test_validate_default_rate_storage_usage_cost(chargeback_costs_default,
             break
 
 
-@pytest.mark.uncollectif(
-    lambda provider: provider.category == 'cloud')
+@pytest.mark.uncollectif(lambda provider: provider.category == 'cloud')
+@pytest.mark.meta(blockers=[BZ(1532368, forced_streams='5.9')])
 def test_validate_custom_rate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate CPU usage cost.
        Calculation is based on custom Chargeback rate.
@@ -571,8 +571,8 @@ def test_validate_custom_rate_cpu_usage_cost(chargeback_costs_custom, chargeback
             break
 
 
-@pytest.mark.uncollectif(
-    lambda provider: provider.one_of(GCEProvider))
+@pytest.mark.uncollectif(lambda provider: provider.one_of(GCEProvider))
+@pytest.mark.meta(blockers=[BZ(1532368, forced_streams='5.9')])
 def test_validate_custom_rate_memory_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate memory usage cost.
        Calculation is based on custom Chargeback rate.
@@ -588,6 +588,7 @@ def test_validate_custom_rate_memory_usage_cost(chargeback_costs_custom, chargeb
             break
 
 
+@pytest.mark.meta(blockers=[BZ(1532368, forced_streams='5.9')])
 def test_validate_custom_rate_network_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate network usage cost.
        Calculation is based on custom Chargeback rate.
@@ -603,6 +604,7 @@ def test_validate_custom_rate_network_usage_cost(chargeback_costs_custom, charge
             break
 
 
+@pytest.mark.meta(blockers=[BZ(1532368, forced_streams='5.9')])
 def test_validate_custom_rate_disk_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate disk usage cost.
        Calculation is based on custom Chargeback rate.
@@ -618,8 +620,8 @@ def test_validate_custom_rate_disk_usage_cost(chargeback_costs_custom, chargebac
             break
 
 
-def test_validate_custom_rate_storage_usage_cost(chargeback_costs_custom,
-        chargeback_report_custom):
+@pytest.mark.meta(blockers=[BZ(1532368, forced_streams='5.9')])
+def test_validate_custom_rate_storage_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate stoarge usage cost.
        Calculation is based on custom Chargeback rate.
     """
