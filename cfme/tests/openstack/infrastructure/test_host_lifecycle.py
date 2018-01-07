@@ -72,7 +72,7 @@ def test_register_host(provider, host, has_mistral_service):
     Metadata:
         test_flag: openstack_scale"""
     hosts_before = [h.uuid for h in provider.mgmt.iapi.node.list()]
-    provider.register(provider.get_yaml_data()['instackenv_file_path'])
+    provider.register(provider.data['instackenv_file_path'])
     # Wait for a new host to appear
     wait_for(lambda: len(provider.mgmt.iapi.node.list()) == len(hosts_before) + 1, timeout=300,
              delay=5)

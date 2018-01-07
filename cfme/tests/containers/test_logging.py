@@ -14,9 +14,10 @@ pytestmark = [
 
 
 TEST_ITEMS = [
-    pytest.mark.polarion('CMP-10634')(ContainersTestItem(ContainersProvider, 'CMP-10634'))
+    pytest.mark.polarion('CMP-10634')(ContainersTestItem(
+        ContainersProvider, 'CMP-10634', collection_obj=None))
     # TODO Add Node back into the list when other classes are updated to use WT views and widgets.
-    # pytest.mark.polarion('CMP-10635')(ContainersTestItem(Node, 'CMP-10635'))
+    # pytest.mark.polarion('CMP-10635')(ContainersTestItem(Node, 'CMP-10635', collection_obj=None))
 ]
 
 
@@ -52,7 +53,7 @@ def test_external_logging_activated(provider, appliance, test_item):
     if test_item.obj is ContainersProvider:
         obj_inst = provider
     else:
-        obj_inst = test_item.obj.get_random_instances(provider, 1, appliance).pop()
+        obj_inst = test_item.collection_obj(appliance).get_random_instances().pop()
 
     view = navigate_to(obj_inst, 'Details')
     assert view.toolbar.monitoring.item_enabled('External Logging'), (

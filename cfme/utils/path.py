@@ -49,9 +49,6 @@ orchestration_path = data_path.join('orchestration')
 #: resource files root directory, ``cfme_tests/data/resources``
 resources_path = data_path.join('resources')
 
-#: middleware provider resource files path, ``cfme_tests/data/resources/middleware``
-middleware_resources_path = resources_path.join('middleware')
-
 
 def get_rel_path(absolute_path_str):
     """Get a relative path for object in the project root

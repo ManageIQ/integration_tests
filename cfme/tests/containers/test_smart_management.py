@@ -3,14 +3,16 @@ import random
 
 import pytest
 from cfme.configure.configuration.region_settings import Tag
-from cfme.containers.provider import ContainersProvider, ContainersTestItem,\
-    refresh_and_navigate
-from cfme.containers.image import Image
-from cfme.containers.project import Project
-from cfme.containers.image_registry import ImageRegistry
-from cfme.containers.pod import Pod
+from cfme.containers.provider import (ContainersProvider, ContainersTestItem,
+    refresh_and_navigate)
+from cfme.containers.image import Image, ImageCollection
+from cfme.containers.project import Project, ProjectCollection
+from cfme.containers.image_registry import (ImageRegistry,
+                                            ImageRegistryCollection)
+from cfme.containers.node import Node, NodeCollection
+from cfme.containers.pod import Pod, PodCollection
 from cfme.containers.template import Template
-from cfme.containers.container import Container
+from cfme.containers.container import Container, ContainerCollection
 from cfme.utils.log import create_sublogger
 from cfme.utils.wait import wait_for
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -24,15 +26,22 @@ pytestmark = [
 logger = create_sublogger("smart_management")
 
 TEST_ITEMS = [
-    pytest.mark.polarion('CMP-9948')(ContainersTestItem(Container, 'CMP-9948')),
-    pytest.mark.polarion('CMP-10320')(ContainersTestItem(Template, 'CMP-10320')),
-    pytest.mark.polarion('CMP-9992')(ContainersTestItem(ImageRegistry, 'CMP-9992')),
-    pytest.mark.polarion('CMP-9981')(ContainersTestItem(Image, 'CMP-9981')),
-    # TODO Add Node back into the list when other classes are updated to use WT views and widgets.
-    # pytest.mark.polarion('CMP-9964')(ContainersTestItem(Node, 'CMP-9964')),
-    pytest.mark.polarion('CMP-9932')(ContainersTestItem(Pod, 'CMP-9932')),
-    pytest.mark.polarion('CMP-9870')(ContainersTestItem(Project, 'CMP-9870')),
-    pytest.mark.polarion('CMP-9854')(ContainersTestItem(ContainersProvider, 'CMP-9854'))
+    pytest.mark.polarion('CMP-9948')(ContainersTestItem(
+        Container, 'CMP-9948', collection_obj=ContainerCollection)),
+    pytest.mark.polarion('CMP-10320')(ContainersTestItem(
+        Template, 'CMP-10320', collection_obj=Template)),
+    pytest.mark.polarion('CMP-9992')(ContainersTestItem(
+        ImageRegistry, 'CMP-9992', collection_obj=ImageRegistryCollection)),
+    pytest.mark.polarion('CMP-9981')(ContainersTestItem(
+        Image, 'CMP-9981', collection_obj=ImageCollection)),
+    pytest.mark.polarion('CMP-9964')(ContainersTestItem(
+        Node, 'CMP-9964', collection_obj=NodeCollection)),
+    pytest.mark.polarion('CMP-9932')(ContainersTestItem(
+        Pod, 'CMP-9932', collection_obj=PodCollection)),
+    pytest.mark.polarion('CMP-9870')(ContainersTestItem(
+        Project, 'CMP-9870', collection_obj=ProjectCollection)),
+    pytest.mark.polarion('CMP-9854')(ContainersTestItem(
+        ContainersProvider, 'CMP-9854', collection_obj=Node))
 ]
 
 
@@ -73,7 +82,7 @@ def test_smart_management_add_tag(provider, appliance, test_item):
     logger.debug("Setting smart mgmt tag to {obj_type}".format(obj_type=test_item.obj.__name__))
     # validate no tag set to project
     obj_inst = (provider if test_item.obj is ContainersProvider
-                else test_item.obj.get_random_instances(provider, 1, appliance).pop())
+                else test_item.collection_obj(appliance).get_random_instances().pop())
 
     logger.debug('Selected object is "{obj_name}"'.format(obj_name=obj_inst.name))
 

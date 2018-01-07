@@ -1,11 +1,9 @@
 import pytest
 
 from cfme.containers.provider import ContainersProvider
-import cfme.fixtures.pytest_selenium as sel
 from cfme.utils.ansible import (setup_ansible_script, run_ansible,
-    fetch_miq_ansible_module, create_tmp_directory, remove_tmp_files)
+                                fetch_miq_ansible_module, create_tmp_directory, remove_tmp_files)
 from cfme.utils.appliance.implementations.ui import navigate_to
-
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -135,6 +133,6 @@ def test_manageiq_ansible_delete_user(appliance, ansible_users, provider):
 def run_ansible_script(appliance, script, reload=True):
     run_status = run_ansible(script)
     if reload:
-        sel.refresh()
+        appliance.browser.widgetastic.refresh()
     navigate_to(appliance.collections.users, 'All')
     return run_status

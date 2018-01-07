@@ -4,7 +4,8 @@ import fauxfactory
 
 from cfme import test_requirements
 from cfme.utils.update import update
-from cfme.utils import version, error
+from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils import version
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
@@ -22,8 +23,8 @@ def create_dialog(appliance, element_data, label=None):
                          tab_desc="my tab desc")
     box = tab.boxes.create(box_label='box_' + fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc")
-    box.elements.create(element_data=[element_data])
-    return sd
+    element = box.elements.create(element_data=[element_data])
+    return sd, element
 
 
 def test_crud_service_dialog(appliance):
@@ -38,7 +39,14 @@ def test_crud_service_dialog(appliance):
             'default_text_box': "Default text"
         }
     }
-    dialog = create_dialog(appliance, element_data)
+
+    dialog, element = create_dialog(appliance, element_data)
+    view_cls = navigator.get_class(element.parent, 'Add').VIEW
+    view = element.appliance.browser.create_view(view_cls)
+    flash_message = version.pick({
+        '5.8': 'Dialog "{}" was added'.format(dialog.label),
+        '5.9': '{} was saved'.format(dialog.label)})
+    view.flash.assert_message(flash_message)
     with update(dialog):
         dialog.description = "my edited description"
     dialog.delete()
@@ -57,15 +65,18 @@ def test_service_dialog_duplicate_name(appliance, request):
         }
     }
     label = 'duplicate_' + fauxfactory.gen_alphanumeric()
-    dialog = create_dialog(appliance, element_data, label=label)
+    dialog, element = create_dialog(appliance, element_data, label=label)
     request.addfinalizer(dialog.delete_if_exists)
     error_message = version.pick({
         '5.8': 'Validation failed: Label is not unique within region 0',
         '5.9': 'There was an error editing this dialog: '
                'Failed to create a new dialog - Validation failed: '
                'Name is not unique within region 0'})
-    with error.expected(error_message):
+    with pytest.raises(AssertionError):
         create_dialog(appliance, element_data, label=label)
+        view_cls = navigator.get_class(element.parent, 'Add').VIEW
+        view = element.appliance.browser.create_view(view_cls)
+        view.flash.assert_message(error_message)
 
 
 def test_checkbox_dialog_element(appliance, request):
@@ -81,7 +92,7 @@ def test_checkbox_dialog_element(appliance, request):
             'field_required': True
         }
     }
-    dialog = create_dialog(appliance, element_data)
+    dialog, element = create_dialog(appliance, element_data)
     request.addfinalizer(dialog.delete_if_exists)
 
 
@@ -101,7 +112,7 @@ def test_datecontrol_dialog_element(appliance, request):
             'field_past_dates': True
         }
     }
-    dialog = create_dialog(appliance, element_data)
+    dialog, element = create_dialog(appliance, element_data)
     request.addfinalizer(dialog.delete_if_exists)
 
 
@@ -118,7 +129,7 @@ def test_tagcontrol_dialog_element(appliance, request):
             'field_required': "Yes"
         }
     }
-    dialog = create_dialog(appliance, element_data)
+    dialog, element = create_dialog(appliance, element_data)
     request.addfinalizer(dialog.delete_if_exists)
 
 
@@ -138,7 +149,7 @@ def test_textareabox_dialog_element(appliance, request):
             'field_required': "Yes"
         }
     }
-    dialog = create_dialog(appliance, element_data)
+    dialog, element = create_dialog(appliance, element_data)
     request.addfinalizer(dialog.delete_if_exists)
 
 
@@ -160,7 +171,6 @@ def test_reorder_elements(appliance, request):
 
         }
     }
-    # service_dialog = get_collection(appliance)
     service_dialog = appliance.collections.service_dialogs
     sd = service_dialog.create(label='label_' + fauxfactory.gen_alphanumeric(),
                                description="my dialog")
@@ -217,7 +227,7 @@ def test_dropdownlist_dialog_element(appliance, request):
             'choose_type': choose_type
         }
     }
-    dialog = create_dialog(appliance, element_data)
+    dialog, element = create_dialog(appliance, element_data)
     request.addfinalizer(dialog.delete_if_exists)
 
 
@@ -230,5 +240,5 @@ def test_radiobutton_dialog_element(appliance, request):
             'choose_type': "Radio Button"
         }
     }
-    dialog = create_dialog(appliance, element_data)
+    dialog, element = create_dialog(appliance, element_data)
     request.addfinalizer(dialog.delete_if_exists)

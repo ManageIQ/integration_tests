@@ -66,11 +66,30 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
 
     @property
     def data(self):
-        return self.get_yaml_data()
+        """ Returns yaml data for this provider.
+        """
+        if hasattr(self, 'provider_data') and self.provider_data is not None:
+            return self.provider_data
+        elif self.key is not None:
+            return conf.cfme_data['management_systems'][self.key]
+        else:
+            raise ProviderHasNoKey(
+                'Provider {} has no key, so cannot get yaml data'.format(self.name))
 
     @property
     def mgmt(self):
-        return self.get_mgmt_system()
+        """ Returns the mgmt_system using the :py:func:`utils.providers.get_mgmt` method.
+        """
+        # gotta stash this in here to prevent circular imports
+        from cfme.utils.providers import get_mgmt
+
+        if self.key:
+            return get_mgmt(self.key)
+        elif getattr(self, 'provider_data', None):
+            return get_mgmt(self.provider_data)
+        else:
+            raise ProviderHasNoKey(
+                'Provider {} has no key, so cannot get mgmt system'.format(self.name))
 
     @property
     def type(self):
@@ -94,31 +113,6 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
     @property
     def default_endpoint(self):
         return self.endpoints.get('default') if hasattr(self, 'endpoints') else None
-
-    def get_yaml_data(self):
-        """ Returns yaml data for this provider.
-        """
-        if hasattr(self, 'provider_data') and self.provider_data is not None:
-            return self.provider_data
-        elif self.key is not None:
-            return conf.cfme_data['management_systems'][self.key]
-        else:
-            raise ProviderHasNoKey(
-                'Provider {} has no key, so cannot get yaml data'.format(self.name))
-
-    def get_mgmt_system(self):
-        """ Returns the mgmt_system using the :py:func:`utils.providers.get_mgmt` method.
-        """
-        # gotta stash this in here to prevent circular imports
-        from cfme.utils.providers import get_mgmt
-
-        if self.key:
-            return get_mgmt(self.key)
-        elif getattr(self, 'provider_data', None):
-            return get_mgmt(self.provider_data)
-        else:
-            raise ProviderHasNoKey(
-                'Provider {} has no key, so cannot get mgmt system'.format(self.name))
 
     def create(self, cancel=False, validate_credentials=True, check_existing=False,
                validate_inventory=False):
@@ -479,12 +473,16 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
                    'the {} Database'.format(self.string_name, self.appliance.product_name))
             view.flash.assert_success_message(msg)
 
-    def setup(self, rest=False):
+    def setup(self):
         """
         Sets up the provider robustly
         """
-        return self.create(
-            cancel=False, validate_credentials=True, check_existing=True, validate_inventory=True)
+        # TODO: Eventually this will become Sentakuified, but only after providers is CEMv3
+        if self.category in ['cloud', 'infra']:
+            return self.create_rest(check_existing=True, validate_inventory=True)
+        else:
+            return self.create(cancel=False, validate_credentials=True,
+                               check_existing=True, validate_inventory=True)
 
     def delete_if_exists(self, *args, **kwargs):
         """Combines ``.exists`` and ``.delete()`` as a shortcut for ``request.addfinalizer``

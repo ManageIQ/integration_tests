@@ -149,7 +149,8 @@ def test_check_package_presence(request, compliance_vm, analysis_profile, policy
     compliance_vm.assign_policy_profiles(profile.description)
     request.addfinalizer(lambda: compliance_vm.unassign_policy_profiles(profile.description))
     do_scan(compliance_vm)
-    assert compliance_vm.check_compliance()
+    compliance_vm.check_compliance()
+    assert compliance_vm.compliant
 
 
 def test_check_files(request, compliance_vm, analysis_profile, condition_collection,
@@ -185,7 +186,8 @@ def test_check_files(request, compliance_vm, analysis_profile, condition_collect
         analysis_profile.files = [{"Name": check_file_name, "Collect Contents?": True}]
 
     do_scan(compliance_vm, ("Configuration", "Files"))
-    assert compliance_vm.check_compliance()
+    compliance_vm.check_compliance()
+    assert compliance_vm.compliant
 
 
 @pytest.mark.uncollectif(BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576')

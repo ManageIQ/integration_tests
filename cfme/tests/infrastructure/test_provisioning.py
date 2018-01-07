@@ -12,7 +12,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-
+from widgetastic.utils import partial_match
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
@@ -62,13 +62,17 @@ def test_provision_from_template(appliance, setup_provider, provider, vm_name, s
         'catalog': {
             'vm_name': vm_name
         },
-        'environment':
-            {'vm_name': vm_name,
+        'environment': {
+            'vm_name': vm_name,
             'host_name': {'name': provisioning['host']} if not auto else None,
             'datastore_name': {'name': provisioning['datastore']} if not auto else None,
-            'automatic_placement': True if auto else None},
-        'network':
-            {'vlan': provisioning['vlan']}}
+            'automatic_placement': True if auto else None
+        },
+        'network': {
+            'vlan': partial_match(provisioning['vlan'])
+        }
+    }
+
     do_vm_provisioning(appliance, template, provider, vm_name, provisioning_data, request,
                        smtp_test, num_sec=900)
 
@@ -112,12 +116,16 @@ def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_t
     provisioning_data = {
         'catalog': {
             'vm_name': vm_name,
-            'num_vms': '2'},
-        'environment':
-            {'host_name': {'name': provisioning['host']},
-            'datastore_name': {'name': provisioning['datastore']}},
-        'network':
-            {'vlan': provisioning['vlan']}}
+            'num_vms': '2'
+        },
+        'environment': {
+            'host_name': {'name': provisioning['host']},
+            'datastore_name': {'name': provisioning['datastore']}
+        },
+        'network': {
+            'vlan': partial_match(provisioning['vlan'])
+        }
+    }
 
     do_vm_provisioning(appliance, template, provider, vm_name, provisioning_data, request,
                        smtp_test, wait=False)

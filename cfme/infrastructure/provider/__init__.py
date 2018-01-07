@@ -16,7 +16,6 @@ from cfme.common.provider_views import (InfraProviderAddView,
                                         ProviderNodesView,
                                         ProviderTemplatesView)
 from cfme.exceptions import DestinationNotFound
-from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import ClusterView, ClusterToolbar
 from cfme.infrastructure.host import Host
 from cfme.utils import conf
@@ -26,7 +25,7 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import BreadCrumb, BaseEntitiesView, View
+from widgetastic_manageiq import BreadCrumb, BaseEntitiesView, View, NoSuchElementException
 
 
 class ProviderClustersView(ClusterView):
@@ -122,7 +121,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     def num_host_ui(self):
         try:
             num = self.get_detail("Relationships", 'Hosts')
-        except sel.NoSuchElementException:
+        except NoSuchElementException:
             logger.error("Couldn't find number of hosts using key [Hosts] trying Nodes")
             num = self.get_detail("Relationships", 'Nodes')
         return int(num)
@@ -168,7 +167,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         """
         result = []
         host_collection = self.appliance.collections.hosts
-        for host in self.get_yaml_data().get("hosts", []):
+        for host in self.data.get("hosts", []):
             creds = conf.credentials.get(host["credentials"], {})
             cred = Host.Credential(
                 principal=creds["username"],
@@ -217,8 +216,13 @@ class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.toolbar.configuration.item_select('Add a New '
-                                                                 'Infrastructure Provider')
+        try:
+            self.prerequisite_view.toolbar.configuration.item_select('Add a New '
+                                                                     'Infrastructure Provider')
+        except MoveTargetOutOfBoundsException:
+            # TODO: Remove once fixed 1475303
+            self.prerequisite_view.toolbar.configuration.item_select('Add a New '
+                                                                     'Infrastructure Provider')
 
 
 @navigator.register(InfraProvider, 'Discover')
@@ -227,8 +231,13 @@ class Discover(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.toolbar.configuration.item_select('Discover '
-                                                                 'Infrastructure Providers')
+        try:
+            self.prerequisite_view.toolbar.configuration.item_select('Discover '
+                                                                     'Infrastructure Providers')
+        except MoveTargetOutOfBoundsException:
+            # TODO: Remove once fixed 1475303
+            self.prerequisite_view.toolbar.configuration.item_select('Discover '
+                                                                     'Infrastructure Providers')
 
 
 @navigator.register(InfraProvider, 'Details')

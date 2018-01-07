@@ -57,7 +57,8 @@ class MyServicesView(BaseLoggedInPage):
 class ServiceRetirementForm(MyServicesView):
     title = Text('#explorer_title_text')
 
-    retirement_date = Calendar('retirementDate')
+    retirement_date = Calendar(VersionPick({Version.lowest(): 'retirementDate',
+                                            '5.9': 'retirement_date_datepicker'}))
     retirement_warning = BootstrapSelect('retirement_warn')
 
 

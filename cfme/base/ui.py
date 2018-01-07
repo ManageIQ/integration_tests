@@ -12,6 +12,8 @@ from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
 from cfme.base.credential import Credential
 from cfme.base.login import BaseLoggedInPage
 from cfme.configure.about import AboutView
+from cfme.configure.configuration.server_settings import (
+    ServerInformationView, ServerAuthenticationView)
 from cfme.configure.documentation import DocView
 from cfme.configure.tasks import TasksView
 from cfme.dashboard import DashboardView
@@ -424,14 +426,17 @@ class ServerView(ConfigurationView):
     @View.nested
     class server(Tab):  # noqa
         TAB_NAME = "Server"
+        including_view = View.include(ServerInformationView, use_parent=True)
 
     @View.nested
     class authentication(Tab):  # noqa
         TAB_NAME = "Authentication"
+        including_view = View.include(ServerAuthenticationView, use_parent=True)
 
     @View.nested
     class workers(Tab):  # noqa
         TAB_NAME = "Workers"
+        # TODO move workers tab view into server_settings as ServerWorkersView
         generic_worker_count = BootstrapSelect("generic_worker_count")
         generic_worker_threshold = BootstrapSelect("generic_worker_threshold")
         cu_data_collector_worker_count = BootstrapSelect("ems_metrics_collector_worker_count")
@@ -467,16 +472,16 @@ class ServerView(ConfigurationView):
 
     @property
     def is_displayed(self):
-        if not self.in_configuration:
-            return False
-        if not self.view.accordions.settings.is_displayed:
-            return False
-        return self.view.accordions.settings.tree.currently_selected == [
+        selected_list = [
             self.context['object'].zone.region.settings_string,
             "Zones",
             "Zone: {} (current)".format(self.context['object'].zone.description),
             "Server: {} [{}] (current)".format(self.context['object'].name,
-                self.context['object'].sid)]
+                                               self.context['object'].sid)]
+        return (
+            self.in_configuration and
+            self.accordions.settings.is_displayed and
+            self.accordions.settings.tree.currently_selected == selected_list)
 
 
 @navigator.register(Server)
@@ -495,12 +500,14 @@ class Details(CFMENavigateStep):
 
 @navigator.register(Server, 'Server')
 class ServerDetails(CFMENavigateStep):
-    VIEW = ServerView
+    VIEW = ServerInformationView
     prerequisite = NavigateToSibling('Details')
 
     def am_i_here(self):
         return (
-            self.view.is_displayed and self.view.server.is_displayed and self.view.server.is_active)
+            self.view.is_displayed and
+            self.prerequisite_view.is_displayed and
+            self.view.server.is_active)
 
     def step(self):
         self.prerequisite_view.server.select()
@@ -508,13 +515,8 @@ class ServerDetails(CFMENavigateStep):
 
 @navigator.register(Server)
 class Authentication(CFMENavigateStep):
-    VIEW = ServerView
+    VIEW = ServerAuthenticationView
     prerequisite = NavigateToSibling('Details')
-
-    def am_i_here(self):
-        return (
-            self.view.is_displayed and self.view.authentication.is_displayed and
-            self.view.authentication.is_active)
 
     def step(self):
         self.prerequisite_view.authentication.select()

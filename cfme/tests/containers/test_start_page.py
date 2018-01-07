@@ -3,7 +3,6 @@ from collections import namedtuple
 
 import pytest
 
-from cfme.configure import settings
 from cfme.containers.overview import ContainersOverviewView
 from cfme.containers.node import NodeAllView
 from cfme.containers.pod import PodAllView
@@ -14,8 +13,10 @@ from cfme.containers.image_registry import ImageRegistryAllView
 from cfme.containers.template import TemplateAllView
 from cfme.containers.replicator import ReplicatorAllView
 from cfme.containers.route import RouteAllView
+from cfme.containers.container import ContainerAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.version import current_version
+from cfme.configure.settings import Visual
 
 
 pytestmark = [
@@ -39,10 +40,9 @@ data_sets = (
     DataSet(RouteAllView, 'Compute / Containers / Routes'),
     # https://bugzilla.redhat.com/show_bug.cgi?id=1510376
     # from cfme.containers.volume import VolumeAllView
-    #  DataSet(VolumeAllView, 'Compute / Containers / Volumes'),
+    # DataSet(VolumeAllView, 'Compute / Containers / Volumes'),
     # https://bugzilla.redhat.com/show_bug.cgi?id=1466350
-    # from cfme.containers.container import ContainerAllView
-    # DataSet(ContainerAllView, 'Compute / Containers / Containers')
+    DataSet(ContainerAllView, 'Compute / Containers / Containers')
 )
 
 
@@ -50,7 +50,7 @@ data_sets = (
 def test_start_page(appliance, soft_assert):
 
     for data_set in data_sets:
-        settings.visual.login_page = data_set.page_name
+        Visual().login_page = data_set.page_name
         login_page = navigate_to(appliance.server, 'LoginScreen')
         login_page.login_admin()
         view = appliance.browser.create_view(data_set.obj_view)

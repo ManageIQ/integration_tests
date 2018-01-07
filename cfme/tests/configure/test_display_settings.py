@@ -3,11 +3,8 @@ import pytest
 
 from cfme import test_requirements
 from cfme.configure.settings import Visual
-from cfme.fixtures import pytest_selenium as sel
 from cfme.utils.appliance import current_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.configure import settings  # NOQA
-
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings]
@@ -35,7 +32,7 @@ def set_timezone(visual):
     visual.timezone = time_zone
 
 
-def test_timezone_setting(set_timezone):
+def test_timezone_setting(appliance, set_timezone):
     """ Tests  timezone setting
 
     Metadata:
@@ -46,4 +43,4 @@ def test_timezone_setting(set_timezone):
 
     navigate_to(current_appliance.server, 'DiagnosticsDetails')
 
-    assert sel.is_displayed(locator), "Timezone settings Failed"
+    assert appliance.browser.widgetastic.is_displayed(locator), "Timezone settings Failed"

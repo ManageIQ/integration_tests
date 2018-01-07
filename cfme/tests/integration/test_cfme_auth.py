@@ -92,7 +92,7 @@ def test_auth_configure(appliance, request, configure_auth, group, user, data):
 
     request.addfinalizer(appliance.server.login_admin)
     with user:
-        appliance.server.login(user, submit_method='click_on_login')
+        appliance.server.login(user)
         assert appliance.server.current_full_name() == data['fullname']
         appliance.server.logout()
     appliance.server.login_admin()

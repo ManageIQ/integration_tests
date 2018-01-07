@@ -22,8 +22,8 @@ class NetworkRouter(WidgetasticTaggable, BaseEntity):
     db_types = ['NetworkRouter']
 
     name = attr.ib()
-    provider_obj = attr.ib()
-    ext_network = attr.ib()
+    provider_obj = attr.ib(default=None)
+    ext_network = attr.ib(default=None)
 
     def add_interface(self, subnet_name):
         """Adds subnet as an interface to current router

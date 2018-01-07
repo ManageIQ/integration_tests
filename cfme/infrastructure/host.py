@@ -17,9 +17,11 @@ from cfme.common.host_views import (
     HostsView,
     HostTimelinesView
 )
+from cfme.configure.tasks import is_host_analysis_finished, TasksView
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.datastore import HostAllDatastoresView
 from cfme.modeling.base import BaseEntity, BaseCollection
+
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from cfme.utils.ipmi import IPMI
@@ -236,7 +238,10 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
         """
         view = navigate_to(self.parent, "All")
         entity = view.entities.get_entity(name=self.name, surf_pages=True)
-        return entity.data['creds'].strip().lower() == "checkmark"
+        try:
+            return entity.data['creds'].strip().lower() == "checkmark"
+        except KeyError:
+            return False
 
     def update_credentials_rest(self, credentials):
         """ Updates host's credentials via rest api
@@ -272,7 +277,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
         else:
             return self.db_id
 
-    def run_smartstate_analysis(self):
+    def run_smartstate_analysis(self, wait_for_task_result=False):
         """Runs smartstate analysis on this host.
 
         Note:
@@ -281,6 +286,10 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
         view = navigate_to(self, "Details")
         view.toolbar.configuration.item_select("Perform SmartState Analysis", handle_alert=True)
         view.flash.assert_success_message('"{}": Analysis successfully initiated'.format(self.name))
+        if wait_for_task_result:
+            view = self.appliance.browser.create_view(TasksView)
+            wait_for(lambda: is_host_analysis_finished(self.name),
+                     delay=15, timeout="10m", fail_func=view.reload.click)
 
     def check_compliance(self, timeout=240):
         """Initiates compliance check and waits for it to finish."""
@@ -535,6 +544,7 @@ class HostCollection(BaseCollection):
             credentials=credentials,
             ipmi_credentials=ipmi_credentials
         )
+
 
 @navigator.register(HostCollection)
 class All(CFMENavigateStep):

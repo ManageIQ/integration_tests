@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from widgetastic.widget import View
+from widgetastic.utils import VersionPick, Version
 from widgetastic_patternfly import Dropdown, Button
 
 from cfme.base.ui import BaseLoggedInPage
@@ -123,7 +125,11 @@ class KeyPair(BaseEntity, WidgetasticTaggable):
 
     def delete(self, cancel=False, wait=False):
         view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Remove this Key Pair',
+        # TODO: get rid of this resolve when widgetastic.core/pull/68 is merged
+        item_name = VersionPick({Version.lowest(): 'Remove this Key Pair',
+                                '5.9': 'Remove this Key Pair from Inventory'}
+                                ).pick(self.appliance.version)
+        view.toolbar.configuration.item_select(item_name,
                                                handle_alert=(not cancel))
         # cancel doesn't redirect, confirmation does
         view.flush_widget_cache()
@@ -233,4 +239,8 @@ class Add(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         """Raises DropdownItemDisabled from widgetastic_patternfly if no RHOS provider present"""
-        self.prerequisite_view.toolbar.configuration.item_select('Add a new Key Pair')
+        try:
+            self.prerequisite_view.toolbar.configuration.item_select('Add a new Key Pair')
+            # TODO: Remove once fixed 1475303
+        except MoveTargetOutOfBoundsException:
+            self.prerequisite_view.toolbar.configuration.item_select('Add a new Key Pair')
