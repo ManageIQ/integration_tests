@@ -525,6 +525,7 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
             fail_func=view.reload_button.click,
             num_sec=300,
         )
+        view.browser.refresh()  # CFME-Issue: To make sure the Tree updates
         first_row = view.saved_reports.table[0]
         return first_row.run_at.text, first_row.queued_at.text
 

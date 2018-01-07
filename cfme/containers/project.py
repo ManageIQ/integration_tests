@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import attr
-import random
-import itertools
 from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
@@ -9,7 +7,8 @@ from wrapanapi.containers.project import Project as ApiProject
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
-                                      ContainerObjectDetailsBaseView)
+                                      ContainerObjectDetailsBaseView,
+                                      GetRandomInstancesMixin)
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from cfme.utils.providers import get_crud_by_name
@@ -37,17 +36,9 @@ class Project(BaseEntity, WidgetasticTaggable, Labelable):
     def mgmt(self):
         return ApiProject(self.provider.mgmt, self.name)
 
-    @classmethod
-    def get_random_instances(cls, provider, count=1, appliance=None):
-        """Generating random instances."""
-        project_list = provider.mgmt.list_project()
-        random.shuffle(project_list)
-        return [cls(obj.name, provider, appliance=appliance)
-                for obj in itertools.islice(project_list, count)]
-
 
 @attr.s
-class ProjectCollection(BaseCollection):
+class ProjectCollection(GetRandomInstancesMixin, BaseCollection):
     """Collection object for :py:class:`Project`."""
 
     ENTITY = Project
@@ -94,7 +85,12 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(name=self.obj.name).click()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name,
+                                                   use_search=True).click()
+
+    def resetter(self):
+        if self.appliance.version == '5.9':
+            self.view.toolbar.view_selector.select("Summary View")
 
 
 @navigator.register(Project, 'EditTags')

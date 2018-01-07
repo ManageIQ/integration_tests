@@ -123,7 +123,7 @@ class CannotContinueWithNavigation(CFMEException):
 
 class ProviderHasNoKey(CFMEException):
     """
-    Raised if the :py:meth:`cfme.cloud.provider.Provider.get_mgmt_system` method is called
+    Raised if the :py:meth:`cfme.cloud.provider.Provider.mgmt` method is called
     but the Provider instance has no key.
     """
     pass
@@ -270,7 +270,6 @@ class OptionNotAvailable(CFMEException):
     pass
 
 
-
 class ZoneNotFound(CFMEException):
     """
     Raised when a specific Zone cannot be found in the method
@@ -304,63 +303,6 @@ class StorageManagerNotFound(CFMEException):
 class CUCommandException(CFMEException):
     """Raised when one of the commands run to set up a CU VM fails """
     pass
-
-
-class MiddlewareProviderNotFound(CFMEException):
-    """
-    Raised if a specific Middleware Provider cannot be found.
-    """
-    pass
-
-
-class MiddlewareServerNotFound(CFMEException):
-    """
-    Raised if a specific Middleware Server cannot be found.
-    """
-    pass
-
-
-class MiddlewareServerGroupNotFound(CFMEException):
-    """
-    Raised if a specific Middleware Server Group cannot be found.
-    """
-    pass
-
-
-class MiddlewareDomainNotFound(CFMEException):
-    """
-    Raised if a specific Middleware Domain cannot be found.
-    """
-    pass
-
-
-class MiddlewareDatasourceNotFound(CFMEException):
-    """
-    Raised if a specific Middleware Datasource cannot be found.
-    """
-    pass
-
-
-class MiddlewareDeploymentNotFound(CFMEException):
-    """
-    Raised if a specific Middleware Deployment cannot be found.
-    """
-    pass
-
-
-class MiddlewareMessagingNotFound(CFMEException):
-    """
-    Raised if a specific Middleware Messaging cannot be found.
-    """
-    pass
-
-
-class JDBCDriverConfigNotFound(CFMEException):
-    """Raised when cdme_data.yaml file does not contain configuration of 'jdbc_drivers'."""
-
-
-class DbAllocatorConfigNotFound(CFMEException):
-    """Raised when cdme_data.yaml file does not contain configuration of 'db_allocator'."""
 
 
 class LabelNotFoundException(Exception):

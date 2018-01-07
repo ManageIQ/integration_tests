@@ -3,6 +3,7 @@ import pytest
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -11,10 +12,10 @@ from cfme.utils.wait import wait_for, TimedOutError
 from markers.env_markers.provider import providers
 
 all_infra_prov = ProviderFilter(classes=[InfraProvider])
-not_scvmm = ProviderFilter(classes=[SCVMMProvider], inverted=True)
+excluded = ProviderFilter(classes=[SCVMMProvider, RHEVMProvider], inverted=True)
 pytestmark = [
     pytest.mark.tier(2),
-    pytest.mark.provider(gen_func=providers, filters=[not_scvmm, all_infra_prov], scope='module'),
+    pytest.mark.provider(gen_func=providers, filters=[excluded, all_infra_prov], scope='module'),
     pytest.mark.usefixtures('setup_provider_modscope')
 ]
 
@@ -35,7 +36,7 @@ class VMEvent(object):
     """
     ACTIONS = {
         'create': {
-            'tl_event': ('VmDeployedEvent', 'USER_RUN_VM'),
+            'tl_event': ('VmDeployedEvent', 'USER_RUN_VM', 'USER_ADD_VM_FINISHED_SUCCESS'),
             'tl_category': 'Creation/Addition',
             'db_event_type': ('vm_create', 'USER_RUN_VM'),
             'emit_cmd': '_setup_vm'

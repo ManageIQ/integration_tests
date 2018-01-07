@@ -149,7 +149,7 @@ class Alert(BaseEntity, Updateable, Pretty):
     pretty_attrs = ["description", "evaluate"]
 
     description = attr.ib()
-    severity = attr.ib(default="Info")
+    severity = attr.ib(default=None)
     active = attr.ib(default=None)
     based_on = attr.ib(default=None)
     evaluate = attr.ib(default=None)
@@ -164,12 +164,11 @@ class Alert(BaseEntity, Updateable, Pretty):
         """Conversion to string used when assigning in multibox selector."""
         return self.description
 
-    def update(self, updates, cancel=False):
+    def update(self, updates):
         """Update this Alert in UI.
 
         Args:
             updates: Provided by update() context manager.
-            cancel: Whether to cancel the update (default False).
         """
         view = navigate_to(self, "Edit")
         for attrib, value in updates.items():

@@ -2,6 +2,7 @@ import attr
 from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 
+from cfme.exceptions import DestinationNotFound
 from cfme.common import WidgetasticTaggable
 from cfme.common.provider import BaseProvider
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -100,13 +101,13 @@ class NetworkProviderCollection(BaseCollection):
     def all(self):
         view = navigate_to(self, 'All')
         list_networks = view.entities.get_all(surf_pages=True)
-        return [self.instantiate(name=p.name) for p in list_networks]
+        return [self.instantiate(prov_class=self.ENTITY, name=p.name) for p in list_networks]
 
     # A rare collection override of instantiate
-    def instantiate(self, prov_class, *args, **kwargs):
+    def instantiate(self, prov_class=ENTITY, *args, **kwargs):
         return prov_class.from_collection(self, *args, **kwargs)
 
-    def create(self, prov_class, *args, **kwargs):
+    def create(self, prov_class=ENTITY, *args, **kwargs):
         obj = self.instantiate(prov_class, *args, **kwargs)
         obj.create()
 
@@ -147,7 +148,12 @@ class OpenCloudSubnets(CFMENavigateStep):
     VIEW = OneProviderSubnetView
 
     def step(self):
-        self.prerequisite_view.entities.relationships.click_at('Cloud Subnets')
+        item = 'Cloud Subnets'
+        item_amt = int(self.prerequisite_view.entities.relationships.get_text_of(item))
+        if item_amt > 0:
+            self.prerequisite_view.entities.relationships.click_at(item)
+        else:
+            raise DestinationNotFound("This provider doesn't have {item}".format(item=item))
 
 
 @navigator.register(NetworkProvider, 'CloudNetworks')
@@ -156,7 +162,12 @@ class OpenCloudNetworks(CFMENavigateStep):
     VIEW = OneProviderCloudNetworkView
 
     def step(self):
-        self.prerequisite_view.entities.relationships.click_at('Cloud Networks')
+        item = 'Cloud Networks'
+        item_amt = int(self.prerequisite_view.entities.relationships.get_text_of(item))
+        if item_amt > 0:
+            self.prerequisite_view.entities.relationships.click_at(item)
+        else:
+            raise DestinationNotFound("This provider doesn't have {item}".format(item=item))
 
 
 @navigator.register(NetworkProvider, 'NetworkRouters')
@@ -165,7 +176,12 @@ class OpenNetworkRouters(CFMENavigateStep):
     VIEW = OneProviderNetworkRouterView
 
     def step(self):
-        self.prerequisite_view.entities.relationships.click_at('Network Routers')
+        item = 'Network Routers'
+        item_amt = int(self.prerequisite_view.entities.relationships.get_text_of(item))
+        if item_amt > 0:
+            self.prerequisite_view.entities.relationships.click_at(item)
+        else:
+            raise DestinationNotFound("This provider doesn't have {item}".format(item=item))
 
 
 @navigator.register(NetworkProvider, 'SecurityGroups')
@@ -174,7 +190,12 @@ class OpenSecurityGroups(CFMENavigateStep):
     VIEW = OneProviderSecurityGroupView
 
     def step(self):
-        self.prerequisite_view.entities.relationships.click_at('Security Groups')
+        item = 'Security Groups'
+        item_amt = int(self.prerequisite_view.entities.relationships.get_text_of(item))
+        if item_amt > 0:
+            self.prerequisite_view.entities.relationships.click_at(item)
+        else:
+            raise DestinationNotFound("This provider doesn't have {item}".format(item=item))
 
 
 @navigator.register(NetworkProvider, 'FloatingIPs')
@@ -182,7 +203,12 @@ class OpenFloatingIPs(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.entities.relationships.click_at('Floating IPs')
+        item = 'Floating IPs'
+        item_amt = int(self.prerequisite_view.entities.relationships.get_text_of(item))
+        if item_amt > 0:
+            self.prerequisite_view.entities.relationships.click_at(item)
+        else:
+            raise DestinationNotFound("This provider doesn't have {item}".format(item=item))
 
 
 @navigator.register(NetworkProvider, 'NetworkPorts')
@@ -191,7 +217,12 @@ class OpenNetworkPorts(CFMENavigateStep):
     VIEW = OneProviderNetworkPortView
 
     def step(self):
-        self.prerequisite_view.entities.relationships.click_at('Network Ports')
+        item = 'Network Ports'
+        item_amt = int(self.prerequisite_view.entities.relationships.get_text_of(item))
+        if item_amt > 0:
+            self.prerequisite_view.entities.relationships.click_at(item)
+        else:
+            raise DestinationNotFound("This provider doesn't have {item}".format(item=item))
 
 
 @navigator.register(NetworkProvider, 'LoadBalancers')
@@ -200,7 +231,12 @@ class OpenNetworkBalancers(CFMENavigateStep):
     VIEW = OneProviderBalancerView
 
     def step(self):
-        self.prerequisite_view.entities.relationships.click_at('Load Balancers')
+        item = 'Load Balancers'
+        item_amt = int(self.prerequisite_view.entities.relationships.get_text_of(item))
+        if item_amt > 0:
+            self.prerequisite_view.entities.relationships.click_at(item)
+        else:
+            raise DestinationNotFound("This provider doesn't have {item}".format(item=item))
 
 
 @navigator.register(NetworkProvider, 'TopologyFromDetails')

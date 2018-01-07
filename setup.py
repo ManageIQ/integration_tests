@@ -28,7 +28,6 @@ setup(
         [
             'infra = cfme.infrastructure.provider:InfraProvider',
             'cloud = cfme.cloud.provider:CloudProvider',
-            'middleware = cfme.middleware.provider:MiddlewareProvider',
             'containers = cfme.containers.provider:ContainersProvider',
             'physical = cfme.physical.provider:PhysicalProvider',
             'networks = cfme.networks.provider:NetworkProvider',
@@ -44,9 +43,6 @@ setup(
             'openstack = cfme.cloud.provider.openstack:OpenStackProvider',
             'azure = cfme.cloud.provider.azure:AzureProvider',
             'gce = cfme.cloud.provider.gce:GCEProvider',
-        ],
-        'manageiq.provider_types.middleware': [
-            'hawkular = cfme.middleware.provider.hawkular:HawkularProvider',
         ],
         'manageiq.provider_types.containers': [
             'kubernetes = cfme.containers.provider.kubernetes:KubernetesProvider',

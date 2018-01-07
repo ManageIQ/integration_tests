@@ -45,7 +45,7 @@ from .services import SystemdService
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # EMS types recognized by IP or credentials
 RECOGNIZED_BY_IP = [
-    "InfraManager", "ContainerManager", "MiddlewareManager", "Openstack::CloudManager"
+    "InfraManager", "ContainerManager", "Openstack::CloudManager"
 ]
 RECOGNIZED_BY_CREDS = ["CloudManager"]
 
@@ -274,7 +274,11 @@ class IPAppliance(object):
         self._user = None
         self.appliance_console = ApplianceConsole(self)
         self.appliance_console_cli = ApplianceConsoleCli(self)
-        self.is_pod = False
+
+        if self.openshift_creds:
+            self.is_pod = True
+        else:
+            self.is_pod = False
 
     def unregister(self):
         """ unregisters appliance from RHSM/SAT6 """
@@ -360,7 +364,7 @@ class IPAppliance(object):
 
         if (
                 exc_type is not None and not RUNNING_UNDER_SPROUT):
-            from cfme.fixtures.pytest_selenium import take_screenshot
+            from cfme.utils.browser import take_screenshot
             logger.info("Before we pop this appliance, a screenshot and a traceback will be taken.")
             ss, ss_error = take_screenshot()
             full_tb = "".join(traceback.format_tb(exc_tb))
@@ -849,7 +853,7 @@ class IPAppliance(object):
             'key_filename': conf_path.join('appliance_private_key').strpath,
         }
         ssh_client = ssh.SSHClient(**connect_kwargs)
-        # FIXME: propperly store ssh clients we made
+        # FIXME: properly store ssh clients we made
         store.ssh_clients_to_close.append(ssh_client)
         return ssh_client
 
@@ -881,18 +885,17 @@ class IPAppliance(object):
                 'oc_username': self.openshift_creds['username'],
                 'oc_password': self.openshift_creds['password'],
                 'container': self.container,
-                'is_pod': True,
+                'is_pod': self.is_pod,
                 'port': self.ssh_port,
                 'project': self.project
             }
-            self.is_pod = True
         else:
             connect_kwargs = {
                 'hostname': self.hostname,
                 'username': conf.credentials['ssh']['username'],
                 'password': conf.credentials['ssh']['password'],
                 'container': self.container,
-                'is_pod': False,
+                'is_pod': self.is_pod,
                 'port': self.ssh_port,
             }
         ssh_client = ssh.SSHClient(**connect_kwargs)
@@ -904,7 +907,7 @@ class IPAppliance(object):
             logger.error('default appliance ssh credentials failed, trying establish ssh connection'
                          ' using ssh private key')
             ssh_client = self.ssh_client_with_privatekey()
-        # FIXME: propperly store ssh clients we made
+        # FIXME: properly store ssh clients we made
         store.ssh_clients_to_close.append(ssh_client)
         return ssh_client
 

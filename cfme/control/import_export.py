@@ -2,7 +2,7 @@
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from navmazing import NavigateToSibling
 
-from widgetastic.widget import Select, ClickableMixin
+from widgetastic.widget import Select, ClickableMixin, FileInput
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from cfme.base.login import BaseLoggedInPage
@@ -19,7 +19,7 @@ class ControlImportExportView(BaseLoggedInPage):
     export_button = Button("Export")
     commit_button = Button("Commit")
 
-    upload_file = Input("upload[file]")
+    upload_file = FileInput(name="upload[file]")
     export = BootstrapSelect("dbtype")
     policy_profiles = Select(id="choices_chosen_")
 

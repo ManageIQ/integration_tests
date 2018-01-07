@@ -5,7 +5,6 @@ from copy import copy
 import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import Checkbox, Table, Text, TextInput, View
 from widgetastic_patternfly import Button, Input
 
@@ -13,10 +12,10 @@ from actions import Action
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from widgetastic_manageiq import (
-    BootstrapSwitchSelect, CheckboxSelect, MultiBoxSelect, SummaryFormItem, Dropdown)
+from widgetastic_manageiq import BootstrapSwitchSelect, MultiBoxSelect, SummaryFormItem, Dropdown
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 from . import ControlExplorerView
 
@@ -37,20 +36,22 @@ class PoliciesAllView(ControlExplorerView):
 
 class EditPolicyEventAssignments(ControlExplorerView):
     title = Text("#explorer_title_text")
-
-    events = VersionPick({
-        Version.lowest(): CheckboxSelect("policy_info_div"),
-        "5.8.1": BootstrapSwitchSelect("policy_info_div")
-    })
-
+    events = BootstrapSwitchSelect("policy_info_div")
     cancel_button = Button("Cancel")
     save_button = Button("Save")
+
+    @property
+    def supposed_title(self):
+        if BZ(1531468, forced_streams=["5.9"]).blocks:
+            return 'Editing {} {} "{}" Event Assignments'
+        else:
+            return 'Editing {} {} Policy "{}" Event Assignments'
 
     @property
     def is_displayed(self):
         return (
             self.in_control_explorer and
-            self.title.text == 'Editing {} {} Policy "{}" Event Assignments'.format(
+            self.title.text == self.supposed_title.format(
                 self.context["object"].PRETTY,
                 self.context["object"].TYPE,
                 self.context["object"].description
@@ -589,13 +590,6 @@ class HostControlPolicy(BasePolicy):
     TYPE = "Control"
     TREE_NODE = "Host"
     PRETTY = "Host / Node"
-
-
-class MiddlewareServerCompliancePolicy(BasePolicy):
-
-    TYPE = "Compliance"
-    TREE_NODE = "Middleware Server"
-    PRETTY = "Middleware Server"
 
 
 class VMControlPolicy(BasePolicy):

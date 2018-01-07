@@ -91,12 +91,12 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
         },
         'datastore': {
             'tab': 'MyOtherTasks',
-            'task': 'SmartState Analysis for [{}]',
+            'task': 'SmartState Analysis for \[{}\]',
             'state': "Finished"
         },
         'cluster': {
             'tab': 'MyOtherTasks',
-            'task': 'SmartState Analysis for [{}]',
+            'task': 'SmartState Analysis for \[{}\]',
             'state': "Finished"}
     }[task_type]
     return is_task_finished(destination=tabs_data['tab'],

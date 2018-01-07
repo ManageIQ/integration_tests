@@ -8,6 +8,7 @@ from widgetastic_patternfly import Button, Dropdown
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
+from cfme.configure.tasks import is_cluster_analysis_finished, TasksView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
@@ -241,13 +242,18 @@ class Cluster(Pretty, BaseEntity, WidgetasticTaggable):
         """extracts cluster id for this cluster"""
         return self._id
 
-    def run_smartstate_analysis(self):
+    def run_smartstate_analysis(self, wait_for_task_result=False):
         """Run SmartState analysis"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
-        view.flash.assert_message_contain(
+        view.flash.assert_message(
             'Cluster / Deployment Role: scan successfully initiated'
         )
+        if wait_for_task_result:
+            view = self.appliance.browser.create_view(TasksView)
+            wait_for(lambda: is_cluster_analysis_finished(self.name),
+                     delay=15, timeout="15m",
+                     fail_func=view.reload.click)
 
 
 @attr.s

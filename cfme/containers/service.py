@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import attr
-import random
-import itertools
 from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
@@ -10,7 +8,7 @@ from wrapanapi.containers.service import Service as ApiService
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
-    ContainerObjectDetailsBaseView)
+    ContainerObjectDetailsBaseView, GetRandomInstancesMixin)
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 from cfme.utils.providers import get_crud_by_name
@@ -39,17 +37,9 @@ class Service(BaseEntity, WidgetasticTaggable, Labelable):
     def mgmt(self):
         return ApiService(self.provider.mgmt, self.name, self.project_name)
 
-    @classmethod
-    def get_random_instances(cls, provider, count=1, appliance=None):
-        """Generating random instances."""
-        service_list = provider.mgmt.list_service()
-        random.shuffle(service_list)
-        return [cls(obj.name, obj.project_name, provider, appliance=appliance)
-                for obj in itertools.islice(service_list, count)]
-
 
 @attr.s
-class ServiceCollection(BaseCollection):
+class ServiceCollection(GetRandomInstancesMixin, BaseCollection):
     """Collection object for :py:class:`Service`."""
 
     ENTITY = Service
@@ -99,7 +89,8 @@ class Details(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
-                                                   project_name=self.obj.project_name).click()
+                                                   project_name=self.obj.project_name,
+                                                   use_search=True).click()
 
 
 @navigator.register(Service, 'EditTags')

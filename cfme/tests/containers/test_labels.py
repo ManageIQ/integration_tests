@@ -6,13 +6,13 @@ import pytest
 import fauxfactory
 
 from cfme.containers.provider import ContainersProvider, refresh_and_navigate
-from cfme.containers.pod import Pod
-from cfme.containers.service import Service
-from cfme.containers.replicator import Replicator
-from cfme.containers.image import Image
-from cfme.containers.project import Project
-from cfme.containers.route import Route
-from cfme.containers.template import Template
+from cfme.containers.pod import Pod, PodCollection
+from cfme.containers.service import Service, ServiceCollection
+from cfme.containers.replicator import Replicator, ReplicatorCollection
+from cfme.containers.image import Image, ImageCollection
+from cfme.containers.project import Project, ProjectCollection
+from cfme.containers.route import Route, RouteCollection
+from cfme.containers.template import Template, TemplateCollection
 
 from cfme.utils.wait import wait_for
 from cfme.utils.log import logger
@@ -25,7 +25,16 @@ pytestmark = [
     pytest.mark.provider([ContainersProvider], scope='module')]
 
 # TODO Add Node back into the list when other classes are updated to use WT views and widgets.
-TEST_OBJECTS = (Image, Pod, Service, Route, Template, Replicator, Project)
+DataSet = namedtuple('DataSet', ['obj', 'collection_obj'])
+TEST_OBJECTS = (
+    DataSet(Image, ImageCollection),
+    DataSet(Pod, PodCollection),
+    DataSet(Service, ServiceCollection),
+    DataSet(Route, RouteCollection),
+    DataSet(Template, TemplateCollection),
+    DataSet(Replicator, ReplicatorCollection),
+    DataSet(Project, ProjectCollection)
+)
 
 
 def check_labels_in_ui(instance, name, expected_value):
@@ -44,15 +53,12 @@ def random_labels(provider, appliance):
     #                <instance>, <label_name>, <label_value>, <results_status>
     # Adding label to each object:
     for test_obj in TEST_OBJECTS:
-        get_random_kwargs = {'count': 1, 'appliance': appliance}
-        if test_obj is Image:
-            get_random_kwargs['docker_only'] = True
-        instance = test_obj.get_random_instances(provider, **get_random_kwargs).pop()
+        instance = test_obj.collection_obj(appliance).get_random_instances().pop()
         label_key = fauxfactory.gen_alpha(1) + \
             fauxfactory.gen_alphanumeric(random.randrange(1, 62))
         value = fauxfactory.gen_alphanumeric(random.randrange(1, 63))
         try:
-            status_code, json_content = test_obj.set_label(instance, label_key, value)
+            status_code, json_content = instance.set_label(label_key, value)
         except:
             status_code, json_content = None, format_exc()
 
@@ -72,7 +78,7 @@ def test_labels_create(provider, soft_assert, random_labels):
     provider.refresh_provider_relationships()
     # Verify that the labels appear in the UI:
     for instance, label_name, label_value, status_code, json_content in random_labels:
-        if soft_assert(status_code, json_content):
+        if soft_assert(status_code in (200, 201), json_content):
             soft_assert(
                 wait_for(
                     lambda: check_labels_in_ui(instance, label_name, label_value),

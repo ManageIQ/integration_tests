@@ -1219,7 +1219,7 @@ class ReportDataControllerMixin(object):
         self.browser.plugin.ensure_page_safe()
         return result
 
-    def get_id_by_keys(self, **keys):
+    def get_ids_by_keys(self, **keys):
         updated_keys = keys.copy()
         for key in updated_keys:
             # js api compares values in lower case but don't replace space with underscore
@@ -1235,7 +1235,7 @@ class ReportDataControllerMixin(object):
         result = self.browser.execute_script(js_cmd)
         self.browser.plugin.ensure_page_safe()
         try:
-            return int(result[0]['id'])
+            return [int(eid['id']) for eid in result]
         except (TypeError, IndexError):
             return None
 
@@ -1304,7 +1304,7 @@ class JSPaginationPane(View, ReportDataControllerMixin):
 
     @property
     def items_amount(self):
-        return len(self._invoke_cmd('get_all_items'))
+        return self._invoke_cmd('pagination_range')['total']
 
     def pages(self):
         """Generator to iterate over pages, yielding after moving to the next page"""
@@ -1486,8 +1486,6 @@ class NonJSPaginationPane(View):
                 else:
                     self.logger.debug('Paginator advancing to next page')
                     self.next_page()
-        elif BZ.bugzilla.get_bug('1460377').is_opened:
-            yield
         else:
             return
 
@@ -1955,6 +1953,9 @@ class AdvancedFilterUserInput(View):
         '//div[@id="user_input_filter"]//div[contains(normalize-space(.), {})]/input')
     user_input_cancel = Button('Cancel')
     user_input_apply = Button(title='Apply the current filter (Enter)')
+    # We have different close button for user input
+    close_button = Text(
+        locator='//div[@id="quicksearchbox"]//button[@data-dismiss="modal"]')
 
     @property
     def is_displayed(self):
@@ -2195,7 +2196,11 @@ class Search(View):
     def close_advanced_search(self):
         """Checks if the advanced search box is open and if it does, closes it."""
         if self.is_advanced_search_opened:
-            self.advanced_search_form.close_button.click()
+            # the reason for this check that both buttons() are present in DOM
+            if self.advanced_search_form.close_button.is_displayed:
+                self.advanced_search_form.close_button.click()
+            else:
+                self.advanced_search_form.filter_user_input_form.close_button.click()
             wait_for(lambda: self.is_advanced_search_opened, fail_condition=True,
                      num_sec=10, delay=2, message='Waiting for advanced search to close')
 
@@ -2805,10 +2810,15 @@ class NonJSBaseEntity(View):
         return getattr(item, name)
 
     def __str__(self):
-        return str(self._get_existing_entity())
+        return str(self.__repr__())
 
     def __repr__(self):
-        return repr(self._get_existing_entity())
+        try:
+            return repr(self._get_existing_entity())
+        except NoSuchElementException:
+            return '< {c} name {n}, id {id} >'.format(c=self.__class__,
+                                                      n=self.name or "",
+                                                      id=self.entity_id or "")
 
     @property
     def is_displayed(self):
@@ -2928,10 +2938,11 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                 return el['entity_id']
         return None
 
-    def get_entity_by_keys(self, **keys):
+    def get_entities_by_keys(self, **keys):
         # some fields aren't available in Tile or Grid View.
         # So, we decided to switch to List View mode if several keys are passed
         # btw, it isn't necessary in 5.9+
+        found_entities = []
         if self.browser.product_version < '5.9':
             # todo: fix this ugly hack somehow else
             view_selector = getattr(self.parent.parent.toolbar, 'view_selector', None)
@@ -2944,7 +2955,8 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                 elements = self._current_page_elements
 
             for el in elements:
-                entity = self.parent.entity_class(parent=self, entity_id=el['entity_id'])
+                entity = self.parent.entity_class(parent=self, entity_id=el['entity_id'],
+                                                  name=el['name'])
                 for key, value in keys.items():
                     try:
                         if entity.data[key] != str(value):
@@ -2952,11 +2964,11 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                     except KeyError:
                         break
                 else:
-                    return entity
+                    found_entities.append(entity)
         else:
             entity_id = keys.pop('entity_id', None)
             if entity_id:
-                return self.parent.entity_class(parent=self, entity_id=entity_id)
+                found_entities.append(self.parent.entity_class(parent=self, entity_id=entity_id))
             elif 'id' in keys:
                 # it turned out that there are some views which have entities with internal id
                 # which override entity id in JS code. this is workaround for such case
@@ -2970,11 +2982,12 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                         except KeyError:
                             break
                     else:
-                        return entity
-                pass
+                        found_entities.append(entity)
             else:
-                return self.parent.entity_class(parent=self, entity_id=self.get_id_by_keys(**keys))
-        return None
+                entities = [self.parent.entity_class(parent=self, entity_id=eid)
+                            for eid in self.get_ids_by_keys(**keys)]
+                found_entities.extend(entities)
+        return found_entities
 
     @property
     def all_entity_names(self):
@@ -2990,7 +3003,8 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         Returns: all entities (QuadIcon/etc.) displayed by view
         """
         if not surf_pages:
-            return [self.parent.entity_class(parent=self, entity_id=eid) for eid in self.entity_ids]
+            return [self.parent.entity_class(parent=self, entity_id=el['entity_id'],
+                                             name=el['name']) for el in self._current_page_elements]
         else:
             entities = []
             for _ in self.paginator.pages():
@@ -3019,9 +3033,10 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                 entity_id = keys['entity_id']
             else:
                 entity_id = None
-                entity = self.get_entity_by_keys(**keys)
-                if entity:
-                    return entity
+                try:
+                    return self.get_entities_by_keys(**keys)[0]
+                except IndexError:
+                    pass
 
             if entity_id:
                 return self.parent.entity_class(parent=self, entity_id=entity_id)
@@ -3041,6 +3056,43 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
             return self.parent.entity_class(parent=self, entity_id=entity_id)
 
         raise ItemNotFound("No Entities found on this page")
+
+    def apply(self, func, conditions, surf_pages=False):
+        """ looks for entities matching to conditions and applies passed func
+        :param func:  function to apply
+        :param conditions: entities should match to
+        :param surf_pages: current page entities if False, all entities otherwise
+        :return: list of entities
+
+        Ex:
+            from cfme.infrastructure.virtual_machines import Vm
+            view = navigate_to(Vm, 'All')
+            entities = view.entities.apply(func=lambda e: e.check(),
+                                           conditions=[{'name': 'cu-24x7'},
+                                                       {'name': 'env-win81-ie11'},
+                                                       {'name': 'nachandr-59013-cback001'}])
+        """
+
+        if isinstance(conditions, dict):
+            conditions = [conditions]
+        elif isinstance(conditions, (list, tuple)):
+            conditions = conditions[:]
+        else:
+            raise ValueError('Wrong conditions passed')
+
+        def apply_to_current_page(conditions):
+            for keys in conditions:
+                entities = self.get_entities_by_keys(**keys)
+                map(func, entities)
+                return entities
+
+        all_found_entities = []
+        if not surf_pages:
+            all_found_entities.extend(apply_to_current_page(conditions))
+        else:
+            for _ in self.paginator.pages():
+                all_found_entities.extend(apply_to_current_page(conditions))
+        return all_found_entities
 
 
 class BaseEntitiesView(View):
@@ -3537,7 +3589,7 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
     def get_entity_by_keys(self, **keys):
         if self.browser.product_version < '5.9':
             for el in self._current_page_elements:
-                entity = self.entity_class(parent=self, entity_id=el['entity_id'])
+                entity = self.entity_class(parent=self, entity_id=el['entity_id'], name=el['name'])
                 for key, value in keys.items():
                     try:
                         if entity.data[key] != str(value):
@@ -3551,7 +3603,10 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
             if entity_id:
                 return self.entity_class(parent=self, entity_id=entity_id)
             else:
-                return self.entity_class(parent=self, entity_id=self.get_id_by_keys(**keys))
+                try:
+                    return self.entity_class(parent=self, entity_id=self.get_ids_by_keys(**keys)[0])
+                except IndexError:
+                    pass
         return None
 
     @property
@@ -3679,3 +3734,90 @@ class Splitter(Widget):
             self.pull_left()
         for _ in range(2):
             self.pull_right()
+
+
+class DriftComparison(Widget):
+    """Represents Drift Analysis Sections Comparison Table
+
+        Args:
+        locator: Locator for Drift Analysis Sections Comparison Table.
+    """
+
+    ROOT = ParametrizedLocator('{@locator}')
+    ALL_SECTIONS = ".//tr[@data-exp-id]"
+    CELLS = "./td//i"
+    SECTION = ".//th[contains(text(), {})]/ancestor::tr"
+    INDENT = ".//tr[contains(@data-parent, {id})]"
+
+    def __init__(self, parent, locator, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.locator = locator
+
+    @property
+    def available_sections(self):
+        """ All element for drift sections """
+        return [section for section in self.browser.elements(self.ALL_SECTIONS, parent=self)]
+
+    def section_element(self, drift_section):
+        """ Element for drift section
+            Args:
+                drift_section: name for section(Can be partial text)
+            Return:
+                Section web element
+        """
+        return self.browser.element(self.SECTION.format(quote(drift_section)))
+
+    def is_changed(self, drift_section):
+        """ Check if section was changed
+            Args:
+                drift_section: name for section(Can be partial text)
+            Return:
+                bool: True if changed, otherwise False
+        """
+        cells = self.browser.elements(
+            self.CELLS, parent=self.section_element(drift_section))
+        attrs = [self.browser.get_attribute("class", cell) for cell in cells]
+        return "drift-delta" in attrs
+
+    def parent_id(self, drift_section):
+        """
+            Args:
+                drift_section: name for section(Can be partial text)
+            Return:
+                int: id numder
+        """
+        elements = self.browser.elements("{}/following-sibling::tr".format(
+            self.SECTION.format(quote(drift_section))), parent=self)
+        return self.browser.get_attribute("data-parent", elements[0])
+
+    def section_attributes(self, drift_section):
+        """ Children elements under section
+            Args:
+                drift_section: name for section(Can be partial text)
+            Return:
+                list: attributes elements
+        """
+        att_id = self.parent_id(drift_section)
+        return [child for child in self.browser.elements(self.INDENT.format(
+            id=quote(att_id)), parent=self)]
+
+    def check_section_attribute_availability(self, drift_section):
+        """Check if at least one attribute is available in the DOM
+            Can be used to check drift attributes options for section
+            Args:
+                drift_section: name for section(Can be partial text)
+            Return:
+                bool: True if available, otherwise False
+        """
+        try:
+            self.section_attributes(drift_section)
+            return True
+        except AttributeError:
+            return False
+
+    @property
+    def section_values(self):
+        return {section.text: self.is_changed(section.text) for section in self.available_sections}
+
+    def read(self):
+        return self.section_values

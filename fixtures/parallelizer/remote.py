@@ -2,7 +2,11 @@ import signal
 
 import zmq
 from py.path import local
+
 import cfme.utils
+from cfme.utils import log
+from cfme.utils.appliance import get_or_create_current_appliance
+from fixtures.log import _test_status, _format_nodeid
 
 SLAVEID = None
 
@@ -73,6 +77,28 @@ class SlaveManager(object):
 
         """
         self.send_event("runtest_logreport", report=serialize_report(report))
+        if report.when == 'teardown':
+            path, lineno, domaininfo = report.location
+            test_status = _test_status(_format_nodeid(report.nodeid, False))
+            if test_status == "failed":
+                appliance = get_or_create_current_appliance()
+                try:
+                    self.log.info(
+                        "Managed providers: {}".format(
+                            ", ".join([
+                                prov.key for prov in
+                                appliance.managed_known_providers]))
+                    )
+                except KeyError as ex:
+                    if 'ext_management_systems' in ex.msg:
+                        self.log.warning("Unable to query ext_management_systems table; DB issue")
+                    else:
+                        raise
+            self.log.info(log.format_marker('{} result: {}'.format(_format_nodeid(report.nodeid),
+                                                                   test_status)),
+                          extra={'source_file': path, 'source_lineno': lineno})
+        if report.outcome == "skipped":
+            self.log.info(log.format_marker(report.longreprtext))
 
     def pytest_internalerror(self, excrepr):
         """pytest internal error hook

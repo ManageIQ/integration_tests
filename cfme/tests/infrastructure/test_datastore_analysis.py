@@ -1,21 +1,18 @@
 # -*- coding: utf-8 -*-
+import pytest
 
 from cfme import test_requirements
-from cfme.configure.tasks import is_datastore_analysis_finished
-from cfme.fixtures import pytest_selenium as sel
-from cfme.infrastructure import datastore, host
+from cfme.configure.tasks import delete_all_tasks
+from cfme.exceptions import MenuItemNotFound
+from cfme.infrastructure.host import Host, get_credentials_from_config
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils import conf, testgen
+from cfme.utils import testgen, hosts
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
-from cfme.utils.appliance import get_or_create_current_appliance
 from cfme.utils.wait import wait_for
-import pytest
 
 pytestmark = [test_requirements.smartstate]
 DATASTORE_TYPES = ('vmfs', 'nfs', 'iscsi')
-PROVIDER_TYPES = (VMwareProvider, RHEVMProvider)
 
 
 # Rows to check in the datastore detail Content infoblock; after smartstate analysis
@@ -30,130 +27,96 @@ CONTENT_ROWS_TO_CHECK = (
 
 
 def pytest_generate_tests(metafunc):
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [RHEVMProvider, VMwareProvider], required_fields=['datastores'])
+    argnames.append('datastore_type')
     new_idlist = []
     new_argvalues = []
 
-    argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, PROVIDER_TYPES, required_fields=['datastores'])
-    argnames += ['datastore']
-    appliance = get_or_create_current_appliance()
-    # TODO: turn the datastore into a parameterized fixture by type,
-    #       and discuss semantics for obtaining them by type
-    datastore_collection = datastore.DatastoreCollection(appliance)
-
-    for i, argvalue_tuple in enumerate(argvalues):
+    for index, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
-        datastores = args['provider'].data.get('datastores', {})
-        if not datastores:
-            continue
+        datastores = args['provider'].data.datastores
         for ds in datastores:
             if not ds.get('test_fleece', False):
                 continue
-            assert ds.get('type') in DATASTORE_TYPES,\
-                'datastore type must be set to [{}] for smartstate analysis tests'\
-                .format('|'.join(DATASTORE_TYPES))
-            argvs = argvalues[i][:]
-            new_argvalues.append(argvs + [datastore_collection.instantiate(
-                ds['name'], args['provider'].key, ds['type'])])
-            test_id = '{}-{}'.format(args['provider'].key, ds['type'])
+            assert ds['type'] in DATASTORE_TYPES, (
+                'datastore type must be set to [{}] for smartstate analysis tests'.format(
+                    '|'.join(DATASTORE_TYPES)))
+            new_argvalues.append([args["provider"], ds['type']])
+            test_id = '{}-{}'.format(idlist[index], ds['type'])
             new_idlist.append(test_id)
+
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-def get_host_data_by_name(provider_key, host_name):
-    for host_obj in conf.cfme_data.get('management_systems', {})[provider_key].get('hosts', []):
-        if host_name == host_obj['name']:
-            return host_obj
-    return None
+@pytest.fixture(scope='module')
+def datastore(appliance, provider, datastore_type):
+    datastores = provider.data.get('datastores')
+    for ds in datastores:
+        if ds.type == datastore_type:
+            return appliance.collections.datastores.instantiate(
+                name=ds.name, provider=provider, type=ds.type)
 
 
-# TODO add support for events
-@pytest.mark.tier(2)
-@pytest.mark.meta(
-    blockers=[
-        BZ(1091033, unblock=lambda datastore: datastore.type != 'iscsi'),
-        BZ(1180467, unblock=lambda provider: provider.type != 'rhevm'),
-        BZ(1380707)
-    ]
-)
-def test_run_datastore_analysis(appliance, request, setup_provider, provider, datastore,
-                                soft_assert, has_no_providers):
-    """Tests smarthost analysis
-
-    Metadata:
-        test_flag: datastore_analysis
-    """
-
+@pytest.fixture(scope='module')
+def datastores_hosts_setup(provider, datastore, request, appliance):
     # Check if there is a host with valid credentials
     host_entities = datastore.get_hosts()
     assert len(host_entities) != 0, "No hosts attached to this datastore found"
     for host_entity in host_entities:
         if 'checkmark' in host_entity.data['creds']:
-            break
-    else:
+            continue
         # If not, get credentials for one of the present hosts
-        found_host = False
-        for host_entity in host_entities:
-            host_data = get_host_data_by_name(provider.key, host_entity.name)
-            if host_data is None:
-                continue
+        host_data = hosts.get_host_data_by_name(provider.key, host_entity.name)
+        if host_data is None:
+            continue
+        host_collection = appliance.collections.hosts
+        test_host = host_collection.instantiate(name=host_entity.name, provider=provider)
+        test_host.update_credentials_rest(
+            credentials=get_credentials_from_config(host_data.credentials))
+        request.addfinalizer(lambda: test_host.update_credentials_rest(
+            credentials=Host.Credential(principal="", secret="")))
 
-            found_host = True
-            host_collection = appliance.collections.hosts
-            test_host = host_collection.instantiate(name=host_entity.name, provider=provider)
 
-            # Add them to the host
-            wait_for(lambda: test_host.exists, delay=10, num_sec=120, fail_func=sel.refresh)
-            if not test_host.has_valid_credentials:
-                test_host.update(
-                    updates={
-                        'credentials': host.get_credentials_from_config(host_data['credentials'])}
-                )
-                wait_for(
-                    lambda: test_host.has_valid_credentials,
-                    delay=10,
-                    num_sec=120,
-                    fail_func=sel.refresh
-                )
+@pytest.fixture(scope='function')
+def clear_all_tasks(appliance):
+    destination = 'AllTasks' if appliance.version >= '5.9' else 'AllOtherTasks'
+    # clear table
+    delete_all_tasks(destination)
 
-                # And remove them again when the test is finished
-                def test_host_remove_creds():
-                    test_host.update(
-                        updates={
-                            'credentials': host.Host.Credential(
-                                principal="",
-                                secret="",
-                                verify_secret=""
-                            )
-                        }
-                    )
-                request.addfinalizer(test_host_remove_creds)
-            break
 
-        assert found_host,\
-            "No credentials found for any of the hosts attached to datastore {}"\
-            .format(datastore.name)
+@pytest.mark.tier(2)
+def test_run_datastore_analysis(setup_provider, datastore, soft_assert, datastores_hosts_setup,
+                                clear_all_tasks, appliance):
+    """Tests smarthost analysis
 
-    # TODO add support for events
-    # register_event(
-    #     None,
-    #     "datastore",
-    #     datastore_name,
-    #     ["datastore_analysis_request_req", "datastore_analysis_complete_req"]
-    # )
-
+    Metadata:
+        test_flag: datastore_analysis
+    """
     # Initiate analysis
-    datastore.run_smartstate_analysis()
-    wait_for(lambda: is_datastore_analysis_finished(datastore.name),
-             delay=15, timeout="15m", fail_func=lambda: tb.select('Reload the current display'))
+    try:
+        datastore.run_smartstate_analysis(wait_for_task_result=True)
+    except MenuItemNotFound:
+        # TODO need to update to cover all detastores
+        pytest.skip('Smart State analysis is disabled for {} datastore'.format(datastore.name))
+    details_view = navigate_to(datastore, 'DetailsFromProvider')
+    # c_datastore = details_view.entities.properties.get_text_of("Datastore Type")
 
-    details_view = navigate_to(datastore, 'Details')
-    c_datastore = details_view.entities.properties.get_text_of("Datastores Type")
     # Check results of the analysis and the datastore type
-    soft_assert(c_datastore == datastore.type.upper(),
-                'Datastore type does not match the type defined in yaml:' +
-                'expected "{}" but was "{}"'.format(datastore.type.upper(), c_datastore))
-    for row_name in CONTENT_ROWS_TO_CHECK:
-        value = InfoBlock('Content', row_name).text
-        soft_assert(value != '0',
-                    'Expected value for {} to be non-empty'.format(row_name))
+    # TODO need to clarify datastore type difference
+    # soft_assert(c_datastore == datastore.type.upper(),
+    #             'Datastore type does not match the type defined in yaml:' +
+    #             'expected "{}" but was "{}"'.format(datastore.type.upper(), c_datastore))
+
+    wait_for(lambda: details_view.entities.content.get_text_of(CONTENT_ROWS_TO_CHECK[0]),
+             delay=15, timeout="3m",
+             fail_condition='0',
+             fail_func=appliance.server.browser.refresh)
+    managed_vms = details_view.entities.relationships.get_text_of('Managed VMs')
+    if managed_vms != '0':
+        for row_name in CONTENT_ROWS_TO_CHECK:
+            value = details_view.entities.content.get_text_of(row_name)
+            soft_assert(value != '0',
+                        'Expected value for {} to be non-empty'.format(row_name))
+    else:
+        assert details_view.entities.content.get_text_of(CONTENT_ROWS_TO_CHECK[-1]) != '0'

@@ -35,7 +35,7 @@ def test_keypair_crud(appliance, provider):
 
 
 @pytest.mark.tier(3)
-def test_keypair_crud_with_key(openstack_provider, keypairs):
+def test_keypair_crud_with_key(openstack_provider, appliance):
     """ This will test whether it will create new Keypair and then deletes it.
 
     Steps:
@@ -43,6 +43,7 @@ def test_keypair_crud_with_key(openstack_provider, keypairs):
         * Select Cloud Provider.
         * Also delete it.
     """
+    keypairs = appliance.collections.keypairs
     key = RSA.generate(1024)
     public_key = key.publickey().exportKey('OpenSSH')
     try:
@@ -59,7 +60,7 @@ def test_keypair_crud_with_key(openstack_provider, keypairs):
 
 
 @pytest.mark.tier(3)
-def test_keypair_create_cancel(openstack_provider, keypairs):
+def test_keypair_create_cancel(openstack_provider, appliance):
     """ This will test cancelling on adding a keypair
 
     Steps:
@@ -67,6 +68,7 @@ def test_keypair_create_cancel(openstack_provider, keypairs):
         * Select Cloud Provider.
         * Also delete it.
     """
+    keypairs = appliance.collections.keypairs
     keypair = keypairs.create(name="", provider=openstack_provider, cancel=True)
 
     assert not keypair.exists

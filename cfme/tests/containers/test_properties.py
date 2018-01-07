@@ -3,16 +3,17 @@ import pytest
 from wrapanapi.utils import eval_strings
 
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
-from cfme.containers.route import Route
-from cfme.containers.project import Project
-from cfme.containers.service import Service
-from cfme.containers.node import Node
-from cfme.containers.image import Image
-from cfme.containers.image_registry import ImageRegistry
-from cfme.containers.pod import Pod
-from cfme.containers.template import Template
-from cfme.containers.volume import Volume
-from cfme.containers.container import Container
+from cfme.containers.route import Route, RouteCollection
+from cfme.containers.project import Project, ProjectCollection
+from cfme.containers.service import Service, ServiceCollection
+from cfme.containers.node import Node, NodeCollection
+from cfme.containers.image import Image, ImageCollection
+from cfme.containers.image_registry import (ImageRegistry,
+                                            ImageRegistryCollection)
+from cfme.containers.pod import Pod, PodCollection
+from cfme.containers.template import Template, TemplateCollection
+from cfme.containers.volume import Volume, VolumeCollection
+from cfme.containers.container import Container, ContainerCollection
 
 from cfme.utils import version
 from cfme.utils.soft_get import soft_get
@@ -39,21 +40,24 @@ TEST_ITEMS = [
             expected_fields=[
                 'name', 'state', 'last state', 'restart count',
                 'backing ref (container id)', 'privileged'
-            ]
+            ],
+            collection_object=ContainerCollection
         )
     ),
     pytest.mark.polarion('CMP-10430')(
         ContainersTestItem(
             Project,
             'CMP-10430',
-            expected_fields=['name', 'creation timestamp', 'resource version']
+            expected_fields=['name', 'creation timestamp', 'resource version'],
+            collection_object=ProjectCollection
         )
     ),
     pytest.mark.polarion('CMP-9877')(
         ContainersTestItem(
             Route,
             'CMP-9877',
-            expected_fields=['name', 'creation timestamp', 'resource version', 'host name']
+            expected_fields=['name', 'creation timestamp', 'resource version', 'host name'],
+            collection_object=RouteCollection
         )
     ),
     pytest.mark.polarion('CMP-9911')(
@@ -61,9 +65,10 @@ TEST_ITEMS = [
             Pod,
             'CMP-9911',
             expected_fields=[
-                'name', 'phase', 'creation timestamp', 'resource version',
+                'name', 'creation timestamp', 'resource version',
                 'restart policy', 'dns policy', 'ip address'
-            ]
+            ],
+            collection_object=PodCollection
         )
     ),
     pytest.mark.polarion('CMP-9960')(
@@ -75,7 +80,8 @@ TEST_ITEMS = [
                 'memory', 'max pods capacity', 'system bios uuid', 'machine id',
                 'infrastructure machine id', 'runtime version', 'kubelet version',
                 'proxy version', 'operating system distribution', 'kernel version',
-            ]
+            ],
+            collection_object=NodeCollection
         )
     ),
     pytest.mark.polarion('CMP-9978')(
@@ -88,7 +94,8 @@ TEST_ITEMS = [
                     'name', 'image id', 'full name', 'architecture', 'author',
                     'entrypoint', 'docker version', 'exposed ports', 'size'
                 ]
-            }
+            },
+            collection_object=ImageCollection
         )
     ),
     pytest.mark.polarion('CMP-9890')(
@@ -98,21 +105,24 @@ TEST_ITEMS = [
             expected_fields=[
                 'name', 'creation timestamp', 'resource version', 'session affinity',
                 'type', 'portal ip'
-            ]
+            ],
+            collection_object=ServiceCollection
         )
     ),
     pytest.mark.polarion('CMP-9988')(
         ContainersTestItem(
             ImageRegistry,
             'CMP-9988',
-            expected_fields=['host']
+            expected_fields=['host'],
+            collection_object=ImageRegistryCollection
         )
     ),
     pytest.mark.polarion('CMP-10316')(
         ContainersTestItem(
             Template,
             'CMP-10316',
-            expected_fields=['name', 'creation timestamp', 'resource version']
+            expected_fields=['name', 'creation timestamp', 'resource version'],
+            collection_object=TemplateCollection
         )
     ),
     pytest.mark.polarion('CMP-10407')(
@@ -126,7 +136,8 @@ TEST_ITEMS = [
                 'reclaim policy',
                 'status phase',
                 'nfs server',
-                'volume path']
+                'volume path'],
+            collection_object=VolumeCollection
         )
     )
 ]
@@ -136,7 +147,7 @@ TEST_ITEMS = [
                          ids=[ContainersTestItem.get_pretty_id(ti) for ti in TEST_ITEMS])
 def test_properties(provider, appliance, test_item, soft_assert):
 
-    instances = test_item.obj.get_random_instances(provider, count=2, appliance=appliance)
+    instances = test_item.collection_object(appliance).get_random_instances(count=2)
 
     for instance in instances:
 
@@ -156,8 +167,7 @@ def test_properties(provider, appliance, test_item, soft_assert):
 def test_pods_conditions(provider, appliance, soft_assert):
 
     selected_pods_cfme = {pd.name: pd
-                          for pd in Pod.get_random_instances(
-                              provider, count=3, appliance=appliance)}
+                          for pd in PodCollection(appliance).get_random_instances(count=3)}
 
     pods_per_ready_status = provider.pods_per_ready_status()
     for pod_name in selected_pods_cfme:

@@ -2,7 +2,6 @@ import pytest
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.networks.provider import NetworkProviderCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
@@ -13,13 +12,13 @@ pytestmark = [
 ]
 
 
-def test_prov_balances_number(provider, appliance):
+def test_prov_balances_number(appliance):
     """
     Test number of balancers on 1 provider
     Prerequisites:
         Only one refreshed cloud provider in cfme database
     """
-    prov_collection = NetworkProviderCollection(appliance)
+    prov_collection = appliance.collections.network_providers
     providers = prov_collection.all()
     for prov in providers:
         view = navigate_to(prov, 'Details')
@@ -30,7 +29,7 @@ def test_prov_balances_number(provider, appliance):
 
 def test_balances_detail(provider, appliance):
     """ Test of getting attribute from balancer object """
-    collection = NetworkProviderCollection(appliance)
+    collection = appliance.collections.network_providers
     providers = collection.all()
     for prov in providers:
         for balancer in prov.balancers.all():

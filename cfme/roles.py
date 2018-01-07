@@ -303,8 +303,6 @@ role_access_ui_59z = {
             'Physical Infrastructure': ['Topology', 'Servers', 'Providers']},
         'Configuration': ['Management'],
         'Control': ['Import / Export', 'Log', 'Explorer', 'Simulation'],
-        'Middleware': ['Datasources', 'Providers', 'Messagings', 'Servers', 'Domains', 'Topology',
-                       'Deployments'],
         'Monitor': {
             'Alerts': ['Overview', 'All Alerts', 'Most Recent Alerts']},
         'Networks': ['Subnets', 'Load Balancers', 'Providers', 'Security Groups', 'Floating IPs',
@@ -336,7 +334,6 @@ role_access_ui_59z = {
         'Configuration': ['Management'],
         'Control': ['Import / Export', 'Log', 'Explorer', 'Simulation'],
         'Networks': ['Providers', 'Security Groups', 'Floating IPs', 'Networks'],
-        'Middleware': ['Datasources', 'Providers', 'Servers', 'Deployments', 'Topology'],
         'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
         'Services': ['Requests', 'Workloads', 'Catalogs', 'My Services'],
         'Storage': {
@@ -350,7 +347,6 @@ role_access_ui_59z = {
                                'PXE', 'Resource Pools'],
             'Physical Infrastructure': ['Servers', 'Providers']},
         'Control': ['Log', 'Simulation'],
-        'Middleware': ['Servers'],
         'Services': ['Requests', 'Workloads', 'My Services'],
     },
     'evmgroup-auditor': {
@@ -364,7 +360,6 @@ role_access_ui_59z = {
                                'PXE', 'Resource Pools'],
             'Physical Infrastructure': ['Servers', 'Providers']},
         'Control': ['Log', 'Simulation'],
-        'Middleware': ['Servers'],
         'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
         'Services': ['Workloads', 'My Services']},
     'evmgroup-desktop': {
@@ -388,7 +383,6 @@ role_access_ui_59z = {
                                'PXE', 'Resource Pools'],
             'Physical Infrastructure': ['Servers', 'Providers']},
         'Configuration': ['Management'],
-        'Middleware': ['Servers'],
         'Services': ['Workloads', 'My Services']
     },
     'evmgroup-security': {
@@ -399,7 +393,6 @@ role_access_ui_59z = {
                                'Clusters', 'Resource Pools'],
             'Physical Infrastructure': ['Servers', 'Providers']},
         'Control': ['Log', 'Simulation'],
-        'Middleware': ['Servers'],
         'Services': ['My Services', 'Workloads']
     },
     'evmgroup-support': {
@@ -410,7 +403,6 @@ role_access_ui_59z = {
                                'Resource Pools'],
             'Physical Infrastructure': ['Servers', 'Providers']},
         'Control': ['Log', 'Simulation'],
-        'Middleware': ['Servers'],
         'Services': ['My Services', 'Workloads']
     },
     'evmgroup-user': {
@@ -420,7 +412,6 @@ role_access_ui_59z = {
             'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
                                'Resource Pools'],
             'Physical Infrastructure': ['Servers', 'Providers']},
-        'Middleware': ['Servers'],
         'Services': ['Requests', 'Workloads', 'My Services']
     },
     'evmgroup-vm_user': {
@@ -431,7 +422,6 @@ role_access_ui_59z = {
             'Clouds': ['Instances'],
             'Infrastructure': ['Virtual Machines']},
         'Configuration': ['Management'],
-        'Middleware': ['Servers'],
         'Services': ['Requests', 'Workloads'],
     }
 }
@@ -454,8 +444,6 @@ role_access_ui_58z = {
                                'Clusters', 'Topology', 'PXE', 'Resource Pools']},
         'Configuration': ['Management'],
         'Control': ['Import / Export', 'Log', 'Explorer', 'Simulation'],
-        'Middleware': ['Datasources', 'Providers', 'Messagings', 'Servers', 'Domains', 'Topology',
-                       'Deployments'],
         'Networks': ['Subnets', 'Load Balancers', 'Providers', 'Security Groups', 'Floating IPs',
                      'Network Ports', 'Topology', 'Networks', 'Network Routers'],
         'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
@@ -482,7 +470,6 @@ role_access_ui_58z = {
         'Configuration': ['Management'],
         'Control': ['Import / Export', 'Log', 'Explorer', 'Simulation'],
         'Networks': ['Providers', 'Security Groups', 'Floating IPs', 'Networks'],
-        'Middleware': ['Datasources', 'Providers', 'Servers', 'Deployments', 'Topology'],
         'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
         'Services': ['Requests', 'Workloads', 'Catalogs', 'My Services'],
         'Storage': {

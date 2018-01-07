@@ -164,9 +164,10 @@ class ElementCollection(BaseCollection):
                 view.fill(element.get('options'))
             self.set_element_type(view, element)
         view.add_button.click()
-        view.flash.assert_no_error()
-        view.flash.assert_message('Dialog "{}" was added'.
-                                  format(self.parent.tab.dialog.label))
+        try:
+            view.flash.assert_no_error()
+        except AssertionError:
+            raise
         return self.instantiate(element_data=element_data)
 
     def set_element_type(self, view, element):

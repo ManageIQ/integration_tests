@@ -613,7 +613,7 @@ class Group(BaseEntity):
         """ Retrive ldap user groups
             return: AddGroupView
         """
-        view = navigate_to(self, 'Add')
+        view = navigate_to(self.parent, 'Add')
         view.fill({'lookup_ldap_groups_chk': True,
                    'user_to_look_up': self.user_to_lookup,
                    'username': self.ldap_credentials.principal,
@@ -625,7 +625,7 @@ class Group(BaseEntity):
         """ Retrive external authorization user groups
             return: AddGroupView
         """
-        view = navigate_to(self, 'Add')
+        view = navigate_to(self.parent, 'Add')
         view.fill({'lookup_ldap_groups_chk': True,
                    'user_to_look_up': self.user_to_lookup})
         view.retrieve_button.click()
@@ -1078,7 +1078,6 @@ class Role(Updateable, Pretty, BaseEntity):
         """
         flash_blocked_msg = "Read Only Role \"{}\" can not be edited".format(self.name)
         edit_role_txt = 'Edit this Role'
-
         view = navigate_to(self, 'Details')
         if not view.toolbar.configuration.item_enabled(edit_role_txt):
             raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
@@ -1250,6 +1249,7 @@ class RoleDetails(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
+        self.prerequisite_view.browser.refresh()  # workaround for 5.9 issue of role now shown
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Roles', self.obj.name)
 

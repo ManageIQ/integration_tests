@@ -1,13 +1,12 @@
+from xml.sax.saxutils import quoteattr
+
 import pytest
 
-from widgetastic_manageiq import Table
-
 from cfme import test_requirements
-from cfme.exceptions import CandidateNotFound
-from cfme.fixtures import pytest_selenium as sel
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.exceptions import CandidateNotFound
 from cfme.utils.appliance.implementations.ui import navigate_to
-
+from widgetastic_manageiq import Table
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
@@ -71,7 +70,7 @@ def test_outputs_link(stack):
 
 
 @pytest.mark.tier(3)
-def test_outputs_link_url(stack):
+def test_outputs_link_url(appliance, stack):
     try:
         view = navigate_to(stack, 'RelationshipOutputs')
     except CandidateNotFound:
@@ -83,7 +82,8 @@ def test_outputs_link_url(stack):
         # TODO: Need to come back to this one
         table = Table('//div[@id="list_grid"]//table[contains(@class, "table-selectable")]')
         table.click_row_by_cells({'Key': 'WebsiteURL'}, 'Key')
-        assert sel.is_displayed_text("WebsiteURL")
+        loc = "//*[normalize-space(text())={}]".format(quoteattr("WebsiteURL"))
+        assert appliance.browser.widgetastic.selenium.is_displayed(loc)
 
 
 @pytest.mark.tier(3)

@@ -12,7 +12,7 @@ if not providers_dest.get_children():
     providers_dest.create_file('__init__.py')
 
 
-folders_to_process = ['infrastructure', 'cloud', 'middleware', 'containers']
+folders_to_process = ['infrastructure', 'cloud', 'containers']
 
 for folder in folders_to_process:
     def find(fmt):
