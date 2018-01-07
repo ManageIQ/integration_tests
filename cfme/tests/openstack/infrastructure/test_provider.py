@@ -13,8 +13,7 @@ pytestmark = [
 
 
 def test_api_port(provider):
-    
-    view_details=navigate_to(provider,"Details")
+    view_details = navigate_to(provider, "Details")
     port = provider.get_yaml_data()['endpoints']['default']['api_port']
     assert int(view_details.entities.properties.get_text_of('API Port')) == port, 'Invalid API Port'
 
