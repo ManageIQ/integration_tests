@@ -77,11 +77,11 @@ def test_relationships_tables(provider, has_persistent_volume, appliance, test_i
     if text.isdigit():
         view = appliance.browser.create_view(test_item.obj.all_view)
         value = int(text)
-        items_amount = int(view.paginator.max_item)
+        items_amount = int(view.paginator.items_amount)
         assert items_amount == value, (
-            'Difference between the value({}) in the relationships table in {}'
-            'to number of records ({}) in the target page'
-            .format(value, instance.name, items_amount)
+            'Mismatch between relationships table value and item amount in the object table: '
+            'field: {}; relationships_table: {}; object table: {};'
+            .format(field, value, instance.name, items_amount)
         )
     else:
         view = appliance.browser.create_view(test_item.obj.details_view)
