@@ -13,14 +13,9 @@ pytestmark = [
 
 
 def test_api_port(provider):
-<<<<<<< HEAD
     view_details = navigate_to(provider, "Details")
     port = provider.get_yaml_data()['endpoints']['default']['api_port']
     assert int(view_details.entities.properties.get_text_of('API Port')) == port, 'Invalid API Port'
-=======
-    port = provider.data['endpoints']['default']['api_port']
-    assert provider.summary.properties.api_port.value == port, 'Invalid API Port'
->>>>>>> ae8a0c5d1ba1624abc4b9568432435241e7872e3
 
 
 def test_credentials_quads(provider):
