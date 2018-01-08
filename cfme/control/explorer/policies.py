@@ -66,10 +66,17 @@ class EditPolicyConditionAssignments(ControlExplorerView):
     save_button = Button("Save")
 
     @property
+    def supposed_title(self):
+        if BZ(1531468, forced_streams=["5.9"]).blocks:
+            return 'Editing {} {} "{}" Condition Assignments'
+        else:
+            return 'Editing {} {} Policy "{}" Condition Assignments'
+
+    @property
     def is_displayed(self):
         return (
             self.in_control_explorer and
-            self.title.text == 'Editing {} {} Policy "{}" Condition Assignments'.format(
+            self.title.text == self.supposed_title.format(
                 self.context["object"].PRETTY,
                 self.context["object"].TYPE,
                 self.context["object"].description
