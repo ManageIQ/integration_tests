@@ -1,16 +1,15 @@
 import fauxfactory
 import pytest
 from cfme.configure.configuration.region_settings import Category, Tag
-from cfme.utils import error, version
+from cfme.utils import error
 from cfme.utils.update import update
 from cfme.utils.testgen import config_managers, generate
-from cfme.utils.blockers import BZ
 
 
 pytest_generate_tests = generate(gen_func=config_managers)
 pytestmark = [pytest.mark.uncollectif(lambda config_manager_obj:
                                       config_manager_obj.type == "Ansible Tower"),
-              pytest.mark.meta(blockers=[BZ(1393987)])]
+              pytest.mark.meta(blockers=[1491704])]
 
 
 @pytest.yield_fixture
@@ -75,7 +74,6 @@ def test_config_manager_add_invalid_creds(request, config_manager_obj):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1462311, forced_streams=["5.7", "5.8"])])
 def test_config_manager_edit(request, config_manager):
     new_name = fauxfactory.gen_alpha(8)
     old_name = config_manager.name
