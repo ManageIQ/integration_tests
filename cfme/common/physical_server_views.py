@@ -168,6 +168,7 @@ class PhysicalServersToolbar(View):
     lifecycle = Dropdown(text="Lifecycle")
     monitoring = Dropdown(text="Monitoring")
     power = Dropdown(text="Power")
+    identify = Dropdown(text="Identify")
     view_selector = View.nested(ItemsToolBarViewSelector)
 
 
