@@ -26,7 +26,7 @@ def test_session_timeout(request, appliance):
     # Try getting timeout
     # I had to use wait_for because on 5.4 and upstream builds it made weird errors
     wait_for(
-        lambda: appliance.browser.widgetastic.selenium.elements(
+        lambda: appliance.browser.widgetastic.selenium.find_elements_by_xpath(
             "//div[(@id='flash_div' or @id='login_div') and contains(normalize-space(.), "
             "'Session was timed out due to inactivity')]"),
         num_sec=60,

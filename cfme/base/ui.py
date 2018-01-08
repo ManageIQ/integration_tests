@@ -356,6 +356,7 @@ class MySettingsView(BaseLoggedInPage):
 
 @navigator.register(Server)
 class MySettings(CFMENavigateStep):
+    VIEW = MySettingsView
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self):

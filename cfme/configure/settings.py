@@ -1,17 +1,17 @@
 import re
-
 from navmazing import NavigateToAttribute
-from widgetastic_manageiq import Table, BootstrapSelect, BreadCrumb, Text, ViewButtonGroup
-from widgetastic_patternfly import (BootstrapSwitch,
-                                    Input, Button, CheckableBootstrapTreeview, Dropdown)
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
-from cfme.base.ui import MySettingsView
+from widgetastic_patternfly import (BootstrapSwitch,
+                                    Input, Button, CheckableBootstrapTreeview, Dropdown)
+
 from cfme.base.login import BaseLoggedInPage
-from cfme.utils.pretty import Pretty
-from cfme.utils.update import Updateable
+from cfme.base.ui import MySettingsView
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
+from widgetastic_manageiq import Table, BootstrapSelect, BreadCrumb, Text, ViewButtonGroup
 
 
 class TimeProfileAddForm(View):
@@ -37,6 +37,12 @@ class TimeProfileAddFormView(BaseLoggedInPage):
     timeprofile_form = View.nested(TimeProfileAddForm)
     entities = View.nested(TimeprofileAddEntities)
     mysetting = View.nested(MySettingsView)
+
+
+class TimeProfileAllView(MySettingsView):
+    @property
+    def is_displayed(self):
+        return self.tabs.time_profile.is_active()
 
 
 class Timeprofile(Updateable, Navigatable):
@@ -119,11 +125,11 @@ class Timeprofile(Updateable, Navigatable):
 
 @navigator.register(Timeprofile, 'All')
 class TimeprofileAll(CFMENavigateStep):
-    VIEW = TimeProfileAddFormView
+    VIEW = TimeProfileAllView
     prerequisite = NavigateToAttribute('appliance.server', 'MySettings')
 
     def step(self):
-        self.view.mysetting.tabs.time_profile.select()
+        self.view.tabs.time_profile.select()
 
 
 class Visual(Updateable, Navigatable):
