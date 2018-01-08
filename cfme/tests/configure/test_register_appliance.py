@@ -1,4 +1,5 @@
 import pytest
+import time
 
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils import conf, version
@@ -150,9 +151,10 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
 
     used_repo_or_channel = red_hat_updates.get_repository_names()
 
-    red_hat_updates.register_appliances()  # Register all
+    # FIXME workaround BZ 1532201
+    time.sleep(15)
 
-    request.addfinalizer(appliance.unregister)
+    red_hat_updates.register_appliances()  # Register all
 
     wait_for(
         func=red_hat_updates.is_registering,
@@ -162,33 +164,14 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
         fail_func=red_hat_updates.refresh
     )
 
-    '''if/else added to overcome bz #1463588 these can be removed once fixed'''
-
-    if reg_method == 'rhsm':
-        wait_for(
-            func=red_hat_updates.is_registered,
-            handle_exception=True,
-            func_args=[appliance.server.name],
-            delay=40,
-            num_sec=400,
-            fail_func=red_hat_updates.refresh
-        )
-    else:
-        # First registration with sat6 fails; we need to click it after this failure
-        wait_for(
-            func=red_hat_updates.is_registered,
-            func_args=[appliance.server.name],
-            delay=50,
-            num_sec=1200,
-            fail_func=red_hat_updates.register_appliances
-        )
-
     wait_for(
         func=appliance.is_registration_complete,
         func_args=[used_repo_or_channel],
         delay=20,
         num_sec=400
     )
+
+    request.addfinalizer(appliance.unregister)
 
 
 @pytest.mark.meta(blockers=[BZ(1500878, forced_streams=['5.9', 'upstream'])])
