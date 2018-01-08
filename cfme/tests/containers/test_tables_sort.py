@@ -19,22 +19,21 @@ pytestmark = [
 
 TEST_ITEMS = [
     pytest.mark.polarion('CMP-9924')(ContainersTestItem(
-        ContainersProvider, 'CMP-9924', collection_obj=None)),
+        ContainersProvider, 'CMP-9924', collection_name=None)),
     pytest.mark.polarion('CMP-9926')(ContainersTestItem(
-        Route, 'CMP-9926', collection_obj='container_routes')),
+        Route, 'CMP-9926', collection_name='container_routes')),
     pytest.mark.polarion('CMP-9928')(ContainersTestItem(
-        Replicator, 'CMP-9928', collection_obj='container_replicators'))
+        Replicator, 'CMP-9928', collection_name='container_replicators'))
 ]
 
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
                          ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
+@pytest.mark.skip(reason='https://github.com/ManageIQ/integration_tests/issues/6385')
 def test_tables_sort(test_item, soft_assert, appliance):
 
-    if test_item.collection_obj:
-        nav_obj = getattr(appliance, test_item.collection_obj)
-
-    current_view = navigate_to(nav_obj, 'All')
+    current_view = navigate_to((test_item.obj if test_item.obj is ContainersProvider
+        else getattr(appliance.collections, test_item.collection_name)), 'All')
     current_view.toolbar.view_selector.select('List View')
 
     for col, header_text in enumerate(current_view.table.headers):
@@ -51,6 +50,6 @@ def test_tables_sort(test_item, soft_assert, appliance):
         soft_assert(
             rows_ascending[::-1] == rows_descending,
             'Malfunction in the table sort: {} != {}'.format(
-                rows_ascending, rows_descending
+                rows_ascending[::-1], rows_descending
             )
         )
