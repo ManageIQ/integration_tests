@@ -200,7 +200,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
 
     def step(self):
-        self.prerequisite_view.navigation.select("Compute", "Infrastructure", "PhysicalServers")
+        self.prerequisite_view.navigation.select("Compute", "Physical Infrastructure", "Servers")
 
 
 @navigator.register(PhysicalServer)
