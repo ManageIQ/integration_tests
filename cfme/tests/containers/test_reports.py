@@ -57,12 +57,16 @@ def get_report(menu_name, candu=False):
 
 
 @pytest.mark.polarion('CMP-10617')
-def test_container_reports_base_on_options(soft_assert):
+def test_container_reports_base_on_options(soft_assert, appliance):
     """This test verifies that all containers options are available in the report 'based on'
     Dropdown in the report creation"""
     view = navigate_to(CustomReport, 'Add')
+    if appliance.version < '5.9':
+        chargeback_for_images = 'Chargeback Container Images'
+    else:
+        chargeback_for_images = 'Chargeback for Images'
     for base_on in (
-        'Chargeback Container Images',
+        chargeback_for_images,
         'Container Images',
         'Container Services',
         'Container Templates',
@@ -248,6 +252,7 @@ def test_report_pod_counts_for_container_images_by_project(provider, soft_assert
 
 
 @pytest.mark.long_running_env
+@pytest.mark.meta(blockers=[1529963], forced_stream=['5.8', '5.9'])
 @pytest.mark.polarion('CMP-9532')
 def test_report_recently_discovered_pods(provider, soft_assert):
     """Testing 'Recently Discovered Pods' report, see polarion case for more info"""
