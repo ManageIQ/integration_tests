@@ -5,22 +5,25 @@ from time import sleep
 from cfme.base.ui import Server
 from cfme.cloud.availability_zone import AvailabilityZone
 from cfme.cloud.instance import Instance
-from cfme.cloud.provider.azure import AzureProvider
-from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.cloud.provider import CloudProvider
+from cfme.utils.providers import ProviderFilter
 from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.utils import version
+from cfme.cloud.provider.gce import GCEProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
+from markers.env_markers.provider import providers
 
 
+cloud_prov_only = ProviderFilter(classes=[CloudProvider])
+excluded = ProviderFilter(classes=[GCEProvider, OpenStackProvider], inverted=True)
 pytestmark = [
     pytest.mark.tier(2),
-    pytest.mark.uncollectif(lambda provider: provider.one_of(EC2Provider)),
-    pytest.mark.usefixtures("setup_provider_modscope"),
-    pytest.mark.provider([AzureProvider, OpenStackProvider, EC2Provider], scope="module")
+    pytest.mark.provider(gen_func=providers, filters=[excluded, cloud_prov_only], scope='module'),
+    pytest.mark.usefixtures("setup_provider_modscope")
 ]
 
 
