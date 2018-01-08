@@ -7,7 +7,6 @@ from cfme.containers.provider import ContainersProvider, ContainersTestItem
 from cfme.containers.service import Service, ServiceCollection
 from cfme.containers.replicator import Replicator, ReplicatorCollection
 from cfme.containers.image import Image, ImageCollection
-from cfme.containers.project import Project, ProjectCollection
 from cfme.containers.template import Template, TemplateCollection
 from cfme.containers.container import Container, ContainerCollection
 from cfme.containers.image_registry import ImageRegistry, ImageRegistryCollection
@@ -44,8 +43,10 @@ TEST_ITEMS = [
         Image, 'CMP-9980', collection_obj=ImageCollection)),
     pytest.mark.polarion('CMP-9994')(ContainersTestItem(
         ImageRegistry, 'CMP-9994', collection_obj=ImageRegistryCollection)),
-    pytest.mark.polarion('CMP-9868')(ContainersTestItem(
-        Project, 'CMP-9868', collection_obj=ProjectCollection)),
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1530610
+    # from cfme.containers.project import Project, ProjectCollection
+    # pytest.mark.polarion('CMP-9868')(ContainersTestItem(
+    #     Project, 'CMP-9868', collection_obj=ProjectCollection)),
     pytest.mark.polarion('CMP-10319')(ContainersTestItem(
         Template, 'CMP-10319', collection_obj=TemplateCollection)),
     pytest.mark.polarion('CMP-10410')(ContainersTestItem(
@@ -70,6 +71,8 @@ def test_relationships_tables(provider, has_persistent_volume, appliance, test_i
     # Check the relationships linking & data integrity
     view = navigate_to(instance, 'Details')
     relations = [key for key, val in view.entities.relationships.read().items() if val != '0']
+    if appliance.version.is_in_series([5, 8]):  # Treat BZ#1518862
+        relations = filter(lambda rel: rel != 'Containers', relations)
     relation = relations[randrange(len(relations))]
     field = view.entities.relationships.get_field(relation)[1]
     text = field.text
@@ -77,11 +80,11 @@ def test_relationships_tables(provider, has_persistent_volume, appliance, test_i
     if text.isdigit():
         view = appliance.browser.create_view(test_item.obj.all_view)
         value = int(text)
-        items_amount = int(view.paginator.max_item)
+        items_amount = int(view.paginator.items_amount)
         assert items_amount == value, (
-            'Difference between the value({}) in the relationships table in {}'
-            'to number of records ({}) in the target page'
-            .format(value, instance.name, items_amount)
+            'Mismatch between relationships table value and item amount in the object table: '
+            'field: {}; relationships_table: {}; object table: {};'
+            .format(field, value, instance.name, items_amount)
         )
     else:
         view = appliance.browser.create_view(test_item.obj.details_view)
