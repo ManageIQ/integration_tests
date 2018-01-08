@@ -104,6 +104,7 @@ class PhysicalServerDetailsToolbar(View):
     policy = Dropdown(text="Policy")
     power = Dropdown(text="Power")
     identify = Dropdown(text="Identify")
+    lifecycle = Dropdown(text="Lifecycle")
 
     @ParametrizedView.nested
     class custom_button(ParametrizedView):  # noqa
