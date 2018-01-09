@@ -380,7 +380,7 @@ def test_no_power_controls_on_archived_vm(testing_vm, archived_vm, soft_assert):
         * Verify the Power toolbar button is not visible
     """
     view = navigate_to(testing_vm, 'AnyProviderDetails', use_resetter=False)
-    soft_assert(not view.toolbar.power.is_displayed, "Power displayed in template details!")
+    soft_assert(not view.toolbar.power.is_displayed, "Power displayed in archived VM's details!")
 
 
 @pytest.mark.uncollectif(lambda provider: provider.one_of(SCVMMProvider) and
