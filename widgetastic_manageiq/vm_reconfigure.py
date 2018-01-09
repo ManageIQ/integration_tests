@@ -1,6 +1,7 @@
 from widgetastic.widget import Table as VanillaTable
 from widgetastic.xpath import quote
 from widgetastic_patternfly import BootstrapSelect, BootstrapSwitch, Button, Input
+from widgetastic.utils import Version, VersionPick
 
 
 class DisksButton(Button):
@@ -30,7 +31,8 @@ class DisksTable(VanillaTable):
         # Workaround necessary until BZ 1524960 is resolved
         4: BootstrapSelect(id='hdUnit'),
         3: BootstrapSelect(id='hdUnit'),
-        'Dependent': BootstrapSwitch(name='cb_dependent'),
+        'Dependent': BootstrapSwitch(
+            name=VersionPick({Version.lowest(): 'cb_dependent', '5.9': 'vm.cb_dependent'})),
         'Delete Backing': BootstrapSwitch(name='cb_deletebacking'),
         'Actions': Button()
     }
