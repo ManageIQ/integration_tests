@@ -36,13 +36,8 @@ class ComputePhysicalInfrastructureServersView(BaseLoggedInPage):
 
     @property
     def in_compute_physical_infrastructure_servers(self):
-        def _server_page(title):
-            return self.navigation.currently_selected == ["Compute", "Physical Infrastructure",
-                "Servers"]
-
-        return (
-            self.logged_in_as_current_user and (_server_page("Physical Servers"))
-        )
+        return (self.logged_in_as_current_user and
+                self.navigation.currently_selected == ["Compute", "Physical Infrastructure", "Servers"])
 
 
 class PhysicalServerQuadIconEntity(BaseQuadIconEntity):
