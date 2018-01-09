@@ -6,6 +6,7 @@ from cfme.cloud.availability_zone import ProviderAvailabilityZoneAllView
 from cfme.cloud.flavor import ProviderFlavorAllView
 from cfme.cloud.provider import CloudProviderImagesView, CloudProviderInstancesView
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.stack import ProviderStackAllView
 from cfme.common.host_views import ProviderAllHostsView
 from cfme.common.provider_views import InfraProviderDetailsView
@@ -13,8 +14,9 @@ from cfme.common.vm_views import HostAllVMsView, ProviderAllVMsView
 from cfme.infrastructure.cluster import ClusterDetailsView, ProviderAllClustersView
 from cfme.infrastructure.datastore import HostAllDatastoresView, ProviderAllDatastoresView
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.virtual_machines import (HostTemplatesOnlyAllView,
-    ProviderTemplatesOnlyAllView)
+                                                  ProviderTemplatesOnlyAllView)
 from cfme.networks.views import NetworkProviderDetailsView, ProviderSecurityGroupAllView
 from cfme.storage.manager import ProviderStorageManagerAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -80,7 +82,7 @@ def host(appliance, provider):
 
 @pytest.mark.parametrize("relationship,view", HOST_RELATIONSHIPS,
     ids=[rel[0] for rel in HOST_RELATIONSHIPS])
-@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE)
+@pytest.mark.provider([VMwareProvider, RHEVMProvider], selector=ONE_PER_TYPE)
 def test_host_relationships(appliance, provider, setup_provider, host, relationship, view):
     """Tests relationship navigation for a host"""
     host_view = navigate_to(host, "Details")
@@ -94,7 +96,7 @@ def test_host_relationships(appliance, provider, setup_provider, host, relations
 
 @pytest.mark.parametrize("relationship,view", INFRA_PROVIDER_RELATIONSHIPS,
     ids=[rel[0] for rel in INFRA_PROVIDER_RELATIONSHIPS])
-@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE)
+@pytest.mark.provider([VMwareProvider, RHEVMProvider], selector=ONE_PER_TYPE)
 def test_infra_provider_relationships(appliance, provider, setup_provider, relationship, view):
     """Tests relationship navigation for an infrastructure provider"""
     provider_view = navigate_to(provider, "Details")
@@ -107,7 +109,7 @@ def test_infra_provider_relationships(appliance, provider, setup_provider, relat
 
 @pytest.mark.parametrize("relationship,view", CLOUD_PROVIDER_RELATIONSHIPS,
     ids=[rel[0] for rel in CLOUD_PROVIDER_RELATIONSHIPS])
-@pytest.mark.provider([EC2Provider], selector=ONE_PER_TYPE)
+@pytest.mark.provider([EC2Provider, AzureProvider], selector=ONE_PER_TYPE)
 def test_cloud_provider_relationships(appliance, provider, setup_provider, relationship, view):
     """Tests relationship navigation for a cloud provider"""
     provider_view = navigate_to(provider, "Details")
