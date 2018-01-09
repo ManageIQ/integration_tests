@@ -26,6 +26,22 @@ class ManagePoliciesView(BaseLoggedInPage):
     def is_displayed(self):
         return False
 
+    def check_policy_assign_unassign(self, assign, *policy_profile_names):
+        """ check if at list one of the given policy profiles,
+        need to be assign or unassign.
+
+        Args:
+            assign: Wheter to assign or unassign policy.
+            policy_profile_names: :py:class:`str` with Policy Profile names.
+        """
+
+        for policy_profile in policy_profile_names:
+            leaf = self.policy_profiles.expand_path(policy_profile)
+            if self.policy_profiles.is_checked(leaf) != assign:
+                return True
+
+        return False
+
 
 class PolicyProfileAssignable(object):
     """This class can be inherited by anything that provider load_details method.
@@ -75,18 +91,17 @@ class PolicyProfileAssignable(object):
             policy_profile_names: :py:class:`str` with Policy Profile names.
         """
         view = navigate_to(self, 'ManagePoliciesFromDetails')
-        for policy_profile in policy_profile_names:
-            if assign:
-
-                view.policy_profiles.check_node(policy_profile)
-            else:
-                view.policy_profiles.uncheck_node(policy_profile)
         # Save button will be disabled in case of no changes done to policy,
-        # In this case click on Cancel
-        if view.save.disabled:
-            view.cancel.click()
-        else:
+        # check if need at list one policy changes, else click on Cancel
+        if view.check_policy_assign_unassign(assign, *policy_profile_names):
+            for policy_profile in policy_profile_names:
+                if assign:
+                    view.policy_profiles.check_node(policy_profile)
+                else:
+                    view.policy_profiles.uncheck_node(policy_profile)
             view.save.click()
+        else:
+            view.cancel.click()
         details_view = self.create_view(navigator.get_class(self, 'Details').VIEW)
         details_view.flash.assert_no_error()
 
