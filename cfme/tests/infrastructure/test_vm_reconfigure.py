@@ -57,7 +57,8 @@ def test_vm_reconfig_add_remove_hw_cold(
     elif change_type == 'sockets':
         new_config.hw.sockets = new_config.hw.sockets + 1
     elif change_type == 'memory':
-        new_config.hw.mem_size = new_config.hw.mem_size_mb + 512
+        mem_diff = -512 if small_vm.provider.one_of(RHEVMProvider) else 512
+        new_config.hw.mem_size = new_config.hw.mem_size_mb + mem_diff
         new_config.hw.mem_size_unit = 'MB'
 
     small_vm.reconfigure(new_config)
