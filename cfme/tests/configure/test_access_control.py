@@ -585,11 +585,10 @@ def _test_vm_removal():
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize(
-    'product_features, action',
-    [([['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'View'],
-       ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions']],
-      _test_vm_view)])
-def test_permission_edit(appliance, request, product_features, action):
+    'product_features', [
+        [['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'View'],
+         ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions']]])
+def test_permission_edit(appliance, request, product_features):
     """
     Ensures that changes in permissions are enforced on next login
     Args:
@@ -608,7 +607,7 @@ def test_permission_edit(appliance, request, product_features, action):
     user = new_user(appliance, group=group)
     with user:
         try:
-            action(appliance)
+            _test_vm_view(appliance)
         except Exception:
             pytest.fail('Incorrect permissions set')
     appliance.server.login_admin()
@@ -618,7 +617,7 @@ def test_permission_edit(appliance, request, product_features, action):
     with user:
         try:
             with error.expected(Exception):
-                action(appliance)
+                _test_vm_view(appliance)
         except error.UnexpectedSuccessException:
             pytest.fail('Permissions have not been updated')
 
