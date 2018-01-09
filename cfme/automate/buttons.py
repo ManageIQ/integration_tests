@@ -281,6 +281,10 @@ class ButtonFormCommon(AutomateCustomizationView):
             key = Input(name=ParametrizedString('attribute_{number}'))
             value = Input(name=ParametrizedString('value_{number}'))
 
+            @classmethod
+            def all(cls, browser):
+                return [(i, ) for i in range(1, 6)]
+
         # TODO: Role Access
 
     cancel = Button('Cancel')

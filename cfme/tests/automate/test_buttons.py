@@ -153,5 +153,6 @@ def test_button_avp_displayed(dialog, request):
                     hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
                     dialog=dialog, system="Request", request="InspectMe")
     view = navigate_to(button, 'Add')
-    assert view.advanced.attribute_1.is_displayed
-    assert view.advanced.value_1.is_displayed
+    for n in range(1, 6):
+        assert view.advanced.attribute(n).key.is_displayed
+        assert view.advanced.attribute(n).value.is_displayed
