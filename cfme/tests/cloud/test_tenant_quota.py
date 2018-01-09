@@ -81,7 +81,7 @@ def catalog_item(provider, provisioning, template_name, dialog, catalog, prov_da
     indirect=['set_roottenant_quota'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
 )
-def test_tenant_quota_enforce_via_lifecycle(request, appliance, provider, setup_provider,
+def test_tenant_quota_enforce_via_lifecycle_cloud(request, appliance, provider, setup_provider,
                                             set_roottenant_quota, extra_msg, custom_prov_data,
                                             approve, prov_data, vm_name, template_name):
     """Test Tenant Quota in UI"""
@@ -119,7 +119,7 @@ def test_tenant_quota_enforce_via_lifecycle(request, appliance, provider, setup_
     indirect=['set_roottenant_quota'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
 )
-def test_tenant_quota_enforce_via_service(request, appliance, provider, setup_provider,
+def test_tenant_quota_enforce_via_service_cloud(request, appliance, provider, setup_provider,
                                           set_roottenant_quota, extra_msg, custom_prov_data,
                                           prov_data, template_name, catalog_item):
     """Test Tenant Quota in UI"""
