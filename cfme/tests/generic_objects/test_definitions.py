@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 
-import pytest
 import fauxfactory
+import pytest
 
 from cfme import test_requirements
 from cfme.utils.appliance import ViaREST
 from cfme.utils.update import update
 from fixtures.pytest_store import store
 
-
 pytestmark = [test_requirements.generic_objects]
 
 
+@pytest.mark.sauce
 @pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.9')
 @pytest.mark.parametrize('context', [ViaREST])
 def test_generic_object_definition_crud(appliance, context):

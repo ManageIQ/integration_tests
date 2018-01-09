@@ -3,10 +3,9 @@ import fauxfactory
 import pytest
 
 from cfme.configure.configuration.analysis_profile import AnalysisProfile, AnalysisProfileAddView
-from cfme.utils.blockers import BZ
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
-
 
 pytestmark = [pytest.mark.tier(3)]
 
@@ -51,6 +50,7 @@ def host_profile():
                            files=files_list, events=events_check())
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_vm_analysis_profile_crud(soft_assert, vm_profile):
     """CRUD for VM analysis profiles."""
@@ -78,6 +78,7 @@ def test_vm_analysis_profile_crud(soft_assert, vm_profile):
     assert not vm_profile.exists
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_host_analysis_profile_crud(soft_assert, host_profile):
     """CRUD for Host analysis profiles."""

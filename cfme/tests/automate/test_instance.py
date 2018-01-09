@@ -3,10 +3,9 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.automate.explorer.domain import DomainCollection
 from cfme.utils import error
 from cfme.utils.update import update
-
-from cfme.automate.explorer.domain import DomainCollection
 
 pytestmark = [test_requirements.automate]
 
@@ -39,6 +38,7 @@ def klass(request, namespace):
     )
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(2)
 @pytest.mark.polarion('RHCF3-3922')
 def test_instance_crud(klass):

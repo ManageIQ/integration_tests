@@ -4,8 +4,8 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.provisioning_dialogs import ProvisioningDialog
-from cfme.utils.update import update
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.update import update
 
 
 @pytest.yield_fixture(scope="function")
@@ -20,6 +20,7 @@ def dialog():
         dlg.delete()
 
 
+@pytest.mark.sauce
 @test_requirements.automate
 @pytest.mark.tier(3)
 def test_provisioning_dialog_crud(dialog):

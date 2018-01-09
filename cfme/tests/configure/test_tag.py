@@ -11,11 +11,11 @@ from cfme.rest.gen_data import (
     tenants as _tenants,
     vm as _vm,
 )
+from cfme.utils import error
+from cfme.utils.blockers import BZ
+from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
-from cfme.utils.rest import assert_response, delete_resources_from_collection
-from cfme.utils.blockers import BZ
-from cfme.utils import error
 
 
 @pytest.yield_fixture
@@ -28,6 +28,7 @@ def category():
     cg.delete()
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_tag_crud(category):
     tag = Tag(name=fauxfactory.gen_alphanumeric(8).lower(),

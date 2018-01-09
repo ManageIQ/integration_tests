@@ -4,15 +4,14 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.import_export import AutomateGitRepository
-
 from cfme.utils import error
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 
-
 pytestmark = [test_requirements.automate]
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(1)
 @pytest.mark.parametrize('enabled', [True, False], ids=['enabled', 'disabled'])
 def test_domain_crud(request, enabled, appliance):

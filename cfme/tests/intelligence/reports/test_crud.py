@@ -7,15 +7,14 @@ from cfme import test_requirements
 from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.intelligence.reports.reports import CustomReport
 from cfme.intelligence.reports.schedules import ScheduleCollection
+from cfme.intelligence.reports.widgets.chart_widgets import ChartWidget
 from cfme.intelligence.reports.widgets.menu_widgets import MenuWidget
 from cfme.intelligence.reports.widgets.report_widgets import ReportWidget
-from cfme.intelligence.reports.widgets.chart_widgets import ChartWidget
 from cfme.intelligence.reports.widgets.rss_widgets import RSSFeedWidget
 from cfme.utils.blockers import BZ
 from cfme.utils.path import data_path
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for_decorator
-
 
 report_crud_dir = data_path.join("reports_crud")
 schedules_crud_dir = data_path.join("schedules_crud")
@@ -53,6 +52,7 @@ def schedule_data(request):
         return yaml.load(rep_yaml)
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(3)
 @test_requirements.report
 def test_custom_report_crud(custom_report):
@@ -65,6 +65,7 @@ def test_custom_report_crud(custom_report):
     custom_report.delete()
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1202412])
 @test_requirements.report
@@ -77,6 +78,7 @@ def test_schedule_crud(schedule_data, appliance):
     schedule.delete()
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1388144, forced_streams=["5.7", "upstream"])])
 def test_menuwidget_crud():
@@ -96,6 +98,7 @@ def test_menuwidget_crud():
     w.delete()
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1388144, forced_streams=["5.7", "upstream"])])
 def test_reportwidget_crud():
@@ -115,6 +118,7 @@ def test_reportwidget_crud():
     w.delete()
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1388144, forced_streams=["5.7", "upstream"])])
 def test_chartwidget_crud():
@@ -132,6 +136,7 @@ def test_chartwidget_crud():
     w.delete()
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1388144, forced_streams=["5.7", "upstream"])])
 def test_rssfeedwidget_crud():
@@ -159,6 +164,7 @@ def test_rssfeedwidget_crud():
     w.delete()
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(3)
 def test_dashboard_crud():
     d = Dashboard(
