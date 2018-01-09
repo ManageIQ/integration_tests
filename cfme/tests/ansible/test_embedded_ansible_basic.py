@@ -156,7 +156,7 @@ def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansib
     credential.delete()
 
 
-@pytest.mark.meta(blockers=[1437108])
+@pytest.mark.blockers(1437108)
 @pytest.mark.tier(2)
 def test_embed_tower_playbooks_list_changed(appliance, wait_for_ansible):
     "Tests if playbooks list changed after playbooks repo removing"
