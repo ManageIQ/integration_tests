@@ -40,7 +40,7 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.mark.meta(blockers=[1242655])
+@pytest.mark.blockers(1242655)
 def test_host_drift_analysis(appliance, request, setup_provider, provider, host, soft_assert):
     """Tests host drift analysis
 

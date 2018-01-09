@@ -127,7 +127,7 @@ def set_template_quad(visual):
     visual.template_quad = True
 
 
-@pytest.mark.meta(blockers=[1267148])
+@pytest.mark.blockers(1267148)
 def test_infra_grid_page_per_item(visual, request, page, value, set_grid):
     """ Tests grid items per page
 
@@ -147,7 +147,7 @@ def test_infra_grid_page_per_item(visual, request, page, value, set_grid):
     assert int(max_item) <= int(item_amt)
 
 
-@pytest.mark.meta(blockers=[1267148])
+@pytest.mark.blockers(1267148)
 def test_infra_tile_page_per_item(visual, request, page, value, set_tile):
     """ Tests tile items per page
 
@@ -167,7 +167,7 @@ def test_infra_tile_page_per_item(visual, request, page, value, set_tile):
     assert int(max_item) <= int(item_amt)
 
 
-@pytest.mark.meta(blockers=[1267148])
+@pytest.mark.blockers(1267148)
 def test_infra_list_page_per_item(visual, request, page, value, set_list):
     """ Tests list items per page
 
@@ -207,7 +207,7 @@ def test_infra_report_page_per_item(visual, value, set_report):
 
 
 @pytest.mark.uncollect('Needs to be fixed after menu removed')
-@pytest.mark.meta(blockers=[1267148])
+@pytest.mark.blockers(1267148)
 @pytest.mark.parametrize('start_page', LANDING_PAGES, scope="module")
 def test_infra_start_page(visual, request, appliance, start_page):
     """ Tests start page
