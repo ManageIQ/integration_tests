@@ -33,10 +33,6 @@ from cfme.base.login import BaseLoggedInPage
 class ComputePhysicalInfrastructureServersView(BaseLoggedInPage):
     """Common parts for server views."""
     title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
-    flash = FlashMessages(
-        './/div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-        'contains(@class, "flash_text_div")]'
-    )
 
     @property
     def in_compute_physical_infrastructure_servers(self):
