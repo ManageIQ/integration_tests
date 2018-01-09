@@ -23,8 +23,7 @@ from widgetastic_manageiq import (
     BaseNonInteractiveEntitiesView
 )
 from widgetastic_patternfly import (
-    Dropdown,
-    FlashMessages,
+    Dropdown
 )
 
 from cfme.base.login import BaseLoggedInPage
@@ -37,7 +36,8 @@ class ComputePhysicalInfrastructureServersView(BaseLoggedInPage):
     @property
     def in_compute_physical_infrastructure_servers(self):
         return (self.logged_in_as_current_user and
-                self.navigation.currently_selected == ["Compute", "Physical Infrastructure", "Servers"])
+                self.navigation.currently_selected == ["Compute", "Physical Infrastructure",
+                                                       "Servers"])
 
 
 class PhysicalServerQuadIconEntity(BaseQuadIconEntity):
