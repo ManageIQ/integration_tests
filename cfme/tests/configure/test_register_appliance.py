@@ -151,7 +151,7 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
 
     used_repo_or_channel = red_hat_updates.get_repository_names()
 
-    # FIXME workaround BZ 1532201
+    # FIXME workaround BZ 1532201 (An exception to the rule as it waits for backend config)
     time.sleep(15)
 
     red_hat_updates.register_appliances()  # Register all
