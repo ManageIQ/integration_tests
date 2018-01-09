@@ -13,7 +13,7 @@ pytestmark = [
 ]
 
 
-@pytest.mark.meta(blockers=[1273654])
+@pytest.mark.blockers(1273654)
 def test_assign_compute_enterprise(appliance, virtualcenter_provider):
     view = navigate_to(appliance.server, 'Chargeback')
 
@@ -82,7 +82,7 @@ def test_assign_compute_taggedvm(appliance, virtualcenter_provider):
     assert selected_option == "Default", 'Selection does not match'
 
 
-@pytest.mark.meta(blockers=[1273654])
+@pytest.mark.blockers(1273654)
 def test_assign_storage_enterprise(appliance, virtualcenter_provider):
     view = navigate_to(appliance.server, 'Chargeback')
 

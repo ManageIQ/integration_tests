@@ -1,32 +1,30 @@
 # -*- coding: utf-8 -*-
-"""A generalized framowork for handling test blockers.
+"""blockers(\*blockers): A generalized framework for handling test blockers.
 
 Currently handling Bugzilla, GitHub and JIRA issues. For extensions, see this file and
 :py:mod:`cfme.utils.blockers`.
 
-If you want to mark test with blockers, use meta mark ``blockers`` and specify a list of the
-blockers. The blockers can be directly the objects of :py:class:`cfme.utils.blockers.Blocker`
-subclasses, but you can use just plain strings that will get resolved into the objects when
-required.
+If you want to mark test with blockers, use the mark ``blockers`` and specify a list of the
+blockers as ``*args``. The blockers can be directly the objects of
+:py:class:`cfme.utils.blockers.Blocker` subclasses, but you can use just plain strings that will
+get resolved into the objects when required.
 
 Example comes:
 
 .. code-block:: python
 
-    @pytest.mark.meta(
-        blockers=[
-            BZ(123456),             # Will get resolved to BZ obviously
-            GH(1234),               # Will get resolved to GH if you have default repo set
-            GH("owner/repo:issue"), # Otherwise you need to use this syntax
-            # Generic blocker writing - (<engine_name>#<blocker_spec>)
-            # These work for any engine that is in :py:mod:`utils.blockers`
-            "BZ#123456",            # Will resolve to BZ
-            "GH#123",               # Will resolve to GH (needs default repo specified)
-            "GH#owner/repo:123",    # Will resolve to GH
-            # Shortcut writing
-            123456,                 # Will resolve to BZ
-            'FOO-42',               # Will resolve to JIRA
-        ]
+    @pytest.mark.blockers(
+        BZ(123456),             # Will get resolved to BZ obviously
+        GH(1234),               # Will get resolved to GH if you have default repo set
+        GH("owner/repo:issue"), # Otherwise you need to use this syntax
+        # Generic blocker writing - (<engine_name>#<blocker_spec>)
+        # These work for any engine that is in :py:mod:`utils.blockers`
+        "BZ#123456",            # Will resolve to BZ
+        "GH#123",               # Will resolve to GH (needs default repo specified)
+        "GH#owner/repo:123",    # Will resolve to GH
+        # Shortcut writing
+        123456,                 # Will resolve to BZ
+        'FOO-42',               # Will resolve to JIRA
     )
 
 
@@ -41,9 +39,12 @@ import pytest
 from kwargify import kwargify as _kwargify
 
 from fixtures.artifactor_plugin import fire_art_test_hook
-from markers.meta import plugin
 from cfme.utils.blockers import Blocker
 from cfme.utils.pytest_shortcuts import extract_fixtures_values
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", __doc__.splitlines()[0])
 
 
 def kwargify(f):
@@ -62,10 +63,13 @@ def kwargify(f):
     return _kwargify(f)
 
 
-@plugin("blockers", ["blockers"])
-def resolve_blockers(item, blockers):
-    if not isinstance(blockers, (list, tuple, set)):
-        raise ValueError("Type of the 'blockers' parameter must be one of: list, tuple, set")
+@pytest.mark.tryfirst
+def pytest_runtest_setup(item):
+    blockers = item.get_marker('blockers')
+    if not blockers:
+        return
+
+    blockers = blockers.args
 
     # Prepare the global env for the kwarg insertion
     appliance = item.config.pluginmanager.get_plugin('appliance-holder').held_appliance

@@ -97,7 +97,7 @@ def test_user_crud(appliance, group_collection):
     user.delete()
 
 
-# @pytest.mark.meta(blockers=[1035399]) # work around instead of skip
+# @pytest.mark.blockers(1035399) # work around instead of skip
 @pytest.mark.tier(2)
 def test_user_login(appliance, group_collection):
     group_name = 'EvmGroup-user'
@@ -681,7 +681,7 @@ def _go_to(cls_or_obj, dest='All'):
         ]
     ]
 )
-@pytest.mark.meta(blockers=[1262759])
+@pytest.mark.blockers(1262759)
 def test_permissions(appliance, product_features, allowed_actions, disallowed_actions):
     """ Test that that under the specified role the allowed acctions succeed
         and the disallowed actions fail
@@ -751,7 +751,7 @@ def single_task_permission_test(appliance, product_features, actions):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1262764])
+@pytest.mark.blockers(1262764)
 def test_permissions_role_crud(appliance):
     single_task_permission_test(appliance,
                                 [['Everything', 'Settings', 'Configuration'],

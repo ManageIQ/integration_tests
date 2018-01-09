@@ -56,7 +56,7 @@ def test_class_crud(namespace):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[1404788])
+@pytest.mark.blockers(1404788)
 def test_schema_crud(request, namespace):
     a_class = namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),
@@ -76,7 +76,7 @@ def test_schema_crud(request, namespace):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[1404788])
+@pytest.mark.blockers(1404788)
 def test_schema_duplicate_field_disallowed(request, domain):
     ns = domain.namespaces.create(
         name=fauxfactory.gen_alpha(),
@@ -94,7 +94,7 @@ def test_schema_duplicate_field_disallowed(request, domain):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1428424, forced_streams=['5.8', 'upstream'])])
+@pytest.mark.blockers(BZ(1428424, 1513601, 1515402))
 def test_duplicate_class_disallowed(namespace):
     name = fauxfactory.gen_alphanumeric()
     namespace.classes.create(name=name)
@@ -131,9 +131,9 @@ def test_same_class_name_different_namespace(request, domain):
     assert c2.exists
 
 
-@pytest.mark.meta(blockers=[1148541])
 @pytest.mark.tier(3)
 @pytest.mark.polarion('RHCF3-3455')
+@pytest.mark.blockers(1148541)
 def test_class_display_name_unset_from_ui(request, namespace):
     a_class = namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),

@@ -396,7 +396,7 @@ def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
         pytest.fail("CFME did not prevent starting of the VM {}".format(vm.name))
 
 
-@pytest.mark.meta(blockers=[1439331])
+@pytest.mark.blockers(1439331)
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
@@ -761,7 +761,6 @@ def test_action_untag(request, vm, vm_off, policy_for_testing, action_collection
 
 
 @pytest.mark.provider([VMwareProvider], scope="module")
-@pytest.mark.meta(blockers=[1381255])
 def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, policy_for_testing,
         compliance_policy):
     """This test checks if 'Cancel vCenter task' action works.

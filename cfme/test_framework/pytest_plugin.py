@@ -45,6 +45,7 @@ pytest_plugins = (
     'markers.env',
     'fixtures.artifactor_plugin',
     'fixtures.parallelizer',
+    'markers.blockers',
 
     'fixtures.prov_filter',
 

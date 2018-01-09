@@ -35,7 +35,7 @@ def report_vms(infra_provider):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1244715])
+@pytest.mark.blockers(1244715)
 @test_requirements.report
 def test_custom_vm_report(soft_assert, report_vms):
     cluster = "Cluster / Deployment Role Name"

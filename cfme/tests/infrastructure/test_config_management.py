@@ -9,7 +9,7 @@ from cfme.utils.testgen import config_managers, generate
 pytest_generate_tests = generate(gen_func=config_managers)
 pytestmark = [pytest.mark.uncollectif(lambda config_manager_obj:
                                       config_manager_obj.type == "Ansible Tower"),
-              pytest.mark.meta(blockers=[1491704])]
+              pytest.mark.blockers(1491704)]
 
 
 @pytest.yield_fixture

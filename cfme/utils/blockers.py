@@ -163,33 +163,43 @@ class BZ(Blocker):
                 return None
         return cls._bugzilla
 
-    def __init__(self, bug_id, **kwargs):
+    def __init__(self, *bug_ids, **kwargs):
         self.ignore_bugs = kwargs.pop("ignore_bugs", [])
         super(BZ, self).__init__(**kwargs)
-        self.bug_id = int(bug_id)
+        if not bug_ids:
+            raise TypeError('You need to provide at least one bug id for bugzilla blockers!')
+        self.bug_ids = [int(bug_id) for bug_id in bug_ids]
+        if len(self.bug_ids) > 1 and self.forced_streams:
+            raise TypeError('You cannot combine multiple bug ids with forced_streams=!')
+
+    @property
+    def bug_id(self):
+        # TODO: This is just a fallback
+        return self.bug_ids[0]
 
     @property
     def data(self):
         return self.bugzilla.resolve_blocker(
-            self.bug_id, ignore_bugs=self.ignore_bugs, force_block_streams=self.forced_streams)
+            self.bug_ids, ignore_bugs=self.ignore_bugs, force_block_streams=self.forced_streams)
 
     @property
     def bugzilla_bug(self):
-        if self.data is None:
-            return None
         return self.data
 
     @property
     def blocks(self):
         try:
-            bug = self.data
+            bug = self.bugzilla_bug
             if bug is None:
+                logger.debug('No applicable bug found for these bug ids: %r', self.bug_ids)
                 return False
             result = False
             if bug.is_opened:
+                logger.debug('Bug %r/%d is opened', self.bug_ids, bug.id)
                 result = True
             if bug.upstream_bug:
                 if not version.appliance_is_downstream() and bug.can_test_on_upstream:
+                    logger.debug('Bug %r/%d is testable on upstream', self.bug_ids, bug.id)
                     result = False
             if not result and version.appliance_is_downstream():
                 if bug.fixed_in is not None:

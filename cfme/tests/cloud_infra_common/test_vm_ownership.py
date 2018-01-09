@@ -172,7 +172,7 @@ def test_group_ownership_on_user_or_group_role(
         assert not check_vm_exists(group_ownership_vm), "vm exists! but shouldn't exist"
 
 
-# @pytest.mark.meta(blockers=[1202947])
+# @pytest.mark.blockers(1202947)
 # def test_ownership_transfer(request, user1, user3, setup_infra_provider):
 #    user_ownership_vm = VM.factory('cu-9-5', setup_infra_provider)
 #    user_ownership_vm.set_ownership(user=user1.name)

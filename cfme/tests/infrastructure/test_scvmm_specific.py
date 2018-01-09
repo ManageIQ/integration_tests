@@ -6,7 +6,7 @@ from cfme.common.vm import VM
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 
 
-@pytest.mark.meta(blockers=[1178961])
+@pytest.mark.blockers(1178961)
 @pytest.mark.uncollectif(
     lambda provider: "host_group" in provider.data.get("provisioning", {}),
     reason="No host group")
