@@ -21,22 +21,21 @@ already been used, it will die
 
 """
 import atexit
-import os
 import subprocess
+from threading import RLock
 
 import diaper
+import os
 import pytest
 
 from artifactor import ArtifactorClient
-from fixtures.pytest_store import write_line, store
-from markers.polarion import extract_polarion_ids
-from threading import RLock
 from cfme.utils.blockers import BZ, Blocker
 from cfme.utils.conf import env, credentials
 from cfme.utils.log import logger
 from cfme.utils.net import random_port, net_check
 from cfme.utils.wait import wait_for
-
+from fixtures.pytest_store import write_line, store
+from markers.polarion import extract_polarion_ids
 
 UNDER_TEST = False  # set to true for artifactor using tests
 
@@ -283,7 +282,8 @@ def pytest_runtest_logreport(report):
         config, 'report_test',
         test_location=location, test_name=name,
         test_xfail=xfail, test_when=report.when,
-        test_outcome=report.outcome)
+        test_outcome=report.outcome,
+        test_phase_duration=report.duration)
     fire_art_hook(config, 'build_report')
 
 

@@ -16,19 +16,19 @@ import csv
 import datetime
 import difflib
 import math
-import os
-import re
 import shutil
 import time
 from copy import deepcopy
 
+import os
+import re
 from jinja2 import Environment, FileSystemLoader
 from py.path import local
 
+from artifactor import ArtifactorBasePlugin
 from cfme.utils import process_pytest_path
 from cfme.utils.conf import cfme_data  # Only for the provider specific reports
 from cfme.utils.path import template_path
-from artifactor import ArtifactorBasePlugin
 
 _tests_tpl = {
     '_sub': {},
@@ -387,10 +387,18 @@ class Reporter(ArtifactorBasePlugin, ReporterBase):
         }}}
 
     @ArtifactorBasePlugin.check_configured
-    def report_test(self, artifacts, test_location, test_name, test_xfail, test_when, test_outcome):
+    def report_test(self, artifacts, test_location, test_name, test_xfail, test_when, test_outcome,
+                    test_phase_duration):
         test_ident = "{}/{}".format(test_location, test_name)
-        return None, {'artifacts': {test_ident: {'statuses': {
-            test_when: (test_outcome, test_xfail)}}}}
+        ret_dict = {
+            'artifacts': {
+                test_ident: {
+                    'statuses': {test_when: (test_outcome, test_xfail)},
+                    'durations': {test_when: test_phase_duration}
+                }
+            }
+        }
+        return None, ret_dict
 
     @ArtifactorBasePlugin.check_configured
     def session_info(self, version=None, build=None, stream=None, fw_version=None):
