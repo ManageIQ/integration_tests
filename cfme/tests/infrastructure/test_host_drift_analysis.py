@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from widgetastic.exceptions import NoSuchElementException
-
 from cfme import test_requirements
-from cfme.configure.tasks import Tasks, delete_all_tasks
-from cfme.common.vm_views import DriftAnalysis, DriftHistory
-from cfme.infrastructure import host as host_obj
+from cfme.configure.tasks import delete_all_tasks
+from cfme.common.host_views import HostDriftAnalysis
+from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
-from cfme.utils import error, testgen
-from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -40,109 +37,83 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.mark.meta(blockers=[1242655])
-def test_host_drift_analysis(appliance, request, setup_provider, provider, host, soft_assert):
+@pytest.fixture(scope='module')
+def a_host(host, appliance, provider):
+    host_collection = appliance.collections.hosts
+    return host_collection.instantiate(name=host.name, provider=provider)
+
+
+@pytest.fixture(scope='module')
+def set_host_credentials(provider, a_host, setup_provider_modscope):
+    host_list = provider.hosts
+    host_names = [host.name for host in host_list]
+    for host_name in host_names:
+        host_data = [host for host in host_list if host.name == host_name][0]
+        a_host.update_credentials_rest(credentials=host_data.credentials)
+
+    yield
+    a_host.update_credentials_rest(credentials=Host.Credential(principal="", secret=""))
+
+
+def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_credentials):
     """Tests host drift analysis
 
     Metadata:
         test_flag: host_drift_analysis
     """
-    host_collection = appliance.collections.hosts
-    test_host = host_collection.instantiate(name=host['name'], provider=provider)
-    wait_for(lambda: test_host.exists, delay=20, num_sec=120,
-             fail_func=appliance.server.browser.refresh, message="hosts_exists")
 
     # tabs changed, hack until configure.tasks is refactored for collections and versioned widgets
     destination = 'AllTasks' if appliance.version >= '5.9' else 'AllOtherTasks'
 
     # get drift history num
-    drift_num_orig = int(test_host.get_detail('Relationships', 'Drift History'))
+    drift_num_orig = int(a_host.get_detail('Relationships', 'Drift History'))
 
-    # add credentials to host + finalizer to remove them
-    if not test_host.has_valid_credentials:
-        test_host.update(
-            updates={'credentials': host_obj.get_credentials_from_config(host['credentials'])},
-            validate_credentials=True
-        )
-
-        @request.addfinalizer
-        def test_host_remove_creds():
-            test_host.update(
-                updates={
-                    'credentials': host_obj.Host.Credential(
-                        principal="",
-                        secret="",
-                        verify_secret=""
-                    )
-                }
-            )
     # clear table
     delete_all_tasks(destination)
 
     # initiate 1st analysis
-    test_host.run_smartstate_analysis()
-
-    # Wait for the task to finish
-    def is_host_analysis_finished():
-        """ Check if analysis is finished - if not, reload page
-        """
-        finished = False
-
-        view = navigate_to(Tasks, destination)
-        host_analysis_row = getattr(view.tabs, destination.lower()).table.row(
-            task_name="SmartState Analysis for '{}'".format(test_host.name))
-        if host_analysis_row.state.text == 'Finished':
-            finished = True
-            # select the row and delete the task
-            host_analysis_row[0].check()
-            view.delete.item_select('Delete', handle_alert=True)
-        else:
-            view.reload.click()
-        return finished
-
-    wait_for(is_host_analysis_finished, delay=5, timeout="8m")
+    a_host.run_smartstate_analysis(wait_for_task_result=True)
 
     # wait for for drift history num+1
     wait_for(
-        lambda: test_host.get_detail('Relationships', 'Drift History') == str(drift_num_orig + 1),
+        lambda: a_host.get_detail('Relationships', 'Drift History') == str(drift_num_orig + 1),
         delay=20,
-        num_sec=120,
+        num_sec=360,
         message="Waiting for Drift History count to increase",
         fail_func=appliance.server.browser.refresh
     )
 
     # add a tag and a finalizer to remove it
-    test_host.add_tag(category='Department', tag='Accounting')
-    request.addfinalizer(lambda: test_host.remove_tag(category='Department', tag='Accounting'))
+    a_host.add_tag(category='Department', tag='Accounting')
+    request.addfinalizer(lambda: a_host.remove_tag(category='Department', tag='Accounting'))
 
     # initiate 2nd analysis
-    test_host.run_smartstate_analysis()
-
-    # Wait for the task to finish
-    wait_for(is_host_analysis_finished, delay=5, timeout="8m")
+    a_host.run_smartstate_analysis(wait_for_task_result=True)
 
     # wait for for drift history num+2
     wait_for(
-        lambda: test_host.get_detail('Relationships', 'Drift History') == str(drift_num_orig + 2),
+        lambda: a_host.get_detail('Relationships', 'Drift History') == str(drift_num_orig + 2),
         delay=20,
-        num_sec=120,
+        num_sec=360,
         message="Waiting for Drift History count to increase",
         fail_func=appliance.server.browser.refresh
     )
 
     # check drift difference
-    soft_assert(not test_host.equal_drift_results('Department (1)', 'My Company Tags', 0, 1),
-        "Drift analysis results are equal when they shouldn't be")
+    soft_assert(a_host.equal_drift_results('Department (1)', 'My Company Tags', 0, 1),
+                "Drift analysis results are equal when they shouldn't be")
 
     # Test UI features that modify the drift grid
-    drift_analysys_view = appliance.browser.create_view(DriftAnalysis)
-    drift_history_view = appliance.browser.create_view(DriftHistory)
+    drift_analysis_view = appliance.browser.create_view(HostDriftAnalysis)
 
     # Accounting tag should not be displayed, because it was changed to True
-    drift_analysys_view.toolbar.different_values_attributes.click()
-    with error.expected(NoSuchElementException):
-        drift_history_view.history_table.row((0, 'Accounting'))
+    drift_analysis_view.toolbar.same_values_attributes.click()
+    soft_assert(
+        not drift_analysis_view.drift_analysis.check_section_attribute_availability(
+            'Department (1)'), "Department (1) row should be hidden, but not")
 
     # Accounting tag should be displayed now
-    drift_analysys_view.toolbar.different_values_attributes.click()
-    drift_history_view.history_table.row((0, 'Accounting'))
+    drift_analysis_view.toolbar.different_values_attributes.click()
+    soft_assert(
+        drift_analysis_view.drift_analysis.check_section_attribute_availability('Department (1)'),
+        "Department (1) row should be visible, but not")

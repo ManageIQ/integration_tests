@@ -34,7 +34,8 @@ from widgetastic_manageiq import (
     PaginationPane,
     SummaryTable,
     Table,
-    TimelinesView
+    TimelinesView,
+    DriftComparison
 )
 
 
@@ -175,24 +176,12 @@ class HostDriftHistory(ComputeInfrastructureHostsView):
 class HostDriftAnalysis(ComputeInfrastructureHostsView):
     apply_button = Button("Apply")
     drift_sections = CheckableBootstrapTreeview(tree_id="all_sectionsbox")
-
-    @ParametrizedView.nested
-    class drift_analysis(ParametrizedView):  # noqa
-        PARAMETERS = ("drift_section", )
-        CELLS = "../td//i"
-        row = Text(ParametrizedLocator(".//div[@id='compare-grid']/"
-                                       "/th[normalize-space(.)={drift_section|quote}]"))
-
-        @property
-        def is_changed(self):
-            cells = self.browser.elements(self.CELLS, parent=self.row)
-            attrs = [self.browser.get_attribute("class", cell) for cell in cells]
-            return "drift-delta" in attrs
+    drift_analysis = DriftComparison(locator=".//div[@id='compare-grid']")
 
     @View.nested
     class toolbar(View):  # noqa
         all_attributes = Button(title="All attributes")
-        different_values_attributes = Button(title="Attributes with different")
+        different_values_attributes = Button(title="Attributes with different values")
         same_values_attributes = Button(title="Attributes with same values")
         details_mode = Button(title="Details Mode")
         exists_mode = Button(title="Exists Mode")
