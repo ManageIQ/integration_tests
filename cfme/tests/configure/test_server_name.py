@@ -10,8 +10,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 def test_server_name(request, appliance):
     """Tests that changing the server name updates the about page"""
 
-    view = navigate_to(appliance.server.settings, 'Details')
-    old_server_name = view.basic_information.appliance_name.read()
+    view = navigate_to(appliance.server, 'Details')
+    old_server_name = view.server.basic_information.appliance_name.read()
 
     @request.addfinalizer
     def _ensure_name_reset():
