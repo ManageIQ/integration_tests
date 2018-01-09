@@ -2,7 +2,7 @@ import pytest
 
 from cfme.containers.container import Container
 from cfme.containers.image import Image
-from cfme.containers.image_registry import (ImageRegistry)
+from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.node import Node
 from cfme.containers.pod import Pod
 from cfme.containers.project import Project
@@ -28,19 +28,19 @@ TEST_ITEMS = [
     pytest.mark.polarion('CMP-9859')(
         ContainersTestItem(
             ContainersProvider, 'CMP-9859', fields_to_verify=['hostname', 'port', 'type'],
-            collection_obj=None
+            collection_name=None
         )
     ),
     pytest.mark.polarion('CMP-10651')(
         ContainersTestItem(
             Route, 'CMP-10651', fields_to_verify=['provider', 'project_name'],
-            collection_obj='container_routes'
+            collection_name='container_routes'
         )
     ),
     pytest.mark.polarion('CMP-9943')(
         ContainersTestItem(
             Container, 'CMP-9943', fields_to_verify=['pod_name', 'image', 'state'],
-            collection_obj='containers'
+            collection_name='containers'
         )
     ),
     pytest.mark.polarion('CMP-9909')(
@@ -49,7 +49,7 @@ TEST_ITEMS = [
                 'provider', 'project_name', 'ready', 'containers',
                 'phase', 'restart_policy', 'dns_policy'
             ],
-            collection_obj='container_pods'
+            collection_name='container_pods'
         )
     ),
     pytest.mark.polarion('CMP-9889')(
@@ -58,7 +58,7 @@ TEST_ITEMS = [
                 'provider', 'project_name', 'type', 'portal_ip',
                 'session_affinity', 'pods'
             ],
-            collection_obj='container_services'
+            collection_name='container_services'
         )
     ),
     pytest.mark.polarion('CMP-9967')(
@@ -67,26 +67,26 @@ TEST_ITEMS = [
                 'provider', 'ready', 'operating_system', 'kernel_version',
                 'runtime_version'
             ],
-            collection_obj='container_nodes'
+            collection_name='container_nodes'
         )
     ),
     pytest.mark.polarion('CMP-9920')(
         ContainersTestItem(
             Replicator, 'CMP-9920',
             fields_to_verify=['provider', 'project_name', 'replicas', 'current_replicas'],
-            collection_obj='container_replicators'
+            collection_name='container_replicators'
         )
     ),
     pytest.mark.polarion('CMP-9975')(
         ContainersTestItem(
             Image, 'CMP-9975', fields_to_verify=['provider', 'tag', 'id', 'image_registry'],
-            collection_obj='container_images'
+            collection_name='container_images'
         )
     ),
     pytest.mark.polarion('CMP-9985')(
         ContainersTestItem(
             ImageRegistry, 'CMP-9985', fields_to_verify=['port', 'provider'],
-            collection_obj='container_image_registries'
+            collection_name='container_image_registries'
         )
     ),
     pytest.mark.polarion('CMP-10652')(
@@ -95,7 +95,7 @@ TEST_ITEMS = [
                 'provider', 'container_routes', 'container_services',
                 'container_replicators', 'pods', 'containers', 'images'
             ],
-            collection_obj='container_projects'
+            collection_name='container_projects'
         )
     )
 ]
@@ -105,11 +105,8 @@ TEST_ITEMS = [
                          ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
 def test_tables_fields(provider, test_item, soft_assert, appliance):
 
-    if test_item.collection_obj:
-        nav_obj = getattr(appliance, test_item.collection_obj)
-
-    view = navigate_to((test_item.obj if isinstance(test_item.obj, ContainersProvider)
-                        else nav_obj), 'All')
+    view = navigate_to((test_item.obj if test_item.obj is ContainersProvider
+                        else getattr(appliance.collections, test_item.collection_name)), 'All')
     view.toolbar.view_selector.select('List View')
     for row in view.table.rows():
         name_field = getattr(row, 'name', getattr(row, 'host', None))

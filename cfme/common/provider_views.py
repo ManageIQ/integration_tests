@@ -349,7 +349,10 @@ class ContainerProvidersView(ProvidersView):
      represents Main view displaying all Containers providers
     """
     SUMMARY_TEXT = 'Containers Providers'
-    table = Table(locator="//div[@id='list_grid']//table")
+
+    @property
+    def table(self):
+        return self.entities.elements
 
     @property
     def paginator(self):
