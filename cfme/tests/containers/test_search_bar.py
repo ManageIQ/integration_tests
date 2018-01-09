@@ -2,13 +2,7 @@ from random import choice
 
 import pytest
 
-from cfme.containers.route import Route
-from cfme.containers.project import Project
 from cfme.containers.provider import ContainersProvider
-from cfme.containers.replicator import Replicator
-from cfme.containers.container import Container
-from cfme.containers.service import Service
-from cfme.containers.pod import Pod
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
@@ -18,11 +12,18 @@ pytestmark = [
 ]
 
 
-TEST_OBJECTS = [Replicator, Project, Route, Service, ContainersProvider, Pod, Container]
+COLLECTION_NAMES = [
+    'container_replicators',
+    'container_projects',
+    'container_routes',
+    'container_services',
+    'container_pods',
+    'containers'
+]
 
 
 @pytest.mark.polarion('CMP-10577')
-def test_search_bar(provider, soft_assert):
+def test_search_bar(provider, appliance, soft_assert):
     """ <object> summary page - Search bar
     This test checks Search bar functionality on every object summary page
     Steps:
@@ -30,8 +31,8 @@ def test_search_bar(provider, soft_assert):
         * Inserts: Irregular symbol, '*' character, full search string, partial search string
         * Verify proper results
     """
-    for obj in TEST_OBJECTS:
-        view = navigate_to(obj, 'All')
+    for collection_name in COLLECTION_NAMES:
+        view = navigate_to(getattr(appliance.collections, collection_name), 'All')
         exist_member_str = choice(view.entities.entity_names)
         # Mapping the search string and the expected found result:
         search_strings_and_result = {
