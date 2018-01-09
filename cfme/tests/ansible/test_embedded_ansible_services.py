@@ -158,14 +158,14 @@ def custom_service_button(ansible_catalog_item):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
+@pytest.mark.blockers(1514593)
 def test_service_ansible_playbook_available():
     view = navigate_to(AnsiblePlaybookCatalogItem("", "", provisioning={}), "PickItemType")
     assert "Ansible Playbook" in [option.text for option in view.catalog_item_type.all_options]
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
+@pytest.mark.blockers(1514593)
 def test_service_ansible_playbook_crud(ansible_repository):
     cat_item = AnsiblePlaybookCatalogItem(
         fauxfactory.gen_alphanumeric(),
@@ -193,7 +193,7 @@ def test_service_ansible_playbook_crud(ansible_repository):
     assert not cat_item.exists
 
 
-@pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
+@pytest.mark.blockers(1514593)
 def test_service_ansible_playbook_tagging(ansible_catalog_item):
     """ Tests ansible_playbook tag addition, check added tag and removal
 
@@ -212,7 +212,7 @@ def test_service_ansible_playbook_tagging(ansible_catalog_item):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
+@pytest.mark.blockers(1514593)
 def test_service_ansible_playbook_negative():
     view = navigate_to(AnsiblePlaybookCatalogItem("", "", {}), "Add")
     view.fill({
@@ -223,7 +223,7 @@ def test_service_ansible_playbook_negative():
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
+@pytest.mark.blockers(1514593)
 def test_service_ansible_playbook_bundle(ansible_catalog_item):
     """Ansible playbooks are not designed to be part of a cloudforms service bundle."""
     view = navigate_to(CatalogBundle(), "BundleAdd")
@@ -232,10 +232,7 @@ def test_service_ansible_playbook_bundle(ansible_catalog_item):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[
-    BZ(1519275, forced_streams=['5.9']),
-    BZ(1515841, forced_streams=['5.9'])
-])
+@pytest.mark.blockers(1514593, 1519275)
 def test_service_ansible_playbook_provision_in_requests(appliance, ansible_catalog_item,
                                                         service_catalog):
     """Tests if ansible playbook service provisioning is shown in service requests."""
@@ -247,7 +244,7 @@ def test_service_ansible_playbook_provision_in_requests(appliance, ansible_catal
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
+@pytest.mark.blockers(1514593)
 def test_service_ansible_playbook_confirm(appliance, soft_assert):
     """Tests after selecting playbook additional widgets appear and are pre-populated where
     possible.
@@ -284,10 +281,7 @@ def test_service_ansible_playbook_confirm(appliance, soft_assert):
 @pytest.mark.parametrize("host_type,order_value,result", SERVICE_CATALOG_VALUES, ids=[
     value[0] for value in SERVICE_CATALOG_VALUES])
 @pytest.mark.parametrize("action", ["provisioning", "retirement"])
-@pytest.mark.meta(blockers=[
-    BZ(1519275, forced_streams=['5.9']),
-    BZ(1515841, forced_streams=['5.9'])
-])
+@pytest.mark.blockers(1514593, 1519275)
 def test_service_ansible_playbook_order_retire(appliance, ansible_catalog_item, service_catalog,
         service_request, service, host_type, order_value, result, action):
     """Test ordering and retiring ansible playbook service against default host, blank field and
@@ -302,7 +296,7 @@ def test_service_ansible_playbook_order_retire(appliance, ansible_catalog_item, 
     assert result == view.provisioning.details.get_text_of("Hosts")
 
 
-@pytest.mark.meta(blockers=[BZ(1519275, forced_streams=['5.9'])])
+@pytest.mark.blockers(1519275)
 def test_service_ansible_playbook_plays_table(ansible_catalog_item, service_catalog,
         service_request, service, soft_assert):
     """Plays table in provisioned and retired service should contain at least one row."""
@@ -315,10 +309,7 @@ def test_service_ansible_playbook_plays_table(ansible_catalog_item, service_cata
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[
-    BZ(1519275, forced_streams=['5.9']),
-    BZ(1515841, forced_streams=['5.9'])
-])
+@pytest.mark.blockers(1514593, 1519275)
 def test_service_ansible_playbook_order_credentials(ansible_catalog_item, ansible_credential,
         service_catalog):
     """Test if credentials avaialable in the dropdown in ordering ansible playbook service
@@ -335,10 +326,7 @@ def test_service_ansible_playbook_order_credentials(ansible_catalog_item, ansibl
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("action", ["provisioning", "retirement"])
-@pytest.mark.meta(blockers=[
-    BZ(1519275, forced_streams=['5.9']),
-    BZ(1515841, forced_streams=['5.9'])
-])
+@pytest.mark.blockers(1514593, 1519275)
 def test_service_ansible_playbook_pass_extra_vars(service_catalog, service_request, service,
         action):
     """Test if extra vars passed into ansible during ansible playbook service provision and
@@ -356,10 +344,7 @@ def test_service_ansible_playbook_pass_extra_vars(service_catalog, service_reque
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[
-    BZ(1519275, forced_streams=['5.9']),
-    BZ(1515841, forced_streams=['5.9'])
-])
+@pytest.mark.blockers(1514593, 1519275)
 def test_service_ansible_execution_ttl(request, service_catalog, ansible_catalog_item, service,
          service_request):
     """Test if long running processes allowed to finish. There is a code that guarantees to have 100
@@ -387,10 +372,7 @@ def test_service_ansible_execution_ttl(request, service_catalog, ansible_catalog
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[
-    BZ(1519275, forced_streams=['5.9']),
-    BZ(1515841, forced_streams=['5.9'])
-])
+@pytest.mark.blockers(1514593, 1519275)
 def test_custom_button_ansible_credential_list(custom_service_button, service_catalog, service,
         service_request, appliance):
     """Test if credential list matches when the Ansible Playbook Service Dialog is invoked from a
