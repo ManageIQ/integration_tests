@@ -14,7 +14,6 @@ from cfme.exceptions import CFMEExceptionOccured
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.utils.appliance import get_or_create_current_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 
 pytestmark = [
@@ -146,7 +145,6 @@ def hardware_reconfigured_alert(alert_collection):
     alert.delete()
 
 
-@pytest.mark.meta(blockers=[1155284])
 def test_scope_windows_registry_stuck(request, appliance, infra_provider, policy_collection,
         policy_profile_collection):
     """If you provide Scope checking windows registry, it messes CFME up. Recoverable."""
@@ -173,7 +171,7 @@ def test_scope_windows_registry_stuck(request, appliance, infra_provider, policy
     vm.unassign_policy_profiles(profile.description)
 
 
-@pytest.mark.meta(blockers=[1243357], automates=[1243357])
+@pytest.mark.meta(automates=[1229348])
 def test_invoke_custom_automation(request, action_collection):
     """This test tests a bug that caused the ``Invoke Custom Automation`` fields to disappear.
 
@@ -203,7 +201,7 @@ def test_invoke_custom_automation(request, action_collection):
     request.addfinalizer(lambda: action.delete() if action.exists else None)
 
 
-@pytest.mark.meta(blockers=[1375093], automates=[1375093])
+@pytest.mark.meta(automates=[1375093])
 def test_check_compliance_history(request, virtualcenter_provider, vmware_vm, policy_collection,
         policy_profile_collection):
     """This test checks if compliance history link in a VM details screen work.
@@ -240,8 +238,7 @@ def test_check_compliance_history(request, virtualcenter_provider, vmware_vm, po
         vmware_vm.name)
 
 
-@pytest.mark.meta(blockers=[BZ(1395965, forced_streams=["5.6", "5.7"]),
-                            BZ(1491576, forced_streams=["5.7"])])
+@pytest.mark.blockers(1374761)
 def test_delete_all_actions_from_compliance_policy(request, policy_collection):
     """We should not allow a compliance policy to be saved
     if there are no actions on the compliance event.
@@ -276,7 +273,7 @@ def test_control_identical_descriptions(request, create_function, collections):
         collections[create_function.name].create(*args, **kwargs)
 
 
-@pytest.mark.meta(blockers=[1231889], automates=[1231889])
+@pytest.mark.meta(automates=[1231889])
 def test_vmware_alarm_selection_does_not_fail(alert_collection):
     """Test the bug that causes CFME UI to explode when VMware Alarm type is selected.
 

@@ -443,7 +443,7 @@ def test_assign_two_random_events_to_control_policy(control_policy, soft_assert)
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1491576, forced_streams=["5.7.4"])])
+@pytest.mark.blockers(1491576)
 def test_control_assign_actions_to_event(request, policy, action):
     if type(policy) in CONTROL_POLICIES:
         event = random.choice(EVENTS)
@@ -509,7 +509,7 @@ def test_alert_crud(alert_collection):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1303645], automates=[1303645])
+@pytest.mark.meta(automates=[1315377])
 def test_control_alert_copy(alert):
     alert_copy = alert.copy(description=fauxfactory.gen_alphanumeric())
     assert alert_copy.exists
@@ -537,7 +537,7 @@ def test_alert_profile_crud(request, alert_profile_class, alert_collection,
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1416311, forced_streams=["5.7"])])
+@pytest.mark.blockers(1416311)
 def test_alert_profile_assigning(alert_profile):
     if isinstance(alert_profile, alert_profiles.ServerAlertProfile):
         if BZ(1489697, forced_streams=["5.8"]).blocks:
