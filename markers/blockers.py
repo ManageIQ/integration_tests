@@ -47,6 +47,15 @@ def pytest_configure(config):
     config.addinivalue_line("markers", __doc__.splitlines()[0])
 
 
+def pytest_addoption(parser):
+    group = parser.getgroup('External Tools Interaction')
+    group.addoption('--disable-blockers',
+                    action='store_true',
+                    default=False,
+                    dest='disable_blockers',
+                    help='Disable blocker (BZ, GH, JIRA) based skipping.')
+
+
 def kwargify(f):
     """Convert function having only positional args to a function taking dictionary.
 
@@ -65,6 +74,10 @@ def kwargify(f):
 
 @pytest.mark.tryfirst
 def pytest_runtest_setup(item):
+    if item.config.getoption('disable_blockers'):
+        # No checking, get out ...
+        return
+
     blockers = item.get_marker('blockers')
     if not blockers:
         return

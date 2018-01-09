@@ -159,6 +159,7 @@ class Bugzilla(object):
                 'Resolved the bug id %d into all these BZs: %r',
                 blockers[0].id,
                 [b.id for b in variants])
+        variants = list(variants)
         is_upstream = version == variants[0].product.latest_version
         filtered = set([])
         version_series = ".".join(str(version).split(".")[:2])
