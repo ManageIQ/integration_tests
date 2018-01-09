@@ -40,7 +40,10 @@ TEST_OBJECTS = (
 def check_labels_in_ui(instance, name, expected_value):
     view = refresh_and_navigate(instance, 'Details')
     if view.entities.labels.is_displayed:
-        return view.entities.labels.get_text_of(name) == str(expected_value)
+        try:
+            return view.entities.labels.get_text_of(name) == str(expected_value)
+        except NameError:
+            return False
     return False
 
 
@@ -78,11 +81,11 @@ def test_labels_create(provider, soft_assert, random_labels):
     provider.refresh_provider_relationships()
     # Verify that the labels appear in the UI:
     for instance, label_name, label_value, status_code, json_content in random_labels:
-        if soft_assert(status_code in (200, 201), json_content):
+        if soft_assert(status_code in (200, 201), str(json_content)):
             soft_assert(
                 wait_for(
                     lambda: check_labels_in_ui(instance, label_name, label_value),
-                    num_sec=120, delay=10,
+                    num_sec=180, delay=10,
                     message='Verifying label ({} = {}) for {} {} exists'
                             .format(label_name, label_value,
                                     instance.__class__.__name__, instance.name),

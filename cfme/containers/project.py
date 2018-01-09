@@ -89,7 +89,7 @@ class Details(CFMENavigateStep):
                                                    use_search=True).click()
 
     def resetter(self):
-        if self.appliance.version == '5.9':
+        if self.appliance.version.is_in_series('5.9'):
             self.view.toolbar.view_selector.select("Summary View")
 
 
