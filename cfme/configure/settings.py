@@ -1,5 +1,5 @@
 import re
-from navmazing import NavigateToAttribute
+from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
 from widgetastic_patternfly import (BootstrapSwitch,
@@ -40,6 +40,10 @@ class TimeProfileAddFormView(BaseLoggedInPage):
 
 
 class TimeProfileAllView(MySettingsView):
+    table = Table("//div[@id='main_div']//table")
+    help_block = Text("//span[contains(@class, 'help-block')]")
+    configuration = Dropdown('Configuration')
+
     @property
     def is_displayed(self):
         return self.tabs.time_profile.is_active()
@@ -56,8 +60,7 @@ class Timeprofile(Updateable, Navigatable):
         self.timezone = timezone
 
     def create(self, cancel=False):
-        view = navigate_to(self, 'All')
-        view.timeprofile_form.configuration.item_select('Add a new Time Profile')
+        view = navigate_to(self, 'Add')
         view.timeprofile_form.fill({
             'description': self.description,
             'scope': self.scope,
@@ -70,12 +73,7 @@ class Timeprofile(Updateable, Navigatable):
             view.flash.assert_message('Time Profile "{}" was saved'.format(self.description))
 
     def update(self, updates):
-        view = navigate_to(self, 'All')
-        rows = view.timeprofile_form.table
-        for row in rows:
-            if row.description.text == self.description:
-                row[0].check()
-        view.timeprofile_form.configuration.item_select('Edit selected Time Profile')
+        view = navigate_to(self, 'Edit')
         changed = view.timeprofile_form.fill({
             'description': updates.get('description'),
             'scope': updates.get('scope'),
@@ -89,12 +87,8 @@ class Timeprofile(Updateable, Navigatable):
                 'Time Profile "{}" was saved'.format(updates.get('description', self.description)))
 
     def copy(self, name=None):
-        view = navigate_to(self, 'All')
-        rows = view.timeprofile_form.table
-        for row in rows:
-            if row.description.text == self.description:
-                row[0].check()
-        view.timeprofile_form.configuration.item_select('Copy selected Time Profile')
+        view = navigate_to(self, 'Copy')
+
         if name is not None:
             new_timeprofile = Timeprofile(description=name, scope=self.scope)
             changed = view.timeprofile_form.fill({
@@ -115,12 +109,11 @@ class Timeprofile(Updateable, Navigatable):
 
     def delete(self):
         view = navigate_to(self, 'All')
-        rows = view.timeprofile_form.table
+        rows = view.table
         for row in rows:
             if row.description.text == self.description:
                 row[0].check()
-        view.timeprofile_form.configuration.item_select("Delete selected "
-                                                        "Time Profiles", handle_alert=True)
+        view.configuration.item_select("Delete selected Time Profiles", handle_alert=True)
 
 
 @navigator.register(Timeprofile, 'All')
@@ -129,7 +122,52 @@ class TimeprofileAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'MySettings')
 
     def step(self):
-        self.view.tabs.time_profile.select()
+        self.prerequisite_view.tabs.time_profile.select()
+
+
+@navigator.register(Timeprofile, 'Add')
+class TimeprofileAdd(CFMENavigateStep):
+    VIEW = TimeProfileAddFormView
+    prerequisite = NavigateToSibling('All')
+
+    def am_i_here(self):
+        return False
+
+    def step(self):
+        self.prerequisite_view.configuration.item_select('Add a new Time Profile')
+
+
+@navigator.register(Timeprofile, 'Edit')
+class TimeprofileEdit(CFMENavigateStep):
+    VIEW = TimeProfileAddFormView
+    prerequisite = NavigateToSibling('All')
+
+    def am_i_here(self):
+        return False
+
+    def step(self):
+        rows = self.prerequisite_view.table
+        for row in rows:
+            if row.description.text == self.obj.description:
+                row[0].check()
+
+        self.prerequisite_view.configuration.item_select('Edit selected Time Profile')
+
+
+@navigator.register(Timeprofile, 'Copy')
+class TimeprofileCopy(CFMENavigateStep):
+    VIEW = TimeProfileAddFormView
+    prerequisite = NavigateToSibling('All')
+
+    def am_i_here(self):
+        return False
+
+    def step(self):
+        rows = self.prerequisite_view.table
+        for row in rows:
+            if row.description.text == self.obj.description:
+                row[0].check()
+        self.prerequisite_view.configuration.item_select('Copy selected Time Profile')
 
 
 class Visual(Updateable, Navigatable):
