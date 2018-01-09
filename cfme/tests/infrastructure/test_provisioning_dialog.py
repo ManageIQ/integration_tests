@@ -246,7 +246,7 @@ def test_tag(provisioner, prov_data, provider, vm_name):
     ), "Service Level: Gold not in tags ({})".format(tags)
 
 
-@pytest.mark.meta(blockers=[1204115])
+@pytest.mark.blockers(1204115)
 def test_provisioning_schedule(provisioner, provider, prov_data, vm_name):
     """ Tests provision scheduling.
 
