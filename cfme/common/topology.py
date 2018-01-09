@@ -193,7 +193,7 @@ class BaseTopologyElementsCollection(BaseCollection):
     def clear_search(self):
         self._view.toolbar.search_box.clear_search()
 
-    def wait_until_movement_not_stopped(self):
+    def wait_for_movement_stop(self):
         element = self.all()[-1]
 
         def _compare_coordinates(element, coordinates=[]):
