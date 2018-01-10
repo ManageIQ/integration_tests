@@ -8,7 +8,9 @@ from cfme.configure.settings import Visual
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.infrastructure import virtual_machines as vms  # NOQA
 from cfme.infrastructure.datastore import DatastoreCollection
+from cfme.infrastructure.host import HostCollection
 from cfme.infrastructure.provider import InfraProvider
+from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [pytest.mark.tier(3),
@@ -24,7 +26,7 @@ def visual(appliance):
     return Visual(appliance=appliance)
 
 
-@pytest.fixture(scope='module', params=[InfraProvider, vms.Vm])
+@pytest.fixture(scope='module', params=[DatastoreCollection, HostCollection, InfraProvider, vms.Vm])
 def page(request):
     return request.param
 
@@ -128,12 +130,14 @@ def set_template_quad(visual):
 
 
 @pytest.mark.meta(blockers=[1267148])
-def test_infra_grid_page_per_item(visual, request, page, value, set_grid):
+def test_infra_grid_page_per_item(visual, request, page, value, set_grid, appliance):
     """ Tests grid items per page
 
     Metadata:
         test_flag: visuals
     """
+    if issubclass(page, BaseCollection):
+        page = page(appliance)
     if visual.grid_view_limit != value:
         visual.grid_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
@@ -148,12 +152,14 @@ def test_infra_grid_page_per_item(visual, request, page, value, set_grid):
 
 
 @pytest.mark.meta(blockers=[1267148])
-def test_infra_tile_page_per_item(visual, request, page, value, set_tile):
+def test_infra_tile_page_per_item(visual, request, page, value, set_tile, appliance):
     """ Tests tile items per page
 
     Metadata:
         test_flag: visuals
     """
+    if issubclass(page, BaseCollection):
+        page = page(appliance)
     if visual.tile_view_limit != value:
         visual.tile_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
@@ -168,12 +174,14 @@ def test_infra_tile_page_per_item(visual, request, page, value, set_tile):
 
 
 @pytest.mark.meta(blockers=[1267148])
-def test_infra_list_page_per_item(visual, request, page, value, set_list):
+def test_infra_list_page_per_item(visual, request, page, value, set_list, appliance):
     """ Tests list items per page
 
     Metadata:
         test_flag: visuals
     """
+    if issubclass(page, BaseCollection):
+        page = page(appliance)
     if visual.list_view_limit != value:
         visual.list_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
