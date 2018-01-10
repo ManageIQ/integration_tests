@@ -22,6 +22,6 @@ def test_number_of_cpu(provider, soft_assert):
 
 
 def test_node_memory(provider):
-    detailed_view = navigate_to(provider, 'Details')
-    node_memory = detailed_view.entities.properties.get_text_of('Aggregate Node Memory')
+    view_details = navigate_to(provider, 'Details')
+    node_memory = view_details.entities.properties.get_text_of('Aggregate Node Memory')
     assert float(node_memory.split()[0]) > 0
