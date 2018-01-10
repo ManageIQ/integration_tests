@@ -1,5 +1,6 @@
 import pytest
 
+from cfme.base.ui import ServerDiagnosticsView
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -23,16 +24,33 @@ pytestmark = [
 @pytest.fixture(scope='module')
 def new_vm(request, provider):
     vm = VM.factory(random_vm_name('timelines', max_length=16), provider)
-    logger.debug('Fixture new_vm set up! Name: %r Provider: %r', vm.name, vm.provider.name)
+    logger.debug('Fixture new_vm set up! Name: %r', vm.name)
+    logger.info('Will create  %r on Provider: %r', vm.name, vm.provider.name)
+    vm.create_on_provider(find_in_cfme=False, timeout=500)
     yield vm
     logger.debug('Fixture new_vm teardown! Name: %r Provider: %r', vm.name, vm.provider.name)
     vm.provider.mgmt.delete_vm(vm.name)
+
+
+@pytest.yield_fixture(scope="module")
+def mark_vm_as_appliance(new_vm, appliance):
+    # set diagnostics vm
+    relations_view = navigate_to(new_vm, 'EditManagementEngineRelationship')
+    server_name = "{name} ({sid})".format(name=appliance.server.name, sid=appliance.server.sid)
+    relations_view.form.server.select_by_visible_text(server_name)
+    relations_view.form.save_button.click()
+    yield
+    # unset diagnostics vm
+    relations_view = navigate_to(new_vm, 'EditManagementEngineRelationship')
+    relations_view.form.server.select_by_visible_text('<Not a Server>')
+    relations_view.form.save_button.click()
 
 
 class VMEvent(object):
     """Class for generating  events on a VM in order to check it on Timelines.
     Args:
         vm: A VM object (Object)
+        event: an event, Key in ACTIONS.(String)
     """
     ACTIONS = {
         'create': {
@@ -80,8 +98,11 @@ class VMEvent(object):
             raise ValueError('{} is not a valid key in ACTION'.format(self.event))
 
     def _setup_vm(self):
-        logger.info('Will set up the VM %r ton the provider', self.vm.name)
-        return self.vm.create_on_provider(find_in_cfme=True)
+        if not self.vm.provider.mgmt.does_vm_exist(self.vm.name):
+            logger.info('Will set up the VM %r ton the provider', self.vm.name)
+            return self.vm.create_on_provider(find_in_cfme=True)
+        else:
+            logger.info('%r already exists on the provider.', self.vm.name)
 
     def _power_on(self):
         return self.vm.provider.mgmt.start_vm(self.vm.name)
@@ -113,7 +134,12 @@ class VMEvent(object):
              The length of the array containing the event found on the Timeline of the target.
         """
         timelines_view = navigate_to(target, 'Timelines')
-        timeline_filter = timelines_view.filter
+
+        if isinstance(timelines_view, ServerDiagnosticsView):
+            timelines_view = timelines_view.timelines
+            timeline_filter = timelines_view.filter
+        else:
+            timeline_filter = timelines_view.filter
 
         for selected_option in timeline_filter.event_category.all_selected_options:
             timeline_filter.event_category.select_by_visible_text(selected_option)
@@ -150,20 +176,31 @@ class VMEvent(object):
                                                                     found_events])))
         return len(found_events)
 
-    def catch_in_timelines(self, soft_assert):
-        targets = (self.vm, self.vm.cluster, self.vm.host, self.vm.provider)
-        for target in targets:
-            try:
-                wait_for(self._check_timelines, [target], timeout='5m', fail_condition=0)
-            except TimedOutError:
-                soft_assert(False, '0 occurrence of {} found on the timeline of {}'.format(
-                    self.event, target))
+    def catch_in_timelines(self, soft_assert, targets):
+        if targets:
+            for target in targets:
+                try:
+                    wait_for(self._check_timelines, [target], timeout='5m', fail_condition=0)
+                except TimedOutError:
+                    soft_assert(False, '0 occurrence of {} found on the timeline of {}'.format(
+                        self.event, target))
+        else:
+            raise ValueError('Targets must not be empty')
 
 
 def test_timeline_events(new_vm, soft_assert):
     events_list = ['create', 'stop', 'start', 'suspend', 'start']
+    targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     for event in events_list:
         vm_event = VMEvent(new_vm, event)
         logger.info('Will generate event %r on machine %r', event, new_vm.name)
         wait_for(vm_event.emit, timeout='5m', message='Event {} did timeout'.format(event))
-        vm_event.catch_in_timelines(soft_assert)
+        vm_event.catch_in_timelines(soft_assert, targets)
+
+
+def test_infra_diagnostic_timeline_events(new_vm, soft_assert, mark_vm_as_appliance):
+    events_list = ['create', 'stop']
+    targets = (new_vm.appliance.server,)
+    for event in events_list:
+        vm_event = VMEvent(new_vm, event)
+        vm_event.catch_in_timelines(soft_assert, targets)
