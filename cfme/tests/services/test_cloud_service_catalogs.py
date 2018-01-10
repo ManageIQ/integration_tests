@@ -2,6 +2,8 @@
 import fauxfactory
 import pytest
 
+from widgetastic.utils import partial_match
+
 from cfme.common.provider import cleanup_vm
 from cfme.cloud.provider import CloudProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
@@ -27,7 +29,8 @@ def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog
     Metadata:
         test_flag: provision
     """
-    vm_name = 'test{}'.format(fauxfactory.gen_alphanumeric())
+    # azure accepts only 15 chars vm name
+    vm_name = 'test{}'.format(fauxfactory.gen_string('alphanumeric', 5))
     # GCE accepts only lowercase letters in VM name
     vm_name = vm_name.lower()
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
@@ -36,18 +39,23 @@ def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog
     provisioning_data = {
         'catalog': {'vm_name': vm_name,
                     },
-        'properties': {'instance_type': provisioning['instance_type'],
+        'properties': {'instance_type': partial_match(provisioning['instance_type']),
                        },
-        'environment': {'security_groups': [provisioning['security_group']],
-                        },
+        'environment': {'security_groups': partial_match(provisioning['security_group']),
+                        }
     }
 
     if provider.type == "azure":
         env_updates = dict(
-            cloud_network=provisioning['virtual_private_cloud'],
+            cloud_network=partial_match(provisioning['virtual_private_cloud']),
             cloud_subnet=provisioning['cloud_subnet'],
-            resource_groups=[provisioning['resource_group']],
+            resource_groups=provisioning['resource_group'],
         )
+        provisioning_data['environment'].update(env_updates)
+        provisioning_data.update({
+            'customize': {
+                'admin_username': provisioning['customize_username'],
+                'root_password': provisioning['customize_password']}})
     else:
         provisioning_data['properties']['guest_keypair'] = provisioning['guest_keypair']
         provisioning_data['properties']['boot_disk_size'] = provisioning['boot_disk_size']
@@ -55,8 +63,7 @@ def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog
             availability_zone=provisioning['availability_zone'],
             cloud_tenant=provisioning['cloud_tenant'],
             cloud_network=provisioning['cloud_network'])
-
-    provisioning_data['environment'].update(env_updates)
+        provisioning_data['environment'].update(env_updates)
     catalog_item = CatalogItem(item_type=provisioning['item_type'],
                                name=item_name,
                                description="my catalog",
