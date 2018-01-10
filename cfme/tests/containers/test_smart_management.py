@@ -11,7 +11,7 @@ from cfme.containers.image_registry import (ImageRegistry,
                                             ImageRegistryCollection)
 from cfme.containers.node import Node, NodeCollection
 from cfme.containers.pod import Pod, PodCollection
-from cfme.containers.template import Template
+from cfme.containers.template import Template, TemplateCollection
 from cfme.containers.container import Container, ContainerCollection
 from cfme.utils.log import create_sublogger
 from cfme.utils.wait import wait_for
@@ -29,7 +29,7 @@ TEST_ITEMS = [
     pytest.mark.polarion('CMP-9948')(ContainersTestItem(
         Container, 'CMP-9948', collection_obj=ContainerCollection)),
     pytest.mark.polarion('CMP-10320')(ContainersTestItem(
-        Template, 'CMP-10320', collection_obj=Template)),
+        Template, 'CMP-10320', collection_obj=TemplateCollection)),
     pytest.mark.polarion('CMP-9992')(ContainersTestItem(
         ImageRegistry, 'CMP-9992', collection_obj=ImageRegistryCollection)),
     pytest.mark.polarion('CMP-9981')(ContainersTestItem(
@@ -41,7 +41,7 @@ TEST_ITEMS = [
     pytest.mark.polarion('CMP-9870')(ContainersTestItem(
         Project, 'CMP-9870', collection_obj=ProjectCollection)),
     pytest.mark.polarion('CMP-9854')(ContainersTestItem(
-        ContainersProvider, 'CMP-9854', collection_obj=Node))
+        ContainersProvider, 'CMP-9854', collection_obj=None))
 ]
 
 
