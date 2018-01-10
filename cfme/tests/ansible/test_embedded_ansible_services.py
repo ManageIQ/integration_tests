@@ -58,7 +58,7 @@ def ansible_repository(appliance, wait_for_ansible):
 
 
 @pytest.yield_fixture(scope="module")
-def ansible_credential(appliance):
+def ansible_credential(appliance, wait_for_ansible):
     credential = appliance.collections.ansible_credentials.create(
         fauxfactory.gen_alpha(),
         "Machine",
