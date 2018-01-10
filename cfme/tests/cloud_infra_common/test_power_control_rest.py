@@ -53,7 +53,8 @@ def wait_for_vm_state_change(vm_obj, state):
         vm.reload()
         return vm.power_state == state
     wait_for(_state_changed, num_sec=num_sec, delay=45, silent_failure=True,
-        message="Wait for VM state `{}` (current state: {})".format(state, vm.power_state))
+        message="Wait for VM state `{}` (current state: {})".format(state, vm.power_state),
+        fail_func=vm_obj.refresh_relationships)
 
 
 def verify_vm_power_state(vm, state):
