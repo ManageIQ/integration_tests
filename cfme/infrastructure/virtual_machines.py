@@ -12,12 +12,12 @@ from widgetastic.utils import partial_match, Parameter, VersionPick, Version
 from widgetastic.widget import (
     Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
 from widgetastic_patternfly import (
-    Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, Tab)
+    Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, Template as BaseTemplate
 from cfme.common.vm_views import (
-    ManagementEngineView, CloneVmView, ProvisionView, EditView, RetirementView,
+    ManagementEngineView, CloneVmView, MigrateVmView, ProvisionView, EditView, RetirementView,
     RetirementViewWithOffset, VMDetailsEntities, VMToolbar, VMEntities, SetOwnershipView)
 from cfme.exceptions import (
     VmNotFound, OptionNotAvailable, DestinationNotFound, ItemNotFound,
@@ -359,48 +359,6 @@ class InfraVmGenealogyView(InfraVmView):
         """Is this view being displayed"""
         expected_title = '"Genealogy" for Virtual Machine "{}"'.format(self.context['object'].name)
         return self.in_infra_vms and self.title.text == expected_title
-
-
-class MigrateView(BaseLoggedInPage):
-    title = Text('#explorer_title_text')
-
-    @View.nested
-    class form(View):  # noqa
-        submit = Button('Submit')
-        cancel = Button('Cancel')
-
-        @View.nested
-        class request(Tab):  # noqa
-            TAB_NAME = 'Request'
-            email = WInput(name='requester__owner_email')
-            first_name = WInput(name='requester__owner_first_name')
-            last_name = WInput(name='requester__owner_last_name')
-            notes = WInput(name='requester__request_notes')
-            manager_name = WInput(name='requester__owner_manager')
-
-        @View.nested
-        class environment(Tab):  # noqa
-            TAB_NAME = 'Environment'
-            # Infra
-            datacenter = BootstrapSelect('environment__placement_dc_name')
-            cluster = BootstrapSelect('environment__placement_cluster_name')
-            resource_pool = BootstrapSelect('environment__placement_rp_name')
-            folder = BootstrapSelect('environment__placement_folder_name')
-            host_filter = BootstrapSelect('environment__host_filter')
-            host_name = Table('//div[@id="prov_host_div"]/table')
-            datastore_filter = BootstrapSelect('environment__ds_filter')
-            datastore_name = Table('//div[@id="prov_ds_div"]/table')
-
-        @View.nested
-        class schedule(Tab):  # noqa
-            TAB_NAME = 'Schedule'
-            # TODO radio widget #
-            # schedule_type = RadioWidget('schedule__schedule_type')
-
-    @property
-    def is_displayed(self):
-        # Nothing is shown
-        return False
 
 
 class VMDisk(
@@ -1355,7 +1313,7 @@ class VmGenealogyAll(CFMENavigateStep):
 
 @navigator.register(Vm, 'Migrate')
 class VmMigrate(CFMENavigateStep):
-    VIEW = MigrateView
+    VIEW = MigrateVmView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
