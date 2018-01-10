@@ -104,13 +104,14 @@ def generated_request(appliance,
 @pytest.mark.tier(3)
 def test_services_request_direct_url(appliance, generated_request):
     """Go to the request page, save the url and try to access it directly."""
-    selenium = appliance.browser.widgetastic.selenium
+    widgetastic = appliance.browser.widgetastic
+    selenium = widgetastic.selenium
     assert navigate_to(generated_request, 'Details'), "could not find the request!"
     request_url = selenium.current_url
     selenium.get(store.base_url)    # I need to flip it with something different here
     selenium.get(request_url)        # Ok, direct access now.
     wait_for(
-        lambda: selenium.is_displayed("//body[contains(@onload, 'miqOnLoad')]"),
+        lambda: widgetastic.is_displayed("//body[contains(@onload, 'miqOnLoad')]"),
         num_sec=20,
         message="wait for a CFME page appear",
         delay=0.5
