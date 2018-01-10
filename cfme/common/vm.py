@@ -601,7 +601,7 @@ class VM(BaseVM):
             view = navigate_to(self, "All")
             entity = self.find_quadicon()
             entity.check()
-        if view.toolbar.power.has_item(option):
+        if option in view.toolbar.power.items:
             return view.toolbar.power.item_enabled(option)
         else:
             return False
