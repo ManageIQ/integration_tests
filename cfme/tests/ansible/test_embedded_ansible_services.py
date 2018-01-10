@@ -315,12 +315,8 @@ def test_service_ansible_playbook_plays_table(ansible_catalog_item, service_cata
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[
-    BZ(1519275, forced_streams=['5.9']),
-    BZ(1515841, forced_streams=['5.9'])
-])
 def test_service_ansible_playbook_order_credentials(ansible_catalog_item, ansible_credential,
-        service_catalog):
+        service_catalog, appliance):
     """Test if credentials avaialable in the dropdown in ordering ansible playbook service
     screen.
     """
@@ -329,8 +325,13 @@ def test_service_ansible_playbook_order_credentials(ansible_catalog_item, ansibl
             "machine_credential": ansible_credential.name
         }
     view = navigate_to(service_catalog, "Order")
-    options = [o.text for o in view.machine_credential.all_options]
-    assert ["<Default>", "CFME Default Credential", ansible_credential.name] == options
+    wait_for(lambda: view.machine_credential.is_displayed, timeout=5)
+    if appliance.version < "5.9":
+        options = [o.text for o in view.machine_credential.all_options]
+        assert ["<Default>", "CFME Default Credential", ansible_credential.name] == options
+    else:
+        options = view.machine_credential.all_options
+        assert [ansible_credential.name, "CFME Default Credential", "<Default>"] == options
 
 
 @pytest.mark.tier(3)
