@@ -4,7 +4,7 @@ from cfme.utils import version
 from wait_for import wait_for
 
 
-def test_set_hostname(appliance):
+def test_appliance_console_cli_set_hostname(appliance):
     hostname = 'test.example.com'
     appliance.appliance_console_cli.set_hostname(hostname)
     return_code, output = appliance.ssh_client.run_command("hostname -f")
@@ -12,7 +12,7 @@ def test_set_hostname(appliance):
     assert return_code == 0
 
 
-def test_configure_appliance_internal_fetch_key(
+def test_appliance_console_cli_internal_fetch_key(
         app_creds, temp_appliance_unconfig_funcscope, appliance):
     fetch_key_ip = appliance.hostname
     temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_internal_fetch_key(
@@ -23,7 +23,7 @@ def test_configure_appliance_internal_fetch_key(
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-def test_configure_appliance_external_join(app_creds, appliance,
+def test_appliance_console_cli_external_join(app_creds, appliance,
         temp_appliance_unconfig_funcscope):
     appliance_ip = appliance.hostname
     temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_external_join(
@@ -33,7 +33,7 @@ def test_configure_appliance_external_join(app_creds, appliance,
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-def test_configure_appliance_external_create(
+def test_appliance_console_cli_external_create(
         app_creds, dedicated_db_appliance, temp_appliance_unconfig_funcscope):
     hostname = dedicated_db_appliance.hostname
     temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_external_create(5,
@@ -70,14 +70,14 @@ def test_external_auth(auth_type, ipa_crud, app_creds):
 
 
 @pytest.mark.skip('No IPA servers currently available')
-def test_ipa_crud(ipa_creds, configured_appliance):
+def test_appliance_console_cli_ipa_crud(ipa_creds, configured_appliance):
     configured_appliance.appliance_console_cli.configure_ipa(ipa_creds['ipaserver'],
         ipa_creds['username'], ipa_creds['password'], ipa_creds['domain'], ipa_creds['realm'])
     configured_appliance.appliance_console_cli.uninstall_ipa_client()
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
-def test_black_console_cli_extend_storage(unconfigured_appliance):
+def test_appliance_console_cli_extend_storage(unconfigured_appliance):
     unconfigured_appliance.ssh_client.run_command('appliance_console_cli -t auto')
 
     def is_storage_extended(unconfigured_appliance):
@@ -86,7 +86,7 @@ def test_black_console_cli_extend_storage(unconfigured_appliance):
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
-def test_black_console_cli_extend_log_storage(unconfigured_appliance):
+def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
     unconfigured_appliance.ssh_client.run_command('appliance_console_cli -l auto')
 
     def is_storage_extended(unconfigured_appliance):
@@ -95,7 +95,7 @@ def test_black_console_cli_extend_log_storage(unconfigured_appliance):
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
-def test_black_console_cli_configure_dedicated_db(unconfigured_appliance, app_creds):
+def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, app_creds):
     unconfigured_appliance.appliance_console_cli.configure_appliance_dedicated_db(
         0, app_creds['username'], app_creds['password'], 'vmdb_production',
         unconfigured_appliance.unpartitioned_disks[0]

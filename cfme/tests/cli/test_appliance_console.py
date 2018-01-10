@@ -28,7 +28,7 @@ tzs = [
 
 
 @pytest.mark.smoke
-def test_black_console(appliance):
+def test_appliance_console(appliance):
     """'ap | tee /tmp/opt.txt)' saves stdout to file, 'ap' launch appliance_console."""
     command_set = ('ap | tee -a /tmp/opt.txt', 'ap')
     appliance.appliance_console.run_commands(command_set)
@@ -40,7 +40,7 @@ def test_black_console(appliance):
                                             .format(appliance.product_name))
 
 
-def test_black_console_set_hostname(appliance):
+def test_appliance_console_set_hostname(appliance):
     """'ap' launch appliance_console, '' clear info screen, '1' loads network settings, '4/5' gives
     access to set hostname, 'hostname' sets new hostname."""
 
@@ -60,7 +60,7 @@ def test_black_console_set_hostname(appliance):
 
 
 @pytest.mark.parametrize('timezone', tzs, ids=[tz.name for tz in tzs])
-def test_black_console_set_timezone(timezone, temp_appliance_preconfig_modscope):
+def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modscope):
     """'ap' launch appliance_console, '' clear info screen, '2/5' set timezone, 'opt' select
     region, 'timezone' selects zone, 'y' confirm slection, '' finish."""
     opt = '2' if temp_appliance_preconfig_modscope.version >= "5.8" else '5'
@@ -70,7 +70,7 @@ def test_black_console_set_timezone(timezone, temp_appliance_preconfig_modscope)
     temp_appliance_preconfig_modscope.appliance_console.timezone_check(timezone)
 
 
-def test_black_console_internal_db(app_creds, temp_appliance_unconfig_funcscope):
+def test_appliance_console_internal_db(app_creds, temp_appliance_unconfig_funcscope):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '1' Creates v2_key,
     '1' selects internal db, 'y' continue, '1' use partition, 'n' don't create dedicated db, '0'
     db region number, 'pwd' db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
@@ -83,7 +83,7 @@ def test_black_console_internal_db(app_creds, temp_appliance_unconfig_funcscope)
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-def test_black_console_internal_db_reset(temp_appliance_preconfig_funcscope):
+def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '4' reset db, 'y'
     confirm db reset, '1' db region number + wait 360 secs, '' continue"""
 
@@ -96,7 +96,7 @@ def test_black_console_internal_db_reset(temp_appliance_preconfig_funcscope):
     temp_appliance_preconfig_funcscope.wait_for_web_ui()
 
 
-def test_black_console_dedicated_db(temp_appliance_unconfig_funcscope, app_creds):
+def test_appliance_console_dedicated_db(temp_appliance_unconfig_funcscope, app_creds):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '1' Creates v2_key,
     '1' selects internal db, 'y' continue, '1' use partition, 'y' create dedicated db, 'pwd'
     db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
@@ -108,7 +108,7 @@ def test_black_console_dedicated_db(temp_appliance_unconfig_funcscope, app_creds
     wait_for(lambda: temp_appliance_unconfig_funcscope.db.is_dedicated_active)
 
 
-def test_black_console_external_db(temp_appliance_unconfig_funcscope, app_creds, appliance):
+def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_creds, appliance):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '2' fetch v2_key,
     'ip' address to fetch from, '' default username, 'pwd' db password, '' default v2_key location,
     '3' join external region, 'port' ip and port of joining region, '' use defult db name, ''
@@ -125,7 +125,7 @@ def test_black_console_external_db(temp_appliance_unconfig_funcscope, app_creds,
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-def test_black_console_external_db_create(app_creds, dedicated_db_appliance,
+def test_appliance_console_external_db_create(app_creds, dedicated_db_appliance,
         temp_appliance_unconfig_funcscope):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '1' create v2_key,
     '2' create region in external db, '0' db region number, 'y' confirm create region in external db
@@ -143,7 +143,7 @@ def test_black_console_external_db_create(app_creds, dedicated_db_appliance,
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-def test_black_console_extend_storage(unconfigured_appliance):
+def test_appliance_console_extend_storage(unconfigured_appliance):
     """'ap' launches appliance_console, '' clears info screen, '10/13' extend storage, '1' select
     disk, 'y' confirm configuration and '' complete."""
 
@@ -157,7 +157,7 @@ def test_black_console_extend_storage(unconfigured_appliance):
 
 
 @pytest.mark.skip('No IPA servers currently available')
-def test_black_console_ipa(ipa_creds, configured_appliance):
+def test_appliance_console_ipa(ipa_creds, configured_appliance):
     """'ap' launches appliance_console, '' clears info screen, '11/14' setup IPA, 'y' confirm setup
     + wait 40 secs and '' finish."""
 
@@ -180,7 +180,7 @@ def test_black_console_ipa(ipa_creds, configured_appliance):
     LoginOption('saml', 'saml_enabled', '2'),
     LoginOption('local_login', 'local_login_disabled', '3')
 ], ids=['sso', 'saml', 'local_login'])
-def test_black_console_external_auth(auth_type, app_creds, ipa_crud):
+def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud):
     """'ap' launches appliance_console, '' clears info screen, '12/15' change ext auth options,
     'auth_type' auth type to change, '4' apply changes."""
 
@@ -209,7 +209,7 @@ def test_black_console_external_auth(auth_type, app_creds, ipa_crud):
 
 
 @pytest.mark.skip('No IPA servers currently available')
-def test_black_console_external_auth_all(app_creds, ipa_crud):
+def test_appliance_console_external_auth_all(app_creds, ipa_crud):
     """'ap' launches appliance_console, '' clears info screen, '12/15' change ext auth options,
     'auth_type' auth type to change, '4' apply changes."""
 
@@ -239,7 +239,7 @@ def test_black_console_external_auth_all(app_creds, ipa_crud):
     evm_tail.validate_logs()
 
 
-def test_black_console_scap(temp_appliance_preconfig, soft_assert):
+def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
     """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
     configuration, '' complete."""
 
