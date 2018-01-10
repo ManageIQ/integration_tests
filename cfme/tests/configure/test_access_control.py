@@ -561,11 +561,6 @@ def _test_vm_provision(appliance):
     navigate_to(vms.Vm, 'VMsOnly')
     vms.lcl_btn("Provision VMs")
 
-
-def _test_vm_view(appliance):
-    logger.info("Checking for vms view access")
-    navigate_to(vms.Vm, 'VMsOnly')
-
 # this fixture is used in disabled tests. it should be updated along with tests
 # def _test_vm_power_on():
 #     """Ensures power button is shown for a VM"""
@@ -607,7 +602,7 @@ def test_permission_edit(appliance, request, product_features):
     user = new_user(appliance, group=group)
     with user:
         try:
-            _test_vm_view(appliance)
+            navigate_to(vms.Vm, 'VMsOnly')
         except Exception:
             pytest.fail('Incorrect permissions set')
     appliance.server.login_admin()
@@ -617,7 +612,7 @@ def test_permission_edit(appliance, request, product_features):
     with user:
         try:
             with error.expected(Exception):
-                _test_vm_view(appliance)
+                navigate_to(vms.Vm, 'VMsOnly')
         except error.UnexpectedSuccessException:
             pytest.fail('Permissions have not been updated')
 
