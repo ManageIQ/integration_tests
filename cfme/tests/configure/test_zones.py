@@ -77,7 +77,11 @@ def test_zone_add_dupe(request):
         description=description)
     request.addfinalizer(zone.delete)
 
-    with error.expected('Name has already been taken'):
+    if current_appliance.version >= 5.9:
+        error_flash = "Name is not unique within region 0"
+    else:
+        error_flash = "Name has already been taken"
+    with error.expected(error_flash):
         zc.create(
             name=name,
             description=description)
