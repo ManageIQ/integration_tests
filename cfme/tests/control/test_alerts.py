@@ -34,6 +34,7 @@ pytestmark = [
     pytest.mark.meta(server_roles=["+automate", "+smartproxy", "+notifier"]),
     pytest.mark.uncollectif(BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576'),
     pytest.mark.uncollectif(BZ(1501895, forced_streams=['5.9']).blocks, 'BZ 1501895'),
+    pytest.mark.usefixtures("setup_provider_modscope"),
     pytest.mark.tier(3),
     test_requirements.alert
 ]
@@ -203,7 +204,7 @@ def vm_name():
 
 
 @pytest.yield_fixture(scope="function")
-def vm(vm_name, full_template, provider, setup_provider):
+def vm(vm_name, full_template, provider):
     vm_obj = VM.factory(vm_name, provider, template_name=full_template.name)
     vm_obj.create_on_provider(allow_skip="default")
     provider.mgmt.start_vm(vm_obj.name)
@@ -275,7 +276,7 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider
     wait_for_alert(smtp_test, alert, delay=16 * 60)
 
 
-@pytest.mark.provider(CANDU_PROVIDER_TYPES)
+@pytest.mark.provider(CANDU_PROVIDER_TYPES, scope="module")
 def test_alert_rtp(request, vm, smtp_test, provider, setup_candu, wait_candu, setup_for_alerts,
         alert_collection):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
@@ -308,7 +309,7 @@ def test_alert_rtp(request, vm, smtp_test, provider, setup_candu, wait_candu, se
         "text": vm.name, "from_address": email})
 
 
-@pytest.mark.provider(CANDU_PROVIDER_TYPES)
+@pytest.mark.provider(CANDU_PROVIDER_TYPES, scope="module")
 def test_alert_timeline_cpu(request, vm, set_performance_capture_threshold, provider, ssh,
         setup_candu, wait_candu, setup_for_alerts, alert_collection):
     """ Tests a custom alert that uses C&U data to trigger an alert. It will run a script that makes
@@ -353,7 +354,7 @@ def test_alert_timeline_cpu(request, vm, set_performance_capture_threshold, prov
         pytest.fail("The event has not been found on the timeline. Event list: {}".format(events))
 
 
-@pytest.mark.provider(CANDU_PROVIDER_TYPES)
+@pytest.mark.provider(CANDU_PROVIDER_TYPES, scope="module")
 def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, vm, wait_candu,
         alert_collection, setup_for_alerts):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
@@ -402,7 +403,7 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, vm, w
     wait_for(_snmp_arrived, timeout="30m", delay=60, message="SNMP trap arrived.")
 
 
-@pytest.mark.provider(CANDU_PROVIDER_TYPES)
+@pytest.mark.provider(CANDU_PROVIDER_TYPES, scope="module")
 def test_alert_hardware_reconfigured(request, configure_fleecing, alert_collection, vm, smtp_test,
         requests_collection, setup_for_alerts):
     """Tests alert based on "Hardware Reconfigured" evaluation.
