@@ -252,6 +252,7 @@ def pytest_runtest_teardown(item, nextitem):
             'browserVersion': caps['version']
         }
     except Exception as e:
+        logger.error("Couldn't grab browser env_vars")
         logger.error(e)
         param_dict = None
 
