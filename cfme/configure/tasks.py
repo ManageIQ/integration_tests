@@ -178,7 +178,8 @@ class MyTasks(CFMENavigateStep):
         self.view.tabs.mytasks.select()
 
     def am_i_here(self):
-        return self.view.tabs.mytasks.is_active()
+        tasks = self.view.tabs.mytasks
+        return tasks.is_displayed and tasks.is_active()
 
 
 @navigator.register(Tasks, 'MyOtherTasks')
@@ -190,7 +191,8 @@ class MyOtherTasks(CFMENavigateStep):
         self.view.tabs.myothertasks.select()
 
     def am_i_here(self):
-        return self.view.tabs.myothertasks.is_active()
+        tasks = self.view.tabs.myothertasks
+        return tasks.is_displayed and tasks.is_active()
 
 
 @navigator.register(Tasks, 'AllTasks')
@@ -202,7 +204,8 @@ class AllTasks(CFMENavigateStep):
         self.view.tabs.alltasks.select()
 
     def am_i_here(self):
-        return self.view.tabs.alltasks.is_active()
+        tasks = self.view.tabs.alltasks
+        return tasks.is_displayed and tasks.is_active()
 
 
 @navigator.register(Tasks, 'AllOtherTasks')
@@ -214,4 +217,5 @@ class AllOtherTasks(CFMENavigateStep):
         self.view.tabs.allothertasks.select()
 
     def am_i_here(self):
-        return self.view.tabs.allothertasks.is_active()
+        tasks = self.view.tabs.allothertasks
+        return tasks.is_displayed and tasks.is_active()
