@@ -62,3 +62,20 @@ For example::
 
 The same can be done for tests that failed, passed or ended up throwing an error.
 For more info, see ``pytest --help | grep -A 2 "chars"``
+
+I upgraded to Fedora 27 and now I cannot run any tests!
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Are you seeing this when trying to start tests?
+
+ImportError::
+
+    pycurl: libcurl link-time ssl backend (openssl) is different from compile-time ssl backend (nss)
+
+Then the solution for you is to reinstall pycurl.
+Do the following within your virtualenv.
+
+.. code-block:: bash
+
+    $ pip uninstall pycurl
+    $ pip install pycurl==7.43.0 --global-option="--with-openssl"
