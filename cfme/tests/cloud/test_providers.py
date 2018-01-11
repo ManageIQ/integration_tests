@@ -5,6 +5,7 @@ import uuid
 import fauxfactory
 
 import pytest
+from widgetastic.exceptions import MoveTargetOutOfBoundsException
 
 from cfme.utils import error
 from cfme.base.credential import Credential
@@ -54,7 +55,11 @@ def test_add_cancelled_validation(request):
     """Tests that the flash message is correct when add is cancelled."""
     prov = EC2Provider()
     request.addfinalizer(prov.delete_if_exists)
-    prov.create(cancel=True)
+    try:
+        prov.create(cancel=True)
+    except MoveTargetOutOfBoundsException:
+        # TODO: Remove once fixed 1475303
+        prov.create(cancel=True)
     view = prov.browser.create_view(CloudProvidersView)
     view.flash.assert_success_message('Add of Cloud Provider was cancelled by the user')
 
@@ -261,6 +266,9 @@ def test_hostname_max_character_validation():
                             security_protocol=None)
     prov = OpenStackProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
     try:
+        prov.create()
+    except MoveTargetOutOfBoundsException:
+        # TODO: Remove once fixed 1475303
         prov.create()
     except AssertionError:
         endpoints = prov.create_view(prov.endpoints_form)
