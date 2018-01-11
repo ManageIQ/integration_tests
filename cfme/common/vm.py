@@ -548,9 +548,9 @@ class VM(BaseVM):
         """
         view = self.load_details(refresh=True)
         wait_for(
-            lambda: not view.toolbar.monitoring.item_enabled("Utilization"),
+            lambda: view.toolbar.monitoring.item_enabled("Utilization"),
             delay=10, handle_exception=True, num_sec=timeout,
-            fail_func=lambda: view.toolbar.reload.click)
+            fail_func=view.toolbar.reload.click)
 
     def wait_for_vm_state_change(self, desired_state=None, timeout=300, from_details=False,
                                  with_relationship_refresh=True, from_any_provider=False):
