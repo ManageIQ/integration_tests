@@ -7,9 +7,11 @@ import pytest
 from cfme.containers.provider import ContainersProvider
 from cfme.utils.version import current_version
 from cfme.common.provider_views import ContainerProvidersView
+from cfme.utils.blockers import GH
 
 
 pytestmark = [
+    pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6409', upstream_only=False)]),
     pytest.mark.uncollectif(lambda: current_version() < "5.8.0.3"),
     pytest.mark.provider([ContainersProvider], scope='module')
 ]
