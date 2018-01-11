@@ -670,12 +670,12 @@ class TestBulkQueryRESTAPI(object):
             test_flag: rest
         """
         collection = appliance.rest_api.collections.roles
-        data0, data1 = collection[0]._data, collection[1]._data
         response = appliance.rest_api.collections.roles.action.query(
-            {'name': data0['name']}, {'name': data1['name']})
+            {'name': collection[0]._data['name']}, {'name': collection[1]._data['name']})
         assert_response(appliance)
         assert len(response) == 2
-        assert data0 == response[0]._data and data1 == response[1]._data
+        for i in range(len(response)):
+            assert collection[i]._data <= response[i]._data.items()
 
     def test_bulk_query_groups(self, appliance):
         """Tests bulk query on 'groups' collection
