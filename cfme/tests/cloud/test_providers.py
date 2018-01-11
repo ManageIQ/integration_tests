@@ -18,7 +18,6 @@ from cfme.common.provider_views import (CloudProviderAddView,
                                         CloudProvidersDiscoverView)
 from cfme import test_requirements
 
-from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
@@ -31,6 +30,8 @@ pytestmark = [pytest.mark.provider([CloudProvider], scope="function")]
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
+@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
+                         reason='no more support for cloud provider discovery')
 def test_empty_discovery_form_validation(appliance):
     """ Tests that the flash message is correct when discovery form is empty."""
     discover(None, AzureProvider)
@@ -41,6 +42,8 @@ def test_empty_discovery_form_validation(appliance):
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
+@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
+                         reason='no more support for cloud provider discovery')
 def test_discovery_cancelled_validation(appliance):
     """ Tests that the flash message is correct when discovery is cancelled."""
     discover(None, AzureProvider, cancel=True)
@@ -61,7 +64,7 @@ def test_add_cancelled_validation(request):
 
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
-                         reason='EC2 option not available')
+                         reason='no more support for cloud provider discovery')
 def test_password_mismatch_validation(appliance):
     cred = Credential(
         principal=fauxfactory.gen_alphanumeric(5),
