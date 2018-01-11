@@ -68,12 +68,12 @@ def test_service_dialog_duplicate_name(appliance, request):
     label = 'duplicate_' + fauxfactory.gen_alphanumeric()
     dialog, element = create_dialog(appliance, element_data, label=label)
     request.addfinalizer(dialog.delete_if_exists)
-    region = appliance.server.zone.region.number
+    region_number = appliance.server.zone.region.number
     error_message = version.pick({
-        '5.8': 'Validation failed: Label is not unique within region {}'.format(region),
+        '5.8': 'Validation failed: Label is not unique within region {}'.format(region_number),
         '5.9': 'There was an error editing this dialog: '
                'Failed to create a new dialog - Validation failed: '
-               'Name is not unique within region {}'.format(region)})
+               'Name is not unique within region {}'.format(region_number)})
     with pytest.raises(AssertionError):
         create_dialog(appliance, element_data, label=label)
         view_cls = navigator.get_class(element.parent, 'Add').VIEW
