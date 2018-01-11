@@ -68,7 +68,7 @@ def test_zone_change_appliance_zone(request, appliance):
 
 @pytest.mark.tier(2)
 @pytest.mark.sauce
-def test_zone_add_dupe(request):
+def test_zone_add_dupe(appliance, request):
     zc = current_appliance.collections.zones
     name = fauxfactory.gen_alphanumeric(5)
     description = fauxfactory.gen_alphanumeric(8)
@@ -77,7 +77,12 @@ def test_zone_add_dupe(request):
         description=description)
     request.addfinalizer(zone.delete)
 
-    with error.expected('Name has already been taken'):
+    if current_appliance.version >= 5.9:
+        error_flash = "Name is not unique within region {}"\
+            .format(appliance.server.zone.region.number)
+    else:
+        error_flash = "Name has already been taken"
+    with error.expected(error_flash):
         zc.create(
             name=name,
             description=description)
