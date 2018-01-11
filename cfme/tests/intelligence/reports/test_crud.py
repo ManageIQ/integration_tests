@@ -54,6 +54,7 @@ def schedule_data(request):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
+@pytest.mark.meta(blockers=[BZ(1531600, forced_streams=["5.9"])])
 @test_requirements.report
 def test_custom_report_crud(custom_report):
     custom_report.create()
