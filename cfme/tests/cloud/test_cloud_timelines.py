@@ -1,147 +1,319 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
-from time import sleep
 
-from cfme.base.ui import Server
+from cfme.base.ui import ServerDiagnosticsView
 from cfme.cloud.availability_zone import AvailabilityZone
 from cfme.cloud.instance import Instance
-from cfme.cloud.provider import CloudProvider
-from cfme.utils.providers import ProviderFilter
+from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.cloud.provider.gce import GCEProvider
-from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.control.explorer.policies import VMControlPolicy
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for
-from cfme.markers.env_markers.provider import providers
+from cfme.utils.wait import wait_for, TimedOutError
 
-
-cloud_prov_only = ProviderFilter(classes=[CloudProvider])
-excluded = ProviderFilter(classes=[GCEProvider, OpenStackProvider], inverted=True)
 pytestmark = [
     pytest.mark.tier(2),
-    pytest.mark.provider(gen_func=providers, filters=[excluded, cloud_prov_only], scope='module'),
-    pytest.mark.usefixtures("setup_provider_modscope")
+    # Only onr prov out of the 2 is taken, if not supplying --use-provider=complete
+    pytest.mark.provider([AzureProvider, EC2Provider]),
+    pytest.mark.usefixtures('setup_provider')
 ]
 
 
-def ec2_sleep():
-    # CFME currently obtains events from AWS Config thru AWS SNS
-    # EC2 Config creates config diffs apprx. every 10 minutes
-    # This workaround is needed until CFME starts using CloudWatch + CloudTrail instead
-    sleep(900)
+@pytest.fixture(scope='function')
+def new_instance(provider):
+    inst = Instance.factory(random_vm_name('cloud-timeline', max_length=20), provider)
+    logger.debug('Fixture new_instance set up! Name: %r Provider: %r', inst.name,
+                 inst.provider.name)
+    inst.create_on_provider(allow_skip="default", find_in_cfme=True)
+    yield inst
+    logger.debug('Fixture new_vm teardown! Name: %r Provider: %r', inst.name, inst.provider.name)
+    if inst.provider.mgmt.does_vm_exist(inst.name):
+        inst.provider.mgmt.delete_vm(inst.name)
 
 
-@pytest.fixture(scope="module")
-def new_instance(request, provider):
-    instance = Instance.factory(random_vm_name("timelines", max_length=16), provider)
-
-    request.addfinalizer(instance.cleanup_on_provider)
-
-    if not provider.mgmt.does_vm_exist(instance.name):
-        logger.info("deploying %s on provider %s", instance.name, provider.key)
-        instance.create_on_provider(allow_skip="default", find_in_cfme=True)
-        if instance.provider.one_of(EC2Provider):
-            ec2_sleep()
-    return instance
-
-
-@pytest.fixture(scope="module")
-def gen_events(new_instance):
-    logger.debug('Starting, stopping VM')
-    mgmt = new_instance.provider.mgmt
-    mgmt.stop_vm(new_instance.name)
-    if new_instance.provider.one_of(EC2Provider):
-        ec2_sleep()
-    mgmt.start_vm(new_instance.name)
-    if new_instance.provider.one_of(EC2Provider):
-        ec2_sleep()
-
-
-def count_events(target, vm):
-    timelines_view = navigate_to(target, 'Timelines')
-    if isinstance(target, Server):
-        timelines_view = timelines_view.timelines
-    timelines_view.filter.time_position.select_by_visible_text('centered')
-    timelines_view.filter.apply.click()
-    found_events = []
-    for evt in timelines_view.chart.get_events():
-        # BZ(1428797)
-        if not hasattr(evt, 'source_instance'):
-            logger.warn("event {evt!r} doesn't have source_vm field. "
-                        "Probably issue".format(evt=evt))
-            continue
-        elif evt.source_instance == vm.name:
-            found_events.append(evt)
-
-    logger.info("found events: {evt}".format(evt="\n".join([repr(e) for e in found_events])))
-    return len(found_events)
-
-
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="function")
 def mark_vm_as_appliance(new_instance, appliance):
     # set diagnostics vm
     relations_view = navigate_to(new_instance, 'EditManagementEngineRelationship')
     server_name = "{name} ({sid})".format(name=appliance.server.name, sid=appliance.server.sid)
     relations_view.form.server.select_by_visible_text(server_name)
     relations_view.form.save_button.click()
-    yield
-    # unset diagnostics vm
-    relations_view = navigate_to(new_instance, 'EditManagementEngineRelationship')
-    relations_view.form.server.select_by_visible_text('<Not a Server>')
-    relations_view.form.save_button.click()
 
 
-def test_cloud_provider_event(gen_events, new_instance):
-    """ Tests provider events on timelines
+@pytest.fixture(scope='function')
+def control_policy(appliance, new_instance, request):
+    action = appliance.collections.actions.create(fauxfactory.gen_alpha(), "Tag",
+            dict(tag=("My Company Tags", "Environment", "Development")))
+    policy = appliance.collections.policies.create(VMControlPolicy, fauxfactory.gen_alpha())
+    policy.assign_events("VM Power Off")
+    policy.assign_actions_to_event("VM Power Off", action)
 
-    Metadata:
-        test_flag: timelines, provision
-    """
-    wait_for(count_events, [new_instance.provider, new_instance], timeout='5m', fail_condition=0,
-             message="events to appear")
+    profile = appliance.collections.policy_profiles.create(fauxfactory.gen_alpha(),
+                                                           policies=[policy])
+
+    yield new_instance.assign_policy_profiles(profile.description)
+    if profile.exists:
+        profile.delete()
+    if policy.exists:
+        policy.delete()
+    if action.exists:
+        action.delete()
 
 
-def test_cloud_azone_event(gen_events, new_instance):
-    """ Tests availability zone events on timelines
-
-    Metadata:
-        test_flag: timelines, provision
-    """
-    # obtaining this instance's azone
+@pytest.fixture(scope='function')
+def azone(new_instance):
     zone_id = new_instance.get_vm_via_rest().availability_zone_id
     zones = new_instance.appliance.rest_api.collections.availability_zones
     zone_name = next(zone.name for zone in zones if zone.id == zone_id)
-    azone = AvailabilityZone(name=zone_name, provider=new_instance.provider,
-                             appliance=new_instance.appliance)
-    wait_for(count_events, [azone, new_instance], timeout='5m', fail_condition=0,
-             message="events to appear")
+    inst_zone = AvailabilityZone(name=zone_name, provider=new_instance.provider,
+                                 appliance=new_instance.appliance)
+    return inst_zone
 
 
-def test_cloud_instance_event(gen_events, new_instance):
-    """ Tests vm events on timelines
+class InstEvent(object):
+    ACTIONS = {
+        'create': {
+            'tl_event': ('AWS_EC2_Instance_CREATE', 'virtualMachines_write_EndRequest'),
+            'tl_category': 'Creation/Addition',
+            'db_event_type': ('AWS_EC2_Instance_CREATE', 'virtualMachines_write_EndRequest'),
+            'emit_cmd': '_create_vm'
+        },
+        'start': {
+            'tl_event': (
+                'AWS_API_CALL_StartInstances', 'AWS_EC2_Instance_running',
+                'virtualMachines_start_EndRequest'
+            ),
+            'tl_category': 'Power Activity',
+            'db_event_type': (
+                'AWS_EC2_Instance_running', 'virtualMachines_start_EndRequest'),
+            'emit_cmd': '_power_on'
+        },
+        'stop': {
+            'tl_event': (
+                'AWS_API_CALL_StopInstances', 'AWS_EC2_Instance_stopped',
+                'virtualMachines_deallocate_EndRequest'
+            ),
+            'tl_category': 'Power Activity',
+            'db_event_type': ('AWS_EC2_Instance_stopped', 'virtualMachines_deallocate_EndRequest'),
+            'emit_cmd': '_power_off'
+        },
+        'rename': {
+            'tl_event': 'AWS_EC2_Instance_UPDATE',
+            'tl_category': 'Creation/Addition',
+            'db_event_type': 'AWS_EC2_Instance_UPDATE',
+            'emit_cmd': '_rename_vm'
+        },
+        'delete': {
+            'tl_event': (
+                'virtualMachines_delete_EndRequest',
+                'AWS_EC2_Instance_DELETE',
+                'AWS_API_CALL_TerminateInstances',
+            ),
+            'tl_category': 'Deletion/Removal',
+            'db_event_type': (
+                'virtualMachines_delete_EndRequest',
+                'AWS_API_CALL_TerminateInstances'
+            ),
+            'emit_cmd': '_delete_vm'
+        },
+        'policy': {
+            'tl_event': ('vm_poweroff',),
+            'tl_category': 'VM Operation',
+            'emit_cmd': '_power_off_power_on'
+        },
+    }
 
-    Metadata:
-        test_flag: timelines, provision
-    """
-    wait_for(count_events, [new_instance, new_instance], timeout='5m', fail_condition=0,
-             message="events to appear")
+    def __init__(self, inst, event):
+        self.inst = inst
+        self.event = event
+        self.__dict__.update(self.ACTIONS[self.event])
+
+    def emit(self):
+        try:
+            emit_action = getattr(self, self.emit_cmd)
+            emit_action()
+        except AttributeError:
+            raise AttributeError('{} is not a valid key in ACTION. self: {}'.format(self.event,
+                                                                                    self.__dict__))
+
+    def _create_vm(self):
+        if not self.inst.provider.mgmt.does_vm_exist(self.inst.name):
+            self.inst.create_on_provider(allow_skip="default", find_in_cfme=True)
+        else:
+            logger.info('%r already exist on provider', self.inst.name)
+
+    def _power_on(self):
+        return self.inst.provider.mgmt.start_vm(self.inst.name)
+
+    def _power_off(self):
+        return self.inst.provider.mgmt.stop_vm(self.inst.name)
+
+    def _power_off_power_on(self):
+        return self._power_off() and self._power_on()
+
+    def _rename_vm(self):
+        logger.info('%r will be renamed', self.inst.name)
+        new_name = self.inst.provider.mgmt.set_name(self.inst.name,
+                                                    "{}-renamed".format(self.inst.name))
+        logger.info('%r new name is %r', self.inst.name, new_name)
+        self.inst.name = new_name
+        self.inst.provider.mgmt.restart_vm(self.inst.name)
+        self.inst.provider.refresh_provider_relationships()
+        self.inst.wait_to_appear()
+        return self.inst.name
+
+    def _delete_vm(self):
+        if self.inst.provider.mgmt.does_vm_exist(self.inst.name):
+            navigate_to(self.inst, 'Details')
+            logger.info('%r will be deleted', self.inst.name)
+            return self.inst.provider.mgmt.delete_vm(self.inst.name)
+
+        else:
+            logger.warn('%r is already not existing!', self.inst.name)
+
+    def _check_timelines(self, target, policy_events):
+        """Verify that the event is present in the timeline
+
+        Args:
+            target: A entity where a Timeline is present (Instance, Availability zone, Provider...)
+            policy_events: switch between the management event timeline and the policy timeline.
+        Returns:
+             The length of the array containing the event found on the Timeline of the target.
+        """
+
+        def _get_timeline_events(target, policy_events):
+            """Navigate to the timeline of the target and select the management timeline or the
+            policy timeline. Returns an array of the found events.
+            """
+
+            timelines_view = navigate_to(target, 'Timelines')
+
+            if isinstance(timelines_view, ServerDiagnosticsView):
+                timelines_view = timelines_view.timelines
+            timeline_filter = timelines_view.filter
+
+            if policy_events:
+                logger.info('Will search in Policy event timelines')
+                timelines_view.filter.event_type.select_by_visible_text('Policy Events')
+                timeline_filter.policy_event_category.select_by_visible_text(self.tl_category)
+                timeline_filter.policy_event_status.fill('Both')
+            else:
+                timeline_filter.detailed_events.fill(True)
+                for selected_option in timeline_filter.event_category.all_selected_options:
+                    timeline_filter.event_category.select_by_visible_text(selected_option)
+                timeline_filter.event_category.select_by_visible_text(self.tl_category)
+
+            timeline_filter.time_position.select_by_visible_text('centered')
+            timeline_filter.apply.click()
+            logger.info('Searching for event type: %r in timeline category: %r', self.event,
+                        self.tl_category)
+            return timelines_view.chart.get_events(self.tl_category)
+
+        events_list = _get_timeline_events(target, policy_events)
+        logger.debug('events_list: %r', str(events_list))
+
+        if not events_list:
+            self.inst.provider.refresh_provider_relationships()
+            logger.warn('Event list of %r is empty!', target)
+
+        found_events = []
+
+        for evt in events_list:
+            try:
+                if not policy_events:
+                    if evt.source_instance in self.inst.name and evt.event_type in self.tl_event:
+                        found_events.append(evt)
+                        break
+                else:
+                    if evt.event_type in self.tl_event and evt.target in self.inst.name:
+                        found_events.append(evt)
+                        break
+            except AttributeError as err:
+                logger.warn('Issue with TimelinesEvent: %r .Faulty event: %r', str(err), str(evt))
+                continue
+
+        logger.info('found events on %r: %s', target, "\n".join([repr(e) for e in found_events]))
+
+        return len(found_events)
+
+    def catch_in_timelines(self, soft_assert, targets, policy_events=False):
+        for target in targets:
+            try:
+                wait_for(self._check_timelines,
+                         [target, policy_events],
+                         timeout='7m',
+                         fail_condition=0)
+            except TimedOutError:
+                soft_assert(False, '0 occurrence of {evt} found on the timeline of {tgt}'.format(
+                    evt=self.event, tgt=target))
 
 
-@pytest.mark.meta(blockers=[BZ(1429962, forced_streams=["5.7"])])
-def test_cloud_diagnostic_timelines(gen_events, new_instance, mark_vm_as_appliance, appliance):
-    """Tests timelines on settings->diagnostics page
-
-    Metadata:
-        test_flag: timelines, provision
-    """
-    # go diagnostic timelines
-    wait_for(count_events, [appliance.server, new_instance], timeout='5m',
-             fail_condition=0, message="events to appear")
+def test_cloud_timeline_create_event(new_instance, soft_assert, azone):
+    targets = (new_instance, new_instance.provider, azone)
+    event = 'create'
+    inst_event = InstEvent(new_instance, event)
+    logger.info('Will generate event %r on machine %r', event, new_instance.name)
+    wait_for(inst_event.emit, timeout='9m', message='Event {} did timeout'.format(event))
+    inst_event.catch_in_timelines(soft_assert, targets)
 
 
-@pytest.mark.manual
-def test_policy_events():
-    pass
+@pytest.mark.meta(blockers=[BZ(1542962, forced_streams=['5.8'])])
+def test_cloud_timeline_policy_event(new_instance, control_policy, soft_assert):
+    event = 'policy'
+    targets = (new_instance, new_instance.provider)
+    inst_event = InstEvent(new_instance, event)
+    logger.info('Will generate event %r on machine %r', event, new_instance.name)
+    wait_for(inst_event.emit, timeout='9m', message='Event {} did timeout'.format(event))
+    inst_event.catch_in_timelines(soft_assert, targets, policy_events=True)
+
+
+def test_cloud_timeline_stop_event(new_instance, soft_assert, azone):
+    targets = (new_instance, new_instance.provider, azone)
+    event = 'stop'
+    inst_event = InstEvent(new_instance, event)
+    logger.info('Will generate event %r on machine %r', event, new_instance.name)
+    wait_for(inst_event.emit, timeout='7m', message='Event {} did timeout'.format(event))
+    inst_event.catch_in_timelines(soft_assert, targets)
+
+
+def test_cloud_timeline_start_event(new_instance, soft_assert, azone):
+    targets = (new_instance, new_instance.provider, azone)
+    event = 'start'
+    inst_event = InstEvent(new_instance, 'start')
+    logger.info('Will generate event %r on machine %r', event, new_instance.name)
+    wait_for(inst_event.emit, timeout='7m', message='Event {} did timeout'.format(event))
+    inst_event.catch_in_timelines(soft_assert, targets)
+
+
+def test_cloud_timeline_diagnostic(new_instance, mark_vm_as_appliance, soft_assert):
+    """Check Configuration/diagnostic/timelines. """
+    event = 'start'
+    targets = (new_instance.appliance.server,)
+    inst_event = InstEvent(new_instance, event)
+    logger.info('Will generate event %r on machine %r', event, new_instance.name)
+    inst_event.catch_in_timelines(soft_assert, targets)
+
+
+@pytest.mark.meta(blockers=[BZ(1537520, forced_streams=['5.8'])])
+@pytest.mark.provider([EC2Provider], override=True, scope='function')
+def test_cloud_timeline_rename_event(new_instance, soft_assert, azone):
+    event = 'rename'
+    targets = (new_instance, new_instance.provider, azone)
+    inst_event = InstEvent(new_instance, event)
+    logger.info('Will generate event %r on machine %r', event, new_instance.name)
+    wait_for(inst_event.emit, timeout='12m', message='Event {} did timeout'.format(event))
+    inst_event.catch_in_timelines(soft_assert, targets)
+
+
+@pytest.mark.uncollectif(lambda provider, appliance: provider.one_of(EC2Provider) and
+                         appliance.version < "5.9")
+def test_cloud_timeline_delete_event(new_instance, soft_assert, azone):
+    event = 'delete'
+    targets = (new_instance, new_instance.provider, azone)
+    inst_event = InstEvent(new_instance, event)
+    logger.info('Will generate event %r on machine %r', event, new_instance.name)
+    wait_for(inst_event.emit, timeout='9m', message='Event {} did timeout'.format(event))
+    inst_event.catch_in_timelines(soft_assert, targets)
