@@ -17,7 +17,6 @@ from widgetastic_manageiq import (
     BreadCrumb,
     Button,
     ItemsToolBarViewSelector,
-    PaginationPane,
     SummaryTable,
     TimelinesView,
     BaseNonInteractiveEntitiesView,
