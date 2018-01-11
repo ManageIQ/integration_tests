@@ -5,6 +5,10 @@ from utils.pretty import Pretty
 
 
 class Server(Navigatable, sentaku.Element):
+
+    def __hash__(self):
+        return self.sid
+
     def __init__(self, appliance, zone=None, name="EVM", sid=1):
         Navigatable.__init__(self, appliance=appliance)
         self.zone = zone or appliance.server.zone
@@ -44,7 +48,7 @@ class Zone(Pretty, Navigatable, sentaku.Element):
         self.region = region or self.appliance.server.zone.region
         self.name = name or "default"
         self.description = description or "Default Zone"
-        self.region.zones.add(self)
+        # self.region.zones.add(self)  # Shriver: Nothing useful about zones is hashable
 
         self.smartproxy_ip = smartproxy_ip
         self.ntp_servers = ntp_servers
