@@ -5,18 +5,18 @@ Whether we can create/update/delete/assign/... these objects. Nothing with deep 
 Can be also used as a unit-test for page model coverage.
 
 """
+import random
 from collections import namedtuple
+
 import fauxfactory
 import pytest
-import random
 
+from cfme import test_requirements
 from cfme.control.explorer import alert_profiles, conditions, policies
-
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 from cfme.utils.version import current_version
-from cfme.utils.blockers import BZ
-from cfme import test_requirements
 
 pytestmark = [
     pytest.mark.long_running,
@@ -385,6 +385,7 @@ def policy_and_condition(request, policy_collection, condition_collection):
     condition.delete()
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_condition_crud(condition_collection, condition_prerequisites):
     # CR
@@ -401,6 +402,7 @@ def test_condition_crud(condition_collection, condition_prerequisites):
     condition.delete()
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_action_crud(action_collection):
     # CR
@@ -416,6 +418,7 @@ def test_action_crud(action_collection):
     action.delete()
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_policy_crud(policy_collection, policy_class):
     # CR
@@ -471,6 +474,7 @@ def test_assign_condition_to_control_policy(request, policy_and_condition):
     assert policy.is_condition_assigned(condition)
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_policy_profile_crud(policy_profile_collection, two_random_policies):
     profile = policy_profile_collection.create(
@@ -493,6 +497,7 @@ def test_modify_condition_expression(condition_for_expressions, fill_type, expre
         condition_for_expressions.FIELD_VALUE)
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_alert_crud(alert_collection):
     # CR
@@ -516,6 +521,7 @@ def test_control_alert_copy(alert):
     alert_copy.delete()
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_alert_profile_crud(request, alert_profile_class, alert_collection,
         alert_profile_collection):

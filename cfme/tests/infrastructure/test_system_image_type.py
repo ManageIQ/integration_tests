@@ -9,6 +9,7 @@ from cfme.utils.update import update
 pytestmark = [pytest.mark.tier(3)]
 
 
+@pytest.mark.sauce
 def test_system_image_type_crud(appliance):
     """
     Tests a System Image Type using CRUD operations.

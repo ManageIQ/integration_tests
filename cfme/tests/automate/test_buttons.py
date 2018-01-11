@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+
 from cfme import test_requirements
 from cfme.automate.buttons import Button, ButtonGroup
 from cfme.infrastructure.provider import InfraProvider
@@ -8,7 +9,6 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 from markers.env_markers.provider import ONE
-
 
 pytestmark = [
     test_requirements.automate,
@@ -69,6 +69,7 @@ def test_button_group_crud(request):
 
 
 @pytest.mark.meta(blockers=[1143019, 1205235])
+@pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_button_crud(dialog, request):
     """Test Creating a Button

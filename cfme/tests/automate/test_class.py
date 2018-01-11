@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
-
 
 pytestmark = [test_requirements.automate]
 
@@ -39,6 +39,7 @@ def namespace(request, domain):
         )
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_class_crud(namespace):
     a_class = namespace.classes.create(
@@ -55,6 +56,7 @@ def test_class_crud(namespace):
     assert not a_class.exists
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1404788])
 def test_schema_crud(request, namespace):

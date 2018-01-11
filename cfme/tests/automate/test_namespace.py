@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme.automate.explorer.domain import DomainCollection
-
 from cfme.utils import error
 from cfme.utils.update import update
 
@@ -32,6 +31,7 @@ def parent_namespace(request, domain):
         )
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(1)
 def test_namespace_crud(request, parent_namespace):
     ns = parent_namespace.namespaces.create(

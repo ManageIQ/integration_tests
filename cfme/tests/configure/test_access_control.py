@@ -84,6 +84,7 @@ def check_item_visibility(tag):
 
 
 # User test cases
+@pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_user_crud(appliance, group_collection):
     group_name = 'EvmGroup-user'
@@ -303,6 +304,7 @@ def test_tagvis_user(user_restricted, check_item_visibility):
     check_item_visibility(user_restricted, user_restricted)
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(2)
 # Group test cases
 def test_group_crud(group_collection):
@@ -314,6 +316,7 @@ def test_group_crud(group_collection):
     group.delete()
 
 
+@pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_group_crud_with_tag(a_provider, category, tag, group_collection):
     """Test for verifying group create with tag defined
@@ -468,6 +471,7 @@ def test_tagvis_group(user_restricted, group_with_tag, check_item_visibility):
 
 
 # Role test cases
+@pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_role_crud(appliance):
     role = new_role(appliance)

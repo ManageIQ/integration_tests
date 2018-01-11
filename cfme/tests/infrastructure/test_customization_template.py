@@ -2,8 +2,8 @@
 import fauxfactory
 import pytest
 
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils import error
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
@@ -15,6 +15,7 @@ def collection(appliance):
     return appliance.collections.customization_templates
 
 
+@pytest.mark.sauce
 def test_customization_template_crud(collection):
     """Basic CRUD test for customization templates."""
 

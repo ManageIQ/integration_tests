@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-import pytest
 import fauxfactory
+import pytest
 
 from cfme import test_requirements
-from cfme.utils.update import update
-from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils import version
+from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.update import update
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
@@ -27,6 +27,7 @@ def create_dialog(appliance, element_data, label=None):
     return sd, element
 
 
+@pytest.mark.sauce
 def test_crud_service_dialog(appliance):
     element_data = {
         'element_information': {
