@@ -20,10 +20,12 @@ from widgetastic_manageiq import (
     PaginationPane,
     SummaryTable,
     TimelinesView,
-    BaseNonInteractiveEntitiesView
+    BaseNonInteractiveEntitiesView,
+    ManageIQTree
 )
 from widgetastic_patternfly import (
-    Dropdown
+    Dropdown,
+    Accordion
 )
 
 from cfme.base.login import BaseLoggedInPage
@@ -144,9 +146,9 @@ class PhysicalServerManagePoliciesView(BaseLoggedInPage):
     """PhysicalServer's Manage Policies view."""
     policies = BootstrapTreeview("protectbox")
     entities = View.nested(BaseNonInteractiveEntitiesView)
-    save_button = Button("Save")
-    reset_button = Button("Reset")
-    cancel_button = Button("Cancel")
+    save = Button("Save")
+    reset = Button("Reset")
+    cancel = Button("Cancel")
 
     @property
     def is_displayed(self):
@@ -166,7 +168,10 @@ class PhysicalServersToolbar(View):
 
 class PhysicalServerSideBar(View):
     """Represents left side bar. It usually contains navigation, filters, etc."""
-    pass
+
+    @View.nested
+    class filters(Accordion): # noqa
+        tree = ManageIQTree()
 
 
 class PhysicalServerEntitiesView(BaseEntitiesView):
@@ -179,10 +184,9 @@ class PhysicalServerEntitiesView(BaseEntitiesView):
 class PhysicalServersView(ComputePhysicalInfrastructureServersView):
     toolbar = View.nested(PhysicalServersToolbar)
     sidebar = View.nested(PhysicalServerSideBar)
-    paginator = PaginationPane()
     including_entities = View.include(PhysicalServerEntitiesView, use_parent=True)
 
     @property
     def is_displayed(self):
         return (self.in_compute_physical_infrastructure_servers and
-                self.title.text in "Physical Servers")
+                self.title.text == "Physical Servers")
