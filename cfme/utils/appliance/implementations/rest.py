@@ -2,6 +2,9 @@
 
 
 class ViaREST(object):
+
+    name = "REST"
+
     def __init__(self, owner):
         self.owner = owner
 

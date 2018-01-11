@@ -1,19 +1,18 @@
-from inspect import isclass
-import os
 import time
+from inspect import isclass
 
+import os
+from cached_property import cached_property
 from jsmin import jsmin
 from navmazing import Navigate, NavigateStep
 from selenium.common.exceptions import NoSuchElementException
 from widgetastic.browser import Browser, DefaultPlugin
 
-from cached_property import cached_property
-from fixtures.pytest_store import store
 from cfme import exceptions
 from cfme.utils.browser import manager
 from cfme.utils.log import logger, create_sublogger
 from cfme.utils.wait import wait_for
-
+from fixtures.pytest_store import store
 from . import Implementation
 
 
@@ -183,6 +182,9 @@ navigate_to = navigator.navigate
 
 
 class ViaSSUI(Implementation):
+
+    name = "SSUI"
+
     def __str__(self):
         return 'SSUI'
 
