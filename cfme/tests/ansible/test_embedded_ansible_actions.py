@@ -25,26 +25,6 @@ pytestmark = [
 ]
 
 
-ANSIBLE_ACTION_VALUES = [
-    (
-        "localhost",
-        {"inventory": {"localhost": True}}
-    ),
-    (
-        "manual_address",
-        {"inventory": {"specific_hosts": True, "hosts": None}}
-    ),
-    (
-        "target_machine",
-        {"inventory": {"target_machine": True}}
-    ),
-    (
-        "unavailable_address",
-        {"inventory": {"specific_hosts": True, "hosts": "unavailable_address"}}
-    )
-]
-
-
 @pytest.fixture(scope="module")
 def wait_for_ansible(appliance):
     appliance.server.settings.enable_server_roles("embedded_ansible")
@@ -92,7 +72,7 @@ def ansible_catalog_item(ansible_repository):
 
 
 @pytest.yield_fixture(scope="module")
-def vmware_vm(full_template_modscope, provider):
+def vmware_vm(full_template_modscope, provider, setup_provider_modscope):
     vm_obj = VM.factory(random_vm_name("ansible"), provider,
                         template_name=full_template_modscope.name)
     vm_obj.create_on_provider(allow_skip="default")
@@ -153,7 +133,7 @@ def policy_for_testing(appliance, vmware_vm, provider, ansible_action):
 
 
 @pytest.yield_fixture(scope="module")
-def ansible_credential(appliance, full_template_modscope):
+def ansible_credential(wait_for_ansible, appliance, full_template_modscope):
     credential = appliance.collections.ansible_credentials.create(
         fauxfactory.gen_alpha(),
         "Machine",
@@ -186,38 +166,78 @@ def service(appliance, ansible_catalog_item):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.parametrize("host_type,inventory", ANSIBLE_ACTION_VALUES, ids=[
-    value[0] for value in ANSIBLE_ACTION_VALUES])
-def test_action_run_ansible_playbook(request, ansible_catalog_item, ansible_action,
-        policy_for_testing, vmware_vm, ansible_credential, service_request, service, host_type,
-        inventory):
-    """Tests a policy with ansible playbook action against localhost, manual address,
-       target machine and unavailable address.
+def test_action_run_ansible_playbook_localhost(request, ansible_catalog_item, ansible_action,
+        policy_for_testing, vmware_vm, ansible_credential, service_request, service):
+    """Tests a policy with ansible playbook action against localhost.
     """
-    if host_type == "manual_address":
-        inventory["inventory"]["hosts"] = vmware_vm.ip_address
-    if host_type in ["manual_address", "target_machine"]:
-        with update(ansible_catalog_item):
-            ansible_catalog_item.provisioning = {"machine_credential": ansible_credential.name}
     with update(ansible_action):
-        ansible_action.run_ansible_playbook = inventory
+        ansible_action.run_ansible_playbook = {"inventory": {"localhost": True}}
     vmware_vm.add_tag("Service Level", "Gold")
     request.addfinalizer(lambda: vmware_vm.remove_tag("Service Level", "Gold"))
     wait_for(service_request.exists, num_sec=600)
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
-    if host_type == "localhost":
-        assert view.provisioning.details.get_text_of("Hosts") == "localhost"
-        assert view.provisioning.results.get_text_of("Status") == "successful"
-    elif host_type == "manual_address":
-        assert view.provisioning.details.get_text_of("Hosts") == vmware_vm.ip_address
-        assert view.provisioning.results.get_text_of("Status") == "successful"
-    elif host_type == "target_machine":
-        assert view.provisioning.details.get_text_of("Hosts") == vmware_vm.ip_address
-        assert view.provisioning.results.get_text_of("Status") == "successful"
-    elif host_type == "unavailable_address":
-        assert view.provisioning.details.get_text_of("Hosts") == "unavailable_address"
-        assert view.provisioning.results.get_text_of("Status") == "failed"
+    assert view.provisioning.details.get_text_of("Hosts") == "localhost"
+    assert view.provisioning.results.get_text_of("Status") == "successful"
+
+
+@pytest.mark.tier(3)
+def test_action_run_ansible_playbook_manual_address(request, ansible_catalog_item, ansible_action,
+        policy_for_testing, vmware_vm, ansible_credential, service_request, service):
+    """Tests a policy with ansible playbook action against manual address."""
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {"machine_credential": ansible_credential.name}
+    with update(ansible_action):
+        ansible_action.run_ansible_playbook = {
+            "inventory": {
+                "specific_hosts": True,
+                "hosts": vmware_vm.ip_address
+            }
+        }
+    vmware_vm.add_tag("Service Level", "Gold")
+    request.addfinalizer(lambda: vmware_vm.remove_tag("Service Level", "Gold"))
+    wait_for(service_request.exists, num_sec=600)
+    service_request.wait_for_request()
+    view = navigate_to(service, "Details")
+    assert view.provisioning.details.get_text_of("Hosts") == vmware_vm.ip_address
+    assert view.provisioning.results.get_text_of("Status") == "successful"
+
+
+@pytest.mark.tier(3)
+def test_action_run_ansible_playbook_target_machine(request, ansible_catalog_item, ansible_action,
+        policy_for_testing, vmware_vm, ansible_credential, service_request, service):
+    """Tests a policy with ansible playbook action against target machine."""
+    with update(ansible_action):
+        ansible_action.run_ansible_playbook = {"inventory": {"target_machine": True}}
+    vmware_vm.add_tag("Service Level", "Gold")
+    request.addfinalizer(lambda: vmware_vm.remove_tag("Service Level", "Gold"))
+    wait_for(service_request.exists, num_sec=600)
+    service_request.wait_for_request()
+    view = navigate_to(service, "Details")
+    assert view.provisioning.details.get_text_of("Hosts") == vmware_vm.ip_address
+    assert view.provisioning.results.get_text_of("Status") == "successful"
+
+
+@pytest.mark.tier(3)
+def test_action_run_ansible_playbook_unavailable_address(request, ansible_catalog_item, vmware_vm,
+        ansible_action, policy_for_testing, ansible_credential, service_request, service):
+    """Tests a policy with ansible playbook action against unavailable address."""
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {"machine_credential": ansible_credential.name}
+    with update(ansible_action):
+        ansible_action.run_ansible_playbook = {
+            "inventory": {
+                "specific_hosts": True,
+                "hosts": "unavailable_address"
+            }
+        }
+    vmware_vm.add_tag("Service Level", "Gold")
+    request.addfinalizer(lambda: vmware_vm.remove_tag("Service Level", "Gold"))
+    wait_for(service_request.exists, num_sec=600)
+    service_request.wait_for_request()
+    view = navigate_to(service, "Details")
+    assert view.provisioning.details.get_text_of("Hosts") == "unavailable_address"
+    assert view.provisioning.results.get_text_of("Status") == "failed"
 
 
 @pytest.mark.tier(3)
