@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+import six
 
 from copy import copy
 
@@ -8,7 +9,6 @@ from cfme.configure.settings import Visual
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.infrastructure import virtual_machines as vms  # NOQA
 from cfme.infrastructure.datastore import DatastoreCollection
-from cfme.infrastructure.host import HostCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -26,7 +26,7 @@ def visual(appliance):
     return Visual(appliance=appliance)
 
 
-@pytest.fixture(scope='module', params=[DatastoreCollection, HostCollection, InfraProvider, vms.Vm])
+@pytest.fixture(scope='module', params=['datastores', 'hosts', InfraProvider, vms.Vm])
 def page(request):
     return request.param
 
@@ -136,8 +136,8 @@ def test_infra_grid_page_per_item(visual, request, page, value, set_grid, applia
     Metadata:
         test_flag: visuals
     """
-    if issubclass(page, BaseCollection):
-        page = page(appliance)
+    if isinstance(page, six.string_types):
+        page = getattr(appliance.collections, page)
     if visual.grid_view_limit != value:
         visual.grid_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
@@ -158,8 +158,8 @@ def test_infra_tile_page_per_item(visual, request, page, value, set_tile, applia
     Metadata:
         test_flag: visuals
     """
-    if issubclass(page, BaseCollection):
-        page = page(appliance)
+    if isinstance(page, six.string_types):
+        page = getattr(appliance.collections, page)
     if visual.tile_view_limit != value:
         visual.tile_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
@@ -180,8 +180,8 @@ def test_infra_list_page_per_item(visual, request, page, value, set_list, applia
     Metadata:
         test_flag: visuals
     """
-    if issubclass(page, BaseCollection):
-        page = page(appliance)
+    if isinstance(page, six.string_types):
+        page = getattr(appliance.collections, page)
     if visual.list_view_limit != value:
         visual.list_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
