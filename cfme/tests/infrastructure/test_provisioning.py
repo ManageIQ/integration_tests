@@ -115,8 +115,8 @@ def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_t
             'num_vms': '2'
         },
         'environment': {
-            'host_name': {'name': provisioning['host']},
-            'datastore_name': {'name': provisioning['datastore']}
+            'host_name': {'name': host},
+            'datastore_name': {'name': datastore}
         },
         'network': {
             'vlan': partial_match(provisioning['vlan'])
@@ -132,15 +132,16 @@ def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_t
         len(filter(
             lambda mail:
             "your request for a new vms was not autoapproved" in normalize_text(mail["subject"]),
-            smtp_test.get_emails())) > 0,
+            smtp_test.get_emails())) == 1,
         num_sec=90, delay=5)
     wait_for(
         lambda:
         len(filter(
             lambda mail:
             "virtual machine request was not approved" in normalize_text(mail["subject"]),
-            smtp_test.get_emails())) > 0,
+            smtp_test.get_emails())) == 1,
         num_sec=90, delay=5)
+    smtp_test.clear_database()
 
     cells = {'Description': 'Provision from [{}] to [{}###]'.format(template, vm_name)}
     provision_request = appliance.collections.requests.instantiate(cells=cells)
@@ -166,8 +167,9 @@ def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_t
         len(filter(
             lambda mail:
             "your virtual machine configuration was approved" in normalize_text(mail["subject"]),
-            smtp_test.get_emails())) > 0,
+            smtp_test.get_emails())) == 1,
         num_sec=120, delay=5)
+    smtp_test.clear_database()
 
     # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
     logger.info('Waiting for vms %s to appear on provider %s', ", ".join(vm_names), provider.key)
@@ -187,5 +189,4 @@ def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_t
                 in normalize_text(mail["subject"]),
                 smtp_test.get_emails())) == len(vm_names)
         )
-
     wait_for(verify, message="email receive check", delay=5)
