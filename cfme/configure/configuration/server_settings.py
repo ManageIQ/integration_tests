@@ -24,9 +24,9 @@ class ServerInformationView(View):
     reset = Button('Reset')
 
     @View.nested
-    class basic_information(View):    # noqa
+    class basic_information(View):  # noqa
         """ Class represents Server Basic Information Form """
-
+        hostname = Text(locator='.//label[normalize-space(.)="Hostname"]/../div')
         company_name = Input(name='server_company')
         appliance_name = Input(name='server_name')
         appliance_zone = BootstrapSelect(id='server_zone')
@@ -34,7 +34,7 @@ class ServerInformationView(View):
         locale = BootstrapSelect(id='locale')
 
     @View.nested
-    class server_roles(View):   # noqa
+    class server_roles(View):  # noqa
         """ Class represents Server Roles Form """
 
         embedded_ansible = BootstrapSwitch(name='server_roles_embedded_ansible')
@@ -71,13 +71,13 @@ class ServerInformationView(View):
             "//label[contains(text(), 'Default Repository SmartProxy')]/following-sibling::div")
 
     @View.nested
-    class vmware_console(View):    # noqa
+    class vmware_console(View):  # noqa
         """ Class represents Server VWware Console Support Form """
 
         console_type = BootstrapSelect("console_type")
 
     @View.nested
-    class ntp_servers(View):    # noqa
+    class ntp_servers(View):  # noqa
         """ Class represents Server VWware Console Support Form """
 
         ntp_server_1 = Input(name="ntp_server_1")
@@ -85,7 +85,7 @@ class ServerInformationView(View):
         ntp_server_3 = Input(name="ntp_server_3")
 
     @View.nested
-    class smtp_server(View):    # noqa
+    class smtp_server(View):  # noqa
         """ Class represents SMTP Server Form """
 
         host = Input("smtp_host")
@@ -101,20 +101,20 @@ class ServerInformationView(View):
         verify = Button('Verify')
 
     @View.nested
-    class web_services(View):   # noqa
+    class web_services(View):  # noqa
         """ Class represents Server WebServices Form """
 
         mode = BootstrapSelect(id='webservices_mode')
         security = BootstrapSelect(id='webservices_security')
 
     @View.nested
-    class logging_form(View):   # noqa
+    class logging_form(View):  # noqa
         """ Class represents Server Logging Form """
 
         log_level = BootstrapSelect(id='log_level')
 
     @View.nested
-    class custom_support_url(View):   # noqa
+    class custom_support_url(View):  # noqa
         """ Class represents Server Custom Support URL Form """
 
         url = Input(name='custom_support_url')
@@ -197,7 +197,8 @@ class ServerInformation(Updateable, Pretty):
                     'storage_metrics_coordinator', 'storage_inventory', 'vmdb_storage_bridge',
                     'cockpit_ws')
 
-    _basic_information = ['company_name', 'appliance_name', 'appliance_zone', 'time_zone', 'locale']
+    _basic_information = ['hostname', 'company_name', 'appliance_name', 'appliance_zone',
+                          'time_zone', 'locale']
     _vmware_console = ['console_type']
     _ntp_servers = ['ntp_server_1', 'ntp_server_2', 'ntp_server_3']
     _smtp_server = ['host', 'port', 'domain', 'start_tls', 'ssl_verify', 'auth', 'username',

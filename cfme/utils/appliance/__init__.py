@@ -1821,6 +1821,14 @@ class IPAppliance(object):
                 miq_servers.id).filter(miq_servers.guid == self.guid)[0][0]
 
     @property
+    def fqdn(self):
+        """fqdn from appliance_console
+        This should likely be 'hostname' as that is what its called on the appliance
+        Currently hostname attribute holds IP addr
+        """
+        return self.server.settings.basic_information_values.get('hostname')  # None if empty
+
+    @property
     def server_roles(self):
         """Return a dictionary of server roles from database"""
         asr = self.db.client['assigned_server_roles']
