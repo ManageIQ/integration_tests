@@ -340,3 +340,7 @@ class RBACOperationBlocked(CFMEException):
     permissions. Also thrown when trying to perform actions CRUD operations on roles/groups/users
     that are CFME defaults
     """
+
+
+class ChargebackRateNotFound(CFMEException):
+    """Raised when a given chargeback (compute or storage) rate is not found during navigation"""
