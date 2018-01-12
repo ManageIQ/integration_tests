@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """A model of an Infrastructure PhysicalServer in CFME."""
 import attr
-
 from navmazing import NavigateToSibling, NavigateToAttribute
-
 from cfme.common import PolicyProfileAssignable, WidgetasticTaggable
 from cfme.common.physical_server_views import (
     PhysicalServerDetailsView,
@@ -11,7 +9,6 @@ from cfme.common.physical_server_views import (
     PhysicalServersView,
     PhysicalServerTimelinesView
 )
-
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseEntity, BaseCollection
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
@@ -69,11 +66,12 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
         view = navigate_to(self, "Details")
         view.toolbar.power.item_select("Power Off", handle_alert=True)
 
-    def get_power_state(self):
+    @property
+    def power_state(self):
         return self.get_detail("Properties", "Power State")
 
     def refresh(self, cancel=False):
-        """Perform 'Refresh Relationships and Power States' for the host.
+        """Perform 'Refresh Relationships and Power States' for the server.
 
         Args:
             cancel (bool): Whether the action should be cancelled, default to False
@@ -84,7 +82,7 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
 
     def wait_for_physical_server_state_change(self, desired_state, timeout=300):
         """Wait for PhysicalServer to come to desired state. This function waits just the needed amount of
-        time thanks to wait_for.
+           time thanks to wait_for.
 
         Args:
             desired_state (str): 'on' or 'off'
@@ -96,11 +94,7 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
             entity = view.entities.get_entity(name=self.name)
             return "currentstate-{}".format(desired_state) in entity.data['state']
 
-        return wait_for(
-            _looking_for_state_change,
-            fail_func=view.browser.refresh,
-            num_sec=timeout
-        )
+        wait_for(_looking_for_state_change, fail_func=view.browser.refresh, num_sec=timeout)
 
     def get_detail(self, title, field):
         """Gets details from the details summary tables.
@@ -136,9 +130,9 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
             return self.db_id
 
     def wait_to_appear(self):
-        """Waits for the host to appear in the UI."""
+        """Waits for the server to appear in the UI."""
         view = navigate_to(self.parent, "All")
-        logger.info("Waiting for the host to appear...")
+        logger.info("Waiting for the server to appear...")
         wait_for(
             lambda: self.exists,
             message="Wait for the server to appear",
@@ -147,9 +141,9 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
         )
 
     def wait_for_delete(self):
-        """Waits for the host to remove from the UI."""
+        """Waits for the server to remove from the UI."""
         view = navigate_to(self.parent, "All")
-        logger.info("Waiting for a host to delete...")
+        logger.info("Waiting for the server to delete...")
         wait_for(
             lambda: not self.exists,
             message="Wait for the server to disappear",
