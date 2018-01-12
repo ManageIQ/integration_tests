@@ -309,9 +309,9 @@ def test_service_ansible_playbook_plays_table(ansible_catalog_item, service_cata
     service_catalog.order()
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
-    soft_assert(len(view.provisioning.plays.fields) > 1, "Plays table in provisioning tab is empty")
+    soft_assert(view.provisioning.plays.row_count > 1, "Plays table in provisioning tab is empty")
     service.retire()
-    soft_assert(len(view.retirement.plays.fields) > 1, "Plays table in retirement tab is empty")
+    soft_assert(view.provisioning.plays.row_count > 1, "Plays table in retirement tab is empty")
 
 
 @pytest.mark.tier(3)
