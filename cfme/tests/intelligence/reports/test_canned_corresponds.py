@@ -18,6 +18,15 @@ pytestmark = [
 ]
 
 
+def compare(db_item, report_item):
+    """If one of the item is unfilled, check that the other item is as well.
+    If not, check that they contain the same information."""
+    if db_item is not None or report_item != '':
+        return db_item.encode('utf8') == report_item
+    else:
+        return db_item is None and report_item == ''
+
+
 def test_providers_summary(soft_assert):
     """Checks some informations about the provider. Does not check memory/frequency as there is
     presence of units and rounding."""
@@ -85,7 +94,6 @@ def test_cluster_relationships(soft_assert):
 
 @pytest.mark.meta(blockers=[BZ(1504010, forced_streams=['5.7', '5.8', 'upstream'])])
 def test_operations_vm_on(soft_assert, appliance):
-
     adb = appliance.db.client
     vms = adb['vms']
     hosts = adb['hosts']
@@ -99,27 +107,25 @@ def test_operations_vm_on(soft_assert, appliance):
         vms.location.label('vm_location'),
         vms.last_scan_on.label('vm_last_scan'),
         storages.name.label('storages_name'),
-        hosts.name.label('hosts_name')).join(
-            hosts, vms.host_id == hosts.id).join(
+        hosts.name.label('hosts_name')).outerjoin(
+            hosts, vms.host_id == hosts.id).outerjoin(
                 storages, vms.storage_id == storages.id).filter(
                     vms.power_state == 'on').order_by(vms.name).all()
-
     assert len(vms_in_db) == len(list(report.data.rows))
     vm_names = [vm.vm_name for vm in vms_in_db]
     for vm in vms_in_db:
         # Following check is based on BZ 1504010
         assert vm_names.count(vm.vm_name) == 1, \
             'There is a duplicate entry in DB for VM {}'.format(vm.vm_name)
-        store_path = '{}/{}'.format(vm.storages_name.encode('utf8'),
-                                    vm.vm_location.encode('utf8'))
+        store_path = vm.vm_location.encode('utf8')
+        if vm.storages_name:
+            store_path = '{}/{}'.format(vm.storages_name.encode('utf8'), store_path)
         for item in report.data.rows:
             if vm.vm_name.encode('utf8') == item['VM Name']:
-                assert vm.hosts_name.encode('utf8') == item['Host']
-                assert vm.storages_name.encode('utf8') == item['Datastore']
-                assert store_path == item['Datastore Path']
-                assert (str(vm.vm_last_scan).encode('utf8') == item['Last Analysis Time'] or
-                 (str(vm.vm_last_scan).encode('utf8') == 'None' and
-                 item['Last Analysis Time'] == ''))
+                assert compare(vm.hosts_name, item['Host'])
+                assert compare(vm.storages_name, item['Datastore'])
+                assert compare(store_path, item['Datastore Path'])
+                assert compare(vm.vm_last_scan, item['Last Analysis Time'])
 
 
 def test_datastores_summary(soft_assert, appliance):
