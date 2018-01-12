@@ -78,7 +78,7 @@ def pxe_server(appliance, provider):
 def pxe_cust_template(appliance, provider):
     provisioning_data = provider.data['provisioning']
     pxe_cust_template = provisioning_data['pxe_kickstart']
-    return get_template_from_config(pxe_cust_template, appliance=appliance)
+    return get_template_from_config(pxe_cust_template, create=True, appliance=appliance)
 
 
 @pytest.fixture(scope="function")
@@ -87,8 +87,6 @@ def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
         pxe_server.create()
 
     pxe_server.set_pxe_image_type(provisioning['pxe_image'], provisioning['pxe_image_type'])
-    if not pxe_cust_template.exists():
-        pxe_cust_template.create()
 
 
 @pytest.fixture(scope="function")
