@@ -36,7 +36,7 @@ def temp_appliance_extended_db(temp_appliance_preconfig):
 
 @pytest.fixture(scope="function")
 def temp_appliance_remote(temp_appliance_preconfig_funcscope):
-    '''Needed for db_migrate_replication as you can't drop a remote db due to subscription'''
+    """Needed for db_migrate_replication as you can't drop a remote db due to subscription"""
     app = temp_appliance_preconfig_funcscope
     app.evmserverd.stop()
     app.db.extend_partition()
@@ -252,7 +252,7 @@ def test_db_migrate_replication(app_creds, temp_appliance_remote, dbversion,
     app2.add_pglogical_replication_subscription(app.hostname)
 
     def is_provider_replicated(app, app2):
-        assert set(app.managed_provider_names) == set(app2.managed_provider_names)
+        return set(app.managed_provider_names) == set(app2.managed_provider_names)
     wait_for(is_provider_replicated, func_args=[app, app2], timeout=30)
 
 
