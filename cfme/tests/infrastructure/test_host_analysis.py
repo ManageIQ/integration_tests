@@ -75,12 +75,6 @@ def test_run_host_analysis(setup_provider_modscope, provider, host_type, host_na
         soft_assert(host_with_credentials.get_detail('Configuration', 'Services') != '0',
                     'No services found in host detail')
 
-    view = navigate_to(host_with_credentials, 'Details')
-    view.security_accordion.navigation.select('Firewall Rules')
-    # Page get updated if rules value is not 0, and title is updated
-    soft_assert("(Firewall Rules)" in view.title.text, (
-        "No firewall rules found in host detail"))
-
     if host_type in ('rhel', 'rhev'):
         soft_assert(host_with_credentials.get_detail('Configuration', 'Packages') != '0',
                     'No packages found in host detail')
@@ -90,3 +84,8 @@ def test_run_host_analysis(setup_provider_modscope, provider, host_type, host_na
     elif host_type in ('esx', 'esxi'):
         soft_assert(host_with_credentials.get_detail('Configuration', 'Advanced Settings') != '0',
                     'No advanced settings found in host detail')
+        view = navigate_to(host_with_credentials, 'Details')
+        view.security_accordion.navigation.select('Firewall Rules')
+        # Page get updated if rules value is not 0, and title is update
+        soft_assert("(Firewall Rules)" in view.title.text, (
+            "No firewall rules found in host detail"))
