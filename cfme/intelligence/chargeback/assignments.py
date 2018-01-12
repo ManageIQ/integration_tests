@@ -91,16 +91,16 @@ class Assign(Updateable, Pretty, Navigatable):
         was_change = self._fill(view)
         if was_change:
             view.save_button.click()
-        view.flash.assert_no_error()
-        view.flash.assert_message('Rate Assignments saved')
+            view.flash.assert_no_error()
+            view.flash.assert_message('Rate Assignments saved')
 
     def computeassign(self):
         view = navigate_to(self, 'Compute')
         was_change = self._fill(view)
         if was_change:
             view.save_button.click()
-        view.flash.assert_no_error()
-        view.flash.assert_message('Rate Assignments saved')
+            view.flash.assert_no_error()
+            view.flash.assert_message('Rate Assignments saved')
 
     def _fill(self, view):
         """This function prepares the values and fills the form."""
