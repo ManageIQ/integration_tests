@@ -3,17 +3,17 @@ import pytest
 
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.physical.physical_server import PhysicalServerCollection
 from cfme.physical.provider.lenovo import LenovoProvider
-from cfme import test_requirements
 
 pytestmark = [pytest.mark.tier(3)]
 
 pytest_generate_tests = testgen.generate([LenovoProvider], scope="module")
 
+
 @pytest.fixture(scope="module")
 def physical_server_collection(appliance):
     return appliance.collections.physical_servers
+
 
 def test_physical_server_details(physical_server_collection, provider):
     """Navigate to the physical server details page and verify that the page is displayed"""
@@ -24,7 +24,7 @@ def test_physical_server_details(physical_server_collection, provider):
 
 
 def test_physical_server_details_dropdowns(physical_server_collection, provider):
-    """Navigate to the physical server details page and verify that the dropdown menus are present"""
+    """Navigate to the physical server details page and verify that the menus are present"""
     physical_servers = physical_server_collection.all(provider)
     physical_server = physical_servers[0]
     physical_server_view = navigate_to(physical_server, 'Details')
