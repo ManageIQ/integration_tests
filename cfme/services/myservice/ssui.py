@@ -66,7 +66,7 @@ class SetOwnershipForm(MyServicesView):
 
 
 class EditMyServiceView(ServiceEditForm):
-    title = Text(locator='//li[@class="active"]')
+    title = Text(locator='//h4[@id="myModalLabel"]')
 
     save_button = Button('Save')
     reset_button = Button('Reset')
@@ -109,7 +109,9 @@ class TagPageView(TagForm):
     def is_displayed(self):
         return (
             self.in_myservices and
-            self.title.text == 'Edit Tags')
+            self.title.text == 'Edit Tags' and
+            self.tag_category.is_displayed and
+            self.tag_name.is_displayed)
 
 
 class RemoveServiceView(MyServicesView):
@@ -140,14 +142,10 @@ class RetireServiceView(MyServicesView):
 
 @MiqImplementationContext.external_for(MyService.update, ViaSSUI)
 def update(self, updates):
-    view = navigate_to(self, 'Edit')
+    view = navigate_to(self, 'Edit', wait_for_view=True)
     view.fill_with(updates, on_change=view.save_button, no_change=view.cancel_button)
     view.flash.assert_no_error()
     view = self.create_view(DetailsMyServiceView, override=updates)
-    wait_for(
-        lambda: view.is_displayed, delay=15, num_sec=300,
-        message="waiting for view to be displayed"
-    )
     # TODO - remove sleep when BZ 1518954 is fixed
     time.sleep(10)
     assert view.notification.assert_message(
@@ -156,11 +154,7 @@ def update(self, updates):
 
 @MiqImplementationContext.external_for(MyService.set_ownership, ViaSSUI)
 def set_ownership(self, owner, group):
-    view = navigate_to(self, 'SetOwnership')
-    wait_for(
-        lambda: view.select_owner.is_displayed, delay=5, num_sec=300,
-        message="waiting for view to be displayed"
-    )
+    view = navigate_to(self, 'SetOwnership', wait_for_view=True)
     view.fill({'select_owner': owner,
                'select_group': group})
     view.save_button.click()
@@ -177,11 +171,7 @@ def set_ownership(self, owner, group):
 
 @MiqImplementationContext.external_for(MyService.edit_tags, ViaSSUI)
 def edit_tags(self, tag, value):
-    view = navigate_to(self, 'EditTagsFromDetails')
-    wait_for(
-        lambda: view.tag_category.is_displayed, delay=15, num_sec=300,
-        message="waiting for view to be displayed"
-    )
+    view = navigate_to(self, 'EditTagsFromDetails', wait_for_view=True)
     view.fill({'tag_category': tag,
                'tag_name': value})
     view.add_tag.click()
@@ -238,6 +228,7 @@ def retire(self):
     # TODO - remove sleep when BZ 1518954 is fixed
     time.sleep(10)
     assert view.notification.assert_message("{} was retired.".format(self.name))
+
 
 @navigator.register(MyService, 'All')
 class MyServiceAll(SSUINavigateStep):
