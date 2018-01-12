@@ -33,7 +33,7 @@ numpy>=1.13.1
 matplotlib>=1.5.1
 paramiko
 parsedatetime
-pdfminer3k
+pdfminer.six
 progress
 py
 pycrypto
@@ -57,7 +57,6 @@ selenium<3.0.0
 shyaml
 slumber
 sqlalchemy
-suds-jurko
 tabulate==0.7.7
 tornado
 tzlocal
