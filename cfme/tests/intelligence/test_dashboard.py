@@ -33,7 +33,7 @@ def widgets(dashboards):
     dashboards.default.collections.widgets.reset()
 
 
-@pytest.mark.meta(blockers=[1476305])
+@pytest.mark.meta(blockers=[BZ(1533792, forced_streams=['5.9'])])
 def test_widgets_operation(dashboards, widgets, soft_assert, infra_provider):
     # We need to make sure the widgets have some data.
     wait_for(
