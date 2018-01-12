@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from copy import copy
 
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Text, Checkbox, View, ConditionalSwitchableView
 from widgetastic_patternfly import Input, Button, BootstrapSelect, BootstrapSwitch, FlashMessages
 
@@ -554,20 +555,21 @@ class ServerAuthenticationView(View):
         auth_settings.register('Amazon', widget=AmazonAuthenticationView)
         auth_settings.register('External (httpd)', widget=ExternalAuthenticationView)
 
+        def before_fill(self, values):
+            """Select the auth mode first"""
+            new_mode = values.pop('auth_mode')
+            if new_mode:
+                # view context's object is a Server, if no AUTH_MODE_MAP match is found use
+                # passed value
+                mapped_mode = AuthenticationSetting.mode_map.get(new_mode.capitalize(), new_mode)
+                self.auth_mode.fill(mapped_mode)
+
     @property
     def is_displayed(self):
         """should be paired with a ServerView.in_server_settings in a nav.am_i_here"""
         return (
             self.form.auth_mode.is_displayed and
             self.title.text == 'Authentication')
-
-    def before_fill(self, values):
-        """Select the auth mode first"""
-        new_mode = values.get('auth_mode')
-        if new_mode:
-            # view context's object is a Server, if no AUTH_MODE_MAP match is found use passed value
-            self.form.auth_mode.fill(
-                self.context['object'].authentication.AUTH_MODE_MAP.get(new_mode, new_mode))
 
 
 class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
@@ -586,7 +588,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
         'dn-uid': 'Distinguished Name (UID=<user>)'
     }
 
-    AUTH_MODE_MAP = {
+    mode_map = {
         'Database': 'Database',
         'Ldap': 'LDAP',
         'Ldaps': 'LDAPS',
@@ -594,9 +596,25 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
         'External': 'External (httpd)'
     }
 
-    def __init__(self, appliance, auth_mode=None):
-        self.auth_mode = auth_mode or 'Database'
+    def __init__(self, appliance):
         self.appliance = appliance
+
+    @property
+    def auth_mode(self):
+        """Check UI confiuration of auth mode"""
+        view = navigate_to(self.appliance.server, 'Authentication', wait_for_view=True)
+        return view.form.auth_mode.read()
+
+    @auth_mode.setter
+    def auth_mode(self, new_mode):
+        """Set the auth mode to Database or external with no other args"""
+        if new_mode.capitalize() not in ['Database', 'External']:
+            raise ValueError('Setting auth_mode directly only allows for Database and External')
+        else:
+            view = navigate_to(self.appliance.server, 'Authentication', wait_for_view=True)
+            changed = view.form.auth_mode.fill(self.AUTH_MODE_MAP.get(new_mode.capitalize()))
+            if changed:
+                view.save.click()
 
     def set_session_timeout(self, hours=None, minutes=None):
         """
@@ -640,7 +658,6 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
                 ex. auth_settings.set_auth_mode(
                 reset= True, mode='Amazon', access_key=key, secret_key=secret_key)
         """
-        self.auth_mode = auth_mode
         fill_data = {'auth_mode': auth_mode}
         settings = {}  # for auth_settings
         if kwargs and auth_mode != 'Database':
@@ -669,16 +686,28 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
             logger.info('Authentication form reset, returning')
             return
         elif changed:
-            if self.auth_mode == 'Amazon':
+            if self.auth_mode in ['Amazon', 'Ldap', 'Ldaps']:
                 view.form.auth_settings.validate.click()
                 view.flash.assert_no_error()
-
-            view.save.click()
-            # TODO move this flash message assert into test and only assert no error
-            flash_message = (
-                'Authentication settings saved for {} Server "{} [{}]" in Zone "{}"'.format(
-                    self.appliance.product_name, self.appliance.server.name,
-                    self.appliance.server.sid, self.appliance.server.zone.name))
-            view.flash.assert_message(flash_message)
+            # FIXME BZ 1527239 This button goes disabled if a password field is 'changed' to same
+            # on exception, log and continue
+            # no exception - assert flash messages
+            # all cases - assert no flash error
+            try:
+                view.save.click()
+            except NoSuchElementException:
+                logger.exception('NoSuchElementException when trying to save auth settings. BZ '
+                                 '1527239 prevents consistent form saving. Assuming auth settings '
+                                 'unchanged')
+                pass
+            else:
+                # TODO move this flash message assert into test and only assert no error
+                flash_message = (
+                    'Authentication settings saved for {} Server "{} [{}]" in Zone "{}"'.format(
+                        self.appliance.product_name, self.appliance.server.name,
+                        self.appliance.server.sid, self.appliance.server.zone.name))
+                view.flash.assert_success_message(flash_message)
+            finally:
+                view.flash.assert_no_error()
         else:
             logger.info('No authentication settings changed, not saving form.')

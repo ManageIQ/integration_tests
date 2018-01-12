@@ -6,6 +6,15 @@ from cfme.utils.ext_auth import (disable_external_auth_ipa, disable_external_aut
     setup_external_auth_ipa, setup_external_auth_openldap)
 
 
+def get_auth_settings(appliance):
+    """Grab the authentication settings from the UI form, popping the title widget content out"""
+    settings = {}
+    settings['auth_mode'] = appliance.server.authentication.auth_mode
+    settings['auth_settings'] = appliance.server.authentication.auth_settings
+    settings['auth_settings'].pop('title')
+    return settings
+
+
 @pytest.fixture(scope='session')
 def available_auth_modes():
     return cfme_data.get('auth_modes', {}).keys()
@@ -59,6 +68,7 @@ def configure_openldap_auth_mode_default_groups(browser, available_auth_modes):
 def configure_aws_iam_auth_mode(appliance, available_auth_modes):
     """Configure AWS IAM authentication mode"""
     if 'miq_aws_iam' in available_auth_modes:
+        # TODO use new get_auth_settings function to store original settings
         auth_settings = appliance.server.authentication
         orig_mode = auth_settings.auth_mode
         orig_settings = auth_settings.auth_settings
@@ -85,25 +95,26 @@ def configure_aws_iam_auth_mode(appliance, available_auth_modes):
 
 # TODO remove this fixture, its doing what the above fixtures are doing but taking an argument
 @pytest.fixture()
-def configure_auth(request, auth_mode):
+def configure_auth(appliance, request, auth_mode):
     data = cfme_data['auth_modes'].get(auth_mode, {})
-    auth_settings = current_appliance.server.authentication
+    orig_settings = get_auth_settings(appliance)
+    app_auth = appliance.server.authentication
     if auth_mode == 'ext_ipa':
         request.addfinalizer(disable_external_auth_ipa)
         setup_external_auth_ipa(**data)
     elif auth_mode == 'ext_openldap':
         request.addfinalizer(disable_external_auth_openldap)
-        setup_external_auth_openldap(**data)
+        setup_external_auth_openldap(appliance, **data)
     elif auth_mode in ['miq_openldap', 'miq_ldap']:
-        auth_settings.set_auth_mode(**data)
+        app_auth.set_auth_mode(auth_mode=data.mode, **data)
         request.addfinalizer(current_appliance.server.login_admin)
-        request.addfinalizer(auth_settings.set_auth_mode)
+        request.addfinalizer(app_auth.set_auth_mode)
     elif auth_mode == 'miq_aws_iam':
         aws_iam_creds = credentials[data.pop('credentials')]
         data['access_key'] = aws_iam_creds['username']
         data['secret_key'] = aws_iam_creds['password']
-        auth_settings.set_auth_mode(**data)
+        app_auth.set_auth_mode(**data)
         request.addfinalizer(current_appliance.server.login_admin)
-        request.addfinalizer(auth_settings.set_auth_mode)
+        request.addfinalizer(app_auth.set_auth_mode)
     else:
         pytest.skip("auth_mode specified is not a expected value for cfme_auth tests")

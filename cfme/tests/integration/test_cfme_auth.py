@@ -22,15 +22,15 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture()
-def data(request, auth_mode, add_group):
+def data(request, auth_mode, group_action):
     auth_data = cfme_data['auth_test_data'].get(auth_mode, {})
-    if add_group == 'evm_default_group':
+    if group_action == 'evm_default_group':
         auth_data['get_groups'] = False
     return auth_data
 
 
 @pytest.fixture()
-def group(request, data, auth_mode, add_group, appliance):
+def group(request, data, auth_mode, group_action, appliance):
     if not data:
         pytest.skip("No data spcified for user group")
     credentials = Credential(
@@ -39,7 +39,7 @@ def group(request, data, auth_mode, add_group, appliance):
     )
     group_collection = appliance.collections.groups
     user_group = None
-    if add_group == RETRIEVE_GROUP:
+    if group_action == RETRIEVE_GROUP:
         user_group = group_collection.instantiate(
             description=data['group_name'], role="EvmRole-user",
             user_to_lookup=data["username"], ldap_credentials=credentials)
@@ -48,7 +48,7 @@ def group(request, data, auth_mode, add_group, appliance):
         elif 'miq' in auth_mode:
             user_group.add_group_from_ldap_lookup()
         request.addfinalizer(user_group.delete)
-    elif add_group == CREATE_GROUP:
+    elif group_action == CREATE_GROUP:
         user_group = group_collection.create(
             description=data['group_name'], role="EvmRole-user",
             user_to_lookup=data["username"], ldap_credentials=credentials)
@@ -56,11 +56,11 @@ def group(request, data, auth_mode, add_group, appliance):
 
 
 @pytest.fixture()
-def user(request, data, add_group, appliance):
+def user(request, data, group_action, appliance):
     if not data:
         pytest.skip("No data specified for user")
     username, password = data["username"], data["password"]
-    if 'evm_default_group' in add_group:
+    if 'evm_default_group' in group_action:
         username, password = data['default_username'], data['default_password']
         data['fullname'] = data['default_userfullname']
     credentials = Credential(
@@ -80,7 +80,7 @@ def user(request, data, add_group, appliance):
 
 @pytest.mark.tier(1)
 @pytest.mark.parametrize(
-    "add_group", ['create_group', 'retrieve_group', 'evm_default_group'])
+    "group_action", ['create_group', 'retrieve_group', 'evm_default_group'])
 def test_auth_configure(appliance, request, configure_auth, group, user, data):
     """This test checks whether different cfme auth modes are working correctly.
        authmodes tested as part of this test: ext_ipa, ext_openldap, miq_openldap
@@ -93,6 +93,7 @@ def test_auth_configure(appliance, request, configure_auth, group, user, data):
     """
 
     request.addfinalizer(appliance.server.login_admin)
+    appliance.server.logout()
     with user:
         appliance.server.login(user)
         assert appliance.server.current_full_name() == data['fullname']
