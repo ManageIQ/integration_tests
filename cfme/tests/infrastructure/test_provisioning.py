@@ -8,7 +8,6 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils import normalize_text
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -17,9 +16,6 @@ from widgetastic.utils import partial_match
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
     pytest.mark.usefixtures('uses_infra_providers'),
-    pytest.mark.meta(blockers=[
-        BZ(1265466, unblock=lambda provider: not provider.one_of(RHEVMProvider))
-    ]),
     pytest.mark.tier(2),
     test_requirements.provision,
     pytest.mark.provider([InfraProvider],
@@ -126,7 +122,6 @@ def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_t
             'vlan': partial_match(provisioning['vlan'])
         }
     }
-
     do_vm_provisioning(appliance, template, provider, vm_name, provisioning_data, request,
                        smtp_test, wait=False)
     wait_for(
