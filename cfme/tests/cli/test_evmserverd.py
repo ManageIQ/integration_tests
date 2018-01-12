@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module contains tests that exercise control of evmserverd service."""
 import pytest
-from cfme.utils import version
 from cfme.utils.wait import wait_for_decorator
 
 
@@ -14,7 +13,10 @@ def start_evmserverd_after_module(appliance):
     appliance.wait_for_web_ui()
 
 
-pytestmark = [pytest.mark.usefixtures("start_evmserverd_after_module")]
+pytestmark = [
+    pytest.mark.uncollectif(lambda appliance: appliance.is_pod),
+    pytest.mark.usefixtures("start_evmserverd_after_module")
+]
 
 
 @pytest.mark.tier(1)

@@ -6,6 +6,8 @@ from cfme.base.credential import Credential
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 
+pytestmark = pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+
 RETRIEVE_GROUP = 'retrieve_group'
 CREATE_GROUP = 'create_group'
 
