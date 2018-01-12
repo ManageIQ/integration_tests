@@ -31,6 +31,7 @@ from datetime import date, timedelta
 
 import fauxfactory
 import pytest
+from wrapanapi import VmState
 
 import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
@@ -43,8 +44,6 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-
-from wrapanapi import VmState
 
 pytestmark = [
     pytest.mark.tier(2),
@@ -87,7 +86,7 @@ def vm_ownership(enable_candu, provider, appliance):
         groups=cb_group,
         cost_center='Workload',
         value_assign='Database')
-    vm.set_ownership(user=user.name)
+    vm.set_ownership(user=user)
     logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
     yield user.name
 

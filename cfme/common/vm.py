@@ -380,15 +380,15 @@ class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, 
         """Set instance ownership
 
         Args:
-            user (str): username for ownership
-            group (str): groupname for ownership
+            user (User): user object for ownership
+            group (Group): group object for ownership
             click_cancel (bool): Whether to cancel form submission
             click_reset (bool): Whether to reset form after filling
         """
         view = navigate_to(self, 'SetOwnership')
         fill_result = view.form.fill({
-            'user_name': user,
-            'group_name': group})
+            'user_name': user.name if user else None,
+            'group_name': group.description if group else group})
         if not fill_result:
             view.form.cancel_button.click()
             view = self.create_view(navigator.get_class(self, 'Details').VIEW)

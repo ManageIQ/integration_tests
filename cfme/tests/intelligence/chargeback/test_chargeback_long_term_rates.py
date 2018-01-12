@@ -7,9 +7,11 @@ But, in order to validate costs for different rates, running the tests on just o
 should suffice.
 """
 import math
+from datetime import date
+
 import fauxfactory
 import pytest
-from datetime import date
+from wrapanapi import VmState
 
 import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
@@ -19,8 +21,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-
-from wrapanapi import VmState
 
 pytestmark = [
     pytest.mark.tier(2),
@@ -69,7 +69,7 @@ def vm_ownership(enable_candu, provider, appliance):
         groups=cb_group,
         cost_center='Workload',
         value_assign='Database')
-    vm.set_ownership(user=user.name)
+    vm.set_ownership(user=user)
     logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
     yield user.name
 

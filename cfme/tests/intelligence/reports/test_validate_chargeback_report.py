@@ -89,7 +89,7 @@ def vm_ownership(enable_candu, provider, appliance):
             groups=cb_group,
             cost_center='Workload',
             value_assign='Database')
-        vm.set_ownership(user=user.name)
+        vm.set_ownership(user=user)
         logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
 
         yield user.name

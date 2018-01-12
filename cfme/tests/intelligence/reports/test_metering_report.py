@@ -5,28 +5,27 @@
 #
 # Metering Reports have been introduced in 59.
 
-import fauxfactory
 import math
+from datetime import date
+
+import fauxfactory
 import pytest
 import re
-
-from datetime import date
+from wrapanapi import VmState
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
-from cfme.common.provider import CloudInfraProvider
-from cfme.cloud.provider import CloudProvider
 from cfme.common.provider import BaseProvider
+from cfme.common.provider import CloudInfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
-
-from wrapanapi import VmState
 
 pf1 = ProviderFilter(classes=[CloudInfraProvider],
     required_fields=[(['cap_and_util', 'test_chargeback'], True)])
@@ -79,7 +78,7 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
         value_assign='Database')
 
     try:
-        vm.set_ownership(user=user.name)
+        vm.set_ownership(user=user)
         logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
 
         yield user.name
