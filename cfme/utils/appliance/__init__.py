@@ -1826,7 +1826,7 @@ class IPAppliance(object):
         This should likely be 'hostname' as that is what its called on the appliance
         Currently hostname attribute holds IP addr
         """
-        return self.server.settings.basic_information_values.get('hostname')  # None if empty
+        return self.rest_api.get_entity_by_href(self.rest_api.server_info['server_href']).hostname
 
     @property
     def server_roles(self):
