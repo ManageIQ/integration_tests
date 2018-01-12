@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+import six
 
 from copy import copy
 
@@ -24,7 +25,7 @@ def visual(appliance):
     return Visual(appliance=appliance)
 
 
-@pytest.fixture(scope='module', params=[InfraProvider, vms.Vm])
+@pytest.fixture(scope='module', params=['datastores', 'hosts', InfraProvider, vms.Vm])
 def page(request):
     return request.param
 
@@ -128,12 +129,14 @@ def set_template_quad(visual):
 
 
 @pytest.mark.meta(blockers=[1267148])
-def test_infra_grid_page_per_item(visual, request, page, value, set_grid):
+def test_infra_grid_page_per_item(visual, request, page, value, set_grid, appliance):
     """ Tests grid items per page
 
     Metadata:
         test_flag: visuals
     """
+    if isinstance(page, six.string_types):
+        page = getattr(appliance.collections, page)
     if visual.grid_view_limit != value:
         visual.grid_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
@@ -148,12 +151,14 @@ def test_infra_grid_page_per_item(visual, request, page, value, set_grid):
 
 
 @pytest.mark.meta(blockers=[1267148])
-def test_infra_tile_page_per_item(visual, request, page, value, set_tile):
+def test_infra_tile_page_per_item(visual, request, page, value, set_tile, appliance):
     """ Tests tile items per page
 
     Metadata:
         test_flag: visuals
     """
+    if isinstance(page, six.string_types):
+        page = getattr(appliance.collections, page)
     if visual.tile_view_limit != value:
         visual.tile_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
@@ -168,12 +173,14 @@ def test_infra_tile_page_per_item(visual, request, page, value, set_tile):
 
 
 @pytest.mark.meta(blockers=[1267148])
-def test_infra_list_page_per_item(visual, request, page, value, set_list):
+def test_infra_list_page_per_item(visual, request, page, value, set_list, appliance):
     """ Tests list items per page
 
     Metadata:
         test_flag: visuals
     """
+    if isinstance(page, six.string_types):
+        page = getattr(appliance.collections, page)
     if visual.list_view_limit != value:
         visual.list_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
