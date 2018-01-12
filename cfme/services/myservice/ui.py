@@ -1,6 +1,6 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import Parameter, VersionPick, Version
-from widgetastic.widget import ParametrizedView, Text, View
+from widgetastic.widget import ParametrizedView, Table, Text, View
 from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Tab
 
 from cfme.base.login import BaseLoggedInPage
@@ -106,7 +106,8 @@ class MyServiceDetailView(MyServicesView):
     @View.nested
     class provisioning(Tab):  # noqa
         results = SummaryTable(title='Results')
-        plays = SummaryTable(title='Plays')
+        plays = Table('.//table[./thead/tr/th[contains(@align, "left") and '
+                      'normalize-space(.)="Plays"]]')
         details = SummaryTable(title='Details')
         credentials = SummaryTable(title='Credentials')
         standart_output = Text('.//div[@id="provisioning"]//pre')
@@ -114,7 +115,8 @@ class MyServiceDetailView(MyServicesView):
     @View.nested
     class retirement(Tab):  # noqa
         results = SummaryTable(title='Results')
-        plays = SummaryTable(title='Plays')
+        plays = Table('.//table[./thead/tr/th[contains(@align, "left") and '
+                      'normalize-space(.)="Plays"]]')
         details = SummaryTable(title='Details')
         credentials = SummaryTable(title='Credentials')
         standart_output = Text('.//div[@id="provisioning"]//pre')
