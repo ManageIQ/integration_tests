@@ -62,7 +62,7 @@ class AddProviderError(CFMEException):
 class AuthModeUnknown(CFMEException):
     """
     Raised if an invalid authenctication mode is passed to
-    :py:func:`cfme.configure.configuration.set_auth_mode`
+    :py:func:`cfme.configure.configuration.ServerAuthentication.configure_auth`
     """
     pass
 

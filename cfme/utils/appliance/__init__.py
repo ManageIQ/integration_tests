@@ -2137,7 +2137,7 @@ class IPAppliance(object):
         except IndexError:
             raise KeyError("No such Domain: {}".format(domain))
 
-    def configure_appliance_for_openldap_ext_auth(self, appliance_fqdn):
+    def configure_appliance_for_openldap_ext_auth(self):
         """This method changes the /etc/sssd/sssd.conf and /etc/openldap/ldap.conf files to set
             up the appliance for an external authentication with OpenLdap.
             Apache file configurations are updated, for webui to take effect.
@@ -2147,7 +2147,6 @@ class IPAppliance(object):
 
         """
         openldap_domain1 = conf.cfme_data['auth_modes']['ext_openldap']
-        assert self.ssh_client.run_command('appliance_console_cli --host {}'.format(appliance_fqdn))
         self.ssh_client.run_command('echo "{}\t{}" > /etc/hosts'.format(
             openldap_domain1['ipaddress'], openldap_domain1['hostname']))
         self.ssh_client.put_file(
