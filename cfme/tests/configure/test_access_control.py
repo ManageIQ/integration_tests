@@ -716,14 +716,14 @@ def test_permissions(appliance, product_features, allowed_actions, disallowed_ac
 
             for name, action_thunk in allowed_actions.items():
                 try:
-                    action_thunk(appliance)
+                    action_thunk()
                 except Exception:
                     fails[name] = "{}: {}".format(name, traceback.format_exc())
 
             for name, action_thunk in disallowed_actions.items():
                 try:
                     with error.expected(Exception):
-                        action_thunk(appliance)
+                        action_thunk()
                 except error.UnexpectedSuccessException:
                     fails[name] = "{}: {}".format(name, traceback.format_exc())
 

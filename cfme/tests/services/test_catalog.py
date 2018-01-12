@@ -3,10 +3,15 @@ import fauxfactory
 import pytest
 
 import cfme.tests.configure.test_access_control as tac
-from cfme.utils import error
+
 from cfme import test_requirements
 from cfme.services.catalogs.catalog import Catalog
+from cfme.utils import error
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
+
+from fixtures.pytest_store import store
+
 
 pytestmark = [test_requirements.service, pytest.mark.tier(2)]
 
@@ -31,6 +36,9 @@ def test_catalog_duplicate_name():
     cat.delete()
 
 
+# Un-collecting for 5.8 because of BZ: 1486041
+@pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.9')
+@pytest.mark.meta(blockers=[BZ(1529079, forced_streams=['upstream'])])
 @pytest.mark.sauce
 def test_permissions_catalog_add(appliance):
     """ Tests that a catalog can be added only with the right permissions"""
