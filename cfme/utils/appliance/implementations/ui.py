@@ -447,7 +447,7 @@ class CFMENavigateStep(NavigateStep):
             self.log_message(
                 "Exception raised [{}] whilst checking if already here".format(e), level="error")
         if not here:
-            self.log_message("Prerequiesite Needed")
+            self.log_message("Prerequisite Needed")
             self.prerequisite_view = self.prerequisite()
             self.check_for_badness(self.step, _tries, nav_args, *args, **kwargs)
         if nav_args['use_resetter']:
