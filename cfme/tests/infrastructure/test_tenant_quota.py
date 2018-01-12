@@ -128,6 +128,7 @@ def test_tenant_quota_enforce_via_service(request, appliance, provider, setup_pr
     """Test Tenant Quota in UI"""
     catalog_item.provisioning_data.update(custom_prov_data)
     catalog_item.provisioning_data['catalog']['vm_name'] = catalog_item.vm_name
+    print('>>>>>>>>>>>>>>>>>>> {}'.format(template_name))
     catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
                                        catalog_item.name)
