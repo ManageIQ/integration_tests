@@ -127,6 +127,11 @@ def test_operations_vm_on(soft_assert, appliance):
 def test_datastores_summary(soft_assert, appliance):
     """Checks Datastores Summary report with DB data. Checks all data in report, even rounded
     storage sizes."""
+    # updating relationships
+    providers = appliance.managed_known_providers
+    for provider in providers:
+        provider.validate()
+
     adb = appliance.db.client
     storages = adb['storages']
     vms = adb['vms']
