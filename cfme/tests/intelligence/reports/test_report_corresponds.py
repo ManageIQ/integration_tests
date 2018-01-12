@@ -5,6 +5,7 @@ from random import sample
 
 import cfme.utils
 from cfme.intelligence.reports.reports import CustomReport
+from cfme.utils.blockers import BZ
 from cfme.utils.providers import get_crud_by_name
 from cfme import test_requirements
 
@@ -35,7 +36,10 @@ def report_vms(infra_provider):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1244715])
+@pytest.mark.meta(blockers=[
+    BZ(1244715),
+    BZ(1531600, forced_streams=['5.9'])
+])
 @test_requirements.report
 def test_custom_vm_report(soft_assert, report_vms):
     cluster = "Cluster / Deployment Role Name"
