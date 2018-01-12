@@ -42,7 +42,6 @@ from .implementations.rest import ViaREST
 from .implementations.ssui import ViaSSUI
 from .implementations.ui import ViaUI
 from .services import SystemdService
-import six
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # EMS types recognized by IP or credentials

@@ -15,6 +15,8 @@ from widgetastic.widget import (
 from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput)
 
+import six
+
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, Template as BaseTemplate
 from cfme.common.vm_views import (
