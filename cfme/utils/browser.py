@@ -8,6 +8,7 @@ from six.moves.urllib_error import URLError
 from shutil import rmtree
 from string import Template
 from tempfile import mkdtemp
+from collections import namedtuple
 
 import os
 import requests
