@@ -10,7 +10,6 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import ports
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.hosts import setup_host_creds
@@ -32,8 +31,6 @@ CANDU_PROVIDER_TYPES = [VMwareProvider]  # TODO: rhevm
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=["+automate", "+smartproxy", "+notifier"]),
-    pytest.mark.uncollectif(BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576'),
-    pytest.mark.uncollectif(BZ(1501895, forced_streams=['5.9']).blocks, 'BZ 1501895'),
     pytest.mark.usefixtures("setup_provider_modscope"),
     pytest.mark.tier(3),
     test_requirements.alert
