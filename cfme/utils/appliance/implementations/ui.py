@@ -1,30 +1,27 @@
 # -*- coding: utf-8 -*-
 import json
 import time
-from jsmin import jsmin
 from inspect import isclass
-import os
-
-from cfme.utils.log import logger, create_sublogger
-from cfme import exceptions
 from time import sleep
 
+import os
+from cached_property import cached_property
+from jsmin import jsmin
 from navmazing import Navigate, NavigateStep
 from selenium.common.exceptions import (
     ErrorInResponseException, InvalidSwitchToTargetException,
     InvalidElementStateException, WebDriverException, UnexpectedAlertPresentException,
     NoSuchElementException, StaleElementReferenceException)
-
-from cfme.utils.browser import manager
-from fixtures.pytest_store import store
-
-from cached_property import cached_property
 from widgetastic.browser import Browser, DefaultPlugin
-from widgetastic.widget import Text, View
 from widgetastic.utils import VersionPick
+from widgetastic.widget import Text, View
+
+from cfme import exceptions
+from cfme.utils.browser import manager
+from cfme.utils.log import logger, create_sublogger
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
-
+from fixtures.pytest_store import store
 from . import Implementation
 
 VersionPick.VERSION_CLASS = Version
@@ -475,6 +472,8 @@ navigate_to = navigator.navigate
 
 class ViaUI(Implementation):
     """UI implementation using the normal ux"""
+
+    name = "UI"
 
     def __str__(self):
         return 'UI'
