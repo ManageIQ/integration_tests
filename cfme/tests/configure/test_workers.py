@@ -2,12 +2,14 @@
 
 import pytest
 
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 @pytest.mark.nondestructive
+@pytest.mark.meta(blockers=[BZ(1531524, forced_streams=["5.9", "upstream"])])
 def test_restart_workers(appliance):
     worker = appliance.collections.diagnostic_workers.instantiate(name="Generic Worker")
     pids = worker.reload_worker()
