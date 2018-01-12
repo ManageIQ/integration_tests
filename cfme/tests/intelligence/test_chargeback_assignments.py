@@ -50,7 +50,8 @@ def test_assign_compute_provider(appliance, virtualcenter_provider):
 def test_assign_compute_cluster(appliance, virtualcenter_provider):
     view = navigate_to(appliance.server, 'Chargeback')
 
-    cluster_name = random.choice(virtualcenter_provider.data["clusters"])
+    cluster_name = "{}/{}".format(virtualcenter_provider.name,
+                                  random.choice(virtualcenter_provider.data["clusters"]))
 
     cluster = cb.Assign(
         assign_to='Selected Cluster / Deployment Roles',
@@ -60,6 +61,7 @@ def test_assign_compute_cluster(appliance, virtualcenter_provider):
     cluster.computeassign()
 
     assign_view = view.browser.create_view(AssignmentsView)
+
     row = assign_view.selections.row(name=cluster_name)
     selected_option = row.rate.widget.selected_option
     assert selected_option == "Default", 'Selection does not match'
