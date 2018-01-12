@@ -10,6 +10,8 @@ from cfme.utils.blockers import BZ
 from cfme.utils.timeutil import parsetime
 from cfme.utils.ssh import SSHClient
 
+pytestmark = pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+
 
 @pytest.fixture(scope="module")
 def temp_appliance_extended_db(temp_appliance_preconfig):
