@@ -330,12 +330,13 @@ class ServerInformation(Updateable, Pretty):
                         product_name=self.appliance.product_name,
                         version=self.appliance.version
                     )
-                if value == 'VMware WebMKS' and self.appliance.version >= '5.8':
-                    self.appliance.ssh_client.run_command('curl {} -o WebMKS_SDK.zip'
-                        .format(conf.cfme_data.vm_console.webmks_console.webmks_sdk_download_url))
-                    self.appliance.ssh_client.run_command('unzip ~/WebMKS_SDK.zip -d {}'
-                        .format(conf.cfme_data.vm_console.webmks_console.
-                            webmks_sdk_extract_location))
+                # From 5.8 version need to add WebMKS_SDK
+                if value == 'VMware WebMKS':
+                    self.appliance.ssh_client.run_command('curl {} -o WebMKS_SDK.zip'.format(
+                        conf.cfme_data.vm_console.webmks_console.webmks_sdk_download_url))
+
+                    self.appliance.ssh_client.run_command('unzip -o ~/WebMKS_SDK.zip -d {}'.format(
+                        conf.cfme_data.vm_console.webmks_console.webmks_sdk_extract_location))
 
         view = navigate_to(self.appliance.server, 'Server')
         updated = view.vmware_console.fill(updates)
