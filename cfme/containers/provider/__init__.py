@@ -46,7 +46,10 @@ class ContainersProviderDefaultEndpoint(DefaultEndpoint):
                'sec_protocol': self.sec_protocol}
 
         if self.sec_protocol.lower() == 'ssl trusting custom ca' and hasattr(self, 'get_ca_cert'):
-            out['trusted_ca_certificates'] = self.get_ca_cert()
+            out['trusted_ca_certificates'] = self.get_ca_cert(
+                {"username": "root",
+                 "password": self.ssh_password,
+                 "hostname": self.master_hostname})
 
         out['confirm_password'] = version.pick({
             version.LOWEST: self.token,

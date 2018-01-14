@@ -8,11 +8,11 @@ from . import ContainersProvider
 from cfme.containers.provider import (
     ContainersProviderDefaultEndpoint, ContainersProviderEndpointsForm
 )
+
 from cfme.common.provider import DefaultEndpoint
 from cfme.utils.ocp_cli import OcpCli
-from cfme.utils.path import data_path
 from cfme.utils.varmeth import variable
-from cfme.utils import version
+from cfme.utils import version, ssh
 
 
 class CustomAttribute(object):
@@ -25,17 +25,19 @@ class CustomAttribute(object):
 
 class OpenshiftDefaultEndpoint(ContainersProviderDefaultEndpoint):
     """Represents Openshift default endpoint"""
+
     @staticmethod
-    def get_ca_cert():
+    def get_ca_cert(connection_info):
         """Getting OpenShift's certificate from the master machine.
         Args:
-           No args.
+            connection_info (dict): username, password and hostname for OCP
         returns:
             certificate's content.
         """
-        cert_file_path = path.join(str(data_path), 'cert-auths', 'cmqe-tests-openshift-signer.crt')
-        with open(cert_file_path) as f:
-            return f.read()
+
+        with ssh.SSHClient(**connection_info) as provider_ssh:
+            _, stdout, _ = provider_ssh.exec_command("cat /etc/origin/master/ca.crt")
+            return str("".join(stdout.readlines()))
 
 
 class HawkularEndpoint(DefaultEndpoint):
@@ -51,7 +53,10 @@ class HawkularEndpoint(DefaultEndpoint):
         }
 
         if out['sec_protocol'] and self.sec_protocol.lower() == 'ssl trusting custom ca':
-            out['trusted_ca_certificates'] = OpenshiftDefaultEndpoint.get_ca_cert()
+            out['trusted_ca_certificates'] = OpenshiftDefaultEndpoint.get_ca_cert(
+                {"username": "root",
+                 "password": self.ssh_password,
+                 "hostname": self.master_hostname})
 
         return out
 
@@ -76,7 +81,10 @@ class AlertsEndpoint(DefaultEndpoint):
             '5.9': self.sec_protocol})
 
         if out['sec_protocol'] and self.sec_protocol.lower() == 'ssl trusting custom ca':
-            out['trusted_ca_certificates'] = OpenshiftDefaultEndpoint.get_ca_cert()
+            out['trusted_ca_certificates'] = OpenshiftDefaultEndpoint.get_ca_cert(
+                {"username": "root",
+                 "password": self.ssh_password,
+                 "hostname": self.master_hostname})
 
         return out
 
@@ -192,7 +200,17 @@ class OpenshiftProvider(ContainersProvider):
 
         endpoints = {}
         token_creds = cls.process_credential_yaml_key(prov_config['credentials'], cred_type='token')
+
+        master_hostname = prov_config['endpoints']['default'].hostname
+        ssh_password = cls.process_credential_yaml_key(prov_config['credentials'],
+                                                       cred_type='ssh').secret
+
         for endp in prov_config['endpoints']:
+            # Add ssh_password for each endpoint, so get_ca_cert
+            # will be able to get SSL cert form OCP for each endpoint
+            setattr(prov_config['endpoints'][endp], "master_hostname", master_hostname)
+            setattr(prov_config['endpoints'][endp], "ssh_password", ssh_password)
+
             if OpenshiftDefaultEndpoint.name == endp:
                 prov_config['endpoints'][endp]['token'] = token_creds.token
                 endpoints[endp] = OpenshiftDefaultEndpoint(**prov_config['endpoints'][endp])
