@@ -86,7 +86,7 @@ class GH(Blocker):
         super(GH, self).__init__(**kwargs)
         self._repo = None
         self.issue = None
-        self.upstream_only = kwargs.get('upstream_only', True)
+        self.upstream_only = kwargs.get('upstream_only', False)
         self.since = kwargs.get('since')
         self.until = kwargs.get('until')
         if isinstance(description, (list, tuple)):
