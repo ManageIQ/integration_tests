@@ -8,6 +8,7 @@ from random import sample
 
 from cfme import test_requirements
 from cfme.intelligence.reports.dashboards import Dashboard
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 
