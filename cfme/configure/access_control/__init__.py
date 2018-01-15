@@ -1292,14 +1292,25 @@ class TenantQuotaForm(View):
 
     @staticmethod
     def check_fill_request_is_same_as_current_form(request, current):
-        """Description"""
-        for r_key, r_val in request.items():
-            if r_key.endswith('_cb') and bool(r_val) != current[r_key]:
+        """
+        The purpose of this method is to compare values that actaully
+        are in the form right now with the values that are requested by a test.
+        We do it because widgetastic's ``View.fill`` method returns wrong value.
+        It returns ``True`` even if no values in form are to be changed.
+        As a result, ``Save`` button on ``TenantQuotaView`` cannot be clicked.
+        That's the reason why the original ``fill`` method is overloaded in this class.
+
+        Args:
+            request: A dictionary in form that is passed to ``fill`` method.
+            current: A dictionary in form that is returned by ``read`` method.
+        """
+        for request_key, request_value in request.items():
+            if request_key.endswith('_cb') and bool(request_value) != current[request_key]:
                 return False
-            if r_key.endswith('_txt'):
-                if r_val is None and current[r_key] == '':
+            if request_key.endswith('_txt'):
+                if request_value is None and current[request_key] == '':
                     pass
-                elif str(r_val) == current[r_key]:
+                elif str(request_value) == current[request_key]:
                     pass
                 else:
                     return False
@@ -1484,7 +1495,6 @@ class Tenant(Updateable, BaseEntity):
                                   'vm_txt': kwargs.get('vm'),
                                   'template_cb': kwargs.get('template_cb'),
                                   'template_txt': kwargs.get('template')})
-        # from IPython import embed; embed()
         if changed:
             view.save_button.click()
             view = self.create_view(DetailsTenantView)
