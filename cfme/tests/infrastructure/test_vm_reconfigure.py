@@ -90,12 +90,12 @@ def test_vm_reconfig_add_remove_disk_cold(
 
     small_vm.reconfigure(new_config)
     wait_for(
-        lambda: small_vm.configuration == new_config, timeout=360, delay=45,
+        lambda: small_vm.configuration.num_disks == new_config.num_disks, timeout=360, delay=45,
         fail_func=small_vm.refresh_relationships,
         message="confirm that disk was added")
 
     small_vm.reconfigure(orig_config)
     wait_for(
-        lambda: small_vm.configuration == orig_config, timeout=360, delay=45,
+        lambda: small_vm.configuration.num_disks == orig_config.num_disks, timeout=360, delay=45,
         fail_func=small_vm.refresh_relationships,
         message="confirm that previously-added disk was removed")
