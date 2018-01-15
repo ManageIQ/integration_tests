@@ -21,7 +21,7 @@ from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.remote.file_detector import UselessFileDetector
 from werkzeug.local import LocalProxy
 
-from cfme.utils import conf, tries
+from cfme.utils import conf, tries, clear_property_cache
 from cfme.utils.log import logger as log  # TODO remove after artifactor handler
 from cfme.utils.path import data_path
 from fixtures.pytest_store import store, write_line
@@ -122,20 +122,25 @@ class BrowserFactory(object):
         self.webdriver_class = webdriver_class
         self.browser_kwargs = browser_kwargs
 
-        if webdriver_class is not webdriver.Remote:
-            # desired_capabilities is only for Remote driver, but can sneak in
-            browser_kwargs.pop('desired_capabilities', None)
-        elif browser_kwargs['desired_capabilities']['browserName'] == 'firefox':
-            browser_kwargs['browser_profile'] = self._firefox_profile
+        self._add_missing_options()
 
-        if webdriver_class is webdriver.Firefox:
-            browser_kwargs['firefox_profile'] = self._firefox_profile
+    def _add_missing_options(self):
+        if self.webdriver_class is not webdriver.Remote:
+            # desired_capabilities is only for Remote driver, but can sneak in
+            self.browser_kwargs.pop('desired_capabilities', None)
+        elif self.browser_kwargs['desired_capabilities']['browserName'] == 'firefox':
+            self.browser_kwargs['browser_profile'] = self._firefox_profile
+
+        if self.webdriver_class is webdriver.Firefox:
+            self.browser_kwargs['firefox_profile'] = self._firefox_profile
 
     @cached_property
     def _firefox_profile(self):
         return _load_firefox_profile()
 
     def processed_browser_args(self):
+        self._add_missing_options()
+
         if 'keep_alive' in self.browser_kwargs:
             warnings.warn(
                 "forcing browser keep_alive to False due to selenium bugs\n"
@@ -167,6 +172,7 @@ class BrowserFactory(object):
     def close(self, browser):
         if browser:
             browser.quit()
+            clear_property_cache(self, '_firefox_profile')
 
 
 class WharfFactory(BrowserFactory):
