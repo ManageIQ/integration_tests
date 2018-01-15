@@ -373,6 +373,23 @@ class Details(CFMENavigateStep):
         self.view.toolbar.reload.click()
 
 
+@navigator.register(Instance, 'ArchiveDetails')
+class ArchiveDetails(CFMENavigateStep):
+    VIEW = InstanceDetailsView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        try:
+            row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True,
+                                                             use_search=True)
+        except ItemNotFound:
+            raise InstanceNotFound('Failed to locate instance with name "{}"'.format(self.obj.name))
+        row.click()
+
+    def resetter(self, *args, **kwargs):
+        self.view.toolbar.reload.click()
+
+
 @navigator.register(Instance, 'Edit')
 class Edit(CFMENavigateStep):
     VIEW = EditView
