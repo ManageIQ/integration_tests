@@ -10,7 +10,7 @@ def extract_fixtures_values(item):
         :py:class:`dict` with fixtures and their values.
     """
     if hasattr(item, "callspec"):
-        return item.callspec.params
+        return item.callspec.params.copy()  # protect against accidential manipulation of the spec
     else:
         # Some of the test items do not have this, so fall back
         # This can cause some problems if the fixtures are used in the guards in this case, but
