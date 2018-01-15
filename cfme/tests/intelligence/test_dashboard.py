@@ -162,7 +162,7 @@ def test_drag_and_drop_widget_to_the_bottom_of_another_column(dashboards, reques
     second_column = dashboards.default.dashboard_view.column_widget_names(2)
 
     first_widget_name = first_column[0]
-    second_widget_name = second_column[-1]
+    second_widget_name = second_column[-2]
     dashboards.default.drag_and_drop(first_widget_name, second_widget_name)
 
-    assert dashboards.default.dashboard_view.column_widget_names(2)[-1] == first_widget_name
+    assert dashboards.default.dashboard_view.column_widget_names(2)[-2] == first_widget_name
