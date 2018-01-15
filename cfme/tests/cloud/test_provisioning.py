@@ -78,24 +78,27 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name, t
 
     # All providers other than Azure
     if not provider.one_of(AzureProvider):
-        recursive_update(inst_args, {
-            'properties': {
-                'instance_type': partial_match(provisioning['instance_type']),
-                'guest_keypair': provisioning['guest_keypair']},
-            'environment': {
-                'availability_zone': None if auto else provisioning['availability_zone'],
-                'security_groups': None if auto else provisioning['security_group'],
-                'automatic_placement': auto
-            }
-        })
+        if provider.one_of(OpenStackProvider):
+            recursive_update(inst_args, {
+                'properties': {
+                    'instance_type': partial_match(provisioning['instance_type']),
+                    'guest_keypair': provisioning['guest_keypair']},
+                'environment': {
+                    'automatic_placement': True
+                }
+            })
+        else:
+            recursive_update(inst_args, {
+                'properties': {
+                    'instance_type': partial_match(provisioning['instance_type']),
+                    'guest_keypair': provisioning['guest_keypair']},
+                'environment': {
+                    'availability_zone': None if auto else provisioning['availability_zone'],
+                    'security_groups': None if auto else provisioning['security_group'],
+                    'automatic_placement': auto
+                }
+            })
 
-    # Openstack specific
-    if provider.one_of(OpenStackProvider):
-        recursive_update(inst_args, {
-            'environment': {
-                'cloud_network': None if auto else provisioning['cloud_network']
-            }
-        })
 
     # GCE specific
     if provider.one_of(GCEProvider):
@@ -544,8 +547,8 @@ def test_provision_from_template_with_attached_disks(request, testing_instance, 
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_provision_with_boot_volume(request, testing_instance, provider, soft_assert, appliance,
-                                    modified_request_class):
+def test_provision_with_boot_volume(request, testing_instance, provider, soft_assert,
+                                    modified_request_class, appliance, copy_domains):
     """ Tests provisioning from a template and attaching one booting volume.
 
     Metadata:
@@ -592,9 +595,8 @@ def test_provision_with_boot_volume(request, testing_instance, provider, soft_as
         assert provision_request.is_succeeded(method='ui'), (
             "Provisioning failed with the message {}".format(
                 provision_request.row.last_message.text))
-
-        soft_assert(vm_name in provider.mgmt.volume_attachments(volume))
-        soft_assert(provider.mgmt.volume_attachments(volume)[vm_name] == "vda")
+        soft_assert(instance.name in provider.mgmt.volume_attachments(volume))
+        soft_assert(provider.mgmt.volume_attachments(volume)[instance.name] == "/dev/vda")
         instance.delete_from_provider()  # To make it possible to delete the volume
         wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
 
