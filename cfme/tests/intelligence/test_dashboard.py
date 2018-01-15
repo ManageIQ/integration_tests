@@ -8,7 +8,6 @@ from random import sample
 
 from cfme import test_requirements
 from cfme.intelligence.reports.dashboards import Dashboard
-from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 
@@ -142,27 +141,3 @@ def test_widgets_reorder(dashboards, soft_assert, request):
     assert previous_names[2:] == new_names[2:]
     assert previous_names[0] == new_names[1]
     assert previous_names[1] == new_names[0]
-
-
-@pytest.mark.meta(blockers=[BZ(1316134, forced_streams=['5.7', '5.8', 'upstream'])])
-def test_drag_and_drop_widget_to_the_bottom_of_another_column(dashboards, request):
-    """In this test we try to drag and drop a left upper widget to
-       the bottom of the middle column.
-
-       Prerequisities:
-        * A list of widgets on the default dashboard
-
-       Steps:
-        * Go to the Dashboard
-        * Drag a left upper widget and drop it under the bottom widget of the near column
-        * Assert that the widgets order is changed
-    """
-    request.addfinalizer(dashboards.default.collections.widgets.reset)
-    first_column = dashboards.default.dashboard_view.column_widget_names(1)
-    second_column = dashboards.default.dashboard_view.column_widget_names(2)
-
-    first_widget_name = first_column[0]
-    second_widget_name = second_column[-1]
-    dashboards.default.drag_and_drop(first_widget_name, second_widget_name)
-
-    assert dashboards.default.dashboard_view.column_widget_names(2)[-1] == first_widget_name
