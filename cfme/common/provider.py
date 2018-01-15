@@ -770,16 +770,18 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
         # cfme 5.9 doesn't allow to remove provider thru api
         bz_blocked = BZ(1501941, forced_streams=['5.9']).blocks
         if app.version < '5.9' or (app.version >= '5.9' and not bz_blocked):
-            for prov in app.rest_api.collections.providers.all:
+            providers = app.rest_api.collections.providers.all
+            for prov in providers:
                 try:
                     if any(db_type in prov.type for db_type in cls.db_types):
                         logger.info('Deleting provider: %s', prov.name)
                         prov.action.delete()
-                        prov.wait_not_exists()
                 except APIException as ex:
                     # Provider is already gone (usually caused by NetworkManager objs)
                     if 'RecordNotFound' not in str(ex):
                         raise ex
+            wait_for(lambda: not bool(set(app.rest_api.collections.providers.all) & set(providers)),
+                     fail_func=app.rest_api.collections.providers.reload())
         else:
             # Delete all matching
             for prov in app.managed_known_providers:

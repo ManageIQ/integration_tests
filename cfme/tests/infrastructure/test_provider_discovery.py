@@ -95,6 +95,7 @@ def test_discover_infra(providers_for_discover, start_ip, max_range):
     @wait_for_decorator(num_sec=count_timeout(start_ip, max_range), delay=5)
     def _wait_for_all_providers():
         for provider in providers_for_discover:
+            provider.browser.refresh()
             # When the provider is discovered, its name won't match what would be expected from
             # the crud objects generated from yaml data. The name in CFME will contain an IP
             # which should uniquely identify the resource
