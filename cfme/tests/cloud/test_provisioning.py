@@ -16,6 +16,7 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.utils import error
 from cfme.utils.conf import credentials
 from cfme.utils.rest import assert_response
 from cfme.utils.generators import random_vm_name
@@ -34,7 +35,12 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture()
+def vm_name():
+    return random_vm_name(context='prov')
+
+
+@pytest.fixture()
 def testing_instance(request, setup_provider, provider, provisioning, vm_name, tag):
     """ Fixture to prepare instance parameters for provisioning
     """
@@ -74,7 +80,7 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name, t
     if not provider.one_of(AzureProvider):
         recursive_update(inst_args, {
             'properties': {
-                'instance_type': provisioning['instance_type'],
+                'instance_type': partial_match(provisioning['instance_type']),
                 'guest_keypair': provisioning['guest_keypair']},
             'environment': {
                 'availability_zone': None if auto else provisioning['availability_zone'],
@@ -133,11 +139,6 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name, t
     except Exception as ex:
         logger.warning('Exception while deleting instance fixture, continuing: {}'
                        .format(ex.message))
-
-
-@pytest.fixture(scope="function")
-def vm_name(request):
-    return random_vm_name('prov')
 
 
 @pytest.fixture(scope='function')
@@ -474,7 +475,9 @@ def original_request_class(appliance):
 
 @pytest.fixture(scope="module")
 def modified_request_class(request, domain, original_request_class):
-    original_request_class.copy_to(domain)
+    with error.handler("error: Error during 'Automate Class copy'"):
+        # methods of this class might have been copied by other fixture, so this error can occur
+        original_request_class.copy_to(domain)
     klass = domain\
         .namespaces.instantiate(name='Cloud')\
         .namespaces.instantiate(name='VM')\
@@ -541,7 +544,7 @@ def test_provision_from_template_with_attached_disks(request, testing_instance, 
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_provision_with_boot_volume(request, testing_instance, provider, soft_assert, copy_domains,
+def test_provision_with_boot_volume(request, testing_instance, provider, soft_assert, appliance,
                                     modified_request_class):
     """ Tests provisioning from a template and attaching one booting volume.
 
@@ -577,6 +580,19 @@ def test_provision_with_boot_volume(request, testing_instance, provider, soft_as
 
         instance.create(**inst_args)
 
+        request_description = 'Provision from [{}] to [{}]'.format(image,
+                                                                   instance.name)
+        provision_request = appliance.collections.requests.instantiate(request_description)
+        try:
+            provision_request.wait_for_request(method='ui')
+        except Exception as e:
+            logger.info(
+                "Provision failed {}: {}".format(e, provision_request.request_state))
+            raise e
+        assert provision_request.is_succeeded(method='ui'), (
+            "Provisioning failed with the message {}".format(
+                provision_request.row.last_message.text))
+
         soft_assert(vm_name in provider.mgmt.volume_attachments(volume))
         soft_assert(provider.mgmt.volume_attachments(volume)[vm_name] == "vda")
         instance.delete_from_provider()  # To make it possible to delete the volume
@@ -586,8 +602,8 @@ def test_provision_with_boot_volume(request, testing_instance, provider, soft_as
 # Not collected for EC2 in generate_tests above
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
 def test_provision_with_additional_volume(request, testing_instance, provider, small_template,
-                                          soft_assert, copy_domains, domain,
-                                          modified_request_class):
+                                          soft_assert, copy_domains, modified_request_class,
+                                          appliance):
     """ Tests provisioning with setting specific image from AE and then also making it create and
     attach an additional 3G volume.
 
@@ -627,7 +643,19 @@ def test_provision_with_additional_volume(request, testing_instance, provider, s
 
     instance.create(**inst_args)
 
-    prov_instance = provider.mgmt._find_instance_by_name(vm_name)
+    request_description = 'Provision from [{}] to [{}]'.format(small_template.name, instance.name)
+    provision_request = appliance.collections.requests.instantiate(request_description)
+    try:
+        provision_request.wait_for_request(method='ui')
+    except Exception as e:
+        logger.info(
+            "Provision failed {}: {}".format(e, provision_request.request_state))
+        raise e
+    assert provision_request.is_succeeded(method='ui'), (
+        "Provisioning failed with the message {}".format(
+            provision_request.row.last_message.text))
+
+    prov_instance = provider.mgmt._find_instance_by_name(instance.name)
     try:
         assert hasattr(prov_instance, 'os-extended-volumes:volumes_attached')
         volumes_attached = getattr(prov_instance, 'os-extended-volumes:volumes_attached')
