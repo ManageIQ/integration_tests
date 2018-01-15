@@ -2,28 +2,28 @@
 """Test Service Details page functionality."""
 import pytest
 
+
+from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.services.myservice import MyService
-from cfme import test_requirements
 from cfme.utils import ssh
 from cfme.utils.appliance import ViaSSUI
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
+from cfme.utils.providers import ProviderFilter
 from cfme.utils.version import current_version
-from wait_for import wait_for
+from cfme.utils.wait import wait_for
+from cfme import test_requirements
+from markers.env_markers.provider import providers
 
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     test_requirements.ssui,
     pytest.mark.long_running,
-    pytest.mark.ignore_stream("upstream", "5.9"),
-    pytest.mark.provider([InfraProvider],
-                         required_fields=[['provisioning', 'template'],
-                                          ['provisioning', 'host'],
-                                          ['provisioning', 'datastore']],
-                         scope="module"),
+    pytest.mark.provider(gen_func=providers,
+                         filters=[ProviderFilter(classes=[InfraProvider, CloudProvider],
+                                                 required_fields=['provisioning'])])
 ]
 
 
@@ -55,7 +55,6 @@ def test_myservice_crud(appliance, setup_provider, context, order_catalog_item_i
         my_service.delete()
 
 
-@pytest.mark.meta(blockers=[BZ(1518056, forced_streams=["5.7"])])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_retire_service(appliance, setup_provider, context, order_catalog_item_in_ops_ui):
     """Tests retire service"""
