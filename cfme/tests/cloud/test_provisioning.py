@@ -6,6 +6,7 @@ import pytest
 
 from riggerlib import recursive_update
 from textwrap import dedent
+from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
@@ -113,10 +114,10 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name, t
         recursive_update(inst_args, {
             'environment': {
                 'automatic_placement': auto,
-                'cloud_network': None if auto else provisioning['virtual_net'],
-                'cloud_subnet': None if auto else provisioning['subnet_range'],
-                'security_groups': None if auto else [provisioning['network_nsg']],
-                'resource_groups': None if auto else provisioning['resource_group']
+                'cloud_network': None if auto else partial_match(provisioning['virtual_net']),
+                'cloud_subnet': None if auto else partial_match(provisioning['subnet_range']),
+                'security_groups': None if auto else [partial_match(provisioning['network_nsg'])],
+                'resource_groups': None if auto else partial_match(provisioning['resource_group'])
             },
             'properties': {
                 'instance_type': provisioning['vm_size'].lower()},
