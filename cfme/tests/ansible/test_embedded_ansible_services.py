@@ -349,7 +349,9 @@ def test_service_ansible_playbook_pass_extra_vars(service_catalog, service_reque
     view = navigate_to(service, "Details")
     if action == "retirement":
         service.retire()
-    pre = getattr(view, action).standart_output.text
+    stdout = getattr(view, action).standart_output
+    wait_for(lambda: stdout.is_displayed, timeout=10)
+    pre = stdout.text
     json_str = pre.split("--------------------------------")
     result_dict = json.loads(json_str[5].replace('", "', "").replace('\\"', '"').replace(
         '\\, "', '",').split('" ] } PLAY')[0])
