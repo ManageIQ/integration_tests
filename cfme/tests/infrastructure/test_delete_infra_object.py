@@ -3,9 +3,7 @@
 import pytest
 from cfme import test_requirements
 from cfme.common.vm import VM
-from cfme.infrastructure import resource_pool
 from cfme.infrastructure.provider import InfraProvider
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
 
 
@@ -16,7 +14,7 @@ pytestmark = [
 ]
 
 
-def test_delete_cluster_appear_after_refresh(setup_provider, provider, appliance):
+def test_delete_cluster_appear_after_refresh(provider, appliance):
     """ Tests delete cluster
 
     Metadata:
@@ -30,7 +28,7 @@ def test_delete_cluster_appear_after_refresh(setup_provider, provider, appliance
     test_cluster.wait_for_exists()
 
 
-def test_delete_host_appear_after_refresh(appliance, setup_provider, provider):
+def test_delete_host_appear_after_refresh(appliance, provider):
     """ Tests delete host
 
     Metadata:
@@ -45,7 +43,7 @@ def test_delete_host_appear_after_refresh(appliance, setup_provider, provider):
     test_host.wait_to_appear()
 
 
-def test_delete_vm_appear_after_refresh(setup_provider, provider):
+def test_delete_vm_appear_after_refresh(provider):
     """ Tests delete vm
 
     Metadata:
@@ -59,7 +57,7 @@ def test_delete_vm_appear_after_refresh(setup_provider, provider):
     test_vm.wait_to_appear()
 
 
-def test_delete_template_appear_after_refresh(setup_provider, provider):
+def test_delete_template_appear_after_refresh(provider):
     """ Tests delete template
 
     Metadata:
@@ -73,7 +71,7 @@ def test_delete_template_appear_after_refresh(setup_provider, provider):
     test_template.wait_to_appear()
 
 
-def test_delete_resource_pool_appear_after_refresh(setup_provider, provider, appliance):
+def test_delete_resource_pool_appear_after_refresh(provider, appliance):
     """ Tests delete pool
 
     Metadata:
@@ -89,7 +87,7 @@ def test_delete_resource_pool_appear_after_refresh(setup_provider, provider, app
 
 @pytest.mark.meta(blockers=[1335961, 1467989])
 @pytest.mark.ignore_stream("upstream")
-def test_delete_datastore_appear_after_refresh(setup_provider, provider, appliance):
+def test_delete_datastore_appear_after_refresh(provider, appliance):
     """ Tests delete datastore
 
     Metadata:
@@ -98,27 +96,28 @@ def test_delete_datastore_appear_after_refresh(setup_provider, provider, applian
     datastore_collection = appliance.collections.datastores
     data_store = provider.data['remove_test']['datastore']
     test_datastore = datastore_collection.instantiate(name=data_store, provider=provider)
-    details_view = navigate_to(test_datastore, 'Details')
 
-    host_count = int(details_view.entities.relationships.get_text_of('Hosts'))
-    vm_count = int(details_view.entities.relationships.get_text_of('Managed VMs'))
-    if host_count != "0":
+    if test_datastore.host_count > 0:
         test_datastore.delete_all_attached_hosts()
-    if vm_count != "0":
+    if test_datastore.vm_count > 0:
         test_datastore.delete_all_attached_vms()
 
     test_datastore.delete(cancel=False)
-    wait_for(lambda: not test_datastore.exists, fail_condition=False,
-             message="Wait datastore to disappear", num_sec=500,
+    wait_for(lambda: not test_datastore.exists,
+             delay=20,
+             timeout=1200,
+             message="Wait datastore to disappear",
              fail_func=test_datastore.browser.refresh)
 
     provider.refresh_provider_relationships()
-    wait_for(lambda: test_datastore.exists, fail_condition=False,
-             message="Wait datastore to appear", num_sec=1000,
+    wait_for(lambda: test_datastore.exists,
+             delay=20,
+             timeout=1200,
+             message="Wait datastore to appear",
              fail_func=test_datastore.browser.refresh)
 
 
-def test_delete_cluster_from_table(setup_provider, provider, appliance):
+def test_delete_cluster_from_table(provider, appliance):
     """ Tests delete cluster from table
 
     Metadata:
