@@ -52,6 +52,9 @@ caselevels = {
 }
 
 
+test_param = re.compile(r'\[.*\]')
+
+
 def pytest_addoption(parser):
     """Adds command line options."""
     group = parser.getgroup(
@@ -70,11 +73,8 @@ def pytest_addoption(parser):
 
 def get_polarion_name(item):
     """Gets Polarion test case name out of the Node ID."""
-    param_legacy = (item.nodeid[item.nodeid.find('::') + 2:]
-              .replace('::()', '')
-              .replace('::', '.'))
-    param_strip = re.sub(r'\[.*\]', '', param_legacy)
-    return (param_legacy, param_strip)
+    param_strip = test_param.sub('', item.location[2])
+    return (item.location[2], param_strip)
 
 
 def testcase_record(
@@ -296,18 +296,28 @@ def _get_name(obj):
     return str(obj)
 
 
-def gen_duplicates_log(tests):
+def gen_duplicates_log(items):
     """Generates log file containing non-unique test cases names."""
-    seen = set()
+    names = {}
     duplicates = set()
-    for test in tests:
-        if test in seen:
-            duplicates.add(test)
+
+    for item in items:
+        name = test_param.sub('', item.location[2])
+        path = item.location[0]
+
+        name_record = names.get(name)
+        if name_record:
+            name_record.add(path)
         else:
-            seen.add(test)
+            names[name] = {path}
+
+    for name, paths in names.items():
+        if len(paths) > 1:
+            duplicates.add(name)
+
     with open('duplicates.log', 'w') as f:
         for test in sorted(duplicates):
-            f.write("{}\n".format(test))
+            f.write('{}\n'.format(test))
 
 
 @pytest.mark.trylast
@@ -316,12 +326,13 @@ def pytest_collection_modifyitems(config, items):
     if not (config.getoption('generate_xmls') or config.getoption('generate_legacy_xmls')):
         return
 
+    gen_duplicates_log(items)
+
     no_blacklist = config.getoption('xmls_no_blacklist')
     collectonly = config.getoption('--collect-only')
     # all "legacy" conditions can be removed once parametrization is finished
     legacy = config.getoption('generate_legacy_xmls')
 
-    all_names = []
     tc_processed = []
     tc_data = []
     tr_processed = []
@@ -336,13 +347,10 @@ def pytest_collection_modifyitems(config, items):
             continue
 
         legacy_name, parametrized_name = get_polarion_name(item)
-        all_names.append(legacy_name)
         name = legacy_name if legacy else parametrized_name
 
         get_testcase_data(name, tc_data, tc_processed, item, legacy)
         get_testresult_data(name, tr_data, tr_processed, item, legacy)
-
-    gen_duplicates_log(all_names)
 
     testcases_gen(tc_data, 'test_case_import.xml')
     testrun_gen(tr_data, 'test_run_import.xml', config, collectonly=collectonly)
