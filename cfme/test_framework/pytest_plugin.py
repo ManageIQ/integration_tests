@@ -33,7 +33,7 @@ def pytest_collection_finish(session):
 
 
 pytest_plugins = (
-    'markers',
+    'cfme.markers',
     'fixtures.pytest_store',
     'cfme.test_framework.sprout.plugin',
     'cfme.test_framework.appliance_police',
@@ -41,9 +41,9 @@ pytest_plugins = (
     'cfme.test_framework.browser_isolation',
     'fixtures.portset',
 
-    'markers.manual',
-    'markers.polarion',  # before artifactor
-    'markers.env',
+    'cfme.markers.manual',
+    'cfme.markers.polarion',  # before artifactor
+    'cfme.markers.env',
     'fixtures.artifactor_plugin',
     'fixtures.parallelizer',
 
@@ -85,9 +85,6 @@ pytest_plugins = (
     'fixtures.virtual_machine',
     'fixtures.widgets',
     'fixtures.xunit_tools',
-
-    'markers',
-
     'cfme.fixtures.ansible_fixtures',
     'cfme.fixtures.base',
     'cfme.fixtures.cli',

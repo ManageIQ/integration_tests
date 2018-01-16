@@ -10,7 +10,7 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for, TimedOutError
-from markers.env_markers.provider import providers
+from cfme.markers.env_markers.provider import providers
 
 all_infra_prov = ProviderFilter(classes=[InfraProvider])
 excluded = ProviderFilter(classes=[SCVMMProvider, RHEVMProvider], inverted=True)

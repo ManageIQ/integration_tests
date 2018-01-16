@@ -12,7 +12,7 @@ from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 from cfme.utils.wait import TimedOutError, wait_for
-from markers.env_markers.provider import ONE_PER_TYPE
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 
 
 pytestmark = [

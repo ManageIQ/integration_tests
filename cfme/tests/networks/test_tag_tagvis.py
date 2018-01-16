@@ -3,7 +3,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.networks.views import (CloudNetworkView, SubnetView, NetworkRouterView, SecurityGroupView,
                                  NetworkPortView, BalancerView, FloatingIpView)
 from cfme.utils.appliance.implementations.ui import navigate_to
-from markers.env_markers.provider import ONE_PER_CATEGORY
+from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 
 
 pytestmark = [
