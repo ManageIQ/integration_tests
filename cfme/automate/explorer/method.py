@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import attr
+from copy import copy
 
 from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import ParametrizedLocator
-from widgetastic.widget import Table, Text, View
+from widgetastic.widget import Table, Text, View, ParametrizedView, Select, ClickableMixin
 from widgetastic_manageiq import SummaryFormItem, ScriptBox, Input
 from widgetastic_patternfly import BootstrapSelect, BootstrapSwitch, Button, CandidateNotFound
 
@@ -13,12 +14,98 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.timeutil import parsetime
-from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
 
 from . import AutomateExplorerView, check_tree_path
 from .common import Copiable, CopyViewBase
 from .klass import ClassDetailsView
+
+
+class Inputs(View, ClickableMixin):
+    ROOT = './/button[@id="exp_collapse_img"]/i'
+    INDIRECT = True  # TODO: This appear to upset the parent lookup combined with ParView
+
+    @property
+    def is_opened(self):
+        return 'fa-angle-up' in self.browser.classes(self)
+
+    def child_widget_accessed(self, widget):
+        if not self.is_opened:
+            self.click()
+
+    @ParametrizedView.nested
+    class inputs(ParametrizedView):  # noqa
+        PARAMETERS = ('name', )
+        ROOT = ParametrizedLocator('//tr[./td[2]/input[normalize-space(@value)={name|quote}]]')
+        ALL_FIELDS = '//div[@id="inputs_div"]/table//tr/td[2]/input'
+
+        @cached_property
+        def row_id(self):
+            attr = self.browser.get_attribute(
+                'id',
+                './/td/input[contains(@id, "fields_name_")]',
+                parent=self)
+            return int(attr.rsplit('_', 1)[-1])
+
+        name = Input(locator=ParametrizedLocator(
+            './/td/input[contains(@id, "fields_name_{@row_id}")]'))
+        data_type = Select(locator=ParametrizedLocator(
+            './/td/select[contains(@id, "fields_datatype_{@row_id}")]'))
+        default_value = Input(locator=ParametrizedLocator(
+            './/td/input[contains(@id, "fields_value_{@row_id}")]'))
+
+        @classmethod
+        def all(cls, browser):
+            results = []
+            for e in browser.elements(cls.ALL_FIELDS):
+                results.append((browser.get_attribute('value', e), ))
+            return results
+
+        def delete(self):
+                self.browser.click(
+                    './/img[@alt="Click to delete this input field from method"]', parent=self)
+                try:
+                    del self.row_id
+                except AttributeError:
+                    pass
+
+    add_input = Text('//img[@alt="Equal green"]')
+    name = Input(locator='.//td/input[contains(@id, "field_name")]')
+    data_type = Select(locator='.//td/select[contains(@id, "field_datatype")]')
+    default_value = Input(locator='.//td/input[contains(@id, "field_default_value")]')
+    finish_add_input = Text('//img[@alt="Add this entry"]')
+
+    def read(self):
+        return self.inputs.read()
+
+    def fill(self, value):
+        keys = set(value.keys())
+        value = copy(value)
+
+        present = {key for key, _ in self.inputs.read().items()}
+        to_delete = present - keys
+        changed = False
+
+        # Create the new ones
+        for key in keys:
+            if key not in present:
+                new_value = value.pop(key)
+                new_value['name'] = key
+                self.add_input.click()
+                super(Inputs, self).fill(new_value)
+                self.finish_add_input.click()
+                changed = True
+
+        # Fill the rest as expected
+        if self.inputs.fill(value):
+            changed = True
+
+        # delete unneeded
+        for key in to_delete:
+            self.inputs(name=key).delete()
+            changed = True
+
+        return changed
 
 
 class MethodCopyView(AutomateExplorerView, CopyViewBase):
@@ -42,6 +129,7 @@ class MethodDetailsView(AutomateExplorerView):
     display_name = SummaryFormItem('Main Info', 'Display Name')
     location = SummaryFormItem('Main Info', 'Location')
     created_on = SummaryFormItem('Main Info', 'Created On', text_filter=parsetime.from_iso_with_utc)
+    inputs = Table(locator='#params_grid', assoc_column='Input Name')
 
     @property
     def is_displayed(self):
@@ -133,7 +221,7 @@ class MethodAddView(AutomateExplorerView):
     script = ScriptBox()
     data = Input(name='cls_method_data')
     validate_button = Button('Validate')
-    # TODO: inline input parameters
+    inputs = View.nested(Inputs)
 
     playbook_name = Input(name='name')
     playbook_display_name = Input(name='display_name')
@@ -169,7 +257,7 @@ class MethodEditView(AutomateExplorerView):
     script = ScriptBox()
     data = Input(name='method_data')
     validate_button = Button('Validate')
-    # TODO: inline input parameters
+    inputs = View.nested(Inputs)
 
     # playbook
     playbook_name = Input(name='name')
@@ -213,7 +301,7 @@ class Method(BaseEntity, Copiable):
     def __init__(self, collection, name=None, display_name=None, location='inline', script=None,
                  data=None, repository=None, playbook=None, machine_credential=None, hosts=None,
                  max_ttl=None, escalate_privilege=None, verbosity=None,
-                 playbook_input_parameters=None, cancel=False, validate=True):
+                 playbook_input_parameters=None, cancel=False, validate=True, inputs=None):
         super(Method, self).__init__(collection)
 
         self.name = name
@@ -230,6 +318,7 @@ class Method(BaseEntity, Copiable):
         self.escalate_privilege = escalate_privilege
         self.verbosity = verbosity
         self.playbook_input_parameters = playbook_input_parameters
+        self.inputs = inputs
 
     __repr__ = object.__repr__
 
@@ -340,7 +429,7 @@ class MethodCollection(BaseCollection):
             self, name=None, display_name=None, location='inline', script=None, data=None,
             cancel=False, validate=True, repository=None, playbook=None, machine_credential=None,
             hosts=None, max_ttl=None, escalate_privilege=None, verbosity=None,
-            playbook_input_parameters=None):
+            playbook_input_parameters=None, inputs=None):
         add_page = navigate_to(self, 'Add', wait_for_view=True)
         add_page.fill({'location': location})
         if location == 'inline':
@@ -348,7 +437,8 @@ class MethodCollection(BaseCollection):
                 'inline_name': name,
                 'inline_display_name': display_name,
                 'script': script,
-                'data': data
+                'data': data,
+                'inputs': inputs,
             })
         if location == 'playbook':
             add_page.fill({
@@ -392,7 +482,8 @@ class MethodCollection(BaseCollection):
                 max_ttl=max_ttl,
                 escalate_privilege=escalate_privilege,
                 verbosity=verbosity,
-                playbook_input_parameters=playbook_input_parameters)
+                playbook_input_parameters=playbook_input_parameters,
+                inputs=inputs)
 
     def delete(self, *methods):
         all_page = navigate_to(self.parent, 'Details')
@@ -444,7 +535,7 @@ class Add(CFMENavigateStep):
 @navigator.register(Method)
 class Details(CFMENavigateStep):
     VIEW = MethodDetailsView
-    prerequisite = NavigateToAttribute('domain', 'Details')
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateExplorer')
 
     def step(self):
         self.prerequisite_view.datastore.tree.click_path(*self.obj.tree_path)

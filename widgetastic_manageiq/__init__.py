@@ -42,7 +42,6 @@ from widgetastic_patternfly import (
     Dropdown, Input, VerticalNavigation, Tab)
 
 from cfme.exceptions import ItemNotFound
-from cfme.utils.blockers import BZ
 
 
 class DynamicTableAddError(Exception):
