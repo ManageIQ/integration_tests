@@ -47,7 +47,7 @@ def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog
     }
     if not provider.one_of(GCEProvider):
         provisioning_data['environment'] = {'security_groups':
-                                                partial_match(provisioning['security_group']),
+                                            partial_match(provisioning['security_group']),
                                             'cloud_tenant': provisioning['cloud_tenant']}
 
     if provider.one_of(AzureProvider):
