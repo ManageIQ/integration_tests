@@ -78,27 +78,23 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name, t
 
     # All providers other than Azure
     if not provider.one_of(AzureProvider):
+        recursive_update(inst_args, {
+            'properties': {
+                'instance_type': partial_match(provisioning['instance_type']),
+                'guest_keypair': provisioning['guest_keypair']}
+        })
         if provider.one_of(OpenStackProvider):
             recursive_update(inst_args, {
-                'properties': {
-                    'instance_type': partial_match(provisioning['instance_type']),
-                    'guest_keypair': provisioning['guest_keypair']},
                 'environment': {
-                    'automatic_placement': True
-                }
+                    'automatic_placement': True}
             })
         else:
             recursive_update(inst_args, {
-                'properties': {
-                    'instance_type': partial_match(provisioning['instance_type']),
-                    'guest_keypair': provisioning['guest_keypair']},
                 'environment': {
                     'availability_zone': None if auto else provisioning['availability_zone'],
                     'security_groups': None if auto else provisioning['security_group'],
-                    'automatic_placement': auto
-                }
+                    'automatic_placement': auto}
             })
-
 
     # GCE specific
     if provider.one_of(GCEProvider):
@@ -605,8 +601,8 @@ def test_provision_with_boot_volume(request, testing_instance, provider, soft_as
 # Not collected for EC2 in generate_tests above
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
 def test_provision_with_additional_volume(request, testing_instance, provider, small_template,
-                                          soft_assert, copy_domains, modified_request_class,
-                                          appliance):
+                                          soft_assert, modified_request_class, appliance,
+                                          copy_domains):
     """ Tests provisioning with setting specific image from AE and then also making it create and
     attach an additional 3G volume.
 
