@@ -10,6 +10,7 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.tier(3),
     test_requirements.general_ui,
+    pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider([InfraProvider], required_fields=['remove_test'], scope="module")
 ]
 
