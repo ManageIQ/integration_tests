@@ -570,6 +570,7 @@ def test_provision_with_boot_volume(request, testing_instance, provider, soft_as
                             :device_name => "vda",
                             :source_type => "volume",
                             :destination_type => "volume",
+                            :volume_size => 1,
                             :delete_on_termination => false
                         }}]
                     }}
