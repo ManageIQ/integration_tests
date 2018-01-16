@@ -241,7 +241,7 @@ class Add(CFMENavigateStep):
         """Raises DropdownItemDisabled from widgetastic_patternfly
         if no RHOS Network manager present"""
         # Todo remove when fixed 1520669
-        if (BZ(blockers=[1520669], forced_streams='5.9').blocks and
+        if (BZ(1520669, forced_streams='5.9').blocks and
                 self.prerequisite_view.flash.messages):
             self.prerequisite_view.flash.dismiss()
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Security Group')
