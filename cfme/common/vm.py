@@ -309,7 +309,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
         view = navigate_to(self, 'Details')
 
         # Click console button given by type
-        view.toolbar.access.item_select(console, handle_alert=not invokes_alert)
+        view.toolbar.access.item_select(console, handle_alert=True if invokes_alert else None)
         self.vm_console
 
     def open_details(self, properties=None):
