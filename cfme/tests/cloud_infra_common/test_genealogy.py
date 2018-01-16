@@ -2,9 +2,9 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.cloud.provider import CloudProvider
 from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
-from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -13,15 +13,14 @@ from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from markers.env_markers.provider import providers
 
-
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers', 'provider'),
     pytest.mark.tier(2),
-    pytest.mark.provider(gen_func=providers,
-                         filters=[ProviderFilter(classes=[BaseProvider]),
-                                  lambda provider: not provider.one_of(SCVMMProvider,
-                                                                       RHEVMProvider)],
-                         scope='module'),
+    pytest.mark.provider(
+        gen_func=providers,
+        filters=[ProviderFilter(classes=[BaseProvider]),
+                 ProviderFilter(classes=[SCVMMProvider, RHEVMProvider], inverted=True)],
+        scope='module'),
 ]
 
 
