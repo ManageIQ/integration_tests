@@ -167,8 +167,13 @@ class Request(BaseEntity):
         Args:
             cancel: Whether to cancel the deletion.
         """
-        view = navigate_to(self, 'Details')
-        view.toolbar.delete.click(handle_alert=True)
+        try:
+            # This try block is a workaround until GH issue  #6444 is fixed
+            # And should be removed once it is done
+            view = navigate_to(self, 'Details')
+            view.toolbar.delete.click(handle_alert=True)
+        except AssertionError:
+            pass
 
     @variable(alias='rest')
     def is_finished(self):
