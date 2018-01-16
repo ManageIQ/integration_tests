@@ -32,17 +32,12 @@ def new_vm(request, provider):
     vm.provider.mgmt.delete_vm(vm.name)
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def mark_vm_as_appliance(new_vm, appliance):
     # set diagnostics vm
     relations_view = navigate_to(new_vm, 'EditManagementEngineRelationship')
     server_name = "{name} ({sid})".format(name=appliance.server.name, sid=appliance.server.sid)
     relations_view.form.server.select_by_visible_text(server_name)
-    relations_view.form.save_button.click()
-    yield
-    # unset diagnostics vm
-    relations_view = navigate_to(new_vm, 'EditManagementEngineRelationship')
-    relations_view.form.server.select_by_visible_text('<Not a Server>')
     relations_view.form.save_button.click()
 
 
@@ -199,8 +194,9 @@ def test_timeline_events(new_vm, soft_assert):
 
 
 def test_infra_diagnostic_timeline_events(new_vm, soft_assert, mark_vm_as_appliance):
-    events_list = ['create', 'stop']
+    events_list = ['create']
     targets = (new_vm.appliance.server,)
     for event in events_list:
+        logger.info('Will generate event %r on machine %r', event, new_vm.name)
         vm_event = VMEvent(new_vm, event)
         vm_event.catch_in_timelines(soft_assert, targets)
