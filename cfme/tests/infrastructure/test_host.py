@@ -21,21 +21,25 @@ pytestmark = [
 
 
 @pytest.fixture(scope='module')
-def hosts_ipaddresses(provider):
+def host_ips(provider):
+    """Returns tuple of hosts' IP addresses."""
     ipaddresses = []
+
     all_hosts = provider.data.get('hosts', [])
     for host in all_hosts:
+        ipaddr = None
         if hasattr(host, 'ipaddress'):
             ipaddr = host.ipaddress
-        else:
+        if not ipaddr:
             try:
                 ipaddr = socket.gethostbyname(host.name)
             except Exception:
-                ipaddr = None
+                pass
         if ipaddr:
             ipaddresses.append(ipaddr)
     if not ipaddresses:
         pytest.skip('No hosts IP addresses found for provider "{}"'.format(provider.name))
+
     ipaddresses.sort()
     return tuple(ipaddresses)
 
@@ -56,7 +60,8 @@ def navigate_and_select_quads(provider):
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
-def test_discover_host(request, provider, appliance, hosts_ipaddresses):
+def test_discover_host(request, provider, appliance, host_ips):
+    """Tests hosts discovery."""
     if provider.delete_if_exists(cancel=False):
         provider.wait_for_delete()
 
@@ -70,10 +75,7 @@ def test_discover_host(request, provider, appliance, hosts_ipaddresses):
     _cleanup()
     request.addfinalizer(_cleanup)
 
-    first_addr = provider.ip_address if hasattr(provider, 'ip_address') else hosts_ipaddresses[0]
-    last_addr = hosts_ipaddresses[-1]
-
-    collection.discover(first_addr, last_addr, esx=True)
+    collection.discover(host_ips[0], host_ips[-1], esx=True)
     hosts_view = navigate_to(collection, 'All')
     expected_len = len(provider.data.get('hosts', {}))
 
@@ -82,7 +84,8 @@ def test_discover_host(request, provider, appliance, hosts_ipaddresses):
         return len(hosts_view.entities.entity_names) == expected_len
 
     wait_for(_check_items_visibility, num_sec=600, delay=10)
-    assert tuple(sorted(hosts_view.entities.entity_names)) == hosts_ipaddresses
+    for host in hosts_view.entities.entity_names:
+        assert host in host_ips
 
 
 # Tests to automate BZ 1201092
