@@ -13,9 +13,9 @@ from cfme.utils.update import update
 pytestmark = [test_requirements.tag, pytest.mark.tier(2)]
 
 test_items = [
-    ('clusters', None),
-    ('vms', Vm),
-    ('templates', Template)
+    ('clusters', None, None),
+    ('vms', Vm, 'ProviderVms'),
+    ('templates', Template, 'ProviderTemplates')
 ]
 
 
@@ -26,22 +26,17 @@ def a_provider(request):
     return setup_one_or_skip(request, filters=[prov_filter])
 
 
-@pytest.fixture(params=test_items, ids=[collection_type for collection_type, __ in test_items],
+@pytest.fixture(params=test_items, ids=[collection_type for collection_type, _, _ in test_items],
                 scope='function')
 def testing_vis_object(request, a_provider, appliance):
     """ Fixture creates class object for tag visibility test
 
     Returns: class object of certain type
     """
-    collection_name, param_class = request.param
+    collection_name, param_class, destination = request.param
     if not param_class:
         param_class = getattr(appliance.collections, collection_name)
-    if collection_name == 'clusters':
-        view = navigate_to(param_class, 'All')
-    elif collection_name == 'vms':
-        view = navigate_to(a_provider, "ProviderVms")
-    else:
-        view = navigate_to(param_class, 'TemplatesOnly')
+    view = navigate_to(a_provider, destination) if destination else navigate_to(param_class, 'All')
     names = view.entities.entity_names
     if not names:
         pytest.skip("No content found for test")
