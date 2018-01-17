@@ -197,6 +197,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
 @navigator.register(InfraProvider, 'All')
 class All(CFMENavigateStep):
     VIEW = InfraProvidersView
+    force_refresh = True
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
