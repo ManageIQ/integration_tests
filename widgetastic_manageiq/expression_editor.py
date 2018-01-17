@@ -13,6 +13,14 @@ from widgetastic.widget import View
 from widgetastic_manageiq import Calendar, Checkbox
 
 
+class ExpressionButton(Button):
+
+    def __locator__(self):
+        return (
+            './/*[(self::a or self::button or (self::input and '
+            '(@type="button" or @type="submit"))) {}]'.format(self.locator_conditions))
+
+
 class ExpressionEditor(View, Pretty):
     """This class enables to embed the expression in a Form.
 
@@ -85,9 +93,9 @@ class ExpressionEditor(View, Pretty):
     COMMIT = Button(title="Commit expression element changes")
     DISCARD = Button(title="Discard expression element changes")
     REMOVE = Button(title="Remove this expression element")
-    NOT = Button(title="Wrap this expression element with a NOT")
-    OR = Button(title="OR with a new expression element")
-    AND = Button(title="AND with a new expression element")
+    NOT = ExpressionButton(title="Wrap this expression element with a NOT")
+    OR = ExpressionButton(title="OR with a new expression element")
+    AND = ExpressionButton(title="AND with a new expression element")
     REDO = Button(title="Redo the last change")
     UNDO = Button(title="Undo the last change")
     SELECT_SPECIFIC = "//img[@alt='Click to change to a specific Date/Time format']"
