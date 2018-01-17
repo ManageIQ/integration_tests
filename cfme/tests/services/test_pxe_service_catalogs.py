@@ -73,7 +73,7 @@ def pxe_server(appliance, provider):
 def pxe_cust_template(appliance, provider):
     provisioning_data = provider.data['provisioning']
     pxe_cust_template = provisioning_data['pxe_kickstart']
-    return get_template_from_config(pxe_cust_template, appliance=appliance)
+    return get_template_from_config(pxe_cust_template, create=True, appliance=appliance)
 
 
 @pytest.fixture(scope="function")
