@@ -1233,6 +1233,25 @@ class VmAllWithTemplatesDetails(CFMENavigateStep):
         self.view.toolbar.reload.click()
 
 
+@navigator.register(Template, 'ArchiveDetails')
+@navigator.register(Vm, 'ArchiveDetails')
+class ArchiveDetails(CFMENavigateStep):
+    VIEW = InfraVmDetailsView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        try:
+            entity_item = self.prerequisite_view.entities.get_entity(
+                name=self.obj.name, surf_pages=True)
+        except ItemNotFound:
+            raise VmOrInstanceNotFound('Failed to locate VM/Template with name "{}"'.
+                                       format(self.obj.name))
+        entity_item.click()
+
+    def resetter(self, *args, **kwargs):
+        self.view.toolbar.reload.click()
+
+
 @navigator.register(Template, 'AnyProviderDetails')
 @navigator.register(Vm, 'AnyProviderDetails')
 class VmAllWithTemplatesDetailsAnyProvider(VmAllWithTemplatesDetails):
