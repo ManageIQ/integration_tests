@@ -16,6 +16,7 @@ from cfme.utils.providers import ProviderFilter
 from cfme.utils.timeutil import parsetime
 from cfme.utils.wait import wait_for
 from markers.env_markers.provider import providers
+from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -242,6 +243,8 @@ def test_unset_retirement_date(retire_vm):
 
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('remove_date', [True, False], ids=['remove_date', 'set_future_date'])
+@pytest.mark.meta(blockers=[BZ(1534962,
+                            forced_streams=['5.9', 'upstream'])])
 def test_resume_retired_instance(retire_vm, provider, remove_date):
     """Test resuming a retired instance, should be supported for infra and cloud, though the
     actual recovery results may differ depending on state after retirement
