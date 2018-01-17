@@ -73,7 +73,7 @@ def setup_external_auth_ipa(**data):
     current_appliance.server.login_admin()
 
 
-def setup_external_auth_openldap(**data):
+def setup_external_auth_openldap(appliance, **data):
     """Sets up the appliance for an external authentication with OpenLdap.
 
     Keywords:
@@ -87,24 +87,14 @@ def setup_external_auth_openldap(**data):
         'password': credentials['host_default']['password'],
         'hostname': data['ipaddress'],
     }
-    current_appliance = get_or_create_current_appliance()
-    appliance_name = 'cfmeappliance{}'.format(fauxfactory.gen_alpha(7).lower())
-    appliance_address = current_appliance.hostname
-    appliance_fqdn = '{}.{}'.format(appliance_name, data['domain_name'])
     with SSHClient(**connect_kwargs) as ldapserver_ssh:
-        # updating the /etc/hosts is a workaround due to the
-        # https://bugzilla.redhat.com/show_bug.cgi?id=1360928
-        command = 'echo "{}\t{}" >> /etc/hosts'.format(appliance_address, appliance_fqdn)
-        ldapserver_ssh.run_command(command)
         ldapserver_ssh.get_file(remote_file=data['cert_filepath'],
                                 local_path=conf_path.strpath)
-    ensure_browser_open()
-    current_appliance.server.login_admin()
-    current_appliance.server.authentication.set_auth_mode(
-        mode='external', get_groups=data.pop("get_groups", True)
+    appliance.server.login_admin()
+    appliance.server.authentication.set_auth_mode(
+        auth_mode='external', get_groups=data.pop("get_groups", True)
     )
-    current_appliance.configure_appliance_for_openldap_ext_auth(appliance_fqdn)
-    current_appliance.server.logout()
+    appliance.configure_openldap()
 
 
 def disable_external_auth_ipa():
