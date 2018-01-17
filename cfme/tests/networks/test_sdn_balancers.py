@@ -46,6 +46,3 @@ def test_balances_detail(provider, network_prov_with_load_balancers):
         for balancer in prov.balancers.all():
             check = balancer.health_checks
             assert check is not None
-
-    provider.delete_if_exists(cancel=False)
-    provider.wait_for_delete()
