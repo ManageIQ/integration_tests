@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+import six
 
 from cfme import test_requirements
 from cfme.configure.settings import Visual
@@ -7,25 +8,15 @@ from cfme.cloud.availability_zone import AvailabilityZone, AvailabilityZoneAllVi
 from cfme.cloud.provider import CloudProvider, CloudProvidersView
 from cfme.cloud.flavor import Flavor, FlavorAllView
 from cfme.cloud.instance import Instance
-from cfme.cloud.keypairs import KeyPairCollection, KeyPairAllView
-from cfme.cloud.stack import StackCollection, StackAllView
-from cfme.cloud.tenant import TenantCollection, TenantAllView
-from cfme.modeling.base import BaseCollection
+from cfme.cloud.keypairs import KeyPairAllView
+from cfme.cloud.stack import StackAllView
+from cfme.cloud.tenant import TenantAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
               pytest.mark.usefixtures("openstack_provider")]
-
-# TODO When all of these classes have widgets and views use them in the tests
-grid_pages = [CloudProvider,
-              AvailabilityZone,
-              TenantCollection,
-              Flavor,
-              Instance,
-              StackCollection,
-              KeyPairCollection]
 
 # Dict values are views which are required to check correct landing pages.
 landing_pages = {
@@ -43,10 +34,25 @@ def visual(appliance):
     return Visual(appliance=appliance)
 
 
+@pytest.fixture(scope='module', params=['10', '20', '50', '100', '200', '500', '1000'])
+def value(request):
+    return request.param
+
+
+@pytest.fixture(scope='module', params=[CloudProvider,
+                                        AvailabilityZone,
+                                        'cloud_tenants',
+                                        Flavor,
+                                        Instance,
+                                        'stacks',
+                                        'keypairs'])
+def page(request):
+    return request.param
+
+
 @pytest.yield_fixture(scope="module")
 def set_grid(visual):
     gridlimit = visual.grid_view_limit
-    visual.grid_view_limit = 5
     yield
     visual.grid_view_limit = gridlimit
 
@@ -54,7 +60,6 @@ def set_grid(visual):
 @pytest.yield_fixture(scope="module")
 def set_tile(visual):
     tilelimit = visual.tile_view_limit
-    visual.tile_view_limit = 5
     yield
     visual.tile_view_limit = tilelimit
 
@@ -62,7 +67,6 @@ def set_tile(visual):
 @pytest.yield_fixture(scope="module")
 def set_list(visual):
     listlimit = visual.list_view_limit
-    visual.list_view_limit = 5
     yield
     visual.list_view_limit = listlimit
 
@@ -83,62 +87,65 @@ def set_cloud_provider_quad(visual):
     visual.cloud_provider_quad = True
 
 
-@pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_cloud_grid_page_per_item(visual, request, page, set_grid, appliance):
+def test_cloud_grid_page_per_item(visual, request, page, value, set_grid, appliance):
     """ Tests grid items per page
 
     Metadata:
         test_flag: visuals
     """
-    if issubclass(page, BaseCollection):
-        page = page(appliance)
+    if isinstance(page, six.string_types):
+        page = getattr(appliance.collections, page)
+    if visual.grid_view_limit != value:
+        visual.grid_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.grid_view_limit
-    view = navigate_to(page, 'All')
-    view.toolbar.view_selector.select('Grid View')
+    view = navigate_to(page, 'All', use_resetter=False)
+    view.toolbar.view_selector.select("Grid View")
     max_item = view.entities.paginator.max_item
     item_amt = view.entities.paginator.items_amount
-    if item_amt is not None and int(item_amt) >= int(limit):
+    if int(item_amt) >= int(limit):
         assert int(max_item) == int(limit), "Gridview Failed for page {}!".format(page)
     assert int(max_item) <= int(item_amt)
 
 
-@pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_cloud_tile_page_per_item(visual, request, page, set_tile, appliance):
+def test_cloud_tile_page_per_item(visual, request, page, value, set_tile, appliance):
     """ Tests tile items per page
 
     Metadata:
         test_flag: visuals
     """
-    if issubclass(page, BaseCollection):
-        page = page(appliance)
+    if isinstance(page, six.string_types):
+        page = getattr(appliance.collections, page)
+    if visual.tile_view_limit != value:
+        visual.tile_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.tile_view_limit
-    view = navigate_to(page, 'All')
+    view = navigate_to(page, 'All', use_resetter=False)
     view.toolbar.view_selector.select('Tile View')
     max_item = view.entities.paginator.max_item
     item_amt = view.entities.paginator.items_amount
-    if item_amt is not None and int(item_amt) >= int(limit):
+    if int(item_amt) >= int(limit):
         assert int(max_item) == int(limit), "Tileview Failed for page {}!".format(page)
     assert int(max_item) <= int(item_amt)
 
 
-@pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_cloud_list_page_per_item(visual, request, page, set_list, appliance):
+def test_cloud_list_page_per_item(visual, request, page, value, set_list, appliance):
     """ Tests list items per page
 
     Metadata:
         test_flag: visuals
     """
-    if issubclass(page, BaseCollection):
-        page = page(appliance)
+    if isinstance(page, six.string_types):
+        page = getattr(appliance.collections, page)
+    if visual.list_view_limit != value:
+        visual.list_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.list_view_limit
-    view = navigate_to(page, 'All')
+    view = navigate_to(page, 'All', use_resetter=False)
     view.toolbar.view_selector.select('List View')
     max_item = view.entities.paginator.max_item
     item_amt = view.entities.paginator.items_amount
-    if item_amt is not None and int(item_amt) >= int(limit):
+    if int(item_amt) >= int(limit):
         assert int(max_item) == int(limit), "Listview Failed for page {}!".format(page)
     assert int(max_item) <= int(item_amt)
 
