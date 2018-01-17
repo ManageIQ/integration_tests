@@ -219,6 +219,17 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
         if getattr(self, "project", None):
             provider_attributes["project"] = self.project
 
+        # Keystone API
+        api_version = getattr(self, "api_version", None)
+        if api_version and "Keystone" in api_version:
+            api_version_trimmed = self.api_version.replace("Keystone ", "")
+            provider_attributes["api_version"] = api_version_trimmed
+        if api_version == "Keystone v3" and getattr(self, "keystone_v3_domain_id", None):
+            provider_attributes["uid_ems"] = self.keystone_v3_domain_id
+
+        if getattr(self, "tenant_mapping", None) is not None:
+            provider_attributes["tenant_mapping_enabled"] = self.tenant_mapping
+
         if self.type_name == "azure":
             provider_attributes["uid_ems"] = self.tenant_id
             provider_attributes["provider_region"] = self.region.lower().replace(" ", "")
@@ -298,6 +309,42 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
             candu_connection["endpoint"]["verify_ssl"] = 0
         connection_configs.append(candu_connection)
 
+    def _fill_amqp_endpoint_dicts(self, provider_attributes, connection_configs):
+        """Fills dicts with AMQP events endpoint data.
+
+        Helper method for ``self.create_rest``
+        """
+        if "events" not in self.endpoints:
+            return
+
+        endpoint_events = self.endpoints["events"]
+
+        event_stream = getattr(endpoint_events, "event_stream", None)
+        if not (event_stream and event_stream.lower() == "amqp"):
+            return
+
+        if isinstance(provider_attributes["credentials"], dict):
+            provider_attributes["credentials"] = [provider_attributes["credentials"]]
+        provider_attributes["credentials"].append({
+            "userid": endpoint_events.credentials.principal,
+            "password": endpoint_events.credentials.secret,
+            "auth_type": "amqp",
+        })
+        events_connection = {
+            "endpoint": {
+                "hostname": endpoint_events.hostname,
+                "role": "amqp",
+            },
+        }
+        if getattr(endpoint_events, "api_port", None):
+            events_connection["endpoint"]["port"] = endpoint_events.api_port
+        if getattr(endpoint_events, "security_protocol", None):
+            security_protocol = endpoint_events.security_protocol.lower()
+            if security_protocol == "basic (ssl)":
+                security_protocol = "ssl"
+            events_connection["endpoint"]["security_protocol"] = security_protocol
+        connection_configs.append(events_connection)
+
     def _compile_connection_configurations(self, provider_attributes, connection_configs):
         """Compiles togetger all dicts with data for ``connection_configurations``.
 
@@ -343,6 +390,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
         self._fill_provider_attributes(provider_attributes)
         self._fill_default_endpoint_dicts(provider_attributes, connection_configs)
         self._fill_candu_endpoint_dicts(provider_attributes, connection_configs)
+        self._fill_amqp_endpoint_dicts(provider_attributes, connection_configs)
         self._compile_connection_configurations(provider_attributes, connection_configs)
 
         try:
