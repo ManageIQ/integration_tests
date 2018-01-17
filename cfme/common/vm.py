@@ -287,7 +287,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
         return getattr(view.entities, properties[0].lower().replace(' ', '_')).get_text_of(
             properties[1])
 
-    def open_console(self, console='VM Console', invokes_alert=False, cancel=False):
+    def open_console(self, console='VM Console', invokes_alert=None):
         """
         Initiates the opening of one of the console types supported by the Access
         button.   Presently we only support VM Console, which is the HTML5 Console.
@@ -300,7 +300,6 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
             console: one of the supported console types given by the Access button.
             invokes_alert: If the particular console will invoke a CFME popup/alert
                            setting this to true will handle this.
-            cancel: Allows one to cancel the operation if the popup/alert occurs.
         """
         # TODO: implement vmrc vm console
         if console not in ['VM Console']:
@@ -309,7 +308,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
         view = navigate_to(self, 'Details')
 
         # Click console button given by type
-        view.toolbar.access.item_select(console, handle_alert=not invokes_alert)
+        view.toolbar.access.item_select(console, handle_alert=invokes_alert)
         self.vm_console
 
     def open_details(self, properties=None):
