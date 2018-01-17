@@ -146,9 +146,13 @@ function run_config {
   fi
 
   docker run -it --rm \
+    -v $(dirname $SSH_AUTH_SOCK) \
+    -v /etc/passwd \
+    -v /etc/group \
     -v ${PLAY_LOCATION}:/projects/ansible_virtenv/ansible_work \
     -v ${WORKDIR}:/projects/cfme_vol/ \
     -v ~/.ssh:/home/${USERNAME}/.ssh:ro \
+    -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
     ${ENV_VARS_CONF} \
     ${DOCK_IMG_CFG} \
     ${1}
@@ -167,10 +171,14 @@ function run_command {
     -w /projects/cfme_vol/integration_tests \
     -u ${USER_ID}:${GROUP_ID} \
     -p ${VNC_PORT}:5999 \
+    -v $(dirname $SSH_AUTH_SOCK) \
+    -v /etc/passwd \
+    -v /etc/group \
     -v ${WORKDIR}:/projects/cfme_vol/ \
     -v ~/.ssh:/home/${USERNAME}/.ssh:ro \
     -v ~/:${HOME} \
     -v /var/tmp/bashrc:${HOME}/.bashrc \
+    -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
     ${ENV_VARS} \
     ${DOCK_IMG} \
     bash -c ". /etc/bashrc; pip install -e .; $1"
