@@ -163,6 +163,6 @@ def test_tagvis_infra_object(infra_test_item, check_item_visibility,
         1. As admin add tag
         2. Login as restricted user, item is visible for user
         3. As admin remove tag
-        4. Login as restricted user, iten is not visible for user
+        4. Login as restricted user, item is not visible for user
     """
     check_item_visibility(infra_test_item, visibility)
