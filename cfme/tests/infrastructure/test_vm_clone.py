@@ -37,7 +37,7 @@ def create_vm(appliance, provider, setup_provider, request):
 
     if not provider.mgmt.does_vm_exist(vm.name):
         logger.info("deploying %s on provider %s", vm.name, provider.key)
-        vm.create_on_provider(allow_skip="default", find_in_cfme=False)
+        vm.create_on_provider(allow_skip="default", find_in_cfme=True)
     return vm
 
 
