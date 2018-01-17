@@ -204,20 +204,7 @@ def generate(*args, **kwargs):
     indirect = kwargs.pop('indirect', False)
     filter_unused = kwargs.pop('filter_unused', True)
     gen_func = kwargs.pop('gen_func', providers_by_class)
-
-    def fixture_filter(metafunc, argnames, argvalues):
-        """Filter fixtures based on fixturenames in the function represented by ``metafunc``"""
-        # Identify indeces of matches between argnames and fixturenames
-        keep_index = [e[0] for e in enumerate(argnames) if e[1] in metafunc.fixturenames]
-
-        # Keep items at indices in keep_index
-        def f(l):
-            return [e[1] for e in enumerate(l) if e[0] in keep_index]
-
-        # Generate the new values
-        argnames = f(argnames)
-        argvalues = map(f, argvalues)
-        return argnames, argvalues
+    from cfme.utils.pytest_shortcuts import fixture_filter
 
     # If parametrize doesn't get you what you need, steal this and modify as needed
     def pytest_generate_tests(metafunc):

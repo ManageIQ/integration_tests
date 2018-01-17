@@ -5,6 +5,8 @@ import pytest
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter, list_providers
 from markers.env import EnvironmentMarker
+from cfme.utils.pytest_shortcuts import fixture_filter
+
 
 ONE = 'one'
 ALL = 'all'
@@ -202,22 +204,6 @@ class ProviderEnvironmentMarker(EnvironmentMarker):
             filter_unused = kwargs.pop('filter_unused', True)
             selector = kwargs.pop('selector', ALL)
             gen_func = kwargs.pop('gen_func', providers_by_class)
-
-            def fixture_filter(metafunc, argnames, argvalues):
-                """Filter fixtures based on fixturenames in
-                the function represented by ``metafunc``"""
-
-                # Identify indeces of matches between argnames and fixturenames
-                keep_index = [e[0] for e in enumerate(argnames) if e[1] in metafunc.fixturenames]
-
-                # Keep items at indices in keep_index
-                def f(l):
-                    return [e[1] for e in enumerate(l) if e[0] in keep_index]
-
-                # Generate the new values
-                argnames = f(argnames)
-                argvalues = map(f, argvalues)
-                return argnames, argvalues
 
             # If parametrize doesn't get you what you need, steal this and modify as needed
             kwargs.update({'selector': selector})
