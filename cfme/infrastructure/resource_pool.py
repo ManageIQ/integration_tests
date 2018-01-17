@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import attr
 from navmazing import NavigateToAttribute
-from widgetastic.exceptions import NoSuchElementException
+
 from widgetastic.widget import View
 from widgetastic_patternfly import Button, Dropdown
 
@@ -12,9 +12,14 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import (
-    ItemsToolBarViewSelector, ManageIQTree, Text, Table, BreadCrumb, SummaryTable, Accordion)
+    Accordion,
+    BaseEntitiesView,
+    BreadCrumb,
+    ItemsToolBarViewSelector,
+    ManageIQTree,
+    SummaryTable,
+    Text)
 
 
 class ResourcePoolToolbar(View):
@@ -44,12 +49,6 @@ class ResourcePoolDetailsAccordion(View):
         tree = ManageIQTree()
 
 
-class ResourcePoolEntities(BaseEntitiesView):
-    """Entities on the main list page"""
-    table = Table("//div[@id='list_grid']//table")
-    # todo: remove table and use entities instead
-
-
 class ResourcePoolDetailsEntities(View):
     """Entities on the details page"""
     breadcrumb = BreadCrumb()
@@ -68,9 +67,9 @@ class ResourcePoolView(BaseLoggedInPage):
         nav_chain = ['Compute', 'Infrastructure', 'Resource Pools']
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == nav_chain and
-            self.title == 'Resource Pools'
+            self.navigation.currently_selected == nav_chain
         )
+
 
 class ResourcePoolAllView(ResourcePoolView):
     """The "all" view -- a list of app the resource pools"""
@@ -81,7 +80,7 @@ class ResourcePoolAllView(ResourcePoolView):
             self.entities.title.text == 'Resource Pools')
 
     toolbar = View.nested(ResourcePoolToolbar)
-    including_entities = View.include(ResourcePoolEntities, use_parent=True)
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
 
 
 class ResourcePoolDetailsView(ResourcePoolView):
@@ -151,7 +150,7 @@ class ResourcePool(Pretty, BaseEntity, WidgetasticTaggable):
             def refresh():
                 if self.provider:
                     self.provider.refresh_provider_relationships()
-                view.browser.selenium.refresh()
+                view.browser.refresh()
                 view.flush_widget_cache()
 
             wait_for(lambda: not self.exists, fail_condition=False, fail_func=refresh, num_sec=500,
@@ -164,7 +163,7 @@ class ResourcePool(Pretty, BaseEntity, WidgetasticTaggable):
         def refresh():
             if self.provider:
                 self.provider.refresh_provider_relationships()
-            view.browser.selenium.refresh()
+            view.browser.refresh()
             view.flush_widget_cache()
 
         wait_for(lambda: self.exists, fail_condition=False, num_sec=1000, fail_func=refresh,
@@ -195,12 +194,7 @@ class ResourcePool(Pretty, BaseEntity, WidgetasticTaggable):
     @property
     def exists(self):
         view = navigate_to(self.parent, 'All')
-        try:
-            view.toolbar.view_selector.select('List View')
-            view.entities.paginator.find_row_on_pages(view.entities.table, name=self.name)
-            return True
-        except NoSuchElementException:
-            return False
+        return self.name in view.entities.entity_names
 
 
 @attr.s
@@ -221,11 +215,6 @@ class All(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Resource Pools')
 
-    def resetter(self):
-        """Reset view and selection"""
-        self.view.toolbar.view_selector.select('Grid View')
-        self.view.entities.paginator.reset_selection()
-
 
 @navigator.register(ResourcePool, 'Details')
 class Details(CFMENavigateStep):
@@ -235,7 +224,6 @@ class Details(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         """Navigate to the item"""
-        self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
         except ItemNotFound:
