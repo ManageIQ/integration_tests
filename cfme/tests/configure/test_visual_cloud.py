@@ -29,12 +29,12 @@ grid_pages = [CloudProvider,
 
 # Dict values are views which are required to check correct landing pages.
 landing_pages = {
-    'Clouds / Providers': CloudProvidersView,
-    'Clouds / Key Pairs': KeyPairAllView,
-    'Clouds / Tenants': TenantAllView,
-    'Clouds / Flavors': FlavorAllView,
-    'Clouds / Availability Zones': AvailabilityZoneAllView,
-    'Clouds / Stacks': StackAllView,
+    'Compute / Clouds / Providers': CloudProvidersView,
+    'Compute / Clouds / Key Pairs': KeyPairAllView,
+    'Compute / Clouds / Tenants': TenantAllView,
+    'Compute / Clouds / Flavors': FlavorAllView,
+    'Compute / Clouds / Availability Zones': AvailabilityZoneAllView,
+    'Compute / Clouds / Stacks': StackAllView,
 }
 
 
@@ -145,16 +145,13 @@ def test_cloud_list_page_per_item(visual, request, page, set_list, appliance):
 
 @pytest.mark.parametrize('start_page', landing_pages, scope="module")
 def test_cloud_start_page(visual, request, appliance, start_page):
-    # TODO: Need to dynamically fetch this value and move this test case to common.
     """ Tests start page
 
     Metadata:
         test_flag: visuals
     """
-    start = "" if appliance.version < '5.8' else "Compute / "
-    new_start_page = "{}{}".format(start, start_page)
     request.addfinalizer(lambda: set_default_page(visual))
-    visual.login_page = new_start_page
+    visual.login_page = start_page
     appliance.server.logout()
     appliance.server.login_admin()
     landing_view = appliance.browser.create_view(landing_pages[start_page])
