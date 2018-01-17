@@ -3,6 +3,7 @@ import pytest
 from widgetastic_patternfly import CandidateNotFound
 
 from cfme.base.credential import Credential
+from cfme.utils.blockers import GH
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 
@@ -81,6 +82,8 @@ def user(request, data, add_group, appliance):
 @pytest.mark.tier(1)
 @pytest.mark.parametrize(
     "add_group", ['create_group', 'retrieve_group', 'evm_default_group'])
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6465',
+                               unblock=lambda auth_mode: auth_mode != 'ext_openldap')])
 def test_auth_configure(appliance, request, configure_auth, group, user, data):
     """This test checks whether different cfme auth modes are working correctly.
        authmodes tested as part of this test: ext_ipa, ext_openldap, miq_openldap
