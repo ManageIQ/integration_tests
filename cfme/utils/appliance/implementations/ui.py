@@ -446,7 +446,15 @@ class CFMENavigateStep(NavigateStep):
         if not here:
             self.log_message("Prerequisite Needed")
             self.prerequisite_view = self.prerequisite()
-            self.check_for_badness(self.step, _tries, nav_args, *args, **kwargs)
+            try:
+                self.check_for_badness(self.step, _tries, nav_args, *args, **kwargs)
+            except Exception as e:
+                self.log_message(
+                    "Exception raised [{}] whilst running step, trying refresh".format(e),
+                    level="error"
+                )
+                self.appliance.browser.widgetastic.refresh()
+                self.check_for_badness(self.step, _tries, nav_args, *args, **kwargs)
         if nav_args['use_resetter']:
             resetter_used = True
             self.check_for_badness(self.resetter, _tries, nav_args, *args, **kwargs)
