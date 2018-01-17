@@ -706,8 +706,9 @@ class VM(BaseVM):
                 msg_date = when.strftime('%m/%d/%y %H:%M UTC')  # two digit year and timestamp
                 msg = 'Retirement date set to {}'.format(msg_date)
             elif when is None and offset is None:
-                # clearing retirement date with empty string in textinput
-                fill_date = ''
+                # clearing retirement date with space in textinput,
+                # using space here as with empty string calendar input is not cleared correctly
+                fill_date = ' '
                 msg = 'Retirement date removed'
             elif offset is not None:
                 # retirement by offset
