@@ -30,7 +30,7 @@ class Ostriz(ArtifactorBasePlugin):
 
     @ArtifactorBasePlugin.check_configured
     def ostriz_send(
-            self, artifacts, test_location, test_name, slaveid, polarion_ids, run_id,
+            self, artifacts, test_location, test_name, slaveid, polarion_id, run_id,
             version, build, stream, jenkins=None, env_params=None):
         env_params = env_params or {}
         test_ident = "{}/{}".format(test_location, test_name)
@@ -45,7 +45,7 @@ class Ostriz(ArtifactorBasePlugin):
         json_data['method'] = "automated"
         json_data['jenkins'] = jenkins or None
         # Either None or a list of Polarion Test Case IDs
-        json_data['polarion'] = polarion_ids
+        json_data['polarion'] = polarion_id
         if not json_data['params']:
             json_data['params'] = {}
         json_data['params'].update(env_params)
