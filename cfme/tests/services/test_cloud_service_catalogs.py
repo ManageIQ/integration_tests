@@ -45,10 +45,13 @@ def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog
                        },
         'environment': {}
     }
+
     if not provider.one_of(GCEProvider):
-        provisioning_data['environment'] = {'security_groups':
-                                            partial_match(provisioning['security_group']),
-                                            'cloud_tenant': provisioning['cloud_tenant']}
+        provisioning_data['environment'].update({'security_groups':
+                                            partial_match(provisioning['security_group'])})
+
+    if not provider.one_of(AzureProvider) and not provider.one_of(GCEProvider):
+        provisioning_data['environment'].update({'cloud_tenant': provisioning['cloud_tenant']})
 
     if provider.one_of(AzureProvider):
         env_updates = dict(
