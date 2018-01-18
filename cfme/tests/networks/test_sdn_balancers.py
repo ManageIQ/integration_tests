@@ -23,9 +23,10 @@ def network_prov_with_load_balancers(appliance):
         try:
             sum_all = len(prov.balancers.all())
         except DestinationNotFound:
-            pytest.skip("No available load balancers for current provider")
+            continue
         available_prov[prov] = sum_all
-    return available_prov
+    return available_prov if available_prov else pytest.skip(
+        "No available load balancers for current providers")
 
 
 def test_prov_balances_number(network_prov_with_load_balancers):
