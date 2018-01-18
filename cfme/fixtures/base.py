@@ -42,8 +42,11 @@ def fix_merkyl_workaround(request, appliance):
 def fix_missing_hostname(appliance):
     """Fix for hostname missing from the /etc/hosts file
 
-    Note: Affects RHOS-based appliances but can't hurt the others so
-          it's applied on all.
+    Note: Needed primarily on RHOS based providers. Negatively impacts freeipa (and probably
+    other services) by setting a FQDN hostname to the loopback IPv4 address.  RHOS providers do
+    not have a FQDN returned by `hostname`
+
+    IPAppliance 'hostname' attribute
     """
     if isinstance(appliance, DummyAppliance):
         return
@@ -51,8 +54,9 @@ def fix_missing_hostname(appliance):
     logger.info("Checking appliance's /etc/hosts for its own hostname")
     if ssh_client.run_command('grep $(hostname) /etc/hosts').rc != 0:
         logger.info("Adding it's hostname to its /etc/hosts")
-        # Append hostname to the first line (127.0.0.1)
-        ret = ssh_client.run_command('sed -i "1 s/$/ $(hostname)/" /etc/hosts')
+        # Append hostname to the /etc/hosts
+        ret = ssh_client.run_command('echo "{ip}  $(hostname)" >> /etc/hosts'
+                                     .format(ip=appliance.hostname))  # yes hostname is the ip
         if ret.rc == 0:
             logger.info("Hostname added")
         else:
