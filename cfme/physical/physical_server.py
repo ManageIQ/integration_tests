@@ -2,6 +2,7 @@
 """A model of an Infrastructure PhysicalServer in CFME."""
 import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
+from cached_property import cached_property
 from cfme.common import PolicyProfileAssignable, WidgetasticTaggable
 from cfme.common.physical_server_views import (
     PhysicalServerDetailsView,
@@ -16,6 +17,7 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
+from cfme.utils.providers import get_crud_by_name
 
 
 @attr.s
@@ -122,6 +124,7 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
         else:
             return True
 
+    @cached_property
     def get_db_id(self):
         if self.db_id is None:
             self.db_id = self.appliance.physical_server_id(self.name)
@@ -158,33 +161,43 @@ class PhysicalServerCollection(BaseCollection):
 
     ENTITY = PhysicalServer
 
-    def check_physical_servers(self, physical_servers):
+    def select_entity_rows(self, physical_servers):
+        """ Select all physical server objects """
         physical_servers = list(physical_servers)
         checked_physical_servers = list()
         view = navigate_to(self, 'All')
 
         for physical_server in physical_servers:
-            try:
-                view.entities.get_entity(name=physical_server.name, surf_pages=True).check()
-                checked_physical_servers.append(physical_server)
-            except ItemNotFound:
-                raise (ItemNotFound(
-                       'Could not find physical server {} in the UI'.format(physical_server.name)))
+            view.entities.get_entity(name=physical_server.name, surf_pages=True).check()
+            checked_physical_servers.append(physical_server)
         return view
 
     def all(self, provider):
         """returning all physical_servers objects"""
-        view = navigate_to(self, 'All')
-        physical_servers = [self.instantiate(name=item, provider=provider)
-                 for item in view.entities.entity_names]
+        physical_server_table = self.appliance.db.client['physical_servers']
+        ems_table = self.appliance.db.client['ext_management_systems']
+        physical_server_query = (
+            self.appliance.db.client.session
+                .query(physical_server_table.name, ems_table.name)
+                .join(ems_table, physical_server_table.ems_id == ems_table.id))
+        provider = None
+
+        if self.filters.get('provider'):
+            provider = self.filters.get('provider')
+            physical_server_query = physical_server_query.filter(ems_table.name == provider.name)
+        physical_servers = []
+        for name, ems_name in physical_server_query.all():
+            physical_servers.append(self.instantiate(name=name,
+                                    provider=provider or get_crud_by_name(ems_name)))
         return physical_servers
 
+
     def power_on(self, *physical_servers):
-        view = self.check_physical_servers(physical_servers)
+        view = self.select_entity_rows(physical_servers)
         view.toolbar.power.item_select("Power On", handle_alert=True)
 
     def power_off(self, *physical_servers):
-        view = self.check_physical_servers(physical_servers)
+        view = self.select_entity_rows(physical_servers)
         view.toolbar.power.item_select("Power Off", handle_alert=True)
 
 
@@ -207,20 +220,12 @@ class Details(CFMENavigateStep):
 
 
 @navigator.register(PhysicalServer)
-class PolicyAssignment(CFMENavigateStep):
+class ManagePolicies(CFMENavigateStep):
     VIEW = PhysicalServerManagePoliciesView
     prerequisite = NavigateToSibling("Details")
 
     def step(self):
         self.prerequisite_view.toolbar.policy.item_select("Manage Policies")
-
-
-@navigator.register(PhysicalServer)
-class Provision(CFMENavigateStep):
-    prerequisite = NavigateToSibling("Details")
-
-    def step(self):
-        self.prerequisite_view.toolbar.lifecycle.item_select("Provision this item")
 
 
 @navigator.register(PhysicalServer)
