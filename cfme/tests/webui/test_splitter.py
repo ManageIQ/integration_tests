@@ -2,13 +2,13 @@ from xml.sax.saxutils import quoteattr, unescape
 
 import pytest
 
-# from cfme.cloud.instance import Instance
-# from cfme.infrastructure.config_management import ConfigManager
-# from cfme.infrastructure.datastore import DatastoreCollection
-# from cfme.infrastructure.pxe import ISODatastore
-# from cfme.infrastructure.virtual_machines import Vm
-# from cfme.intelligence.chargeback.rates import ComputeRate
-# from cfme.intelligence.reports.reports import CustomReport
+from cfme.cloud.instance import Instance
+from cfme.infrastructure.config_management import ConfigManager
+from cfme.infrastructure.datastore import DatastoreCollection
+from cfme.infrastructure.pxe import ISODatastore
+from cfme.infrastructure.virtual_machines import Vm
+from cfme.intelligence.chargeback.rates import ComputeRate
+from cfme.intelligence.reports.reports import CustomReport
 from cfme.base.ui import Server
 from cfme.exceptions import CannotScrollException
 from cfme.infrastructure.networking import InfraNetworking
@@ -16,23 +16,18 @@ from cfme.modeling.base import BaseCollection
 from cfme.optimize.bottlenecks import Bottlenecks
 from cfme.optimize.utilization import Utilization
 from cfme.services.myservice import MyService
+from cfme.services.workloads import Workloads
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from widgetastic_manageiq import Splitter
 
-# LOCATIONS = [
-#     (Server, 'ControlExplorer'), (Server, 'AutomateExplorer'), (Server, 'AutomateCustomization'),
-#     (MyService, 'All'), (Server, 'ServiceCatalogsDefault'), (Server, 'WorkloadsDefault'),
-#     (CustomReport, 'All'), (ComputeRate, 'All'), (Instance, 'All'), (Vm, 'VMsOnly'),
-#     (ISODatastore, 'All'), (Server, 'Configuration'), (DatastoreCollection, 'All'),
-#     (ConfigManager, 'All'), (Utilization, 'All'), (InfraNetworking, 'All'), (Bottlenecks, 'All')
-# ]
 LOCATIONS = [
-    (Server, 'ControlExplorer'), (Server, 'AutomateExplorer'), (Server, 'AutomateCustomization'),
-    (MyService, 'All'), (Server, 'ServiceCatalogsDefault'), (Server, 'Configuration'),
-    (Utilization, 'All'), (InfraNetworking, 'All')
+    (Vm, 'VMsOnly'), (Server, 'ControlExplorer'), (Server, 'AutomateExplorer'),
+    (Server, 'AutomateCustomization'), (MyService, 'All'), (Server, 'ServiceCatalogsDefault'),
+    (Workloads, 'All'), (CustomReport, 'All'), (ComputeRate, 'All'), (Instance, 'All'),
+    (ISODatastore, 'All'), (Server, 'Configuration'), (DatastoreCollection, 'All'),
+    (ConfigManager, 'All'), (Utilization, 'All'), (InfraNetworking, 'All'), (Bottlenecks, 'All')
 ]
-
 
 pytestmark = [
     pytest.mark.parametrize(
@@ -58,6 +53,8 @@ def test_pull_splitter_persistence(request, appliance, model_object, destination
         model_object = appliance.server
     elif issubclass(model_object, BaseCollection):
         model_object = model_object(appliance)
+    elif isinstance(model_object, basestring):
+        model_object = getattr(appliance, model_object)
 
     navigate_to(model_object, destination)
     # First we move splitter to hidden position by pulling it left twice
@@ -66,7 +63,7 @@ def test_pull_splitter_persistence(request, appliance, model_object, destination
     navigate_to(appliance.server, 'Dashboard')
     try:
         navigate_to(model_object, destination)
-    except (TypeError, CannotScrollException):
+    except (TypeError, CannotScrollException, Exception):
         # this exception is expected here since
         # some navigation commands try to use accordion when it is hidden by splitter
         pass

@@ -13,6 +13,14 @@ class BottlenecksView(BaseLoggedInPage):
             self.logged_in_as_current_user and
             self.navigation.currently_selected == ['Optimize', 'Bottlenecks'])
 
+    @property
+    def is_displayed(self):
+        return (
+            self.title.text == 'Region "Region {}" Bottlenecks Summary'
+            .format(self.browser.appliance.server.zone.region.number) and
+            self.bottlenecks.is_opened and
+            self.bottlenecks.tree.currently_selected == ["Bottlenecks"])
+
     @View.nested
     class bottlenecks(Accordion):  # noqa
         ACCORDION_NAME = "Bottlenecks"

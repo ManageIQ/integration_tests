@@ -118,10 +118,20 @@ class TemplatesImages(Navigatable):
         Navigatable.__init__(self, appliance)
 
 
-@navigator.register(Server)
+class Workloads(Navigatable):
+    """
+        This is fake class mainly needed for navmazing navigation
+
+    """
+
+    def __init__(self, appliance=None):
+        Navigatable.__init__(self, appliance)
+
+
+@navigator.register(Workloads, 'All')
 class WorkloadsDefault(CFMENavigateStep):
     VIEW = WorkloadsDefaultView
-    prerequisite = NavigateToSibling("LoggedIn")
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         self.view.navigation.select("Services", "Workloads")
