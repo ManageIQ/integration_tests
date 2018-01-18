@@ -108,6 +108,18 @@ def setup_embedded_ansible(appliance_ip, license):
         print("It can be done only against upstream appliances.")
 
 
+@main.command('setup-webmks', help='Setups VMware WebMKS on an appliance by downloading'
+            'and extracting SDK to required location')
+@click.argument('appliance_ip', default=None, required=False)
+def config_webmks(appliance_ip):
+    appliance = get_appliance(appliance_ip)
+    server_settings = appliance.server.settings
+    server_settings.update_vmware_console({'console_type': 'VMware WebMKS'})
+    roles = server_settings.server_roles_db
+    if 'websocket' in roles and not roles['websocket']:
+        server_settings.enable_server_roles('websocket')
+
+
 # Useful Properties
 methods_to_install = [
     'is_db_enabled',
@@ -139,7 +151,6 @@ for method in methods_to_install:
         callback=partial(fn, method), params=[
             click.Argument(['appliance_ip'], default=None, required=False)])
     main.add_command(command)
-
 
 if __name__ == "__main__":
     main()
