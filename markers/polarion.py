@@ -33,8 +33,11 @@ class ReportPolarionToJunitPlugin(object):
     xml = attr.ib()
     node_map = attr.ib()
 
+    @pytest.mark.tryfirst
     def pytest_runtest_logreport(self, report):
         """Adds the supplied test case id to the xunit file as a property"""
+        if report.when != 'setup':
+            return
         reporter = self.xml.node_reporter(report)
         polarion_ids = self.node_map.get(report.nodeid, [])
         for polarion_id in polarion_ids:
