@@ -74,13 +74,12 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
 
     try:
         vm.set_ownership(user=user.name)
-        # logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
+        logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
 
         yield user.name
     finally:
         vm.unset_ownership()
         user.delete()
-        logger.info('In vm_ownership')
 
 
 @pytest.yield_fixture(scope="module")
@@ -273,8 +272,7 @@ def metering_report(vm_ownership, provider):
 # Tests to validate costs reported in the Chargeback report for various metrics.
 # The costs reported in the Chargeback report should be approximately equal to the
 # costs estimated in the chargeback_costs_default/chargeback_costs_custom fixtures.
-@pytest.mark.uncollectif(
-    lambda provider: provider.category == 'cloud')
+@pytest.mark.uncollectif(lambda provider: provider.category == 'cloud')
 def test_validate_cpu_usage(resource_usage, metering_report):
     """Test to validate CPU usage.
        Calculation is based on default Chargeback rate.
@@ -289,8 +287,7 @@ def test_validate_cpu_usage(resource_usage, metering_report):
             break
 
 
-@pytest.mark.uncollectif(
-    lambda provider: provider.one_of(GCEProvider))
+@pytest.mark.uncollectif(lambda provider: provider.one_of(GCEProvider))
 def test_validate_memory_usage(resource_usage, metering_report):
     """Test to validate memory usage.
        Calculation is based on default Chargeback rate.
