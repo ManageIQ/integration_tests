@@ -36,12 +36,8 @@ def template(provider, provisioning, setup_provider):
     template = OrchestrationTemplate(template_type=template_type,
                                      template_name=template_name)
 
-    if provider.type == "ec2":
-        data_file = load_data_file(str(orchestration_path.join('aws_vm_template.json')))
-    elif provider.type == "openstack":
-        data_file = load_data_file(str(orchestration_path.join('openstack_vm_template.data')))
-    elif provider.type == "azure":
-        data_file = load_data_file(str(orchestration_path.join('azure_vm_template.json')))
+    file = provisioning['stack_provisioning']['data_file']
+    data_file = load_data_file(str(orchestration_path.join(file)))
 
     template.create(data_file.read().replace('CFMETemplateName', template_name))
     if provider.type == "azure":

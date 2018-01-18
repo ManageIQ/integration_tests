@@ -174,8 +174,6 @@ def order(self):
         view.fill(self.dialog_values)
     if self.ansible_dialog_values:
         view.fill(self.ansible_dialog_values)
-    if self.stack_data and self.appliance.version > '5.9':
-        view.fill({'role_arn': "default"})
     msg = "Order Request was Submitted"
     if self.appliance.version < "5.9":
         msg_type = "success"
@@ -184,8 +182,6 @@ def order(self):
     # TODO Remove once repaired
     if BZ(1513541, forced_streams=['5.9']).blocks:
         raise NotImplementedError("Service Order is broken - check BZ 1513541")
-    if self.stack_data and self.appliance.version > '5.9':
-        view.fill({'role_arn': "default"})
     view.submit_button.click()
     view = self.create_view(RequestsView)
     view.flash.assert_no_error()
