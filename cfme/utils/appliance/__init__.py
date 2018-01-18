@@ -470,7 +470,7 @@ class IPAppliance(object):
                 self.fix_ntp_clock(log_callback=log_callback)
                 # TODO: Handle external DB setup
             # This is workaround for Openstack appliances to use only one disk for the VMDB
-            if on_openstack:
+            if on_openstack and self.is_downstream and not self.unpartitioned_disks:
                 self.configure_rhos_db_disk()
 
             self.db.setup(region=region, key_address=key_address,
@@ -2288,10 +2288,13 @@ class Appliance(IPAppliance):
         db_password = kwargs.get('ssh_password')
         ssh_password = kwargs.get('ssh_password')
         db_name = kwargs.get('db_name')
+        on_openstack = kwargs.pop('on_openstack', False)
 
         if kwargs.get('fix_ntp_clock', True) is True:
             self.fix_ntp_clock(log_callback=log_callback)
         if kwargs.get('db_address') is None:
+            if on_openstack and self.is_downstream and not self.unpartitioned_disks:
+                self.configure_rhos_db_disk()
             self.db.enable_internal(
                 region, key_address, db_password, ssh_password)
         else:
