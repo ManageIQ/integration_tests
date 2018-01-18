@@ -1,25 +1,24 @@
 # -*- coding: utf-8 -*-
 
-import pytest
 import random
 import time
+from operator import attrgetter
+
+import pytest
 
 from cfme import test_requirements
-from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from fixtures.pytest_store import store
-from fixtures.provider import setup_or_skip
-from operator import attrgetter
 from cfme.utils import conf
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
-
+from fixtures.provider import setup_or_skip
 
 pytestmark = [
     pytest.mark.tier(1),
@@ -55,17 +54,17 @@ def clean_setup_provider(request, provider):
 
 
 @pytest.fixture(scope="module")
-def metrics_collection(clean_setup_provider, provider, enable_candu):
+def metrics_collection(appliance, clean_setup_provider, provider, enable_candu):
     """Check the db is gathering collection data for the given provider.
 
     Metadata:
         test_flag: metrics_collection
     """
-    metrics_tbl = store.current_appliance.db.client['metrics']
-    mgmt_systems_tbl = store.current_appliance.db.client['ext_management_systems']
+    metrics_tbl = appliance.db.client['metrics']
+    mgmt_systems_tbl = appliance.db.client['ext_management_systems']
 
     logger.info("Fetching provider ID for %s", provider.key)
-    mgmt_system_id = store.current_appliance.db.client.session.query(mgmt_systems_tbl).filter(
+    mgmt_system_id = appliance.db.client.session.query(mgmt_systems_tbl).filter(
         mgmt_systems_tbl.name == conf.cfme_data.get('management_systems', {})[provider.key]['name']
     ).first().id
 
@@ -82,11 +81,11 @@ def metrics_collection(clean_setup_provider, provider, enable_candu):
         logger.info("name: %s, id: %s, vms: %s, hosts: %s",
             provider.key, mgmt_system_id, vm_count, host_count)
         # Count host and vm metrics for the provider we're testing
-        host_count = store.current_appliance.db.client.session.query(metrics_tbl).filter(
+        host_count = appliance.db.client.session.query(metrics_tbl).filter(
             metrics_tbl.parent_ems_id == mgmt_system_id).filter(
             metrics_tbl.resource_type == "Host"
         ).count()
-        vm_count = store.current_appliance.db.client.session.query(metrics_tbl).filter(
+        vm_count = appliance.db.client.session.query(metrics_tbl).filter(
             metrics_tbl.parent_ems_id == mgmt_system_id).filter(
             metrics_tbl.resource_type == "VmOrTemplate"
         ).count()
