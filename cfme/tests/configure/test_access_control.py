@@ -200,7 +200,7 @@ def test_user_password_required_error_validation(appliance, group_collection):
     check = "Password can't be blank"
 
     with error.expected(check):
-        user = appliance.collections.users.create(
+        appliance.collections.users.create(
             name='user{}'.format(fauxfactory.gen_alphanumeric()),
             credential=Credential(
                 principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret=None),
@@ -741,8 +741,7 @@ def single_task_permission_test(appliance, product_features, actions):
        fail when everything but product_features are enabled"""
     # Enable only specified product features
     test_prod_features = [(['Everything'], False)] + [(f, True) for f in product_features]
-    test_permissions(appliance, _mk_role(appliance, name=fauxfactory.gen_alphanumeric(),
-                                         product_features=test_prod_features), actions, {})
+    test_permissions(appliance, test_prod_features, actions, {})
 
     # Enable everything but specified product features
     test_prod_features = [(['Everything'], True)]
@@ -753,8 +752,7 @@ def single_task_permission_test(appliance, product_features, actions):
         test_prod_features = [(['Everything'], False)] + test_prod_features
 
     test_prod_features += [(f, False) for f in product_features]
-    test_permissions(appliance, _mk_role(appliance, name=fauxfactory.gen_alphanumeric(),
-                                         product_features=test_prod_features), {}, actions)
+    test_permissions(appliance, test_prod_features, {}, actions)
 
 
 @pytest.mark.tier(3)
