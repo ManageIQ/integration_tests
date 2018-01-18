@@ -475,7 +475,7 @@ class PolicyCollection(BaseCollection):
         })
         view.add_button.click()
         view = policy.create_view(PolicyDetailsView)
-        assert view.is_displayed
+        view.wait_displayed()
         view.flash.assert_success_message('Policy "{}" was added'.format(policy.description))
         return policy
 

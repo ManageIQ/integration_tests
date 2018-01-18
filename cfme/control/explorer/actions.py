@@ -253,7 +253,7 @@ class ActionCollection(BaseCollection):
         view.add_button.click()
         action = self.instantiate(description, action_type, action_values=action_values)
         view = action.create_view(ActionDetailsView)
-        assert view.is_displayed
+        view.wait_displayed()
         view.flash.assert_success_message('Action "{}" was added'.format(action.description))
         return action
 
