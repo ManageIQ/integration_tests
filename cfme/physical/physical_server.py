@@ -191,7 +191,6 @@ class PhysicalServerCollection(BaseCollection):
                                     provider=provider or get_crud_by_name(ems_name)))
         return physical_servers
 
-
     def power_on(self, *physical_servers):
         view = self.select_entity_rows(physical_servers)
         view.toolbar.power.item_select("Power On", handle_alert=True)
