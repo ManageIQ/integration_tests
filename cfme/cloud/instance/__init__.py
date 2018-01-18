@@ -332,9 +332,7 @@ class All(CFMENavigateStep):
 
     def resetter(self, *args, **kwargs):
         # If a filter was applied, it will persist through navigation and needs to be cleared
-        if self.view.adv_search_clear.is_displayed:
-            logger.debug('Clearing advanced search filter')
-            self.view.adv_search_clear.click()
+        self.view.entities.search.remove_search_filters()
         self.view.toolbar.reload.click()
 
 
