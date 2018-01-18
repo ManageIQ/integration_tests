@@ -95,7 +95,7 @@ def setup_external_auth_openldap(appliance, **data):
     appliance.server.authentication.configure_auth(
         auth_mode='external', get_groups=data.pop("get_groups", True)
     )
-    appliance.configure_appliance_for_openldap_ext_auth()
+    appliance.configure_openldap()
     appliance.server.logout()
 
 
