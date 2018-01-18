@@ -2177,6 +2177,24 @@ class IPAppliance(object):
                                     'systemctl restart httpd')
         self.wait_for_web_ui()
 
+    def configure_freeipa(self, ipaserver, iparealm, principal, password, get_groups=False):
+        """Configure appliance UI and backend for freeIPA
+
+        Args:
+            ipaserver: string server hostname/ip
+            iparealm: string server realm
+            principal: string ipa principal
+            password: string ipa password
+        """
+        if ipaserver not in self.server.settings.ntp_servers_values:
+            self.server.settings.update_ntp_servers({'ntp_server_1': ipaserver})
+            sleep(120)
+            self.server.authentication.configure_auth(auth_mode='external', get_groups=get_groups)
+        cfg_result = self.ssh_client.run_command(
+            'appliance_console_cli --ipaserver {} --iparealm {} --ipaprincipal {} --ipapassword {}'
+            .format(ipaserver, iparealm, principal, password))
+        assert cfg_result
+
     @logger_wrap("Configuring VM Console: {}")
     def configure_vm_console_cert(self, log_callback=None):
         """This method generates a self signed SSL cert and installs it

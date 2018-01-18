@@ -100,7 +100,7 @@ def configure_auth(appliance, request, auth_mode):
     app_auth = appliance.server.authentication
     if auth_mode == 'ext_ipa':
         request.addfinalizer(disable_external_auth_ipa)
-        setup_external_auth_ipa(**data)
+        setup_external_auth_ipa(appliance, **data)
     elif auth_mode == 'ext_openldap':
         request.addfinalizer(disable_external_auth_openldap)
         setup_external_auth_openldap(appliance, **data)
