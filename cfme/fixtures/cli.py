@@ -1,13 +1,15 @@
-from cfme.utils.version import get_stream
 from collections import namedtuple
 from contextlib import contextmanager
-from cfme.test_framework.sprout.client import SproutClient
-from cfme.utils.conf import cfme_data, credentials, auth_data
-from cfme.utils.log import logger
+
 import pytest
 from wait_for import wait_for
-from cfme.test_framework.sprout.client import SproutException
-from fixtures.appliance import temp_appliances
+from six import iteritems
+
+import cfme.utils.auth as authutil
+from cfme.test_framework.sprout.client import SproutClient, SproutException
+from cfme.utils.version import get_stream
+from cfme.utils.conf import cfme_data, credentials, auth_data
+from cfme.utils.log import logger
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 
@@ -41,6 +43,14 @@ def fqdn_appliance(appliance, preconfigured, count):
     for app in apps:
         app.ssh_client.close()
     sp.destroy_pool(pool_id)
+
+
+@pytest.fixture(scope='function')
+def restore_hostname(appliance):
+    """store and reset hostname"""
+    orig_host = appliance.ssh_client.run_command('hostname')
+    yield
+    appliance.appliance_console_cli.set_hostname(orig_host)
 
 
 @pytest.yield_fixture()
@@ -88,12 +98,20 @@ def appliance_with_preset_time(temp_appliance_preconfig_funcscope):
     return temp_appliance_preconfig_funcscope
 
 
-@pytest.yield_fixture()
-def ipa_crud(configured_appliance, ipa_creds):
-    configured_appliance.appliance_console_cli.configure_ipa(ipa_creds['ipaserver'],
-        ipa_creds['username'], ipa_creds['password'], ipa_creds['domain'], ipa_creds['realm'])
+@pytest.fixture()
+def ipa_crud():
+    try:
+        ipa_keys = [key
+                    for key, yaml in iteritems(auth_data.auth_providers)
+                    if yaml.type == authutil.FreeIPAAuthProvider.auth_type]
+        ipa_provider = authutil.get_auth_crud(ipa_keys[0])
+    except AttributeError:
+        pytest.skip('Unable to parse auth_data.yaml for freeipa server')
+    except IndexError:
+        pytest.skip('No freeipa server available for testing')
+    logger.info('Configuring first available freeipa auth provider %s', ipa_provider)
 
-    yield(configured_appliance)
+    return ipa_provider
 
 
 @pytest.fixture()
@@ -113,22 +131,4 @@ def app_creds_modscope():
         'password': credentials['database']['password'],
         'sshlogin': credentials['ssh']['username'],
         'sshpass': credentials['ssh']['password']
-    }
-
-
-@pytest.fixture()
-def ipa_creds():
-    try:
-        ext_ipa = auth_data['auth_providers']['ext_ipa']
-    except KeyError:
-        pytest.skip('Missing auth_providers.ext_ipa in auth_data.yaml')
-    fqdn = ext_ipa['ipaserver'].split('.', 1)
-    creds_key = ext_ipa['credentials']
-    return{
-        'hostname': fqdn[0],
-        'domain': fqdn[1],
-        'realm': ext_ipa['iparealm'],
-        'ipaserver': ext_ipa['ipaserver'],
-        'username': credentials[creds_key]['principal'],
-        'password': credentials[creds_key]['password']
     }

@@ -14,6 +14,22 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 
 
+AUTH_MODES = {
+    'database': 'Database',
+    'ldap': 'LDAP',
+    'ldaps': 'LDAPS',
+    'amazon': 'Amazon',
+    'external': 'External (httpd)'}
+
+USER_TYPES = {
+    'upn': 'User Principal Name',
+    'email': 'E-mail Address',
+    'cn': 'Distinguished Name (CN=<user>)',
+    'uid': 'Distinguished Name (UID=<user>)',
+    'sam': 'SAM Account Name'
+}
+
+
 class ServerInformationView(View):
     """ Class represents full Server tab view"""
     title = Text("//div[@id='settings_server']/h3[1]")
@@ -493,9 +509,9 @@ class DatabaseAuthenticationView(View):
 class LdapAuthenticationView(View):
     """ Ldap Authentication View """
 
-    ldap_host_1 = Input(name='authentication_ldaphost_1')
-    ldap_host_2 = Input(name='authentication_ldaphost_2')
-    ldap_host_3 = Input(name='authentication_ldaphost_3')
+    host1 = Input(name='authentication_ldaphost_1')
+    host2 = Input(name='authentication_ldaphost_2')
+    host3 = Input(name='authentication_ldaphost_3')
     port = Input(name='authentication_ldapport')
     user_type = BootstrapSelect(id='authentication_user_type')
     domain_prefix = Input(name='authentication_domain_prefix')
@@ -556,15 +572,6 @@ class ServerAuthenticationView(View):
         auth_settings.register('Amazon', widget=AmazonAuthenticationView)
         auth_settings.register('External (httpd)', widget=ExternalAuthenticationView)
 
-        def before_fill(self, values):
-            """Select the auth mode first"""
-            new_mode = values.pop('auth_mode')
-            if new_mode:
-                # view context's object is a Server, if no AUTH_MODE_MAP match is found use
-                # passed value
-                mapped_mode = AuthenticationSetting.mode_map.get(new_mode.capitalize(), new_mode)
-                self.auth_mode.fill(mapped_mode)
-
     @property
     def is_displayed(self):
         """should be paired with a ServerView.in_server_settings in a nav.am_i_here"""
@@ -584,19 +591,6 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
 
     pretty_attrs = ['auth_mode']
 
-    user_type_dict = {
-        'userprincipalname': 'User Principal Name',
-        'dn-uid': 'Distinguished Name (UID=<user>)'
-    }
-
-    mode_map = {
-        'Database': 'Database',
-        'Ldap': 'LDAP',
-        'Ldaps': 'LDAPS',
-        'Amazon': 'Amazon',
-        'External': 'External (httpd)'
-    }
-
     def __init__(self, appliance):
         self.appliance = appliance
 
@@ -613,7 +607,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
             raise ValueError('Setting auth_mode directly only allows for Database and External')
         else:
             view = navigate_to(self.appliance.server, 'Authentication', wait_for_view=True)
-            changed = view.form.auth_mode.fill(self.mode_map.get(new_mode.capitalize()))
+            changed = view.form.auth_mode.fill(AUTH_MODES.get(new_mode))
             if changed:
                 view.save.click()
 
@@ -643,45 +637,63 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
 
     @property
     def auth_settings(self):
-        """ Authentication view fields values """
+        """ Authentication view fields values
+        Includes auth_mode
+        """
         view = navigate_to(self.appliance.server, 'Authentication')
-        return view.read()
+        settings = view.form.read()
+        return settings
 
-    def configure_auth(self, reset=False, **kwargs):
+    @auth_settings.setter
+    def auth_settings(self, values):
+        """Authentication view field setting, just form fill, no auth_provider handling
+        Includes auth_mode
+        Args:
+            values: dict with auth_mode and auth_settings keys
+        """
+        view = navigate_to(self.appliance.server, 'Authentication', wait_for_view=True)
+        if view.form.fill(values):
+            try:
+                view.save.click()
+            except NoSuchElementException:
+                logger.exception('NoSuchElementException when trying to save auth settings. BZ '
+                                 '1527239 prevents consistent form saving. Assuming auth settings '
+                                 'unchanged')
+                pass
+
+    def configure(self, auth_mode=None, auth_provider=None, user_type=None, reset=False,
+                  validate=True):
         """ Set up authentication mode
 
-        Defaults to Database if no auth_mode is passed in kwargs, ignoring other kwargs
+        Defaults to Database if auth_mode is none, uses auth_provider.as_fill_value()
 
         Args:
-            reset: Set True, to reset all changes for the page. Default value: False
-            kwargs: A dict of keyword arguments used to initialize auth mode
-                if you want not to use yamls settings,
-                auth_mode='your_mode_type_here' should be a mandatory in your kwargs
-                ex. auth_settings.configure_auth(
-                reset= True, mode='Amazon', access_key=key, secret_key=secret_key)
+            auth_mode: key for AUTH_MODES, UI dropdown selection, defaults to Database if None
+            auth_provider: authentication provider class from cfme.utils.auth
+            user_type: key for USER_TYPES
+            reset:  to reset all changes for the page.after filling
+            validate: validate ldap/ldaps/amazon provider config bind_dn+password
+
         """
-        fill_data = {'auth_mode': kwargs.get('auth_mode', 'database')}
-        settings = {}  # for auth_settings
-        if fill_data['auth_mode'] == 'Database':
-            logger.warning('auth_mode is Database, ignoring kwargs')
+        # Don't call lower() on None, just use 'database'
+        mode = AUTH_MODES.get(auth_mode.lower() if auth_mode else 'database')
+        settings = None  # determine correct settings for mode selection
+        if mode == AUTH_MODES['database']:
+            # no other auth config settings
+            logger.warning('auth_mode is Database, ignoring auth_provider')
+        elif mode == AUTH_MODES['external']:
+            # limited config in external mode
+            # possible to configure external with no auth provider object (default UI options)
+            settings = auth_provider.as_fill_external_value() if auth_provider else None
+        elif auth_provider:
+            # full provider config
+            settings = auth_provider.as_fill_value(auth_mode=auth_mode, user_type=user_type)
         else:
-            for key, value in kwargs.items():
-                if key not in ['default_groups']:
-                    if key == 'hosts':
-                        # TODO why kill a test if more than 3 ldap hosts passed for config
-                        assert len(value) <= 3, "You can specify only 3 LDAP hosts"
-                        for enum, host in enumerate(value):
-                            settings["ldap_host_{}".format(enum + 1)] = host
-                    elif key == 'user_type':
-                        settings[key] = self.user_type_dict[value]
-                    else:
-                        settings[key] = value
-                else:
-                    settings[key] = value
-        fill_data['auth_settings'] = settings
+            raise ValueError('You have tried to configure auth with unexpected settings: '
+                             '%r on mode %r', auth_provider, auth_mode)
 
         view = navigate_to(self.appliance.server, 'Authentication', wait_for_view=True)
-        changed = view.form.fill(fill_data)
+        changed = view.form.fill({'auth_mode': mode, 'auth_settings': settings})
         if reset:
             view.reset.click()
             view.flash.assert_message('All changes have been reset')
@@ -689,8 +701,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
             logger.info('Authentication form reset, returning')
             return
         elif changed:
-            if (fill_data['auth_mode'] in ['amazon', 'ldap', 'ldaps'] and
-                    view.form.auth_settings.validate.is_displayed):
+            if validate and mode not in [AUTH_MODES['database'], AUTH_MODES['external']]:
                 view.form.auth_settings.validate.click()
                 view.flash.assert_no_error()
             # FIXME BZ 1527239 This button goes disabled if a password field is 'changed' to same
@@ -706,11 +717,10 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
                 pass
             else:
                 # TODO move this flash message assert into test and only assert no error
-                flash_message = (
-                    'Authentication settings saved for {} Server "{} [{}]" in Zone "{}"'.format(
-                        self.appliance.product_name, self.appliance.server.name,
-                        self.appliance.server.sid, self.appliance.server.zone.name))
-                view.flash.assert_success_message(flash_message)
+                view.flash.assert_success_message(
+                    'Authentication settings saved for {} Server "{} [{}]" in Zone "{}"'
+                    .format(self.appliance.product_name, self.appliance.server.name,
+                            self.appliance.server.sid, self.appliance.server.zone.name))
             finally:
                 view.flash.assert_no_error()
         else:
