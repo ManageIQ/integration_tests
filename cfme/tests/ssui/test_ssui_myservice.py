@@ -30,6 +30,23 @@ pytestmark = [
 
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+def test_create_snapshot_via_ssui(appliance, setup_provider, context,
+                                  order_catalog_item_in_ops_ui):
+    service_name = order_catalog_item_in_ops_ui.name
+    with appliance.context.use(context):
+        my_service = MyService(appliance, service_name)
+        my_service.create_snapshot("snpsht_name", False, "snpsht_desc")
+        wait_for(
+            my_service.does_snapshot_exist,
+            func_args=["snpsht_name"],
+            num_sec=120, delay=10, message="Waiting for snapshot creation"
+        )
+        my_service.delete()
+
+
+@pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
+@pytest.mark.parametrize('context', [ViaSSUI])
 def test_myservice_crud(appliance, setup_provider, context, order_service):
     """Test Myservice crud in SSUI."""
     catalog_item = order_service

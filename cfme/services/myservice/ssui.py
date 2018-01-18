@@ -2,7 +2,7 @@
 import time
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, Select
+from widgetastic.widget import Checkbox, Text, Select
 from widgetastic_patternfly import Input, Button
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
@@ -12,6 +12,7 @@ from cfme.utils.appliance.implementations.ssui import (
     navigator, SSUINavigateStep, navigate_to, ViaSSUI
 )
 from cfme.utils.wait import wait_for
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic_manageiq import (SSUIlist, SSUIDropdown, Notification, SSUIAppendToBodyDropdown)
 from . import MyService
 
@@ -48,6 +49,7 @@ class DetailsMyServiceView(MyServicesView):
     configuration = SSUIDropdown('Configuration')
     lifecycle = SSUIDropdown('Lifecycle')
     console_button = Button(tooltip="HTML5 console", classes=['open-console-button'])
+    snapshots_dropdown = SSUIAppendToBodyDropdown('Snapshots')
 
 
 class ServiceEditForm(MyServicesView):
@@ -124,6 +126,36 @@ class RemoveServiceView(MyServicesView):
         return (
             self.remove.is_displayed and
             self.title.text == 'Remove Service')
+
+
+class ViewSnapshotsView(MyServicesView):
+    title = Text(locator='//li[@class="active"]')
+    snapshot = SSUIlist()
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_myservices and
+            self.title.text == "Snapshots")
+
+
+class CreateSnapshotForm(MyServicesView):
+    name = Input(name='name')
+    memory = Checkbox(name='memory')
+    description = Input(locator='//textarea[@id="description"]')
+
+
+class CreateSnapshotView(CreateSnapshotForm):
+    title = Text(locator='//h4[@id="myModalLabel"]')
+
+    cancel = Button('Cancel')
+    create = Button('Create')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_myservices and
+            self.title.text == 'Create Snapshot')
 
 
 class RetireServiceView(MyServicesView):
@@ -215,6 +247,38 @@ def launch_vm_console(self, catalog_item):
     return vm_obj
 
 
+@MiqImplementationContext.external_for(MyService.view_snapshots, ViaSSUI)
+def view_snapshots(self):
+    view = navigate_to(self, 'ViewSnapshot', wait_for_view=True)
+    assert view.is_displayed
+
+
+@MiqImplementationContext.external_for(MyService.does_snapshot_exist, ViaSSUI)
+def does_snapshot_exist(self, snapshot_name):
+    view = navigate_to(self, 'ViewSnapshot', wait_for_view=True)
+    try:
+        view.snapshot.click_at(snapshot_name)
+    except NoSuchElementException:
+        return False
+    return True
+
+
+@MiqImplementationContext.external_for(MyService.create_snapshot, ViaSSUI)
+def create_snapshot(self, name, memory, description):
+    view = navigate_to(self, 'CreateSnapshot', wait_for_view=True)
+    view.fill({'name': name,
+               'memory': memory,
+               'description': description})
+    view.create.click()
+
+    view = self.create_view(DetailsMyServiceView)
+    wait_for(
+        lambda: view.is_displayed, delay=15, num_sec=300,
+        message="waiting for view to be displayed"
+    )
+    assert view.is_displayed
+
+
 @MiqImplementationContext.external_for(MyService.retire, ViaSSUI)
 def retire(self):
     view = navigate_to(self, 'Retire', wait_for_view=True)
@@ -290,6 +354,24 @@ class LaunchVMConsole(SSUINavigateStep):
             self.prerequisite_view.console_button.click()
         else:
             self.prerequisite_view.access_dropdown.item_select('VM Console')
+
+
+@navigator.register(MyService, 'ViewSnapshot')
+class ViewSnapshot(SSUINavigateStep):
+    VIEW = ViewSnapshotsView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.snapshots_dropdown.item_select('View')
+
+
+@navigator.register(MyService, 'CreateSnapshot')
+class CreateSnapshot(SSUINavigateStep):
+    VIEW = CreateSnapshotView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.snapshots_dropdown.item_select('Create')
 
 
 @navigator.register(MyService, 'SetOwnership')

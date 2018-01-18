@@ -26,6 +26,9 @@ class MyService(Updateable, Navigatable, Taggable, sentaku.modeling.ElementMixin
     reconfigure_service = sentaku.ContextualMethod()
     launch_vm_console = sentaku.ContextualMethod()
     service_power = sentaku.ContextualMethod()
+    create_snapshot = sentaku.ContextualMethod()
+    view_snapshots = sentaku.ContextualMethod()
+    does_snapshot_exist = sentaku.ContextualMethod()
 
     def __init__(self, appliance, name=None, description=None, vm_name=None):
         self.appliance = appliance
