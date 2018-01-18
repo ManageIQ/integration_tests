@@ -14,7 +14,7 @@ If you want to take a screenshot inside your test, just do it like this:
 import fauxfactory
 import pytest
 
-from cfme.utils.browser import take_screenshot
+from cfme.utils.browser import take_screenshot as take_browser_screenshot
 from cfme.utils.log import logger
 from fixtures.artifactor_plugin import fire_art_test_hook
 from fixtures.pytest_store import store
@@ -26,7 +26,7 @@ def take_screenshot(request):
 
     def _take_screenshot(name):
         logger.info("Taking a screenshot named {}".format(name))
-        ss, ss_error = take_screenshot()
+        ss, ss_error = take_browser_screenshot()
         g_id = fauxfactory.gen_alpha(length=6)
         if ss:
             fire_art_test_hook(
