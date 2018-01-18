@@ -146,9 +146,9 @@ function run_config {
   fi
 
   docker run -it --rm \
-    -v $(dirname $SSH_AUTH_SOCK) \
-    -v /etc/passwd \
-    -v /etc/group \
+    -v $(dirname $SSH_AUTH_SOCK):$(dirname $SSH_AUTH_SOCK):rw \
+    -v /etc/passwd:/etc/passwd:ro \
+    -v /etc/group:/etc/group:ro \
     -v ${PLAY_LOCATION}:/projects/ansible_virtenv/ansible_work \
     -v ${WORKDIR}:/projects/cfme_vol/ \
     -v ~/.ssh:/home/${USERNAME}/.ssh:ro \
@@ -171,9 +171,9 @@ function run_command {
     -w /projects/cfme_vol/integration_tests \
     -u ${USER_ID}:${GROUP_ID} \
     -p ${VNC_PORT}:5999 \
-    -v $(dirname $SSH_AUTH_SOCK) \
-    -v /etc/passwd \
-    -v /etc/group \
+    -v $(dirname $SSH_AUTH_SOCK):$(dirname $SSH_AUTH_SOCK):rw \
+    -v /etc/passwd:/etc/passwd:ro \
+    -v /etc/group:/etc/group:ro \
     -v ${WORKDIR}:/projects/cfme_vol/ \
     -v ~/.ssh:/home/${USERNAME}/.ssh:ro \
     -v ~/:${HOME} \

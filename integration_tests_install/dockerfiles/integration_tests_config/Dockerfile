@@ -44,4 +44,4 @@ RUN . $WORK/bin/activate; pip install -U virtualenv paramiko PyYAML Jinja2 httpl
 
 RUN uuidgen | sed 's/-//g' > /etc/machine-id
 
-CMD /bin/bash -l -c "/usr/bin/ssh-agent -a ${SSH_AUTH_SOCK} -d && ansible-playbook -i inventory -c local configure_integration_tests.yml"
+CMD /bin/bash -l -c "ansible-playbook -i inventory -c local configure_integration_tests.yml"
