@@ -2192,8 +2192,8 @@ class IPAppliance(object):
             self.server.settings.update_ntp_servers({'ntp_server_1': ipaserver})
             sleep(120)
             self.server.authentication.configure_auth(auth_mode='external', get_groups=get_groups)
-        cli_cmd = 'appliance_console_cli --ipaserver {} --ipaprincipal {} --ipapassword {}'\
-            .format(ipaserver, principal, password)
+        cli_cmd = ('appliance_console_cli --ipaserver {} --ipaprincipal {} --ipapassword {}'
+                   .format(ipaserver, principal, password))
         # add in optional parameters
         cmd = ' '.join([cli_cmd,
                         'ipadomain={}'.format(ipadomain) if ipadomain else None,
