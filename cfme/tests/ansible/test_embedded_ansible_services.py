@@ -328,10 +328,9 @@ def test_service_ansible_playbook_order_credentials(ansible_catalog_item, ansibl
     wait_for(lambda: view.machine_credential.is_displayed, timeout=5)
     if appliance.version < "5.9":
         options = [o.text for o in view.machine_credential.all_options]
-        assert ["<Default>", "CFME Default Credential", ansible_credential.name] == options
     else:
         options = view.machine_credential.all_options
-        assert [ansible_credential.name, "CFME Default Credential", "<Default>"] == options
+    assert set(["<Default>", "CFME Default Credential", ansible_credential.name]) == set(options)
 
 
 @pytest.mark.tier(3)
