@@ -68,7 +68,7 @@ This
         category = "physical"
         pretty_attrs = ['name']
         STATS_TO_MATCH = ['num_server']
-        string_name = "Physical Infrastructure"
+        string_name = "Physical Infrastructure Provider"
 
         def __init__(
                 self, appliance=None, name=None, key=None, endpoints=None):
@@ -139,7 +139,7 @@ the providers as a whole, or the even within the category of the provider, is re
     class BigBadProvider(PhysicalProvider):
         type_name = 'bigbad'
         endpoints_form = BigBadEndpointForm
-        string_name = "Ems Physical Infras"
+        string_name = "Ems Physical Infras Provider"
         mgmt_class = BigBadSystem                                     # The reference to wrapanapi
 
         def __init__(self, appliance, name=None, key=None, endpoints=None):

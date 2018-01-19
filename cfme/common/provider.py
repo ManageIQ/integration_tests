@@ -187,7 +187,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
             if cancel:
                 created = False
                 add_view.cancel.click()
-                cancel_text = ('Add of {} Provider was '
+                cancel_text = ('Add of {} was '
                                'cancelled by the user'.format(self.string_name))
 
                 main_view.flash.assert_message(cancel_text)
@@ -195,7 +195,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
             else:
                 add_view.add.click()
                 if main_view.is_displayed:
-                    success_text = '{} Providers "{}" was saved'.format(self.string_name,
+                    success_text = '{}s "{}" was saved'.format(self.string_name,
                                                                         self.name)
                     main_view.flash.assert_message(success_text)
                 else:
@@ -431,7 +431,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
 
         if cancel:
             edit_view.cancel.click()
-            cancel_text = 'Edit of {type} Provider "{name}" ' \
+            cancel_text = 'Edit of {type} "{name}" ' \
                           'was cancelled by the user'.format(type=self.string_name,
                                                              name=self.name)
             main_view.flash.assert_message(cancel_text)
@@ -444,7 +444,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
             if updates:
                 self.name = updates.get('name', self.name)
 
-            success_text = '{} Provider "{}" was saved'.format(self.string_name, self.name)
+            success_text = '{} "{}" was saved'.format(self.string_name, self.name)
             if main_view.is_displayed:
                 # since 5.8.1 main view is displayed when edit starts from main view
                 main_view.flash.assert_message(success_text)
@@ -465,11 +465,11 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
         """
         view = navigate_to(self, 'Details')
         item_title = version.pick({'5.9': 'Remove this {} Provider from Inventory',
-                                   version.LOWEST: 'Remove this {} Provider'})
+                                   version.LOWEST: 'Remove this {}'})
         view.toolbar.configuration.item_select(item_title.format(self.string_name),
                                                handle_alert=not cancel)
         if not cancel:
-            msg = ('Delete initiated for 1 {} Provider from '
+            msg = ('Delete initiated for 1 {} from '
                    'the {} Database'.format(self.string_name, self.appliance.product_name))
             view.flash.assert_success_message(msg)
 

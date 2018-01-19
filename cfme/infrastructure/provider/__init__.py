@@ -66,7 +66,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     category = "infra"
     pretty_attrs = ['name', 'key', 'zone']
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
-    string_name = "Infrastructure"
+    string_name = "Infrastructure Provider"
     templates_destination_name = "Templates"
     db_types = ["InfraManager"]
     hosts_menu_item = "Hosts"
