@@ -2177,12 +2177,14 @@ class IPAppliance(object):
                                     'systemctl restart httpd')
         self.wait_for_web_ui()
 
-    def configure_freeipa(self, ipaserver, iparealm, principal, password, get_groups=False):
+    def configure_freeipa(self, ipaserver, principal, password, iparealm=None, ipadomain=None,
+                          get_groups=False):
         """Configure appliance UI and backend for freeIPA
 
         Args:
             ipaserver: string server hostname/ip
-            iparealm: string server realm
+            ipadomain: string domain, optional
+            iparealm: string server realm, optional
             principal: string ipa principal
             password: string ipa password
         """
@@ -2190,9 +2192,13 @@ class IPAppliance(object):
             self.server.settings.update_ntp_servers({'ntp_server_1': ipaserver})
             sleep(120)
             self.server.authentication.configure_auth(auth_mode='external', get_groups=get_groups)
-        cfg_result = self.ssh_client.run_command(
-            'appliance_console_cli --ipaserver {} --iparealm {} --ipaprincipal {} --ipapassword {}'
-            .format(ipaserver, iparealm, principal, password))
+        cli_cmd = 'appliance_console_cli --ipaserver {} --ipaprincipal {} --ipapassword {}'\
+            .format(ipaserver, principal, password)
+        # add in optional parameters
+        cmd = ' '.join([cli_cmd,
+                        'ipadomain={}'.format(ipadomain) if ipadomain else None,
+                        'iparealm={}'.format(iparealm) if iparealm else None])
+        cfg_result = self.ssh_client.run_command(cmd)
         assert cfg_result
 
     @logger_wrap("Configuring VM Console: {}")
