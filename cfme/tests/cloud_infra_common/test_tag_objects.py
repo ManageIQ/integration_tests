@@ -20,22 +20,22 @@ pytestmark = [
 
 
 infra_test_items = [
-    ('infra_provider', InfraProvider),
-    ('vms', Vm),
-    ('templates', Template),
-    ('hosts', None),
-    ('clusters', None),
-    ('datastores', None)
+    ('infra_provider', InfraProvider, None),
+    ('vms', Vm, 'ProviderVms'),
+    ('templates', Template, 'ProviderTemplates'),
+    ('hosts', None, None),
+    ('clusters', None, None),
+    ('datastores', None, None)
 ]
 
 cloud_test_items = [
-    ('cloud_provider', CloudProvider),
-    ('instances', Instance),
-    ('flavors', Flavor),
-    ('availability_zones', AvailabilityZone),
-    ('cloud_tenants', None),
-    ('keypairs', None),
-    ('templates', Image)
+    ('cloud_provider', CloudProvider, None),
+    ('instances', Instance, 'Instances'),
+    ('flavors', Flavor, None),
+    ('availability_zones', AvailabilityZone, None),
+    ('cloud_tenants', None, None),
+    ('keypairs', None, None),
+    ('templates', Image, 'Images')
 ]
 
 
@@ -52,12 +52,12 @@ def cloud_provider(request):
     return setup_one_or_skip(request, filters=[prov_filter])
 
 
-def get_collection_entity(appliance, collection_name, param_class, provider):
+def get_collection_entity(appliance, collection_name, param_class, destination, provider):
     if collection_name in ['infra_provider', 'cloud_provider']:
         return provider
     if not param_class:
         param_class = getattr(appliance.collections, collection_name)
-    view = navigate_to(param_class, 'All')
+    view = navigate_to(provider, destination) if destination else navigate_to(param_class, 'All')
     names = view.entities.entity_names
     if names:
         name = names[0]
@@ -86,15 +86,17 @@ def _tag_cleanup(test_item, tag):
 @pytest.fixture(params=cloud_test_items, ids=([item[0] for item in cloud_test_items]),
                 scope='module')
 def cloud_test_item(request, appliance, cloud_provider):
-    collection_name, param_class = request.param
-    return get_collection_entity(appliance, collection_name, param_class, cloud_provider)
+    collection_name, param_class, destination = request.param
+    return get_collection_entity(
+        appliance, collection_name, param_class, destination, cloud_provider)
 
 
 @pytest.fixture(params=infra_test_items, ids=[item[0] for item in infra_test_items],
                 scope='module')
 def infra_test_item(request, appliance, infra_provider):
-    collection_name, param_class = request.param
-    return get_collection_entity(appliance, collection_name, param_class, infra_provider)
+    collection_name, param_class, destination = request.param
+    return get_collection_entity(
+        appliance, collection_name, param_class, destination, infra_provider)
 
 
 @pytest.fixture(scope='function')
