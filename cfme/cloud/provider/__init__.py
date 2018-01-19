@@ -126,6 +126,7 @@ class CloudProvider(Pretty, CloudInfraProvider):
 @navigator.register(CloudProvider, 'All')
 class All(CFMENavigateStep):
     VIEW = CloudProvidersView
+    force_refresh = True
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):

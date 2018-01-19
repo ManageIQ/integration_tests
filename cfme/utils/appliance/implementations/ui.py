@@ -173,6 +173,7 @@ def can_skip_badness_test(fn):
 
 class CFMENavigateStep(NavigateStep):
     VIEW = None
+    force_refresh = False
 
     @cached_property
     def view(self):
@@ -447,6 +448,9 @@ class CFMENavigateStep(NavigateStep):
             self.log_message("Prerequisite Needed")
             self.prerequisite_view = self.prerequisite()
             self.check_for_badness(self.step, _tries, nav_args, *args, **kwargs)
+        elif self.force_refresh:
+            self.log_message('Already here, forcing refresh')
+            self.appliance.browser.widgetastic.browser.refresh()
         if nav_args['use_resetter']:
             resetter_used = True
             self.check_for_badness(self.resetter, _tries, nav_args, *args, **kwargs)
