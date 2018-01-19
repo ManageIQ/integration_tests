@@ -30,8 +30,8 @@ from cfme.utils import path, trackerbot
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger, add_stdout_handler
 
-CFME_BREW_ID = "cfme"
-NIGHTLY_MIQ_ID = "manageiq"
+CFME_ID = "cfme"
+MIQ_ID = "manageiq"
 
 add_stdout_handler(logger)
 
@@ -62,102 +62,124 @@ def parse_cmd_line():
     return args
 
 
-def template_name(image_link, image_ts, checksum_link, version=None):
+def template_name(image_link, timestamp, version=None):
+    """Generate a template name from given link, a timestamp, and optional version string
+    This method should handle naming templates from the following URL types:
+        - http://<build-server-address>/builds/manageiq/master/latest/
+        - http://<build-server-address>/builds/manageiq/gaprindashvili/stable/
+        - http://<build-server-address>/builds/manageiq/fine/stable/
+        - http://<build-server-address>/builds/cfme/5.7/stable/
+        - http://<build-server-address>/builds/cfme/5.9/latest/
+
+    These builds fall into a few categories:
+        - MIQ nightly (master/latest)  (upstream)
+        - MIQ stable (<name>/stable)  (upstream_stable, upstream_fine, etc)
+        - CFME nightly (<stream>/latest)  (downstream-nightly)
+        - CFME stream (<stream>/stable)  (downstream-<stream>)
+
+    The generated template names should follow the syntax with 5 digit version numbers:
+        - MIQ nightly: miq-nightly-<yyyymmdd>  (miq-nightly-201711212330)
+        - MIQ stable: miq-stable-<name>-<number>-yyyymmdd  (miq-stable-fine-4-20171024)
+        - CFME nightly: cfme-nightly-<version>-<yyyymmdd>  (cfme-nightly-59000-20170901)
+        - CFME stream: cfme-<version>-<yyyymmdd>  (cfme-57402-20171202)
+
+    Release names for upstream will be truncated to 5 letters (thanks gaprindashvili...)
+    """
+
     pattern = re.compile(r'.*/(.*)')
-    image_name = pattern.findall(image_link)[0]
-    image_name = image_name.lower()
-    image_dt = get_last_modified(checksum_link)
-    # CFME brew builds
-    if CFME_BREW_ID in image_name:
+    image_name = pattern.findall(image_link)[0].lower()
+    formatted_timestamp = '{year}{month}{day}'.format(year=str(timestamp.year),
+                                                      month=str(timestamp.month).zfill(2),
+                                                      day=str(timestamp.day).zfill(2))
+    # CFME
+    if CFME_ID in image_name:
         if 'nightly' in image_name:
-            # 5.6+ nightly
-            # cfme-rhevm-5.6.0.0-nightly-20160308112121-1.x86_64.rhevm.ova
-            # => cfme-nightly-5600-201603081121 (YYYYMMDDHHmm)
-            pattern = re.compile(r'.*-nightly-(\d+).*')
-            result = pattern.findall(image_name)
-            return "cfme-nightly-{}-{}".format(version, result[0][:-2])
-        elif version:
-            # proper build
-            if len(version) == 4:
-                version = version[:-1] + '0' + version[-1:]
-            return "cfme-{}-{}{}{}".format(version, image_ts, image_dt.hour, image_dt.minute)
+            # CFME nightly
+            name = '-'.join([CFME_ID,
+                             'nightly',
+                             version,
+                             formatted_timestamp])
         else:
-            # other nightly; leaving it in in case this template-naming comes back
-            pattern = re.compile(r'[^\d]*?-(\d).(\d)-(\d).*')
-            result = pattern.findall(image_name)
-            # cfme-pppp-x.y-z.arch.[pppp].ova => cfme-nightly-x.y-z
-            return "cfme-nightly-{}.{}-{}".format(result[0][0], result[0][1], result[0][2])
-    # nightly builds MIQ
-    elif NIGHTLY_MIQ_ID in image_name:
-        if "master" in image_name:
-            pattern = re.compile(r'[^\d]*?-master-(\d*)-*')
+            # CFME stream
+            name = '-'.join([CFME_ID,
+                             version,
+                             formatted_timestamp])
+        return name
+
+    # MIQ
+    elif MIQ_ID in image_name:
+        if "master/latest" in image_link:
+            # MIQ nightly
+            name = '-'.join(['miq',
+                             'nightly',
+                             formatted_timestamp])
         else:
-            pattern = re.compile(r'[^\d]*?-(\w*)-(\d*)-(\d*)-*')
-        result = pattern.findall(image_name)
-        if version:
-            # manageiq-pppp-bbbbbb-yyyymmddhhmm.ova => miq-nightly-vvvv-yyyymmddhhmm
-            return "miq-nightly-{}-{}".format(version, result[0])
-        elif "stable" in image_link:
+            # MIQ stable
             # Handle named MIQ releases, dropping provider and capturing release and date
-            if 'master' not in image_link:
-                pattern = re.compile(r'manageiq-([^\d]|ec2)*?-(?P<release>[-.\w]*?)'
-                                     r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})')
-                # Use match so we can use regex group names
-                result = pattern.match(image_name)
-                return "miq-stable-{}-{}{}{}".format(result.group('release')[:5],  # keep it short
-                                                     result.group('year'),
-                                                     result.group('month'),
-                                                     result.group('day'))
-            return "miq-stable-{}-{}".format(result[0][0], result[0][2])
-        else:
-            # manageiq-pppp-bbbbbb-yyyymmddhhmm.ova => miq-nightly-yyyymmddhhmm
-            return "miq-nightly-{}".format(result[0])
+            # regex includes -\d on the end to stop the lazy capture past the release name+number
+            pattern = re.compile(r'manageiq-(?:[\w]+?)-(?P<release>[\w]+?)-(?P<number>\d)-\d{3,}')
+            # Use match so we can use regex group names
+            result = pattern.match(image_name)
+            short_release = result.group('release')[:5]
+            number = result.group('number')
+            name = '-'.join(['miq',
+                             'stable',
+                             short_release,
+                             number,
+                             formatted_timestamp])
 
+        return name
+
+    # Podified
     elif 'openshift' in image_link:
-        return 'cfme-{}-{}{}'.format(version, image_dt.strftime('%m'), image_dt.strftime('%d'))
-    # z-stream
-    else:
-        pattern = re.compile(r'[.-](\d+(?:\d+)?)')
-        result = pattern.findall(image_name)
-        if version:
-            # CloudForms-x.y-yyyy-mm-dd.i-xxx*.ova => cfme-vvvv-mmdd
-            # If build number < 10, pad it with a 0.
-            if len(version) == 4:
-                version = version[:-1] + '0' + version[-1:]
-            return "cfme-{}-{}{}{}{}".format(version, result[3], result[4],
-                                         image_dt.hour, image_dt.minute)
-        else:
-            # CloudForms-x.y-yyyy-mm-dd.i-xxx*.ova => cfme-xy-yyyymmddi
-            str_res = ''.join(result)
-            return "cfme-{}-{}".format(str_res[0:2], str_res[2:])
+        return '-'.join([CFME_ID,
+                         version,
+                         formatted_timestamp])
 
 
-def get_version(dir_url):
-    if not dir_url.endswith("/"):
-        dir_url += "/"
+def get_version_and_timestamp(dir_url):
+    """Return a tuple of version string and datetime object
 
-    version_url = dir_url + "version"
+    Version string is padded to 5 digit"""
+    version_url = '/'.join([dir_url, 'version'])
 
     try:
         urlo = urlopen(version_url)
     except Exception:
-        return None
+        logger.warning('No version file, must be upstream builds')
+        urlo = None
 
-    version = urlo.read()
+    if urlo:
+        # version string from file
+        version = urlo.read()
+        match = re.search(
+            '^(?P<major>\d{1})\.?(?P<minor>\d{1})\.?(?P<patch>\d{1})\.?(?P<build>\d{1,2})',
+            str(version)
+        )
+        version_str = ''.join([match.group('major'),
+                               match.group('minor'),
+                               match.group('patch'),
+                               match.group('build').zfill(2)])  # zero left-pad to given length
+    else:
+        # no version string file
+        version_str = None
 
-    return version.rstrip().replace('.', '')
+        # setup alternate file for timestamp query
+        keyfile_url = '/'.join([dir_url, 'manageiq_public.key'])
+        try:
+            urlo = urlopen(keyfile_url)
+        except Exception:
+            logger.warning('No manageiq_public.key file, trying for SHA256SUM file')
+            urlo = urlopen('/'.join([dir_url, 'SHA256SUM']))
 
+    logger.info('Parsed version number (empty for upstream): %s', version_str)
 
-def get_last_modified(image_url):
-    """Returns a datetime object for when the image was last modified."""
-    format = "%a, %d %b %Y %H:%M:%S %Z"
-    try:
-        urlo = urlopen(image_url)
-    except Exception:
-        return None
-
+    # build datetime from URL header
     headers = urlo.info()
-    return datetime.datetime.strptime(headers.getheader("Last-Modified"), format)
+    datetime_format = "%a, %d %b %Y %H:%M:%S %Z"
+    timestamp = datetime.datetime.strptime(headers.getheader("Last-Modified"),
+                                           datetime_format)
+    return version_str, timestamp
 
 
 def make_kwargs_rhevm(cfme_data, provider):
@@ -288,20 +310,6 @@ def browse_directory(dir_url):
     for key, val in name_dict.iteritems():
         name_dict[key] = urljoin(dir_url, val)
 
-    for key in name_dict.keys():
-        if key == 'template_upload_openshift':
-            # this is necessary because headers don't contain last-modified date for folders
-            #  cfme-template is disposed in templates everywhere except 'latest' in 5.9
-            # todo: remove this along with refactoring script
-            if '5.8' in name_dict[key] or ('5.9' in name_dict[key] and 'latest' in name_dict[key]):
-                url = urljoin(name_dict[key], 'cfme-template.yaml')
-            else:
-                url = urljoin(name_dict[key], 'templates/cfme-template.yaml')
-        else:
-            url = name_dict[key]
-        date = urlopen(url).info().getdate('last-modified')
-        name_dict[key + "_date"] = "%02d" % date[1] + "%02d" % date[2]
-
     return name_dict
 
 
@@ -396,12 +404,12 @@ def main():
             kwargs['provider_data'] = None
 
         if cfme_data['template_upload']['automatic_name_strategy']:
+            version, timestamp = get_version_and_timestamp(url)
             kwargs['template_name'] = template_name(
                 dir_files[module],
-                dir_files[module + "_date"],
-                checksum_url,
-                get_version(url)
-            )
+                timestamp,
+                version)
+            logger.info('template_name: %s', kwargs['template_name'])
             if not stream:
                 # Stream is none, using automatic naming strategy, parse stream from template name
                 template_parser = trackerbot.parse_template(kwargs['template_name'])
@@ -417,6 +425,9 @@ def main():
         logger.info("TEMPLATE_UPLOAD_ALL:------End of %r upload on: %r--------",
             kwargs['template_name'], provider_type)
         return 0
+    else:
+        logger.warning('No URL match, not calling any upload modules.')
+        return 1
 
 
 if __name__ == "__main__":
