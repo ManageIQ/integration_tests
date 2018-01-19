@@ -41,11 +41,8 @@ UNDER_TEST = False  # set to true for artifactor using tests
 
 
 # Create a list of all our passwords for use with the sanitize request later in this module
-words = []
-for cred in credentials:
-    word = credentials[cred].get('password')
-    if word:
-        words.append(word)
+# Filter out all Nones as it will mess the output up.
+words = [word for word in {v.get('password') for v in credentials.values()} if word is not None]
 
 
 def get_test_idents(item):
