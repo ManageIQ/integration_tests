@@ -4,18 +4,32 @@ import pytest
 import cfme.configure.access_control as ac
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.common.provider import BaseProvider
+from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm import VM
 from cfme.exceptions import VmOrInstanceNotFound
 from cfme.utils.blockers import BZ
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
 
 
 pytestmark = [
     test_requirements.ownership,
     pytest.mark.meta(blockers=[BZ(1380781, forced_streams=["5.7"])]),
     pytest.mark.tier(3),
-    pytest.mark.provider([BaseProvider], required_fields=['ownership_vm'], scope='module')
+    pytest.mark.provider([CloudInfraProvider], scope='module')
 ]
+
+
+@pytest.yield_fixture(scope="module")
+def vm_crud(provider):
+    vm = VM.factory(random_vm_name(context='ownrs'), provider)
+    vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+    yield vm
+
+    try:
+        vm.delete_from_provider()
+    except Exception:
+        logger.exception('Exception deleting test vm "%s" on %s', vm.name, provider.name)
 
 
 @pytest.yield_fixture(scope="module")
@@ -124,52 +138,44 @@ def check_vm_exists(vm_ownership):
         return False
 
 
-def test_form_button_validation(request, user1, setup_provider, provider):
-    ownership_vm = provider.data['ownership_vm']
-    user_ownership_vm = VM.factory(ownership_vm, provider)
+def test_form_button_validation(request, user1, setup_provider, provider, vm_crud):
     # Reset button test
-    user_ownership_vm.set_ownership(user=user1.name, click_reset=True)
+    vm_crud.set_ownership(user=user1.name, click_reset=True)
     # Cancel button test
-    user_ownership_vm.set_ownership(user=user1.name, click_cancel=True)
+    vm_crud.set_ownership(user=user1.name, click_cancel=True)
     # Save button test
-    user_ownership_vm.set_ownership(user=user1.name)
+    vm_crud.set_ownership(user=user1.name)
     # Unset the ownership
-    user_ownership_vm.unset_ownership()
+    vm_crud.unset_ownership()
 
 
-def test_user_ownership_crud(request, user1, setup_provider, provider):
-    ownership_vm = provider.data['ownership_vm']
-    user_ownership_vm = VM.factory(ownership_vm, provider)
+def test_user_ownership_crud(request, user1, setup_provider, provider, vm_crud):
     # Set the ownership and checking it
-    user_ownership_vm.set_ownership(user=user1.name)
+    vm_crud.set_ownership(user=user1.name)
     with user1:
-        assert user_ownership_vm.exists, "vm not found"
-    user_ownership_vm.unset_ownership()
+        assert vm_crud.exists, "vm not found"
+    vm_crud.unset_ownership()
     with user1:
-        assert not check_vm_exists(user_ownership_vm), "vm exists! but shouldn't exist"
+        assert not check_vm_exists(vm_crud), "vm exists! but shouldn't exist"
 
 
-def test_group_ownership_on_user_only_role(request, user2, setup_provider, provider):
-    ownership_vm = provider.data['ownership_vm']
-    group_ownership_vm = VM.factory(ownership_vm, provider)
-    group_ownership_vm.set_ownership(group=user2.group.description)
+def test_group_ownership_on_user_only_role(request, user2, setup_provider, provider, vm_crud):
+    vm_crud.set_ownership(group=user2.group.description)
     with user2:
-        assert not check_vm_exists(group_ownership_vm), "vm exists! but shouldn't exist"
-    group_ownership_vm.set_ownership(user=user2.name)
+        assert not check_vm_exists(vm_crud), "vm exists! but shouldn't exist"
+    vm_crud.set_ownership(user=user2.name)
     with user2:
-        assert group_ownership_vm.exists, "vm exists"
+        assert vm_crud.exists, "vm exists"
 
 
 def test_group_ownership_on_user_or_group_role(
-        request, user3, setup_provider, provider):
-    ownership_vm = provider.data['ownership_vm']
-    group_ownership_vm = VM.factory(ownership_vm, provider)
-    group_ownership_vm.set_ownership(group=user3.group.description)
+        request, user3, setup_provider, provider, vm_crud):
+    vm_crud.set_ownership(group=user3.group.description)
     with user3:
-        assert group_ownership_vm.exists, "vm not found"
-    group_ownership_vm.unset_ownership()
+        assert vm_crud.exists, "vm not found"
+    vm_crud.unset_ownership()
     with user3:
-        assert not check_vm_exists(group_ownership_vm), "vm exists! but shouldn't exist"
+        assert not check_vm_exists(vm_crud), "vm exists! but shouldn't exist"
 
 
 # @pytest.mark.meta(blockers=[1202947])
