@@ -4,10 +4,12 @@ import pytest
 from widgetastic.utils import partial_match
 
 from cfme.common.provider import cleanup_vm
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.rest.gen_data import dialog as _dialog
 from cfme.rest.gen_data import service_catalog_obj as _catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils import version
 from cfme.utils.log import logger
 
 
@@ -31,6 +33,11 @@ def create_catalog_item(provider, provisioning, vm_name, dialog, catalog, consol
 
     template, host, datastore, iso_file, catalog_item_type, vlan = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type', 'vlan'))
+    if provider.one_of(RHEVMProvider):
+        catalog_item_type = version.pick({
+            version.LOWEST: 'RHEV',
+            '5.9.0.17': catalog_item_type
+        })
     if console_template:
         logger.info("Console template name : {}".format(console_template.name))
         template = console_template.name
