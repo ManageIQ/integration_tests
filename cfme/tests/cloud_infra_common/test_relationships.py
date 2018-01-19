@@ -52,9 +52,24 @@ CLOUD_PROVIDER_RELATIONSHIPS = [
 ]
 
 
+def _fix_item(appliance, item):
+    # Some version-dependent things ...
+    if item == 'Orchestration stacks' and appliance.version >= '5.9':
+        return 'Orchestration Stacks'
+    elif item == 'Availability zones' and appliance.version >= '5.9':
+        return 'Availability Zones'
+    else:
+        return item
+
+
+RELATIONSHIPS = {
+    "Infrastructure Provider", "Availability zones", "Availability Zones", "Flavors",
+    "Security Groups", "Instances", "Images", "Orchestration stacks", "Orchestration Stacks",
+    "Storage Managers"}
+
+
 def get_obj(relationship, appliance, **kwargs):
-    if relationship in ["Infrastructure Provider", "Availability zones", "Flavors",
-            "Security Groups", "Instances", "Images", "Orchestration stacks", "Storage Managers"]:
+    if relationship in RELATIONSHIPS:
         obj = kwargs.get("provider")
     elif relationship == "Cluster":
         cluster_col = appliance.collections.clusters
@@ -110,6 +125,8 @@ def test_infra_provider_relationships(appliance, provider, setup_provider, relat
 @pytest.mark.provider([EC2Provider], selector=ONE_PER_TYPE)
 def test_cloud_provider_relationships(appliance, provider, setup_provider, relationship, view):
     """Tests relationship navigation for a cloud provider"""
+    # Version dependent strings
+    relationship = _fix_item(appliance, relationship)
     provider_view = navigate_to(provider, "Details")
     if provider.get_detail("Relationships", relationship) == "0":
         pytest.skip("There are no relationships for {}".format(relationship))
