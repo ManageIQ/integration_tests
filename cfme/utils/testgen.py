@@ -349,4 +349,4 @@ def pxe_servers(metafunc):
 
     items = cfme_data.get('pxe_servers', {}).keys()
 
-    return argnames, [items], items
+    return argnames, filter(None, [items]), items
