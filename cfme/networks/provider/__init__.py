@@ -25,6 +25,7 @@ from cfme.networks.views import (
 )
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.log import logger
 
 
 @attr.s
@@ -44,7 +45,7 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable, BaseEntity):
     provider_types = {}
     property_tuples = []
     detail_page_suffix = 'provider_detail'
-    db_types = ['NetworksManager']
+    db_types = ['NetworkManager']
 
     _collections = {
         'balancers': BalancerCollection,
@@ -88,6 +89,95 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable, BaseEntity):
     @cached_property
     def security_groups(self):
         return self.collections.security_groups
+
+    def create(self, cancel=False, validate_credentials=True, validate_inventory=False):
+        created = True
+
+        logger.info('Setting up Network Provider: %s', self.key)
+        add_view = navigate_to(self, 'Add')
+
+        if not cancel or (cancel and any(self.view_value_mapping.values())):
+            # filling main part of dialog
+            add_view.fill(self.view_value_mapping)
+
+        if not cancel or (cancel and self.endpoints):
+            # filling endpoints
+            for endpoint_name, endpoint in self.endpoints.items():
+                try:
+                    # every endpoint class has name like 'default', 'events', etc.
+                    # endpoints view can have multiple tabs, the code below tries
+                    # to find right tab by passing endpoint name to endpoints view
+                    endp_view = getattr(self.endpoints_form(parent=add_view),
+                                        endpoint_name)
+                except AttributeError:
+                    # tabs are absent in UI when there is only single (default) endpoint
+                    endp_view = self.endpoints_form(parent=add_view)
+
+                endp_view.fill(endpoint.view_value_mapping)
+
+                # filling credentials
+                if hasattr(endpoint, 'credentials'):
+                    endp_view.fill(endpoint.credentials.view_value_mapping)
+
+                if (validate_credentials and hasattr(endp_view, 'validate') and
+                        endp_view.validate.is_displayed):
+                    # there are some endpoints which don't demand validation like
+                    #  RSA key pair
+                    endp_view.validate.click()
+                    # Flash message widget is in add_view, not in endpoints tab
+                    logger.info(
+                        'Validating credentials flash message for endpoint %s',
+                        endpoint_name)
+                    self._post_validate_checks(add_view)
+
+        main_view = self.create_view(navigator.get_class(self, 'All').VIEW)
+        if cancel:
+            created = False
+            add_view.cancel.click()
+            self._post_cancel_checks(main_view)
+        else:
+            add_view.add.click()
+            self._post_create_checks(main_view, add_view)
+
+        if validate_inventory:
+            self.validate()
+
+        return created
+
+    def _post_validate_checks(self, add_view):
+        add_view.flash.assert_no_error()
+        add_view.flash.assert_success_message(
+            'Credential validation was successful')
+
+    def _post_cancel_checks(self, main_view):
+        main_view.flash.assert_no_error()
+        cancel_text = ('Add of {} Manager was '
+                       'cancelled by the user'.format(self.string_name))
+        main_view.flash.assert_message(cancel_text)
+
+    def _post_create_checks(self, main_view, add_view=None):
+        main_view.flash.assert_no_error()
+        if main_view.is_displayed:
+            success_text = '{} Providers "{}" was saved'.format(self.string_name, self.name)
+            main_view.flash.assert_message(success_text)
+        else:
+            add_view.flash.assert_no_error()
+            raise AssertionError("Provider wasn't added. It seems form isn't accurately filled")
+
+    def delete(self, cancel=True):
+        """
+        Deletes a provider from CFME
+
+        Args:
+            cancel: Whether to cancel the deletion, defaults to True
+        """
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Remove this Network Provider from Inventory',
+                                               handle_alert=not cancel)
+        if not cancel:
+            msg = ('Delete initiated for 1 Network Provider from the {} Database'.format(
+                self.appliance.product_name))
+            view.flash.assert_success_message(msg)
 
 
 @attr.s
