@@ -59,10 +59,9 @@ def get_distributed_appliances(appliance):
     ver_to_prov = str(appliance.version)
     appl1 = provision_appliance(ver_to_prov, 'long-test_childDB_A')
     appl2 = provision_appliance(ver_to_prov, 'long-test_childDB_B')
-    appl1.configure(region=1, patch_ajax_wait=False)
+    appl1.configure(region=1)
     appl1.ipapp.wait_for_web_ui()
-    appl2.configure(region=1, patch_ajax_wait=False, key_address=appl1.hostname,
-                    db_address=appl1.hostname)
+    appl2.configure(region=1, key_address=appl1.hostname, db_address=appl1.hostname)
     appl2.ipapp.wait_for_web_ui()
     return appl1, appl2
 
