@@ -448,10 +448,10 @@ class CFMENavigateStep(NavigateStep):
             self.prerequisite_view = self.prerequisite()
             try:
                 self.check_for_badness(self.step, _tries, nav_args, *args, **kwargs)
-            except Exception as e:
+            except (exceptions.CandidateNotFound, exceptions.ItemNotFound) as e:
                 self.log_message(
-                    "Exception raised [{}] whilst running step, trying refresh".format(e),
-                    level="error"
+                    "Item/Tree Exception raised [{}] whilst running step, trying refresh"
+                    .format(e), level="error"
                 )
                 self.appliance.browser.widgetastic.refresh()
                 self.check_for_badness(self.step, _tries, nav_args, *args, **kwargs)
