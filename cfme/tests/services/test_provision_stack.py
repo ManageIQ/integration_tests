@@ -30,7 +30,7 @@ pytestmark = [
 
 
 @pytest.yield_fixture(scope="function")
-def template(provider, provisioning, setup_provider):
+def template(provider, provisioning, setup_provider, appliance):
     template_type = provisioning['stack_provisioning']['template_type']
     template_name = fauxfactory.gen_alphanumeric()
     template = OrchestrationTemplate(template_type=template_type,
@@ -40,11 +40,11 @@ def template(provider, provisioning, setup_provider):
     data_file = load_data_file(str(orchestration_path.join(file)))
 
     template.create(data_file.read().replace('CFMETemplateName', template_name))
-    if provider.type == "azure":
+    if provider.type == "azure" and appliance.version < '5.9':
         dialog_name = "azure-single-vm-from-user-image"
     else:
         dialog_name = "dialog_" + fauxfactory.gen_alphanumeric()
-    if provider.type != "azure":
+    if provider.type != "azure" and appliance.version < '5.9':
         template.create_service_dialog_from_template(dialog_name, template.template_name)
 
     yield template, dialog_name
@@ -66,11 +66,11 @@ def dialog(appliance, provider, template):
         }
     }
     dialog = appliance.collections.service_dialogs
-    sd = dialog.instantiate(label=dialog_name)
-    tab = sd.tabs.instantiate(tab_label="Basic Information", tab_desc="Basic Information Tab")
-    box = tab.boxes.instantiate(box_label="Options")
-    element = box.elements.instantiate(element_data=element_data)
-    element.add_another_element(element_data)
+    sd = dialog.create(label=dialog_name)
+    tab = sd.tabs.create(tab_label="Basic Information", tab_desc="Basic Information Tab")
+    box = tab.boxes.create(box_label="Options")
+    box.elements.create(element_data=[element_data])
+    # element.add_another_element(element_data)
     yield template, sd, service_name
 
 
