@@ -169,7 +169,7 @@ class ContainersProvider(BaseProvider, Pretty):
         'num_image_registry',
         'num_container']
     # TODO add 'num_volume'
-    string_name = "Containers"
+    string_name = "Containers Provider"
     detail_page_suffix = 'provider_detail'
     edit_page_suffix = 'provider_edit_detail'
     quad_name = None
