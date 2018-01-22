@@ -399,6 +399,17 @@ class CloudProvidersView(ProvidersView):
                 self.entities.title.text == 'Cloud Providers')
 
 
+class NetworkProvidersView(ProvidersView):
+    """
+     represents Main view displaying all Network providers
+    """
+    @property
+    def is_displayed(self):
+        return (super(NetworkProvidersView, self).is_displayed and
+                self.navigation.currently_selected == ['Networks', 'Providers'] and
+                self.entities.title.text == 'Network Managers')
+
+
 class PhysicalProvidersView(ProvidersView):
     """
      represents Main view displaying all Infra providers
