@@ -35,7 +35,7 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable, BaseEntity):
           only automaticaly with cloud provider
     """
     STATS_TO_MATCH = []
-    string_name = 'Network'
+    string_name = 'Network Manager'
     in_version = ('5.8', version.LATEST)
     edit_page_suffix = ''
     refresh_text = 'Refresh Relationships and Power States'

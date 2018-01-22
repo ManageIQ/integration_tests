@@ -25,7 +25,7 @@ class PhysicalProvider(Pretty, BaseProvider, Fillable):
     category = "physical"
     pretty_attrs = ['name']
     STATS_TO_MATCH = ['num_server']
-    string_name = "Physical Infrastructure"
+    string_name = "Physical Infrastructure Provider"
     page_name = "infrastructure"
     db_types = ["PhysicalInfraManager"]
 

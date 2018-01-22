@@ -15,7 +15,7 @@ class LenovoEndpointForm(DefaultEndpointForm):
 class LenovoProvider(PhysicalProvider):
     type_name = 'lenovo'
     endpoints_form = LenovoEndpointForm
-    string_name = 'Physical Infrastructure'
+    string_name = 'Physical Infrastructure Provider'
     mgmt_class = LenovoSystem
     refresh_text = "Refresh Relationships and Power States"
 
