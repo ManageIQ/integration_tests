@@ -4,6 +4,7 @@ import fauxfactory
 from textwrap import dedent
 
 from cfme.utils import db, conf, clear_property_cache, datafile
+from cfme.utils.conf import credentials
 from cfme.utils.path import scripts_path
 from cfme.utils.wait import wait_for
 
@@ -96,7 +97,7 @@ class ApplianceDB(AppliancePlugin):
         rc, out = self.ssh_client.run_command('createdb vmdb_production', timeout=30)
         assert rc == 0, "Failed to create clean database: {}".format(out)
 
-    def migrate_db(self):
+    def migrate(self):
         """migrates a given database and updates REGION/GUID files"""
         ssh = self.ssh_client
         rc, out = ssh.run_rake_command("db:migrate", timeout=300)
@@ -122,6 +123,28 @@ class ApplianceDB(AppliancePlugin):
                 "echo -n '{}' > {}".format(db_data, data_filepath), timeout=15)
             assert rc == 0, "Failed to replace data in {} with '{}': {}".format(
                 data_filepath, db_data, out)
+
+    def automate_reset(self):
+        rc, out = self.ssh_client.run_rake_command("evm:automate:reset", timeout=300)
+        assert rc == 0, "Failed to reset automate: {}".format(out)
+
+    def fix_auth_key(self):
+        rc, out = self.ssh_client.run_command("fix_auth -i invalid", timeout=45)
+        assert rc == 0, "Failed to change invalid passwords: {}".format(out)
+        # fix db password
+
+    def fix_auth_dbyml(self):
+        rc, out = self.ssh_client.run_command("fix_auth --databaseyml -i {}".format(
+            credentials['database']['password']), timeout=45)
+        assert rc == 0, "Failed to change invalid password: {}".format(out)
+
+    def reset_user_pass(self):
+        rc, out = self.ssh_client.run_rails_command(
+            '"u = User.find_by_userid(\'admin\'); u.password = \'{}\'; u.save!"'
+            .format(self.appliance.user.credential.secret))
+        assert rc == 0, "Failed to change UI password of {} to {}:" \
+            .format(self.appliance.user.credential.principal,
+                    self.appliance.user.credential.secret, out)
 
     @property
     def ssh_client(self, **connect_kwargs):
@@ -476,3 +499,12 @@ class ApplianceDB(AppliancePlugin):
             result = ssh.run_command('systemctl stop {}'.format(self.service_name))
             assert result.success, 'Failed to stop {}'.format(service)
             self.logger.info('Stopped {}'.format(service))
+
+    def restart_db_service(self):
+        """restarts the postgresql service via systemctl"""
+        service = '{}-postgresql'.format(self.postgres_version)
+        self.logger.info('Restarting {}'.format(service))
+        with self.ssh_client as ssh:
+            result = ssh.run_command('systemctl restart {}'.format(self.service_name))
+            assert result.success, 'Failed to restart {}'.format(service)
+            self.logger.info('Restarted {}'.format(service))
