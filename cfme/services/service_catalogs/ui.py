@@ -1,8 +1,9 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import ParametrizedString, VersionPick
-from widgetastic.widget import ParametrizedView, Text, View, Select
+from widgetastic.utils import (deflatten_dict, Parameter, ParametrizedLocator,ParametrizedString,
+    VersionPick)
+from widgetastic.widget import ParametrizedView, Text, View
 from widgetastic_patternfly import Button, Input, BootstrapSelect
 
 from cfme.base import Server
@@ -47,74 +48,48 @@ class OrderForm(ServicesCatalogView):
         })
     )
 
-    timeout = Input(name='stack_timeout')
-    db_user = Input(name="param_DBUser__protected")
-    db_root_password = Input(name='param_DBRootPassword__protected')
-    resource_group = BootstrapSelect("resource_group")
-    mode = BootstrapSelect('deploy_mode')
-    select_instance_type = BootstrapSelect("param_InstanceType")
-    vm_user = Input(name='param_adminUserName')
-    vm_password = Input(name="param_adminPassword__protected")
-    vm_size = BootstrapSelect('param_virtualMachineSize')
-    user_image = BootstrapSelect("param_userImageName")
-    os_type = BootstrapSelect('param_operatingSystemType')
-    stack_name = VersionPick({
-        '5.9': Input(
-            locator='.//input[../../../div[normalize-space(.)="Stack Name"]]'),
-        Version.lowest(): Input(name='stack_name')})
-    stack_timeout = VersionPick({
-        '5.9': Input(
-            locator='.//input[../../../div[contains(normalize-space(.), "Timeout")]]'),
-        Version.lowest(): Input(name='stack_timeout')})
-
-    vm_name = VersionPick({
-        '5.9': Input(
-            locator='.//input[../../../div[contains(normalize-space(.), "Virtual Machine Name")]]'),
-        Version.lowest(): Input(name="param_virtualMachineName")})
-
-    key_name = VersionPick({
-        '5.9': Input(
-            locator='.//input[../../../div[contains(normalize-space(.), "Key Name")]]'),
-        Version.lowest(): Input(name="param_KeyName")})
-    role_arn = Input(locator='.//input[../../../div[contains(normalize-space(.), "Role ARN")]]')
-    ssh_location = Input(name="param_SSHLocation")
-
-    flavor = Input(id='param_flavor')
-    image = Input(id="param_image")
-    key = Input(id='param_key')
-    private_network = Input(id="param_private_network")
-    default_select_value = VersionPick({
-        '5.9': Select(locator='.//select[../../'
-                              'div[contains(normalize-space(.), "Service Level")]]'),
-        Version.lowest(): BootstrapSelect('service_level')})
-    # Ansible dialog fields
-    machine_credential = VersionPick({
-        Version.lowest(): BootstrapSelect("credential"),
-        '5.9': DialogFieldDropDownList(".//div[@input-id='credential']")})
-    hosts = VersionPick({
-        Version.lowest(): Input(name="hosts"),
-        '5.9': Input(id="hosts")})
-
     @ParametrizedView.nested
-    class variable(ParametrizedView):  # noqa
+    class fields(ParametrizedView):  # noqa
         PARAMETERS = ("key",)
-        value_input = Input(id=ParametrizedString("param_{key}"))
+        input = Input(id=Parameter("key"))
+        ansible_input = Input(id=ParametrizedString("param_{key}"))
+        dropdown = VersionPick({
+            Version.lowest(): BootstrapSelect(Parameter("key")),
+            "5.9": DialogFieldDropDownList(ParametrizedLocator(".//div[@input-id='{key|quote}']"))
+        })
 
         @property
-        def value(self):
-            return self.browser.get_attribute("value", self.value_input)
+        def visible_widget(self):
+            if self.input.is_displayed:
+                return self.input
+            elif self.dropdown.is_displayed:
+                return self.dropdown
+            elif self.ansible_input.is_displayed:
+                return self.ansible_input
 
         def read(self):
-            return self.value_input.value
+            return self.visible_widget.read()
 
         def fill(self, value):
-            current_value = self.value_input.value
-            if value == current_value:
-                return False
-            self.browser.click(self.value_input)
-            self.browser.clear(self.value_input)
-            self.browser.send_keys(value, self.value_input)
-            return True
+            return self.visible_widget.fill(value)
+
+    def fill(self, fill_data):
+        values = deflatten_dict(fill_data)
+        was_change = False
+        self.before_fill(values)
+        for key, value in values.items():
+            widget = self.fields(key)
+            if value is None:
+                self.logger.debug('Skipping fill of %r because value was None', key)
+                continue
+            try:
+                if widget.fill(value):
+                    was_change = True
+            except NotImplementedError:
+                continue
+
+        self.after_fill(was_change)
+        return was_change
 
 
 class ServiceCatalogsView(ServicesCatalogView):
