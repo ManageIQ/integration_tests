@@ -1,6 +1,5 @@
 import fauxfactory
 import pytest
-from widgetastic.exceptions import RowNotFound
 
 from cfme.base.credential import Credential
 from cfme.configure.configuration.region_settings import Category, Tag
@@ -72,9 +71,7 @@ def user_restricted(appliance, group_with_tag, new_credential):
         name='user{}'.format(fauxfactory.gen_alphanumeric()),
         credential=new_credential,
         email='xyz@redhat.com',
-        group=group_with_tag,
-        cost_center='Workload',
-        value_assign='Database')
+        group=group_with_tag)
     yield user
     user.delete()
 

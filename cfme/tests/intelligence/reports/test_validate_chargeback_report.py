@@ -64,15 +64,15 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
     cb_group = group_collection.instantiate(description='EvmGroup-user')
 
     vm = VM.factory(vm_name, provider)
+
     user = None
+
     try:
-        user = appliance.collections.users.create(
+        user = appliance.collections.users.instantiate(
             name=provider.name + fauxfactory.gen_alphanumeric(),
             credential=new_credential(),
             email='abc@example.com',
-            group=cb_group,
-            cost_center='Workload',
-            value_assign='Database')
+            group=cb_group)
         vm.set_ownership(user=user.name)
         logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
 
