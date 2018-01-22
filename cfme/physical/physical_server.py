@@ -22,7 +22,6 @@ from cfme.utils.providers import get_crud_by_name
 from cfme.exceptions import (ProviderHasNoKey, ProviderHasNoProperty)
 from wrapanapi.lenovo import LenovoSystem
 from cfme.utils.varmeth import variable
-from cfme.fixtures import pytest_selenium as sel
 
 @attr.s
 class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticTaggable):
