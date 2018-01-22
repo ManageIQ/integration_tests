@@ -19,7 +19,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
 from cfme.utils.providers import get_crud_by_name
-from cfme.exceptions import (ProviderHasNoKey, ProviderHasNoProperty)
+from cfme.exceptions import ProviderHasNoProperty
 from wrapanapi.lenovo import LenovoSystem
 from cfme.utils.varmeth import variable
 
@@ -179,7 +179,7 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
         # Gather the data necessary to instantiate an instance of the management class
         # defined in wrapanapi.
         provider_data = providers['lenovo']
-        credentials = provider_data['credentials']  
+        credentials = provider_data['credentials']
         credentials = conf.credentials[credentials]
         provider_kwargs = provider_data.copy()
         provider_kwargs.update(credentials)
@@ -212,7 +212,8 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
                 cfme_stat = getattr(self, stat)(method=method)
 
                 if host_stats[stat] != cfme_stat:
-                    raise StatsDoNotMatch("The {} stat does not match. (server: {}, host stat: {}, cfme stat: {})".format(stat, self.name, host_stats[stat], cfme_stat))
+                    msg = "The {} stat does not match. (server: {}, host stat: {}, cfme stat: {})"
+                    raise StatsDoNotMatch(msg.format(stat, self.name, host_stats[stat], cfme_stat))
             except KeyError:
                 raise HostStatsNotContains(
                     "Host stats information does not contain '{}'".format(stat))
