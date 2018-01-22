@@ -50,10 +50,12 @@ TEST_ITEMS = (
 
 @pytest.fixture(scope="module")
 def sync_ssl_certificate(provider, appliance):
-    """
-    fixture which sync SSL certificate between CFME and OCP
-    :param provider:  OCP provider object
-    :param appliance: CFME appliance object
+    """ fixture which sync SSL certificate between CFME and OCP
+    Args:
+        provider (OpenShiftProvider):  OCP system to sync cert from
+        appliance (IPAppliance): CFME appliance to sync cert with
+    Returns:
+         None
     """
 
     # creating a ssh connection to both appliance and provider
