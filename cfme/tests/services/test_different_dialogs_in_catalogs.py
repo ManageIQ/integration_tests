@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-
 from widgetastic.utils import partial_match
 
 from cfme import test_requirements
-from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.common.provider import cleanup_vm
+from cfme.infrastructure.provider import InfraProvider
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.infrastructure.provider import InfraProvider
-from cfme.common.provider import cleanup_vm
-from cfme.utils.log import logger
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.blockers import BZ
-
+from cfme.utils.log import logger
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -64,8 +62,8 @@ def catalog():
 
 @pytest.fixture(scope="function")
 def catalog_item(provider, provisioning, vm_name, tagcontrol_dialog, catalog):
-    template, host, datastore, iso_file, catalog_item_type, vlan = map(provisioning.get,
-        ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type', 'vlan'))
+    template, host, datastore, iso_file, vlan = map(provisioning.get,
+        ('template', 'host', 'datastore', 'iso_file', 'vlan'))
 
     provisioning_data = {
         'catalog': {'vm_name': vm_name,
@@ -82,7 +80,7 @@ def catalog_item(provider, provisioning, vm_name, tagcontrol_dialog, catalog):
     elif provider.type == 'virtualcenter':
         provisioning_data['catalog']['provision_type'] = 'VMware'
     item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
+    catalog_item = CatalogItem(item_type=provider.catalog_name, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=tagcontrol_dialog, catalog_name=template,
                   provider=provider, prov_data=provisioning_data)
