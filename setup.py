@@ -140,8 +140,7 @@ setup(
             ('generic_object_definitions = '
                 'cfme.generic_objects.definition:GenericObjectDefinitionCollection'),
             ('generic_objects = '
-                'cfme.generic_objects.instance:GenericObjectInstanceCollection'),
-            'physical_servers = cfme.physical.physical_server:PhysicalServerCollection'
+                'cfme.generic_objects.instance:GenericObjectInstanceCollection')
         ],
         'pytest11':
         [
