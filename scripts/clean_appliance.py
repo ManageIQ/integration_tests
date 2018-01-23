@@ -44,8 +44,8 @@ def main():
         # `systemctl stop evmserverd` is a little slow, and we're destroying the
         # db, so rudely killing ruby speeds things up significantly
         print('Stopping ruby processes...')
-        ssh_client.run_command('killall ruby')
-        ssh_client.run_rake_command('evm:db:reset')
+        ssh_client.run_command('systemctl stop evmserverd')
+        ssh_client.run_rake_command('evm:db:reset', disable_db_check=True)
         ssh_client.run_command('systemctl start evmserverd')
 
         # SSHClient has the smarts to get our hostname if none was provided
