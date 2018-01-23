@@ -4,8 +4,7 @@ import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Text, TextInput
-from widgetastic_manageiq import CheckableManageIQTree, MultiBoxSelect
-from widgetastic_patternfly import BootstrapSelect, Button, Input
+from widgetastic_patternfly import BootstrapSelect, Button, Input, CheckableBootstrapTreeview
 
 from . import ControlExplorerView
 from cfme.utils import ParamClassName
@@ -13,6 +12,7 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from widgetastic_manageiq import MultiBoxSelect
 
 
 class AlertProfileFormCommon(ControlExplorerView):
@@ -83,7 +83,7 @@ class AlertProfilesEditAssignmentsView(ControlExplorerView):
     title = Text("#explorer_title_text")
     assign_to = BootstrapSelect("chosen_assign_to")
     tag_category = BootstrapSelect("chosen_cat")
-    selections = CheckableManageIQTree(VersionPick({
+    selections = CheckableBootstrapTreeview(VersionPick({
         Version.lowest(): "obj_treebox",
         "5.9": "object_treebox"
     }))
