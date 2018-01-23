@@ -40,7 +40,7 @@ def customer_db_migrate(temp_appliance_preconfig):
         rc, out = app.ssh_client.run_rake_command("evm:start")
         assert rc == 0, "Couldn't start evmserverd: {}".format(out)
     app.wait_for_web_ui(timeout=600)
-    app.reset_user_pass()
+    app.db.reset_user_pass()
     # Disable roles in the UI
 
     return app

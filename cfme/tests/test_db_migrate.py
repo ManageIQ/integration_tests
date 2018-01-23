@@ -119,7 +119,7 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
         rc, out = app.ssh_client.run_rake_command("evm:start")
         assert rc == 0, "Couldn't start evmserverd: {}".format(out)
     app.wait_for_web_ui(timeout=600)
-    app.reset_user_pass()
+    app.db.reset_user_pass()
     app.server.login(app.user)
 
 
@@ -169,7 +169,7 @@ def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance
         assert rc == 0, "Couldn't start evmserverd: {}".format(out)
     app.wait_for_web_ui(timeout=600)
     # Reset user's password, just in case (necessary for customer DBs)
-    app.reset_user_pass()
+    app.db.reset_user_pass()
     app.server.login(app.user)
 
     app.set_pglogical_replication(replication_type=':remote')
