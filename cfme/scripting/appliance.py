@@ -60,7 +60,6 @@ def upgrade_appliance(appliance_ip, cfme_only, update_to):
         os.fsync(f.fileno())
         app.ssh_client.put_file(
             f.name, '/etc/yum.repos.d/update.repo')
-    ver = '95' if app.version >= '5.8' else '94'
     cfme = '-y'
     if cfme_only:
         cfme = 'cfme -y'
@@ -70,16 +69,58 @@ def upgrade_appliance(appliance_ip, cfme_only, update_to):
     rc, out = app.ssh_client.run_command('yum update {}'.format(cfme), timeout=3600)
     assert rc == 0, "update failed {}".format(out)
     print('Running database migration')
-    rc, out = app.ssh_client.run_rake_command("db:migrate", timeout=300)
-    assert rc == 0, "Failed to migrate new database: {}".format(out)
-    rc, out = app.ssh_client.run_rake_command("evm:automate:reset", timeout=300)
-    assert rc == 0, "Failed to reset automate: {}".format(out)
-    rc, out = app.ssh_client.run_rake_command(
-        'db:migrate:status 2>/dev/null | grep "^\s*down"', timeout=30)
-    assert rc != 0, "Migration failed; migrations in 'down' state found: {}".format(out)
+    app.db.migrate()
+    app.db.automate_reset()
     print('Restarting postgres service')
-    rc, out = app.ssh_client.run_command('systemctl restart rh-postgresql{}-postgresql'.format(ver))
-    assert rc == 0, "Failed to restart postgres: {}".format(out)
+    app.db.restart_db_service()
+    print('Starting EVM')
+    app.start_evm_service()
+    print('Waiting for webui')
+    app.wait_for_web_ui()
+    print('Appliance upgrade completed')
+
+
+@main.command('migrate', help='Restores/migrates database from file or downloaded')
+@click.argument('appliance-ip', default=None, required=True)
+@click.option('--db-url', default=None, help='Download a backup file')
+@click.option('--keys-url', default=None, help='URL for matching db v2key and GUID if available')
+@click.option('--backup', default=None, help='Location of local backup file, including file name')
+def backup_migrate(appliance_ip, db_url, keys_url, backup):
+    """Restores and migrates database backup on an appliance"""
+    print('Connecting to {}'.format(appliance_ip))
+    app = get_appliance(appliance_ip)
+    if db_url:
+        print('Downloading database backup')
+        rc, out = app.ssh_client.run_command(
+            'curl -o "/evm_db.backup" "{}"'.format(db_url), timeout=30)
+        assert rc == 0, "Failed to download database: {}".format(out)
+        backup = '/evm_db.backup'
+    else:
+        backup = backup
+    print('Stopping EVM')
+    app.evmserverd.stop()
+    print('Dropping/Creating database')
+    app.db.drop()
+    app.db.create()
+    print('Restoring database from backup')
+    rc, out = app.ssh_client.run_command(
+        'pg_restore -v --dbname=vmdb_production {}'.format(backup), timeout=600)
+    assert rc == 0, "Failed to restore new database: {}".format(out)
+    print('Running database migration')
+    app.db.migrate()
+    app.db.automate_reset()
+    if keys_url:
+        rc, out = app.ssh_client.run_command(
+            'curl -o "/var/www/miq/vmdb/certs/v2_key" "{}v2_key"'.format(keys_url), timeout=15)
+        assert rc == 0, "Failed to download v2_key: {}".format(out)
+        rc, out = app.ssh_client.run_command(
+            'curl -o "/var/www/miq/vmdb/GUID" "{}GUID"'.format(keys_url), timeout=15)
+        assert rc == 0, "Failed to download GUID: {}".format(out)
+    else:
+        app.db.fix_auth_key()
+    app.db.fix_auth_dbyml()
+    print('Restarting postgres service')
+    app.db.restart_db_service()
     print('Starting EVM')
     app.start_evm_service()
     print('Waiting for webui')
