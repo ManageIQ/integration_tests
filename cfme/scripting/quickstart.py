@@ -1,12 +1,14 @@
 from __future__ import print_function
 
-import os
-import sys
 import argparse
-import subprocess
-import json
 import hashlib
+import json
+import subprocess
+import sys
 from pipes import quote
+
+import distro
+import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--mk-virtualenv", default="../cfme_venv")
@@ -16,7 +18,6 @@ parser.add_argument("--config-path", default="../cfme-qe-yamls/complete/")
 IS_SCRIPT = sys.argv[0] == __file__
 CWD = os.getcwd()  # we expect to be in the workdir
 IS_ROOT = os.getuid() == 0
-REDHAT_RELEASE_FILE = '/etc/redhat-release'
 CREATED = object()
 REQUIREMENT_FILE = 'requirements/frozen.txt'
 HAS_DNF = os.path.exists('/usr/bin/dnf')
@@ -25,44 +26,44 @@ IN_VIRTUALENV = getattr(sys, 'real_prefix', None) is not None
 PRISTINE_ENV = dict(os.environ)
 
 REDHAT_PACKAGES_SPECS = [
-    ("Fedora release 23", "nss",
+    ("fedora", "23", "nss",
      " python-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq3-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python-devel tesseract"
      " freetype-devel"),
-    ("Fedora release 24", "nss",
+    ("fedora", "24", "nss",
      " python-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq3-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python-devel tesseract"
      " freetype-devel"),
-    ("Fedora release 25", "nss",
+    ("fedora", "25", "nss",
      " python2-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq3-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python2-devel tesseract"
      " freetype-devel"),
-    ("Fedora release 26", "nss",
+    ("fedora", "26", "nss",
      " python2-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python2-devel tesseract"
      " freetype-devel"),
-    ("Fedora release 27", "openssl",
+    ("fedora", "27", "openssl",
      " python2-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python2-devel tesseract"
      " freetype-devel"),
-    ("CentOS Linux release 7", "nss",
+    ("centos", "7", "nss",
      " python-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq3-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python-devel tesseract"
      " libpng-devel"
      " freetype-devel"),
-    ("Red Hat Enterprise Linux Server release 7", "nss",
+    ("rhel", "7", "nss",
      " python-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq3-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
@@ -78,18 +79,16 @@ REDHAT_PACKAGES_SPECS = [
      " freetype-devel")
 ]
 
-
-if os.path.exists(REDHAT_RELEASE_FILE):
-
-    with open(REDHAT_RELEASE_FILE) as fp:
-        release_string = fp.read()
-    for release, curl_ssl, packages in REDHAT_PACKAGES_SPECS:
-        if release_string.startswith(release):
+distro_id = distro.id()
+distro_ver = distro.major_version(best=False)
+if distro_id:
+    for release_name, release_version, curl_ssl, packages in REDHAT_PACKAGES_SPECS:
+        if distro_id == release_name and distro_ver == release_version:
             REDHAT_PACKAGES = packages
             os.environ['PYCURL_SSL_LIBRARY'] = curl_ssl
             break
     else:
-        print("{} not known".format(release_string))
+        print("{} not known".format(distro_id))
         sys.exit(1)
     assert REDHAT_PACKAGES
 

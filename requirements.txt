@@ -1,3 +1,4 @@
+distro
 # this file is there for backward compatibility, it will be taken away after prt updates
 -r requirements/frozen.txt
 # do editable self-install to avoid need for pythonpath changes
