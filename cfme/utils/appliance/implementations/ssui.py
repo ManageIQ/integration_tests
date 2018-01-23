@@ -30,6 +30,11 @@ class MiqSSUIBrowser(Browser):
             logger=create_sublogger('MiqSSUIBrowser'),
             extra_objects=extra_objects)
         self.window_handle = selenium.current_window_handle
+        # TODO: Use the same base class for both UI & SSUI since they are 99% the same
+        self.logger.info(
+            'Opened browser %s %s',
+            selenium.capabilities.get('browserName', 'unknown'),
+            selenium.capabilities.get('version', 'unknown'))
 
     @property
     def appliance(self):
