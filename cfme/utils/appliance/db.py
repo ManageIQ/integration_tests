@@ -80,9 +80,7 @@ class ApplianceDB(AppliancePlugin):
             Note: EVM service has to be stopped for this to work.
         """
         def _db_dropped():
-            rc, out = self.appliance.ssh_client.run_command(
-                'systemctl restart {}-postgresql'.format(self.postgres_version), timeout=60)
-            assert rc == 0, "Failed to restart postgres service: {}".format(out)
+            self.appliance.db.restart_db_service
             self.appliance.ssh_client.run_command('dropdb vmdb_production', timeout=15)
             rc, out = self.appliance.ssh_client.run_command(
                 "psql -l | grep vmdb_production | wc -l", timeout=15)
@@ -94,7 +92,7 @@ class ApplianceDB(AppliancePlugin):
 
             Note: EVM service has to be stopped for this to work.
         """
-        rc, out = self.ssh_client.run_command('createdb vmdb_production', timeout=30)
+        rc, out = self.appliance.ssh_client.run_command('createdb vmdb_production', timeout=30)
         assert rc == 0, "Failed to create clean database: {}".format(out)
 
     def migrate(self):
