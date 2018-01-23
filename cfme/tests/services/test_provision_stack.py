@@ -42,10 +42,10 @@ def template(provider, provisioning, setup_provider, appliance):
     template.create(data_file.read().replace('CFMETemplateName', template_name))
     if provider.one_of(AzureProvider) and appliance.version < '5.9':
         dialog_name = "azure-single-vm-from-user-image"
-    elif not provider.one_of(AzureProvider) and appliance.version < '5.9':
-        template.create_service_dialog_from_template(dialog_name, template.template_name)
     else:
         dialog_name = "dialog_" + fauxfactory.gen_alphanumeric()
+    if not provider.one_of(AzureProvider) or appliance.version >= '5.9':
+        template.create_service_dialog_from_template(dialog_name, template.template_name)
 
     yield template, dialog_name
 
@@ -54,24 +54,23 @@ def template(provider, provisioning, setup_provider, appliance):
 def dialog(appliance, provider, template, stack_data):
     template, dialog_name = template
     service_name = fauxfactory.gen_alphanumeric()
-    element_data = []
-    import pdb; pdb.set_trace()
-    for key, value in stack_data.items():
-        element_data.append({
-            'element_information': {
-                'ele_label': key.replace("_", " ").capitalize(),
-                'ele_name': key,
-                'choose_type': "Text Box"
-            },
-            'options': {
-                'default_text_box': value
-            }
-        })
+    element_data = {
+        'element_information': {
+            'ele_label': "Options",
+            'ele_name': "service_name",
+            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'choose_type': "Text Box"
+        },
+        'options': {
+            'default_text_box': service_name
+        }
+    }
     dialog = appliance.collections.service_dialogs
-    sd = dialog.create(label=dialog_name)
-    tab = sd.tabs.create(tab_label="Basic Information", tab_desc="Basic Information Tab")
-    box = tab.boxes.create(box_label="Options")
-    box.elements.create(element_data=element_data)
+    sd = dialog.instantiate(label=dialog_name)
+    tab = sd.tabs.instantiate(tab_label="Basic Information", tab_desc="Basic Information Tab")
+    box = tab.boxes.instantiate(box_label="Options")
+    element = box.elements.instantiate(element_data=element_data)
+    element.add_another_element(element_data)
     yield template, sd, service_name
 
 

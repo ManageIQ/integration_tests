@@ -1,7 +1,7 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import (deflatten_dict, Parameter, ParametrizedLocator,ParametrizedString,
+from widgetastic.utils import (deflatten_dict, Parameter, ParametrizedLocator, ParametrizedString,
     VersionPick)
 from widgetastic.widget import ParametrizedView, Text, View
 from widgetastic_patternfly import Button, Input, BootstrapSelect
@@ -92,6 +92,31 @@ class OrderForm(ServicesCatalogView):
         return was_change
 
 
+class AzureOrderForm(ServicesCatalogView):
+    """This view available only in 5.8"""
+    title = Text('#explorer_title_text')
+    dialog_title = Text('.//div[@id="main_div"]//h3')
+
+    stack_name = Input(name='stack_name')
+    resource_group = BootstrapSelect('resource_group')
+    mode = BootstrapSelect('deploy_mode')
+    vm_name = Input(name='param_virtualMachineName')
+    vm_user = Input(name='param_adminUserName')
+    vm_password = Input(name='param_adminPassword__protected')
+    user_image = BootstrapSelect('param_userImageName')
+    os_type = BootstrapSelect('param_operatingSystemType')
+    vm_size = BootstrapSelect('param_virtualMachineSize')
+
+    submit_button = Button('Submit')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_explorer and self.service_catalogs.is_opened and
+            self.title.text == 'Order Service "{}"'.format(self.context['object'].name)
+        )
+
+
 class ServiceCatalogsView(ServicesCatalogView):
     title = Text("#explorer_title_text")
 
@@ -144,6 +169,8 @@ def order(self):
     view = navigate_to(self, 'Order')
     wait_for(lambda: view.dialog_title.is_displayed, timeout=10)
     if self.stack_data:
+        if "user_image" in self.stack_data and self.appliance.version < "5.9":
+            view = self.create_view(AzureOrderForm)
         view.fill(self.stack_data)
     if self.dialog_values:
         view.fill(self.dialog_values)
