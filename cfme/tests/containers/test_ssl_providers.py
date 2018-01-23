@@ -7,7 +7,7 @@ import pytest
 from cfme.containers.provider import ContainersProvider
 from cfme.utils.version import current_version
 from cfme.common.provider_views import ContainerProvidersView
-from cfme.utils.blockers import GH
+from cfme.utils.blockers import GH, BZ
 
 
 pytestmark = [
@@ -103,6 +103,7 @@ def test_add_provider_ssl(provider, default_sec_protocol, soft_assert):
         new_provider.wait_for_delete()
 
 
+@pytest.mark.meta(blockers=[BZ(1536828, forced_streams=['5.8', '5.9'])])
 @pytest.mark.parametrize('test_item', TEST_ITEMS, ids=[
     'Default: {} /  Hawkular: {}'.format(
         ti.args[1].default_sec_protocol, ti.args[1].hawkular_sec_protocol)
