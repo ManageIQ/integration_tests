@@ -59,6 +59,21 @@ class PhysicalProvider(Pretty, BaseProvider, Fillable):
         if not cancel:
             view.flash.assert_no_error()
 
+    def get_detail(self, *ident):
+        """ Gets details from the details infoblock
+
+        The function first ensures that we are on the detail page for the specific provider.
+
+        Args:
+            *ident: An SummaryTable title, followed by the Key name, e.g. "Relationships", "Images"
+
+
+        Returns: A string representing the contents of passed field value.
+        """
+        view = self.load_details(refresh=True)
+        block, field = ident
+        return getattr(view.entities, block.lower()).get_text_of(field)
+
 @navigator.register(Server, 'PhysicalProviders')
 @navigator.register(PhysicalProvider, 'All')
 class All(CFMENavigateStep):

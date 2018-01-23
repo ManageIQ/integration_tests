@@ -2,7 +2,7 @@
 from lxml.html import document_fromstring
 
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import VersionPick, Version
+from widgetastic.utils import VersionPick, Version, Parameter
 from widgetastic.widget import View, Text, ConditionalSwitchableView, ParametrizedView
 from widgetastic_patternfly import Dropdown, BootstrapSelect, Tab
 
@@ -166,10 +166,33 @@ class CloudProviderDetailsView(ProviderDetailsView):
                 self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'])
 
 
+class PhysicalProviderDetailsToolBar(ProviderDetailsToolBar):
+    """
+    Represents the physical provider toolbar and its controls
+    """
+    reload = Button(title='Reload Current Display')
+
+
 class PhysicalProviderDetailsView(ProviderDetailsView):
     """
      Physical  Details page
     """
+    toolbar = View.nested(PhysicalProviderDetailsToolBar)
+    entities = ConditionalSwitchableView(reference='toolbar.view_selector',
+                                         ignore_bad_reference=True)
+
+    @entities.register('Summary View', default=True)
+    class PhysicalProviderDetailsSummaryView(View):
+        """
+        Represents Details page when it is switched to Summary aka Tables view
+        """
+        properties = SummaryTable(title="Properties")
+        status = SummaryTable(title="Status")
+        relationships = SummaryTable(title="Relationships")
+        overview = SummaryTable(title="Overview")
+        smart_management = SummaryTable(title="Smart Management")
+        custom_attributes = SummaryTable(title='Custom Attributes')
+
     @property
     def is_displayed(self):
         return (super(PhysicalProviderDetailsView, self).is_displayed and
