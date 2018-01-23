@@ -65,7 +65,7 @@ class MiqBrowserPlugin(DefaultPlugin):
             );
         } catch(err) {
         }
-        
+
         function isHidden(el) {if(el === null) return true; return el.offsetParent === null;}
         function isDataLoading() {
             try {
