@@ -54,6 +54,18 @@ class ErrorView(View):
 
 class MiqBrowserPlugin(DefaultPlugin):
     ENSURE_PAGE_SAFE = jsmin('''\
+        try {
+            var eventNotificationsService = angular.element('#notification-app')
+                .injector().get('eventNotifications');
+            eventNotificationsService.clearAll(
+                ManageIQ.angular.eventNotificationsData.state.groups[0]
+            );
+            eventNotificationsService.clearAll(
+                ManageIQ.angular.eventNotificationsData.state.groups[1]
+            );
+        } catch(err) {
+        }
+        
         function isHidden(el) {if(el === null) return true; return el.offsetParent === null;}
         function isDataLoading() {
             try {
