@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import fauxfactory
 import math
+
+import fauxfactory
 import pytest
 import re
 
-from cfme.cloud.provider.azure import AzureProvider
-from cfme.cloud.provider.gce import GCEProvider
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.vm import VM
@@ -16,7 +15,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CustomReport
 from datetime import date
 from fixtures.provider import setup_or_skip
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
@@ -25,9 +23,7 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.uncollectif(lambda: current_version() < '5.9'),
-    pytest.mark.meta(blockers=[BZ(1511099, forced_streams=["5.7", "5.8"],
-                                  unblock=lambda provider: not provider.one_of(GCEProvider))]),
-    pytest.mark.provider([VMwareProvider, RHEVMProvider, AzureProvider, GCEProvider],
+    pytest.mark.provider([VMwareProvider, RHEVMProvider],
                          scope='module',
                          required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
     test_requirements.chargeback,
@@ -135,10 +131,8 @@ def resource_usage(vm_ownership, appliance, provider):
     average_memory_used_in_mb = 0
     average_network_io = 0
     average_disk_io = 0
-    average_storage_used = 0
-    consumed_hours = 0
-    vm_name = provider.data['cap_and_util']['chargeback_vm']
 
+    vm_name = provider.data['cap_and_util']['chargeback_vm']
     metrics = appliance.db.client['metrics']
     rollups = appliance.db.client['metric_rollups']
     ems = appliance.db.client['ext_management_systems']
@@ -214,7 +208,6 @@ def resource_usage(vm_ownership, appliance, provider):
 
     for record in appliance.db.client.session.query(rollups).filter(
             rollups.id.in_(result.subquery())):
-        consumed_hours = consumed_hours + 1
         if (record.cpu_usagemhz_rate_average or
            record.cpu_usage_rate_average or
            record.derived_memory_used or
@@ -225,20 +218,10 @@ def resource_usage(vm_ownership, appliance, provider):
             average_network_io = average_network_io + record.net_usage_rate_average
             average_disk_io = average_disk_io + record.disk_usage_rate_average
 
-    for record in appliance.db.client.session.query(rollups).filter(
-            rollups.id.in_(result.subquery())):
-        if record.derived_vm_used_disk_storage:
-            average_storage_used = average_storage_used + record.derived_vm_used_disk_storage
-
-    # Convert storage used in Bytes to GB
-    average_storage_used = average_storage_used * math.pow(2, -30)
-
     return {"cpu_used": average_cpu_used_in_mhz,
             "memory_used": average_memory_used_in_mb,
             "network_io": average_network_io,
-            "disk_io_used": average_disk_io,
-            "storage_used": average_storage_used,
-            "consumed_hours": consumed_hours}
+            "disk_io_used": average_disk_io}
 
 
 @pytest.yield_fixture(scope="module")
@@ -272,7 +255,6 @@ def metering_report(vm_ownership, provider):
 # Tests to validate costs reported in the Chargeback report for various metrics.
 # The costs reported in the Chargeback report should be approximately equal to the
 # costs estimated in the chargeback_costs_default/chargeback_costs_custom fixtures.
-@pytest.mark.uncollectif(lambda provider: provider.category == 'cloud')
 def test_validate_cpu_usage(resource_usage, metering_report):
     """Test to validate CPU usage.
        Calculation is based on default Chargeback rate.
@@ -281,13 +263,12 @@ def test_validate_cpu_usage(resource_usage, metering_report):
         if groups["CPU Used"]:
             estimated_cpu_usage = resource_usage['cpu_used']
             usage_from_report = groups["CPU Used"]
-            usage = re.sub(r'[MHz,]', r'', usage_from_report)
+            usage = re.sub(r'[MHz, GHz,]', r'', usage_from_report)
             assert estimated_cpu_usage - 1.0 <= float(usage) \
                 <= estimated_cpu_usage + 1.0, 'Estimated cost and report cost do not match'
             break
 
 
-@pytest.mark.uncollectif(lambda provider: provider.one_of(GCEProvider))
 def test_validate_memory_usage(resource_usage, metering_report):
     """Test to validate memory usage.
        Calculation is based on default Chargeback rate.
@@ -297,7 +278,9 @@ def test_validate_memory_usage(resource_usage, metering_report):
         if groups["Memory Used"]:
             estimated_memory_usage = resource_usage['memory_used']
             usage_from_report = groups["Memory Used"]
-            usage = re.sub(r'[$,]', r'', usage_from_report)
+            if usage_from_report.find('GB'):
+                estimated_memory_usage = estimated_memory_usage * math.pow(2, -10)
+            usage = re.sub(r'[MB, GB,]', r'', usage_from_report)
             assert estimated_memory_usage - 1.0 <= float(usage) \
                 <= estimated_memory_usage + 1.0, 'Estimated cost and report cost do not match'
             break
@@ -331,21 +314,3 @@ def test_validate_disk_usage(resource_usage, metering_report):
             assert estimated_disk_usage - 1.0 <= float(usage) \
                 <= estimated_disk_usage + 1.0, 'Estimated cost and report cost do not match'
             break
-
-
-def test_validate_storage_usage(resource_usage, metering_report):
-    """Test to validate stoarge usage cost.
-       Calculation is based on default Chargeback rate.
-    """
-    for groups in metering_report:
-        if groups["Storage Used"]:
-            estimated_storage_usage = resource_usage['storage_used']
-            usage_from_report = groups["Storage Used"]
-            usage = re.sub(r'[$,]', r'', usage_from_report)
-            assert estimated_storage_usage - 1.0 <= float(usage) \
-                <= estimated_storage_usage + 1.0, 'Estimated cost and report cost do not match'
-            break
-
-
-def test_nan(resource_usage, provider):
-    logger.info('In test_nan')
