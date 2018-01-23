@@ -10,6 +10,7 @@ pytestmark = [pytest.mark.tier(3)]
 
 pytest_generate_tests = testgen.generate([LenovoProvider], scope="module")
 
+
 @pytest.fixture(scope="module")
 def physical_server(appliance, provider):
     # Create and then wait for the provider to be added
@@ -17,23 +18,25 @@ def physical_server(appliance, provider):
     wait_for(
         lambda: provider.get_detail('Relationships', 'Physical Servers') != '0',
         fail_func=provider.refresh_provider_relationships_ui,
-        num_sec=60, 
+        num_sec=60,
         delay=5
     )
 
     # Get and return the first physical server
     physical_servers = appliance.collections.physical_servers.all(provider)
-    physical_server = physical_servers[0] 
+    physical_server = physical_servers[0]
     yield physical_server
 
     # Clean up the provider when finished
     provider.delete(cancel=False)
     provider.wait_for_delete()
 
+
 def test_physical_server_details(physical_server):
     """Navigate to the physical server details page and verify that the page is displayed"""
     physical_server_view = navigate_to(physical_server, 'Details')
     assert physical_server_view.is_displayed
+
 
 def test_physical_server_details_dropdowns(physical_server):
     """Navigate to the physical server details page and verify that the menus are present"""
@@ -66,6 +69,7 @@ def test_physical_server_details_dropdowns(physical_server):
 
     monitoring_items = physical_server_view.toolbar.monitoring.items
     assert "Timelines" in monitoring_items
+
 
 def test_physical_server_details_stats(physical_server):
     """Navigate to the physical server details page and verify that the stats match"""

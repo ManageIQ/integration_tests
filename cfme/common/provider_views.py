@@ -2,7 +2,7 @@
 from lxml.html import document_fromstring
 
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import VersionPick, Version, Parameter
+from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View, Text, ConditionalSwitchableView, ParametrizedView
 from widgetastic_patternfly import Dropdown, BootstrapSelect, Tab
 
