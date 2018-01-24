@@ -562,8 +562,8 @@ def test_assign_user_to_new_group(appliance, group_collection):
 
 def _test_vm_provision(appliance):
     logger.info("Checking for provision access")
-    navigate_to(vms.Vm, 'VMsOnly')
-    vms.lcl_btn("Provision VMs")
+    view = navigate_to(vms.Vm, 'VMsOnly')
+    view.toolbar.lifecycle.item_select('Provision VMs')
 
 # this fixture is used in disabled tests. it should be updated along with tests
 # def _test_vm_power_on():
@@ -649,6 +649,11 @@ def _go_to(cls_or_obj, dest='All'):
     return nav
 
 
+def _allowed_action_tasks(appliance):
+    view = appliance.browser.widgetastic(tasks.TasksView)
+    view.tabs.default.click()
+
+
 @pytest.mark.tier(3)
 @pytest.mark.parametrize(
     'product_features,allowed_actions,disallowed_actions',
@@ -659,9 +664,7 @@ def _go_to(cls_or_obj, dest='All'):
                 [['Everything', 'Settings', 'Tasks'], True]
             ],
             {  # allowed_actions
-                'tasks': lambda appliance: appliance.browser.widgetastic.click(
-                    tasks.buttons.default
-                )
+                'tasks': _allowed_action_tasks,
             },
             {  # disallowed actions
                 'my services': _go_to(MyService),
