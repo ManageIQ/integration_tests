@@ -343,6 +343,8 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
             view = navigate_to(self, 'Details', use_resetter=False)
         if refresh:
             view.toolbar.reload.click()
+
+        view.wait_displayed()
         return view
 
     def open_edit(self):
