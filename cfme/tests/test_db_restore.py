@@ -63,7 +63,8 @@ def test_db_restore(request, soft_assert, get_appliances):
     server_info = appl1.server.settings
     server_info.enable_server_roles('automate')
     roles = server_info.server_roles_db
-    virtual_crud = provider_app_crud(VMwareProvider, appl1).setup()
+    virtual_crud = provider_app_crud(VMwareProvider, appl1)\
+    virtual_crud.setup()
     provider_app_crud(EC2Provider, appl1).setup()
 
     providers_appl1 = appl1.managed_known_providers
