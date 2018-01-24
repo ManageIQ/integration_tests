@@ -12,7 +12,7 @@ pytest_generate_tests = testgen.generate([LenovoProvider], scope="module")
 
 
 @pytest.fixture(scope="module")
-def physical_servers(appliance, provider):
+def physical_server_collection(appliance, provider):
     # Create and then wait for the provider to be added
     provider.create()
     wait_for(
@@ -22,24 +22,23 @@ def physical_servers(appliance, provider):
         delay=5
     )
 
-    # Get and return the physical servers
-    physical_servers = appliance.collections.physical_servers.all(provider)
-    yield physical_servers
+    # Get and return the physical server collection
+    yield appliance.collections.physical_servers
 
     # Clean up the provider when finished
     provider.delete(cancel=False)
     provider.wait_for_delete()
 
 
-def test_physical_servers_view_displayed(physical_servers):
+def test_physical_servers_view_displayed(physical_server_collection):
     """Navigate to the physical servers page and verify that servers are displayed"""
-    physical_servers_view = navigate_to(physical_servers, 'All')
+    physical_servers_view = navigate_to(physical_server_collection, 'All')
     assert physical_servers_view.is_displayed
 
 
-def test_physical_servers_view_dropdowns(physical_servers):
+def test_physical_servers_view_dropdowns(physical_server_collection):
     """Navigate to the physical servers page and verify that the dropdown menus are present"""
-    physical_servers_view = navigate_to(physical_servers, 'All')
+    physical_servers_view = navigate_to(physical_server_collection, 'All')
 
     configuration_items = physical_servers_view.toolbar.configuration.items
     assert "Refresh Relationships and Power States" in configuration_items
