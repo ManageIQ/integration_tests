@@ -52,7 +52,7 @@ class OrderForm(ServicesCatalogView):
     class fields(ParametrizedView):  # noqa
         PARAMETERS = ("key",)
         input = Input(id=Parameter("key"))
-        ansible_input = Input(id=ParametrizedString("param_{key}"))
+        param_input = Input(id=ParametrizedString("param_{key}"))
         dropdown = VersionPick({
             Version.lowest(): BootstrapSelect(Parameter("key")),
             "5.9": DialogFieldDropDownList(ParametrizedLocator(".//div[@input-id='{key|quote}']"))
@@ -64,8 +64,8 @@ class OrderForm(ServicesCatalogView):
                 return self.input
             elif self.dropdown.is_displayed:
                 return self.dropdown
-            elif self.ansible_input.is_displayed:
-                return self.ansible_input
+            elif self.param_input.is_displayed:
+                return self.param_input
 
         def read(self):
             return self.visible_widget.read()
@@ -90,31 +90,6 @@ class OrderForm(ServicesCatalogView):
 
         self.after_fill(was_change)
         return was_change
-
-
-class AzureOrderForm(ServicesCatalogView):
-    """This view available only in 5.8"""
-    title = Text('#explorer_title_text')
-    dialog_title = Text('.//div[@id="main_div"]//h3')
-
-    stack_name = Input(name='stack_name')
-    resource_group = BootstrapSelect('resource_group')
-    mode = BootstrapSelect('deploy_mode')
-    vm_name = Input(name='param_virtualMachineName')
-    vm_user = Input(name='param_adminUserName')
-    vm_password = Input(name='param_adminPassword__protected')
-    user_image = BootstrapSelect('param_userImageName')
-    os_type = BootstrapSelect('param_operatingSystemType')
-    vm_size = BootstrapSelect('param_virtualMachineSize')
-
-    submit_button = Button('Submit')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.in_explorer and self.service_catalogs.is_opened and
-            self.title.text == 'Order Service "{}"'.format(self.context['object'].name)
-        )
 
 
 class ServiceCatalogsView(ServicesCatalogView):
@@ -169,8 +144,6 @@ def order(self):
     view = navigate_to(self, 'Order')
     wait_for(lambda: view.dialog_title.is_displayed, timeout=10)
     if self.stack_data:
-        if "user_image" in self.stack_data and self.appliance.version < "5.9":
-            view = self.create_view(AzureOrderForm)
         view.fill(self.stack_data)
     if self.dialog_values:
         view.fill(self.dialog_values)

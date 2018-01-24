@@ -29,7 +29,7 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def template(provider, provisioning, setup_provider, appliance):
     template_type = provisioning['stack_provisioning']['template_type']
     template_name = fauxfactory.gen_alphanumeric()
@@ -40,53 +40,23 @@ def template(provider, provisioning, setup_provider, appliance):
     data_file = load_data_file(str(orchestration_path.join(file)))
 
     template.create(data_file.read().replace('CFMETemplateName', template_name))
-    if provider.one_of(AzureProvider) and appliance.version < '5.9':
-        dialog_name = "azure-single-vm-from-user-image"
-    else:
-        dialog_name = "dialog_" + fauxfactory.gen_alphanumeric()
-    if not provider.one_of(AzureProvider) or appliance.version >= '5.9':
-        template.create_service_dialog_from_template(dialog_name, template.template_name)
-
-    yield template, dialog_name
+    dialog_name = "dialog_" + fauxfactory.gen_alphanumeric()
+    template.create_service_dialog_from_template(dialog_name, template.template_name)
+    return template, dialog_name
 
 
-@pytest.yield_fixture(scope="function")
-def dialog(appliance, provider, template, stack_data):
-    template, dialog_name = template
-    service_name = fauxfactory.gen_alphanumeric()
-    element_data = {
-        'element_information': {
-            'ele_label': "Options",
-            'ele_name': "service_name",
-            'ele_desc': fauxfactory.gen_alphanumeric(),
-            'choose_type': "Text Box"
-        },
-        'options': {
-            'default_text_box': service_name
-        }
-    }
-    dialog = appliance.collections.service_dialogs
-    sd = dialog.instantiate(label=dialog_name)
-    tab = sd.tabs.instantiate(tab_label="Basic Information", tab_desc="Basic Information Tab")
-    box = tab.boxes.instantiate(box_label="Options")
-    element = box.elements.instantiate(element_data=element_data)
-    element.add_another_element(element_data)
-    yield template, sd, service_name
-
-
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def catalog():
     cat_name = "cat_" + fauxfactory.gen_alphanumeric()
     catalog = Catalog(name=cat_name, description="my catalog")
     catalog.create()
-    yield catalog
+    return catalog
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def catalog_item(dialog, catalog, template, provider):
-    template, dialog, service_name = dialog
-    item_name = service_name
-
+    template, dialog = template
+    item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Orchestration",
                                name=item_name,
                                description="my catalog",
@@ -96,8 +66,7 @@ def catalog_item(dialog, catalog, template, provider):
                                orch_template=template,
                                provider=provider)
     catalog_item.create()
-
-    yield catalog_item, template
+    return catalog_item, template
 
 
 def random_desc():
@@ -111,9 +80,6 @@ def stack_data(appliance, provider, provisioning):
     vm_name = 'test-{}'.format(random_base)
     stack_timeout = "20"
     if provider.one_of(AzureProvider):
-        size, resource_group, os_type, mode = map(provisioning.get,
-                                                  ('vm_size', 'resource_group', 'os_type', 'mode'))
-
         try:
             template = provider.data.templates.small_template
             vm_user = credentials[template.creds].username
@@ -121,18 +87,17 @@ def stack_data(appliance, provider, provisioning):
         except AttributeError:
             pytest.skip('Could not find small_template or credentials for {}'.format(provider.name))
 
-        # service order appends a type string to the template name
-        user_image = 'Windows | {}'.format(template.name)
         _stack_data = {
             'stack_name': stackname,
             'vm_name': vm_name,
-            'resource_group': resource_group,
-            'mode': mode,
+            'resource_group': provisioning.get('resource_group'),
+            'deploy_mode': provisioning.get('mode'),
             'vm_user': vm_user,
-            'vm_password': vm_password,
-            'user_image': user_image,
-            'os_type': os_type,
-            'vm_size': size
+            'vm_password__protected': vm_password,
+            'vm_size': provisioning.get('vm_size'),
+            'cloud_network': provisioning.get('cloud_network'),
+            'cloud_subnet': provisioning.get('cloud_subnet'),
+            'location': provisioning.get('region_api')
         }
     elif provider.type == 'openstack':
         stack_prov = provisioning['stack_provisioning']
