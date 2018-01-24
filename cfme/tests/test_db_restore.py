@@ -1,10 +1,8 @@
 import fauxfactory
 import pytest
 
-from cfme.cloud import provider as cloud_provider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.common.vm import VM
-from cfme.infrastructure.provider import wait_for_a_provider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from fixtures.pytest_store import store
 from cfme.utils.log import logger
@@ -31,7 +29,6 @@ def provision_vm(request, provider):
     else:
         logger.info("recycling deployed vm %s on provider %s", vm_name, provider.key)
     vm.provider.refresh_provider_relationships()
-    vm.wait_to_appear()
     return vm
 
 
@@ -59,10 +56,8 @@ def test_db_restore(request, soft_assert, get_appliances):
     server_info = appl1.server.settings
     server_info.enable_server_roles('automate')
     roles = server_info.server_roles_db
-    virtual_crud = provider_app_crud(VMwareProvider, appl1)
-    virtual_crud.setup()
+    provider_app_crud(VMwareProvider, appl1).setup()
     provider_app_crud(EC2Provider, appl1).setup()
-    providers_appl1 = appl1.managed_known_providers
     appl1.db.backup()
     # Fetch v2_key and DB backup from the first appliance
     rand_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
@@ -78,17 +73,13 @@ def test_db_restore(request, soft_assert, get_appliances):
     appl2.db.restore()
     appl2.start_evm_service()
     appl2.wait_for_web_ui()
-    with appl2:
-        wait_for_a_provider()
-        cloud_provider.wait_for_a_provider()
     # Assert providers on the second appliance
-    providers_appl2 = appl2.managed_known_providers
-    assert set(providers_appl2).issubset(providers_appl1), (
+    assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (
         'Restored DB is missing some providers'
     )
     # Verify that existing provider can detect new VMs on the second appliance
+    virtual_crud = provider_app_crud(VMwareProvider, appl2)
     vm = provision_vm(request, virtual_crud)
-    soft_assert(vm.find_quadicon().data['state'] == 'currentstate-on')
     soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
     # Assert server roles on the second appliance
     for role, is_enabled in server_info.server_roles_ui.iteritems():
