@@ -670,5 +670,6 @@ def refresh_and_navigate(*args, **kwargs):
 class GetRandomInstancesMixin(object):
 
     def get_random_instances(self, count=1):
+        """Getting random instances of the object."""
         all_instances = self.all()
-        return random.sample(all_instances, count)
+        return random.sample(all_instances, min(count, len(all_instances)))
