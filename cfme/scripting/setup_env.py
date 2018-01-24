@@ -118,11 +118,16 @@ def setup_ha_env(cfme_version, provider, lease, desc):
 @click.option('--lease', default='3h', help='set pool lease time, example: 1d4h30m')
 @click.option('--sprout-poolid', default=None, help='Specify ID of existing pool')
 @click.option('--desc', default='Replicated appliances', help='Set description of the pool')
-def setup_replication_env(cfme_version, provider, lease, sprout_poolid, desc):
+@click.option('--remote-worker', is_flag=True, help='Add node to remote region')
+def setup_replication_env(cfme_version, provider, lease, sprout_poolid, desc, remote_worker):
     lease_time = tot_time(lease)
     """Multi appliance setup with multi region and replication from remote to global"""
     required_app_count = 2
     sprout_client = SproutClient.from_config()
+
+    if remote_worker:
+        required_app_count += 1
+
     if sprout_poolid:
         if sprout_client.call_method('pool_exists', sprout_poolid):
             sprout_pool = sprout_client.call_method('request_check', sprout_poolid)
@@ -145,22 +150,38 @@ def setup_replication_env(cfme_version, provider, lease, sprout_poolid, desc):
         )
         print("Appliance pool lease time is {}".format(lease))
         sprout_client.set_pool_description(request_id, desc)
-    print("Configuring replicated environment")
+        print("Appliances Provisioned")
+    print("Configuring Replicated Environment")
     ip0 = apps[0].hostname
     ip1 = apps[1].hostname
+
+    print("Global Appliance Configuration")
     opt = '5' if cfme_version >= "5.8" else '8'
     command_set0 = ('ap', '', opt, '1', '1', 'y', '1', 'n', '99', pwd,
         TimedCommand(pwd, 360), '')
     apps[0].appliance_console.run_commands(command_set0)
     apps[0].wait_for_evm_service()
     apps[0].wait_for_web_ui()
-    print("Global region appliance provisioned and configured {}".format(ip0))
+    print("Done: Global @ {}".format(ip0))
+
+    print("Remote Appliance Configuration")
     command_set1 = ('ap', '', opt, '2', ip0, '', pwd, '', '1', 'y', '1', 'n', '1', pwd,
         TimedCommand(pwd, 360), '')
     apps[1].appliance_console.run_commands(command_set1)
     apps[1].wait_for_evm_service()
     apps[1].wait_for_web_ui()
-    print("Remote region appliance provisioned and configured {}".format(ip1))
+    print("Done: Remote @ {}".format(ip1))
+
+    if remote_worker:
+        print("Remote Worker Appliance Configuration")
+        ip2 = apps[2].hostname
+        command_set2 = ['ap', '', opt, '2', ip1, '', pwd, '', '3', ip1, '', '', '', pwd, pwd]
+        apps[2].appliance_console.run_commands(command_set2)
+        apps[2].wait_for_evm_service()
+        apps[2].wait_for_web_ui()
+        print("Done: Remote Worker @ {}".format(ip2))
+
+    print("Configuring Replication")
     print("Setup - Replication on remote appliance")
     apps[1].set_pglogical_replication(replication_type=':remote')
     print("Setup - Replication on global appliance")
