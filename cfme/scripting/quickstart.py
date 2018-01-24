@@ -68,6 +68,13 @@ REDHAT_PACKAGES_SPECS = [
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python-devel tesseract"
      " libpng-devel"
+     " freetype-devel"),
+    ("Red Hat Enterprise Linux Workstation release 7.4", "nss",
+     " python-virtualenv gcc postgresql-devel libxml2-devel"
+     " libxslt-devel zeromq3-devel libcurl-devel"
+     " redhat-rpm-config gcc-c++ openssl-devel"
+     " libffi-devel python-devel tesseract"
+     " libpng-devel"
      " freetype-devel")
 ]
 
