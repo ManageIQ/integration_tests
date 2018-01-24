@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-
 from widgetastic.utils import partial_match
 
+from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
-from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
-from cfme import test_requirements
+from cfme.services.catalogs.catalog_item import CatalogItem
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
-from cfme.utils.log import logger
 from cfme.utils.conf import cfme_data
+from cfme.utils.log import logger
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -87,10 +86,10 @@ def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
 def catalog_item(provider, vm_name, dialog, catalog, provisioning, setup_pxe_servers_vm_prov):
     # generate_tests makes sure these have values
     pxe_template, host, datastore, pxe_server, pxe_image, pxe_kickstart, pxe_root_password,\
-        pxe_image_type, pxe_vlan, catalog_item_type = map(
+        pxe_image_type, pxe_vlan = map(
             provisioning.get, (
                 'pxe_template', 'host', 'datastore', 'pxe_server', 'pxe_image', 'pxe_kickstart',
-                'pxe_root_password', 'pxe_image_type', 'vlan', 'catalog_item_type'
+                'pxe_root_password', 'pxe_image_type', 'vlan'
             )
         )
 
@@ -111,7 +110,7 @@ def catalog_item(provider, vm_name, dialog, catalog, provisioning, setup_pxe_ser
     }
 
     item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
+    catalog_item = CatalogItem(item_type=provider.catalog_name, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog, catalog_name=pxe_template,
                   provider=provider, prov_data=provisioning_data)

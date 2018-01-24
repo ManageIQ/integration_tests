@@ -2,9 +2,9 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Tab, Input, Button
 from wrapanapi.ec2 import EC2System
 
-from . import CloudProvider
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin
+from . import CloudProvider
 
 
 class EC2Endpoint(DefaultEndpoint):
@@ -39,6 +39,7 @@ class EC2Provider(CloudProvider):
      BaseProvider->CloudProvider->EC2Provider class.
      represents CFME provider and operations available in UI
     """
+    catalog_name = "Amazon"
     type_name = "ec2"
     mgmt_class = EC2System
     db_types = ["Amazon::CloudManager"]

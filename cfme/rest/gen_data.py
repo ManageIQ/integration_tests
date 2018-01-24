@@ -6,13 +6,12 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
-from fixtures.provider import setup_one_by_class_or_skip
 from cfme.utils import version
 from cfme.utils.log import logger
 from cfme.utils.rest import create_resource, get_vms_in_service
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
-
+from fixtures.provider import setup_one_by_class_or_skip
 
 TEMPLATE_TORSO = """{
   "AWSTemplateFormatVersion" : "2010-09-09",
@@ -266,16 +265,16 @@ def service_templates_ui(request, appliance, service_dialog=None, service_catalo
     if not service_catalog:
         service_catalog = service_catalog_obj(request, appliance.rest_api)
 
-    catalog_item_type = 'Generic'
+    catalog_item_type = a_provider.catalog_name if a_provider else 'Generic'
     provisioning_args = {}
 
     catalog_items = []
     new_names = []
     for _ in range(num):
         if a_provider:
-            template, host, datastore, vlan, catalog_item_type = map(
+            template, host, datastore, vlan = map(
                 a_provider.data.get('provisioning').get,
-                ('template', 'host', 'datastore', 'vlan', 'catalog_item_type'))
+                ('template', 'host', 'datastore', 'vlan'))
 
             vm_name = 'test_rest_{}'.format(fauxfactory.gen_alphanumeric())
 
@@ -291,7 +290,6 @@ def service_templates_ui(request, appliance, service_dialog=None, service_catalo
             if a_provider.one_of(RHEVMProvider):
                 provisioning_data['catalog']['provision_type'] = 'Native Clone'
                 provisioning_data['network']['vlan'] = vlan
-                catalog_item_type = 'RHEV'
             elif a_provider.one_of(VMwareProvider):
                 provisioning_data['catalog']['provision_type'] = 'VMware'
                 provisioning_data['network']['vlan'] = vlan

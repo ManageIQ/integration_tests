@@ -2,16 +2,15 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
-from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog_item import CatalogBundle
+from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme import test_requirements
+from cfme.utils import error
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for_decorator
-from cfme.utils import error
-
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -111,12 +110,8 @@ def test_no_template_catalog_item(provider, provisioning, setup_provider, vm_nam
     Metadata:
         test_flag: provision
     """
-    template, catalog_item_type = map(provisioning.get,
-        ('template', 'catalog_item_type'))
-    if provider.type == 'rhevm':
-        catalog_item_type = "RHEV"
     item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
+    catalog_item = CatalogItem(item_type=provider.catalog_name, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog, dialog=dialog)
     with error.expected("'Catalog/Name' is required"):
         catalog_item.create()

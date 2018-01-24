@@ -1,6 +1,6 @@
-from wrapanapi.google import GoogleCloudSystem
 from widgetastic.widget import View
 from widgetastic_patternfly import Button, Input
+from wrapanapi.google import GoogleCloudSystem
 
 from cfme.base.credential import ServiceAccountCredential
 from cfme.common.provider import DefaultEndpoint
@@ -31,6 +31,7 @@ class GCEProvider(CloudProvider):
      BaseProvider->CloudProvider->GCEProvider class.
      represents CFME provider and operations available in UI
     """
+    catalog_name = "Google"
     type_name = "gce"
     mgmt_class = GoogleCloudSystem
     db_types = ["Google::CloudManager"]
