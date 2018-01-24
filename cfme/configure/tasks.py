@@ -71,16 +71,12 @@ def delete_all_tasks(destination):
 def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
     """ Check if analysis is finished - if not, reload page"""
 
-    tabs_data = TABS_DATA_PER_PROVIDER[task_type]
-    return all_tasks_analysis_pass(destination=tabs_data['tab'],
-                                   task_name=tabs_data['task'].format(name),
-                                   expected_status=tabs_data['state'],
-                                   expected_num_of_tasks=1,
-                                   silent_failure=False,
-                                   clear_tasks_after_success=clear_tasks_after_success)
+    return check_tasks_have_no_errors(name, task_type, expected_num_of_tasks=1,
+                                      silent_failure=False,
+                                      clear_tasks_after_success=clear_tasks_after_success)
 
 
-def are_all_tasks_match_status(name, expected_num_of_tasks, task_type='container'):
+def are_all_tasks_match_status(name, expected_num_of_tasks, task_type):
     """ Check if all tasks states are finished - if not, reload page"""
 
     tabs_data = TABS_DATA_PER_PROVIDER[task_type]
@@ -112,22 +108,15 @@ def all_tasks_match_status(destination, task_name, expected_status, expected_num
     return expected_num_of_tasks == len(rows), len(rows)
 
 
-def are_all_tasks_analysis_pass(name, expected_num_of_tasks, task_type='container',
-                                silent_failure=False, clear_tasks_after_success=False):
+def check_tasks_have_no_errors(task_name, task_type, expected_num_of_tasks, silent_failure=False,
+                               clear_tasks_after_success=False):
     """ Check if all tasks analysis match state with no errors"""
 
     tabs_data = TABS_DATA_PER_PROVIDER[task_type]
-    return all_tasks_analysis_pass(destination=tabs_data['tab'],
-                                   task_name=tabs_data['task'].format(name),
-                                   expected_status=tabs_data['state'],
-                                   expected_num_of_tasks=expected_num_of_tasks,
-                                   silent_failure=silent_failure,
-                                   clear_tasks_after_success=clear_tasks_after_success)
+    destination = tabs_data['tab']
+    task_name = tabs_data['task'].format(task_name)
+    expected_status = tabs_data['state']
 
-
-def all_tasks_analysis_pass(destination, task_name, expected_status, expected_num_of_tasks,
-                            silent_failure=False, clear_tasks_after_success=False):
-    """ Check if all tasks, with same task name, match states - if not, reload page"""
     view = navigate_to(Tasks, destination)
     tab_view = getattr(view.tabs, destination.lower())
 
@@ -144,7 +133,9 @@ def all_tasks_analysis_pass(destination, task_name, expected_status, expected_nu
 
     # check state for all tasks
     if expected_num_of_tasks != len(rows):
-        logger.warn('IndexError exception suppressed when searching for task row, no match found.')
+        logger.warn('There is no match between expected number of tasks "{}",'
+                    ' and number of tasks on state "{}'.format(expected_num_of_tasks,
+                                                               expected_status))
         return False
 
     # throw exception if error in message
@@ -174,15 +165,22 @@ def wait_analysis_finished_multiple_tasks(
     # get view for reload button
     view = navigate_to(Tasks, 'AllTasks')
 
-    def tasks_finished(output_rows=row_completed, task_name=task_name,
-                       task_type=task_type, expected_num_of_tasks=expected_num_of_tasks):
-        is_succeed, rows = are_all_tasks_match_status(task_name, expected_num_of_tasks, task_type)
-        output_rows.append(rows)
+    def tasks_finished(output_rows, task_name, task_type, expected_num_of_tasks):
+
+        is_succeed, num_of_succeed_tasks = are_all_tasks_match_status(
+            task_name, expected_num_of_tasks, task_type)
+        output_rows.append(num_of_succeed_tasks)
         return is_succeed
 
     try:
-        wait_for(lambda: tasks_finished(),
-                 delay=delay, timeout=timeout, fail_func=view.reload.click)
+        wait_for(tasks_finished,
+                 func_kwargs={'output_rows': row_completed,
+                              'task_name': task_name,
+                              'task_type': task_type,
+                              'expected_num_of_tasks': expected_num_of_tasks},
+                 delay=delay,
+                 timeout=timeout,
+                 fail_func=view.reload.click)
         return row_completed[-1]
     except TimedOutError, e:
         logger.error("Only {}  Tasks out of {}, Finished".format(row_completed[-1],

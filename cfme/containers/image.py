@@ -178,8 +178,11 @@ class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssi
         """check rows on Container Images table."""
         images_view = navigate_to(self, 'All', use_resetter=False)
         images_view.paginator.set_items_per_page(1000)
+        conditions = []
         for image_entity in image_entities:
-            images_view.entities.get_entity(name=image_entity.name, id=image_entity.id).check()
+            conditions.append({'id': image_entity.id})
+        entities = images_view.entities.apply(func=lambda e: e.check(), conditions=conditions)
+        return entities
 
     def perform_smartstate_analysis_multiple_images(
             self, image_entities, wait_for_finish=False, timeout='20M'):
@@ -208,9 +211,9 @@ class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssi
                                                             num_of_tasks, timeout=timeout)
 
                 # check all task passed successfully with no error
-                if tasks.are_all_tasks_analysis_pass(task_name, num_of_tasks, task_type,
-                                                     silent_failure=True,
-                                                     clear_tasks_after_success=False):
+                if tasks.check_tasks_have_no_errors(task_name, task_type, num_of_tasks,
+                                                    silent_failure=True,
+                                                    clear_tasks_after_success=False):
                     return True
                 else:
                     logger.error('Some Images SSA tasks finished with error message,'

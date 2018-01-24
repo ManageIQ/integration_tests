@@ -63,8 +63,13 @@ def random_image_instances(appliance):
 def test_check_compliance(provider, random_image_instances, appliance):
 
     collection = appliance.collections.container_images
+    # create conditions list that will match the images that we want to check
+    conditions = []
+    for image_instance in random_image_instances:
+        conditions.append({'id': image_instance.id})
     # assign OpenSCAP policy
-    collection.assign_policy_profiles_multiple_entities(random_image_instances, 'OpenSCAP profile')
+    collection.assign_policy_profiles_multiple_entities(random_image_instances, conditions,
+                                                        'OpenSCAP profile')
 
     # Verify Image summary
     collection.check_compliance_multiple_images(random_image_instances)
@@ -84,13 +89,16 @@ def test_containers_smartstate_analysis(provider, test_item,
                                         random_image_instances, appliance):
 
     collection = appliance.collections.container_images
-
+    # create conditions list that will match the images that we want to check
+    conditions = []
+    for image_instance in random_image_instances:
+        conditions.append({'id': image_instance.id})
     # assign OpenSCAP policy
     if test_item.is_openscap:
-        collection.assign_policy_profiles_multiple_entities(random_image_instances,
+        collection.assign_policy_profiles_multiple_entities(random_image_instances, conditions,
                                                            'OpenSCAP profile')
     else:
-        collection.unassign_policy_profiles_multiple_entities(random_image_instances,
+        collection.unassign_policy_profiles_multiple_entities(random_image_instances, conditions,
                                                             'OpenSCAP profile')
 
     # perform smartstate analysis

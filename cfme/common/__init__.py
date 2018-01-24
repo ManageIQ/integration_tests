@@ -86,25 +86,44 @@ class PolicyProfileAssignable(object):
         details_view = self.create_view(navigator.get_class(self, 'Details').VIEW)
         details_view.flash.assert_no_error()
 
-    def assign_policy_profiles_multiple_entities(self, entities, *policy_profile_names):
+    def assign_policy_profiles_multiple_entities(self, entities, conditions, *policy_profile_names):
         """ Assign Policy Profiles to selected entity's on Collection All view
 
         Args:
             entities: list of entity's from collection table
             policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
                 coverage goes in, PolicyProfile objects will be also passable.
+            conditions: entities should match to
+
+        Ex:
+            collection = appliance.collections.container_images
+            # assign OpenSCAP policy
+            collection.assign_policy_profiles_multiple_entities(random_image_instances,
+                            conditions=[{'name': 'dotnet/dotnet-20-rhel7'},
+                                        {'name': 'dotnet/dotnet-20-runtime-rhel7'}],
+                            'OpenSCAP profile')
         """
         map(self.assigned_policy_profiles.add, policy_profile_names)
         self._assign_or_unassign_policy_profiles_multiple_entities(
-            entities, True, *policy_profile_names)
+            entities, True, conditions, *policy_profile_names)
 
-    def unassign_policy_profiles_multiple_entities(self, entities, *policy_profile_names):
+    def unassign_policy_profiles_multiple_entities(self, entities, conditions,
+                                                   *policy_profile_names):
         """ UnAssign Policy Profiles to selected entity's on Collection All view
 
         Args:
             entities: list of entity's from collection table
             policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
                 coverage goes in, PolicyProfile objects will be also passable.
+            conditions: entities should match to
+
+        Ex:
+            collection = appliance.collections.container_images
+            # unassign OpenSCAP policy
+            collection.unassign_policy_profiles_multiple_entities(random_image_instances,
+                            conditions=[{'name': 'dotnet/dotnet-20-rhel7'},
+                                        {'name': 'dotnet/dotnet-20-runtime-rhel7'}],
+                            'OpenSCAP profile')
         """
         for pp_name in policy_profile_names:
             try:
@@ -112,10 +131,10 @@ class PolicyProfileAssignable(object):
             except KeyError:
                 pass
         self._assign_or_unassign_policy_profiles_multiple_entities(
-            entities, False, *policy_profile_names)
+            entities, False, conditions, *policy_profile_names)
 
     def _assign_or_unassign_policy_profiles_multiple_entities(
-            self, entities, assign, *policy_profile_names):
+            self, entities, assign, conditions, *policy_profile_names):
 
         """DRY function for managing policy profiles.
 
@@ -124,18 +143,19 @@ class PolicyProfileAssignable(object):
 
         Args:
             entities: list of entity's from collection table
-            assign: Wheter to assign or unassign.
+            assign: Whether to assign or unassign.
             policy_profile_names: :py:class:`str` with Policy Profile names.
+            conditions: entities should match to
         """
         view = navigate_to(self, 'All')
 
         # set item per page for maximum value in order to avoid paging,
         # that will cancel the already check entity's
+        items_per_page = view.paginator.items_per_page
         view.paginator.set_items_per_page(1000)
 
         # check the entity's on collection ALL view
-        for entity in entities:
-            view.entities.get_entity(name=entity.name, id=entity.id).check()
+        view.entities.apply(func=lambda e: e.check(), conditions=conditions)
 
         wait_for(lambda: view.toolbar.policy.is_enabled, num_sec=5,
                  message='Policy drop down menu is disabled after checking some entities')
@@ -143,17 +163,25 @@ class PolicyProfileAssignable(object):
         # get the object of the Manage Policies view
         manage_policies_view = self.create_view(navigator.get_class(self, 'ManagePolicies').VIEW)
 
+        policy_changed = False
         for policy_profile in policy_profile_names:
             if assign:
-                manage_policies_view.policy_profiles.check_node(policy_profile)
+                policy_changed = manage_policies_view.policy_profiles.fill(
+                    manage_policies_view.policy_profiles.CheckNode([policy_profile])
+                ) or policy_changed
             else:
-                manage_policies_view.policy_profiles.uncheck_node(policy_profile)
-        if manage_policies_view.save.disabled:
-            manage_policies_view.cancel.click()
-        else:
+                policy_changed = manage_policies_view.policy_profiles.fill(
+                    manage_policies_view.policy_profiles.UncheckNode([policy_profile])
+                ) or policy_changed
+        if policy_changed:
             manage_policies_view.save.click()
+        else:
+            manage_policies_view.cancel.click()
 
         view.flash.assert_no_error()
+
+        # return the previous number of items per page
+        view.paginator.set_items_per_page(items_per_page)
 
 
 @navigator.register(PolicyProfileAssignable, 'ManagePoliciesFromDetails')
