@@ -13,7 +13,6 @@ from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
-from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -21,27 +20,16 @@ from cfme.intelligence.reports.reports import CustomReport
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-from fixtures.provider import setup_or_skip
 
 pytestmark = [
     pytest.mark.tier(2),
-    pytest.mark.meta(blockers=[BZ(1531600, forced_streams=["5.9"]),
-                               BZ(1511099, forced_streams=["5.7", "5.8"],
-                                  unblock=lambda provider: not provider.one_of(GCEProvider)),
-                               BZ(1531554, forced_streams=["5.8"])]),
+    pytest.mark.meta(blockers=[BZ(1531554, forced_streams=["5.8"])]),
     pytest.mark.provider([VMwareProvider, RHEVMProvider, AzureProvider, GCEProvider],
                          scope='module',
                          required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
-    test_requirements.chargeback,
+    pytest.mark.usefixtures("setup_provider_modscope"),
+    test_requirements.chargeback
 ]
-
-
-@pytest.yield_fixture(scope="module")
-def clean_setup_provider(request, provider):
-    BaseProvider.clear_providers()
-    setup_or_skip(request, provider)
-    yield
-    BaseProvider.clear_providers()
 
 
 def new_credential():
@@ -49,7 +37,7 @@ def new_credential():
 
 
 @pytest.yield_fixture(scope="module")
-def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
+def vm_ownership(enable_candu, provider, appliance):
     # In these tests, chargeback reports are filtered on VM owner.So,VMs have to be
     # assigned ownership.
     vm_name = provider.data['cap_and_util']['chargeback_vm']
