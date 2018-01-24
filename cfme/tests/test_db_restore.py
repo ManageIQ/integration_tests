@@ -24,9 +24,7 @@ def provision_vm(request, provider):
     """Function to provision appliance to the provider being tested"""
     vm_name = "test_rest_db_" + fauxfactory.gen_alphanumeric()
     vm = VM.factory(vm_name, provider)
-
     request.addfinalizer(vm.delete_from_provider)
-
     if not provider.mgmt.does_vm_exist(vm_name):
         logger.info("deploying %s on provider %s", vm_name, provider.key)
         vm.create_on_provider(allow_skip="default")
@@ -51,25 +49,21 @@ def get_appliances(temp_appliances_unconfig_modscope):
     return temp_appliances_unconfig_modscope
 
 
-#TODO Refactore test in to fixtures
+# TODO Refactore test in to fixtures
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(
     lambda: not store.current_appliance.is_downstream)
 def test_db_restore(request, soft_assert, get_appliances):
-
     appl1, appl2 = get_appliances
-
     # Manage infra,cloud providers and set some roles before taking a DB backup
     server_info = appl1.server.settings
     server_info.enable_server_roles('automate')
     roles = server_info.server_roles_db
-    virtual_crud = provider_app_crud(VMwareProvider, appl1)\
+    virtual_crud = provider_app_crud(VMwareProvider, appl1)
     virtual_crud.setup()
     provider_app_crud(EC2Provider, appl1).setup()
-
     providers_appl1 = appl1.managed_known_providers
     appl1.db.backup()
-
     # Fetch v2_key and DB backup from the first appliance
     rand_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
     appl1.ssh_client.get_file("/var/www/miq/vmdb/certs/v2_key", rand_filename)
@@ -78,8 +72,6 @@ def test_db_restore(request, soft_assert, get_appliances):
     # Push v2_key and DB backup to second appliance
     appl2.ssh_client.put_file(rand_filename, "/var/www/miq/vmdb/certs/v2_key")
     appl2.ssh_client.put_file(dump_filename, "/tmp/evm_db.backup")
-
-
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
     appl2.db.drop()
@@ -89,18 +81,15 @@ def test_db_restore(request, soft_assert, get_appliances):
     with appl2:
         wait_for_a_provider()
         cloud_provider.wait_for_a_provider()
-
     # Assert providers on the second appliance
     providers_appl2 = appl2.managed_known_providers
     assert set(providers_appl2).issubset(providers_appl1), (
         'Restored DB is missing some providers'
     )
-
     # Verify that existing provider can detect new VMs on the second appliance
     vm = provision_vm(request, virtual_crud)
     soft_assert(vm.find_quadicon().data['state'] == 'currentstate-on')
     soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
-
     # Assert server roles on the second appliance
     for role, is_enabled in server_info.server_roles_ui.iteritems():
         if is_enabled:
