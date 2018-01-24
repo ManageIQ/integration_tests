@@ -89,15 +89,14 @@ def stack_data(appliance, provider, provisioning):
 
         _stack_data = {
             'stack_name': stackname,
-            'vm_name': vm_name,
             'resource_group': provisioning.get('resource_group'),
             'deploy_mode': provisioning.get('mode'),
-            'vm_user': vm_user,
-            'vm_password__protected': vm_password,
-            'vm_size': provisioning.get('vm_size'),
-            'cloud_network': provisioning.get('cloud_network'),
-            'cloud_subnet': provisioning.get('cloud_subnet'),
-            'location': provisioning.get('region_api')
+            'virtualMachineName': vm_name,
+            'adminUserName': vm_user,
+            'adminPassword__protected': vm_password,
+            'userImageName': 'linux_generic | {}'.format(template.name),
+            'operatingSystemType': 'Linux',
+            'virtualMachineSize': provisioning.get('vm_size')
         }
     elif provider.type == 'openstack':
         stack_prov = provisioning['stack_provisioning']

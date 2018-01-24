@@ -57,6 +57,11 @@ class OrderForm(ServicesCatalogView):
             Version.lowest(): BootstrapSelect(Parameter("key")),
             "5.9": DialogFieldDropDownList(ParametrizedLocator(".//div[@input-id='{key|quote}']"))
         })
+        param_dropdown = VersionPick({
+            Version.lowest(): BootstrapSelect(ParametrizedString("param_{key}")),
+            "5.9": DialogFieldDropDownList(
+                ParametrizedLocator(".//div[@input-id='param_{key}']"))
+        })
 
         @property
         def visible_widget(self):
@@ -66,6 +71,8 @@ class OrderForm(ServicesCatalogView):
                 return self.dropdown
             elif self.param_input.is_displayed:
                 return self.param_input
+            elif self.param_dropdown.is_displayed:
+                return self.param_dropdown
 
         def read(self):
             return self.visible_widget.read()
