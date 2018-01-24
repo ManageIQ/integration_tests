@@ -273,8 +273,8 @@ class Stack(Pretty, BaseEntity, WidgetasticTaggable):
         row[0].check()
         view.toolbar.lifecycle.item_select('Retire selected Orchestration Stacks',
                                            handle_alert=True)
-        view.flash.assert_success_message('Retirement initiated for 1 Orchestration'
-                                                   ' Stack from the CFME Database')
+        view.flash.assert_success_message(
+            'Retirement initiated for 1 Orchestration Stack from the CFME Database')
         if wait:
             def refresh():
                 """Refresh the view"""
@@ -369,7 +369,7 @@ class RelationshipsSecurityGroups(CFMENavigateStep):
             self.prerequisite_view.sidebar.relationships.nav.select(
                 title='Show all Security Groups')
         except NoSuchElementException:
-            raise CandidateNotFound('No security groups for stack, cannot navigate')
+            raise CandidateNotFound({'No security groups for stack': 'cannot navigate'})
 
 
 @navigator.register(Stack, 'RelationshipParameters')
@@ -382,7 +382,7 @@ class RelationshipParameters(CFMENavigateStep):
         try:
             self.prerequisite_view.sidebar.relationships.nav.select(title='Show all Parameters')
         except NoSuchElementException:
-            raise CandidateNotFound('No parameters for stack, cannot navigate')
+            raise CandidateNotFound({'No parameters for stack': 'cannot navigate'})
 
 
 @navigator.register(Stack, 'RelationshipOutputs')
@@ -395,7 +395,7 @@ class RelationshipOutputs(CFMENavigateStep):
         try:
             self.prerequisite_view.sidebar.relationships.nav.select(title='Show all Outputs')
         except NoSuchElementException:
-            raise CandidateNotFound('No outputs for stack, cannot navigate')
+            raise CandidateNotFound({'No outputs for stack': 'cannot navigate'})
 
 
 @navigator.register(Stack, 'RelationshipResources')
@@ -408,4 +408,4 @@ class RelationshipResources(CFMENavigateStep):
         try:
             self.prerequisite_view.sidebar.relationships.nav.select(title='Show all Resources')
         except NoSuchElementException:
-            raise CandidateNotFound('No resources for stack, cannot navigate')
+            raise CandidateNotFound({'No resources for stack': 'cannot navigate'})

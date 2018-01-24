@@ -15,17 +15,17 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def stack(setup_provider_modscope, provider, appliance):
     collection = appliance.collections.stacks
-    stack = collection.instantiate(provider.data['provisioning']['stacks'][0], provider=provider)
-    stack.wait_for_exists()
-    yield stack
-
-    try:
-        stack.delete()
-    except Exception:
-        pass
+    for stack_name in provider.data.provisioning.stacks:
+        stack = collection.instantiate(stack_name, provider=provider)
+        try:
+            stack.wait_for_exists()
+            return stack
+        except Exception:
+            pass
+    pytest.skip("No available stacks found for test")
 
 
 @pytest.mark.tier(3)
