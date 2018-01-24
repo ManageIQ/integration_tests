@@ -278,7 +278,7 @@ def test_validate_memory_usage(resource_usage, metering_report):
         if groups["Memory Used"]:
             estimated_memory_usage = resource_usage['memory_used']
             usage_from_report = groups["Memory Used"]
-            if usage_from_report.find('GB'):
+            if 'GB' in usage_from_report:
                 estimated_memory_usage = estimated_memory_usage * math.pow(2, -10)
             usage = re.sub(r'[MB, GB,]', r'', usage_from_report)
             assert estimated_memory_usage - 1.0 <= float(usage) \
