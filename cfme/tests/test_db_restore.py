@@ -55,7 +55,7 @@ def get_appliances(temp_appliances_unconfig_modscope):
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(
     lambda: not store.current_appliance.is_downstream)
-def test_db_restore(request, soft_assert, appliance, get_appliances):
+def test_db_restore(request, soft_assert, get_appliances):
 
     appl1, appl2 = get_appliances
 
@@ -64,16 +64,15 @@ def test_db_restore(request, soft_assert, appliance, get_appliances):
         appl2.destroy()
     request.addfinalizer(finalize)
 
-    with appl1:
-        # Manage infra,cloud providers and set some roles before taking a DB backup
-        server_info = appliance.server.settings
-        server_info.enable_server_roles('automate')
-        roles = server_info.server_roles_db
-        virtual_crud = provider_app_crud(VMwareProvider, appl1).setup()
-        provider_app_crud(EC2Provider, appl1).setup()
+    # Manage infra,cloud providers and set some roles before taking a DB backup
+    server_info = appl1.server.settings
+    server_info.enable_server_roles('automate')
+    roles = server_info.server_roles_db
+    virtual_crud = provider_app_crud(VMwareProvider, appl1).setup()
+    provider_app_crud(EC2Provider, appl1).setup()
 
-        providers_appl1 = appl1.managed_known_providers
-        appl1.db.backup()
+    providers_appl1 = appl1.managed_known_providers
+    appl1.db.backup()
 
     # Fetch v2_key and DB backup from the first appliance
     rand_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
