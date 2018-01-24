@@ -152,6 +152,10 @@ class MiqBrowser(Browser):
             logger=create_sublogger('MiqBrowser'),
             extra_objects=extra_objects)
         self.window_handle = selenium.current_window_handle
+        self.logger.info(
+            'Opened browser %s %s',
+            selenium.capabilities.get('browserName', 'unknown'),
+            selenium.capabilities.get('version', 'unknown'))
 
     @property
     def appliance(self):
