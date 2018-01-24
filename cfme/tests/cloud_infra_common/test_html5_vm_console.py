@@ -54,33 +54,8 @@ def vm_obj(request, provider, setup_provider, console_template, vm_name):
     return vm_obj
 
 
-@pytest.fixture(scope="module")
-def configure_vmware_console_for_test(appliance, provider):
-    """Configure VMware Console to use VNC which is what is required for the HTML5 console."""
-    if provider.one_of(VMwareProvider):
-        appliance.server.settings.update_vmware_console({'console_type': 'VNC'})
-
-
-@pytest.fixture(scope="session")
-def configure_websocket(appliance):
-    """
-    Enable websocket role if it is disabled.
-
-    Currently the fixture cfme/fixtures/base.py,
-    disables the websocket role to avoid intrusive popups.
-    """
-    server_settings = appliance.server.settings
-    roles = server_settings.server_roles_db
-    if 'websocket' in roles and not roles['websocket']:
-        logger.info('Enabling the websocket role to allow console connections')
-        server_settings.enable_server_roles('websocket')
-        yield
-    logger.info('Disabling the websocket role to avoid intrusive popups')
-    server_settings.disable_server_roles('websocket')
-
-
 def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
-        configure_vmware_console_for_test, take_screenshot):
+        configure_console_vnc, take_screenshot):
     """
     Test the HTML5 console support for a particular provider.
 

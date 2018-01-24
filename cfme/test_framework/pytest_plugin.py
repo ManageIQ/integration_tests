@@ -95,6 +95,7 @@ pytest_plugins = (
     'cfme.fixtures.smtp',
     'cfme.fixtures.tag',
     'cfme.fixtures.vm_name',
+    'cfme.fixtures.vm_console',
     'cfme.fixtures.vporizer',
     'cfme.fixtures.model_collections',
     'cfme.fixtures.has_persistent_volume',
