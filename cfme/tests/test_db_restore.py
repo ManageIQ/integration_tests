@@ -59,11 +59,6 @@ def test_db_restore(request, soft_assert, get_appliances):
 
     appl1, appl2 = get_appliances
 
-    def finalize():
-        appl1.destroy()
-        appl2.destroy()
-    request.addfinalizer(finalize)
-
     # Manage infra,cloud providers and set some roles before taking a DB backup
     server_info = appl1.server.settings
     server_info.enable_server_roles('automate')
