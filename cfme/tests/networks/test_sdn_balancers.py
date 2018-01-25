@@ -18,13 +18,13 @@ pytestmark = [
 def network_prov_with_load_balancers(appliance):
     prov_collection = appliance.collections.network_providers
     providers = prov_collection.all()
-    available_prov = {}
+    available_prov = []
     for prov in providers:
         try:
             sum_all = len(prov.balancers.all())
         except DestinationNotFound:
             continue
-        available_prov[prov] = sum_all
+        available_prov.append((prov, sum_all))
     return available_prov if available_prov else pytest.skip(
         "No available load balancers for current providers")
 
@@ -35,7 +35,7 @@ def test_prov_balances_number(network_prov_with_load_balancers):
     Prerequisites:
         Only one refreshed cloud provider in cfme database
     """
-    for prov, sum_all in network_prov_with_load_balancers.items():
+    for prov, sum_all in network_prov_with_load_balancers:
         view = navigate_to(prov, 'Details')
         balancers_number = view.entities.relationships.get_text_of('Load Balancers')
         assert int(balancers_number) == sum_all
@@ -43,7 +43,7 @@ def test_prov_balances_number(network_prov_with_load_balancers):
 
 def test_balances_detail(provider, network_prov_with_load_balancers):
     """ Test of getting attribute from balancer object """
-    for prov, _ in network_prov_with_load_balancers.items():
+    for prov, _ in network_prov_with_load_balancers:
         for balancer in prov.balancers.all():
             check = balancer.health_checks
             assert check is not None
