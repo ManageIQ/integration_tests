@@ -29,7 +29,7 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def template(provider, provisioning, setup_provider):
     template_type = provisioning['stack_provisioning']['template_type']
     template_name = fauxfactory.gen_alphanumeric()
@@ -40,53 +40,23 @@ def template(provider, provisioning, setup_provider):
     data_file = load_data_file(str(orchestration_path.join(file)))
 
     template.create(data_file.read().replace('CFMETemplateName', template_name))
-    if provider.type == "azure":
-        dialog_name = "azure-single-vm-from-user-image"
-    else:
-        dialog_name = "dialog_" + fauxfactory.gen_alphanumeric()
-    if provider.type != "azure":
-        template.create_service_dialog_from_template(dialog_name, template.template_name)
-
-    yield template, dialog_name
+    dialog_name = "dialog_" + fauxfactory.gen_alphanumeric()
+    template.create_service_dialog_from_template(dialog_name, template.template_name)
+    return template, dialog_name
 
 
-@pytest.yield_fixture(scope="function")
-def dialog(appliance, provider, template):
-    template, dialog_name = template
-    service_name = fauxfactory.gen_alphanumeric()
-    element_data = {
-        'element_information': {
-            'ele_label': "Options",
-            'ele_name': "service_name",
-            'ele_desc': fauxfactory.gen_alphanumeric(),
-            'choose_type': "Text Box"
-        },
-        'options': {
-            'default_text_box': service_name
-        }
-    }
-    dialog = appliance.collections.service_dialogs
-    sd = dialog.instantiate(label=dialog_name)
-    tab = sd.tabs.instantiate(tab_label="Basic Information", tab_desc="Basic Information Tab")
-    box = tab.boxes.instantiate(box_label="Options")
-    element = box.elements.instantiate(element_data=element_data)
-    element.add_another_element(element_data)
-    yield template, sd, service_name
-
-
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def catalog():
     cat_name = "cat_" + fauxfactory.gen_alphanumeric()
     catalog = Catalog(name=cat_name, description="my catalog")
     catalog.create()
-    yield catalog
+    return catalog
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def catalog_item(dialog, catalog, template, provider):
-    template, dialog, service_name = dialog
-    item_name = service_name
-
+    template, dialog = template
+    item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Orchestration",
                                name=item_name,
                                description="my catalog",
@@ -96,23 +66,20 @@ def catalog_item(dialog, catalog, template, provider):
                                orch_template=template,
                                provider=provider)
     catalog_item.create()
-
-    yield catalog_item, template
+    return catalog_item, template
 
 
 def random_desc():
     return fauxfactory.gen_alphanumeric()
 
 
-def prepare_stack_data(appliance, provider, provisioning):
+@pytest.fixture(scope="function")
+def stack_data(appliance, provider, provisioning):
     random_base = fauxfactory.gen_alphanumeric()
     stackname = 'test{}'.format(random_base)
     vm_name = 'test-{}'.format(random_base)
     stack_timeout = "20"
     if provider.one_of(AzureProvider):
-        size, resource_group, os_type, mode = map(provisioning.get,
-                                                  ('vm_size', 'resource_group', 'os_type', 'mode'))
-
         try:
             template = provider.data.templates.small_template
             vm_user = credentials[template.creds].username
@@ -120,31 +87,30 @@ def prepare_stack_data(appliance, provider, provisioning):
         except AttributeError:
             pytest.skip('Could not find small_template or credentials for {}'.format(provider.name))
 
-        # service order appends a type string to the template name
-        user_image = 'Windows | {}'.format(template.name)
-        stack_data = {
+        _stack_data = {
             'stack_name': stackname,
-            'vm_name': vm_name,
-            'resource_group': resource_group,
-            'mode': mode,
-            'vm_user': vm_user,
-            'vm_password': vm_password,
-            'user_image': user_image,
-            'os_type': os_type,
-            'vm_size': size
+            'resource_group': provisioning.get('resource_group'),
+            'deploy_mode': provisioning.get('mode'),
+            'location': provisioning.get('region_api'),
+            'vmname': vm_name,
+            'vmuser': vm_user,
+            'vmpassword': vm_password,
+            'vmsize': provisioning.get('vm_size'),
+            'cloudnetwork': provisioning.get('cloud_network'),
+            'cloudsubnet': provisioning.get('cloud_subnet')
         }
     elif provider.type == 'openstack':
         stack_prov = provisioning['stack_provisioning']
 
-        stack_data = {
+        _stack_data = {
             'stack_name': stackname,
             'key': stack_prov['key_name'],
             'flavor': stack_prov['instance_type'],
         }
     else:
         stack_prov = provisioning['stack_provisioning']
-        if appliance.version == '5.8':
-            stack_data = {
+        if appliance.version < '5.9':
+            _stack_data = {
                 'stack_name': stackname,
                 'stack_timeout': stack_timeout,
                 'vm_name': vm_name,
@@ -153,24 +119,23 @@ def prepare_stack_data(appliance, provider, provisioning):
                 'ssh_location': provisioning['ssh_location']
             }
         else:
-            stack_data = {
+            _stack_data = {
                 'stack_name': stackname,
                 'stack_timeout': stack_timeout,
                 'vm_name': vm_name,
                 'key_name': stack_prov['key_name']
             }
-    return stack_data
+    return _stack_data
 
 
 def test_provision_stack(appliance, setup_provider, provider, provisioning, catalog, catalog_item,
-                         request):
+                         request, stack_data):
     """Tests stack provisioning
 
     Metadata:
         test_flag: provision
     """
     catalog_item, template = catalog_item
-    stack_data = prepare_stack_data(appliance, provider, provisioning)
 
     @request.addfinalizer
     def _cleanup_vms():
@@ -187,14 +152,14 @@ def test_provision_stack(appliance, setup_provider, provider, provisioning, cata
     assert provision_request.is_succeeded()
 
 
-def test_reconfigure_service(appliance, provider, provisioning, catalog, catalog_item, request):
+def test_reconfigure_service(appliance, provider, provisioning, catalog, catalog_item, request,
+                             stack_data):
     """Tests stack provisioning
 
     Metadata:
         test_flag: provision
     """
     catalog_item, template = catalog_item
-    stack_data = prepare_stack_data(appliance, provider, provisioning)
 
     @request.addfinalizer
     def _cleanup_vms():
@@ -207,21 +172,22 @@ def test_reconfigure_service(appliance, provider, provisioning, catalog, catalog
     request_description = catalog_item.name
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
-    provision_request.wait_for_request()
+    provision_request.wait_for_request(method='ui')
     assert provision_request.is_succeeded()
-
-    myservice = MyService(appliance, catalog_item.name)
+    last_message = provision_request.get_request_row_from_ui()['Last Message'].text
+    service_name = last_message.split()[2].strip('[]')
+    myservice = MyService(appliance, service_name)
     myservice.reconfigure_service()
 
 
-def test_remove_template_provisioning(appliance, provider, provisioning, catalog, catalog_item):
+def test_remove_template_provisioning(appliance, provider, provisioning, catalog, catalog_item,
+                                      stack_data):
     """Tests stack provisioning
 
     Metadata:
         test_flag: provision
     """
     catalog_item, template = catalog_item
-    stack_data = prepare_stack_data(appliance, provider, provisioning)
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
                                        catalog_item.name, stack_data)
     service_catalogs.order()
@@ -235,7 +201,8 @@ def test_remove_template_provisioning(appliance, provider, provisioning, catalog
             provision_request.row.status.text == "Error")
 
 
-def test_retire_stack(appliance, provider, provisioning, catalog, catalog_item, request):
+def test_retire_stack(appliance, provider, provisioning, catalog, catalog_item, request,
+                      stack_data):
     """Tests stack provisioning
 
     Metadata:
@@ -244,7 +211,6 @@ def test_retire_stack(appliance, provider, provisioning, catalog, catalog_item, 
     catalog_item, template = catalog_item
     DefaultView.set_default_view("Stacks", "Grid View")
 
-    stack_data = prepare_stack_data(appliance, provider, provisioning)
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
                                        catalog_item.name, stack_data)
     service_catalogs.order()
