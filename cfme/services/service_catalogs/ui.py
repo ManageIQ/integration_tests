@@ -40,6 +40,14 @@ class ServicesCatalogView(BaseLoggedInPage):
 
 
 class OrderForm(ServicesCatalogView):
+    """Represents the order form of a service.
+    This form doesn't have a static set of elements apart from titles and buttons. In the most cases
+    the fields can be either regular inputs or dropdowns. Their locators depend on field names. In
+    order to find and fill required fields a parametrized view is used here. The keys of a fill
+    dictionary should match ids of the fields. For instance there is a field with such html
+    <input id="some_key"></input>, so a fill dictionary should look like that:
+    {"some_key": "some_value"}
+    """
     title = Text('#explorer_title_text')
     dialog_title = Text(
         VersionPick({

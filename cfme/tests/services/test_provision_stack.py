@@ -30,7 +30,7 @@ pytestmark = [
 
 
 @pytest.fixture(scope="function")
-def template(provider, provisioning, setup_provider, appliance):
+def template(provider, provisioning, setup_provider):
     template_type = provisioning['stack_provisioning']['template_type']
     template_name = fauxfactory.gen_alphanumeric()
     template = OrchestrationTemplate(template_type=template_type,
@@ -91,12 +91,13 @@ def stack_data(appliance, provider, provisioning):
             'stack_name': stackname,
             'resource_group': provisioning.get('resource_group'),
             'deploy_mode': provisioning.get('mode'),
-            'virtualMachineName': vm_name,
-            'adminUserName': vm_user,
-            'adminPassword__protected': vm_password,
-            'userImageName': 'linux_generic | {}'.format(template.name),
-            'operatingSystemType': 'Linux',
-            'virtualMachineSize': provisioning.get('vm_size')
+            'location': provisioning.get('region_api'),
+            'vmname': vm_name,
+            'vmuser': vm_user,
+            'vmpassword': vm_password,
+            'vmsize': provisioning.get('vm_size'),
+            'cloudnetwork': provisioning.get('cloud_network'),
+            'cloudsubnet': provisioning.get('cloud_subnet')
         }
     elif provider.type == 'openstack':
         stack_prov = provisioning['stack_provisioning']
@@ -171,10 +172,11 @@ def test_reconfigure_service(appliance, provider, provisioning, catalog, catalog
     request_description = catalog_item.name
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
-    provision_request.wait_for_request()
+    provision_request.wait_for_request(method='ui')
     assert provision_request.is_succeeded()
-
-    myservice = MyService(appliance, catalog_item.name)
+    last_message = provision_request.get_request_row_from_ui()['Last Message'].text
+    service_name = last_message.split()[2].strip('[]')
+    myservice = MyService(appliance, service_name)
     myservice.reconfigure_service()
 
 
