@@ -54,8 +54,8 @@ class HawkularEndpoint(DefaultEndpoint):
 
         if out['sec_protocol'] and self.sec_protocol.lower() == 'ssl trusting custom ca':
             out['trusted_ca_certificates'] = OpenshiftDefaultEndpoint.get_ca_cert(
-                {"username": "root",
-                 "password": self.ssh_password,
+                {"username": self.ssh_creds.principal,
+                 "password": self.ssh_creds.secret,
                  "hostname": self.master_hostname})
 
         return out
@@ -82,8 +82,8 @@ class AlertsEndpoint(DefaultEndpoint):
 
         if out['sec_protocol'] and self.sec_protocol.lower() == 'ssl trusting custom ca':
             out['trusted_ca_certificates'] = OpenshiftDefaultEndpoint.get_ca_cert(
-                {"username": "root",
-                 "password": self.ssh_password,
+                {"username": self.ssh_creds.principal,
+                 "password": self.ssh_creds.secret,
                  "hostname": self.master_hostname})
 
         return out
@@ -202,14 +202,13 @@ class OpenshiftProvider(ContainersProvider):
         token_creds = cls.process_credential_yaml_key(prov_config['credentials'], cred_type='token')
 
         master_hostname = prov_config['endpoints']['default'].hostname
-        ssh_password = cls.process_credential_yaml_key(prov_config['credentials'],
-                                                       cred_type='ssh').secret
+        ssh_creds = cls.process_credential_yaml_key(prov_config['ssh_creds'])
 
         for endp in prov_config['endpoints']:
             # Add ssh_password for each endpoint, so get_ca_cert
             # will be able to get SSL cert form OCP for each endpoint
             setattr(prov_config['endpoints'][endp], "master_hostname", master_hostname)
-            setattr(prov_config['endpoints'][endp], "ssh_password", ssh_password)
+            setattr(prov_config['endpoints'][endp], "ssh_creds", ssh_creds)
 
             if OpenshiftDefaultEndpoint.name == endp:
                 prov_config['endpoints'][endp]['token'] = token_creds.token
@@ -341,3 +340,44 @@ class OpenshiftProvider(ContainersProvider):
             } for attr in attribs if attr.name in names]}
         return self.appliance.rest_api.post(
             path.join(self.href(), 'custom_attributes'), **payload)
+
+    def sync_ssl_certificate(self):
+        """ fixture which sync SSL certificate between CFME and OCP
+        Args:
+            provider (OpenShiftProvider):  OCP system to sync cert from
+            appliance (IPAppliance): CFME appliance to sync cert with
+        Returns:
+             None
+        """
+
+        provider_ssh = self.cli.ssh_client
+        appliance_ssh = self.appliance.ssh_client()
+
+        # Connection to the applince in case of dead connection
+        if not appliance_ssh.connected:
+            appliance_ssh.connect()
+
+        # Checking if SSL is already configured between appliance and provider,
+        # by send a HTTPS request (using SSL) from the appliance to the provider,
+        # hiding the output and sending back the return code of the action
+        _, stdout, stderr = \
+            appliance_ssh.exec_command(
+                "curl https://{provider}:8443 -sS > /dev/null;echo $?".format(
+                    provider=self.provider_data.hostname))
+
+        # Do in case of failure (return code is not 0)
+        if stdout.readline().replace('\n', "") != "0":
+            cert_name = "{provider_name}.ca.crt".format(
+                provider_name=self.provider_data.hostname.split(".")[0])
+
+            # Copy certificate to the appliance
+            provider_ssh.get_file("/etc/origin/master/ca.crt", "/tmp/ca.crt")
+            appliance_ssh.put_file("/tmp/ca.crt",
+                                   "/etc/pki/ca-trust/source/anchors/{crt}".format(crt=cert_name))
+
+            appliance_ssh.exec_command("update-ca-trust")
+
+            # restarting evemserverd to apply the new SSL certificate
+            self.appliance.restart_evm_service()
+            self.appliance.wait_for_evm_service()
+            self.appliance.wait_for_web_ui()
