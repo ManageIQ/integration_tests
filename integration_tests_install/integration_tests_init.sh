@@ -147,8 +147,6 @@ function run_config {
 
   docker run -it --rm \
     -v $(dirname $SSH_AUTH_SOCK):$(dirname $SSH_AUTH_SOCK):rw \
-    -v /etc/passwd:/etc/passwd:ro \
-    -v /etc/group:/etc/group:ro \
     -v ${PLAY_LOCATION}:/projects/ansible_virtenv/ansible_work \
     -v ${WORKDIR}:/projects/cfme_vol/ \
     -v ~/.ssh:/home/${USERNAME}/.ssh:ro \
