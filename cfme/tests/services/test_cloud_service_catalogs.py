@@ -6,6 +6,8 @@ from widgetastic.utils import partial_match
 
 from cfme.common.provider import cleanup_vm
 from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider.gce import GCEProvider
+from cfme.cloud.provider.azure import AzureProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme import test_requirements
@@ -41,11 +43,17 @@ def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog
                     },
         'properties': {'instance_type': partial_match(provisioning['instance_type']),
                        },
-        'environment': {'security_groups': partial_match(provisioning['security_group']),
-                        }
+        'environment': {}
     }
 
-    if provider.type == "azure":
+    if not provider.one_of(GCEProvider):
+        provisioning_data['environment'].update({'security_groups':
+                                            partial_match(provisioning['security_group'])})
+
+    if not provider.one_of(AzureProvider) and not provider.one_of(GCEProvider):
+        provisioning_data['environment'].update({'cloud_tenant': provisioning['cloud_tenant']})
+
+    if provider.one_of(AzureProvider):
         env_updates = dict(
             cloud_network=partial_match(provisioning['virtual_private_cloud']),
             cloud_subnet=provisioning['cloud_subnet'],
@@ -61,9 +69,9 @@ def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog
         provisioning_data['properties']['boot_disk_size'] = provisioning['boot_disk_size']
         env_updates = dict(
             availability_zone=provisioning['availability_zone'],
-            cloud_tenant=provisioning['cloud_tenant'],
             cloud_network=provisioning['cloud_network'])
         provisioning_data['environment'].update(env_updates)
+
     catalog_item = CatalogItem(item_type=provisioning['item_type'],
                                name=item_name,
                                description="my catalog",
