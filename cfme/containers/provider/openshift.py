@@ -8,11 +8,11 @@ from . import ContainersProvider
 from cfme.containers.provider import (
     ContainersProviderDefaultEndpoint, ContainersProviderEndpointsForm
 )
+
 from cfme.common.provider import DefaultEndpoint
 from cfme.utils.ocp_cli import OcpCli
-from cfme.utils.path import data_path
 from cfme.utils.varmeth import variable
-from cfme.utils import version
+from cfme.utils import version, ssh
 
 
 class CustomAttribute(object):
@@ -25,17 +25,19 @@ class CustomAttribute(object):
 
 class OpenshiftDefaultEndpoint(ContainersProviderDefaultEndpoint):
     """Represents Openshift default endpoint"""
+
     @staticmethod
-    def get_ca_cert():
+    def get_ca_cert(connection_info):
         """Getting OpenShift's certificate from the master machine.
         Args:
-           No args.
+            connection_info (dict): username, password and hostname for OCP
         returns:
             certificate's content.
         """
-        cert_file_path = path.join(str(data_path), 'cert-auths', 'cmqe-tests-openshift-signer.crt')
-        with open(cert_file_path) as f:
-            return f.read()
+
+        with ssh.SSHClient(**connection_info) as provider_ssh:
+            _, stdout, _ = provider_ssh.exec_command("cat /etc/origin/master/ca.crt")
+            return str("".join(stdout.readlines()))
 
 
 class HawkularEndpoint(DefaultEndpoint):
@@ -51,7 +53,10 @@ class HawkularEndpoint(DefaultEndpoint):
         }
 
         if out['sec_protocol'] and self.sec_protocol.lower() == 'ssl trusting custom ca':
-            out['trusted_ca_certificates'] = OpenshiftDefaultEndpoint.get_ca_cert()
+            out['trusted_ca_certificates'] = OpenshiftDefaultEndpoint.get_ca_cert(
+                {"username": self.ssh_creds.principal,
+                 "password": self.ssh_creds.secret,
+                 "hostname": self.master_hostname})
 
         return out
 
@@ -76,7 +81,10 @@ class AlertsEndpoint(DefaultEndpoint):
             '5.9': self.sec_protocol})
 
         if out['sec_protocol'] and self.sec_protocol.lower() == 'ssl trusting custom ca':
-            out['trusted_ca_certificates'] = OpenshiftDefaultEndpoint.get_ca_cert()
+            out['trusted_ca_certificates'] = OpenshiftDefaultEndpoint.get_ca_cert(
+                {"username": self.ssh_creds.principal,
+                 "password": self.ssh_creds.secret,
+                 "hostname": self.master_hostname})
 
         return out
 
@@ -192,7 +200,16 @@ class OpenshiftProvider(ContainersProvider):
 
         endpoints = {}
         token_creds = cls.process_credential_yaml_key(prov_config['credentials'], cred_type='token')
+
+        master_hostname = prov_config['endpoints']['default'].hostname
+        ssh_creds = cls.process_credential_yaml_key(prov_config['ssh_creds'])
+
         for endp in prov_config['endpoints']:
+            # Add ssh_password for each endpoint, so get_ca_cert
+            # will be able to get SSL cert form OCP for each endpoint
+            setattr(prov_config['endpoints'][endp], "master_hostname", master_hostname)
+            setattr(prov_config['endpoints'][endp], "ssh_creds", ssh_creds)
+
             if OpenshiftDefaultEndpoint.name == endp:
                 prov_config['endpoints'][endp]['token'] = token_creds.token
                 endpoints[endp] = OpenshiftDefaultEndpoint(**prov_config['endpoints'][endp])
@@ -323,3 +340,44 @@ class OpenshiftProvider(ContainersProvider):
             } for attr in attribs if attr.name in names]}
         return self.appliance.rest_api.post(
             path.join(self.href(), 'custom_attributes'), **payload)
+
+    def sync_ssl_certificate(self):
+        """ fixture which sync SSL certificate between CFME and OCP
+        Args:
+            provider (OpenShiftProvider):  OCP system to sync cert from
+            appliance (IPAppliance): CFME appliance to sync cert with
+        Returns:
+             None
+        """
+
+        provider_ssh = self.cli.ssh_client
+        appliance_ssh = self.appliance.ssh_client()
+
+        # Connection to the applince in case of dead connection
+        if not appliance_ssh.connected:
+            appliance_ssh.connect()
+
+        # Checking if SSL is already configured between appliance and provider,
+        # by send a HTTPS request (using SSL) from the appliance to the provider,
+        # hiding the output and sending back the return code of the action
+        _, stdout, stderr = \
+            appliance_ssh.exec_command(
+                "curl https://{provider}:8443 -sS > /dev/null;echo $?".format(
+                    provider=self.provider_data.hostname))
+
+        # Do in case of failure (return code is not 0)
+        if stdout.readline().replace('\n', "") != "0":
+            cert_name = "{provider_name}.ca.crt".format(
+                provider_name=self.provider_data.hostname.split(".")[0])
+
+            # Copy certificate to the appliance
+            provider_ssh.get_file("/etc/origin/master/ca.crt", "/tmp/ca.crt")
+            appliance_ssh.put_file("/tmp/ca.crt",
+                                   "/etc/pki/ca-trust/source/anchors/{crt}".format(crt=cert_name))
+
+            appliance_ssh.exec_command("update-ca-trust")
+
+            # restarting evemserverd to apply the new SSL certificate
+            self.appliance.restart_evm_service()
+            self.appliance.wait_for_evm_service()
+            self.appliance.wait_for_web_ui()
