@@ -44,6 +44,7 @@ functools32==3.2.3.post2
 future==0.16.0
 futures==3.0.5
 GitPython==2.1.5
+git+git://github.com/ManageIQ/manageiq-api-client-python@fd3893d#egg=manageiq-client
 google-api-python-client==1.6.2
 gunicorn==19.7.1
 html5lib==0.999999999
@@ -73,7 +74,6 @@ keystoneauth1==2.20.0
 kwargify==2.2.0
 layered-yaml-attrdict-config==16.1.0
 lxml==3.8.0
-manageiq-client==0.3.0
 MarkupSafe==1.0
 matplotlib==1.5.1
 mccabe==0.6.1
