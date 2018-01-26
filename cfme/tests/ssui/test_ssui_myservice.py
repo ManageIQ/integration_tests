@@ -5,13 +5,13 @@ import pytest
 
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
 from cfme.utils import ssh
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
-from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 from cfme import test_requirements
 from markers.env_markers.provider import providers
@@ -57,18 +57,25 @@ def test_myservice_crud(appliance, setup_provider, context, order_catalog_item_i
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_retire_service(appliance, setup_provider, context, order_catalog_item_in_ops_ui):
-    """Tests retire service"""
+    """Test retire service."""
     service_name = order_catalog_item_in_ops_ui.name
     with appliance.context.use(context):
         my_service = MyService(appliance, service_name)
         my_service.retire()
 
 
-@pytest.mark.uncollectif(lambda: current_version() >= '5.9')
+@pytest.fixture(scope="function")
+def configure_vmware_console_for_test(appliance, provider):
+    """Configure VMware Console to use VNC which is what is required for the HTML5 console."""
+    if provider.one_of(VMwareProvider):
+        appliance.server.settings.update_vmware_console({'console_type': 'VNC'})
+
+
 @pytest.mark.parametrize('context', [ViaSSUI])
 @pytest.mark.parametrize('order_catalog_item_in_ops_ui', [['console_test']], indirect=True)
 def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
-        order_catalog_item_in_ops_ui, take_screenshot, console_template):
+        configure_vmware_console_for_test, order_catalog_item_in_ops_ui, take_screenshot,
+        console_template):
     """Test Myservice VM Console in SSUI."""
     catalog_item = order_catalog_item_in_ops_ui
     service_name = catalog_item.name
