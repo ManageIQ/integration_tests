@@ -55,7 +55,7 @@ class ErrorView(View):
 class MiqBrowserPlugin(DefaultPlugin):
     # Here we dismiss notifications as they obscure lower elements which need to be clicked on
     # We don't bother iterating and instead choose [0] and [1] to simplify the codepath
-    # TODO: In the future we will store the the notifications that are unread before dismissing them
+    # TODO: In the future we will store the notifications that are unread before dismissing them
 
     ENSURE_PAGE_SAFE = jsmin('''\
         try {
