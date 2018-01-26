@@ -10,6 +10,8 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.generators import random_vm_name
 
+from widgetastic.utils import partial_match
+
 pytestmark = [
     test_requirements.quota,
     pytest.mark.meta(server_roles="+automate"),
@@ -34,10 +36,11 @@ def roottenant(appliance):
 
 
 @pytest.fixture
-def prov_data(vm_name):
+def prov_data(vm_name, provisioning):
     return {
         "catalog": {'vm_name': vm_name},
         "environment": {'automatic_placement': True},
+        "network": {'vlan': partial_match(provisioning['vlan'])}
     }
 
 
@@ -83,10 +86,10 @@ def small_vm(provider, small_template_modscope):
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data', 'extra_msg', 'approve'],
     [
-        [('cpu', 2), {'hardware': {'num_sockets': '8'}}, '', False],
-        [('storage', 0.01), {}, '', False],
-        [('memory', 2), {'hardware': {'memory': '4096'}}, '', False],
-        [('vm', 1), {'catalog': {'num_vms': '4'}}, '###', True]
+        [('cpu', '2'), {'hardware': {'num_sockets': '8'}}, '', False],
+        [('storage', '0.01'), {}, '', False],
+        [('memory', '2'), {'hardware': {'memory': '4096'}}, '', False],
+        [('vm', '1'), {'catalog': {'num_vms': '4'}}, '###', True]
     ],
     indirect=['set_roottenant_quota'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
@@ -116,10 +119,10 @@ def test_tenant_quota_enforce_via_lifecycle(appliance, provider, setup_provider,
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data', 'extra_msg'],
     [
-        [('cpu', 2), {'hardware': {'num_sockets': '8'}}, ''],
-        [('storage', 0.01), {}, ''],
-        [('memory', 2), {'hardware': {'memory': '4096'}}, ''],
-        [('vm', 1), {'catalog': {'num_vms': '4'}}, '###']
+        [('cpu', '2'), {'hardware': {'num_sockets': '8'}}, ''],
+        [('storage', '0.01'), {}, ''],
+        [('memory', '2'), {'hardware': {'memory': '4096'}}, ''],
+        [('vm', '1'), {'catalog': {'num_vms': '4'}}, '###']
     ],
     indirect=['set_roottenant_quota'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
@@ -153,9 +156,9 @@ def test_tenant_quota_enforce_via_service(request, appliance, provider, setup_pr
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data'],
     [
-        [('cpu', 2), {'change': 'cores_per_socket', 'value': 4}],
-        [('cpu', 2), {'change': 'sockets', 'value': 4}],
-        [('memory', 2), {'change': 'mem_size', 'value': 4096}]
+        [('cpu', '2'), {'change': 'cores_per_socket', 'value': '4'}],
+        [('cpu', '2'), {'change': 'sockets', 'value': '4'}],
+        [('memory', '2'), {'change': 'mem_size', 'value': '4096'}]
     ],
     indirect=['set_roottenant_quota'],
     ids=['max_cores', 'max_sockets', 'max_memory']

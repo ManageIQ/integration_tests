@@ -1450,20 +1450,25 @@ class Tenant(Updateable, BaseEntity):
     def set_quota(self, **kwargs):
         """ Sets tenant quotas """
         view = navigate_to(self, 'ManageQuotas', wait_for_view=True)
-        view.form.fill({'cpu_cb': kwargs.get('cpu_cb'),
-                        'cpu_txt': kwargs.get('cpu'),
-                        'memory_cb': kwargs.get('memory_cb'),
-                        'memory_txt': kwargs.get('memory'),
-                        'storage_cb': kwargs.get('storage_cb'),
-                        'storage_txt': kwargs.get('storage'),
-                        'vm_cb': kwargs.get('vm_cb'),
-                        'vm_txt': kwargs.get('vm'),
-                        'template_cb': kwargs.get('template_cb'),
-                        'template_txt': kwargs.get('template')})
-        view.save_button.click()
+        changed = view.form.fill({'cpu_cb': kwargs.get('cpu_cb'),
+                                  'cpu_txt': kwargs.get('cpu'),
+                                  'memory_cb': kwargs.get('memory_cb'),
+                                  'memory_txt': kwargs.get('memory'),
+                                  'storage_cb': kwargs.get('storage_cb'),
+                                  'storage_txt': kwargs.get('storage'),
+                                  'vm_cb': kwargs.get('vm_cb'),
+                                  'vm_txt': kwargs.get('vm'),
+                                  'template_cb': kwargs.get('template_cb'),
+                                  'template_txt': kwargs.get('template')})
+        if changed:
+            view.save_button.click()
+            expected_msg = 'Quotas for {} "{}" were saved'.format(self.obj_type, self.name)
+        else:
+            view.cancel_button.click()
+            expected_msg = 'Manage quotas for {} "{}" was cancelled by the user'\
+                .format(self.obj_type, self.name)
         view = self.create_view(DetailsTenantView)
-        view.flash.assert_success_message('Quotas for {} "{}" were saved'.format(
-            self.obj_type, self.name))
+        view.flash.assert_success_message(expected_msg)
         assert view.is_displayed
 
     @property
