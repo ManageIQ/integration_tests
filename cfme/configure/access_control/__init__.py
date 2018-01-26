@@ -1290,6 +1290,40 @@ class TenantQuotaForm(View):
     vm_txt = Input(id='id_vms_allocated')
     template_txt = Input(id='id_templates_allocated')
 
+    @staticmethod
+    def check_fill_request_is_same_as_current_form(request, current):
+        """
+        The purpose of this method is to compare values that actaully
+        are in the form right now with the values that are requested by a test.
+        We do it because widgetastic's ``View.fill`` method returns wrong value.
+        It returns ``True`` even if no values in form are to be changed.
+        As a result, ``Save`` button on ``TenantQuotaView`` cannot be clicked.
+        That's the reason why the original ``fill`` method is overloaded in this class.
+
+        Args:
+            request: A dictionary in form that is passed to ``fill`` method.
+            current: A dictionary in form that is returned by ``read`` method.
+        """
+        for request_key, request_value in request.items():
+            if request_key.endswith('_cb') and bool(request_value) != current[request_key]:
+                return False
+            if request_key.endswith('_txt'):
+                if request_value is None and current[request_key] == '':
+                    pass
+                elif str(request_value) == current[request_key]:
+                    pass
+                else:
+                    return False
+        return True
+
+    def fill(self, values):
+        current = self.read()
+        if self.check_fill_request_is_same_as_current_form(values, current):
+            was_change = False
+        else:
+            was_change = super(TenantQuotaForm, self).fill(values)
+        return was_change
+
 
 class TenantQuotaView(ConfigurationView):
     """ Tenant Quota View """
@@ -1449,22 +1483,28 @@ class Tenant(Updateable, BaseEntity):
 
     def set_quota(self, **kwargs):
         """ Sets tenant quotas """
+
         view = navigate_to(self, 'ManageQuotas', wait_for_view=True)
-        view.form.fill({'cpu_cb': kwargs.get('cpu_cb'),
-                        'cpu_txt': kwargs.get('cpu'),
-                        'memory_cb': kwargs.get('memory_cb'),
-                        'memory_txt': kwargs.get('memory'),
-                        'storage_cb': kwargs.get('storage_cb'),
-                        'storage_txt': kwargs.get('storage'),
-                        'vm_cb': kwargs.get('vm_cb'),
-                        'vm_txt': kwargs.get('vm'),
-                        'template_cb': kwargs.get('template_cb'),
-                        'template_txt': kwargs.get('template')})
-        view.save_button.click()
-        view = self.create_view(DetailsTenantView)
-        view.flash.assert_success_message('Quotas for {} "{}" were saved'.format(
-            self.obj_type, self.name))
-        assert view.is_displayed
+        changed = view.form.fill({'cpu_cb': kwargs.get('cpu_cb'),
+                                  'cpu_txt': kwargs.get('cpu'),
+                                  'memory_cb': kwargs.get('memory_cb'),
+                                  'memory_txt': kwargs.get('memory'),
+                                  'storage_cb': kwargs.get('storage_cb'),
+                                  'storage_txt': kwargs.get('storage'),
+                                  'vm_cb': kwargs.get('vm_cb'),
+                                  'vm_txt': kwargs.get('vm'),
+                                  'template_cb': kwargs.get('template_cb'),
+                                  'template_txt': kwargs.get('template')})
+        if changed:
+            view.save_button.click()
+            view = self.create_view(DetailsTenantView)
+            view.flash.assert_success_message('Quotas for {} "{}" were saved'.format(
+                self.obj_type, self.name))
+        else:
+            view.cancel_button.click()
+            view = self.create_view(DetailsTenantView)
+            view.flash.assert_success_message('Manage quotas for {} "{}" was cancelled by the user'
+                .format(self.obj_type, self.name))
 
     @property
     def quota(self):
