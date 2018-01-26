@@ -63,7 +63,7 @@ class OrderForm(ServicesCatalogView):
         param_input = Input(id=ParametrizedString("param_{key}"))
         dropdown = VersionPick({
             Version.lowest(): BootstrapSelect(Parameter("key")),
-            "5.9": DialogFieldDropDownList(ParametrizedLocator(".//div[@input-id='{key|quote}']"))
+            "5.9": DialogFieldDropDownList(ParametrizedLocator(".//div[@input-id={key|quote}]"))
         })
         param_dropdown = VersionPick({
             Version.lowest(): BootstrapSelect(ParametrizedString("param_{key}")),
@@ -149,8 +149,8 @@ class OrderServiceCatalogView(OrderForm):
     @property
     def is_displayed(self):
         return (
-            self.in_explorer and self.service_catalogs.is_opened and
-            self.title.text == 'Order Service "{}"'.format(self.context['object'].name)
+            self.in_service_catalogs and self.service_catalogs.is_opened and
+            'Service "{}"'.format(self.context['object'].name) in self.title.text
         )
 
 
