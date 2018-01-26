@@ -7,7 +7,7 @@ import pytest
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.provider import base_types
-from cfme.configure import tasks
+from cfme.configure.tasks import TasksView
 from cfme.exceptions import RBACOperationBlocked
 from cfme.infrastructure import virtual_machines as vms
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -659,9 +659,8 @@ def _go_to(cls_or_obj, dest='All'):
                 [['Everything', 'Settings', 'Tasks'], True]
             ],
             {  # allowed_actions
-                'tasks': lambda appliance: appliance.browser.widgetastic.click(
-                    tasks.buttons.default
-                )
+                'tasks':
+                    lambda appliance: appliance.browser.create_view(TasksView).tabs.default.click()
             },
             {  # disallowed actions
                 'my services': _go_to(MyService),
@@ -714,13 +713,13 @@ def test_permissions(appliance, product_features, allowed_actions, disallowed_ac
         with user:
             appliance.server.login(user)
 
-            for name, action_thunk in allowed_actions.items():
+            for name, action_thunk in sorted(allowed_actions.items()):
                 try:
                     action_thunk(appliance)
                 except Exception:
                     fails[name] = "{}: {}".format(name, traceback.format_exc())
 
-            for name, action_thunk in disallowed_actions.items():
+            for name, action_thunk in sorted(disallowed_actions.items()):
                 try:
                     with error.expected(Exception):
                         action_thunk(appliance)
