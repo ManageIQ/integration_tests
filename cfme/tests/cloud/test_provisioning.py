@@ -81,21 +81,20 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name, t
         recursive_update(inst_args, {
             'properties': {
                 'instance_type': partial_match(provisioning['instance_type']),
-                'guest_keypair': provisioning['guest_keypair']},
-            'environment': {
-                'availability_zone': None if auto else provisioning['availability_zone'],
-                'security_groups': None if auto else provisioning['security_group'],
-                'automatic_placement': auto
-            }
+                'guest_keypair': provisioning['guest_keypair']}
         })
-
-    # Openstack specific
-    if provider.one_of(OpenStackProvider):
-        recursive_update(inst_args, {
-            'environment': {
-                'cloud_network': None if auto else provisioning['cloud_network']
-            }
-        })
+        if provider.one_of(OpenStackProvider):
+            recursive_update(inst_args, {
+                'environment': {
+                    'automatic_placement': True}
+            })
+        else:
+            recursive_update(inst_args, {
+                'environment': {
+                    'availability_zone': None if auto else provisioning['availability_zone'],
+                    'security_groups': None if auto else provisioning['security_group'],
+                    'automatic_placement': auto}
+            })
 
     # GCE specific
     if provider.one_of(GCEProvider):
@@ -544,8 +543,8 @@ def test_provision_from_template_with_attached_disks(request, testing_instance, 
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_provision_with_boot_volume(request, testing_instance, provider, soft_assert, appliance,
-                                    modified_request_class):
+def test_provision_with_boot_volume(request, testing_instance, provider, soft_assert,
+                                    modified_request_class, appliance, copy_domains):
     """ Tests provisioning from a template and attaching one booting volume.
 
     Metadata:
@@ -567,6 +566,7 @@ def test_provision_with_boot_volume(request, testing_instance, provider, soft_as
                             :device_name => "vda",
                             :source_type => "volume",
                             :destination_type => "volume",
+                            :volume_size => 1,
                             :delete_on_termination => false
                         }}]
                     }}
@@ -592,9 +592,8 @@ def test_provision_with_boot_volume(request, testing_instance, provider, soft_as
         assert provision_request.is_succeeded(method='ui'), (
             "Provisioning failed with the message {}".format(
                 provision_request.row.last_message.text))
-
-        soft_assert(vm_name in provider.mgmt.volume_attachments(volume))
-        soft_assert(provider.mgmt.volume_attachments(volume)[vm_name] == "vda")
+        soft_assert(instance.name in provider.mgmt.volume_attachments(volume))
+        soft_assert(provider.mgmt.volume_attachments(volume)[instance.name] == "/dev/vda")
         instance.delete_from_provider()  # To make it possible to delete the volume
         wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
 
@@ -602,8 +601,8 @@ def test_provision_with_boot_volume(request, testing_instance, provider, soft_as
 # Not collected for EC2 in generate_tests above
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
 def test_provision_with_additional_volume(request, testing_instance, provider, small_template,
-                                          soft_assert, copy_domains, modified_request_class,
-                                          appliance):
+                                          soft_assert, modified_request_class, appliance,
+                                          copy_domains):
     """ Tests provisioning with setting specific image from AE and then also making it create and
     attach an additional 3G volume.
 
