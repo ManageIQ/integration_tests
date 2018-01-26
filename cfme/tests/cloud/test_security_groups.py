@@ -35,7 +35,6 @@ def test_security_group_crud(sec_group):
         * Select Cloud Tenant.
         * Also delete it.
     """
-    # TODO: Update need to be done in future.
     assert sec_group.exists
     sec_group.delete(wait=True)
     assert not sec_group.exists
