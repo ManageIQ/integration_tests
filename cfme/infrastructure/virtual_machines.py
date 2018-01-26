@@ -593,7 +593,7 @@ class Vm(VM):
             view.fill(snapshot_dict)
             view.create.click()
             list_view = self.vm.create_view(InfraVmSnapshotView)
-            wait_for(lambda: self.exists, num_sec=300, delay=20,
+            wait_for(lambda: self.exists, num_sec=400, delay=20,
                      fail_func=list_view.toolbar.reload.click, handle_exception=True)
 
         def delete(self, cancel=False):
