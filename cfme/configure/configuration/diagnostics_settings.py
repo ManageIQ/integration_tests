@@ -2,8 +2,8 @@ import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic_patternfly import Input, BootstrapSelect, Button, Dropdown
-from widgetastic_manageiq import SummaryFormItem
-from widgetastic.widget import View, Table, RowNotFound
+from widgetastic_manageiq import SummaryFormItem, Table
+from widgetastic.widget import View, RowNotFound
 
 from cfme.base.ui import ServerDiagnosticsView
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -70,7 +70,11 @@ class DiagnosticWorker(BaseEntity):
         view = navigate_to(self.parent, 'AllDiagnosticWorkers')
         # Initiate the restart
         for pid_item in pid:
-            view.workers_table.row(pid=pid_item).click()
+            row = view.workers_table.row(pid=pid_item)
+            if self.appliance.version >= '5.9':
+                row[0].check(),
+            else:
+                row.click()
             view.toolbar.configuration.item_select("Restart selected worker", handle_alert=True)
         return pid
 
