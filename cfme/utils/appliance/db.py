@@ -100,12 +100,13 @@ class ApplianceDB(AppliancePlugin):
 
     def backup(self, database_path="/tmp/evm_db.backup"):
         """Backup VMDB database
+        Changed from Rake task due to a bug in 5.9
 
         """
         from . import ApplianceException
         self.logger.info('Backing up database')
-        status, output = self.appliance.ssh_client.run_rake_command(
-            'evm:db:backup:local --trace -- --local-file "{}" --dbname vmdb_production'.format(
+        status, output = self.appliance.ssh_client.run_command(
+            'pg_dump --format custom --file {} vmdb_production'.format(
                 database_path))
         if status != 0:
             msg = 'Failed to backup database'
