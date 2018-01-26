@@ -38,11 +38,9 @@ from widgetastic.widget import (
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
     Accordion as PFAccordion, BootstrapSwitch, BootstrapTreeview,
-    BootstrapSelect, Button, CheckableBootstrapTreeview,
-    Dropdown, Input, VerticalNavigation, Tab)
+    BootstrapSelect, Button, Dropdown, Input, VerticalNavigation, Tab)
 
 from cfme.exceptions import ItemNotFound
-from cfme.utils.blockers import BZ
 
 
 class DynamicTableAddError(Exception):
@@ -51,7 +49,6 @@ class DynamicTableAddError(Exception):
 
 
 # TODO: replace below calls with direct calls later
-CheckableManageIQTree = CheckableBootstrapTreeview
 ManageIQTree = BootstrapTreeview
 
 

@@ -12,7 +12,7 @@ from widgetastic.utils import partial_match, Parameter, VersionPick, Version
 from widgetastic.widget import (
     Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
 from widgetastic_patternfly import (
-    Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput)
+    Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, CheckableBootstrapTreeview)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, Template as BaseTemplate
@@ -30,7 +30,7 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
-    Accordion, ConditionalSwitchableView, ManageIQTree, CheckableManageIQTree, NonJSPaginationPane,
+    Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
     SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 
@@ -352,7 +352,7 @@ class InfraVmGenealogyView(InfraVmView):
     toolbar = View.nested(InfraVmGenealogyToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
     title = Text('#explorer_title_text')
-    tree = CheckableManageIQTree('genealogy_treebox')
+    tree = CheckableBootstrapTreeview('genealogy_treebox')
 
     @property
     def is_displayed(self):
