@@ -159,8 +159,10 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
+        search_visible = self.prerequisite_view.entities.search.is_displayed
         self.prerequisite_view.entities.get_entity(provider=self.obj.provider.name,
-                                                   use_search=True, name=self.obj.name,
+                                                   surf_pages=not search_visible,
+                                                   use_search=search_visible, name=self.obj.name,
                                                    id=self.obj.id).click()
 
 

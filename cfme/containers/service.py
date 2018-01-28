@@ -88,9 +88,11 @@ class Details(CFMENavigateStep):
     VIEW = ServiceDetailsView
 
     def step(self):
+        search_visible = self.prerequisite_view.entities.search.is_displayed
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                    project_name=self.obj.project_name,
-                                                   use_search=True).click()
+                                                   surf_pages=not search_visible,
+                                                   use_search=search_visible).click()
 
 
 @navigator.register(Service, 'EditTags')
