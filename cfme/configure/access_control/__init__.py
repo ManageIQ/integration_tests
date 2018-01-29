@@ -3,7 +3,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Checkbox, View, Text
 from widgetastic_patternfly import (
-    BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview as CBTree,
+    BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview as CbTree,
     BootstrapSwitch, CandidateNotFound, Dropdown)
 
 from cfme.base.credential import Credential
@@ -474,19 +474,19 @@ class GroupForm(ConfigurationView):
         """ Represents 'My company tags' tab in Group Form """
         TAB_NAME = "My Company Tags"
         tree_locator = 'tags_treebox'
-        tree = CBTree(tree_locator)
+        tree = CbTree(tree_locator)
 
     @View.nested
     class hosts_and_clusters(Tab):  # noqa
         """ Represents 'Hosts and Clusters' tab in Group Form """
         TAB_NAME = "Hosts & Clusters"
-        tree = CBTree('hac_treebox')
+        tree = CbTree('hac_treebox')
 
     @View.nested
     class vms_and_templates(Tab):  # noqa
         """ Represents 'VM's and Templates' tab in Group Form """
         TAB_NAME = "VMs & Templates"
-        tree = CBTree('vat_treebox')
+        tree = CbTree('vat_treebox')
 
 
 class AddGroupView(GroupForm):
@@ -988,7 +988,7 @@ class RoleForm(ConfigurationView):
     """ Role Form for CFME UI """
     name_txt = Input(name='name')
     vm_restriction_select = BootstrapSelect(id='vm_restriction')
-    features_tree = CBTree("features_treebox")
+    features_tree = CbTree("features_treebox")
 
     cancel_button = Button('Cancel')
 
@@ -1172,7 +1172,7 @@ class Role(Updateable, Pretty, BaseEntity):
 
             changes = [
                 view.fill({
-                    'features_tree': CBTree.CheckNode(path) if option else CBTree.UncheckNode(path)
+                    'features_tree': CbTree.CheckNode(path) if option else CbTree.UncheckNode(path)
                 })
                 for path, option in product_features
             ]

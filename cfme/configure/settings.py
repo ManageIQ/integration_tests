@@ -3,7 +3,7 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
 from widgetastic_patternfly import (
-    BootstrapSwitch, Input, Button, CheckableBootstrapTreeview as CBTree, Dropdown)
+    BootstrapSwitch, Input, Button, CheckableBootstrapTreeview as CbTree, Dropdown)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import MySettingsView
@@ -384,7 +384,7 @@ class VisualAll(CFMENavigateStep):
 
 
 class DefaultFilterForm(MySettingsView):
-    tree = CBTree('df_treebox')
+    tree = CbTree('df_treebox')
     save = Button('Save')
 
 
@@ -407,7 +407,7 @@ class DefaultFilter(Updateable, Pretty, Navigatable):
         """
         view = navigate_to(self, 'All')
         for path, check in updates['filters']:
-            fill_value = CBTree.CheckNode(path) if check else CBTree.UncheckNode(path)
+            fill_value = CbTree.CheckNode(path) if check else CbTree.UncheckNode(path)
             if view.tree.fill(fill_value):
                 view.save.click()
             else:

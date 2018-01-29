@@ -4,7 +4,8 @@ import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Text, TextInput
-from widgetastic_patternfly import BootstrapSelect, Button, Input, CBTree
+from widgetastic_patternfly import (
+    BootstrapSelect, Button, Input, CheckableBootstrapTreeview as CbTree)
 
 from . import ControlExplorerView
 from cfme.utils import ParamClassName
@@ -83,7 +84,7 @@ class AlertProfilesEditAssignmentsView(ControlExplorerView):
     title = Text("#explorer_title_text")
     assign_to = BootstrapSelect("chosen_assign_to")
     tag_category = BootstrapSelect("chosen_cat")
-    selections = CBTree(VersionPick({
+    selections = CbTree(VersionPick({
         Version.lowest(): "obj_treebox",
         "5.9": "object_treebox"
     }))
@@ -183,7 +184,7 @@ class BaseAlertProfile(BaseEntity, Updateable, Pretty):
         changed = []
         # separate fill calls, checkable tree fills one path at a time
         changed.append(view.fill({"assign_to": assign, "tag_category": tag_category}))
-        changed.extend([view.selections.fill(CBTree.CheckNode(path)) for path in selections])
+        changed.extend([view.selections.fill(CbTree.CheckNode(path)) for path in selections])
         if changed:
             view.save_button.click()
         else:
