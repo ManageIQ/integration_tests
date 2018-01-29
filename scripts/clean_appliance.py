@@ -40,12 +40,13 @@ def main():
         ssh_kwargs['hostname'] = args.hostname
 
     with SSHClient(stream_output=True, **ssh_kwargs) as ssh_client:
-
-        # `systemctl stop evmserverd` is a little slow, and we're destroying the
-        # db, so rudely killing ruby speeds things up significantly
-        print('Stopping ruby processes...')
-        ssh_client.run_command('killall ruby')
-        ssh_client.run_rake_command('evm:db:reset')
+        # Graceful stop is done here even though it is slower than killing ruby processes.
+        # Problem with killing ruby is that evm_watchdog gets spawned right after being killed
+        # and then prevents you from destroying the DB.
+        # Graceful stop makes sure there are no active connections to the DB left.
+        print('Stopping evmserverd...')
+        ssh_client.run_command('systemctl stop evmserverd')
+        ssh_client.run_rake_command('evm:db:reset', disable_db_check=True)
         ssh_client.run_command('systemctl start evmserverd')
 
         # SSHClient has the smarts to get our hostname if none was provided
