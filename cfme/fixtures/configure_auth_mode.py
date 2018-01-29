@@ -67,13 +67,13 @@ def configure_openldap_auth_mode_default_groups(browser, available_auth_modes):
 @pytest.yield_fixture(scope='module')
 def configure_aws_iam_auth_mode(appliance, available_auth_modes):
     """Configure AWS IAM authentication mode"""
-    if 'miq_aws_iam' in available_auth_modes:
+    if 'miq_aws' in available_auth_modes:
         # TODO use new get_auth_settings function to store original settings
         auth_settings = appliance.server.authentication
         orig_mode = auth_settings.auth_mode
         orig_settings = auth_settings.auth_settings
         orig_settings.pop('title')
-        yaml_data = cfme_data.auth_modes.miq_aws_iam.copy()
+        yaml_data = cfme_data.auth_modes.miq_aws.copy()
         creds = credentials[yaml_data.pop('credentials')]  # remove cred key from fill_data with pop
         fill_data = {
             'access_key': creds['username'],
@@ -90,7 +90,7 @@ def configure_aws_iam_auth_mode(appliance, available_auth_modes):
                                           minutes=orig_settings.get('minutes_timeout', '0'))
     else:
         # Need this configuration data to test, can't make up aws_iam account.
-        pytest.skip('miq_aws_iam yaml configuration not available for configure_aws_iam_auth_mode')
+        pytest.skip('miq_aws yaml configuration not available for configure_aws_iam_auth_mode')
 
 
 # TODO remove this fixture, its doing what the above fixtures are doing but taking an argument
@@ -108,7 +108,7 @@ def configure_auth(appliance, request, auth_mode):
         app_auth.configure_auth(**data)
         request.addfinalizer(current_appliance.server.login_admin)
         request.addfinalizer(app_auth.configure_auth)
-    elif auth_mode == 'miq_aws_iam':
+    elif auth_mode == 'miq_aws':
         aws_iam_creds = credentials[data.pop('credentials')]
         data['access_key'] = aws_iam_creds['username']
         data['secret_key'] = aws_iam_creds['password']

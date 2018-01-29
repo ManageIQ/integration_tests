@@ -2,7 +2,7 @@ from cfme.utils.version import get_stream
 from collections import namedtuple
 from contextlib import contextmanager
 from cfme.test_framework.sprout.client import SproutClient
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.conf import cfme_data, credentials, auth_data
 from cfme.utils.log import logger
 import pytest
 from wait_for import wait_for
@@ -103,7 +103,7 @@ def app_creds_modscope():
 
 @pytest.fixture()
 def ipa_creds():
-    fqdn = cfme_data['auth_modes']['ext_ipa']['ipaserver'].split('.', 1)
+    fqdn = auth_data['auth_providers']['ext_ipa']['ipaserver'].split('.', 1)
     creds_key = cfme_data['auth_modes']['ext_ipa']['credentials']
     return{
         'hostname': fqdn[0],
