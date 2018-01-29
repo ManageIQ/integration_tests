@@ -4,7 +4,8 @@ The Workflow
 ------------
 
 - Master py.test process starts up, inspects config to decide how many slave to start, if at all
-- py.test config.option.appliances and the related --appliance cmdline flag are used to count no. of needed slaves
+- py.test config.option.appliances and the related --appliance cmdline flag are used to count
+  the number of needed slaves
 - Slaves are started
 - Master runs collection, blocks until slaves report their collections
 - Slaves each run collection and submit them to the master, then block inside their runtest loop,

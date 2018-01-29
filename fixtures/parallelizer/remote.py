@@ -210,19 +210,20 @@ if __name__ == '__main__':
 
     from cfme.utils.appliance import IPAppliance, stack
 
-    try:
-        appliance_config = json.loads(args.appliance_json)
-    except ValueError:
-        self.log.error("Error parsing appliance json")
-        raise
-
-    appliance = IPAppliance(**appliance_config)
-    stack.push(appliance)
-
     # overwrite the default logger before anything else is imported,
     # to get our best chance at having everything import the replaced logger
     import cfme.utils.log
     cfme.utils.log.setup_for_worker(args.slaveid)
+    slave_log = cfme.utils.log.logger
+
+    try:
+        appliance_config = json.loads(args.appliance_json)
+    except ValueError:
+        slave_log.error("Error parsing appliance json")
+        raise
+
+    appliance = IPAppliance(**appliance_config)
+    stack.push(appliance)
 
     from fixtures import terminalreporter
     from fixtures.pytest_store import store

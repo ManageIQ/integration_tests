@@ -2668,7 +2668,8 @@ def load_appliances_from_config(config):
     The ``config`` contains some global values and ``appliances`` key which contains a list of dicts
     that have the same keys as ``IPAppliance.CONFIG_MAPPING``'s keys.
 
-    The global values in the root of the dict have lesser priority than the values in appliance definitions themselves
+    The global values in the root of the dict have lesser priority than the values in appliance
+    definitions themselves
 
     Args:
         config: A dictionary with the configuration

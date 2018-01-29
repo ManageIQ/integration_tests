@@ -19,8 +19,8 @@ this option can be specified more than once, and must be specified at least two 
 def pytest_addoption(parser):
     group = parser.getgroup("cfme")
     group._addoption(
-        '--appliance', dest='appliances', action='append', metavar='appliance_url', help=_appliance_help,
-        default=[])
+        '--appliance', dest='appliances', action='append', metavar='appliance_url',
+        help=_appliance_help, default=[])
     group._addoption('--use-sprout', dest='use_sprout', action='store_true',
         default=False, help="Use Sprout for provisioning appliances.")
     group._addoption('--sprout-appliances', dest='sprout_appliances', type=int,
