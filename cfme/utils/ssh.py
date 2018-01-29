@@ -324,6 +324,8 @@ class SSHClient(paramiko.SSHClient):
                 if session.exit_status_ready():
                     break
             exit_status = session.recv_exit_status()
+            if exit_status != 0:
+                logger.warning('Exit code %d!', exit_status)
             return SSHResult(exit_status, ''.join(output))
         except paramiko.SSHException:
             if reraise:

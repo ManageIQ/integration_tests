@@ -38,6 +38,15 @@ def download_artifact(
         url, verify=False, auth=HTTPBasicAuth(jenkins_username, jenkins_token)).text
 
 
+def check_artifact(
+        jenkins_username, jenkins_token, jenkins_url, jenkins_job, jenkins_build,
+        artifact_path):
+    url = jenkins_artifact_url(
+        jenkins_username, jenkins_token, jenkins_url, jenkins_job, jenkins_build, artifact_path)
+    return requests.head(
+        url, verify=False, auth=HTTPBasicAuth(jenkins_username, jenkins_token)).status_code < 300
+
+
 def get_build_numbers(client, job_name):
     return [build['number'] for build in client.get_job_info(job_name)['builds']]
 
@@ -95,8 +104,14 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
             print('coverage-results.tgz not in artifacts of {}/{}'.format(job_name, build_number))
             continue
 
+        if not check_artifact(
+                jenkins_user, jenkins_token, jenkins_url, job_name, build_number,
+                artifacts['coverage-results.tgz']['relativePath']):
+            print('Coverage archive not possible to be downloaded, skipping')
+            continue
+
         if build_appliance_version == appliance_version:
-            print('Build {} waas found to contain what is needed'.format(build_number))
+            print('Build {} was found to contain what is needed'.format(build_number))
             eligible_build_numbers.add(build_number)
         else:
             print(
@@ -128,7 +143,7 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
             print('Downloading the coverage report from build {}'.format(build_number))
             download_url = jenkins_artifact_url(
                 jenkins_user, jenkins_token, jenkins_url, job_name, build_number,
-                'log/coverage/coverage-results.tgz')
+                artifacts['coverage-results.tgz']['relativePath'])
             cmd = ssh.run_command(
                 'curl -k -o /var/www/miq/vmdb/coverage/tmp.tgz {}'.format(quote(download_url)))
             if not cmd:
