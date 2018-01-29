@@ -625,7 +625,7 @@ class VM(BaseVM):
             if self.provider.mgmt.does_vm_exist(self.name):
                 try:
                     logger.info("Mgmt System delete_vm")
-                    return self.provider.mgmt.delete_vm(self.name)
+                    return self.provider.mgmt.delete_vm(self.name, timeout=250)
                 except exceptions.VMInstanceNotFound:
                     # Does not exist already
                     return True
