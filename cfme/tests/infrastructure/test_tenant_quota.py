@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+
 from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -52,9 +53,9 @@ def set_roottenant_quota(request, roottenant, appliance):
 
 
 @pytest.fixture
-def catalog_item(provider, provisioning, template_name, dialog, catalog, prov_data):
+def catalog_item(provider, template_name, dialog, catalog, prov_data):
     yield CatalogItem(
-        item_type=provisioning['catalog_item_type'],
+        item_type=provider.catalog_name,
         name='test_{}'.format(fauxfactory.gen_alphanumeric()),
         description="test catalog",
         display_in=True,
