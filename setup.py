@@ -43,6 +43,7 @@ setup(
             'openstack = cfme.cloud.provider.openstack:OpenStackProvider',
             'azure = cfme.cloud.provider.azure:AzureProvider',
             'gce = cfme.cloud.provider.gce:GCEProvider',
+            'vcloud = cfme.cloud.provider.vcloud:VmwareCloudProvider',
         ],
         'manageiq.provider_types.containers': [
             'kubernetes = cfme.containers.provider.kubernetes:KubernetesProvider',

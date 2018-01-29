@@ -247,6 +247,16 @@ management_systems:
                 credentials: nuage
                 security_protocol: SSL
                 api_port:
+    vcloud:
+        name: vmware_cloud
+        type: vcloud
+        api_version: 9.0
+        api_version_name: vCloud API 9.0
+        endpoints:
+            default:
+                hostname: 10.11.12.13
+                credentials: vcloud
+                api_port: 443
 
 configuration_managers:
     sat6:
