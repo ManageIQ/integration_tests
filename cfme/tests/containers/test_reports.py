@@ -191,6 +191,7 @@ def test_report_projects_by_number_of_pods(appliance, soft_assert):
                     .format(row['Project Name'], pods_count, row['Number of Pods']))
 
 
+@pytest.mark.meta(blockers=[BZ(1539378, forced_streams=["5.9"])])
 @pytest.mark.polarion('CMP-10009')
 def test_report_projects_by_cpu_usage(soft_assert, vporizer):
     """Testing 'Projects By CPU Usage' report, see polarion case for more info"""
@@ -206,6 +207,7 @@ def test_report_projects_by_cpu_usage(soft_assert, vporizer):
                     .format(row['Name'], usage_db, usage_report))
 
 
+@pytest.mark.meta(blockers=[BZ(1539378, forced_streams=["5.9"])])
 @pytest.mark.polarion('CMP-10010')
 def test_report_projects_by_memory_usage(soft_assert, vporizer):
     """Testing 'Projects By Memory Usage' report, see polarion case for more info"""
