@@ -73,16 +73,17 @@ For example::
       (e.g. ``browserName`` does not become ``browser_name``).
 
 
-base_url
+Appliance hostname
 --------
 
-Regardless of which Webdriver you use, ``base_url`` must be set. It is assumed that the website
-at the ``base_url`` will be a working CFME UI.
+Regardless of which Webdriver you use, ``hostname`` must be set for each appliance listed in ``appliances``.
+It is assumed that the website at the ``hostname`` will be a working CFME UI. You can specify ``ui_protocol``
+or ``ui_port`` to switch between http/https or change the web server port, respectively.
 
 .. note ::
 
-    ``base_url`` is not solely used by the browser. Other functionality, such as the SSH and SOAP
-    clients, derive their destination addresses from the ``base_url``.
+    ``hostname`` is not solely used by the browser. Other functionality, such as the SSH and SOAP
+    clients, derive their destination addresses from the ``hostname``.
 
 Firefox
 -------

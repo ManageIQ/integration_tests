@@ -46,8 +46,8 @@ Obtaining what you need (Project Setup)
           you the port numbers it is using and you should be able to VNC to it to see what is happening.
 
 * After all this, you should be able to run ``miq shell`` and or ``miq-runtest --collect-only``. Be
-  aware that you will also have to add your appliance to the ``env.yaml`` in either the
-  ``base_url``(deprecated) section, or in the newer ``appliances`` list.
+  aware that you will also have to add your appliance to the ``env.yaml`` in the ``appliances`` list. Support
+  for using ``base_url`` in ``env.yaml`` to specify an appliance has been removed.
 
 * You will also need to run the configuration script against the appliance that you intend to test
   if you didn't get it from sprout. All external usage of this framework will be non-sprout unless
@@ -128,7 +128,7 @@ started as quickly as possible:
 * ``cfme_tests`` expects an appliance, with an IP visible to the machine that runs ``cfme_tests``
 
   * If this is not the case (eg. CFME behind NAT, a container, whatever), you MUST specify the
-    ``base_url`` in configuration with a port, which is quite obvious, but people tend to forget
+    appliance in env configuration with a port, which is quite obvious, but people tend to forget
     ``cfme_tests`` also uses SSH and Postgres extensively, therefore you MUST have those services
     accessible and ideally on the expected ports. If you don't have them running on the expected
     ports, you MUST specify them manually using ``--port-ssh`` and ``--port-db`` command-line
@@ -180,12 +180,12 @@ started as quickly as possible:
 * Using :py:class:`utils.appliance.Appliance` only makes sense for appliances on providers that
   are specified in ``cfme_data.yaml``.
 
-* If you want to test a single appliance, set the ``base_url`` in the ``conf/env.yaml``
+* If you want to test a single appliance, set the ``hostname`` in the first list item under ``appliances``
+  in the ``conf/env.yaml``
 
 * If you want to test against multiple appliances, use the ``--appliance w.x.y.z`` parameter. Eg. if
   you have appliances ``1.2.3.4`` and ``2.3.4.5``, then append ``--appliance 1.2.3.4 --appliance 2.3.4.5``
-  to the ``miq-runtest`` command. Due to a glitch that has not been resolved yet, you should set the
-  ``base_url`` to the first appliance.
+  to the ``miq-runtest`` command.
 
 * If you have access to Sprout, you can request a fresh appliance to run your tests, you can use
   command like this one:

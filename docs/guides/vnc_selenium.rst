@@ -142,7 +142,8 @@ An example of the yaml is below:
 
 .. code-block:: yaml
 
-   base_url: https://10.11.12.13
+   appliances:
+       - hostname: 10.11.12.13
    browser:
        webdriver: Remote
        webdriver_options:

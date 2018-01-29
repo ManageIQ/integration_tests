@@ -189,7 +189,7 @@ log "use_sprout: $USE_SPROUT"
 # Now fill out the env yaml with ALL THE THINGS
 cat > $CFME_REPO_DIR/conf/env.local.yaml <<EOF
 appliances:
-  - base_url: $APPLIANCE
+  - hostname: $IP_ADDRESS
 $BROWSER_SECTION
 
 artifactor:
