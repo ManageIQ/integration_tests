@@ -709,7 +709,6 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
         """
         domain = credential_dict.get('domain')
         token = credential_dict.get('token')
-        print str(credential_dict)
         if not cred_type:
             return Credential(principal=credential_dict['username'],
                               secret=credential_dict['password'],
