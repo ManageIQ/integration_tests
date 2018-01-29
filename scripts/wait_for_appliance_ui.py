@@ -1,11 +1,9 @@
 #!/usr/bin/env python2
 
-"""Wait for an appliance UI to be usable
+"""
+Wait for an appliance UI to be usable
 
 Specifically, it will block until the specified URL returns status code 200.
-
-It will use base_url from conf.env by default.
-
 """
 import argparse
 import sys

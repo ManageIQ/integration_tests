@@ -19,7 +19,7 @@ this option can be specified more than once, and must be specified at least two 
 def pytest_addoption(parser):
     group = parser.getgroup("cfme")
     group._addoption(
-        '--appliance', dest='appliances', action='append', metavar='base_url', help=_appliance_help,
+        '--appliance', dest='appliances', action='append', metavar='appliance_url', help=_appliance_help,
         default=[])
     group._addoption('--use-sprout', dest='use_sprout', action='store_true',
         default=False, help="Use Sprout for provisioning appliances.")
@@ -78,9 +78,6 @@ def mangle_in_sprout_appliances(config):
         log.info("- %s is %s", url, appliance['name'])
 
     mgr.reset_timer()
-    # Set the base_url for collection purposes on the first appliance
-    conf.runtime["env"]["base_url"] = appliances[0]
-    # Retrieve and print the template_name for Jenkins to pick up
     template_name = requested_appliances[0]["template_name"]
     conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
     log.info("appliance_template: %s", template_name)

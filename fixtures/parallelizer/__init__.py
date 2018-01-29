@@ -4,12 +4,7 @@ The Workflow
 ------------
 
 - Master py.test process starts up, inspects config to decide how many slave to start, if at all
-
-  - env['parallel_base_urls'] is inspected first
-  - py.test config.option.appliances and the related --appliance cmdline flag are used
-    if env['parallel_base_urls'] isn't set
-  - if neither are set, no parallelization happens
-
+- py.test config.option.appliances and the related --appliance cmdline flag are used to count no. of needed slaves
 - Slaves are started
 - Master runs collection, blocks until slaves report their collections
 - Slaves each run collection and submit them to the master, then block inside their runtest loop,

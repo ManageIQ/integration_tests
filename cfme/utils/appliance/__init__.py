@@ -233,7 +233,6 @@ class IPAppliance(object):
         'db_port': 'db_port',
         'ssh_port': 'ssh_port',
         'project': 'project',
-        'ui_protocol': 'ui_protocol',
     }
     CONFIG_NONGLOBAL = {'hostname'}
     PROTOCOL_PORT_MAPPING = {'http': 80, 'https': 443}
@@ -746,7 +745,6 @@ class IPAppliance(object):
         If the ports do not correspond the protocols' default port numbers, then the ports are
         explicitly specified as well.
         """
-        # If address wasn't set in __init__, use the hostname from base_url
         show_port = self.PROTOCOL_PORT_MAPPING[self.ui_protocol] != self.ui_port
         if show_port:
             return '{}://{}:{}/'.format(self.ui_protocol, self.hostname, self.ui_port)
@@ -2616,13 +2614,6 @@ def load_appliances(appliance_list, global_kwargs):
 
         if kwargs.pop('dummy', False):
             result.append(DummyAppliance(**kwargs))
-            continue
-        if 'base_url' in kwargs:
-            warnings.warn(
-                'Your appliance specification has old-style base_url, please change',
-                category=DeprecationWarning, stacklevel=2)
-            url = kwargs.pop('base_url')
-            appliance = IPAppliance.from_url(url, **kwargs)
         else:
             appliance = IPAppliance(**{IPAppliance.CONFIG_MAPPING[k]: v for k, v in kwargs.items()})
         result.append(appliance)
@@ -2671,35 +2662,25 @@ class DummyAppliance(object):
 
 
 def load_appliances_from_config(config):
-    """Backwards-compatible config loader.
+    """
+    Instantiate IPAppliance objects based on data in ``appliances`` section of config.
 
     The ``config`` contains some global values and ``appliances`` key which contains a list of dicts
-    that have the same keys as ``IPAppliance.CONFIG_MAPPING``'s keys. If ``appliances`` key is not
-    present, it is assumed it is old-format definition and the whole dict is used as a reference
-    for one single appliance.
+    that have the same keys as ``IPAppliance.CONFIG_MAPPING``'s keys.
 
-    The global values in the root of the dict (in case of ``appliances`` present) have lesser
-    priority than the values in appliance definitions themselves
+    The global values in the root of the dict have lesser priority than the values in appliance definitions themselves
 
     Args:
         config: A dictionary with the configuration
     """
     if 'appliances' not in config:
-        # old-style setup
-        warnings.warn(
-            'Your conf.env has old-style base_url', category=DeprecationWarning, stacklevel=2)
-        appliances = [{
-            k: config[k]
-            for k in IPAppliance.CONFIG_MAPPING.keys()
-            if k in config}]
-        global_kwargs = {}
-    else:
-        # new-style setup
-        appliances = config['appliances']
-        global_kwargs = {
-            k: config[k]
-            for k in IPAppliance.CONFIG_MAPPING.keys()
-            if k not in IPAppliance.CONFIG_NONGLOBAL and k in config}
+        raise ValueError("Invalid config: missing an 'appliances' section")
+    appliances = config['appliances']
+
+    global_kwargs = {
+        k: config[k]
+        for k in IPAppliance.CONFIG_MAPPING.keys()
+        if k not in IPAppliance.CONFIG_NONGLOBAL and k in config}
 
     return load_appliances(appliances, global_kwargs)
 

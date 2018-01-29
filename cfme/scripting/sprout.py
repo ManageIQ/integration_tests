@@ -100,13 +100,14 @@ def populate_config_from_appliances(appliance_data):
 
     y_data['appliances'] = []
     for app in appliance_data:
-        y_data['appliances'].append({'base_url': 'https://{}/'.format(app['ip_address'])})
+        app_config = dict(
+            hostname=app['ip_address'],
+            ui_protocol="https",
+        )
+        y_data['appliances'].append(app_config)
     with open(file_name, 'w') as f:
-        try:
-            del y_data['base_url']
-        except KeyError:
-            pass
-        yaml.dump(y_data, f, default_flow_style=False)
+        # Use safe dump to avoid !!python/unicode tags
+        yaml.safe_dump(y_data, f, default_flow_style=False)
 
 
 if __name__ == "__main__":

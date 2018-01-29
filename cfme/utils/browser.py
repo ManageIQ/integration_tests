@@ -232,7 +232,7 @@ class BrowserManager(object):
         self._browser_renew_thread = None
 
     def coerce_url_key(self, key):
-        return key or store.base_url
+        return key or store.current_appliance.url
 
     @classmethod
     def from_conf(cls, browser_conf):

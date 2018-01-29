@@ -21,17 +21,6 @@ def test_ipappliance_from_url():
     assert ip_a.hostname == address
 
 
-# INVALID TEST CASE. You should always provide the hostname, unless you are an Appliance
-# def test_ipappliance_use_baseurl(appliance):
-#     if isinstance(appliance, DummyAppliance):
-#         pytest.xfail("Dummy appliance cant provide base_url")
-#     ip_a = IPAppliance()
-#     ip_a_parsed = urlparse(ip_a.url)
-#     env_parsed = urlparse(store.base_url)
-#     assert (ip_a_parsed.scheme, ip_a_parsed.netloc) == (env_parsed.scheme, env_parsed.netloc)
-#     assert ip_a.address in store.base_url
-
-
 @pytest.mark.skipif(pytest.config.getoption('--dummy-appliance'),
                     reason="infra_provider cant support dummy instance")
 def test_ipappliance_managed_providers(appliance, infra_provider):
