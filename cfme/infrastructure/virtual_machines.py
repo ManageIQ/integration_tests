@@ -594,7 +594,8 @@ class Vm(VM):
             view.create.click()
             list_view = self.vm.create_view(InfraVmSnapshotView)
             wait_for(lambda: self.exists, num_sec=300, delay=20,
-                     fail_func=list_view.toolbar.reload.click, handle_exception=True)
+                     fail_func=list_view.toolbar.reload.click, handle_exception=True,
+                     message="Waiting for snapshot create")
 
         def delete(self, cancel=False):
             title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
@@ -617,7 +618,8 @@ class Vm(VM):
                 })
                 view.flash.assert_message(flash_message)
 
-            wait_for(lambda: not self.exists, num_sec=300, delay=20, fail_func=view.browser.refresh)
+            wait_for(lambda: not self.exists, num_sec=300, delay=20, fail_func=view.browser.refresh,
+                     message="Waiting for snapshot delete")
 
         def delete_all(self, cancel=False):
             view = navigate_to(self.vm, 'SnapshotsAll')
