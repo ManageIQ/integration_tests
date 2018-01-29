@@ -19,7 +19,7 @@ class SlaveManager(object):
         self.session = None
         self.collection = None
         self.slaveid = conf.runtime['env']['slaveid'] = slaveid
-        self.appliance_config = conf.runtime['env']['appliances'] = appliance_config
+        self.appliance_config = conf.runtime['env']['appliances'][0] = appliance_config
         self.log = cfme.utils.log.logger
         conf.clear()
         # Override the logger in utils.log
