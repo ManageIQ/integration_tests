@@ -88,7 +88,16 @@ class StackOutputsEntities(View):
     """The entities of the resources page"""
     breadcrumb = BreadCrumb()
     title = Text('//div[@id="main-content"]//h1')
-    outputs = Table('//div[@id="list_grid"]//table')
+    outputs = Table('//div[@id="gtl_div"]//table')
+
+
+class StackOutputsDetails(BaseLoggedInPage):
+    title = Text('//div[@id="main-content"]//h1')
+
+    @property
+    def is_displayed(self):
+        """Is this page currently being displayed"""
+        return self.in_stacks and self.entities.title.is_displayed
 
 
 class StackResourcesEntities(View):
