@@ -200,16 +200,14 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
         host_stats = client.stats(*stats_to_match, requester=self)
 
         # Refresh the browser
-        method = None
         if ui:
             self.browser.selenium.refresh()
-            method = 'ui'
 
         # Verify that the stats retrieved from wrapanapi match those retrieved
         # from the UI
         for stat in stats_to_match:
             try:
-                cfme_stat = getattr(self, stat)(method=method)
+                cfme_stat = getattr(self, stat)(method='ui' if ui else None)
 
                 if host_stats[stat] != cfme_stat:
                     msg = "The {} stat does not match. (server: {}, host stat: {}, cfme stat: {})"
