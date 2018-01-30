@@ -29,6 +29,7 @@ TEST_ITEMS = [
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
                          ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
+@pytest.mark.skip(reason='https://github.com/ManageIQ/integration_tests/issues/6385')
 def test_tables_sort(test_item, soft_assert, appliance):
 
     current_view = navigate_to((test_item.obj if test_item.obj is ContainersProvider
