@@ -1,22 +1,21 @@
-import pytest
 import fauxfactory
+import pytest
 
-from cfme.configure.settings import DefaultView
-from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.services.catalogs.catalog import Catalog
-from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
-from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.services.myservice import MyService
+from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.stack import StackCollection
-from cfme import test_requirements
+from cfme.configure.settings import DefaultView
+from cfme.services.catalogs.catalog import Catalog
+from cfme.services.catalogs.catalog_item import CatalogItem
+from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
+from cfme.services.myservice import MyService
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.conf import credentials
-from cfme.utils.path import orchestration_path
 from cfme.utils.datafile import load_data_file
 from cfme.utils.log import logger
+from cfme.utils.path import orchestration_path
 from cfme.utils.wait import wait_for
-
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -122,8 +121,8 @@ def stack_data(appliance, provider, provisioning):
             _stack_data = {
                 'stack_name': stackname,
                 'stack_timeout': stack_timeout,
-                'vm_name': vm_name,
-                'key_name': stack_prov['key_name']
+                'param_virtualMachineName': vm_name,
+                'param_KeyName': stack_prov['key_name']
             }
     return _stack_data
 
