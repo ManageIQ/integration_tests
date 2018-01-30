@@ -38,7 +38,10 @@ def fixture_filter(metafunc, argnames, argvalues):
             return trim_items(l, keep_index)
         else:
             parameterset = ParameterSet.extract_from(l)
-            return parameterset._replace(values=trim_items(parameterset.values, keep_index))
+            if isinstance(l, str):
+                return [parameterset]
+            else:
+                return parameterset._replace(values=trim_items(parameterset.values, keep_index))
 
     # Generate the new values
     argnames = f(argnames)
