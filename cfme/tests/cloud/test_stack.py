@@ -1,12 +1,10 @@
-from xml.sax.saxutils import quoteattr
-
 import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.exceptions import CandidateNotFound
 from cfme.utils.appliance.implementations.ui import navigate_to
-from widgetastic_manageiq import Table
+from cfme.cloud.stack import StackOutputsDetails
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
@@ -15,17 +13,17 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def stack(setup_provider_modscope, provider, appliance):
     collection = appliance.collections.stacks
-    stack = collection.instantiate(provider.data['provisioning']['stacks'][0], provider=provider)
-    stack.wait_for_exists()
-    yield stack
-
-    try:
-        stack.delete()
-    except Exception:
-        pass
+    for stack_name in provider.data.provisioning.stacks:
+        stack = collection.instantiate(stack_name, provider=provider)
+        try:
+            stack.wait_for_exists()
+            return stack
+        except Exception:
+            pass
+    pytest.skip("No available stacks found for test")
 
 
 @pytest.mark.tier(3)
@@ -39,7 +37,7 @@ def test_security_group_link(stack):
     else:
         # Navigation successful, stack had security groups
         assert view.is_displayed
-        assert view.entities.title.text == '{} (Security Groups)'.format(stack.name)
+        assert view.entities.title.text == '{} (All Security Groups)'.format(stack.name)
 
 
 @pytest.mark.tier(3)
@@ -79,11 +77,10 @@ def test_outputs_link_url(appliance, stack):
         assert view.sidebar.relationships.nav.is_disabled('Outputs (0)')
     else:
         # Outputs is a table with clickable rows
-        # TODO: Need to come back to this one
-        table = Table('//div[@id="list_grid"]//table[contains(@class, "table-selectable")]')
-        table.click_row_by_cells({'Key': 'WebsiteURL'}, 'Key')
-        loc = "//*[normalize-space(text())={}]".format(quoteattr("WebsiteURL"))
-        assert appliance.browser.widgetastic.selenium.is_displayed(loc)
+        key_value = view.entities.outputs[0].key.text
+        view.entities.outputs[0].click()
+        view = appliance.browser.create_view(StackOutputsDetails)
+        assert view.title.text == key_value
 
 
 @pytest.mark.tier(3)
