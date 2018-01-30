@@ -165,6 +165,9 @@ class ImageAllForProvider(CFMENavigateStep):
         self.view.sidebar.images_by_provider.tree.click_path('Images by Provider',
                                                              self.obj.provider.name)
 
+    def resetter(self):
+        self.view.entities.search.remove_search_filters()
+
 
 @navigator.register(Image, 'Details')
 class ImageDetails(CFMENavigateStep):

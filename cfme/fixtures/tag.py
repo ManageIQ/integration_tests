@@ -1,6 +1,5 @@
 import fauxfactory
 import pytest
-from widgetastic.exceptions import RowNotFound
 
 from cfme.base.credential import Credential
 from cfme.configure.configuration.region_settings import Category, Tag
