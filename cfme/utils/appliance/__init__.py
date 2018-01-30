@@ -1868,7 +1868,7 @@ class IPAppliance(object):
         enabling_ansible = ansible_old is False and ansible_new is True
 
         yaml = self.get_yaml_config()
-        yaml['server']['role'] = ','.join([role for role, boolean in six.iteritems(roles) if boolean])
+        yaml['server']['role'] = ','.join(role for role, boolean in six.iteritems(roles) if boolean)
         self.set_yaml_config(yaml)
         timeout = 600 if enabling_ansible else 300
         wait_for(lambda: self.server_roles == roles, num_sec=timeout, delay=15)

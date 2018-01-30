@@ -12,7 +12,6 @@ from cfme.utils.wait import wait_for
 from cfme.utils.pretty import Pretty
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.providers import get_mgmt
-import six
 
 PROTOCOL_TYPES = ('smb', 'nfs')
 

@@ -32,8 +32,11 @@ def logging_routes(provider):
     all_routers_up = all([router["status"]["ingress"][0]["conditions"][0]["status"]
                           for router in routers])
 
-    all_pods = {pod: status["Ready"]
-                for pod, status in six.iteritems(provider.pods_per_ready_status()) if "logging" in pod}
+    all_pods = {
+        pod: status["Ready"]
+        for pod, status in six.iteritems(provider.pods_per_ready_status())
+        if "logging" in pod
+    }
 
     assert all_pods, "no logging pods found"
     assert all(all_pods.values()), "some pods not ready"
