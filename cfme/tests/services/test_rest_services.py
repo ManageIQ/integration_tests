@@ -3,7 +3,6 @@ import datetime
 
 import fauxfactory
 import pytest
-
 from manageiq_client.api import ManageIQClient as MiqApi
 
 from cfme import test_requirements
@@ -24,15 +23,14 @@ from cfme.rest.gen_data import (
     vm as _vm,
 )
 from cfme.services.catalogs.catalog_item import CatalogBundle
-from fixtures.provider import setup_one_or_skip
-from fixtures.pytest_store import store
-from cfme.utils import error, version
+from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
-
+from fixtures.provider import setup_one_or_skip
+from fixtures.pytest_store import store
 
 pytestmark = [
     pytest.mark.long_running,
@@ -50,8 +48,7 @@ def a_provider(request):
         ['provisioning', 'template'],
         ['provisioning', 'host'],
         ['provisioning', 'datastore'],
-        ['provisioning', 'vlan'],
-        ['provisioning', 'catalog_item_type']])
+        ['provisioning', 'vlan']])
     return setup_one_or_skip(request, filters=[pf])
 
 
