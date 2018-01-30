@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException, RowNotFound
-from widgetastic_patternfly import BootstrapSelect, Button
+from widgetastic_patternfly import BootstrapSelect, Button, CheckableBootstrapTreeview
 from widgetastic.widget import Table, Text, View
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
-from widgetastic_manageiq import BaseNonInteractiveEntitiesView, CheckableManageIQTree, BreadCrumb
+from widgetastic_manageiq import BaseNonInteractiveEntitiesView, BreadCrumb
 
 
 class ManagePoliciesView(BaseLoggedInPage):
     """
     Manage policies page
     """
-    policy_profiles = CheckableManageIQTree(tree_id='protectbox')
+    policy_profiles = CheckableBootstrapTreeview(tree_id='protectbox')
     breadcrumb = BreadCrumb()  # some views have breadcrumb, some not
     entities = View.nested(BaseNonInteractiveEntitiesView)
     save = Button('Save')

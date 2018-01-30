@@ -53,7 +53,23 @@ class ErrorView(View):
 
 
 class MiqBrowserPlugin(DefaultPlugin):
+    # Here we dismiss notifications as they obscure lower elements which need to be clicked on
+    # We don't bother iterating and instead choose [0] and [1] to simplify the codepath
+    # TODO: In the future we will store the notifications that are unread before dismissing them
+
     ENSURE_PAGE_SAFE = jsmin('''\
+        try {
+            var eventNotificationsService = angular.element('#notification-app')
+                .injector().get('eventNotifications');
+            eventNotificationsService.clearAll(
+                ManageIQ.angular.eventNotificationsData.state.groups[0]
+            );
+            eventNotificationsService.clearAll(
+                ManageIQ.angular.eventNotificationsData.state.groups[1]
+            );
+        } catch(err) {
+        }
+
         function isHidden(el) {if(el === null) return true; return el.offsetParent === null;}
         function isDataLoading() {
             try {
@@ -152,6 +168,10 @@ class MiqBrowser(Browser):
             logger=create_sublogger('MiqBrowser'),
             extra_objects=extra_objects)
         self.window_handle = selenium.current_window_handle
+        self.logger.info(
+            'Opened browser %s %s',
+            selenium.capabilities.get('browserName', 'unknown'),
+            selenium.capabilities.get('version', 'unknown'))
 
     @property
     def appliance(self):

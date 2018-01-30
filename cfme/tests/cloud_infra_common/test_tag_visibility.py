@@ -1,14 +1,13 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.common.provider import BaseProvider
+from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm import VM
-
 
 pytestmark = [
     test_requirements.tag,
     pytest.mark.tier(3),
-    pytest.mark.provider([BaseProvider], required_fields=['cap_and_util'], scope='module')
+    pytest.mark.provider([CloudInfraProvider], required_fields=['cap_and_util'], scope='module')
 ]
 
 

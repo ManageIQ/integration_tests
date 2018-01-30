@@ -325,11 +325,11 @@ def test_service_ansible_playbook_order_credentials(ansible_catalog_item, ansibl
             "machine_credential": ansible_credential.name
         }
     view = navigate_to(service_catalog, "Order")
-    wait_for(lambda: view.machine_credential.is_displayed, timeout=5)
+    view.wait_displayed()
     if appliance.version < "5.9":
-        options = [o.text for o in view.machine_credential.all_options]
+        options = [o.text for o in (view.fields('credential')).visible_widget.all_options]
     else:
-        options = view.machine_credential.all_options
+        options = (view.fields('credential')).visible_widget.all_options
     assert set(["<Default>", "CFME Default Credential", ansible_credential.name]) == set(options)
 
 

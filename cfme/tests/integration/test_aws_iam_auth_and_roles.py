@@ -4,10 +4,8 @@ from deepdiff import DeepDiff
 
 from cfme.utils.appliance import ViaUI, current_appliance
 from cfme.utils.blockers import BZ
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.conf import credentials
 from cfme.roles import role_access_ui_58z, role_access_ui_59z, role_access_ssui
-
-ONLY_IN_59 = ['Physical Infrastructure', 'Object Storage']
 
 
 def auth_groups():
@@ -16,25 +14,21 @@ def auth_groups():
         tuple containing (group_name, context)
         where group_name is a string and context is ViaUI/SSUI
     """
-    if 'miq_aws_iam' not in cfme_data.get('auth_modes'):
-        pytest.skip('No yaml entry for "miq_aws_iam" in cfme_data.auth_modes')
-    else:
-        parameter_list = []
-        # TODO: Include SSUI role_access dict and VIASSUI context
-        roles_and_context = [(
-            role_access_ui_59z if current_appliance.version >= '5.9' else role_access_ui_58z, ViaUI)
-        ]
-        for group_dict, context in roles_and_context:
-            parameter_list.extend([(group, context) for group in group_dict.keys()])
+    parameter_list = []
+    # TODO: Include SSUI role_access dict and VIASSUI context
+    roles_and_context = [(
+        role_access_ui_59z if current_appliance.version >= '5.9' else role_access_ui_58z, ViaUI)
+    ]
+    for group_dict, context in roles_and_context:
+        parameter_list.extend([(group, context) for group in group_dict.keys()])
     return parameter_list
 
 
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('group_name, context', auth_groups())
-@pytest.mark.meta(blockers=[BZ(1525598),
-                            BZ(1525657),
-                            BZ(1526495),
-                            BZ(1527179)])
+@pytest.mark.meta(blockers=[BZ(1525598, forced_streams=['5.8', '5.9']),
+                            BZ(1525657, forced_streams=['5.9']),
+                            BZ(1526495, forced_streams=['5.8', '5.9'])])
 def test_group_roles(appliance, configure_aws_iam_auth_mode, group_name, context, soft_assert):
     """Basic default AWS_IAM group role auth + RBAC test
 

@@ -122,8 +122,8 @@ def setup_replication_env(cfme_version, provider, lease, sprout_poolid, desc):
     lease_time = tot_time(lease)
     """Multi appliance setup with multi region and replication from remote to global"""
     required_app_count = 2
+    sprout_client = SproutClient.from_config()
     if sprout_poolid:
-        sprout_client = SproutClient.from_config()
         if sprout_client.call_method('pool_exists', sprout_poolid):
             sprout_pool = sprout_client.call_method('request_check', sprout_poolid)
             if len(sprout_pool['appliances']) >= required_app_count:
@@ -131,6 +131,7 @@ def setup_replication_env(cfme_version, provider, lease, sprout_poolid, desc):
                 apps = []
                 for app in sprout_pool['appliances']:
                     apps.append(IPAppliance(app['ip_address']))
+                sprout_client.set_pool_description(sprout_poolid, desc)
             else:
                 sys.exit("Pool does not meet the minimum size requirements!")
         else:
@@ -143,8 +144,7 @@ def setup_replication_env(cfme_version, provider, lease, sprout_poolid, desc):
             provider=provider, lease_time=lease_time
         )
         print("Appliance pool lease time is {}".format(lease))
-    sprout_client = SproutClient.from_config()
-    sprout_client.set_pool_description(request_id, desc)
+        sprout_client.set_pool_description(request_id, desc)
     print("Configuring replicated environment")
     ip0 = apps[0].hostname
     ip1 = apps[1].hostname

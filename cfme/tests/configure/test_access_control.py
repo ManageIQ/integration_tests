@@ -7,7 +7,7 @@ import pytest
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.provider import base_types
-from cfme.configure import tasks
+from cfme.configure.tasks import TasksView
 from cfme.exceptions import RBACOperationBlocked
 from cfme.infrastructure import virtual_machines as vms
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -200,7 +200,7 @@ def test_user_password_required_error_validation(appliance, group_collection):
     check = "Password can't be blank"
 
     with error.expected(check):
-        user = appliance.collections.users.create(
+        appliance.collections.users.create(
             name='user{}'.format(fauxfactory.gen_alphanumeric()),
             credential=Credential(
                 principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret=None),
@@ -562,8 +562,8 @@ def test_assign_user_to_new_group(appliance, group_collection):
 
 def _test_vm_provision(appliance):
     logger.info("Checking for provision access")
-    navigate_to(vms.Vm, 'VMsOnly')
-    vms.lcl_btn("Provision VMs")
+    view = navigate_to(vms.Vm, 'VMsOnly')
+    view.toolbar.lifecycle.item_enabled('Provision VMs')
 
 # this fixture is used in disabled tests. it should be updated along with tests
 # def _test_vm_power_on():
@@ -659,9 +659,8 @@ def _go_to(cls_or_obj, dest='All'):
                 [['Everything', 'Settings', 'Tasks'], True]
             ],
             {  # allowed_actions
-                'tasks': lambda appliance: appliance.browser.widgetastic.click(
-                    tasks.buttons.default
-                )
+                'tasks':
+                    lambda appliance: appliance.browser.create_view(TasksView).tabs.default.click()
             },
             {  # disallowed actions
                 'my services': _go_to(MyService),
@@ -714,13 +713,13 @@ def test_permissions(appliance, product_features, allowed_actions, disallowed_ac
         with user:
             appliance.server.login(user)
 
-            for name, action_thunk in allowed_actions.items():
+            for name, action_thunk in sorted(allowed_actions.items()):
                 try:
                     action_thunk(appliance)
                 except Exception:
                     fails[name] = "{}: {}".format(name, traceback.format_exc())
 
-            for name, action_thunk in disallowed_actions.items():
+            for name, action_thunk in sorted(disallowed_actions.items()):
                 try:
                     with error.expected(Exception):
                         action_thunk(appliance)
@@ -741,20 +740,11 @@ def single_task_permission_test(appliance, product_features, actions):
        fail when everything but product_features are enabled"""
     # Enable only specified product features
     test_prod_features = [(['Everything'], False)] + [(f, True) for f in product_features]
-    test_permissions(appliance, _mk_role(appliance, name=fauxfactory.gen_alphanumeric(),
-                                         product_features=test_prod_features), actions, {})
+    test_permissions(appliance, test_prod_features, actions, {})
 
-    # Enable everything but specified product features
-    test_prod_features = [(['Everything'], True)]
-    # CFME 5.7 - New roles have the checkbox for 'Everything' checked but the
-    # only child item checked is 'Access Rules for all Virtual Machines' so
-    # clear 'Everything' so all child items can be enabled to start
-    if appliance.version < "5.8":
-        test_prod_features = [(['Everything'], False)] + test_prod_features
-
-    test_prod_features += [(f, False) for f in product_features]
-    test_permissions(appliance, _mk_role(appliance, name=fauxfactory.gen_alphanumeric(),
-                                         product_features=test_prod_features), {}, actions)
+    # Enable everything except product features
+    test_prod_features = [(['Everything'], True)] + [(f, False) for f in product_features]
+    test_permissions(appliance, test_prod_features, {}, actions)
 
 
 @pytest.mark.tier(3)
@@ -767,7 +757,7 @@ def test_permissions_role_crud(appliance):
 
 
 @pytest.mark.tier(3)
-def test_permissions_vm_provisioning(appliance):
+def test_permissions_vm_provisioning(appliance, a_provider):
     features = [
         ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
         ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',

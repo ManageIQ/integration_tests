@@ -2,7 +2,7 @@ from cfme.utils.version import get_stream
 from collections import namedtuple
 from contextlib import contextmanager
 from cfme.test_framework.sprout.client import SproutClient
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.conf import cfme_data, credentials, auth_data
 from cfme.utils.log import logger
 import pytest
 from wait_for import wait_for
@@ -103,13 +103,17 @@ def app_creds_modscope():
 
 @pytest.fixture()
 def ipa_creds():
-    fqdn = cfme_data['auth_modes']['ext_ipa']['ipaserver'].split('.', 1)
-    creds_key = cfme_data['auth_modes']['ext_ipa']['credentials']
+    try:
+        ext_ipa = auth_data['auth_providers']['ext_ipa']
+    except KeyError:
+        pytest.skip('Missing auth_providers.ext_ipa in auth_data.yaml')
+    fqdn = ext_ipa['ipaserver'].split('.', 1)
+    creds_key = ext_ipa['credentials']
     return{
         'hostname': fqdn[0],
         'domain': fqdn[1],
-        'realm': cfme_data['auth_modes']['ext_ipa']['iparealm'],
-        'ipaserver': cfme_data['auth_modes']['ext_ipa']['ipaserver'],
+        'realm': ext_ipa['iparealm'],
+        'ipaserver': ext_ipa['ipaserver'],
         'username': credentials[creds_key]['principal'],
         'password': credentials[creds_key]['password']
     }

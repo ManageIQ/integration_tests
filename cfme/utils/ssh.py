@@ -372,11 +372,12 @@ class SSHClient(paramiko.SSHClient):
         return self.run_command('cd /var/www/miq/vmdb; echo \"{}\" '
             '| bundle exec bin/rails c 2> /dev/null'.format(command), timeout=timeout)
 
-    def run_rake_command(self, command, timeout=RUNCMD_TIMEOUT, **kwargs):
+    def run_rake_command(self, command, timeout=RUNCMD_TIMEOUT, disable_db_check=False, **kwargs):
         logger.info("Running rake command %r", command)
+        prefix = 'DISABLE_DATABASE_ENVIRONMENT_CHECK=1 ' if disable_db_check else ''
         return self.run_command(
-            'cd /var/www/miq/vmdb; bin/rake -f /var/www/miq/vmdb/Rakefile {command}'.format(
-                command=command), timeout=timeout, **kwargs)
+            'cd /var/www/miq/vmdb; {pre}bin/rake -f /var/www/miq/vmdb/Rakefile {command}'.format(
+                command=command, pre=prefix), timeout=timeout, **kwargs)
 
     def put_file(self, local_file, remote_file='.', **kwargs):
         logger.info("Transferring local file %r to remote %r", local_file, remote_file)

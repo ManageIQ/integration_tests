@@ -7,11 +7,9 @@ import pytest
 from cfme.containers.provider import ContainersProvider
 from cfme.utils.version import current_version
 from cfme.common.provider_views import ContainerProvidersView
-from cfme.utils.blockers import GH
 
 
 pytestmark = [
-    pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6409', upstream_only=False)]),
     pytest.mark.uncollectif(lambda: current_version() < "5.8.0.3"),
     pytest.mark.provider([ContainersProvider], scope='module')
 ]
@@ -49,9 +47,14 @@ TEST_ITEMS = (
 )
 
 
+@pytest.fixture(scope="module")
+def sync_ssl_certificate(provider):
+    provider.sync_ssl_certificate()
+
+
 @pytest.mark.polarion('CMP-9836')
 @pytest.mark.usefixtures('has_no_containers_providers')
-def test_add_provider_naming_conventions(provider, appliance, soft_assert):
+def test_add_provider_naming_conventions(provider, appliance, soft_assert, sync_ssl_certificate):
     """" This test is checking ability to add Providers with different names:
 
     Steps:
@@ -81,7 +84,7 @@ def test_add_provider_naming_conventions(provider, appliance, soft_assert):
 
 @pytest.mark.parametrize('default_sec_protocol', DEFAULT_SEC_PROTOCOLS)
 @pytest.mark.usefixtures('has_no_containers_providers')
-def test_add_provider_ssl(provider, default_sec_protocol, soft_assert):
+def test_add_provider_ssl(provider, default_sec_protocol, soft_assert, sync_ssl_certificate):
     """ This test checks adding container providers with 3 different security protocols:
     SSL trusting custom CA, SSL without validation and SSL
     Steps:
@@ -92,7 +95,11 @@ def test_add_provider_ssl(provider, default_sec_protocol, soft_assert):
         * Assert that provider was added successfully
         """
     new_provider = copy(provider)
-    new_provider.endpoints['default'].sec_protocol = default_sec_protocol
+    endpoints = {'default': new_provider.endpoints['default']}
+    endpoints['default'].sec_protocol = default_sec_protocol
+    new_provider.endpoints = endpoints
+    new_provider.metrics_type = 'Disabled'
+
     try:
         new_provider.setup()
     except AssertionError:
@@ -108,7 +115,8 @@ def test_add_provider_ssl(provider, default_sec_protocol, soft_assert):
         ti.args[1].default_sec_protocol, ti.args[1].hawkular_sec_protocol)
     for ti in TEST_ITEMS])
 @pytest.mark.usefixtures('has_no_containers_providers')
-def test_add_hawkular_provider_ssl(provider, appliance, test_item, soft_assert):
+def test_add_hawkular_provider_ssl(provider, appliance, test_item, soft_assert,
+                                   sync_ssl_certificate):
     """This test checks adding container providers with 3 different security protocols:
     SSL trusting custom CA, SSL without validation and SSL
     The test checks the Default Endpoint as well as the Hawkular Endpoint

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """polarion(\*tcid): Marker for marking tests as automation for polarion test cases."""
 import pytest
-from functools import partial
+import attr
+from fixtures.pytest_store import store
 
 
 def pytest_configure(config):
@@ -11,18 +12,33 @@ def pytest_configure(config):
 def extract_polarion_ids(item):
     """Extracts Polarion TC IDs from the test item. Returns None if no marker present."""
     polarion = item.get_marker('polarion')
-    if not polarion:
-        return None
-
-    return map(str, polarion.args)
+    return map(str, getattr(polarion, 'args', []))
 
 
-@pytest.fixture(autouse=True)
-def _update_polarion_in_junit(request, record_xml_property):
-    """Adds the supplied test case id to the xunit file as a property"""
+@pytest.mark.tryfirst
+def pytest_collection_modifyitems(config, items):
+    xml = getattr(config, '_xml', None)
+    if xml is None:
+        return
+    if store.parallelizer_role != 'master':
+        return
+    config.pluginmanager.register(ReportPolarionToJunitPlugin(
+        xml=xml,
+        node_map={item.nodeid: extract_polarion_ids(item) for item in items},
+    ))
 
-    record_id_to_xml = partial(record_xml_property, "test_id")
-    ids = extract_polarion_ids(request.node)
-    if ids is not None:
-        for id in ids:
-            record_id_to_xml(id)
+
+@attr.s(hash=False)
+class ReportPolarionToJunitPlugin(object):
+    xml = attr.ib()
+    node_map = attr.ib()
+
+    @pytest.mark.tryfirst
+    def pytest_runtest_logreport(self, report):
+        """Adds the supplied test case id to the xunit file as a property"""
+        if report.when != 'setup':
+            return
+        reporter = self.xml.node_reporter(report)
+        polarion_ids = self.node_map.get(report.nodeid, [])
+        for polarion_id in polarion_ids:
+            reporter.add_property('test_id', polarion_id)

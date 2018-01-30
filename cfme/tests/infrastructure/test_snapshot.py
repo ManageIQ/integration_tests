@@ -126,8 +126,10 @@ def test_delete_all_snapshots(small_test_vm, provider):
     snapshot2.create()
     snapshot2.delete_all()
     # Make sure the snapshots are indeed deleted
-    wait_for(lambda: not snapshot1.exists, num_sec=300, delay=20, fail_func=snapshot1.refresh)
-    wait_for(lambda: not snapshot2.exists, num_sec=300, delay=20, fail_func=snapshot1.refresh)
+    wait_for(lambda: not snapshot1.exists, num_sec=300, delay=20, fail_func=snapshot1.refresh,
+             message="Waiting for first snapshot to disappear")
+    wait_for(lambda: not snapshot2.exists, num_sec=300, delay=20, fail_func=snapshot1.refresh,
+             message="Waiting for second snapshot to disappear")
 
 
 def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request,
@@ -152,7 +154,8 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     # The 'fail_func' ensures we close the connection that failed with exception.
     # Without this, the connection would hang there and wait_for would fail with timeout.
     wait_for(lambda: ssh_client.run_command('touch snapshot1.txt').rc == 0, num_sec=400,
-             delay=20, handle_exception=True, fail_func=ssh_client.close())
+             delay=20, handle_exception=True, fail_func=ssh_client.close(),
+             message="Waiting for successful SSH connection")
     # Create first snapshot
     snapshot1.create()
     ssh_client.run_command('touch snapshot2.txt')
@@ -174,7 +177,8 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     snapshot1.revert_to()
     # Wait for the snapshot to become active
     logger.info('Waiting for vm %s to become active', snapshot1.name)
-    wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=provider.browser.refresh)
+    wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=provider.browser.refresh,
+             message="Waiting for the first snapshot to become active")
     # VM state after revert should be OFF
     full_test_vm.wait_for_vm_state_change(desired_state=full_test_vm.STATE_OFF, timeout=720)
     # Let's power it ON again
@@ -183,7 +187,8 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     soft_assert(full_test_vm.provider.mgmt.is_vm_running(full_test_vm.name), "vm not running")
     # Wait for successful ssh connection
     wait_for(lambda: ssh_client.run_command('test -e snapshot1.txt').rc == 0,
-             num_sec=400, delay=20, handle_exception=True, fail_func=ssh_client.close())
+             num_sec=400, delay=20, handle_exception=True, fail_func=ssh_client.close(),
+             message="Waiting for successful SSH connection after revert")
     try:
         result = ssh_client.run_command('test -e snapshot1.txt')
         assert not result.rc
@@ -226,7 +231,8 @@ def setup_snapshot_env(test_vm, memory):
     snapshot2.create()
     snapshot1.revert_to()
     wait_for(lambda: snapshot1.active,
-             num_sec=300, delay=20, fail_func=test_vm.provider.browser.refresh)
+             num_sec=300, delay=20, fail_func=test_vm.provider.browser.refresh,
+             message="Waiting for the first snapshot to become active")
 
 
 @pytest.mark.parametrize("parent_vm", ["on_with_memory", "on_without_memory", "off"])
@@ -264,22 +270,26 @@ def test_operations_suspended_vm(small_test_vm, soft_assert):
     # Create first snapshot when VM is running
     snapshot1 = new_snapshot(small_test_vm)
     snapshot1.create()
-    wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=snapshot1.refresh)
+    wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=snapshot1.refresh,
+             message="Waiting for the first snapshot to become active")
     # Suspend the VM
     small_test_vm.power_control_from_cfme(option=small_test_vm.SUSPEND, cancel=False)
     small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_SUSPENDED)
     # Create second snapshot when VM is suspended
     snapshot2 = new_snapshot(small_test_vm)
     snapshot2.create()
-    wait_for(lambda: snapshot2.active, num_sec=300, delay=20, fail_func=snapshot2.refresh)
+    wait_for(lambda: snapshot2.active, num_sec=300, delay=20, fail_func=snapshot2.refresh,
+             message="Waiting for the second snapshot to become active")
     # Try to revert to first snapshot while the VM is suspended
     snapshot1.revert_to()
-    wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=snapshot1.refresh)
+    wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=snapshot1.refresh,
+             message="Waiting for the first snapshot to become active after revert")
     # Check VM state, VM should be off
     assert small_test_vm.provider.mgmt.is_vm_stopped(small_test_vm.name)
     # Revert back to second snapshot
     snapshot2.revert_to()
-    wait_for(lambda: snapshot2.active, num_sec=300, delay=20, fail_func=snapshot2.refresh)
+    wait_for(lambda: snapshot2.active, num_sec=300, delay=20, fail_func=snapshot2.refresh,
+             message="Waiting for the second snapshot to become active after revert")
     # Check VM state, VM should be suspended
     assert small_test_vm.provider.mgmt.is_vm_suspended(small_test_vm.name)
     # Try to delete both snapshots while the VM is suspended
@@ -297,14 +307,17 @@ def test_operations_powered_off_vm(small_test_vm):
     # Create first snapshot
     snapshot1 = new_snapshot(small_test_vm)
     snapshot1.create()
-    wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=snapshot1.refresh)
+    wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=snapshot1.refresh,
+             message="Waiting for the first snapshot to become active")
     # Create second snapshot
     snapshot2 = new_snapshot(small_test_vm)
     snapshot2.create()
-    wait_for(lambda: snapshot2.active, num_sec=300, delay=20, fail_func=snapshot2.refresh)
+    wait_for(lambda: snapshot2.active, num_sec=300, delay=20, fail_func=snapshot2.refresh,
+             message="Waiting for the second snapshot to become active")
     # Try to revert to first snapshot while the VM is off
     snapshot1.revert_to()
-    wait_for(lambda: snapshot1.active is True, num_sec=300, delay=20, fail_func=snapshot1.refresh)
+    wait_for(lambda: snapshot1.active is True, num_sec=300, delay=20, fail_func=snapshot1.refresh,
+             message="Waiting for the fist snapshot to become active after revert")
     # Try to delete both snapshots while the VM is off
     # The delete method will make sure the snapshots are indeed deleted
     snapshot1.delete()
@@ -359,7 +372,8 @@ def test_create_snapshot_via_ae(appliance, request, domain, small_test_vm):
         attributes_values={"snap_name": snap_name})
 
     wait_for(lambda: snapshot.exists, timeout="2m", delay=10,
-             fail_func=small_test_vm.provider.browser.refresh, handle_exception=True)
+             fail_func=small_test_vm.provider.browser.refresh, handle_exception=True,
+             message="Waiting for snapshot create")
 
     # Clean up if it appeared
     snapshot.delete()

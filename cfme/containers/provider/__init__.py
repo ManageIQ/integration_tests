@@ -46,7 +46,10 @@ class ContainersProviderDefaultEndpoint(DefaultEndpoint):
                'sec_protocol': self.sec_protocol}
 
         if self.sec_protocol.lower() == 'ssl trusting custom ca' and hasattr(self, 'get_ca_cert'):
-            out['trusted_ca_certificates'] = self.get_ca_cert()
+            out['trusted_ca_certificates'] = self.get_ca_cert(
+                {"username": self.ssh_creds.principal,
+                 "password": self.ssh_creds.secret,
+                 "hostname": self.master_hostname})
 
         out['confirm_password'] = version.pick({
             version.LOWEST: self.token,
@@ -670,5 +673,6 @@ def refresh_and_navigate(*args, **kwargs):
 class GetRandomInstancesMixin(object):
 
     def get_random_instances(self, count=1):
+        """Getting random instances of the object."""
         all_instances = self.all()
-        return random.sample(all_instances, count)
+        return random.sample(all_instances, min(count, len(all_instances)))

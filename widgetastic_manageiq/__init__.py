@@ -38,11 +38,9 @@ from widgetastic.widget import (
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
     Accordion as PFAccordion, BootstrapSwitch, BootstrapTreeview,
-    BootstrapSelect, Button, CheckableBootstrapTreeview,
-    Dropdown, Input, VerticalNavigation, Tab)
+    BootstrapSelect, Button, Dropdown, Input, VerticalNavigation, Tab)
 
 from cfme.exceptions import ItemNotFound
-from cfme.utils.blockers import BZ
 
 
 class DynamicTableAddError(Exception):
@@ -51,7 +49,6 @@ class DynamicTableAddError(Exception):
 
 
 # TODO: replace below calls with direct calls later
-CheckableManageIQTree = CheckableBootstrapTreeview
 ManageIQTree = BootstrapTreeview
 
 
@@ -3062,11 +3059,10 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
 
         raise ItemNotFound("No Entities found on this page")
 
-    def apply(self, func, conditions, surf_pages=False):
+    def apply(self, func, conditions):
         """ looks for entities matching to conditions and applies passed func
         :param func:  function to apply
         :param conditions: entities should match to
-        :param surf_pages: current page entities if False, all entities otherwise
         :return: list of entities
 
         Ex:
@@ -3077,7 +3073,6 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                                                        {'name': 'env-win81-ie11'},
                                                        {'name': 'nachandr-59013-cback001'}])
         """
-
         if isinstance(conditions, dict):
             conditions = [conditions]
         elif isinstance(conditions, (list, tuple)):
@@ -3086,18 +3081,13 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
             raise ValueError('Wrong conditions passed')
 
         def apply_to_current_page(conditions):
+            entities = []
             for keys in conditions:
-                entities = self.get_entities_by_keys(**keys)
-                map(func, entities)
-                return entities
-
-        all_found_entities = []
-        if not surf_pages:
-            all_found_entities.extend(apply_to_current_page(conditions))
-        else:
-            for _ in self.paginator.pages():
-                all_found_entities.extend(apply_to_current_page(conditions))
-        return all_found_entities
+                cur_entities = self.get_entities_by_keys(**keys)
+                map(func, cur_entities)
+                entities.extend(cur_entities)
+            return entities
+        return apply_to_current_page(conditions)
 
 
 class BaseEntitiesView(View):

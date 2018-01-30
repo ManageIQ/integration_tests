@@ -1,12 +1,12 @@
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Tab, Input, BootstrapSwitch, Button
-
-from cfme.common.provider_views import BeforeFillMixin
-from cfme.utils import version
-from . import InfraProvider
-from cfme.common.provider import CANDUEndpoint, DefaultEndpoint, DefaultEndpointForm
 from wrapanapi.rhevm import RHEVMSystem
+
+from cfme.common.provider import CANDUEndpoint, DefaultEndpoint, DefaultEndpointForm
+from cfme.common.provider_views import BeforeFillMixin
 from cfme.exceptions import ItemNotFound
+from cfme.utils import version, deferred_verpick
+from . import InfraProvider
 
 
 class RHEVMEndpoint(DefaultEndpoint):
@@ -41,6 +41,10 @@ class RHEVMEndpointForm(View):
 
 
 class RHEVMProvider(InfraProvider):
+    catalog_name = deferred_verpick({
+        version.LOWEST: 'RHEV',
+        '5.9.0.17': 'Red Hat Virtualization',
+    })
     type_name = "rhevm"
     mgmt_class = RHEVMSystem
     db_types = ["Redhat::InfraManager"]

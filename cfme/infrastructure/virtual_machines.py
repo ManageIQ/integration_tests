@@ -12,7 +12,7 @@ from widgetastic.utils import partial_match, Parameter, VersionPick, Version
 from widgetastic.widget import (
     Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
 from widgetastic_patternfly import (
-    Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput)
+    Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, CheckableBootstrapTreeview)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, Template as BaseTemplate
@@ -30,7 +30,7 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
-    Accordion, ConditionalSwitchableView, ManageIQTree, CheckableManageIQTree, NonJSPaginationPane,
+    Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
     SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 
@@ -352,7 +352,7 @@ class InfraVmGenealogyView(InfraVmView):
     toolbar = View.nested(InfraVmGenealogyToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
     title = Text('#explorer_title_text')
-    tree = CheckableManageIQTree('genealogy_treebox')
+    tree = CheckableBootstrapTreeview('genealogy_treebox')
 
     @property
     def is_displayed(self):
@@ -594,7 +594,8 @@ class Vm(VM):
             view.create.click()
             list_view = self.vm.create_view(InfraVmSnapshotView)
             wait_for(lambda: self.exists, num_sec=300, delay=20,
-                     fail_func=list_view.toolbar.reload.click, handle_exception=True)
+                     fail_func=list_view.toolbar.reload.click, handle_exception=True,
+                     message="Waiting for snapshot create")
 
         def delete(self, cancel=False):
             title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
@@ -617,7 +618,8 @@ class Vm(VM):
                 })
                 view.flash.assert_message(flash_message)
 
-            wait_for(lambda: not self.exists, num_sec=300, delay=20, fail_func=view.browser.refresh)
+            wait_for(lambda: not self.exists, num_sec=300, delay=20, fail_func=view.browser.refresh,
+                     message="Waiting for snapshot delete")
 
         def delete_all(self, cancel=False):
             view = navigate_to(self.vm, 'SnapshotsAll')

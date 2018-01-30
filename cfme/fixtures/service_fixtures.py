@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import pytest
-
 from widgetastic.utils import partial_match
 
 from cfme.common.provider import cleanup_vm
@@ -28,9 +27,9 @@ def catalog_item(provider, provisioning, vm_name, dialog, catalog):
 
 
 def create_catalog_item(provider, provisioning, vm_name, dialog, catalog, console_template=None):
-
-    template, host, datastore, iso_file, catalog_item_type, vlan = map(provisioning.get,
-        ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type', 'vlan'))
+    catalog_item_type = provider.catalog_name
+    template, host, datastore, iso_file, vlan = map(provisioning.get,
+        ('template', 'host', 'datastore', 'iso_file', 'vlan'))
     if console_template:
         logger.info("Console template name : {}".format(console_template.name))
         template = console_template.name

@@ -4,7 +4,7 @@ from widgetastic_patternfly import CandidateNotFound
 
 from cfme.base.credential import Credential
 from cfme.utils.blockers import GH
-from cfme.utils.conf import cfme_data
+from cfme.utils.conf import auth_data
 from cfme.utils.log import logger
 
 pytestmark = pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
@@ -14,7 +14,7 @@ CREATE_GROUP = 'create_group'
 
 
 def pytest_generate_tests(metafunc):
-    auth_modes = cfme_data.get('auth_test_data')
+    auth_modes = auth_data.get('auth_providers')
     if not auth_modes:
         return
     argvalues = [[authmode] for authmode in auth_modes]
@@ -24,10 +24,10 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture()
 def data(request, auth_mode, add_group):
-    auth_data = cfme_data['auth_test_data'].get(auth_mode, {})
+    yaml_data = auth_data['auth_test'].get(auth_mode, {})
     if add_group == 'evm_default_group':
-        auth_data['get_groups'] = False
-    return auth_data
+        yaml_data['get_groups'] = False
+    return yaml_data
 
 
 @pytest.fixture()
@@ -89,9 +89,9 @@ def test_auth_configure(appliance, request, configure_auth, group, user, data):
        authmodes tested as part of this test: ext_ipa, ext_openldap, miq_openldap
        e.g. test_auth[ext-ipa_create-group]
         Prerequisities:
-            * ``cfme_data.yaml`` file
+            * ``auth_data.yaml`` file
         Steps:
-            * Make sure corresponding auth_modes data is updated to ``cfme_data.yaml``
+            * Make sure corresponding auth_modes data is updated to ``auth_data.yaml``
             * this test fetches the auth_modes from yaml and generates tests per auth_mode.
     """
 
