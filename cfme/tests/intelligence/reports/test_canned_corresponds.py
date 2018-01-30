@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme.configure.settings import Visual
 from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -25,6 +26,13 @@ def compare(db_item, report_item):
         return db_item.encode('utf8') == report_item
     else:
         return db_item is None and report_item == ''
+
+
+# TODO: Please make Changes when pagination is fix
+@pytest.fixture(scope='module')
+def visual(appliance):
+    set_visual = Visual(appliance)
+    set_visual.report_view_limit = 1000
 
 
 def test_providers_summary(soft_assert):
@@ -93,7 +101,7 @@ def test_cluster_relationships(soft_assert):
 
 
 @pytest.mark.meta(blockers=[BZ(1504010, forced_streams=['5.7', '5.8', 'upstream'])])
-def test_operations_vm_on(soft_assert, appliance):
+def test_operations_vm_on(visual, soft_assert, appliance):
     adb = appliance.db.client
     vms = adb['vms']
     hosts = adb['hosts']
