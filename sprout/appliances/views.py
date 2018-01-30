@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
-import xmlrpclib
+import six.moves.xmlrpc_client
 from functools import wraps
 
 from celery import chain
@@ -937,7 +937,7 @@ def view_bug_query(request, query_id):
             return go_home(request)
     try:
         bugs = query.list_bugs(request.user)
-    except xmlrpclib.Fault as e:
+    except six.moves.xmlrpc_client.Fault as e:
         messages.error(request, 'Bugzilla query error {}: {}'.format(e.faultCode, e.faultString))
         return go_home(request)
     return render(request, 'bugs/list_query.html', locals())
