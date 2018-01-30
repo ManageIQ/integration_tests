@@ -770,10 +770,9 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
         # cfme 5.9 doesn't allow to remove provider thru api
         bz_blocked = BZ(1501941, forced_streams=['5.9']).blocks
         if app.version < '5.9' or (app.version >= '5.9' and not bz_blocked):
-            providers = app.rest_api.collections.providers.all
             deleted_providers = []
             # Delete all matching
-            for prov in providers:
+            for prov in app.rest_api.collections.providers:
                 try:
                     if any(db_type in prov.type for db_type in cls.db_types):
                         logger.info('Deleting provider: %s', prov.name)
@@ -785,7 +784,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
                         raise ex
             # Wait for all matching to be deleted
             for prov in deleted_providers:
-                prov.wait_for_delete()
+                prov.wait_not_exists()
         else:
             # Delete all matching
             for prov in app.managed_known_providers:
