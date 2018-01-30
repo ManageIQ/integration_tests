@@ -1967,7 +1967,7 @@ class AdvancedFilterUserInput(View):
 
 class AdvancedSearchView(View):
     """ Advanced Search View """
-    import expression_editor as exp_editor
+    from . import expression_editor as exp_editor
     search_exp_editor = exp_editor.ExpressionEditor()
 
     load_filter_button = Button('Load')

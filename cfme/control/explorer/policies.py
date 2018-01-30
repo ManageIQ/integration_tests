@@ -9,7 +9,7 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Checkbox, Table, Text, TextInput, View
 from widgetastic_patternfly import Button, Input
 
-from actions import Action
+from .actions import Action
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
