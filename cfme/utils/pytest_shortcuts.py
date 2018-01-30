@@ -39,7 +39,7 @@ def fixture_filter(metafunc, argnames, argvalues):
         else:
             parameterset = ParameterSet.extract_from(l)
             if isinstance(l, str):
-                return [parameterset]
+                return parameterset._replace(values=[parameterset.values])
             else:
                 return parameterset._replace(values=trim_items(parameterset.values, keep_index))
 

@@ -1063,4 +1063,5 @@ def remove_all_pxe_servers():
     if view.entities.is_displayed:
         for entity in view.entities.rows():
             entity[0].check()
-        view.toolbar.configuration.item_select('Remove PXE Servers', handle_alert=True)
+        view.toolbar.configuration.item_select('Remove PXE Servers from Inventory',
+            handle_alert=True)
