@@ -168,7 +168,7 @@ class StackSecurityGroupsView(StackView):
     @property
     def is_displayed(self):
         """Is this page currently being displayed"""
-        expected_title = '{} (Security Groups)'.format(self.context['object'].name)
+        expected_title = '{} (All Security Groups)'.format(self.context['object'].name)
         return (
             self.in_stacks and
             self.entities.title.text == expected_title and

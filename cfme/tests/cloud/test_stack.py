@@ -37,7 +37,7 @@ def test_security_group_link(stack):
     else:
         # Navigation successful, stack had security groups
         assert view.is_displayed
-        assert view.entities.title.text == '{} (Security Groups)'.format(stack.name)
+        assert view.entities.title.text == '{} (All Security Groups)'.format(stack.name)
 
 
 @pytest.mark.tier(3)
