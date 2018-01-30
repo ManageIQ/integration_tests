@@ -68,7 +68,10 @@ def test_retire_service(appliance, setup_provider, context, order_catalog_item_i
 def configure_vmware_console_for_test(appliance, provider):
     """Configure VMware Console to use VNC which is what is required for the HTML5 console."""
     if provider.one_of(VMwareProvider):
-        appliance.server.settings.update_vmware_console({'console_type': 'VNC'})
+        if provider.key >= 'vsphere65':
+            pytest.skip("VNC consoles are unsupported on VMware ESXi 6.5 and later")
+        else:
+            appliance.server.settings.update_vmware_console({'console_type': 'VNC'})
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
