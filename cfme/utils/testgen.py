@@ -334,6 +334,6 @@ def pxe_servers(metafunc):
     """
     argnames = ['pxe_name']
 
-    items = cfme_data.get('pxe_servers', {}).keys()
+    items = list(cfme_data.get('pxe_servers', {}).keys())
 
     return argnames, [items], items

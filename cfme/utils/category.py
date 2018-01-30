@@ -2,6 +2,8 @@
 """Module used for handling categories of let's say form values and for categorizing them."""
 
 
+from __future__ import absolute_import
+import six
 class CategoryBase(object):
     """Base class for categories
 
@@ -30,7 +32,7 @@ def categorize(iterable, cat):
         cat: Category specification dictionary
     """
     for item in iterable:
-        for cond, func in cat.iteritems():
+        for cond, func in six.iteritems(cat):
             if callable(cond) and cond(item):
                 func(item)
                 break

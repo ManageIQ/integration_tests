@@ -8,7 +8,9 @@ is enough.
 
 It also provides a facility to check the appliance's version/stream for smoke testing.
 """
+from __future__ import absolute_import
 import pytest
+import six
 
 
 def get_streams_id():
@@ -56,7 +58,7 @@ def pytest_itemcollected(item):
                 add_mark = True
             else:
                 add_mark = True
-                for condition_key, condition_value in conditions.iteritems():
+                for condition_key, condition_value in six.iteritems(conditions):
                     if condition_key not in params:
                         continue
                     if params[condition_key] == condition_value:

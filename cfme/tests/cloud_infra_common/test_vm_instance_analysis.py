@@ -272,7 +272,7 @@ def detect_system_type(vm):
     if hasattr(vm, 'ssh'):
         system_release = safe_string(vm.ssh.run_command("cat /etc/os-release").output)
 
-        all_systems_dict = RPM_BASED.values() + DEB_BASED.values()
+        all_systems_dict = list(RPM_BASED.values()) + list(DEB_BASED.values())
         for systems_type in all_systems_dict:
             if systems_type['id'].lower() in system_release.lower():
                 return systems_type
@@ -479,7 +479,7 @@ def test_ssa_packages(ssa_vm, soft_assert, appliance, ssa_profile):
     if ssa_vm.system_type == WINDOWS:
         pytest.skip("Windows has no packages")
 
-    if 'package' not in ssa_vm.system_type.keys():
+    if 'package' not in ssa_vm.system_type:
         pytest.skip("Don't know how to update packages for {}".format(ssa_vm.system_type))
 
     package_name = ssa_vm.system_type['package']

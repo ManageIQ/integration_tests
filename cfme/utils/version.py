@@ -138,7 +138,7 @@ def pick(v_dict, active_version=None):
     active_version = active_version or current_version()
 
     v_dict = {get_version(k): v for (k, v) in v_dict.items()}
-    versions = v_dict.keys()
+    versions = list(v_dict.keys())
     sorted_matching_versions = sorted((v for v in versions if v <= active_version),
                                       reverse=True)
     return v_dict.get(sorted_matching_versions[0]) if sorted_matching_versions else None

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import base64
 import re
 import yaml
+import six
 
 try:
     import six.moves.cPickle as pickle
@@ -268,7 +270,7 @@ class Provider(MetadataMixin):
 
     @classmethod
     def get_available_provider_keys(cls):
-        return cfme_data.get("management_systems", {}).keys()
+        return list(cfme_data.get("management_systems", {}).keys())
 
     @property
     def provider_data(self):
@@ -328,7 +330,7 @@ class Provider(MetadataMixin):
                 per_user_usage[owner] = 1
             else:
                 per_user_usage[owner] += 1
-        per_user_usage = per_user_usage.items()
+        per_user_usage = list(per_user_usage.items())
         per_user_usage.sort(key=lambda item: item[1], reverse=True)
         return per_user_usage
 
@@ -349,7 +351,7 @@ class Provider(MetadataMixin):
                 if user not in result:
                     result[user] = 0
                 result[user] += count
-        result = result.items()
+        result = list(result.items())
         result.sort(key=lambda item: item[1], reverse=True)
         return result
 
@@ -454,7 +456,7 @@ class Group(MetadataMixin):
 
     def pick_versions_to_delete(self):
         to_delete = {}
-        for zstream, versions in self.zstreams_versions.iteritems():
+        for zstream, versions in six.iteritems(self.zstreams_versions):
             versions = sorted(versions, key=Version, reverse=True)
             versions_to_delete = versions[1:]
             if versions_to_delete:
@@ -1241,7 +1243,7 @@ class AppliancePool(MetadataMixin):
     def appliance_filter_params(self):
         params = self.filter_params
         result = {}
-        for key, value in params.iteritems():
+        for key, value in six.iteritems(params):
             result["template__{}".format(key)] = value
         return result
 

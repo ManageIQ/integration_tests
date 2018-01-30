@@ -60,7 +60,7 @@ class SlaveManager(object):
         self.session = session
         self.collection = {item.nodeid: item for item in session.items}
         terminalreporter.disable()
-        self.send_event("collectionfinish", node_ids=self.collection.keys())
+        self.send_event("collectionfinish", node_ids=list(self.collection.keys()))
 
     def pytest_runtest_logstart(self, nodeid, location):
         """pytest runtest logstart hook

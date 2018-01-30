@@ -2,6 +2,8 @@
 """Provides custom exceptions for the ``cfme`` module. """
 
 
+from __future__ import absolute_import
+import six
 class CFMEException(Exception):
     """Base class for exceptions in the CFME tree
 
@@ -81,7 +83,7 @@ class CandidateNotFound(CFMEException):
 
     @property
     def message(self):
-        return ", ".join("{}: {}".format(k, v) for k, v in self.d.iteritems())
+        return ", ".join("{}: {}".format(k, v) for k, v in six.iteritems(self.d))
 
     def __str__(self):
         return self.message

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import fauxfactory
 import pytest
 
@@ -11,6 +12,7 @@ from cfme.utils.wait import wait_for
 from cfme.utils.pretty import Pretty
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.providers import get_mgmt
+import six
 
 PROTOCOL_TYPES = ('smb', 'nfs')
 
@@ -58,10 +60,9 @@ class DbBackupData(Pretty):
         creds_key = conf.cfme_data.get('log_db_operations', {}).get('credentials', False)
         assert creds_key, \
             "No 'credentials' key found for machine {machine_id}".format(**self.__dict__)
-
-        assert creds_key in conf.credentials.iterkeys() and conf.credentials[creds_key],\
+        credentials = conf.credentials.get(creds_key)
+        assert credentials, \
             "No credentials for key '{}' found in credentials yaml".format(creds_key)
-        credentials = conf.credentials[creds_key]
 
         return credentials
 
@@ -70,9 +71,10 @@ class DbBackupData(Pretty):
         """
         data = {}
         for key in self.required_keys[protocol_type]:
-            assert key in protocol_data.iterkeys() and protocol_data[key],\
+            element = protocol_data.get(key)
+            assert element, \
                 "'{}' key must be set for scheduled {} backup to work".format(key, protocol_type)
-            data[key] = protocol_data[key]
+            data[key] = element
         return data
 
     @property

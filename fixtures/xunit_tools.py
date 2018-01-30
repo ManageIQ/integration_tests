@@ -1,5 +1,6 @@
 # pylint: disable=broad-except
 
+from __future__ import absolute_import
 import re
 import datetime
 
@@ -11,6 +12,7 @@ import pytest
 # pylint: disable=no-name-in-module
 from cfme.utils.conf import xunit, cfme_data
 from cfme.utils.pytest_shortcuts import extract_fixtures_values
+import six
 
 
 whitelist = [
@@ -103,7 +105,7 @@ def testcase_record(
     test_steps.append(test_step)
     testcase.append(test_steps)
     custom_fields_el = etree.Element('custom-fields')
-    for tc_id, content in custom_fields.iteritems():
+    for tc_id, content in six.iteritems(custom_fields):
         custom_field = etree.Element('custom-field', id=tc_id, content=content)
         custom_fields_el.append(custom_field)
     testcase.append(custom_fields_el)
@@ -144,7 +146,7 @@ def get_testcase_data(tests, test_names, item, legacy=False):
     except Exception:
         pass
 
-    param_list = extract_fixtures_values(item).keys() if not legacy else None
+    param_list = list(extract_fixtures_values(item).keys()) if not legacy else None
 
     manual = item.get_marker('manual')
     if not manual:
@@ -192,7 +194,7 @@ def testresult_record(test_name, parameters=None, result=None):
     properties = etree.Element('properties')
     testcase_id = etree.Element('property', name="polarion-testcase-id", value=test_name)
     properties.append(testcase_id)
-    for param, value in parameters.iteritems():
+    for param, value in six.iteritems(parameters):
         param_el = etree.Element(
             'property', name="polarion-parameter-{}".format(param), value=value)
         properties.append(param_el)
@@ -213,7 +215,7 @@ def get_testresult_data(tests, test_names, item, legacy=False):
         name = parametrized_name
         try:
             params = item.callspec.params
-            param_dict = {p: _get_name(v) for p, v in params.iteritems()}
+            param_dict = {p: _get_name(v) for p, v in six.iteritems(params)}
         except Exception:
             param_dict = {}
     tests.append({'name': name, 'params': param_dict, 'result': None})
@@ -238,7 +240,7 @@ def testrun_gen(tests, filename, config, collectonly=True):
         'property', name='polarion-response-{}'.format(
             xunit['response']['id']), value=xunit['response']['value'])
     properties.append(property_resp)
-    for prop_name, prop_value in prop_dict.iteritems():
+    for prop_name, prop_value in six.iteritems(prop_dict):
         if prop_value is None:
             continue
         prop_el = etree.Element(
@@ -310,7 +312,7 @@ def gen_duplicates_log(items):
         a[item.location[0]][re.sub(r'\[.*\]', '', item.location[2])] = a[item.location[0]].get(
             re.sub(r'\[.*\]', '', item.location[2]), 0) + 1
     with open('duplicates.log', 'w') as f:
-        for tests in a.itervalues():
+        for tests in six.itervalues(a):
             for test in tests:
                 if test not in ntr:
                     ntr.append(test)

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import fauxfactory
 import pytest
 from datetime import datetime, timedelta
@@ -21,6 +22,7 @@ from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 from markers.env_markers.provider import providers
 from . import do_scan, wait_for_ssa_enabled
+import six
 
 
 pf1 = ProviderFilter(classes=[InfraProvider])
@@ -56,7 +58,7 @@ def wait_for_alert(smtp, alert, delay=None, additional_checks=None):
                 if not additional_checks:
                     return True
                 else:
-                    for key, value in additional_checks.iteritems():
+                    for key, value in six.iteritems(additional_checks):
                         if value in mail.get(key, ""):
                             return True
         return False

@@ -36,6 +36,7 @@ as a result. If this counter reaches a predefined number of failures (see ``SETU
 the failing provider will be added to the list of problematic providers and no further attempts
 to set it up will be made.
 """
+from __future__ import absolute_import
 import pytest
 import random
 import six
@@ -199,7 +200,7 @@ def _generate_provider_fixtures():
 
     This will make fixtures like "cloud_provider" and "has_no_cloud_providers" available to tests.
     """
-    for prov_type, prov_class in all_types().iteritems():
+    for prov_type, prov_class in six.iteritems(all_types()):
         def gen_setup_provider(prov_class):
             @pytest.fixture(scope='function')
             def _setup_provider(request):

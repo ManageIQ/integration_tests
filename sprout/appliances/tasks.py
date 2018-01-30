@@ -40,6 +40,7 @@ from cfme.utils.timeutil import parsetime
 from cfme.utils.trackerbot import api, depaginate, parse_template
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
+import six
 
 
 LOCK_EXPIRE = 60 * 15  # 15 minutes
@@ -225,18 +226,18 @@ def poke_trackerbot(self):
 
         per_group[obj["template"]["group"]["name"]].append(obj)
     # Sort them using the build date
-    for group in per_group.iterkeys():
+    for group in six.iterkeys(per_group):
         per_group[group] = sorted(
             per_group[group],
             reverse=True, key=lambda o: o["template"]["datestamp"])
     objects = []
     # And interleave the the groups
     while any(per_group.values()):
-        for key in per_group.iterkeys():
+        for key in six.iterkeys(per_group):
             if per_group[key]:
                 objects.append(per_group[key].pop(0))
     for template in objects:
-        if template["provider"]["key"] not in conf.cfme_data.management_systems.keys():
+        if template["provider"]["key"] not in list(conf.cfme_data.management_systems.keys()):
             # If we don't use that provider in yamls, set the template as not usable
             # 1) It will prevent adding this template if not added
             # 2) It'll mark the template as unusable if it already exists
@@ -1588,7 +1589,7 @@ def pick_templates_for_deletion(self):
     """Applies some heuristics to guess templates that might be candidates to deletion."""
     to_mail = {}
     for group in Group.objects.all():
-        for zstream, versions in group.pick_versions_to_delete().iteritems():
+        for zstream, versions in six.iteritems(group.pick_versions_to_delete()):
             for version in versions:
                 for template in Template.objects.filter(
                         template_group=group, version=version, exists=True, suggested_delete=False):
@@ -1711,7 +1712,7 @@ def notify_owners(self, results):
         per_user[user].append(message)
 
     # Send out the e-mails
-    for user, messages in per_user.iteritems():
+    for user, messages in six.iteritems(per_user):
         appliance_list = '\n'.join('* {}'.format(message) for message in messages)
         email_body = """\
 Hello,

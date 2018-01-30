@@ -64,7 +64,7 @@ def test_add_tags(ansible_tags, provider):
     run_ansible('add_tags')
     gui_tags = [x.lower() for x in(get_smart_management(provider))]
     for tag_to_test in tags_to_test:
-        full_string = '{}{} {}'.format(tag_to_test.values()[0], ":", tag_to_test.values()[1])
+        full_string = '{}{} {}'.format(list(tag_to_test.values())[0], ":", list(tag_to_test.values())[1])
         assert full_string in gui_tags
 
 
