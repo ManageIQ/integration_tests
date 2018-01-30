@@ -4,7 +4,6 @@ import pytest
 from cfme import test_requirements
 from cfme.common.provider import CloudInfraProvider
 from cfme.utils import error
-from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.wait import wait_for
 
@@ -109,8 +108,8 @@ def test_provider_delete_from_detail(provider_rest, appliance, method):
         del_action = provider_rest.action.delete.POST
 
     del_action()
-    if not (method == 'post' and BZ(1525498, forced_streams=['5.9', 'upstream']).blocks):
-        assert_response(appliance)
+    # testing BZ1525498
+    assert_response(appliance)
     provider_rest.wait_not_exists(num_sec=50)
     with error.expected("ActiveRecord::RecordNotFound"):
         del_action()
@@ -125,8 +124,5 @@ def test_provider_delete_from_collection(provider_rest, appliance):
         test_flag: rest
     """
     collection = appliance.rest_api.collections.providers
-    if BZ(1525498, forced_streams=['5.9', 'upstream']).blocks:
-        delete_resources_from_collection(
-            collection, [provider_rest], num_sec=50, check_response=False)
-    else:
-        delete_resources_from_collection(collection, [provider_rest], num_sec=50)
+    # testing BZ1525498
+    delete_resources_from_collection(collection, [provider_rest], num_sec=50)
