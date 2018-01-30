@@ -290,7 +290,8 @@ def resource_usage(vm_ownership, appliance, provider):
             "consumed_hours": consumed_hours}
 
 
-def resource_cost(appliance, provider, metric, usage, description, rate_type, consumed_hours):
+def resource_cost(appliance, provider, metric_description, usage, description, rate_type,
+        consumed_hours):
     # Query the DB for Chargeback rates
     tiers = appliance.db.client['chargeback_tiers']
     details = appliance.db.client['chargeback_rate_details']
@@ -305,7 +306,7 @@ def resource_cost(appliance, provider, metric, usage, description, rate_type, co
             appliance.db.client.session.query(tiers).
             join(details, tiers.chargeback_rate_detail_id == details.id).
             join(cb_rates, details.chargeback_rate_id == cb_rates.id).
-            filter(details.metric == metric).
+            filter(details.description == metric_description).
             filter(cb_rates.rate_type == rate_type).
             filter(cb_rates.description == description).all()
         )
@@ -332,19 +333,19 @@ def chargeback_costs_default(resource_usage, appliance, provider):
     average_storage_used = resource_usage['average_storage_used']
     consumed_hours = resource_usage['consumed_hours']
 
-    cpu_used_cost = resource_cost(appliance, provider, 'cpu_usagemhz_rate_average',
+    cpu_used_cost = resource_cost(appliance, provider, 'Used CPU',
         average_cpu_used_in_mhz, 'Default', 'Compute', consumed_hours)
 
-    memory_used_cost = resource_cost(appliance, provider, 'derived_memory_used',
+    memory_used_cost = resource_cost(appliance, provider, 'Used Memory',
         average_memory_used_in_mb, 'Default', 'Compute', consumed_hours)
 
-    network_used_cost = resource_cost(appliance, provider, 'net_usage_rate_average',
+    network_used_cost = resource_cost(appliance, provider, 'Used Network I/O',
         average_network_io, 'Default', 'Compute', consumed_hours)
 
-    disk_used_cost = resource_cost(appliance, provider, 'disk_usage_rate_average',
+    disk_used_cost = resource_cost(appliance, provider, 'Used Disk I/O',
         average_disk_io, 'Default', 'Compute', consumed_hours)
 
-    storage_used_cost = resource_cost(appliance, provider, 'derived_vm_used_disk_storage',
+    storage_used_cost = resource_cost(appliance, provider, 'Used Disk Storage',
         average_storage_used, 'Default', 'Storage', consumed_hours)
 
     return {"cpu_used_cost": cpu_used_cost,
@@ -366,19 +367,19 @@ def chargeback_costs_custom(resource_usage, new_compute_rate, appliance, provide
     average_storage_used = resource_usage['average_storage_used']
     consumed_hours = resource_usage['consumed_hours']
 
-    cpu_used_cost = resource_cost(appliance, provider, 'cpu_usagemhz_rate_average',
+    cpu_used_cost = resource_cost(appliance, provider, 'Used CPU',
         average_cpu_used_in_mhz, description, 'Compute', consumed_hours)
 
-    memory_used_cost = resource_cost(appliance, provider, 'derived_memory_used',
+    memory_used_cost = resource_cost(appliance, provider, 'Used Memory',
         average_memory_used_in_mb, description, 'Compute', consumed_hours)
 
-    network_used_cost = resource_cost(appliance, provider, 'net_usage_rate_average',
+    network_used_cost = resource_cost(appliance, provider, 'Used Network I/O',
         average_network_io, description, 'Compute', consumed_hours)
 
-    disk_used_cost = resource_cost(appliance, provider, 'disk_usage_rate_average',
+    disk_used_cost = resource_cost(appliance, provider, 'Used Disk I/O',
         average_disk_io, description, 'Compute', consumed_hours)
 
-    storage_used_cost = resource_cost(appliance, provider, 'derived_vm_used_disk_storage',
+    storage_used_cost = resource_cost(appliance, provider, 'Used Disk Storage',
         average_storage_used, description, 'Storage', consumed_hours)
 
     return {"cpu_used_cost": cpu_used_cost,
@@ -614,7 +615,6 @@ def test_validate_custom_rate_disk_usage_cost(chargeback_costs_custom, chargebac
             break
 
 
-@pytest.mark.meta(blockers=[BZ(1532368, forced_streams='5.9')])
 def test_validate_custom_rate_storage_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate stoarge usage cost.
        Calculation is based on custom Chargeback rate.
