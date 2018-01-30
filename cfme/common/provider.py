@@ -771,17 +771,21 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
         bz_blocked = BZ(1501941, forced_streams=['5.9']).blocks
         if app.version < '5.9' or (app.version >= '5.9' and not bz_blocked):
             providers = app.rest_api.collections.providers.all
+            deleted_providers = []
+            # Delete all matching
             for prov in providers:
                 try:
                     if any(db_type in prov.type for db_type in cls.db_types):
                         logger.info('Deleting provider: %s', prov.name)
                         prov.action.delete()
+                        deleted_providers.append(prov)
                 except APIException as ex:
                     # Provider is already gone (usually caused by NetworkManager objs)
                     if 'RecordNotFound' not in str(ex):
                         raise ex
-            wait_for(lambda: not bool(set(app.rest_api.collections.providers.all) & set(providers)),
-                     fail_func=app.rest_api.collections.providers.reload())
+            # Wait for all matching to be deleted
+            for prov in deleted_providers:
+                prov.wait_for_delete()
         else:
             # Delete all matching
             for prov in app.managed_known_providers:
