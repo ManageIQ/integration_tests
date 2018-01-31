@@ -194,7 +194,8 @@ class ProviderTemplatesOnlyAllView(TemplatesOnlyAllView):
 
     @property
     def is_displayed(self):
-        msg = '{} (All Miq Templates)'.format(self.context['object'].name)
+        text = 'Miq' if self.browser.product_version < "5.9" else 'VM'
+        msg = '{} (All {} Templates)'.format(self.context['object'].name, text)
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
