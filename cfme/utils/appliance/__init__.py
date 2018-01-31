@@ -2621,8 +2621,8 @@ def load_appliances(appliance_list, global_kwargs):
                 raise ValueError(
                     "No valid IPAppliance kwargs found in config for appliance #{}".format(num)
                 )
-                
             appliance = IPAppliance(**{mapping[k]: v for k, v in kwargs.items() if k in mapping})
+
         result.append(appliance)
     return result
 
