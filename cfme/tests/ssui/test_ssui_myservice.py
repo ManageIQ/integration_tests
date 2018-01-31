@@ -73,7 +73,8 @@ def configure_vmware_console_for_test(appliance, provider):
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 @pytest.mark.parametrize('order_catalog_item_in_ops_ui', [['console_test']], indirect=True)
-@pytest.mark.uncollectif(lambda provider: provider.key >= 'vsphere65',
+@pytest.mark.uncollectif(lambda provider: provider.one_of(VMwareProvider) and
+                         provider.version >= 6.5,
                          'VNC consoles are unsupported on VMware ESXi 6.5 and later')
 def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
         configure_vmware_console_for_test, order_catalog_item_in_ops_ui, take_screenshot,
