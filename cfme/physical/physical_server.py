@@ -172,14 +172,10 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
         if ui:
             self.load_details()
 
-        # Check that the stats match
-        self._check_for_matching_stats(self.provider.mgmt, self.STATS_TO_MATCH, ui=ui)
+        # Retrieve the client and the stats to match
+        client = self.provider.mgmt
+        stats_to_match = self.STATS_TO_MATCH
 
-    def _check_for_matching_stats(self, client, stats_to_match=None, ui=False):
-        """ A function that checks that the stats from CFME and wrapanapi match.
-
-            If the stats do not match, an exception is raised.
-        """
         # Retrieve the stats from wrapanapi
         host_stats = client.stats(*stats_to_match, requester=self)
 
