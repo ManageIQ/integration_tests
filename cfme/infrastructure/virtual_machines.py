@@ -5,7 +5,6 @@ quadicon lists, and VM details page.
 from collections import namedtuple
 from copy import copy
 
-from fixtures.pytest_store import store
 import fauxfactory
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
@@ -195,7 +194,7 @@ class ProviderTemplatesOnlyAllView(TemplatesOnlyAllView):
 
     @property
     def is_displayed(self):
-        text = 'Miq' if store.current_appliance.version < '5.9' else 'VM'
+        text = 'Miq' if self.browser.product_version < "5.9" else 'VM'
         msg = '{} (All {} Templates)'.format(self.context['object'].name, text)
         return (
             self.logged_in_as_current_user and
