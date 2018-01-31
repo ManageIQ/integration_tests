@@ -172,24 +172,8 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
         if ui:
             self.load_details()
 
-        # Retrieve the data from the provider
-        providers_data = conf.cfme_data.get("management_systems", {})
-        providers = providers_data
-
-        # Gather the data necessary to instantiate an instance of the management class
-        # defined in wrapanapi.
-        provider_data = providers['lenovo']
-        credentials = provider_data['credentials']
-        credentials = conf.credentials[credentials]
-        provider_kwargs = provider_data.copy()
-        provider_kwargs.update(credentials)
-        provider_kwargs['logger'] = logger
-
-        # Create an instance of the management class
-        mgmt = self.mgmt_class(**provider_kwargs)
-
         # Check that the stats match
-        self._check_for_matching_stats(mgmt, self.STATS_TO_MATCH, ui=ui)
+        self._check_for_matching_stats(self.provider.mgmt, self.STATS_TO_MATCH, ui=ui)
 
     def _check_for_matching_stats(self, client, stats_to_match=None, ui=False):
         """ A function that checks that the stats from CFME and wrapanapi match.
