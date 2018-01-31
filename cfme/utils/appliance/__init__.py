@@ -2607,7 +2607,7 @@ def load_appliances(appliance_list, global_kwargs):
         List of :py:class:`IPAppliance`
     """
     result = []
-    for appliance_kwargs in appliance_list:
+    for num, appliance_kwargs in enumerate(appliance_list):
         kwargs = {}
         kwargs.update(global_kwargs)
         kwargs.update(appliance_kwargs)
@@ -2615,7 +2615,14 @@ def load_appliances(appliance_list, global_kwargs):
         if kwargs.pop('dummy', False):
             result.append(DummyAppliance(**kwargs))
         else:
-            appliance = IPAppliance(**{IPAppliance.CONFIG_MAPPING[k]: v for k, v in kwargs.items()})
+            mapping = IPAppliance.CONFIG_MAPPING
+
+            if not any(k in mapping for k in kwargs):
+                raise ValueError(
+                    "No valid IPAppliance kwargs found in config for appliance #{}".format(num)
+                )
+                
+            appliance = IPAppliance(**{mapping[k]: v for k, v in kwargs.items() if k in mapping})
         result.append(appliance)
     return result
 
