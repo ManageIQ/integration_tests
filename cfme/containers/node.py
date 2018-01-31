@@ -124,9 +124,11 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
+        search_visible = self.prerequisite_view.entities.search.is_displayed
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                    provider=self.obj.provider.name,
-                                                   use_search=True).click()
+                                                   surf_pages=not search_visible,
+                                                   use_search=search_visible).click()
 
 
 @navigator.register(Node, 'EditTags')
