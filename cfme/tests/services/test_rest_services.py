@@ -26,7 +26,11 @@ from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
-from cfme.utils.rest import assert_response, delete_resources_from_collection
+from cfme.utils.rest import (
+    assert_response,
+    delete_resources_from_collection,
+    query_resource_attributes,
+)
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 from fixtures.provider import setup_one_or_skip
@@ -196,6 +200,24 @@ def unassign_templates(templates):
 
 
 class TestServiceRESTAPI(object):
+    # testing BZ1539741
+    def test_query_service_attributes(self, services, soft_assert):
+        """Tests access to service attributes.
+
+        Metadata:
+            test_flag: rest
+        """
+        outcome = query_resource_attributes(services[0])
+        for failure in outcome.failed:
+            if failure.name == 'configuration_script' and BZ(
+                    1540250, forced_streams=['5.9', 'upstream']).blocks:
+                continue
+            if failure.name == 'metric_rollups' and BZ(
+                    1540254, forced_streams=['5.9', 'upstream']).blocks:
+                continue
+            soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+                failure.type, failure.name, failure.response.status_code, failure.error))
+
     def test_edit_service(self, appliance, services):
         """Tests editing a service.
         Prerequisities:
