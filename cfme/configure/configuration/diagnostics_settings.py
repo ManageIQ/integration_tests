@@ -279,7 +279,7 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
         elif self.second_server_collect:
             message = "MiqServer {} [{}]".format(
                 first_slave_server.name,
-                first_slave_server.zone.id
+                first_slave_server.sid
             )
         else:
             message = "MiqServer {} [{}]".format(
