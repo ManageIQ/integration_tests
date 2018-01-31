@@ -3,7 +3,8 @@
 import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from cached_property import cached_property
-from cfme.utils import conf
+from wrapanapi.lenovo import LenovoSystem
+
 from cfme.common import PolicyProfileAssignable, WidgetasticTaggable
 from cfme.common.physical_server_views import (
     PhysicalServerDetailsView,
@@ -11,17 +12,20 @@ from cfme.common.physical_server_views import (
     PhysicalServersView,
     PhysicalServerTimelinesView
 )
-from cfme.exceptions import ItemNotFound, StatsDoNotMatch, HostStatsNotContains
+from cfme.exceptions import (
+    ItemNotFound,
+    StatsDoNotMatch,
+    HostStatsNotContains,
+    ProviderHasNoProperty
+)
 from cfme.modeling.base import BaseEntity, BaseCollection
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
-from cfme.utils.update import Updateable
-from cfme.utils.wait import wait_for
 from cfme.utils.providers import get_crud_by_name
-from cfme.exceptions import ProviderHasNoProperty
-from wrapanapi.lenovo import LenovoSystem
+from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
+from cfme.utils.wait import wait_for
 
 @attr.s
 class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticTaggable):
