@@ -90,7 +90,7 @@ def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards):
                                 "Widget {} not found in {}!".format(widget.name, dash.name))
                 del dash_dict[dash.name]
         soft_assert(not dash_dict, "Some of the dashboards were not found! ({})".format(
-            ", ".join(dash_dict.keys())))
+            ", ".join(list(dash_dict.keys()))))
     except IndexError:
         pytest.fail("No dashboard selection tabs present on dashboard!")
 

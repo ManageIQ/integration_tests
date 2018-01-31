@@ -94,7 +94,7 @@ class Db(Mapping):
 
     def __iter__(self):
         """Iterator of table names in this db"""
-        return self.keys()
+        return list(self.keys())
 
     def __len__(self):
         """Number of tables in this db"""
@@ -110,7 +110,7 @@ class Db(Mapping):
 
     def items(self):
         """Iterator of ``(table_name, table)`` pairs"""
-        return izip(self.keys(), self.values())
+        return izip(list(self.keys()), list(self.values()))
 
     def values(self):
         """Iterator of tables in this db"""

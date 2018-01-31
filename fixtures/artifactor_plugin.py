@@ -20,6 +20,7 @@ already been used, it will die
 
 
 """
+from __future__ import absolute_import
 import atexit
 import subprocess
 from threading import RLock
@@ -36,6 +37,7 @@ from cfme.utils.net import random_port, net_check
 from cfme.utils.wait import wait_for
 from fixtures.pytest_store import write_line, store
 from markers.polarion import extract_polarion_ids
+import six
 
 UNDER_TEST = False  # set to true for artifactor using tests
 
@@ -198,7 +200,7 @@ def pytest_runtest_protocol(item):
 
     try:
         params = item.callspec.params
-        param_dict = {p: get_name(v) for p, v in params.iteritems()}
+        param_dict = {p: get_name(v) for p, v in six.iteritems(params)}
     except:
         param_dict = {}
     ip = appliance.hostname

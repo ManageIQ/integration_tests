@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import re
 from bugzilla import Bugzilla as _Bugzilla
 from collections import Sequence
@@ -8,6 +9,7 @@ from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger
 from cfme.utils.version import (
     LATEST, Version, current_version, appliance_build_datetime, appliance_is_downstream)
+import six
 
 NONE_FIELDS = {"---", "undefined", "unspecified"}
 
@@ -54,11 +56,11 @@ class Bugzilla(object):
 
     @property
     def bug_count(self):
-        return len(self.__bug_cache.keys())
+        return len(list(self.__bug_cache.keys()))
 
     @property
     def bugs(self):
-        for bug in self.__bug_cache.itervalues():
+        for bug in six.itervalues(self.__bug_cache):
             yield bug
 
     def products(self, *names):

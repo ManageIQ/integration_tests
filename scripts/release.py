@@ -60,7 +60,7 @@ def main(tag, old_tag, report_type, line_limit):
     print('')
     print('Includes: {} -> {}'.format(old_tag, tag))
 
-    max_len_labels = len(reduce((lambda x, y: x if len(x) > len(y) else y), valid_labels))
+    max_len_labels = max(len(x) for x in valid_labels)
 
     now = datetime.date.today()
     start_of_week = now - datetime.timedelta(days=30)
@@ -97,8 +97,7 @@ def main(tag, old_tag, report_type, line_limit):
         return 1
 
     if report_type in ['full', 'brief']:
-        max_len_pr = len(
-            reduce((lambda x, y: str(x) if len(str(x)) > len(str(y)) else str(y)), prs.keys()))
+        max_len_pr = max(len(str(x)) for x in prs)
 
         for commit in commits.split("\n"):
             pr = re.match('.*[#](\d+).*', commit)

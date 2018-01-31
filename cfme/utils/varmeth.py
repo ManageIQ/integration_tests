@@ -80,7 +80,7 @@ class variable(object):
             except KeyError:
                 raise AttributeError(
                     "Method {} does not have a variant for {}, valid variants are {}".format(
-                        self._name, method, ", ".join(map(str, self._mapping.keys()))))
+                        self._name, method, ", ".join(map(str, list(self._mapping.keys())))))
             return method(obj, *args, **kwargs)
         return caller
 

@@ -9,6 +9,7 @@ together with template_upload_all script. This is why all the function calls, wh
 normally be placed in main function, are located in function run(**kwargs).
 """
 
+from __future__ import absolute_import
 import argparse
 import sys
 import os
@@ -19,6 +20,7 @@ from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.wait import wait_for
 from wrapanapi.scvmm import SCVMMSystem
+import six
 
 add_stdout_handler(logger)
 
@@ -106,15 +108,15 @@ def make_kwargs(args, **kwargs):
     if len(kwargs) is 0:
         return args_kwargs
 
-    for kkey, kval in kwargs.iteritems():
-        for akey, aval in args_kwargs.iteritems():
+    for kkey, kval in six.iteritems(kwargs):
+        for akey, aval in six.iteritems(args_kwargs):
             if aval is not None:
                 if kkey == akey:
                     if kval != aval:
                         kwargs[akey] = aval
 
-    for akey, aval in args_kwargs.iteritems():
-        if akey not in kwargs.iterkeys():
+    for akey, aval in six.iteritems(args_kwargs):
+        if akey not in six.iterkeys(kwargs):
             kwargs[akey] = aval
 
     return kwargs
@@ -128,7 +130,7 @@ def make_kwargs_scvmm(cfme_data, provider, image_url, template_name):
     scvmm_kwargs = cfme_data['template_upload']['template_upload_scvmm']
 
     final_kwargs = {'provider': provider}
-    for kkey, kvalue in scvmm_kwargs.iteritems():
+    for kkey, kvalue in six.iteritems(scvmm_kwargs):
         final_kwargs[kkey] = kvalue
     final_kwargs['image_url'] = image_url
     final_kwargs['template_name'] = template_name

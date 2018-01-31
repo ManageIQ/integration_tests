@@ -170,7 +170,7 @@ def _get_outdated(polarion_testcases, pytest_testcases):
 
 def _write_csv(output_file, outdated_db):
     with open(output_file, 'wb') as csvfile:
-        sorted_db = sorted(outdated_db.items(), key=operator.itemgetter(0))
+        sorted_db = sorted(list(outdated_db.items()), key=operator.itemgetter(0))
         csv_writer = UnicodeWriter(csvfile)
         csv_writer.writerow([col.title() for col in sorted_db[0][1].keys()])
         for testcase in sorted_db:

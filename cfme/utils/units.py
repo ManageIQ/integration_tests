@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import math
 import re
 from collections import namedtuple
+import six
 
 # TODO: Split the 1000 and 1024 factor out. Now it is not an issue as it is used FOR COMPARISON ONLY
 FACTOR = 1024
@@ -15,7 +17,7 @@ EQUAL_UNITS = {
 }
 
 # Sanity check
-for target_unit, units in EQUAL_UNITS.iteritems():
+for target_unit, units in six.iteritems(EQUAL_UNITS):
     assert target_unit in UNITS
     for unit in units:
         assert unit in UNITS
@@ -54,7 +56,7 @@ class Unit(object):
             raise ValueError('{} is not a proper value to be parsed!'.format(repr(s)))
         number, prefix, unit_type = match.groups()
         # Check if it isnt just an another name for another unit.
-        for target_unit, units in EQUAL_UNITS.iteritems():
+        for target_unit, units in six.iteritems(EQUAL_UNITS):
             if unit_type in units:
                 unit_type = target_unit
         return cls(float(number), prefix, unit_type)

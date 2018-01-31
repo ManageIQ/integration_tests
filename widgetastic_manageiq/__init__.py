@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import atexit
 import json
 import math
@@ -1966,7 +1967,7 @@ class AdvancedFilterUserInput(View):
 
 class AdvancedSearchView(View):
     """ Advanced Search View """
-    import expression_editor as exp_editor
+    from . import expression_editor as exp_editor
     search_exp_editor = exp_editor.ExpressionEditor()
 
     load_filter_button = Button('Load')
@@ -3295,7 +3296,7 @@ class MenuShortcutsPicker(View):
             values = [values]
         if isinstance(values, dict):
             dict_values = values
-            values = values.values()
+            values = list(values.values())
         if set(values) == set(self.all_shortcuts):
             return False
         else:
@@ -3304,7 +3305,7 @@ class MenuShortcutsPicker(View):
                 dict_values_to_add = dict_values
             else:
                 dict_values_to_add = {value: value for value in values}
-            for shortcut, alias in dict_values_to_add.iteritems():
+            for shortcut, alias in six.iteritems(dict_values_to_add):
                 self.add_shortcut(shortcut, alias)
             return True
 

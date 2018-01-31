@@ -2,6 +2,7 @@
 """A model of Infrastructure Virtual Machines area of CFME.  This includes the VMs explorer tree,
 quadicon lists, and VM details page.
 """
+from __future__ import absolute_import
 from collections import namedtuple
 from copy import copy
 
@@ -33,6 +34,7 @@ from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
     SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
+import six
 
 
 def has_child(tree, text, parent_item=None):
@@ -869,7 +871,7 @@ class Vm(VM):
         vm_recfg = navigate_to(self, 'Reconfigure', wait_for_view=True)
 
         # We gotta add disks separately
-        fill_data = {k: v for k, v in changes.iteritems() if k != 'disks'}
+        fill_data = {k: v for k, v in six.iteritems(changes) if k != 'disks'}
         vm_recfg.fill(fill_data)
 
         for disk_change in changes['disks']:

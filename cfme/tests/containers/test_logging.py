@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytest
 
 from cfme.utils.version import current_version
@@ -5,6 +6,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
 from cfme.containers.node import Node, NodeCollection
+import six
 
 NUM_OF_DEFAULT_LOG_ROUTES = 2
 pytestmark = [
@@ -30,8 +32,11 @@ def logging_routes(provider):
     all_routers_up = all([router["status"]["ingress"][0]["conditions"][0]["status"]
                           for router in routers])
 
-    all_pods = {pod: status["Ready"]
-                for pod, status in provider.pods_per_ready_status().iteritems() if "logging" in pod}
+    all_pods = {
+        pod: status["Ready"]
+        for pod, status in six.iteritems(provider.pods_per_ready_status())
+        if "logging" in pod
+    }
 
     assert all_pods, "no logging pods found"
     assert all(all_pods.values()), "some pods not ready"

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytest
 from os import path as os_path
 
@@ -10,6 +11,7 @@ from cfme.utils.version import get_stream
 from scripts.repo_gen import process_url, build_file
 from wait_for import wait_for
 import tempfile
+import six
 
 
 def pytest_generate_tests(metafunc):
@@ -19,7 +21,7 @@ def pytest_generate_tests(metafunc):
     db_backups = cfme_data.get('db_backups', {})
     if not db_backups:
         return []
-    for key, data in db_backups.iteritems():
+    for key, data in six.iteritems(db_backups):
         argvalues.append((data.url, data.version, data.desc))
         idlist.append(key)
     return metafunc.parametrize(argnames=argnames, argvalues=argvalues, ids=idlist)

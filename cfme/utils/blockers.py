@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 import six
-import xmlrpclib
+import six.moves.xmlrpc_client
 from github import Github
 from urlparse import urlparse
 
@@ -56,7 +56,7 @@ class Blocker(object):
                 except KeyError:
                     raise ValueError(
                         "{} is a wrong engine specification for blocker! ({} available)".format(
-                            engine, ", ".join(cls.all_blocker_engines().keys())))
+                            engine, ", ".join(list(cls.all_blocker_engines().keys()))))
                 return engine_class(spec, **kwargs)
             match = re.match('^[A-Z][A-Z0-9]+-[0-9]+$', blocker)
             if match is not None:
@@ -195,7 +195,7 @@ class BZ(Blocker):
                 if bug.fixed_in is not None:
                     return version.current_version() < bug.fixed_in
             return result
-        except xmlrpclib.Fault as e:
+        except six.moves.xmlrpc_client.Fault as e:
             code = e.faultCode
             s = e.faultString.strip().split("\n")[0]
             logger.error("Bugzilla thrown a fault: %s/%s", code, s)

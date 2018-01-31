@@ -41,10 +41,14 @@ def random_default_views():
     for collection_name, ui_name in objects_mapping.items():
         original_default_views[collection_name] = DefaultView.get_default_view(ui_name)
         tested_default_views[collection_name] = choice(VIEWS)
-    DefaultView.set_default_view(objects_mapping.values(), tested_default_views.values())
+    DefaultView.set_default_view(
+        list(objects_mapping.values()),
+        list(tested_default_views.values()))
     yield tested_default_views
     # setting back the default views to the original state:
-    DefaultView.set_default_view(objects_mapping.values(), original_default_views.values())
+    DefaultView.set_default_view(
+        list(objects_mapping.values()),
+        list(original_default_views.values()))
 
 
 @pytest.mark.polarion('CMP-10568')

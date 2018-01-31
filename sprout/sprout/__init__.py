@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 from contextlib import contextmanager
 try:
-    import cPickle as pickle
+    import six.moves.cPickle as pickle
 except ImportError:
     import pickle
 from .celery import app as celery_app

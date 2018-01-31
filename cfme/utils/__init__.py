@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import atexit
 import re
 import subprocess
@@ -8,6 +9,7 @@ import diaper
 from cached_property import cached_property
 from functools import partial
 from werkzeug.local import LocalProxy
+import six
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 
@@ -269,7 +271,7 @@ def process_shell_output(value):
         for entry in sorted(value):
             result_lines.append(entry)
     elif isinstance(value, dict):
-        for key, value in value.iteritems():
+        for key, value in six.iteritems(value):
             result_lines.append('{}={}'.format(key, value))
     elif isinstance(value, str):
         result_lines.append(value)

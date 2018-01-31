@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import fauxfactory
 import pytest
 
@@ -7,6 +8,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from fixtures.pytest_store import store
 from cfme.utils.log import logger
 from cfme.utils.providers import list_providers_by_class
+import six
 
 
 def provider_app_crud(provider_class, appliance):
@@ -82,7 +84,7 @@ def test_db_restore(request, soft_assert, get_appliances):
     vm = provision_vm(request, virtual_crud)
     soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
     # Assert server roles on the second appliance
-    for role, is_enabled in server_info.server_roles_ui.iteritems():
+    for role, is_enabled in six.iteritems(server_info.server_roles_ui):
         if is_enabled:
             assert roles[role], "Role '{}' is selected but should not be".format(role)
         else:

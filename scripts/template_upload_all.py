@@ -17,6 +17,7 @@ The scripts for respective providers are:
     - template_upload_vsphere.py
 """
 
+from __future__ import absolute_import
 import argparse
 import re
 import datetime
@@ -29,6 +30,7 @@ from urllib2 import urlopen, HTTPError
 from cfme.utils import path, trackerbot
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger, add_stdout_handler
+import six
 
 CFME_BREW_ID = "cfme"
 NIGHTLY_MIQ_ID = "manageiq"
@@ -285,7 +287,7 @@ def browse_directory(dir_url):
     if len(openshift_image_name) is not 0:
         name_dict['template_upload_openshift'] = openshift_image_name[0]
 
-    for key, val in name_dict.iteritems():
+    for key, val in six.iteritems(name_dict):
         name_dict[key] = urljoin(dir_url, val)
 
     for key in name_dict.keys():
@@ -333,7 +335,7 @@ def main():
             urls[stream] = \
                 base_url + '.'.join(version[:2]) + '/' + '.'.join(version) + '/'
 
-    for key, url in urls.iteritems():
+    for key, url in six.iteritems(urls):
         if stream is not None:
             if key != stream:
                 continue
@@ -358,31 +360,31 @@ def main():
 
         if provider_type == 'openstack':
             module = 'template_upload_rhos'
-            if module not in dir_files.iterkeys():
+            if module not in six.iterkeys(dir_files):
                 continue
         elif provider_type == 'rhevm':
             module = 'template_upload_rhevm'
-            if module not in dir_files.iterkeys():
+            if module not in six.iterkeys(dir_files):
                 continue
         elif provider_type == 'virtualcenter':
             module = 'template_upload_vsphere'
-            if module not in dir_files.iterkeys():
+            if module not in six.iterkeys(dir_files):
                 continue
         elif provider_type == 'scvmm':
             module = 'template_upload_scvmm'
-            if module not in dir_files.iterkeys():
+            if module not in six.iterkeys(dir_files):
                 continue
         elif provider_type == 'gce':
             module = 'template_upload_gce'
-            if module not in dir_files.iterkeys():
+            if module not in six.iterkeys(dir_files):
                 continue
         elif provider_type == 'ec2':
             module = 'template_upload_ec2'
-            if module not in dir_files.iterkeys():
+            if module not in six.iterkeys(dir_files):
                 continue
         elif provider_type == 'openshift':
             module = 'template_upload_openshift'
-            if module not in dir_files.iterkeys():
+            if module not in six.iterkeys(dir_files):
                 continue
 
         if not module:
