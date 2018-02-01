@@ -102,13 +102,13 @@ def generated_request(appliance,
 
 
 @pytest.mark.tier(3)
-def test_services_request_direct_url(appliance, generated_request, a_provider):
+def test_services_request_direct_url(appliance, generated_request):
     """Go to the request page, save the url and try to access it directly."""
     widgetastic = appliance.browser.widgetastic
     selenium = widgetastic.selenium
     assert navigate_to(generated_request, 'Details'), "could not find the request!"
     request_url = selenium.current_url
-    navigate_to(a_provider, 'Details')  # Nav to some other page
+    navigate_to(appliance.server, 'LoggedIn')  # Nav to some other page
     selenium.get(request_url)  # Ok, direct access now.
     wait_for(
         lambda: widgetastic.is_displayed("//body[contains(@onload, 'miqOnLoad')]"),
