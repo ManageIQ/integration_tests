@@ -5,6 +5,7 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.utils import error
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate]
@@ -40,7 +41,7 @@ def klass(request, namespace):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_method_crud(request, klass):
+def test_method_crud(klass):
     method = klass.methods.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
@@ -58,6 +59,39 @@ def test_method_crud(request, klass):
     assert method.exists
     method.delete()
     assert not method.exists
+
+
+@pytest.mark.sauce
+@pytest.mark.tier(2)
+def test_automate_method_inputs_crud(klass):
+    method = klass.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        location='inline',
+        script='blah',
+        inputs={
+            'foo': {'data_type': 'string'},
+            'bar': {'data_type': 'integer', 'default_value': '42'}}
+    )
+    assert method.exists
+    view = navigate_to(method, 'Details')
+    assert view.inputs.is_displayed
+    assert view.inputs.read() == {
+        'foo': {'Data Type': 'string', 'Default Value': ''},
+        'bar': {'Data Type': 'integer', 'Default Value': '42'},
+    }
+    with update(method):
+        method.inputs = {'different': {'default_value': 'value'}}
+    view = navigate_to(method, 'Details')
+    assert view.inputs.is_displayed
+    assert view.inputs.read() == {
+        'different': {'Data Type': 'string', 'Default Value': 'value'},
+    }
+    with update(method):
+        method.inputs = {}
+    view = navigate_to(method, 'Details')
+    assert not view.inputs.is_displayed
+    method.delete()
 
 
 @pytest.mark.tier(2)
