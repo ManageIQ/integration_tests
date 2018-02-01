@@ -1,4 +1,5 @@
 import argparse
+import json
 import re
 import urlparse
 from collections import defaultdict, namedtuple
@@ -137,7 +138,7 @@ def provider_templates(api):
 
 
 def mark_provider_template(api, provider, template, tested=None, usable=None,
-        diagnosis='', build_number=None, stream=None):
+        diagnosis='', build_number=None, stream=None, custom_data=None):
     """Mark a provider template as tested and/or usable
 
     Args:
@@ -151,7 +152,8 @@ def mark_provider_template(api, provider, template, tested=None, usable=None,
     Returns the response of the API request
 
     """
-    provider_template = _as_providertemplate(provider, template, group=stream)
+    provider_template = _as_providertemplate(provider, template, group=stream,
+                                             custom_data=custom_data)
 
     if tested is not None:
         provider_template['tested'] = bool(tested)
@@ -225,13 +227,13 @@ def templates_to_test(api, limit=1, request_type=None):
     return templates
 
 
-def _as_providertemplate(provider, template, group=None):
+def _as_providertemplate(provider, template, group=None, custom_data=None):
     if not isinstance(provider, Provider):
         provider = Provider(str(provider))
     if not isinstance(group, Group) and group is not None:
         group = Group(name=group)
     if not isinstance(template, Template):
-        template = Template(str(template), group=group)
+        template = Template(str(template), group=group, custom_data=custom_data)
 
     return ProviderTemplate(provider, template)
 
@@ -258,7 +260,7 @@ def post_jenkins_result(job_name, number, stream, date, template,
         print(exc.content)
 
 
-def trackerbot_add_provider_template(stream, provider, template_name):
+def trackerbot_add_provider_template(stream, provider, template_name, custom_data=None):
     try:
         existing_provider_templates = [
             pt['id']
@@ -268,7 +270,8 @@ def trackerbot_add_provider_template(stream, provider, template_name):
             print('Template {} already tracked for provider {}'.format(
                 template_name, provider))
         else:
-            mark_provider_template(api(), provider, template_name, stream=stream)
+            mark_provider_template(api(), provider, template_name, stream=stream,
+                                   custom_data=custom_data)
             print('Added {} template {} on provider {}'.format(
                 stream, template_name, provider))
     except Exception as e:
@@ -344,12 +347,15 @@ class Provider(dict):
 
 class Template(dict):
     """dict subclass to help serialize templates as JSON"""
-    def __init__(self, name, group=None, datestamp=None):
+    def __init__(self, name, group=None, datestamp=None, custom_data=None):
         self['name'] = name
         if group is not None:
             self['group'] = group
         if datestamp is not None:
             self['datestamp'] = datestamp.strftime('%Y-%m-%d')
+
+        if custom_data is not None:
+            self['custom_data'] = json.dumps(custom_data)
 
 
 class ProviderTemplate(dict):
