@@ -90,7 +90,7 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
     @variable(alias='ui')
     def memory_capacity(self):
         return self.get_detail("Properties", "Total memory (mb)")
-    
+
     def refresh(self, cancel=False):
         """Perform 'Refresh Relationships and Power States' for the server.
 
@@ -222,13 +222,16 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
                 server_inventory = server_inventory[inventory]
 
                 if server_inventory != cfme_inventory:
-                    msg = "The {} inventory does not match. (server: {}, server inventory: {}, cfme inventory: {})"
-                    raise StatsDoNotMatch(msg.format(inventory, self.name, server_inventory, cfme_inventory))
+                    msg = "The {} inventory does not match. (server: {}, server inventory: {}, " \
+                          "cfme inventory: {})"
+                    raise StatsDoNotMatch(msg.format(inventory, self.name, server_inventory,
+                                                     cfme_inventory))
             except KeyError:
                 raise HostStatsNotContains(
                     "Server inventory information does not contain '{}'".format(inventory))
             except AttributeError:
-                raise ProviderHasNoProperty("Provider does not know how to get '{}'".format(inventory))         
+                msg = "Provider does not know how to get '{}'"
+                raise ProviderHasNoProperty(msg.format(inventory))
 
 @attr.s
 class PhysicalServerCollection(BaseCollection):
