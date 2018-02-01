@@ -53,7 +53,8 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
     db_id = None
     mgmt_class = LenovoSystem
 
-    STATS_TO_MATCH = ['power_state']
+    INVENTORY_TO_MATCH = ['power_state']
+    STATS_TO_MATCH = ['cores_capacity', 'memory_capacity']
 
     def load_details(self, refresh=False):
         """To be compatible with the Taggable and PolicyProfileAssignable mixins.
@@ -82,6 +83,14 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
     def power_state(self):
         return self.get_detail("Power Management", "Power State")
 
+    @variable(alias='ui')
+    def cores_capacity(self):
+        return self.get_detail("Properties", "CPU total cores")
+
+    @variable(alias='ui')
+    def memory_capacity(self):
+        return self.get_detail("Properties", "Total memory (mb)")
+    
     def refresh(self, cancel=False):
         """Perform 'Refresh Relationships and Power States' for the server.
 
@@ -176,12 +185,14 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
         if ui:
             self.load_details()
 
-        # Retrieve the client and the stats to match
+        # Retrieve the client and the stats and inventory to match
         client = self.provider.mgmt
         stats_to_match = self.STATS_TO_MATCH
+        inventory_to_match = self.INVENTORY_TO_MATCH
 
-        # Retrieve the stats from wrapanapi
-        host_stats = client.stats(*stats_to_match, requester=self)
+        # Retrieve the stats and inventory from wrapanapi
+        server_stats = client.stats(*stats_to_match, requester=self)
+        server_inventory = client.inventory(*inventory_to_match, requester=self)
 
         # Refresh the browser
         if ui:
@@ -191,17 +202,33 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
         # from the UI
         for stat in stats_to_match:
             try:
-                cfme_stat = getattr(self, stat)(method='ui' if ui else None)
+                cfme_stat = int(getattr(self, stat)(method='ui' if ui else None))
+                server_stat = int(server_stats[stat])
 
-                if host_stats[stat] != cfme_stat:
-                    msg = "The {} stat does not match. (server: {}, host stat: {}, cfme stat: {})"
-                    raise StatsDoNotMatch(msg.format(stat, self.name, host_stats[stat], cfme_stat))
+                if server_stat != cfme_stat:
+                    msg = "The {} stat does not match. (server: {}, server stat: {}, cfme stat: {})"
+                    raise StatsDoNotMatch(msg.format(stat, self.name, server_stat, cfme_stat))
             except KeyError:
                 raise HostStatsNotContains(
-                    "Host stats information does not contain '{}'".format(stat))
+                    "Server stats information does not contain '{}'".format(stat))
             except AttributeError:
                 raise ProviderHasNoProperty("Provider does not know how to get '{}'".format(stat))
 
+        # Verify that the inventory retrieved from wrapanapi match those retrieved
+        # from the UI
+        for inventory in inventory_to_match:
+            try:
+                cfme_inventory = getattr(self, inventory)(method='ui' if ui else None)
+                server_inventory = server_inventory[inventory]
+
+                if server_inventory != cfme_inventory:
+                    msg = "The {} inventory does not match. (server: {}, server inventory: {}, cfme inventory: {})"
+                    raise StatsDoNotMatch(msg.format(inventory, self.name, server_inventory, cfme_inventory))
+            except KeyError:
+                raise HostStatsNotContains(
+                    "Server inventory information does not contain '{}'".format(inventory))
+            except AttributeError:
+                raise ProviderHasNoProperty("Provider does not know how to get '{}'".format(inventory))         
 
 @attr.s
 class PhysicalServerCollection(BaseCollection):
