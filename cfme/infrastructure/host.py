@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """A model of an Infrastructure Host in CFME."""
 import attr
+
 from manageiq_client.api import APIException
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
+from widgetastic.utils import VersionPick
 
 from cfme.base.credential import Credential as BaseCredential
 from cfme.common import PolicyProfileAssignable, WidgetasticTaggable
@@ -131,10 +133,10 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
             cancel (bool): Whether to cancel the deletion, defaults to True
         """
         view = navigate_to(self, "Details")
-        msg = 'Remove item'
-        if self.appliance.version >= '5.9':
-            msg = 'Remove item from Inventory'
-        view.toolbar.configuration.item_select(msg, handle_alert=not cancel)
+        remove_item = VersionPick({
+            '5.8': 'Remove item',
+            '5.9': 'Remove item from Inventory'})
+        view.toolbar.configuration.item_select(remove_item, handle_alert=not cancel)
         if not cancel:
             view = self.create_view(HostsView)
             assert view.is_displayed
@@ -478,11 +480,41 @@ class HostCollection(BaseCollection):
     def delete(self, *hosts):
         """Deletes this host from CFME."""
         view = self.check_hosts(hosts)
-        view.toolbar.configuration.item_select('Remove items from Inventory', handle_alert=True)
-        view.flash.assert_success_message('The selected Hosts / Nodes was deleted')
+        remove_item = VersionPick({
+            '5.8': 'Remove items',
+            '5.9': 'Remove items from Inventory'})
+        view.toolbar.configuration.item_select(remove_item, handle_alert=True)
+        view.flash.assert_success_message(
+            'Delete initiated for {} Hosts / Nodes from the {} Database'.format(
+                len(hosts), self.appliance.product_name))
         for host in hosts:
-            wait_for(lambda: not host.exists, num_sec=600, delay=30,
-                     message='Wait for Host to be deleted')
+            host.wait_for_delete()
+
+    def discover(self, from_address, to_address, esx=False, ipmi=False, cancel=False):
+        """Discovers hosts."""
+        view = navigate_to(self, 'Discover')
+
+        parts = from_address.split('.')
+        fill_dict = {
+            'esx': esx or None,
+            'ipmi': ipmi or None,
+            'from_ip1': parts[0],
+            'from_ip2': parts[1],
+            'from_ip3': parts[2],
+            'from_ip4': parts[3],
+            'to_ip4': to_address.split('.')[-1]
+        }
+        view.fill(fill_dict)
+
+        if not cancel:
+            view.start_button.click()
+            flash_message = 'Hosts / Nodes: Discovery successfully initiated'
+        else:
+            view.cancel_button.click()
+            flash_message = 'Hosts / Nodes Discovery was cancelled by the user'
+        view = self.create_view(HostsView)
+        assert view.is_displayed
+        view.flash.assert_success_message(flash_message)
 
     def power_on(self, *hosts):
         view = self.check_hosts(hosts)
@@ -585,10 +617,10 @@ class Add(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select("Add a New item")
 
 
-@navigator.register(Host)
+@navigator.register(HostCollection)
 class Discover(CFMENavigateStep):
     VIEW = HostDiscoverView
-    prerequisite = NavigateToAttribute("parent", "All")
+    prerequisite = NavigateToSibling("All")
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select("Discover items")
