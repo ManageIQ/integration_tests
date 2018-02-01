@@ -108,7 +108,7 @@ def test_services_request_direct_url(appliance, generated_request):
     selenium = widgetastic.selenium
     assert navigate_to(generated_request, 'Details'), "could not find the request!"
     request_url = selenium.current_url
-    navigate_to(appliance.server, 'LoggedIn')  # Nav to some other page
+    navigate_to(appliance.server, 'Configuration')  # Nav to some other page
     selenium.get(request_url)  # Ok, direct access now.
     wait_for(
         lambda: widgetastic.is_displayed("//body[contains(@onload, 'miqOnLoad')]"),
