@@ -335,16 +335,16 @@ def test_group_crud_with_tag(a_provider, category, tag, group_collection):
     group = group_collection.create(
         description='grp{}'.format(fauxfactory.gen_alphanumeric()),
         role='EvmRole-approver',
-        tag=[category.display_name, tag.display_name],
-        host_cluster=[a_provider.data['name']],
-        vm_template=[a_provider.data['name'], a_provider.data['datacenters'][0],
-                     'Discovered virtual machine']
+        tag=([category.display_name, tag.display_name], True),
+        host_cluster=([a_provider.data['name']], True),
+        vm_template=([a_provider.data['name'], a_provider.data['datacenters'][0],
+                     'Discovered virtual machine'], True)
     )
     with update(group):
-        group.tag = [tag.category.display_name, tag.display_name]
-        group.host_cluster = [a_provider.data['name']]
-        group.vm_template = [a_provider.data['name'], a_provider.data['datacenters'][0],
-                             'Discovered virtual machine']
+        group.tag = ([tag.category.display_name, tag.display_name], False)
+        group.host_cluster = ([a_provider.data['name']], False)
+        group.vm_template = ([a_provider.data['name'], a_provider.data['datacenters'][0],
+                             'Discovered virtual machine'], False)
     group.delete()
 
 
