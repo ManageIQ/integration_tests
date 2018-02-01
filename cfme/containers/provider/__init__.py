@@ -180,6 +180,7 @@ class ContainersProvider(BaseProvider, Pretty):
     endpoints_form = ContainersProviderEndpointsForm
     all_view = ContainerProvidersView
     details_view = ContainerProviderDetailsView
+    refresh_text = 'Refresh items and relationships'
 
     def __init__(
             self,
