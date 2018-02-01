@@ -232,13 +232,14 @@ def num_shepherd_appliances(user, group, version=None, date=None, provider=None)
 @jsonapi.authenticated_method
 def request_appliances(
         user, group, count=1, lease_time=60, version=None, date=None, provider=None,
-        preconfigured=True, yum_update=False, container=False, ram=None, cpu=None):
+        preconfigured=True, yum_update=False, container=False, ram=None, cpu=None,
+        provider_type=None):
     """Request a number of appliances."""
     if date:
         date = datetime.strptime(date, "%y%m%d")
     return AppliancePool.create(
         user, group, version, date, provider, count, lease_time, preconfigured, yum_update,
-        container, ram, cpu).id
+        container, ram, cpu, provider_type).id
 
 
 @jsonapi.authenticated_method
@@ -582,3 +583,9 @@ def clone_pool(user, pool_id, count=None, lease_time=60):
     else:
         owner = user
     return pool.clone(count, lease_time, owner).id
+
+
+@jsonapi.authenticated_method
+def available_provider_types(user):
+    """Return a list of provider types usable for provisioning."""
+    return Provider.get_available_provider_types(user)

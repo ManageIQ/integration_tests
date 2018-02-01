@@ -289,6 +289,10 @@ class Provider(MetadataMixin):
         return sorted(types)
 
     @property
+    def provider_type(self):
+        return self.provider_data.get('type', None)
+
+    @property
     def provider_data(self):
         data = self.metadata.get('provider_data')
         if data:
@@ -1157,7 +1161,7 @@ class AppliancePool(MetadataMixin):
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
             time_leased=60, preconfigured=True, yum_update=False, container=False, ram=None,
-            cpu=None):
+            cpu=None, provider_type=None):
         container_q = ~Q(container=None) if container else Q(container=None)
         if owner.has_quotas:
             user_pools_count = cls.objects.filter(owner=owner).count()
@@ -1200,8 +1204,15 @@ class AppliancePool(MetadataMixin):
                 date = dates[0]
         if isinstance(group, basestring):
             group = Group.objects.get(id=group)
+        if isinstance(provider_type, basestring):
+            if provider_type not in Provider.get_available_provider_types(owner):
+                raise Exception('There are no providers for type {!r}'.format(provider_type))
         if isinstance(provider, basestring):
             provider = Provider.objects.get(id=provider, working=True, disabled=False)
+            if provider_type is not None and provider.provider_type != provider_type:
+                raise Exception(
+                    'You used contradicting parameters: provider={!r}, provider_type={!r}'.format(
+                        provider.id, provider_type))
         if not (version or date):
             raise Exception(
                 "Could not find proper combination of group, date, version and a working provider!")
@@ -1211,7 +1222,8 @@ class AppliancePool(MetadataMixin):
         req_params = dict(
             group=group, version=version, date=date, total_count=num_appliances, owner=owner,
             provider=provider, preconfigured=preconfigured, yum_update=yum_update,
-            is_container=container, override_memory=ram, override_cpu=cpu)
+            is_container=container, override_memory=ram, override_cpu=cpu,
+            provider_type=provider_type)
         if num_appliances == 0:
             req_params['finished'] = True
         req = cls(**req_params)
@@ -1267,10 +1279,14 @@ class AppliancePool(MetadataMixin):
 
     @property
     def possible_templates(self):
-        return Template.objects.filter(
+        q = Template.objects.filter(
             self.container_q,
             ready=True, exists=True, usable=True,
-            **self.filter_params).all().distinct().order_by()
+            **self.filter_params).select_related('provider').distinct().order_by()
+        if self.provider_type is None:
+            return list(q)
+        else:
+            return [t for t in q if t.provider.provider_type == self.provider_type]
 
     @property
     def possible_provisioning_templates(self):
@@ -1286,7 +1302,10 @@ class AppliancePool(MetadataMixin):
 
     @property
     def appliances(self):
-        return Appliance.objects.filter(appliance_pool=self).order_by("id").all()
+        return Appliance.objects\
+            .filter(appliance_pool=self)\
+            .select_related('template__provider')\
+            .order_by("id")
 
     @property
     def single_or_none_appliance(self):
