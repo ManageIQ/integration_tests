@@ -3,7 +3,6 @@
 import re
 import datetime
 
-from collections import defaultdict
 from lxml import etree
 
 import pytest
@@ -53,6 +52,9 @@ caselevels = {
 }
 
 
+test_param = re.compile(r'\[.*\]')
+
+
 def pytest_addoption(parser):
     """Adds command line options."""
     group = parser.getgroup(
@@ -71,11 +73,8 @@ def pytest_addoption(parser):
 
 def get_polarion_name(item):
     """Gets Polarion test case name out of the Node ID."""
-    param_legacy = (item.nodeid[item.nodeid.find('::') + 2:]
-              .replace('::()', '')
-              .replace('::', '.'))
-    param_strip = re.sub(r'\[.*\]', '', param_legacy)
-    return (param_legacy, param_strip)
+    param_strip = test_param.sub('', item.location[2])
+    return (item.location[2], param_strip)
 
 
 def testcase_record(
@@ -118,11 +117,9 @@ def testcase_record(
     return testcase
 
 
-def get_testcase_data(tests, test_names, item, legacy=False):
+def get_testcase_data(name, tests, processed_test, item, legacy=False):
     """Gets data for single testcase entry."""
-    legacy_name, parametrized_name = get_polarion_name(item)
-    name = legacy_name if legacy else parametrized_name
-    if name in test_names:
+    if name in processed_test:
         return
 
     work_items = []
@@ -166,7 +163,7 @@ def get_testcase_data(tests, test_names, item, legacy=False):
         custom_fields['caseautomation'] = "manualonly"
         description = '{}'.format(description)
 
-    test_names.append(name)
+    processed_test.append(name)
     tests.append(dict(
         test_name=name,
         description=description,
@@ -200,17 +197,14 @@ def testresult_record(test_name, parameters=None, result=None):
     return testcase
 
 
-def get_testresult_data(tests, test_names, item, legacy=False):
+def get_testresult_data(name, tests, processed_test, item, legacy=False):
     """Gets data for single test result entry."""
-    legacy_name, parametrized_name = get_polarion_name(item)
     if legacy:
-        name = legacy_name
-        if name in test_names:
+        if name in processed_test:
             return
         param_dict = None
-        test_names.append(name)
+        processed_test.append(name)
     else:
-        name = parametrized_name
         try:
             params = item.callspec.params
             param_dict = {p: _get_name(v) for p, v in params.iteritems()}
@@ -304,18 +298,26 @@ def _get_name(obj):
 
 def gen_duplicates_log(items):
     """Generates log file containing non-unique test cases names."""
-    a = defaultdict(dict)
-    ntr = []
+    names = {}
+    duplicates = set()
+
     for item in items:
-        a[item.location[0]][re.sub(r'\[.*\]', '', item.location[2])] = a[item.location[0]].get(
-            re.sub(r'\[.*\]', '', item.location[2]), 0) + 1
+        name = test_param.sub('', item.location[2])
+        path = item.location[0]
+
+        name_record = names.get(name)
+        if name_record:
+            name_record.add(path)
+        else:
+            names[name] = {path}
+
+    for name, paths in names.items():
+        if len(paths) > 1:
+            duplicates.add(name)
+
     with open('duplicates.log', 'w') as f:
-        for tests in a.itervalues():
-            for test in tests:
-                if test not in ntr:
-                    ntr.append(test)
-                else:
-                    f.write("{}\n".format(test))
+        for test in sorted(duplicates):
+            f.write('{}\n'.format(test))
 
 
 @pytest.mark.trylast
@@ -331,9 +333,9 @@ def pytest_collection_modifyitems(config, items):
     # all "legacy" conditions can be removed once parametrization is finished
     legacy = config.getoption('generate_legacy_xmls')
 
-    tc_names = []
+    tc_processed = []
     tc_data = []
-    tr_names = []
+    tr_processed = []
     tr_data = []
 
     for item in items:
@@ -343,8 +345,12 @@ def pytest_collection_modifyitems(config, items):
                 compiled_blacklist.search(item.nodeid) and
                 not compiled_whitelist.search(item.nodeid)):
             continue
-        get_testcase_data(tc_data, tc_names, item, legacy)
-        get_testresult_data(tr_data, tr_names, item, legacy)
+
+        legacy_name, parametrized_name = get_polarion_name(item)
+        name = legacy_name if legacy else parametrized_name
+
+        get_testcase_data(name, tc_data, tc_processed, item, legacy)
+        get_testresult_data(name, tr_data, tr_processed, item, legacy)
 
     testcases_gen(tc_data, 'test_case_import.xml')
     testrun_gen(tr_data, 'test_run_import.xml', config, collectonly=collectonly)
