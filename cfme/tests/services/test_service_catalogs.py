@@ -9,6 +9,7 @@ from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import error
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for_decorator
 
@@ -118,6 +119,7 @@ def test_no_template_catalog_item(provider, provisioning, setup_provider, vm_nam
 
 
 @pytest.mark.tier(3)
+@pytest.mark.meta(blockers=[BZ(1540592, forced_streams=['5.9'])])
 def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_item):
     """Tests edit catalog item after deleting provider
     Metadata:
