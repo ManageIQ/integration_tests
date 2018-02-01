@@ -22,6 +22,7 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
     logged_in = sentaku.ContextualMethod()
     current_full_name = sentaku.ContextualMethod()
     current_username = sentaku.ContextualMethod()
+    current_group_name = sentaku.ContextualMethod()
 
     # zone = sentaku.ContextualProperty()
     # slave_servers = sentaku.ContextualProperty()
