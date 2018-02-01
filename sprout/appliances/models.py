@@ -270,6 +270,24 @@ class Provider(MetadataMixin):
     def get_available_provider_keys(cls):
         return cfme_data.get("management_systems", {}).keys()
 
+    @classmethod
+    def get_available_provider_types(cls, user=None):
+        types = set()
+        for provider in cls.objects.all():
+            if user is not None and not provider.user_can_use(user):
+                continue
+            provider_data = provider.provider_data
+            if not provider_data:
+                continue
+            if not provider_data.get('use_for_sprout', False):
+                continue
+            if 'sprout' not in provider_data:
+                continue
+            provider_type = provider_data.get('type')
+            if provider_type:
+                types.add(provider_type)
+        return sorted(types)
+
     @property
     def provider_data(self):
         data = self.metadata.get('provider_data')
@@ -1073,6 +1091,8 @@ class AppliancePool(MetadataMixin):
 
     override_memory = models.IntegerField(null=True, blank=True)
     override_cpu = models.IntegerField(null=True, blank=True)
+
+    provider_type = models.CharField(max_length=32, default='')
 
     class Meta:
         ordering = ['id']
