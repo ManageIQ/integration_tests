@@ -344,3 +344,10 @@ class RBACOperationBlocked(CFMEException):
 
 class ChargebackRateNotFound(CFMEException):
     """Raised when a given chargeback (compute or storage) rate is not found during navigation"""
+
+
+class StatsDoNotMatch(CFMEException):
+    """
+    Raised if the stats retrieved from CFME do not match those retrieved by wrapanapi
+    """
+    pass
