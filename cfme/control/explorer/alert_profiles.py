@@ -180,6 +180,8 @@ class BaseAlertProfile(BaseEntity, Updateable, Pretty):
             tag_category: Only for choices starting with Tagged. N/A for The Enterprise.
         """
         view = navigate_to(self, "Edit assignments")
+        if selections is not None:
+            selections = view.selections.CheckNode(selections)
         changed = view.fill({
             "assign_to": assign,
             "tag_category": tag_category,
