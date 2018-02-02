@@ -7,6 +7,7 @@ import pytest
 from riggerlib import recursive_update
 from textwrap import dedent
 from widgetastic.utils import partial_match
+from widgetastic_patternfly import CheckableBootstrapTreeview as Check_tree
 
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
@@ -68,7 +69,8 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name, t
         parameter = request.param
         if parameter == 'tag':
             inst_args['purpose'] = {
-                'apply_tags': ('{} *'.format(tag.category.display_name), tag.display_name)
+                'apply_tags': Check_tree.CheckNode(
+                    ['{} *'.format(tag.category.display_name), tag.display_name])
             }
         else:
             auto = parameter

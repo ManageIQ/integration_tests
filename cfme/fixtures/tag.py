@@ -55,7 +55,7 @@ def group_with_tag(appliance, role, category, tag):
     group = appliance.collections.groups.create(
         description='grp{}'.format(fauxfactory.gen_alphanumeric()),
         role=role.name,
-        tag=[category.display_name, tag.display_name]
+        tag=([category.display_name, tag.display_name], True)
     )
     yield group
     group.delete()

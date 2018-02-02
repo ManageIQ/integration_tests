@@ -678,11 +678,11 @@ class Group(BaseEntity):
             'group_tenant': updates.get('tenant')
         })
 
-        changed_tag = self._set_group_restriction(view.my_company_tags, updates.get('tag'), True)
+        changed_tag = self._set_group_restriction(view.my_company_tags, updates.get('tag'))
         changed_host_cluster = self._set_group_restriction(
-            view.hosts_and_clusters, updates.get('host_cluster'), True)
+            view.hosts_and_clusters, updates.get('host_cluster'))
         changed_vm_template = self._set_group_restriction(
-            view.vms_and_templates, updates.get('vm_template'), True)
+            view.vms_and_templates, updates.get('vm_template'))
 
         if changed or changed_tag or changed_host_cluster or changed_vm_template:
             view.save_button.click()
@@ -810,7 +810,7 @@ class Group(BaseEntity):
         assert original_sequence != changed_sequence, "{} Group Edit Sequence Failed".format(
             self.description)
 
-    def _set_group_restriction(self, tab_view, item, update=False):
+    def _set_group_restriction(self, tab_view, item, update=True):
         """ Sets tag/host/template restriction for the group
 
         Args:
@@ -823,13 +823,12 @@ class Group(BaseEntity):
         updated_result = False
         if item is not None:
             if update:
-                if tab_view.tree.node_checked(*item):
-                    tab_view.tree.uncheck_node(*item)
-                else:
-                    tab_view.tree.check_node(*item)
+                path, action_type = item
+                if isinstance(path, list):
+                    node = (tab_view.tree.CheckNode(path) if action_type else
+                            tab_view.tree.UncheckNode(path))
+                    tab_view.tree.fill(node)
                 updated_result = True
-            else:
-                tab_view.tree.fill(item)
         return updated_result
 
     @property
