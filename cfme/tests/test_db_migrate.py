@@ -159,7 +159,7 @@ def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance
         assert rc == 0, "Failed to download v2_key: {}".format(out)
     # or change all invalid (now unavailable) passwords to 'invalid'
     except AssertionError:
-        app.db.fix_Auth()
+        app.db.fix_auth()
     app.db.fix_auth_dbyml()
     # start evmserverd, wait for web UI to start and try to log in
     try:
