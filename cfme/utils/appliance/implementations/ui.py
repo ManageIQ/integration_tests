@@ -12,7 +12,7 @@ from selenium.common.exceptions import (
     ErrorInResponseException, InvalidSwitchToTargetException,
     InvalidElementStateException, WebDriverException, UnexpectedAlertPresentException,
     NoSuchElementException, StaleElementReferenceException)
-from widgetastic.browser import Browser, DefaultPlugin
+from widgetastic.browser import Browser, DefaultPlugin, BrowserParentWrapper
 from widgetastic.utils import VersionPick
 from widgetastic.widget import Text, View
 
@@ -185,7 +185,12 @@ class MiqBrowser(Browser):
         return self.appliance.version
 
     def handle_alert(self, *args, **kwargs):
-        result = super(MiqBrowser, self).handle_alert(*args, **kwargs)
+        # We need to hack this a bit because of hte way wrapping works
+        if isinstance(self, BrowserParentWrapper):
+            browser = self._browser
+        else:
+            browser = self
+        result = super(MiqBrowser, browser).handle_alert(*args, **kwargs)
         if self.browser_type != 'firefox':
             return result
 
