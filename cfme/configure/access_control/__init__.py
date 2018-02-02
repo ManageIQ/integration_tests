@@ -3,7 +3,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Checkbox, View, Text
 from widgetastic_patternfly import (
-    BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview,
+    BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview as CbTree,
     BootstrapSwitch, CandidateNotFound, Dropdown)
 
 from cfme.base.credential import Credential
@@ -474,19 +474,19 @@ class GroupForm(ConfigurationView):
         """ Represents 'My company tags' tab in Group Form """
         TAB_NAME = "My Company Tags"
         tree_locator = 'tags_treebox'
-        tree = CheckableBootstrapTreeview(tree_locator)
+        tree = CbTree(tree_locator)
 
     @View.nested
     class hosts_and_clusters(Tab):  # noqa
         """ Represents 'Hosts and Clusters' tab in Group Form """
         TAB_NAME = "Hosts & Clusters"
-        tree = CheckableBootstrapTreeview('hac_treebox')
+        tree = CbTree('hac_treebox')
 
     @View.nested
     class vms_and_templates(Tab):  # noqa
         """ Represents 'VM's and Templates' tab in Group Form """
         TAB_NAME = "VMs & Templates"
-        tree = CheckableBootstrapTreeview('vat_treebox')
+        tree = CbTree('vat_treebox')
 
 
 class AddGroupView(GroupForm):
@@ -988,7 +988,7 @@ class RoleForm(ConfigurationView):
     """ Role Form for CFME UI """
     name_txt = Input(name='name')
     vm_restriction_select = BootstrapSelect(id='vm_restriction')
-    product_features_tree = CheckableBootstrapTreeview("features_treebox")
+    features_tree = CbTree("features_treebox")
 
     cancel_button = Button('Cancel')
 
@@ -1168,15 +1168,17 @@ class Role(Updateable, Pretty, BaseEntity):
             view: AddRoleView or EditRoleView
             product_features: list of product features with options to select
         """
-        feature_update = False
         if product_features is not None and isinstance(product_features, (list, tuple, set)):
-            for path, option in product_features:
-                if option:
-                    view.product_features_tree.check_node(*path)
-                else:
-                    view.product_features_tree.uncheck_node(*path)
-            feature_update = True
-        return feature_update
+
+            changes = [
+                view.fill({
+                    'features_tree': CbTree.CheckNode(path) if option else CbTree.UncheckNode(path)
+                })
+                for path, option in product_features
+            ]
+            return True in changes
+        else:
+            return False
 
 
 @attr.s

@@ -6,6 +6,7 @@ import fauxfactory
 import pytest
 import re
 from widgetastic.utils import partial_match
+from widgetastic_patternfly import CheckableBootstrapTreeview as CbTree
 
 from cfme import test_requirements
 from cfme.base.login import BaseLoggedInPage
@@ -234,7 +235,7 @@ def test_tag(provisioner, prov_data, provider, vm_name):
         test_flag: provision
     """
     prov_data['catalog']['vm_name'] = vm_name
-    prov_data['purpose']["apply_tags"] = ("Service Level *", "Gold")
+    prov_data['purpose']["apply_tags"] = CbTree.CheckNode(path=("Service Level *", "Gold"))
     template_name = provider.data['provisioning']['template']
 
     vm = provisioner(template_name, prov_data)

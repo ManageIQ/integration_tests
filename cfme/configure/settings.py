@@ -2,13 +2,14 @@ import re
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
-from widgetastic_patternfly import (BootstrapSwitch,
-                                    Input, Button, CheckableBootstrapTreeview, Dropdown)
+from widgetastic_patternfly import (
+    BootstrapSwitch, Input, Button, CheckableBootstrapTreeview as CbTree, Dropdown)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import MySettingsView
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from widgetastic_manageiq import Table, BootstrapSelect, BreadCrumb, Text, ViewButtonGroup
@@ -383,7 +384,7 @@ class VisualAll(CFMENavigateStep):
 
 
 class DefaultFilterForm(MySettingsView):
-    tree = CheckableBootstrapTreeview('df_treebox')
+    tree = CbTree('df_treebox')
     save = Button('Save')
 
 
@@ -397,11 +398,20 @@ class DefaultFilter(Updateable, Pretty, Navigatable):
         self.filters = filters or []
 
     def update(self, updates):
+        """
+        Args:
+            updates: Dictionary containing 'filters' key. Values are tuples of ([path], bool)
+                Where bool is whether to check or uncheck the filter
+
+        Returns: None
+        """
         view = navigate_to(self, 'All')
-        for value in updates['filters']:
-            for path in value:
-                if isinstance(path, list) and view.tree.fill(path):
-                    view.save.click()
+        for path, check in updates['filters']:
+            fill_value = CbTree.CheckNode(path) if check else CbTree.UncheckNode(path)
+            if view.tree.fill(fill_value):
+                view.save.click()
+            else:
+                logger.info('No change to filter on update, not saving form.')
 
 
 @navigator.register(DefaultFilter, 'All')
