@@ -43,6 +43,10 @@ class BaseLoggedInPage(View):
         return self.settings.text.strip().split('|', 1)[0].strip()
 
     @property
+    def current_groupname(self):
+        return self.settings.items[1].strip()
+
+    @property
     def logged_in(self):
         return self.settings.is_displayed
 

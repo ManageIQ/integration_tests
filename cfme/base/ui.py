@@ -124,6 +124,10 @@ class LoginPage(View):
         return None
 
     @property
+    def current_groupname(self):
+        return None
+
+    @property
     def logged_in(self):
         return not self.logged_out
 
@@ -226,6 +230,13 @@ def current_full_name(self):
         return logged_in_view.current_fullname
     else:
         return None
+
+
+@MiqImplementationContext.external_for(Server.current_group_name, ViaUI)
+def current_group_name(self):
+    """Returns current groupname from settings dropdown nav if logged in, or None"""
+    view = self.appliance.browser.create_view(BaseLoggedInPage)
+    return view.current_groupname if view.logged_in else None
 
 
 def automate_menu_name(appliance):
