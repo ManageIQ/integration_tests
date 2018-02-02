@@ -12,7 +12,7 @@ from selenium.common.exceptions import (
     ErrorInResponseException, InvalidSwitchToTargetException,
     InvalidElementStateException, WebDriverException, UnexpectedAlertPresentException,
     NoSuchElementException, StaleElementReferenceException)
-from widgetastic.browser import Browser, DefaultPlugin
+from widgetastic.browser import Browser, DefaultPlugin, BrowserParentWrapper
 from widgetastic.utils import VersionPick
 from widgetastic.widget import Text, View
 
@@ -183,6 +183,32 @@ class MiqBrowser(Browser):
     @property
     def product_version(self):
         return self.appliance.version
+
+    def handle_alert(self, *args, **kwargs):
+        # We need to hack this a bit because of hte way wrapping works
+        if isinstance(self, BrowserParentWrapper):
+            browser = self._browser
+        else:
+            browser = self
+        result = super(MiqBrowser, browser).handle_alert(*args, **kwargs)
+        if self.browser_type != 'firefox':
+            return result
+
+        # A workaround because of selenium on firefox being a PITA
+        # Open a new window, and close it to regain focus
+        # Workaround by @psav
+        self.logger.debug('Fixing firefox alert focus mess by opening and closing a new window')
+        win = self.selenium.current_window_handle
+        self.selenium.execute_script('open("about:blank")')
+        for win_h in self.selenium.window_handles:
+            if win != win_h:
+                self.logger.debug('Closing the newly opened window')
+                break
+        self.selenium.switch_to.window(win_h)
+        self.selenium.close()
+        self.selenium.switch_to.window(win)
+        self.logger.debug('Switched back to the original window')
+        return result
 
 
 def can_skip_badness_test(fn):
