@@ -1,6 +1,7 @@
 import pytest
 from os import path as os_path
 
+from cfme.base.ui import navigate_to
 from cfme.utils import version, os
 from cfme.utils.appliance import ApplianceException
 from cfme.utils.blockers import BZ
@@ -120,6 +121,7 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
         assert rc == 0, "Couldn't start evmserverd: {}".format(out)
     app.wait_for_web_ui(timeout=600)
     app.db.reset_user_pass()
+    wait_for(lambda: navigate_to(app.server, 'LoginScreen'), exception=True)
     app.server.login(app.user)
 
 
