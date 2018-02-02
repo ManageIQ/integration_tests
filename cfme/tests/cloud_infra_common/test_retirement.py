@@ -85,7 +85,7 @@ def verify_retirement_state(retire_vm):
     # Use lambda for is_retired since its a property
     view_cls = navigator.get_class(retire_vm, 'Details').VIEW
     view = retire_vm.appliance.browser.create_view(view_cls)
-    assert wait_for(lambda: retire_vm.is_retired, delay=5, num_sec=10 * 60,
+    assert wait_for(lambda: retire_vm.is_retired, delay=5, num_sec=15 * 60,
                     fail_func=view.toolbar.reload.click,
              message="Wait for VM '{}' to enter retired state".format(retire_vm.name))
 
