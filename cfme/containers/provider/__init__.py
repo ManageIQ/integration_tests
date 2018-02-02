@@ -20,7 +20,7 @@ from cfme.common.provider_views import (
     BeforeFillMixin, ContainerProviderAddView, ContainerProvidersView,
     ContainerProviderEditView, ContainerProviderEditViewUpdated, ProvidersView,
     ContainerProviderAddViewUpdated, ProviderSideBar,
-    ProviderDetailsToolBar, ProviderDetailsView)
+    ProviderDetailsToolBar, ProviderDetailsView, ProviderToolBar)
 from cfme.utils import version
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -476,6 +476,7 @@ class ContainerObjectAllBaseView(ProvidersView):
     summary = Text('//div[@id="main-content"]//h1')
     policy = Dropdown('Policy')
     download = Dropdown('Download')
+    toolbar = View.nested(ProviderToolBar)
 
     @property
     def table(self):

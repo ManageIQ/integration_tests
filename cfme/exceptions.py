@@ -45,6 +45,17 @@ class ConsoleTypeNotSupported(CFMEException):
         return "Console type not supported: {}".format(self.console_type)
 
 
+class TaskFailedException(CFMEException):
+    """Raised by functions in :py:mod:`cfme/configure/tasks` when task is finished
+    with some error message"""
+    def __init__(self, task_name, message):
+        self.task_name = task_name
+        self.message = message
+
+    def __str__(self):
+        return "Task {} error: {}".format(self.task_name, self.message)
+
+
 class CFMEExceptionOccured(CFMEException):
     """Raised by when there is a Rails exception currently on page."""
     pass

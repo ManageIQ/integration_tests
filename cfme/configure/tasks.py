@@ -9,13 +9,42 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown, Tab
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.exceptions import TaskFailedException
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
-from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for, TimedOutError
 from widgetastic_manageiq import BootstrapSelect, Button, CheckboxSelect, Table
 
+
 table_loc = '//div[@id="gtl_div"]//table'
+
+TABS_DATA_PER_PROVIDER = {
+    'container': {
+        'tab': 'AllTasks',
+        'task': '{}',
+        'state': 'finished'
+    },
+    'vm': {
+        'tab': 'AllTasks',
+        'task': 'Scan from Vm {}',
+        'state': 'finished'
+    },
+    'host': {
+        'tab': 'MyOtherTasks',
+        'task': "SmartState Analysis for '{}'",
+        'state': 'Finished'
+    },
+    'datastore': {
+        'tab': 'MyOtherTasks',
+        'task': 'SmartState Analysis for \[{}\]',
+        'state': "Finished"
+    },
+    'cluster': {
+        'tab': 'MyOtherTasks',
+        'task': 'SmartState Analysis for \[{}\]',
+        'state': "Finished"}
+}
 
 
 def is_vm_analysis_finished(name, **kwargs):
@@ -39,7 +68,28 @@ def delete_all_tasks(destination):
     view.delete.item_select('Delete All', handle_alert=True)
 
 
-def is_task_finished(destination, task_name, expected_status, clear_tasks_after_success=True):
+def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
+    """ Check if analysis is finished - if not, reload page"""
+
+    return check_tasks_have_no_errors(name, task_type, expected_num_of_tasks=1,
+                                      silent_failure=False,
+                                      clear_tasks_after_success=clear_tasks_after_success)
+
+
+def are_all_tasks_match_status(name, expected_num_of_tasks, task_type):
+    """ Check if all tasks states are finished - if not, reload page"""
+
+    tabs_data = TABS_DATA_PER_PROVIDER[task_type]
+    return all_tasks_match_status(
+        destination=tabs_data['tab'],
+        task_name=tabs_data['task'].format(name),
+        expected_status=tabs_data['state'],
+        expected_num_of_tasks=expected_num_of_tasks
+    )
+
+
+def all_tasks_match_status(destination, task_name, expected_status, expected_num_of_tasks):
+    """ Check if all tasks with same task name states are finished - if not, reload page"""
     view = navigate_to(Tasks, destination)
     tab_view = getattr(view.tabs, destination.lower())
 
@@ -49,19 +99,57 @@ def is_task_finished(destination, task_name, expected_status, clear_tasks_after_
     expected_status = re.compile(expected_status, re.IGNORECASE)
 
     try:
-        row = tab_view.table.row(task_name=task_name, state=expected_status)
+        rows = list(tab_view.table.rows(task_name=task_name, state=expected_status))
     except IndexError:
         logger.warn('IndexError exception suppressed when searching for task row, no match found.')
         return False
 
+    # check state = finished for all tasks
+    return expected_num_of_tasks == len(rows), len(rows)
+
+
+def check_tasks_have_no_errors(task_name, task_type, expected_num_of_tasks, silent_failure=False,
+                               clear_tasks_after_success=False):
+    """ Check if all tasks analysis match state with no errors"""
+
+    tabs_data = TABS_DATA_PER_PROVIDER[task_type]
+    destination = tabs_data['tab']
+    task_name = tabs_data['task'].format(task_name)
+    expected_status = tabs_data['state']
+
+    view = navigate_to(Tasks, destination)
+    tab_view = getattr(view.tabs, destination.lower())
+
+    # task_name change from str to support also regular expression pattern
+    task_name = re.compile(task_name)
+    # expected_status change from str to support also regular expression pattern
+    expected_status = re.compile(expected_status, re.IGNORECASE)
+
+    try:
+        rows = list(tab_view.table.rows(task_name=task_name, state=expected_status))
+    except IndexError:
+        logger.warn('IndexError exception suppressed when searching for task row, no match found.')
+        return False
+
+    # check state for all tasks
+    if expected_num_of_tasks != len(rows):
+        logger.warn('There is no match between expected number of tasks "{}",'
+                    ' and number of tasks on state "{}'.format(expected_num_of_tasks,
+                                                               expected_status))
+        return False
+
     # throw exception if error in message
-    message = row.message.text.lower()
-    if 'error' in message:
-        raise Exception("Task {} error: {}".format(task_name, message))
-    elif 'timed out' in message:
-        raise TimedOutError("Task {} timed out: {}".format(task_name, message))
-    elif 'failed' in message:
-        raise Exception("Task {} has a failure: {}".format(task_name, message))
+    for row in rows:
+        message = row.message.text.lower()
+        for term in ('error', 'timed out', 'failed', 'unable to run openscap'):
+            if term in message:
+                if silent_failure:
+                    logger.warning("Task {} error: {}".format(row.task_name.text, message))
+                    return False
+                elif term == 'timed out':
+                    raise TimedOutError("Task {} timed out: {}".format(row.task_name.text, message))
+                else:
+                    raise TaskFailedException(task_name=row.task_name.text, message=message)
 
     if clear_tasks_after_success:
         # Remove all finished tasks so they wouldn't poison other tests
@@ -70,39 +158,34 @@ def is_task_finished(destination, task_name, expected_status, clear_tasks_after_
     return True
 
 
-def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
-    """ Check if analysis is finished - if not, reload page"""
+def wait_analysis_finished_multiple_tasks(
+        task_name, task_type, expected_num_of_tasks, delay=5, timeout='5M'):
+    """ Wait until analysis is finished (or timeout exceeded)"""
+    row_completed = []
+    # get view for reload button
+    view = navigate_to(Tasks, 'AllTasks')
 
-    tabs_data = {
-        'container': {
-            'tab': 'AllTasks',
-            'task': '{}',
-            'state': 'finished'
-        },
-        'vm': {
-            'tab': 'AllTasks',
-            'task': 'Scan from Vm {}',
-            'state': 'finished'
-        },
-        'host': {
-            'tab': 'MyOtherTasks',
-            'task': "SmartState Analysis for '{}'",
-            'state': 'Finished'
-        },
-        'datastore': {
-            'tab': 'MyOtherTasks',
-            'task': 'SmartState Analysis for \[{}\]',
-            'state': "Finished"
-        },
-        'cluster': {
-            'tab': 'MyOtherTasks',
-            'task': 'SmartState Analysis for \[{}\]',
-            'state': "Finished"}
-    }[task_type]
-    return is_task_finished(destination=tabs_data['tab'],
-                            task_name=tabs_data['task'].format(name),
-                            expected_status=tabs_data['state'],
-                            clear_tasks_after_success=clear_tasks_after_success)
+    def tasks_finished(output_rows, task_name, task_type, expected_num_of_tasks):
+
+        is_succeed, num_of_succeed_tasks = are_all_tasks_match_status(
+            task_name, expected_num_of_tasks, task_type)
+        output_rows.append(num_of_succeed_tasks)
+        return is_succeed
+
+    try:
+        wait_for(tasks_finished,
+                 func_kwargs={'output_rows': row_completed,
+                              'task_name': task_name,
+                              'task_type': task_type,
+                              'expected_num_of_tasks': expected_num_of_tasks},
+                 delay=delay,
+                 timeout=timeout,
+                 fail_func=view.reload.click)
+        return row_completed[-1]
+    except TimedOutError, e:
+        logger.error("Only {}  Tasks out of {}, Finished".format(row_completed[-1],
+                                                                 expected_num_of_tasks))
+        raise TimedOutError('exception {}'.format(e))
 
 
 class TasksView(BaseLoggedInPage):
