@@ -75,13 +75,20 @@ class PolicyProfileAssignable(object):
             policy_profile_names: :py:class:`str` with Policy Profile names.
         """
         view = navigate_to(self, 'ManagePoliciesFromDetails')
+        policy_changed = False
         for policy_profile in policy_profile_names:
             if assign:
-
-                view.policy_profiles.check_node(policy_profile)
+                policy_changed = view.policy_profiles.fill(
+                    view.policy_profiles.CheckNode([policy_profile])
+                ) or policy_changed
             else:
-                view.policy_profiles.uncheck_node(policy_profile)
-        view.save.click()
+                policy_changed = view.policy_profiles.fill(
+                    view.policy_profiles.UncheckNode([policy_profile])
+                ) or policy_changed
+        if policy_changed:
+            view.save.click()
+        else:
+            view.cancel.click()
         details_view = self.create_view(navigator.get_class(self, 'Details').VIEW)
         details_view.flash.assert_no_error()
 

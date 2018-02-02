@@ -14,7 +14,7 @@ from wrapanapi.utils import eval_strings
 from cfme import exceptions
 from cfme.base.credential import TokenCredential
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import TagPageView
+from cfme.common import TagPageView, PolicyProfileAssignable
 from cfme.common.provider import BaseProvider, DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import (
     BeforeFillMixin, ContainerProviderAddView, ContainerProvidersView,
@@ -152,7 +152,7 @@ class ContainerProviderDetailsView(ProviderDetailsView, LoggingableView):
                 self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'])
 
 
-class ContainersProvider(BaseProvider, Pretty):
+class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     PLURAL = 'Providers'
     provider_types = {}
     in_version = ('5.5', version.LATEST)
