@@ -199,7 +199,7 @@ class MiqBrowser(Browser):
         # Workaround by @psav
         self.logger.debug('Fixing firefox alert focus mess by opening and closing a new window')
         win = self.selenium.current_window_handle
-        self.selenium.execute_script('open("http://google.com")')
+        self.selenium.execute_script('open("about:blank")')
         for win_h in self.selenium.window_handles:
             if win != win_h:
                 self.logger.debug('Closing the newly opened window')
