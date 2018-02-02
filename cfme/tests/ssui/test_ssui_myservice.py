@@ -27,20 +27,6 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope="module")
-def configure_websocket(appliance):
-    """Enable websocket role if it is disabled.
-
-    Currently the fixture cfme/fixtures/base.py:27,
-    disables the websocket role to avoid intrusive popups.
-    """
-    appliance.server.settings.enable_server_roles('websocket')
-    logger.info('Enabling the websocket role to allow console connections')
-    yield
-    appliance.server.settings.disable_server_roles('websocket')
-    logger.info('Disabling the websocket role to avoid intrusive popups')
-
-
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_myservice_crud(appliance, setup_provider, context, order_catalog_item_in_ops_ui):
     """Test Myservice crud in SSUI."""
@@ -64,20 +50,13 @@ def test_retire_service(appliance, setup_provider, context, order_catalog_item_i
         my_service.retire()
 
 
-@pytest.fixture(scope="function")
-def configure_vmware_console_for_test(appliance, provider):
-    """Configure VMware Console to use VNC which is what is required for the HTML5 console."""
-    if provider.one_of(VMwareProvider):
-        appliance.server.settings.update_vmware_console({'console_type': 'VNC'})
-
-
 @pytest.mark.parametrize('context', [ViaSSUI])
 @pytest.mark.parametrize('order_catalog_item_in_ops_ui', [['console_test']], indirect=True)
 @pytest.mark.uncollectif(lambda provider: provider.one_of(VMwareProvider) and
                          provider.version >= 6.5,
                          'VNC consoles are unsupported on VMware ESXi 6.5 and later')
 def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
-        configure_vmware_console_for_test, order_catalog_item_in_ops_ui, take_screenshot,
+        configure_console_vnc, order_catalog_item_in_ops_ui, take_screenshot,
         console_template):
     """Test Myservice VM Console in SSUI."""
     catalog_item = order_catalog_item_in_ops_ui
