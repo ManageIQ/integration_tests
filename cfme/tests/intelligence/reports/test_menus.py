@@ -29,7 +29,7 @@ def report_menus(group):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1384518, forced_streams=["5.7", "upstream"])])
+@pytest.mark.meta(blockers=[BZ(1541324, forced_streams=["5.9"])])
 @pytest.mark.parametrize("group", GROUPS)
 def test_shuffle_top_level(group, report_menus):
     # Shuffle the order
@@ -46,7 +46,7 @@ def test_shuffle_top_level(group, report_menus):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1384518, forced_streams=["5.7", "upstream"])])
+@pytest.mark.meta(blockers=[BZ(1541324, forced_streams=["5.9"])])
 @pytest.mark.parametrize("group", GROUPS)
 def test_shuffle_first_level(group, report_menus):
     # Find a folder
