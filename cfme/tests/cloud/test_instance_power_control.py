@@ -27,24 +27,12 @@ def testing_instance(setup_provider, provider):
     """
     instance = Instance.factory(random_vm_name('pwr-c'), provider)
     if not provider.mgmt.does_vm_exist(instance.name):
-        instance.create_on_provider(allow_skip="default")
+        instance.create_on_provider(allow_skip="default", find_in_cfme=True)
     elif instance.provider.type == "ec2" and \
             provider.mgmt.is_vm_state(instance.name, provider.mgmt.states['deleted']):
         provider.mgmt.set_name(
             instance.name, 'test_terminated_{}'.format(fauxfactory.gen_alphanumeric(8)))
         instance.create_on_provider(allow_skip="default", find_in_cfme=True)
-    provider.refresh_provider_relationships()
-
-    # Make sure the instance shows up
-    try:
-        wait_for(lambda: instance.exists,
-                 fail_condition=False,
-                 num_sec=600,
-                 delay=15,
-                 fail_func=provider.refresh_provider_relationships)
-    except TimedOutError:
-        pytest.fail('Failed to find instance in CFME after creating on provider: {}'
-                    .format(instance.name))
 
     yield instance
 
