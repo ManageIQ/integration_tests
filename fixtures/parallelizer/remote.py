@@ -208,6 +208,8 @@ if __name__ == '__main__':
     parser.add_argument('ts', help='The timestap to use for collections')
     args = parser.parse_args()
 
+    # TODO: clean the logic up here
+
     from cfme.utils.appliance import IPAppliance, stack
 
     # overwrite the default logger before anything else is imported,
