@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Helper functions for tests using REST API."""
 
+from collections import namedtuple
+
 from cfme.exceptions import OptionNotAvailable
 from cfme.utils import error
 from cfme.utils.wait import wait_for
@@ -107,6 +109,7 @@ def create_resource(rest_api, col_name, col_data, col_action='create', substr_se
 
 def delete_resources_from_collection(
         collection, resources, not_found=False, num_sec=10, delay=2, check_response=True):
+    """Checks that delete from collection works as expected."""
     def _assert_response(*args, **kwargs):
         if check_response:
             assert_response(collection._api, *args, **kwargs)
@@ -125,3 +128,43 @@ def delete_resources_from_collection(
     else:
         collection.action.delete(*resources)
         _assert_response(success=False)
+
+
+def query_resource_attributes(resource, soft_assert=None):
+    """Checks that all available attributes/subcollections are really accessible."""
+    collection = resource.collection
+    rest_api = collection._api
+    options = rest_api.options(collection._href)
+    attrs_to_query = options['virtual_attributes'] + options['relationships']
+    subcolls_to_check = options['subcollections']
+
+    FailedRecord = namedtuple('FailedRecord', ['name', 'type', 'error', 'response'])
+    service_href = resource.href
+    failed = []
+    missing = []
+
+    for attr in attrs_to_query:
+        try:
+            response = rest_api.get('{}?attributes={}'.format(service_href, attr))
+            assert rest_api.response, 'Failed response'
+        except Exception as err:
+            failed.append(FailedRecord(attr, 'attribute', err, rest_api.response))
+            continue
+
+        if attr not in response:
+            missing.append(attr)
+
+    for subcol in subcolls_to_check:
+        try:
+            getattr(resource, subcol)
+        except Exception as err:
+            failed.append(FailedRecord(subcol, 'subcollection', err, rest_api.response))
+
+    outcome = namedtuple('AttrCheck', ['failed', 'missing'])(failed, missing)
+
+    if soft_assert:
+        for failure in outcome.failed:
+            soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+                failure.type, failure.name, failure.response.status_code, failure.error))
+
+    return outcome
