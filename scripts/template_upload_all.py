@@ -114,7 +114,11 @@ def template_name(image_link, image_ts, checksum_link, version=None):
             return "miq-nightly-{}".format(result[0])
 
     elif 'openshift' in image_link:
-        return 'cfme-{}-{}{}'.format(version, image_dt.strftime('%m'), image_dt.strftime('%d'))
+        return 'cfme-{}-{}{}{}{}'.format(version,
+                                         image_dt.strftime('%m'),
+                                         image_dt.strftime('%d'),
+                                         image_dt.hour,
+                                         image_dt.minute)
     # z-stream
     else:
         pattern = re.compile(r'[.-](\d+(?:\d+)?)')

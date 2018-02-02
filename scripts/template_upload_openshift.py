@@ -10,6 +10,7 @@ normally be placed in main function, are located in function run(**kwargs).
 """
 
 import argparse
+import inspect
 import os
 from threading import Lock, Thread
 
@@ -20,8 +21,8 @@ from cfme.utils.providers import list_provider_keys
 from cfme.utils.ssh import SSHClient
 
 lock = Lock()
-
 add_stdout_handler(logger)
+cur_dir = os.path.abspath(os.path.split(inspect.getfile(inspect.currentframe()))[0])
 
 
 def parse_cmd_line():
@@ -92,46 +93,116 @@ def upload_template(hostname, username, password, provider, url, name, provider_
         logger.info("checking whether this template is already present in provider env")
         if name not in list_templates(hostname, username, password, upload_folder):
             with SSHClient(hostname=hostname, username=username, password=password) as ssh:
+                # creating folder to store template files
                 dest_dir = os.path.join(upload_folder, name)
                 logger.info("creating folder for templates: {f}".format(f=dest_dir))
                 result = ssh.run_command('mkdir {dir}'.format(dir=dest_dir))
                 if result.failed:
-                    logger.exception("OPENSHIFT: cant create folder %r", str(result))
-                    raise
+                    err_text = "OPENSHIFT: cant create folder {}".format(str(result))
+                    logger.exception(err_text)
+                    raise RuntimeError(err_text)
                 download_cmd = ('wget -q --no-parent --no-directories --reject "index.html*" '
                                 '--directory-prefix={dir} -r {url}')
                 logger.info("downloading templates to destination dir {f}".format(f=dest_dir))
                 result = ssh.run_command(download_cmd.format(dir=dest_dir, url=url))
                 if result.failed:
-                    logger.exception("OPENSHIFT: cannot upload template %r", str(result))
-                    raise
+                    err_text = "OPENSHIFT: cannot download template {}".format(str(result))
+                    logger.exception(err_text)
+                    raise RuntimeError(err_text)
 
                 # updating image streams in openshift
+                logger.info("logging in to openshift")
                 login_cmd = 'oc login --username={u} --password={p}'
                 result = ssh.run_command(login_cmd.format(u=oc_username, p=oc_password))
                 if result.failed:
-                    logger.exception("OPENSHIFT: couldn't login to openshift %r", str(result))
-                    raise
+                    err_text = "OPENSHIFT: couldn't login to openshift {}".format(str(result))
+                    logger.exception(err_text)
+                    raise RuntimeError(err_text)
 
                 logger.info("looking for templates in destination dir {f}".format(f=dest_dir))
                 get_urls_cmd = 'find {d} -type f -name "cfme-openshift-*" -exec tail -1 {{}} \;'
                 result = ssh.run_command(get_urls_cmd.format(d=dest_dir))
                 if result.failed:
-                    logger.exception("OPENSHIFT: couldn't get img stream urls %r", str(result))
-                    raise
+                    err_text = "OPENSHIFT: couldn't get img stream urls {}".format(str(result))
+                    logger.exception(err_text)
+                    raise RuntimeError(err_text)
 
+                tags = {}
                 for img_url in str(result).split():
                     update_img_cmd = 'docker pull {url}'
                     logger.info("updating image stream to tag {t}".format(t=img_url))
                     result = ssh.run_command(update_img_cmd.format(url=img_url))
+                    # url ex:
+                    # brew-pulp-docker01.web.prod.ext.phx2.redhat.com:8888/cloudforms46/cfme-openshift-httpd:2.4.6-14
+                    tag_name, tag_value = img_url.split('/')[-1].split(':')
+                    tags[tag_name] = tag_value
                     if result.failed:
-                        logger.exception("OPENSHIFT: couldn't update image stream using url %r,"
-                                         "%r", img_url, str(result))
-                        raise
+                        err_text = ("OPENSHIFT: couldn't update image stream using url "
+                                    "{}, {}".format(img_url, str(result)))
+                        logger.exception(err_text)
+                        raise RuntimeError(err_text)
+
+                logger.info('updating templates before upload to openshift')
+                # updating main template file, adding essential patches
+                patch_dir = os.path.join(cur_dir, 'data', 'openshift', 'patches', 'main_template')
+
+                main_template_file = 'cfme-template.yaml'
+                main_template = os.path.join(dest_dir, main_template_file)
+                dst_main_template = os.path.join(dest_dir, main_template_file + '.backup')
+                result = ssh.run_command('cp {src} {dst}'.format(src=main_template,
+                                                                 dst=dst_main_template))
+                if result.failed:
+                    err_text = "OPENSHIFT: couldn't backup template file"
+                    logger.exception(err_text)
+                    raise RuntimeError(err_text)
+
+                patches = [os.path.join(patch_dir, p) for p in os.listdir(patch_dir)
+                           if p.endswith('.patch')]
+                for patch in patches:
+                    ssh.patch_file(patch, main_template)
+
+                logger.info("uploading templates to openshift")
+
+                default_template_name = 'cloudforms'
+                new_template_name = name
+                logger.info('removing old templates from ocp if those exist')
+                for template in (default_template_name, new_template_name):
+                    if ssh.run_command('oc get template {t} '
+                                       '--namespace=openshift'.format(t=template)).success:
+                        ssh.run_command('oc delete template {t} '
+                                        '--namespace=openshift'.format(t=template))
+
+                change_name_cmd = """python -c 'import yaml
+data = yaml.safe_load(open("{file}"))
+data["metadata"]["name"] = "{new_name}"
+yaml.safe_dump(data, stream=open("{file}", "w"))'""".format(new_name=new_template_name,
+                                                            file=main_template)
+                # our templates always have the same name but we have to keep many templates
+                # of the same stream. So we have to change template name before upload to ocp
+                # in addition, openshift doesn't provide any convenient way to change template name
+                logger.info(change_name_cmd)
+                result = ssh.run_command(change_name_cmd)
+                if result.failed:
+                    err_text = "OPENSHIFT: couldn't change default template name"
+                    logger.exception(err_text)
+                    raise RuntimeError(err_text)
+
+                logger.info("uploading main template to ocp")
+                result = ssh.run_command('oc create -f {t} '
+                                         '--namespace=openshift'.format(t=main_template))
+                if result.failed:
+                    err_text = "OPENSHIFT: couldn't upload template to openshift"
+                    logger.exception(err_text)
+                    raise RuntimeError(err_text)
 
             if not provider_data:
                 logger.info("OPENSHIFT:%r Adding template %r to trackerbot", provider, name)
-                trackerbot.trackerbot_add_provider_template(stream, provider, name)
+                trackerbot.trackerbot_add_provider_template(stream=stream,
+                                                            provider=provider,
+                                                            template_name=name,
+                                                            custom_data={'TAGS': tags})
+
+            logger.info("upload has been finished successfully")
         else:
             logger.info("OPENSHIFT:%r template %r already exists", provider, name)
 
