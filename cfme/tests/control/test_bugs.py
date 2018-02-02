@@ -7,6 +7,7 @@ from widgetastic.widget import Text
 
 from cfme import test_requirements
 from cfme.common.vm import VM
+from cfme.control.explorer import ControlExplorerView
 from cfme.control.explorer.alerts import AlertDetailsView
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policies import VMCompliancePolicy, VMControlPolicy
@@ -16,6 +17,7 @@ from cfme.utils.appliance import get_or_create_current_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
+from cfme.utils.wait import TimedOutError
 
 pytestmark = [
     test_requirements.control,
@@ -260,7 +262,7 @@ def test_delete_all_actions_from_compliance_policy(request, policy_collection):
 
 
 @pytest.mark.parametrize("create_function", items, ids=[item.name for item in items])
-def test_control_identical_descriptions(request, create_function, collections):
+def test_control_identical_descriptions(request, create_function, collections, appliance):
     """CFME should not allow to create policy, alerts, profiles, actions and others to be created
     if the item with the same description already exists.
 
@@ -272,8 +274,11 @@ def test_control_identical_descriptions(request, create_function, collections):
         The item shouldn't be created.
     """
     args, kwargs = create_function.fn(request, collections[create_function.name])
-    with pytest.raises(AssertionError):
+    flash = appliance.browser.create_view(ControlExplorerView).flash
+    try:
         collections[create_function.name].create(*args, **kwargs)
+    except (TimedOutError, AssertionError):
+        flash.assert_message("Description has already been taken")
 
 
 @pytest.mark.meta(blockers=[1231889], automates=[1231889])
