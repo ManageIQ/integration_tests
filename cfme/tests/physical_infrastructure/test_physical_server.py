@@ -1,33 +1,16 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.physical.provider.lenovo import LenovoProvider
-from cfme.utils.wait import wait_for
 
-pytestmark = [pytest.mark.tier(3)]
-
-pytest_generate_tests = testgen.generate([LenovoProvider], scope="module")
+pytestmark = [pytest.mark.tier(3), pytest.mark.provider([LenovoProvider], scope="module")]
 
 
 @pytest.fixture(scope="module")
-def physical_server_collection(appliance, provider):
-    # Create and then wait for the provider to be added
-    provider.create()
-    wait_for(
-        lambda: provider.get_detail('Relationships', 'Physical Servers') != '0',
-        fail_func=provider.refresh_provider_relationships_ui,
-        num_sec=60,
-        delay=5
-    )
-
+def physical_server_collection(appliance, provider, setup_provider_modscope):
     # Get and return the physical server collection
     yield appliance.collections.physical_servers
-
-    # Clean up the provider when finished
-    provider.delete(cancel=False)
-    provider.wait_for_delete()
 
 
 def test_physical_servers_view_displayed(physical_server_collection):
