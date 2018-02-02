@@ -4,8 +4,9 @@ import pytest
 from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils.wait import wait_for
+from cfme.utils.blockers import BZ
 from cfme.utils.version import current_version
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [
@@ -14,6 +15,9 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures("setup_provider"),
     pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module"),
+    pytest.mark.meta(blockers=[BZ(1541036,
+                     forced_streams=['5.9', 'upstream'],
+                     unblock=lambda provider: not provider.one_of(RHEVMProvider))]),
 ]
 
 
