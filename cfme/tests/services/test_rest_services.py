@@ -175,8 +175,22 @@ def vm(request, a_provider, appliance):
     return _vm(request, a_provider, appliance.rest_api)
 
 
+@pytest.fixture(scope="function")
+def delete_carts(appliance):
+    """Makes sure there are no carts present before running the tests."""
+    carts = appliance.rest_api.collections.service_orders.find_by(state="cart")
+    if not carts:
+        return
+    carts = list(carts)
+    cart_hrefs = [c._ref_repr() for c in carts]
+    appliance.rest_api.collections.service_orders.action.delete(*cart_hrefs)
+    assert_response(appliance)
+    for cart in carts:
+        cart.wait_not_exists()
+
+
 @pytest.yield_fixture(scope="function")
-def cart(appliance):
+def cart(appliance, delete_carts):
     cart = appliance.rest_api.collections.service_orders.action.create(name="cart")
     assert_response(appliance)
     cart = cart[0]
@@ -1528,7 +1542,7 @@ class TestServiceOrderCart(object):
     @pytest.mark.tier(3)
     # not testing on version < 5.9 due to BZ1493785 that was fixed only in 5.9
     @pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.9')
-    def test_create_cart(self, appliance, service_templates):
+    def test_create_cart(self, request, appliance, service_templates):
         """Tests creating a cart with service requests.
 
         Metadata:
@@ -1538,8 +1552,14 @@ class TestServiceOrderCart(object):
         body = {'service_requests': requests}
         href = appliance.rest_api.collections.service_orders._href
         response = appliance.rest_api.post(href, **body)
-        assert_response(appliance)
         response = response['results'].pop()
+
+        @request.addfinalizer
+        def delete_cart():
+            cart = appliance.rest_api.get_entity('service_orders', response['id'])
+            cart.action.delete()
+
+        assert_response(appliance)
         cart_dict = appliance.rest_api.get('{}/cart'.format(href))
         assert response['id'] == cart_dict['id']
 
@@ -1630,7 +1650,8 @@ class TestServiceOrderCart(object):
         Metadata:
             test_flag: rest
         """
-        self.add_requests(cart, service_templates_class[:2])
+        selected_templates = service_templates_class[:2]
+        self.add_requests(cart, selected_templates)
         cart.action.order()
         assert_response(appliance)
         cart.reload()
@@ -1646,12 +1667,14 @@ class TestServiceOrderCart(object):
 
         wait_for(_order_finished, num_sec=180, delay=10)
 
-        for sr in service_requests:
+        for index, sr in enumerate(service_requests):
             service_name = str(sr.options['dialog']['dialog_service_name'])
             assert '[{}]'.format(service_name) in sr.message
-            # this fails if the service with the `service_name` doesn't exist
-            new_service = appliance.rest_api.collections.services.get(name=service_name)
+            service_description = selected_templates[index].description
+            new_service = appliance.rest_api.collections.services.get(
+                description=service_description)
             request.addfinalizer(new_service.action.delete)
+            assert service_name == new_service.name
 
         # when cart is ordered, it can not longer be accessed using /api/service_orders/cart
         with error.expected('ActiveRecord::RecordNotFound'):
