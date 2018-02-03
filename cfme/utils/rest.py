@@ -71,8 +71,9 @@ def assert_response(
     rest_api.response = last_response
 
 
-def get_vms_in_service(rest_api, service):
+def get_vms_in_service(service):
     """Gets list of vm entities associated with the service."""
+    rest_api = service.collection._api
     service.vms.reload()
     # return entities under /api/vms, not under /api/services/:id/vms subcollection
     # where "actions" are not available

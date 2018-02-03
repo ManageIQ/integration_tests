@@ -17,9 +17,9 @@ from cfme.rest.gen_data import (
     orchestration_templates as _orchestration_templates,
     service_catalog_obj as _service_catalog_obj,
     service_catalogs as _service_catalogs,
-    service_data as _service_data,
     service_templates as _service_templates,
     service_templates_ui,
+    services as _services,
     vm as _vm,
 )
 from cfme.services.catalogs.catalog_item import CatalogBundle
@@ -29,6 +29,7 @@ from cfme.utils.providers import ProviderFilter
 from cfme.utils.rest import (
     assert_response,
     delete_resources_from_collection,
+    get_vms_in_service,
     query_resource_attributes,
 )
 from cfme.utils.update import update
@@ -166,8 +167,8 @@ def service_templates(request, appliance):
 
 
 @pytest.fixture(scope="function")
-def service_data(request, appliance, a_provider):
-    return _service_data(request, appliance, a_provider)
+def vm_service(request, appliance, a_provider):
+    return _services(request, appliance, a_provider).pop()
 
 
 @pytest.fixture(scope="function")
@@ -302,24 +303,23 @@ class TestServiceRESTAPI(object):
     @pytest.mark.parametrize(
         "from_detail", [True, False],
         ids=["from_detail", "from_collection"])
-    def test_retire_service_now(self, appliance, service_data, from_detail):
+    def test_retire_service_now(self, appliance, vm_service, from_detail):
         """Test retiring a service now.
 
         Metadata:
             test_flag: rest
         """
         collection = appliance.rest_api.collections.services
-        service = collection.get(name=service_data['service_name'])
-        vm = appliance.rest_api.collections.vms.get(name=service_data['vm_name'])
+        vm = get_vms_in_service(vm_service).pop()
 
         if from_detail:
-            service.action.retire()
+            vm_service.action.retire()
             assert_response(appliance)
         else:
-            collection.action.retire(service)
+            collection.action.retire(vm_service)
             assert_response(appliance)
 
-        wait_for_retired(service)
+        wait_for_retired(vm_service)
         wait_for_retired(vm)
 
     @pytest.mark.parametrize(
@@ -394,7 +394,7 @@ class TestServiceRESTAPI(object):
     @pytest.mark.parametrize(
         "from_detail", [True, False],
         ids=["from_detail", "from_collection"])
-    def test_power_service(self, appliance, service_data, from_detail):
+    def test_power_service(self, appliance, vm_service, from_detail):
         """Tests power operations on /api/services and /api/services/:id.
 
         * start, stop and suspend actions
@@ -404,14 +404,13 @@ class TestServiceRESTAPI(object):
             test_flag: rest
         """
         collection = appliance.rest_api.collections.services
-        service = collection.get(name=service_data['service_name'])
-        vm = appliance.rest_api.collections.vms.get(name=service_data['vm_name'])
+        vm = get_vms_in_service(vm_service).pop()
 
         def _action_and_check(action, resulting_state):
             if from_detail:
-                getattr(service.action, action)()
+                getattr(vm_service.action, action)()
             else:
-                getattr(collection.action, action)(service)
+                getattr(collection.action, action)(vm_service)
             assert_response(appliance)
             wait_for_vm_power_state(vm, resulting_state)
 
@@ -421,15 +420,14 @@ class TestServiceRESTAPI(object):
         _action_and_check('suspend', 'suspended')
         _action_and_check('start', 'on')
 
-    def test_service_vm_subcollection(self, appliance, service_data):
+    def test_service_vm_subcollection(self, vm_service):
         """Tests /api/services/:id/vms.
 
         Metadata:
             test_flag: rest
         """
-        service = appliance.rest_api.collections.services.get(name=service_data['service_name'])
-        vm = appliance.rest_api.collections.vms.get(name=service_data['vm_name'])
-        assert service.vms[0].id == vm.id
+        vm = get_vms_in_service(vm_service).pop()
+        assert vm_service.vms[0].id == vm.id
 
     def test_service_add_resource(self, request, appliance, vm):
         """Tests adding resource to service.
@@ -445,30 +443,28 @@ class TestServiceRESTAPI(object):
         assert_response(appliance)
         assert len(service.vms) == 1
 
-    def test_service_remove_resource(self, request, appliance, service_data):
+    def test_service_remove_resource(self, request, appliance, vm_service):
         """Tests removing resource from service.
 
         Metadata:
             test_flag: rest
         """
-        service = appliance.rest_api.collections.services.get(name=service_data['service_name'])
-        vm = appliance.rest_api.collections.vms.get(name=service_data['vm_name'])
+        vm = get_vms_in_service(vm_service).pop()
         request.addfinalizer(vm.action.delete)
 
-        vms_num = len(service.vms)
+        vms_num = len(vm_service.vms)
         assert vms_num >= 1
-        service.action.remove_resource(resource=vm._ref_repr())
+        vm_service.action.remove_resource(resource=vm._ref_repr())
         assert_response(appliance)
-        assert len(service.vms) == vms_num - 1
+        assert len(vm_service.vms) == vms_num - 1
 
-    def test_service_remove_all_resources(self, request, appliance, vm, service_data):
+    def test_service_remove_all_resources(self, request, appliance, vm, vm_service):
         """Tests removing all resources from service.
 
         Metadata:
             test_flag: rest
         """
-        service = appliance.rest_api.collections.services.get(name=service_data['service_name'])
-        vm_assigned = appliance.rest_api.collections.vms.get(name=service_data['vm_name'])
+        vm_assigned = get_vms_in_service(vm_service).pop()
         vm_added = appliance.rest_api.collections.vms.get(name=vm)
 
         @request.addfinalizer
@@ -476,11 +472,11 @@ class TestServiceRESTAPI(object):
             vm_assigned.action.delete()
             vm_added.action.delete()
 
-        service.action.add_resource(resource=vm_added._ref_repr())
-        assert len(service.vms) >= 2
-        service.action.remove_all_resources()
+        vm_service.action.add_resource(resource=vm_added._ref_repr())
+        assert len(vm_service.vms) >= 2
+        vm_service.action.remove_all_resources()
         assert_response(appliance)
-        assert not service.vms
+        assert not vm_service.vms
 
     def test_create_service_from_parent(self, request, appliance):
         """Tests creation of new service that reference existing service.
@@ -558,7 +554,7 @@ class TestServiceRESTAPI(object):
     @pytest.mark.skipif(
         store.current_appliance.version < '5.9',
         reason='BZ 1416903 was fixed only for versions >= 5.9')
-    def test_power_parent_service(self, request, appliance, service_data):
+    def test_power_parent_service(self, request, appliance, vm_service):
         """Tests that power operations triggered on service parent affects child service.
 
         * start, stop and suspend actions
@@ -570,8 +566,8 @@ class TestServiceRESTAPI(object):
         collection = appliance.rest_api.collections.services
         service = collection.action.create(service_body())[0]
         request.addfinalizer(service.action.delete)
-        child = collection.get(name=service_data['service_name'])
-        vm = appliance.rest_api.collections.vms.get(name=service_data['vm_name'])
+        child = vm_service
+        vm = get_vms_in_service(child).pop()
         service.action.add_resource(resource=child._ref_repr())
         assert_response(appliance)
 
@@ -847,8 +843,9 @@ class TestServiceCatalogsRESTAPI(object):
 
         service_name = str(service_request.options['dialog']['dialog_service_name'])
         assert '[{}]'.format(service_name) in service_request.message
-        # this fails if the service with the `service_name` doesn't exist
-        new_service = appliance.rest_api.collections.services.get(name=service_name)
+        source_id = str(service_request.source_id)
+        new_service = appliance.rest_api.collections.services.get(service_template_id=source_id)
+        assert new_service.name == service_name
 
         @request.addfinalizer
         def _finished():
@@ -899,6 +896,7 @@ class TestServiceCatalogsRESTAPI(object):
             # Using service template id instead.
             source_id = str(service_request.source_id)
             new_service = appliance.rest_api.collections.services.get(service_template_id=source_id)
+            assert new_service.name == service_name
             new_services.append(new_service)
 
         @request.addfinalizer
@@ -929,8 +927,9 @@ class TestServiceCatalogsRESTAPI(object):
 
         service_name = str(service_request.options['dialog']['dialog_service_name'])
         assert '[{}]'.format(service_name) in service_request.message
-        # this fails if the service with the `service_name` doesn't exist
-        new_service = appliance.rest_api.collections.services.get(name=service_name)
+        source_id = str(service_request.source_id)
+        new_service = appliance.rest_api.collections.services.get(service_template_id=source_id)
+        assert new_service.name == service_name
 
         @request.addfinalizer
         def _finished():
@@ -1111,8 +1110,9 @@ class TestPendingRequestsRESTAPI(object):
 
         service_name = str(pending_request.options['dialog']['dialog_service_name'])
         assert '[{}]'.format(service_name) in pending_request.message
-        # this fails if the service with the `service_name` doesn't exist
-        new_service = appliance.rest_api.collections.services.get(name=service_name)
+        source_id = str(pending_request.source_id)
+        new_service = appliance.rest_api.collections.services.get(service_template_id=source_id)
+        assert new_service.name == service_name
 
         request.addfinalizer(new_service.action.delete)
 
@@ -1202,8 +1202,9 @@ class TestServiceRequests(object):
 
         service_name = str(service_request.options['dialog']['dialog_service_name'])
         assert '[{}]'.format(service_name) in service_request.message
-        # this fails if the service with the `service_name` doesn't exist
-        new_service = appliance.rest_api.collections.services.get(name=service_name)
+        source_id = str(service_request.source_id)
+        new_service = appliance.rest_api.collections.services.get(service_template_id=source_id)
+        assert new_service.name == service_name
         request.addfinalizer(new_service.action.delete)
 
 
