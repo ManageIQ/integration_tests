@@ -182,9 +182,13 @@ class BaseAlertProfile(BaseEntity, Updateable, Pretty):
         """
         view = navigate_to(self, "Edit assignments")
         changed = []
-        # separate fill calls, checkable tree fills one path at a time
-        changed.append(view.fill({"assign_to": assign, "tag_category": tag_category}))
-        changed.extend([view.selections.fill(CbTree.CheckNode(path)) for path in selections])
+        if selections is not None:
+            selections = view.selections.CheckNode(selections)
+        changed = view.fill({
+            "assign_to": assign,
+            "tag_category": tag_category,
+            "selections": selections
+        })
         if changed:
             view.save_button.click()
         else:
