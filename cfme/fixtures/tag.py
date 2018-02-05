@@ -4,6 +4,7 @@ import pytest
 from cfme.base.credential import Credential
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
 
@@ -13,9 +14,14 @@ def category():
         Returns random created category object
         Object can be used in all test run session
     """
-    cg = Category(name=fauxfactory.gen_alpha(8).lower(),
-                  description=fauxfactory.gen_alphanumeric(length=32),
-                  display_name=fauxfactory.gen_alphanumeric(length=32))
+    if BZ(1517285, forced_streams='5.9').blocks:
+        cg = Category(name=fauxfactory.gen_alpha(8).lower(),
+                      description=fauxfactory.gen_alphanumeric(length=32),
+                      display_name='test-{}'.format(fauxfactory.gen_alphanumeric(length=32)))
+    else:
+        cg = Category(name=fauxfactory.gen_alpha(8).lower(),
+                      description=fauxfactory.gen_alphanumeric(length=32),
+                      display_name=fauxfactory.gen_alphanumeric(length=32))
     cg.create()
     yield cg
     cg.delete(False)
