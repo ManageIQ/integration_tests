@@ -2,6 +2,7 @@ import attr
 import re
 
 from navmazing import NavigateToAttribute, NavigateToSibling
+
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
 from widgetastic_manageiq import Table, BootstrapSelect, BreadCrumb, Text, ViewButtonGroup
@@ -67,7 +68,7 @@ class TimeProfileEditView(TimeProfileView):
 
     @property
     def is_displayed(self):
-        return True if 'Edit' in self.entities.breadcrumb.active_location else False
+        return 'Edit' in self.entities.breadcrumb.active_location
 
 
 @attr.s
@@ -128,7 +129,7 @@ class TimeProfile(Updateable, BaseEntity):
         if not cancel and changed:
             view.form.add.click()
             view.flash.assert_no_error()
-        return new_time_profile
+            return new_time_profile
 
 
 @attr.s
@@ -163,7 +164,7 @@ class TimeProfileCollection(BaseCollection):
         if not cancel:
             view.form.add.click()
             view.flash.assert_no_error()
-        return time_profile
+            return time_profile
 
     def delete(self, cancel=False, *time_objs):
         """

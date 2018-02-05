@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.configure.settings import TimeProfileAddView
+from cfme.configure.settings import TimeProfileEditView
 from cfme.utils.update import update
 
 
@@ -47,16 +47,13 @@ def test_days_required_error_validation(appliance, soft_assert):
     This test case performs the error validation of days field.
     """
     collection = appliance.collections.time_profiles
-    collection.create(
-        description='time_profile {}'.format(fauxfactory.gen_alphanumeric()),
-        scope='Current User',
-        timezone="(GMT-10:00) Hawaii",
-        days=False,
-        hours=True,
-        cancel=True)
-    view = appliance.browser.create_view(TimeProfileAddView)
+    time_profile = collection.instantiate(description='UTC', scope='Current User',
+                                          days=True, hours=True)
+    with update(time_profile):
+        time_profile.days = False
+    view = appliance.browser.create_view(TimeProfileEditView)
     soft_assert(view.form.help_block.text == "At least one day needs to be selected")
-    soft_assert(view.form.add.disabled)
+    soft_assert(view.form.save.disabled)
     view.form.cancel.click()
 
 
@@ -66,16 +63,13 @@ def test_hours_required_error_validation(appliance, soft_assert):
     This test case performs the error validation of hours field.
     """
     collection = appliance.collections.time_profiles
-    collection.create(
-        description='time_profile {}'.format(fauxfactory.gen_alphanumeric()),
-        scope='Current User',
-        timezone="(GMT-10:00) Hawaii",
-        days=True,
-        hours=False,
-        cancel=True)
-    view = appliance.browser.create_view(TimeProfileAddView)
+    time_profile = collection.instantiate(description='UTC', scope='Current User',
+                                          days=True, hours=True)
+    with update(time_profile):
+        time_profile.hours = False
+    view = appliance.browser.create_view(TimeProfileEditView)
     soft_assert(view.form.help_block.text == "At least one hour needs to be selected")
-    soft_assert(view.form.add.disabled)
+    soft_assert(view.form.save.disabled)
     view.form.cancel.click()
 
 
@@ -85,15 +79,13 @@ def test_time_profile_description_required_error_validation(appliance, soft_asse
     This test case performs the error validation of description field.
     """
     collection = appliance.collections.time_profiles
-    collection.create(
-        description=None,
-        scope='Current User',
-        timezone="(GMT-10:00) Hawaii",
-        days=True, hours=True,
-        cancel=True)
-    view = appliance.browser.create_view(TimeProfileAddView)
+    time_profile = collection.instantiate(description='UTC', scope='Current User',
+                                          days=True, hours=True)
+    with update(time_profile):
+        time_profile.description = ''
+    view = appliance.browser.create_view(TimeProfileEditView)
     soft_assert(view.form.description.help_block == "Required")
-    soft_assert(view.form.add.disabled)
+    soft_assert(view.form.save.disabled)
     view.form.cancel.click()
 
 
