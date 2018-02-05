@@ -160,7 +160,9 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
             # we will get instance of SSHResult
             # Sometimes Openstack drops characters from word 'blather' hence try to remove
             # file using partial file name. Known issue, being worked on.
-            command_result = ssh_client.run_command("rm blather", ensure_user=True)
+            file_name = ssh_client.run_command('find . -maxdepth 1 -name b* -type f -empty')\
+                .output.strip()
+            command_result = ssh_client.run_command("rm {}".format(file_name), ensure_user=True)
             assert command_result
     except Exception as e:
         # Take a screenshot if an exception occurs
