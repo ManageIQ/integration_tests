@@ -105,6 +105,7 @@ class VMConsole(Pretty):
         return image_jpeg
 
     def get_screen_text(self):
+        # Here's the problem
         """
         Return the text from a text console.
 
@@ -124,7 +125,7 @@ class VMConsole(Pretty):
         # higher resolution allows tesseract to recognize text correctly
         text = (image_to_string(((Image.open(tmp_file_name)).resize((7680, 4320),
          Image.ANTIALIAS)).filter(ImageFilter.SHARPEN), lang='eng',
-         config='--user-words eng.user-words')).encode('utf-8')
+         config=None)).encode('utf-8')
         tmp_file.close()
 
         logger.info('screen text:{}'.format(text))
