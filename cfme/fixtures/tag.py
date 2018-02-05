@@ -15,13 +15,12 @@ def category():
         Object can be used in all test run session
     """
     if BZ(1517285, forced_streams='5.9').blocks:
-        cg = Category(name=fauxfactory.gen_alpha(8).lower(),
-                      description=fauxfactory.gen_alphanumeric(length=32),
-                      display_name='test-{}'.format(fauxfactory.gen_alphanumeric(length=32)))
+        display_name = 'test-{}'.format(fauxfactory.gen_alphanumeric(length=32))
     else:
-        cg = Category(name=fauxfactory.gen_alpha(8).lower(),
-                      description=fauxfactory.gen_alphanumeric(length=32),
-                      display_name=fauxfactory.gen_alphanumeric(length=32))
+        display_name = fauxfactory.gen_alphanumeric(length=32)
+    cg = Category(name=fauxfactory.gen_alpha(8).lower(),
+                  description=fauxfactory.gen_alphanumeric(length=32),
+                  display_name=display_name)
     cg.create()
     yield cg
     cg.delete(False)
