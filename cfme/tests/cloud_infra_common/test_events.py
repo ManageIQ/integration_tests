@@ -76,9 +76,7 @@ def test_vm_create(request, appliance, vm_crud, provider, register_event):
 
     register_event(target_type='VmOrTemplate', target_name=vm_crud.name, event_type='vm_create')
 
-    vm_crud.create_on_provider()
-    provider.refresh_provider_relationships()
-    vm_crud.wait_to_appear()
+    vm_crud.create_on_provider(find_in_cfme=True)
 
     def _check():
         return any(tag.category.display_name == "Environment" and tag.display_name == "Development"
