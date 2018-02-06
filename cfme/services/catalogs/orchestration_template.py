@@ -151,9 +151,11 @@ class OrchestrationTemplate(Updateable, Pretty, Navigatable, WidgetasticTaggable
                    'template_type': temp_type,
                    'content': content})
         view.add_button.click()
-        view = self.create_view(DetailsTemplateView)
-        view.flash.assert_success_message('Orchestration Template '
-                                          '"{}" was saved'.format(self.template_name))
+        try:
+            view.flash.assert_no_error()
+        except AssertionError:
+            view.fill({'name': self.template_name})
+            view.add_button.click()
 
     def update(self, updates):
         view = navigate_to(self, "Edit")

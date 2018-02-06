@@ -6,7 +6,7 @@ from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 from cfme.utils import error
 from cfme.utils.update import update
 from cfme import test_requirements
-from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to, navigator
 
 
 pytestmark = [
@@ -61,6 +61,10 @@ def test_orchestration_template_crud(provisioning, create_template):
                                      template_name=fauxfactory.gen_alphanumeric(),
                                      description="my template")
     template.create(create_template)
+    view_cls = navigator.get_class(template, 'AddTemplate').VIEW
+    view = template.appliance.browser.create_view(view_cls)
+    view.flash.assert_message('Orchestration Template '
+                              '"{}" was saved'.format(template.template_name))
     with update(template):
         template.description = "my edited description"
     template.delete()
