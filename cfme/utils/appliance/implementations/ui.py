@@ -184,27 +184,6 @@ class MiqBrowser(Browser):
     def product_version(self):
         return self.appliance.version
 
-    def handle_alert(self, *args, **kwargs):
-        result = super(MiqBrowser, self).handle_alert(*args, **kwargs)
-        if self.browser_type != 'firefox':
-            return result
-
-        # A workaround because of selenium on firefox being a PITA
-        # Open a new window, and close it to regain focus
-        # Workaround by @psav
-        self.logger.debug('Fixing firefox alert focus mess by opening and closing a new window')
-        win = self.selenium.current_window_handle
-        self.selenium.execute_script('open("http://google.com")')
-        for win_h in self.selenium.window_handles:
-            if win != win_h:
-                self.logger.debug('Closing the newly opened window')
-                break
-        self.selenium.switch_to.window(win_h)
-        self.selenium.close()
-        self.selenium.switch_to.window(win)
-        self.logger.debug('Switched back to the original window')
-        return result
-
 
 def can_skip_badness_test(fn):
     """Decorator for setting a noop"""
