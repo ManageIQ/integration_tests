@@ -111,9 +111,26 @@ class MiqBrowserPlugin(DefaultPlugin):
     )
     DEFAULT_WAIT = .8
 
+    def make_document_focused(self):
+        if not self.browser.execute_script('return document.hasFocus()'):
+            self.logger.debug(
+                'Fixing firefox alert focus mess by opening and closing a new window')
+            win = self.browser.selenium.current_window_handle
+            self.browser.selenium.execute_script('open("about:blank")')
+
+            win_h = None
+
+            for win_h in self.browser.selenium.window_handles:
+                if win != win_h:
+                    self.logger.debug('Closing the newly opened window')
+                    break
+            self.browser.selenium.switch_to.window(win_h)
+            self.browser.selenium.close()
+            self.browser.selenium.switch_to.window(win)
+            self.logger.debug('Switched back to the original window')
+
     def ensure_page_safe(self, timeout='20s'):
         # THIS ONE SHOULD ALWAYS USE JAVASCRIPT ONLY, NO OTHER SELENIUM INTERACTION
-
         def _check():
             result = self.browser.execute_script(self.ENSURE_PAGE_SAFE, silent=True)
             # TODO: Logging
@@ -146,12 +163,14 @@ class MiqBrowserPlugin(DefaultPlugin):
         self.logger.debug('observed field detected, pausing for %.1f seconds', interval)
         time.sleep(interval)
         self.browser.plugin.ensure_page_safe()
+        self.make_document_focused()
 
     def before_keyboard_input(self, element, keyboard_input):
         # there is an issue in different dialogs
         # when cfme doesn't see that some input fields have been updated
         # this is temporary fix until we figure out real reason and fix it
         sleep(0.3)
+        self.make_document_focused()
 
 
 class MiqBrowser(Browser):
