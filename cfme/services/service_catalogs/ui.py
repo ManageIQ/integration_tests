@@ -3,7 +3,7 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import (deflatten_dict, Parameter, ParametrizedLocator, ParametrizedString,
     VersionPick)
-from widgetastic.widget import ParametrizedView, Text, View
+from widgetastic.widget import ParametrizedView, Text, View, Select
 from widgetastic_patternfly import Button, Input, BootstrapSelect
 
 from cfme.base import Server
@@ -60,6 +60,7 @@ class OrderForm(ServicesCatalogView):
     class fields(ParametrizedView):  # noqa
         PARAMETERS = ("key",)
         input = Input(id=Parameter("key"))
+        select = Select(id=Parameter("key"))
         param_input = Input(id=ParametrizedString("param_{key}"))
         dropdown = VersionPick({
             Version.lowest(): BootstrapSelect(Parameter("key")),
@@ -81,6 +82,8 @@ class OrderForm(ServicesCatalogView):
                 return self.param_input
             elif self.param_dropdown.is_displayed:
                 return self.param_dropdown
+            elif self.select.is_displayed:
+                return self.select
 
         def read(self):
             return self.visible_widget.read()
