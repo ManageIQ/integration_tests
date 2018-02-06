@@ -89,7 +89,6 @@ def catalog_item(provider, provisioning, vm_name, tagcontrol_dialog, catalog):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.meta(blockers=[BZ(1434990, forced_streams=["5.7", "upstream"])])
 def test_tagdialog_catalog_item(appliance, provider, setup_provider, catalog_item, request):
     """Tests tag dialog catalog item
     Metadata:
@@ -99,7 +98,7 @@ def test_tagdialog_catalog_item(appliance, provider, setup_provider, catalog_ite
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
     dialog_values = {
-        'default_select_value': "Gold"
+        'service_level': "Gold"
     }
     service_catalogs = ServiceCatalogs(appliance, catalog=catalog_item.catalog,
                                        name=catalog_item.name,
