@@ -15,7 +15,8 @@ def category():
         Object can be used in all test run session
     """
     if BZ(1517285, forced_streams='5.9').blocks:
-        display_name = 'test-{}'.format(fauxfactory.gen_alphanumeric(length=32))
+        display_name = 'test-{}'.format(fauxfactory.gen_alphanumeric(length=27))
+    # display_name should be with max length of 32
     else:
         display_name = fauxfactory.gen_alphanumeric(length=32)
     cg = Category(name=fauxfactory.gen_alpha(8).lower(),
