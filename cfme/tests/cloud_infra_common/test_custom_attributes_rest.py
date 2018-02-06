@@ -12,7 +12,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.rest import assert_response, delete_resources_from_collection
-from cfme.utils.version import current_version
+from fixtures.pytest_store import store
 
 
 pytestmark = [
@@ -23,7 +23,7 @@ pytestmark = [
 ]
 
 COLLECTIONS = ['providers', 'instances', 'vms']
-COLLECTIONS_ADDED_IN_59 = ['instances', 'vms']
+COLLECTIONS_ADDED_IN_59 = ['instances']
 
 
 @pytest.yield_fixture(scope='module')
@@ -32,45 +32,44 @@ def vm_obj(provider, setup_provider_modscope, small_template_modscope):
     vm_name = random_vm_name('attrs')
     new_vm = VM.factory(vm_name, provider, template_name=small_template_modscope.name)
 
-    if not provider.mgmt.does_vm_exist(vm_name):
-        new_vm.create_on_provider(find_in_cfme=True, allow_skip='default')
-
     yield new_vm
 
-    try:
-        provider.mgmt.delete_vm(new_vm.name)
-    except Exception:
-        logger.warning('Failed to delete vm `{}`.'.format(new_vm.name))
+    if provider.mgmt.does_vm_exist(new_vm.name):
+        try:
+            provider.mgmt.delete_vm(new_vm.name)
+        except Exception:
+            logger.warning('Failed to delete vm `{}`.'.format(new_vm.name))
 
 
 @pytest.fixture(scope='module')
-def providers(appliance, provider, setup_provider_modscope):
+def get_provider(appliance, provider, setup_provider_modscope):
     resource = appliance.rest_api.collections.providers.get(name=provider.name)
-    return resource
+    return lambda: resource
 
 
 @pytest.fixture(scope='module')
-def instances(appliance, provider, vm_obj):
+def get_vm(appliance, provider, vm_obj):
     if provider.one_of(InfraProvider):
-        return
-    resource = appliance.rest_api.collections.instances.get(name=vm_obj.name)
-    return resource
+        collection = appliance.rest_api.collections.vms
+    else:
+        collection = appliance.rest_api.collections.instances
+
+    def _get_vm():
+        vms = collection.find_by(name=vm_obj.name)
+        if not vms:
+            vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip='default')
+            vms = collection.find_by(name=vm_obj.name)
+        return vms[0]
+
+    return _get_vm
 
 
 @pytest.fixture(scope='module')
-def vms(appliance, provider, vm_obj):
-    if not provider.one_of(InfraProvider):
-        return
-    resource = appliance.rest_api.collections.vms.get(name=vm_obj.name)
-    return resource
-
-
-@pytest.fixture(scope='module')
-def fixtures_db(providers, instances, vms):
+def get_resource(get_provider, get_vm):
     db = {
-        'providers': providers,
-        'instances': instances,
-        'vms': vms
+        'providers': get_provider,
+        'instances': get_vm,
+        'vms': get_vm
     }
     return db
 
@@ -96,13 +95,12 @@ def add_custom_attributes(request, resource):
 
     assert_response(resource.collection._api)
     assert len(attrs) == attrs_num
-    return attrs, resource
+    return attrs
 
 
 def _uncollectif(provider, collection_name):
     return (
-        current_version() < '5.8' or
-        (current_version() < '5.9' and collection_name in COLLECTIONS_ADDED_IN_59) or
+        (store.current_appliance.version < '5.9' and collection_name in COLLECTIONS_ADDED_IN_59) or
         (provider.one_of(InfraProvider) and collection_name == 'instances') or
         (provider.one_of(CloudProvider) and collection_name == 'vms')
     )
@@ -113,13 +111,14 @@ class TestCustomAttributesRESTAPI(object):
         _uncollectif(provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
-    def test_add(self, request, collection_name, appliance, fixtures_db):
+    def test_add(self, request, collection_name, get_resource):
         """Test adding custom attributes to resource using REST API.
 
         Metadata:
             test_flag: rest
         """
-        attributes, resource = add_custom_attributes(request, fixtures_db[collection_name])
+        resource = get_resource[collection_name]()
+        attributes = add_custom_attributes(request, resource)
         for attr in attributes:
             record = resource.custom_attributes.get(id=attr.id)
             assert record.name == attr.name
@@ -129,13 +128,13 @@ class TestCustomAttributesRESTAPI(object):
         _uncollectif(provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
-    def test_delete_from_detail_post(self, request, collection_name, appliance, fixtures_db):
+    def test_delete_from_detail_post(self, request, collection_name, appliance, get_resource):
         """Test deleting custom attributes from detail using POST method.
 
         Metadata:
             test_flag: rest
         """
-        attributes, __ = add_custom_attributes(request, fixtures_db[collection_name])
+        attributes = add_custom_attributes(request, get_resource[collection_name]())
         for entity in attributes:
             entity.action.delete.POST()
             assert_response(appliance)
@@ -144,17 +143,17 @@ class TestCustomAttributesRESTAPI(object):
             assert_response(appliance, http_status=404)
 
     @pytest.mark.uncollectif(lambda provider, collection_name:
-        current_version() < '5.9' or  # BZ 1422596 was not fixed for versions < 5.9
+        store.current_appliance.version < '5.9' or  # BZ 1422596 was not fixed for versions < 5.9
         _uncollectif(provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
-    def test_delete_from_detail_delete(self, request, collection_name, appliance, fixtures_db):
+    def test_delete_from_detail_delete(self, request, collection_name, appliance, get_resource):
         """Test deleting custom attributes from detail using DELETE method.
 
         Metadata:
             test_flag: rest
         """
-        attributes, __ = add_custom_attributes(request, fixtures_db[collection_name])
+        attributes = add_custom_attributes(request, get_resource[collection_name]())
         for entity in attributes:
             entity.action.delete.DELETE()
             assert_response(appliance)
@@ -166,13 +165,14 @@ class TestCustomAttributesRESTAPI(object):
         _uncollectif(provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
-    def test_delete_from_collection(self, request, collection_name, fixtures_db):
+    def test_delete_from_collection(self, request, collection_name, get_resource):
         """Test deleting custom attributes from collection using REST API.
 
         Metadata:
             test_flag: rest
         """
-        attributes, resource = add_custom_attributes(request, fixtures_db[collection_name])
+        resource = get_resource[collection_name]()
+        attributes = add_custom_attributes(request, resource)
         collection = resource.custom_attributes
         delete_resources_from_collection(collection, attributes, not_found=True)
 
@@ -180,13 +180,14 @@ class TestCustomAttributesRESTAPI(object):
         _uncollectif(provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
-    def test_delete_single_from_collection(self, request, collection_name, fixtures_db):
+    def test_delete_single_from_collection(self, request, collection_name, get_resource):
         """Test deleting single custom attribute from collection using REST API.
 
         Metadata:
             test_flag: rest
         """
-        attributes, resource = add_custom_attributes(request, fixtures_db[collection_name])
+        resource = get_resource[collection_name]()
+        attributes = add_custom_attributes(request, resource)
         attribute = attributes[0]
         collection = resource.custom_attributes
         delete_resources_from_collection(collection, [attribute], not_found=True)
@@ -196,13 +197,14 @@ class TestCustomAttributesRESTAPI(object):
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
-    def test_edit(self, request, from_detail, collection_name, appliance, fixtures_db):
+    def test_edit(self, request, from_detail, collection_name, appliance, get_resource):
         """Test editing custom attributes using REST API.
 
         Metadata:
             test_flag: rest
         """
-        attributes, resource = add_custom_attributes(request, fixtures_db[collection_name])
+        resource = get_resource[collection_name]()
+        attributes = add_custom_attributes(request, resource)
         response_len = len(attributes)
         body = []
         for __ in range(response_len):
@@ -230,6 +232,8 @@ class TestCustomAttributesRESTAPI(object):
             assert edited[i].section == body[i]['section'] == attributes[i].section
 
     @pytest.mark.uncollectif(lambda provider, collection_name:
+        # BZ 1516762 was not fixed for versions < 5.9
+        (store.current_appliance.version < '5.9' and collection_name != 'providers') or
         _uncollectif(provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
@@ -240,13 +244,14 @@ class TestCustomAttributesRESTAPI(object):
             unblock=lambda collection_name: collection_name not in ('vms', 'instances')
         )])
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
-    def test_bad_section_edit(self, request, from_detail, collection_name, appliance, fixtures_db):
+    def test_bad_section_edit(self, request, from_detail, collection_name, appliance, get_resource):
         """Test that editing custom attributes using REST API and adding invalid section fails.
 
         Metadata:
             test_flag: rest
         """
-        attributes, resource = add_custom_attributes(request, fixtures_db[collection_name])
+        resource = get_resource[collection_name]()
+        attributes = add_custom_attributes(request, resource)
         response_len = len(attributes)
         body = []
         for __ in range(response_len):
@@ -264,6 +269,8 @@ class TestCustomAttributesRESTAPI(object):
             assert_response(appliance, http_status=400)
 
     @pytest.mark.uncollectif(lambda provider, collection_name:
+        # BZ 1516762 was not fixed for versions < 5.9
+        (store.current_appliance.version < '5.9' and collection_name != 'providers') or
         _uncollectif(provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
@@ -273,13 +280,14 @@ class TestCustomAttributesRESTAPI(object):
             forced_streams=['5.9', 'upstream'],
             unblock=lambda collection_name: collection_name not in ('vms', 'instances')
         )])
-    def test_bad_section_add(self, request, collection_name, appliance, fixtures_db):
+    def test_bad_section_add(self, request, collection_name, appliance, get_resource):
         """Test adding custom attributes with invalid section to resource using REST API.
 
         Metadata:
             test_flag: rest
         """
-        __, resource = add_custom_attributes(request, fixtures_db[collection_name])
+        resource = get_resource[collection_name]()
+        add_custom_attributes(request, resource)
         uid = fauxfactory.gen_alphanumeric(5)
         body = {
             'name': 'ca_name_{}'.format(uid),
