@@ -41,7 +41,8 @@ def template(provider, provisioning, setup_provider):
     template.create(data_file.read().replace('CFMETemplateName', template_name))
     dialog_name = "dialog_" + fauxfactory.gen_alphanumeric()
     template.create_service_dialog_from_template(dialog_name, template.template_name)
-    return template, dialog_name
+    yield template, dialog_name
+    template.delete()
 
 
 @pytest.fixture(scope="function")
@@ -49,7 +50,8 @@ def catalog():
     cat_name = "cat_" + fauxfactory.gen_alphanumeric()
     catalog = Catalog(name=cat_name, description="my catalog")
     catalog.create()
-    return catalog
+    yield catalog
+    catalog.delete()
 
 
 @pytest.fixture(scope="function")
@@ -65,7 +67,8 @@ def catalog_item(dialog, catalog, template, provider):
                                orch_template=template,
                                provider=provider)
     catalog_item.create()
-    return catalog_item, template
+    yield catalog_item, template
+    catalog_item.delete()
 
 
 def random_desc():
@@ -95,8 +98,8 @@ def stack_data(appliance, provider, provisioning):
             'vmuser': vm_user,
             'vmpassword': vm_password,
             'vmsize': provisioning.get('vm_size'),
-            'cloudnetwork': provisioning.get('cloud_network'),
-            'cloudsubnet': provisioning.get('cloud_subnet')
+            'cloudnetwork': provisioning.get('cloud_network').split(" ")[0],
+            'cloudsubnet': provisioning.get('cloud_subnet').split(" ")[0]
         }
     elif provider.type == 'openstack':
         stack_prov = provisioning['stack_provisioning']
@@ -230,14 +233,15 @@ def test_retire_stack(appliance, provider, provisioning, catalog, catalog_item, 
 
 def clean_up(stack_data, provider):
     try:
+        logger.info("Removing Stack and it's VM")
         # stack_exist returns 400 if stack ID not found, which triggers an exception
         if provider.mgmt.stack_exist(stack_data['stack_name']):
             wait_for(lambda: provider.mgmt.delete_stack(stack_data['stack_name']),
                      delay=10, num_sec=800, message="wait for stack delete")
-        if provider.type == 'azure' and provider.mgmt.does_vm_exist(stack_data['vm_name']):
-            wait_for(lambda: provider.mgmt.delete_vm(stack_data['vm_name']),
+        if provider.type == 'azure' and provider.mgmt.does_vm_exist(stack_data['vmname']):
+
+            wait_for(lambda: provider.mgmt.delete_vm(stack_data['vmname']),
                      delay=10, num_sec=800, message="wait for vm delete")
-        catalog_item.orch_template.delete()
     except Exception as ex:
         logger.warning('Exception while checking/deleting stack, continuing: {}'
                        .format(ex.message))
