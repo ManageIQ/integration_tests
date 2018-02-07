@@ -12,8 +12,8 @@ from widgetastic.utils import partial_match, Parameter, VersionPick, Version
 from widgetastic.widget import (
     Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
 from widgetastic_manageiq import (
-    Accordion, ConditionalSwitchableView, ManageIQTree, CheckableManageIQTree, NonJSPaginationPane,
-    Table, TimelinesView, CompareToolBarActionsView)
+    Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane, Table, TimelinesView,
+    CompareToolBarActionsView)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, CheckableBootstrapTreeview)
