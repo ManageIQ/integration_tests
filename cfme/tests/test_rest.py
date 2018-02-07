@@ -79,12 +79,6 @@ def test_vm_scan(appliance, vm, from_detail):
         return response.task.state.lower() == 'finished'
 
 
-COLLECTIONS_ADDED_IN_58 = {
-    "actions", "alert_definitions", "alerts", "authentications", "configuration_script_payloads",
-    "configuration_script_sources", "load_balancers",
-}
-
-
 COLLECTIONS_REMOVED_IN_59 = {
     "arbitration_profiles",
     "arbitration_rules",
@@ -122,7 +116,6 @@ COLLECTIONS_OMMITED = {"settings"}
 @pytest.mark.uncollectif(
     lambda collection_name:
         (collection_name in COLLECTIONS_OMMITED) or
-        (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < "5.8") or
         (collection_name in COLLECTIONS_REMOVED_IN_59 and current_version() >= "5.9")
 )
 def test_query_simple_collections(appliance, collection_name):
@@ -144,7 +137,6 @@ def test_query_simple_collections(appliance, collection_name):
 @pytest.mark.uncollectif(
     lambda collection_name:
         (collection_name in COLLECTIONS_OMMITED) or
-        (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < "5.8") or
         (collection_name in COLLECTIONS_REMOVED_IN_59 and current_version() >= "5.9")
 )
 def test_query_with_api_version(api_version, collection_name):
@@ -169,10 +161,9 @@ COLLECTIONS_BUGGY_ATTRS = {"results", "service_catalogs", "automate", "categorie
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
     lambda collection_name:
-        (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < "5.8") or
         (collection_name in COLLECTIONS_REMOVED_IN_59 and current_version() >= "5.9")
 )
-@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:15754'])
+# testing GH#ManageIQ/manageiq:15754
 def test_select_attributes(appliance, collection_name):
     """Tests that it's possible to limit returned attributes.
 
@@ -534,7 +525,6 @@ COLLECTIONS_BUGGY_HREF_SLUG_IN_58 = {'policy_actions', 'automate_domains'}
     lambda collection_name:
         collection_name == 'automate' or  # doesn't have 'href'
         (collection_name in COLLECTIONS_BUGGY_HREF_SLUG_IN_58 and current_version() < '5.9') or
-        (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < '5.8') or
         (collection_name in COLLECTIONS_REMOVED_IN_59 and current_version() >= '5.9')
 )
 @pytest.mark.meta(blockers=[
