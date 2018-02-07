@@ -598,6 +598,28 @@ class NestedSummaryTable(SummaryTable):
         return [{key: col.text for key, col in row} for row in self]
 
 
+class ParametrizedSummaryTable(ParametrizedView):
+
+    PARAMETERS = ("title", )
+    _table = SummaryTable(title=Parameter("title"))
+
+    @property
+    def fields(self):
+        return self._table.fields
+
+    def get_field(self, field_name):
+        return self._table.get_field(field_name)
+
+    def get_text_of(self, field_name):
+        return self._table.get_text_of(field_name)
+
+    def get_img_of(self, field_name):
+        return self._table.get_img_of(field_name)
+
+    def click_at(self, field_name):
+        return self._table.click_at(field_name)
+
+
 class StatusBox(Widget, ClickableMixin):
     card = Text(ParametrizedLocator('.//div[@pf-aggregate-status-card and (normalize-space'
                                     '(.//h2/a/span[contains(@class, '

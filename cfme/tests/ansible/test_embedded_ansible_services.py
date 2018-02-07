@@ -47,9 +47,15 @@ def ansible_repository(appliance, wait_for_ansible):
         name=fauxfactory.gen_alpha(),
         url="https://github.com/quarckster/ansible_playbooks",
         description=fauxfactory.gen_alpha())
+    view = navigate_to(repository, "Details")
+    if appliance.version < "5.9":
+        refresh = view.browser.refresh
+    else:
+        refresh = view.toolbar.refresh.click
     wait_for(
-        lambda: repository.get_detail("Properties", "Status", refresh=True) == "successful",
-        timeout=60
+        lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
+        timeout=60,
+        fail_func=refresh
     )
     yield repository
 
