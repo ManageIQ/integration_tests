@@ -14,7 +14,7 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import SummaryTable, Table
+from widgetastic_manageiq import ParametrizedSummaryTable, Table
 
 
 class CredentialsBaseView(BaseLoggedInPage):
@@ -43,11 +43,15 @@ class CredentialsListView(CredentialsBaseView):
 
 
 class CredentialDetailsView(CredentialsBaseView):
-    configuration = Dropdown("Configuration")
-    download = Button(title="Download summary in PDF format")
-    properties = SummaryTable("Properties")
-    relationships = SummaryTable("Relationships")
-    credential_options = SummaryTable("Credential Options")
+
+    @View.nested
+    class toolbar(View):  # noqa
+        configuration = Dropdown("Configuration")
+        download = Button(title="Download summary in PDF format")
+
+    @View.nested
+    class entities(View):  # noqa
+        summary = ParametrizedView.nested(ParametrizedSummaryTable)
 
     @property
     def is_displayed(self):
@@ -243,7 +247,7 @@ class Credential(BaseEntity):
             remove_str = "Remove this Credential"
         else:
             remove_str = "Remove this Credential from Inventory"
-        view.configuration.item_select(remove_str, handle_alert=True)
+        view.toolbar.configuration.item_select(remove_str, handle_alert=True)
         credentials_list_page = self.create_view(CredentialsListView)
         wait_for(lambda: False, silent_failure=True, timeout=5)
         assert credentials_list_page.is_displayed
@@ -358,4 +362,4 @@ class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling("Details")
 
     def step(self):
-        self.prerequisite_view.configuration.item_select("Edit this Credential")
+        self.prerequisite_view.toolbar.configuration.item_select("Edit this Credential")
