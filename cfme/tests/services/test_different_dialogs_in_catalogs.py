@@ -98,9 +98,7 @@ def test_tagdialog_catalog_item(appliance, provider, setup_provider, catalog_ite
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
-    dialog_values = {
-        'default_select_value': "Gold"
-    }
+    dialog_values = {'service_level': "Gold"}
     service_catalogs = ServiceCatalogs(appliance, catalog=catalog_item.catalog,
                                        name=catalog_item.name,
                                        dialog_values=dialog_values)
