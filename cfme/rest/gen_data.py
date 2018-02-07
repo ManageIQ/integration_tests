@@ -9,7 +9,7 @@ from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.utils import version
 from cfme.utils.log import logger
-from cfme.utils.rest import create_resource, get_vms_in_service
+from cfme.utils.rest import create_resource
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
 from fixtures.provider import setup_one_by_class_or_skip
@@ -198,7 +198,8 @@ def services(request, appliance, a_provider, service_dialog=None, service_catalo
 
     service_name = str(service_request.options['dialog']['dialog_service_name'])
     assert '[{}]'.format(service_name) in service_request.message
-    provisioned_service = appliance.rest_api.collections.services.get(name=service_name)
+    provisioned_service = appliance.rest_api.collections.services.get(
+        service_template_id=service_template.id)
 
     @request.addfinalizer
     def _finished():
@@ -210,12 +211,6 @@ def services(request, appliance, a_provider, service_dialog=None, service_catalo
 
     # tests expect iterable
     return [provisioned_service]
-
-
-def service_data(request, appliance, a_provider, service_dialog=None, service_catalog=None):
-    prov_service = services(request, appliance, a_provider, service_dialog, service_catalog).pop()
-    prov_vm = get_vms_in_service(appliance.rest_api, prov_service).pop()
-    return {'service_name': prov_service.name, 'vm_name': prov_vm.name}
 
 
 def rates(request, rest_api, num=3):
