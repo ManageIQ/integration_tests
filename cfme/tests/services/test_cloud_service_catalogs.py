@@ -56,7 +56,7 @@ def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog
     if provider.one_of(AzureProvider):
         env_updates = dict(
             cloud_network=partial_match(provisioning['virtual_private_cloud']),
-            cloud_subnet=provisioning['cloud_subnet'],
+            cloud_subnet=partial_match(provisioning['cloud_subnet']),
             resource_groups=provisioning['resource_group'],
         )
         provisioning_data['environment'].update(env_updates)
