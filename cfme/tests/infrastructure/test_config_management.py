@@ -59,7 +59,7 @@ def test_config_manager_add(request, config_manager_obj):
 @pytest.mark.tier(3)
 def test_config_manager_add_invalid_url(request, config_manager_obj):
     request.addfinalizer(config_manager_obj.delete)
-    config_manager_obj.url = "invalid_url"
+    config_manager_obj.url = 'https://invalid_url'
     error_message = 'getaddrinfo: Name or service not known'
     with error.expected(error_message):
         config_manager_obj.create()
