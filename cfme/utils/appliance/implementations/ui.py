@@ -112,6 +112,8 @@ class MiqBrowserPlugin(DefaultPlugin):
     DEFAULT_WAIT = .8
 
     def make_document_focused(self):
+        if self.browser.browser_type != 'firefox':
+            return
         if not self.browser.execute_script('return document.hasFocus()'):
             self.logger.debug(
                 'Fixing firefox alert focus mess by opening and closing a new window')
