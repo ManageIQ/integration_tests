@@ -1477,7 +1477,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
         payload = {
             'name': 'test_{}'.format(uniq),
             'description': 'Test Template {}'.format(uniq),
-            'type': 'OrchestrationTemplateCfn',
+            'type': 'InvalidOrchestrationTemplateType',
             'orderable': False,
             'draft': False,
             'content': TEMPLATE_TORSO.replace('CloudFormation', uniq)
