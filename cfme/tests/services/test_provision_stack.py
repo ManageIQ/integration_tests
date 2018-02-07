@@ -98,8 +98,8 @@ def stack_data(appliance, provider, provisioning):
             'vmuser': vm_user,
             'vmpassword': vm_password,
             'vmsize': provisioning.get('vm_size'),
-            'cloudnetwork': provisioning.get('cloud_network').split(" ")[0],
-            'cloudsubnet': provisioning.get('cloud_subnet').split(" ")[0]
+            'cloudnetwork': provisioning.get('cloud_network').split()[0],
+            'cloudsubnet': provisioning.get('cloud_subnet').split()[0]
         }
     elif provider.type == 'openstack':
         stack_prov = provisioning['stack_provisioning']

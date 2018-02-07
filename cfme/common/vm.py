@@ -636,11 +636,14 @@ class VM(BaseVM):
             return True
 
     def create_on_provider(self, timeout=900, find_in_cfme=False, delete_on_failure=True, **kwargs):
-        """Create the VM on the provider
+        """Create the VM on the provider via MgmtSystem. `deploy_template` handles errors during
+        VM provision on MgmtSystem sideNS deletes VM if provisioned incorrectly
 
         Args:
             timeout: Number of seconds to wait for the VM to appear in CFME
                      Will not wait at all, if set to 0 (Defaults to ``900``)
+            find_in_cfme: Verifies that VM exists in CFME UI
+            delete_on_failure: Attempts to remove VM on UI navigation failure
         """
         deploy_template(self.provider.key, self.name, self.template_name, **kwargs)
         try:
