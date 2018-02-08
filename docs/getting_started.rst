@@ -45,6 +45,11 @@ Obtaining what you need (Project Setup)
         * Run ``miq selenium-container`` to start up a docker container with the defaults. It should tell
           you the port numbers it is using and you should be able to VNC to it to see what is happening.
 
+.. warning::
+    Make sure you are not trying to use local selenium server and Docker container at the same time.
+    The reason is that selenium server and Docker container both use port 4444 by default.
+    You cannot run those two at the same time unless you override this default behaviour.
+
 * After all this, you should be able to run ``miq shell`` and or ``miq-runtest --collect-only``. Be
   aware that you will also have to add your appliance to the ``env.yaml`` in either the
   ``base_url``(deprecated) section, or in the newer ``appliances`` list.
