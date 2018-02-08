@@ -50,6 +50,7 @@ class NetworkProviderAddView(ProviderAddView):
      represents Network Provider Add View
     """
     prov_type = BootstrapSelect(id='ems_type')
+    api_version = BootstrapSelect(id='api_version')
 
     @property
     def is_displayed(self):

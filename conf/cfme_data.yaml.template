@@ -236,6 +236,17 @@ management_systems:
                 image_reg:
                 image_tag:
                 cve_loc:
+    nuage:
+        name: nuage_net
+        type: nuage
+        api_version: v5_0
+        api_version_name: Version 5.0
+        endpoints:
+            default:
+                hostname:
+                credentials: nuage
+                security_protocol: SSL
+                api_port:
 
 configuration_managers:
     sat6:
