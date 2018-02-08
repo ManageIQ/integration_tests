@@ -28,11 +28,13 @@ class DisksTable(VanillaTable):
         'Type': BootstrapSelect(id='hdType'),
         'Mode': BootstrapSelect(id='hdMode'),
         'Size': Input(id='dvcSize'),
+        'ControllerType': BootstrapSelect(id='Controller'),
         # Workaround necessary until BZ 1524960 is resolved
-        4: BootstrapSelect(id='hdUnit'),
-        3: BootstrapSelect(id='hdUnit'),
-        'Dependent': BootstrapSwitch(
-            name=VersionPick({Version.lowest(): 'cb_dependent', '5.9': 'vm.cb_dependent'})),
+        5: BootstrapSelect(id='hdUnit'),  # for VMware in 5.9
+        4: BootstrapSelect(id='hdUnit'),  # for VMware in 5.8
+        3: BootstrapSelect(id='hdUnit'),  # for RHEVM in 5.9
+        'Dependent': VersionPick({Version.lowest(): BootstrapSwitch(name='cb_dependent'),
+                                  '5.9': BootstrapSwitch(name='vm.cb_dependent')}),
         'Delete Backing': BootstrapSwitch(name='cb_deletebacking'),
         'Actions': Button()
     }
