@@ -216,3 +216,18 @@ def test_provider_rhv_create_delete_tls(request, provider, verify_tls):
 
     prov.delete(cancel=False)
     prov.wait_for_delete()
+
+
+def test_infrastructure_add_provider_trailing_whitespaces():
+    """Test to validate the hostname and username should be without whitespaces"""
+    credentials = Credential(principal="test test", secret=fauxfactory.gen_alphanumeric(5))
+    endpoint = VirtualCenterEndpoint(hostname="test test", credentials=credentials)
+    prov = VMwareProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
+    with pytest.raises(AssertionError):
+        prov.create()
+
+    view = prov.create_view(prov.endpoints_form)
+    assert view.hostname.help_block == "Spaces are prohibited"
+    assert view.username.help_block == "Spaces are prohibited"
+    view = prov.create_view(InfraProviderAddView)
+    assert not view.add.active
