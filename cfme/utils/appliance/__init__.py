@@ -179,21 +179,19 @@ class ApplianceConsoleCli(object):
             " --dbname {dbname} --verbose --dbdisk {dbdisk} --key --standalone".format(
                 region=region, username=username, password=password, dbname=dbname, dbdisk=dbdisk))
 
-    def configure_ipa(self, ipaserver, username, password, domain, realm):
-        self._run("--ipaserver {ipaserver} --ipaprincipal {username} --ipapassword {password}"
-            " --ipadomain {domain} --iparealm {realm}".format(
-                ipaserver=ipaserver, username=username, password=password, domain=domain,
-                realm=realm))
-        assert self.appliance.ssh_client.run_command("systemctl status sssd | grep running")
-        return_code, output = self.appliance.ssh_client.run_command(
-            "cat /etc/ipa/default.conf | grep 'enable_ra = True'")
-        assert return_code == 0
+    def configure_ipa(self, ipaserver, username, password, domain=None, realm=None):
+        assert self._run("--ipaserver {ipaserver} --ipaprincipal {username} "
+                         "--ipapassword {password} {domain} {realm}"
+                         .format(ipaserver=ipaserver, username=username, password=password,
+                                 domain='--ipadomain {}'.format(domain) if domain else '',
+                                 realm='--iparealm {}'.format(realm) if realm else ''))
+        assert self.appliance.sssd.running
+        assert self.appliance.ssh_client.run_command("cat /etc/ipa/default.conf "
+                                                     "| grep 'enable_ra = True'")
 
     def uninstall_ipa_client(self):
-        self._run("--uninstall-ipa")
-        return_code, output = self.appliance.ssh_client.run_command(
-            "cat /etc/ipa/default.conf")
-        assert return_code != 0
+        assert self._run("--uninstall-ipa")
+        assert not self.appliance.ssh_client.run_command("cat /etc/ipa/default.conf")
 
 
 class IPAppliance(object):
@@ -219,6 +217,8 @@ class IPAppliance(object):
     _nav_steps = {}
 
     evmserverd = SystemdService.declare(unit_name='evmserverd')
+    httpd = SystemdService.declare(unit_name='httpd')
+    sssd = SystemdService.declare(unit_name='sssd')
     db = ApplianceDB.declare()
 
     CONFIG_MAPPING = {
@@ -236,6 +236,15 @@ class IPAppliance(object):
     }
     CONFIG_NONGLOBAL = {'hostname'}
     PROTOCOL_PORT_MAPPING = {'http': 80, 'https': 443}
+    CONF_FILES = {
+        'upstream_templates': '/var/www/miq/system/TEMPLATE',
+        'downstream_templates': '/opt/rh/cfme-appliance/TEMPLATE',
+        'pam_httpd_auth': '/etc/pam.d/httpd-auth',
+        'httpd_remote_user': '/etc/httpd/conf.d/manageiq-remote-user.conf',
+        'httpd_ext_auth': '/etc/httpd/conf.d/manageiq-external-auth.conf',
+        'openldap': '/etc/openldap/ldap.conf',
+        'sssd': '/etc/sssd/sssd.conf'
+    }
 
     @property
     def as_json(self):
@@ -2135,45 +2144,71 @@ class IPAppliance(object):
         except IndexError:
             raise KeyError("No such Domain: {}".format(domain))
 
-    def configure_openldap(self):
+    @logger_wrap('Configuring openldap external auth provider')
+    def configure_openldap(self, ipaddress, hostname, ldap_conf, sssd_conf,
+                           cert_filepath=None, cert_filename=None, **kwargs):
         """This method changes the /etc/sssd/sssd.conf and /etc/openldap/ldap.conf files to set
             up the appliance for an external authentication with OpenLdap.
             Apache file configurations are updated, for webui to take effect.
-
+            Args:
+                ipaddress: ip of the openldap server
+                hostname: hostname of the openldap server
+                cert_filepath: optional path for placing TLS/SSL cert on appliance
+                cert_filename: optional name of the cert file in conf_path
+                kwargs: additional args for UI auth configuration (3 booleans)
         """
-        ldap_yaml = conf.cfme_data.auth_modes.ext_openldap
+        # TODO refactor using passed auth provider object instead of passed fields
         # write /etc/hosts entry for ldap hostname  TODO DNS
-        self.ssh_client.run_command('echo "{}    {}" >> /etc/hosts'
-                                    .format(ldap_yaml.ipaddress, ldap_yaml.hostname))
+        self.ssh_client.run_command('echo "{}  {}" >> /etc/hosts'
+                                    .format(ipaddress, hostname))
         # place cert from local conf directory on ldap server
-        self.ssh_client.put_file(local_file=conf_path.join(ldap_yaml.cert_filename).strpath,
-                                 remote_file=ldap_yaml.cert_filepath)
+        self.ssh_client.put_file(local_file=conf_path.join(cert_filename).strpath,
+                                 remote_file=cert_filepath)
         # configure ldap and sssd with conf file content from yaml
-        assert self.ssh_client.run_command('echo "{}"  > /etc/openldap/ldap.conf'
-                                           .format(ldap_yaml.ldap_conf))
-        assert self.ssh_client.run_command('echo "{}" > /etc/sssd/sssd.conf'
-                                           .format(ldap_yaml.sssd_conf))
-        assert self.ssh_client.run_command('chown -R root:root /etc/sssd/sssd.conf')
-        assert self.ssh_client.run_command('chmod 600 /etc/sssd/sssd.conf')
+        assert self.ssh_client.run_command(
+            'echo "{s}" > {c}'.format(s=ldap_conf, c=self.CONF_FILES['openldap'])
+        )
+        assert self.ssh_client.run_command(
+            'echo "{s}" > {c}'.format(s=sssd_conf, c=self.CONF_FILES['sssd'])
+        )
+        assert self.ssh_client.run_command('chown -R root:root {}').format(self.CONF_FILES['sssd'])
+        assert self.ssh_client.run_command('chmod 600 {}').format(self.CONF_FILES['sssd'])
         # copy miq/cfme template files for httpd ext auth config
-        template_dir = '/opt/rh/cfme-appliance/TEMPLATE'
-        if self.version == 'master':
-            template_dir = '/var/www/miq/system/TEMPLATE'
-        manageiq_ext_auth = '/etc/httpd/conf.d/manageiq-external-auth.conf'
+        template_dir = self.CONF_FILES.get(
+            'downstream_templates' if self.is_downstream else 'upstream_templates'
+        )
+        # pam httpd-auth and httpd remote-user.conf
+        for file in [self.CONF_FILES['pam_httpd_auth'], self.CONF_FILES['httpd_remote_user']]:
+            assert self.ssh_client.run_command('cp {t}{c} {c}'.format(t=template_dir, c=file))
+
+        # https external-auth conf, template has extra '.erb' suffix
         assert self.ssh_client.run_command(
-            'cp {template_dir}/etc/pam.d/httpd-auth /etc/pam.d/httpd-auth'
-            .format(template_dir=template_dir))
-        assert self.ssh_client.run_command(
-            'cp {template_dir}/etc/httpd/conf.d/manageiq-remote-user.conf /etc/httpd/conf.d/'
-            .format(template_dir=template_dir))
-        assert self.ssh_client.run_command(
-            'cp {template_dir}/etc/httpd/conf.d/manageiq-external-auth.conf.erb {manageiq_ext_auth}'
-            .format(template_dir=template_dir,
-                    manageiq_ext_auth=manageiq_ext_auth))
-        self.ssh_client.run_command('setenforce 0 && '
-                                    'systemctl restart sssd && '
-                                    'systemctl restart httpd')
+            'cp {t}{c}.erb {c}'
+            .format(t=template_dir, c=self.CONF_FILES['httpd_ext_auth'])
+        )
+        assert self.ssh_client.run_command('setenforce 0')
+        self.sssd.restart()
+        self.httpd.restart()
         self.wait_for_web_ui()
+
+        # UI configuration of auth provider type
+        self.server.authentication.configure_auth(auth_mode='external', **kwargs)
+
+    @logger_wrap('Disabling openldap external auth provider')
+    def disable_openldap(self):
+        self.server.authentication.configure_auth()
+        files_to_remove = [
+            '/etc/sssd/sssd.conf',
+            '/etc/pam.d/httpd-auth',
+            self.HTTPD_CONF_MODULES['manageiq_ext_auth'],
+            self.HTTPD_CONF_MODULES['manageiq_remoteuser']
+        ]
+        for file in files_to_remove:
+            assert self.ssh_client.run_command('rm -rf {}'.format(file))
+        self.evmserverd.restart()
+        self.httpd.restart()
+        self.wait_for_web_ui()
+        self.server.authentication.configure_auth(auth_mode='database')
 
     @logger_wrap("Configuring VM Console: {}")
     def configure_vm_console_cert(self, log_callback=None):
