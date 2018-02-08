@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-
-import math
-
 import fauxfactory
+import math
 import pytest
 import re
+
+from datetime import date
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
@@ -13,16 +13,13 @@ from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CustomReport
-from datetime import date
-from fixtures.provider import setup_or_skip
 from cfme.utils.log import logger
-from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
 
 pytestmark = [
     pytest.mark.tier(2),
-    pytest.mark.uncollectif(lambda: current_version() < '5.9'),
+    pytest.mark.ignore_stream('5.8'),
     pytest.mark.provider([VMwareProvider, RHEVMProvider],
                          scope='module',
                          required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
@@ -31,11 +28,9 @@ pytestmark = [
 
 
 @pytest.yield_fixture(scope="module")
-def clean_setup_provider(request, provider):
-    BaseProvider.clear_providers()
-    setup_or_skip(request, provider)
+def clean_setup_provider(request, has_no_providers_modscope, setup_provider_modscope,
+        provider):
     yield
-    logger.info('In clean_setup_provider')
     BaseProvider.clear_providers()
 
 
