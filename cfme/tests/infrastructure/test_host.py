@@ -118,9 +118,8 @@ def test_multiple_host_good_creds(setup_provider, provider):
 def test_multiple_host_bad_creds(setup_provider, provider):
     """    Tests multiple host credentialing with bad credentials """
     host = random.choice(provider.data["hosts"])
-    bad_creds = credentials[host['credentials']]
-    bad_creds.update({'password': 'bad_password'})
-    cred = Credential(principal=bad_creds.username, secret=bad_creds.password)
+    username = credentials[host['credentials']].username
+    cred = Credential(principal=username, secret='bad_password')
 
     edit_view = navigate_and_select_quads(provider=provider)
 
