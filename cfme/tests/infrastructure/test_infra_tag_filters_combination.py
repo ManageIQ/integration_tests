@@ -49,7 +49,8 @@ def testing_vis_object(request, a_provider, appliance):
 @pytest.fixture(scope='module')
 def group_tag_datacenter_combination(group_with_tag, a_provider):
     with update(group_with_tag):
-        group_with_tag.host_cluster = [a_provider.data['name'], a_provider.data['datacenters'][0]]
+        group_with_tag.host_cluster = ([a_provider.data['name'],
+                                        a_provider.data['datacenters'][0]], True)
 
 
 @pytest.mark.meta(blockers=[BZ(1533391, forced_streams=["5.9", "upstream"])])
