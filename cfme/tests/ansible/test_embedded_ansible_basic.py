@@ -142,8 +142,9 @@ def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansib
     view = navigate_to(credential, "Details")
 
     def wait_for_changes(field_name):
+        cr_opts = view.entities.summary("Credential Options")
         wait_for(
-            lambda: view.credential_options.get_text_of(field_name) == updated_value,
+            lambda: cr_opts.get_text_of(field_name) == updated_value,
             fail_func=view.browser.selenium.refresh,
             delay=10,
             timeout=60
