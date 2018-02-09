@@ -263,6 +263,29 @@ def policy_for_testing(provider, vm_name, policy_name, policy_profile_name, comp
     control_policy.delete()
 
 
+@pytest.yield_fixture(scope="module")
+def host(provider, setup_provider_modscope):
+    return provider.hosts[0]
+
+
+@pytest.yield_fixture(scope="module")
+def host_policy(appliance, host, policy_collection, name_suffix):
+    control_policy = policy_collection.create(
+        policies.HostControlPolicy,
+        "action_testing: policy {}".format(name_suffix)
+    )
+    policy_profile_collection = appliance.collections.policy_profiles
+    policy_profile = policy_profile_collection.create(
+        "action_testing: policy profile {}".format(name_suffix),
+        policies=[control_policy]
+    )
+    host.assign_policy_profiles(policy_profile.description)
+    yield control_policy
+    host.unassign_policy_profiles(policy_profile.description)
+    policy_profile.delete()
+    control_policy.delete()
+
+
 @pytest.fixture(scope="function")
 def vm_on(vm):
     """ Ensures that the VM is on when the control goes to the test."""
@@ -441,6 +464,39 @@ def test_action_prevent_ssa(request, appliance, configure_fleecing, vm, vm_on, p
         assert rc == 0, "Action \"Prevent current event from proceeding\" hasn't been invoked"
     else:
         pytest.fail("CFME did not prevent analysing the VM {}".format(vm.name))
+
+
+@pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
+def test_action_prevent_host_ssa(request, appliance, host, host_policy):
+    """Tests preventing Smart State Analysis on a host.
+
+    This test sets the policy that prevents host analysis.
+    https://bugzilla.redhat.com/show_bug.cgi?id=1437910
+
+    Metadata:
+        test_flag: actions, provision
+    """
+    host_policy.assign_actions_to_event("Host Analysis Request",
+        ["Prevent current event from proceeding"])
+    request.addfinalizer(host_policy.assign_events)
+    view = navigate_to(host, "Details")
+
+    def _scan():
+        return host.get_detail("Relationships", "Drift History")
+
+    original = _scan()
+    view.toolbar.configuration.item_select("Perform SmartState Analysis", handle_alert=True)
+    view.flash.assert_success_message('"{}": Analysis successfully initiated'.format(host.name))
+    try:
+        wait_for(
+            lambda: _scan() != original,
+            num_sec=60, delay=5, fail_func=view.browser.refresh)
+    except TimedOutError:
+            rc, _ = appliance.ssh_client.run_command("grep 'Prevent current event from proceeding.*"
+                "Host Analysis Request.*{}' /var/www/miq/vmdb/log/policy.log".format(host.name))
+            assert rc == 0, "Action \"Prevent current event from proceeding\" hasn't been invoked"
+    else:
+        pytest.fail("CFME did not prevent analysing the Host {}".format(host.name))
 
 
 @pytest.mark.provider(
