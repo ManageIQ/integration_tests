@@ -54,9 +54,6 @@ def test_host_good_creds(appliance, request, setup_provider, provider):
         host_obj.credentials = host.get_credentials_from_config(host_data['credentials'])
 
 
-@pytest.mark.meta(
-    blockers=[BZ(1310910, unblock=lambda provider: provider.type != 'rhevm')]
-)
 @pytest.mark.meta(blockers=[BZ(1516849,
                             forced_streams=['5.8', '5.9', 'upstream'],
                             unblock=lambda provider: not provider.one_of(RHEVMProvider))])
