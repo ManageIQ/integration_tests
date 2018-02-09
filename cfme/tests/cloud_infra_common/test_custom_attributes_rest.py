@@ -12,7 +12,6 @@ from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.rest import assert_response, delete_resources_from_collection
-from fixtures.pytest_store import store
 
 
 pytestmark = [
@@ -98,17 +97,17 @@ def add_custom_attributes(request, resource):
     return attrs
 
 
-def _uncollectif(provider, collection_name):
+def _uncollectif(appliance, provider, collection_name):
     return (
-        (store.current_appliance.version < '5.9' and collection_name in COLLECTIONS_ADDED_IN_59) or
+        (appliance.version < '5.9' and collection_name in COLLECTIONS_ADDED_IN_59) or
         (provider.one_of(InfraProvider) and collection_name == 'instances') or
         (provider.one_of(CloudProvider) and collection_name == 'vms')
     )
 
 
 class TestCustomAttributesRESTAPI(object):
-    @pytest.mark.uncollectif(lambda provider, collection_name:
-        _uncollectif(provider, collection_name)
+    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
+        _uncollectif(appliance, provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_add(self, request, collection_name, get_resource):
@@ -124,8 +123,8 @@ class TestCustomAttributesRESTAPI(object):
             assert record.name == attr.name
             assert record.value == attr.value
 
-    @pytest.mark.uncollectif(lambda provider, collection_name:
-        _uncollectif(provider, collection_name)
+    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
+        _uncollectif(appliance, provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_delete_from_detail_post(self, request, collection_name, appliance, get_resource):
@@ -142,9 +141,9 @@ class TestCustomAttributesRESTAPI(object):
                 entity.action.delete.POST()
             assert_response(appliance, http_status=404)
 
-    @pytest.mark.uncollectif(lambda provider, collection_name:
-        store.current_appliance.version < '5.9' or  # BZ 1422596 was not fixed for versions < 5.9
-        _uncollectif(provider, collection_name)
+    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
+        appliance.version < '5.9' or  # BZ 1422596 was not fixed for versions < 5.9
+        _uncollectif(appliance, provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_delete_from_detail_delete(self, request, collection_name, appliance, get_resource):
@@ -161,8 +160,8 @@ class TestCustomAttributesRESTAPI(object):
                 entity.action.delete.DELETE()
             assert_response(appliance, http_status=404)
 
-    @pytest.mark.uncollectif(lambda provider, collection_name:
-        _uncollectif(provider, collection_name)
+    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
+        _uncollectif(appliance, provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_delete_from_collection(self, request, collection_name, get_resource):
@@ -176,8 +175,8 @@ class TestCustomAttributesRESTAPI(object):
         collection = resource.custom_attributes
         delete_resources_from_collection(collection, attributes, not_found=True)
 
-    @pytest.mark.uncollectif(lambda provider, collection_name:
-        _uncollectif(provider, collection_name)
+    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
+        _uncollectif(appliance, provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_delete_single_from_collection(self, request, collection_name, get_resource):
@@ -192,8 +191,8 @@ class TestCustomAttributesRESTAPI(object):
         collection = resource.custom_attributes
         delete_resources_from_collection(collection, [attribute], not_found=True)
 
-    @pytest.mark.uncollectif(lambda provider, collection_name:
-        _uncollectif(provider, collection_name)
+    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
+        _uncollectif(appliance, provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
@@ -231,10 +230,10 @@ class TestCustomAttributesRESTAPI(object):
             assert edited[i].value == body[i]['value'] == attributes[i].value
             assert edited[i].section == body[i]['section'] == attributes[i].section
 
-    @pytest.mark.uncollectif(lambda provider, collection_name:
+    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
         # BZ 1516762 was not fixed for versions < 5.9
-        (store.current_appliance.version < '5.9' and collection_name != 'providers') or
-        _uncollectif(provider, collection_name)
+        (appliance.version < '5.9' and collection_name != 'providers') or
+        _uncollectif(appliance, provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     @pytest.mark.meta(blockers=[
@@ -268,10 +267,10 @@ class TestCustomAttributesRESTAPI(object):
                 resource.custom_attributes.action.edit(*body)
             assert_response(appliance, http_status=400)
 
-    @pytest.mark.uncollectif(lambda provider, collection_name:
+    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
         # BZ 1516762 was not fixed for versions < 5.9
-        (store.current_appliance.version < '5.9' and collection_name != 'providers') or
-        _uncollectif(provider, collection_name)
+        (appliance.version < '5.9' and collection_name != 'providers') or
+        _uncollectif(appliance, provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     @pytest.mark.meta(blockers=[
