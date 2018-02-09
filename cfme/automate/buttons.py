@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
+import attr
 import re
 
+from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from widgetastic.utils import ParametrizedString, VersionPick
 from widgetastic.widget import Text, Checkbox, ParametrizedView
 from widgetastic_manageiq import SummaryFormItem, FonticonPicker, PotentiallyInvisibleTab
-from widgetastic_patternfly import BootstrapSelect, Button, Input
+from widgetastic_patternfly import BootstrapSelect, Button, CandidateNotFound, Input
 
-from widgetastic_patternfly import CandidateNotFound
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.blockers import BZ
@@ -357,90 +359,12 @@ class ButtonDetailView(AutomateCustomizationView):
                 self.context['object'].group.text, self.context['object'].text])
 
 
-class Button(Updateable, Navigatable):
-    """Create,Edit and Delete buttons under a Button
-
-    Args:
-        group: Group where this button belongs.
-        text: The button name.
-        hover: The button hover text.
-        dialog: The dialog to be selected for a button.
-        system: System or Processes , DropDown to choose Automation/Request.
-    """
-    TAB_MAPPING = {
-        # Options
-        'text': 'options',
-        'hover': 'options',
-        'dialog': 'options',
-        'image': 'options',
-        'open_url': 'options',
-        # Advanced
-        'system': 'advanced',
-        'request': 'advanced',
-    }
-
-    def __init__(self, group=None, text=None, hover=None, dialog=None, system=None, request=None,
-                 image=None, open_url=None, attributes=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.group = group
-        self.text = text
-        self.hover = hover
-        self.dialog = dialog
-        self.system = system
-        self.request = request
-        if image:
-            self.image = image
-        elif self.appliance.version < '5.9':
-            self.image = 'Button Image 1'
-        else:
-            self.image = 'fa-user'
-        self.open_url = open_url
-        self.attributes = attributes
-
-    @classmethod
-    def _categorize_fill_dict(cls, d):
-        """This method uses ``TAB_MAPPING`` to categorize fields to appropriate tabs.
-
-        For DRY purposes.
-        """
-        result = {}
-        for key, value in d.items():
-            try:
-                placement = cls.TAB_MAPPING[key]
-            except KeyError:
-                raise KeyError('Unknown key name {} for Button'.format(key))
-            if placement not in result:
-                result[placement] = {}
-            result[placement][key] = value
-        return result
-
-    def create(self):
-        view = navigate_to(self, 'Add')
-        view.fill(self._categorize_fill_dict({
-            'text': self.text,
-            'hover': self.hover,
-            'dialog': self.dialog,
-            'image': self.image,
-            'open_url': self.open_url,
-            'system': self.system,
-            'request': self.request
-        }))
-        if self.attributes is not None:
-            for i, dict_ in enumerate(self.attributes, 1):
-                view.advanced.attribute(i).fill(dict_)
-        view.add_button.click()
-        view = self.create_view(ButtonGroupDetailView, self.group)
-        # TODO: Enable this
-        # assert view.is_displayed
-        view.flash.assert_no_error()
-        if self.appliance.version < '5.9':
-            view.flash.assert_message('Button "{}" was added'.format(self.hover))
-        else:
-            view.flash.assert_message('Custom Button "{}" was added'.format(self.hover))
+class BaseButton(BaseEntity, Updateable):
+    """Base class for Automate Buttons."""
 
     def update(self, updates):
         view = navigate_to(self, 'Edit')
-        changed = view.fill(self._categorize_fill_dict(updates))
+        changed = view.fill(self.parent._categorize_fill_dict(updates))
         if changed:
             view.save_button.click()
         else:
@@ -486,7 +410,124 @@ class Button(Updateable, Navigatable):
             self.delete()
 
 
-@navigator.register(Button, 'All')
+@attr.s
+class DefaultButton(BaseButton):
+    group = attr.ib()
+    text = attr.ib()
+    hover = attr.ib()
+    image = attr.ib()
+    dialog = attr.ib()
+    system = attr.ib(default=None)
+    request = attr.ib(default=None)
+    open_url = attr.ib(default=None)
+    attributes = attr.ib(default=None)
+
+
+@attr.s
+class AnsiblePlaybookButton(BaseButton):
+    group = attr.ib()
+    text = attr.ib()
+    hover = attr.ib()
+    image = attr.ib()
+    playbook = attr.ib()
+    inventory = attr.ib()
+    system = attr.ib(default=None)
+    request = attr.ib(default=None)
+    open_url = attr.ib(default=None)
+    attributes = attr.ib(default=None)
+
+
+@attr.s
+class ButtonCollection(BaseCollection):
+
+    ENTITY = BaseButton
+    TAB_MAPPING = {
+        # Options
+        'text': 'options',
+        'hover': 'options',
+        'dialog': 'options',
+        'playbook': 'options',
+        'inventory': 'options',
+        'image': 'options',
+        'open_url': 'options',
+        # Advanced
+        'system': 'advanced',
+        'request': 'advanced',
+    }
+
+    @classmethod
+    def _categorize_fill_dict(cls, d):
+        """This method uses ``TAB_MAPPING`` to categorize fields to appropriate tabs.
+
+        For DRY purposes.
+        """
+        result = {}
+        for key, value in d.items():
+            try:
+                placement = cls.TAB_MAPPING[key]
+            except KeyError:
+                raise KeyError('Unknown key name {} for Button'.format(key))
+            if placement not in result:
+                result[placement] = {}
+            result[placement][key] = value
+        return result
+
+    def instantiate(self, button_class, group, text, hover, dialog=None, playbook=None,
+                    inventory=None, image=None, open_url=None, system=None, request=None,
+                    attributes=None):
+        if image:
+            pass
+        elif self.appliance.version < '5.9':
+            image = 'Button Image 1'
+        else:
+            image = 'fa-user'
+        kwargs = {'open_url': open_url, 'system': system, 'request': request,
+                  'attributes': attributes}
+        if button_class is DefaultButton:
+            args = [group, text, hover, image, dialog]
+        elif button_class is AnsiblePlaybookButton:
+            args = [group, text, hover, image, playbook, inventory]
+        return button_class.from_collection(self, *args, **kwargs)
+
+    def create(self, button_class, group, text, hover, dialog=None, playbook=None, inventory=None,
+               image=None, open_url=None, system=None, request=None, attributes=None):
+        self.group = group
+        if image:
+            pass
+        elif self.appliance.version < '5.9':
+            image = 'Button Image 1'
+        else:
+            image = 'fa-user'
+        view = navigate_to(self, 'Add')
+        view.fill(self._categorize_fill_dict({
+            'text': text,
+            'hover': hover,
+            'dialog': dialog,
+            'playbook': playbook,
+            'inventory': inventory,
+            'image': image,
+            'open_url': open_url,
+            'system': system,
+            'request': request
+        }))
+        if attributes is not None:
+            for i, dict_ in enumerate(attributes, 1):
+                view.advanced.attribute(i).fill(dict_)
+        view.add_button.click()
+        view = self.create_view(ButtonGroupDetailView, group)
+        # TODO: Enable this
+        # assert view.is_displayed
+        view.flash.assert_no_error()
+        if self.appliance.version < '5.9':
+            view.flash.assert_message('Button "{}" was added'.format(hover))
+        else:
+            view.flash.assert_message('Custom Button "{}" was added'.format(hover))
+        return self.instantiate(button_class, group, text, hover, dialog=dialog, playbook=playbook,
+                                inventory=inventory, image=image, open_url=open_url, system=system,
+                                request=request, attributes=attributes)
+
+
+@navigator.register(ButtonCollection, 'All')
 class ButtonAll(CFMENavigateStep):
     VIEW = ButtonsAllView
     prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
@@ -495,7 +536,7 @@ class ButtonAll(CFMENavigateStep):
         self.view.buttons.tree.click_path('Object Types')
 
 
-@navigator.register(Button, 'Add')
+@navigator.register(ButtonCollection, 'Add')
 class ButtonNew(CFMENavigateStep):
     VIEW = NewButtonView
     prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
@@ -505,7 +546,7 @@ class ButtonNew(CFMENavigateStep):
         self.view.configuration.item_select('Add a new Button')
 
 
-@navigator.register(Button, 'Details')
+@navigator.register(BaseButton, 'Details')
 class ButtonDetails(CFMENavigateStep):
     VIEW = ButtonDetailView
     prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
@@ -515,7 +556,7 @@ class ButtonDetails(CFMENavigateStep):
             "Object Types", self.obj.group.type, self.obj.group.text, self.obj.text)
 
 
-@navigator.register(Button, 'Edit')
+@navigator.register(BaseButton, 'Edit')
 class ButtonEdit(CFMENavigateStep):
     VIEW = EditButtonView
     prerequisite = NavigateToSibling('Details')

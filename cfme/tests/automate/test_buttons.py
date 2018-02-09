@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.automate.buttons import Button, ButtonGroup
+from cfme.automate.buttons import ButtonGroup, DefaultButton as Button
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -71,7 +71,7 @@ def test_button_group_crud(request):
 @pytest.mark.meta(blockers=[1143019, 1205235])
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_button_crud(dialog, request):
+def test_button_crud(appliance, dialog, request):
     """Test Creating a Button
 
     Prerequisities:
@@ -91,13 +91,13 @@ def test_button_crud(dialog, request):
         type=ButtonGroup.SERVICE)
     request.addfinalizer(buttongroup.delete_if_exists)
     buttongroup.create()
-    button = Button(
+    button = appliance.collections.buttons.create(
+        button_class=Button,
         group=buttongroup,
         text=fauxfactory.gen_alphanumeric(),
         hover=fauxfactory.gen_alphanumeric(),
         dialog=dialog, system="Request", request="InspectMe")
     request.addfinalizer(button.delete_if_exists)
-    button.create()
     assert button.exists
     view = navigate_to(button, 'Details')
     assert view.text.text == button.text
