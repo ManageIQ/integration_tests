@@ -144,24 +144,8 @@ def upload_template(hostname, username, password, provider, url, name, provider_
 
                 logger.info('updating templates before upload to openshift')
                 # updating main template file, adding essential patches
-                patch_dir = os.path.join(cur_dir, 'data', 'openshift', 'patches', 'main_template')
-
                 main_template_file = 'cfme-template.yaml'
                 main_template = os.path.join(dest_dir, main_template_file)
-                dst_main_template = os.path.join(dest_dir, main_template_file + '.backup')
-                result = ssh.run_command('cp {src} {dst}'.format(src=main_template,
-                                                                 dst=dst_main_template))
-                if result.failed:
-                    err_text = "OPENSHIFT: couldn't backup template file"
-                    logger.exception(err_text)
-                    raise RuntimeError(err_text)
-
-                patches = [os.path.join(patch_dir, p) for p in os.listdir(patch_dir)
-                           if p.endswith('.patch')]
-                for patch in patches:
-                    ssh.patch_file(patch, main_template)
-
-                logger.info("uploading templates to openshift")
 
                 default_template_name = 'cloudforms'
                 new_template_name = name
@@ -172,6 +156,7 @@ def upload_template(hostname, username, password, provider, url, name, provider_
                         ssh.run_command('oc delete template {t} '
                                         '--namespace=openshift'.format(t=template))
 
+                logger.info('changing template name to unique one')
                 change_name_cmd = """python -c 'import yaml
 data = yaml.safe_load(open("{file}"))
 data["metadata"]["name"] = "{new_name}"
