@@ -65,8 +65,9 @@ def get_provision_data(rest_api, provider, template_name, auto_approve=True):
     }
 
     if provider.one_of(RHEVMProvider):
-        result["vm_fields"]["vlan"] = "<Template>"
         result["vm_fields"]["provision_type"] = "native_clone"
+        if current_version() > '5.9.0.16':
+            result["vm_fields"]["vlan"] = "<Template>"
 
     return result
 
