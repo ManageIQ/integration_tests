@@ -110,6 +110,40 @@ def test_provision(request, appliance, provision_data):
     assert found_vms, 'VM `{}` not found'.format(vm_name)
 
 
+@pytest.mark.meta(server_roles="+notifier")
+def test_provision_emails(request, provision_data, provider, appliance, smtp_test):
+    """
+    Test that redundant e-mails are not received when provisioning VM that has some
+    attributes set to values that differ from template's default.
+
+    Metadata:
+        test_flag: rest, provision
+    """
+    def check_one_approval_mail_received():
+        return len(smtp_test.get_emails(
+            subject_like="%%Your Virtual Machine configuration was Approved%%")) == 1
+
+    def check_one_completed_mail_received():
+        return len(smtp_test.get_emails(
+            subject_like="%%Your virtual machine request has Completed%%")) == 1
+
+    request.addfinalizer(lambda: clean_vm(vm_name, provider))
+
+    vm_name = provision_data["vm_fields"]["vm_name"]
+    provision_data["vm_fields"]["vm_memory"] = "1024"
+    provision_data["vm_fields"]["number_of_sockets "] = "2"
+
+    appliance.rest_api.collections.provision_requests.action.create(**provision_data)
+    assert appliance.rest_api.response.status_code == 200
+
+    request = appliance.collections.requests.instantiate(description=vm_name, partial_check=True)
+    request.wait_for_request()
+    assert provider.mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
+
+    wait_for(check_one_approval_mail_received, num_sec=90, delay=5)
+    wait_for(check_one_completed_mail_received, num_sec=90, delay=5)
+
+
 def test_create_pending_provision_requests(request, appliance, provider, small_template):
     """Tests creation and and auto-approval of pending provision request
     using /api/provision_requests.
