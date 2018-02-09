@@ -211,6 +211,11 @@ def test_retire_stack(appliance, provider, provisioning, catalog, catalog_item, 
         test_flag: provision
     """
     catalog_item, template = catalog_item
+
+    @request.addfinalizer
+    def _cleanup_vms():
+        clean_up(stack_data, provider)
+
     DefaultView.set_default_view("Stacks", "Grid View")
 
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
@@ -225,10 +230,6 @@ def test_retire_stack(appliance, provider, provisioning, catalog, catalog_item, 
     stack = StackCollection(appliance).instantiate(stack_data['stack_name'], provider=provider)
     stack.wait_for_exists()
     stack.retire_stack()
-
-    @request.addfinalizer
-    def _cleanup_vms():
-        clean_up(stack_data, provider)
 
 
 def clean_up(stack_data, provider):
