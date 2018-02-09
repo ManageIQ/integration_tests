@@ -79,6 +79,13 @@ def clean_vm(provider, vm_name):
     provider.mgmt.delete_vm(vm_name)
 
 
+def request_finished(provision_request):
+    provision_request.reload()
+    if "error" in provision_request.status.lower():
+        pytest.fail("Error when provisioning: `{}`".format(provision_request.message))
+    return provision_request.request_state.lower() in ("finished", "provisioned")
+
+
 # Here also available the ability to create multiple provision request, but used the save
 # href and method, so it doesn't make any sense actually
 def test_provision(request, provision_data, provider, appliance):
@@ -100,13 +107,9 @@ def test_provision(request, provision_data, provider, appliance):
     assert appliance.rest_api.response.status_code == 200
     provision_request = response[0]
 
-    def _finished():
-        provision_request.reload()
-        if "error" in provision_request.status.lower():
-            pytest.fail("Error when provisioning: `{}`".format(provision_request.message))
-        return provision_request.request_state.lower() in ("finished", "provisioned")
+    wait_for(request_finished, func_args=[provision_request], num_sec=800, delay=5,
+        message="REST provisioning finishes")
 
-    wait_for(_finished, num_sec=800, delay=5, message="REST provisioning finishes")
     assert provider.mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
 
 
