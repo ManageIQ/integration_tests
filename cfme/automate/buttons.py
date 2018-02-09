@@ -2,7 +2,6 @@
 import attr
 import re
 
-from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from widgetastic.utils import ParametrizedString, VersionPick
@@ -441,6 +440,8 @@ class AnsiblePlaybookButton(BaseButton):
 class ButtonCollection(BaseCollection):
 
     ENTITY = BaseButton
+    DEFAULT = DefaultButton
+    ANSIBLE = AnsiblePlaybookButton
     TAB_MAPPING = {
         # Options
         'text': 'options',

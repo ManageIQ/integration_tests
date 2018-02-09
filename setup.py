@@ -88,7 +88,7 @@ setup(
             'datastores = cfme.infrastructure.datastore:DatastoreCollection',
             'service_dialogs = cfme.automate.dialog_collection_pick:collection_pick',
             'domains = cfme.automate.explorer.domain:DomainCollection',
-            'keypairs = cfme.cloud.keypairs:KeyPairCollection', 
+            'keypairs = cfme.cloud.keypairs:KeyPairCollection',
             'stacks = cfme.cloud.stack:StackCollection',
             'security_groups = cfme.cloud.security_groups:SecurityGroupCollection',
             'cloud_tenants = cfme.cloud.tenant:TenantCollection',

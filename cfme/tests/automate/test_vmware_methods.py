@@ -8,7 +8,7 @@ from widgetastic_patternfly import Dropdown
 from widgetastic.widget import View
 
 from cfme import test_requirements
-from cfme.automate.buttons import ButtonGroup, Button
+from cfme.automate.buttons import ButtonGroup
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM
@@ -122,11 +122,12 @@ def test_vmware_vimapi_hotadd_disk(
 
     # Button that will invoke the dialog and action
     button_name = fauxfactory.gen_alphanumeric()
-    button = Button(group=testing_group,
-                    text=button_name,
-                    hover=button_name, system="Request", request=instance.name)
+    button = appliance.collections.buttons.create(
+        button_class=appliance.collections.buttons.DEFAULT,
+        group=testing_group,
+        text=button_name,
+        hover=button_name, system="Request", request=instance.name)
     request.addfinalizer(button.delete_if_exists)
-    button.create()
 
     def _get_disk_capacity():
         view = testing_vm.load_details(refresh=True)

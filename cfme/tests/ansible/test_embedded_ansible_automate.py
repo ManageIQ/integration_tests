@@ -4,7 +4,7 @@ import pytest
 from widgetastic_patternfly import Button as WButton
 
 from cfme import test_requirements
-from cfme.automate.buttons import Button, ButtonGroup
+from cfme.automate.buttons import ButtonGroup
 from cfme.automate.simulation import simulate
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -121,13 +121,14 @@ def ansible_catalog_item(ansible_repository):
 
 
 @pytest.yield_fixture
-def custom_vm_button(ansible_catalog_item):
+def custom_vm_button(appliance, ansible_catalog_item):
     buttongroup = ButtonGroup(
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()))
     buttongroup.type = buttongroup.VM_INSTANCE
     buttongroup.create()
-    button = Button(
+    button = appliance.collections.buttons.create(
+        button_class=appliance.collections.buttons.DEFAULT,
         group=buttongroup,
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
@@ -139,7 +140,6 @@ def custom_vm_button(ansible_catalog_item):
             {"key": "service_template_name", "value": ansible_catalog_item.name}
         ]
     )
-    button.create()
     yield button
     button.delete_if_exists()
     buttongroup.delete_if_exists()
