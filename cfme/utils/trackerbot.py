@@ -265,7 +265,7 @@ def trackerbot_add_provider_template(stream, provider, template_name, custom_dat
         existing_provider_templates = [
             pt['id']
             for pt in depaginate(
-                api(), api().providertemplate.get())['objects']]
+                api(), api().providertemplate.get(provider=provider))['objects']]
         if '{}_{}'.format(template_name, provider) in existing_provider_templates:
             print('Template {} already tracked for provider {}'.format(
                 template_name, provider))
