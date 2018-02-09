@@ -112,6 +112,11 @@ class CatalogForm(BasicInfoForm):
     def before_filling(self):
         item_type = self.context['object'].provider_type or \
             self.context['object'].item_type or 'Generic'
+        if item_type == 'AnsibleTower':
+            item_type = VersionPick({
+                Version.lowest(): "AnsibleTower",
+                "5.9": "Ansible Tower"
+            })
         self.select_item_type.select_by_visible_text(item_type)
         self.flush_widget_cache()
 
