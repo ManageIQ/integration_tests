@@ -95,11 +95,9 @@ def test_vm(virtualcenter_provider):
 
     if not virtualcenter_provider.mgmt.does_vm_exist(vm_name):
         logger.info("deploying %r on provider %r", vm_name, virtualcenter_provider.key)
-        vm.create_on_provider(allow_skip="default")
+        vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     else:
         logger.info("recycling deployed vm %r on provider %r", vm_name, virtualcenter_provider.key)
-    vm.provider.refresh_provider_relationships()
-    vm.wait_to_appear()
     yield vm
 
     try:

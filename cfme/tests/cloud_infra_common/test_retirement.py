@@ -50,8 +50,7 @@ def retire_vm(small_template, provider):
     yield vm
 
     try:
-        if provider.mgmt.does_vm_exist(vm.name):
-            provider.mgmt.delete_vm(vm.name)
+        provider.mgmt.delete_vm(vm.name)
     except Exception:
         logger.warning('Failed to delete vm from provider: {}'.format(vm.name))
 
@@ -69,8 +68,7 @@ def retire_ec2_s3_vm(provider):
     yield vm
 
     try:
-        if provider.mgmt.does_vm_exist(vm.name):
-            provider.mgmt.delete_vm(vm.name)
+        provider.mgmt.delete_vm(vm.name)
     except Exception:
         logger.warning('Failed to delete vm from provider: {}'.format(vm.name))
 
