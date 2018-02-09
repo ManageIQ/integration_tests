@@ -91,7 +91,7 @@ def _setup_provider_verbose(request, provider, appliance=None):
                         [p.key for p in providers_to_remove])))
                 for p in providers_to_remove:
                     logger.info('removing provider %r', p.key)
-                    p.delete(cancel=False)
+                    p.delete_rest()
                 # Decoupled wait for better performance
                 for p in providers_to_remove:
                     logger.info('waiting for provider %r to disappear', p.key)
@@ -111,7 +111,7 @@ def _setup_provider_verbose(request, provider, appliance=None):
             store.terminalreporter.write_line(message + "\n", red=True)
         if provider.exists:
             # Remove it in order to not explode on next calls
-            provider.delete(cancel=False)
+            provider.delete_rest()
             provider.wait_for_delete()
             message = "Provider {} was deleted because it failed to set up.".format(
                 provider.key)

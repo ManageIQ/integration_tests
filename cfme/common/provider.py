@@ -458,7 +458,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
 
     def delete(self, cancel=True):
         """
-        Deletes a provider from CFME
+        Deletes a provider from CFME using UI
 
         Args:
             cancel: Whether to cancel the deletion, defaults to True
@@ -472,6 +472,20 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
             msg = ('Delete initiated for 1 {} Provider from '
                    'the {} Database'.format(self.string_name, self.appliance.product_name))
             view.flash.assert_success_message(msg)
+
+    def delete_rest(self):
+        """Deletes a provider from CFME using REST"""
+        provider_rest = self.appliance.rest_api.collections.providers.get(name=self.name)
+
+        try:
+            provider_rest.action.delete()
+        except APIException as err:
+            raise AssertionError("Provider wasn't deleted: {}".format(err))
+
+        response = self.appliance.rest_api.response
+        if not response:
+            raise AssertionError("Provider wasn't deleted, status code {}".format(
+                response.status_code))
 
     def setup(self):
         """
@@ -657,19 +671,13 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
         return False
 
     def wait_for_delete(self):
-        view = navigate_to(self, 'All')
-
-        def is_entity_present():
-            try:
-                view.entities.get_entity(name=self.name, surf_pages=True)
-                return True
-            except ItemNotFound:
-                return False
+        try:
+            provider_rest = self.appliance.rest_api.collections.providers.get(name=self.name)
+        except ValueError:
+            return
 
         logger.info('Waiting for a provider to delete...')
-        wait_for(is_entity_present, fail_condition=True,
-                 message="Wait provider to disappear", num_sec=1000,
-                 fail_func=self.browser.selenium.refresh)
+        provider_rest.wait_not_exists(message="Wait provider to disappear", num_sec=1000)
 
     def load_details(self, refresh=False):
         """To be compatible with the Taggable and PolicyProfileAssignable mixins.
@@ -766,36 +774,15 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
     def clear_providers(cls):
         """ Clear all providers of given class on the appliance """
         from cfme.utils.appliance import current_appliance as app
-        app.rest_api.collections.providers.reload()
-        # cfme 5.9 doesn't allow to remove provider thru api
-        bz_blocked = BZ(1501941, forced_streams=['5.9']).blocks
-        if app.version < '5.9' or (app.version >= '5.9' and not bz_blocked):
-            deleted_providers = []
-            # Delete all matching
-            for prov in app.rest_api.collections.providers:
-                try:
-                    if any(db_type in prov.type for db_type in cls.db_types):
-                        logger.info('Deleting provider: %s', prov.name)
-                        prov.action.delete()
-                        deleted_providers.append(prov)
-                except APIException as ex:
-                    # Provider is already gone (usually caused by NetworkManager objs)
-                    if 'RecordNotFound' not in str(ex):
-                        raise ex
-            # Wait for all matching to be deleted
-            for prov in deleted_providers:
-                prov.wait_not_exists()
-        else:
-            # Delete all matching
-            for prov in app.managed_known_providers:
-                if prov.one_of(cls):
-                    logger.info('Deleting provider: %s', prov.name)
-                    prov.delete(cancel=False)
-            # Wait for all matching to be deleted
-            for prov in app.managed_known_providers:
-                if prov.one_of(cls):
-                    prov.wait_for_delete()
-        app.rest_api.collections.providers.reload()
+        # Delete all matching
+        for prov in app.managed_known_providers:
+            if prov.one_of(cls):
+                logger.info('Deleting provider: %s', prov.name)
+                prov.delete_rest()
+        # Wait for all matching to be deleted
+        for prov in app.managed_known_providers:
+            if prov.one_of(cls):
+                prov.wait_for_delete()
 
     def one_of(self, *classes):
         """ Returns true if provider is an instance of any of the classes or sublasses there of"""
