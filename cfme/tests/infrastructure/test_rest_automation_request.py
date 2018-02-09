@@ -8,7 +8,7 @@ from cfme import test_requirements
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import automation_requests_data as _automation_requests_data
 from cfme.rest.gen_data import vm as _vm
-from cfme.utils.rest import assert_response
+from cfme.utils.rest import assert_response, query_resource_attributes
 from cfme.utils.wait import wait_for
 from fixtures.pytest_store import store
 
@@ -155,6 +155,15 @@ class TestAutomationRequestsRESTAPI(object):
             appliance.rest_api.collections.automation_requests, appliance.rest_api, vm)
 
     @pytest.mark.tier(3)
+    def test_query_request_attributes(self, requests_pending, soft_assert):
+        """Tests access to attributes of automation request using /api/automation_requests.
+
+        Metadata:
+            test_flag: rest
+        """
+        query_resource_attributes(requests_pending[0], soft_assert=soft_assert)
+
+    @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         'multiple', [False, True],
         ids=['one_request', 'multiple_requests'])
@@ -231,6 +240,15 @@ class TestAutomationRequestsCommonRESTAPI(object):
     def requests_pending(self, appliance, vm):
         return gen_pending_requests(
             appliance.rest_api.collections.requests, appliance.rest_api, vm, requests=True)
+
+    @pytest.mark.tier(3)
+    def test_query_request_attributes(self, requests_pending, soft_assert):
+        """Tests access to attributes of automation request using /api/requests.
+
+        Metadata:
+            test_flag: rest
+        """
+        query_resource_attributes(requests_pending[0], soft_assert=soft_assert)
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
