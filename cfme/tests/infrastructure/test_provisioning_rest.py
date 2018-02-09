@@ -15,6 +15,9 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures("setup_provider"),
     pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module"),
+    pytest.mark.meta(blockers=[BZ(1541036,
+                     forced_streams=['5.9', 'upstream'],
+                     unblock=lambda provider: provider.one_of(RHEVMProvider))])
 ]
 
 
@@ -54,7 +57,8 @@ def get_provision_data(rest_api, provider, template_name, auto_approve=True):
             "cc": "001"
         },
         "additional_values": {
-            "request_id": "1001"
+            "request_id": "1001",
+            "placement_auto": "true"
         },
         "ems_custom_attributes": {},
         "miq_custom_attributes": {}
