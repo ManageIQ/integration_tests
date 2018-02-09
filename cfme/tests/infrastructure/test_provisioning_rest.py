@@ -14,10 +14,7 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures("setup_provider"),
-    pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module"),
-    pytest.mark.meta(blockers=[BZ(1541036,
-                     forced_streams=['5.9', 'upstream'],
-                     unblock=lambda provider: provider.one_of(RHEVMProvider))])
+    pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
 ]
 
 
