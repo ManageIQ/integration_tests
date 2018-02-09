@@ -72,6 +72,13 @@ def provision_data(appliance, provider, small_template_modscope):
     return get_provision_data(appliance.rest_api, provider, small_template_modscope.name)
 
 
+def clean_vm(provider, vm_name):
+    if not provider.mgmt.is_vm_stopped(vm_name):
+        provider.mgmt.stop_vm(vm_name)
+        provider.mgmt.wait_vm_stopped(vm_name)
+    provider.mgmt.delete_vm(vm_name)
+
+
 # Here also available the ability to create multiple provision request, but used the save
 # href and method, so it doesn't make any sense actually
 def test_provision(request, provision_data, provider, appliance):
@@ -87,8 +94,8 @@ def test_provision(request, provision_data, provider, appliance):
     """
 
     vm_name = provision_data["vm_fields"]["vm_name"]
-    request.addfinalizer(
-        lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
+    request.addfinalizer(lambda: clean_vm(provider, vm_name) if provider.mgmt.does_vm_exist(vm_name)
+        else None)
     response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)
     assert appliance.rest_api.response.status_code == 200
     provision_request = response[0]
