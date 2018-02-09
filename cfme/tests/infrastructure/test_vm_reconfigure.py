@@ -81,7 +81,7 @@ def test_vm_reconfig_add_remove_hw_cold(
     # Disk modes cannot be specified when adding disk to VM in RHV provider
     lambda disk_mode, provider: disk_mode != 'persistent' and provider.one_of(RHEVMProvider))
 def test_vm_reconfig_add_remove_disk_cold(
-        provider, small_vm, ensure_vm_stopped, disk_type, disk_mode, soft_assert):
+        provider, small_vm, ensure_vm_stopped, disk_type, disk_mode):
 
     orig_config = small_vm.configuration.copy()
     new_config = orig_config.copy()
@@ -92,12 +92,14 @@ def test_vm_reconfig_add_remove_disk_cold(
     wait_for(add_disk_request.is_succeeded, timeout=360, delay=45,
              fail_func=small_vm.refresh_relationships,
              message="confirm that disk was added")
-    soft_assert(lambda: small_vm.configuration == new_config, "Disk wasn't added to VM config")
+    assert small_vm.configuration.num_disks == new_config.num_disks,\
+        "Disk wasn't added to VM config"
     remove_disk_request = small_vm.reconfigure(orig_config)
     wait_for(remove_disk_request.is_succeeded, timeout=360, delay=45,
              fail_func=small_vm.refresh_relationships,
              message="confirm that previously-added disk was removed")
-    soft_assert(lambda: small_vm.configuration == orig_config, "Disk wasn't removed from VM config")
+    assert small_vm.configuration.num_disks == orig_config.num_disks,\
+        "Disk wasn't removed from VM config"
 
 
 def test_reconfig_vm_negative_cancel(provider, small_vm, ensure_vm_stopped):

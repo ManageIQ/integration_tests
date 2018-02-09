@@ -29,7 +29,7 @@ class DisksTable(VanillaTable):
         'Mode': BootstrapSelect(id='hdMode'),
         'Size': Input(id='dvcSize'),
         'ControllerType': BootstrapSelect(id='Controller'),
-        # Workaround necessary until BZ 1524960 is resolved
+        # TODO: Workaround necessary until BZ 1524960 is resolved
         5: BootstrapSelect(id='hdUnit'),  # for VMware in 5.9
         4: BootstrapSelect(id='hdUnit'),  # for VMware in 5.8
         3: BootstrapSelect(id='hdUnit'),  # for RHEVM in 5.9
