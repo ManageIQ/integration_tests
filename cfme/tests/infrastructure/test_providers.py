@@ -145,7 +145,6 @@ def test_providers_discovery(request, provider):
     wait_for_a_provider()
 
 
-@pytest.mark.uncollectif(lambda provider: provider.type == 'rhevm', 'blocker=1399622')
 @pytest.mark.usefixtures('has_no_infra_providers')
 def test_provider_add_with_bad_credentials(provider):
     """Tests provider add with bad credentials

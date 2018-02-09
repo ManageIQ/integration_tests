@@ -55,7 +55,7 @@ class RHEVMProvider(InfraProvider):
     _canvas_element = '(//*[@id="remote-console"]/canvas|//*[@id="spice-screen"]/canvas)'
     _ctrl_alt_del_xpath = '//*[@id="ctrlaltdel"]'
     _fullscreen_xpath = '//*[@id="fullscreen"]'
-    bad_credentials_error_msg = 'Cannot complete login due to an incorrect user name or password.'
+    bad_credentials_error_msg = "Credential validation was not successful"
 
     ems_events = [
         ('vm_create', {'event_type': 'USER_ADD_VM_FINISHED_SUCCESS', 'vm_or_template_id': None}),
