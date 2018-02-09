@@ -1,5 +1,9 @@
 import pytest
+
+from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.exceptions import ManyEntitiesFound, ItemNotFound
 from cfme.networks.network_port import NetworkPortCollection
 from cfme.networks.provider import NetworkProviderCollection
@@ -9,12 +13,13 @@ from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([EC2Provider], scope='module')
+    pytest.mark.provider([EC2Provider, AzureProvider, OpenStackProvider, GCEProvider],
+                         scope='module')
 ]
 
 
 @pytest.mark.meta(blockers=[BZ(1480577, forced_streams=["5.7", "5.8"])])
-def test_port_detail_name(provider, appliance):
+def test_sdn_port_detail_name(provider, appliance):
     """ Test equality of quadicon and detail names """
     port_collection = NetworkPortCollection(appliance)
     ports = port_collection.all()
@@ -30,7 +35,7 @@ def test_port_detail_name(provider, appliance):
 
 
 @pytest.mark.meta(blockers=[BZ(1480577, forced_streams=["5.7", "5.8"])])
-def test_port_net_prov(provider, appliance):
+def test_sdn_port_net_prov(provider, appliance):
     """ Test functionality of quadicon and detail network providers"""
     prov_collection = NetworkProviderCollection(appliance)
 

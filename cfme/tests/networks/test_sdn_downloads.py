@@ -1,6 +1,9 @@
 import pytest
 
 from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.gce import GCEProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.exceptions import ManyEntitiesFound
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -8,7 +11,8 @@ from cfme.utils.blockers import BZ
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.meta(blockers=[BZ(1480577, forced_streams=["5.7", "5.8"])]),
-    pytest.mark.provider([AzureProvider], scope="module")
+    pytest.mark.provider([EC2Provider, AzureProvider, OpenStackProvider, GCEProvider],
+                         scope="module")
 ]
 FILETYPES = ["txt", "csv", "pdf"]
 extensions_mapping = {'txt': 'Text', 'csv': 'CSV', 'pdf': 'PDF'}
@@ -35,14 +39,14 @@ def download_summary(spec_object):
 
 @pytest.mark.parametrize("filetype", FILETYPES)
 @pytest.mark.parametrize("collection_type", OBJECTCOLLECTIONS)
-def test_download_lists_base(filetype, collection_type, appliance):
+def test_sdn_download_lists_base(filetype, collection_type, appliance):
     """ Download the items from base lists. """
     collection = getattr(appliance.collections, collection_type)
     download(collection, filetype)
 
 
 @pytest.mark.parametrize("collection_type", OBJECTCOLLECTIONS)
-def test_download_pdf_summary(appliance, collection_type, provider):
+def test_sdn_download_pdf_summary(appliance, collection_type, provider):
     """ Download the summary details of specific object """
     collection = getattr(appliance.collections, collection_type)
     if collection.all():

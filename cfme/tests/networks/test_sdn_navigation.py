@@ -1,6 +1,7 @@
 import pytest
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.networks.provider import NetworkProviderCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -8,7 +9,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([EC2Provider, AzureProvider, OpenStackProvider],
+    pytest.mark.provider([EC2Provider, AzureProvider, OpenStackProvider, GCEProvider],
                          scope='function')
 ]
 
@@ -28,7 +29,7 @@ def test_provider_relationships_navigation(provider, tested_part, appliance):
         navigate_to(network_provider, tested_part.replace(' ', ''))
 
 
-def test_provider_topology_navigation(provider, appliance):
+def test_sdn_provider_topology_navigation(provider, appliance):
     view = navigate_to(provider, 'Details')
     net_prov_name = view.entities.relationships.get_text_of('Network Manager')
 

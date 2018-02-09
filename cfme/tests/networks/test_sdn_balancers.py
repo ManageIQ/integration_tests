@@ -2,15 +2,15 @@ import pytest
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.exceptions import DestinationNotFound
 from cfme.utils.appliance.implementations.ui import navigate_to
 
-
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([AzureProvider, EC2Provider, OpenStackProvider],
-                         scope='module')
+    pytest.mark.provider(
+        [AzureProvider, EC2Provider, OpenStackProvider, GCEProvider], scope='module')
 ]
 
 
@@ -29,7 +29,7 @@ def network_prov_with_load_balancers(appliance):
         "No available load balancers for current providers")
 
 
-def test_prov_balances_number(network_prov_with_load_balancers):
+def test_sdn_prov_balances_number(network_prov_with_load_balancers):
     """
     Test number of balancers on 1 provider
     Prerequisites:
@@ -41,7 +41,7 @@ def test_prov_balances_number(network_prov_with_load_balancers):
         assert int(balancers_number) == sum_all
 
 
-def test_balances_detail(provider, network_prov_with_load_balancers):
+def test_sdn_balances_detail(provider, network_prov_with_load_balancers):
     """ Test of getting attribute from balancer object """
     for prov, _ in network_prov_with_load_balancers:
         for balancer in prov.balancers.all():
