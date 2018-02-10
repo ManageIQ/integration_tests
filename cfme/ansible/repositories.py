@@ -336,7 +336,7 @@ class Add(CFMENavigateStep):
 
     def step(self):
         # workaround for disabled Dropdown
-        dropdown = self.prerequisite_view
+        dropdown = self.prerequisite_view.configuration
         wait_for(
             dropdown.item_enabled,
             func_args=["Add New Repository"],
