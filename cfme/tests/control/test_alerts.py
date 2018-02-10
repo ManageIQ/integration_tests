@@ -7,9 +7,11 @@ from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.control.explorer import alert_profiles, policies
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import ports
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.hosts import setup_host_creds
@@ -244,6 +246,7 @@ def setup_snmp(appliance):
 
 
 @pytest.mark.provider(gen_func=providers, filters=[pf1, pf2], scope="module")
+@pytest.mark.meta(blockers=BZ(1533451, unblock=lambda prov: not prov.one_of(RHEVMProvider)))
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider, vm, smtp_test,
         alert_collection, setup_for_alerts):
     """ Tests alerts for vm turned on more than twice in 15 minutes
