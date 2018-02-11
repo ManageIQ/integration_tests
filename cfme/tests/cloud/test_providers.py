@@ -96,6 +96,38 @@ def test_providers_discovery_amazon(appliance):
     wait_for_a_provider()
 
 
+@pytest.mark.uncollectif(lambda provider: (store.current_appliance.version >= '5.9' or
+                                           not(provider.one_of(AzureProvider) or
+                                               provider.one_of(EC2Provider))),
+                         reason='no more support for cloud provider discovery')
+@test_requirements.discovery
+@pytest.mark.tier(1)
+def test_providers_discovery(request, provider):
+    """Tests provider discovery
+
+    Metadata:
+        test_flag: crud
+    """
+    if provider.one_of(AzureProvider):
+        cred = Credential(
+            principal=provider.default_endpoint.credentials.principal,
+            secret=provider.default_endpoint.credentials.secret,
+            tenant_id=provider.data['tenant_id'],
+            subscription_id=provider.data['subscription_id'])
+    elif provider.one_of(EC2Provider):
+        cred = Credential(
+            principal=provider.default_endpoint.credentials.principal,
+            secret=provider.default_endpoint.credentials.secret,
+            verify_secret=provider.default_endpoint.credentials.secret)
+
+    discover(cred, provider)
+    view = provider.create_view(CloudProvidersView)
+    view.flash.assert_success_message('Cloud Providers: Discovery successfully initiated')
+
+    request.addfinalizer(CloudProvider.clear_providers)
+    wait_for_a_provider()
+
+
 @pytest.mark.tier(3)
 @pytest.mark.usefixtures('has_no_cloud_providers')
 @test_requirements.discovery

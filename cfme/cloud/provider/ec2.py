@@ -81,5 +81,5 @@ class EC2Provider(CloudProvider):
         return {
             'username': getattr(credential, 'principal', None),
             'password': getattr(credential, 'secret', None),
-            'password_verify': getattr(credential, 'verify_secret', None)
+            'confirm_password': getattr(credential, 'verify_secret', None)
         }

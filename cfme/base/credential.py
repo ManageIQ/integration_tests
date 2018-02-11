@@ -63,11 +63,14 @@ class Credential(Pretty, Updateable, FromConfigMixin):
     """
     pretty_attrs = ['principal', 'secret']
 
-    def __init__(self, principal, secret, verify_secret=None, domain=None, **ignore):
+    def __init__(self, principal, secret, verify_secret=None, domain=None,
+                 tenant_id=None, subscription_id=None, **ignore):
         self.principal = principal
         self.secret = secret
         self.verify_secret = verify_secret
         self.domain = domain
+        self.tenant_id = tenant_id
+        self.subscription_id = subscription_id
 
     def __getattribute__(self, attr):
         if attr == 'verify_secret':
