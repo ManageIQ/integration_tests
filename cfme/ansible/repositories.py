@@ -3,9 +3,9 @@
 import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import Text, Checkbox, Fillable, View
-from widgetastic_manageiq import Table, PaginationPane, SummaryTable
-from widgetastic_patternfly import Dropdown, Button, Input
+from widgetastic.widget import Checkbox, Fillable, ParametrizedView, Text, View
+from widgetastic_manageiq import PaginationPane, ParametrizedSummaryTable, Table
+from widgetastic_patternfly import Button, Dropdown, Input
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
@@ -37,15 +37,16 @@ class RepositoryAllView(RepositoryBaseView):
 
 
 class RepositoryDetailsView(RepositoryBaseView):
-    refresh = Button(title="Refresh this page")
-    configuration = Dropdown("Configuration")
-    download = Button(title="Download summary in PDF format")
+
+    @View.nested
+    class toolbar(View):  # noqa
+        refresh = Button(title="Refresh this page")
+        configuration = Dropdown("Configuration")
+        download = Button(title="Download summary in PDF format")
 
     @View.nested
     class entities(View):  # noqa
-        properties = SummaryTable("Properties")
-        relationships = SummaryTable("Relationships")
-        repository_options = SummaryTable("Repository Options")
+        summary = ParametrizedView.nested(ParametrizedSummaryTable)
 
     @property
     def is_displayed(self):
@@ -117,15 +118,6 @@ class Repository(BaseEntity, Fillable):
     def playbooks(self):
         return self.collections.playbooks
 
-    def get_detail(self, title, field, refresh=False):
-        view = navigate_to(self, "Details")
-        if refresh:
-            if self.appliance.version < "5.9":
-                view.browser.refresh()
-            else:
-                view.refresh.click()
-        return getattr(view.entities, title.lower().replace(" ", "_")).get_text_of(field)
-
     @property
     def as_fill_value(self):
         """For use when selecting this repo in the UI forms"""
@@ -176,7 +168,7 @@ class Repository(BaseEntity, Fillable):
             remove_str = "Remove this Repository"
         else:
             remove_str = "Remove this Repository from Inventory"
-        view.configuration.item_select(remove_str, handle_alert=True)
+        view.toolbar.configuration.item_select(remove_str, handle_alert=True)
         repo_list_page = self.create_view(RepositoryAllView)
         assert repo_list_page.is_displayed
         repo_list_page.flash.assert_no_error()
@@ -188,7 +180,7 @@ class Repository(BaseEntity, Fillable):
     def refresh(self):
         """Perform a refresh to update the repository."""
         view = navigate_to(self, "Details")
-        view.configuration.item_select("Refresh this Repository", handle_alert=True)
+        view.toolbar.configuration.item_select("Refresh this Repository", handle_alert=True)
         view.flash.assert_no_error()
         view.flash.assert_message("Embedded Ansible refresh has been successfully initiated")
 
@@ -352,4 +344,4 @@ class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling("Details")
 
     def step(self):
-        self.prerequisite_view.configuration.item_select("Edit this Repository")
+        self.prerequisite_view.toolbar.configuration.item_select("Edit this Repository")
