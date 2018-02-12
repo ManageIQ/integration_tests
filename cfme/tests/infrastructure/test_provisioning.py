@@ -31,6 +31,7 @@ def vm_name():
     return vm_name
 
 
+@pytest.mark.rhv1
 @pytest.mark.tier(1)
 @pytest.mark.parametrize('auto', [True, False], ids=["Auto", "Manual"])
 def test_provision_from_template(appliance, setup_provider, provider, vm_name, smtp_test,
@@ -72,6 +73,7 @@ def test_provision_from_template(appliance, setup_provider, provider, vm_name, s
                        smtp_test, num_sec=900)
 
 
+@pytest.mark.rhv2
 @pytest.mark.parametrize("edit", [True, False], ids=["edit", "approve"])
 def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_test, request,
                             edit, provisioning):

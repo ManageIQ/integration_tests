@@ -78,6 +78,7 @@ def new_snapshot(test_vm, has_name=True, memory=False, create_description=True):
     )
 
 
+@pytest.mark.rhv2
 @pytest.mark.uncollectif(lambda provider:
                          (provider.one_of(RHEVMProvider) and provider.version < 4) or
                          current_version() < '5.8', 'Must be RHEVM provider version >= 4')
@@ -104,6 +105,7 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
         "Memory checkbox is displayed when VM is stopped")
 
 
+@pytest.mark.rhv1
 @pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
                          'Must be RHEVM provider version >= 4')
 def test_snapshot_crud(small_test_vm, provider):
@@ -223,6 +225,7 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     ssh_client.close()
 
 
+@pytest.mark.rhv1
 @pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
                          'Must be RHEVM provider version >= 4')
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6744',

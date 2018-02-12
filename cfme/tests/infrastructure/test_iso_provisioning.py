@@ -77,6 +77,7 @@ def vm_name():
     return vm_name
 
 
+@pytest.mark.rhv1
 @pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6692',
                                unblock=lambda provider: not provider.one_of(RHEVMProvider))])

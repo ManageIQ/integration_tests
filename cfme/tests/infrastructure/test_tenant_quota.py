@@ -80,6 +80,7 @@ def small_vm(provider, small_template_modscope):
     vm.delete_from_provider()
 
 
+@pytest.mark.rhv2
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here
@@ -113,6 +114,7 @@ def test_tenant_quota_enforce_via_lifecycle(appliance, provider, setup_provider,
     assert provision_request.row.reason.text == "Quota Exceeded"
 
 
+@pytest.mark.rhv3
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here
@@ -150,6 +152,7 @@ def test_tenant_quota_enforce_via_service(request, appliance, provider, setup_pr
         catalog_item.delete()
 
 
+@pytest.mark.rhv2
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here

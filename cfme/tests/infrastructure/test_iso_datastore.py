@@ -18,6 +18,7 @@ def no_iso_dss(provider):
         template_crud.delete(cancel=False)
 
 
+@pytest.mark.rhv1
 @pytest.mark.meta(blockers=[1200783])
 def test_iso_datastore_crud(setup_provider, no_iso_dss, provider):
     """

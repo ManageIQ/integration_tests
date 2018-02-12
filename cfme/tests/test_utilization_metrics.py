@@ -123,6 +123,7 @@ def query_metric_db(appliance, provider, metric, vm_name=None, host_name=None):
         metrics_tbl.id.in_(provs.subquery()))
 
 
+@pytest.mark.rhv2
 # Tests to check that specific metrics are being collected
 @pytest.mark.meta(blockers=[BZ(1525296,
                                unblock=lambda provider: not provider.one_of(CloudProvider))])
@@ -143,6 +144,7 @@ def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
             break
 
 
+@pytest.mark.rhv2
 @pytest.mark.uncollectif(
     lambda provider: provider.one_of(EC2Provider) or provider.one_of(GCEProvider))
 @pytest.mark.meta(blockers=[BZ(1525296,
@@ -165,6 +167,7 @@ def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
             break
 
 
+@pytest.mark.rhv2
 @pytest.mark.meta(
     blockers=[BZ(1408963, forced_streams=["5.7", "5.8", "upstream"],
         unblock=lambda provider: not provider.one_of(RHEVMProvider))]
@@ -182,6 +185,7 @@ def test_raw_metric_vm_network(metrics_collection, appliance, provider):
             break
 
 
+@pytest.mark.rhv2
 @pytest.mark.uncollectif(
     lambda provider: provider.one_of(EC2Provider))
 @pytest.mark.meta(
@@ -201,6 +205,7 @@ def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
             break
 
 
+@pytest.mark.rhv2
 @pytest.mark.uncollectif(
     lambda provider: provider.one_of(CloudProvider))
 def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
@@ -214,6 +219,7 @@ def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
             break
 
 
+@pytest.mark.rhv2
 @pytest.mark.uncollectif(
     lambda provider: provider.one_of(CloudProvider))
 def test_raw_metric_host_memory(metrics_collection, appliance, provider):
@@ -227,6 +233,7 @@ def test_raw_metric_host_memory(metrics_collection, appliance, provider):
             break
 
 
+@pytest.mark.rhv2
 @pytest.mark.uncollectif(
     lambda provider: provider.one_of(CloudProvider))
 def test_raw_metric_host_network(metrics_collection, appliance, provider):
@@ -240,6 +247,7 @@ def test_raw_metric_host_network(metrics_collection, appliance, provider):
             break
 
 
+@pytest.mark.rhv2
 @pytest.mark.uncollectif(
     lambda provider: provider.one_of(CloudProvider))
 @pytest.mark.meta(

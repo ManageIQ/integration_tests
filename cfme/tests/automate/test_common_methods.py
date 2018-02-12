@@ -53,6 +53,7 @@ def generate_retirement_date(delta=None):
     return gen_date
 
 
+@pytest.mark.rhv3
 @pytest.mark.tier(3)
 def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
     """ Tests extending a retirement using an AE method.

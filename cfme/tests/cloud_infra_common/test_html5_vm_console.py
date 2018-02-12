@@ -54,6 +54,7 @@ def vm_obj(request, provider, setup_provider, console_template, vm_name):
     return vm_obj
 
 
+@pytest.mark.rhv1
 def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
         configure_console_vnc, take_screenshot):
     """

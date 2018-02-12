@@ -46,6 +46,7 @@ def ensure_vm_running(small_vm):
         raise Exception("Unknown power state - unable to continue!")
 
 
+@pytest.mark.rhv1
 @pytest.mark.parametrize('change_type', ['cores_per_socket', 'sockets', 'memory'])
 def test_vm_reconfig_add_remove_hw_cold(
         provider, small_vm, ensure_vm_stopped, change_type):
@@ -80,6 +81,7 @@ def test_vm_reconfig_add_remove_hw_cold(
         message="confirm that previously-added {} was removed".format(change_type))
 
 
+@pytest.mark.rhv1
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
 @pytest.mark.parametrize(
     'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])

@@ -104,6 +104,7 @@ def catalog_item(setup_provider, provider, vm_name, dialog, catalog, provisionin
     yield catalog_item
 
 
+@pytest.mark.rhv1
 @pytest.mark.usefixtures('setup_iso_datastore')
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6692',
                                unblock=lambda provider: not provider.one_of(RHEVMProvider))])

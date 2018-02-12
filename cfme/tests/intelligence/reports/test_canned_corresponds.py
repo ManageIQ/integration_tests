@@ -27,6 +27,7 @@ def compare(db_item, report_item):
         return db_item is None and report_item == ''
 
 
+@pytest.mark.rhv3
 def test_providers_summary(soft_assert):
     """Checks some informations about the provider. Does not check memory/frequency as there is
     presence of units and rounding."""
@@ -53,6 +54,7 @@ def test_providers_summary(soft_assert):
                     "Physical CPU count does not match at {}".format(provider["Name"]))
 
 
+@pytest.mark.rhv3
 def test_cluster_relationships(soft_assert):
     path = ["Relationships", "Virtual Machines, Folders, Clusters", "Cluster Relationships"]
     report = CannedSavedReport.new(path)
@@ -94,6 +96,7 @@ def test_cluster_relationships(soft_assert):
             soft_assert(False, "Hostname {} not found in {}".format(host_name, provider_name))
 
 
+@pytest.mark.rhv2
 @pytest.mark.meta(blockers=[BZ(1504010, forced_streams=['5.7', '5.8', 'upstream'])])
 def test_operations_vm_on(soft_assert, appliance, request):
     adb = appliance.db.client
@@ -136,6 +139,7 @@ def test_operations_vm_on(soft_assert, appliance, request):
                 assert compare(vm.vm_last_scan, item['Last Analysis Time'])
 
 
+@pytest.mark.rhv3
 def test_datastores_summary(soft_assert, appliance, request):
     """Checks Datastores Summary report with DB data. Checks all data in report, even rounded
     storage sizes."""

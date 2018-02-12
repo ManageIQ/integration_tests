@@ -117,6 +117,7 @@ def catalog_item(provider, vm_name, dialog, catalog, provisioning, setup_pxe_ser
     yield catalog_item
 
 
+@pytest.mark.rhv1
 @pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
 def test_pxe_servicecatalog(appliance, setup_provider, provider, catalog_item, request):
     """Tests RHEV PXE service catalog

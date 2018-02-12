@@ -129,6 +129,7 @@ def test_api_port_max_character_validation_infra():
         assert text == prov.default_endpoint.api_port[0:15]
 
 
+@pytest.mark.rhv1
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
 def test_providers_discovery(request, provider):
@@ -145,6 +146,7 @@ def test_providers_discovery(request, provider):
     wait_for_a_provider()
 
 
+@pytest.mark.rhv1
 @pytest.mark.usefixtures('has_no_infra_providers')
 def test_provider_add_with_bad_credentials(provider):
     """Tests provider add with bad credentials
@@ -162,6 +164,7 @@ def test_provider_add_with_bad_credentials(provider):
         provider.create(validate_credentials=True)
 
 
+@pytest.mark.rhv1
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
 @pytest.mark.smoke
@@ -187,6 +190,7 @@ def test_provider_crud(provider):
     provider.wait_for_delete()
 
 
+@pytest.mark.rhv1
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
 @pytest.mark.parametrize('verify_tls', [False, True], ids=['no_tls', 'tls'])
