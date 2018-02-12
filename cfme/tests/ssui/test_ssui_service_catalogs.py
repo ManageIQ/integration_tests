@@ -10,7 +10,7 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     test_requirements.ssui,
     pytest.mark.long_running,
-    pytest.mark.ignore_stream("upstream", "5.9"),
+    pytest.mark.ignore_stream("upstream"),
     pytest.mark.provider([InfraProvider],
                          required_fields=[['provisioning', 'template'],
                                           ['provisioning', 'host'],
