@@ -87,12 +87,6 @@ class Store(object):
     def has_config(self):
         return self.config is not None
 
-    @property
-    def base_url(self):
-        """ If there is a current appliance the base url of that appliance is returned
-            else, the base_url from the config is returned."""
-        return self.current_appliance.url
-
     def _maybe_get_plugin(self, name):
         """ returns the plugin if the pluginmanager is availiable and the plugin exists"""
         return self.pluginmanager and self.pluginmanager.getplugin(name)

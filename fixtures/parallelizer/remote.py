@@ -1,3 +1,4 @@
+import json
 import signal
 
 import zmq
@@ -13,12 +14,12 @@ SLAVEID = None
 
 class SlaveManager(object):
     """SlaveManager which coordinates with the master process for parallel testing"""
-    def __init__(self, config, slaveid, base_url, zmq_endpoint):
+    def __init__(self, config, slaveid, appliance_config, zmq_endpoint):
         self.config = config
         self.session = None
         self.collection = None
         self.slaveid = conf.runtime['env']['slaveid'] = slaveid
-        self.base_url = conf.runtime['env']['base_url'] = base_url
+        self.appliance_config = conf.runtime['env']['appliances'][0] = appliance_config
         self.log = cfme.utils.log.logger
         conf.clear()
         # Override the logger in utils.log
@@ -207,14 +208,24 @@ if __name__ == '__main__':
     parser.add_argument('ts', help='The timestap to use for collections')
     args = parser.parse_args()
 
+    # TODO: clean the logic up here
+
     from cfme.utils.appliance import IPAppliance, stack
-    appliance = IPAppliance.from_json(args.appliance_json)
-    stack.push(appliance)
 
     # overwrite the default logger before anything else is imported,
     # to get our best chance at having everything import the replaced logger
     import cfme.utils.log
     cfme.utils.log.setup_for_worker(args.slaveid)
+    slave_log = cfme.utils.log.logger
+
+    try:
+        appliance_config = json.loads(args.appliance_json)
+    except ValueError:
+        slave_log.error("Error parsing appliance json")
+        raise
+
+    appliance = IPAppliance(**appliance_config)
+    stack.push(appliance)
 
     from fixtures import terminalreporter
     from fixtures.pytest_store import store
@@ -233,7 +244,7 @@ if __name__ == '__main__':
         conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
         conf.runtime["cfme_data"]["basic_info"]["appliances_provider"] = provider_name
     config = _init_config(slave_options, slave_args)
-    slave_manager = SlaveManager(config, args.slaveid, appliance.url,
+    slave_manager = SlaveManager(config, args.slaveid, appliance_config,
         conf.slave_config['zmq_endpoint'])
     config.pluginmanager.register(slave_manager, 'slave_manager')
     config.hook.pytest_cmdline_main(config=config)

@@ -94,11 +94,11 @@ Running commands on another appliance
              As this is now the case, it is unlikely that the context manager will be needed for
              much longer.
 
-We implement a small appliance stack in the framework. When a test first starts it loads up the
-base_url appliance as the first appliance in the stack. From then on, all the browsing operations,
-database operations and ssh commands are run on the top appliance in the stack. From time to time
-it becomes necessary to run commands on another appliance. Let's say you were trying to get two
-appliances to talk to each other, in this case, you would use the context manager for appliances.
+We implement a small appliance stack in the framework. When a test first starts it loads up the first
+appliance in the stack. From then on, all the browsing operations, database operations and ssh commands
+are run on the top appliance in the stack. From time to time it becomes necessary to run commands on
+another appliance. Let's say you were trying to get two appliances to talk to each other, in this case,
+you would use the context manager for appliances.
 
 By default, even if you add a new appliance onto the stack, the browser operations will keep
 happening on the last appliance that was used, however, there is a simple way to steal the browsers

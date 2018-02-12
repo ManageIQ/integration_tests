@@ -23,7 +23,8 @@ Finally, you have to put ``container`` in the ``env.yaml`` so it looks something
 
 .. code-block:: yaml
 
-    base_url: https://1.2.3.4/
+    appliances:
+        - hostname: 1.2.3.4
     container: cfme
     whatever: else_is_required
 

@@ -95,7 +95,7 @@ def generated_request(appliance,
     provision_request = appliance.collections.requests.instantiate(cells=request_cells)
     yield provision_request
 
-    browser().get(store.base_url)
+    browser().get(appliance.url)
     appliance.server.login_admin()
 
     provision_request.remove_request()

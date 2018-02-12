@@ -131,12 +131,11 @@ class SSHClient(paramiko.SSHClient):
         }
         # Load credentials and destination from confs, if connect_kwargs is empty
         if not connect_kwargs.get('hostname'):
-            parsed_url = urlparse(store.base_url)
-            default_connect_kwargs["port"] = ports.SSH
+            default_connect_kwargs['hostname'] = store.current_appliance.hostname
+            default_connect_kwargs['port'] = ports.SSH
             default_connect_kwargs['username'] = conf.credentials['ssh']['username']
             default_connect_kwargs['password'] = conf.credentials['ssh']['password']
-            default_connect_kwargs['hostname'] = parsed_url.hostname
-        default_connect_kwargs["port"] = connect_kwargs.pop('port', ports.SSH)
+        default_connect_kwargs['port'] = connect_kwargs.pop('port', ports.SSH)
 
         # Overlay defaults with any passed-in kwargs and store
         default_connect_kwargs.update(connect_kwargs)
