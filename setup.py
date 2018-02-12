@@ -72,6 +72,13 @@ setup(
             'infra = cfme.infrastructure.virtual_machines:Template',
             'cloud = cfme.cloud.instance.image:Image'
         ],
+        'manageiq.auth_provider_types':
+        [
+            'amazon = cfme.utils.auth:AmazonAuthProvider',
+            'freeipa = cfme.utils.auth:FreeIPAAuthProvider',
+            'openldap = cfme.utils.auth:OpenLDAPAuthProvider',
+            'openldaps = cfme.utils.auth:OpenLDAPSAuthProvider'
+        ],
         'manageiq.appliance_collections':
         [
             'actions = cfme.control.explorer.actions:ActionCollection',
