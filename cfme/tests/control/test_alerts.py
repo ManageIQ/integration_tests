@@ -11,6 +11,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import ports
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.generators import random_vm_name
@@ -116,7 +117,8 @@ def vddk_url(provider):
 
 @pytest.yield_fixture(scope="function")
 def configure_fleecing(appliance, provider, vm, vddk_url):
-    host = vm.get_detail(properties=("Relationships", "Host"))
+    view = navigate_to(vm, "Details")
+    host = view.entities.summary("Relationships").get_text_of("Host")
     setup_host_creds(provider, host)
     appliance.install_vddk(vddk_url=vddk_url)
     yield
