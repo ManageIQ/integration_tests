@@ -1,5 +1,6 @@
 """Helper functions related to the creation and destruction of virtual machines and instances
 """
+from __future__ import absolute_import
 import pytest
 
 from cfme.utils.providers import get_crud
@@ -9,6 +10,7 @@ from ovirtsdk.infrastructure.errors import RequestError as RHEVRequestError
 from ssl import SSLError
 from cfme.utils.log import logger
 from cfme.utils.mgmt_system import exceptions
+import six
 
 
 def _vm_cleanup(mgmt, vm_name):
@@ -44,7 +46,7 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
     if isinstance(allow_skip, dict):
         skip_exceptions = allow_skip.keys()
         callable_mapping = allow_skip
-    elif isinstance(allow_skip, basestring) and allow_skip.lower() == "default":
+    elif isinstance(allow_skip, six.string_types) and allow_skip.lower() == "default":
         skip_exceptions = (OSOverLimit, RHEVRequestError, exceptions.VMInstanceNotCloned, SSLError)
         callable_mapping = {}
     else:

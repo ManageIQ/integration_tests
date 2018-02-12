@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import re
 import six
-import xmlrpclib
+import six.moves.xmlrpc_client
 from github import Github
 from urlparse import urlparse
 
@@ -100,7 +101,7 @@ class GH(Blocker):
             if self.DEFAULT_REPOSITORY is None:
                 raise ValueError("You must specify github/default_repo in env.yaml!")
             self.issue = description
-        elif isinstance(description, basestring):
+        elif isinstance(description, six.string_types):
             try:
                 owner, repo, issue_num = re.match(r"^([^/]+)/([^/:]+):([0-9]+)$",
                                                   str(description).strip()).groups()
@@ -195,7 +196,7 @@ class BZ(Blocker):
                 if bug.fixed_in is not None:
                     return version.current_version() < bug.fixed_in
             return result
-        except xmlrpclib.Fault as e:
+        except six.moves.xmlrpc_client.Fault as e:
             code = e.faultCode
             s = e.faultString.strip().split("\n")[0]
             logger.error("Bugzilla thrown a fault: %s/%s", code, s)

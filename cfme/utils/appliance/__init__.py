@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import logging
 import socket
@@ -7,7 +8,7 @@ from datetime import datetime
 from tempfile import NamedTemporaryFile
 from textwrap import dedent
 from time import sleep, time
-from urlparse import urlparse
+from six.moves.urllib_parse import urlparse
 
 import attr
 import dateutil.parser
@@ -112,7 +113,7 @@ class ApplianceConsole(object):
             channel = self.appliance.ssh_client.invoke_shell()
         self.commands = commands
         for command in commands:
-            if isinstance(command, basestring):
+            if isinstance(command, six.string_types):
                 command_string, timeout = command, timeout
             else:
                 command_string, timeout = command

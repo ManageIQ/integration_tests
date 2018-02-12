@@ -1,6 +1,6 @@
 from collections import Mapping
 from contextlib import contextmanager
-from itertools import izip
+from six.moves import zip
 
 from cached_property import cached_property
 from sqlalchemy import MetaData, create_engine, event, inspect
@@ -26,8 +26,8 @@ def ping_connection(dbapi_connection, connection_record, connection_proxy):
     cursor = dbapi_connection.cursor()
     try:
         cursor.execute("SELECT 1")
-    except StandardError:
-        raise DisconnectionError
+    except Exception:
+        raise DisconnectionError()
     cursor.close()
 
 
@@ -110,7 +110,7 @@ class Db(Mapping):
 
     def items(self):
         """Iterator of ``(table_name, table)`` pairs"""
-        return izip(self.keys(), self.values())
+        return zip(self.keys(), self.values())
 
     def values(self):
         """Iterator of tables in this db"""

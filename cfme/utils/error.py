@@ -21,10 +21,12 @@ Usage:
 
 """
 
+from __future__ import absolute_import
 from contextlib import contextmanager
 import re
 from multimethods import singledispatch
 from collections import Callable
+import six
 
 
 @singledispatch
@@ -52,7 +54,7 @@ def regex(expr, e):
     return p.search(str(e))
 
 
-@match.method(basestring)
+@match.method(six.string_types)
 def _str(s, e):
     """Treat string as a regex and match it against the Exception's
     message."""

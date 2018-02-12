@@ -15,10 +15,12 @@ For example, this will work but not do anyhting helpful:
     scripts/appliance.py providername vmname __init__
 
 """
+from __future__ import absolute_import
 import argparse
 import sys
 
 from cfme.utils.appliance import Appliance
+import six
 
 
 def main():
@@ -40,7 +42,7 @@ def main():
             exit = 0
             for entry in result:
                 print(entry)
-        elif isinstance(result, (basestring, int)):
+        elif isinstance(result, (six.string_types, int)):
             exit = 0
             print(result)
         elif isinstance(result, bool):

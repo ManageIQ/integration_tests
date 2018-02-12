@@ -16,8 +16,6 @@ docker-py
 dump2polarion
 fauxfactory>=2.0.7
 flake8
-functools32
-futures==3.0.5
 GitPython>=2.1.5
 ipython
 iso8601
@@ -35,7 +33,7 @@ numpy>=1.14.0
 matplotlib>=1.5.1
 paramiko
 parsedatetime
-pdfminer
+pdfminer.six
 progress
 py
 pycrypto
@@ -59,7 +57,6 @@ selenium<3.0.0
 shyaml
 slumber
 sqlalchemy
-suds
 tabulate==0.7.7
 tornado
 tzlocal

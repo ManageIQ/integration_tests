@@ -2,6 +2,7 @@
 """A model of Infrastructure Virtual Machines area of CFME.  This includes the VMs explorer tree,
 quadicon lists, and VM details page.
 """
+from __future__ import absolute_import
 from collections import namedtuple
 from copy import copy
 
@@ -13,6 +14,8 @@ from widgetastic.widget import (
     Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
 from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, CheckableBootstrapTreeview)
+
+import six
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, Template as BaseTemplate
@@ -1020,7 +1023,7 @@ class Genealogy(object):
 # todo: there will be an entity's method to apply some operation to a bunch of entities
 def _method_setup(vm_names, provider_crud=None):
     """ Reduces some redundant code shared between methods """
-    if isinstance(vm_names, basestring):                                 # noqa
+    if isinstance(vm_names, six.string_types):
         vm_names = [vm_names]
 
     if provider_crud:

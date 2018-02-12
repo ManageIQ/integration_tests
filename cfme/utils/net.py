@@ -2,7 +2,7 @@ from collections import defaultdict
 import socket
 import os
 import re
-import urlparse
+from six.moves.urllib_parse import urlparse
 from fixtures.pytest_store import store
 
 from cfme.utils.log import logger
@@ -63,7 +63,7 @@ def net_check(port, addr=None, force=False):
     """Checks the availablility of a port"""
     port = int(port)
     if not addr:
-        addr = urlparse.urlparse(store.base_url).hostname
+        addr = urlparse(store.base_url).hostname
     if port not in _ports[addr] or force:
         # First try DNS resolution
         try:
@@ -88,7 +88,7 @@ def net_check_remote(port, addr=None, machine_addr=None, ssh_creds=None, force=F
         addr = my_ip_address()
     if port not in _ports[addr] or force:
         if not machine_addr:
-            machine_addr = urlparse.urlparse(store.base_url).hostname
+            machine_addr = urlparse(store.base_url).hostname
         if not ssh_creds:
             ssh_client = store.current_appliance.ssh_client
         else:
