@@ -1023,15 +1023,16 @@ def test_delete_default_tenant(appliance):
         view.toolbar.configuration.item_select('Delete selected items', handle_alert=True)
 
 
-def test_copied_user_password_inheritance(appliance, group_collection):
+def test_copied_user_password_inheritance(appliance, group_collection, request):
     """Test to verify that dialog for copied user should appear and password field should be
-    empty"""
+    empty
+    """
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
     user = new_user(appliance, group)
+    request.addfinalizer(user.delete)
     view = navigate_to(user, 'Details')
     view.toolbar.configuration.item_select('Copy this User to a new User')
     view = user.create_view(AddUserView)
     assert view.password_txt.value == '' and view.password_verify_txt.value == ''
     view.cancel_button.click()
-    user.delete()
