@@ -1,11 +1,11 @@
 import pytest
-
 from deepdiff import DeepDiff
 
+from cfme.roles import role_access_ui_58z, role_access_ui_59z, role_access_ssui
 from cfme.utils.appliance import ViaUI, current_appliance
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
-from cfme.roles import role_access_ui_58z, role_access_ui_59z, role_access_ssui
+from cfme.utils.log import logger
 
 
 def auth_groups():
@@ -26,9 +26,20 @@ def auth_groups():
 
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('group_name, context', auth_groups())
-@pytest.mark.meta(blockers=[BZ(1525598, forced_streams=['5.8', '5.9']),
-                            BZ(1525657, forced_streams=['5.9']),
-                            BZ(1526495, forced_streams=['5.8', '5.9'])])
+@pytest.mark.meta(blockers=[
+    BZ(1531499,
+       forced_streams=['5.8'],
+       unblock=lambda group_name: group_name not in [
+           'evmgroup-administrator', 'evmgroup-vm_user', 'evmgroup-desktop', 'evmgroup-operator']),
+    BZ(1525598,
+       forced_streams=['5.8'],
+       unblock=lambda group_name: group_name not in
+       ['evmgroup-security', 'evmgroup-approver', 'evmgroup-auditor', 'evmgroup-support']),
+    BZ(1530683,
+       unblock=lambda group_name: group_name not in
+       ['evmgroup-user', 'evmgroup-approver', 'evmgroup-auditor', 'evmgroup-operator',
+        'evmgroup-support', 'evmgroup-security'])
+])
 def test_group_roles(appliance, configure_aws_iam_auth_mode, group_name, context, soft_assert):
     """Basic default AWS_IAM group role auth + RBAC test
 
@@ -53,13 +64,27 @@ def test_group_roles(appliance, configure_aws_iam_auth_mode, group_name, context
     with appliance.context.use(context):
         user = appliance.collections.users.simple_user(username, password)
         view = appliance.server.login(user)
+        assert appliance.server.current_full_name() == user.name
         nav_visbility = view.navigation.nav_item_tree()
 
+        # RFE BZ 1526495 shows up as an extra requests link in nav
+        bz = BZ(1526495,
+                forced_streams=['5.8', '5.9'],
+                unblock=lambda group_name: group_name not in
+                ['evmgroup-user', 'evmgroup-approver', 'evmgroup-desktop', 'evmgroup-vm_user',
+                 'evmgroup-administrator', 'evmgroup-super_administrator'])
+        rfe_blocks = bz.blocks
         for area in group_access.keys():
             # using .get() on nav_visibility because it may not have `area` key
             diff = DeepDiff(group_access[area], nav_visbility.get(area, {}),
                             verbose_level=0,  # If any higher, will flag string vs unicode
                             ignore_order=True)
-            soft_assert(diff == {}, '{g} RBAC mismatch for {a}: {d}'.format(g=group_name,
-                                                                            a=area,
-                                                                            d=diff))
+            nav_extra = diff.get('iterable_item_added')
+
+            if nav_extra and 'Requests' in nav_extra.values() and rfe_blocks:
+                logger.warning('Skipping RBAC verification for group "%s" due to %r',
+                               group_name, bz)
+                continue
+            else:
+                soft_assert(diff == {}, '{g} RBAC mismatch for {a}: {d}'
+                                        .format(g=group_name, a=area, d=diff))

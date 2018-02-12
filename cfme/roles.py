@@ -304,7 +304,7 @@ role_access_ui_59z = {
         'Configuration': ['Management'],
         'Control': ['Import / Export', 'Log', 'Explorer', 'Simulation'],
         'Monitor': {
-            'Alerts': ['Overview', 'All Alerts', 'Most Recent Alerts']},
+            'Alerts': ['Overview', 'All Alerts']},
         'Networks': ['Subnets', 'Load Balancers', 'Providers', 'Security Groups', 'Floating IPs',
                      'Network Ports', 'Topology', 'Networks', 'Network Routers'],
         'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
@@ -346,7 +346,7 @@ role_access_ui_59z = {
             'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
                                'PXE', 'Resource Pools'],
             'Physical Infrastructure': ['Servers', 'Providers']},
-        'Control': ['Log', 'Simulation'],
+        'Control': ['Explorer', 'Log', 'Simulation'],
         'Services': ['Requests', 'Workloads', 'My Services'],
     },
     'evmgroup-auditor': {
@@ -359,7 +359,7 @@ role_access_ui_59z = {
             'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
                                'PXE', 'Resource Pools'],
             'Physical Infrastructure': ['Servers', 'Providers']},
-        'Control': ['Log', 'Simulation'],
+        'Control': ['Explorer', 'Log', 'Simulation'],
         'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
         'Services': ['Workloads', 'My Services']},
     'evmgroup-desktop': {
@@ -392,7 +392,7 @@ role_access_ui_59z = {
             'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts',
                                'Clusters', 'Resource Pools'],
             'Physical Infrastructure': ['Servers', 'Providers']},
-        'Control': ['Log', 'Simulation'],
+        'Control': ['Explorer', 'Log', 'Simulation'],
         'Services': ['My Services', 'Workloads']
     },
     'evmgroup-support': {
@@ -402,7 +402,7 @@ role_access_ui_59z = {
             'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
                                'Resource Pools'],
             'Physical Infrastructure': ['Servers', 'Providers']},
-        'Control': ['Log', 'Simulation'],
+        'Control': ['Explorer', 'Log', 'Simulation'],
         'Services': ['My Services', 'Workloads']
     },
     'evmgroup-user': {
@@ -447,7 +447,7 @@ role_access_ui_58z = {
         'Networks': ['Subnets', 'Load Balancers', 'Providers', 'Security Groups', 'Floating IPs',
                      'Network Ports', 'Topology', 'Networks', 'Network Routers'],
         'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
-        'Red Hat Insights': ['Rules', 'Overview', 'Inventory', 'Actions'],
+        'Red Hat Insights': ['Rules', 'Overview', 'Systems'],
         'Services': ['Requests', 'Workloads', 'Catalogs', 'My Services'],
         'Storage': {
             'Block Storage': ['Volume Snapshots', 'Managers', 'Volume Backups', 'Volumes'],
