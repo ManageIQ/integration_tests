@@ -75,9 +75,9 @@ setup(
         'manageiq.auth_provider_types':
         [
             'amazon = cfme.utils.auth:AmazonAuthProvider',
-            'freeipa = cfme.utils.auth:FreeipaAuthProvider',
-            'openldap = cfme.utils.auth:OpenldapAuthProvider',
-            'openldaps = cfme.utils.auth:OpenldapsAuthProvider'
+            'freeipa = cfme.utils.auth:FreeIPAAuthProvider',
+            'openldap = cfme.utils.auth:OpenLDAPAuthProvider',
+            'openldaps = cfme.utils.auth:OpenLDAPSAuthProvider'
         ],
         'manageiq.appliance_collections':
         [

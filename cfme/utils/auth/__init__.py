@@ -61,10 +61,7 @@ def get_auth_crud(auth_prov_key):
 
 @attr.s
 class BaseAuthProvider(object):
-    """Base class for authentication provider objects
-
-    Might not be needed
-    """
+    """Base class for authentication provider objects    """
     auth_type = None
     view_class = None
     key = attr.ib()
@@ -103,7 +100,6 @@ class MIQAuthProvider(BaseAuthProvider):
     """base class for miq auth providers (ldap/ldaps modes in UI)
     Intended to be used for freeipa, AD, openldap and openldaps type providers
     """
-    auth_type = None
     host1 = attr.ib()
     bind_password = attr.ib()  # Ordered to adhere to mandatory attrs sequence
     host2 = attr.ib(default=None)
@@ -131,21 +127,21 @@ class MIQAuthProvider(BaseAuthProvider):
 
 
 @attr.s
-class OpenldapAuthProvider(MIQAuthProvider):
+class OpenLDAPAuthProvider(MIQAuthProvider):
     """openldap auth provider, NO SSL No attributes beyond MIQAuthProvider"""
     auth_type = 'openldap'
     view_class = LdapAuthenticationView
 
 
 @attr.s
-class OpenldapsAuthProvider(MIQAuthProvider):
+class OpenLDAPSAuthProvider(MIQAuthProvider):
     """openldap auth provider, WITH SSL"""
     auth_type = 'openldaps'
     view_class = LdapsAuthenticationView
 
 
 @attr.s
-class FreeipaAuthProvider(MIQAuthProvider):
+class FreeIPAAuthProvider(MIQAuthProvider):
     """freeipa can be used with ldap auth config or external
     For ldap config:
         3 hosts can be configured
