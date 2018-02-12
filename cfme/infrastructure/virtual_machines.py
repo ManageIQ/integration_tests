@@ -237,15 +237,15 @@ class InfraVmDetailsView(InfraVmView):
         pass
 
     sidebar = View.nested(VmsTemplatesAccordion)
-    entities = View.nested(InfraVmSummaryView)
+    entities = View.nested(VMDetailsEntities)
 
     @property
     def is_displayed(self):
         expected_name = self.context['object'].name
         expected_provider = self.context['object'].provider.name
         try:
-            relationship_provider_name = self.entities.relationships.get_text_of('Infrastructure '
-                                                                                 'Provider')
+            relationships = self.entities.summary('Relationships')
+            relationship_provider_name = relationships.get_text_of('Infrastructure Provider')
         except NameError:
             currently_selected = self.sidebar.vmstemplates.tree.currently_selected[-1]
             if currently_selected in ['<Archived>', '<Orphaned>']:
@@ -496,8 +496,7 @@ class VMConfiguration(Pretty):
             Just Nonpersistent is an invalid setup that UI currently (5.8) allows.
         """
         # New disk doesn't have a filename, until actually added
-        disk = VMDisk(
-            filename=None, size=size, size_unit=size_unit, type=type, mode=mode)
+        disk = VMDisk(filename=None, size=size, size_unit=size_unit, type=type, mode=mode)
         self.disks.append(disk)
         return disk
 
@@ -584,9 +583,7 @@ class Vm(VM):
         def create(self, force_check_memory=False):
             """Create a snapshot"""
             view = navigate_to(self.vm, 'SnapshotsAdd')
-            snapshot_dict = {
-                'description': self.description
-            }
+            snapshot_dict = {'description': self.description}
             if self.name is not None:
                 snapshot_dict['name'] = self.name
             if force_check_memory or self.vm.provider.mgmt.is_vm_running(self.vm.name):
@@ -776,7 +773,8 @@ class Vm(VM):
     @property
     def total_snapshots(self):
         """Returns the number of snapshots for this VM. If it says ``None``, returns ``0``."""
-        snapshots = self.get_detail(properties=("Properties", "Snapshots")).strip().lower()
+        view = navigate_to(self, "Details")
+        snapshots = view.entities.summary("Properties").get_text_of("Snapshots").strip().lower()
         if snapshots == "none":
             return 0
         else:
@@ -1309,7 +1307,7 @@ class VmSnapshotsAll(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.entities.properties.click_at('Snapshots')
+        self.prerequisite_view.entities.summary('Properties').click_at('Snapshots')
 
 
 @navigator.register(Vm, 'SnapshotsAdd')
@@ -1330,7 +1328,7 @@ class VmGenealogyAll(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.entities.relationships.click_at('Genealogy')
+        self.prerequisite_view.entities.summary('Relationships').click_at('Genealogy')
 
 
 @navigator.register(Vm, 'Migrate')
