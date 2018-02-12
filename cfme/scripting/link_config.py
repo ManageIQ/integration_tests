@@ -1,5 +1,8 @@
 from __future__ import print_function
 
+import errno
+import os
+
 import click
 from pathlib2 import Path
 
@@ -15,23 +18,31 @@ def _warn_on_unknown_encryption(path):
                 "please remember follow the documentation on yaml keys")
 
 
-def _warn_on_missmatching_symlink(src, target):
+def _check_missmatching_symlink(src, target):
+    check_passed = True
     if target.resolve() != src.resolve():
-        print("WARNING:", target, "does not point to", src)
-        print("         please verify this is intended")
+        print(
+            "WARNING: Different symlink already exists for", target.name, "in your dest. "
+            "Skipped this file. Use --force to override.")
+        check_passed = False
+    return check_passed
 
 
-def _warn_on_existing_file(target):
-    print('WARNING: You have', target.name, 'as file in your conf/ folder.')
-    print('         Please ensure its up2date with the actual configuration.')
-    print('         Local overrides can be stored in a .local.yaml file')
-    print('         to prevent staleness.')
+def _check_existing_file(target):
+    check_passed = True
+    if target.is_file():
+        print(
+            "ERROR: File", target.name, "already exists in your dest. Skipped this file. "
+            "Use --force to override.")
+        check_passed = False
+    return check_passed
 
 
 @click.command()
 @click.argument('src', type=click.Path(file_okay=False))
 @click.argument('dest', type=click.Path(exists=True, file_okay=False))
-def main(src, dest):
+@click.option('--force', is_flag=True)
+def main(src, dest, force):
     """links configfiles from one folder to another
 
     if links exists it verifies content
@@ -40,6 +51,7 @@ def main(src, dest):
     Args:
         src: source folder
         dest: target folder
+        force: override existing symlinks
     """
     src = Path(src)
     if not src.exists():
@@ -51,13 +63,30 @@ def main(src, dest):
     for element in filter(_is_yaml_file, src.iterdir()):
         _warn_on_unknown_encryption(element)
         target = dest.joinpath(element.name)
-        # the following is fragile
-        if target.is_symlink():
-            _warn_on_missmatching_symlink(src=element, target=target)
-        elif target.is_file():
-            _warn_on_existing_file(target)
-        else:
-            target.symlink_to(element.resolve())
+        
+	# the following is fragile
+        if force:
+            try:
+                target.symlink_to(element.resolve())
+            except OSError as e:
+                if e.errno == errno.EEXIST:
+                    backup_target = Path(dest.joinpath(element.name + "_bak"))
+                    print("Replacing", target.name, "and saving backup as", backup_target.name)
+                    # Would use 'backup_target.replace()' here but that's only supported in py3
+                    if backup_target.exists():
+                        os.remove(str(backup_target))
+                    target.rename(backup_target)
+
+                    target.symlink_to(element.resolve())
+                else:
+                    raise e
+	else:
+            if target.is_symlink():
+                # If symlink already exists and points to same src, do nothing.
+                _check_missmatching_symlink(src=element, target=target)
+            elif _check_existing_file(target):
+	        target.symlink_to(element.resolve())
+                print("Symlink created for", target.name)
 
 
 if __name__ == '__main__':
