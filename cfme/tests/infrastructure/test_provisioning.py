@@ -122,9 +122,7 @@ def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_t
             'vlan': partial_match(provisioning['vlan'])
         }
     }
-    # WA until https://github.com/RedHatQE/widgetastic.patternfly/pull/40 is merged
-    if provider.one_of(RHEVMProvider):
-        provisioning_data['network']['vlan'] = '{0} ({0})'.format(provisioning['vlan'])
+
     do_vm_provisioning(appliance, template, provider, vm_name, provisioning_data, request,
                        smtp_test, wait=False)
     wait_for(
