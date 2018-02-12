@@ -79,12 +79,12 @@ def main(src, dest, force):
                     target.symlink_to(element.resolve())
                 else:
                     raise e
-	else:
+        else:
             if target.is_symlink():
                 # If symlink already exists and points to same src, do nothing.
                 _check_missmatching_symlink(src=element, target=target)
             elif _check_existing_file(target):
-	        target.symlink_to(element.resolve())
+                target.symlink_to(element.resolve())
                 print("Symlink created for", target.name)
 
 
