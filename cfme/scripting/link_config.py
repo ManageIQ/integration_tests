@@ -64,7 +64,6 @@ def main(src, dest, force):
         _warn_on_unknown_encryption(element)
         target = dest.joinpath(element.name)
 
-        # the following is fragile
         if force:
             try:
                 target.symlink_to(element.resolve())
