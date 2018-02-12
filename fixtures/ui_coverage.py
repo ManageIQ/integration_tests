@@ -10,8 +10,24 @@ General Notes
 simplecov can merge test results, but doesn't appear to like working in a
 multi-process environment. Specifically, it clobbers its own results when running
 simultaneously in multiple processes. To solve this, each process records its
-output to its own directory (configured in coverage_hook). All of the
-individual process' results are then manually merged (coverage_merger) into one
+output to its own directory (configured in coverage_hook).  You end up with a
+directory structure like this:
+
+    coverage-\
+             |-$ip1-\
+             .      |-$pid1-\
+             .      .       |-.resultset.json (coverage statistics)
+             .      .       |-.last_run.json  (overall coverage percentage)
+             .      .
+             .      |-$pidN
+             .
+             |-$ipN
+
+Note the .resultset.json format is documented in the ruby Coverage libraries docs:
+
+    http://ruby-doc.org/stdlib-2.1.0/libdoc/coverage/rdoc/Coverage.html
+
+All of the individual process' results are then manually merged (coverage_merger) into one
 big json result, and handed back to simplecov which generates the compiled html
 (for humans) and rcov (for jenkins) reports.
 
@@ -39,15 +55,12 @@ Post-testing (``pytest_unconfigure`` hook):
 1. Poll ``thing_toucher`` to make sure it completed; block if needed.
 2. Stop EVM, but nicely this time so the coverage atexit hooks run:
    ``systemctl stop evmserverd``
-3. Run ``coverage_merger.rb`` with the rails runner, which compiles all the individual process
-   reports and runs coverage again, additionally creating an rcov report
-4. Pull the coverage dir back for parsing and archiving
-5. For fun: Read the results from ``coverage/.last_run.json`` and print it to the test terminal/log
+3. Pull the coverage dir back for parsing and archiving
 
-Post-testing (e.g. ci environment):
+Post-testing (e.g. ci environment): *** This is changing ***
+
 1. Use the generated rcov report with the ruby stats plugin to get a coverage graph
 2. Zip up and archive the entire coverage dir for review
-
 """
 import subprocess
 from threading import Thread
