@@ -3,6 +3,7 @@ import pytest
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 from cfme.utils.generators import random_vm_name
 
@@ -46,6 +47,8 @@ def ensure_vm_running(small_vm):
         raise Exception("Unknown power state - unable to continue!")
 
 
+@pytest.mark.meta(blockers=[BZ(1534520, forced_streams=['5.9'],
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.parametrize('change_type', ['cores_per_socket', 'sockets', 'memory'])
 def test_vm_reconfig_add_remove_hw_cold(
         provider, small_vm, ensure_vm_stopped, change_type):
@@ -57,8 +60,7 @@ def test_vm_reconfig_add_remove_hw_cold(
     elif change_type == 'sockets':
         new_config.hw.sockets = new_config.hw.sockets + 1
     elif change_type == 'memory':
-        mem_diff = -512 if small_vm.provider.one_of(RHEVMProvider) else 512
-        new_config.hw.mem_size = new_config.hw.mem_size_mb + mem_diff
+        new_config.hw.mem_size = new_config.hw.mem_size_mb + 512
         new_config.hw.mem_size_unit = 'MB'
 
     small_vm.reconfigure(new_config)
