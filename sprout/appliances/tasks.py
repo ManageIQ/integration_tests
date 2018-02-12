@@ -267,6 +267,7 @@ def poke_trackerbot(self):
         template_name = template["template"]["name"]
         ga_released = template['template']['ga_released']
         date = parse_template(template_name).datestamp
+        custom_data = template['template'].get('custom_data', {})
         if not date:
             # Not a CFME/MIQ template, ignore it.
             continue
@@ -278,7 +279,12 @@ def poke_trackerbot(self):
                 name=template_name, preconfigured=False)
             if original_template.ga_released != ga_released:
                 original_template.ga_released = ga_released
-                original_template.save()
+                original_template.save(update_fields=['ga_released'])
+            if custom_data and original_template.custom_data != custom_data:
+                original_template.custom_data = custom_data
+                original_template.container = 'cloudforms-0'
+                original_template.save(update_fields=['custom_data',
+                                                      'container'])
         except ObjectDoesNotExist:
             if template_name in provider.templates:
                 date = parse_template(template_name).datestamp
@@ -296,13 +302,13 @@ def poke_trackerbot(self):
                 with transaction.atomic():
                     tpl = Template(
                         provider=provider, template_group=group, original_name=template_name,
-                        name=template_name, preconfigured=False, date=date,
+                        name=template_name, preconfigured=False, date=date, custom_data=custom_data,
                         version=template_version, ready=True, exists=True, usable=True)
                     tpl.save()
                     original_template = tpl
                     self.logger.info("Created a new template #{}".format(tpl.id))
         # If the provider is set to not preconfigure templates, do not bother even doing it.
-        if provider.num_simultaneous_configuring > 0:
+        if provider.num_simultaneous_configuring > 0 and provider.provider_type != 'openshift':
             # Preconfigured one
             try:
                 preconfigured_template = Template.objects.get(
@@ -310,7 +316,7 @@ def poke_trackerbot(self):
                     preconfigured=True)
                 if preconfigured_template.ga_released != ga_released:
                     preconfigured_template.ga_released = ga_released
-                    preconfigured_template.save()
+                    preconfigured_template.save(update_fields=['ga_released'])
             except ObjectDoesNotExist:
                 if template_name in provider.templates:
                     original_id = original_template.id if original_template is not None else None
@@ -325,7 +331,7 @@ def poke_trackerbot(self):
         with transaction.atomic():
             for template in Template.objects.filter(provider=provider, original_name=template_name):
                 template.usable = usability
-                template.save()
+                template.save(update_fields=['usable'])
                 # Kill all shepherd appliances if they were acidentally spun up
                 if not usability:
                     for appliance in Appliance.objects.filter(
@@ -461,13 +467,13 @@ def prepare_template_verify_version(self, template_id):
             # version.
             with transaction.atomic():
                 template.version = t
-                template.save()
+                template.save(update_fields=['version'])
                 if template.parent_template is not None:
                     # In case we have a parent template, update the version there too.
                     if template.version != template.parent_template.version:
                         pt = template.parent_template
                         pt.version = template.version
-                        pt.save()
+                        pt.save(update_fields=['version'])
             return  # no need to continue with spamming process
         # SPAM SPAM SPAM!
         with transaction.atomic():
@@ -554,7 +560,7 @@ def prepare_template_finish(self, template_id):
             template = Template.objects.get(id=template_id)
             template.ready = True
             template.exists = True
-            template.save()
+            template.save(update_fields=['ready', 'exists'])
             del template.temporary_name
     except Exception as e:
         template.set_status("Could not mark the appliance as template. Retrying.")
@@ -621,7 +627,7 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
         rename_appliances_for_pool.delay(pool.id)
         with transaction.atomic():
             pool.finished = True
-            pool.save()
+            pool.save(update_fields=['finished'])
     else:
         # Look whether we can swap any provisioning appliance with some in shepherd
         unfinished = list(
@@ -634,7 +640,7 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
                 for _ in range(n):
                     appl = unfinished.pop()
                     appl.appliance_pool = None
-                    appl.save()
+                    appl.save(update_fields=['appliance_pool'])
         try:
             self.retry(args=(appliance_pool_id, time_minutes), countdown=30, max_retries=120)
         except MaxRetriesExceededError:  # Bad luck, pool fulfillment failed. So destroy it.
@@ -719,7 +725,7 @@ def clone_template_to_pool(template_id, appliance_pool_id, time_minutes):
         # Set pool to these params to keep the appliances with same versions/dates
         pool.version = template.version
         pool.date = template.date
-        pool.save()
+        pool.save(update_fields=['version', 'date'])
     clone_template_to_appliance.delay(appliance.id, time_minutes, pool.yum_update)
 
 
@@ -731,7 +737,7 @@ def apply_lease_times(self, appliance_id, time_minutes):
         appliance = Appliance.objects.get(id=appliance_id)
         appliance.datetime_leased = timezone.now()
         appliance.leased_until = appliance.datetime_leased + timedelta(minutes=int(time_minutes))
-        appliance.save()
+        appliance.save(update_fields=['datetime_leased', 'leased_until'])
 
 
 @logged_task()
@@ -807,11 +813,19 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
                     kwargs['ram'] = appliance.appliance_pool.override_memory
                 if appliance.appliance_pool.override_cpu is not None:
                     kwargs['cpu'] = appliance.appliance_pool.override_cpu
-            appliance.provider_api.deploy_template(
-                appliance.template.name, vm_name=appliance.name,
-                progress_callback=lambda progress: appliance.set_status(
-                    "Deploy progress: {}".format(progress)),
-                **kwargs)
+            if provider_data['type'] == 'openshift' and appliance.template['custom_data']:
+                kwargs['tags'] = appliance.template['custom_data'].get('TAGS')
+            vm_data = appliance.provider_api.deploy_template(appliance.template.name,
+                      vm_name=appliance.name, progress_callback=lambda progress:
+                appliance.set_status("Deploy progress: {}".format(progress)), **kwargs)
+            if provider_data['type'] == 'openshift':
+                with transaction.atomic():
+                    appliance.openshift_ext_ip = vm_data['external_ip']
+                    appliance.openshift_project = vm_data['project']
+                    appliance.ip_address = vm_data['url']
+                    appliance.save(update_fields=['openshift_ext_ip',
+                                                  'openshift_project',
+                                                  'ip_address'])
     except Exception as e:
         messages = {"limit", "cannot add", "quota"}
         if isinstance(e, OSOverLimit):
@@ -889,7 +903,7 @@ def mark_appliance_ready(self, appliance_id):
     with transaction.atomic():
         appliance = Appliance.objects.get(id=appliance_id)
         appliance.ready = True
-        appliance.save()
+        appliance.save(update_fields=['ready'])
     Appliance.objects.get(id=appliance_id).set_status("Appliance was marked as ready")
 
 
@@ -1051,7 +1065,7 @@ def retrieve_appliance_ip(self, appliance_id):
         with transaction.atomic():
             appliance = Appliance.objects.get(id=appliance_id)
             appliance.ip_address = ip_address
-            appliance.save()
+            appliance.save(update_fields=['ip_address'])
     except ObjectDoesNotExist:
         # source object is not present, terminating
         return
@@ -1125,10 +1139,10 @@ def check_templates_in_provider(self, provider_id):
         templates = map(str, provider.api.list_template())
     except Exception:
         provider.working = False
-        provider.save()
+        provider.save(update_fields=['working'])
     else:
         provider.working = True
-        provider.save()
+        provider.save(update_fields=['working'])
         with provider.edit_metadata as metadata:
             metadata["templates"] = templates
     if not provider.working:
@@ -1140,7 +1154,7 @@ def check_templates_in_provider(self, provider_id):
             tpl = Template.objects.get(pk=template.pk)
             exists = tpl.name in templates
             tpl.exists = exists
-            tpl.save()
+            tpl.save(update_fields=['exists'])
         # if not exists:
         #     if len(Appliance.objects.filter(template=template).all()) == 0\
         #             and template.status_changed < expiration_time:
@@ -1169,7 +1183,7 @@ def delete_nonexistent_appliances(self):
                 if "AppliancePool" in str(e):
                     # Someone managed to delete the appliance pool before
                     appliance.appliance_pool = None
-                    appliance.save()
+                    appliance.save(update_fields=['appliance_pool'])
                     appliance.delete()
                 else:
                     raise  # No diaper pattern here!
@@ -1319,7 +1333,7 @@ def wait_appliance_ready(self, appliance_id):
             with transaction.atomic():
                 appliance = Appliance.objects.get(id=appliance_id)
                 appliance.ready = True
-                appliance.save()
+                appliance.save(update_fields=['ready'])
             appliance.set_status("The appliance is ready.")
             with diaper:
                 appliance.synchronize_metadata()
@@ -1327,7 +1341,7 @@ def wait_appliance_ready(self, appliance_id):
             with transaction.atomic():
                 appliance = Appliance.objects.get(id=appliance_id)
                 appliance.ready = False
-                appliance.save()
+                appliance.save(update_fields=['ready'])
             appliance.set_status("Waiting for UI to appear.")
             self.retry(args=(appliance_id,), countdown=30, max_retries=45)
     except ObjectDoesNotExist:
@@ -1372,7 +1386,7 @@ def delete_template_from_provider(self, template_id):
     with transaction.atomic():
         template = Template.objects.get(pk=template.pk)
         template.exists = False
-        template.save()
+        template.save(update_fields=['exists'])
     return True
 
 
@@ -1391,7 +1405,7 @@ def appliance_rename(self, appliance_id, new_name):
     with redis.appliances_ignored_when_renaming(appliance.name, new_name):
         self.logger.info("Renaming {}/{} to {}".format(appliance_id, appliance.name, new_name))
         appliance.name = appliance.provider_api.rename_vm(appliance.name, new_name)
-        appliance.save()
+        appliance.save(update_fields=['name'])
     return appliance.name
 
 
@@ -1520,7 +1534,7 @@ Sprout template version mismatch spammer™
         if result > 0:
             for mismatch in mismatches:
                 mismatch.sent = True
-                mismatch.save()
+                mismatch.save(update_fields=['sent'])
 
 
 @singleton_task()
@@ -1593,7 +1607,7 @@ def pick_templates_for_deletion(self):
                 for template in Template.objects.filter(
                         template_group=group, version=version, exists=True, suggested_delete=False):
                     template.suggested_delete = True
-                    template.save()
+                    template.save(update_fields=['suggested_delete'])
                     if group.id not in to_mail:
                         to_mail[group.id] = {}
                     if zstream not in to_mail[group.id]:
