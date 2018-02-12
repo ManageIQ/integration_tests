@@ -106,7 +106,7 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
     return _provisioner
 
 
-def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
+def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name, smtp_test):
     """ Tests change RAM and CPU in provisioning dialog.
 
     Prerequisities:
@@ -117,10 +117,19 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
         * Apart from the usual provisioning settings, set number of CPUs and amount of RAM.
         * Submit the provisioning request and wait for it to finish.
         * Visit the page of the provisioned VM. The summary should state correct values for CPU&RAM.
+        * Check that promer amount of e-mails was received
 
     Metadata:
         test_flag: provision
     """
+    def check_approval_mail_received():
+        return len(smtp_test.get_emails(
+            subject_like="%%Your Virtual Machine configuration was Approved%%")) == 1
+
+    def check_completed_mail_received():
+        return len(smtp_test.get_emails(
+            subject_like="%%Your virtual machine request has Completed%%")) == 1
+
     prov_data['catalog']["vm_name"] = vm_name
     prov_data['hardware']["num_sockets"] = "4"
     prov_data['hardware']["cores_per_socket"] = "1" if not provider.one_of(SCVMMProvider) else None
@@ -144,6 +153,8 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
         raise ValueError("Could not parse string {}".format(repr(data)))
     soft_assert(num_cpus == "4", "num_cpus should be {}, is {}".format("4", num_cpus))
     soft_assert(memory == "2048 MB", "memory should be {}, is {}".format("2048 MB", memory))
+    wait_for(check_approval_mail_received, num_sec=90, delay=5)
+    wait_for(check_completed_mail_received, num_sec=90, delay=5)
 
 
 # Special parametrization in testgen above
