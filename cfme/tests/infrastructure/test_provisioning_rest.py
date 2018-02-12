@@ -2,9 +2,9 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils.blockers import BZ
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
@@ -63,7 +63,7 @@ def get_provision_data(rest_api, provider, template_name, auto_approve=True):
 
     if provider.one_of(RHEVMProvider):
         result["vm_fields"]["provision_type"] = "native_clone"
-        if current_version() > '5.9.0.16':
+        if provider.appliance.version > '5.9.0.16':
             result["vm_fields"]["vlan"] = "<Template>"
 
     return result
@@ -74,11 +74,9 @@ def provision_data(appliance, provider, small_template_modscope):
     return get_provision_data(appliance.rest_api, provider, small_template_modscope.name)
 
 
-def clean_vm(provider, vm_name):
-    if not provider.mgmt.is_vm_stopped(vm_name):
-        provider.mgmt.stop_vm(vm_name)
-        provider.mgmt.wait_vm_stopped(vm_name)
-    provider.mgmt.delete_vm(vm_name)
+def clean_vm(vm_name, provider):
+    vm_obj = VM.factory(vm_name=vm_name, provider=provider)
+    vm_obj.delete_from_provider()
 
 
 def request_finished(provision_request):
@@ -101,14 +99,11 @@ def test_provision(request, provision_data, provider, appliance):
     Metadata:
         test_flag: rest, provision
     """
-
     vm_name = provision_data["vm_fields"]["vm_name"]
-    request.addfinalizer(lambda: clean_vm(provider, vm_name) if provider.mgmt.does_vm_exist(vm_name)
-        else None)
+    request.addfinalizer(lambda: clean_vm(vm_name, provider))
     response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)
     assert appliance.rest_api.response.status_code == 200
     provision_request = response[0]
-
     wait_for(request_finished, func_args=[provision_request], num_sec=800, delay=5,
         message="REST provisioning finishes")
 
