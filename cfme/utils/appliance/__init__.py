@@ -2651,7 +2651,7 @@ def _version_for_version_or_stream(version_or_stream, sprout_client=None):
 @attr.s
 class DummyAppliance(object):
     """a dummy with minimal attribute set"""
-    hostname = '0.0.0.0'
+    hostname = 'DummyApplianceHostname'
     browser_steal = False
     version = attr.ib(default=Version('5.8.0'), convert=_version_for_version_or_stream)
     is_downstream = True

@@ -44,11 +44,11 @@ def appliances_from_cli(cli_appliances):
 def pytest_configure(config):
 
     reporter = terminalreporter.reporter()
-    if stack.top:
-        appliances = [stack.top]
-    elif config.getoption('--dummy-appliance'):
+    if config.getoption('--dummy-appliance'):
         appliances = [DummyAppliance.from_config(config)]
         reporter.write_line('Retrieved Dummy Appliance', red=True)
+    elif stack.top:
+        appliances = [stack.top]
     elif config.option.appliances:
         appliances = appliances_from_cli(config.option.appliances)
         reporter.write_line('Retrieved these appliances from the --appliance parameters', red=True)

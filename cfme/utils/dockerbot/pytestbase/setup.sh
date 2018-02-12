@@ -41,6 +41,7 @@ on_exit () {
 #   $1 cmd - Command to run
 #   $2 max_retry - Maximum num of attempts to run the command; defaults to 5
 #   $3 sleep_duration - duration to sleep between attempts; defaults to 0
+#   $4 optional failure msg to print for an unsuccessful case
 do_or_die () {
     cmd=$1
     max_retry=${2:-5}
@@ -57,6 +58,9 @@ do_or_die () {
             sleep "$sleep_duration"
         else
             log "Failed to run the command $try times - exiting now..."
+            if [ "$4" ]; then
+                log "Failure reason: $4"
+            fi
             exit
         fi
     done
@@ -183,13 +187,23 @@ if [ -n "$PROVIDER" ]; then
 fi
 export APPLIANCE=${APPLIANCE-"None"}
 log "appliance: $APPLIANCE"
+export IP_ADDRESS=$IP_ADDRESS
+log "ip_address: $IP_ADDRESS"
 export USE_SPROUT=${USE_SPROUT-"no"}
 log "use_sprout: $USE_SPROUT"
 
 # Now fill out the env yaml with ALL THE THINGS
-cat > $CFME_REPO_DIR/conf/env.local.yaml <<EOF
+rm -f $CFME_REPO_DIR/conf.env.local.yaml
+
+if [ "$USE_SPROUT" == "no" ];
+    HOSTNAME="$IP_ADDRESS"
+else
+    HOSTNAME="SPROUT_SHOULD_OVERRIDE_THIS"
+fi    
+
+cat >> $CFME_REPO_DIR/conf/env.local.yaml <<EOF
 appliances:
-  - hostname: $IP_ADDRESS
+  - hostname: $HOSTNAME
 $BROWSER_SECTION
 
 artifactor:
@@ -234,8 +248,6 @@ run_n_log "find $CFME_REPO_DIR -name \"*.pyc\" -exec rm -rf {} \;"
 set +e
 
 
-
-
 if [ "$USE_SPROUT" = "yes" ];
 then
     log "invoking complete collectonly with dummy instance before test"
@@ -243,7 +255,8 @@ then
 
     run_n_log "miq sprout checkout --populate-yaml" &
     sleep 5
-    do_or_die "(date && grep -q appliances: conf/env.local.yaml)>> $ARTIFACTOR_DIR/setup.txt" 5 60
+    do_or_die "(date && [ `grep -c SPROUT_SHOULD_OVERRIDE_THIS $CFME_REPO_DIR/conf/env.local.yaml` == 0 ])" \
+         >> $ARTIFACTOR_DIR/setup.txt" 5 60 "Sprout failed to provision appliance"
 else
     log "no sprout used"
     log "invoking complete collectonly with given appliance instance before test"
