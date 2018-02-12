@@ -805,7 +805,8 @@ class RegionChangeNameView(RegionView):
 
     @property
     def is_displayed(self):
-        return self.region_description.is_displayed
+        return self.region_description.is_displayed and super(RegionChangeNameView,
+                                                              self).is_displayed
 
 
 @navigator.register(Region, 'Details')
