@@ -447,7 +447,7 @@ role_access_ui_58z = {
         'Networks': ['Subnets', 'Load Balancers', 'Providers', 'Security Groups', 'Floating IPs',
                      'Network Ports', 'Topology', 'Networks', 'Network Routers'],
         'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
-        'Red Hat Insights': ['Rules', 'Overview', 'Inventory', 'Actions'],
+        'Red Hat Insights': ['Rules', 'Overview', 'Systems'],
         'Services': ['Requests', 'Workloads', 'Catalogs', 'My Services'],
         'Storage': {
             'Block Storage': ['Volume Snapshots', 'Managers', 'Volume Backups', 'Volumes'],

@@ -27,6 +27,10 @@ def auth_groups():
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('group_name, context', auth_groups())
 @pytest.mark.meta(blockers=[
+    BZ(1531499,
+       forced_streams=['5.8'],
+       unblock=lambda group_name: group_name not in [
+           'evmgroup-administrator', 'evmgroup-vm_user', 'evmgroup-desktop', 'evmgroup-operator']),
     BZ(1525598,
        forced_streams=['5.8'],
        unblock=lambda group_name: group_name not in
