@@ -258,15 +258,18 @@ def test_provision_from_template_using_rest(
     }
 
     if not isinstance(provider, AzureProvider):
-        provision_data['vm_fields']['availability_zone'] = provisioning['availability_zone']
-        provision_data['vm_fields']['security_groups'] = [provisioning['security_group']]
-        provision_data['vm_fields']['guest_keypair'] = provisioning['guest_keypair']
-
+        recursive_update(provision_data, {
+                         'vm_fields': {
+                             'availability_zone': provisioning['availability_zone'],
+                             'security_groups': [provisioning['security_group']],
+                             'guest_keypair': provisioning['guest_keypair']}})
     if isinstance(provider, GCEProvider):
-        provision_data['vm_fields']['cloud_network'] = provisioning['cloud_network']
-        provision_data['vm_fields']['boot_disk_size'] = provisioning['boot_disk_size']
-        provision_data['vm_fields']['zone'] = provisioning['availability_zone']
-        provision_data['vm_fields']['region'] = 'us-central1'
+        recursive_update(provision_data, {
+                         'vm_fields': {
+                             'cloud_network': provisioning['cloud_network'],
+                             'boot_disk_size': provisioning['boot_disk_size'].replace(' ', '.'),
+                             'zone': provisioning['availability_zone'],
+                             'region': provider.data["region"]}})
     elif isinstance(provider, AzureProvider):
         try:
             template = provider.data.templates.small_template
@@ -275,8 +278,10 @@ def test_provision_from_template_using_rest(
         except AttributeError:
             pytest.skip('Could not find small_template or credentials for {}'.format(provider.name))
         # mapping: product/dialogs/miq_dialogs/miq_provision_azure_dialogs_template.yaml
-        provision_data['vm_fields']['root_username'] = vm_user
-        provision_data['vm_fields']['root_password'] = vm_password
+        recursive_update(provision_data, {
+                         'vm_fields': {
+                             'root_username': vm_user,
+                             'root_password': vm_password}})
 
     request.addfinalizer(
         lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
