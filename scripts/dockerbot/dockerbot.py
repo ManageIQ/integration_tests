@@ -360,6 +360,8 @@ class DockerBot(object):
         self.check_arg('sprout_password', None)
         self.check_arg('sprout_description', None)
 
+        self.check_arg('validate_test_cases', False)
+
         if ec:
             sys.exit(127)
 
@@ -410,6 +412,8 @@ class DockerBot(object):
         if self.args['dev_pr']:
             repo, branch = self.get_dev_branch(self.args['dev_pr'])
             self.args['pytest'] += ' --dev-branch {} --dev-repo {}'.format(branch, repo)
+        if self.args['validate_test_cases']:
+            self.args['pytest'] += ' --validate-test-cases'
         print("  PYTEST Command: {}".format(self.args['pytest']))
 
     def enc_key(self):
@@ -637,6 +641,9 @@ if __name__ == "__main__":
     pytest.add_argument('--test-id',
                         help="A test id",
                         default=None)
+    pytest.add_argument('--validate-test-cases', action="store_true",
+                        help="Enable test case validation",
+                        default=False)
 
     pytester = parser.add_argument_group('PR Tester Options')
     pytester.add_argument('--prtester', action="store_true",
