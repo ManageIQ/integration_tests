@@ -1,7 +1,7 @@
 from cached_property import cached_property
 from os import path
 
-from wrapanapi.containers.providers.openshift import Openshift
+from wrapanapi.containers.providers.rhopenshift import Openshift
 
 from . import ContainersProvider
 
