@@ -53,17 +53,24 @@ def vm_name(testing_instance):
 def wait_for_ui_state_refresh(instance, provider, state_change_time, timeout=900):
     """ Waits for 'State Changed On' refresh
     """
+    view = navigate_to(instance, 'Details')
+
     def _wait_for_state_refresh():
         try:
-            navigate_to(instance, 'Details')
-            return state_change_time != instance.get_detail(properties=("Power Management",
-                                                                        "State Changed On"))
+            state = view.entities.summary('Power Management').get_text_of('State Changed On')
+            return state_change_time != state
         except NameError:
             logger.warning('NameError caught while waiting for state change, continuing')
             return False
+
     refresh_timer = RefreshTimer(time_for_refresh=180)
+
+    def _fail_func():
+        provider.is_refreshed(refresh_timer)
+        view.toolbar.reload.click()
+
     try:
-        wait_for(_wait_for_state_refresh, fail_func=lambda: provider.is_refreshed(refresh_timer),
+        wait_for(_wait_for_state_refresh, fail_func=_fail_func,
                  num_sec=timeout, delay=30, message='Waiting for instance state refresh')
     except TimedOutError:
         return False
@@ -72,7 +79,8 @@ def wait_for_ui_state_refresh(instance, provider, state_change_time, timeout=900
 def wait_for_termination(provider, instance):
     """ Waits for VM/instance termination and refreshes power states and relationships
     """
-    state_change_time = instance.get_detail(properties=('Power Management', 'State Changed On'))
+    view = navigate_to(instance, 'Details')
+    state_change_time = view.entities.summary('Power Management').get_text_of('State Changed On')
     provider.refresh_provider_relationships()
     logger.info("Refreshing provider relationships and power states")
     refresh_timer = RefreshTimer(time_for_refresh=300)
@@ -83,17 +91,17 @@ def wait_for_termination(provider, instance):
              delay=60,
              handle_exception=True)
     wait_for_ui_state_refresh(instance, provider, state_change_time, timeout=720)
-    if instance.get_detail(properties=('Power Management', 'Power State')) not in \
+    if view.entities.summary('Power Management').get_text_of('Power State') not in \
             {instance.STATE_TERMINATED, instance.STATE_ARCHIVED, instance.STATE_UNKNOWN}:
         """Wait for one more state change as transitional state also changes "State Changed On" time
         """
         logger.info("Instance is still powering down. please wait before termination")
-        state_change_time = instance.get_detail(properties=('Power Management', 'State Changed On'))
+        state_change_time = view.entities.summary('Power Management').get_text_of(
+            'State Changed On')
         wait_for_ui_state_refresh(instance, provider, state_change_time, timeout=720)
     if provider.type == 'ec2':
-        return True if provider.mgmt.is_vm_state(instance.name, provider.mgmt.states['deleted'])\
-            else False
-    elif instance.get_detail(properties=('Power Management', 'Power State')) in \
+        return provider.mgmt.is_vm_state(instance.name, provider.mgmt.states['deleted'])
+    elif view.entities.summary('Power Management').get_text_of('Power State') in \
             {instance.STATE_TERMINATED, instance.STATE_ARCHIVED, instance.STATE_UNKNOWN}:
         return True
     else:
@@ -197,25 +205,20 @@ def test_soft_reboot(appliance, provider, testing_instance, verify_vm_running, s
         test_flag: power_control, provision
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
-    state_change_time = testing_instance.get_detail(properties=('Power Management',
-                                                                'State Changed On'))
+    view = navigate_to(testing_instance, 'Details')
+    state_change_time = view.entities.summary('Power Management').get_text_of('State Changed On')
     testing_instance.power_control_from_cfme(option=testing_instance.SOFT_REBOOT)
-
-    view = appliance.browser.create_view(BaseLoggedInPage)
     view.flash.assert_success_message(text='Restart Guest initiated', partial=True)
-
     wait_for_ui_state_refresh(testing_instance, provider, state_change_time, timeout=720)
-    if provider.type == 'gce' \
-            and testing_instance.get_detail(properties=('Power Management', 'Power State')) \
-            == testing_instance.STATE_UNKNOWN:
+    pwr_state = view.entities.summary('Power Management').get_text_of('Power State')
+    if provider.type == 'gce' and pwr_state == testing_instance.STATE_UNKNOWN:
         """Wait for one more state change as transitional state also
         changes "State Changed On" time on GCE provider
         """
         logger.info("Instance is still in \"{}\" state. please wait before CFME will show correct "
-                    "state".format(testing_instance.get_detail(properties=('Power Management',
-                                                                           'Power State'))))
-        state_change_time = testing_instance.get_detail(properties=('Power Management',
-                                                                    'State Changed On'))
+                    "state".format(pwr_state))
+        state_change_time = view.entities.summary('Power Management').get_text_of(
+            'State Changed On')
         wait_for_ui_state_refresh(testing_instance, provider, state_change_time,
                                   timeout=720)
 
@@ -233,13 +236,11 @@ def test_hard_reboot(appliance, provider, testing_instance, verify_vm_running, s
         test_flag: power_control, provision
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
-    navigate_to(testing_instance, 'Details')
-    state_change_time = testing_instance.get_detail(properties=('Power Management',
-                                                                'State Changed On'))
+    view = navigate_to(testing_instance, 'Details')
+    state_change_time = view.entities.summary('Power Management').get_text_of('State Changed On')
 
     testing_instance.power_control_from_cfme(option=testing_instance.HARD_REBOOT)
 
-    view = appliance.browser.create_view(BaseLoggedInPage)
     view.flash.assert_success_message(text='Reset initiated', partial=True)
 
     wait_for_ui_state_refresh(testing_instance, provider, state_change_time, timeout=720)
