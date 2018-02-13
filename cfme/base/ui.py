@@ -149,7 +149,8 @@ LOGIN_METHODS = ['click_on_login', 'press_enter_after_password', '_js_auth_fn']
 
 
 @MiqImplementationContext.external_for(Server.login, ViaUI)
-def login(self, user=None, method=LOGIN_METHODS[-1]):
+# for selenim3 v_js_auth_fn doesn't sent info to the server
+def login(self, user=None, method=LOGIN_METHODS[1]):
     """
     Login to CFME with the given username and password.
     Optionally, submit_method can be press_enter_after_password
