@@ -14,6 +14,7 @@ from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import ssh, safe_string, testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, wait_for_decorator
 from cfme.utils.blockers import BZ
@@ -296,15 +297,15 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
 
     # Check release and quadricon
     quadicon_os_icon = template.find_quadicon().data['os']
-    details_os_icon = template.get_detail(
-        properties=('Properties', 'Operating System'))
+    view = navigate_to(template, 'Details')
+    details_os_icon = view.entities.summary('Properties').get_text_of('Operating System')
     logger.info("Icons: {}, {}".format(details_os_icon, quadicon_os_icon))
 
-    c_users = template.get_detail(properties=('Security', 'Users'))
-    c_groups = template.get_detail(properties=('Security', 'Groups'))
+    c_users = view.entities.summary('Security').get_text_of('Users')
+    c_groups = view.entities.summary('Security').get_text_of('Groups')
     c_packages = 0
     if vm_analysis_provisioning_data['fs-type'] not in ['ntfs', 'fat32']:
-        c_packages = template.get_detail(properties=('Configuration', 'Packages'))
+        c_packages = view.entities.summary('Configuration').get_text_of('Packages')
 
     logger.info("SSA shows {} users, {} groups and {} packages".format(
         c_users, c_groups, c_packages))
@@ -315,11 +316,11 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
         soft_assert(c_packages != '0', "packages: '{}' != '0'".format(c_packages))
     else:
         # Make sure windows-specific data is not empty
-        c_patches = template.get_detail(properties=('Security', 'Patches'))
-        c_applications = template.get_detail(properties=('Configuration', 'Applications'))
-        c_win32_services = template.get_detail(properties=('Configuration', 'Win32 Services'))
-        c_kernel_drivers = template.get_detail(properties=('Configuration', 'Kernel Drivers'))
-        c_fs_drivers = template.get_detail(properties=('Configuration', 'File System Drivers'))
+        c_patches = view.entities.summary('Security').get_text_of('Patches')
+        c_applications = view.entities.summary('Configuration').get_text_of('Applications')
+        c_win32_services = view.entities.summary('Configuration').get_text_of('Win32 Services')
+        c_kernel_drivers = view.entities.summary('Configuration').get_text_of('Kernel Drivers')
+        c_fs_drivers = view.entities.summary('Configuration').get_text_of('File System Drivers')
 
         soft_assert(c_patches != '0', "patches: '{}' != '0'".format(c_patches))
         soft_assert(c_applications != '0', "applications: '{}' != '0'".format(c_applications))
@@ -356,16 +357,17 @@ def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profile):
     ssa_vm.smartstate_scan(wait_for_task_result=True)
     # Check release and quadricon
     quadicon_os_icon = ssa_vm.find_quadicon().data['os']
-    details_os_icon = ssa_vm.get_detail(properties=('Properties', 'Operating System'))
+    view = navigate_to(ssa_vm, 'Details')
+    details_os_icon = view.entities.summary('Properties').get_text_of('Operating System')
     logger.info("Icons: %s, %s", details_os_icon, quadicon_os_icon)
     c_lastanalyzed = ssa_vm.last_analysed
-    c_users = ssa_vm.get_detail(properties=('Security', 'Users'))
-    c_groups = ssa_vm.get_detail(properties=('Security', 'Groups'))
+    c_users = view.entities.summary('Security').get_text_of('Users')
+    c_groups = view.entities.summary('Security').get_text_of('Groups')
     c_packages = 0
     c_services = 0
     if ssa_vm.system_type != WINDOWS:
-        c_packages = ssa_vm.get_detail(properties=('Configuration', 'Packages'))
-        c_services = ssa_vm.get_detail(properties=('Configuration', 'Init Processes'))
+        c_packages = view.entities.summary('Configuration').get_text_of('Packages')
+        c_services = view.entities.summary('Configuration').get_text_of('Init Processes')
 
     logger.info("SSA shows {} users, {} groups {} packages and {} services".format(
         c_users, c_groups, c_packages, c_services))
@@ -385,11 +387,11 @@ def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profile):
                     "services: '{}' != '{}'".format(c_services, e_services))
     else:
         # Make sure windows-specific data is not empty
-        c_patches = ssa_vm.get_detail(properties=('Security', 'Patches'))
-        c_applications = ssa_vm.get_detail(properties=('Configuration', 'Applications'))
-        c_win32_services = ssa_vm.get_detail(properties=('Configuration', 'Win32 Services'))
-        c_kernel_drivers = ssa_vm.get_detail(properties=('Configuration', 'Kernel Drivers'))
-        c_fs_drivers = ssa_vm.get_detail(properties=('Configuration', 'File System Drivers'))
+        c_patches = view.entities.summary('Security').get_text_of('Patches')
+        c_applications = view.entities.summary('Configuration').get_text_of('Applications')
+        c_win32_services = view.entities.summary('Configuration').get_text_of('Win32 Services')
+        c_kernel_drivers = view.entities.summary('Configuration').get_text_of('Kernel Drivers')
+        c_fs_drivers = view.entities.summary('Configuration').get_text_of('File System Drivers')
 
         soft_assert(c_patches != '0', "patches: '{}' != '0'".format(c_patches))
         soft_assert(c_applications != '0', "applications: '{}' != '0'".format(c_applications))
@@ -420,7 +422,8 @@ def test_ssa_users(ssa_vm, appliance, ssa_profile):
     ssa_vm.smartstate_scan(wait_for_task_result=True)
 
     # Check that all data has been fetched
-    current_users = ssa_vm.get_detail(properties=('Security', 'Users'))
+    view = navigate_to(ssa_vm, "Details")
+    current_users = view.entities.summary('Security').get_text_of('Users')
     if ssa_vm.system_type != WINDOWS:
         assert current_users == expected_users
 
@@ -454,7 +457,8 @@ def test_ssa_groups(ssa_vm, appliance, ssa_profile):
     ssa_vm.smartstate_scan(wait_for_task_result=True)
 
     # Check that all data has been fetched
-    current_group = ssa_vm.get_detail(properties=('Security', 'Groups'))
+    view = navigate_to(ssa_vm, 'Details')
+    current_group = view.entities.summary('Security').get_text_of('Groups')
     if ssa_vm.system_type != WINDOWS:
         assert current_group == expected_group
 
@@ -497,7 +501,8 @@ def test_ssa_packages(ssa_vm, soft_assert, appliance, ssa_profile):
     ssa_vm.smartstate_scan(wait_for_task_result=True)
 
     # Check that all data has been fetched
-    current = ssa_vm.get_detail(properties=('Configuration', 'Packages'))
+    view = navigate_to(ssa_vm, 'Details')
+    current = view.entities.summary('Configuration').get_text_of('Packages')
     assert current == expected
 
     # Make sure new package is listed
@@ -520,7 +525,8 @@ def test_ssa_files(appliance, ssa_vm, soft_assert):
     ssa_vm.smartstate_scan(wait_for_task_result=True)
 
     # Check that all data has been fetched
-    current = ssa_vm.get_detail(properties=('Configuration', 'Files'))
+    view = navigate_to(ssa_vm, 'Details')
+    current = view.entities.summary('Configuration').get_text_of('Files')
     assert current != '0', "No files were scanned"
 
     details_property_view = ssa_vm.open_details(("Configuration", "Files"))
@@ -543,31 +549,32 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profile):
 
     ssa_vm.load_details()
     drift_num_orig = 0
-    drift_orig = ssa_vm.get_detail(properties=("Relationships", "Drift History"))
+    view = navigate_to(ssa_vm, "Details")
+    drift_orig = view.entities.summary("Relationships").get_text_of("Drift History")
     if drift_orig != 'None':
         drift_num_orig = int(drift_orig)
     ssa_vm.smartstate_scan(wait_for_task_result=True)
     wait_for(
-        lambda: ssa_vm.get_detail(
-            properties=("Relationships", "Drift History")) == str(drift_num_orig + 1),
+        lambda: view.entities.summary("Relationships").get_text_of(
+            "Drift History") == str(drift_num_orig + 1),
         delay=20,
         num_sec=360,
         message="Waiting for Drift History count to increase",
-        fail_func=appliance.server.browser.refresh
+        fail_func=view.toolbar.reload.click
     )
-    drift_new = int(ssa_vm.get_detail(properties=("Relationships", "Drift History")))
+    drift_new = int(view.entities.summary("Relationships").get_text_of("Drift History"))
 
     # add a tag and a finalizer to remove it
     ssa_vm.add_tag('Department', 'Accounting')
     request.addfinalizer(lambda: ssa_vm.remove_tag('Department', 'Accounting'))
     ssa_vm.smartstate_scan(wait_for_task_result=True)
     wait_for(
-        lambda: ssa_vm.get_detail(
-            properties=("Relationships", "Drift History")) == str(drift_new + 1),
+        lambda: view.entities.summary("Relationships").get_text_of(
+            "Drift History") == str(drift_new + 1),
         delay=20,
         num_sec=360,
         message="Waiting for Drift History count to increase",
-        fail_func=appliance.server.browser.refresh
+        fail_func=view.toolbar.reload.click
     )
     # check drift difference
     soft_assert(ssa_vm.equal_drift_results('Department (1)', 'My Company Tags', 0, 1),
