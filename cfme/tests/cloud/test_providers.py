@@ -33,7 +33,7 @@ pytestmark = [pytest.mark.provider([CloudProvider], scope="function")]
 @test_requirements.discovery
 @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
                          reason='no more support for cloud provider discovery')
-def test_empty_discovery_form_validation(appliance):
+def test_empty_discovery_form_validation_cloud(appliance):
     """ Tests that the flash message is correct when discovery form is empty."""
     discover(None, AzureProvider)
     view = appliance.browser.create_view(CloudProvidersDiscoverView)
@@ -45,7 +45,7 @@ def test_empty_discovery_form_validation(appliance):
 @test_requirements.discovery
 @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
                          reason='no more support for cloud provider discovery')
-def test_discovery_cancelled_validation(appliance):
+def test_discovery_cancelled_validation_cloud(appliance):
     """ Tests that the flash message is correct when discovery is cancelled."""
     discover(None, AzureProvider, cancel=True)
     view = appliance.browser.create_view(CloudProvidersView)
@@ -54,7 +54,7 @@ def test_discovery_cancelled_validation(appliance):
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_add_cancelled_validation(request):
+def test_add_cancelled_validation_cloud(request):
     """Tests that the flash message is correct when add is cancelled."""
     prov = EC2Provider()
     request.addfinalizer(prov.delete_if_exists)
@@ -70,7 +70,7 @@ def test_add_cancelled_validation(request):
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
                          reason='no more support for cloud provider discovery')
-def test_password_mismatch_validation(appliance):
+def test_discovery_password_mismatch_validation(appliance):
     cred = Credential(
         principal=fauxfactory.gen_alphanumeric(5),
         secret=fauxfactory.gen_alphanumeric(5),
@@ -159,7 +159,7 @@ def test_provider_crud(provider):
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_type_required_validation(request):
+def test_type_required_validation_cloud(request):
     """Test to validate type while adding a provider"""
     prov = CloudProvider()
     request.addfinalizer(prov.delete_if_exists)
@@ -170,7 +170,7 @@ def test_type_required_validation(request):
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_name_required_validation(request):
+def test_name_required_validation_cloud(request):
     """Tests to validate the name while adding a provider"""
     prov = EC2Provider(
         name=None,
@@ -198,7 +198,7 @@ def test_region_required_validation(request, soft_assert):
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_host_name_required_validation(request):
+def test_host_name_required_validation_cloud(request):
     """Test to validate the hostname while adding a provider"""
     prov = OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
@@ -252,7 +252,7 @@ def test_password_max_character_validation():
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_name_max_character_validation(request, cloud_provider):
+def test_name_max_character_validation_cloud(request, cloud_provider):
     """Test to validate that provider can have up to 255 characters in name"""
     request.addfinalizer(lambda: cloud_provider.delete_if_exists(cancel=False))
     name = fauxfactory.gen_alphanumeric(255)
@@ -262,7 +262,7 @@ def test_name_max_character_validation(request, cloud_provider):
 
 
 @pytest.mark.tier(3)
-def test_hostname_max_character_validation():
+def test_hostname_max_character_validation_cloud():
     """Test to validate max character for hostname field"""
     endpoint = RHOSEndpoint(hostname=fauxfactory.gen_alphanumeric(256),
                             api_port=None,
@@ -280,7 +280,7 @@ def test_hostname_max_character_validation():
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_api_port_max_character_validation():
+def test_api_port_max_character_validation_cloud():
     """Test to validate max character for api port field"""
     endpoint = RHOSEndpoint(hostname=fauxfactory.gen_alphanumeric(5),
                             api_port=fauxfactory.gen_alphanumeric(16),
