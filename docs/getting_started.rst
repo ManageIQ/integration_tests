@@ -178,10 +178,6 @@ started as quickly as possible:
   prints in the same order as the appliances were specified on the command line, so it is suitable
   for further shell processing if needed.
 
-* Similarly, you can use  ``scripts/appliance.py`` script for interacting with the
-  :py:class:`utils.appliance.Appliance` methods. It is a bit older and has slightly different usage.
-  And lacks threading.
-
 * Using :py:class:`utils.appliance.Appliance` only makes sense for appliances on providers that
   are specified in ``cfme_data.yaml``.
 
