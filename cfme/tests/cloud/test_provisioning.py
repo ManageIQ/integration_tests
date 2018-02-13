@@ -18,6 +18,7 @@ from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils import error
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.rest import assert_response
 from cfme.utils.generators import random_vm_name
@@ -197,8 +198,9 @@ def test_gce_preemptible_provision(provider, testing_instance, soft_assert):
              num_sec=1000,
              delay=60,
              handle_exception=True)
-    soft_assert('Yes' in instance.get_detail(
-        properties=("Properties", "Preemptible")), "GCE Instance isn't Preemptible")
+    view = navigate_to(instance, "Details")
+    preemptible = view.entities.summary("Properties").get_text_of("Preemptible")
+    soft_assert('Yes' in preemptible, "GCE Instance isn't Preemptible")
     soft_assert(instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
 
 
