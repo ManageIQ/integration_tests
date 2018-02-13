@@ -98,6 +98,18 @@ class TenantAllView(TenantView):
         return self.in_tenants and self.entities.title.text == 'Cloud Tenants'
 
 
+class ProviderTenantAllView(TenantAllView):
+
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
+            self.entities.title.text == '{} (All Cloud Tenants)'.format(
+                self.context['object'].name)
+        )
+
+
 class TenantDetailsView(TenantView):
     """The details page for a tenant"""
     toolbar = View.nested(TenantDetailsToolbar)
