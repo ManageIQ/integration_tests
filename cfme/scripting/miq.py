@@ -7,7 +7,7 @@ from cfme.scripting.setup_env import main as setup_main
 from cfme.scripting.sprout import main as sprout_main
 
 from scripts.dockerbot.sel_container import main as sel_con_main
-from scripts.release import main as rel_main
+from cfme.utils.release import main as rel_main
 
 
 @click.group()
