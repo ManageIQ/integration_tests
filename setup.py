@@ -18,11 +18,11 @@ setup(
     entry_points={
         'console_scripts': [
             'miq = cfme.scripting.miq:cli',
-            'miq-release = scripts.release:main',
+            'miq-release = cfme.utils.release:main',
             'miq-artifactor-server = artifactor.__main__:main',
             'miq-runtest = cfme.scripting.runtest:main',
             'miq-ipython = cfme.scripting.ipyshell:main',
-            'miq-selenium-container = scripts.dockerbot.sel_container:main'
+            'miq-selenium-container = cfme.utils.dockerbot.sel_container:main'
         ],
         'manageiq.provider_categories':
         [

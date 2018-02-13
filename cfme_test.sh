@@ -50,7 +50,7 @@ if [ -z "$CID" ]
     tmux new-session -s cfme_tests -n container -d \
       "$VEN_ACTIVATE; \
       cd $CFME_TEST_PATH; \
-      python scripts/dockerbot/sel_container.py --watch --webdriver 4444; \
+      python cfme/utils/dockerbot/sel_container.py --watch --webdriver 4444; \
       exec $USER_SHELL"
     sleep 20s
     tmux new-window -t cfme_tests "$VEN_ACTIVATE; exec $USER_SHELL"

@@ -11,7 +11,7 @@ from cfme.utils.log import logger
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
 from fixtures.pytest_store import store
-from scripts.repo_gen import process_url, build_file
+from cfme.utils.repo_gen import process_url, build_file
 
 
 def pytest_generate_tests(metafunc):

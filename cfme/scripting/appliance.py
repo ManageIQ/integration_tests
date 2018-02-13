@@ -14,7 +14,7 @@ from cfme.utils import os
 from cfme.utils.conf import cfme_data
 from functools import partial
 from .setup_ansible import setup_ansible
-from scripts.repo_gen import process_url, build_file
+from cfme.utils.repo_gen import process_url, build_file
 
 
 def get_appliance(appliance_ip):

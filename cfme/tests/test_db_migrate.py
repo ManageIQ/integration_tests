@@ -8,7 +8,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger
 from cfme.utils.version import get_stream
-from scripts.repo_gen import process_url, build_file
+from cfme.utils.repo_gen import process_url, build_file
 from wait_for import wait_for
 import tempfile
 
