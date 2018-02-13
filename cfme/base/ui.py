@@ -766,7 +766,7 @@ class RegionView(ConfigurationView):
     @View.nested
     class details(Tab):  # noqa
         TAB_NAME = "Details"
-        table = Table(locator="//td[@title='Edit this Region']/../../..")
+        table = Table(locator='.//table[./tbody/tr/td[@title="Edit this Region"]]')
 
     @View.nested
     class candu_collection(Tab):  # noqa
