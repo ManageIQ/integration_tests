@@ -78,7 +78,7 @@ def main(src, dest, force):
 
                     target.symlink_to(element.resolve())
                 else:
-                    raise e
+                    raise
         else:
             if target.is_symlink():
                 # If symlink already exists and points to same src, do nothing.
