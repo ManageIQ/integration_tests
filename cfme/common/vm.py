@@ -241,7 +241,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, N
     def is_retired(self):
         """Check retirement status of vm"""
         view = navigate_to(self, "Details", use_resetter=False)
-        if view.entities.lifecycle.get_text_of('Retirement Date').lower() != 'never' != 'never':
+        if view.entities.lifecycle.get_text_of('Retirement Date').lower() != 'never':
             try:
                 status = view.entities.summary('Lifecycle').get_text_of('Retirement state').lower()
                 return status == 'retired'

@@ -1,12 +1,12 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import VersionPick, Version
-from widgetastic.widget import View, Text
+from widgetastic.widget import View
 from widgetastic_patternfly import Button, Dropdown
 
 from cfme.common.vm import Template
 from cfme.common.vm_views import (
     EditView, SetOwnershipView, PolicySimulationView, BasicProvisionFormView,
-    VMEntities)
+    VMDetailsEntities, VMEntities)
 from cfme.exceptions import ImageNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
@@ -40,16 +40,8 @@ class ImageDetailsToolbar(View):
     download = Button(title='Download summary in PDF format')
 
 
-class ImageDetailsEntities(View):
-    title = Text('//div[@id="main-content"]//h1//span[@id="explorer_title_text"]')
-    properties = SummaryTable(title='Properties')
-    lifecycle = SummaryTable(title='Lifecycle')
-    relationships = SummaryTable(title='Relationships')
-    compliance = SummaryTable(title='Compliance')
-    power_management = SummaryTable(title='Power Management')
-    security = SummaryTable(title='Security')
-    configuration = SummaryTable(title='Configuration')
-    smart_management = SummaryTable(title='Smart Management')
+class ImageDetailsEntities(VMDetailsEntities):
+    pass
 
 
 class ImageAllView(CloudInstanceView):
