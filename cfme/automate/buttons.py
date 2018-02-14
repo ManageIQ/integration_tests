@@ -10,7 +10,6 @@ from widgetastic_manageiq import SummaryFormItem, FonticonPicker, PotentiallyInv
 from widgetastic_patternfly import BootstrapSelect, Button, CandidateNotFound, Input
 
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.blockers import BZ
 from cfme.utils.update import Updateable
@@ -27,234 +26,6 @@ class ButtonsAllView(AutomateCustomizationView):
         return self.in_customization and self.title.text == 'All Object Types'
 
 
-class ButtonGroupObjectTypeView(AutomateCustomizationView):
-    title = Text('#explorer_title_text')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.in_customization and
-            self.title.text == 'Button Groups' and
-            not self.buttons.is_dimmed and
-            self.buttons.is_opened and
-            self.buttons.tree.currently_selected == ['Object Types', self.context['object'].type])
-
-
-class ButtonGroupDetailView(AutomateCustomizationView):
-    title = Text('#explorer_title_text')
-
-    text = SummaryFormItem(
-        'Basic Information',
-        VersionPick({
-            Version.lowest(): 'Button Group Text',
-            '5.9': 'Text'}),
-        text_filter=lambda text: re.sub(r'\s+Display on Button\s*$', '', text))
-    hover = SummaryFormItem(
-        'Basic Information',
-        VersionPick({
-            Version.lowest(): 'Button Group Hover Text',
-            '5.9': 'Hover Text'}))
-
-    @property
-    def is_displayed(self):
-        return (
-            self.in_customization and
-            self.title.text == 'Button Group "{}"'.format(self.context['object'].text) and
-            self.buttons.is_opened and
-            not self.buttons.is_dimmed and
-            self.buttons.tree.currently_selected == [
-                'Object Types', self.context['object'].type, self.context['object'].text])
-
-
-class ButtonGroupFormCommon(AutomateCustomizationView):
-    text = Input(name='name')
-    display = Checkbox(name='display')
-    hover = Input(name='description')
-    image = VersionPick({
-        Version.lowest(): BootstrapSelect('button_image'),
-        '5.9': FonticonPicker('button_icon')})
-
-    cancel_button = Button('Cancel')
-
-
-class NewButtonGroupView(ButtonGroupFormCommon):
-    title = Text('#explorer_title_text')
-
-    add_button = Button('Add')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.in_customization and
-            self.title.text == 'Adding a new Buttons Group' and
-            self.buttons.is_dimmed and
-            self.buttons.is_opened and
-            self.buttons.tree.currently_selected == ['Object Types', self.context['object'].type])
-
-
-class EditButtonGroupView(ButtonGroupFormCommon):
-    title = Text('#explorer_title_text')
-
-    save_button = Button(title='Save Changes')
-    reset_button = Button('Reset')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.in_customization and
-            self.title.text.startswith('Editing Buttons Group') and
-            self.buttons.is_dimmed and
-            self.buttons.is_opened and
-            self.buttons.tree.currently_selected == [
-                'Object Types', self.context['object'].type, self.context['object'].text])
-
-
-class ButtonGroup(Updateable, Navigatable):
-    """Create,Edit and Delete Button Groups
-
-    Args:
-        text: The button Group name.
-        hover: The button group hover text.
-        type: The object type.
-    """
-    CLUSTER = "Cluster"
-    DATASTORE = "Datastore"
-    HOST = "Host / Node"
-    PROVIDER = "Provider"
-    SERVICE = "Service"
-    TEMPLATE = "VM Template and Image"
-    VM_INSTANCE = "VM and Instance"
-
-    def __init__(self, text=None, hover=None, type=None, image=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.text = text
-        self.hover = hover
-        self.type = type
-        if image:
-            self.image = image
-        elif self.appliance.version < '5.9':
-            self.image = 'Button Image 1'
-        else:
-            self.image = 'fa-user'
-
-    def create(self):
-        view = navigate_to(self, 'Add')
-        view.fill({
-            'text': self.text,
-            'hover': self.hover,
-            'image': self.image,
-        })
-        view.add_button.click()
-        view = self.create_view(ButtonGroupObjectTypeView)
-
-        view.flash.assert_no_error()
-        if self.appliance.version < '5.9':
-            view.flash.assert_message('Buttons Group "{}" was added'.format(self.hover))
-        else:
-            # checks only when bug is fixed AND version is >5.8
-            if not BZ(1500176, forced_streams=['5.9', 'upstream']).blocks:
-                assert view.is_displayed
-            view.flash.assert_message('Button Group "{}" was added'.format(self.hover))
-
-    def update(self, updates):
-        view = navigate_to(self, 'Edit')
-        changed = view.fill(updates)
-        if changed:
-            view.save_button.click()
-        else:
-            view.cancel_button.click()
-        view = self.create_view(ButtonGroupDetailView, override=updates)
-        if not BZ(1500176, forced_streams=['5.9', 'upstream']).blocks:
-            assert view.is_displayed
-        view.flash.assert_no_error()
-        if changed:
-            if self.appliance.version < '5.9':
-                view.flash.assert_message(
-                    'Buttons Group "{}" was saved'.format(updates.get('hover', self.hover)))
-            else:
-                view.flash.assert_message(
-                    'Button Group "{}" was saved'.format(updates.get('hover', self.hover)))
-        else:
-            view.flash.assert_message(
-                'Edit of Buttons Group "{}" was cancelled by the user'.format(self.text))
-
-    def delete(self, cancel=False):
-        view = navigate_to(self, 'Details')
-        view.configuration.item_select('Remove this Button Group', handle_alert=not cancel)
-        if cancel:
-            assert view.is_displayed
-            view.flash.assert_no_error()
-        else:
-            view = self.create_view(ButtonGroupObjectTypeView)
-            if not BZ(1500176, forced_streams=['5.9', 'upstream']).blocks:
-                assert view.is_displayed
-            view.flash.assert_no_error()
-            if self.appliance.version < '5.9':
-                view.flash.assert_message(
-                    'Buttons Group "{}": Delete successful'.format(self.hover))
-            else:
-                view.flash.assert_message('Button Group "{}": Delete successful'.format(self.hover))
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except CandidateNotFound:
-            return False
-
-    def delete_if_exists(self):
-        if self.exists:
-            self.delete()
-
-
-@navigator.register(ButtonGroup, 'All')
-class ButtonGroupAll(CFMENavigateStep):
-    VIEW = ButtonsAllView
-    prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
-
-    def step(self):
-        self.view.buttons.tree.click_path('Object Types')
-
-
-@navigator.register(ButtonGroup, 'ObjectType')
-class ButtonGroupObjectType(CFMENavigateStep):
-    VIEW = ButtonGroupObjectTypeView
-    prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
-
-    def step(self):
-        self.view.buttons.tree.click_path('Object Types', self.obj.type)
-
-
-@navigator.register(ButtonGroup, 'Add')
-class ButtonGroupNew(CFMENavigateStep):
-    VIEW = NewButtonGroupView
-    prerequisite = NavigateToSibling('ObjectType')
-
-    def step(self):
-        self.view.configuration.item_select('Add a new Button Group')
-
-
-@navigator.register(ButtonGroup, 'Details')
-class ButtonGroupDetails(CFMENavigateStep):
-    VIEW = ButtonGroupDetailView
-    prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
-
-    def step(self):
-        self.view.buttons.tree.click_path(
-            'Object Types', self.obj.type, self.obj.text)
-
-
-@navigator.register(ButtonGroup, 'Edit')
-class ButtonGroupEdit(CFMENavigateStep):
-    VIEW = EditButtonGroupView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.view.configuration.item_select('Edit this Button Group')
-
-
-# Button
 class ButtonFormCommon(AutomateCustomizationView):
 
     class options(PotentiallyInvisibleTab):  # noqa
@@ -490,9 +261,10 @@ class ButtonCollection(BaseCollection):
             args = [group, text, hover, image, playbook, inventory]
         return button_class.from_collection(self, *args, **kwargs)
 
-    def create(self, button_class, group, text, hover, dialog=None, playbook=None, inventory=None,
-               image=None, open_url=None, system=None, request=None, attributes=None):
-        self.group = group
+    def create(self, button_class, text, hover, group=None, dialog=None, playbook=None,
+               inventory=None, image=None, open_url=None, system=None, request=None,
+               attributes=None):
+        self.group = group or self.parent
         if image:
             pass
         elif self.appliance.version < '5.9':
@@ -523,9 +295,10 @@ class ButtonCollection(BaseCollection):
             view.flash.assert_message('Button "{}" was added'.format(hover))
         else:
             view.flash.assert_message('Custom Button "{}" was added'.format(hover))
-        return self.instantiate(button_class, group, text, hover, dialog=dialog, playbook=playbook,
-                                inventory=inventory, image=image, open_url=open_url, system=system,
-                                request=request, attributes=attributes)
+        return self.instantiate(button_class, self.group, text, hover, dialog=dialog,
+                                playbook=playbook, inventory=inventory, image=image,
+                                open_url=open_url, system=system, request=request,
+                                attributes=attributes)
 
 
 @navigator.register(ButtonCollection, 'All')
@@ -564,3 +337,252 @@ class ButtonEdit(CFMENavigateStep):
 
     def step(self):
         self.view.configuration.item_select('Edit this Button')
+
+
+# Button group
+class ButtonGroupObjectTypeView(AutomateCustomizationView):
+    title = Text('#explorer_title_text')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_customization and
+            self.title.text == 'Button Groups' and
+            not self.buttons.is_dimmed and
+            self.buttons.is_opened and
+            self.buttons.tree.currently_selected == ['Object Types', self.context['object'].type])
+
+
+class ButtonGroupDetailView(AutomateCustomizationView):
+    title = Text('#explorer_title_text')
+
+    text = SummaryFormItem(
+        'Basic Information',
+        VersionPick({
+            Version.lowest(): 'Button Group Text',
+            '5.9': 'Text'}),
+        text_filter=lambda text: re.sub(r'\s+Display on Button\s*$', '', text))
+    hover = SummaryFormItem(
+        'Basic Information',
+        VersionPick({
+            Version.lowest(): 'Button Group Hover Text',
+            '5.9': 'Hover Text'}))
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_customization and
+            self.title.text == 'Button Group "{}"'.format(self.context['object'].text) and
+            self.buttons.is_opened and
+            not self.buttons.is_dimmed and
+            self.buttons.tree.currently_selected == [
+                'Object Types', self.context['object'].type, self.context['object'].text])
+
+
+class ButtonGroupFormCommon(AutomateCustomizationView):
+    text = Input(name='name')
+    display = Checkbox(name='display')
+    hover = Input(name='description')
+    image = VersionPick({
+        Version.lowest(): BootstrapSelect('button_image'),
+        '5.9': FonticonPicker('button_icon')})
+
+    cancel_button = Button('Cancel')
+
+
+class NewButtonGroupView(ButtonGroupFormCommon):
+    title = Text('#explorer_title_text')
+
+    add_button = Button('Add')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_customization and
+            self.title.text == 'Adding a new Buttons Group' and
+            self.buttons.is_dimmed and
+            self.buttons.is_opened and
+            self.buttons.tree.currently_selected == ['Object Types', self.context['object'].type])
+
+
+class EditButtonGroupView(ButtonGroupFormCommon):
+    title = Text('#explorer_title_text')
+
+    save_button = Button(title='Save Changes')
+    reset_button = Button('Reset')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_customization and
+            self.title.text.startswith('Editing Buttons Group') and
+            self.buttons.is_dimmed and
+            self.buttons.is_opened and
+            self.buttons.tree.currently_selected == [
+                'Object Types', self.context['object'].type, self.context['object'].text])
+
+
+@attr.s
+class ButtonGroup(BaseEntity, Updateable):
+    """Create,Edit and Delete Button Groups
+
+    Args:
+        text: The button Group name.
+        hover: The button group hover text.
+        type: The object type.
+    """
+    text = attr.ib()
+    hover = attr.ib()
+    type = attr.ib()
+    image = attr.ib()
+
+    _collections = {'buttons': ButtonCollection}
+
+    @property
+    def buttons(self):
+        return self.collections.buttons
+
+    def update(self, updates):
+        view = navigate_to(self, 'Edit')
+        changed = view.fill(updates)
+        if changed:
+            view.save_button.click()
+        else:
+            view.cancel_button.click()
+        view = self.create_view(ButtonGroupDetailView, override=updates)
+        if not BZ(1500176, forced_streams=['5.9', 'upstream']).blocks:
+            assert view.is_displayed
+        view.flash.assert_no_error()
+        if changed:
+            if self.appliance.version < '5.9':
+                view.flash.assert_message(
+                    'Buttons Group "{}" was saved'.format(updates.get('hover', self.hover)))
+            else:
+                view.flash.assert_message(
+                    'Button Group "{}" was saved'.format(updates.get('hover', self.hover)))
+        else:
+            view.flash.assert_message(
+                'Edit of Buttons Group "{}" was cancelled by the user'.format(self.text))
+
+    def delete(self, cancel=False):
+        view = navigate_to(self, 'Details')
+        view.configuration.item_select('Remove this Button Group', handle_alert=not cancel)
+        if cancel:
+            assert view.is_displayed
+            view.flash.assert_no_error()
+        else:
+            view = self.create_view(ButtonGroupObjectTypeView)
+            if not BZ(1500176, forced_streams=['5.9', 'upstream']).blocks:
+                assert view.is_displayed
+            view.flash.assert_no_error()
+            if self.appliance.version < '5.9':
+                view.flash.assert_message(
+                    'Buttons Group "{}": Delete successful'.format(self.hover))
+            else:
+                view.flash.assert_message('Button Group "{}": Delete successful'.format(self.hover))
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+            return True
+        except CandidateNotFound:
+            return False
+
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()
+
+
+@attr.s
+class ButtonGroupCollection(BaseCollection):
+    ENTITY = ButtonGroup
+    CLUSTER = "Cluster"
+    DATASTORE = "Datastore"
+    HOST = "Host / Node"
+    PROVIDER = "Provider"
+    SERVICE = "Service"
+    TEMPLATE = "VM Template and Image"
+    VM_INSTANCE = "VM and Instance"
+
+    def instantiate(self, text, hover, type, image=None):
+        if image:
+            pass
+        elif self.appliance.version < '5.9':
+            image = 'Button Image 1'
+        else:
+            image = 'fa-user'
+        return self.ENTITY.from_collection(self, text, hover, type, image)
+
+    def create(self, text, hover, type, image=None):
+        self.type = type
+        if image:
+            pass
+        elif self.appliance.version < '5.9':
+            image = 'Button Image 1'
+        else:
+            image = 'fa-user'
+        view = navigate_to(self, 'Add')
+        view.fill({
+            'text': text,
+            'hover': hover,
+            'image': image
+        })
+        view.add_button.click()
+        view = self.create_view(ButtonGroupObjectTypeView)
+
+        view.flash.assert_no_error()
+        if self.appliance.version < '5.9':
+            view.flash.assert_message('Buttons Group "{}" was added'.format(hover))
+        else:
+            # checks only when bug is fixed AND version is >5.8
+            if not BZ(1500176, forced_streams=['5.9', 'upstream']).blocks:
+                assert view.is_displayed
+            view.flash.assert_message('Button Group "{}" was added'.format(hover))
+        return self.instantiate(text, hover, type, image)
+
+
+@navigator.register(ButtonGroupCollection, 'All')
+class ButtonGroupAll(CFMENavigateStep):
+    VIEW = ButtonsAllView
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
+
+    def step(self):
+        self.view.buttons.tree.click_path('Object Types')
+
+
+@navigator.register(ButtonGroupCollection, 'ObjectType')
+class ButtonGroupObjectType(CFMENavigateStep):
+    VIEW = ButtonGroupObjectTypeView
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
+
+    def step(self):
+        self.view.buttons.tree.click_path('Object Types', self.obj.type)
+
+
+@navigator.register(ButtonGroupCollection, 'Add')
+class ButtonGroupNew(CFMENavigateStep):
+    VIEW = NewButtonGroupView
+    prerequisite = NavigateToSibling('ObjectType')
+
+    def step(self):
+        self.view.configuration.item_select('Add a new Button Group')
+
+
+@navigator.register(ButtonGroup, 'Details')
+class ButtonGroupDetails(CFMENavigateStep):
+    VIEW = ButtonGroupDetailView
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
+
+    def step(self):
+        self.view.buttons.tree.click_path(
+            'Object Types', self.obj.type, self.obj.text)
+
+
+@navigator.register(ButtonGroup, 'Edit')
+class ButtonGroupEdit(CFMENavigateStep):
+    VIEW = EditButtonGroupView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.view.configuration.item_select('Edit this Button Group')
