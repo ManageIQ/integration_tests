@@ -86,10 +86,7 @@ class ShoppingCartView(DetailsServiceCatalogsView):
 
     @property
     def is_displayed(self):
-        return (
-            self.in_service_catalogs and
-            self.title.text == "Shopping Cart"
-        )
+        return self.title.text == "Shopping Cart"
 
 
 @MiqImplementationContext.external_for(ServiceCatalogs.add_to_shopping_cart, ViaSSUI)
