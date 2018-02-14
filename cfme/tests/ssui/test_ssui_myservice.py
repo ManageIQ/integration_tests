@@ -9,6 +9,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
 from cfme.utils import ssh
 from cfme.utils.appliance import ViaSSUI
+from cfme.utils.blockers import GH
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
@@ -27,6 +28,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6653')])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_myservice_crud(appliance, setup_provider, context, order_catalog_item_in_ops_ui):
     """Test Myservice crud in SSUI."""
