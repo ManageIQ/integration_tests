@@ -38,6 +38,7 @@ pytest_plugins = (
     'cfme.test_framework.sprout.plugin',
     'cfme.test_framework.appliance_police',
     'cfme.test_framework.appliance',
+    'cfme.test_framework.browser_isolation',
     'fixtures.portset',
 
     'markers.manual',
