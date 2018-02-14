@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.automate.buttons import Button, ButtonGroup
+from cfme.automate.buttons import ButtonGroup
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -71,7 +71,7 @@ def test_button_group_crud(request):
 @pytest.mark.meta(blockers=[1143019, 1205235])
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_button_crud(dialog, request):
+def test_button_crud(appliance, dialog, request):
     """Test Creating a Button
 
     Prerequisities:
@@ -91,13 +91,13 @@ def test_button_crud(dialog, request):
         type=ButtonGroup.SERVICE)
     request.addfinalizer(buttongroup.delete_if_exists)
     buttongroup.create()
-    button = Button(
+    button = appliance.collections.buttons.create(
+        button_class=appliance.collections.buttons.DEFAULT,
         group=buttongroup,
         text=fauxfactory.gen_alphanumeric(),
         hover=fauxfactory.gen_alphanumeric(),
         dialog=dialog, system="Request", request="InspectMe")
     request.addfinalizer(button.delete_if_exists)
-    button.create()
     assert button.exists
     view = navigate_to(button, 'Details')
     assert view.text.text == button.text
@@ -123,19 +123,20 @@ def test_button_on_host(appliance, request, provider, setup_provider):
     buttongroup.type = buttongroup.HOST
     request.addfinalizer(buttongroup.delete_if_exists)
     buttongroup.create()
-    button = Button(group=buttongroup,
-                    text=fauxfactory.gen_alphanumeric(),
-                    hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
-                    system="Request", request="InspectMe")
+    button = appliance.collections.buttons.create(
+        button_class=appliance.collections.buttons.DEFAULT,
+        group=buttongroup,
+        text=fauxfactory.gen_alphanumeric(),
+        hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
+        system="Request", request="InspectMe")
     request.addfinalizer(button.delete_if_exists)
-    button.create()
     host = appliance.collections.hosts.all(provider)[0]
     host.execute_button(buttongroup.hover, button.text, handle_alert=None)
 
 
 @pytest.mark.meta(blockers=[BZ(1460774, forced_streams=["5.8", "upstream"])])
 @pytest.mark.tier(2)
-def test_button_avp_displayed(dialog, request):
+def test_button_avp_displayed(appliance, dialog, request):
     """This test checks whether the Attribute/Values pairs are displayed in the dialog.
        automates 1229348
     Steps:
@@ -149,11 +150,7 @@ def test_button_avp_displayed(dialog, request):
         type=ButtonGroup.VM_INSTANCE)
     request.addfinalizer(buttongroup.delete_if_exists)
     buttongroup.create()
-    button = Button(group=buttongroup,
-                    text=fauxfactory.gen_alphanumeric(),
-                    hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
-                    dialog=dialog, system="Request", request="InspectMe")
-    view = navigate_to(button, 'Add')
+    view = navigate_to(appliance.collections.buttons, 'Add')
     for n in range(1, 6):
         assert view.advanced.attribute(n).key.is_displayed
         assert view.advanced.attribute(n).value.is_displayed

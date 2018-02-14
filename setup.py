@@ -92,6 +92,7 @@ setup(
             'ansible_credentials = cfme.ansible.credentials:CredentialsCollection',
             'ansible_playbooks = cfme.ansible.playbooks:PlaybooksCollection',
             'ansible_repositories = cfme.ansible.repositories:RepositoryCollection',
+            'buttons = cfme.automate.buttons:ButtonCollection',
             'datastores = cfme.infrastructure.datastore:DatastoreCollection',
             'service_dialogs = cfme.automate.dialog_collection_pick:collection_pick',
             'domains = cfme.automate.explorer.domain:DomainCollection',
