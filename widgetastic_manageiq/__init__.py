@@ -2934,7 +2934,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         if self.browser.product_version < '5.9':
             br = self.browser
             for el in br.elements(self.elements):
-                el_id = (br.get_attribute('href', el).split('/')[-1])
+                el_id = br.get_attribute('href', el).split('/')[-1]
                 el_name = br.get_attribute('title', el)
                 elements.append({'name': el_name, 'entity_id': el_id})
         else:
