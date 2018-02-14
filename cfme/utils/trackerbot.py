@@ -227,6 +227,58 @@ def templates_to_test(api, limit=1, request_type=None):
     return templates
 
 
+def get_tested_providers(api, template_name):
+    """
+    Return all tested provider templates for given template_name
+    """
+    response = api.providertemplate.get(tested=True, template=template_name, limit=200)
+    providers = [pt['provider'] for pt in response.get('objects', []) if pt['provider']['active']]
+    return providers
+
+
+def mark_unusable_as_untested(api, template_name, provider_type):
+    """
+    Search through all tested providers and if provider type is unusable, mark it as not tested
+
+    This action is limited to a specific template_name and a specific provider_type
+    """
+    # Get usable providers from template
+    try:
+        template = api.template(template_name).get()
+        usable_providers = template['usable_providers']
+    except slumber.exceptions.HttpNotFoundError:
+        # Template doesn't even exist, nothing to do here
+        return
+
+    # Now find all tested provider templates. If they are tested BUT unusable, mark untested
+    tested_providers = set(
+        p['key'].lower() for p in get_tested_providers(api, template_name)
+        if p['type'] == provider_type
+    )
+
+    tested_unusable_providers = [p for p in tested_providers if p not in usable_providers]
+
+    for provider_key in tested_unusable_providers:
+        mark_provider_template(api, provider_key, template_name, tested=False, usable=False)
+
+
+def check_if_tested(api, template_name, provider_type):
+    """
+    Check if a template has been tested on a specific provider type.
+
+    Args:
+        template_name: e.g. "cfme-59021-02141929"
+        provider_type: e.g. "rhevm"
+
+    Returns:
+        True if this template has been tested on at least one deployment of this provider type
+        False otherwise
+    """
+    tested_providers = get_tested_providers(api, template_name)
+    tested_types = set(p['type'].lower() for p in tested_providers)
+    return provider_type.lower() in tested_types
+
+
 def _as_providertemplate(provider, template, group=None, custom_data=None):
     if not isinstance(provider, Provider):
         provider = Provider(str(provider))

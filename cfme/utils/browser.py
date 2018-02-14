@@ -289,7 +289,6 @@ class BrowserManager(object):
 
     def quit(self):
         # TODO: figure if we want to log the url key here
-        log.info('closing browser')
         self._consume_cleanups()
         try:
             self.factory.close(self.browser)

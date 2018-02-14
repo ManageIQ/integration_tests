@@ -5,6 +5,7 @@ import re
 import sys
 import argparse
 import subprocess
+import time
 import json
 import hashlib
 from pipes import quote
@@ -45,6 +46,9 @@ elif HAS_APT:
 
 if not IS_ROOT:
     INSTALL_COMMAND = 'sudo ' + INSTALL_COMMAND
+
+OS_NAME = "unknown"
+OS_VERSION = "unknown"
 
 if os.path.exists(OS_RELEASE_FILE):
     with open(OS_RELEASE_FILE) as os_release:
@@ -130,9 +134,11 @@ if os.path.exists(REDHAT_RELEASE_FILE):
             break
 
     if not REQUIRED_PACKAGES:
-        print('{} {} not known. '
-              'Please ensure you have the required packages installed.')
-        print('$ dnf install -y {}'.format(REDHAT_PACKAGES_SPECS[-1][-1]))
+        print(
+            '{} not known. '
+            'Please ensure you have the required packages installed.'.format(release_string)
+        )
+        print('$ [dnf/yum] install -y {}'.format(REDHAT_PACKAGES_SPECS[-1][-1]))
 
 elif os.path.exists(OS_RELEASE_FILE):
 
@@ -143,8 +149,10 @@ elif os.path.exists(OS_RELEASE_FILE):
             break
 
     if not REQUIRED_PACKAGES:
-        print('{} {} not known. '
-              'Please ensure you have the required packages installed.')
+        print(
+            '{} {} not known. '
+            'Please ensure you have the required packages installed.'.format(OS_NAME, OS_VERSION)
+        )
         print('$ apt install -y {}'.format(OS_PACKAGES_SPECS[-1][-1]))
 
 else:
@@ -158,7 +166,8 @@ def command_text(command, shell):
         return ' '.join(map(quote, command))
 
 
-def call_or_exit(command, shell=False, long_running=False, **kw):
+def run_cmd_or_exit(command, shell=False, long_running=False, **kw):
+    res = None
     try:
         if long_running:
             print(
@@ -166,14 +175,21 @@ def call_or_exit(command, shell=False, long_running=False, **kw):
                 '# this may take some time to finish ...')
         else:
             print('QS $', command_text(command, shell))
-        res = subprocess.call(command, shell=shell, **kw)
+        res = subprocess.check_output(command, shell=shell, **kw)
+    except subprocess.CalledProcessError as e:
+        print(e.output)
+        c = " ".join(command) if type(command) == list else command
+        if c.startswith(INSTALL_COMMAND):
+            print("Hit error during yum/dnf install, re-trying...")
+            time.sleep(5)
+            res = subprocess.check_output(command, shell=shell, **kw)
+        else:
+            raise
     except Exception as e:
+        print("Running command failed!")
         print(repr(e))
         sys.exit(1)
-    else:
-        if res:
-            print("call failed with", res)
-            sys.exit(res)
+    return res
 
 
 def pip_json_list(venv):
@@ -187,7 +203,7 @@ def pip_json_list(venv):
 
 def install_system_packages():
     if INSTALL_COMMAND:
-        call_or_exit(INSTALL_COMMAND + REQUIRED_PACKAGES, shell=True)
+        run_cmd_or_exit(INSTALL_COMMAND + REQUIRED_PACKAGES, shell=True)
     else:
         print("WARNING: unknown distribution,",
               "please ensure you have the required packages installed")
@@ -203,7 +219,7 @@ def setup_virtualenv(target, use_site):
         return CREATED
     add = ['--system-site-packages'] if use_site else []
 
-    call_or_exit(['virtualenv', target] + add)
+    run_cmd_or_exit(['virtualenv', target] + add)
 
     venv_call(target,
               'pip', 'install', '-U',
@@ -219,7 +235,7 @@ def setup_virtualenv(target, use_site):
 def venv_call(venv_path, command, *args, **kwargs):
     # pop PYTHONHOME to avoid nested environments
     os.environ.pop('PYTHONHOME', None)
-    call_or_exit([
+    run_cmd_or_exit([
         os.path.join(venv_path, 'bin', command),
     ] + list(args), **kwargs)
 
