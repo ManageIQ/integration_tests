@@ -12,7 +12,8 @@ from cfme.utils.appliance.implementations.ssui import (
     ViaSSUI,
 )
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import SSUIPrimarycard, SSUIAggregatecard, SSUIlist, SSUIPaginationPane
+from widgetastic_manageiq import (SSUIPrimarycard, SSUIAggregatecard,
+                                  SSUIlist, SSUIPaginationPane)
 
 
 class DashboardView(SSUIBaseLoggedInPage):
@@ -38,7 +39,7 @@ class MyServiceForm(SSUIBaseLoggedInPage):
 
 class MyServicesView(MyServiceForm):
     title = Text(locator='//li[@class="active"]')
-    results = Text(locator='//div[contains(@class, "toolbar-pf-results")]/div/h5')
+    results = Text(locator='//div[contains(@class, "toolbar-pf-results")]/*/h5')
     paginator = SSUIPaginationPane()
 
     @property
