@@ -3,6 +3,7 @@ import pytest
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 
 from cfme.utils import error
+from cfme.utils.blockers import BZ
 from cfme.common.provider_views import NetworkProvidersView
 from cfme import test_requirements
 from cfme.networks.provider.nuage import NuageProvider, NetworkProvider
@@ -10,7 +11,8 @@ from cfme.networks.provider.nuage import NuageProvider, NetworkProvider
 pytestmark = [
     pytest.mark.provider([NetworkProvider], scope="module"),
     test_requirements.discovery,
-    pytest.mark.ignore_stream('5.8')
+    pytest.mark.ignore_stream('5.8'),
+    pytest.mark.meta(blockers=[BZ(1518301, forced_streams=['5.9'])])
 ]
 
 
