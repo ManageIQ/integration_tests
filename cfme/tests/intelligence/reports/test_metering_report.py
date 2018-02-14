@@ -35,7 +35,8 @@ def clean_setup_provider(request, has_no_providers_modscope, setup_provider_mods
 
 
 def new_credential():
-    return Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret='secret')
+    return Credential(principal='uid' + '{}'.format(fauxfactory.gen_alphanumeric()),
+        secret='secret')
 
 
 @pytest.yield_fixture(scope="module")
@@ -149,7 +150,7 @@ def resource_usage(vm_ownership, appliance, provider):
 
         rc, out = appliance.ssh_client.run_rails_command(
             "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
-            vm.perf_capture('realtime', 4.hour.ago.utc, Time.now.utc)\""
+            vm.perf_capture('realtime', 2.hour.ago.utc, Time.now.utc)\""
             .format(provider.id, repr(vm_name)))
         assert rc == 0, "Failed to capture VM C&U data:".format(out)
 
@@ -258,9 +259,11 @@ def test_validate_cpu_usage(resource_usage, metering_report):
         if groups["CPU Used"]:
             estimated_cpu_usage = resource_usage['cpu_used']
             usage_from_report = groups["CPU Used"]
+            if 'GHz' in usage_from_report:
+                estimated_cpu_usage = estimated_cpu_usage * math.pow(2, -10)
             usage = re.sub(r'[MHz, GHz,]', r'', usage_from_report)
-            assert estimated_cpu_usage - 1.0 <= float(usage) \
-                <= estimated_cpu_usage + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_cpu_usage - 2.0 <= float(usage) \
+                <= estimated_cpu_usage + 2.0, 'Estimated cost and report cost do not match'
             break
 
 
@@ -276,8 +279,8 @@ def test_validate_memory_usage(resource_usage, metering_report):
             if 'GB' in usage_from_report:
                 estimated_memory_usage = estimated_memory_usage * math.pow(2, -10)
             usage = re.sub(r'[MB, GB,]', r'', usage_from_report)
-            assert estimated_memory_usage - 1.0 <= float(usage) \
-                <= estimated_memory_usage + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_memory_usage - 2.0 <= float(usage) \
+                <= estimated_memory_usage + 2.0, 'Estimated cost and report cost do not match'
             break
 
 
@@ -291,8 +294,8 @@ def test_validate_network_usage(resource_usage, metering_report):
             estimated_network_usage = resource_usage['network_io']
             usage_from_report = groups["Network I/O Used"]
             usage = re.sub(r'[KBps,]', r'', usage_from_report)
-            assert estimated_network_usage - 1.0 <= float(usage) \
-                <= estimated_network_usage + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_network_usage - 2.0 <= float(usage) \
+                <= estimated_network_usage + 2.0, 'Estimated cost and report cost do not match'
             break
 
 
@@ -306,6 +309,6 @@ def test_validate_disk_usage(resource_usage, metering_report):
             estimated_disk_usage = resource_usage['disk_io_used']
             usage_from_report = groups["Disk I/O Used"]
             usage = re.sub(r'[KBps,]', r'', usage_from_report)
-            assert estimated_disk_usage - 1.0 <= float(usage) \
-                <= estimated_disk_usage + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_disk_usage - 2.0 <= float(usage) \
+                <= estimated_disk_usage + 2.0, 'Estimated cost and report cost do not match'
             break
