@@ -21,8 +21,9 @@ pytestmark = [
     test_requirements.rest
 ]
 
-COLLECTIONS = ['providers', 'instances', 'vms']
-COLLECTIONS_ADDED_IN_59 = ['instances']
+COLLECTIONS = ['providers', 'vms']
+COLLECTIONS_ADDED_IN_59 = ['instances', 'services']
+COLLECTIONS.extend(COLLECTIONS_ADDED_IN_59)
 
 
 @pytest.yield_fixture(scope='module')
@@ -63,12 +64,37 @@ def get_vm(appliance, provider, vm_obj):
     return _get_vm
 
 
+@pytest.yield_fixture(scope='module')
+def get_service(appliance):
+    uid = fauxfactory.gen_alphanumeric(5)
+    name = 'test_rest_service_{}'.format(uid)
+
+    def _get_service():
+        service = appliance.rest_api.collections.services.find_by(name=name)
+        if not service:
+            body = {
+                'name': name,
+                'description': 'Test REST Service {}'.format(uid),
+            }
+            service = appliance.rest_api.collections.services.action.create(body)
+        return service[0]
+
+    yield _get_service
+
+    try:
+        service = appliance.rest_api.collections.services.get(name=name)
+        service.delete()
+    except AttributeError:
+        pass
+
+
 @pytest.fixture(scope='module')
-def get_resource(get_provider, get_vm):
+def get_resource(get_provider, get_vm, get_service):
     db = {
         'providers': get_provider,
         'instances': get_vm,
-        'vms': get_vm
+        'vms': get_vm,
+        'services': get_service,
     }
     return db
 
