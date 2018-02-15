@@ -23,7 +23,6 @@ from cfme.utils.rest import assert_response
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.update import update
-from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for, RefreshTimer
 
 
@@ -95,7 +94,7 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name, t
         recursive_update(inst_args, {
             'properties': {
                 'boot_disk_size': provisioning['boot_disk_size'],
-                'is_preemptible': True if current_version() >= "5.7" else None}
+                'is_preemptible': True}
         })
 
     # Azure specific
