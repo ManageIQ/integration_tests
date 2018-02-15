@@ -39,11 +39,13 @@ def do_scan(vm, additional_item_check=None, rediscover=True):
     logger.info("Scan initiated")
     wait_for(
         lambda: _scan() != original,
-        num_sec=300, delay=5, fail_func=vm_details_view.toolbar.reload.click)
+        num_sec=300, delay=5, fail_func=vm_details_view.toolbar.reload.click,
+        message="Check if Last Analyzed field changed")
     if additional_item_check is not None:
         title, field = additional_item_check
         get_text_of = vm_details_view.entities.summary(title).get_text_of
         wait_for(
             lambda: get_text_of(field) != original_item,
-            num_sec=120, delay=5, fail_func=vm_details_view.toolbar.reload.click)
+            num_sec=120, delay=5, fail_func=vm_details_view.toolbar.reload.click,
+            message="Check if Last Analyzed field changed")
     logger.info("Scan finished")
