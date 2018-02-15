@@ -13,7 +13,6 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import TemplateNotFound
 from widgetastic_manageiq import (Calendar,
                                   Checkbox,
-                                  SummaryTable,
                                   Button,
                                   ItemsToolBarViewSelector,
                                   Table,
@@ -30,7 +29,8 @@ from widgetastic_manageiq import (Calendar,
                                   BaseNonInteractiveEntitiesView,
                                   BreadCrumb,
                                   PaginationPane,
-                                  DriftComparison)
+                                  DriftComparison,
+                                  ParametrizedSummaryTable)
 
 
 class InstanceQuadIconEntity(BaseQuadIconEntity):
@@ -239,18 +239,7 @@ class VMDetailsEntities(View):
     VM's have 3-4 more tables, should inherit and add them there.
     """
     title = Text('//div[@id="main-content"]//h1//span[@id="explorer_title_text"]')
-    properties = SummaryTable(title='Properties')
-    lifecycle = SummaryTable(title='Lifecycle')
-    relationships = SummaryTable(title='Relationships')
-    vmsafe = SummaryTable(title='VMsafe')
-    attributes = SummaryTable(title='Custom Attributes')  # Only displayed when assigned
-    compliance = SummaryTable(title='Compliance')
-    power_management = SummaryTable(title='Power Management')
-    security = SummaryTable(title='Security')
-    configuration = SummaryTable(title='Configuration')
-    diagnostics = SummaryTable(title='Diagnostics')
-    smart_management = SummaryTable(title='Smart Management')
-    datastore_allocation_summary = SummaryTable(title='Datastore Allocation Summary')
+    summary = ParametrizedView.nested(ParametrizedSummaryTable)
 
 
 class VMPropertyDetailView(View):

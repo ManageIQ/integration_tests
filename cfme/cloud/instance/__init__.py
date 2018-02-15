@@ -113,7 +113,8 @@ class InstanceDetailsView(CloudInstanceView):
         expected_provider = self.context['object'].provider.name
         try:
             # Not displayed when the instance is archived
-            relationship_provider_name = self.entities.relationships.get_text_of('Cloud Provider')
+            relationships = self.entities.summary('Relationships')
+            relationship_provider_name = relationships.get_text_of('Cloud Provider')
         except (NameError, NoSuchElementException):
             logger.warning('No "Cloud Provider" Relationship, assume instance view not displayed')
             return False
@@ -257,7 +258,7 @@ class Instance(VM, Navigatable):
 
         def _looking_for_state_change():
             view = navigate_to(self, 'Details')
-            current_state = view.entities.power_management.get_text_of("Power State")
+            current_state = view.entities.summary("Power Management").get_text_of("Power State")
             logger.info('Current Instance state: {}'.format(current_state))
             logger.info('Desired Instance state: {}'.format(desired_state))
             if isinstance(desired_state, (list, tuple)):

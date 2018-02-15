@@ -28,10 +28,11 @@ def do_scan(vm, additional_item_check=None, rediscover=True):
             vm.assign_policy_profiles(*vm.assigned_policy_profiles)
 
     def _scan():
-        return vm.get_detail(properties=("Lifecycle", "Last Analyzed")).lower()
+        return vm_details_view.entities.summary("Lifecycle").get_text_of("Last Analyzed")
     original = _scan()
     if additional_item_check is not None:
-        original_item = vm.get_detail(properties=additional_item_check)
+        title, field = additional_item_check
+        original_item = vm_details_view.entities.summary(title).get_text_of(field)
     vm.smartstate_scan(cancel=False, from_details=True)
     vm_details_view.flash.assert_success_message(
         "Analysis initiated for 1 VM and Instance from the CFME Database")
@@ -40,7 +41,9 @@ def do_scan(vm, additional_item_check=None, rediscover=True):
         lambda: _scan() != original,
         num_sec=300, delay=5, fail_func=vm_details_view.toolbar.reload.click)
     if additional_item_check is not None:
+        title, field = additional_item_check
+        get_text_of = vm_details_view.entities.summary(title).get_text_of
         wait_for(
-            lambda: vm.get_detail(properties=additional_item_check) != original_item,
+            lambda: get_text_of(field) != original_item,
             num_sec=120, delay=5, fail_func=vm_details_view.toolbar.reload.click)
     logger.info("Scan finished")

@@ -45,14 +45,12 @@ def new_instance(provider):
 
 def test_create_instance(new_instance, soft_assert):
     """Creates an instance and verifies it appears on UI"""
-    navigate_to(new_instance, 'Details')
+    view = navigate_to(new_instance, 'Details')
     prov_data = new_instance.provider.data['provisioning']
-    power_state = new_instance.get_detail(properties=('Power Management',
-                                                      'Power State'))
+    power_state = view.entities.summary('Power Management').get_text_of('Power State')
     assert power_state == OpenStackInstance.STATE_ON
 
-    vm_tmplt = new_instance.get_detail(properties=('Relationships',
-                                                   'VM Template'))
+    vm_tmplt = view.entities.summary('Relationships').get_text_of('VM Template')
     soft_assert(vm_tmplt == prov_data['image']['name'])
 
     # Assert other relationships in a loop
@@ -64,7 +62,7 @@ def test_create_instance(new_instance, soft_assert):
         props.append(('Virtual Private Cloud', 'cloud_network'))
 
     for p in props:
-        v = new_instance.get_detail(properties=('Relationships', p[0]))
+        v = view.entities.summary('Relationships').get_text_of(p[0])
         soft_assert(v == prov_data[p[1]])
 
 
@@ -72,8 +70,8 @@ def test_stop_instance(new_instance):
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.STOP)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_OFF)
-    state = new_instance.get_detail(properties=('Power Management',
-                                                'Power State'))
+    view = navigate_to(new_instance, 'Details')
+    state = view.entities.summary('Power Management').get_text_of('Power State')
     assert state == OpenStackInstance.STATE_OFF
 
 
@@ -81,7 +79,8 @@ def test_suspend_instance(new_instance):
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SUSPEND)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_SUSPENDED)
-    state = new_instance.get_detail(properties=('Power Management', 'Power State'))
+    view = navigate_to(new_instance, 'Details')
+    state = view.entities.summary('Power Management').get_text_of('Power State')
     assert state == OpenStackInstance.STATE_SUSPENDED
 
 
@@ -89,8 +88,8 @@ def test_pause_instance(new_instance):
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.PAUSE)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_PAUSED)
-    state = new_instance.get_detail(properties=('Power Management',
-                                                'Power State'))
+    view = navigate_to(new_instance, 'Details')
+    state = view.entities.summary('Power Management').get_text_of('Power State')
     assert state == OpenStackInstance.STATE_PAUSED
 
 
@@ -101,9 +100,8 @@ def test_shelve_instance(new_instance):
         new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_SHELVED)
     except TimedOutError:
         logger.warning("Timeout when waiting for instance state: 'shelved'. Skipping")
-
-    state = new_instance.get_detail(properties=('Power Management',
-                                                'Power State'))
+    view = navigate_to(new_instance, 'Details')
+    state = view.entities.summary('Power Management').get_text_of('Power State')
     assert state in (OpenStackInstance.STATE_SHELVED_OFFLOAD,
                      OpenStackInstance.STATE_SHELVED)
 
@@ -119,8 +117,8 @@ def test_shelve_offload_instance(new_instance):
         logger.warning("Timeout when initiating power state 'Shelve Offload'. Skipping")
 
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_SHELVED_OFFLOAD)
-    state = new_instance.get_detail(properties=('Power Management',
-                                                'Power State'))
+    view = navigate_to(new_instance, 'Details')
+    state = view.entities.summary('Power Management').get_text_of('Power State')
     assert state == OpenStackInstance.STATE_SHELVED_OFFLOAD
 
 
@@ -130,8 +128,8 @@ def test_start_instance(new_instance):
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.START)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_ON)
-    state = new_instance.get_detail(properties=('Power Management',
-                                                'Power State'))
+    view = navigate_to(new_instance, 'Details')
+    state = view.entities.summary('Power Management').get_text_of('Power State')
     assert state == OpenStackInstance.STATE_ON
 
 
@@ -140,7 +138,8 @@ def test_soft_reboot_instance(new_instance):
                                          option=OpenStackInstance.SOFT_REBOOT)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_REBOOTING)
 
-    state = new_instance.get_detail(properties=('Power Management', 'Power State'))
+    view = navigate_to(new_instance, 'Details')
+    state = view.entities.summary('Power Management').get_text_of('Power State')
     assert state in (OpenStackInstance.STATE_ON,
                      OpenStackInstance.STATE_REBOOTING)
 
@@ -150,8 +149,8 @@ def test_hard_reboot_instance(new_instance):
                                          option=OpenStackInstance.HARD_REBOOT)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_REBOOTING)
 
-    state = new_instance.get_detail(properties=('Power Management',
-                                                'Power State'))
+    view = navigate_to(new_instance, 'Details')
+    state = view.entities.summary('Power Management').get_text_of('Power State')
     assert state in (OpenStackInstance.STATE_ON,
                      OpenStackInstance.STATE_REBOOTING)
 

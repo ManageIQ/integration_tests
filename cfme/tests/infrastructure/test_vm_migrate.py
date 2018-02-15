@@ -6,6 +6,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme import test_requirements
 
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 
@@ -39,7 +40,8 @@ def test_vm_migrate(appliance, new_vm, provider):
         test_flag: migrate, provision
     """
     # auto_test_services should exist to test migrate VM
-    vm_host = new_vm.get_detail(properties=('Relationships', 'Host'))
+    view = navigate_to(new_vm, 'Details')
+    vm_host = view.entities.summary('Relationships').get_text_of('Host')
     migrate_to = [vds.name for vds in provider.hosts if vds.name not in vm_host][0]
     new_vm.migrate_vm("email@xyz.com", "first", "last", host_name=migrate_to)
     request_description = new_vm.name

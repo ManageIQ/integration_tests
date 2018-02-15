@@ -121,13 +121,15 @@ def check_power_options(provider, soft_assert, vm, power_state):
 def wait_for_last_boot_timestamp_refresh(vm, boot_time, timeout=300):
     """Timestamp update doesn't happen with state change so need a longer
     wait when expecting a last boot timestamp change"""
+    view = navigate_to(vm, "Details")
 
     def _wait_for_timestamp_refresh():
-        vm.load_details(refresh=True)
-        return boot_time != vm.get_detail(properties=("Power Management", "Last Boot Time"))
+        cur_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
+        return boot_time != cur_boot_time
 
     try:
-        wait_for(_wait_for_timestamp_refresh, num_sec=timeout, delay=30)
+        wait_for(_wait_for_timestamp_refresh, num_sec=timeout, delay=30,
+                 fail_func=view.toolbar.reload.click)
     except TimedOutError:
         return False
 
@@ -135,12 +137,13 @@ def wait_for_last_boot_timestamp_refresh(vm, boot_time, timeout=300):
 def wait_for_vm_tools(vm, timeout=300):
     """Sometimes test opens VM details before it gets loaded and can't verify if vmtools are
     installed"""
+    view = navigate_to(vm, "Details")
 
     def _wait_for_tools_ok():
-        vm.load_details(refresh=True)
-        return vm.get_detail(properties=("Properties", "Platform Tools")) == 'toolsOk'
+        return view.entities.summary("Properties").get_text_of("Platform Tools") == 'toolsOk'
+
     try:
-        wait_for(_wait_for_tools_ok, num_sec=timeout, delay=10)
+        wait_for(_wait_for_tools_ok, num_sec=timeout, delay=10, fail_func=view.toolbar.reload.click)
     except TimedOutError:
         return False
 
@@ -228,11 +231,11 @@ class TestVmDetailsPowerControlPerProvider(object):
         """
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
-        last_boot_time = testing_vm.get_detail(properties=("Power Management", "Last Boot Time"))
+        view = navigate_to(testing_vm, "Details")
+        last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_OFF, cancel=False,
                                            from_details=True)
 
-        view = appliance.browser.create_view(BaseLoggedInPage)
         view.flash.assert_success_message(text='Stop initiated', partial=True)
 
         if_scvmm_refresh_provider(testing_vm.provider)
@@ -242,8 +245,8 @@ class TestVmDetailsPowerControlPerProvider(object):
             not testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm running")
         # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1101604
         if not testing_vm.provider.one_of(RHEVMProvider):
-            new_last_boot_time = testing_vm.get_detail(
-                properties=("Power Management", "Last Boot Time"))
+            new_last_boot_time = view.entities.summary("Power Management").get_text_of(
+                "Last Boot Time")
             soft_assert(new_last_boot_time == last_boot_time,
                         "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
 
@@ -275,11 +278,11 @@ class TestVmDetailsPowerControlPerProvider(object):
         """
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
-        last_boot_time = testing_vm.get_detail(properties=("Power Management", "Last Boot Time"))
+        view = navigate_to(testing_vm, "Details")
+        last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
         testing_vm.power_control_from_cfme(option=testing_vm.SUSPEND, cancel=False,
                                            from_details=True)
 
-        view = appliance.browser.create_view(BaseLoggedInPage)
         view.flash.assert_success_message(text='Suspend initiated', partial=True)
 
         if_scvmm_refresh_provider(testing_vm.provider)
@@ -296,8 +299,8 @@ class TestVmDetailsPowerControlPerProvider(object):
                 testing_vm.name), "vm not suspended")
         # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1101604
         if not testing_vm.provider.one_of(RHEVMProvider):
-            new_last_boot_time = testing_vm.get_detail(
-                properties=("Power Management", "Last Boot Time"))
+            new_last_boot_time = view.entities.summary("Power Management").get_text_of(
+                "Last Boot Time")
             soft_assert(new_last_boot_time == last_boot_time,
                         "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
 
@@ -317,11 +320,11 @@ class TestVmDetailsPowerControlPerProvider(object):
                 logger.warning('working around bz1174858, ignoring timeout')
             else:
                 raise
-        last_boot_time = testing_vm.get_detail(properties=("Power Management", "Last Boot Time"))
+        view = navigate_to(testing_vm, "Details")
+        last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=False,
                                            from_details=True)
 
-        view = appliance.browser.create_view(BaseLoggedInPage)
         view.flash.assert_success_message(text='Start initiated', partial=True)
 
         if_scvmm_refresh_provider(testing_vm.provider)
@@ -413,11 +416,11 @@ def test_guest_os_reset(appliance, testing_vm_tools, verify_vm_running, soft_ass
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
     wait_for_vm_tools(testing_vm_tools)
-    last_boot_time = testing_vm_tools.get_detail(properties=("Power Management", "Last Boot Time"))
+    view = navigate_to(testing_vm_tools, "Details")
+    last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
     testing_vm_tools.power_control_from_cfme(
         option=testing_vm_tools.GUEST_RESTART, cancel=False, from_details=True)
 
-    view = appliance.browser.create_view(BaseLoggedInPage)
     view.flash.assert_success_message(text='Restart Guest initiated', partial=True)
 
     testing_vm_tools.wait_for_vm_state_change(
@@ -432,18 +435,17 @@ def test_guest_os_shutdown(appliance, testing_vm_tools, verify_vm_running, soft_
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
     wait_for_vm_tools(testing_vm_tools)
-    last_boot_time = testing_vm_tools.get_detail(properties=("Power Management", "Last Boot Time"))
+    view = navigate_to(testing_vm_tools, "Details")
+    last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
     testing_vm_tools.power_control_from_cfme(
         option=testing_vm_tools.GUEST_SHUTDOWN, cancel=False, from_details=True)
 
-    view = appliance.browser.create_view(BaseLoggedInPage)
     view.flash.assert_success_message(text='Shutdown Guest initiated', partial=True)
 
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_OFF, timeout=720, from_details=True)
     soft_assert(
         not testing_vm_tools.provider.mgmt.is_vm_running(testing_vm_tools.name), "vm running")
-    new_last_boot_time = testing_vm_tools.get_detail(
-        properties=("Power Management", "Last Boot Time"))
+    new_last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
     soft_assert(new_last_boot_time == last_boot_time,
                 "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
