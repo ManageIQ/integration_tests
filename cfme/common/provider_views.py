@@ -16,7 +16,6 @@ from widgetastic_manageiq import (BreadCrumb,
                                   ItemsToolBarViewSelector,
                                   Checkbox,
                                   Input,
-                                  Table,
                                   BaseEntitiesView,
                                   PaginationPane,
                                   BaseTileIconEntity,
@@ -314,6 +313,7 @@ class ProviderVmsView(ProviderVmsTemplatesView):
         return (self.logged_in_as_current_user and
                 self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
                 self.title.text == title)
+
 
 class ProviderToolBar(View):
     """
