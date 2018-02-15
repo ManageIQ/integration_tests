@@ -911,8 +911,9 @@ class SSUIPrimarycard(Widget, ClickableMixin):
     class primary_card(ParametrizedView):  # noqa
         PARAMETERS = ("item_name",)
         card = Text(
-            ParametrizedLocator('.//div[@class="ss-dashboard__card-primary__count"]/h2'
-                                '[./following-sibling::h3[normalize-space(.)={item_name|quote}]]'))
+            ParametrizedLocator(
+                './/div[@class="ss-dashboard__card-primary__count"]//h2'
+                '[./following-sibling::h3[normalize-space(.)={item_name|quote}]]'))
 
         def card_click(self):
             """Clicks the primary card with this name."""
