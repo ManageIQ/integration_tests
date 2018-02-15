@@ -68,6 +68,12 @@ def unconfigured_appliance(appliance):
 
 
 @pytest.yield_fixture()
+def unconfigured_appliances(appliance):
+    with fqdn_appliance(appliance, preconfigured=False, count=3) as apps:
+        yield apps
+
+
+@pytest.yield_fixture()
 def configured_appliance(appliance):
     with fqdn_appliance(appliance, preconfigured=True) as app:
         yield app

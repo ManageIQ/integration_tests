@@ -1,4 +1,6 @@
 import pytest
+
+from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
 from cfme.utils import version
 from wait_for import wait_for
@@ -43,7 +45,7 @@ def test_appliance_console_cli_external_create(
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-@pytest.mark.skip('No IPA servers currently available')
+@pytest.mark.uncollect('No IPA servers currently available')
 @pytest.mark.parametrize('auth_type', ['sso_enabled', 'saml_enabled', 'local_login_disabled'],
     ids=['sso', 'saml', 'local_login'])
 def test_external_auth(auth_type, ipa_crud, app_creds):
@@ -69,7 +71,7 @@ def test_external_auth(auth_type, ipa_crud, app_creds):
     evm_tail.validate_logs()
 
 
-@pytest.mark.skip('No IPA servers currently available')
+@pytest.mark.uncollect('No IPA servers currently available')
 def test_appliance_console_cli_ipa_crud(ipa_creds, configured_appliance):
     configured_appliance.appliance_console_cli.configure_ipa(ipa_creds['ipaserver'],
         ipa_creds['username'], ipa_creds['password'], ipa_creds['domain'], ipa_creds['realm'])
@@ -101,3 +103,35 @@ def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, ap
         unconfigured_appliance.unpartitioned_disks[0]
     )
     wait_for(lambda: unconfigured_appliance.db.is_dedicated_active)
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
+@pytest.mark.uncollectif(BZ(1544854, forced_streams=['5.9']).blocks, 'BZ 1544854')
+def test_appliance_console_cli_ha_crud(unconfigured_applinaces, app_creds):
+    """Tests the configuration of HA with three appliances including failover to standby node"""
+    app = unconfigured_applinaces
+    app0_ip = app[0].hostname
+    app1_ip = app[1].hostname
+    # Configure primary database
+    app[0].appliance_console_cli.configure_appliance_dedicated_db(
+        app_creds['username'], app_creds['password'], 'vmdb_production',
+        app[0].unpartitioned_disks[0]
+    )
+    wait_for(lambda: app[0].db.is_dedicated_active)
+    # Configure webui access on EVM appliance
+    app[2].appliance_console_cli.configure_appliance_external_create(1,
+        app0_ip, app_creds['username'], app_creds['password'], 'vmdb_production', app0_ip,
+        app_creds['sshlogin'], app_creds['sshpass'])
+    app[2].wait_for_evm_service()
+    app[2].wait_for_web_ui()
+    # Configure primary node
+    app[0].appliance_console_cli.configure_appliance_dedicated_ha_primary(
+        app_creds['username'], app_creds['password'], 'primary', app0_ip, '1', 'vmdb_production'
+    )
+    # Configure standby node
+    app[1].appliance_console_cli.configure_appliance_dedicated_ha_standby(
+        app_creds['username'], app_creds['password'], 'standby', app0_ip, app1_ip, '2',
+        'vmdb_production', app[0].unpartitioned_disks[0]
+    )
+    wait_for(lambda: app[1].db.is_dedicated_active)
+    # Intiate failover to standby node

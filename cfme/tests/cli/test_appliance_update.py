@@ -29,7 +29,7 @@ def pytest_generate_tests(metafunc):
         logger.exception('Caught IndexError generating for test_appliance_update, skipping')
     except AssertionError:
         logger.debug('Caught AssertionError: No previous z-stream version to update from')
-        versions.append(pytest.param("bad:{!r}".format(version), marks=pytest.mark.skip(
+        versions.append(pytest.param("bad:{!r}".format(version), marks=pytest.mark.uncollect(
             'Could not parse minor_build version from: {}'.format(version)
         )))
     else:
