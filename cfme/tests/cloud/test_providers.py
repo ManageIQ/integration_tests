@@ -70,7 +70,7 @@ def test_add_cancelled_validation_cloud(request):
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
                          reason='no more support for cloud provider discovery')
-def test_discovery_password_mismatch_validation(appliance):
+def test_discovery_password_mismatch_validation_cloud(appliance):
     cred = Credential(
         principal=fauxfactory.gen_alphanumeric(5),
         secret=fauxfactory.gen_alphanumeric(5),
