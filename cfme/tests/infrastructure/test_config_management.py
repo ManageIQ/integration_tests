@@ -5,9 +5,7 @@ from cfme.utils.testgen import config_managers, generate
 
 
 pytest_generate_tests = generate(gen_func=config_managers)
-pytestmark = [pytest.mark.uncollectif(lambda config_manager_obj:
-                                      config_manager_obj.type == "Ansible Tower"),
-              pytest.mark.meta(blockers=[1491704])]
+pytestmark = [pytest.mark.meta(blockers=[1491704])]
 
 
 @pytest.fixture
@@ -87,7 +85,6 @@ def test_config_manager_edit(request, config_manager):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
 def test_config_manager_remove(config_manager):
     config_manager.delete()
 
