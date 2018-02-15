@@ -306,8 +306,7 @@ def test_openstack_provider_has_api_version():
 
 
 @pytest.mark.tier(3)
-@pytest.mark.usefixtures('has_no_cloud_providers')
-def test_select_key_pair_none_while_provisioning(request):
+def test_select_key_pair_none_while_provisioning(request, has_no_cloud_providers):
     """
         GH Issue: https://github.com/ManageIQ/manageiq/issues/10575
 
