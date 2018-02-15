@@ -9,6 +9,7 @@ from widgetastic.exceptions import MoveTargetOutOfBoundsException
 
 from cfme.utils import error
 from cfme.base.credential import Credential
+from cfme.cloud.instance import Instance
 from cfme.cloud.provider import discover, wait_for_a_provider, CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
@@ -19,6 +20,7 @@ from cfme.common.provider_views import (CloudProviderAddView,
                                         CloudProvidersDiscoverView)
 from cfme import test_requirements
 
+from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
@@ -301,6 +303,37 @@ def test_openstack_provider_has_api_version():
     view = navigate_to(prov, 'Add')
     view.fill({"prov_type": "OpenStack"})
     assert view.api_version.is_displayed, "API version select is not visible"
+
+
+@pytest.mark.tier(3)
+@pytest.mark.usefixtures('has_no_cloud_providers')
+def test_select_key_pair_none_while_provisioning(request):
+    """
+        GH Issue: https://github.com/ManageIQ/manageiq/issues/10575
+
+        Requirement: Have an ec2 provider with single key pair
+                    (For now available in South America (Sao Paulo) region)
+        1. Compute -> Cloud -> Instances
+        2. Click on Provision Instances in Toolbar
+        3. Go to Properties
+        4. Select None in Guest Access Key Pair
+        5. None should be selected
+    """
+
+    prov_config = conf.cfme_data['management_systems']['ec2_sa-east-1']
+    ec2_provider = EC2Provider.from_config(prov_config, prov_key='ec2_sa-east-1')
+    request.addfinalizer(ec2_provider.delete_if_exists)
+
+    ec2_provider.create()
+    ec2_provider.validate_stats()
+
+    view = navigate_to(Instance, 'Provision')
+    view.form.image_table[0].click()
+    view.form.continue_button.click()
+
+    view.form.properties.guest_keypair.fill('<None>')
+    # check drop down was updated with selected value
+    assert view.form.properties.guest_keypair.read() == '<None>'
 
 
 class TestProvidersRESTAPI(object):
