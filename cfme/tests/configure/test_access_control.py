@@ -7,6 +7,7 @@ import pytest
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.provider import base_types
+from cfme.configure.access_control import AddUserView
 from cfme.configure.tasks import TasksView
 from cfme.exceptions import RBACOperationBlocked
 from cfme.infrastructure import virtual_machines as vms
@@ -1020,3 +1021,18 @@ def test_delete_default_tenant(appliance):
             row[0].check()
     with error.handler('Default Tenant "{}" can not be deleted'.format(roottenant.name)):
         view.toolbar.configuration.item_select('Delete selected items', handle_alert=True)
+
+
+def test_copied_user_password_inheritance(appliance, group_collection, request):
+    """Test to verify that dialog for copied user should appear and password field should be
+    empty
+    """
+    group_name = 'EvmGroup-user'
+    group = group_collection.instantiate(description=group_name)
+    user = new_user(appliance, group)
+    request.addfinalizer(user.delete)
+    view = navigate_to(user, 'Details')
+    view.toolbar.configuration.item_select('Copy this User to a new User')
+    view = user.create_view(AddUserView)
+    assert view.password_txt.value == '' and view.password_verify_txt.value == ''
+    view.cancel_button.click()
