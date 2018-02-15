@@ -1,4 +1,5 @@
 import pytest
+from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from itertools import combinations
 
 from cfme.utils import testgen
@@ -90,7 +91,12 @@ def delete_providers_after_test():
 @pytest.mark.usefixtures('has_no_infra_providers', 'delete_providers_after_test')
 def test_discover_infra(providers_for_discover, start_ip, max_range):
     for provider in providers_for_discover:
-        discover(provider, False, start_ip, max_range)
+        try:
+            discover(provider, False, start_ip, max_range)
+        except MoveTargetOutOfBoundsException:
+            # TODO: Remove once fixed 1475303
+            provider.browser.refresh()
+            discover(provider, False, start_ip, max_range)
 
     @wait_for_decorator(num_sec=count_timeout(start_ip, max_range), delay=5)
     def _wait_for_all_providers():
