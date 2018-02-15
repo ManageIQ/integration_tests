@@ -767,6 +767,7 @@ class RegionView(ConfigurationView):
     @View.nested
     class details(Tab):  # noqa
         TAB_NAME = "Details"
+        table = Table(locator='.//table[./tbody/tr/td[@title="Edit this Region"]]')
 
     @View.nested
     class candu_collection(Tab):  # noqa
@@ -797,6 +798,18 @@ class RegionView(ConfigurationView):
         return self.accordions.settings.tree.currently_selected == [self.obj.settings_string]
 
 
+class RegionChangeNameView(RegionView):
+    region_description = Input("region_description")
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return self.region_description.is_displayed and super(RegionChangeNameView,
+                                                              self).is_displayed
+
+
 @navigator.register(Region, 'Details')
 class RegionDetails(CFMENavigateStep):
     VIEW = RegionView
@@ -807,6 +820,15 @@ class RegionDetails(CFMENavigateStep):
         # region objects
         self.prerequisite_view.accordions.settings.tree.click_path(self.obj.settings_string)
         self.view.details.select()
+
+
+@navigator.register(Region)
+class ChangeRegionName(CFMENavigateStep):
+    VIEW = RegionChangeNameView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.view.details.table.row().click()
 
 
 @navigator.register(Region)
