@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
 from cfme.common.provider import cleanup_vm
@@ -11,7 +12,9 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme import test_requirements
+from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [
@@ -24,53 +27,51 @@ pytestmark = [
 ]
 
 
-def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog, request,
+@pytest.fixture()
+def vm_name():
+    return random_vm_name(context='provs')
+
+
+def test_cloud_catalog_item(appliance, vm_name, setup_provider, provider, dialog, catalog, request,
                             provisioning):
     """Tests cloud catalog item
 
     Metadata:
         test_flag: provision
     """
-    # azure accepts only 15 chars vm name
-    vm_name = 'test{}'.format(fauxfactory.gen_string('alphanumeric', 5))
-    # GCE accepts only lowercase letters in VM name
-    vm_name = vm_name.lower()
-    request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
+    wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+    request.addfinalizer(lambda: cleanup_vm("{}0001".format(vm_name), provider))
     image = provisioning['image']['name']
-    item_name = fauxfactory.gen_alphanumeric()
-    provisioning_data = {
-        'catalog': {'vm_name': vm_name,
+    item_name = "{}-service-{}".format(provider.name, fauxfactory.gen_alphanumeric())
+
+    inst_args = {
+        'catalog': {'vm_name': vm_name
                     },
-        'properties': {'instance_type': partial_match(provisioning['instance_type']),
-                       },
-        'environment': {}
+        'environment': {
+            'availability_zone': provisioning.get('availability_zone', None),
+            'security_groups': [provisioning.get('security_group', None)],
+            'cloud_tenant': provisioning.get('cloud_tenant', None),
+            'cloud_network': provisioning.get('cloud_network', None),
+            'cloud_subnet': provisioning.get('cloud_subnet', None),
+            'resource_groups': provisioning.get('resource_group', None)
+        },
+        'properties': {
+            'instance_type': partial_match(provisioning.get('instance_type', None)),
+            'guest_keypair': provisioning.get('guest_keypair', None)}
     }
-
-    if not provider.one_of(GCEProvider):
-        provisioning_data['environment'].update({'security_groups':
-                                            partial_match(provisioning['security_group'])})
-
-    if not provider.one_of(AzureProvider) and not provider.one_of(GCEProvider):
-        provisioning_data['environment'].update({'cloud_tenant': provisioning['cloud_tenant']})
-
+    # GCE specific
+    if provider.one_of(GCEProvider):
+        recursive_update(inst_args, {
+            'properties': {
+                'boot_disk_size': provisioning['boot_disk_size'],
+                'is_preemptible': True}
+        })
+    # Azure specific
     if provider.one_of(AzureProvider):
-        env_updates = dict(
-            cloud_network=partial_match(provisioning['virtual_private_cloud']),
-            cloud_subnet=partial_match(provisioning['cloud_subnet']),
-            resource_groups=provisioning['resource_group'],
-        )
-        provisioning_data['environment'].update(env_updates)
-        provisioning_data.update({
+        recursive_update(inst_args, {
             'customize': {
                 'admin_username': provisioning['customize_username'],
                 'root_password': provisioning['customize_password']}})
-    else:
-        provisioning_data['properties']['guest_keypair'] = provisioning['guest_keypair']
-        provisioning_data['properties']['boot_disk_size'] = provisioning['boot_disk_size']
-        env_updates = dict(
-            availability_zone=provisioning['availability_zone'],
-            cloud_network=provisioning['cloud_network'])
-        provisioning_data['environment'].update(env_updates)
 
     catalog_item = CatalogItem(item_type=provisioning['item_type'],
                                name=item_name,
@@ -80,7 +81,8 @@ def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog
                                dialog=dialog,
                                catalog_name=image,
                                provider=provider,
-                               prov_data=provisioning_data)
+                               prov_data=inst_args)
+    request.addfinalizer(catalog_item.delete)
     catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()

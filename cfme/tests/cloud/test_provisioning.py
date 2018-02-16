@@ -24,7 +24,6 @@ from cfme.utils.rest import assert_response
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.update import update
-from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for, RefreshTimer
 
 
@@ -79,35 +78,24 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name, t
         # in case nothing was passed just skip
         pass
 
-    # All providers other than Azure
-    if not provider.one_of(AzureProvider):
-        recursive_update(inst_args, {
-            'properties': {
-                'instance_type': partial_match(provisioning['instance_type']),
-                'guest_keypair': provisioning['guest_keypair']}
-        })
-        if provider.one_of(OpenStackProvider):
-            recursive_update(inst_args, {
-                'environment': {
-                    'automatic_placement': True}
-            })
-        else:
-            recursive_update(inst_args, {
-                'environment': {
-                    'availability_zone': None if auto else provisioning['availability_zone'],
-                    'security_groups': None if auto else provisioning['security_group'],
-                    'automatic_placement': auto}
-            })
-
+    recursive_update(inst_args, {
+        'environment': {
+            'availability_zone': provisioning.get('availability_zone', None),
+            'security_groups': [provisioning.get('security_group', None)],
+            'cloud_network': provisioning.get('cloud_network', None),
+            'cloud_subnet': provisioning.get('cloud_subnet', None),
+            'resource_groups': provisioning.get('resource_group', None)
+        },
+        'properties': {
+            'instance_type': partial_match(provisioning.get('instance_type', None)),
+            'guest_keypair': provisioning.get('guest_keypair', None)}
+    })
     # GCE specific
     if provider.one_of(GCEProvider):
         recursive_update(inst_args, {
-            'environment': {
-                'cloud_network': None if auto else provisioning['cloud_network']
-            },
             'properties': {
                 'boot_disk_size': provisioning['boot_disk_size'],
-                'is_preemptible': True if current_version() >= "5.7" else None}
+                'is_preemptible': True}
         })
 
     # Azure specific
@@ -120,24 +108,16 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name, t
         except AttributeError:
             pytest.skip('Could not find small_template or credentials for {}'.format(provider.name))
         recursive_update(inst_args, {
-            'environment': {
-                'automatic_placement': auto,
-                'cloud_network': None if auto else partial_match(provisioning['virtual_net']),
-                'cloud_subnet': None if auto else partial_match(provisioning['subnet_range']),
-                'security_groups': None if auto else [partial_match(provisioning['network_nsg'])],
-                'resource_groups': None if auto else partial_match(provisioning['resource_group'])
-            },
-            'properties': {
-                'instance_type': provisioning['vm_size'].lower()},
             'customize': {
                 'admin_username': vm_user,
                 'root_password': vm_password}})
-
+    if auto:
+        inst_args.update({'environment': {'automatic_placement': auto}})
     yield instance, inst_args, image
 
+    logger.info('Fixture cleanup, deleting test instance: %s', instance.name)
     try:
-        if instance.does_vm_exist_on_provider():
-            instance.delete_from_provider()
+        instance.delete_from_provider()
     except Exception as ex:
         logger.warning('Exception while deleting instance fixture, continuing: {}'
                        .format(ex.message))
@@ -183,8 +163,7 @@ def test_provision_from_template(provider, provisioned_instance):
     assert provisioned_instance.does_vm_exist_on_provider(), "Instance wasn't provisioned"
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(GCEProvider) or
-                         current_version() < "5.7")
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(GCEProvider))
 def test_gce_preemptible_provision(provider, testing_instance, soft_assert):
     instance, inst_args, image = testing_instance
     instance.create(**inst_args)
@@ -334,7 +313,9 @@ def test_manual_placement_using_rest(
 
     # find out cloud network
     assert provider_data['cloud_networks']
-    cloud_network_name = provisioning.get('cloud_network')
+    cloud_network_name = provisioning.get('cloud_network').strip()
+    if provider.one_of(EC2Provider):
+        cloud_network_name = cloud_network_name.split()[0]
     cloud_network = None
     for cloud_network in provider_data['cloud_networks']:
         # If name of cloud network is available, find match.
