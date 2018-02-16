@@ -30,11 +30,11 @@ def appliance_police():
     try:
         appliance = store.current_appliance
         available_ports = {
-            'ssh': (appliance.hostname, ports.SSH),
+            'ssh': (appliance.hostname, appliance.ssh_port),
             'https': (appliance.hostname, appliance.ui_port),
-            'postgres': (appliance.db_host or appliance.hostname, ports.DB)}
-        port_results = {pn: net_check(addr=pp[0], port=pp[1], force=True)
-                        for pn, pp in available_ports.items()}
+            'postgres': (appliance.db_host or appliance.hostname, appliance.db_port)}
+        port_results = {pn: net_check(addr=p_addr, port=p_port, force=True)
+                        for pn, (p_addr, p_port) in available_ports.items()}
         for port, result in port_results.items():
             if port == 'ssh' and appliance.is_pod:
                 # ssh is not available for podified appliance
