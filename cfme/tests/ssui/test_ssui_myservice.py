@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 """Test Service Details page functionality."""
+import time
+
 import pytest
+
+from markers.env_markers.provider import providers
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
@@ -14,8 +19,6 @@ from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
-from markers.env_markers.provider import providers
-
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -60,7 +63,7 @@ def test_retire_service(appliance, setup_provider, context, order_catalog_item_i
                          'VNC consoles are unsupported on VMware ESXi 6.5 and later')
 def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
         configure_console_vnc, order_catalog_item_in_ops_ui, take_screenshot,
-        console_template):
+        console_template, provider):
     """Test Myservice VM Console in SSUI."""
     catalog_item = order_catalog_item_in_ops_ui
     service_name = catalog_item.name
@@ -72,16 +75,22 @@ def test_vm_console(request, appliance, setup_provider, context, configure_webso
         myservice = MyService(appliance, service_name)
         vm_obj = myservice.launch_vm_console(catalog_item)
         vm_console = vm_obj.vm_console
+        if provider.one_of(OpenStackProvider):
+            public_net = provider.data['public_network']
+            provider.mgmt.assign_floating_ip(vm_obj.name, public_net)
         request.addfinalizer(vm_console.close_console_window)
         request.addfinalizer(appliance.server.logout)
+        ssh_who_command = ("who --count" if not provider.one_of(OpenStackProvider)
+                        else "who -aH")
         with ssh.SSHClient(hostname=vm_obj.ip_address, username=console_vm_username,
                 password=console_vm_password) as vm_ssh_client:
             try:
                 assert vm_console.wait_for_connect(180), ("VM Console did not reach 'connected'"
                     " state")
-                user_count_before_login = vm_ssh_client.run_command("who --count", ensure_user=True)
-                logger.info("Output of who --count is {} before login"
-                    .format(user_count_before_login))
+                user_count_before_login = vm_ssh_client.run_command(ssh_who_command,
+                    ensure_user=True)
+                logger.info("Output of '{}' is {} before login"
+                    .format(ssh_who_command, user_count_before_login))
                 assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
                     " didn't prompt for Login")
                 # Enter Username:
@@ -91,17 +100,20 @@ def test_vm_console(request, appliance, setup_provider, context, configure_webso
                 # Enter Password:
                 vm_console.send_keys("{}".format(console_vm_password))
                 logger.info("Wait to get the '$' prompt")
-                vm_console.wait_for_text(text_to_find=catalog_item.provider.data.templates.
-                    console_template.prompt_text, timeout=200)
+                if not provider.one_of(OpenStackProvider):
+                    vm_console.wait_for_text(text_to_find=catalog_item.provider.data.templates.
+                        console_template.prompt_text, timeout=200)
+                else:
+                    time.sleep(15)
 
                 def _validate_login():
                     # the following try/except is required to handle the exception thrown by SSH
                     # while connecting to VMware VM.It throws "[Error 104]Connection reset by Peer".
                     try:
-                        user_count_after_login = vm_ssh_client.run_command("who --count",
+                        user_count_after_login = vm_ssh_client.run_command(ssh_who_command,
                                                     ensure_user=True)
-                        logger.info("Output of 'who --count' is {} after login"
-                        .format(user_count_after_login))
+                        logger.info("Output of '{}' is {} after login"
+                        .format(ssh_who_command, user_count_after_login))
                         return user_count_before_login < user_count_after_login
                     except Exception as e:
                         logger.info("Exception: {}".format(e))

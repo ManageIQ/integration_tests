@@ -41,7 +41,6 @@ def create_catalog_item(provider, provisioning, vm_name, dialog, catalog, consol
         provisioning_data = {
             'catalog': {'vm_name': vm_name,
                         'provision_type': provision_type},
-
             'environment': {'host_name': {'name': host},
                             'datastore_name': {'name': datastore}},
             'network': {'vlan': partial_match(vlan)},
