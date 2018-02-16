@@ -664,6 +664,9 @@ def request_pool(request):
         preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
         yum_update = request.POST.get("yum_update", "false").lower() == "true"
         container = request.POST.get("container", "false").lower() == "true"
+        provider_type = request.POST.get("provider_type", "any").lower()
+        if not provider_type or provider_type == 'any':
+            provider_type = None
         if container:
             # Container is preconfigured only
             # We need to do this as the disabled checkbox for Preconfigured seems to not return
@@ -680,7 +683,7 @@ def request_pool(request):
                 cpu = int(request.POST['cpu'])
         pool_id = AppliancePool.create(
             request.user, group, version, date, provider, count, lease_time, preconfigured,
-            yum_update, container, ram, cpu).id
+            yum_update, container, ram, cpu, provider_type).id
         messages.success(request, "Pool requested - id {}".format(pool_id))
     except Exception as e:
         messages.warning(request, "{}: {}".format(type(e).__name__, e))
