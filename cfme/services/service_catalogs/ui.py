@@ -66,7 +66,7 @@ class OrderForm(ServicesCatalogView):
             Version.lowest(): BootstrapSelect(Parameter("key")),
             "5.9": BootstrapSelect(locator=ParametrizedString(
                 ".//div[contains(@class, 'bootstrap-select') and "
-                "select[@id='{key}']]"))
+                "select[@id={key|quote}]]"))
         })
         param_dropdown = VersionPick({
             Version.lowest(): BootstrapSelect(ParametrizedString("param_{key}")),
