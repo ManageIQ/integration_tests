@@ -20,7 +20,6 @@ from cfme.common.provider_views import (CloudProviderAddView,
                                         CloudProvidersDiscoverView)
 from cfme import test_requirements
 
-from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
@@ -306,7 +305,8 @@ def test_openstack_provider_has_api_version():
 
 
 @pytest.mark.tier(3)
-def test_select_key_pair_none_while_provisioning(request, has_no_cloud_providers):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider))
+def test_select_key_pair_none_while_provisioning(request, has_no_cloud_providers, provider):
     """
         GH Issue: https://github.com/ManageIQ/manageiq/issues/10575
 
@@ -318,13 +318,11 @@ def test_select_key_pair_none_while_provisioning(request, has_no_cloud_providers
         4. Select None in Guest Access Key Pair
         5. None should be selected
     """
+    provider.region_name = 'South America (Sao Paulo)'
+    request.addfinalizer(provider.delete_if_exists)
 
-    prov_config = conf.cfme_data['management_systems']['ec2_sa-east-1']
-    ec2_provider = EC2Provider.from_config(prov_config, prov_key='ec2_sa-east-1')
-    request.addfinalizer(ec2_provider.delete_if_exists)
-
-    ec2_provider.create()
-    ec2_provider.validate_stats()
+    provider.create()
+    provider.validate()
 
     view = navigate_to(Instance, 'Provision')
     view.form.image_table[0].click()
