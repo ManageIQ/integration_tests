@@ -350,7 +350,7 @@ class WidgetasticTaggable(object):
         view = navigate_to(self, 'Details')
         tags = []
         entities = view.entities
-        if getattr(entities, 'smart_management', False):
+        if hasattr(entities, 'smart_management'):
             tag_table = entities.smart_management
         else:
             tag_table = entities.summary('Smart Management')
