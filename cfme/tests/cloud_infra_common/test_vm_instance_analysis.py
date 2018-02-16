@@ -554,6 +554,7 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profile):
     if drift_orig != 'None':
         drift_num_orig = int(drift_orig)
     ssa_vm.smartstate_scan(wait_for_task_result=True)
+    view = navigate_to(ssa_vm, "Details")
     wait_for(
         lambda: view.entities.summary("Relationships").get_text_of(
             "Drift History") == str(drift_num_orig + 1),
@@ -568,6 +569,7 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profile):
     ssa_vm.add_tag('Department', 'Accounting')
     request.addfinalizer(lambda: ssa_vm.remove_tag('Department', 'Accounting'))
     ssa_vm.smartstate_scan(wait_for_task_result=True)
+    view = navigate_to(ssa_vm, "Details")
     wait_for(
         lambda: view.entities.summary("Relationships").get_text_of(
             "Drift History") == str(drift_new + 1),
