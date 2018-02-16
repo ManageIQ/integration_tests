@@ -1,6 +1,7 @@
 from string import digits, ascii_letters
 from random import choice
 from os import path
+from copy import deepcopy
 import re
 import pytest
 
@@ -8,6 +9,8 @@ from manageiq_client.api import APIException
 
 from cfme.containers.provider import ContainersProvider, refresh_and_navigate
 from cfme.containers.provider.openshift import CustomAttribute
+from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -30,11 +33,18 @@ ATTRIBUTES_DATASET = [
 VALUE_UPDATES = ['2018-07-12', 'ADF231VRWQ1', '1']
 
 
-# TODO: Fixturize tests
+@pytest.yield_fixture(scope='function')
+def add_delete_custom_attributes(provider):
+    provider.add_custom_attributes(*ATTRIBUTES_DATASET)
+    yield
+    try:
+        provider.delete_custom_attributes(*ATTRIBUTES_DATASET)
+    except:
+        logger.info("No custom attributes to delete")
 
 
 @pytest.mark.polarion('CMP-10281')
-def test_add_static_custom_attributes(provider):
+def test_add_static_custom_attributes(add_delete_custom_attributes, provider):
     """Tests adding of static custom attributes to provider
     Steps:
         * Add static custom attributes (API)
@@ -43,7 +53,6 @@ def test_add_static_custom_attributes(provider):
         * The attributes was successfully added
     """
 
-    provider.add_custom_attributes(*ATTRIBUTES_DATASET)
     view = refresh_and_navigate(provider, 'Details')
     custom_attr_ui = view.entities.custom_attributes.read()
     for attr in ATTRIBUTES_DATASET:
@@ -63,19 +72,21 @@ def test_edit_static_custom_attributes(provider):
         * The attributes was successfully updated to the new values
     """
 
-    edited_attribs = ATTRIBUTES_DATASET
+    provider.add_custom_attributes(*ATTRIBUTES_DATASET)
+    edited_attribs = deepcopy(ATTRIBUTES_DATASET)
     for ii, value in enumerate(VALUE_UPDATES):
         edited_attribs[ii].value = value
     provider.edit_custom_attributes(*edited_attribs)
     view = refresh_and_navigate(provider, 'Details')
     custom_attr_ui = view.entities.custom_attributes.read()
-    for attr in ATTRIBUTES_DATASET:
+    for attr in edited_attribs:
         assert attr.name in custom_attr_ui
         assert custom_attr_ui[attr.name] == attr.value
+    provider.delete_custom_attributes(*edited_attribs)
 
 
 @pytest.mark.polarion('CMP-10285')
-def test_delete_static_custom_attributes(provider):
+def test_delete_static_custom_attributes(add_delete_custom_attributes, provider):
     """Tests deleting of static custom attributes from provider
     Steps:
         * Delete the static custom attributes that recently added (API)
@@ -160,10 +171,17 @@ def test_delete_non_exist_attribute(provider):
                     .format(ca.value))
 
 
+@pytest.mark.meta(blockers=[BZ(1544800, forced_streams=["5.8", "5.9"])])
 @pytest.mark.polarion('CMP-10542')
 def test_add_already_exist_attribute(provider):
     ca = choice(ATTRIBUTES_DATASET)
     provider.add_custom_attributes(ca)
+    with pytest.raises(APIException):
+        provider.add_custom_attributes(ca)
+        provider.delete_custom_attributes(ca)
+        pytest.fail('You tried to add a custom attribute that already exists'
+                    '({}) and didn\'t get an error!'
+                    .format(ca.value))
 
 
 @pytest.mark.polarion('CMP-10540')
@@ -175,6 +193,7 @@ def test_very_long_name_with_special_characters(provider):
     provider.delete_custom_attributes(ca)
 
 
+@pytest.mark.meta(blockers=[BZ(1540647, forced_streams=["5.8", "5.9"])])
 @pytest.mark.polarion('CMP-10541')
 def test_very_long_value_with_special_characters(provider):
     ca = CustomAttribute('very_long_value', get_random_string(1000), None)
