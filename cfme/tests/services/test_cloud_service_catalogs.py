@@ -40,9 +40,9 @@ def test_cloud_catalog_item(appliance, vm_name, setup_provider, provider, dialog
         test_flag: provision
     """
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
-    request.addfinalizer(lambda: cleanup_vm(vm_name + "0001", provider))
+    request.addfinalizer(lambda: cleanup_vm("{}0001".format(vm_name), provider))
     image = provisioning['image']['name']
-    item_name = provider.name + '-service-' + fauxfactory.gen_alphanumeric()
+    item_name = "{}-service-{}".format(provider.name, fauxfactory.gen_alphanumeric())
 
     inst_args = {
         'catalog': {'vm_name': vm_name
@@ -82,7 +82,7 @@ def test_cloud_catalog_item(appliance, vm_name, setup_provider, provider, dialog
                                catalog_name=image,
                                provider=provider,
                                prov_data=inst_args)
-    request.addfinalizer(lambda: catalog_item.delete())
+    request.addfinalizer(catalog_item.delete())
     catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
