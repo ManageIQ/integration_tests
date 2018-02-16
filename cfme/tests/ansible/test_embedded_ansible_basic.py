@@ -52,6 +52,16 @@ CREDENTIALS = [
             "password": fauxfactory.gen_alpha(),
             "vcenter_host": fauxfactory.gen_alpha()
         }
+    ),
+    (
+        "OpenStack",
+        {
+            "username": fauxfactory.gen_alpha(),
+            "password": fauxfactory.gen_alpha(),
+            "authentication_url": fauxfactory.gen_alpha(),
+            "project": fauxfactory.gen_alpha(),
+            "domain": fauxfactory.gen_alpha()
+        }
     )
 ]
 

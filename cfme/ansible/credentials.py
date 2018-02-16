@@ -109,6 +109,20 @@ class CredentialFormView(CredentialsBaseView):
         vcenter_host = Input(
             locator='.//input[@title="The hostname or IP address of the vCenter Host"]')
 
+    @credential_form.register("OpenStack")
+    class CredentialFormOpenStackView(View):
+        username = Input(locator='.//input[@title="The username to use to connect to OpenStack"]')
+        password = Input(locator='.//input[@title=\
+            "The password or API key to use to connect to OpenStack"][2]')
+        authentication_url = Input(
+            locator='.//input[@title=\
+                "The host to authenticate with. For example, https://openstack.business.com/v2.0"]')
+        project = Input(locator='.//input[@title=\
+            "This is the tenant name. This value is usually the same as the username"][2]')
+        domain = Input(locator='.//input[@title=\
+            "OpenStack domains define administrative \
+                boundaries. It is only needed for Keystone v3 authentication URLs"][2]')
+
     cancel_button = Button("Cancel")
 
 
@@ -208,11 +222,19 @@ class Credential(BaseEntity):
             "password": updates.get("password"),
             "vcenter_host": updates.get("vcenter_host")
         }
+        openstack_credential_fill_dict = {
+            "username": updates.get("username"),
+            "password": updates.get("password"),
+            "authentication_url": updates.get("authentication_url"),
+            "project": updates.get("project"),
+            "domain": updates.get("domain")
+        }
         credential_type_map = {
             "Machine": machine_credential_fill_dict,
             "Scm": scm_credential_fill_dict,
             "Amazon": amazon_credential_fill_dict,
-            "VMware": vmware_credential_fill_dict
+            "VMware": vmware_credential_fill_dict,
+            "OpenStack": openstack_credential_fill_dict
         }
         edit_page = navigate_to(self, "Edit")
         changed = edit_page.fill({"name": updates.get("name")})
@@ -295,11 +317,19 @@ class CredentialsCollection(BaseCollection):
             "password": credentials.get("password"),
             "vcenter_host": credentials.get("vcenter_host")
         }
+        openstack_credential_fill_dict = {
+            "username": credentials.get("username"),
+            "password": credentials.get("password"),
+            "authentication_url": credentials.get("authentication_url"),
+            "project": credentials.get("project"),
+            "domain": credentials.get("domain")
+        }
         credential_type_map = {
             "Machine": machine_credential_fill_dict,
             "Scm": scm_credential_fill_dict,
             "Amazon": amazon_credential_fill_dict,
-            "VMware": vmware_credential_fill_dict
+            "VMware": vmware_credential_fill_dict,
+            "OpenStack": openstack_credential_fill_dict,
         }
 
         add_page.fill({"name": name, "credential_type": credential_type})
