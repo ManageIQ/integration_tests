@@ -1156,7 +1156,8 @@ class AppliancePool(MetadataMixin):
             yum_update=self.yum_update,
             container=self.is_container,
             ram=self.override_memory,
-            cpu=self.override_cpu)
+            cpu=self.override_cpu,
+            provider_type=self.provider_type)
 
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
