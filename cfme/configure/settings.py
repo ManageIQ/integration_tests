@@ -1,81 +1,94 @@
+import attr
 import re
+
 from navmazing import NavigateToAttribute, NavigateToSibling
+
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
+from widgetastic_manageiq import Table, BootstrapSelect, BreadCrumb, Text, ViewButtonGroup
 from widgetastic_patternfly import (
     BootstrapSwitch, Input, Button, CheckableBootstrapTreeview as CbTree, Dropdown)
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.base import BaseEntity, BaseCollection
 from cfme.base.ui import MySettingsView
+from cfme.base.login import BaseLoggedInPage
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from widgetastic_manageiq import Table, BootstrapSelect, BreadCrumb, Text, ViewButtonGroup
 
 
-class TimeProfileAddForm(View):
+class TimeProfileForm(View):
     description = Input(id='description')
     scope = BootstrapSelect('profile_type')
     timezone = BootstrapSelect('profile_tz')
     days = BootstrapSwitch(name='all_days')
     hours = BootstrapSwitch(name='all_hours')
-    save_button = Button(VersionPick({Version.lowest(): 'Save', '5.9': 'Add'}))
-    configuration = Dropdown('Configuration')
-    table = Table("//div[@id='main_div']//table")
-    save_edit_button = Button('Save')
-    cancel_button = Button('Cancel')
-    help_block = Text("//span[contains(@class, 'help-block')]")
+    cancel = Button('Cancel')
+    help_block = Text('//span[contains(@class, "help-block")]')
 
 
-class TimeprofileAddEntities(View):
+class TimeProfileEntities(View):
+    table = Table('//div[@id="main_div"]//table')
     breadcrumb = BreadCrumb()
     title = Text('//div[@id="main-content"]//h3')
 
 
-class TimeProfileAddFormView(BaseLoggedInPage):
-    timeprofile_form = View.nested(TimeProfileAddForm)
-    entities = View.nested(TimeprofileAddEntities)
+class TimeProfileView(BaseLoggedInPage):
+    entities = View.nested(TimeProfileEntities)
     mysetting = View.nested(MySettingsView)
-
-
-class TimeProfileAllView(MySettingsView):
-    table = Table("//div[@id='main_div']//table")
-    help_block = Text("//span[contains(@class, 'help-block')]")
     configuration = Dropdown('Configuration')
+
+
+class TimeProfileAllView(TimeProfileView):
 
     @property
     def is_displayed(self):
-        return self.tabs.time_profile.is_active()
+        return self.mysetting.tabs.time_profile.is_active()
 
 
-class Timeprofile(Updateable, Navigatable):
-    def __init__(self, description=None, scope=None, days=None, hours=None, timezone=None,
-                 appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.description = description
-        self.scope = scope
-        self.days = days
-        self.hours = hours
-        self.timezone = timezone
+class TimeProfileAddView(TimeProfileView):
 
-    def create(self, cancel=False):
-        view = navigate_to(self, 'Add')
-        view.timeprofile_form.fill({
-            'description': self.description,
-            'scope': self.scope,
-            'days': self.days,
-            'hours': self.hours,
-            'timezone': self.timezone,
-        })
-        if not cancel:
-            view.timeprofile_form.save_button.click()
-            view.flash.assert_message('Time Profile "{}" was saved'.format(self.description))
+    @View.nested
+    class form(TimeProfileForm):    # noqa
+        add = Button(VersionPick({Version.lowest(): 'Save', '5.9': 'Add'}))
+
+    @property
+    def is_displayed(self):
+        return self.entities.title == 'Time Profile Information'
+
+
+class TimeProfileEditView(TimeProfileView):
+
+    @View.nested
+    class form(TimeProfileForm):    # noqa
+        reset = Button('Reset')
+        save = Button('Save')
+
+    @property
+    def is_displayed(self):
+        return 'Edit' in self.entities.breadcrumb.active_location
+
+
+@attr.s
+class TimeProfile(Updateable, BaseEntity):
+
+    description = attr.ib(default=None)
+    scope = attr.ib(default=None)
+    days = attr.ib(default=True)
+    hours = attr.ib(default=True)
+    timezone = attr.ib(default=None)
 
     def update(self, updates):
+        """
+        This method is used for updating the time_profile
+
+        Args:
+            updates: It the object of the time_profile that we need to update.
+        """
         view = navigate_to(self, 'Edit')
-        changed = view.timeprofile_form.fill({
+        changed = view.form.fill({
             'description': updates.get('description'),
             'scope': updates.get('scope'),
             'days': updates.get('days'),
@@ -83,92 +96,136 @@ class Timeprofile(Updateable, Navigatable):
             'timezone': updates.get('timezone'),
         })
         if changed:
-            view.timeprofile_form.save_edit_button.click()
-            view.flash.assert_message(
-                'Time Profile "{}" was saved'.format(updates.get('description', self.description)))
+            view.form.save.click()
+            view.flash.assert_no_error()
 
-    def copy(self, name=None):
+    def copy(self, description=None, cancel=False):
+        """
+        This method performs the copy of the provided time profile object.
+        Args:
+            description (str) : It's the descriptive name of the new copied time_profile.
+            cancel (bool) : This variable performs cancel operation while copy.
+
+        return: It returns the object of the copied time_profile.
+        """
+
         view = navigate_to(self, 'Copy')
-
-        if name is not None:
-            new_timeprofile = Timeprofile(description=name, scope=self.scope)
-            changed = view.timeprofile_form.fill({
-                'description': name,
+        if description is not None:
+            new_time_profile = self.parent.instantiate(description=description, scope=self.scope)
+            changed = view.form.fill({
+                'description': description,
                 'scope': self.scope,
             })
         else:
-            new_timeprofile = Timeprofile(description="{} copy".format(self.description),
-                                          scope=self.scope)
-            changed = view.timeprofile_form.fill({
+            new_time_profile = self.parent.instantiate(
+                description="{} copy".format(self.description),
+                scope=self.scope
+            )
+            changed = view.form.fill({
                 'description': "{} copy".format(self.description),
                 'scope': self.scope,
             })
 
-        if changed:
-            view.timeprofile_form.save_button.click()
-        return new_timeprofile
+        if not cancel and changed:
+            view.form.add.click()
+            view.flash.assert_no_error()
+            return new_time_profile
 
-    def delete(self):
+
+@attr.s
+class TimeProfileCollection(BaseCollection):
+
+    ENTITY = TimeProfile
+
+    def create(self, description=None, scope=None, days=True, hours=True,
+               timezone=None, cancel=False):
+        """
+        Args:
+            description (str): It's the descriptive name of the time_profile.
+            scope: It's the option 'All User' or 'Current User' from dropdown.
+            days (bool): It's the option to switch on or switch off the days Bootstrap switch.
+            hours (bool): It's the option to switch on or switch off the hours Bootstrap switch.
+            timezone: It's the required Time Zone for the time_profile.
+            cancel (bool) : It's a flag used to cancel or not the create operation.
+
+        return: It returns the object of the newly created time_profile object.
+        """
+
+        time_profile = self.instantiate(description, scope, days, hours, timezone)
+
+        view = navigate_to(self, 'Add')
+        view.form.fill({
+            'description': description,
+            'scope': scope,
+            'days': days,
+            'hours': hours,
+            'timezone': timezone,
+        })
+        if not cancel:
+            view.form.add.click()
+            view.flash.assert_no_error()
+            return time_profile
+
+    def delete(self, cancel=False, *time_objs):
+        """
+        This method performs the delete operation.
+
+        Args:
+            cancel (bool) : It's a flag used for selecting Ok or Cancel from delete confirmation
+             dialogue box
+            time_objs : It's time profile object.
+        """
+
         view = navigate_to(self, 'All')
-        rows = view.table
-        for row in rows:
-            if row.description.text == self.description:
-                row[0].check()
-        view.configuration.item_select("Delete selected Time Profiles", handle_alert=True)
+        for time_obj in time_objs:
+            view.entities.table.row(Description=time_obj.description)[0].check()
+        view.configuration.item_select("Delete selected Time Profiles",
+                                       handle_alert=not cancel)
+        view.flash.assert_no_error()
 
 
-@navigator.register(Timeprofile, 'All')
-class TimeprofileAll(CFMENavigateStep):
+@navigator.register(TimeProfileCollection, 'All')
+class TimeProfileCollectionAll(CFMENavigateStep):
     VIEW = TimeProfileAllView
     prerequisite = NavigateToAttribute('appliance.server', 'MySettings')
 
     def step(self):
-        self.prerequisite_view.tabs.time_profile.select()
+        self.view.mysetting.tabs.time_profile.select()
 
 
-@navigator.register(Timeprofile, 'Add')
-class TimeprofileAdd(CFMENavigateStep):
-    VIEW = TimeProfileAddFormView
+@navigator.register(TimeProfileCollection, 'Add')
+class TimeProfileAdd(CFMENavigateStep):
+    VIEW = TimeProfileAddView
     prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        self.view.configuration.item_select('Add a new Time Profile')
 
     def am_i_here(self):
         return False
 
+
+@navigator.register(TimeProfile, 'Edit')
+class TimeProfileEdit(CFMENavigateStep):
+    VIEW = TimeProfileEditView
+    prerequisite = NavigateToAttribute('parent', 'All')
+
     def step(self):
-        self.prerequisite_view.configuration.item_select('Add a new Time Profile')
-
-
-@navigator.register(Timeprofile, 'Edit')
-class TimeprofileEdit(CFMENavigateStep):
-    VIEW = TimeProfileAddFormView
-    prerequisite = NavigateToSibling('All')
+        self.view.entities.table.row(Description=self.obj.description)[0].check()
+        self.view.configuration.item_select('Edit selected Time Profile')
 
     def am_i_here(self):
         return False
 
-    def step(self):
-        rows = self.prerequisite_view.table
-        for row in rows:
-            if row.description.text == self.obj.description:
-                row[0].check()
 
-        self.prerequisite_view.configuration.item_select('Edit selected Time Profile')
-
-
-@navigator.register(Timeprofile, 'Copy')
-class TimeprofileCopy(CFMENavigateStep):
-    VIEW = TimeProfileAddFormView
-    prerequisite = NavigateToSibling('All')
-
-    def am_i_here(self):
-        return False
+@navigator.register(TimeProfile, 'Copy')
+class TimeProfileCopy(CFMENavigateStep):
+    VIEW = TimeProfileAddView
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
-        rows = self.prerequisite_view.table
-        for row in rows:
-            if row.description.text == self.obj.description:
-                row[0].check()
-        self.prerequisite_view.configuration.item_select('Copy selected Time Profile')
+        self.view.entities.table.row(Description=self.obj.description)[0].check()
+        self.view.configuration.item_select('Copy selected Time Profile')
 
 
 class Visual(Updateable, Navigatable):
@@ -501,7 +558,7 @@ class DefaultView(Updateable, Navigatable):
             button_group_names: either the name of the button_group_name
                                 or list of the button groups to set the
                                 default view for.
-            default: the default view to set. in case that button_group_names
+            defaults: the default view to set. in case that button_group_names
                      is a list, you can either set 1 view and it'll be set
                      for all the button_group_names or you can use a list
                      (default view per button_group_name).
