@@ -26,17 +26,15 @@ pytestmark = [
     test_requirements.chargeback,
 ]
 
+# Allowed deviation between the reported value in the Metering report and the estimated value.
+DEVIATION = 2
+
 
 @pytest.yield_fixture(scope="module")
 def clean_setup_provider(request, has_no_providers_modscope, setup_provider_modscope,
         provider):
     yield
     BaseProvider.clear_providers()
-
-
-def new_credential():
-    return Credential(principal='uid' + '{}'.format(fauxfactory.gen_alphanumeric()),
-        secret='secret')
 
 
 @pytest.yield_fixture(scope="module")
@@ -47,16 +45,16 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
     if not provider.mgmt.does_vm_exist(vm_name):
-        pytest.skip("Skipping test, cu-24x7 VM does not exist")
-    if not provider.mgmt.is_vm_running(vm_name):
-        provider.mgmt.start_vm(vm_name)
-        provider.mgmt.wait_vm_running(vm_name)
+        pytest.skip("Skipping test, {} VM does not exist".format(vm_name))
+    provider.mgmt.start_vm(vm_name)
+    provider.mgmt.wait_vm_running(vm_name)
 
     group_collection = appliance.collections.groups
     cb_group = group_collection.instantiate(description='EvmGroup-user')
     user = appliance.collections.users.create(
         name=fauxfactory.gen_alphanumeric(),
-        credential=new_credential(),
+        credential=Credential(principal='uid' + '{}'.format(fauxfactory.gen_alphanumeric()),
+            secret='secret'),
         email='abc@example.com',
         group=cb_group,
         cost_center='Workload',
@@ -84,6 +82,9 @@ def enable_candu(provider, appliance):
     server_info.enable_server_roles(
         'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
     server_info.disable_server_roles('automate', 'smartstate')
+    # We are enabling C&U data capture for 1)all hosts and clusters and 2)all datastores.
+    # On the UI, this can be set through the Configuration -> Settings -> Region -> C&U collection
+    # tab.
     command = ('Metric::Targets.perf_capture_always = {:storage=>true, :host_and_cluster=>true};')
     appliance.ssh_client.run_rails_command(command, timeout=None)
 
@@ -94,10 +95,8 @@ def enable_candu(provider, appliance):
     appliance.ssh_client.run_rails_command(command, timeout=None)
 
 
-def verify_records_rollups_table(appliance, provider):
+def verify_records_rollups_table(appliance, provider, vm_name):
     # Verify that hourly rollups are present in the metric_rollups table.
-    vm_name = provider.data['cap_and_util']['chargeback_vm']
-
     ems = appliance.db.client['ext_management_systems']
     rollups = appliance.db.client['metric_rollups']
 
@@ -105,8 +104,9 @@ def verify_records_rollups_table(appliance, provider):
         result = (
             appliance.db.client.session.query(rollups.id)
             .join(ems, rollups.parent_ems_id == ems.id)
-            .filter(rollups.capture_interval_name == 'hourly', rollups.resource_name == vm_name,
-            ems.name == provider.name, rollups.timestamp >= date.today())
+            .filter(rollups.capture_interval_name == 'hourly',
+                    rollups.resource_name == vm_name,
+                    ems.name == provider.name, rollups.timestamp >= date.today())
         )
 
     for record in appliance.db.client.session.query(rollups).filter(
@@ -141,26 +141,26 @@ def resource_usage(vm_ownership, appliance, provider):
     # are capturing C&U data and forcing hourly rollups by running these commands through
     # the Rails console.
 
-    def verify_records_metrics_table(appliance, provider):
+    def verify_records_metrics_table(appliance, provider, vm_name):
         # Verify that rollups are present in the metric_rollups table.
-        vm_name = provider.data['cap_and_util']['chargeback_vm']
 
         ems = appliance.db.client['ext_management_systems']
         metrics = appliance.db.client['metrics']
 
-        rc, out = appliance.ssh_client.run_rails_command(
+        # Capture real-time C&U data
+        ret = appliance.ssh_client.run_rails_command(
             "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
             vm.perf_capture('realtime', 2.hour.ago.utc, Time.now.utc)\""
             .format(provider.id, repr(vm_name)))
-        assert rc == 0, "Failed to capture VM C&U data:".format(out)
+        assert ret.rc == 0, "Failed to capture VM C&U data:".format(ret.output)
 
         with appliance.db.client.transaction:
             result = (
                 appliance.db.client.session.query(metrics.id)
                 .join(ems, metrics.parent_ems_id == ems.id)
                 .filter(metrics.capture_interval_name == 'realtime',
-                metrics.resource_name == vm_name,
-                ems.name == provider.name, metrics.timestamp >= date.today())
+                        metrics.resource_name == vm_name,
+                        ems.name == provider.name, metrics.timestamp >= date.today())
             )
 
         for record in appliance.db.client.session.query(metrics).filter(
@@ -173,7 +173,7 @@ def resource_usage(vm_ownership, appliance, provider):
                 return True
         return False
 
-    wait_for(verify_records_metrics_table, [appliance, provider], timeout=600,
+    wait_for(verify_records_metrics_table, [appliance, provider, vm_name], timeout=600,
         fail_condition=False, message='Waiting for VM real-time data')
 
     # New C&U data may sneak in since 1)C&U server roles are running and 2)collection for clusters
@@ -182,14 +182,15 @@ def resource_usage(vm_ownership, appliance, provider):
 
     appliance.server.settings.disable_server_roles(
         'ems_metrics_coordinator', 'ems_metrics_collector')
-    rc, out = appliance.ssh_client.run_rails_command(
+    # Perfrom rollup of C&U data.
+    ret = appliance.ssh_client.run_rails_command(
         "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
-        vm.perf_rollup_range(4.hour.ago.utc, Time.now.utc,'realtime')\"".
+        vm.perf_rollup_range(2.hour.ago.utc, Time.now.utc,'realtime')\"".
         format(provider.id, repr(vm_name)))
-    assert rc == 0, "Failed to rollup VM C&U data:".format(out)
+    assert ret.rc == 0, "Failed to rollup VM C&U data:".format(ret.out)
 
-    wait_for(verify_records_rollups_table, [appliance, provider], timeout=600, fail_condition=False,
-        message='Waiting for hourly rollups')
+    wait_for(verify_records_rollups_table, [appliance, provider, vm_name], timeout=600,
+        fail_condition=False, message='Waiting for hourly rollups')
 
     # Since we are collecting C&U data for > 1 hour, there will be multiple hourly records per VM
     # in the metric_rollups DB table.The values from these hourly records are summed up.
@@ -198,8 +199,9 @@ def resource_usage(vm_ownership, appliance, provider):
         result = (
             appliance.db.client.session.query(rollups.id)
             .join(ems, rollups.parent_ems_id == ems.id)
-            .filter(rollups.capture_interval_name == 'hourly', rollups.resource_name == vm_name,
-            ems.name == provider.name, rollups.timestamp >= date.today())
+            .filter(rollups.capture_interval_name == 'hourly',
+                    rollups.resource_name == vm_name,
+                    ems.name == provider.name, rollups.timestamp >= date.today())
         )
 
     for record in appliance.db.client.session.query(rollups).filter(
@@ -248,13 +250,11 @@ def metering_report(vm_ownership, provider):
     report.delete()
 
 
-# Tests to validate costs reported in the Chargeback report for various metrics.
-# The costs reported in the Chargeback report should be approximately equal to the
-# costs estimated in the chargeback_costs_default/chargeback_costs_custom fixtures.
+# Tests to validate usage reported in the Metering report for various metrics.
+# The usage reported in the report should be approximately equal to the
+# usage estimated in the resource_usage fixture, therefore a small deviation is fine.
 def test_validate_cpu_usage(resource_usage, metering_report):
-    """Test to validate CPU usage.
-       Calculation is based on default Chargeback rate.
-    """
+    """Test to validate CPU usage."""
     for groups in metering_report:
         if groups["CPU Used"]:
             estimated_cpu_usage = resource_usage['cpu_used']
@@ -262,16 +262,13 @@ def test_validate_cpu_usage(resource_usage, metering_report):
             if 'GHz' in usage_from_report:
                 estimated_cpu_usage = estimated_cpu_usage * math.pow(2, -10)
             usage = re.sub(r'[MHz, GHz,]', r'', usage_from_report)
-            assert estimated_cpu_usage - 2.0 <= float(usage) \
-                <= estimated_cpu_usage + 2.0, 'Estimated cost and report cost do not match'
+            assert estimated_cpu_usage - DEVIATION <= float(usage) \
+                <= estimated_cpu_usage + DEVIATION, 'Estimated cost and report cost do not match'
             break
 
 
 def test_validate_memory_usage(resource_usage, metering_report):
-    """Test to validate memory usage.
-       Calculation is based on default Chargeback rate.
-
-    """
+    """Test to validate memory usage."""
     for groups in metering_report:
         if groups["Memory Used"]:
             estimated_memory_usage = resource_usage['memory_used']
@@ -279,36 +276,31 @@ def test_validate_memory_usage(resource_usage, metering_report):
             if 'GB' in usage_from_report:
                 estimated_memory_usage = estimated_memory_usage * math.pow(2, -10)
             usage = re.sub(r'[MB, GB,]', r'', usage_from_report)
-            assert estimated_memory_usage - 2.0 <= float(usage) \
-                <= estimated_memory_usage + 2.0, 'Estimated cost and report cost do not match'
+            assert estimated_memory_usage - DEVIATION <= float(usage) \
+                <= estimated_memory_usage + DEVIATION, 'Estimated cost and report cost do not match'
             break
 
 
 def test_validate_network_usage(resource_usage, metering_report):
-    """Test to validate network usage cost.
-       Calculation is based on default Chargeback rate.
-
-    """
+    """Test to validate network usage cost."""
     for groups in metering_report:
         if groups["Network I/O Used"]:
             estimated_network_usage = resource_usage['network_io']
             usage_from_report = groups["Network I/O Used"]
             usage = re.sub(r'[KBps,]', r'', usage_from_report)
-            assert estimated_network_usage - 2.0 <= float(usage) \
-                <= estimated_network_usage + 2.0, 'Estimated cost and report cost do not match'
+            assert estimated_network_usage - DEVIATION <= float(usage) \
+                <= estimated_network_usage + DEVIATION,\
+                'Estimated cost and report cost do not match'
             break
 
 
 def test_validate_disk_usage(resource_usage, metering_report):
-    """Test to validate disk usage cost.
-       Calculation is based on default Chargeback rate.
-
-    """
+    """Test to validate disk usage cost."""
     for groups in metering_report:
         if groups["Disk I/O Used"]:
             estimated_disk_usage = resource_usage['disk_io_used']
             usage_from_report = groups["Disk I/O Used"]
             usage = re.sub(r'[KBps,]', r'', usage_from_report)
-            assert estimated_disk_usage - 2.0 <= float(usage) \
-                <= estimated_disk_usage + 2.0, 'Estimated cost and report cost do not match'
+            assert estimated_disk_usage - DEVIATION <= float(usage) \
+                <= estimated_disk_usage + DEVIATION, 'Estimated cost and report cost do not match'
             break
