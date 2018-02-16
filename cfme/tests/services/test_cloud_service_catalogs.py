@@ -82,7 +82,7 @@ def test_cloud_catalog_item(appliance, vm_name, setup_provider, provider, dialog
                                catalog_name=image,
                                provider=provider,
                                prov_data=inst_args)
-    request.addfinalizer(catalog_item.delete())
+    request.addfinalizer(catalog_item.delete)
     catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
