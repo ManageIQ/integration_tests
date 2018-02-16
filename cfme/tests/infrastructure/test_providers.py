@@ -27,7 +27,7 @@ pytestmark = [
 
 
 @pytest.mark.sauce
-def test_empty_discovery_form_validation(appliance):
+def test_empty_discovery_form_validation_infra(appliance):
     """ Tests that the flash message is correct when discovery form is empty."""
     discover(None)
     view = appliance.browser.create_view(InfraProvidersDiscoverView)
@@ -35,7 +35,7 @@ def test_empty_discovery_form_validation(appliance):
 
 
 @pytest.mark.sauce
-def test_discovery_cancelled_validation(appliance):
+def test_discovery_cancelled_validation_infra(appliance):
     """ Tests that the flash message is correct when discovery is cancelled."""
     discover(None, cancel=True)
     view = appliance.browser.create_view(InfraProvidersView)
@@ -44,7 +44,7 @@ def test_discovery_cancelled_validation(appliance):
 
 
 @pytest.mark.sauce
-def test_add_cancelled_validation(appliance):
+def test_add_cancelled_validation_infra(appliance):
     """Tests that the flash message is correct when add is cancelled."""
     prov = VMwareProvider()
     prov.create(cancel=True)
@@ -53,7 +53,7 @@ def test_add_cancelled_validation(appliance):
 
 
 @pytest.mark.sauce
-def test_type_required_validation():
+def test_type_required_validation_infra():
     """Test to validate type while adding a provider"""
     prov = InfraProvider()
     with pytest.raises(AssertionError):
@@ -63,7 +63,7 @@ def test_type_required_validation():
     assert not view.add.active
 
 
-def test_name_required_validation():
+def test_name_required_validation_infra():
     """Tests to validate the name while adding a provider"""
     endpoint = VirtualCenterEndpoint(hostname=fauxfactory.gen_alphanumeric(5))
     prov = VMwareProvider(
@@ -78,7 +78,7 @@ def test_name_required_validation():
     assert not view.add.active
 
 
-def test_host_name_required_validation():
+def test_host_name_required_validation_infra():
     """Test to validate the hostname while adding a provider"""
     endpoint = VirtualCenterEndpoint(hostname=None)
     prov = VMwareProvider(
@@ -94,7 +94,7 @@ def test_host_name_required_validation():
     assert not view.add.active
 
 
-def test_name_max_character_validation(request, infra_provider):
+def test_name_max_character_validation_infra(request, infra_provider):
     """Test to validate max character for name field"""
     request.addfinalizer(lambda: infra_provider.delete_if_exists(cancel=False))
     name = fauxfactory.gen_alphanumeric(255)
@@ -103,7 +103,7 @@ def test_name_max_character_validation(request, infra_provider):
     assert infra_provider.exists
 
 
-def test_host_name_max_character_validation():
+def test_host_name_max_character_validation_infra():
     """Test to validate max character for host name field"""
     endpoint = VirtualCenterEndpoint(hostname=fauxfactory.gen_alphanumeric(256))
     prov = VMwareProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
@@ -114,7 +114,7 @@ def test_host_name_max_character_validation():
         assert view.hostname.value == prov.hostname[0:255]
 
 
-def test_api_port_max_character_validation():
+def test_api_port_max_character_validation_infra():
     """Test to validate max character for api port field"""
     endpoint = RHEVMEndpoint(hostname=fauxfactory.gen_alphanumeric(5),
                              api_port=fauxfactory.gen_alphanumeric(16),
