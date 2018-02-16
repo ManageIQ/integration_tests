@@ -2941,8 +2941,13 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         else:
             entities = self._invoke_cmd('get_all_items')
             for entity in entities:
-                elements.append({'name': entity['item']['cells']['Name'],
-                                 'entity_id': entity['item']['id']})
+                try:
+                    name = entity['item']['cells']['Name']
+                except KeyError:
+                    # Floating Ip view has an issue. it doesn't have Name though it should
+                    name = entity['item']['cells']['Instance name']
+
+                elements.append({'name': name, 'entity_id': entity['item']['id']})
         return elements
 
     @property
