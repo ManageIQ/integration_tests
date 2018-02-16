@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.automate.buttons import ButtonGroup
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -19,7 +18,7 @@ pytestmark = [
 # IMPORTANT: This is a canonical test. It shows how a proper test should look like under new order.
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_button_group_crud(request):
+def test_button_group_crud(request, appliance):
     """Test Creating a Button Group
 
     Prerequisities:
@@ -33,15 +32,13 @@ def test_button_group_crud(request):
         * Delete the button group
         * Assert that the button group no longer exists.
     """
-    # Generate an object
-    buttongroup = ButtonGroup(
+    # 1) Create it
+    buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(),
         hover=fauxfactory.gen_alphanumeric(),
-        type=ButtonGroup.SERVICE)
+        type=appliance.collections.button_groups.SERVICE)
     # Ensure it gets deleted after the test
     request.addfinalizer(buttongroup.delete_if_exists)
-    # 1) Create it
-    buttongroup.create()
     # 2) Verify it exists
     assert buttongroup.exists
     # 3) Now the new part, go to the details page
@@ -85,15 +82,13 @@ def test_button_crud(appliance, dialog, request):
         * Delete the button
         * Assert that the button no longer exists.
     """
-    buttongroup = ButtonGroup(
+    buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(),
         hover=fauxfactory.gen_alphanumeric(),
-        type=ButtonGroup.SERVICE)
+        type=appliance.collections.button_groups.SERVICE)
     request.addfinalizer(buttongroup.delete_if_exists)
-    buttongroup.create()
-    button = appliance.collections.buttons.create(
+    button = buttongroup.buttons.create(
         button_class=appliance.collections.buttons.DEFAULT,
-        group=buttongroup,
         text=fauxfactory.gen_alphanumeric(),
         hover=fauxfactory.gen_alphanumeric(),
         dialog=dialog, system="Request", request="InspectMe")
@@ -117,15 +112,13 @@ def test_button_crud(appliance, dialog, request):
 @pytest.mark.provider([InfraProvider], scope='function', selector=ONE)
 @pytest.mark.tier(3)
 def test_button_on_host(appliance, request, provider, setup_provider):
-    buttongroup = ButtonGroup(
+    buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(),
-        hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()))
-    buttongroup.type = buttongroup.HOST
+        hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
+        type=appliance.collections.button_groups.HOST)
     request.addfinalizer(buttongroup.delete_if_exists)
-    buttongroup.create()
-    button = appliance.collections.buttons.create(
+    button = buttongroup.buttons.create(
         button_class=appliance.collections.buttons.DEFAULT,
-        group=buttongroup,
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
         system="Request", request="InspectMe")
@@ -144,12 +137,11 @@ def test_button_avp_displayed(appliance, dialog, request):
         * Locate the section with attribute/value pairs.
     """
     # This is optional, our nav tree does not have unassigned button
-    buttongroup = ButtonGroup(
+    buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
-        type=ButtonGroup.VM_INSTANCE)
+        type=appliance.collections.button_groups.VM_INSTANCE)
     request.addfinalizer(buttongroup.delete_if_exists)
-    buttongroup.create()
     view = navigate_to(appliance.collections.buttons, 'Add')
     for n in range(1, 6):
         assert view.advanced.attribute(n).key.is_displayed

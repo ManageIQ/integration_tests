@@ -8,7 +8,6 @@ from widgetastic_patternfly import Dropdown
 from widgetastic.widget import View
 
 from cfme import test_requirements
-from cfme.automate.buttons import ButtonGroup
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM
@@ -53,14 +52,13 @@ def cls(request, domain):
 
 
 @pytest.yield_fixture(scope="module")
-def testing_group(request):
+def testing_group(appliance, request):
     group_desc = fauxfactory.gen_alphanumeric()
-    group = ButtonGroup(
+    group = appliance.collections.button_groups.create(
         text=group_desc,
         hover=group_desc,
-        type=ButtonGroup.VM_INSTANCE
+        type=appliance.collections.button_groups.VM_INSTANCE
     )
-    group.create()
     yield group
     group.delete_if_exists()
 
@@ -122,9 +120,8 @@ def test_vmware_vimapi_hotadd_disk(
 
     # Button that will invoke the dialog and action
     button_name = fauxfactory.gen_alphanumeric()
-    button = appliance.collections.buttons.create(
+    button = testing_group.buttons.create(
         button_class=appliance.collections.buttons.DEFAULT,
-        group=testing_group,
         text=button_name,
         hover=button_name, system="Request", request=instance.name)
     request.addfinalizer(button.delete_if_exists)

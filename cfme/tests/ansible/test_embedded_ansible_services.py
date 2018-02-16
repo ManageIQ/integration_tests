@@ -6,7 +6,6 @@ import pytest
 from widgetastic_patternfly import BootstrapSelect
 
 from cfme import test_requirements
-from cfme.automate.buttons import ButtonGroup
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogBundle
@@ -144,14 +143,12 @@ def service(appliance, ansible_catalog_item):
 
 @pytest.yield_fixture
 def custom_service_button(appliance, ansible_catalog_item):
-    buttongroup = ButtonGroup(
+    buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(),
-        hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()))
-    buttongroup.type = buttongroup.SERVICE
-    buttongroup.create()
-    button = appliance.collections.buttons.create(
+        hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
+        type=appliance.collections.button_groups.SERVICE)
+    button = buttongroup.buttons.create(
         button_class=appliance.collections.buttons.DEFAULT,
-        group=buttongroup,
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
         dialog=ansible_catalog_item.provisioning["provisioning_dialog_name"],

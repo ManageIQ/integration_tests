@@ -8,7 +8,6 @@ from datetime import timedelta, date
 from cfme import test_requirements
 from cfme.infrastructure.virtual_machines import InfraVmSummaryView
 from cfme.infrastructure.provider import InfraProvider
-from cfme.automate.buttons import ButtonGroup
 from cfme.common.vm import VM
 from cfme.utils.blockers import BZ
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -86,17 +85,15 @@ def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
 
     # Create the vm_retire_extend button and click on it
     grp_name = "grp_{}".format(fauxfactory.gen_alphanumeric())
-    grp = ButtonGroup(
+    grp = appliance.collections.button_groups.create(
         text=grp_name,
         hover=grp_name,
-        type=ButtonGroup.VM_INSTANCE
+        type=appliance.collections.button_groups.VM_INSTANCE
     )
     request.addfinalizer(lambda: grp.delete_if_exists())
-    grp.create()
     btn_name = "btn_{}".format(fauxfactory.gen_alphanumeric())
-    button = appliance.collections.buttons.create(
+    button = grp.buttons.create(
         button_class=appliance.collections.buttons.DEFAULT,
-        group=grp,
         text=btn_name,
         hover=btn_name,
         system="Request",
