@@ -341,6 +341,7 @@ class ServerInformation(Updateable, Pretty):
                         conf.cfme_data.vm_console.webmks_console.webmks_sdk_extract_location))
 
         view = navigate_to(self.appliance.server, 'Server')
+        view.browser.refresh()
         updated = view.vmware_console.fill(updates)
         self._save_action(view, updated, reset)
 
