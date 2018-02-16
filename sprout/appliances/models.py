@@ -1096,7 +1096,7 @@ class AppliancePool(MetadataMixin):
     override_memory = models.IntegerField(null=True, blank=True)
     override_cpu = models.IntegerField(null=True, blank=True)
 
-    provider_type = models.CharField(max_length=32, default='')
+    provider_type = models.CharField(max_length=32, null=True, blank=True)
 
     class Meta:
         ordering = ['id']
