@@ -187,8 +187,6 @@ def shepherd(request):
 
 @only_authenticated
 def versions_for_group(request):
-    if not request.user.is_authenticated():
-        return go_home(request)
     group_id = request.POST.get("stream")
     latest_version = None
     preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
@@ -221,8 +219,6 @@ def versions_for_group(request):
 
 @only_authenticated
 def date_for_group_and_version(request):
-    if not request.user.is_authenticated():
-        return go_home(request)
     group_id = request.POST.get("stream")
     latest_date = None
     preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
@@ -263,13 +259,14 @@ def date_for_group_and_version(request):
 
 @only_authenticated
 def providers_for_date_group_and_version(request):
-    if not request.user.is_authenticated():
-        return go_home(request)
     total_provisioning_slots = 0
     total_appliance_slots = 0
     total_shepherd_slots = 0
     shepherd_appliances = {}
     group_id = request.POST.get("stream")
+    provider_type = request.POST.get("provider_type")
+    if provider_type == 'any' or not provider_type:
+        provider_type = None
     preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
     container = request.POST.get("container", "false").lower() == "true"
     container_q = ~Q(container=None) if container else Q(container=None)
@@ -316,7 +313,15 @@ def providers_for_date_group_and_version(request):
             providers = Template.objects.filter(
                 container_q, **filters).values("provider").distinct()
             providers = sorted([p.values()[0] for p in providers])
-            providers = [Provider.objects.get(id=provider) for provider in providers]
+            providers = Provider.objects.filter(id__in=providers)
+            if provider_type is None:
+                providers = list(providers)
+            else:
+                providers = [
+                    provider
+                    for provider
+                    in providers
+                    if provider.provider_type == provider_type]
             for provider in providers:
                 appl_filter = dict(
                     appliance_pool=None, ready=True, template__provider=provider,
@@ -356,6 +361,7 @@ def my_appliances(request, show_user="my"):
         pools = AppliancePool.objects.order_by("id")
     else:
         pools = AppliancePool.objects.filter(owner__username=show_user).order_by("id")
+    pools = pools.select_related('group', 'provider', 'owner')
     page = request.GET.get("page")
     try:
         per_page = int(request.GET.get("per_page", 5))
@@ -423,6 +429,7 @@ def my_appliances(request, show_user="my"):
                 per_pool_quota = remaining_vms
     per_pool_quota_enabled = per_pool_quota is not None
     can_change_hw = request.user.has_perm('appliances.can_modify_hw')
+    provider_types = Provider.get_available_provider_types(request.user)
     return render(request, 'appliances/my_appliances.html', locals())
 
 

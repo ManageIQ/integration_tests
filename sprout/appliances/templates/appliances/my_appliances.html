@@ -148,12 +148,15 @@ $(document).ready(function() {
         $.ajax({
                 type: "POST",
                 url: "{% url 'providers_for_date_group_and_version' %}",
-                data: {stream: $('select#stream').val(), version: $('select#version').val(), date: $('select#date').val(), preconfigured: $("#preconfigured").is(":checked"), container: $("#container").is(":checked")},
+                data: {stream: $('select#stream').val(), version: $('select#version').val(), date: $('select#date').val(), preconfigured: $("#preconfigured").is(":checked"), container: $("#container").is(":checked"), provider_type: $('select#provider_type').val()},
                 dataType: 'html'
          }).done(function(data){
             replaceSelectContents('provider', data, true)
          });
     });
+    $('select#provider_type').change(function(){
+        $("select#stream").trigger("change");
+    })
 
     // Initialize the button
     $("select#stream").trigger("change");
@@ -603,6 +606,19 @@ $(document).ready(function() {
                   </select>
               </div>
             </div>
+
+            <div class="form-group">
+              <label for="provider" class="col-sm-3 control-label">Select provider type:</label>
+              <div class="col-sm-8">
+                  <select class="form-control selectpicker" id="provider_type" name="provider_type" data-live-search="true" data-size="6">
+                    <option value="any">any (recommended)</option>
+                    {% for provider_type in provider_types %}
+                    <option value="{{ provider_type }}">{{ provider_type }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+            </div>
+
             <div class="form-group">
               <label for="provider" class="col-sm-3 control-label">Select specific provider:</label>
               <div class="col-sm-8">
