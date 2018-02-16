@@ -896,8 +896,8 @@ class Vm(VM):
                     # -- block end --
                     row[unit_column].fill(disk.size_unit)
                     row.mode.fill(mode)
+                    row.dependent.fill(dependent)
                 row.size.fill(disk.size)
-                row.dependent.fill(dependent)
                 row.actions.widget.click()
                 message = 'Add Disks'
             elif action == 'delete':
