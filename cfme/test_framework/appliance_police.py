@@ -24,11 +24,10 @@ class AppliancePoliceException(Exception):
 
 
 @pytest.fixture(autouse=True, scope="function")
-def appliance_police():
+def appliance_police(appliance):
     if not store.slave_manager:
         return
     try:
-        appliance = store.current_appliance
         available_ports = {
             'ssh': (appliance.hostname, appliance.ssh_port),
             'https': (appliance.hostname, appliance.ui_port),
