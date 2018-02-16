@@ -272,11 +272,11 @@ def host(provider, setup_provider_modscope):
 def host_policy(appliance, host, policy_collection, name_suffix):
     control_policy = policy_collection.create(
         policies.HostControlPolicy,
-        "action_testing: policy {}".format(name_suffix)
+        "action_testing: host policy {}".format(name_suffix)
     )
     policy_profile_collection = appliance.collections.policy_profiles
     policy_profile = policy_profile_collection.create(
-        "action_testing: policy profile {}".format(name_suffix),
+        "action_testing: host policy profile {}".format(name_suffix),
         policies=[control_policy]
     )
     host.assign_policy_profiles(policy_profile.description)
