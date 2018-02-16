@@ -349,7 +349,11 @@ class WidgetasticTaggable(object):
         """
         view = navigate_to(self, 'Details')
         tags = []
-        tag_table = view.entities.smart_management
+        entities = view.entities
+        if getattr(entities, 'smart_management', False):
+            tag_table = entities.smart_management
+        else:
+            tag_table = entities.summary('Smart Management')
         tags_text = tag_table.get_text_of(tenant)
         if tags_text != 'No {} have been assigned'.format(tenant):
             for tag in list(tags_text):
