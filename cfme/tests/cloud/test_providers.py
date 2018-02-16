@@ -9,6 +9,7 @@ from widgetastic.exceptions import MoveTargetOutOfBoundsException
 
 from cfme.utils import error
 from cfme.base.credential import Credential
+from cfme.cloud.instance import Instance
 from cfme.cloud.provider import discover, wait_for_a_provider, CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
@@ -333,6 +334,35 @@ def test_openstack_provider_has_api_version():
     view = navigate_to(prov, 'Add')
     view.fill({"prov_type": "OpenStack"})
     assert view.api_version.is_displayed, "API version select is not visible"
+
+
+@pytest.mark.tier(3)
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider))
+def test_select_key_pair_none_while_provisioning(request, has_no_cloud_providers, provider):
+    """
+        GH Issue: https://github.com/ManageIQ/manageiq/issues/10575
+
+        Requirement: Have an ec2 provider with single key pair
+                    (For now available in South America (Sao Paulo) region)
+        1. Compute -> Cloud -> Instances
+        2. Click on Provision Instances in Toolbar
+        3. Go to Properties
+        4. Select None in Guest Access Key Pair
+        5. None should be selected
+    """
+    provider.region_name = 'South America (Sao Paulo)'
+    request.addfinalizer(provider.delete_if_exists)
+
+    provider.create()
+    provider.validate()
+
+    view = navigate_to(Instance, 'Provision')
+    view.form.image_table[0].click()
+    view.form.continue_button.click()
+
+    view.form.properties.guest_keypair.fill('<None>')
+    # check drop down was updated with selected value
+    assert view.form.properties.guest_keypair.read() == '<None>'
 
 
 class TestProvidersRESTAPI(object):
