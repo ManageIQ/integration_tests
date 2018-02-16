@@ -2654,11 +2654,13 @@ class BaseQuadIconEntity(ParametrizedView, ClickableMixin):
     """
     PARAMETERS = ('entity_id',)
     ROOT = ParametrizedLocator('.//table[./tbody/tr/td/*[(self::a or self::span) and '
-                               'substring(@href, string-length(@href)'
+                               'substring(substring-before(@href, "?"), '
+                               'string-length(substring-before(@href, "?"))'
                                '-string-length("/{entity_id}")+1)="/{entity_id}"]]')
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
     label = Text(locator=ParametrizedLocator('./tbody/tr/td/*[(self::a or self::span) and '
-                                             'substring(@href, string-length(@href)-'
+                                             'substring(substring-before(@href, "?"), '
+                                             'string-length(substring-before(@href, "?"))-'
                                              'string-length("/{entity_id}")+1)="/{entity_id}"]'))
     checkbox = Checkbox(locator='./tbody/tr/td/input[@type="checkbox"]')
     QUADRANT = './/div[@class="flobj {pos}72"]/*[self::p or self::img or self::div]'
@@ -2707,7 +2709,8 @@ class BaseTileIconEntity(ParametrizedView):
     """
     PARAMETERS = ('entity_id',)
     ROOT = ParametrizedLocator('.//table[.//table[./tbody/tr/td/*[(self::a or self::span) and '
-                               'substring(@href, string-length(@href)-'
+                               'substring(substring-before(@href, "?"), '
+                               'string-length(substring-before(@href, "?"))-'
                                'string-length("/{entity_id}")+1)="/{entity_id}"]]]')
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
     quad_icon = ParametrizedView.nested(BaseQuadIconEntity)
@@ -3581,7 +3584,7 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
         if self.browser.product_version < '5.9':
             br = self.browser
             for el in br.elements(self.elements):
-                el_id = int(br.get_attribute('href', el).split('/')[-1])
+                el_id = br.get_attribute('href', el).split('?')[0].split('/')[-1]
                 el_name = br.get_attribute('title', el)
                 elements.append({'name': el_name, 'entity_id': el_id})
         else:
