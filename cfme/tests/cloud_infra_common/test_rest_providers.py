@@ -4,6 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.common.provider import CloudInfraProvider
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import (
@@ -62,6 +63,12 @@ def test_query_provider_attributes(provider, provider_rest, soft_assert):
                 continue
             if failure.name == 'flavors' and BZ(
                     1545240, forced_streams=['5.9', 'upstream']).blocks:
+                continue
+        if provider.one_of(RHEVMProvider):
+            # once BZ1546112 is fixed other failure than internal server
+            # error is expected
+            if failure.name in ('cloud_networks', 'cloud_subnets', 'security_groups') and BZ(
+                    1546112, forced_streams=['5.9', 'upstream']).blocks:
                 continue
         soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
             failure.type, failure.name, failure.response.status_code, failure.error))
