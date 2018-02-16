@@ -14,7 +14,8 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import PaginationPane, Table, ReportToolBarViewSelector
+from widgetastic_manageiq import (PaginationPane, Table, ReportToolBarViewSelector,
+                                  NonJSPaginationPane)
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 from . import CloudIntelReportsView, ReportsMultiBoxSelect
 
@@ -311,7 +312,8 @@ class CustomReport(Updateable, Navigatable):
 class CustomSavedReportDetailsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
     table = VanillaTable(".//div[@id='report_html_div']/table")
-    paginator = PaginationPane()
+    # PaginationPane() is not working on Report Details page
+    paginator = View.nested(NonJSPaginationPane)
     view_selector = View.nested(ReportToolBarViewSelector)
 
     @ParametrizedView.nested
@@ -506,6 +508,7 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
         """
         cls.path = path
         view = navigate_to(cls, "Info")
+        view.browser.refresh()  # CFME-Issue on 5.8
         assert view.is_displayed
         view.report_info.queue_button.click()
         view.flash.assert_no_error()
