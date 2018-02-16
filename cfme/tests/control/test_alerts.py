@@ -271,10 +271,12 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider
     vm.wait_for_vm_state_change(vm.STATE_OFF)
     for i in range(5):
         vm.power_control_from_cfme(option=vm.POWER_ON, cancel=False)
-        wait_for(lambda: provider.mgmt.is_vm_running(vm.name), num_sec=300)
+        wait_for(lambda: provider.mgmt.is_vm_running(vm.name), num_sec=300,
+                 message="Check if vm is running")
         vm.wait_for_vm_state_change(vm.STATE_ON)
         vm.power_control_from_cfme(option=vm.POWER_OFF, cancel=False)
-        wait_for(lambda: provider.mgmt.is_vm_stopped(vm.name), num_sec=300)
+        wait_for(lambda: provider.mgmt.is_vm_stopped(vm.name), num_sec=300,
+                 message="Check if vm is stopped")
         vm.wait_for_vm_state_change(vm.STATE_OFF)
 
     wait_for_alert(smtp_test, alert, delay=16 * 60)

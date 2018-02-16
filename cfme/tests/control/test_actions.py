@@ -336,7 +336,7 @@ def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, policy_
     vm.stop_vm()
     # Wait for VM powered on by CFME
     try:
-        wait_for(vm.is_vm_running, num_sec=600, delay=5)
+        wait_for(vm.is_vm_running, num_sec=600, delay=5, message="Check if a vm is running")
     except TimedOutError:
         pytest.fail("CFME did not power on the VM {}".format(vm.name))
 
@@ -362,7 +362,7 @@ def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, policy_
     vm.start_vm()
     # Wait for VM powered off by CFME
     try:
-        wait_for(vm.is_vm_stopped, num_sec=600, delay=5)
+        wait_for(vm.is_vm_stopped, num_sec=600, delay=5, message="Check if a vm is stopped")
     except TimedOutError:
         pytest.fail("CFME did not power off the VM {}".format(vm.name))
 
@@ -387,7 +387,7 @@ def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, poli
     vm.start_vm()
     # Wait for VM be suspended by CFME
     try:
-        wait_for(vm.is_vm_suspended, num_sec=600, delay=5)
+        wait_for(vm.is_vm_suspended, num_sec=600, delay=5, message="Check if a vm is suspended")
     except TimedOutError:
         pytest.fail("CFME did not suspend the VM {}".format(vm.name))
 
@@ -412,7 +412,7 @@ def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
     # Request VM's start (through UI)
     vm.crud.power_control_from_cfme(option=vm.crud.POWER_ON, cancel=False)
     try:
-        wait_for(vm.is_vm_running, num_sec=600, delay=5)
+        wait_for(vm.is_vm_running, num_sec=600, delay=5, message="Check if vm is running")
     except TimedOutError:
         pass  # VM did not start, so that's what we want
     else:
@@ -435,7 +435,8 @@ def test_action_prevent_vm_retire(request, vm, vm_on, policy_for_testing):
     request.addfinalizer(policy_for_testing.assign_events)
     vm.crud.retire()
     try:
-        wait_for(lambda: vm.crud.is_retired, num_sec=600, delay=15)
+        wait_for(lambda: vm.crud.is_retired, num_sec=600, delay=15,
+                 message="Waiting for vm retiring")
     except TimedOutError:
         pass
     else:
@@ -490,7 +491,8 @@ def test_action_prevent_host_ssa(request, appliance, host, host_policy):
     try:
         wait_for(
             lambda: _scan() != original,
-            num_sec=60, delay=5, fail_func=view.browser.refresh)
+            num_sec=60, delay=5, fail_func=view.browser.refresh,
+            message="Check if Drift History field is changed")
     except TimedOutError:
             rc, _ = appliance.ssh_client.run_command("grep 'Prevent current event from proceeding.*"
                 "Host Analysis Request.*{}' /var/www/miq/vmdb/log/policy.log".format(host.name))

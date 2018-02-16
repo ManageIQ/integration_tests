@@ -58,7 +58,8 @@ class TestConditionsRESTAPI(object):
                 lambda: not appliance.rest_api.collections.conditions.find_by(
                     name=condition.name),
                 num_sec=100,
-                delay=5
+                delay=5,
+                message="Check if a condition deleted"
             )
 
             with error.expected('ActiveRecord::RecordNotFound'):
@@ -105,6 +106,7 @@ class TestConditionsRESTAPI(object):
                     description=new[index]['description']) or False,
                 num_sec=100,
                 delay=5,
+                message="Find a test condition"
             )
             condition.reload()
             assert condition.description == edited[index].description == record[0].description
@@ -142,10 +144,10 @@ class TestPoliciesRESTAPI(object):
             assert_response(appliance)
 
             wait_for(
-                lambda: not appliance.rest_api.collections.policies.find_by(
-                    name=policy.name),
+                lambda: not appliance.rest_api.collections.policies.find_by(name=policy.name),
                 num_sec=100,
-                delay=5
+                delay=5,
+                message="Check if a policy doesn't exist"
             )
 
             with error.expected('ActiveRecord::RecordNotFound'):
@@ -216,6 +218,7 @@ class TestPoliciesRESTAPI(object):
                     description=new[index]['description']) or False,
                 num_sec=100,
                 delay=5,
+                message="Find a policy"
             )
             policy.reload()
             assert policy.description == edited[index].description == record[0].description
