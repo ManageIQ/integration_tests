@@ -5,8 +5,8 @@ import pytest
 from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
-from cfme.services.catalogs.catalog_item import CatalogBundle
-from cfme.services.catalogs.catalog_item import CatalogItem
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.services.catalogs.catalog_item import CatalogBundle, CatalogItem, EditCatalogItemView
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import error
 from cfme.utils.blockers import BZ
@@ -119,7 +119,6 @@ def test_no_template_catalog_item(provider, provisioning, setup_provider, vm_nam
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1540592, forced_streams=['5.9'])])
 def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_item):
     """Tests edit catalog item after deleting provider
     Metadata:
@@ -127,7 +126,15 @@ def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_
     """
     catalog_item.create()
     provider.delete(cancel=False)
-    catalog_item.update({'description': 'my edited description'})
+    changes = {'description': 'my edited description'}
+    if provider.appliance.version > '5.9.0.20' and provider.one_of(RHEVMProvider):
+        with pytest.raises(AssertionError):
+            catalog_item.update(changes)
+        view = provider.create_view(EditCatalogItemView)
+        view.flash.assert_message("'Environment/Cluster Name' is required", t='error')
+        view.flash.assert_message("'Network/Network' is required", t='error')
+    else:
+        catalog_item.update(changes)
 
 
 @pytest.mark.tier(3)
