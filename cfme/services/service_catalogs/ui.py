@@ -15,7 +15,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.blockers import BZ
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import Accordion, ManageIQTree, DialogFieldDropDownList
+from widgetastic_manageiq import Accordion, ManageIQTree
 
 
 class ServicesCatalogView(BaseLoggedInPage):
@@ -64,12 +64,15 @@ class OrderForm(ServicesCatalogView):
         param_input = Input(id=ParametrizedString("param_{key}"))
         dropdown = VersionPick({
             Version.lowest(): BootstrapSelect(Parameter("key")),
-            "5.9": DialogFieldDropDownList(ParametrizedLocator(".//div[@input-id={key|quote}]"))
+            "5.9": BootstrapSelect(locator=ParametrizedString(
+                ".//div[contains(@class, 'bootstrap-select') and "
+                "select[@id='{key}']]"))
         })
         param_dropdown = VersionPick({
             Version.lowest(): BootstrapSelect(ParametrizedString("param_{key}")),
-            "5.9": DialogFieldDropDownList(
-                ParametrizedLocator(".//div[@input-id='param_{key}']"))
+            "5.9": BootstrapSelect(locator=ParametrizedString(
+                ".//div[contains(@class, 'bootstrap-select') and "
+                "select[@id='param_{key}']]"))
         })
 
         @property
