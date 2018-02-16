@@ -89,15 +89,25 @@ def test_vm_reconfig_add_remove_disk_cold(
         size=500, size_unit='MB', type=disk_type, mode=disk_mode)
 
     add_disk_request = small_vm.reconfigure(new_config)
+    # Add disk request verification
     wait_for(add_disk_request.is_succeeded, timeout=360, delay=45,
-             fail_func=small_vm.refresh_relationships,
              message="confirm that disk was added")
+    # Add disk UI verification
+    wait_for(
+        lambda: small_vm.configuration.num_disks == new_config.num_disks, timeout=360, delay=45,
+        fail_func=small_vm.refresh_relationships,
+        message="confirm that disk was added")
     assert small_vm.configuration.num_disks == new_config.num_disks,\
         "Disk wasn't added to VM config"
     remove_disk_request = small_vm.reconfigure(orig_config)
+    # Remove disk request verification
     wait_for(remove_disk_request.is_succeeded, timeout=360, delay=45,
-             fail_func=small_vm.refresh_relationships,
              message="confirm that previously-added disk was removed")
+    # Remove disk UI verification
+    wait_for(
+        lambda: small_vm.configuration.num_disks == orig_config.num_disks, timeout=360, delay=45,
+        fail_func=small_vm.refresh_relationships,
+        message="confirm that previously-added disk was removed")
     assert small_vm.configuration.num_disks == orig_config.num_disks,\
         "Disk wasn't removed from VM config"
 
