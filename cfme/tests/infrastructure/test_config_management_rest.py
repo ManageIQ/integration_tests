@@ -5,7 +5,7 @@ import fauxfactory
 
 from cfme import test_requirements
 from cfme.utils import error
-from cfme.utils.rest import assert_response
+from cfme.utils.rest import assert_response, query_resource_attributes
 from cfme.utils.testgen import config_managers, generate
 from cfme.utils.wait import wait_for
 
@@ -80,6 +80,13 @@ def _check_edited_authentications(appliance, authentications, new_names):
 
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type != 'Ansible Tower')
 class TestAuthenticationsRESTAPI(object):
+    def test_query_authentications_attributes(self, authentications, soft_assert):
+        """Tests access to authentication attributes.
+
+        Metadata:
+            test_flag: rest
+        """
+        query_resource_attributes(authentications[0], soft_assert=soft_assert)
 
     def test_authentications_edit_single(self, appliance, authentications):
         """Tests editing single authentication at a time.
