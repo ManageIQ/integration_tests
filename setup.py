@@ -127,6 +127,7 @@ setup(
             'network_security_groups = cfme.networks.security_group:SecurityGroupCollection',
             'network_subnets = cfme.networks.subnet:SubnetCollection',
             'network_topology_elements = cfme.networks.topology:NetworkTopologyElementsCollection',
+            'network_floating_ips = cfme.networks.floating_ips:FloatingIpCollection',
             'requests = cfme.services.requests:RequestCollection',
             'resource_pools = cfme.infrastructure.resource_pool:ResourcePoolCollection',
             'volumes = cfme.storage.volume:VolumeCollection',

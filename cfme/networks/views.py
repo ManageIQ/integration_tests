@@ -713,3 +713,63 @@ class OneProviderSecurityGroupView(BaseLoggedInPage):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Providers'] and
                 self.title.text == title)
+
+
+class FloatingIpToolBar(View):
+    """ Represents floating ips toolbar and its controls """
+    policy = Dropdown(text='Policy')
+    download = Dropdown(text='Download')
+    view_selector = View.nested(ItemsToolBarViewSelector)
+
+
+class FloatingIpDetailsToolBar(View):
+    """ Represents toolbar of summary of port """
+    policy = Dropdown(text='Policy')
+    download = Button(title='Download summary in PDF format')
+
+
+class FloatingIpDetailsSideBar(View):
+    """ Represents left side bar of floating ip details """
+    @View.nested
+    class properties(Accordion):  # noqa
+        ACCORDION_NAME = "Properties"
+        tree = ManageIQTree()
+
+    @View.nested
+    class relationships(Accordion):  # noqa
+        ACCORDION_NAME = "Relationships"
+        tree = ManageIQTree()
+
+
+class FloatingIpEntities(BaseEntitiesView):
+    """ Represents central view where all QuadIcons, etc are displayed """
+    pass
+
+
+class FloatingIpView(BaseLoggedInPage):
+    """ Represents whole All FloatingIP page """
+    toolbar = View.nested(FloatingIpToolBar)
+    including_entities = View.include(FloatingIpEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        return (self.navigation.currently_selected == ['Networks', 'Floating IPs'] and
+                self.entities.title.text == 'Floating IPs')
+
+
+class FloatingIpDetailsView(BaseLoggedInPage):
+    """ Represents detail view of floating ip """
+    toolbar = View.nested(FloatingIpDetailsToolBar)
+    sidebar = View.nested(FloatingIpDetailsSideBar)
+
+    @View.nested
+    class entities(View):  # noqa
+        """ Represents details page when it's switched to Summary/Table view """
+        properties = SummaryTable(title="Properties")
+        relationships = SummaryTable(title="Relationships")
+        smart_management = SummaryTable(title="Smart Management")
+
+    @property
+    def is_displayed(self):
+        return (self.navigation.currently_selected == ['Networks', 'Floating IPs'] and
+                self.title.text == '{} (Summary)'.format(self.context['object'].address))
