@@ -15,6 +15,10 @@ def test_appliance_console_cli_set_hostname(appliance):
 def test_appliance_console_cli_internal_fetch_key(
         app_creds, temp_appliance_unconfig_funcscope, appliance):
     fetch_key_ip = appliance.hostname
+
+    if not temp_appliance_unconfig_funcscope.unpartitioned_disks:
+        temp_appliance_unconfig_funcscope.configure_rhos_db_disk()
+
     temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_internal_fetch_key(
         0, 'localhost', app_creds['username'], app_creds['password'], 'vmdb_production',
         temp_appliance_unconfig_funcscope.unpartitioned_disks[0], fetch_key_ip,
