@@ -75,20 +75,20 @@ class EditMyServiceView(ServiceEditForm):
     @property
     def is_displayed(self):
         return (
-            self.in_myservices and
+            self.name.is_displayed and
             self.title.text == "Edit Service"
         )
 
 
 class SetOwnershipView(SetOwnershipForm):
-    title = Text(locator='//h4[@id="myModalLabel"]')
+    title = Text(locator='//*[@id="myModalLabel"]')
 
     save_button = Button('Save')
 
     @property
     def is_displayed(self):
         return (
-            self.in_myservices and
+            self.select_owner.is_displayed and
             self.title.text == 'Set Service Ownership')
 
 
@@ -108,7 +108,6 @@ class TagPageView(TagForm):
     @property
     def is_displayed(self):
         return (
-            self.in_myservices and
             self.title.text == 'Edit Tags' and
             self.tag_category.is_displayed and
             self.tag_name.is_displayed)
@@ -123,7 +122,7 @@ class RemoveServiceView(MyServicesView):
     @property
     def is_displayed(self):
         return (
-            self.in_myservices and
+            self.remove.is_displayed and
             self.title.text == 'Remove Service')
 
 
@@ -136,7 +135,7 @@ class RetireServiceView(MyServicesView):
     @property
     def is_displayed(self):
         return (
-            self.in_myservices and
+            self.retire.is_displayed and
             self.title.text == 'Retire Service Now')
 
 
@@ -247,6 +246,11 @@ class Details(SSUINavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
+        wait_for(
+            lambda: self.prerequisite_view.service.is_displayed(self.obj.name),
+            delay=5, num_sec=300,
+            message="waiting for view to be displayed"
+        )
         self.prerequisite_view.service.click_at(self.obj.name)
 
 
