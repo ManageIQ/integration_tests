@@ -5,7 +5,6 @@
 """
 
 from collections import Iterable
-from numbers import Number
 from time import sleep
 from threading import Thread, Event as ThreadEvent
 
@@ -13,53 +12,6 @@ from cfme.utils.log import create_sublogger
 from manageiq_client.filters import Q
 
 logger = create_sublogger('events')
-
-
-class EventTool(object):
-    """ EventTool serves as a wrapper to getting the events via REST API.
-
-    :var TARGET_TYPES: Mapping of object types to REST API collections.
-    """
-    TARGET_TYPES = {
-        # target_type: target_rest
-        'VmOrTemplate': 'vms',
-        'Host': 'hosts',
-        'Service': 'services',
-    }
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    @property
-    def event_streams(self):
-        """ Event streams REST API collection."""
-        return self.appliance.rest_api.collections.event_streams
-
-    def process_id(self, target_type, target_name):
-        """ Resolves id, let it be a string or an id.
-
-        In case the ``target_type`` is defined in the :py:const:`OBJECT_TABLE`, you can pass a
-        string with object's name.
-
-        Args:
-            target_type: What kind of object is the target of the event (VmOrTemplate, Host...)
-            target_name: An id or a name of the object.
-
-        Returns:
-            :py:class:`int` with id of the object in the database.
-        """
-        if isinstance(target_name, Number):
-            return target_name
-        if target_type not in self.TARGET_TYPES:
-            raise TypeError(
-                ('Type {} is not specified in the auto-coercion TARGET_TYPES. '
-                 'Pass a real id of the object or extend the table.').format(target_type))
-        target_rest = self.TARGET_TYPES[target_type]
-        target_collection = getattr(self.appliance.rest_api.collections, target_rest)
-        o = target_collection.filter(Q('name', '=', target_name))
-        if not o:
-            raise ValueError('{} with name {} not found.'.format(target_type, target_name))
-        return o[0].id
 
 
 class EventAttr(object):
@@ -95,22 +47,17 @@ class EventAttr(object):
 class Event(object):
     """ Event represents either event received by REST API or an expected event.
 
-    :var DEFAULT_ATTRS: List of default attributes to process.
+    :var TARGET_TYPES: Mapping of object types to REST API collections.
     """
-    DEFAULT_ATTRS = [
-        'created_on',
-        'event_type',
-        'href',
-        'id',
-        'message',
-        'source',
-        'target_id',
-        'target_type',
-        'timestamp',
-    ]
+    TARGET_TYPES = {
+        # target_type: target_rest
+        'VmOrTemplate': 'vms',
+        'Host': 'hosts',
+        'Service': 'services',
+    }
 
-    def __init__(self, event_tool, *args):
-        self._tool = event_tool
+    def __init__(self, appliance, *args):
+        self._appliance = appliance
         self.event_attrs = {}  # container for EventAttr objects
 
         for arg in args:
@@ -124,15 +71,39 @@ class Event(object):
                             self.event_attrs.values()])
         return "BaseEvent({})".format(params)
 
+    def process_id(self, target_type, target_name):
+        """ Resolves id by target name.
+
+        In case the ``target_type`` is defined in the :py:const:`OBJECT_TABLE`, you can pass a
+        string with object's name.
+
+        Args:
+            target_type: What kind of object is the target of the event (VmOrTemplate, Host...)
+            target_name: An id or a name of the object.
+
+        Returns:
+            :py:class:`int` with id of the object in the database.
+        """
+        if target_type not in self.TARGET_TYPES:
+            raise TypeError(
+                ('Type {} is not specified in the auto-coercion TARGET_TYPES. '
+                 'Pass a real id of the object or extend the table.').format(target_type))
+        target_rest = self.TARGET_TYPES[target_type]
+        target_collection = getattr(self._appliance.rest_api.collections, target_rest)
+        o = target_collection.filter(Q('name', '=', target_name))
+        if not o:
+            raise ValueError('{} with name {} not found.'.format(target_type, target_name))
+        return o[0].id
+
     def add_target_id(self):
         """ Resolves target_id by target_type and target name."""
         if 'target_name' in self.event_attrs and 'target_id' not in self.event_attrs:
             try:
-                target_id = self._tool.process_id(self.event_attrs['target_type'].value,
-                                                  self.event_attrs['target_name'].value)
+                target_id = self.process_id(self.event_attrs['target_type'].value,
+                                            self.event_attrs['target_name'].value)
                 self.event_attrs['target_id'] = EventAttr(**{'target_id': target_id})
             except ValueError:
-                # Target isn't added yet.
+                # Target isn't added yet. Need to wait
                 pass
 
     def matches(self, evt):
@@ -145,27 +116,18 @@ class Event(object):
             return True
 
     def add_attrs(self, *attrs):
-        """ Adds an EventAttr to event.
-
-        This method allows to add an attribute that are in :py:const:``DEFAULT_ATTRS`` to event.
-        """
+        """ Adds an EventAttr to event."""
         if not isinstance(attrs, Iterable):
             raise ValueError("incorrect parameters are passed {}".format(attrs))
 
         for attr in attrs:
-            if attr.name == 'target_name':
-                # This attribute will be converted to target_id during matching.
-                self.event_attrs[attr.name] = attr
-            elif attr.name in self.DEFAULT_ATTRS:
-                self.event_attrs[attr.name] = attr
-            else:
-                logger.warning('The attribute {} is absent in default attributes. '
-                               'Ignoring.'.format(attr.name))
+            self.event_attrs[attr.name] = attr
         return self
 
     def build_from_entity(self, event_entity):
-        for key in self.DEFAULT_ATTRS:
-            self.add_attrs(EventAttr(**{key: getattr(event_entity, key, None)}))
+        """ Builds Event object from event Entity"""
+        for key, value in event_entity['_data'].items():
+            self.add_attrs(EventAttr(**{key: value}))
         return self
 
 
@@ -175,21 +137,20 @@ class EventListener(Thread):
 
     :var FILTER_ATTRS: List of filters used in REST API call
     """
-    FILTER_ATTRS = [
-        'event_type',
-        'target_type',
-        'target_id',
-        'source'
-    ]
+    FILTER_ATTRS = ['event_type', 'target_type', 'target_id', 'source']
 
     def __init__(self, appliance):
         super(EventListener, self).__init__()
         self._appliance = appliance
-        self._tool = EventTool(self._appliance)
 
         self._events_to_listen = []
         self._last_processed_id = None  # this is used to filter out old or processed events
         self._stop_event = ThreadEvent()
+
+    @property
+    def event_streams(self):
+        """ Event streams REST API collection."""
+        return self._appliance.rest_api.collections.event_streams
 
     def set_last_record(self, evt=None):
         """ Sets last_processed_id."""
@@ -199,9 +160,9 @@ class EventListener(Thread):
         else:
             # Otherwise sets the latest occurred event id.
             try:
-                last_event_stream = self._tool.event_streams.query_string(limit=1,
-                                                                          sort_order='desc',
-                                                                          sort_by='id')
+                last_event_stream = self.event_streams.query_string(limit=1,
+                                                                    sort_order='desc',
+                                                                    sort_by='id')
                 self._last_processed_id = last_event_stream[0].id
             except IndexError:
                 # No events yet, so do nothing
@@ -217,7 +178,7 @@ class EventListener(Thread):
                                      event_type='vm_create')
             listener.listen_to(evt)
         """
-        event = Event(event_tool=self._tool)
+        event = Event(self._appliance)
         for name, value in kwattrs.items():
             event.add_attrs(EventAttr(**{name: value}))
 
@@ -285,17 +246,18 @@ class EventListener(Thread):
 
                 matched_events = self.get_next_portion(exp_event['event'])
 
-                if not matched_events:
+                if not len(matched_events):
                     continue
 
                 # Match events
+                got_event = None
                 for event_entity in matched_events:
-                    got_event = Event(event_tool=self._tool).build_from_entity(event_entity)
+                    got_event = Event(self._appliance).build_from_entity(event_entity)
                     if exp_event['event'].matches(got_event):
                         if exp_event['callback']:
                             exp_event['callback'](exp_event=exp_event['event'], got_event=got_event)
                         exp_event['matched_events'].append(got_event)
-                    self.set_last_record(got_event)
+                self.set_last_record(got_event)
 
                 if self._stop_event.is_set():
                     break
@@ -316,7 +278,7 @@ class EventListener(Thread):
             if evt_attr.value:
                 q &= Q(filter_attr, '=', evt_attr.value)
 
-        return self._tool.event_streams.filter(q)
+        return self.event_streams.filter(q)
 
     @property
     def got_events(self):
