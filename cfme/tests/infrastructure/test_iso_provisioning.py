@@ -2,12 +2,14 @@
 import fauxfactory
 import pytest
 
-from cfme.utils.conf import cfme_data
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils import testgen
+from cfme.utils.blockers import GH
+from cfme.utils.conf import cfme_data
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -76,6 +78,8 @@ def vm_name():
 
 
 @pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6692',
+                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_iso_provision_from_template(appliance, provider, vm_name, smtp_test, datastore_init,
                                      request, setup_provider):
     """Tests ISO provisioning
