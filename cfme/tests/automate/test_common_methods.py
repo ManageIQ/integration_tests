@@ -93,7 +93,6 @@ def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
     request.addfinalizer(lambda: grp.delete_if_exists())
     btn_name = "btn_{}".format(fauxfactory.gen_alphanumeric())
     button = grp.buttons.create(
-        button_class=appliance.collections.buttons.DEFAULT,
         text=btn_name,
         hover=btn_name,
         system="Request",
