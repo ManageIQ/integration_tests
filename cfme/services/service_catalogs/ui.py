@@ -1,13 +1,13 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import (deflatten_dict, Parameter, ParametrizedLocator, ParametrizedString,
-    VersionPick)
+from widgetastic.utils import deflatten_dict, Parameter, ParametrizedString, VersionPick
 from widgetastic.widget import ParametrizedView, Select, Text, View
 from widgetastic_patternfly import Button, Input, BootstrapSelect
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
+from cfme.exceptions import ItemNotFound
 from cfme.services.requests import RequestsView
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import MiqImplementationContext
@@ -87,6 +87,8 @@ class OrderForm(ServicesCatalogView):
                 return self.param_dropdown
             elif self.select.is_displayed:
                 return self.select
+            else:
+                raise ItemNotFound("Visible widget is not found")
 
         def read(self):
             return self.visible_widget.read()
