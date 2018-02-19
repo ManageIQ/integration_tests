@@ -130,6 +130,6 @@ def test_service_link(appliance, context, myservice):
     with appliance.context.use(context):
         myservice = MyService(appliance, name=service_name, vm_name=vm_name)
         view = navigate_to(myservice, 'VMDetails')
-        view.relationships.click_at("Service")
+        view.summary('Relationships').click_at('Service')
         new_view = myservice.create_view(MyServiceDetailView)
         assert new_view.is_displayed
