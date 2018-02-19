@@ -45,14 +45,14 @@ def azure_cleanup(nic_template, pip_template, days_old):
                     try:
                         mgmt.remove_nics_by_search(nic_template, resource_group)
                     except Exception as e:
-                        logger.warning("NIC cleanup failed")
+                        logger.exception("NIC cleanup failed")
                         errors.append(e)
 
                     # removing public ips
                     try:
                         mgmt.remove_pips_by_search(pip_template, resource_group)
                     except Exception as e:
-                        logger.warning("Public IP cleanup failed")
+                        logger.exception("Public IP cleanup failed")
                         errors.append(e)
 
                     # removing stale stacks
@@ -69,15 +69,15 @@ def azure_cleanup(nic_template, pip_template, days_old):
                             if not removed_stacks:
                                 logger.info("No empty stacks older '%s' days were found", days_old)
                     except Exception as e:
-                        logger.warning("Removing Stacks failed")
+                        logger.exception("Removing Stacks failed")
                         errors.append(e)
                     try:
                         mgmt.remove_unused_blobs(resource_group)
                     except Exception as e:
-                        logger.warning("Removing unused blobs failed")
+                        logger.exception("Removing unused blobs failed")
                         errors.append(e)
         if errors:
-            tb.format_exc()
+            logger.error("Hit exceptions during cleanup! See logs.")
             return 1
         else:
             return 0
