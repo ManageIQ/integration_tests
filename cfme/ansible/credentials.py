@@ -112,16 +112,15 @@ class CredentialFormView(CredentialsBaseView):
     @credential_form.register("OpenStack")
     class CredentialFormOpenStackView(View):
         username = Input(locator='.//input[@title="The username to use to connect to OpenStack"]')
-        password = Input(locator='.//input[@title=\
-            "The password or API key to use to connect to OpenStack"][2]')
+        password = Input(locator='.//input[@title="The password or API'
+                                 ' key to use to connect to OpenStack"][2]')
         authentication_url = Input(
-            locator='.//input[@title=\
-                "The host to authenticate with. For example, https://openstack.business.com/v2.0"]')
-        project = Input(locator='.//input[@title=\
-            "This is the tenant name. This value is usually the same as the username"][2]')
-        domain = Input(locator='.//input[@title=\
-            "OpenStack domains define administrative \
-                boundaries. It is only needed for Keystone v3 authentication URLs"][2]')
+            locator='.//input[@title="The host to authenticate with. '
+            'For example, https://openstack.business.com/v2.0"]')
+        project = Input(locator='.//input[@title="This is the tenant name. This value '
+            'is usually the same as the username"]')
+        domain = Input(locator='.//input[@title="OpenStack domains define administrative '
+            'boundaries. It is only needed for Keystone v3 authentication URLs"]')
 
     cancel_button = Button("Cancel")
 
