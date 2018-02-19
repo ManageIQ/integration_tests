@@ -21,6 +21,7 @@ from django.db.models import Q
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
+from json_field import JSONField
 
 from sprout import critical_section, redis
 from sprout.log import create_logger
@@ -559,6 +560,8 @@ class Template(MetadataMixin):
     ready = models.BooleanField(default=False, help_text="Template is ready-to-be-used")
     exists = models.BooleanField(default=True, help_text="Template exists in the provider.")
     usable = models.BooleanField(default=False, help_text="Template is marked as usable")
+    custom_data = JSONField(default={}, help_text="Some Templates require additional data "
+                                                  "for deployment")
 
     preconfigured = models.BooleanField(default=True, help_text="Is prepared for immediate use?")
     suggested_delete = models.BooleanField(
@@ -738,6 +741,11 @@ class Appliance(MetadataMixin):
         help_text="Which appliance pool this appliance belongs to.")
     name = models.CharField(max_length=64, help_text="Appliance's name as it is in the provider.")
     ip_address = models.CharField(max_length=45, null=True, help_text="Appliance's IP address")
+
+    openshift_ext_ip = models.CharField(max_length=45, null=True,
+                                        help_text="Openshift's project external ip")
+    openshift_project = models.CharField(max_length=45, null=True,
+                                         help_text="Openshift's project name")
 
     datetime_leased = models.DateTimeField(null=True, help_text="When the appliance was leased")
     leased_until = models.DateTimeField(null=True, help_text="When does the appliance lease expire")
