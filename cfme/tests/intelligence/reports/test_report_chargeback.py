@@ -7,7 +7,6 @@ from cfme.intelligence.reports.reports import CustomReport
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
-pytestmark = [pytest.mark.tier(3)]
 pytestmark = [
     pytest.mark.tier(3),
     pytest.mark.meta(blockers=[BZ(1531600, forced_streams=["5.9"])]),
