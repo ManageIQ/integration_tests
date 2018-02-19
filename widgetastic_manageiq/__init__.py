@@ -2652,11 +2652,11 @@ class BaseQuadIconEntity(ParametrizedView, ClickableMixin):
     It is expected that some properties like "data" will be overridden in its children
 
     """
-    ENTITY_XPATH = ('./tbody/tr/td/*[(self::a or self::span) and '
-                    '((contains(@href, "?") and substring(substring-before(@href, "?"), '
-                    'string-length(substring-before(@href, "?"))-string-length("/{entity_id}"+1))='
+    ENTITY_XPATH = ('./tbody/tr/td/*[(self::a or self::span) and ((contains(@href, "?") '
+                    'and substring(substring-before(@href, "?"), '
+                    'string-length(substring-before(@href, "?"))-string-length("/{entity_id}")+1)='
                     '"/{entity_id}") or substring(@href, string-length(@href)-'
-                    'string-length("/{entity_id}"+1))="/{entity_id}")]')
+                    'string-length("/{entity_id}")+1)="/{entity_id}")]')
     PARAMETERS = ('entity_id',)
     ROOT = ParametrizedLocator('.//table[{xpath}]'.format(xpath=ENTITY_XPATH))
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
@@ -2726,7 +2726,7 @@ class BaseTileIconEntity(ParametrizedView):
         return self.quad_icon(self.context['entity_id']).name
 
     def click(self):
-        self.quad_icon.click()
+        self.quad_icon(self.context['entity_id']).click()
 
     @property
     def data(self):
