@@ -2291,14 +2291,16 @@ class Appliance(IPAppliance):
 
         if kwargs.get('fix_ntp_clock', True) is True:
             self.fix_ntp_clock(log_callback=log_callback)
-        if kwargs.get('db_address') is None:
-            if on_openstack and self.is_downstream and not self.unpartitioned_disks:
-                self.configure_rhos_db_disk()
-            self.db.enable_internal(
-                region, key_address, db_password, ssh_password)
-        else:
-            self.db.enable_external(
-                db_address, region, db_name, db_username, db_password)
+        if self.is_downstream:
+            # Upstream already has one.
+            if kwargs.get('db_address') is None:
+                if on_openstack and not self.unpartitioned_disks:
+                    self.configure_rhos_db_disk()
+                self.db.enable_internal(
+                    region, key_address, db_password, ssh_password)
+            else:
+                self.db.enable_external(
+                    db_address, region, db_name, db_username, db_password)
         self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
         if kwargs.get('loosen_pgssl', True) is True:
             self.db.loosen_pgssl()
