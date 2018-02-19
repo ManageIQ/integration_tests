@@ -21,7 +21,8 @@ from appliances.models import (
     GroupShepherd)
 from appliances.tasks import (appliance_power_on, appliance_power_off, appliance_suspend,
     anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete, delete_template_from_provider,
-    appliance_rename, wait_appliance_ready, mark_appliance_ready, appliance_reboot)
+    appliance_rename, wait_appliance_ready, mark_appliance_ready, appliance_reboot,
+    nuke_template_configuration)
 
 from sprout.log import create_logger
 from cfme.utils.bz import Bugzilla
@@ -1031,3 +1032,26 @@ def swap_offenders(request):
     failed_ssh = Appliance.objects.filter(ssh_failed=True, power_state=Appliance.Power.ON).order_by(
         'appliance_pool__owner__username', 'name')
     return render(request, 'appliances/swap_offenders.html', locals())
+
+
+def template_configurations(request):
+    if not request.user.is_superuser or not request.user.is_staff:
+        messages.info(request, 'You do not have the right to see the template configuration view')
+        return go_back_or_home(request)
+    templates_configuring = Template.objects\
+        .select_related('provider', 'template_group')\
+        .filter(ready=False, preconfigured=True)
+    return render(request, 'appliances/template_conf.html', locals())
+
+
+def nuke_template(request):
+    if not request.user.is_authenticated() or not (
+            request.user.is_superuser or request.user.is_staff):
+        return HttpResponseForbidden("Only authenticated superusers can operate this action.")
+    template_id = request.POST["template_id"]
+    try:
+        template = Template.objects.get(id=template_id)
+    except ObjectDoesNotExist:
+        raise Http404('Template with ID {} does not exist!.'.format(template_id))
+    task = nuke_template_configuration.delay(template.id)
+    return HttpResponse(task.id)

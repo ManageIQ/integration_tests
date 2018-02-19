@@ -56,7 +56,7 @@ VERSION_REGEXPS = [
 ]
 VERSION_REGEXPS = map(re.compile, VERSION_REGEXPS)
 VERSION_REGEXP_UPSTREAM = re.compile(r'^miq-stable-([^-]+)-')
-TRACKERBOT_PAGINATE = 20
+TRACKERBOT_PAGINATE = 100
 
 
 def retrieve_cfme_appliance_version(template_name):
@@ -2017,3 +2017,21 @@ def sync_quotas_perf(self):
         sync_provider_hw.delay(provider.id)
         for appliance in provider.currently_managed_appliances:
             sync_appliance_hw.delay(appliance.id)
+
+
+@singleton_task()
+def nuke_template_configuration(self, template_id):
+    try:
+        template = Template.objects.get(id=template_id)
+    except ObjectDoesNotExist:
+        # No longer exists
+        return True
+
+    if template.provider.api.does_vm_exist(template.name):
+        self.logger.info('Found the template as a VM')
+        template.provider.api.delete_vm(template.name)
+    if template.provider.api.does_template_exist(template.name):
+        self.logger.info('Found the template as a template')
+        template.provider.api.delete_template(template.name)
+    template.delete()
+    return True

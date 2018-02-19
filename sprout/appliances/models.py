@@ -608,6 +608,16 @@ class Template(MetadataMixin):
             self.logger.info("{}: {}".format(self.pk, status))
 
     @property
+    def possibly_bunk(self):
+        if 'creation failed' in self.status:
+            return True
+        if 'Could not properly' in self.status:
+            return True
+        if self.age > timedelta(hours=2):            return True
+
+        return False
+
+    @property
     def cfme(self):
         return CFMEAppliance.from_provider(self.provider_name, self.name, container=self.container)
 

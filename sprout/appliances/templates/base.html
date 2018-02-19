@@ -63,6 +63,9 @@
             </li>
         {% endif %}
         {% if user.is_staff or user.is_superuser %}
+            <li id="template_configurations">
+              <a href="{% url 'template_configurations' %}">Template configurations</a>
+            </li>
             <li id="vms">
               <a href="{% url 'vms_default' %}">VM Manager</a>
             </li>
