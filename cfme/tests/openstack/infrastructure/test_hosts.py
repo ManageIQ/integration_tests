@@ -23,7 +23,7 @@ def test_host_configuration(host_collection, provider, soft_assert, appliance):
     for host in hosts:
         host.run_smartstate_analysis()
         wait_for(is_host_analysis_finished, [host.name], delay=15,
-                 timeout="10m", fail_func=appliance.browser.refresh)
+                 timeout="10m", fail_func=host.browser.refresh)
         fields = ['Packages', 'Services', 'Files']
         for field in fields:
             value = int(host.get_detail("Configuration", field))
@@ -55,7 +55,8 @@ def test_host_devices(host_collection, provider):
     hosts = host_collection.all(provider)
     assert hosts
     for host in hosts:
-        assert int(host.get_detail("Properties", "Devices")) > 0
+        result = int(host.get_detail("Properties", "Devices").split()[0])
+        assert result > 0
 
 
 def test_host_hostname(host_collection, provider, soft_assert):
