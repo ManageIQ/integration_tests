@@ -613,7 +613,8 @@ class Template(MetadataMixin):
             return True
         if 'Could not properly' in self.status:
             return True
-        if self.age > timedelta(hours=2):            return True
+        if self.age > timedelta(hours=2):
+            return True
 
         return False
 
