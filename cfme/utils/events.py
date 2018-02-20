@@ -71,40 +71,31 @@ class Event(object):
                             self.event_attrs.values()])
         return "BaseEvent({})".format(params)
 
-    def process_id(self, target_type, target_name):
-        """ Resolves id by target name.
-
-        In case the ``target_type`` is defined in the :py:const:`OBJECT_TABLE`, you can pass a
-        string with object's name.
-
-        Args:
-            target_type: What kind of object is the target of the event (VmOrTemplate, Host...)
-            target_name: An id or a name of the object.
-
-        Returns:
-            :py:class:`int` with id of the object in the database.
-        """
-        if target_type not in self.TARGET_TYPES:
-            raise TypeError(
-                ('Type {} is not specified in the auto-coercion TARGET_TYPES. '
-                 'Pass a real id of the object or extend the table.').format(target_type))
-        target_rest = self.TARGET_TYPES[target_type]
-        target_collection = getattr(self._appliance.rest_api.collections, target_rest)
-        o = target_collection.filter(Q('name', '=', target_name))
-        if not o:
-            raise ValueError('{} with name {} not found.'.format(target_type, target_name))
-        return o[0].id
-
-    def add_target_id(self):
+    def process_id(self):
         """ Resolves target_id by target_type and target name."""
         if 'target_name' in self.event_attrs and 'target_id' not in self.event_attrs:
             try:
-                target_id = self.process_id(self.event_attrs['target_type'].value,
-                                            self.event_attrs['target_name'].value)
-                self.event_attrs['target_id'] = EventAttr(**{'target_id': target_id})
+                target_type = self.event_attrs['target_type'].value
+                target_name = self.event_attrs['target_name'].value
+
+                # Target type should be present in TARGET_TYPES
+                if target_type not in self.TARGET_TYPES:
+                    raise TypeError(
+                        'Type {} is not specified in the TARGET_TYPES.'.format(target_type))
+
+                target_rest = self.TARGET_TYPES[target_type]
+                target_collection = getattr(self._appliance.rest_api.collections, target_rest)
+                o = target_collection.filter(Q('name', '=', target_name))
+
+                if not o.resources:
+                    raise ValueError('{} with name {} not found.'.format(target_type, target_name))
+
+                # Set target_id if target object was found
+                self.event_attrs['target_id'] = EventAttr(**{'target_id': o[0].id})
+
             except ValueError:
                 # Target isn't added yet. Need to wait
-                pass
+                sleep(1)
 
     def matches(self, evt):
         """ Compares common attributes of expected event and passed event."""
@@ -234,19 +225,20 @@ class EventListener(Thread):
 
     def process_events(self):
         """ Processes all new events and compares them with expected events.
-        processed events are ignored next time
+
+        Processed events are ignored next time.
         """
         while not self._stop_event.is_set():
             sleep(1)
             for exp_event in self._events_to_listen:
 
                 # Skip if event has occurred
-                if exp_event['first_event'] and len(exp_event['matched_events']) > 0:
+                if exp_event['first_event'] and len(exp_event['matched_events']):
                     continue
 
                 matched_events = self.get_next_portion(exp_event['event'])
 
-                if not len(matched_events):
+                if not matched_events:
                     continue
 
                 # Match events
@@ -263,22 +255,23 @@ class EventListener(Thread):
                     break
 
     def get_next_portion(self, evt):
-        # Find target_id of an object, skip otherwise
-        evt.add_target_id()
+        """ Returns list with one or more events matched with expected event.
 
-        if 'target_id' not in evt.event_attrs:
-            return
+        Returns None if there is no matched events."""
+        evt.process_id()
 
-        # Create filters by expected event attributes
-        q = Q('id', '>', self._last_processed_id)
+        if 'target_id' in evt.event_attrs:
+            q = Q('id', '>', self._last_processed_id)  # ensure we get only new events
 
-        used_filters = set(self.FILTER_ATTRS).intersection(set(evt.event_attrs))
-        for filter_attr in used_filters:
-            evt_attr = evt.event_attrs[filter_attr]
-            if evt_attr.value:
-                q &= Q(filter_attr, '=', evt_attr.value)
+            used_filters = set(self.FILTER_ATTRS).intersection(set(evt.event_attrs))
+            for filter_attr in used_filters:
+                evt_attr = evt.event_attrs[filter_attr]
+                if evt_attr.value:
+                    q &= Q(filter_attr, '=', evt_attr.value)
+            result = self.event_streams.filter(q)
 
-        return self.event_streams.filter(q)
+            if len(result):
+                return result
 
     @property
     def got_events(self):
