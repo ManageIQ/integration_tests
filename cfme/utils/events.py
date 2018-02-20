@@ -133,9 +133,8 @@ class EventListener(Thread):
     def __init__(self, appliance):
         super(EventListener, self).__init__()
         self._appliance = appliance
-
         self._events_to_listen = []
-        self._last_processed_id = None  # this is used to filter out old or processed events
+        self._last_processed_id = 0  # this is used to filter out old or processed events
         self._stop_event = ThreadEvent()
 
     @property
@@ -143,21 +142,13 @@ class EventListener(Thread):
         """ Event streams REST API collection."""
         return self._appliance.rest_api.collections.event_streams
 
-    def set_last_record(self, evt=None):
-        """ Sets last_processed_id."""
-        if evt:
-            # Sets last processed event id.
-            self._last_processed_id = evt.event_attrs['id'].value
-        else:
-            # Otherwise sets the latest occurred event id.
-            try:
-                last_event_stream = self.event_streams.query_string(limit=1,
-                                                                    sort_order='desc',
-                                                                    sort_by='id')
-                self._last_processed_id = last_event_stream[0].id
-            except IndexError:
-                # No events yet, so do nothing
-                pass
+    def set_last_record(self):
+        """ Sets last_processed_id to the latest event."""
+        last_event_stream = self.event_streams.query_string(limit=1,
+                                                            sort_order='desc',
+                                                            sort_by='id')
+        if len(last_event_stream):
+            self._last_processed_id = last_event_stream[0].id
 
     def new_event(self, *attrs, **kwattrs):
         """ This method simplifies "expected" event creation.
@@ -249,7 +240,7 @@ class EventListener(Thread):
                         if exp_event['callback']:
                             exp_event['callback'](exp_event=exp_event['event'], got_event=got_event)
                         exp_event['matched_events'].append(got_event)
-                self.set_last_record(got_event)
+                self._last_processed_id = got_event.event_attrs['id'].value
 
                 if self._stop_event.is_set():
                     break
