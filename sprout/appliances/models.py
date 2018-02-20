@@ -904,6 +904,7 @@ class Appliance(MetadataMixin):
 
     @property
     def containerized(self):
+        # only docker applianced are considered as containerized ones
         return self.template.container is not None and self.provider.type != 'openshift'
 
     def set_status(self, status):

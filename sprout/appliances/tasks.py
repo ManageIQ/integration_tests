@@ -280,7 +280,7 @@ def poke_trackerbot(self):
             if original_template.ga_released != ga_released:
                 original_template.ga_released = ga_released
                 original_template.save(update_fields=['ga_released'])
-            if (provider.type == 'openshift' and custom_data and
+            if (provider.provider_type == 'openshift' and custom_data and
                     original_template.custom_data != custom_data):
                 original_template.custom_data = custom_data
                 original_template.container = 'cloudforms-0'
@@ -306,7 +306,7 @@ def poke_trackerbot(self):
                         name=template_name, preconfigured=False, date=date, custom_data=custom_data,
                         version=template_version, ready=True, exists=True, usable=True)
                     tpl.save()
-                    if provider.type == 'openshift':
+                    if provider.provider_type == 'openshift':
                         original_template.container = 'cloudforms-0'
                         original_template.save(update_fields=['container'])
                     original_template = tpl
@@ -1960,7 +1960,7 @@ def process_docker_images_from_url_group(self, group_id, version, docker_version
         if provider.remaining_configuring_slots < 1:
             # Will do it later ...
             continue
-        if provider.type == 'openshift':
+        if provider.provider_type == 'openshift':
             # openshift providers aren't containerized ones
             continue
         try:
