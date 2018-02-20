@@ -106,7 +106,7 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     """Testing HA configuration with 3 appliances.
 
     Appliance one configuring dedicated database, 'ap' launch appliance_console,
-    '' clear info screen, '5' setup db, '1' Creates v2_key, '1' selects internal db, 'y' continue,
+    '' clear info screen, '5' setup db, '1' Creates v2_key, '1' selects internal db,
     '1' use partition, 'y' create dedicated db, 'pwd' db password, 'pwd' confirm db password + wait
     360 secs and '' finish.
 
@@ -139,10 +139,10 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     """
     app = unconfigured_appliances
     app0_ip = app[0].hostname
-    app2_ip = app[2].hostname
+    app1_ip = app[1].hostname
     pwd = app_creds['password']
     # Configure first appliance as dedicated database
-    command_set = ('ap', '', '5', '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+    command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
     app[0].appliance_console.run_commands(command_set)
     wait_for(lambda: app[0].db.is_dedicated_active)
     # Configure EVM webui appliance with create region in dedicated database
@@ -153,15 +153,15 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     app[2].wait_for_web_ui()
     # Configure primary replication node
     command_set = ('ap', '', '6', '1', '1', '', '', pwd, pwd, app0_ip, 'y',
-        TimedCommand('y', 360), '')
+        TimedCommand('y', 60), '')
     app[0].appliance_console.run_commands(command_set)
     # Configure secondary replication node
-    command_set = ('ap', '', '6', '2', '1', '2', '', '', pwd, pwd, app0_ip, app2_ip, 'y',
-        TimedCommand('y', 360), '')
+    command_set = ('ap', '', '6', '2', '1', '2', '', '', pwd, pwd, app0_ip, app1_ip, 'y',
+        TimedCommand('y', 60), '')
     app[1].appliance_console.run_commands(command_set)
     # Configure automatic failover on EVM appliance
     command_set = ('ap', '', '9', TimedCommand('1', 30), '')
-    app[1].appliance_console.run_commands(command_set)
+    app[2].appliance_console.run_commands(command_set)
     # Cause failover to occur
     rc, out = app[0].ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
     assert rc == 0, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(out)
@@ -169,9 +169,9 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     def is_failover_started(appliance):
         assert appliance.ssh_client.run_command(
             "cat /var/www/miq/vmdb/log/ha_admin.log | grep 'Starting to execute failover'")
-    wait_for(is_failover_started, func_args=[app[1]])
-    app[1].wait_for_evm_service()
-    app[1].wait_for_web_ui
+    wait_for(is_failover_started, func_args=[app[2]], timeout=300)
+    app[2].wait_for_evm_service()
+    app[2].wait_for_web_ui
 
 
 def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_creds, appliance):

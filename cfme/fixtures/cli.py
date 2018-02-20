@@ -34,7 +34,7 @@ def dedicated_db_appliance(app_creds, appliance):
 
 
 @contextmanager
-def fqdn_appliance(appliance, preconfigured):
+def fqdn_appliance(appliance, preconfigured, count):
     sp = SproutClient.from_config()
     available_providers = set(sp.call_method('available_providers'))
     required_providers = set(cfme_data['fqdn_providers'])
@@ -44,7 +44,7 @@ def fqdn_appliance(appliance, preconfigured):
     for provider in usable_providers:
         try:
             apps, pool_id = sp.provision_appliances(
-                count=1, preconfigured=preconfigured, version=version, stream=stream,
+                count=count, preconfigured=preconfigured, version=version, stream=stream,
                 provider=provider
             )
             break
@@ -55,15 +55,15 @@ def fqdn_appliance(appliance, preconfigured):
     else:
         logger.error("Couldn't provision an appliance at all")
         raise SproutException('No provision available')
-    yield apps[0]
-
-    apps[0].ssh_client.close()
+    yield apps
+    for app in apps:
+        app.ssh_client.close()
     sp.destroy_pool(pool_id)
 
 
 @pytest.yield_fixture()
 def unconfigured_appliance(appliance):
-    with fqdn_appliance(appliance, preconfigured=False) as app:
+    with fqdn_appliance(appliance, preconfigured=False, count=1) as app:
         yield app
 
 
@@ -75,7 +75,7 @@ def unconfigured_appliances(appliance):
 
 @pytest.yield_fixture()
 def configured_appliance(appliance):
-    with fqdn_appliance(appliance, preconfigured=True) as app:
+    with fqdn_appliance(appliance, preconfigured=True, count=1) as app:
         yield app
 
 
