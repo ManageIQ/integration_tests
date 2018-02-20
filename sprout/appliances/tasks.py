@@ -280,7 +280,8 @@ def poke_trackerbot(self):
             if original_template.ga_released != ga_released:
                 original_template.ga_released = ga_released
                 original_template.save(update_fields=['ga_released'])
-            if custom_data and original_template.custom_data != custom_data:
+            if (provider.type == 'openshift' and custom_data and
+                    original_template.custom_data != custom_data):
                 original_template.custom_data = custom_data
                 original_template.container = 'cloudforms-0'
                 original_template.save(update_fields=['custom_data',
@@ -305,6 +306,9 @@ def poke_trackerbot(self):
                         name=template_name, preconfigured=False, date=date, custom_data=custom_data,
                         version=template_version, ready=True, exists=True, usable=True)
                     tpl.save()
+                    if provider.type == 'openshift':
+                        original_template.container = 'cloudforms-0'
+                        original_template.save(update_fields=['container'])
                     original_template = tpl
                     self.logger.info("Created a new template #{}".format(tpl.id))
         # If the provider is set to not preconfigure templates, do not bother even doing it.
@@ -1955,6 +1959,9 @@ def process_docker_images_from_url_group(self, group_id, version, docker_version
             continue
         if provider.remaining_configuring_slots < 1:
             # Will do it later ...
+            continue
+        if provider.type == 'openshift':
+            # openshift providers aren't containerized ones
             continue
         try:
             Template.objects.get(

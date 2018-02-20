@@ -191,7 +191,10 @@ def versions_for_group(request):
     latest_version = None
     preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
     container = request.POST.get("container", "false").lower() == "true"
-    container_q = ~Q(container=None) if container else Q(container=None)
+    if container:
+        container_q = ~Q(container=None) & ~Q(provider_type='openshift')
+    else:
+        container_q = Q(container=None)
     if group_id == "<None>":
         versions = []
         group = None
@@ -223,7 +226,10 @@ def date_for_group_and_version(request):
     latest_date = None
     preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
     container = request.POST.get("container", "false").lower() == "true"
-    container_q = ~Q(container=None) if container else Q(container=None)
+    if container:
+        container_q = ~Q(container=None) & ~Q(provider_type='openshift')
+    else:
+        container_q = Q(container=None)
     if group_id == "<None>":
         dates = []
     else:
@@ -269,9 +275,12 @@ def providers_for_date_group_and_version(request):
         provider_type = None
     preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
     container = request.POST.get("container", "false").lower() == "true"
-    container_q = ~Q(container=None) if container else Q(container=None)
     if container:
-        appliance_container_q = ~Q(template__container=None)
+        container_q = ~Q(container=None) & ~Q(provider_type='openshift')
+    else:
+        container_q = Q(container=None)
+    if container:
+        appliance_container_q = ~Q(template__container=None) & ~Q(provider_type='openshift')
     else:
         appliance_container_q = Q(template__container=None)
     if group_id == "<None>":
