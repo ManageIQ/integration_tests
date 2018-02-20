@@ -161,6 +161,8 @@ class Provider(MetadataMixin):
     custom_memory_limit = models.IntegerField(null=True, blank=True)
     custom_cpu_limit = models.IntegerField(null=True, blank=True)
 
+    provider_type = models.CharField(max_length=16, null=True, blank=True)
+
     class Meta:
         ordering = ['id']
 
@@ -288,10 +290,6 @@ class Provider(MetadataMixin):
             if provider_type:
                 types.add(provider_type)
         return sorted(types)
-
-    @property
-    def provider_type(self):
-        return self.provider_data.get('type', None)
 
     @property
     def provider_data(self):
@@ -906,7 +904,8 @@ class Appliance(MetadataMixin):
 
     @property
     def containerized(self):
-        return self.template.container is not None
+        # only docker applianced are considered as containerized ones
+        return self.template.container is not None and self.provider.type != 'openshift'
 
     def set_status(self, status):
         with transaction.atomic():
@@ -1171,7 +1170,10 @@ class AppliancePool(MetadataMixin):
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
             time_leased=60, preconfigured=True, yum_update=False, container=False, ram=None,
             cpu=None, provider_type=None):
-        container_q = ~Q(container=None) if container else Q(container=None)
+        if container:
+            container_q = ~Q(container=None) & ~Q(provider_type='openshift')
+        else:
+            container_q = Q(container=None)
         if owner.has_quotas:
             user_pools_count = cls.objects.filter(owner=owner).count()
             user_vms_count = Appliance.objects.filter(appliance_pool__owner=owner).count()
@@ -1255,11 +1257,17 @@ class AppliancePool(MetadataMixin):
 
     @property
     def container_q(self):
-        return ~Q(container=None) if self.is_container else Q(container=None)
+        if self.is_container:
+            return ~Q(container=None) & ~Q(provider_type='openshift')
+        else:
+            return Q(container=None)
 
     @property
     def appliance_container_q(self):
-        return ~Q(template__container=None) if self.is_container else Q(template__container=None)
+        if self.is_container:
+            return ~Q(template__container=None) & ~Q(provider_type='openshift')
+        else:
+            return Q(template__container=None)
 
     @property
     def filter_params(self):
