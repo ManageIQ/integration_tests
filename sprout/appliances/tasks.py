@@ -270,7 +270,8 @@ def poke_trackerbot(self):
         template_name = template["template"]["name"]
         ga_released = template['template']['ga_released']
         date = parse_template(template_name).datestamp
-        custom_data = template['template'].get('custom_data', {})
+        custom_data = template['template'].get('custom_data', "{}")
+        processed_custom_data = custom_data.replace("u'", '"').replace("'", '"')
         if not date:
             # Not a CFME/MIQ template, ignore it.
             continue
@@ -283,11 +284,13 @@ def poke_trackerbot(self):
             if original_template.ga_released != ga_released:
                 original_template.ga_released = ga_released
                 original_template.save(update_fields=['ga_released'])
-            if (provider.provider_type == 'openshift' and custom_data and
-                    original_template.custom_data != custom_data):
-                original_template.custom_data = custom_data
-                original_template.container = 'cloudforms-0'
+            if provider.provider_type == 'openshift':
+                if custom_data and original_template.custom_data != custom_data:
+                    # nasty trackerbot slightly corrupts json data and it is parsed in wrong way
+                    # as a result
+                    original_template.custom_data = yaml.safe_load(processed_custom_data)
                 original_template.template_type = Template.OPENSHIFT_POD
+                original_template.container = 'cloudforms-0'
                 original_template.save(update_fields=['custom_data',
                                                       'container',
                                                       'template_type'])
@@ -312,9 +315,10 @@ def poke_trackerbot(self):
                         version=template_version, ready=True, exists=True, usable=True)
                     tpl.save()
                     if provider.provider_type == 'openshift':
-                        original_template.container = 'cloudforms-0'
-                        original_template.template_type = Template.OPENSHIFT_POD
-                        original_template.save(update_fields=['container', 'template_type'])
+                        tpl.custom_data = yaml.safe_load(processed_custom_data)
+                        tpl.container = 'cloudforms-0'
+                        tpl.template_type = Template.OPENSHIFT_POD
+                        tpl.save(update_fields=['container', 'template_type'])
                     original_template = tpl
                     self.logger.info("Created a new template #{}".format(tpl.id))
         # If the provider is set to not preconfigure templates, do not bother even doing it.
@@ -719,16 +723,25 @@ def replace_clone_to_pool(
 
 def clone_template_to_pool(template_id, appliance_pool_id, time_minutes):
     template = Template.objects.get(id=template_id)
-    new_appliance_name = settings.APPLIANCE_FORMAT.format(
+    if template.template_type != 'openshift_pod':
+        appliance_format = settings.APPLIANCE_FORMAT
+    else:
+        appliance_format = settings.OPENSHIFT_APPLIANCE_FORMAT
+
+    new_appliance_name = appliance_format.format(
         group=template.template_group.id,
         date=template.date.strftime("%y%m%d"),
-        rnd=fauxfactory.gen_alphanumeric(8))
+        rnd=fauxfactory.gen_alphanumeric(8).lower())
     with transaction.atomic():
         pool = AppliancePool.objects.get(id=appliance_pool_id)
         if pool.not_needed_anymore:
             return
         # Apply also username
         new_appliance_name = "{}_{}".format(pool.owner.username, new_appliance_name)
+        if template.template_type == 'openshift_pod':
+            # openshift doesn't allow underscores to be used in project names
+            new_appliance_name = new_appliance_name.replace('_', '-')
+
         appliance = Appliance(template=template, name=new_appliance_name, appliance_pool=pool)
         appliance.save()
         # Set pool to these params to keep the appliances with same versions/dates
@@ -822,12 +835,12 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
                     kwargs['ram'] = appliance.appliance_pool.override_memory
                 if appliance.appliance_pool.override_cpu is not None:
                     kwargs['cpu'] = appliance.appliance_pool.override_cpu
-            if provider_data['type'] == 'openshift' and appliance.template['custom_data']:
-                kwargs['tags'] = appliance.template['custom_data'].get('TAGS')
+            if appliance.is_openshift and appliance.template.custom_data:
+                kwargs['tags'] = appliance.template.custom_data.get('TAGS')
             vm_data = appliance.provider_api.deploy_template(appliance.template.name,
                       vm_name=appliance.name, progress_callback=lambda progress:
                 appliance.set_status("Deploy progress: {}".format(progress)), **kwargs)
-            if provider_data['type'] == 'openshift':
+            if appliance.is_openshift:
                 with transaction.atomic():
                     appliance.openshift_ext_ip = vm_data['external_ip']
                     appliance.openshift_project = vm_data['project']
@@ -936,10 +949,11 @@ def appliance_power_on(self, appliance_id):
                 Appliance.objects.get(id=appliance_id).set_status("Appliance was powered on.")
                 with transaction.atomic():
                     appliance = Appliance.objects.get(id=appliance_id)
-                    appliance.ip_address = current_ip
+                    if not appliance.is_openshift:
+                        appliance.ip_address = current_ip
                     appliance.set_power_state(Appliance.Power.ON)
                     appliance.save()
-                if appliance.containerized:
+                if appliance.containerized and not appliance.is_openshift:
                     with appliance.ipapp.ssh_client as ssh:
                         # Fire up the container
                         ssh.run_command('cfme-start', ensure_host=True)
@@ -947,7 +961,8 @@ def appliance_power_on(self, appliance_id):
                 sync_appliance_hw.delay(appliance.id)
                 sync_provider_hw.delay(appliance.template.provider.id)
                 # fixes time synchronization
-                appliance.ipapp.fix_ntp_clock()
+                if not appliance.is_openshift:
+                    appliance.ipapp.fix_ntp_clock()
                 return
             else:
                 # IP not present yet
@@ -1002,7 +1017,8 @@ def appliance_power_off(self, appliance_id):
     try:
         if not appliance.provider.is_working:
             raise RuntimeError('Provider is not working.')
-        if appliance.provider_api.is_vm_stopped(appliance.name):
+        api = appliance.provider_api
+        if not api.does_vm_exist(appliance.name) or api.is_vm_stopped(appliance.name):
             Appliance.objects.get(id=appliance_id).set_status("Appliance was powered off.")
             with transaction.atomic():
                 appliance = Appliance.objects.get(id=appliance_id)
@@ -1011,17 +1027,17 @@ def appliance_power_off(self, appliance_id):
                 appliance.save()
             sync_provider_hw.delay(appliance.template.provider.id)
             return
-        elif appliance.provider_api.is_vm_suspended(appliance.name):
+        elif api.is_vm_suspended(appliance.name):
             appliance.set_status("Starting appliance from suspended state to properly off it.")
-            appliance.provider_api.start_vm(appliance.name)
+            api.start_vm(appliance.name)
             self.retry(args=(appliance_id,), countdown=20, max_retries=40)
-        elif not appliance.provider_api.in_steady_state(appliance.name):
+        elif not api.in_steady_state(appliance.name):
             appliance.set_status("Waiting for appliance to be steady (current state: {}).".format(
-                appliance.provider_api.vm_status(appliance.name)))
+                api.vm_status(appliance.name)))
             self.retry(args=(appliance_id,), countdown=20, max_retries=40)
         else:
             appliance.set_status("Powering off.")
-            appliance.provider_api.stop_vm(appliance.name)
+            api.stop_vm(appliance.name)
             self.retry(args=(appliance_id,), countdown=20, max_retries=40)
     except Exception as e:
         provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
