@@ -5,6 +5,7 @@ from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.simulation import simulate
 from cfme.common.provider import cleanup_vm
+from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
@@ -22,6 +23,18 @@ pytestmark = [
     pytest.mark.tier(3),
     pytest.mark.provider([VMwareProvider], scope="module"),
 ]
+
+
+@pytest.yield_fixture(scope='function')
+def new_vm(provider, setup_provider, small_template_modscope):
+    """Fixture to provision and delete vm on the provider"""
+    vm_name = 'test_service_{}'.format(fauxfactory.gen_alphanumeric())
+    vm = VM.factory(vm_name, provider, small_template_modscope.name)
+    vm.create_on_provider(find_in_cfme=True, timeout=700, allow_skip="default")
+    yield vm
+    if provider.mgmt.does_vm_exist(vm.name):
+        provider.mgmt.delete_vm(vm.name)
+    provider.refresh_provider_relationships()
 
 
 @pytest.fixture(scope="function")
@@ -59,7 +72,7 @@ def myservice(appliance, setup_provider, provider, catalog_item, request):
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_add_vm_to_service(myservice, request, copy_domain):
+def test_add_vm_to_service(myservice, request, copy_domain, new_vm):
     """Tests adding vm to service
 
     Metadata:
@@ -95,7 +108,7 @@ def test_add_vm_to_service(myservice, request, copy_domain):
         message="create",
         request=method.name,
         target_type='VM and Instance',
-        target_object="auto_test_services",
+        target_object=new_vm.name,
         execute_methods=True
     )
-    myservice.check_vm_add("auto_test_services")
+    myservice.check_vm_add(new_vm.name)
