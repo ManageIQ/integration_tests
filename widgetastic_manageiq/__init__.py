@@ -2652,16 +2652,15 @@ class BaseQuadIconEntity(ParametrizedView, ClickableMixin):
     It is expected that some properties like "data" will be overridden in its children
 
     """
+    ENTITY_XPATH = ('./tbody/tr/td/*[(self::a or self::span) and ((contains(@href, "?") '
+                    'and substring(substring-before(@href, "?"), '
+                    'string-length(substring-before(@href, "?"))-string-length("/{entity_id}")+1)='
+                    '"/{entity_id}") or substring(@href, string-length(@href)-'
+                    'string-length("/{entity_id}")+1)="/{entity_id}")]')
     PARAMETERS = ('entity_id',)
-    ROOT = ParametrizedLocator('.//table[./tbody/tr/td/*[(self::a or self::span) and '
-                               'substring(substring-before(@href, "?"), '
-                               'string-length(substring-before(@href, "?"))'
-                               '-string-length("/{entity_id}")+1)="/{entity_id}"]]')
+    ROOT = ParametrizedLocator('.//table[{xpath}]'.format(xpath=ENTITY_XPATH))
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
-    label = Text(locator=ParametrizedLocator('./tbody/tr/td/*[(self::a or self::span) and '
-                                             'substring(substring-before(@href, "?"), '
-                                             'string-length(substring-before(@href, "?"))-'
-                                             'string-length("/{entity_id}")+1)="/{entity_id}"]'))
+    label = Text(locator=ParametrizedLocator(ENTITY_XPATH))
     checkbox = Checkbox(locator='./tbody/tr/td/input[@type="checkbox"]')
     QUADRANT = './/div[@class="flobj {pos}72"]/*[self::p or self::img or self::div]'
 
@@ -2708,10 +2707,7 @@ class BaseTileIconEntity(ParametrizedView):
 
     """
     PARAMETERS = ('entity_id',)
-    ROOT = ParametrizedLocator('.//table[.//table[./tbody/tr/td/*[(self::a or self::span) and '
-                               'substring(substring-before(@href, "?"), '
-                               'string-length(substring-before(@href, "?"))-'
-                               'string-length("/{entity_id}")+1)="/{entity_id}"]]]')
+    ROOT = ParametrizedLocator('.//table[.//table[{}]]'.format(BaseQuadIconEntity.ENTITY_XPATH))
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
     quad_icon = ParametrizedView.nested(BaseQuadIconEntity)
 
@@ -2728,6 +2724,9 @@ class BaseTileIconEntity(ParametrizedView):
     @property
     def name(self):
         return self.quad_icon(self.context['entity_id']).name
+
+    def click(self):
+        self.quad_icon(self.context['entity_id']).click()
 
     @property
     def data(self):
