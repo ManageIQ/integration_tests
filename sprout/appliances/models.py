@@ -161,6 +161,8 @@ class Provider(MetadataMixin):
     custom_memory_limit = models.IntegerField(null=True, blank=True)
     custom_cpu_limit = models.IntegerField(null=True, blank=True)
 
+    provider_type = models.CharField(max_length=16, null=True, blank=True)
+
     class Meta:
         ordering = ['id']
 
@@ -288,10 +290,6 @@ class Provider(MetadataMixin):
             if provider_type:
                 types.add(provider_type)
         return sorted(types)
-
-    @property
-    def provider_type(self):
-        return self.provider_data.get('type', None)
 
     @property
     def provider_data(self):
