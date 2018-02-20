@@ -135,7 +135,6 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
             created = False
         else:
             created = True
-
             logger.info('Setting up Provider: %s', self.key)
             add_view = navigate_to(self, 'Add')
 

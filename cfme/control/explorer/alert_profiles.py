@@ -304,3 +304,8 @@ class ServerAlertProfile(BaseAlertProfile):
 class VMInstanceAlertProfile(BaseAlertProfile):
 
     TYPE = "VM and Instance"
+
+
+class NodeAlertProfile(BaseAlertProfile):
+
+    TYPE = "Node"
