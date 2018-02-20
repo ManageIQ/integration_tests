@@ -264,6 +264,9 @@ def poke_trackerbot(self):
             continue
         if not provider.provider_data.get("use_for_sprout", False):
             continue
+        if not provider.provider_type:
+            provider.provider_type = provider.provider_data.get('type')
+            provider.save(update_fields=['provider_type'])
         template_name = template["template"]["name"]
         ga_released = template['template']['ga_released']
         date = parse_template(template_name).datestamp
