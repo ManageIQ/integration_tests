@@ -1,9 +1,10 @@
 import fauxfactory
 import pytest
+
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils import error
-from cfme.utils.update import update
 from cfme.utils.testgen import config_managers, generate
+from cfme.utils.update import update
 
 
 pytest_generate_tests = generate(gen_func=config_managers)

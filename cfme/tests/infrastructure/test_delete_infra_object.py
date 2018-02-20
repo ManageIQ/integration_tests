@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-
 import pytest
+
 from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider

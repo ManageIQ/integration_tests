@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import pytest
+
 from cfme import test_requirements
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils import testgen, version
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     test_requirements.smartstate,

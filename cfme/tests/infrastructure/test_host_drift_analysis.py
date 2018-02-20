@@ -2,8 +2,8 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.configure.tasks import delete_all_tasks
 from cfme.common.host_views import HostDriftAnalysis
+from cfme.configure.tasks import delete_all_tasks
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils import testgen

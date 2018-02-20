@@ -4,7 +4,6 @@ import pytest
 from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils import normalize_text
 from cfme.utils.appliance.implementations.ui import navigate_to

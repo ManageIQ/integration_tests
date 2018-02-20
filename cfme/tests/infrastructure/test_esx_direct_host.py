@@ -5,8 +5,8 @@ not be difficult to extend the parametrizer.
 """
 import pytest
 
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.common.provider import DefaultEndpoint
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import testgen
 from cfme.utils.net import resolve_hostname
 from cfme.utils.version import Version
