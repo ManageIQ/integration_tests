@@ -132,7 +132,6 @@ def custom_vm_button(appliance, ansible_catalog_item):
         hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
         type=appliance.collections.button_groups.VM_INSTANCE)
     button = buttongroup.buttons.create(
-        button_class=appliance.collections.buttons.DEFAULT,
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
         dialog=ansible_catalog_item.provisioning["provisioning_dialog_name"],

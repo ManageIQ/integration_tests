@@ -3846,3 +3846,32 @@ class DriftComparison(Widget):
 
     def read(self):
         return self.section_values
+
+
+class FakeWidget(Widget):
+    """This is a fake widget.
+
+    It can be useful when some widget is supposed to be presented in a view.
+
+    Args:
+        visible (bool): should this widget be visible?
+        read_value: a value which will be returned by ``read()`` method
+        fill_value (bool): a value which will be returned by ``fill()`` method
+
+    """
+
+    def __init__(self, parent, visible=True, read_value=None, fill_value=False, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.visible = visible
+        self.read_value = read_value
+        self.fill_value = fill_value
+
+    def read(self):
+        return self.read_value
+
+    def fill(self, values):
+        return self.fill_value
+
+    @property
+    def is_displayed(self):
+        return self.visible

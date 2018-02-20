@@ -8,7 +8,7 @@ from widgetastic.utils import ParametrizedString, VersionPick
 from widgetastic.xpath import quote
 from widgetastic.widget import Checkbox, ConditionalSwitchableView, ParametrizedView, Text, View
 from widgetastic_manageiq import (SummaryFormItem, FonticonPicker, PotentiallyInvisibleTab,
-                                  RadioGroup)
+                                  RadioGroup, FakeWidget)
 from widgetastic_patternfly import BootstrapSelect, Button, CandidateNotFound, Input
 
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -53,7 +53,10 @@ class ButtonFormCommon(AutomateCustomizationView):
 
     class options(PotentiallyInvisibleTab):  # noqa
         form = ConditionalSwitchableView(reference="type")
-        type = BootstrapSelect('button_type')
+        type = VersionPick({
+            Version.lowest(): FakeWidget(read_value='Default'),
+            '5.9': BootstrapSelect('button_type')
+        })
 
         @form.register('Default')
         class ButtonFormDefaultView(View):  # noqa
