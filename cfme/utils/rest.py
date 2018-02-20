@@ -157,7 +157,8 @@ def query_resource_attributes(resource, soft_assert=None):
 
     for subcol in subcolls_to_check:
         try:
-            getattr(resource, subcol)
+            subcol_rest = getattr(resource, subcol)
+            subcol_rest.reload()
         except Exception as err:
             failed.append(FailedRecord(subcol, 'subcollection', err, rest_api.response))
 

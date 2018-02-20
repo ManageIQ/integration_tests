@@ -807,7 +807,13 @@ class TestServiceCatalogsRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        query_resource_attributes(service_catalogs[0], soft_assert=soft_assert)
+        outcome = query_resource_attributes(service_catalogs[0])
+        for failure in outcome.failed:
+            if failure.name == 'service_templates' and BZ(
+                    1546942, forced_streams=['5.8']).blocks:
+                continue
+            soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+                failure.type, failure.name, failure.response.status_code, failure.error))
 
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
     def test_edit_catalogs(self, appliance, service_catalogs, from_detail):
@@ -1272,7 +1278,13 @@ class TestBlueprintsRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        query_resource_attributes(blueprints[0], soft_assert=soft_assert)
+        outcome = query_resource_attributes(blueprints[0])
+        for failure in outcome.failed:
+            if failure.name == 'service_templates' and BZ(
+                    1546952, forced_streams=['5.8']).blocks:
+                continue
+            soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+                failure.type, failure.name, failure.response.status_code, failure.error))
 
     @pytest.mark.tier(3)
     def test_create_blueprints(self, appliance, blueprints):
