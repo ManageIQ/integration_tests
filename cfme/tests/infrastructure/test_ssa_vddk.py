@@ -46,7 +46,7 @@ def ssa_analysis_profile():
     analysis_profile.delete()
 
 
-@pytest.yield_fixture(params=vddk_versions, ids=([item for item in vddk_versions]), scope='module')
+@pytest.fixture(params=vddk_versions, ids=([item for item in vddk_versions]), scope='module')
 def configure_vddk(request, appliance, provider, vm):
     vddk_version = request.param
     vddk_url = conf.cfme_data.get("basic_info").get("vddk_url").get(vddk_version)
@@ -54,26 +54,32 @@ def configure_vddk(request, appliance, provider, vm):
     host = view.entities.summary("Relationships").get_text_of("Host")
     setup_host_creds(provider, host)
     appliance.install_vddk(vddk_url=vddk_url)
-    yield
-    appliance.uninstall_vddk()
-    setup_host_creds(provider, host, remove_creds=True)
+
+    @request.addfinalizer
+    def _finalize():
+        appliance.uninstall_vddk()
+        setup_host_creds(provider, host, remove_creds=True)
 
 
-@pytest.yield_fixture(scope="module")
-def vm(provider, small_template_modscope, ssa_analysis_profile):
+@pytest.fixture(scope="module")
+def vm(request, provider, small_template_modscope, ssa_analysis_profile):
     """ Fixture to provision instance on the provider """
     vm_name = random_vm_name("ssa", max_length=16)
     vm_obj = VM.factory(vm_name, provider, template_name=small_template_modscope.name)
     vm_obj.create_on_provider(find_in_cfme=True, allow_skip="default")
     provider.mgmt.start_vm(vm_obj.name)
     provider.mgmt.wait_vm_running(vm_obj.name)
-    yield vm_obj
-    try:
-        if provider.mgmt.does_vm_exist(vm_obj.name):
-            provider.mgmt.delete_vm(vm_obj.name)
-        provider.refresh_provider_relationships()
-    except Exception as e:
-        logger.exception(e)
+
+    @request.addfinalizer
+    def _finalize():
+        try:
+            if provider.mgmt.does_vm_exist(vm_obj.name):
+                provider.mgmt.delete_vm(vm_obj.name)
+            provider.refresh_provider_relationships()
+        except Exception as e:
+            logger.exception(e)
+
+    return vm_obj
 
 
 @pytest.mark.long_running
