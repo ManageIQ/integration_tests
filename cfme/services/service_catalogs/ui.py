@@ -1,13 +1,13 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import (deflatten_dict, Parameter, ParametrizedLocator, ParametrizedString,
-    VersionPick)
+from widgetastic.utils import deflatten_dict, Parameter, ParametrizedString, VersionPick
 from widgetastic.widget import ParametrizedView, Select, Text, View
 from widgetastic_patternfly import Button, Input, BootstrapSelect
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
+from cfme.exceptions import ItemNotFound
 from cfme.services.requests import RequestsView
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import MiqImplementationContext
@@ -15,7 +15,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.blockers import BZ
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import Accordion, ManageIQTree, DialogFieldDropDownList
+from widgetastic_manageiq import Accordion, ManageIQTree
 
 
 class ServicesCatalogView(BaseLoggedInPage):
@@ -64,12 +64,15 @@ class OrderForm(ServicesCatalogView):
         param_input = Input(id=ParametrizedString("param_{key}"))
         dropdown = VersionPick({
             Version.lowest(): BootstrapSelect(Parameter("key")),
-            "5.9": DialogFieldDropDownList(ParametrizedLocator(".//div[@input-id={key|quote}]"))
+            "5.9": BootstrapSelect(locator=ParametrizedString(
+                ".//div[contains(@class, 'bootstrap-select') and "
+                "select[@id={key|quote}]]"))
         })
         param_dropdown = VersionPick({
             Version.lowest(): BootstrapSelect(ParametrizedString("param_{key}")),
-            "5.9": DialogFieldDropDownList(
-                ParametrizedLocator(".//div[@input-id='param_{key}']"))
+            "5.9": BootstrapSelect(locator=ParametrizedString(
+                ".//div[contains(@class, 'bootstrap-select') and "
+                "select[@id='param_{key}']]"))
         })
 
         @property
@@ -84,6 +87,8 @@ class OrderForm(ServicesCatalogView):
                 return self.param_dropdown
             elif self.select.is_displayed:
                 return self.select
+            else:
+                raise ItemNotFound("Visible widget is not found")
 
         def read(self):
             return self.visible_widget.read()

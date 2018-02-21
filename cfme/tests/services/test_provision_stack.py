@@ -115,10 +115,10 @@ def stack_data(appliance, provider, provisioning):
             _stack_data = {
                 'stack_name': stackname,
                 'stack_timeout': stack_timeout,
-                'vm_name': vm_name,
-                'key_name': stack_prov['key_name'],
-                'select_instance_type': stack_prov['instance_type'],
-                'ssh_location': provisioning['ssh_location']
+                'virtualMachineName': vm_name,
+                'KeyName': stack_prov['key_name'],
+                'InstanceType': stack_prov['instance_type'],
+                'SSHLocation': provisioning['ssh_location']
             }
         else:
             _stack_data = {
