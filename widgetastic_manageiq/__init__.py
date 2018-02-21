@@ -851,6 +851,11 @@ class SSUIlist(Widget, ClickableMixin):
 
             return self.list_item.click()
 
+        def is_displayed(self):
+            """Returns True if the service is displayed."""
+
+            return self.list_item.is_displayed
+
     def click_at(self, item_name):
         """Clicks the list item with this name.
 
@@ -859,6 +864,9 @@ class SSUIlist(Widget, ClickableMixin):
         """
 
         return self.list(item_name).list_click()
+
+    def is_displayed(self, (item_name)):
+        return self.list(item_name).is_displayed()
 
 
 class SSUIDropdown(Dropdown):
