@@ -338,7 +338,7 @@ def sonar_scan(appliance, scanner_url, scanner_dir, server_url, timeout):
     run_sonar_scanner(appliance, scanner_dir, timeout)
 
 
-def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
+def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name, show_coverage_url):
     if not jenkins_user or not jenkins_token:
         try:
             from cfme.utils import conf
@@ -410,6 +410,14 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
             'Could not find any coverage reports for {} in {}'.format(
                 appliance_version, job_name))
         return 2
+    eligible_build_numbers = sorted(eligible_build_numbers)
+    if(show_coverage_url):
+        for build_number in eligible_build_numbers:
+            download_url = jenkins_artifact_url(
+                jenkins_user, jenkins_token, jenkins_url, job_name, build_number,
+                artifacts['coverage-results.tgz']['relativePath'])
+            print 'Coverage URL: {}'.format(download_url)
+            return
 
     # Stop the evm service, not needed at all
     print('Stopping evmserverd')
@@ -420,7 +428,6 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
     # Upload the merger
     print('Installing coverage merger')
     appliance.coverage._upload_coverage_merger()
-    eligible_build_numbers = sorted(eligible_build_numbers)
     with appliance.ssh_client as ssh:
         if not ssh.run_command('mkdir -p {}'.format(coverage_dir)):
             print('Could not create coverage directory on the appliance: {}'.format(coverage_dir))
@@ -431,6 +438,7 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
             download_url = jenkins_artifact_url(
                 jenkins_user, jenkins_token, jenkins_url, job_name, build_number,
                 artifacts['coverage-results.tgz']['relativePath'])
+            print 'Coverage URL: {}'.format(download_url)
             cmd = ssh.run_command('curl -k -o {}/tmp.tgz {}'.format(
                 coverage_dir,
                 quote(download_url)))
@@ -463,12 +471,13 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Upload coverage data from jenkins job to sonarqube')
     parser.add_argument('jenkins_url')
     parser.add_argument('jenkins_job_name')
     parser.add_argument('work_appliance_ip')
     parser.add_argument('--jenkins-user', default=None)
     parser.add_argument('--jenkins-token', default=None)
+    parser.add_argument('--show-coverage-url', action='store_true', default=False)
     args = parser.parse_args()
     with IPAppliance(hostname=args.work_appliance_ip) as appliance:
         exit(main(
@@ -476,4 +485,5 @@ if __name__ == '__main__':
             args.jenkins_url,
             args.jenkins_user,
             args.jenkins_token,
-            args.jenkins_job_name))
+            args.jenkins_job_name,
+            args.show_coverage_url))

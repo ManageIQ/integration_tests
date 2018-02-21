@@ -20,6 +20,7 @@ if __name__ == '__main__':
     parser.add_argument('version')
     parser.add_argument('--jenkins-user', default=None)
     parser.add_argument('--jenkins-token', default=None)
+    parser.add_argument('--show-coverage-url', action='store_true', default=False)
     args = parser.parse_args()
     # TODO: Upstream support
     group = 'downstream-' + ''.join(args.version.split('.')[:2]) + 'z'
@@ -43,7 +44,8 @@ if __name__ == '__main__':
                     args.jenkins_url,
                     args.jenkins_user,
                     args.jenkins_token,
-                    args.jenkins_job_name))
+                    args.jenkins_job_name,
+                    args.show_coverage_url))
     finally:
         with diaper:
             sprout.destroy_pool(pool_id)
