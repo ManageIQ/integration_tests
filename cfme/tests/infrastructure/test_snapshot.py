@@ -273,7 +273,7 @@ def test_operations_suspended_vm(small_test_vm, soft_assert):
     wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=snapshot1.refresh,
              message="Waiting for the first snapshot to become active")
     # Suspend the VM
-    small_test_vm.power_control_from_cfme(option=small_test_vm.SUSPEND, cancel=False)
+    small_test_vm.power_control_from_provider(option=small_test_vm.SUSPEND)
     small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_SUSPENDED)
     # Create second snapshot when VM is suspended
     snapshot2 = new_snapshot(small_test_vm)
