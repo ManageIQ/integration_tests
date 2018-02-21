@@ -27,6 +27,7 @@ from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
 
+
 @attr.s
 class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticTaggable):
     """Model of an Physical Server in cfme.
@@ -81,15 +82,18 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
 
     @variable(alias='ui')
     def power_state(self):
-        return self.get_detail("Power Management", "Power State")
+        view = navigate_to(self, "Details")
+        return view.entities.summary("Power Management").get_text_of("Power State")
 
     @variable(alias='ui')
     def cores_capacity(self):
-        return self.get_detail("Properties", "CPU total cores")
+        view = navigate_to(self, "Details")
+        return view.entities.summary("Properties").get_text_of("CPU total cores")
 
     @variable(alias='ui')
     def memory_capacity(self):
-        return self.get_detail("Properties", "Total memory (mb)")
+        view = navigate_to(self, "Details")
+        return view.entities.summary("Properties").get_text_of("Total memory (mb)")
 
     def refresh(self, cancel=False):
         """Perform 'Refresh Relationships and Power States' for the server.
@@ -116,18 +120,6 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
             return "currentstate-{}".format(desired_state) in entity.data['state']
 
         wait_for(_looking_for_state_change, fail_func=view.browser.refresh, num_sec=timeout)
-
-    def get_detail(self, title, field):
-        """Gets details from the details summary tables.
-
-        Args:
-            title (str): Summary Table title
-            field (str): Summary table field name
-
-        Returns: A string representing the entities of the SummaryTable's value.
-        """
-        view = navigate_to(self, "Details")
-        return getattr(view.entities, title.lower().replace(" ", "_")).get_text_of(field)
 
     @property
     def exists(self):

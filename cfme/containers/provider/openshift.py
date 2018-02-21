@@ -10,6 +10,7 @@ from cfme.containers.provider import (
 )
 
 from cfme.common.provider import DefaultEndpoint
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.ocp_cli import OcpCli
 from cfme.utils.varmeth import variable
 from cfme.utils import version, ssh
@@ -185,7 +186,8 @@ class OpenshiftProvider(ContainersProvider):
 
     @num_route.variant('ui')
     def num_route_ui(self):
-        return int(self.get_detail("Relationships", "Routes"))
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Routes"))
 
     @variable(alias='db')
     def num_template(self):
@@ -193,7 +195,8 @@ class OpenshiftProvider(ContainersProvider):
 
     @num_template.variant('ui')
     def num_template_ui(self):
-        return int(self.get_detail("Relationships", "Container Templates"))
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Container Templates"))
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
