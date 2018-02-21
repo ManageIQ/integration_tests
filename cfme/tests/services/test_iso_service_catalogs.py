@@ -4,16 +4,17 @@ import pytest
 
 from widgetastic.utils import partial_match
 
+from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
+from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
-from cfme import test_requirements
 from cfme.utils import testgen
-from cfme.utils.log import logger
+from cfme.utils.blockers import GH
 from cfme.utils.conf import cfme_data
-from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -104,7 +105,8 @@ def catalog_item(setup_provider, provider, vm_name, dialog, catalog, provisionin
 
 
 @pytest.mark.usefixtures('setup_iso_datastore')
-@pytest.mark.meta(blockers=[BZ(1358069, forced_streams=["5.6", "5.7", "upstream"])])
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6692',
+                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_rhev_iso_servicecatalog(appliance, setup_provider, provider, catalog_item, request):
     """Tests RHEV ISO service catalog
 
