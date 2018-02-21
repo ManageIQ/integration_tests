@@ -194,20 +194,19 @@ def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_cr
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-def test_appliance_console_external_db_create(app_creds, dedicated_db_appliance,
-        temp_appliance_unconfig_funcscope):
+def test_appliance_console_external_db_create(app_creds, dedicated_db_appliance_create):
     """'ap' launch appliance_console, '' clear info screen, '5' setup db, '1' create v2_key,
     '2' create region in external db, '0' db region number, 'y' confirm create region in external db
     'ip', '' ip and port for dedicated db, '' use default db name, '' default username, 'pwd' db
     password, 'pwd' confirm db password + wait 360 secs and '' finish."""
 
-    ip = dedicated_db_appliance.hostname
+    ip = dedicated_db_appliance_create[0].hostname
     pwd = app_creds['password']
     command_set = ('ap', '', '5', '1', '2', '0', 'y', ip, '', '', '', pwd,
-        TimedCommand(pwd, 600), '')
-    temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
-    temp_appliance_unconfig_funcscope.wait_for_evm_service()
-    temp_appliance_unconfig_funcscope.wait_for_web_ui()
+        TimedCommand(pwd, 300), '')
+    dedicated_db_appliance_create[1].appliance_console.run_commands(command_set)
+    dedicated_db_appliance_create[1].wait_for_evm_service()
+    dedicated_db_appliance_create[1].wait_for_web_ui()
 
 
 def test_appliance_console_extend_storage(unconfigured_appliance):

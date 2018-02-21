@@ -34,14 +34,13 @@ def test_appliance_console_cli_external_join(app_creds, appliance,
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-def test_appliance_console_cli_external_create(
-        app_creds, dedicated_db_appliance, temp_appliance_unconfig_funcscope):
-    hostname = dedicated_db_appliance.hostname
-    temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_external_create(5,
+def test_appliance_console_cli_external_create(app_creds, dedicated_db_appliance_create):
+    hostname = dedicated_db_appliance_create[0].hostname
+    dedicated_db_appliance_create[1].appliance_console_cli.configure_appliance_external_create(5,
         hostname, app_creds['username'], app_creds['password'], 'vmdb_production', hostname,
         app_creds['sshlogin'], app_creds['sshpass'])
-    temp_appliance_unconfig_funcscope.wait_for_evm_service()
-    temp_appliance_unconfig_funcscope.wait_for_web_ui()
+    dedicated_db_appliance_create[1].wait_for_evm_service()
+    dedicated_db_appliance_create[1].wait_for_web_ui()
 
 
 @pytest.mark.uncollect('No IPA servers currently available')
@@ -82,8 +81,8 @@ def test_appliance_console_cli_extend_storage(unconfigured_appliance):
     unconfigured_appliance[0].ssh_client.run_command('appliance_console_cli -t auto')
 
     def is_storage_extended(unconfigured_appliance):
-        assert unconfigured_appliance.ssh_client.run_command("df -h | grep /var/www/miq_tmp")
-    wait_for(is_storage_extended, func_args=[unconfigured_appliance])
+        assert unconfigured_appliance[0].ssh_client.run_command("df -h | grep /var/www/miq_tmp")
+    wait_for(is_storage_extended, func_args=[unconfigured_appliance[0]])
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
@@ -91,8 +90,8 @@ def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
     unconfigured_appliance[0].ssh_client.run_command('appliance_console_cli -l auto')
 
     def is_storage_extended(unconfigured_appliance):
-        assert unconfigured_appliance.ssh_client.run_command("df -h | grep /vg_miq_logs")
-    wait_for(is_storage_extended, func_args=[unconfigured_appliance])
+        assert unconfigured_appliance[0].ssh_client.run_command("df -h | grep /vg_miq_logs")
+    wait_for(is_storage_extended, func_args=[unconfigured_appliance[0]])
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.9')

@@ -74,6 +74,19 @@ def dedicated_db_appliance(app_creds, unconfigured_appliance):
     yield apps[0]
 
 
+@pytest.yield_fixture(scope="function")
+def dedicated_db_appliance_create(app_creds, unconfigured_appliances):
+    """'ap' launch appliance_console, '' clear info screen, '5' setup db, '1' Creates v2_key,
+    '1' selects internal db, '1' use partition, 'y' create dedicated db, 'pwd'
+    db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
+    apps = unconfigured_appliances
+    pwd = app_creds['password']
+    command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+    apps[0].appliance_console.run_commands(command_set)
+    wait_for(lambda: apps[0].db.is_dedicated_active)
+    yield apps
+
+
 @pytest.yield_fixture()
 def ipa_crud(configured_appliance, ipa_creds):
     configured_appliance.appliance_console_cli.configure_ipa(ipa_creds['ipaserver'],
