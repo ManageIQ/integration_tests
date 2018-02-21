@@ -25,8 +25,9 @@ def test_host_configuration(host_collection, provider, soft_assert, appliance):
         wait_for(is_host_analysis_finished, [host.name], delay=15,
                  timeout="10m", fail_func=host.browser.refresh)
         fields = ['Packages', 'Services', 'Files']
+        view = navigate_to(host, 'Details')
         for field in fields:
-            value = int(host.get_detail("Configuration", field))
+            value = int(view.entities.summary('Configuration').get_text_of(field))
             soft_assert(value > 0, 'Nodes number of {} is 0'.format(field))
 
 
@@ -36,8 +37,9 @@ def test_host_cpu_resources(host_collection, provider, soft_assert):
     for host in hosts:
         fields = ['Number of CPUs', 'Number of CPU Cores',
                   'CPU Cores Per Socket']
+        view = navigate_to(host, 'Details')
         for field in fields:
-            value = int(host.get_detail("Properties", field))
+            value = int(view.entities.summary('Properties').get_text_of(field))
             soft_assert(value > 0, "Aggregate Node {} is 0".format(field))
 
 
@@ -45,8 +47,9 @@ def test_host_auth(host_collection, provider, soft_assert):
     hosts = host_collection.all(provider)
     assert hosts
     for host in hosts:
-        navigate_to(host, 'Details')
-        auth_status = host.get_detail('Authentication Status', 'SSH Key Pair Credentials')
+        view = navigate_to(host, 'Details')
+        auth_status = view.entities.summary('Authentication Status').get_text_of(
+            'SSH Key Pair Credentials')
         soft_assert(auth_status == 'Valid',
                     'Incorrect SSH authentication status {}'.format(auth_status))
 
@@ -55,7 +58,8 @@ def test_host_devices(host_collection, provider):
     hosts = host_collection.all(provider)
     assert hosts
     for host in hosts:
-        result = int(host.get_detail("Properties", "Devices").split()[0])
+        view = navigate_to(host, 'Details')
+        result = int(view.entities.summary('Properties').get_text_of('Devices').split()[0])
         assert result > 0
 
 
@@ -63,7 +67,8 @@ def test_host_hostname(host_collection, provider, soft_assert):
     hosts = host_collection.all(provider)
     assert hosts
     for host in hosts:
-        result = host.get_detail("Properties", "Hostname")
+        view = navigate_to(host, 'Details')
+        result = view.entities.summary('Properties').get_text_of('Hostname')
         soft_assert(result, "Missing hostname in: " + str(result))
 
 
@@ -71,7 +76,8 @@ def test_host_memory(host_collection, provider):
     hosts = host_collection.all(provider)
     assert hosts
     for host in hosts:
-        result = int(host.get_detail("Properties", "Memory").split()[0])
+        view = navigate_to(host, 'Details')
+        result = int(view.entities.summary('Properties').get_text_of('Memory').split()[0])
         assert result > 0
 
 
@@ -79,12 +85,13 @@ def test_host_security(host_collection, provider, soft_assert):
     hosts = host_collection.all(provider)
     assert hosts
     for host in hosts:
+        view = navigate_to(host, 'Details')
         soft_assert(
-            int(host.get_detail("Security", "Users")) > 0,
+            int(view.entities.summary('Security').get_text_of('Users')) > 0,
             'Nodes number of Users is 0')
 
         soft_assert(
-            int(host.get_detail("Security", "Groups")) > 0,
+            int(view.entities.summary('Security').get_text_of('Groups')) > 0,
             'Nodes number of Groups is 0')
 
 
@@ -93,8 +100,8 @@ def test_host_smbios_data(host_collection, provider, soft_assert):
     hosts = host_collection.all(provider)
     assert hosts
     for host in hosts:
-        navigate_to(host, 'Details')
-        res = host.get_detail('Properties', 'Manufacturer / Model')
+        view = navigate_to(host, 'Details')
+        res = view.entities.summary('Properties').get_text_of('Manufacturer / Model')
         soft_assert(res, 'Manufacturer / Model value are empty')
         soft_assert(res != 'N/A')
 
@@ -103,5 +110,6 @@ def test_host_zones_assigned(host_collection, provider):
     hosts = host_collection.all(provider)
     assert hosts
     for host in hosts:
-        result = host.get_detail('Relationships', 'Availability Zone')
+        view = navigate_to(host, 'Details')
+        result = view.entities.summary('Relationships').get_text_of('Availability Zone')
         assert result, "Availability zone doesn't specified"

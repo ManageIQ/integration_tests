@@ -483,7 +483,7 @@ def test_action_prevent_host_ssa(request, appliance, host, host_policy):
     view = navigate_to(host, "Details")
 
     def _scan():
-        return host.get_detail("Relationships", "Drift History")
+        return view.entities.summary("Relationships").get_text_of("Drift History")
 
     original = _scan()
     view.toolbar.configuration.item_select("Perform SmartState Analysis", handle_alert=True)

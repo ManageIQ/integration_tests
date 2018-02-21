@@ -186,10 +186,11 @@ def test_host_provisioning(appliance, setup_provider, cfme_data, host_provisioni
     assert host_request.row.status.text != 'Error'
 
     # Navigate to host details page and verify Provider and cluster names
-    assert test_host.get_detail('Relationships', 'Infrastructure Provider') ==\
+    view = navigate_to(test_host, 'Details')
+    assert view.entities.summary('Relationships').get_text_of('Infrastructure Provider') ==\
         provider.name, 'Provider name does not match'
 
-    assert test_host.get_detail('Relationships', 'Cluster') ==\
+    assert view.entities.summary('Relationships').get_text_of('Cluster') ==\
         host_provisioning['cluster'], 'Cluster does not match'
 
     # Navigate to host datastore page and verify that the requested datastore has been assigned

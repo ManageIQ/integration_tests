@@ -75,7 +75,8 @@ def get_obj(relationship, appliance, **kwargs):
         cluster_col = appliance.collections.clusters
         host = kwargs.get("host")
         provider = kwargs.get("provider")
-        cluster_name = host.get_detail("Relationships", "Cluster")
+        view = navigate_to(host, "Details")
+        cluster_name = view.entities.summary("Relationships").get_text_of("Cluster")
         obj = cluster_col.instantiate(name=cluster_name, provider=provider)
     elif relationship in ["Datastores", "VMs", "Templates"]:
         obj = kwargs.get("host")
@@ -99,10 +100,10 @@ def host(appliance, provider):
 def test_host_relationships(appliance, provider, setup_provider, host, relationship, view):
     """Tests relationship navigation for a host"""
     host_view = navigate_to(host, "Details")
-    if host.get_detail("Relationships", relationship) == "0":
+    if host_view.entities.summary("Relationships").get_text_of(relationship) == "0":
         pytest.skip("There are no relationships for {}".format(relationship))
     obj = get_obj(relationship, appliance, provider=provider, host=host)
-    host_view.entities.relationships.click_at(relationship)
+    host_view.entities.summary("Relationships").click_at(relationship)
     relationship_view = appliance.browser.create_view(view, additional_context={'object': obj})
     assert relationship_view.is_displayed
 

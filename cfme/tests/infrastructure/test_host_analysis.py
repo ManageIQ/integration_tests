@@ -68,23 +68,23 @@ def test_run_host_analysis(setup_provider_modscope, provider, host_type, host_na
     host_with_credentials.run_smartstate_analysis(wait_for_task_result=True)
 
     # Check results of the analysis
-    drift_history = host_with_credentials.get_detail('Relationships', 'Drift History')
+    view = navigate_to(host_with_credentials, 'Details')
+    drift_history = view.entities.summary('Relationships').get_text_of('Drift History')
     soft_assert(drift_history != '0', 'No drift history change found')
 
     if provider.type == "rhevm":
-        soft_assert(host_with_credentials.get_detail('Configuration', 'Services') != '0',
+        soft_assert(view.entities.summary('Configuration').get_text_of('Services') != '0',
                     'No services found in host detail')
 
     if host_type in ('rhel', 'rhev'):
-        soft_assert(host_with_credentials.get_detail('Configuration', 'Packages') != '0',
+        soft_assert(view.entities.summary('Configuration').get_text_of('Packages') != '0',
                     'No packages found in host detail')
-        soft_assert(host_with_credentials.get_detail('Configuration', 'Files') != '0',
+        soft_assert(view.entities.summary('Configuration').get_text_of('Files') != '0',
                     'No files found in host detail')
 
     elif host_type in ('esx', 'esxi'):
-        soft_assert(host_with_credentials.get_detail('Configuration', 'Advanced Settings') != '0',
+        soft_assert(view.entities.summary('Configuration').get_text_of('Advanced Settings') != '0',
                     'No advanced settings found in host detail')
-        view = navigate_to(host_with_credentials, 'Details')
         view.security_accordion.navigation.select('Firewall Rules')
         # Page get updated if rules value is not 0, and title is update
         soft_assert("(Firewall Rules)" in view.title.text, (

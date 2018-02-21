@@ -166,7 +166,8 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
         view.toolbar.power.item_select("Power Off", handle_alert=True)
 
     def get_power_state(self):
-        return self.get_detail("Properties", "Power State")
+        view = navigate_to(self, "Details")
+        return view.entities.summary("Properties").get_text_of("Power State")
 
     def refresh(self, cancel=False):
         """Perform 'Refresh Relationships and Power States' for the host.
@@ -205,18 +206,6 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
             password=self.ipmi_credentials.secret,
             interface_type=self.interface_type
         )
-
-    def get_detail(self, title, field):
-        """Gets details from the details summary tables.
-
-        Args:
-            title (str): Summary Table title
-            field (str): Summary table field name
-
-        Returns: A string representing the entities of the SummaryTable's value.
-        """
-        view = navigate_to(self, "Details")
-        return getattr(view.entities, title.lower().replace(" ", "_")).get_text_of(field)
 
     @property
     def exists(self):
@@ -266,7 +255,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
         Returns: :py:class:`list` of datastores names
         """
         host_details_view = navigate_to(self, "Details")
-        host_details_view.entities.relationships.click_at("Datastores")
+        host_details_view.entities.summary("Relationships").click_at("Datastores")
         datastores_view = self.create_view(HostAllDatastoresView)
         assert datastores_view.is_displayed
         return [entity.name for entity in datastores_view.entites.get_all_()]
@@ -315,7 +304,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
         """
         view = navigate_to(self, "Details")
         view.browser.refresh()
-        return self.get_detail("Compliance", "Status")
+        return view.entities.summary("Compliance").get_text_of("Status")
 
     @property
     def is_compliant(self):
@@ -354,7 +343,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
 
         # mark by indexes or mark all
         details_view = navigate_to(self, "Details")
-        details_view.entities.relationships.click_at("Drift History")
+        details_view.entities.summary("Relationships").click_at("Drift History")
         drift_history_view = self.create_view(HostDriftHistory)
         assert drift_history_view.is_displayed
         if indexes:
