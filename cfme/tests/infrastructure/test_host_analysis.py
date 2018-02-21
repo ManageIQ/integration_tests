@@ -32,9 +32,9 @@ def pytest_generate_tests(metafunc):
                 'host type must be set to [{}] for smartstate analysis tests'.format(
                     '|'.join(HOST_TYPES)))
 
-            argvalues[index] = argvalues[index] + [test_host['type'], test_host['name']]
-            test_id = '{}-{}'.format(args['provider'].key, test_host['type'])
-            new_argvalues.append(argvalues[index])
+            new_argvalue_list = [args['provider'], test_host['type'], test_host['name']]
+            test_id = '{}-{}-{}'.format(args['provider'].key, test_host['type'], test_host['name'])
+            new_argvalues.append(new_argvalue_list)
             new_idlist.append(test_id)
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
