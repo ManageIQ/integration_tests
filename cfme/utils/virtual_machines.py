@@ -42,7 +42,7 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
     """
     allow_skip = deploy_args.pop("allow_skip", ())
     if isinstance(allow_skip, dict):
-        skip_exceptions = allow_skip.keys()
+        skip_exceptions = list(allow_skip.keys())
         callable_mapping = allow_skip
     elif isinstance(allow_skip, basestring) and allow_skip.lower() == "default":
         skip_exceptions = (OSOverLimit, RHEVRequestError, exceptions.VMInstanceNotCloned, SSLError)

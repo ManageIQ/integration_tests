@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import logging
 import socket
@@ -1290,7 +1291,7 @@ class IPAppliance(object):
             are dictionaries where keys are the versions and values the names of the repositories.
         """
         products = {}
-        for repo_name, repo_url in self.read_repos().iteritems():
+        for repo_name, repo_url in six.iteritems(self.read_repos()):
             match = self.product_url_regexp.search(repo_url)
             if match is None:
                 continue
@@ -1311,7 +1312,7 @@ class IPAppliance(object):
         self.ssh_client.run_command('echo "[update-{}]" > {}'.format(repo_id, filename))
         self.ssh_client.run_command('echo "name=update-url-{}" >> {}'.format(repo_id, filename))
         self.ssh_client.run_command('echo "baseurl={}" >> {}'.format(repo_url, filename))
-        for k, v in kwargs.iteritems():
+        for k, v in six.iteritems(kwargs):
             self.ssh_client.run_command('echo "{}={}" >> {}'.format(k, v, filename))
         return repo_id
 
@@ -1328,7 +1329,7 @@ class IPAppliance(object):
             raise ValueError(
                 "The URL {} does not contain information about product and version.".format(
                     repo_url))
-        for repo_id, url in self.read_repos().iteritems():
+        for repo_id, url in six.iteritems(self.read_repos()):
             if url == repo_url:
                 # It is already there, so just enable it
                 self.enable_disable_repo(repo_id, True)
@@ -1336,7 +1337,7 @@ class IPAppliance(object):
         product, ver = match.groups()
         repos = self.find_product_repos()
         if product in repos:
-            for v, i in repos[product].iteritems():
+            for v, i in six.iteritems(repos[product]):
                 logger.info("Deleting %s repo with version %s (%s)", product, v, i)
                 self.ssh_client.run_command("rm -f /etc/yum.repos.d/{}.repo".format(i))
         return self.write_repofile(fauxfactory.gen_alpha(), repo_url, **kwargs)
@@ -1954,7 +1955,7 @@ class IPAppliance(object):
         enabling_ansible = ansible_old is False and ansible_new is True
 
         yaml = self.get_yaml_config()
-        yaml['server']['role'] = ','.join([role for role, boolean in roles.iteritems() if boolean])
+        yaml['server']['role'] = ','.join([role for role, boolean in six.iteritems(roles) if boolean])
         self.set_yaml_config(yaml)
         timeout = 600 if enabling_ansible else 300
         wait_for(lambda: self.server_roles == roles, num_sec=timeout, delay=15)

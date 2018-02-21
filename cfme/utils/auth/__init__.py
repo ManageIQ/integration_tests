@@ -106,7 +106,7 @@ class MIQAuthProvider(BaseAuthProvider):
     host3 = attr.ib(default=None)
     port = attr.ib(default=LDAP_PORT)
     user_type = attr.ib(default='principal',
-                        validator=lambda item, attribute, value: value in USER_TYPES.keys())
+                        validator=lambda item, attribute, value: value in list(USER_TYPES.keys()))
     domain_prefix = attr.ib(default=None)
     user_suffix = attr.ib(default=None)
     base_dn = attr.ib(default=None)

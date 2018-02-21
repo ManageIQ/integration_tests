@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
 import json
 import logging
 import traceback
@@ -14,6 +15,7 @@ from cfme.utils.appliance import Appliance
 from cfme.utils.conf import docker as docker_conf
 from cfme.utils.log import setup_logger
 from cfme.utils.trackerbot import api
+import six
 
 token = docker_conf['gh_token']
 owner = docker_conf['gh_owner']
@@ -33,7 +35,7 @@ logging.getLogger("pika").propagate = False
 def send_message_to_bot(msg):
 
     required_fields = set(['rabbitmq_url', 'gh_queue', 'gh_channel', 'gh_message_type'])
-    if not required_fields.issubset(docker_conf.viewkeys()):
+    if not required_fields.issubset(six.viewkeys(docker_conf)):
         logger.warn("Skipping - docker.yaml doesn't have {}".format(required_fields))
         return
 

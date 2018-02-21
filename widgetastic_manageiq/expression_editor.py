@@ -2,6 +2,7 @@
 """ The expression editor present in some locations of CFME.
 
 """
+from __future__ import absolute_import
 from functools import partial
 from selenium.common.exceptions import NoSuchElementException
 from cfme.utils.wait import wait_for, TimedOutError
@@ -11,6 +12,7 @@ from cfme.utils.pretty import Pretty
 from widgetastic_patternfly import Input, BootstrapSelect, Button
 from widgetastic.widget import View
 from widgetastic_manageiq import Calendar, Checkbox
+import six
 
 
 class ExpressionButton(Button):
@@ -402,7 +404,7 @@ def run_commands(command_list, clear_expression=True, context=None):
             # Single command, no params
             step_list.append(get_func(command, context))
         elif isinstance(command, dict):
-            for key, value in command.iteritems():
+            for key, value in six.iteritems(command):
                 func = get_func(key, context)
                 args = []
                 kwargs = {}

@@ -248,7 +248,7 @@ def list_providers(filters=None, use_global_filters=True, appliance=None):
             'You need to change it appropriately.')
     filters = filters or []
     if use_global_filters:
-        filters = filters + global_filters.values()
+        filters = filters + list(global_filters.values())
     providers = [get_crud(prov_key, appliance=appliance) for prov_key in providers_data]
     for prov_filter in filters:
         providers = filter(prov_filter, providers)
@@ -283,7 +283,7 @@ def list_provider_keys(provider_type=None):
     Returns: List of provider keys (strings).
     """
     try:
-        all_keys = conf.cfme_data.management_systems.keys()
+        all_keys = list(conf.cfme_data.management_systems.keys())
     except:
         all_keys = []
 

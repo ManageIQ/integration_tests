@@ -1,11 +1,13 @@
+from __future__ import absolute_import
 from artifactor import ArtifactorBasePlugin
 import requests
 import json
+import six
 
 
 def overall_test_status(statuses):
     # Handle some logic for when to count certain tests as which state
-    for when, status in statuses.iteritems():
+    for when, status in six.iteritems(statuses):
         if when == "call" and status[1] and status[0] == "skipped":
             return "xfailed"
         elif when == "call" and status[1] and status[0] == "failed":

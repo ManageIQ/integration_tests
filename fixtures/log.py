@@ -78,7 +78,7 @@ def pytest_sessionfinish(session, exitstatus):
         c[_test_status(test)] += 1
     # Prepend a total to the summary list
     results = ['total: {}'.format(sum(c.values()))] + map(
-        lambda n: '{}: {}'.format(n[0], n[1]), c.items())
+        lambda n: '{}: {}'.format(n[0], n[1]), list(c.items()))
     # Then join it with commas
     summary = ', '.join(results)
     logger().info(log.format_marker('Finished test run', mark='='))

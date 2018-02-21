@@ -45,7 +45,7 @@ def pytest_generate_tests(metafunc):
         args = dict(zip(argnames, argvalue_tuple))
 
         iso_cust_template = args['provider'].data['provisioning']['iso_kickstart']
-        if iso_cust_template not in cfme_data.get('customization_templates', {}).keys():
+        if iso_cust_template not in cfme_data.get('customization_templates', {}):
             continue
 
         new_idlist.append(idlist[i])

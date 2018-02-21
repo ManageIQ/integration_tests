@@ -9,6 +9,7 @@ together with template_upload_all script. This is why all the function calls, wh
 normally be placed in main function, are located in function run(**kwargs).
 """
 
+from __future__ import absolute_import
 import argparse
 import fauxfactory
 from threading import Lock, Thread
@@ -19,6 +20,7 @@ from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.providers import list_provider_keys
 from cfme.utils.ssh import SSHClient
 from wrapanapi import VMWareSystem
+import six
 
 # ovftool sometimes refuses to cooperate. We can try it multiple times to be sure.
 NUM_OF_TRIES_OVFTOOL = 5
@@ -113,7 +115,7 @@ def add_disk(client, name, provider):
 
 
 def check_kwargs(**kwargs):
-    for key, val in kwargs.iteritems():
+    for key, val in six.iteritems(kwargs):
         if val is None:
             logger.error("VSPHERE:%r Supply required parameter '%r'", kwargs['provider'], key)
             return False
@@ -131,15 +133,15 @@ def make_kwargs(args, **kwargs):
         template_name = cfme_data['basic_info']['appliance_template']
         kwargs.update({'template_name': template_name})
 
-    for kkey, kval in kwargs.iteritems():
-        for akey, aval in args_kwargs.iteritems():
+    for kkey, kval in six.iteritems(kwargs):
+        for akey, aval in six.iteritems(args_kwargs):
             if aval is not None:
                 if kkey == akey:
                     if kval != aval:
                         kwargs[akey] = aval
 
-    for akey, aval in args_kwargs.iteritems():
-        if akey not in kwargs.iterkeys():
+    for akey, aval in six.iteritems(args_kwargs):
+        if akey not in six.iterkeys(kwargs):
             kwargs[akey] = aval
 
     return kwargs

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from bottle import request, route, run, template
 import os
 import subprocess
@@ -5,6 +6,7 @@ import tempfile
 import sys
 import cgi
 import signal
+import six
 
 try:
     with open(sys.argv[2], "r") as f:
@@ -73,7 +75,7 @@ def setup(path):
 
 def get_data():
     data = []
-    for name, logger in Loggers.iteritems():
+    for name, logger in six.iteritems(Loggers):
         data.append({'name': name,
                 'tmp_name': logger.f.name,
                 'size': logger.size(),

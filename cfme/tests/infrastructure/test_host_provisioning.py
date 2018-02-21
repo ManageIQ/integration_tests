@@ -54,7 +54,7 @@ def pytest_generate_tests(metafunc):
             continue
 
         pxe_cust_template = prov_data.get('pxe_kickstart', '')
-        if pxe_cust_template not in cfme_data.get('customization_templates', {}).keys():
+        if pxe_cust_template not in cfme_data.get('customization_templates', {}):
             continue
 
         new_idlist.append(idlist[i])

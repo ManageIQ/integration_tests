@@ -36,6 +36,7 @@ If the blocker does not block, the ``unblock`` is not called. There is also a ``
 will get called if the blocker blocks. if the action does nothing, then it continues with next
 actions etc., until it gets to the point that it skips the test because there are blockers.
 """
+from __future__ import absolute_import
 import pytest
 
 from kwargify import kwargify as _kwargify
@@ -44,6 +45,7 @@ from fixtures.artifactor_plugin import fire_art_test_hook
 from markers.meta import plugin
 from cfme.utils.blockers import Blocker
 from cfme.utils.pytest_shortcuts import extract_fixtures_values
+import six
 
 
 def kwargify(f):
@@ -79,7 +81,7 @@ def resolve_blockers(item, blockers):
     # We will however add only those that are not in the global_env otherwise we could overwrite
     # our own stuff.
     params = extract_fixtures_values(item)
-    for funcarg, value in params.iteritems():
+    for funcarg, value in six.iteritems(params):
         if funcarg not in global_env:
             global_env[funcarg] = value
 

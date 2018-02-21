@@ -47,6 +47,7 @@ It has a command-line option that allows you to disable certain plugins. Just sp
 ``--disablemetaplugins a,b,c`` where a, b and c are the plugins that should be disabled
 
 """
+from __future__ import absolute_import
 from collections import namedtuple
 from kwargify import kwargify
 from types import FunctionType
@@ -54,6 +55,7 @@ from types import FunctionType
 import pytest
 
 from lya import AttrDict
+import six
 
 
 def pytest_configure(config):
@@ -135,7 +137,7 @@ def run_plugins(item, when):
     from cfme.utils.log import logger
     possible_plugins = []
     for plug in plugin._plugins:
-        if all([meta in item._metadata.keys() for meta in plug.metas])\
+        if all([meta in list(item._metadata.keys()) for meta in plug.metas])\
                 and plug.kwargs.get("run", plugin.DEFAULT) == when:
             possible_plugins.append(plug)
     by_names = {}
@@ -148,7 +150,7 @@ def run_plugins(item, when):
         disabled_plugins = []
     else:
         disabled_plugins = [name.strip() for name in disabled_plugins.split(",")]
-    for plugin_name, plugin_objects in by_names.iteritems():
+    for plugin_name, plugin_objects in six.iteritems(by_names):
         if plugin_name in disabled_plugins:
             logger.info("Ignoring plugin {} due to commandline option".format(plugin_name))
             continue

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from collections import Iterable
 
@@ -20,6 +21,7 @@ from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for, RefreshTimer
 from . import PolicyProfileAssignable
+import six
 
 
 # TODO: Move to collection when it happens
@@ -976,7 +978,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
         # TODO: Move to TemplateCollection
         result_list = []
         all_template_details = self.get_all_template_details()
-        for provider, templates in template_dict.iteritems():
+        for provider, templates in six.iteritems(template_dict):
             for template_name in templates:
                 inner_tuple = ()
                 for id in all_template_details:

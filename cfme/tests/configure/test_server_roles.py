@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import pytest
 
 from cfme.utils.conf import cfme_data
+import six
 
 server_roles_conf = cfme_data.get('server_roles',
                                   {'all': [], 'sets': {}})
@@ -14,7 +16,7 @@ def all_possible_roles():
     return roles
 
 
-@pytest.fixture(scope="module", params=server_roles_conf['sets'].keys())
+@pytest.fixture(scope="module", params=list(server_roles_conf['sets'].keys()))
 def roles(request, all_possible_roles, appliance):
     result = {}
     for role in all_possible_roles:
@@ -52,7 +54,7 @@ def test_server_roles_changing(request, roles, appliance):
     # Set roles
     server_settings.update_server_roles_ui(roles)
     # Get roles and check; use UI because the changes take a while to propagate to DB
-    for role, is_enabled in server_settings.server_roles_ui.iteritems():
+    for role, is_enabled in six.iteritems(server_settings.server_roles_ui):
         if is_enabled:
             assert roles[role], "Role '{}' is selected but should not be".format(role)
         else:

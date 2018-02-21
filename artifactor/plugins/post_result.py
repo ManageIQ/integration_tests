@@ -53,7 +53,8 @@ class PostResult(ArtifactorBasePlugin):
             with log_path.join('no_status.log').open('a') as f:
                 f.write(error)
 
-        map(_inc_test_count, old_artifacts.values())
+        for val in old_artifacts.values():
+            _inc_test_count(val)
         report['test_counts'] = test_counts
         report['test_counts']['total'] = sum(test_counts.values())
 

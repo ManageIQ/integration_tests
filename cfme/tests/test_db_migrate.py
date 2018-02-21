@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import tempfile
 
 import pytest
@@ -13,8 +14,10 @@ from cfme.utils.log import logger
 from cfme.utils.repo_gen import process_url, build_file
 from cfme.utils.version import get_stream
 
-pytestmark = [pytest.mark.uncollectif(lambda appliance: appliance.is_dev, reason="rails server")]
+import six
 
+
+pytestmark = [pytest.mark.uncollectif(lambda appliance: appliance.is_dev, reason="rails server")]
 
 def pytest_generate_tests(metafunc):
     if metafunc.function in {test_upgrade_single_inplace, test_db_migrate_replication}:
@@ -35,6 +38,35 @@ def pytest_generate_tests(metafunc):
         argvalues.append((data.url, data.version, data.desc))
         idlist.append(key)
     return metafunc.parametrize(argnames=argnames, argvalues=argvalues, ids=idlist)
+
+
+@pytest.fixture(scope="module")
+def temp_appliance_extended_db(temp_appliance_preconfig):
+    app = temp_appliance_preconfig
+    app.evmserverd.stop()
+    app.db.extend_partition()
+    app.start_evm_service()
+    return app
+
+
+@pytest.fixture(scope="function")
+def temp_appliance_remote(temp_appliance_preconfig_funcscope):
+    """Needed for db_migrate_replication as you can't drop a remote db due to subscription"""
+    app = temp_appliance_preconfig_funcscope
+    app.evmserverd.stop()
+    app.db.extend_partition()
+    app.start_evm_service()
+    return app
+
+
+@pytest.fixture(scope="function")
+def temp_appliance_global_region(temp_appliance_unconfig_funcscope_rhevm):
+    temp_appliance_unconfig_funcscope_rhevm.appliance_console_cli.configure_appliance_internal(
+        99, 'localhost', credentials['database']['username'], credentials['database']['password'],
+        'vmdb_production', temp_appliance_unconfig_funcscope_rhevm.unpartitioned_disks[0])
+    temp_appliance_unconfig_funcscope_rhevm.wait_for_evm_service()
+    temp_appliance_unconfig_funcscope_rhevm.wait_for_web_ui()
+    return temp_appliance_unconfig_funcscope_rhevm
 
 
 @pytest.fixture(scope="module")
