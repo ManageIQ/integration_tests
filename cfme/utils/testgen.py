@@ -89,7 +89,7 @@ import pytest
 from cfme.common.provider import BaseProvider
 from cfme.infrastructure.config_management import get_config_manager_from_config
 from cfme.roles import group_data
-from cfme.utils.conf import cfme_data
+from cfme.utils.conf import cfme_data, auth_data
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter, list_providers
 
@@ -306,7 +306,7 @@ def auth_groups(metafunc, auth_mode):
     argvalues = []
     idlist = []
 
-    if auth_mode in cfme_data.get('auth_modes', {}):
+    if auth_mode in auth_data.get('auth_providers', {}):
         # If auth_modes exists, group_roles is assumed to exist as well
         for group in group_data:
             argvalues.append([group, sorted(group_data[group])])
