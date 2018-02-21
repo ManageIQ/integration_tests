@@ -79,7 +79,7 @@ def test_appliance_console_cli_ipa_crud(ipa_creds, configured_appliance):
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
 def test_appliance_console_cli_extend_storage(unconfigured_appliance):
-    unconfigured_appliance.ssh_client.run_command('appliance_console_cli -t auto')
+    unconfigured_appliance[0].ssh_client.run_command('appliance_console_cli -t auto')
 
     def is_storage_extended(unconfigured_appliance):
         assert unconfigured_appliance.ssh_client.run_command("df -h | grep /var/www/miq_tmp")
@@ -88,7 +88,7 @@ def test_appliance_console_cli_extend_storage(unconfigured_appliance):
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
 def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
-    unconfigured_appliance.ssh_client.run_command('appliance_console_cli -l auto')
+    unconfigured_appliance[0].ssh_client.run_command('appliance_console_cli -l auto')
 
     def is_storage_extended(unconfigured_appliance):
         assert unconfigured_appliance.ssh_client.run_command("df -h | grep /vg_miq_logs")
@@ -97,14 +97,14 @@ def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
 def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, app_creds):
-    unconfigured_appliance.appliance_console_cli.configure_appliance_dedicated_db(
+    unconfigured_appliance[0].appliance_console_cli.configure_appliance_dedicated_db(
         app_creds['username'], app_creds['password'], 'vmdb_production',
-        unconfigured_appliance.unpartitioned_disks[0]
+        unconfigured_appliance[0].unpartitioned_disks[0]
     )
-    wait_for(lambda: unconfigured_appliance.db.is_dedicated_active)
+    wait_for(lambda: unconfigured_appliance[0].db.is_dedicated_active)
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.9.1')
 @pytest.mark.uncollectif(BZ(1544854, forced_streams=['5.9']).blocks, 'BZ 1544854')
 def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
     """Tests the configuration of HA with three appliances including failover to standby node"""
