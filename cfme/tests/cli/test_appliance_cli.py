@@ -16,12 +16,12 @@ def test_appliance_console_cli_set_hostname(appliance):
 
 def test_appliance_console_cli_internal_fetch_key(app_creds, unconfigured_appliance, appliance):
     fetch_key_ip = appliance.hostname
-    unconfigured_appliance.appliance_console_cli.configure_appliance_internal_fetch_key(
+    unconfigured_appliance[0].appliance_console_cli.configure_appliance_internal_fetch_key(
         0, 'localhost', app_creds['username'], app_creds['password'], 'vmdb_production',
-        unconfigured_appliance.unpartitioned_disks[0], fetch_key_ip, app_creds['sshlogin'],
+        unconfigured_appliance[0].unpartitioned_disks[0], fetch_key_ip, app_creds['sshlogin'],
         app_creds['sshpass'])
-    unconfigured_appliance.wait_for_evm_service()
-    unconfigured_appliance.wait_for_web_ui()
+    unconfigured_appliance[0].wait_for_evm_service()
+    unconfigured_appliance[0].wait_for_web_ui()
 
 
 def test_appliance_console_cli_external_join(app_creds, appliance,
@@ -106,9 +106,9 @@ def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, ap
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
 @pytest.mark.uncollectif(BZ(1544854, forced_streams=['5.9']).blocks, 'BZ 1544854')
-def test_appliance_console_cli_ha_crud(unconfigured_applinaces, app_creds):
+def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
     """Tests the configuration of HA with three appliances including failover to standby node"""
-    app = unconfigured_applinaces
+    app = unconfigured_appliances
     app0_ip = app[0].hostname
     app1_ip = app[1].hostname
     # Configure primary database

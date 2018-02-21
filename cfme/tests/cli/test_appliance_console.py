@@ -170,8 +170,8 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
         assert appliance.ssh_client.run_command(
             "cat /var/www/miq/vmdb/log/ha_admin.log | grep 'Starting to execute failover'")
     wait_for(is_failover_started, func_args=[app[2]], timeout=300)
-    app[2].wait_for_evm_service()
-    app[2].wait_for_web_ui
+    app[2].wait_for_evm_service(timeout=600)
+    app[2].wait_for_web_ui()
 
 
 def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_creds, appliance):
@@ -210,11 +210,11 @@ def test_appliance_console_extend_storage(unconfigured_appliance):
     disk, 'y' confirm configuration and '' complete."""
 
     command_set = ('ap', '', '10', '1', 'y', '')
-    unconfigured_appliance.appliance_console.run_commands(command_set)
+    unconfigured_appliance[0].appliance_console.run_commands(command_set)
 
     def is_storage_extended(unconfigured_appliance):
         assert unconfigured_appliance.ssh_client.run_command("df -h | grep /var/www/miq_tmp")
-    wait_for(is_storage_extended, func_args=[unconfigured_appliance])
+    wait_for(is_storage_extended, func_args=[unconfigured_appliance[0]])
 
 
 @pytest.mark.uncollect('No IPA servers currently available')
