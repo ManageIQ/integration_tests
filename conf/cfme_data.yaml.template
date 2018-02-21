@@ -312,7 +312,7 @@ auth_modes:
             - ad2.example.com
             - ad3.example.com
         port: "389"
-        user_type: userprincipalname
+        user_type: principal
         user_suffix: ad.example.com
         get_groups: True
         get_roles: True

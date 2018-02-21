@@ -75,6 +75,7 @@ def configured_appliance(appliance):
 
 @pytest.yield_fixture()
 def ipa_crud(configured_appliance, ipa_creds):
+    # TODO Refactor with auth provider class use
     configured_appliance.appliance_console_cli.configure_ipa(ipa_creds['ipaserver'],
         ipa_creds['username'], ipa_creds['password'], ipa_creds['domain'], ipa_creds['realm'])
 
@@ -103,6 +104,7 @@ def app_creds_modscope():
 
 @pytest.fixture()
 def ipa_creds():
+    # TODO refactor with auth provider class use
     try:
         ext_ipa = auth_data['auth_providers']['ext_ipa']
     except KeyError:

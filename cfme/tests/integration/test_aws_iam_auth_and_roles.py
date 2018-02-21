@@ -40,7 +40,7 @@ def auth_groups():
        ['evmgroup-user', 'evmgroup-approver', 'evmgroup-auditor', 'evmgroup-operator',
         'evmgroup-support', 'evmgroup-security'])
 ])
-def test_group_roles(appliance, configure_aws_iam_auth_mode, group_name, context, soft_assert):
+def test_group_roles(appliance, setup_aws_auth_provider, group_name, context, soft_assert):
     """Basic default AWS_IAM group role auth + RBAC test
 
     Validates expected menu and submenu names are present for default
@@ -65,7 +65,7 @@ def test_group_roles(appliance, configure_aws_iam_auth_mode, group_name, context
         user = appliance.collections.users.simple_user(username, password)
         view = appliance.server.login(user)
         assert appliance.server.current_full_name() == user.name
-        nav_visbility = view.navigation.nav_item_tree()
+        nav_visbile = view.navigation.nav_item_tree()
 
         # RFE BZ 1526495 shows up as an extra requests link in nav
         bz = BZ(1526495,
@@ -73,15 +73,14 @@ def test_group_roles(appliance, configure_aws_iam_auth_mode, group_name, context
                 unblock=lambda group_name: group_name not in
                 ['evmgroup-user', 'evmgroup-approver', 'evmgroup-desktop', 'evmgroup-vm_user',
                  'evmgroup-administrator', 'evmgroup-super_administrator'])
-        rfe_blocks = bz.blocks
         for area in group_access.keys():
             # using .get() on nav_visibility because it may not have `area` key
-            diff = DeepDiff(group_access[area], nav_visbility.get(area, {}),
+            diff = DeepDiff(group_access[area], nav_visbile.get(area, {}),
                             verbose_level=0,  # If any higher, will flag string vs unicode
                             ignore_order=True)
             nav_extra = diff.get('iterable_item_added')
 
-            if nav_extra and 'Requests' in nav_extra.values() and rfe_blocks:
+            if nav_extra and 'Requests' in nav_extra.values() and bz.blocks:
                 logger.warning('Skipping RBAC verification for group "%s" due to %r',
                                group_name, bz)
                 continue
