@@ -7,8 +7,11 @@ from cfme.utils import error
 from cfme import test_requirements
 from cfme.rest.gen_data import conditions as _conditions
 from cfme.rest.gen_data import policies as _policies
-from cfme.utils.blockers import BZ
-from cfme.utils.rest import assert_response, delete_resources_from_collection
+from cfme.utils.rest import (
+    assert_response,
+    delete_resources_from_collection,
+    query_resource_attributes,
+)
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
@@ -26,7 +29,14 @@ class TestConditionsRESTAPI(object):
         assert len(response) == num_conditions
         return response
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
+    def test_query_condition_attributes(self, conditions, soft_assert):
+        """Tests access to condition attributes.
+
+        Metadata:
+            test_flag: rest
+        """
+        query_resource_attributes(conditions[0], soft_assert=soft_assert)
+
     def test_create_conditions(self, appliance, conditions):
         """Tests create conditions.
 
@@ -37,7 +47,6 @@ class TestConditionsRESTAPI(object):
             record = appliance.rest_api.collections.conditions.get(id=condition.id)
             assert record.description == condition.description
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
     def test_delete_conditions_from_detail(self, conditions, appliance, method):
         """Tests delete conditions from detail.
@@ -46,27 +55,20 @@ class TestConditionsRESTAPI(object):
             test_flag: rest
         """
         for condition in conditions:
-            if method == 'post':
-                del_action = condition.action.delete.POST
-            else:
-                del_action = condition.action.delete.DELETE
-
+            del_action = getattr(condition.action.delete, method.upper())
             del_action()
             assert_response(appliance)
 
-            wait_for(
-                lambda: not appliance.rest_api.collections.conditions.find_by(
-                    name=condition.name),
+            condition.wait_not_exists(
                 num_sec=100,
                 delay=5,
-                message="Check if a condition deleted"
+                message="Check if a condition doesn't exist"
             )
 
             with error.expected('ActiveRecord::RecordNotFound'):
                 del_action()
             assert_response(appliance, http_status=404)
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     def test_delete_conditions_from_collection(self, conditions, appliance):
         """Tests delete conditions from collection.
 
@@ -76,7 +78,6 @@ class TestConditionsRESTAPI(object):
         collection = appliance.rest_api.collections.conditions
         delete_resources_from_collection(collection, conditions, num_sec=100, delay=5)
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     @pytest.mark.parametrize(
         'from_detail', [True, False],
         ids=['from_detail', 'from_collection'])
@@ -121,7 +122,14 @@ class TestPoliciesRESTAPI(object):
         assert len(response) == num_policies
         return response
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
+    def test_query_policy_attributes(self, policies, soft_assert):
+        """Tests access to policy attributes.
+
+        Metadata:
+            test_flag: rest
+        """
+        query_resource_attributes(policies[0], soft_assert=soft_assert)
+
     def test_create_policies(self, appliance, policies):
         """Tests create policies.
 
@@ -132,7 +140,6 @@ class TestPoliciesRESTAPI(object):
             record = appliance.rest_api.collections.policies.get(id=policy.id)
             assert record.description == policy.description
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     def test_delete_policies_from_detail_post(self, policies, appliance):
         """Tests delete policies from detail using POST method.
 
@@ -143,8 +150,7 @@ class TestPoliciesRESTAPI(object):
             policy.action.delete.POST()
             assert_response(appliance)
 
-            wait_for(
-                lambda: not appliance.rest_api.collections.policies.find_by(name=policy.name),
+            policy.wait_not_exists(
                 num_sec=100,
                 delay=5,
                 message="Check if a policy doesn't exist"
@@ -155,9 +161,10 @@ class TestPoliciesRESTAPI(object):
             assert_response(appliance, http_status=404)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.9')
-    @pytest.mark.meta(blockers=[BZ(1435773, forced_streams=['5.9'])])
     def test_delete_policies_from_detail_delete(self, policies, appliance):
         """Tests delete policies from detail using DELETE method.
+
+        Testing BZ 1435773
 
         Metadata:
             test_flag: rest
@@ -166,18 +173,16 @@ class TestPoliciesRESTAPI(object):
             policy.action.delete.DELETE()
             assert_response(appliance)
 
-            wait_for(
-                lambda: not appliance.rest_api.collections.policies.find_by(
-                    name=policy.name),
+            policy.wait_not_exists(
                 num_sec=100,
-                delay=5
+                delay=5,
+                message="Check if a policy doesn't exist"
             )
 
             with error.expected('ActiveRecord::RecordNotFound'):
                 policy.action.delete.DELETE()
             assert_response(appliance, http_status=404)
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     def test_delete_policies_from_collection(self, policies, appliance):
         """Tests delete policies from collection.
 
@@ -187,13 +192,13 @@ class TestPoliciesRESTAPI(object):
         collection = appliance.rest_api.collections.policies
         delete_resources_from_collection(collection, policies, num_sec=100, delay=5)
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
-    @pytest.mark.meta(blockers=[BZ(1435777, forced_streams=['5.8', 'upstream'])])
     @pytest.mark.parametrize(
         'from_detail', [True, False],
         ids=['from_detail', 'from_collection'])
     def test_edit_policies(self, policies, appliance, from_detail):
         """Tests edit policies.
+
+        Testing BZ 1435777
 
         Metadata:
             test_flag: rest
