@@ -93,7 +93,7 @@ def test_cluster_relationships(soft_assert):
 
 
 @pytest.mark.meta(blockers=[BZ(1504010, forced_streams=['5.7', '5.8', 'upstream'])])
-def test_operations_vm_on(soft_assert, appliance):
+def test_operations_vm_on(soft_assert, appliance, request):
     adb = appliance.db.client
     vms = adb['vms']
     hosts = adb['hosts']
@@ -111,12 +111,18 @@ def test_operations_vm_on(soft_assert, appliance):
             hosts, vms.host_id == hosts.id).outerjoin(
                 storages, vms.storage_id == storages.id).filter(
                     vms.power_state == 'on').order_by(vms.name).all()
+
+    @request.addfinalizer
+    def _finalize():
+        report.delete()
+
     assert len(vms_in_db) == len(list(report.data.rows))
     vm_names = [vm.vm_name for vm in vms_in_db]
     for vm in vms_in_db:
         # Following check is based on BZ 1504010
-        assert vm_names.count(vm.vm_name) == 1, \
-            'There is a duplicate entry in DB for VM {}'.format(vm.vm_name)
+        if not BZ(1504010, forced_streams=['5.9']).blocks:
+            assert vm_names.count(vm.vm_name) == 1, (
+                'There is a duplicate entry in DB for VM {}'.format(vm.vm_name))
         store_path = vm.vm_location.encode('utf8')
         if vm.storages_name:
             store_path = '{}/{}'.format(vm.storages_name.encode('utf8'), store_path)
@@ -128,7 +134,7 @@ def test_operations_vm_on(soft_assert, appliance):
                 assert compare(vm.vm_last_scan, item['Last Analysis Time'])
 
 
-def test_datastores_summary(soft_assert, appliance):
+def test_datastores_summary(soft_assert, appliance, request):
     """Checks Datastores Summary report with DB data. Checks all data in report, even rounded
     storage sizes."""
     adb = appliance.db.client
@@ -143,6 +149,10 @@ def test_datastores_summary(soft_assert, appliance):
                                        storages.total_space, storages.name, storages.id).all()
 
     assert len(storages_in_db) == len(list(report.data.rows))
+
+    @request.addfinalizer
+    def _finalize():
+        report.delete()
 
     storages_in_db_list = []
     report_rows_list = []
