@@ -174,10 +174,10 @@ class ApplianceConsoleCli(object):
                 dbname=dbname, dbdisk=dbdisk, fetch_key=fetch_key, sshlogin=sshlogin,
                 sshpass=sshpass))
 
-    def configure_appliance_dedicated_db(self, region, username, password, dbname, dbdisk):
+    def configure_appliance_dedicated_db(self, username, password, dbname, dbdisk):
         self._run("--internal --username {username} --password {password}"
             " --dbname {dbname} --verbose --dbdisk {dbdisk} --key --standalone".format(
-                region=region, username=username, password=password, dbname=dbname, dbdisk=dbdisk))
+                username=username, password=password, dbname=dbname, dbdisk=dbdisk))
 
     def configure_ipa(self, ipaserver, username, password, domain=None, realm=None):
         assert self._run("--ipaserver {ipaserver} --ipaprincipal {username} "
@@ -204,16 +204,6 @@ class ApplianceConsoleCli(object):
             " --auto-failover --dbname {dbname} --verbose --dbdisk {dbdisk}"
             " --standalone".format(username=username, password=password, reptype=reptype,
                 primhost=primhost, standhost=standhost, node=node, dbname=dbname, dbdisk=dbdisk))
-
-    def configure_ipa(self, ipaserver, username, password, domain, realm):
-        self._run("--ipaserver {ipaserver} --ipaprincipal {username} --ipapassword {password}"
-            " --ipadomain {domain} --iparealm {realm}".format(
-                ipaserver=ipaserver, username=username, password=password, domain=domain,
-                realm=realm))
-        assert self.appliance.ssh_client.run_command("systemctl status sssd | grep running")
-        return_code, output = self.appliance.ssh_client.run_command(
-            "cat /etc/ipa/default.conf | grep 'enable_ra = True'")
-        assert return_code == 0
 
     def uninstall_ipa_client(self):
         assert self._run("--uninstall-ipa")

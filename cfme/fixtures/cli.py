@@ -11,24 +11,6 @@ from fixtures.appliance import temp_appliances
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 
-
-@pytest.yield_fixture(scope="function")
-def dedicated_db_appliance(app_creds, appliance):
-    """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '1' Creates v2_key,
-    '1' selects internal db, 'y' continue, '1' use partition, 'y' create dedicated db, 'pwd'
-    db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
-    if appliance.version > '5.7':
-        with temp_appliances(count=1, preconfigured=False) as apps:
-            pwd = app_creds['password']
-            opt = '5' if apps[0].version >= "5.8" else '8'
-            command_set = ('ap', '', opt, '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
-            apps[0].appliance_console.run_commands(command_set)
-            wait_for(lambda: apps[0].db.is_dedicated_active)
-            yield apps[0]
-    else:
-        raise Exception("Can't setup dedicated db on appliance below 5.7 builds")
-
-
 """ The Following fixtures are for provisioning one preconfigured or unconfigured appliance for
     testing from an FQDN provider unless there are no provisions available"""
 
@@ -77,6 +59,19 @@ def unconfigured_appliances(appliance):
 def configured_appliance(appliance):
     with fqdn_appliance(appliance, preconfigured=True, count=1) as app:
         yield app
+
+
+@pytest.yield_fixture(scope="function")
+def dedicated_db_appliance(app_creds, unconfigured_appliance):
+    """'ap' launch appliance_console, '' clear info screen, '5' setup db, '1' Creates v2_key,
+    '1' selects internal db, '1' use partition, 'y' create dedicated db, 'pwd'
+    db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
+    apps = unconfigured_appliance
+    pwd = app_creds['password']
+    command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+    apps[0].appliance_console.run_commands(command_set)
+    wait_for(lambda: apps[0].db.is_dedicated_active)
+    yield apps[0]
 
 
 @pytest.yield_fixture()

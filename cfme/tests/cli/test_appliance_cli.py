@@ -98,7 +98,7 @@ def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
 def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, app_creds):
     unconfigured_appliance.appliance_console_cli.configure_appliance_dedicated_db(
-        0, app_creds['username'], app_creds['password'], 'vmdb_production',
+        app_creds['username'], app_creds['password'], 'vmdb_production',
         unconfigured_appliance.unpartitioned_disks[0]
     )
     wait_for(lambda: unconfigured_appliance.db.is_dedicated_active)
@@ -130,7 +130,23 @@ def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
     # Configure standby node
     app[1].appliance_console_cli.configure_appliance_dedicated_ha_standby(
         app_creds['username'], app_creds['password'], 'standby', app0_ip, app1_ip, '2',
-        'vmdb_production', app[0].unpartitioned_disks[0]
+        'vmdb_production', app[1].unpartitioned_disks[0]
     )
-    wait_for(lambda: app[1].db.is_dedicated_active)
-    # Intiate failover to standby node
+    # Configure automatic failover on EVM appliance
+    command_set = ('ap', '', '9', '1', '')
+    app[2].appliance_console.run_commands(command_set)
+
+    def is_ha_monitor_started(appliance):
+        assert appliance.ssh_client.run_command(
+            "cat /var/www/miq/vmdb/config/failover_databases.yml | grep {}".format(app1_ip))
+    wait_for(is_ha_monitor_started, func_args=[app[2]], timeout=300, handle_exception=True)
+    # Cause failover to occur
+    rc, out = app[0].ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
+    assert rc == 0, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(out)
+
+    def is_failover_started(appliance):
+        assert appliance.ssh_client.run_command(
+            "cat /var/www/miq/vmdb/log/ha_admin.log | grep 'Starting to execute failover'")
+    wait_for(is_failover_started, func_args=[app[2]], timeout=450, handle_exception=True)
+    app[2].wait_for_evm_service()
+    app[2].wait_for_web_ui()
