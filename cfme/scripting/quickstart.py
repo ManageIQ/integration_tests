@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import os
+import re
 import sys
 import argparse
 import subprocess
@@ -20,9 +21,40 @@ REDHAT_RELEASE_FILE = '/etc/redhat-release'
 CREATED = object()
 REQUIREMENT_FILE = 'requirements/frozen.txt'
 HAS_DNF = os.path.exists('/usr/bin/dnf')
+HAS_YUM = os.path.exists('/usr/bin/yum')
+HAS_APT = os.path.exists('/usr/bin/apt')
 IN_VIRTUALENV = getattr(sys, 'real_prefix', None) is not None
 
 PRISTINE_ENV = dict(os.environ)
+
+OS_RELEASE_FILE = '/etc/os-release'
+OS_NAME_REGEX = r'NAME="([\w\W]+)"'
+OS_VERSION_REGEX = r'VERSION="([\w\W]+)"'
+OS_NAME = None
+OS_VERSION = None
+
+REQUIRED_PACKAGES = None
+INSTALL_COMMAND = None
+
+if HAS_DNF:
+    INSTALL_COMMAND = 'dnf install -y'
+elif HAS_YUM:
+    INSTALL_COMMAND = 'yum install -y'
+elif HAS_APT:
+    INSTALL_COMMAND = 'apt install -y'
+
+if not IS_ROOT:
+    INSTALL_COMMAND = 'sudo ' + INSTALL_COMMAND
+
+if os.path.exists(OS_RELEASE_FILE):
+    with open(OS_RELEASE_FILE) as os_release:
+        for var in os_release.readlines():
+            name = re.match(OS_NAME_REGEX, var)
+            if name:
+                OS_NAME = name.group(1)
+            version = re.match(OS_VERSION_REGEX, var)
+            if version:
+                OS_VERSION = version.group(1)
 
 REDHAT_PACKAGES_SPECS = [
     ("Fedora release 23", "nss",
@@ -78,6 +110,14 @@ REDHAT_PACKAGES_SPECS = [
      " freetype-devel")
 ]
 
+OS_PACKAGES_SPECS = [
+    # Extend this
+    ("Ubuntu", "16.04.3 LTS (Xenial Xerus)", "openssl",
+     " python-virtualenv gcc postgresql libxml2-dev"
+     " libxslt1-dev libzmq3-dev libcurl4-openssl-dev"
+     " g++ openssl libffi-dev python-dev libtesseract3"
+     " libpng-dev libfreetype6-dev libssl-dev")
+]
 
 if os.path.exists(REDHAT_RELEASE_FILE):
 
@@ -85,24 +125,30 @@ if os.path.exists(REDHAT_RELEASE_FILE):
         release_string = fp.read()
     for release, curl_ssl, packages in REDHAT_PACKAGES_SPECS:
         if release_string.startswith(release):
-            REDHAT_PACKAGES = packages
+            REQUIRED_PACKAGES = packages
             os.environ['PYCURL_SSL_LIBRARY'] = curl_ssl
             break
-    else:
-        print("{} not known".format(release_string))
-        sys.exit(1)
-    assert REDHAT_PACKAGES
 
-    if HAS_DNF:
-        INSTALL_COMMAND = 'dnf install -y'
-    else:
-        INSTALL_COMMAND = 'yum install -y'
-    if not IS_ROOT:
-        INSTALL_COMMAND = 'sudo ' + INSTALL_COMMAND
+    if not REQUIRED_PACKAGES:
+        print('{} {} not known. '
+              'Please ensure you have the required packages installed.')
+        print('$ dnf install -y {}'.format(REDHAT_PACKAGES_SPECS[-1][-1]))
+
+elif os.path.exists(OS_RELEASE_FILE):
+
+    for os_name, os_version, curl_ssl, packages in OS_PACKAGES_SPECS:
+        if os_name == OS_NAME and os_version == OS_VERSION:
+            REQUIRED_PACKAGES = packages
+            os.environ['PYCURL_SSL_LIBRARY'] = curl_ssl
+            break
+
+    if not REQUIRED_PACKAGES:
+        print('{} {} not known. '
+              'Please ensure you have the required packages installed.')
+        print('$ apt install -y {}'.format(OS_PACKAGES_SPECS[-1][-1]))
+
 else:
     INSTALL_COMMAND = None
-    # to actually print them
-    REDHAT_PACKAGES = REDHAT_PACKAGES_SPECS[-1][-1]
 
 
 def command_text(command, shell):
@@ -141,12 +187,14 @@ def pip_json_list(venv):
 
 def install_system_packages():
     if INSTALL_COMMAND:
-        call_or_exit(INSTALL_COMMAND + REDHAT_PACKAGES, shell=True)
+        call_or_exit(INSTALL_COMMAND + REQUIRED_PACKAGES, shell=True)
     else:
         print("WARNING: unknown distribution,",
               "please ensure you have the required packages installed")
-        print("INFO: on redhat based systems this is the equivalend of:")
-        print("$ dnf install -y", REDHAT_PACKAGES)
+        print("INFO: on redhat based systems this is the equivalent of:")
+        print("$ dnf install -y", REDHAT_PACKAGES_SPECS[-1][-1])
+        print("INFO: on non-redhat based systems this is the equivalent of:")
+        print("$ apt install -y", OS_PACKAGES_SPECS[-1][-1])
 
 
 def setup_virtualenv(target, use_site):
