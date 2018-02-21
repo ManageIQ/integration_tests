@@ -619,6 +619,15 @@ class TestServiceRESTAPI(object):
 
 
 class TestServiceDialogsRESTAPI(object):
+    def test_query_service_dialog_attributes(self, appliance, dialog, soft_assert):
+        """Tests access to service dialog attributes.
+
+        Metadata:
+            test_flag: rest
+        """
+        service_dialog = appliance.rest_api.collections.service_dialogs.get(label=dialog.label)
+        query_resource_attributes(service_dialog, soft_assert=soft_assert)
+
     @pytest.mark.parametrize("method", ["post", "delete"])
     def test_delete_service_dialog(self, appliance, dialog, method):
         """Tests deleting service dialogs from detail.
@@ -651,6 +660,14 @@ class TestServiceDialogsRESTAPI(object):
 
 
 class TestServiceTemplateRESTAPI(object):
+    def test_query_service_templates_attributes(self, service_templates, soft_assert):
+        """Tests access to service template attributes.
+
+        Metadata:
+            test_flag: rest
+        """
+        query_resource_attributes(service_templates[0], soft_assert=soft_assert)
+
     def test_create_service_templates(self, appliance, service_templates):
         """Tests creation of service templates.
 
@@ -784,6 +801,20 @@ class TestServiceTemplateRESTAPI(object):
 
 
 class TestServiceCatalogsRESTAPI(object):
+    def test_query_service_catalog_attributes(self, service_catalogs, soft_assert):
+        """Tests access to service catalog attributes.
+
+        Metadata:
+            test_flag: rest
+        """
+        outcome = query_resource_attributes(service_catalogs[0])
+        for failure in outcome.failed:
+            if failure.name == 'service_templates' and BZ(
+                    1546942, forced_streams=['5.8']).blocks:
+                continue
+            soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+                failure.type, failure.name, failure.response.status_code, failure.error))
+
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
     def test_edit_catalogs(self, appliance, service_catalogs, from_detail):
         """Tests editing catalog items using the REST API.
@@ -1061,6 +1092,14 @@ class TestPendingRequestsRESTAPI(object):
 
         return service_request
 
+    def test_query_service_request_attributes(self, pending_request, soft_assert):
+        """Tests access to service request attributes.
+
+        Metadata:
+            test_flag: rest
+        """
+        query_resource_attributes(pending_request, soft_assert=soft_assert)
+
     def test_create_pending_request(self, pending_request):
         """Tests creating pending service request using the REST API.
 
@@ -1233,6 +1272,20 @@ class TestBlueprintsRESTAPI(object):
         assert len(response) == num
         return response
 
+    def test_query_blueprints_attributes(self, blueprints, soft_assert):
+        """Tests access to blueprints attributes.
+
+        Metadata:
+            test_flag: rest
+        """
+        outcome = query_resource_attributes(blueprints[0])
+        for failure in outcome.failed:
+            if failure.name == 'service_templates' and BZ(
+                    1546952, forced_streams=['5.8']).blocks:
+                continue
+            soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+                failure.type, failure.name, failure.response.status_code, failure.error))
+
     @pytest.mark.tier(3)
     def test_create_blueprints(self, appliance, blueprints):
         """Tests creation of blueprints.
@@ -1321,6 +1374,14 @@ class TestOrchestrationTemplatesRESTAPI(object):
         assert_response(appliance)
         assert len(response) == num
         return response
+
+    def test_query_orchestration_templates_attributes(self, orchestration_templates, soft_assert):
+        """Tests access to orchestration templates attributes.
+
+        Metadata:
+            test_flag: rest
+        """
+        query_resource_attributes(orchestration_templates[0], soft_assert=soft_assert)
 
     @pytest.mark.tier(3)
     def test_create_orchestration_templates(self, appliance, orchestration_templates):
@@ -1514,6 +1575,14 @@ class TestServiceOrderCart(object):
         assert len(response) == len(service_templates)
         assert cart.service_requests.subcount == len(response)
         return response
+
+    def test_query_cart_attributes(self, cart, soft_assert):
+        """Tests access to cart attributes.
+
+        Metadata:
+            test_flag: rest
+        """
+        query_resource_attributes(cart, soft_assert=soft_assert)
 
     @pytest.mark.tier(3)
     def test_create_empty_cart(self, appliance, cart):
