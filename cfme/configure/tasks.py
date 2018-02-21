@@ -47,6 +47,12 @@ TABS_DATA_PER_PROVIDER = {
 }
 
 
+class TasksTable(Table):
+
+    def wait_displayed(self, timeout=10, delay=2, fail_func=None):
+        wait_for(lambda: self.is_displayed, timeout=timeout, delay=delay, fail_func=fail_func)
+
+
 def is_vm_analysis_finished(name, **kwargs):
     return is_analysis_finished(name=name, task_type='vm', **kwargs)
 
@@ -125,6 +131,7 @@ def check_tasks_have_no_errors(task_name, task_type, expected_num_of_tasks, sile
     # expected_status change from str to support also regular expression pattern
     expected_status = re.compile(expected_status, re.IGNORECASE)
 
+    tab_view.table.wait_displayed(fail_func=view.reload.click)
     try:
         rows = list(tab_view.table.rows(task_name=task_name, state=expected_status))
     except IndexError:
@@ -220,24 +227,24 @@ class TasksView(BaseLoggedInPage):
         class mytasks(Tab):  # noqa
             TAB_NAME = VersionPick({Version.lowest(): 'My VM and Container Analysis Tasks',
                                     '5.9': 'My Tasks'})
-            table = Table(table_loc)
+            table = TasksTable(table_loc)
 
         @View.nested
         class myothertasks(Tab):  # noqa
             TAB_NAME = VersionPick({'5.9': 'My Tasks',
                                     Version.lowest(): 'My Other UI Tasks'})
-            table = Table(table_loc)
+            table = TasksTable(table_loc)
 
         @View.nested
         class alltasks(Tab):  # noqa
             TAB_NAME = VersionPick({'5.9': 'All Tasks',
                                     Version.lowest(): "All VM and Container Analysis Tasks"})
-            table = Table(table_loc)
+            table = TasksTable(table_loc)
 
         @View.nested
         class allothertasks(Tab):  # noqa
             TAB_NAME = "All Other Tasks"
-            table = Table(table_loc)
+            table = TasksTable(table_loc)
 
     @property
     def is_displayed(self):
