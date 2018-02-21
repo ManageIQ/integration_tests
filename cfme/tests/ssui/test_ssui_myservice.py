@@ -2,18 +2,18 @@
 """Test Service Details page functionality."""
 import pytest
 
-
+from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
 from cfme.utils import ssh
 from cfme.utils.appliance import ViaSSUI
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
-from cfme import test_requirements
 from markers.env_markers.provider import providers
 
 
@@ -27,6 +27,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_myservice_crud(appliance, setup_provider, context, order_catalog_item_in_ops_ui):
     """Test Myservice crud in SSUI."""
@@ -41,6 +42,7 @@ def test_myservice_crud(appliance, setup_provider, context, order_catalog_item_i
         my_service.delete()
 
 
+@pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_retire_service(appliance, setup_provider, context, order_catalog_item_in_ops_ui):
     """Test retire service."""
@@ -50,6 +52,7 @@ def test_retire_service(appliance, setup_provider, context, order_catalog_item_i
         my_service.retire()
 
 
+@pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
 @pytest.mark.parametrize('order_catalog_item_in_ops_ui', [['console_test']], indirect=True)
 @pytest.mark.uncollectif(lambda provider: provider.one_of(VMwareProvider) and

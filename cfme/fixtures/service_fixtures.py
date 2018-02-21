@@ -3,6 +3,8 @@ import pytest
 from widgetastic.utils import partial_match
 
 from cfme.common.provider import cleanup_vm
+from cfme.cloud.provider import CloudProvider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.rest.gen_data import dialog as _dialog
 from cfme.rest.gen_data import service_catalog_obj as _catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
@@ -28,30 +30,35 @@ def catalog_item(provider, provisioning, vm_name, dialog, catalog):
 
 def create_catalog_item(provider, provisioning, vm_name, dialog, catalog, console_template=None):
     catalog_item_type = provider.catalog_name
-    template, host, datastore, iso_file, vlan = map(provisioning.get,
-        ('template', 'host', 'datastore', 'iso_file', 'vlan'))
+    provision_type, template, host, datastore, iso_file, vlan = map(provisioning.get,
+        ('provision_type', 'template', 'host', 'datastore', 'iso_file', 'vlan'))
     if console_template:
         logger.info("Console template name : {}".format(console_template.name))
         template = console_template.name
     item_name = dialog.label
+    if provider.one_of(InfraProvider):
+        catalog_name = template
+        provisioning_data = {
+            'catalog': {'vm_name': vm_name,
+                        'provision_type': provision_type},
 
-    provisioning_data = {
-        'catalog': {'vm_name': vm_name,
-                    },
-        'environment': {'host_name': {'name': host},
-                        'datastore_name': {'name': datastore},
-                        },
-        'network': {'vlan': partial_match(vlan),
-                    },
-    }
-
-    if provider.type == 'rhevm':
-        provisioning_data['catalog']['provision_type'] = 'Native Clone'
-    elif provider.type == 'virtualcenter':
-        provisioning_data['catalog']['provision_type'] = 'VMware'
+            'environment': {'host_name': {'name': host},
+                            'datastore_name': {'name': datastore}},
+            'network': {'vlan': partial_match(vlan)},
+        }
+    elif provider.one_of(CloudProvider):
+        catalog_name = provisioning['image']['name']
+        provisioning_data = {
+            'catalog': {'vm_name': vm_name},
+            'properties': {'instance_type': partial_match(provisioning['instance_type']),
+                           'guest_keypair': provisioning['guest_keypair'],
+                           'boot_disk_size': provisioning.get('boot_disk_size', None)},
+            'environment': {'availability_zone': provisioning['availability_zone'],
+                            'cloud_network': provisioning['cloud_network']}
+        }
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
         description="my catalog", display_in=True, catalog=catalog,
-        dialog=dialog, catalog_name=template,
+        dialog=dialog, catalog_name=catalog_name,
         provider=provider, prov_data=provisioning_data)
     return catalog_item
 
