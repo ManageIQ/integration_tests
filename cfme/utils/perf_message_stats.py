@@ -353,7 +353,8 @@ def generate_hourly_charts_and_csvs(hourly_buckets, charts_dir):
 def generate_raw_data_csv(rawdata_dict, csv_file_name):
     csv_rawdata_path = log_path.join('csv_output', csv_file_name)
     output_file = csv_rawdata_path.open('w', ensure=True)
-    csvwriter = csv.DictWriter(output_file, fieldnames=rawdata_dict[list(rawdata_dict.keys())[0]].headers,
+    csvwriter = csv.DictWriter(
+        output_file, fieldnames=rawdata_dict[list(rawdata_dict.keys())[0]].headers,
         delimiter=',', quotechar='\'', quoting=csv.QUOTE_MINIMAL)
     csvwriter.writeheader()
     sorted_rd_keys = sorted(rawdata_dict.keys())

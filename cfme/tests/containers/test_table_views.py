@@ -43,10 +43,14 @@ def random_default_views(appliance):
         tested_default_views[collection_name] = choice(VIEWS)
     appliance.user.my_settings.default_views.set_default_view(objects_mapping.values(),
                                                               tested_default_views.values())
+        list(tested_default_views.values())
+    )
     yield tested_default_views
     # setting back the default views to the original state:
     appliance.user.my_settings.default_views.set_default_view(objects_mapping.values(),
                                                               original_default_views.values())
+        list(original_default_views.values())
+    )
 
 
 @pytest.mark.polarion('CMP-10568')

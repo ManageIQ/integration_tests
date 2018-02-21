@@ -98,7 +98,9 @@ def main(tag, old_tag, report_type, line_limit):
 
     if report_type in ['full', 'brief']:
         max_len_pr = len(
-            reduce((lambda x, y: str(x) if len(str(x)) > len(str(y)) else str(y)), list(prs.keys())))
+            reduce(
+                (lambda x, y: str(x) if len(str(x)) > len(str(y)) else str(y)),
+                list(prs.keys())))
 
         for commit in commits.split("\n"):
             pr = re.match('.*[#](\d+).*', commit)
