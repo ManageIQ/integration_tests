@@ -92,7 +92,7 @@ CREDENTIALS = [
             "project": fauxfactory.gen_alpha(),
             "domain": fauxfactory.gen_alpha()
         }
-    )
+    ),
     (
         "Google Compute Engine",
         {
