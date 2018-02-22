@@ -18,7 +18,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.version import current_version
-from cfme.utils.wait import wait_for, wait_for_decorator, TimedOutError
+from cfme.utils.wait import wait_for, TimedOutError
 from fixtures.provider import setup_one_or_skip
 from fixtures.pytest_store import store
 
@@ -38,11 +38,6 @@ def api_version(appliance):
     return appliance.new_rest_api_instance(entry_point=entry_point)
 
 
-@pytest.fixture(scope="function")
-def vm(request, a_provider, appliance):
-    return _vm(request, a_provider, appliance.rest_api)
-
-
 @pytest.fixture(scope="module")
 def vm_modscope(request, a_provider, appliance):
     return _vm(request, a_provider, appliance.rest_api)
@@ -57,26 +52,6 @@ def wait_for_requests(requests):
         return True
 
     wait_for(_finished, num_sec=45, delay=5, message="requests finished")
-
-
-@pytest.mark.tier(2)
-@pytest.mark.parametrize(
-    "from_detail", [True, False],
-    ids=["from_detail", "from_collection"])
-def test_vm_scan(appliance, vm, from_detail):
-    rest_vm = appliance.rest_api.collections.vms.get(name=vm)
-    if from_detail:
-        response = rest_vm.action.scan()
-    else:
-        response, = appliance.rest_api.collections.vms.action.scan(rest_vm)
-    assert_response(appliance)
-
-    @wait_for_decorator(timeout="5m", delay=5, message="REST running scanning vm finishes")
-    def _finished():
-        response.task.reload()
-        if response.task.status.lower() in {"error"}:
-            pytest.fail("Error when running scan vm method: `{}`".format(response.task.message))
-        return response.task.state.lower() == 'finished'
 
 
 COLLECTIONS_REMOVED_IN_59 = {

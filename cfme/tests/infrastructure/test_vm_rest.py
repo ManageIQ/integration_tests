@@ -12,7 +12,7 @@ from cfme.utils.rest import (
     delete_resources_from_collection,
     query_resource_attributes,
 )
-from cfme.utils.wait import wait_for
+from cfme.utils.wait import wait_for, wait_for_decorator
 
 
 pytestmark = [test_requirements.provision]
@@ -46,6 +46,28 @@ def test_query_vm_attributes(vm, soft_assert):
             continue
         soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
             failure.type, failure.name, failure.response.status_code, failure.error))
+
+
+@pytest.mark.tier(2)
+@pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
+def test_vm_scan(appliance, vm, from_detail):
+    """Tests running VM scan using REST API.
+
+    Metadata:
+        test_flag: rest
+    """
+    if from_detail:
+        response = vm.action.scan()
+    else:
+        response, = appliance.rest_api.collections.vms.action.scan(vm)
+    assert_response(appliance)
+
+    @wait_for_decorator(timeout='5m', delay=5, message='REST running VM scan finishes')
+    def _finished():
+        response.task.reload()
+        if 'error' in response.task.status.lower():
+            pytest.fail('Error when running scan vm method: `{}`'.format(response.task.message))
+        return response.task.state.lower() == 'finished'
 
 
 @pytest.mark.tier(3)
