@@ -55,6 +55,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
     STATS_TO_MATCH = []
     db_types = ["Providers"]
     ems_events = []
+    not_found_in_rest_msg = "Couldn't find ExtManagementSystem with 'id'"
 
     def __hash__(self):
         return hash(self.key) ^ hash(type(self))
@@ -673,6 +674,11 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
             provider_rest = self.appliance.rest_api.collections.providers.get(name=self.name)
         except ValueError:
             return
+        except APIException as e:
+            if self.not_found_in_rest_msg in e.message:
+                return
+            else:
+                raise e
 
         logger.info('Waiting for a provider to delete...')
         provider_rest.wait_not_exists(message="Wait provider to disappear", num_sec=1000)
