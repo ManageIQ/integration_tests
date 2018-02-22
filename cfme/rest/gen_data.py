@@ -476,17 +476,17 @@ def tenants(request, rest_api, num=1):
 def users(request, rest_api, num=1):
     data = []
     for _ in range(num):
+        uniq = fauxfactory.gen_alphanumeric(4).lower()
         data.append({
-            "userid": "user_{}".format(fauxfactory.gen_alphanumeric(3)),
-            "name": "name_{}".format(fauxfactory.gen_alphanumeric()),
-            "password": "pass_{}".format(fauxfactory.gen_alphanumeric(3)),
-            "group": {"description": "EvmGroup-user"}
+            "userid": "user_{}".format(uniq),
+            "name": "name_{}".format(uniq),
+            "password": fauxfactory.gen_alphanumeric(),
+            "email": "user@example.com",
+            "group": {"description": "EvmGroup-user_self_service"}
         })
 
-    users = _creating_skeleton(request, rest_api, "users", data)
-    if num == 1:
-        return users.pop()
-    return users
+    resources = _creating_skeleton(request, rest_api, "users", data)
+    return resources, data
 
 
 def _creating_skeleton(request, rest_api, col_name, col_data, col_action='create',
