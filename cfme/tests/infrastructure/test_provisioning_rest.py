@@ -2,9 +2,9 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils.blockers import BZ
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
@@ -14,10 +14,7 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures("setup_provider"),
-    pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module"),
-    pytest.mark.meta(blockers=[BZ(1541036,
-                     forced_streams=['5.9', 'upstream'],
-                     unblock=lambda provider: not provider.one_of(RHEVMProvider))]),
+    pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
 ]
 
 
@@ -57,7 +54,8 @@ def get_provision_data(rest_api, provider, template_name, auto_approve=True):
             "cc": "001"
         },
         "additional_values": {
-            "request_id": "1001"
+            "request_id": "1001",
+            "placement_auto": "true"
         },
         "ems_custom_attributes": {},
         "miq_custom_attributes": {}
@@ -65,12 +63,20 @@ def get_provision_data(rest_api, provider, template_name, auto_approve=True):
 
     if provider.one_of(RHEVMProvider):
         result["vm_fields"]["provision_type"] = "native_clone"
+        if provider.appliance.version > '5.9.0.16':
+            result["vm_fields"]["vlan"] = "<Template>"
+
     return result
 
 
 @pytest.fixture(scope="module")
 def provision_data(appliance, provider, small_template_modscope):
     return get_provision_data(appliance.rest_api, provider, small_template_modscope.name)
+
+
+def clean_vm(vm_name, provider):
+    vm_obj = VM.factory(vm_name=vm_name, provider=provider)
+    vm_obj.delete_from_provider()
 
 
 # Here also available the ability to create multiple provision request, but used the save
@@ -86,21 +92,13 @@ def test_provision(request, provision_data, provider, appliance):
     Metadata:
         test_flag: rest, provision
     """
-
     vm_name = provision_data["vm_fields"]["vm_name"]
-    request.addfinalizer(
-        lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
-    response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)
+    request.addfinalizer(lambda: clean_vm(vm_name, provider))
+    appliance.rest_api.collections.provision_requests.action.create(**provision_data)
     assert appliance.rest_api.response.status_code == 200
-    provision_request = response[0]
+    request = appliance.collections.requests.instantiate(description=vm_name, partial_check=True)
+    request.wait_for_request()
 
-    def _finished():
-        provision_request.reload()
-        if "error" in provision_request.status.lower():
-            pytest.fail("Error when provisioning: `{}`".format(provision_request.message))
-        return provision_request.request_state.lower() in ("finished", "provisioned")
-
-    wait_for(_finished, num_sec=800, delay=5, message="REST provisioning finishes")
     assert provider.mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
 
 
