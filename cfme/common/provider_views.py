@@ -89,7 +89,7 @@ class ProviderDetailsToolBar(View):
     """
     monitoring = Dropdown(text='Monitoring')
     configuration = Dropdown(text='Configuration')
-    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+    reload = Button(title=VersionPick({Version.lowest(): 'Reload Current Display',
                                        '5.9': 'Refresh this page'}))
     policy = Dropdown(text='Policy')
     authentication = Dropdown(text='Authentication')
