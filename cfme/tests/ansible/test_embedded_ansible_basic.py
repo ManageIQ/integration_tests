@@ -50,14 +50,6 @@ TXXaywKBgQCaXeEZ5BTuD7FvMSX95EamDJ/DMyE8TONwDHMIowf2IQbf0Y5U7ntK
 
 CREDENTIALS = [
     (
-        "Google Compute Engine",
-        {
-            "service_account": fauxfactory.gen_alpha(),
-            "priv_key": private_key,
-            "project": fauxfactory.gen_alpha(),
-        }
-    ),
-    (
         "Machine",
         {
             "username": fauxfactory.gen_alpha(),
@@ -101,14 +93,14 @@ CREDENTIALS = [
             "domain": fauxfactory.gen_alpha()
         }
     )
-    # (
-    #     "Google Compute Engine",
-    #     {
-    #         "service_account": fauxfactory.gen_alpha(),
-    #         "priv_key": private_key,
-    #         "project": fauxfactory.gen_alpha(),
-    #     }
-    # )
+    (
+        "Google Compute Engine",
+        {
+            "service_account": fauxfactory.gen_alpha(),
+            "priv_key": private_key,
+            "project": fauxfactory.gen_alpha(),
+        }
+    )
 ]
 
 REPOSITORIES = [
