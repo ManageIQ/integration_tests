@@ -143,7 +143,7 @@ class DashboardView(BaseLoggedInPage):
             RSS_TABLE = './div[./div[contains(@class, "rss_widget")]]/div/table'
             TABLE = './div/table|./div/div/table'
             MC = (
-                './div/div[contains(@class, "mc")]/*[1]|./div/div[starts-with(@id, "dd_w") '
+                './/div[contains(@class, "mc")]/*[1]|.//div[starts-with(@id, "dd_w") '
                 'and contains(@id, "_box")]/*[1]')
             ROOT = ParametrizedLocator(
                 './/div[starts-with(@id, "w_") and .//h2[contains(@class, "card-pf-title")'
