@@ -86,7 +86,7 @@ class Request(BaseEntity):
     def get_request_row_from_ui(self):
         """Opens CFME UI and return table_row object"""
         view = navigate_to(self.parent, 'All')
-        self.row = view.find_request(self.cells, partial_check=False)
+        self.row = view.find_request(self.cells, partial_check=self.partial_check)
         return self.row
 
     def get_request_id(self):

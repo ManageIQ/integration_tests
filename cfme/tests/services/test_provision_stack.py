@@ -4,8 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
-from cfme.cloud.stack import StackCollection
-from cfme.configure.settings import DefaultView
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
@@ -15,67 +14,20 @@ from cfme.utils.conf import credentials
 from cfme.utils.datafile import load_data_file
 from cfme.utils.log import logger
 from cfme.utils.path import orchestration_path
-from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.ignore_stream("upstream"),
     test_requirements.stack,
     pytest.mark.tier(2),
+    pytest.mark.usefixtures("setup_provider_modscope"),
     pytest.mark.provider([CloudProvider],
                          required_fields=[['provisioning', 'stack_provisioning']],
                          scope="module"),
 ]
 
 
-@pytest.fixture(scope="function")
-def template(provider, provisioning, setup_provider):
-    template_type = provisioning['stack_provisioning']['template_type']
-    template_name = fauxfactory.gen_alphanumeric()
-    template = OrchestrationTemplate(template_type=template_type,
-                                     template_name=template_name)
-
-    file = provisioning['stack_provisioning']['data_file']
-    data_file = load_data_file(str(orchestration_path.join(file)))
-
-    template.create(data_file.read().replace('CFMETemplateName', template_name))
-    dialog_name = "dialog_" + fauxfactory.gen_alphanumeric()
-    template.create_service_dialog_from_template(dialog_name, template.template_name)
-    yield template, dialog_name
-    template.delete()
-
-
-@pytest.fixture(scope="function")
-def catalog():
-    cat_name = "cat_" + fauxfactory.gen_alphanumeric()
-    catalog = Catalog(name=cat_name, description="my catalog")
-    catalog.create()
-    yield catalog
-    catalog.delete()
-
-
-@pytest.fixture(scope="function")
-def catalog_item(dialog, catalog, template, provider):
-    template, dialog = template
-    item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type="Orchestration",
-                               name=item_name,
-                               description="my catalog",
-                               display_in=True,
-                               catalog=catalog,
-                               dialog=dialog,
-                               orch_template=template,
-                               provider=provider)
-    catalog_item.create()
-    yield catalog_item, template
-    catalog_item.delete()
-
-
-def random_desc():
-    return fauxfactory.gen_alphanumeric()
-
-
-@pytest.fixture(scope="function")
+@pytest.fixture
 def stack_data(appliance, provider, provisioning):
     random_base = fauxfactory.gen_alphanumeric()
     stackname = 'test{}'.format(random_base)
@@ -89,7 +41,7 @@ def stack_data(appliance, provider, provisioning):
         except AttributeError:
             pytest.skip('Could not find small_template or credentials for {}'.format(provider.name))
 
-        _stack_data = {
+        stack_data = {
             'stack_name': stackname,
             'resource_group': provisioning.get('resource_group'),
             'deploy_mode': provisioning.get('mode'),
@@ -101,10 +53,9 @@ def stack_data(appliance, provider, provisioning):
             'cloudnetwork': provisioning.get('cloud_network').split()[0],
             'cloudsubnet': provisioning.get('cloud_subnet').split()[0]
         }
-    elif provider.type == 'openstack':
+    elif provider.one_of(OpenStackProvider):
         stack_prov = provisioning['stack_provisioning']
-
-        _stack_data = {
+        stack_data = {
             'stack_name': stackname,
             'key': stack_prov['key_name'],
             'flavor': stack_prov['instance_type'],
@@ -112,7 +63,7 @@ def stack_data(appliance, provider, provisioning):
     else:
         stack_prov = provisioning['stack_provisioning']
         if appliance.version < '5.9':
-            _stack_data = {
+            stack_data = {
                 'stack_name': stackname,
                 'stack_timeout': stack_timeout,
                 'virtualMachineName': vm_name,
@@ -121,132 +72,148 @@ def stack_data(appliance, provider, provisioning):
                 'SSHLocation': provisioning['ssh_location']
             }
         else:
-            _stack_data = {
+            stack_data = {
                 'stack_name': stackname,
                 'stack_timeout': stack_timeout,
                 'param_virtualMachineName': vm_name,
                 'param_KeyName': stack_prov['key_name']
             }
-    return _stack_data
+    return stack_data
 
 
-def test_provision_stack(appliance, setup_provider, provider, provisioning, catalog, catalog_item,
-                         request, stack_data):
-    """Tests stack provisioning
+@pytest.fixture
+def dialog_name():
+    return 'dialog_{}'.format(fauxfactory.gen_alphanumeric())
 
-    Metadata:
-        test_flag: provision
-    """
-    catalog_item, template = catalog_item
 
-    @request.addfinalizer
-    def _cleanup_vms():
-        clean_up(stack_data, provider)
+@pytest.yield_fixture
+def template(provider, provisioning, dialog_name, stack):
+    template_type = provisioning['stack_provisioning']['template_type']
+    template_name = fauxfactory.gen_alphanumeric()
+    template = OrchestrationTemplate(template_type=template_type,
+                                     template_name=template_name)
+    file = provisioning['stack_provisioning']['data_file']
+    data_file = load_data_file(str(orchestration_path.join(file)))
+    template.create(data_file.read().replace('CFMETemplateName', template_name))
+    template.create_service_dialog_from_template(dialog_name, template.template_name)
+    yield template
+    if stack.exists:
+        stack.retire_stack()
+    if template.exists:
+        template.delete()
 
+
+@pytest.yield_fixture
+def catalog():
+    cat_name = "cat_{}".format(fauxfactory.gen_alphanumeric())
+    catalog = Catalog(name=cat_name, description="my catalog")
+    catalog.create()
+    yield catalog
+    if catalog.exists:
+        catalog.delete()
+
+
+@pytest.yield_fixture
+def catalog_item(dialog, catalog, template, provider, dialog_name):
+    item_name = fauxfactory.gen_alphanumeric()
+    catalog_item = CatalogItem(item_type="Orchestration",
+                               name=item_name,
+                               description="my catalog",
+                               display_in=True,
+                               catalog=catalog,
+                               dialog=dialog_name,
+                               orch_template=template,
+                               provider=provider)
+    catalog_item.create()
+    yield catalog_item
+    if catalog_item.exists:
+        catalog_item.delete()
+
+
+@pytest.fixture
+def order_service(appliance, catalog_item, stack_data):
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
                                        catalog_item.name, stack_data)
     service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
-    request_description = catalog_item.name
-    provision_request = appliance.collections.requests.instantiate(request_description,
+
+
+@pytest.yield_fixture
+def provision_request(appliance, catalog_item, order_service):
+    provision_request = appliance.collections.requests.instantiate(catalog_item.name,
                                                                    partial_check=True)
-    provision_request.wait_for_request()
-    msg = "Request failed with the message {}".format(provision_request.rest.message)
-    assert provision_request.is_succeeded(), msg
-
-
-def test_reconfigure_service(appliance, provider, provisioning, catalog, catalog_item, request,
-                             stack_data):
-    """Tests stack provisioning
-
-    Metadata:
-        test_flag: provision
-    """
-    catalog_item, template = catalog_item
-
-    @request.addfinalizer
-    def _cleanup_vms():
-        clean_up(stack_data, provider)
-
-    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
-                                       catalog_item.name, stack_data)
-    service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
-    request_description = catalog_item.name
-    provision_request = appliance.collections.requests.instantiate(request_description,
-                                                                   partial_check=True)
+    logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     provision_request.wait_for_request(method='ui')
-    msg = "Request failed with the message {}".format(provision_request.row.last_message.text)
-    assert provision_request.is_succeeded(method='ui'), msg
+    yield provision_request
+    if provision_request.exists:
+        provision_request.remove_request()
+
+
+@pytest.yield_fixture
+def service(appliance, provision_request):
     last_message = provision_request.get_request_row_from_ui()['Last Message'].text
     service_name = last_message.split()[2].strip('[]')
-    myservice = MyService(appliance, service_name)
-    myservice.reconfigure_service()
+    service = MyService(appliance, service_name)
+    yield service
+    if service.exists:
+        service.delete()
 
 
-def test_remove_template_provisioning(appliance, provider, provisioning, catalog, catalog_item,
-                                      stack_data):
+@pytest.fixture
+def stack(appliance, provider, stack_data):
+    return appliance.collections.stacks.instantiate(stack_data['stack_name'], provider=provider)
+
+
+def test_provision_stack(provision_request, stack):
     """Tests stack provisioning
 
     Metadata:
         test_flag: provision
     """
-    catalog_item, template = catalog_item
-    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
-                                       catalog_item.name, stack_data)
-    service_catalogs.order()
-    # This is part of test - remove template and see if provision fails , so not added as finalizer
+    assert provision_request.is_succeeded()
+    stack.wait_for_exists()
+
+
+def test_reconfigure_service(service, provision_request):
+    """Tests service reconfiguring
+
+    Metadata:
+        test_flag: provision
+    """
+    assert provision_request.is_succeeded()
+    service.reconfigure_service()
+
+
+def test_remove_template_provisioning(appliance, catalog_item, template, order_service, request):
+    """Tests stack provisioning
+
+    Metadata:
+        test_flag: provision
+    """
+    # This is part of test - remove template and see if provision fails, so not added as finalizer
     template.delete()
     request_description = 'Provisioning Service [{}] from [{}]'.format(catalog_item.name,
                                                                        catalog_item.name)
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
+
+    @request.addfinalizer
+    def _finalize():
+        last_message = provision_request.get_request_row_from_ui()['Last Message'].text
+        service_name = last_message.split()[2].strip('[]')
+        myservice = MyService(appliance, service_name)
+        if myservice.exists:
+            myservice.delete
+
     assert (provision_request.row.last_message.text == 'Service_Template_Provisioning failed' or
             provision_request.row.status.text == "Error")
 
 
-def test_retire_stack(appliance, provider, provisioning, catalog, catalog_item, request,
-                      stack_data):
-    """Tests stack provisioning
+def test_retire_stack(appliance, provider, provision_request, stack):
+    """Tests stack retirement
 
     Metadata:
         test_flag: provision
     """
-    catalog_item, template = catalog_item
-
-    @request.addfinalizer
-    def _cleanup_vms():
-        clean_up(stack_data, provider)
-
-    DefaultView.set_default_view("Stacks", "Grid View")
-
-    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
-                                       catalog_item.name, stack_data)
-    service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
-    request_description = catalog_item.name
-    provision_request = appliance.collections.requests.instantiate(request_description,
-                                                                   partial_check=True)
-    provision_request.wait_for_request()
-    msg = "Request failed with the message {}".format(provision_request.rest.message)
-    assert provision_request.is_succeeded(), msg
-    stack = StackCollection(appliance).instantiate(stack_data['stack_name'], provider=provider)
+    assert provision_request.is_succeeded()
     stack.wait_for_exists()
     stack.retire_stack()
-
-
-def clean_up(stack_data, provider):
-    try:
-        logger.info("Removing Stack and it's VM")
-        # stack_exist returns 400 if stack ID not found, which triggers an exception
-        if provider.mgmt.stack_exist(stack_data['stack_name']):
-            wait_for(lambda: provider.mgmt.delete_stack(stack_data['stack_name']),
-                     delay=10, num_sec=800, message="wait for stack delete")
-        if provider.type == 'azure' and provider.mgmt.does_vm_exist(stack_data['vmname']):
-
-            wait_for(lambda: provider.mgmt.delete_vm(stack_data['vmname']),
-                     delay=10, num_sec=800, message="wait for vm delete")
-    except Exception as ex:
-        logger.warning('Exception while checking/deleting stack, continuing: {}'
-                       .format(ex.message))
-        pass
