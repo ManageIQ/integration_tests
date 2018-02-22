@@ -11,7 +11,7 @@ import pytest
 # from cfme.intelligence.reports.reports import CustomReport
 from cfme.base.ui import Server
 from cfme.exceptions import CannotScrollException
-from cfme.infrastructure.networking import InfraNetworking
+from cfme.infrastructure.networking import InfraNetworkingCollection
 from cfme.modeling.base import BaseCollection
 from cfme.optimize.bottlenecks import Bottlenecks
 from cfme.optimize.utilization import Utilization
@@ -30,7 +30,7 @@ from widgetastic_manageiq import Splitter
 LOCATIONS = [
     (Server, 'ControlExplorer'), (Server, 'AutomateExplorer'), (Server, 'AutomateCustomization'),
     (MyService, 'All'), (Server, 'ServiceCatalogsDefault'), (Server, 'Configuration'),
-    (Utilization, 'All'), (InfraNetworking, 'All')
+    (Utilization, 'All'), (InfraNetworkingCollection, 'All')
 ]
 
 

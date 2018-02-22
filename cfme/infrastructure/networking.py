@@ -1,18 +1,22 @@
+import attr
 from navmazing import NavigateToAttribute
 from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 from widgetastic_manageiq import PaginationPane, ItemsToolBarViewSelector, Text
 
 
-class InfraNetworking(Navigatable):
+class InfraNetworking(BaseEntity):
     _param_name = 'InfraNetworking'
 
-    def __init__(self, appliance=None):
-        Navigatable.__init__(self, appliance)
+
+@attr.s
+class InfraNetworkingCollection(BaseCollection):
+    """Collection object for the :py:class:`cmfe.infrastructure.networking.InfraNetworking`."""
+    ENTITY = InfraNetworking
 
 
 class InfraNetworkingView(BaseLoggedInPage):
@@ -51,7 +55,7 @@ class InfraNetworkingAllView(InfraNetworkingView):
     paginator = PaginationPane()
 
 
-@navigator.register(InfraNetworking, 'All')
+@navigator.register(InfraNetworkingCollection)
 class All(CFMENavigateStep):
     VIEW = InfraNetworkingAllView
 
