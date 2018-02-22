@@ -17,19 +17,19 @@ pytestmark = [
 
 
 def test_assigned_roles(provider):
-    navigate_to(provider, 'Details')
+    view = navigate_to(provider, 'Details')
     try:
-        res = provider.get_detail('Relationships', 'Deployment Roles')
+        res = view.entities.summary('Relationships').get_text_of('Deployment Roles')
     except NameError:
-        res = provider.get_detail('Relationships', 'Clusters / Deployment Roles')
+        res = view.entities.summary('Relationships').get_text_of('Clusters / Deployment Roles')
     assert int(res) > 0
 
 
 def test_nodes(provider):
-    navigate_to(provider, 'Details')
+    view = navigate_to(provider, 'Details')
     nodes = len(provider.mgmt.list_node())
 
-    assert int(provider.get_detail('Relationships', 'Nodes')) == nodes
+    assert int(view.entities.summary('Relationships').get_text_of('Nodes')) == nodes
 
 
 def test_templates(provider, soft_assert):
@@ -47,10 +47,10 @@ def test_templates(provider, soft_assert):
 
 
 def test_stacks(provider):
-    navigate_to(provider, 'Details')
+    view = navigate_to(provider, 'Details')
     """
     todo get the list of tenants from external resource and compare
     it with result - currently not 0
     """
 
-    assert int(provider.get_detail('Relationships', 'Orchestration stacks')) > 0
+    assert int(view.entities.summary('Relationships').get_text_of('Orchestration stacks')) > 0

@@ -8,12 +8,10 @@ from widgetastic_patternfly import Button, Input
 from cfme.base.credential import (
     Credential, EventsCredential, TokenCredential, SSHCredential, CANDUCredential)
 from cfme.common import WidgetasticTaggable
-from cfme.exceptions import (
-    ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, ItemNotFound)
+from cfme.exceptions import ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty
 from cfme.utils import ParamClassName, version, conf
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.net import resolve_hostname
 from cfme.utils.stats import tol_check
@@ -689,21 +687,6 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
             view.toolbar.reload.click()
         return view
 
-    def get_detail(self, *ident):
-        """ Gets details from the details infoblock
-
-        The function first ensures that we are on the detail page for the specific provider.
-
-        Args:
-            *ident: An SummaryTable title, followed by the Key name, e.g. "Relationships", "Images"
-
-
-        Returns: A string representing the contents of passed field value.
-        """
-        view = self.load_details()
-        block, field = ident
-        return getattr(view.entities, block.lower()).get_text_of(field)
-
     @classmethod
     def get_credentials(cls, credential_dict, cred_type=None):
         """Processes a credential dictionary into a credential object.
@@ -1036,7 +1019,8 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, WidgetasticTagga
 
     @num_template.variant('ui')
     def num_template_ui(self):
-        return int(self.get_detail("Relationships", self.template_name))
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of(self.template_name))
 
     @variable(alias="db")
     def num_vm(self):
@@ -1051,7 +1035,8 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, WidgetasticTagga
 
     @num_vm.variant('ui')
     def num_vm_ui(self):
-        return int(self.get_detail("Relationships", self.vm_name))
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of(self.vm_name))
 
     def load_all_provider_instances(self):
         return self.load_all_provider_vms()
@@ -1061,10 +1046,10 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, WidgetasticTagga
 
         """
         view = navigate_to(self, 'Details')
-        if view.entities.relationships.get_text_of(self.vm_name) == "0":
+        if view.entities.summary("Relationships").get_text_of(self.vm_name) == "0":
             return False
         else:
-            view.entities.relationships.click_at(self.vm_name)
+            view.entities.summary("Relationships").click_at(self.vm_name)
             return True
 
     def load_all_provider_images(self):
@@ -1076,10 +1061,10 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, WidgetasticTagga
         """
         # todo: replace these methods with new nav location
         view = navigate_to(self, 'Details')
-        if view.entities.relationships.get_text_of(self.template_name) == "0":
+        if view.entities.summary("Relationships").get_text_of(self.template_name) == "0":
             return False
         else:
-            view.entities.relationships.click_at(self.template_name)
+            view.entities.summary("Relationships").click_at(self.template_name)
             return True
 
 

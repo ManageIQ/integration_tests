@@ -98,7 +98,8 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
 
     @num_datastore.variant('ui')
     def num_datastore_ui(self):
-            return int(self.get_detail("Relationships", "Datastores"))
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Datastores"))
 
     @variable(alias='rest')
     def num_host(self):
@@ -120,11 +121,12 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
 
     @num_host.variant('ui')
     def num_host_ui(self):
+        view = navigate_to(self, "Details")
         try:
-            num = self.get_detail("Relationships", 'Hosts')
+            num = view.entities.summary("Relationships").get_text_of("Hosts")
         except NoSuchElementException:
             logger.error("Couldn't find number of hosts using key [Hosts] trying Nodes")
-            num = self.get_detail("Relationships", 'Nodes')
+            num = view.entities.summary("Relationships").get_text_of("Nodes")
         return int(num)
 
     @variable(alias='rest')
@@ -149,8 +151,8 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
 
     @num_cluster.variant('ui')
     def num_cluster_ui(self):
-        num = self.get_detail("Relationships", 'Clusters')
-        return int(num)
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Clusters"))
 
     def discover(self):  # todo: move this to provider collections
         """

@@ -7,6 +7,7 @@ from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.networks.security_group import SecurityGroupCollection
 from cfme.utils import version
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.varmeth import variable
 from . import NetworkProvider
 
@@ -89,7 +90,8 @@ class NuageProvider(NetworkProvider):
 
     @num_security_group.variant('ui')
     def num_security_group_ui(self):
-        return int(self.get_detail('Relationships', 'Security Groups'))
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Security Groups"))
 
     @variable(alias="db")
     def num_cloud_subnet(self):
@@ -97,4 +99,5 @@ class NuageProvider(NetworkProvider):
 
     @num_cloud_subnet.variant('ui')
     def num_cloud_subnet_ui(self):
-        return int(self.get_detail('Relationships', 'Cloud Subnets'))
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Cloud Subnets"))

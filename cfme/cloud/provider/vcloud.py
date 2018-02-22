@@ -5,6 +5,7 @@ from wrapanapi.vcloud import VmwareCloudSystem
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm, Credential
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.utils import version
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.varmeth import variable
 from . import CloudProvider
 
@@ -88,7 +89,8 @@ class VmwareCloudProvider(CloudProvider):
 
     @num_availability_zone.variant('ui')
     def num_availability_zone_ui(self):
-        return int(self.get_detail("Relationships", "Availability Zones"))
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Availability Zones"))
 
     @variable(alias="db")
     def num_orchestration_stack(self):
@@ -96,4 +98,5 @@ class VmwareCloudProvider(CloudProvider):
 
     @num_orchestration_stack.variant('ui')
     def num_orchestration_stack_ui(self):
-        return int(self.get_detail("Relationships", "Orchestration Stacks"))
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Orchestration Stacks"))

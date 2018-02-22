@@ -222,7 +222,7 @@ class Instances(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.entities.relationships.click_at('Instances')
+        self.prerequisite_view.entities.summary("Relationships").click_at('Instances')
 
 
 @navigator.register(CloudProvider, 'Images')
@@ -231,7 +231,7 @@ class Images(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.entities.relationships.click_at('Images')
+        self.prerequisite_view.entities.summary("Relationships").click_at('Images')
 
 
 def get_all_providers():

@@ -217,7 +217,8 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
 
     @num_project.variant('ui')
     def num_project_ui(self):
-        return int(self.get_detail("Relationships", "Projects"))
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Projects"))
 
     @variable(alias='db')
     def num_service(self):
@@ -229,7 +230,8 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
             name = "Services"
         else:
             name = "Container Services"
-        return int(self.get_detail("Relationships", name))
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of(name))
 
     @variable(alias='db')
     def num_replication_controller(self):
@@ -237,7 +239,8 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
 
     @num_replication_controller.variant('ui')
     def num_replication_controller_ui(self):
-        return int(self.get_detail("Relationships", "Replicators"))
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Replicators"))
 
     @variable(alias='db')
     def num_container_group(self):
@@ -245,7 +248,8 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
 
     @num_container_group.variant('ui')
     def num_container_group_ui(self):
-        return int(self.get_detail("Relationships", "Pods"))
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Pods"))
 
     @variable(alias='db')
     def num_pod(self):
@@ -263,7 +267,8 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
 
     @num_node.variant('ui')
     def num_node_ui(self):
-        return int(self.get_detail("Relationships", "Nodes"))
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Nodes"))
 
     @variable(alias='db')
     def num_container(self):
@@ -279,7 +284,8 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
 
     @num_container.variant('ui')
     def num_container_ui(self):
-        return int(self.get_detail("Relationships", "Containers"))
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Containers"))
 
     @variable(alias='db')
     def num_image(self):
@@ -291,7 +297,8 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
             name = "Images"
         else:
             name = "Container Images"
-        return int(self.get_detail("Relationships", name))
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of(name))
 
     @variable(alias='db')
     def num_image_registry(self):
@@ -299,7 +306,8 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
 
     @num_image_registry.variant('ui')
     def num_image_registry_ui(self):
-        return int(self.get_detail("Relationships", "Image Registries"))
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Image Registries"))
 
     def pods_per_ready_status(self):
         """Grabing the Container Statuses Summary of the pods from API"""
@@ -576,17 +584,6 @@ class LoadDetailsMixin(object):
         view = navigate_to(self, 'Details')
         if refresh:
             view.browser.refresh()
-
-    def get_detail(self, table_name, field_name):
-        """ Gets details from the details infoblock
-        Args:
-            table_name: the name of the table to get the data from.
-            table: the name of the field to get from this table.
-        Returns: A string representing the contents of the summary's value.
-        """
-        view = navigate_to(self, 'Details')
-        table = getattr(view, table_name.lower(), getattr(view.entities, table_name.lower()))
-        return table.read().get(field_name)
 
 
 class Labelable(object):

@@ -9,7 +9,7 @@ from widgetastic_patternfly import Dropdown, BootstrapSelect, Tab
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.host_views import HostEntitiesView
 from widgetastic_manageiq import (BreadCrumb,
-                                  SummaryTable,
+                                  ParametrizedSummaryTable,
                                   Button,
                                   TimelinesView,
                                   DetailsToolBarViewSelector,
@@ -22,8 +22,7 @@ from widgetastic_manageiq import (BreadCrumb,
                                   BaseQuadIconEntity,
                                   BaseListEntity,
                                   NonJSBaseEntity,
-                                  JSBaseEntity
-                                  )
+                                  JSBaseEntity)
 
 
 class ProviderQuadIconEntity(BaseQuadIconEntity):
@@ -115,12 +114,7 @@ class ProviderDetailsView(BaseLoggedInPage):
         """
         represents Details page when it is switched to Summary aka Tables view
         """
-        properties = SummaryTable(title="Properties")
-        status = SummaryTable(title="Status")
-        relationships = SummaryTable(title="Relationships")
-        overview = SummaryTable(title="Overview")
-        smart_management = SummaryTable(title="Smart Management")
-        custom_attributes = SummaryTable(title='Custom Attributes')
+        summary = ParametrizedSummaryTable()
 
     @entities.register('Dashboard View')
     class ProviderDetailsDashboardView(View):

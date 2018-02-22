@@ -17,6 +17,7 @@ from cfme.utils.varmeth import variable
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 
+
 class PhysicalProvider(Pretty, BaseProvider, Fillable):
     """
     Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.
@@ -38,8 +39,9 @@ class PhysicalProvider(Pretty, BaseProvider, Fillable):
 
     @variable(alias='ui')
     def num_server(self):
+        view = navigate_to(self, 'Details')
         try:
-            num = self.get_detail('Relationships', 'Physical Servers')
+            num = view.entities.summary('Relationships').get_text_of('Physical Servers')
         except NoSuchElementException:
             logger.error("Couldn't find number of servers")
         return int(num)
@@ -59,20 +61,6 @@ class PhysicalProvider(Pretty, BaseProvider, Fillable):
         if not cancel:
             view.flash.assert_no_error()
 
-    def get_detail(self, *ident):
-        """ Gets details from the details infoblock
-
-        The function first ensures that we are on the detail page for the specific provider.
-
-        Args:
-            *ident: An SummaryTable title, followed by the Key name, e.g. "Relationships", "Images"
-
-
-        Returns: A string representing the contents of passed field value.
-        """
-        view = self.load_details(refresh=True)
-        block, field = ident
-        return getattr(view.entities, block.lower()).get_text_of(field)
 
 @navigator.register(Server, 'PhysicalProviders')
 @navigator.register(PhysicalProvider, 'All')
