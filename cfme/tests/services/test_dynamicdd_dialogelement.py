@@ -4,7 +4,6 @@ import pytest
 
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.explorer.domain import DomainCollection
-from cfme.services.catalogs.catalog import Catalog
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme import test_requirements
 from cfme.utils.blockers import BZ
@@ -67,11 +66,9 @@ def dialog(appliance, copy_instance, create_method):
 
 
 @pytest.yield_fixture(scope="function")
-def catalog():
+def catalog(appliance):
     cat_name = "cat_" + fauxfactory.gen_alphanumeric()
-    catalog = Catalog(name=cat_name,
-                  description="my catalog")
-    catalog.create()
+    catalog = appliance.collections.catalogs.create(name=cat_name, description="my catalog")
     yield catalog
 
 

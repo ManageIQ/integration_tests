@@ -5,7 +5,6 @@ from widgetastic.utils import partial_match
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.utils import version
 from cfme.utils.log import logger
@@ -42,10 +41,11 @@ def service_catalogs(request, rest_api, num=5):
     return _creating_skeleton(request, rest_api, 'service_catalogs', scls_data, col_action='add')
 
 
-def service_catalog_obj(request, rest_api):
+def service_catalog_obj(request, appliance):
     """Return service catalog object."""
-    rest_catalog = service_catalogs(request, rest_api, num=1)[0]
-    return Catalog(name=rest_catalog.name, description=rest_catalog.description)
+    rest_catalog = service_catalogs(request, appliance.rest_api, num=1)[0]
+    return appliance.collections.catalogs.instantiate(name=rest_catalog.name,
+                                                      description=rest_catalog.description)
 
 
 def categories(request, rest_api, num=1):
@@ -228,7 +228,7 @@ def service_templates_ui(request, appliance, service_dialog=None, service_catalo
     if not service_dialog:
         service_dialog = dialog(request, appliance)
     if not service_catalog:
-        service_catalog = service_catalog_obj(request, appliance.rest_api)
+        service_catalog = service_catalog_obj(request, appliance)
 
     catalog_item_type = a_provider.catalog_name if a_provider else 'Generic'
     provisioning_args = {}
@@ -303,7 +303,7 @@ def service_templates_rest(request, appliance, service_dialog=None, service_cata
     if not service_dialog:
         service_dialog = dialog(request, appliance)
     if not service_catalog:
-        service_catalog = service_catalog_obj(request, appliance.rest_api)
+        service_catalog = service_catalog_obj(request, appliance)
 
     catalog_id = appliance.rest_api.collections.service_catalogs.get(name=service_catalog.name).id
     dialog_id = appliance.rest_api.collections.service_dialogs.get(label=service_dialog.label).id

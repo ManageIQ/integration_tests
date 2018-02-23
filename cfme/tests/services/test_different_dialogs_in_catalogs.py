@@ -6,7 +6,6 @@ from widgetastic.utils import partial_match
 from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
-from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.blockers import BZ
@@ -52,11 +51,9 @@ def tagcontrol_dialog(appliance):
 
 
 @pytest.yield_fixture(scope="function")
-def catalog():
+def catalog(appliance):
     catalog = "cat_" + fauxfactory.gen_alphanumeric()
-    cat = Catalog(name=catalog,
-                  description="my catalog")
-    cat.create()
+    cat = appliance.collections.catalogs.create(name=catalog, description="my catalog")
     yield cat
 
 

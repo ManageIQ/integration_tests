@@ -5,7 +5,6 @@ from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 from cfme.services.myservice import MyService
@@ -103,10 +102,9 @@ def template(provider, provisioning, dialog_name, stack):
 
 
 @pytest.yield_fixture
-def catalog():
+def catalog(appliance):
     cat_name = "cat_{}".format(fauxfactory.gen_alphanumeric())
-    catalog = Catalog(name=cat_name, description="my catalog")
-    catalog.create()
+    catalog = appliance.collections.catalogs.create(name=cat_name, description="my catalog")
     yield catalog
     if catalog.exists:
         catalog.delete()

@@ -1,3 +1,5 @@
+import attr
+
 from widgetastic.utils import Parameter
 from widgetastic.widget import Text
 from widgetastic_manageiq import MultiBoxSelect
@@ -5,9 +7,9 @@ from widgetastic_patternfly import Button, Input
 from navmazing import NavigateToAttribute, NavigateToSibling
 
 from cfme.common import WidgetasticTaggable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.update import Updateable
 from cfme.utils.pretty import Pretty
-from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from . import ServicesCatalogView
@@ -82,25 +84,12 @@ class EditCatalogView(CatalogForm):
         )
 
 
-class Catalog(Updateable, Pretty, Navigatable, WidgetasticTaggable):
+@attr.s
+class Catalog(BaseEntity, Updateable, Pretty, WidgetasticTaggable):
 
-    def __init__(self, name=None, description=None, items=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.description = description
-        self.items = items
-
-    def create(self):
-        view = navigate_to(self, 'Add')
-        view.fill({
-            'name': self.name,
-            'description': self.description,
-            'assign_catalog_items': self.items
-        })
-        view.add_button.click()
-        view = self.create_view(CatalogsView)
-        assert view.is_displayed
-        view.flash.assert_no_error()
+    name = attr.ib()
+    description = attr.ib()
+    items = attr.ib(default=None)
 
     def update(self, updates):
         view = navigate_to(self, 'Edit')
@@ -137,10 +126,36 @@ class Catalog(Updateable, Pretty, Navigatable, WidgetasticTaggable):
             return False
 
 
-@navigator.register(Catalog, 'All')
+@attr.s
+class CatalogCollection(BaseCollection):
+    """A collection for the :py:class:`cfme.services.catalogs.catalog.Catalog`"""
+    ENTITY = Catalog
+
+    def create(self, name, description, items=None):
+        """Create a catalog.
+
+        Args:
+            name: The name of the catalog
+            description: The description of the catalog
+            items: Items in the catalog
+        """
+        view = navigate_to(self, 'Add')
+        view.fill({
+            'name': name,
+            'description': description,
+            'assign_catalog_items': items
+        })
+        view.add_button.click()
+        catalog = self.instantiate(name=name, description=description, items=items)
+        view = self.create_view(CatalogsView)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        return catalog
+
+
+@navigator.register(CatalogCollection)
 class All(CFMENavigateStep):
     VIEW = CatalogsView
-
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
@@ -148,30 +163,27 @@ class All(CFMENavigateStep):
         self.view.catalogs.tree.click_path("All Catalogs")
 
 
-@navigator.register(Catalog, 'Add')
+@navigator.register(CatalogCollection)
 class Add(CFMENavigateStep):
     VIEW = AddCatalogView
-
     prerequisite = NavigateToSibling('All')
 
     def step(self):
         self.prerequisite_view.configuration.item_select('Add a New Catalog')
 
 
-@navigator.register(Catalog, 'Details')
+@navigator.register(Catalog)
 class Details(CFMENavigateStep):
     VIEW = DetailsCatalogView
-
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.catalogs.tree.click_path("All Catalogs", self.obj.name)
 
 
-@navigator.register(Catalog, 'Edit')
+@navigator.register(Catalog)
 class Edit(CFMENavigateStep):
     VIEW = EditCatalogView
-
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
