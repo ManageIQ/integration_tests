@@ -164,16 +164,16 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     apps[2].appliance_console.run_commands(command_set)
 
     def is_ha_monitor_started(appliance):
-        assert appliance.ssh_client.run_command(
-            "cat /var/www/miq/vmdb/config/failover_databases.yml | grep {}".format(app1_ip))
+        return bool(appliance.ssh_client.run_command(
+            "grep {} /var/www/miq/vmdb/config/failover_databases.yml".format(app1_ip)).success)
     wait_for(is_ha_monitor_started, func_args=[apps[2]], timeout=300, handle_exception=True)
     # Cause failover to occur
     rc, out = apps[0].ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
     assert rc == 0, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(out)
 
     def is_failover_started(appliance):
-        assert appliance.ssh_client.run_command(
-            "cat /var/www/miq/vmdb/log/ha_admin.log | grep 'Starting to execute failover'")
+        return bool(appliance.ssh_client.run_command(
+            "grep 'Starting to execute failover' /var/www/miq/vmdb/log/ha_admin.log").success)
     wait_for(is_failover_started, func_args=[apps[2]], timeout=450, handle_exception=True)
     apps[2].wait_for_evm_service()
     apps[2].wait_for_web_ui()
