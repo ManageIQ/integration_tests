@@ -627,6 +627,9 @@ class TestServiceRESTAPI(object):
 
 class TestServiceDialogsRESTAPI(object):
     def check_returned_dialog(self, appliance):
+        # full dialog is returned only in >= 5.9
+        if appliance.version < '5.9':
+            return
         returned = appliance.rest_api.response.json()
         if 'results' in returned:
             results = returned['results']
