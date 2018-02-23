@@ -74,6 +74,17 @@ def test_query_provider_attributes(provider, provider_rest, soft_assert):
             failure.type, failure.name, failure.response.status_code, failure.error))
 
 
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+def test_provider_options(appliance):
+    """Tests that provider settings are present in OPTIONS listing.
+
+    Metadata:
+        test_flag: rest
+    """
+    options = appliance.rest_api.options(appliance.rest_api.collections.providers._href)
+    assert 'provider_settings' in options['data']
+
+
 def test_create_provider(provider_rest):
     """Tests creating provider using REST API.
 
