@@ -1,16 +1,19 @@
 import argparse
 import json
 import re
+import time
+import urllib
 import urlparse
 from collections import defaultdict, namedtuple
 from datetime import date
-import urllib
 
 import slumber
 import requests
-import time
+from attr import attr
+from bs4 import BeautifulSoup
 
 from cfme.utils.conf import env
+from cfme.utils.log import logger
 from cfme.utils.providers import providers_data
 from cfme.utils.version import get_stream
 
@@ -26,9 +29,9 @@ stream_matchers = (
     (get_stream('5.4'), r'^cfme-54.*-(?P<month>\d{2})(?P<day>\d{2})'),
     (get_stream('5.5'), r'^cfme-55.*-(?P<month>\d{2})(?P<day>\d{2})'),
     (get_stream('5.6'), r'^cfme-56.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.7'), r'^cfme-57.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.8'), r'^cfme-58.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.9'), r'^cfme-59.*-(?P<month>\d{2})(?P<day>\d{2})'),
+    (get_stream('5.7'), r'^cfme-57.*-(?P<year>\d{4})?(?P<month>\d{2})(?P<day>\d{2})'),
+    (get_stream('5.8'), r'^cfme-58.*-(?P<year>\d{4})?(?P<month>\d{2})(?P<day>\d{2})'),
+    (get_stream('5.9'), r'^cfme-59.*-(?P<year>\d{4})?(?P<month>\d{2})(?P<day>\d{2})'),
     # Nightly builds have potentially multiple version streams bound to them so we
     # cannot use get_stream()
     ('upstream_stable', r'^miq-stable-(?P<release>gapri[-\w]*?)'  # release name limit to 5 chars
@@ -324,6 +327,80 @@ def composite_uncollect(build, source='jenkins'):
     except Exception as e:
         print(e)
         return {'tests': []}
+
+
+@attr.s
+class TemplateName(object):
+    """Generate a template name from given link, a timestamp, and optional version string
+    This method should handle naming templates from the following URL types:
+        - http://<build-server-address>/builds/manageiq/master/latest/
+        - http://<build-server-address>/builds/manageiq/gaprindashvili/stable/
+        - http://<build-server-address>/builds/manageiq/fine/stable/
+        - http://<build-server-address>/builds/cfme/5.8/stable/
+        - http://<build-server-address>/builds/cfme/5.9/latest/
+
+    These builds fall into a few categories:
+        - MIQ nightly (master/latest)  (upstream)
+        - MIQ stable (<name>/stable)  (upstream_stable, upstream_fine, etc)
+        - CFME nightly (<stream>/latest)  (downstream-nightly)
+        - CFME stream (<stream>/stable)  (downstream-<stream>)
+
+    The generated template names should follow the syntax with 5 digit version numbers:
+        - MIQ nightly: miq-nightly-<yyyymmdd>  (miq-nightly-201711212330)
+        - MIQ stable: miq-stable-<name>-<number>-yyyymmdd  (miq-stable-fine-4-20171024)
+        - CFME nightly: cfme-nightly-<version>-<yyyymmdd>  (cfme-nightly-59000-20170901)
+        - CFME stream: cfme-<version>-<yyyymmdd>  (cfme-57402-20171202)
+
+    Release names for upstream will be truncated to 5 letters (thanks gaprindashvili...)
+    """
+    build_url = attr.ib()  # URL to the build folder with ova/vhd/qc2/etc images
+
+    def build_version(self):
+        """Version string from version file in build folder (cfme)
+        padded in the build number to 5 digit total (5.9.0.1 -> 59001)
+
+        Raises:
+            ValueError if unable to parse version string from file
+
+        Returns:  TODO parse MIQ name from a build image here
+            None if no version string available
+            String 5-digit version number
+        """
+        v = requests.get('/'.join([self.image_url, 'version']))
+        if v.ok:
+            logger.info('version file found, parsing dotted version string')
+            match = re.search(
+                '^(?P<major>\d)\.?(?P<minor>\d)\.?(?P<patch>\d)\.?(?P<build>\d{1,2})',
+                v.content)
+            if match:
+                return ''.join([match.group('major'),
+                                match.group('minor'),
+                                match.group('patch'),
+                                match.group('build').zfill(2)])  # zero left-pad
+            else:
+                raise ValueError('Unable to match version string in %s/version: %s',
+                                 self.build_url, v.content)
+        else:
+            logger.info('No version file found in %s, pulling build name from image file',
+                        self.build_url)
+            build_dir = requests.get(self.build_url)
+            dir_parser = BeautifulSoup(build_dir.text, 'html.parser')
+            # Find image file links, use first one to pattern match name
+            images = [node.get('href')
+                      for node in dir_parser.find_all('a')
+                      if node.get('href').endswith('ova') or node.get('href').endswith('qc2')]
+            if images:
+                match = re.search('manageiq-(?:[\w]+?)-(?P<release>[\w]+?)-(?P<number>\d)-\d{3,}',
+                                  str(images[0]))
+                if match:
+                    return '-'.join([match.group('release')[:5],
+                                     match.group('number')])
+                else:
+                    raise ValueError('Unable to match version string in image file: %s',
+                                     str(images[0]))
+            else:
+                raise ValueError('No image of ova or qc2 type found to parse version from in %s',
+                                 self.build_url)
 
 
 # Dict subclasses to help with JSON serialization
