@@ -74,9 +74,9 @@ def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
 
     pwd = app_creds['password']
     command_set = ('ap', '', '5', '1', '1', 'y', '1', 'n', '0', pwd, TimedCommand(pwd, 360), '')
-    unconfigured_appliance[0].appliance_console.run_commands(command_set)
-    unconfigured_appliance[0].wait_for_evm_service()
-    unconfigured_appliance[0].wait_for_web_ui()
+    unconfigured_appliance.appliance_console.run_commands(command_set)
+    unconfigured_appliance.wait_for_evm_service()
+    unconfigured_appliance.wait_for_web_ui()
 
 
 def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope):
@@ -98,8 +98,8 @@ def test_appliance_console_dedicated_db(unconfigured_appliance, app_creds):
 
     pwd = app_creds['password']
     command_set = ('ap', '', '5', '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
-    unconfigured_appliance[0].appliance_console.run_commands(command_set)
-    wait_for(lambda: unconfigured_appliance[0].db.is_dedicated_active)
+    unconfigured_appliance.appliance_console.run_commands(command_set)
+    wait_for(lambda: unconfigured_appliance.db.is_dedicated_active)
 
 
 def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
@@ -137,46 +137,46 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     and evm starts up again pointing at the new primary database.
 
     """
-    app = unconfigured_appliances
-    app0_ip = app[0].hostname
-    app1_ip = app[1].hostname
+    apps = unconfigured_appliances
+    app0_ip = apps[0].hostname
+    app1_ip = apps[1].hostname
     pwd = app_creds['password']
     # Configure first appliance as dedicated database
     command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
-    app[0].appliance_console.run_commands(command_set)
-    wait_for(lambda: app[0].db.is_dedicated_active)
+    apps[0].appliance_console.run_commands(command_set)
+    wait_for(lambda: apps[0].db.is_dedicated_active)
     # Configure EVM webui appliance with create region in dedicated database
     command_set = ('ap', '', '5', '2', app0_ip, '', pwd, '', '2', '0', 'y', app0_ip, '', '', '',
         pwd, TimedCommand(pwd, 360), '')
-    app[2].appliance_console.run_commands(command_set)
-    app[2].wait_for_evm_service()
-    app[2].wait_for_web_ui()
+    apps[2].appliance_console.run_commands(command_set)
+    apps[2].wait_for_evm_service()
+    apps[2].wait_for_web_ui()
     # Configure primary replication node
     command_set = ('ap', '', '6', '1', '1', '', '', pwd, pwd, app0_ip, 'y',
         TimedCommand('y', 60), '')
-    app[0].appliance_console.run_commands(command_set)
+    apps[0].appliance_console.run_commands(command_set)
     # Configure secondary replication node
     command_set = ('ap', '', '6', '2', '1', '2', '', '', pwd, pwd, app0_ip, app1_ip, 'y',
         TimedCommand('y', 60), '')
-    app[1].appliance_console.run_commands(command_set)
+    apps[1].appliance_console.run_commands(command_set)
     # Configure automatic failover on EVM appliance
     command_set = ('ap', '', '9', TimedCommand('1', 30), '')
-    app[2].appliance_console.run_commands(command_set)
+    apps[2].appliance_console.run_commands(command_set)
 
     def is_ha_monitor_started(appliance):
         assert appliance.ssh_client.run_command(
             "cat /var/www/miq/vmdb/config/failover_databases.yml | grep {}".format(app1_ip))
-    wait_for(is_ha_monitor_started, func_args=[app[2]], timeout=300, handle_exception=True)
+    wait_for(is_ha_monitor_started, func_args=[apps[2]], timeout=300, handle_exception=True)
     # Cause failover to occur
-    rc, out = app[0].ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
+    rc, out = apps[0].ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
     assert rc == 0, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(out)
 
     def is_failover_started(appliance):
         assert appliance.ssh_client.run_command(
             "cat /var/www/miq/vmdb/log/ha_admin.log | grep 'Starting to execute failover'")
-    wait_for(is_failover_started, func_args=[app[2]], timeout=450, handle_exception=True)
-    app[2].wait_for_evm_service()
-    app[2].wait_for_web_ui()
+    wait_for(is_failover_started, func_args=[apps[2]], timeout=450, handle_exception=True)
+    apps[2].wait_for_evm_service()
+    apps[2].wait_for_web_ui()
 
 
 def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_creds, appliance):
@@ -194,19 +194,20 @@ def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_cr
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-def test_appliance_console_external_db_create(app_creds, dedicated_db_appliance_create):
+def test_appliance_console_external_db_create(
+        app_creds, dedicated_db_appliance, unconfigured_appliance_secondary):
     """'ap' launch appliance_console, '' clear info screen, '5' setup db, '1' create v2_key,
     '2' create region in external db, '0' db region number, 'y' confirm create region in external db
     'ip', '' ip and port for dedicated db, '' use default db name, '' default username, 'pwd' db
     password, 'pwd' confirm db password + wait 360 secs and '' finish."""
 
-    ip = dedicated_db_appliance_create[0].hostname
+    ip = dedicated_db_appliance.hostname
     pwd = app_creds['password']
     command_set = ('ap', '', '5', '1', '2', '0', 'y', ip, '', '', '', pwd,
         TimedCommand(pwd, 300), '')
-    dedicated_db_appliance_create[1].appliance_console.run_commands(command_set)
-    dedicated_db_appliance_create[1].wait_for_evm_service()
-    dedicated_db_appliance_create[1].wait_for_web_ui()
+    unconfigured_appliance_secondary.appliance_console.run_commands(command_set)
+    unconfigured_appliance_secondary.wait_for_evm_service()
+    unconfigured_appliance_secondary.wait_for_web_ui()
 
 
 def test_appliance_console_extend_storage(unconfigured_appliance):
@@ -214,11 +215,11 @@ def test_appliance_console_extend_storage(unconfigured_appliance):
     disk, 'y' confirm configuration and '' complete."""
 
     command_set = ('ap', '', '10', '1', 'y', '')
-    unconfigured_appliance[0].appliance_console.run_commands(command_set)
+    unconfigured_appliance.appliance_console.run_commands(command_set)
 
-    def is_storage_extended(unconfigured_appliance):
+    def is_storage_extended():
         assert unconfigured_appliance.ssh_client.run_command("df -h | grep /var/www/miq_tmp")
-    wait_for(is_storage_extended, func_args=[unconfigured_appliance[0]])
+    wait_for(is_storage_extended)
 
 
 @pytest.mark.uncollect('No IPA servers currently available')
