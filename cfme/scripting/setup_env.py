@@ -24,7 +24,7 @@ def tot_time(string):
 def provision_appliances(count, cfme_version, provider_type, lease_time):
     sprout_client = SproutClient.from_config()
     apps, request_id = sprout_client.provision_appliances(version=str(cfme_version),
-        count=count, preconfigured=False, lease_time=lease_time, provider_tpye=provider_type)
+        count=count, preconfigured=False, lease_time=lease_time, provider_type=provider_type)
     return apps, request_id
 
 
@@ -113,7 +113,7 @@ def setup_ha_env(cfme_version, provider_type, lease, desc):
 
 @main.command('replicated', help='Sets up replicated environment')
 @click.option('--cfme-version', required=True)
-@click.option('--provider-type', default='rhemv', help='Specify sprout provider type')
+@click.option('--provider-type', default='rhevm', help='Specify sprout provider type')
 @click.option('--lease', default='3h', help='set pool lease time, example: 1d4h30m')
 @click.option('--sprout-poolid', default=None, help='Specify ID of existing pool')
 @click.option('--desc', default='Replicated appliances', help='Set description of the pool')
