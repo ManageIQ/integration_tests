@@ -10,6 +10,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm  # For Vm.Snapshot
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import GH
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -202,6 +203,8 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
 
 @pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
                          'Must be RHEVM provider version >= 4')
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6744',
+    unblock=lambda provider: provider.name != 'rhv_cfme_integration')])
 def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request):
     """Tests revert snapshot
 
