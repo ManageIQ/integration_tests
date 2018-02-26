@@ -473,6 +473,121 @@ class TestUsersViaREST(object):
             assert record[0].name == edited[index].name == user.name
 
     @pytest.mark.tier(3)
+    @pytest.mark.meta(blockers=[BZ(1549085, forced_streams=['5.8'])])
+    @pytest.mark.parametrize('group_by', ['id', 'href', 'description'])
+    def test_edit_user_groups(self, appliance, users, group_by):
+        """Tests editing user group.
+
+        Metadata:
+            test_flag: rest
+        """
+        group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
+        groups = [appliance.rest_api.collections.groups.get(description=desc)
+                  for desc in group_descriptions]
+        group_handles = [{'href': groups[0].href}]
+        for group in groups[1:]:
+            if group_by == 'id':
+                group_handle = {'id': group.id}
+            elif group_by == 'href':
+                group_handle = {'href': group.href}
+            elif group_by == 'description':
+                group_handle = {'description': group.description}
+            group_handles.append(group_handle)
+
+        users_len = len(users)
+        new = []
+        for _ in range(users_len):
+            new.append({'miq_groups': group_handles})
+        edited = []
+        for index in range(users_len):
+            edited.append(users[index].action.edit(**new[index]))
+            assert_response(appliance)
+        assert users_len == len(edited)
+
+        def _updated(user):
+            user.reload(attributes='miq_groups')
+            descs = []
+            for group in user.miq_groups:
+                descs.append(group['description'])
+            return all(desc in descs for desc in group_descriptions)
+
+        for index, user in enumerate(users):
+            wait_for(
+                lambda: _updated(user),
+                num_sec=20,
+                delay=2,
+            )
+            user.reload()
+            assert edited[index].id == user.id
+
+    @pytest.mark.tier(3)
+    @pytest.mark.meta(blockers=[BZ(1549086, forced_streams=['5.8', '5.9', 'upstream'])])
+    def test_change_current_group(self, request, appliance):
+        """Tests that it's possible to edit current group.
+
+        Metadata:
+            test_flag: rest
+        """
+        group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
+        groups = [appliance.rest_api.collections.groups.get(description=desc)
+                  for desc in group_descriptions]
+        group_handles = [{'href': group.href} for group in groups]
+        users, __ = self.users_data(request, appliance, num=1)
+        user = users[0]
+        user.action.edit(miq_groups=group_handles)
+        assert_response(appliance)
+        user.reload()
+        assert user.current_group.id == groups[0].id
+        user.action.edit(current_group=group_handles[1])
+        assert_response(appliance)
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+    def test_change_current_group_as_user(self, request, appliance):
+        """Tests that users can update their own group.
+
+        Metadata:
+            test_flag: rest
+        """
+        group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
+        groups = [appliance.rest_api.collections.groups.get(description=desc)
+                  for desc in group_descriptions]
+        group_handles = [{'href': group.href} for group in groups]
+        users, data = self.users_data(request, appliance, num=1)
+        user = users[0]
+        user.action.edit(miq_groups=group_handles)
+        assert_response(appliance)
+        user.reload()
+        assert user.current_group.id == groups[0].id
+        user_auth = (user.userid, data[0]['password'])
+        user_api = appliance.new_rest_api_instance(auth=user_auth)
+        user_api.post(user.href, action='set_current_group', current_group=group_handles[1])
+        assert_response(user_api)
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+    def test_change_unassigned_group_as_user(self, request, appliance):
+        """Tests that users can't update their own group to a group they don't belong to.
+
+        Metadata:
+            test_flag: rest
+        """
+        group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
+        groups = [appliance.rest_api.collections.groups.get(description=desc)
+                  for desc in group_descriptions]
+        group_handles = [{'href': group.href} for group in groups]
+        users, data = self.users_data(request, appliance, num=1)
+        user = users[0]
+        user.action.edit(miq_groups=group_handles[:1])
+        assert_response(appliance)
+        user.reload()
+        assert user.current_group.id == groups[0].id
+        user_auth = (user.userid, data[0]['password'])
+        user_api = appliance.new_rest_api_instance(auth=user_auth)
+        with error.expected('User must belong to group'):
+            user_api.post(user.href, action='set_current_group', current_group=group_handles[1])
+
+    @pytest.mark.tier(3)
     def test_change_password_as_user(self, appliance, user_auth):
         """Tests that users can update their own password.
 
