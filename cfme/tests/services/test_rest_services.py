@@ -13,6 +13,7 @@ from cfme.rest.gen_data import (
     blueprints as _blueprints,
     copy_role,
     dialog as _dialog,
+    dialog_rest as _dialog_rest,
     groups,
     orchestration_templates as _orchestration_templates,
     service_catalog_obj as _service_catalog_obj,
@@ -95,6 +96,12 @@ def service_body(**kwargs):
 @pytest.fixture(scope="function")
 def dialog(request, appliance):
     return _dialog(request, appliance)
+
+
+@pytest.fixture(scope="function")
+def service_dialogs(request, appliance, num=3):
+    service_dialogs = [_dialog_rest(request, appliance.rest_api) for __ in range(num)]
+    return service_dialogs
 
 
 @pytest.fixture(scope="function")
@@ -619,44 +626,106 @@ class TestServiceRESTAPI(object):
 
 
 class TestServiceDialogsRESTAPI(object):
-    def test_query_service_dialog_attributes(self, appliance, dialog, soft_assert):
+    def check_returned_dialog(self, appliance):
+        # full dialog is returned only in >= 5.9
+        if appliance.version < '5.9':
+            return
+        returned = appliance.rest_api.response.json()
+        if 'results' in returned:
+            results = returned['results']
+        else:
+            results = [returned]
+        for result in results:
+            dialog_tabs, = result['dialog_tabs']
+            dialog_groups, = dialog_tabs['dialog_groups']
+            dialog_fields, = dialog_groups['dialog_fields']
+            assert dialog_fields['name']
+
+    def test_query_service_dialog_attributes(self, service_dialogs, soft_assert):
         """Tests access to service dialog attributes.
 
         Metadata:
             test_flag: rest
         """
-        service_dialog = appliance.rest_api.collections.service_dialogs.get(label=dialog.label)
-        query_resource_attributes(service_dialog, soft_assert=soft_assert)
+        query_resource_attributes(service_dialogs[0], soft_assert=soft_assert)
+
+    def test_check_dialog_returned_create(self, request, appliance):
+        """Tests that the full dialog is returned as part of the API response on create.
+
+        Metadata:
+            test_flag: rest
+        """
+        _dialog_rest(request, appliance.rest_api)
+        assert_response(appliance)
+        self.check_returned_dialog(appliance)
+
+    @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
+    def test_edit_service_dialogs(self, appliance, service_dialogs, from_detail):
+        """Tests editing service dialog using the REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        new_descriptions = []
+        if from_detail:
+            edited = []
+            for dialog in service_dialogs:
+                new_description = 'Test Dialog {}'.format(fauxfactory.gen_alphanumeric().lower())
+                new_descriptions.append(new_description)
+                edited.append(dialog.action.edit(description=new_description))
+                assert_response(appliance)
+                self.check_returned_dialog(appliance)
+        else:
+            catalog_edited = []
+            for dialog in service_dialogs:
+                new_description = 'Test Dialog {}'.format(fauxfactory.gen_alphanumeric().lower())
+                new_descriptions.append(new_description)
+                dialog.reload()
+                catalog_edited.append({
+                    'href': dialog.href,
+                    'description': new_description,
+                })
+            edited = appliance.rest_api.collections.service_dialogs.action.edit(*catalog_edited)
+            assert_response(appliance)
+            self.check_returned_dialog(appliance)
+        assert len(edited) == len(service_dialogs)
+        for index, dialog in enumerate(service_dialogs):
+            record, __ = wait_for(
+                lambda: appliance.rest_api.collections.service_dialogs.find_by(
+                    description=new_descriptions[index]) or False,
+                num_sec=180,
+                delay=10,
+            )
+            dialog.reload()
+            assert dialog.description == edited[index].description
+            assert dialog.description == record[0].description
+            assert dialog.description == new_descriptions[index]
 
     @pytest.mark.parametrize("method", ["post", "delete"])
-    def test_delete_service_dialog(self, appliance, dialog, method):
+    def test_delete_service_dialog(self, appliance, service_dialogs, method):
         """Tests deleting service dialogs from detail.
 
         Metadata:
             test_flag: rest
         """
-        service_dialog = appliance.rest_api.collections.service_dialogs.get(label=dialog.label)
-
-        if method == "delete":
-            del_action = service_dialog.action.delete.DELETE
-        else:
-            del_action = service_dialog.action.delete.POST
-
-        del_action()
-        assert_response(appliance)
-        with error.expected("ActiveRecord::RecordNotFound"):
+        for dialog in service_dialogs:
+            del_action = getattr(dialog.action.delete, method.upper())
             del_action()
-        assert_response(appliance, http_status=404)
+            assert_response(appliance)
 
-    def test_delete_service_dialogs(self, appliance, dialog):
+            dialog.wait_not_exists(num_sec=10, delay=2)
+            with error.expected("ActiveRecord::RecordNotFound"):
+                del_action()
+            assert_response(appliance, http_status=404)
+
+    def test_delete_service_dialogs(self, appliance, service_dialogs):
         """Tests deleting service dialogs from collection.
 
         Metadata:
             test_flag: rest
         """
-        service_dialog = appliance.rest_api.collections.service_dialogs.get(label=dialog.label)
         collection = appliance.rest_api.collections.service_dialogs
-        delete_resources_from_collection(collection, [service_dialog])
+        delete_resources_from_collection(collection, service_dialogs)
 
 
 class TestServiceTemplateRESTAPI(object):

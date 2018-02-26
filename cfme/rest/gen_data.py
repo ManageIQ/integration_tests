@@ -75,37 +75,6 @@ def tags(request, rest_api, categories):
     return _creating_skeleton(request, rest_api, 'tags', tags, substr_search=True)
 
 
-def dialog_ui(appliance):
-    """Creates service dialog using UI."""
-    # TODO: this function is not used with supported versions
-    service_dialogs = appliance.collections.service_dialogs
-    uid = fauxfactory.gen_alphanumeric()
-    # ele_name has to be "service_name" so that we can override the service name generated
-    # by provisioning as that name contains timestamp which is difficult to assert.
-    # Also the dialog label and default text box should be same value = uid here.
-    element_data = dict(
-        ele_label="ele_{}".format(uid),
-        ele_name="service_name",
-        ele_desc="my ele desc {}".format(uid),
-        choose_type="Text Box",
-        default_text_box=uid
-    )
-    service_dialog = service_dialogs.create(
-        label=uid,
-        description="my dialog {}".format(uid)
-    )
-    tab = service_dialog.tabs.create(
-        tab_label="tab_{}".format(uid),
-        tab_desc="my tab desc {}".format(uid)
-    )
-    box = tab.boxes.create(
-        box_label="box_{}".format(uid),
-        box_desc="my box desc {}".format(uid)
-    )
-    box.elements.create(element_data=[element_data])
-    return service_dialog
-
-
 def dialog_rest(request, rest_api):
     """Creates service dialog using REST API."""
     uid = fauxfactory.gen_alphanumeric()
