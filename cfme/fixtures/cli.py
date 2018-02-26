@@ -11,30 +11,12 @@ from fixtures.appliance import temp_appliances
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 
-
-@pytest.yield_fixture(scope="function")
-def dedicated_db_appliance(app_creds, appliance):
-    """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '1' Creates v2_key,
-    '1' selects internal db, 'y' continue, '1' use partition, 'y' create dedicated db, 'pwd'
-    db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
-    if appliance.version > '5.7':
-        with temp_appliances(count=1, preconfigured=False) as apps:
-            pwd = app_creds['password']
-            opt = '5' if apps[0].version >= "5.8" else '8'
-            command_set = ('ap', '', opt, '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
-            apps[0].appliance_console.run_commands(command_set)
-            wait_for(lambda: apps[0].db.is_dedicated_active)
-            yield apps[0]
-    else:
-        raise Exception("Can't setup dedicated db on appliance below 5.7 builds")
-
-
 """ The Following fixtures are for provisioning one preconfigured or unconfigured appliance for
     testing from an FQDN provider unless there are no provisions available"""
 
 
 @contextmanager
-def fqdn_appliance(appliance, preconfigured):
+def fqdn_appliance(appliance, preconfigured, count):
     sp = SproutClient.from_config()
     available_providers = set(sp.call_method('available_providers'))
     required_providers = set(cfme_data['fqdn_providers'])
@@ -44,7 +26,7 @@ def fqdn_appliance(appliance, preconfigured):
     for provider in usable_providers:
         try:
             apps, pool_id = sp.provision_appliances(
-                count=1, preconfigured=preconfigured, version=version, stream=stream,
+                count=count, preconfigured=preconfigured, version=version, stream=stream,
                 provider=provider
             )
             break
@@ -55,22 +37,47 @@ def fqdn_appliance(appliance, preconfigured):
     else:
         logger.error("Couldn't provision an appliance at all")
         raise SproutException('No provision available')
-    yield apps[0]
-
-    apps[0].ssh_client.close()
+    yield apps
+    for app in apps:
+        app.ssh_client.close()
     sp.destroy_pool(pool_id)
 
 
 @pytest.yield_fixture()
 def unconfigured_appliance(appliance):
-    with fqdn_appliance(appliance, preconfigured=False) as app:
-        yield app
+    with fqdn_appliance(appliance, preconfigured=False, count=1) as apps:
+        yield apps[0]
+
+
+@pytest.yield_fixture()
+def unconfigured_appliance_secondary(appliance):
+    with fqdn_appliance(appliance, preconfigured=False, count=1) as apps:
+        yield apps[0]
+
+
+@pytest.yield_fixture()
+def unconfigured_appliances(appliance):
+    with fqdn_appliance(appliance, preconfigured=False, count=3) as apps:
+        yield apps
 
 
 @pytest.yield_fixture()
 def configured_appliance(appliance):
-    with fqdn_appliance(appliance, preconfigured=True) as app:
-        yield app
+    with fqdn_appliance(appliance, preconfigured=True, count=1) as apps:
+        yield apps[0]
+
+
+@pytest.yield_fixture(scope="function")
+def dedicated_db_appliance(app_creds, unconfigured_appliance):
+    """'ap' launch appliance_console, '' clear info screen, '5' setup db, '1' Creates v2_key,
+    '1' selects internal db, '1' use partition, 'y' create dedicated db, 'pwd'
+    db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
+    app = unconfigured_appliance
+    pwd = app_creds['password']
+    command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+    app.appliance_console.run_commands(command_set)
+    wait_for(lambda: app.db.is_dedicated_active)
+    yield app
 
 
 @pytest.yield_fixture()

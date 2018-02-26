@@ -174,10 +174,10 @@ class ApplianceConsoleCli(object):
                 dbname=dbname, dbdisk=dbdisk, fetch_key=fetch_key, sshlogin=sshlogin,
                 sshpass=sshpass))
 
-    def configure_appliance_dedicated_db(self, region, username, password, dbname, dbdisk):
-        self._run("--region {region} --internal --username {username} --password {password}"
+    def configure_appliance_dedicated_db(self, username, password, dbname, dbdisk):
+        self._run("--internal --username {username} --password {password}"
             " --dbname {dbname} --verbose --dbdisk {dbdisk} --key --standalone".format(
-                region=region, username=username, password=password, dbname=dbname, dbdisk=dbdisk))
+                username=username, password=password, dbname=dbname, dbdisk=dbdisk))
 
     def configure_ipa(self, ipaserver, username, password, domain=None, realm=None):
         assert self._run("--ipaserver {ipaserver} --ipaprincipal {username} "
@@ -188,6 +188,22 @@ class ApplianceConsoleCli(object):
         assert self.appliance.sssd.running
         assert self.appliance.ssh_client.run_command("cat /etc/ipa/default.conf "
                                                      "| grep 'enable_ra = True'")
+
+    def configure_appliance_dedicated_ha_primary(
+            self, username, password, reptype, primhost, node, dbname):
+        self._run("--username {username} --password {password} --replication {reptype}"
+            " --primary-host {primhost} --cluster-node-number {node} --auto-failover --verbose"
+            " --dbname {dbname}".format(
+                username=username, password=password, reptype=reptype, primhost=primhost, node=node,
+                dbname=dbname))
+
+    def configure_appliance_dedicated_ha_standby(
+            self, username, password, reptype, primhost, standhost, node, dbname, dbdisk):
+        self._run("--internal --username {username} --password {password} --replication {reptype}"
+            " --primary-host {primhost} --standby-host {standhost} --cluster-node-number {node}"
+            " --auto-failover --dbname {dbname} --verbose --dbdisk {dbdisk}"
+            " --standalone".format(username=username, password=password, reptype=reptype,
+                primhost=primhost, standhost=standhost, node=node, dbname=dbname, dbdisk=dbdisk))
 
     def uninstall_ipa_client(self):
         assert self._run("--uninstall-ipa")
