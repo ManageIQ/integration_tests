@@ -42,14 +42,16 @@ def test_scale_provider_down(provider, host, has_mistral_service):
     wait_for(lambda: provider.mgmt.iapi.node.get(host_uuid).maintenance, timeout=600, delay=5)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
     host.browser.refresh()
-    assert host.get_detail('Properties', 'Maintenance Mode') == 'Enabled'
+    view = navigate_to(host, 'Details')
+    assert view.entities.summary('Properties').get_text_of('Maintenance Mode') == 'Enabled'
     provider.scale_down()
     wait_for(lambda: provider.mgmt.iapi.node.get(host_uuid).provision_state == 'available', delay=5,
              timeout=1200)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
     host.name = host_uuid  # host's name is changed after scale down
     host.browser.refresh()
-    assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'available'
+    prov_state = view.entities.summary('Openstack Hardware').get_text_of('Provisioning State')
+    assert prov_state == 'available'
 
 
 def test_delete_host(appliance, host, provider, has_mistral_service):
@@ -94,7 +96,8 @@ def test_introspect_host(host, provider, has_mistral_service):
              timeout=600)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
     host.browser.refresh()
-    assert host.get_detail('Openstack Hardware', 'Introspected') == 'true'
+    view = navigate_to(host, 'Details')
+    assert view.entities.summary('Openstack Hardware').get_text_of('Introspected') == 'true'
 
 
 def test_provide_host(host, provider, has_mistral_service):
@@ -106,7 +109,9 @@ def test_provide_host(host, provider, has_mistral_service):
              timeout=300)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
     host.browser.refresh()
-    assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'available'
+    view = navigate_to(host, 'Details')
+    prov_state = view.entities.summary('Openstack Hardware').get_text_of('Provisioning State')
+    assert prov_state == 'available'
 
 
 def test_scale_provider_out(host, provider, has_mistral_service):
@@ -125,4 +130,6 @@ def test_scale_provider_out(host, provider, has_mistral_service):
     host.name += ' (NovaCompute)'  # Host will change it's name after successful scale out
     host.browser.refresh()
     assert host.exists
-    assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'active'
+    view = navigate_to(host, 'Details')
+    prov_state = view.entities.summary('Openstack Hardware').get_text_of('Provisioning State')
+    assert prov_state == 'active'

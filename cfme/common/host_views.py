@@ -3,7 +3,6 @@ from lxml.html import document_fromstring
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import (
     Parameter,
-    ParametrizedLocator,
     Version,
     VersionPick
 )
@@ -19,23 +18,24 @@ from widgetastic_patternfly import (
 from cfme.base.login import BaseLoggedInPage
 from widgetastic_manageiq import (
     Accordion,
-    ManageIQTree,
     BaseEntitiesView,
-    NonJSBaseEntity,
-    JSBaseEntity,
     BaseListEntity,
     BaseQuadIconEntity,
     BaseTileIconEntity,
     BreadCrumb,
     Button,
     Checkbox,
+    DriftComparison,
     Input,
     ItemsToolBarViewSelector,
+    JSBaseEntity,
+    ManageIQTree,
+    NonJSBaseEntity,
     PaginationPane,
+    ParametrizedSummaryTable,
     SummaryTable,
     Table,
-    TimelinesView,
-    DriftComparison
+    TimelinesView
 )
 
 
@@ -131,14 +131,7 @@ class HostDetailsToolbar(View):
 
 class HostDetailsEntities(View):
     """Represents Details page."""
-    properties = SummaryTable(title="Properties")
-    relationships = SummaryTable(title="Relationships")
-    compliance = SummaryTable(title="Compliance")
-    configuration = SummaryTable(title="Configuration")
-    smart_management = SummaryTable(title="Smart Management")
-    security = SummaryTable(title="Security")
-    authentication_status = SummaryTable(title="Authentication Status")
-    openstack_hardware = SummaryTable(title="Openstack Hardware")
+    summary = ParametrizedView.nested(ParametrizedSummaryTable)
 
 
 class HostDetailsView(ComputeInfrastructureHostsView):

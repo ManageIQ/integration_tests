@@ -7,6 +7,7 @@ from cfme.common.host_views import HostDriftAnalysis
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -66,7 +67,8 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
     destination = 'AllTasks' if appliance.version >= '5.9' else 'AllOtherTasks'
 
     # get drift history num
-    drift_num_orig = int(a_host.get_detail('Relationships', 'Drift History'))
+    view = navigate_to(a_host, 'Details')
+    drift_num_orig = int(view.entities.summary('Relationships').get_text_of('Drift History'))
 
     # clear table
     delete_all_tasks(destination)
@@ -75,8 +77,10 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
     a_host.run_smartstate_analysis(wait_for_task_result=True)
 
     # wait for for drift history num+1
+    navigate_to(a_host, 'Details')
     wait_for(
-        lambda: a_host.get_detail('Relationships', 'Drift History') == str(drift_num_orig + 1),
+        lambda: (view.entities.summary('Relationships').get_text_of('Drift History') ==
+                 str(drift_num_orig + 1)),
         delay=20,
         num_sec=360,
         message="Waiting for Drift History count to increase",
@@ -91,8 +95,10 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
     a_host.run_smartstate_analysis(wait_for_task_result=True)
 
     # wait for for drift history num+2
+    navigate_to(a_host, 'Details')
     wait_for(
-        lambda: a_host.get_detail('Relationships', 'Drift History') == str(drift_num_orig + 2),
+        lambda: (view.entities.summary('Relationships').get_text_of('Drift History') ==
+                 str(drift_num_orig + 2)),
         delay=20,
         num_sec=360,
         message="Waiting for Drift History count to increase",
