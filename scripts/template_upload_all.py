@@ -58,6 +58,8 @@ def parse_cmd_line():
                         help='local yaml file path, to use local provider_data & not conf/cfme_data'
                              'to be useful for template upload/deploy by non cfmeqe',
                         default=None)
+    parser.add_argument('--print-name-only', dest='print_name_only', action="store_true",
+                        default=False, help='only print the template name that will be generated')
     args = parser.parse_args()
     return args
 
@@ -411,6 +413,10 @@ def main():
                 template_parser = trackerbot.parse_template(kwargs['template_name'])
                 if template_parser.stream:
                     kwargs['stream'] = template_parser.group_name
+
+        if args.print_name_only:
+            print(kwargs['template_name'])
+            return 0
 
         logger.info("TEMPLATE_UPLOAD_ALL:-----Start of %r upload on: %r--------",
             kwargs['template_name'], provider_type)
