@@ -121,9 +121,10 @@ def test_vmware_vimapi_hotadd_disk(
     # Button that will invoke the dialog and action
     button_name = fauxfactory.gen_alphanumeric()
     button = testing_group.buttons.create(
-        button_class=appliance.collections.buttons.DEFAULT,
         text=button_name,
-        hover=button_name, system="Request", request=instance.name)
+        hover=button_name,
+        system="Request",
+        request=instance.name)
     request.addfinalizer(button.delete_if_exists)
 
     def _get_disk_capacity():

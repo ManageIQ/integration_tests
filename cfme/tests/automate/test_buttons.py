@@ -88,7 +88,6 @@ def test_button_crud(appliance, dialog, request):
         type=appliance.collections.button_groups.SERVICE)
     request.addfinalizer(buttongroup.delete_if_exists)
     button = buttongroup.buttons.create(
-        button_class=appliance.collections.buttons.DEFAULT,
         text=fauxfactory.gen_alphanumeric(),
         hover=fauxfactory.gen_alphanumeric(),
         dialog=dialog, system="Request", request="InspectMe")
@@ -118,7 +117,6 @@ def test_button_on_host(appliance, request, provider, setup_provider):
         type=appliance.collections.button_groups.HOST)
     request.addfinalizer(buttongroup.delete_if_exists)
     button = buttongroup.buttons.create(
-        button_class=appliance.collections.buttons.DEFAULT,
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
         system="Request", request="InspectMe")

@@ -132,7 +132,6 @@ def custom_vm_button(appliance, ansible_catalog_item):
         hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
         type=appliance.collections.button_groups.VM_INSTANCE)
     button = buttongroup.buttons.create(
-        button_class=appliance.collections.buttons.DEFAULT,
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
         dialog=ansible_catalog_item.provisioning["provisioning_dialog_name"],
@@ -215,6 +214,34 @@ def test_automate_ansible_playbook_method_type(request, appliance, domain, names
     request.addfinalizer(lambda: appliance.ssh_client.run_command(
         "if [ -f \"/var/tmp/modified-release\" ]; then rm \"/var/tmp/modified-release\""))
     assert appliance.ssh_client.run_command("[ -f \"/var/tmp/modified-release\" ]").success
+
+
+def test_ansible_playbook_button_crud(ansible_catalog_item, appliance, request):
+    buttongroup = appliance.collections.button_groups.create(
+        text=fauxfactory.gen_alphanumeric(),
+        hover=fauxfactory.gen_alphanumeric(),
+        type=appliance.collections.button_groups.VM_INSTANCE)
+    request.addfinalizer(buttongroup.delete_if_exists)
+    button = buttongroup.buttons.create(
+        type='Ansible Playbook',
+        text=fauxfactory.gen_alphanumeric(),
+        hover=fauxfactory.gen_alphanumeric(),
+        playbook_cat_item=ansible_catalog_item.name)
+    request.addfinalizer(button.delete_if_exists)
+    assert button.exists
+    view = navigate_to(button, 'Details')
+    assert view.text.text == button.text
+    assert view.hover.text == button.hover
+    edited_hover = "edited {}".format(fauxfactory.gen_alphanumeric())
+    with update(button):
+        button.hover = edited_hover
+    assert button.exists
+    view = navigate_to(button, 'Details')
+    assert view.hover.text == edited_hover
+    button.delete(cancel=True)
+    assert button.exists
+    button.delete()
+    assert not button.exists
 
 
 def test_custom_button_order_ansible_playbook_service(setup_provider, vmware_vm, custom_vm_button,

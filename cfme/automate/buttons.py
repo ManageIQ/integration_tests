@@ -5,8 +5,10 @@ import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from widgetastic.utils import ParametrizedString, VersionPick
-from widgetastic.widget import Text, Checkbox, ParametrizedView
-from widgetastic_manageiq import SummaryFormItem, FonticonPicker, PotentiallyInvisibleTab
+from widgetastic.xpath import quote
+from widgetastic.widget import Checkbox, ConditionalSwitchableView, ParametrizedView, Text, View
+from widgetastic_manageiq import (SummaryFormItem, FonticonPicker, PotentiallyInvisibleTab,
+                                  RadioGroup, FakeWidget)
 from widgetastic_patternfly import BootstrapSelect, Button, CandidateNotFound, Input
 
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -16,6 +18,27 @@ from cfme.utils.update import Updateable
 from cfme.utils.version import Version
 
 from . import AutomateCustomizationView
+
+
+class AutomateRadioGroup(RadioGroup):
+    LABELS = './/label'
+    BUTTON = './/label[normalize-space(.)={}]/preceding-sibling::input[@type="radio"][1]'
+
+    @property
+    def selected(self):
+        names = self.button_names
+        for name in names:
+            bttn = self.browser.element(self.BUTTON.format(quote(name)))
+            if bttn.get_attribute('checked') is not None:
+                return name
+        else:
+            return names[0]
+
+    def select(self, name):
+        if self.selected != name:
+            self.browser.element(self.BUTTON.format(quote(name))).click()
+            return True
+        return False
 
 
 class ButtonsAllView(AutomateCustomizationView):
@@ -29,15 +52,27 @@ class ButtonsAllView(AutomateCustomizationView):
 class ButtonFormCommon(AutomateCustomizationView):
 
     class options(PotentiallyInvisibleTab):  # noqa
-        type = BootstrapSelect('button_type')
-        # TODO: Add the Ansible fields.
+        form = ConditionalSwitchableView(reference="type")
+        type = VersionPick({
+            Version.lowest(): FakeWidget(read_value='Default'),
+            '5.9': BootstrapSelect('button_type')
+        })
+
+        @form.register('Default')
+        class ButtonFormDefaultView(View):  # noqa
+            dialog = BootstrapSelect('dialog_id')
+
+        @form.register('Ansible Playbook')
+        class ButtonFormAnsibleView(View):  # noqa
+            playbook_cat_item = BootstrapSelect('service_template_id')
+            inventory = AutomateRadioGroup(locator=".//input[@name='inventory']/..")
+
         text = Input(name='name')
         display = Checkbox(name='display')
         hover = Input(name='description')
         image = VersionPick({
             Version.lowest(): BootstrapSelect('button_image'),
             '5.9': FonticonPicker('button_icon')})
-        dialog = BootstrapSelect('dialog_id')
         open_url = Checkbox('open_url')
         # TODO: Display for, Submit by after converted to BootstrapSelect
 
@@ -59,7 +94,7 @@ class ButtonFormCommon(AutomateCustomizationView):
 
         # TODO: Role Access
 
-    cancel = Button('Cancel')
+    cancel_button = Button('Cancel')
 
 
 class NewButtonView(ButtonFormCommon):
@@ -101,6 +136,9 @@ class EditButtonView(ButtonFormCommon):
 class ButtonDetailView(AutomateCustomizationView):
     title = Text('#explorer_title_text')
 
+    button_type = SummaryFormItem('Basic Information', 'Button Type')
+    playbook_cat_item = SummaryFormItem('Basic Information', 'Ansible Playbook')
+    target = SummaryFormItem('Basic Information', 'Target')
     text = SummaryFormItem(
         'Basic Information', VersionPick({Version.lowest(): 'Button Text', '5.9': 'Text'}),
         text_filter=lambda text: re.sub(r'\s+Display on Button\s*$', '', text))
@@ -134,14 +172,29 @@ class BaseButton(BaseEntity, Updateable):
 
     def update(self, updates):
         view = navigate_to(self, 'Edit')
-        changed = view.fill(self.parent._categorize_fill_dict(updates))
+        changed = view.fill({
+            'options': {
+                'text': updates.get('text'),
+                'hover': updates.get('hover'),
+                'image': updates.get('image'),
+                'open_url': updates.get('open_url'),
+                'form': {
+                    'dialog': updates.get('dialog'),
+                    'playbook_cat_item': updates.get('playbook_cat_item'),
+                    'inventory': updates.get('inventory')
+                }
+            },
+            'advanced': {
+                'system': updates.get('system'),
+                'request': updates.get('request')
+            }
+        })
         if changed:
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(ButtonDetailView)
-        # TODO: Enable this
-        # assert view.is_displayed
+        view = self.create_view(ButtonDetailView, override=updates)
+        assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
             if self.appliance.version < '5.9':
@@ -162,8 +215,7 @@ class BaseButton(BaseEntity, Updateable):
             view.flash.assert_no_error()
         else:
             view = self.create_view(ButtonGroupDetailView, self.group)
-            # TODO: Enable this check
-            # assert view.is_displayed
+            assert view.is_displayed
             view.flash.assert_no_error()
             view.flash.assert_message('Button "{}": Delete successful'.format(self.hover))
 
@@ -199,7 +251,7 @@ class AnsiblePlaybookButton(BaseButton):
     text = attr.ib()
     hover = attr.ib()
     image = attr.ib()
-    playbook = attr.ib()
+    playbook_cat_item = attr.ib()
     inventory = attr.ib()
     system = attr.ib(default=None)
     request = attr.ib(default=None)
@@ -211,40 +263,8 @@ class AnsiblePlaybookButton(BaseButton):
 class ButtonCollection(BaseCollection):
 
     ENTITY = BaseButton
-    DEFAULT = DefaultButton
-    ANSIBLE = AnsiblePlaybookButton
-    TAB_MAPPING = {
-        # Options
-        'text': 'options',
-        'hover': 'options',
-        'dialog': 'options',
-        'playbook': 'options',
-        'inventory': 'options',
-        'image': 'options',
-        'open_url': 'options',
-        # Advanced
-        'system': 'advanced',
-        'request': 'advanced',
-    }
 
-    @classmethod
-    def _categorize_fill_dict(cls, d):
-        """This method uses ``TAB_MAPPING`` to categorize fields to appropriate tabs.
-
-        For DRY purposes.
-        """
-        result = {}
-        for key, value in d.items():
-            try:
-                placement = cls.TAB_MAPPING[key]
-            except KeyError:
-                raise KeyError('Unknown key name {} for Button'.format(key))
-            if placement not in result:
-                result[placement] = {}
-            result[placement][key] = value
-        return result
-
-    def instantiate(self, button_class, group, text, hover, dialog=None, playbook=None,
+    def instantiate(self, group, text, hover, type='Default', dialog=None, playbook_cat_item=None,
                     inventory=None, image=None, open_url=None, system=None, request=None,
                     attributes=None):
         if image:
@@ -255,13 +275,15 @@ class ButtonCollection(BaseCollection):
             image = 'fa-user'
         kwargs = {'open_url': open_url, 'system': system, 'request': request,
                   'attributes': attributes}
-        if button_class is DefaultButton:
+        if type == 'Default':
+            button_class = DefaultButton
             args = [group, text, hover, image, dialog]
-        elif button_class is AnsiblePlaybookButton:
-            args = [group, text, hover, image, playbook, inventory]
+        elif type == 'Ansible Playbook':
+            button_class = AnsiblePlaybookButton
+            args = [group, text, hover, image, playbook_cat_item, inventory]
         return button_class.from_collection(self, *args, **kwargs)
 
-    def create(self, button_class, text, hover, group=None, dialog=None, playbook=None,
+    def create(self, text, hover, type='Default', group=None, dialog=None, playbook_cat_item=None,
                inventory=None, image=None, open_url=None, system=None, request=None,
                attributes=None):
         self.group = group or self.parent
@@ -272,32 +294,35 @@ class ButtonCollection(BaseCollection):
         else:
             image = 'fa-user'
         view = navigate_to(self, 'Add')
-        view.fill(self._categorize_fill_dict({
-            'text': text,
-            'hover': hover,
-            'dialog': dialog,
-            'playbook': playbook,
-            'inventory': inventory,
-            'image': image,
-            'open_url': open_url,
-            'system': system,
-            'request': request
-        }))
+        view.options.fill({'type': type})
+        view.fill({
+            'options': {
+                'text': text,
+                'hover': hover,
+                'image': image,
+                'open_url': open_url,
+                'form': {
+                    'dialog': dialog,
+                    'playbook_cat_item': playbook_cat_item,
+                    'inventory': inventory
+                }
+            },
+            'advanced': {'system': system, 'request': request}
+        })
         if attributes is not None:
             for i, dict_ in enumerate(attributes, 1):
                 view.advanced.attribute(i).fill(dict_)
         view.add_button.click()
-        view = self.create_view(ButtonGroupDetailView, group)
-        # TODO: Enable this
-        # assert view.is_displayed
+        view = self.create_view(ButtonGroupDetailView, self.group)
+        assert view.is_displayed
         view.flash.assert_no_error()
         if self.appliance.version < '5.9':
             view.flash.assert_message('Button "{}" was added'.format(hover))
         else:
             view.flash.assert_message('Custom Button "{}" was added'.format(hover))
-        return self.instantiate(button_class, self.group, text, hover, dialog=dialog,
-                                playbook=playbook, inventory=inventory, image=image,
-                                open_url=open_url, system=system, request=request,
+        return self.instantiate(self.group, text, hover, type, dialog=dialog,
+                                playbook_cat_item=playbook_cat_item, inventory=inventory,
+                                image=image, open_url=open_url, system=system, request=request,
                                 attributes=attributes)
 
 
