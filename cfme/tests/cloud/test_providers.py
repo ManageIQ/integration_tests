@@ -365,6 +365,47 @@ def test_select_key_pair_none_while_provisioning(request, has_no_cloud_providers
     assert view.form.properties.guest_keypair.read() == '<None>'
 
 
+@pytest.mark.tier(3)
+def test_cloud_names_grid_floating_ips(appliance, ec2_provider, soft_assert):
+    """
+        Requirement: Cloud provider with floating IPs
+
+        Go to Network -> Floating IPs
+        Change view to grid
+        Test if names are displayed
+    """
+    floating_ips_collection = appliance.collections.network_floating_ips
+    view = navigate_to(floating_ips_collection, "All")
+    view.toolbar.view_selector.select('Grid View')
+    for entity in view.entities.get_all():
+        if appliance.version < '5.9':
+            soft_assert(entity.name)
+        else:
+            soft_assert('title="{}"'.format(entity.data['address']) in entity.data['quadicon'])
+
+
+@pytest.mark.tier(3)
+def test_display_network_topology(appliance, openstack_provider):
+    """
+        BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1343553
+
+        Steps to Reproduce:
+        1. Add RHOS undercloud provider
+        2. Make sure it has no floating IPs
+        3. Go to Networks -> Topology
+        4. Topology should be shown without errors.
+    """
+    floating_ips_collection = appliance.collections.network_floating_ips
+    view = navigate_to(floating_ips_collection, "All")
+    if view.entities.entity_names:
+        pytest.skip("No Floating IPs needed for this test")
+
+    topology_col = appliance.collections.network_topology_elements
+    view = navigate_to(topology_col, 'All')
+    assert view.is_displayed
+    view.flash.assert_no_errors()
+
+
 class TestProvidersRESTAPI(object):
     @pytest.fixture(scope="function")
     def arbitration_profiles(self, request, appliance, cloud_provider):
