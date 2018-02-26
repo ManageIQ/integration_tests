@@ -223,12 +223,6 @@ def resource_usage(vm_ownership, appliance, provider):
     # Convert storage used in Bytes to GB
     storage_used = storage_used * math.pow(2, -30)
 
-    logger.info('cpu_used {}'.format(cpu_used_in_mhz))
-    logger.info('memory_used {}'.format(memory_used_in_mb))
-    logger.info('network_io {}'.format(network_io))
-    logger.info('disk_io {}'.format(disk_io))
-    logger.info('storage_used {}'.format(storage_used))
-
     return {"cpu_used": cpu_used_in_mhz,
             "memory_used": memory_used_in_mb,
             "network_io": network_io,
