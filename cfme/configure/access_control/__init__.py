@@ -8,7 +8,7 @@ from widgetastic_patternfly import (
 
 from cfme.base.credential import Credential
 from cfme.base.ui import ConfigurationView
-from cfme.exceptions import RBACOperationBlocked
+from cfme.exceptions import CFMEException, RBACOperationBlocked
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
@@ -123,6 +123,8 @@ class User(Updateable, Pretty, BaseEntity):
         credential: User's credentials
         email: User's email
         group: User's group for assigment
+        groups: Add User to multiple groups in Versions >= 5.9.
+            Overrides any single group assignment specified by 'group'
         cost_center: User's cost center
         value_assign: user's value to assign
         appliance: appliance under test
@@ -133,6 +135,7 @@ class User(Updateable, Pretty, BaseEntity):
     credential = attr.ib(default=None)
     email = attr.ib(default=None)
     group = attr.ib(default=None)
+    groups = attr.ib(default=None)
     cost_center = attr.ib(default=None)
     value_assign = attr.ib(default=None)
     _restore_user = attr.ib(default=None, init=False)
@@ -335,7 +338,7 @@ class UserCollection(BaseCollection):
         return self.instantiate(name=userid, credential=creds)
 
     def create(self, name=None, credential=None, email=None, group=None, cost_center=None,
-               value_assign=None, cancel=False):
+               value_assign=None, groups=None, cancel=False):
         """ User creation method
 
         Args:
@@ -343,9 +346,10 @@ class UserCollection(BaseCollection):
             credential: User's credentials
             email: User's email
             group: User's group for assigment
+            groups: Add User to multiple groups in Versions >= 5.9.
+                Overrides any single group assignment specified by 'group'
             cost_center: User's cost center
             value_assign: user's value to assign
-            appliance: appliance under test
             cancel: True - if you want to cancel user creation,
                     by defaul user will be created
 
@@ -362,8 +366,18 @@ class UserCollection(BaseCollection):
 
         user = self.instantiate(
             name=name, credential=credential, email=email, group=group, cost_center=cost_center,
-            value_assign=value_assign
+            value_assign=value_assign, groups=groups
         )
+
+        if user.groups and self.appliance.version < "5.9":
+            raise CFMEException(
+                "Assigning a user to multiple groups is only supported in CFME versions > 5.8")
+
+        if user.groups:
+            # view.fill supports iteration over a list when selecting pulldown list items
+            user_group_names = [getattr(ug, 'description', None) for ug in user.groups]
+        else:
+            user_group_names = getattr(user.group, 'description', None)
 
         view = navigate_to(self, 'Add')
         view.fill({
@@ -372,7 +386,7 @@ class UserCollection(BaseCollection):
             'password_txt': user.credential.secret,
             'password_verify_txt': user.credential.verify_secret,
             'email_txt': user.email,
-            'user_group_select': getattr(user.group, 'description', None)
+            'user_group_select': user_group_names
         })
 
         if cancel:

@@ -44,7 +44,7 @@ def new_credential():
                           secret='redhat')
 
 
-def new_user(appliance, group, name=None, credential=None):
+def new_user(appliance, group, groups=None, name=None, credential=None):
     from fixtures.blockers import bug
 
     uppercase_username_bug = bug(1487199)
@@ -57,6 +57,7 @@ def new_user(appliance, group, name=None, credential=None):
         credential=credential,
         email='xyz@redhat.com',
         group=group,
+        groups=groups,
         cost_center='Workload',
         value_assign='Database')
 
@@ -101,6 +102,32 @@ def test_user_crud(appliance, group_collection):
     copied_user = user.copy()
     copied_user.delete()
     user.delete()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+def test_user_assign_multiple_groups(appliance, request, group_collection):
+    """Assign a user to multiple groups
+
+    Steps:
+        * Create a user and assign them to multiple groups
+        * Login as the user
+        * Confirm that the user has each group visible in the Settings menu
+    """
+    group_names = [
+        'EvmGroup-user', 'EvmGroup-administrator', 'EvmGroup-user_self_service', 'EvmGroup-desktop']
+
+    group_list = [group_collection.instantiate(description=names) for names in group_names]
+
+    user = new_user(appliance, group=None, groups=group_list)
+
+    request.addfinalizer(user.delete)
+    request.addfinalizer(user.appliance.server.login_admin)
+
+    view = appliance.server.login(user)
+
+    assert set(view.group_names) == set(group_names), (
+        "User's assigned groups are different from expected groups")
 
 
 # @pytest.mark.meta(blockers=[1035399]) # work around instead of skip
