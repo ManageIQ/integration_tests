@@ -176,13 +176,12 @@ def test_list_vms_infra_node(appliance, provider, soft_assert):
     host_collection = appliance.collections.hosts
     # Match hypervisors by IP with count of running VMs
     hvisors = {hv.host_ip: hv.running_vms for hv in provider.mgmt.api.hypervisors.list()}
+    hv_ips = hvisors.keys()
 
     # Skip non-compute nodes
     hosts = [host for host in host_collection.all(provider) if 'Compute' in host.name]
     assert hosts
-    for host in hosts:
-        view = navigate_to(host, 'Details')
-        host_ip = view.entities.summary('Properties').get_text_of('IP Address')
-        vms = int(view.entities.summary('Relationships').get_text_of('VMs'))
-        soft_assert(vms == hvisors[host_ip],
+    for counter, host in enumerate(hosts):
+        vms = int(host.get_detail('Relationships', 'VMs'))
+        soft_assert(vms == hvisors[hv_ips[counter]],
                     'Number of instances on UI does not match with real value')
