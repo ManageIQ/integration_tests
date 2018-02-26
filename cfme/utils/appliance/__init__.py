@@ -2346,6 +2346,27 @@ class Appliance(IPAppliance):
             self.restart_evm_service(log_callback=log_callback)
             self.wait_for_web_ui(log_callback=log_callback)
 
+        # Set fqdn for openstack appliance
+        # If hostname is IP or resolvable, try hostname lookup and set it
+        # Example lookups with self.hostname as IP and self.hostname as resolvable name
+        # [root@host-192-168-55-85 ~]# host 1.2.3.137
+        # 137.3.2.1.in-addr.arpa domain name pointer 137.test.miq.com.
+        # [root@host-192-168-55-85 ~]# host 137.test.miq.com
+        # 137.test.miq.com has address 1.2.3.137
+        if on_openstack:
+            host_out = self.ssh_client.run_command('host {}'.format(self.hostname))
+            if host_out.success and 'domain name pointer' in host_out.output:
+                # resolvable and reverse lookup
+                fqdn = host_out.output.split(' ')[-1].rstrip('.')
+            elif host_out.success and 'has address' in host_out.output:
+                # resolvable and address returned
+                fqdn = self.hostname
+            else:
+                # not resolvable, don't set
+                fqdn = None
+            if fqdn:
+                self.appliance_console_cli.set_hostname(fqdn)
+
     @logger_wrap("Configure Appliance: {}")
     def configure(self, setup_fleece=False, log_callback=None, **kwargs):
         """Configures appliance - database setup, rename, ntp sync
