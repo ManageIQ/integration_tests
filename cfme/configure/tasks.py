@@ -125,6 +125,12 @@ def check_tasks_have_no_errors(task_name, task_type, expected_num_of_tasks, sile
     # expected_status change from str to support also regular expression pattern
     expected_status = re.compile(expected_status, re.IGNORECASE)
 
+    wait_for(
+        lambda: tab_view.table.is_displayed,
+        timeout=10,
+        delay=2,
+        fail_func=view.reload.click
+    )
     try:
         rows = list(tab_view.table.rows(task_name=task_name, state=expected_status))
     except IndexError:
