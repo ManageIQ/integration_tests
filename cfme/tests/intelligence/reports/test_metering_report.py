@@ -214,26 +214,11 @@ def resource_usage(vm_ownership, appliance, provider):
 
     for record in appliance.db.client.session.query(rollups).filter(
             rollups.id.in_(result.subquery())):
-        storage_used = storage_used + record.derived_vm_used_disk_storage
         cpu_used_in_mhz = cpu_used_in_mhz + record.cpu_usagemhz_rate_average
         memory_used_in_mb = memory_used_in_mb + record.derived_memory_used
         network_io = network_io + record.net_usage_rate_average
         disk_io = disk_io + record.disk_usage_rate_average
-
-        """
-        if (record.cpu_usagemhz_rate_average or
-           record.cpu_usage_rate_average or
-           record.derived_memory_used or
-           record.net_usage_rate_average or
-           record.disk_usage_rate_average):
-            cpu_used_in_mhz = cpu_used_in_mhz + record.cpu_usagemhz_rate_average
-            memory_used_in_mb = memory_used_in_mb + record.derived_memory_used
-            network_io = network_io + record.net_usage_rate_average
-            disk_io = disk_io + record.disk_usage_rate_average
-
-        if record.derived_vm_used_disk_storage:
-            storage_used = storage_used + record.derived_vm_used_disk_storage
-        """
+        storage_used = storage_used + record.derived_vm_used_disk_storage
 
     # Convert storage used in Bytes to GB
     storage_used = storage_used * math.pow(2, -30)
