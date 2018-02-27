@@ -9,6 +9,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 from markers.env_markers.provider import ONE_PER_TYPE
@@ -123,23 +124,19 @@ def ansible_catalog_item(ansible_repository):
         cat_item.delete()
 
 
-@pytest.yield_fixture
-def custom_vm_button(appliance, ansible_catalog_item):
+@pytest.yield_fixture(params=["Localhost", "Target Machine", "Specific Hosts"],
+                      ids=["localhost", "specific_hosts", "target_machine"])
+def custom_vm_button(appliance, ansible_catalog_item, request):
     buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
         type=appliance.collections.button_groups.VM_INSTANCE)
     button = buttongroup.buttons.create(
+        type="Ansible Playbook",
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
-        dialog=ansible_catalog_item.provisioning["provisioning_dialog_name"],
-        system="Request",
-        request="Order_Ansible_Playbook",
-        attributes=[
-            {"key": "hosts", "value": "localhost"},
-            {"key": "service_template_name", "value": ansible_catalog_item.name}
-        ]
-    )
+        inventory=request.param,
+        playbook_cat_item=ansible_catalog_item.name)
     yield button
     button.delete_if_exists()
     buttongroup.delete_if_exists()
@@ -226,8 +223,9 @@ def test_ansible_playbook_button_crud(ansible_catalog_item, appliance, request):
     assert not button.exists
 
 
-def test_custom_button_order_ansible_playbook_service(full_template_vm, custom_vm_button,
-        service_request, service, appliance):
+@pytest.mark.meta(blockers=[BZ(1548562, forced_streams=["5.9"])])
+def test_embedded_ansible_custom_button(full_template_vm, custom_vm_button, service_request,
+                                        service, appliance):
     view = navigate_to(full_template_vm, "Details")
     view.toolbar.custom_button(custom_vm_button.group.text).item_select(custom_vm_button.text)
     submit_button = WButton(appliance.browser.widgetastic, "Submit")
@@ -235,5 +233,8 @@ def test_custom_button_order_ansible_playbook_service(full_template_vm, custom_v
     wait_for(service_request.exists, num_sec=600)
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
-    assert view.provisioning.details.get_text_of("Hosts") == "localhost"
+    if custom_vm_button.inventory == "Localhost":
+        assert view.provisioning.details.get_text_of("Hosts") == "localhost"
+    else:
+        assert view.provisioning.details.get_text_of("Hosts") == full_template_vm.ip_address
     assert view.provisioning.results.get_text_of("Status") == "successful"
