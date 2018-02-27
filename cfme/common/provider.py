@@ -8,7 +8,8 @@ from widgetastic_patternfly import Button, Input
 from cfme.base.credential import (
     Credential, EventsCredential, TokenCredential, SSHCredential, CANDUCredential)
 from cfme.common import WidgetasticTaggable
-from cfme.exceptions import ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty
+from cfme.exceptions import (
+    ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, AddProviderError)
 from cfme.utils import ParamClassName, version, conf
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator
@@ -536,6 +537,10 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
             # To see the possible error.
             self.load_details(refresh=True)
             raise
+        else:
+            if self.last_refresh_error() is not None:
+                raise AddProviderError("Cannot validate the provider. Error occured: {}".format(
+                                       self.last_refresh_error()))
 
     def validate_stats(self, ui=False):
         """ Validates that the detail page matches the Providers information.
@@ -597,6 +602,14 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
         try:
             col = self.appliance.rest_api.collections.providers.find_by(name=self.name)[0]
             return col.last_refresh_date
+        except AttributeError:
+            return None
+
+    @variable(alias='rest')
+    def last_refresh_error(self):
+        try:
+            col = self.appliance.rest_api.collections.providers.find_by(name=self.name)[0]
+            return col.last_refresh_error
         except AttributeError:
             return None
 
