@@ -248,7 +248,7 @@ def test_hard_reboot(appliance, provider, testing_instance, verify_vm_running, s
     soft_assert(provider.mgmt.is_vm_running(testing_instance.name), "instance is not running")
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider))
+@pytest.mark.providers([AzureProvider])
 def test_hard_reboot_unsupported(appliance, provider, testing_instance):
     """
     Tests that hard reboot throws an 'unsupported' error message on an Azure instance
@@ -259,19 +259,7 @@ def test_hard_reboot_unsupported(appliance, provider, testing_instance):
     view = navigate_to(testing_instance, 'All')
     testing_instance.power_control_from_cfme(
         option=testing_instance.HARD_REBOOT, from_details=False)
-    assert len(view.flash.messages) > 0, "Expected a flash error message to be displayed"
-
-    error_msg_found = False
-    # Message we are looking for is...
-    #   "Reset does not apply to at least one of the selected items"
-    # ...but we leave out 'Reset' in case that text changes in the future
-    txt = "does not apply to at least one of the selected items"
-    for message in view.flash.messages:
-        if txt in message.read():
-            error_msg_found = True
-
-    assert error_msg_found, ("Expected to see error containing text '{}' after "
-                             "attempting unsupported hard reboot".format(txt))
+    view.flash.assert_message("Reset does not apply to at least one of the selected items")
 
 
 @pytest.mark.uncollectif(lambda provider: (not provider.one_of(OpenStackProvider) and
