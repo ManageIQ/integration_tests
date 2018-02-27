@@ -47,8 +47,9 @@ def ensure_vm_running(small_vm):
         raise Exception("Unknown power state - unable to continue!")
 
 
-@pytest.mark.meta(blockers=[BZ(1534520, forced_streams=['5.9'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+@pytest.mark.meta(blockers=[BZ(1534520, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider, change_type:
+        not provider.one_of(RHEVMProvider) or change_type != 'memory')])
 @pytest.mark.parametrize('change_type', ['cores_per_socket', 'sockets', 'memory'])
 def test_vm_reconfig_add_remove_hw_cold(
         provider, small_vm, ensure_vm_stopped, change_type):
