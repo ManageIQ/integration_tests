@@ -333,7 +333,6 @@ def pxe_servers(metafunc):
     """Provides pxe data
     """
     argnames = ['pxe_name']
-
-    items = cfme_data.get('pxe_servers', {}).keys()
-
-    return argnames, [items], items
+    argvalues = [[k] for k in sorted(cfme_data.get('pxe_servers', {}).keys())]
+    idlist = [k[0] for k in argvalues]
+    return argnames, argvalues, idlist
