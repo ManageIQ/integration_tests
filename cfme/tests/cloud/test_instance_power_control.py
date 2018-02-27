@@ -248,8 +248,8 @@ def test_hard_reboot(appliance, provider, testing_instance, verify_vm_running, s
     soft_assert(provider.mgmt.is_vm_running(testing_instance.name), "instance is not running")
 
 
-@pytest.mark.providers([AzureProvider])
-def test_hard_reboot_unsupported(appliance, provider, testing_instance):
+@pytest.mark.provider([AzureProvider])
+def test_hard_reboot_unsupported(testing_instance):
     """
     Tests that hard reboot throws an 'unsupported' error message on an Azure instance
 
