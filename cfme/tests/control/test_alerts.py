@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.control.explorer import alert_profiles, policies
+from cfme.control.explorer.alert_profiles import AlertProfileDetailsView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -128,7 +129,12 @@ def configure_fleecing(appliance, provider, vm, vddk_url):
 
 @pytest.fixture
 def setup_for_alerts(alert_profile_collection, action_collection, policy_collection,
-        policy_profile_collection):
+        policy_profile_collection, appliance):
+    """fixture wrapping the function defined within, for delayed execution during the test
+
+    Returns:
+        unbound function object for calling during the test
+    """
     def _setup_for_alerts(request, alerts_list, event=None, vm_name=None, provider=None):
         """This function takes alerts and sets up CFME for testing it. If event and further args are
         not specified, it won't create the actions and policy profiles.
@@ -146,7 +152,16 @@ def setup_for_alerts(alert_profile_collection, action_collection, policy_collect
             alerts=alerts_list
         )
         request.addfinalizer(alert_profile.delete)
-        alert_profile.assign_to("The Enterprise")
+        view = appliance.browser.create_view(AlertProfileDetailsView)
+        if alert_profile.assign_to("The Enterprise"):
+            # change made
+            view.flash.assert_message(
+                'Alert Profile "{}" assignments successfully saved'
+                .format(alert_profile.description)
+            )
+        else:
+            # no assignment change made
+            view.flash.assert_message('Edit Alert Profile assignments cancelled by user')
         if event is not None:
             action = action_collection.create(
                 "Evaluate Alerts for {}".format(vm_name),
