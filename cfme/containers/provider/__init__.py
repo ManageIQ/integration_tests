@@ -273,13 +273,21 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     @variable(alias='db')
     def num_container(self):
         # Containers are linked to providers through container definitions and then through pods
-        res = self.appliance.db.client.engine.execute(
-            "SELECT count(*) "
+        query = version.pick({
+            version.LOWEST: "SELECT count(*) "
             "FROM ext_management_systems, container_groups, container_definitions, containers "
             "WHERE containers.container_definition_id=container_definitions.id "
             "AND container_definitions.container_group_id=container_groups.id "
             "AND container_groups.ems_id=ext_management_systems.id "
-            "AND ext_management_systems.name='{}'".format(self.name))
+            "AND ext_management_systems.name='{}'".format(self.name),
+
+            '5.9': "SELECT count(*) "
+            "FROM ext_management_systems, container_groups, containers "
+            "WHERE containers.container_group_id=container_groups.id "
+            "AND container_groups.ems_id=ext_management_systems.id "
+            "AND ext_management_systems.name='{}'".format(self.name)
+        })
+        res = self.appliance.db.client.engine.execute(query)
         return int(res.first()[0])
 
     @num_container.variant('ui')
