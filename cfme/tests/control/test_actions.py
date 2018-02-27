@@ -41,7 +41,6 @@ from . import do_scan, wait_for_ssa_enabled
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles="+automate +smartproxy +smartstate"),
-    pytest.mark.uncollectif(BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576'),
     pytest.mark.tier(2),
     test_requirements.control
 ]
@@ -579,9 +578,11 @@ def test_action_power_on_audit(request, vm, vm_off, appliance, policy_for_testin
     wait_for(search_logs, num_sec=180, message="log search")
 
 
-@pytest.mark.provider([VMwareProvider], scope="module")
+@pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
+@pytest.mark.meta(blockers=[BZ(1549529, forced_streams=["5.8", "5.9", "upstream"],
+                  unblock=lambda provider: provider.one_of(VMwareProvider))])
 def test_action_create_snapshot_and_delete_last(request, action_collection,
-        vm, vm_on, policy_for_testing):
+        vm, vm_on, policy_for_testing, provider):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete Most Recent Snapshot'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and when it is
@@ -590,8 +591,6 @@ def test_action_create_snapshot_and_delete_last(request, action_collection,
     Metadata:
         test_flag: actions, provision
     """
-    if not hasattr(vm.crud, "total_snapshots"):
-        pytest.skip("This provider does not support snapshots yet!")
     # Set up the policy and prepare finalizer
     snapshot_name = fauxfactory.gen_alphanumeric()
     snapshot_create_action = action_collection.create(
@@ -622,9 +621,11 @@ def test_action_create_snapshot_and_delete_last(request, action_collection,
              message="wait for snapshot deleted", delay=5)
 
 
-@pytest.mark.provider([VMwareProvider], scope="module")
+@pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
+@pytest.mark.meta(blockers=[BZ(1549529, forced_streams=["5.8", "5.9", "upstream"],
+                  unblock=lambda provider: provider.one_of(VMwareProvider))])
 def test_action_create_snapshots_and_delete_them(request, action_collection, vm, vm_on,
-        policy_for_testing):
+        policy_for_testing, provider):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete all Snapshots'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and then it cycles
