@@ -102,3 +102,18 @@ def test_vm_reconfig_add_remove_disk_cold(
         lambda: small_vm.configuration == orig_config, timeout=360, delay=45,
         fail_func=small_vm.refresh_relationships,
         message="confirm that previously-added disk was removed")
+
+
+def test_reconfig_vm_negative_cancel(provider, small_vm, ensure_vm_stopped):
+    """ Cancel reconfiguration changes """
+    config_vm = small_vm.configuration.copy()
+
+    # Some changes in vm reconfigure before cancel
+    config_vm.hw.cores_per_socket = config_vm.hw.cores_per_socket + 1
+    config_vm.hw.sockets = config_vm.hw.sockets + 1
+    config_vm.hw.mem_size = config_vm.hw.mem_size_mb + 512
+    config_vm.hw.mem_size_unit = 'MB'
+    config_vm.add_disk(
+        size=5, size_unit='GB', type='thin', mode='persistent')
+
+    small_vm.reconfigure(config_vm, cancel=True)
