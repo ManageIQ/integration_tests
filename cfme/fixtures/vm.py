@@ -51,12 +51,12 @@ def _get_vm_name(request):
 
 
 @pytest.fixture(scope="module")
-def full_template_vm_modscope(request, full_template_modscope, provider, setup_provider_modscope):
+def full_template_vm_modscope(setup_provider_modscope, request, full_template_modscope, provider):
     vm_name = _get_vm_name(request)
     return _create_vm(request, full_template_modscope, provider, vm_name)
 
 
 @pytest.fixture(scope="function")
-def full_template_vm(request, full_template, provider, setup_provider):
+def full_template_vm(setup_provider, request, full_template, provider):
     vm_name = _get_vm_name(request)
     return _create_vm(request, full_template, provider, vm_name)
