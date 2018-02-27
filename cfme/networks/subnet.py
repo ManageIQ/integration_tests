@@ -167,6 +167,10 @@ class All(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.navigation.select('Networks', 'Subnets')
 
+    def resetter(self):
+        """Reset the view"""
+        self.view.browser.refresh()
+
 
 @navigator.register(Subnet, 'Details')
 class OpenCloudNetworks(CFMENavigateStep):
