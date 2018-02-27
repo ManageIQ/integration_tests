@@ -336,7 +336,7 @@ class InfraVmSnapshotAddView(InfraVmView):
     @property
     def is_displayed(self):
         """Is this view being displayed"""
-        return self.in_infra_vms and self.title.text == 'Adding a new Snapshot'
+        return False
 
 
 class InfraVmGenealogyToolbar(View):

@@ -68,10 +68,11 @@ def full_test_vm(setup_provider_modscope, provider, full_template_modscope, requ
         logger.exception('Exception deleting test vm "%s" on %s', vm.name, provider.name)
 
 
-def new_snapshot(test_vm, has_name=True, memory=False, description=True):
+def new_snapshot(test_vm, has_name=True, memory=False, create_description=True):
+    name = fauxfactory.gen_alphanumeric(8)
     return Vm.Snapshot(
-        name="snpshot_{}".format(fauxfactory.gen_alphanumeric(8)) if has_name else None,
-        description="snapshot_{}".format(fauxfactory.gen_alphanumeric(8)) if description else None,
+        name="snpshot_{}".format(name) if has_name else None,
+        description="snapshot_{}".format(name) if create_description else None,
         memory=memory,
         parent_vm=test_vm
     )
@@ -127,11 +128,10 @@ def test_create_without_description(small_test_vm):
     Metadata:
         test_flag: snapshot, provision
     """
-    snapshot = new_snapshot(small_test_vm, has_name=False, description=False)
+    snapshot = new_snapshot(small_test_vm, has_name=False, create_description=False)
     with pytest.raises(AssertionError):
         snapshot.create()
     view = snapshot.vm.create_view(InfraVmSnapshotAddView)
-    assert view.is_displayed
     view.flash.assert_message('Description is required')
 
 
