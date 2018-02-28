@@ -1,15 +1,22 @@
-from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
+from widgetastic_patternfly import Input
 from wrapanapi.lenovo import LenovoSystem
 
+from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from . import PhysicalProvider
 
 
 class LenovoEndpoint(DefaultEndpoint):
-    pass
+    api_port = 443
 
+    @property
+    def view_value_mapping(self):
+        return {
+            'hostname': self.hostname,
+            'api_port': self.api_port
+        }
 
 class LenovoEndpointForm(DefaultEndpointForm):
-    pass
+    api_port = Input('default_api_port')
 
 
 class LenovoProvider(PhysicalProvider):

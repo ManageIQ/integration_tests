@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import uuid
+
 import pytest
 
-from cfme.utils import testgen
-from cfme.utils.update import update
 from cfme import test_requirements
 from cfme.physical.provider.lenovo import LenovoProvider
+from cfme.utils import testgen
+from cfme.utils.update import update
 
 pytest_generate_tests = testgen.generate([LenovoProvider], scope="function")
 
@@ -13,7 +14,7 @@ pytest_generate_tests = testgen.generate([LenovoProvider], scope="function")
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 @test_requirements.discovery
-def test_provider_crud(provider):
+def test_provider_crud(provider, has_no_providers):
     """Tests provider add with good credentials
 
     Metadata:
