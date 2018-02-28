@@ -13,12 +13,17 @@ from urlparse import urlsplit, urlunsplit
 
 from cfme.utils.appliance import IPAppliance
 from cfme.utils.conf import env
+from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.path import log_path
 from cfme.utils.quote import quote
 from cfme.utils.version import Version
 
+# log to stdout too
+add_stdout_handler(logger)
+
+# Global variables
 coverage_dir = '/coverage'
-scan_timeout = env.sonarqube.scan_timeout
+scan_timeout = env.sonarqube.get('scan_timeout', 600)
 scanner_dir = '/root/scanner'
 sonar_server_url = env.sonarqube.url
 sonar_scanner_url = env.sonarqube.scanner_url
@@ -52,10 +57,10 @@ def jenkins_artifact_url(jenkins_username, jenkins_token, jenkins_url, jenkins_j
 
     Args:
         jenkins_username:  Jenkins login.
-        jenkins_token:  ???
+        jenkins_token:  User token generated in the Jenkins UI.
         jenkins_url:  URL to Jenkins server.
         jenkins_job:  Jenkins Job ID
-        jenkins_build: Particular Build???
+        jenkins_build: Particular Jenkins Run/Build
         artifactor_path: Path within the artifactor archive to the artifact.
 
     Returns:
@@ -76,10 +81,10 @@ def download_artifact(
 
     Args:
         jenkins_username:  Jenkins login.
-        jenkins_token:  ???
+        jenkins_token:  User token generated in the Jenkins UI.
         jenkins_url:  URL to Jenkins server.
         jenkins_job:  Jenkins Job ID
-        jenkins_build: Particular Build???
+        jenkins_build: Particular Jenkins Run/Build
         artifactor_path: Path within the artifactor archive to the artifact.
 
     Returns:
@@ -99,10 +104,10 @@ def check_artifact(
 
     Args:
         jenkins_username:  Jenkins login.
-        jenkins_token:  ???
+        jenkins_token:  User token generated in the Jenkins UI.
         jenkins_url:  URL to Jenkins server.
         jenkins_job:  Jenkins Job ID
-        jenkins_build: Particular Build???
+        jenkins_build: Particular Jenkins/Build
         artifactor_path: Path within the artifactor archive to the artifact.
 
     Returns:
@@ -133,7 +138,7 @@ def merge_coverage_data(ssh, coverage_dir):
     Returns:
         Nothing
     """
-    print('Merging coverage data')
+    logger.info('Merging coverage data')
 
     # Run the coverage merger script out of the rails root pointing
     # to where the coverage data is installed.   This will generate
@@ -143,17 +148,17 @@ def merge_coverage_data(ssh, coverage_dir):
     cmd = ssh.run_rails_command(
         'coverage_merger.rb --coverageRoot={}'.format(coverage_dir),
         timeout=60 * 60)
-    if not cmd:
-        print('Failure running the merger - {}'.format(str(cmd)))
-        return 6
+    if cmd.failed:
+        raise Exception('Failure running the merger - {}'.format(str(cmd)))
+
+    # Attempt to get the overall code coverage percentage from the result.
+    logger.info('Coverage report generation was successful')
+    logger.info(str(cmd))
+    percentage = re.search(r'LOC\s+\((\d+.\d+%)\)\s+covered\.', str(cmd))
+    if percentage:
+        logger.info('COVERAGE={};'.format(percentage.groups()[0]))
     else:
-        print('Coverage report generation was successful')
-        print(str(cmd))
-        percentage = re.search(r'LOC\s+\((\d+.\d+%)\)\s+covered\.', str(cmd))
-        if percentage:
-            print('COVERAGE={};'.format(percentage.groups()[0]))
-        else:
-            print('COVERAGE=unknown;')
+        logger.info('COVERAGE=unknown;')
 
     # The sonar-scanner will actually need the .resultset.json file it
     # uses to be in /coverage/.resultset.json (i.e. the root of the coverarage
@@ -171,24 +176,19 @@ def pull_merged_coverage_data(ssh, coverage_dir):
     Returns:
         Nothing
     """
-    print('Packing the generated HTML')
+    logger.info('Packing the generated HTML')
     cmd = ssh.run_command('cd {}; tar cfz /tmp/merged.tgz merged'.format(coverage_dir))
-    if not cmd:
-        print('Could not compress! - {}'.format(str(cmd)))
-        return 7
-    print('Grabbing the generated HTML')
+    if cmd.failed:
+        raise Exception('Could not compress! - {}'.format(str(cmd)))
+    logger.info('Grabbing the generated HTML')
     ssh.get_file('/tmp/merged.tgz', log_path.strpath)
-    print('Decompressing the generated HTML')
-    rc = subprocess.call(
+    logger.info('Locally decompressing the generated HTML')
+    subprocess.check_call(
         ['tar', 'xf', log_path.join('merged.tgz').strpath, '-C', log_path.strpath])
-    if rc == 0:
-        print('Done!')
-    else:
-        print('Failure to extract')
-        return 8
+    logger.info('Done!')
 
 
-def install_sonar_scanner(appliance, scanner_url, scanner_dir, server_url):
+def install_sonar_scanner(ssh, project_version, scanner_url, scanner_dir, server_url):
     """ Install sonar-scanner application
 
     Pulls the sonar-scanner application to the appliance from scanner_url,
@@ -198,7 +198,8 @@ def install_sonar_scanner(appliance, scanner_url, scanner_dir, server_url):
     to pick up both sets of sources.
 
     Args:
-        appliance: Appliance object
+        ssh: ssh object (cfme.utils.ssh)
+        project_version: Version of project to be scanned.
         scanner_url:  Where to get the scanner from.
         scanner_dir:  Where to install the scanner on the appliance.
         server_url:  Where to send scan data to (i.e. what sonarqube)
@@ -206,8 +207,7 @@ def install_sonar_scanner(appliance, scanner_url, scanner_dir, server_url):
     Returns:
         Nothing
     """
-    print "Installing sonar scanner on appliance."
-    ssh = appliance.ssh_client
+    logger.info('Installing sonar scanner on appliance.')
     scanner_zip = '/root/scanner.zip'
 
     # Create install directory for sonar scanner:
@@ -276,34 +276,32 @@ sonar.projectVersion={version}
 sonar.language=ruby
 sonar.sources=opt/rh/cfme-gemset,var/www/miq/vmdb
 '''.format(
-        version=str(appliance.version).strip())
+        version=str(project_version).strip())
 
     # Write the config file locally and then copy to remote.
-    print 'Writing {}'.format(local_conf)
-    f = open(local_conf, 'w')
-    f.write(config_data)
-    f.close()
-    print "Copying {} to appliance as {}".format(local_conf, remote_conf)
+    logger.info('Writing {}'.format(local_conf))
+    with open(local_conf, 'w') as f:
+        f.write(config_data)
+    logger.info('Copying {} to appliance as {}'.format(local_conf, remote_conf))
     ssh.put_file(local_conf, remote_conf)
 
 
-def run_sonar_scanner(appliance, scanner_dir, timeout):
+def run_sonar_scanner(ssh, scanner_dir, timeout):
     """Run the sonar scanner
 
     Run the sonar-scanner.
 
     Args:
-        appliance:  Appliance object
+        ssh: ssh object (cfme.utils.ssh)
         scanner_dir:  Installation directory of the sonar-scanner software.
         timeout:  timeout in seconds.
 
     Returns:
         Nothing
     """
-    print 'Running sonar scan. This may take a while.'
-    print '   timeout={}'.format(timeout)
-    print '   start_time={}'.format(time.strftime('%T'))
-    ssh = appliance.ssh_client
+    logger.info('Running sonar scan. This may take a while.')
+    logger.info('   timeout={}'.format(timeout))
+    logger.info('   start_time={}'.format(time.strftime('%T')))
     scanner_executable = '{}/bin/sonar-scanner'.format(scanner_dir)
 
     # It's very important that we run the sonar-scanner from / as this
@@ -314,16 +312,17 @@ def run_sonar_scanner(appliance, scanner_dir, timeout):
     result = ssh.run_command(cmd, timeout=timeout)
     if not result:
         raise Exception("sonar scan failed!\ncmd: {}\noutput: {}".format(cmd, result))
-    print '   end_time={}'.format(time.strftime('%T'))
+    logger.info('   end_time={}'.format(time.strftime('%T')))
 
 
-def sonar_scan(appliance, scanner_url, scanner_dir, server_url, timeout):
+def sonar_scan(ssh, project_version, scanner_url, scanner_dir, server_url, timeout):
     """Run the sonar scan
 
     In addition to running the scan, handles the installation of the sonar-scanner software.
 
     Args:
-        appliance:  Appliance object.
+        ssh: ssh object (cfme.utils.ssh)
+        project_version: Version of project to be scanned.
         scanner_url:  Where to pull the sonar-scanner software from
         scanner_dir:  Installation directory of sonar-scanner
         server_url:  sonarqube URL.
@@ -332,8 +331,8 @@ def sonar_scan(appliance, scanner_url, scanner_dir, server_url, timeout):
     Returns:
         Nothing
     """
-    install_sonar_scanner(appliance, scanner_url, scanner_dir, server_url)
-    run_sonar_scanner(appliance, scanner_dir, timeout)
+    install_sonar_scanner(ssh, project_version, scanner_url, scanner_dir, server_url)
+    run_sonar_scanner(ssh, scanner_dir, timeout)
 
 
 def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
@@ -347,12 +346,11 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
                 '--jenkins-user and --jenkins-token not provided and credentials yaml does not '
                 'contain the jenkins_app entry with user and token')
     appliance_version = str(appliance.version).strip()
-    print('Looking for appliance version {} in {}'.format(appliance_version, job_name))
+    logger.info('Looking for appliance version {} in {}'.format(appliance_version, job_name))
     client = jenkins.Jenkins(jenkins_url, username=jenkins_user, password=jenkins_token)
     build_numbers = get_build_numbers(client, job_name)
     if not build_numbers:
-        print('No builds for job {}'.format(job_name))
-        return 1
+        raise Exception('No builds for job {}'.format(job_name))
 
     # Find the builds with appliance version
     eligible_build_numbers = set()
@@ -362,12 +360,13 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
             if not artifacts:
                 raise ValueError()
         except (KeyError, ValueError):
-            print('No artifacts for {}/{}'.format(job_name, build_number))
+            logger.info('No artifacts for {}/{}'.format(job_name, build_number))
             continue
 
         artifacts = group_list_dict_by(artifacts, 'fileName')
         if 'appliance_version' not in artifacts:
-            print('appliance_version not in artifacts of {}/{}'.format(job_name, build_number))
+            logger.info(
+                'appliance_version not in artifacts of {}/{}'.format(job_name, build_number))
             continue
 
         build_appliance_version = download_artifact(
@@ -375,76 +374,75 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
             artifacts['appliance_version']['relativePath']).strip()
 
         if not build_appliance_version:
-            print('Appliance version unspecified for build {}'.format(build_number))
+            logger.info('Appliance version unspecified for build {}'.format(build_number))
             continue
 
         if Version(build_appliance_version) < Version(appliance_version):
-            print(
+            logger.info(
                 'Build {} already has lower version ({})'.format(
                     build_number, build_appliance_version))
-            print('Ending here')
+            logger.info('Ending here')
             break
 
         if 'coverage-results.tgz' not in artifacts:
-            print('coverage-results.tgz not in artifacts of {}/{}'.format(job_name, build_number))
+            logger.info(
+                'coverage-results.tgz not in artifacts of {}/{}'.format(job_name, build_number))
             continue
 
         if not check_artifact(
                 jenkins_user, jenkins_token, jenkins_url, job_name, build_number,
                 artifacts['coverage-results.tgz']['relativePath']):
-            print('Coverage archive not possible to be downloaded, skipping')
+            logger.info('Coverage archive not possible to be downloaded, skipping')
             continue
 
         if build_appliance_version == appliance_version:
-            print('Build {} was found to contain what is needed'.format(build_number))
+            logger.info('Build {} was found to contain what is needed'.format(build_number))
             eligible_build_numbers.add(build_number)
         else:
-            print(
+            logger.info(
                 'Skipping build {} because it does not have correct version ({})'.format(
                     build_number, build_appliance_version))
 
     if not eligible_build_numbers:
-        print(
-            'Could not find any coverage reports for {} in {}'.format(
-                appliance_version, job_name))
-        return 2
+        raise Exception(
+            'Could not find any coverage reports for {} in {}'.format(appliance_version, job_name))
 
     # Stop the evm service, not needed at all
-    print('Stopping evmserverd')
+    logger.info('Stopping evmserverd')
     appliance.evmserverd.stop()
     # Install the coverage tools on the appliance
-    print('Installing simplecov')
+    logger.info('Installing simplecov')
     appliance.coverage._install_simplecov()
     # Upload the merger
-    print('Installing coverage merger')
+    logger.info('Installing coverage merger')
     appliance.coverage._upload_coverage_merger()
     eligible_build_numbers = sorted(eligible_build_numbers)
     with appliance.ssh_client as ssh:
         if not ssh.run_command('mkdir -p {}'.format(coverage_dir)):
-            print('Could not create coverage directory on the appliance: {}'.format(coverage_dir))
-            return 3
-        # Download all the coverage reports
+            raise Exception(
+                'Could not create coverage directory on the appliance: {}'.format(coverage_dir))
+
+        # Download and extract all the coverage data
         for build_number in eligible_build_numbers:
-            print('Downloading the coverage report from build {}'.format(build_number))
+            logger.info('Downloading the coverage data from build {}'.format(build_number))
             download_url = jenkins_artifact_url(
                 jenkins_user, jenkins_token, jenkins_url, job_name, build_number,
                 artifacts['coverage-results.tgz']['relativePath'])
             cmd = ssh.run_command('curl -k -o {}/tmp.tgz {}'.format(
                 coverage_dir,
                 quote(download_url)))
+            if cmd.failed:
+                raise Exception('Could not download! - {}'.format(str(cmd)))
 
-            if not cmd:
-                print('Could not download! - {}'.format(str(cmd)))
-                return 4
-            print('Extracting the coverage report from build {}'.format(build_number))
+            # Extract coverage data
+            logger.info('Extracting the coverage data from build {}'.format(build_number))
             extract_command = ' && '.join([
                 'cd {}'.format(coverage_dir),
                 'tar xf tmp.tgz --strip-components=1',
                 'rm -f tmp.tgz'])
             cmd = ssh.run_command(extract_command)
-            if not cmd:
-                print('Could not extract! - {}'.format(str(cmd)))
-                return 5
+            if cmd.failed:
+                raise Exception('Could not extract! - {}'.format(str(cmd)))
 
         merge_coverage_data(
             ssh=ssh,
@@ -453,7 +451,8 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
             ssh=ssh,
             coverage_dir=coverage_dir)
         sonar_scan(
-            appliance=appliance,
+            ssh=ssh,
+            project_version=appliance.version,
             scanner_url=sonar_scanner_url,
             scanner_dir=scanner_dir,
             server_url=sonar_server_url,
