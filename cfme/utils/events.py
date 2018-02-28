@@ -4,7 +4,6 @@
 
 """
 
-from collections import Iterable
 from time import sleep
 from threading import Thread, Event as ThreadEvent
 
@@ -108,9 +107,6 @@ class Event(object):
 
     def add_attrs(self, *attrs):
         """ Adds an EventAttr to event."""
-        if not isinstance(attrs, Iterable):
-            raise ValueError("incorrect parameters are passed {}".format(attrs))
-
         for attr in attrs:
             self.event_attrs[attr.name] = attr
         return self
