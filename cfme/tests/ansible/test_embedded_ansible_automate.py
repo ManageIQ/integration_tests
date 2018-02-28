@@ -125,17 +125,19 @@ def ansible_catalog_item(ansible_repository):
 
 
 @pytest.yield_fixture(params=["Localhost", "Target Machine", "Specific Hosts"],
-                      ids=["localhost", "specific_hosts", "target_machine"])
-def custom_vm_button(appliance, ansible_catalog_item, request):
+                      ids=["localhost", "target_machine", "specific_hosts"])
+def custom_vm_button(appliance, ansible_catalog_item, request, vmware_vm):
     buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
         type=appliance.collections.button_groups.VM_INSTANCE)
+    hosts = vmware_vm.ip_address if request.param == "Specific Hosts" else None
     button = buttongroup.buttons.create(
         type="Ansible Playbook",
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
         inventory=request.param,
+        hosts=hosts,
         playbook_cat_item=ansible_catalog_item.name)
     yield button
     button.delete_if_exists()
