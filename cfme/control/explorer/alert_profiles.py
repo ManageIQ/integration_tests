@@ -179,6 +179,9 @@ class BaseAlertProfile(BaseEntity, Updateable, Pretty):
             assign: Where to assign (The Enterprise, ...).
             selections: What items to check in the tree. N/A for The Enteprise.
             tag_category: Only for choices starting with Tagged. N/A for The Enterprise.
+
+        Returns:
+            Boolean indicating if assignment was made (form fill changed)
         """
         view = navigate_to(self, "Edit assignments")
         changed = []
@@ -196,12 +199,7 @@ class BaseAlertProfile(BaseEntity, Updateable, Pretty):
         view = self.create_view(AlertProfileDetailsView)
         assert view.is_displayed
         view.flash.assert_no_error()
-        if changed:
-            view.flash.assert_message(
-                'Alert Profile "{}" assignments successfully saved'.format(self.description))
-        else:
-            view.flash.assert_message(
-                'Edit of Alert Profile "{}" was cancelled by the user'.format(self.description))
+        return changed
 
 
 @attr.s

@@ -13,6 +13,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.control.explorer import alert_profiles, conditions, policies
+from cfme.control.explorer.alert_profiles import AlertProfileDetailsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
@@ -543,14 +544,23 @@ def test_alert_profile_crud(request, alert_profile_class, alert_collection,
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1416311, forced_streams=["5.7"])])
-def test_alert_profile_assigning(alert_profile):
+def test_alert_profile_assigning(alert_profile, appliance):
+    view = appliance.browser.create_view(AlertProfileDetailsView)
     if isinstance(alert_profile, alert_profiles.ServerAlertProfile):
-        if BZ(1489697, forced_streams=["5.8"]).blocks:
-            pytest.skip("BZ 1489697")
-        alert_profile.assign_to("Selected Servers", selections=["Servers", "EVM"])
+        options = dict(assign='Selected Servers', selections=['Servers', 'EVM'])
     else:
-        alert_profile.assign_to("The Enterprise")
+        options = dict(assign='The Enterprise')
+
+    # first assignment should be unique
+    first_change = alert_profile.assign_to(**options)
+    assert first_change
+    view.flash.assert_success_message('Alert Profile "{}" assignments successfully saved'
+                                      .format(alert_profile.description))
+
+    # second assignment, no change, should be cancelled
+    second_change = alert_profile.assign_to(**options)
+    assert not second_change
+    view.flash.assert_success_message('Edit Alert Profile assignments cancelled by user')
 
 
 @pytest.mark.tier(2)
