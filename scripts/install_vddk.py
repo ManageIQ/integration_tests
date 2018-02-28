@@ -5,7 +5,7 @@
 
 import argparse
 import sys
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 from cfme.utils.appliance import IPAppliance, get_or_create_current_appliance
 
 

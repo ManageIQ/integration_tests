@@ -33,7 +33,7 @@ def pytest_runtest_setup(item):
 
 def pytest_exception_interact(node, call, report):
     from fixtures.pytest_store import store
-    from httplib import BadStatusLine
+    from six.moves.http_client import BadStatusLine
     from socket import error
     import urllib2
 

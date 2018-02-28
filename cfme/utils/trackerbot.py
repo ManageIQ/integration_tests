@@ -1,9 +1,8 @@
 import argparse
 import json
 import re
-import time
+import six.moves.urllib.parse
 import urllib
-import urlparse
 from collections import defaultdict, namedtuple
 from datetime import date, datetime
 
@@ -11,6 +10,8 @@ import attr
 import slumber
 import requests
 from lxml import html
+import time
+
 from cfme.utils.conf import env
 from cfme.utils.log import logger
 from cfme.utils.providers import providers_data
@@ -360,11 +361,11 @@ def depaginate(api, result):
     ret_objects = result['objects']
     while meta['next']:
         # parse out url bits for constructing the new api req
-        next_url = urlparse.urlparse(meta['next'])
+        next_url = six.moves.urllib.parse.urlparse(meta['next'])
         # ugh...need to find the word after 'api/' in the next URL to
         # get the resource endpoint name; not sure how to make this better
         next_endpoint = next_url.path.strip('/').split('/')[-1]
-        next_params = {k: v[0] for k, v in urlparse.parse_qs(next_url.query).items()}
+        next_params = {k: v[0] for k, v in six.moves.urllib.parse.parse_qs(next_url.query).items()}
         result = getattr(api, next_endpoint).get(**next_params)
         ret_objects.extend(result['objects'])
         meta = result['meta']

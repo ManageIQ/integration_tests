@@ -9,7 +9,7 @@ import subprocess
 import time
 
 from requests.auth import HTTPBasicAuth
-from urlparse import urlsplit, urlunsplit
+from six.moves.urllib.parse import urlsplit, urlunsplit
 
 from cfme.utils.appliance import IPAppliance
 from cfme.utils.conf import env

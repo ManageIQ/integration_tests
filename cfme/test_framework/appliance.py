@@ -1,6 +1,6 @@
 import attr
 import pytest
-import urlparse
+import six.moves.urllib.parse
 import warnings
 
 from fixtures import terminalreporter
@@ -23,7 +23,7 @@ def pytest_addoption(parser):
 def appliances_from_cli(cli_appliances):
     appliance_config = dict(appliances=[])
     for appliance_url in cli_appliances:
-        parsed_url = urlparse.urlparse(appliance_url)
+        parsed_url = six.moves.urllib.parse.urlparse(appliance_url)
         if not parsed_url.hostname:
             raise ValueError(
                 "Invalid appliance url: {}".format(appliance_url)

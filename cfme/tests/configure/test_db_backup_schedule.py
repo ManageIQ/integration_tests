@@ -4,7 +4,7 @@ import pytest
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 from cfme.utils import conf, testgen
 from cfme.utils.ssh import SSHClient
 from cfme.utils.wait import wait_for
