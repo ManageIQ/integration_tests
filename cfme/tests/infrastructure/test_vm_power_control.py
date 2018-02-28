@@ -151,7 +151,7 @@ def wait_for_vm_tools(vm, timeout=300):
 class TestControlOnQuadicons(object):
 
     @pytest.mark.rhv3
-    def test_power_off_cancel(self, testing_vm, verify_vm_running, soft_assert):
+    def test_power_off_cancel(self, testing_vm, ensure_vm_running, soft_assert):
         """Tests power off cancel
 
         Metadata:
@@ -168,7 +168,7 @@ class TestControlOnQuadicons(object):
             testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm not running")
 
     @pytest.mark.rhv1
-    def test_power_off(self, appliance, testing_vm, verify_vm_running, soft_assert):
+    def test_power_off(self, appliance, testing_vm, ensure_vm_running, soft_assert):
         """Tests power off
 
         Metadata:
@@ -188,7 +188,7 @@ class TestControlOnQuadicons(object):
             not testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm running")
 
     @pytest.mark.rhv3
-    def test_power_on_cancel(self, testing_vm, verify_vm_stopped, soft_assert):
+    def test_power_on_cancel(self, testing_vm, ensure_vm_stopped, soft_assert):
         """Tests power on cancel
 
         Metadata:
@@ -205,7 +205,7 @@ class TestControlOnQuadicons(object):
 
     @pytest.mark.rhv1
     @pytest.mark.tier(1)
-    def test_power_on(self, appliance, testing_vm, verify_vm_stopped, soft_assert):
+    def test_power_on(self, appliance, testing_vm, ensure_vm_stopped, soft_assert):
         """Tests power on
 
         Metadata:
@@ -228,7 +228,7 @@ class TestControlOnQuadicons(object):
 class TestVmDetailsPowerControlPerProvider(object):
 
     @pytest.mark.rhv3
-    def test_power_off(self, appliance, testing_vm, verify_vm_running, soft_assert):
+    def test_power_off(self, appliance, testing_vm, ensure_vm_running, soft_assert):
         """Tests power off
 
         Metadata:
@@ -256,7 +256,7 @@ class TestVmDetailsPowerControlPerProvider(object):
                         "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
 
     @pytest.mark.rhv3
-    def test_power_on(self, appliance, testing_vm, verify_vm_stopped, soft_assert):
+    def test_power_on(self, appliance, testing_vm, ensure_vm_stopped, soft_assert):
         """Tests power on
 
         Metadata:
@@ -277,7 +277,7 @@ class TestVmDetailsPowerControlPerProvider(object):
             testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm not running")
 
     @pytest.mark.rhv3
-    def test_suspend(self, appliance, testing_vm, verify_vm_running, soft_assert):
+    def test_suspend(self, appliance, testing_vm, ensure_vm_running, soft_assert):
         """Tests suspend
 
         Metadata:
@@ -412,21 +412,21 @@ def test_orphaned_vm_status(testing_vm, orphaned_vm):
 
 @pytest.mark.rhv1
 @pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider))
-def test_power_options_from_on(provider, soft_assert, testing_vm, verify_vm_running):
+def test_power_options_from_on(provider, soft_assert, testing_vm, ensure_vm_running):
     testing_vm.wait_for_vm_state_change(
         desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
     check_power_options(provider, soft_assert, testing_vm, testing_vm.STATE_ON)
 
 
 @pytest.mark.rhv3
-def test_power_options_from_off(provider, soft_assert, testing_vm, verify_vm_stopped):
+def test_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_stopped):
     testing_vm.wait_for_vm_state_change(
         desired_state=testing_vm.STATE_OFF, timeout=720, from_details=True)
     check_power_options(provider, soft_assert, testing_vm, testing_vm.STATE_OFF)
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
-def test_guest_os_reset(appliance, testing_vm_tools, verify_vm_running, soft_assert):
+def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
     wait_for_vm_tools(testing_vm_tools)
@@ -445,7 +445,7 @@ def test_guest_os_reset(appliance, testing_vm_tools, verify_vm_running, soft_ass
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
-def test_guest_os_shutdown(appliance, testing_vm_tools, verify_vm_running, soft_assert):
+def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
     wait_for_vm_tools(testing_vm_tools)

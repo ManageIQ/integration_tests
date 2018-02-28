@@ -496,6 +496,12 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, Navigatable)
 class VM(BaseVM):
     TO_RETIRE = None
 
+    # May be overriden by implementors of BaseVM
+    STATE_ON = "on"
+    STATE_OFF = "off"
+    STATE_PAUSED = "paused"
+    STATE_SUSPENDED = "suspended"
+
     def retire(self):
         view = navigate_to(self, 'Details', use_resetter=False)
         view.toolbar.reload.click()
@@ -650,6 +656,117 @@ class VM(BaseVM):
     def does_vm_exist_on_provider(self):
         """Check if VM exists on provider itself"""
         return self.provider.mgmt.does_vm_exist(self.name)
+
+    def _handle_transition(self, in_desired_state, in_state_requiring_prep, in_actionable_state,
+                           do_prep, do_action, state, timeout, delay):
+        """
+        Handles state transition for ensure_state_on_provider()
+
+        See that docstring below for explanation of the args. Each arg here is a callable except for
+        'state', 'timeout' and 'delay'
+        """
+        # If VM is already in desired state, don't bother with the transition logic...
+        if in_desired_state():
+            return True
+
+        def _transition():
+            if in_desired_state():
+                return True
+            elif in_state_requiring_prep():
+                do_prep()
+            elif in_actionable_state():
+                do_action()
+
+            logger.debug(
+                "Sleeping {}sec... (current state: {}, needed state: {})".format(
+                    delay, self.provider.mgmt.vm_status(self.name), state)
+            )
+            return False
+
+        return wait_for(
+            _transition, timeout=timeout, delay=delay,
+            message="vm to reach state '{}'".format(state)
+        )
+
+    def ensure_state_on_provider(self, state, timeout="6m", delay=15):
+        """
+        Ensures that the VM/instance is in desired state on provider using provider API.
+
+        State can be one of:
+            VM.STATE_ON, VM.STATE_OFF, VM.STATE_SUSPENDED, VM.STATE_PAUSED
+
+        Each desired state requires various checks/steps to ensure we "achieve" that state.
+
+        The logic implied while waiting is:
+        1. Check if VM is in_desired_state, if so, we're done
+        2. If not, check if it is in_state_requiring_prep
+            (for example, you can't stop a suspended VM, so we need to prep the VM by starting it)
+        3. Move the VM to the correct 'prep state' (calling method do_prep)
+        4. Check if the VM is in a state that allows moving to the desired state
+            (in_actionable_state should return True)
+        5. Perform the action to put the VM into that state (calling method do_action)
+
+        The methods are defined differently for each desired state.
+
+        For some states, step 2 and 3 do not apply, see for example when desired state is
+        'running', in those cases just make sure that 'in_state_requiring_prep' always returns
+        false.
+
+        Args:
+            provider: Provider class object
+            vm_name: Name of the VM/instance
+            state: str, one of:
+                VM.STATE_ON, VM.STATE_OFF, VM.STATE_SUSPENDED, VM.STATE_PAUSED
+            timeout: timeout in sec (or string like "6m") used in wait_for
+            delay: delay in sec to use in each loop of the wait_for
+        """
+        mgmt = self.provider.mgmt
+        vm = self.name
+
+        def _suspended():
+            return mgmt.can_suspend and mgmt.is_vm_suspended(vm)
+
+        def _paused():
+            return mgmt.can_pause and mgmt.is_vm_paused(vm)
+
+        if state == self.STATE_ON:
+            return self._handle_transition(
+                in_desired_state=lambda: mgmt.is_vm_running(vm),
+                in_state_requiring_prep=lambda: False,
+                in_actionable_state=lambda: mgmt.is_vm_stopped(vm) or _suspended() or _paused(),
+                do_prep=lambda: None,
+                do_action=lambda: mgmt.start_vm(vm),
+                state=state, timeout=timeout, delay=delay
+            )
+        elif state == self.STATE_OFF:
+            return self._handle_transition(
+                in_desired_state=lambda: mgmt.is_vm_stopped(vm),
+                in_state_requiring_prep=lambda: _suspended() or _paused(),
+                in_actionable_state=lambda: mgmt.is_vm_running(vm),
+                do_prep=lambda: mgmt.start_vm(vm),
+                do_action=lambda: mgmt.stop_vm(vm),
+                state=state, timeout=timeout, delay=delay
+            )
+        elif state == self.STATE_SUSPENDED:
+            return self._handle_transition(
+                in_desired_state=lambda: _suspended(),
+                in_state_requiring_prep=lambda: mgmt.is_vm_stopped(vm) or _paused(),
+                in_actionable_state=lambda: mgmt.is_vm_running(vm),
+                do_prep=lambda: mgmt.start_vm(vm),
+                do_action=lambda: mgmt.suspend_vm(vm),
+                state=state, timeout=timeout, delay=delay
+            )
+        elif state == self.STATE_PAUSED:
+            return self._handle_transition(
+                in_desired_state=lambda: _paused(),
+                in_state_requiring_prep=lambda: mgmt.is_vm_stopped(vm) or _suspended(),
+                in_actionable_state=lambda: mgmt.is_vm_running(vm),
+                do_prep=lambda: mgmt.start_vm(vm),
+                do_action=lambda: mgmt.pause_vm(vm),
+                state=state, timeout=timeout, delay=delay
+            )
+        else:
+            raise ValueError("Invalid state '{}'".format(state))
 
     def set_retirement_date(self, when=None, offset=None, warn=None):
         """Overriding common method to use widgetastic views/widgets properly
