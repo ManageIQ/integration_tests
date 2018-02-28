@@ -287,8 +287,10 @@ def poke_trackerbot(self):
                     original_template.custom_data != custom_data):
                 original_template.custom_data = custom_data
                 original_template.container = 'cloudforms-0'
+                original_template.template_type = Template.OPENSHIFT_POD
                 original_template.save(update_fields=['custom_data',
-                                                      'container'])
+                                                      'container',
+                                                      'template_type'])
         except ObjectDoesNotExist:
             if template_name in provider.templates:
                 date = parse_template(template_name).datestamp
@@ -311,7 +313,8 @@ def poke_trackerbot(self):
                     tpl.save()
                     if provider.provider_type == 'openshift':
                         original_template.container = 'cloudforms-0'
-                        original_template.save(update_fields=['container'])
+                        original_template.template_type = Template.OPENSHIFT_POD
+                        original_template.save(update_fields=['container', 'template_type'])
                     original_template = tpl
                     self.logger.info("Created a new template #{}".format(tpl.id))
         # If the provider is set to not preconfigure templates, do not bother even doing it.
@@ -1995,7 +1998,8 @@ def create_docker_vm(self, group_id, provider_id, version, date, pull_url):
             template_group=group, provider=provider,
             container='cfme', name=new_name, original_name=provider.container_base_template,
             version=version, date=date,
-            ready=False, exists=False, usable=True, preconfigured=True)
+            ready=False, exists=False, usable=True, preconfigured=True,
+            template_type=Template.DOCKER_VM)
         new_template.save()
 
     workflow = chain(
