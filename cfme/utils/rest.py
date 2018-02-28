@@ -53,7 +53,9 @@ def assert_response(
                 num_sec=task_wait,
                 message='task state finished',
             )
-            assert task.status.lower() == 'ok', 'Task failed with status "{}"'.format(task.status)
+            task_message = getattr(task, 'message', '')
+            assert task.status.lower() == 'ok', (
+                'Task failed with status "{}", message "{}"'.format(task.status, task_message))
 
     if 'results' in content:
         results = content['results']
