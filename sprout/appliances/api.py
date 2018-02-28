@@ -233,13 +233,13 @@ def num_shepherd_appliances(user, group, version=None, date=None, provider=None)
 def request_appliances(
         user, group, count=1, lease_time=60, version=None, date=None, provider=None,
         preconfigured=True, yum_update=False, container=False, ram=None, cpu=None,
-        provider_type=None):
+        provider_type=None, template_type=Template.DEFAULT_TEMPLATE_TYPE):
     """Request a number of appliances."""
     if date:
         date = datetime.strptime(date, "%y%m%d")
     return AppliancePool.create(
         user, group, version, date, provider, count, lease_time, preconfigured, yum_update,
-        container, ram, cpu, provider_type).id
+        container, ram, cpu, provider_type, template_type).id
 
 
 @jsonapi.authenticated_method
