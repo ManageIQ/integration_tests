@@ -3169,7 +3169,7 @@ class BaseEntitiesView(View):
                 for row in self.elements.rows():
                     # ex: miqRowClick('2', '/ems_infra/', false); return false;
                     attr = br.get_attribute('onclick', row)
-                    el_id = int(re.search("miqRowClick\('(\d+)", attr).group(1))
+                    el_id = re.search("miqRowClick\('([\d|r]+)", attr).group(1)
                     el_name = row.name.text if getattr(row, 'name', None) else ''
                     elements.append({'name': el_name, 'entity_id': el_id})
             else:
