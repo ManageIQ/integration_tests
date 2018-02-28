@@ -542,6 +542,15 @@ class GroupShepherd(MetadataMixin):
 
 
 class Template(MetadataMixin):
+    VM = 'virtual_machine'
+    DOCKER_VM = 'docker_vm'
+    OPENSHIFT_POD = 'openshift_pod'
+    TEMPLATE_TYPES = (
+        (VM, 'Virtual Machine'),
+        (DOCKER_VM, 'VM-based Docker container'),
+        (OPENSHIFT_POD, 'Openshift pod'))
+    DEFAULT_TEMPLATE_TYPE = TEMPLATE_TYPES[0][0]
+
     provider = models.ForeignKey(
         Provider, on_delete=models.CASCADE, help_text="Where does this template reside",
         related_name="provider_templates")
@@ -574,6 +583,8 @@ class Template(MetadataMixin):
             'Whether the appliance is located in a container in the VM. '
             'This then specifies the container name.'))
     ga_released = models.BooleanField(default=False)
+    template_type = models.CharField(
+        max_length=16, choices=TEMPLATE_TYPES, default=DEFAULT_TEMPLATE_TYPE)
 
     class Meta:
         ordering = ['name', 'original_name', 'provider', 'id']
