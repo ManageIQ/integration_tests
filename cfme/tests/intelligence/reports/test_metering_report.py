@@ -142,7 +142,7 @@ def resource_usage(vm_ownership, appliance, provider):
     # are capturing C&U data and forcing hourly rollups by running these commands through
     # the Rails console.
     #
-    # Metering reports differ from Chargeback reports in that Metering reports 1)only report
+    # Metering reports differ from Chargeback reports in that Metering reports 1)report only
     # resource usage and not costs and 2)sum total of resource usage is reported instead of
     # the average usage.For eg:If we have 24 hourly rollups, resource usage in a Metering report
     # is the sum of these 24 rollups, whereas resource usage in a Chargeback report is the
@@ -232,7 +232,7 @@ def resource_usage(vm_ownership, appliance, provider):
 
 @pytest.yield_fixture(scope="module")
 def metering_report(vm_ownership, provider):
-    # Create a Metering report based; Queue the report.
+    # Create a Metering report based on VM owner; Queue the report.
     owner = vm_ownership
     data = {
         'menu_name': 'cb_' + provider.name,
