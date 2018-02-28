@@ -269,7 +269,7 @@ def test_validate_cpu_usage(resource_usage, metering_report):
             usage_from_report = groups["CPU Used"]
             if 'GHz' in usage_from_report:
                 estimated_cpu_usage = estimated_cpu_usage * math.pow(2, -10)
-            usage = re.sub(r'[MHz, GHz,]', r'', usage_from_report)
+            usage = re.sub(r'(MHz|GHz|,)', r'', usage_from_report)
             assert estimated_cpu_usage - DEVIATION <= float(usage) \
                 <= estimated_cpu_usage + DEVIATION, 'Estimated cost and report cost do not match'
             break
@@ -283,7 +283,7 @@ def test_validate_memory_usage(resource_usage, metering_report):
             usage_from_report = groups["Memory Used"]
             if 'GB' in usage_from_report:
                 estimated_memory_usage = estimated_memory_usage * math.pow(2, -10)
-            usage = re.sub(r'[MB, GB,]', r'', usage_from_report)
+            usage = re.sub(r'(MB|GB|,)', r'', usage_from_report)
             assert estimated_memory_usage - DEVIATION <= float(usage) \
                 <= estimated_memory_usage + DEVIATION, 'Estimated cost and report cost do not match'
             break
@@ -295,7 +295,7 @@ def test_validate_network_usage(resource_usage, metering_report):
         if groups["Network I/O Used"]:
             estimated_network_usage = resource_usage['network_io']
             usage_from_report = groups["Network I/O Used"]
-            usage = re.sub(r'[KBps,]', r'', usage_from_report)
+            usage = re.sub(r'(KBps|,)', r'', usage_from_report)
             assert estimated_network_usage - DEVIATION <= float(usage) \
                 <= estimated_network_usage + DEVIATION,\
                 'Estimated cost and report cost do not match'
@@ -308,7 +308,7 @@ def test_validate_disk_usage(resource_usage, metering_report):
         if groups["Disk I/O Used"]:
             estimated_disk_usage = resource_usage['disk_io_used']
             usage_from_report = groups["Disk I/O Used"]
-            usage = re.sub(r'[KBps,]', r'', usage_from_report)
+            usage = re.sub(r'(KBps|,)', r'', usage_from_report)
             assert estimated_disk_usage - DEVIATION <= float(usage) \
                 <= estimated_disk_usage + DEVIATION, 'Estimated cost and report cost do not match'
             break
@@ -320,7 +320,7 @@ def test_validate_storage_usage(resource_usage, metering_report):
         if groups["Storage Used"]:
             estimated_storage_usage = resource_usage['storage_used']
             usage_from_report = groups["Storage Used"]
-            usage = re.sub(r'[MB, GB,]', r'', usage_from_report)
+            usage = re.sub(r'(MB|GB|,)', r'', usage_from_report)
             assert estimated_storage_usage - DEVIATION <= float(usage) \
                 <= estimated_storage_usage + DEVIATION, \
                 'Estimated cost and report cost do not match'
