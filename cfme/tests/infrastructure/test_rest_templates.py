@@ -6,8 +6,12 @@ from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import mark_vm_as_template
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils import error
-from cfme.utils.rest import delete_resources_from_collection
-from cfme.utils.version import current_version
+from cfme.utils.blockers import BZ
+from cfme.utils.rest import (
+    assert_response,
+    delete_resources_from_collection,
+    query_resource_attributes,
+)
 
 pytestmark = [test_requirements.rest]
 
@@ -35,6 +39,29 @@ def template(request, appliance, a_provider, vm):
 
 
 @pytest.mark.tier(3)
+def test_query_template_attributes(request, appliance, a_provider, soft_assert):
+    """Tests access to template attributes.
+
+    Metadata:
+        test_flag: rest
+    """
+    templates = appliance.rest_api.collections.templates.all
+    if templates:
+        template_rest = templates[0]
+    else:
+        vm_rest = vm(request, a_provider, appliance)
+        template_rest = template(request, appliance, a_provider, vm_rest)
+
+    outcome = query_resource_attributes(template_rest)
+    for failure in outcome.failed:
+        if failure.type == 'attribute' and failure.name == 'policy_events' and BZ(
+                1546995, forced_streams=['5.8', '5.9', 'upstream']).blocks:
+            continue
+        soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+            failure.type, failure.name, failure.response.status_code, failure.error))
+
+
+@pytest.mark.tier(3)
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
 def test_set_ownership(appliance, template, from_detail):
     """Tests setting of template ownership.
@@ -55,7 +82,7 @@ def test_set_ownership(appliance, template, from_detail):
     else:
         data["href"] = template.href
         appliance.rest_api.collections.templates.action.set_ownership(**data)
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
     template.reload()
     assert hasattr(template, "evm_owner_id")
     assert template.evm_owner_id == user.id
@@ -64,19 +91,19 @@ def test_set_ownership(appliance, template, from_detail):
 
 
 @pytest.mark.tier(2)
-# BZ1422807 that was fixed only in 5.8
-@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 def test_delete_template_from_detail_post(appliance, template):
     """Tests deletion of template from detail using POST method.
+
+    Testing BZ1422807
 
     Metadata:
         test_flag: rest
     """
-    template.action.delete(force_method="post")
-    assert appliance.rest_api.response.status_code == 200
+    template.action.delete.POST()
+    assert_response(appliance)
     with error.expected("ActiveRecord::RecordNotFound"):
-        template.action.delete(force_method="post")
-    assert appliance.rest_api.response.status_code == 404
+        template.action.delete.POST()
+    assert_response(appliance, http_status=404)
 
 
 @pytest.mark.tier(2)
@@ -86,11 +113,11 @@ def test_delete_template_from_detail_delete(appliance, template):
     Metadata:
         test_flag: rest
     """
-    template.action.delete(force_method="delete")
-    assert appliance.rest_api.response.status_code == 204
+    template.action.delete.DELETE()
+    assert_response(appliance)
     with error.expected("ActiveRecord::RecordNotFound"):
-        template.action.delete(force_method="delete")
-    assert appliance.rest_api.response.status_code == 404
+        template.action.delete.DELETE()
+    assert_response(appliance, http_status=404)
 
 
 @pytest.mark.tier(2)
