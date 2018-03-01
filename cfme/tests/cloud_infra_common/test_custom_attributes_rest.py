@@ -84,7 +84,7 @@ def get_service(appliance):
     try:
         service = appliance.rest_api.collections.services.get(name=name)
         service.delete()
-    except AttributeError:
+    except (AttributeError, ValueError):
         pass
 
 
