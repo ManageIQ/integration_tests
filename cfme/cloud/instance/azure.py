@@ -17,6 +17,7 @@ class AzureInstance(Instance):
     })
     # CFME-only power control options
     SOFT_REBOOT = "Soft Reboot"
+    HARD_REBOOT = "Hard Reboot"  # unsupported by azure, used for negative tests
     # Provider-only power control options
     RESTART = "Restart"
 

@@ -248,6 +248,20 @@ def test_hard_reboot(appliance, provider, testing_instance, verify_vm_running, s
     soft_assert(provider.mgmt.is_vm_running(testing_instance.name), "instance is not running")
 
 
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider))
+def test_hard_reboot_unsupported(testing_instance):
+    """
+    Tests that hard reboot throws an 'unsupported' error message on an Azure instance
+
+    Metadata:
+        test_flag: power_control, provision
+    """
+    view = navigate_to(testing_instance, 'All')
+    testing_instance.power_control_from_cfme(
+        option=testing_instance.HARD_REBOOT, from_details=False)
+    view.flash.assert_message("Reset does not apply to at least one of the selected items")
+
+
 @pytest.mark.uncollectif(lambda provider: (not provider.one_of(OpenStackProvider) and
                                            not provider.one_of(AzureProvider)))
 def test_suspend(appliance, provider, testing_instance, verify_vm_running, soft_assert):
