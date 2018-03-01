@@ -53,4 +53,5 @@ def test_vm_migrate(appliance, new_vm, provider):
     migrate_request = appliance.collections.requests.instantiate(request_description, cells=cells,
                                                                  partial_check=True)
     migrate_request.wait_for_request(method='ui')
-    assert migrate_request.is_succeeded(method='ui')
+    assert migrate_request.is_succeeded(method='ui'),\
+        ("Request failed with the message {}".format(migrate_request.row.last_message.text))

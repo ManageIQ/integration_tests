@@ -151,7 +151,8 @@ def test_provision_stack(appliance, setup_provider, provider, provisioning, cata
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-    assert provision_request.is_succeeded()
+    assert provision_request.is_succeeded(),\
+        ("Request failed with the message {}".format(provision_request.rest.message))
 
 
 def test_reconfigure_service(appliance, provider, provisioning, catalog, catalog_item, request,
@@ -175,7 +176,8 @@ def test_reconfigure_service(appliance, provider, provisioning, catalog, catalog
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request(method='ui')
-    assert provision_request.is_succeeded()
+    assert provision_request.is_succeeded(method='ui'),\
+        ("Request failed with the message {}".format(provision_request.row.last_message.text))
     last_message = provision_request.get_request_row_from_ui()['Last Message'].text
     service_name = last_message.split()[2].strip('[]')
     myservice = MyService(appliance, service_name)
@@ -226,7 +228,8 @@ def test_retire_stack(appliance, provider, provisioning, catalog, catalog_item, 
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-    assert provision_request.is_succeeded()
+    assert provision_request.is_succeeded(), \
+        ("Request failed with the message {}".format(provision_request.rest.message))
     stack = StackCollection(appliance).instantiate(stack_data['stack_name'], provider=provider)
     stack.wait_for_exists()
     stack.retire_stack()

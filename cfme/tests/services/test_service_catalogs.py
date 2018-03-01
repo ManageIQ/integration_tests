@@ -47,7 +47,8 @@ def test_order_catalog_item(appliance, provider, setup_provider, catalog_item, r
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-    assert provision_request.is_succeeded()
+    assert provision_request.is_succeeded(), \
+        "Provisioning failed with the message {}".format(provision_request.rest.message)
 
 
 @pytest.mark.tier(2)
@@ -100,7 +101,8 @@ def test_order_catalog_bundle(appliance, provider, setup_provider, catalog_item,
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-    assert provision_request.is_succeeded()
+    assert provision_request.is_succeeded(),\
+        "Provisioning failed with the message {}".format(provision_request.rest.message)
 
 
 # Note here this needs to be reduced, doesn't need to test against all providers

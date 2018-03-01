@@ -96,16 +96,14 @@ def test_provision(request, appliance, provision_data):
     """
     vm_name = provision_data['vm_fields']['vm_name']
     request.addfinalizer(lambda: clean_vm(appliance, vm_name))
-    prov_request, = appliance.rest_api.collections.provision_requests.action.create(
-        **provision_data)
+    appliance.rest_api.collections.provision_requests.action.create(**provision_data)
     assert_response(appliance)
-    prov_request.reload()
-    wait_for(
-        lambda: prov_request.request_state == 'finished',
-        fail_func=prov_request.reload,
-        num_sec=600,
-        delay=10)
-    assert prov_request.status.lower() == 'ok'
+    provision_request = appliance.collections.requests.instantiate(description=vm_name,
+                                                                   partial_check=True)
+    provision_request.wait_for_request()
+
+    assert provision_request.is_succeeded(), ("Provisioning failed with the message {}".format(
+        provision_request.rest.message))
     found_vms = appliance.rest_api.collections.vms.find_by(name=vm_name)
     assert found_vms, 'VM `{}` not found'.format(vm_name)
 

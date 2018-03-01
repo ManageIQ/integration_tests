@@ -108,4 +108,5 @@ def test_tagdialog_catalog_item(appliance, provider, setup_provider, catalog_ite
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-    assert provision_request.is_succeeded()
+    assert provision_request.is_succeeded(), ("Request failed with the message {}".format(
+        provision_request.rest.message))
