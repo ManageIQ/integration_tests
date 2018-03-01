@@ -490,7 +490,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
         Sets up the provider robustly
         """
         # TODO: Eventually this will become Sentakuified, but only after providers is CEMv3
-        if self.category in ['cloud', 'infra']:
+        if self.category in ['cloud', 'infra', 'physical']:
             return self.create_rest(check_existing=True, validate_inventory=True)
         else:
             return self.create(cancel=False, validate_credentials=True,

@@ -25,11 +25,14 @@ class LenovoProvider(PhysicalProvider):
     string_name = 'Physical Infrastructure'
     mgmt_class = LenovoSystem
     refresh_text = "Refresh Relationships and Power States"
+    db_types = ["Lenovo::PhysicalInfraManager"]
 
     def __init__(self, appliance, name=None, key=None, endpoints=None):
         super(LenovoProvider, self).__init__(
             appliance=appliance, name=name, key=key, endpoints=endpoints
         )
+        self.hostname = self.default_endpoint.view_value_mapping['hostname']
+        self.ip_address = self.hostname
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
