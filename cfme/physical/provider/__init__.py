@@ -83,6 +83,28 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).click()
+
+    def resetter(self):
+        # Reset view and selection
+        pass
+
+
+@navigator.register(PhysicalProvider, 'Edit')
+class Edit(CFMENavigateStep):
+    VIEW = PhysicalProviderEditView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this Infrastructure Provider')
+
+
+@navigator.register(PhysicalProvider, 'Details')
+class Details(CFMENavigateStep):
+    VIEW = PhysicalProviderDetailsView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 

@@ -166,9 +166,16 @@ management_systems:
     lenovo:
         name: lenovo
         type: lenovo
+        tags:
+            - default
+        excluded_tests_flags: []
+        credentials: lenovo
+        hostname: 10.0.0.1
+        ipaddress: 10.0.0.1
         endpoints:
             default:
                 credentials: lenovo
+                hostname: 10.0.0.1
                 ipaddress: 10.0.0.1
                 api_port: 3000
     nuage:

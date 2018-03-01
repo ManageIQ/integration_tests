@@ -171,6 +171,25 @@ class PhysicalProviderDetailsView(ProviderDetailsView):
                                                        'Providers'])
 
 
+class ContainerProviderDetailsView(ProviderDetailsView):
+    """
+     Container Details page
+    """
+    @property
+    def is_displayed(self):
+        return (super(ContainerProviderDetailsView, self).is_displayed and
+                self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'])
+
+class PhysicalProviderDetailsView(ProviderDetailsView):
+    """
+     Physical  Details page
+    """
+    @property
+    def is_displayed(self):
+        return (super(PhysicalProviderDetailsView, self).is_displayed and
+                self.navigation.currently_selected ==
+                ['Compute', 'Physical Infrastructure', 'Providers'])
+
 class ProviderTimelinesView(TimelinesView, BaseLoggedInPage):
     """
      represents Timelines page
@@ -416,6 +435,18 @@ class PhysicalProvidersView(ProvidersView):
                 self.entities.title.text == 'Physical Infrastructure Providers')
 
 
+class PhysicalProvidersView(ProvidersView):
+    """
+     represents Main view displaying all Infra providers
+    """
+    @property
+    def is_displayed(self):
+        return (super(PhysicalProvidersView, self).is_displayed and
+                self.navigation.currently_selected == [
+                    'Compute', 'Physical Infrastructure', 'Providers'] and
+                self.entities.title.text == 'Physical Infrastructure Providers')
+
+
 class BeforeFillMixin(object):
     """
      this mixin is used to activate appropriate tab before filling this tab
@@ -535,6 +566,19 @@ class ContainerProviderAddViewUpdated(ContainerProviderAddView, ContainerProvide
 class PhysicalProviderAddView(ProviderAddView):
     """
      represents Provider Add View
+    """
+
+    @property
+    def is_displayed(self):
+        return (super(PhysicalProviderAddView, self).is_displayed and
+                self.navigation.currently_selected == [
+                    'Compute', 'Physical Infrastructure', 'Providers'] and
+                self.title.text == 'Add New Ems Physical Infra')
+
+
+class PhysicalProviderAddView(ProviderAddView):
+    """
+     represents Middleware Provider Add View
     """
 
     @property
