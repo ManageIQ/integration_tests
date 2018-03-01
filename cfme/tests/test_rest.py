@@ -16,11 +16,13 @@ from cfme.rest.gen_data import vm as _vm
 from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
-from cfme.utils.rest import assert_response, delete_resources_from_collection
-from cfme.utils.version import current_version
+from cfme.utils.rest import (
+    assert_response,
+    delete_resources_from_collection,
+    query_resource_attributes,
+)
 from cfme.utils.wait import wait_for, TimedOutError
 from fixtures.provider import setup_one_or_skip
-from fixtures.pytest_store import store
 
 
 pytestmark = [test_requirements.rest]
@@ -89,9 +91,9 @@ COLLECTIONS_OMMITED = {"settings"}
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
-    lambda collection_name:
+    lambda appliance, collection_name:
         (collection_name in COLLECTIONS_OMMITED) or
-        (collection_name in COLLECTIONS_REMOVED_IN_59 and current_version() >= "5.9")
+        (collection_name in COLLECTIONS_REMOVED_IN_59 and appliance.version >= "5.9")
 )
 def test_query_simple_collections(appliance, collection_name):
     """This test tries to load each of the listed collections. 'Simple' collection means that they
@@ -110,9 +112,9 @@ def test_query_simple_collections(appliance, collection_name):
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
-    lambda collection_name:
+    lambda appliance, collection_name:
         (collection_name in COLLECTIONS_OMMITED) or
-        (collection_name in COLLECTIONS_REMOVED_IN_59 and current_version() >= "5.9")
+        (collection_name in COLLECTIONS_REMOVED_IN_59 and appliance.version >= "5.9")
 )
 def test_query_with_api_version(api_version, collection_name):
     """Loads each of the listed collections using /api/<version>/<collection>.
@@ -135,8 +137,8 @@ COLLECTIONS_BUGGY_ATTRS = {"results", "service_catalogs", "automate", "categorie
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
-    lambda collection_name:
-        (collection_name in COLLECTIONS_REMOVED_IN_59 and current_version() >= "5.9")
+    lambda appliance, collection_name:
+        (collection_name in COLLECTIONS_REMOVED_IN_59 and appliance.version >= "5.9")
 )
 # testing GH#ManageIQ/manageiq:15754
 def test_select_attributes(appliance, collection_name):
@@ -145,7 +147,7 @@ def test_select_attributes(appliance, collection_name):
     Metadata:
         test_flag: rest
     """
-    if collection_name in COLLECTIONS_BUGGY_ATTRS and current_version() < '5.9':
+    if collection_name in COLLECTIONS_BUGGY_ATTRS and appliance.version < '5.9':
         pytest.skip("Affected by BZ 1437201, cannot test.")
     collection = getattr(appliance.rest_api.collections, collection_name)
     response = appliance.rest_api.get(
@@ -159,60 +161,6 @@ def test_select_attributes(appliance, collection_name):
         assert len(resource) == expected_len
 
 
-def test_add_picture(appliance):
-    """Tests adding picture.
-
-    Metadata:
-        test_flag: rest
-    """
-    collection = appliance.rest_api.collections.pictures
-    count = collection.count
-    collection.action.create({
-        "extension": "png",
-        "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcS"
-                   "JAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="})
-    assert_response(appliance)
-    collection.reload()
-    assert collection.count == count + 1
-
-
-@pytest.mark.uncollectif(lambda: current_version() < '5.8')
-def test_add_picture_invalid_extension(appliance):
-    """Tests adding picture with invalid extension.
-
-    Metadata:
-        test_flag: rest
-    """
-    collection = appliance.rest_api.collections.pictures
-    count = collection.count
-    with error.expected('Extension must be'):
-        collection.action.create({
-            "extension": "xcf",
-            "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcS"
-            "JAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="})
-    assert_response(appliance, http_status=400)
-    collection.reload()
-    assert collection.count == count
-
-
-@pytest.mark.uncollectif(lambda: current_version() < '5.8')
-def test_add_picture_invalid_data(appliance):
-    """Tests adding picture with invalid content.
-
-    Metadata:
-        test_flag: rest
-    """
-    collection = appliance.rest_api.collections.pictures
-    count = collection.count
-    with error.expected('invalid base64'):
-        collection.action.create({
-            "extension": "png",
-            "content": "invalid"})
-    assert_response(appliance, http_status=400)
-    collection.reload()
-    assert collection.count == count
-
-
 def test_http_options(appliance):
     """Tests OPTIONS http method.
 
@@ -223,7 +171,6 @@ def test_http_options(appliance):
     assert_response(appliance)
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 @pytest.mark.parametrize("collection_name", ["hosts", "clusters"])
 def test_http_options_node_types(appliance, collection_name):
     """Tests that OPTIONS http method on Hosts and Clusters collection returns node_types.
@@ -236,7 +183,6 @@ def test_http_options_node_types(appliance, collection_name):
     assert_response(appliance)
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 def test_http_options_subcollections(appliance):
     """Tests that OPTIONS returns supported subcollections.
 
@@ -256,7 +202,6 @@ def test_server_info(appliance):
     assert all(item in appliance.rest_api.server_info for item in ('appliance', 'build', 'version'))
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 def test_server_info_href(appliance):
     """Check that appliance's server, zone and region is present.
 
@@ -269,7 +214,6 @@ def test_server_info_href(appliance):
         assert 'id' in appliance.rest_api.get(appliance.rest_api.server_info[item])
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 def test_default_region(appliance):
     """Check that the default region is present.
 
@@ -291,7 +235,6 @@ def test_product_info(appliance):
                ('copyright', 'name', 'name_full', 'support_website', 'support_website_text'))
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 def test_settings_collection(appliance):
     """Checks that all expected info is present in /api/settings.
 
@@ -323,7 +266,6 @@ def test_user_settings(appliance):
     assert isinstance(appliance.rest_api.settings, dict)
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 def test_datetime_filtering(appliance, a_provider):
     """Tests support for DateTime filtering with timestamps in YYYY-MM-DDTHH:MM:SSZ format.
 
@@ -335,6 +277,7 @@ def test_datetime_filtering(appliance, a_provider):
         collection._href,
         '?expand=resources&attributes=created_on&sort_by=created_on&sort_order=asc'
         '&filter[]=created_on{}{}')
+    collection.reload()
     vms_num = len(collection)
     assert vms_num > 3
     baseline_vm = collection[vms_num / 2]
@@ -359,7 +302,6 @@ def test_datetime_filtering(appliance, a_provider):
         assert first_newer.created_on == baseline_vm.created_on
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 def test_date_filtering(appliance, a_provider):
     """Tests support for DateTime filtering with timestamps in YYYY-MM-DD format.
 
@@ -371,6 +313,7 @@ def test_date_filtering(appliance, a_provider):
         collection._href,
         '?expand=resources&attributes=created_on&sort_by=created_on&sort_order=desc'
         '&filter[]=created_on{}{}')
+    collection.reload()
     vms_num = len(collection)
     assert vms_num > 3
     baseline_vm = collection[vms_num / 2]
@@ -391,7 +334,6 @@ def test_date_filtering(appliance, a_provider):
         assert first_older.created_on < baseline_vm.created_on
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 def test_resources_hiding(appliance):
     """Test that it's possible to hide resources in response.
 
@@ -409,7 +351,6 @@ def test_resources_hiding(appliance):
     assert resources_hidden['subcount'] == resources_visible['subcount']
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 def test_sorting_by_attributes(appliance):
     """Test that it's possible to sort resources by attributes.
 
@@ -445,7 +386,7 @@ PAGING_DATA = [
 ]
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.9')
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 @pytest.mark.parametrize(
     'paging', PAGING_DATA, ids=['{},{}'.format(d[0], d[1]) for d in PAGING_DATA])
 def test_rest_paging(appliance, paging):
@@ -486,7 +427,7 @@ def test_rest_paging(appliance, paging):
         expected_previous_offset = offset - limit if offset > limit else 0
         assert 'limit={}&offset={}'.format(limit, expected_previous_offset) in links['previous']
     assert 'limit={}&offset={}'.format(limit, 0) in links['first']
-    expected_last_offset = (response['pages'] - (1 if limit > 1 else 0)) * limit
+    expected_last_offset = (response['pages'] - (1 if response['count'] % limit else 0)) * limit
     assert 'limit={}&offset={}'.format(limit, expected_last_offset) in links['last']
 
 
@@ -497,12 +438,17 @@ COLLECTIONS_BUGGY_HREF_SLUG_IN_58 = {'policy_actions', 'automate_domains'}
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
-    lambda collection_name:
+    lambda appliance, collection_name:
         collection_name == 'automate' or  # doesn't have 'href'
-        (collection_name in COLLECTIONS_BUGGY_HREF_SLUG_IN_58 and current_version() < '5.9') or
-        (collection_name in COLLECTIONS_REMOVED_IN_59 and current_version() >= '5.9')
+        (collection_name in COLLECTIONS_BUGGY_HREF_SLUG_IN_58 and appliance.version < '5.9') or
+        (collection_name in COLLECTIONS_REMOVED_IN_59 and appliance.version >= '5.9')
 )
 @pytest.mark.meta(blockers=[
+    BZ(
+        1547852,
+        forced_streams=['5.9', 'upstream'],
+        unblock=lambda collection_name: collection_name != 'pictures'
+    ),
     BZ(
         1503852,
         forced_streams=['5.8', '5.9', 'upstream'],
@@ -528,12 +474,11 @@ def test_attributes_present(appliance, collection_name):
         assert 'id' in resource
         assert 'href' in resource
         assert resource['href'] == '{}/{}'.format(collection._href, resource['id'])
-        if current_version() >= '5.8':
+        if appliance.version >= '5.8':
             assert 'href_slug' in resource
             assert resource['href_slug'] == '{}/{}'.format(collection.name, resource['id'])
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 @pytest.mark.parametrize('vendor', ['Microsoft', 'Redhat', 'Vmware'])
 def test_collection_class_valid(appliance, a_provider, vendor):
     """Tests that it's possible to query using collection_class.
@@ -542,6 +487,7 @@ def test_collection_class_valid(appliance, a_provider, vendor):
         test_flag: rest
     """
     collection = appliance.rest_api.collections.vms
+    collection.reload()
     resource_type = collection[0].type
     tested_type = 'ManageIQ::Providers::{}::InfraManager::Vm'.format(vendor)
 
@@ -557,8 +503,7 @@ def test_collection_class_valid(appliance, a_provider, vendor):
             assert entity.type == tested_type
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.8')
-def test_collection_class_invalid(appliance):
+def test_collection_class_invalid(appliance, a_provider):
     """Tests that it's not possible to query using invalid collection_class.
 
     Metadata:
@@ -569,7 +514,7 @@ def test_collection_class_invalid(appliance):
             collection_class='ManageIQ::Providers::Nonexistent::Vm')
 
 
-@pytest.mark.meta(blockers=[BZ(1504693, forced_streams=['5.7', '5.8', '5.9', 'upstream'])])
+@pytest.mark.meta(blockers=[BZ(1504693, forced_streams=['5.8', '5.9', 'upstream'])])
 def test_bulk_delete(request, appliance):
     """Tests bulk delete from collection.
 
@@ -596,6 +541,90 @@ def test_bulk_delete(request, appliance):
     results = appliance.rest_api.response.json()['results']
     assert results[0]['success'] is False
     assert results[1]['success'] is True
+
+
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+def test_rest_ping(appliance):
+    """Tests /api/ping.
+
+    Metadata:
+        test_flag: rest
+    """
+    ping_addr = '{}/ping'.format(appliance.rest_api._entry_point)
+    assert appliance.rest_api._session.get(ping_addr).text == 'pong'
+
+
+class TestPicturesRESTAPI(object):
+    def create_picture(self, appliance):
+        picture = appliance.rest_api.collections.pictures.action.create({
+            "extension": "png",
+            "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcS"
+                       "JAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="})
+        assert_response(appliance)
+        return picture[0]
+
+    def test_query_picture_attributes(self, appliance, soft_assert):
+        """Tests access to picture attributes.
+
+        Metadata:
+            test_flag: rest
+        """
+        picture = self.create_picture(appliance)
+        outcome = query_resource_attributes(picture)
+
+        bad_attrs = ('href_slug', 'region_description', 'region_number', 'image_href')
+        for failure in outcome.failed:
+            if failure.name in bad_attrs and BZ(1547852, forced_streams=['5.9']).blocks:
+                continue
+            soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+                failure.type, failure.name, failure.response.status_code, failure.error))
+
+    def test_add_picture(self, appliance):
+        """Tests adding picture.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = appliance.rest_api.collections.pictures
+        collection.reload()
+        count = collection.count
+        self.create_picture(appliance)
+        collection.reload()
+        assert collection.count == count + 1
+        assert collection.count == len(collection)
+
+    def test_add_picture_invalid_extension(self, appliance):
+        """Tests adding picture with invalid extension.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = appliance.rest_api.collections.pictures
+        count = collection.count
+        with error.expected('Extension must be'):
+            collection.action.create({
+                "extension": "xcf",
+                "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcS"
+                "JAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="})
+        assert_response(appliance, http_status=400)
+        collection.reload()
+        assert collection.count == count
+
+    def test_add_picture_invalid_data(self, appliance):
+        """Tests adding picture with invalid content.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = appliance.rest_api.collections.pictures
+        count = collection.count
+        with error.expected('invalid base64'):
+            collection.action.create({
+                "extension": "png",
+                "content": "invalid"})
+        assert_response(appliance, http_status=400)
+        collection.reload()
+        assert collection.count == count
 
 
 class TestBulkQueryRESTAPI(object):
@@ -658,7 +687,7 @@ class TestBulkQueryRESTAPI(object):
 
 
 # arbitration_settings were removed in versions >= 5.9'
-@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9')
+@pytest.mark.uncollectif(lambda appliance: appliance.version >= '5.9')
 class TestArbitrationSettingsRESTAPI(object):
     @pytest.fixture(scope='function')
     def arbitration_settings(self, request, appliance):
@@ -667,6 +696,14 @@ class TestArbitrationSettingsRESTAPI(object):
         assert_response(appliance)
         assert len(response) == num_settings
         return response
+
+    def test_query_arbitration_setting_attributes(self, arbitration_settings, soft_assert):
+        """Tests access to arbitration setting attributes.
+
+        Metadata:
+            test_flag: rest
+        """
+        query_resource_attributes(arbitration_settings[0], soft_assert=soft_assert)
 
     def test_create_arbitration_settings(self, appliance, arbitration_settings):
         """Tests create arbitration settings.
@@ -686,10 +723,12 @@ class TestArbitrationSettingsRESTAPI(object):
             test_flag: rest
         """
         for setting in arbitration_settings:
-            setting.action.delete(force_method=method)
+            del_action = getattr(setting.action.delete, method.upper())
+            del_action()
             assert_response(appliance)
+
             with error.expected('ActiveRecord::RecordNotFound'):
-                setting.action.delete(force_method=method)
+                del_action()
             assert_response(appliance, http_status=404)
 
     def test_delete_arbitration_settings_from_collection(self, appliance, arbitration_settings):
@@ -735,7 +774,7 @@ class TestArbitrationSettingsRESTAPI(object):
 
 
 # arbitration_rules were removed in versions >= 5.9'
-@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9')
+@pytest.mark.uncollectif(lambda appliance: appliance.version >= '5.9')
 class TestArbitrationRulesRESTAPI(object):
     @pytest.fixture(scope='function')
     def arbitration_rules(self, request, appliance):
@@ -745,7 +784,14 @@ class TestArbitrationRulesRESTAPI(object):
         assert len(response) == num_rules
         return response
 
-    @pytest.mark.uncollectif(lambda: current_version() >= '5.9')
+    def test_query_arbitration_rule_attributes(self, arbitration_rules, soft_assert):
+        """Tests access to arbitration rule attributes.
+
+        Metadata:
+            test_flag: rest
+        """
+        query_resource_attributes(arbitration_rules[0], soft_assert=soft_assert)
+
     def test_create_arbitration_rules(self, arbitration_rules, appliance):
         """Tests create arbitration rules.
 
@@ -757,7 +803,6 @@ class TestArbitrationRulesRESTAPI(object):
             assert record.description == rule.description
 
     # there's no test for the DELETE method as it is not working and won't be fixed, see BZ 1410504
-    @pytest.mark.uncollectif(lambda: current_version() >= '5.9')
     def test_delete_arbitration_rules_from_detail_post(self, arbitration_rules, appliance):
         """Tests delete arbitration rules from detail.
 
@@ -771,7 +816,6 @@ class TestArbitrationRulesRESTAPI(object):
                 entity.action.delete.POST()
             assert_response(appliance, http_status=404)
 
-    @pytest.mark.uncollectif(lambda: current_version() >= '5.9')
     def test_delete_arbitration_rules_from_collection(self, arbitration_rules, appliance):
         """Tests delete arbitration rules from collection.
 
@@ -785,7 +829,6 @@ class TestArbitrationRulesRESTAPI(object):
             collection.action.delete(*arbitration_rules)
         assert_response(appliance, http_status=404)
 
-    @pytest.mark.uncollectif(lambda: current_version() >= '5.9')
     @pytest.mark.parametrize(
         'from_detail', [True, False],
         ids=['from_detail', 'from_collection'])
@@ -822,6 +865,16 @@ class TestNotificationsRESTAPI(object):
         assert len(requests) == 2
         wait_for_requests(requests)
 
+    def test_query_notification_attributes(self, appliance, generate_notifications, soft_assert):
+        """Tests access to notification attributes.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = appliance.rest_api.collections.notifications
+        collection.reload()
+        query_resource_attributes(collection[-1], soft_assert=soft_assert)
+
     @pytest.mark.parametrize(
         'from_detail', [True, False],
         ids=['from_detail', 'from_collection'])
@@ -850,20 +903,25 @@ class TestNotificationsRESTAPI(object):
     def test_delete_notifications_from_detail(self, appliance, generate_notifications, method):
         """Tests delete notifications from detail.
 
+        Tests BZ 1420872
+
         Metadata:
             test_flag: rest
         """
-        if method == 'delete' and BZ('1420872', forced_streams=['5.7', '5.8', 'upstream']).blocks:
+        # BZ 1420872 was fixed for >= 5.9 only
+        if method == 'delete' and appliance.version < '5.9':
             pytest.skip("Affected by BZ1420872, cannot test.")
         collection = appliance.rest_api.collections.notifications
         collection.reload()
         notifications = [collection[-i] for i in range(1, 3)]
 
         for entity in notifications:
-            entity.action.delete(force_method=method)
+            del_action = getattr(entity.action.delete, method.upper())
+            del_action()
             assert_response(appliance)
+
             with error.expected('ActiveRecord::RecordNotFound'):
-                entity.action.delete(force_method=method)
+                del_action()
             assert_response(appliance, http_status=404)
 
     def test_delete_notifications_from_collection(self, appliance, generate_notifications):
@@ -889,7 +947,18 @@ class TestEventStreamsRESTAPI(object):
         # remove vm event
         a_provider.mgmt.delete_vm(vm_name)
 
-    @pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.9')
+    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+    def test_query_event_attributes(self, appliance, gen_events, soft_assert):
+        """Tests access to event attributes.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = appliance.rest_api.collections.event_streams
+        collection.reload()
+        query_resource_attributes(collection[-1], soft_assert=soft_assert)
+
+    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
     def test_find_created_events(self, appliance, vm_modscope, gen_events, a_provider, soft_assert):
         """Tests find_by and get functions of event_streams collection
 
@@ -912,9 +981,9 @@ class TestEventStreamsRESTAPI(object):
             try:
                 msg = ("vm's {v} event {evt} of {t} type is not found in "
                        "event_streams collection".format(v=vm_name, evt=evt, t=ems_event_type))
-                found_evts, _ = wait_for(lambda: [e for e in evt_col.find_by(type=ems_event_type,
-                                                                             **params)],
-                                         num_sec=30, delay=5, message=msg, fail_condition=[])
+                found_evts, __ = wait_for(
+                    lambda: [e for e in evt_col.find_by(type=ems_event_type, **params)],
+                    num_sec=30, delay=5, message=msg, fail_condition=[])
             except TimedOutError as exc:
                 soft_assert(False, str(exc))
 
