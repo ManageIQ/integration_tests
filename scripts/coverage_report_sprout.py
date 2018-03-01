@@ -1,10 +1,14 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+#
+# This is a wrapper script for coverage_report_jenkins.py that handles acquiring an appliance
+# through sprout and then calls coverage_report_jenkins.py.
 import argparse
 import diaper
 
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils.appliance import IPAppliance
+from cfme.utils.conf import env
 
 from coverage_report_jenkins import main as coverage_report_jenkins
 
@@ -16,12 +20,16 @@ if __name__ == '__main__':
     parser.add_argument('version')
     parser.add_argument('--jenkins-user', default=None)
     parser.add_argument('--jenkins-token', default=None)
+    parser.add_argument('--show-coverage-url', action='store_true', default=False)
     args = parser.parse_args()
     # TODO: Upstream support
     group = 'downstream-' + ''.join(args.version.split('.')[:2]) + 'z'
     sprout = SproutClient.from_config()
     print('requesting an appliance from sprout for {}/{}'.format(group, args.version))
-    pool_id = sprout.request_appliances(group, version=args.version)
+    pool_id = sprout.request_appliances(
+        group,
+        version=args.version,
+        lease_time=env.sonarqube.scanner_lease)
     print('Requested pool {}'.format(pool_id))
     result = None
     try:
@@ -36,7 +44,8 @@ if __name__ == '__main__':
                     args.jenkins_url,
                     args.jenkins_user,
                     args.jenkins_token,
-                    args.jenkins_job_name))
+                    args.jenkins_job_name,
+                    args.show_coverage_url))
     finally:
         with diaper:
             sprout.destroy_pool(pool_id)
