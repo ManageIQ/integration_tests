@@ -31,8 +31,6 @@ class LenovoProvider(PhysicalProvider):
         super(LenovoProvider, self).__init__(
             appliance=appliance, name=name, key=key, endpoints=endpoints
         )
-        self.hostname = self.default_endpoint.view_value_mapping['hostname']
-        self.ip_address = self.hostname
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):

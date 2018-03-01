@@ -16,6 +16,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
+from cfme.utils.net import resolve_hostname
 
 
 class PhysicalProvider(Pretty, BaseProvider, Fillable):
@@ -36,6 +37,14 @@ class PhysicalProvider(Pretty, BaseProvider, Fillable):
         self.endpoints = self._prepare_endpoints(endpoints)
         self.name = name
         self.key = key
+
+    @property
+    def hostname(self):
+        return getattr(self.default_endpoint, "hostname", None)
+
+    @property
+    def ip_address(self):
+        return getattr(self.default_endpoint, "ipaddress", resolve_hostname(str(self.hostname)))
 
     @variable(alias='ui')
     def num_server(self):

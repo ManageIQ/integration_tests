@@ -170,6 +170,7 @@ management_systems:
             default:
                 credentials: lenovo
                 ipaddress: 10.0.0.1
+                hostname: lenovo.hostname
                 api_port: 3000
     nuage:
         name: nuage_net
