@@ -1,6 +1,9 @@
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
+from widgetastic_manageiq import SettingsNavDropdown
 from widgetastic_patternfly import NavDropdown, VerticalNavigation, FlashMessages
+
+from cfme.exceptions import CFMEException
 
 
 class BaseLoggedInPage(View):
@@ -14,10 +17,7 @@ class BaseLoggedInPage(View):
         './/div[starts-with(@class, "flash_text_div") or @id="flash_text_div"]'
     )
     help = NavDropdown('.//li[./a[@id="dropdownMenu1"]]|.//li[./a[@id="help-menu"]]')
-    settings = NavDropdown('.//li[./a[@id="dropdownMenu2"]]')
-    # 5.9 Locator for Settings item that replaces current group name when user has multiple groups
-    group_list_locator = (
-        './/ul/li[contains(@class, "dropdown-submenu") and contains(., "Change Group")]')
+    settings = SettingsNavDropdown('.//li[./a[@id="dropdownMenu2"]]')
     navigation = VerticalNavigation('#maintab')
 
     @property
@@ -29,6 +29,26 @@ class BaseLoggedInPage(View):
             return False
 
         return user.name == self.current_fullname
+
+    def change_group(self, group_name):
+        """ From the settings menu change to the group specified by 'group_name'
+            Only available in versions >= 5.9
+
+            User is required to be currently logged in
+        """
+        if self.extra.appliance.version < '5.9':
+            raise CFMEException("Changing the user group is not supported in versions < 5.9")
+
+        if not self.logged_in_as_user:
+            raise CFMEException("Unable to change group when a user is not logged in")
+
+        if group_name not in self.group_names:
+            raise CFMEException("{} is not an assigned group for {}".format(
+                group_name, self.current_username))
+
+        self.settings.groups.select_item(group_name)
+
+        return True
 
     @property
     def logged_in_as_current_user(self):
@@ -51,35 +71,31 @@ class BaseLoggedInPage(View):
 
     @property
     def current_groupname(self):
-        # TODO: Move these locators and accessors to a widget "Group Dropdown" widget
-        # 5.9 Locators for finding current group when user has multiple groups
-        current_group_locator = '{}/ul/li/a[@title="Currently Selected Group"]'.format(
-            self.group_list_locator)
-        current_group_marker = ' (Current Group)'
-        try:
-            current_group = self.browser.element(current_group_locator)
-            return self.browser.text(current_group).replace(current_group_marker, '')
-        except NoSuchElementException:
-            return self.settings.items[1].strip()
+        current_groups = self.settings.groups.items
+
+        # User is only assigned to one group
+        if len(current_groups) == 1:
+            return current_groups[0]
+
+        for group in current_groups:
+            if self.settings.groups.SELECTED_GROUP_MARKER in group:
+                return group.replace(self.settings.groups.SELECTED_GROUP_MARKER, '')
+        else:
+            # Handle some weird case where we don't detect a current group
+            raise CFMEException("User is not currently assigned to a group")
 
     @property
     def group_names(self):
         """ Return a list of the logged in user's assigned groups.
 
         Returns:
-            Version >= 5.9 - list of all groups the logged in user is assigned to
+            Version >= 5.9 - list containing all groups the logged in user is assigned to
             Version < 5.9 - single item list containing the user's current group
         """
-        # TODO: Move these locators and accessors to a widget "Group Dropdown" widget
-        group_list_locator = '{}/ul/li'.format(self.group_list_locator)
-        current_group_marker = ' (Current Group)'
 
-        group_list = self.browser.elements(group_list_locator)
-        if group_list:
-            return [
-                self.browser.text(group).replace(current_group_marker, '') for group in group_list]
-        else:
-            return [self.current_groupname]
+        return [
+            group.replace(self.settings.groups.SELECTED_GROUP_MARKER, '')
+            for group in self.settings.groups.items]
 
     @property
     def logged_in(self):
