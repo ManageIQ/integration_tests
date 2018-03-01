@@ -27,7 +27,7 @@ pytestmark = [
 ]
 
 # Allowed deviation between the reported value in the Metering report and the estimated value.
-DEVIATION = 2
+DEVIATION = 1
 
 
 @pytest.yield_fixture(scope="module")
@@ -39,7 +39,7 @@ def clean_setup_provider(request, has_no_providers_modscope, setup_provider_mods
 
 @pytest.yield_fixture(scope="module")
 def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
-    # In these tests, chargeback reports are filtered on VM owner.So,VMs have to be
+    # In these tests, Metering report is filtered on VM owner.So,VMs have to be
     # assigned ownership.
 
     vm_name = provider.data['cap_and_util']['chargeback_vm']
@@ -75,7 +75,7 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
 @pytest.yield_fixture(scope="module")
 def enable_candu(provider, appliance):
     # C&U data collection consumes a lot of memory and CPU.So, we are disabling some server roles
-    # that are not needed for Chargeback reporting.
+    # that are not needed for Metering reports.
 
     server_info = appliance.server.settings
     original_roles = server_info.server_roles_db
@@ -123,10 +123,11 @@ def verify_records_rollups_table(appliance, provider, vm_name):
 @pytest.fixture(scope="module")
 def resource_usage(vm_ownership, appliance, provider):
     # Retrieve resource usage values from metric_rollups table.
-    average_cpu_used_in_mhz = 0
-    average_memory_used_in_mb = 0
-    average_network_io = 0
-    average_disk_io = 0
+    cpu_used_in_mhz = 0
+    memory_used_in_mb = 0
+    network_io = 0
+    disk_io = 0
+    storage_used = 0
 
     vm_name = provider.data['cap_and_util']['chargeback_vm']
     metrics = appliance.db.client['metrics']
@@ -137,9 +138,16 @@ def resource_usage(vm_ownership, appliance, provider):
     appliance.db.client.session.query(metrics).delete()
     appliance.db.client.session.query(rollups).delete()
 
-    # Chargeback reporting is done on hourly and daily rollup values and not real-time values.So, we
+    # Metering reports are done on hourly and daily rollup values and not real-time values.So, we
     # are capturing C&U data and forcing hourly rollups by running these commands through
     # the Rails console.
+    #
+    # Metering reports differ from Chargeback reports in that Metering reports 1)report only
+    # resource usage and not costs and 2)sum total of resource usage is reported instead of
+    # the average usage.For eg:If we have 24 hourly rollups, resource usage in a Metering report
+    # is the sum of these 24 rollups, whereas resource usage in a Chargeback report is the
+    # average of these 24 rollups. So, we need data from at least 2 hours in order to validate that
+    # the resource usage is actually being summed up.
 
     def verify_records_metrics_table(appliance, provider, vm_name):
         # Verify that rollups are present in the metric_rollups table.
@@ -177,8 +185,8 @@ def resource_usage(vm_ownership, appliance, provider):
         fail_condition=False, message='Waiting for VM real-time data')
 
     # New C&U data may sneak in since 1)C&U server roles are running and 2)collection for clusters
-    # and hosts is on.This would mess up our Chargeback calculations, so we are disabling C&U
-    # collection after data has been fetched for the last hour.
+    # and hosts is on.This would mess up our calculations, so we are disabling C&U
+    # collection after data has been fetched for the last two hours.
 
     appliance.server.settings.disable_server_roles(
         'ems_metrics_coordinator', 'ems_metrics_collector')
@@ -206,25 +214,25 @@ def resource_usage(vm_ownership, appliance, provider):
 
     for record in appliance.db.client.session.query(rollups).filter(
             rollups.id.in_(result.subquery())):
-        if (record.cpu_usagemhz_rate_average or
-           record.cpu_usage_rate_average or
-           record.derived_memory_used or
-           record.net_usage_rate_average or
-           record.disk_usage_rate_average):
-            average_cpu_used_in_mhz = average_cpu_used_in_mhz + record.cpu_usagemhz_rate_average
-            average_memory_used_in_mb = average_memory_used_in_mb + record.derived_memory_used
-            average_network_io = average_network_io + record.net_usage_rate_average
-            average_disk_io = average_disk_io + record.disk_usage_rate_average
+        cpu_used_in_mhz = cpu_used_in_mhz + record.cpu_usagemhz_rate_average
+        memory_used_in_mb = memory_used_in_mb + record.derived_memory_used
+        network_io = network_io + record.net_usage_rate_average
+        disk_io = disk_io + record.disk_usage_rate_average
+        storage_used = storage_used + record.derived_vm_used_disk_storage
 
-    return {"cpu_used": average_cpu_used_in_mhz,
-            "memory_used": average_memory_used_in_mb,
-            "network_io": average_network_io,
-            "disk_io_used": average_disk_io}
+    # Convert storage used in Bytes to GB
+    storage_used = storage_used * math.pow(2, -30)
+
+    return {"cpu_used": cpu_used_in_mhz,
+            "memory_used": memory_used_in_mb,
+            "network_io": network_io,
+            "disk_io_used": disk_io,
+            "storage_used": storage_used}
 
 
 @pytest.yield_fixture(scope="module")
 def metering_report(vm_ownership, provider):
-    # Create a Metering report based; Queue the report.
+    # Create a Metering report based on VM owner; Queue the report.
     owner = vm_ownership
     data = {
         'menu_name': 'cb_' + provider.name,
@@ -243,7 +251,7 @@ def metering_report(vm_ownership, provider):
     report = CustomReport(is_candu=True, **data)
     report.create()
 
-    logger.info('Queuing chargeback report with default rate for {} provider'.format(provider.name))
+    logger.info('Queuing Metering report for {} provider'.format(provider.name))
     report.queue(wait_for_finish=True)
 
     yield list(report.get_saved_reports()[0].data.rows)
@@ -261,7 +269,7 @@ def test_validate_cpu_usage(resource_usage, metering_report):
             usage_from_report = groups["CPU Used"]
             if 'GHz' in usage_from_report:
                 estimated_cpu_usage = estimated_cpu_usage * math.pow(2, -10)
-            usage = re.sub(r'[MHz, GHz,]', r'', usage_from_report)
+            usage = re.sub(r'(MHz|GHz|,)', r'', usage_from_report)
             assert estimated_cpu_usage - DEVIATION <= float(usage) \
                 <= estimated_cpu_usage + DEVIATION, 'Estimated cost and report cost do not match'
             break
@@ -275,19 +283,19 @@ def test_validate_memory_usage(resource_usage, metering_report):
             usage_from_report = groups["Memory Used"]
             if 'GB' in usage_from_report:
                 estimated_memory_usage = estimated_memory_usage * math.pow(2, -10)
-            usage = re.sub(r'[MB, GB,]', r'', usage_from_report)
+            usage = re.sub(r'(MB|GB|,)', r'', usage_from_report)
             assert estimated_memory_usage - DEVIATION <= float(usage) \
                 <= estimated_memory_usage + DEVIATION, 'Estimated cost and report cost do not match'
             break
 
 
 def test_validate_network_usage(resource_usage, metering_report):
-    """Test to validate network usage cost."""
+    """Test to validate network usage."""
     for groups in metering_report:
         if groups["Network I/O Used"]:
             estimated_network_usage = resource_usage['network_io']
             usage_from_report = groups["Network I/O Used"]
-            usage = re.sub(r'[KBps,]', r'', usage_from_report)
+            usage = re.sub(r'(KBps|,)', r'', usage_from_report)
             assert estimated_network_usage - DEVIATION <= float(usage) \
                 <= estimated_network_usage + DEVIATION,\
                 'Estimated cost and report cost do not match'
@@ -295,12 +303,25 @@ def test_validate_network_usage(resource_usage, metering_report):
 
 
 def test_validate_disk_usage(resource_usage, metering_report):
-    """Test to validate disk usage cost."""
+    """Test to validate disk usage."""
     for groups in metering_report:
         if groups["Disk I/O Used"]:
             estimated_disk_usage = resource_usage['disk_io_used']
             usage_from_report = groups["Disk I/O Used"]
-            usage = re.sub(r'[KBps,]', r'', usage_from_report)
+            usage = re.sub(r'(KBps|,)', r'', usage_from_report)
             assert estimated_disk_usage - DEVIATION <= float(usage) \
                 <= estimated_disk_usage + DEVIATION, 'Estimated cost and report cost do not match'
+            break
+
+
+def test_validate_storage_usage(resource_usage, metering_report):
+    """Test to validate storage usage."""
+    for groups in metering_report:
+        if groups["Storage Used"]:
+            estimated_storage_usage = resource_usage['storage_used']
+            usage_from_report = groups["Storage Used"]
+            usage = re.sub(r'(MB|GB|,)', r'', usage_from_report)
+            assert estimated_storage_usage - DEVIATION <= float(usage) \
+                <= estimated_storage_usage + DEVIATION, \
+                'Estimated cost and report cost do not match'
             break
