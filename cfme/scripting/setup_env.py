@@ -21,10 +21,11 @@ def tot_time(string):
     return tot
 
 
-def provision_appliances(count, cfme_version, provider, lease_time):
+def provision_appliances(count, cfme_version, provider_type, provider, lease_time):
     sprout_client = SproutClient.from_config()
     apps, request_id = sprout_client.provision_appliances(version=str(cfme_version),
-        count=count, preconfigured=False, lease_time=lease_time, provider=provider)
+        count=count, preconfigured=False, lease_time=lease_time, provider_type=provider_type,
+        provider=provider)
     return apps, request_id
 
 
@@ -36,16 +37,18 @@ def main():
 
 @main.command('distributed', help='Sets up distributed environment')
 @click.option('--cfme-version', required=True)
-@click.option('--provider', default=None, help='Specify sprout provider')
+@click.option('--provider-type', default='rhevm', help='Specify sprout provider_type')
+@click.option('--provider', default=None, help='Specify sprout provider, overrides provider_type')
 @click.option('--lease', default='3h', help='Set pool lease time, example: 1d4h30m')
 @click.option('--desc', default='Distributed appliances', help='Set description of the pool')
-def setup_distributed_env(cfme_version, provider, lease, desc):
+def setup_distributed_env(cfme_version, provider_type, provider, lease, desc):
     lease_time = tot_time(lease)
+    provider_type = None if provider else provider_type
     """multi appliance single region configuration (distributed setup, 1st appliance has
     a local database and workers, 2nd appliance has workers pointing at 1st appliance)"""
     print("Provisioning and configuring distributed environment")
-    apps, request_id = provision_appliances(count=2, cfme_version=cfme_version, provider=provider,
-        lease_time=lease_time)
+    apps, request_id = provision_appliances(count=2, cfme_version=cfme_version,
+        provider_type=provider_type, provider=provider, lease_time=lease_time)
     sprout_client = SproutClient.from_config()
     sprout_client.set_pool_description(request_id, desc)
     opt = '5' if cfme_version >= "5.8" else '8'
@@ -69,17 +72,18 @@ def setup_distributed_env(cfme_version, provider, lease, desc):
 
 @main.command('ha', help='Sets up high availability environment')
 @click.option('--cfme-version', required=True)
-@click.option('--provider', default=cfme_data.get('basic_info', {}).get('ha_provider'),
-    help='Specify sprout provider, must not be RHOS')
+@click.option('--provider-type', default='rhevm', help='Specify provider type, must not be RHOS')
+@click.option('--provider', default=None, help='Specify sprout provider, overrides provider_type')
 @click.option('--lease', default='3h', help='set pool lease time, example: 1d4h30m')
 @click.option('--desc', default='HA configuration', help='Set description of the pool')
-def setup_ha_env(cfme_version, provider, lease, desc):
+def setup_ha_env(cfme_version, provider_type, provider, lease, desc):
     lease_time = tot_time(lease)
+    provider_type = None if provider else provider_type
     """multi appliance setup consisting of dedicated primary and standy databases with a single
     UI appliance."""
     print("Provisioning and configuring HA environment")
-    apps, request_id = provision_appliances(count=3, cfme_version=cfme_version, provider=provider,
-        lease_time=lease_time)
+    apps, request_id = provision_appliances(count=3, cfme_version=cfme_version,
+        provider_type=provider_type, provider=provider, lease_time=lease_time)
     sprout_client = SproutClient.from_config()
     sprout_client.set_pool_description(request_id, desc)
     ip0 = apps[0].hostname
@@ -114,13 +118,16 @@ def setup_ha_env(cfme_version, provider, lease, desc):
 
 @main.command('replicated', help='Sets up replicated environment')
 @click.option('--cfme-version', required=True)
-@click.option('--provider', default=None, help='Specify sprout provider')
+@click.option('--provider-type', default='rhevm', help='Specify sprout provider type')
+@click.option('--provider', default=None, help='Specify sprout provider, overrides provider_type')
 @click.option('--lease', default='3h', help='set pool lease time, example: 1d4h30m')
 @click.option('--sprout-poolid', default=None, help='Specify ID of existing pool')
 @click.option('--desc', default='Replicated appliances', help='Set description of the pool')
 @click.option('--remote-worker', is_flag=True, help='Add node to remote region')
-def setup_replication_env(cfme_version, provider, lease, sprout_poolid, desc, remote_worker):
+def setup_replication_env(cfme_version, provider_type, provider, lease, sprout_poolid, desc,
+                          remote_worker):
     lease_time = tot_time(lease)
+    provider_type = None if provider else provider_type
     """Multi appliance setup with multi region and replication from remote to global"""
     required_app_count = 2
     sprout_client = SproutClient.from_config()
@@ -146,7 +153,7 @@ def setup_replication_env(cfme_version, provider, lease, sprout_poolid, desc, re
         print("Provisioning appliances")
         apps, request_id = provision_appliances(
             count=required_app_count, cfme_version=cfme_version,
-            provider=provider, lease_time=lease_time
+            provider_type=provider_type, provider=provider, lease_time=lease_time
         )
         print("Appliance pool lease time is {}".format(lease))
         sprout_client.set_pool_description(request_id, desc)

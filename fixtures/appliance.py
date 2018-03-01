@@ -19,7 +19,7 @@ from cfme.test_framework.sprout.client import SproutClient
 
 
 @contextmanager
-def temp_appliances(count=1, preconfigured=True, lease_time=180, stream=None):
+def temp_appliances(count=1, preconfigured=True, lease_time=180, stream=None, provider_type=None):
     """ Provisions one or more appliances for testing
 
     Args:
@@ -31,7 +31,7 @@ def temp_appliances(count=1, preconfigured=True, lease_time=180, stream=None):
     request_id = None
     try:
         sprout_client = SproutClient.from_config()
-        apps, request_id = sprout_client.provision_appliances(
+        apps, request_id = sprout_client.provision_appliances(provider_type=provider_type,
             count=count, lease_time=lease_time, preconfigured=preconfigured, stream=stream)
         yield apps
     finally:
@@ -95,6 +95,12 @@ def temp_appliance_unconfig_clsscope():
 @pytest.yield_fixture(scope="function")
 def temp_appliance_unconfig_funcscope():
     with temp_appliances(preconfigured=False) as appliances:
+        yield appliances[0]
+
+
+@pytest.yield_fixture(scope="function")
+def temp_appliance_unconfig_funcscope_rhevm():
+    with temp_appliances(preconfigured=False, provider_type='rhevm') as appliances:
         yield appliances[0]
 
 

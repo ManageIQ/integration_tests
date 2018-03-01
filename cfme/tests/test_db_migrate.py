@@ -46,13 +46,13 @@ def temp_appliance_remote(temp_appliance_preconfig_funcscope):
 
 
 @pytest.fixture(scope="function")
-def temp_appliance_global_region(temp_appliance_unconfig_funcscope):
-    temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_internal(
+def temp_appliance_global_region(temp_appliance_unconfig_funcscope_rhevm):
+    temp_appliance_unconfig_funcscope_rhevm.appliance_console_cli.configure_appliance_internal(
         99, 'localhost', credentials['database']['username'], credentials['database']['password'],
-        'vmdb_production', temp_appliance_unconfig_funcscope.unpartitioned_disks[0])
-    temp_appliance_unconfig_funcscope.wait_for_evm_service()
-    temp_appliance_unconfig_funcscope.wait_for_web_ui()
-    return temp_appliance_unconfig_funcscope
+        'vmdb_production', temp_appliance_unconfig_funcscope_rhevm.unpartitioned_disks[0])
+    temp_appliance_unconfig_funcscope_rhevm.wait_for_evm_service()
+    temp_appliance_unconfig_funcscope_rhevm.wait_for_web_ui()
+    return temp_appliance_unconfig_funcscope_rhevm
 
 
 @pytest.yield_fixture(scope="function")
@@ -126,7 +126,8 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
 
 
 @pytest.mark.uncollectif(
-    lambda dbversion: dbversion == 'ec2_5540' and version.current_version() < "5.9")
+    lambda dbversion: dbversion == 'scvmm_58' and version.current_version() < "5.9" or
+    dbversion == 'ec2_5540' and version.current_version() < "5.9")
 @pytest.mark.parametrize('dbversion', ['ec2_5540', 'azure_5620', 'rhev_57', 'scvmm_58'],
         ids=['55', '56', '57', '58'])
 def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance_global_region):
