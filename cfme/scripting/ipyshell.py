@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import click
 import sys
-from . import quickstart
 
 from IPython.terminal.interactiveshell import TerminalInteractiveShell
 
@@ -14,9 +13,12 @@ IMPORTS = [
 
 
 @click.command(help="Open an IPython shell")
-def main():
+@click.option('--no-quickstart', is_flag=True)
+def main(no_quickstart):
     """Use quickstart to ensure we have correct env, then execute imports in ipython and done."""
-    quickstart.main(quickstart.parser.parse_args(['--mk-virtualenv', sys.prefix]))
+    if not no_quickstart:
+        from . import quickstart
+        quickstart.main(quickstart.parser.parse_args(['--mk-virtualenv', sys.prefix]))
     print('Welcome to IPython designed for running CFME QE code.')
     ipython = TerminalInteractiveShell.instance()
     for code_import in IMPORTS:
