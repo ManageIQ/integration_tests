@@ -331,10 +331,10 @@ class SSHClient(paramiko.SSHClient):
                     # When the program finishes, we need to grab the rest of the output that is left
                     # Though it's possible, we should have read enough of the buffers so that we can
                     # just dump the rest.
-                    if session.recv_ready():
+                    if session.recv_ready:
                         for line in stdout:
                             write_output(line, self.f_stdout)
-                    if session.recv_stderr_ready():
+                    if session.recv_stderr_ready:
                         for line in stderr:
                             write_output(line, self.f_stderr)
                     break
