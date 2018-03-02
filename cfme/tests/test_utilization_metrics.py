@@ -52,7 +52,6 @@ def clean_setup_provider(request, provider):
     yield
     BaseProvider.clear_providers()
 
-
 @pytest.fixture(scope="module")
 def metrics_collection(appliance, clean_setup_provider, provider, enable_candu):
     """Check the db is gathering collection data for the given provider.
@@ -62,22 +61,16 @@ def metrics_collection(appliance, clean_setup_provider, provider, enable_candu):
     """
     metrics_tbl = appliance.db.client['metrics']
     mgmt_systems_tbl = appliance.db.client['ext_management_systems']
-
     logger.info("Fetching provider ID for %s", provider.key)
     mgmt_system_id = appliance.db.client.session.query(mgmt_systems_tbl).filter(
         mgmt_systems_tbl.name == conf.cfme_data.get('management_systems', {})[provider.key]['name']
     ).first().id
-
     logger.info("ID fetched; testing metrics collection now")
     start_time = time.time()
     host_count = 0
     vm_count = 0
-    host_rising = False
-    vm_rising = False
     timeout = 900.0  # 15 min
     while time.time() < start_time + timeout:
-        last_host_count = host_count
-        last_vm_count = vm_count
         logger.info("name: %s, id: %s, vms: %s, hosts: %s",
             provider.key, mgmt_system_id, vm_count, host_count)
         # Count host and vm metrics for the provider we're testing
@@ -89,19 +82,11 @@ def metrics_collection(appliance, clean_setup_provider, provider, enable_candu):
             metrics_tbl.parent_ems_id == mgmt_system_id).filter(
             metrics_tbl.resource_type == "VmOrTemplate"
         ).count()
-
-        if host_rising is not True:
-            if host_count > last_host_count:
-                host_rising = True
-        if vm_rising is not True:
-            if vm_count > last_vm_count:
-                vm_rising = True
-
         # only vms are collected for cloud
-        if provider.category == "cloud" and vm_rising:
+        if provider.category == "cloud" and vm_count:
             return
         # both vms and hosts must be collected for infra
-        elif provider.category == "infra" and vm_rising and host_rising:
+        elif provider.category == "infra" and vm_count and host_count:
             return
         else:
             time.sleep(15)
