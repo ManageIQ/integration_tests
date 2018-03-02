@@ -218,7 +218,7 @@ class Volume(BaseEntity):
                  timeout=1000,
                  fail_func=self.refresh)
 
-    def create_snapshot(self, name, cancle=False, reset=False):
+    def create_snapshot(self, name, cancel=False, reset=False):
         """create snapshot of cloud volume"""
         initial_snapshot_count = self.snapshots_count
         view = navigate_to(self, 'Snapshot')
@@ -231,7 +231,7 @@ class Volume(BaseEntity):
                 view.reset.click()
                 view.flash.assert_message('All changes have been reset')
 
-            elif cancle:
+            elif cancel:
                 view.cancel.click()
                 view = self.create_view(VolumeDetailsView)
                 wait_for(lambda: view.is_displayed, delay=2, timeout=10, message='waiting for view')
@@ -343,7 +343,7 @@ class VolumeCollection(BaseCollection):
         view.flash.assert_success_message(base_message.format(name))
 
         volume = self.instantiate(name, provider)
-        wait_for(lambda: volume.exists, delay=20, timeout=500, fail_func=volume.refresh)
+        wait_for(lambda: volume.exists, delay=50, timeout=1500, fail_func=volume.refresh)
 
         return volume
 

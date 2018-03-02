@@ -224,7 +224,8 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-            self.prerequisite_view.navigation.select('Storage', 'Block Storage', 'Volume Snapshots')
+            self.prerequisite_view.navigation.select(
+                'Storage', 'Block Storage', 'Volume Snapshots')
 
 
 @navigator.register(VolumeSnapshot, 'Details')

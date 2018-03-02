@@ -51,7 +51,7 @@ def snapshot(appliance, provider, volume):
 
     try:
         if snapshot.exists:
-            snapshot_collection.delete(snapshot)
+            snapshot.delete()
     except Exception as e:
         logger.warning("{name}:{msg}: Snapshot deletion - skipping...".format(
             name=type(e).__name__,
@@ -73,7 +73,7 @@ def test_storage_snapshot_create_cancelled_validation(volume):
     """
 
     snapshot_name = fauxfactory.gen_alpha()
-    volume.create_snapshot(snapshot_name, cancle=True)
+    volume.create_snapshot(snapshot_name, cancel=True)
 
 
 @pytest.mark.tier(3)
