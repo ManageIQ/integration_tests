@@ -68,7 +68,7 @@ def get_provision_data(rest_api, provider, template_name, auto_approve=True):
     return result
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def provision_data(appliance, provider, small_template_modscope):
     return get_provision_data(appliance.rest_api, provider, small_template_modscope.name)
 
@@ -130,8 +130,9 @@ def test_provision_emails(request, provision_data, provider, appliance, smtp_tes
     request.addfinalizer(lambda: clean_vm(appliance, vm_name))
 
     vm_name = provision_data["vm_fields"]["vm_name"]
-    provision_data["vm_fields"]["vm_memory"] = "1024"
-    provision_data["vm_fields"]["number_of_sockets "] = "2"
+    memory = int(provision_data["vm_fields"]["vm_memory"])
+    provision_data["vm_fields"]["vm_memory"] = str(memory / 2)
+    provision_data["vm_fields"]["number_of_cpus"] += 1
 
     appliance.rest_api.collections.provision_requests.action.create(**provision_data)
     assert appliance.rest_api.response.status_code == 200
