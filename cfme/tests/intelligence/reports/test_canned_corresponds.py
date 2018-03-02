@@ -32,11 +32,13 @@ def test_providers_summary(soft_assert):
     presence of units and rounding."""
     path = ["Configuration Management", "Providers", "Providers Summary"]
     report = CannedSavedReport.new(path)
+    # Skip cloud and network providers as they don't share some attributes with infra providers
+    skipped_providers = {"ec2", "openstack", "redhat_network"}
     for provider in report.data.rows:
-        if any(ptype in provider["MS Type"] for ptype in {"ec2", "openstack"}):  # Skip cloud
+        if provider["MS Type"] in skipped_providers:
             continue
         details_view = navigate_to(InfraProvider(name=provider["Name"]), 'Details')
-        props = details_view.entities.properties
+        props = details_view.entities.summary("Properties")
 
         hostname = ("Host Name", "Hostname")
         soft_assert(props.get_text_of(hostname[0]) == provider[hostname[1]],
