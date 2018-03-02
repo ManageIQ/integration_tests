@@ -1,9 +1,9 @@
 import pytest
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.utils.appliance.implementations.ui import navigate_to
-from markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.networks.views import (CloudNetworkView, SubnetView, NetworkRouterView, SecurityGroupView,
                                  NetworkPortView, BalancerView, FloatingIpView)
+from cfme.utils.appliance.implementations.ui import navigate_to
+from markers.env_markers.provider import ONE_PER_CATEGORY
 
 
 pytestmark = [
@@ -50,9 +50,7 @@ def test_tagvis_network_provider_children(provider, appliance, request, relation
     network_provider = collection.instantiate(name=net_prov_name)
     network_provider.add_tag(tag=tag)
 
-    @request.addfinalizer
-    def _finalize():
-        network_provider.remove_tag(tag=tag)
+    request.addfinalizer(lambda: network_provider.remove_tag(tag=tag))
 
     actual_visibility = child_visibility(appliance, network_provider, relationship, view)
     assert actual_visibility
