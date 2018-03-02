@@ -7,6 +7,7 @@ import pytest
 import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.services.dashboard import Dashboard
 from cfme import test_requirements
 from cfme.utils.appliance import ViaSSUI
@@ -171,7 +172,8 @@ def test_retired_service(appliance, context):
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
-@pytest.mark.meta(blockers=[BZ(1551113, unblock=lambda provider: provider.type != 'scvmm')])
+@pytest.mark.meta(blockers=[BZ(1551113, unblock=lambda provider: not provider.one_of(
+    SCVMMProvider))])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_monthly_charges(appliance, setup_provider, context, order_catalog_item_in_ops_ui,
         run_service_chargeback_report):
