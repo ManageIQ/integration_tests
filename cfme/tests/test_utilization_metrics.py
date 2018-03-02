@@ -62,10 +62,12 @@ def metrics_collection(appliance, clean_setup_provider, provider, enable_candu):
     """
     metrics_tbl = appliance.db.client['metrics']
     mgmt_systems_tbl = appliance.db.client['ext_management_systems']
+
     logger.info("Fetching provider ID for %s", provider.key)
     mgmt_system_id = appliance.db.client.session.query(mgmt_systems_tbl).filter(
         mgmt_systems_tbl.name == conf.cfme_data.get('management_systems', {})[provider.key]['name']
     ).first().id
+
     logger.info("ID fetched; testing metrics collection now")
     start_time = time.time()
     host_count = 0
