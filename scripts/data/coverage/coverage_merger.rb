@@ -27,6 +27,7 @@
 #                   $coverage_data_lineN
 #               },
 #           }
+#           "timestamp": 1518751298
 #       }
 #   } 
 #
@@ -36,34 +37,103 @@
 #      - > 0: Number of times line covered.
 #      - null: Not coverable (e.g. a comment)
 #
-# The merge will actually still keep the data separate between the 
-# appliance-processes, but they are all in the same file.   sonar-scanner 
-# can apparently handle this fine.   So the file will look like:
+# 
+# The merge file will look like this.
 # 
 #   {
-#       "$ip1-$pid1": {
+#       "merged-coverage-data": {
 #           "coverage": {
-#               ...
+#              "$file1": {
+#                   $coverage_data_line1,
+#                   .
+#                   .
+#                   .
+#                   $coverage_data_lineN
+#               },
+#               .
+#               .
+#               .
+#              "$fileN": {
+#                   $coverage_data_line1,
+#                   .
+#                   .
+#                   .
+#                   $coverage_data_lineN
+#               },
 #           }
-#       }
-#       .
-#       .
-#       .
-#       "$ipM-$pidN": {
-#           "coverage": {
-#               ...
-#           }
+#           "timestamp": 1518751298
 #       }
 #   } 
 #
 require 'fileutils'
 require 'json'
+require 'logger'
 require 'optparse'
 require 'simplecov'
 require 'simplecov/result'
 
 rails_root = '/var/www/miq/vmdb'
+data_title = 'merged_data'
 results = Hash.new
+results[data_title] = {
+    'coverage' => { },
+    'timestamp' => 0,
+}
+
+# Setup simple logging
+$log = Logger.new(STDOUT)
+$log.level = Logger::INFO
+$log.formatter = proc do |severity, datetime, progname, msg|
+  "#{msg}\n"
+end
+
+def merge_file(file, coverage_data, merge_data)
+  $log.debug("\t#{file}")
+
+  if !merge_data.key?(file)
+    $log.debug("\t\tnew file!")
+    merge_data[file] = coverage_data
+  else
+    $log.debug("\t\tfile exist in merge data...merging.")
+    merge_source_coverage(merge_data[file], coverage_data)
+  end
+end
+
+def merge_source_coverage(src_coverage_data1, src_coverage_data2)                                                                  
+  # Since this is the coverage data for the same source file
+  # even though it is across different processes and/or appliances 
+  # we expect the number of lines in the source file to be equal.   
+  if src_coverage_data1.length != src_coverage_data2.length
+    raise ArgumentError, 'Both files are not the same length!'
+  end
+  num_of_lines = src_coverage_data1.length
+
+  # We expect lines to be marked with either 0, some positive integer
+  # or Null. If both lines are integers (0 included) we just add the two
+  # lines together for the result.   If both are Null they stay Null.
+  # If there is a mix we raise and exception.  Null denotes a line that
+  # would not be counted for code coverage and for it to be Null in one 
+  # array and not the other implies actual differences in the files which is
+  # not allowed.
+  line_number = 0
+  while line_number < num_of_lines
+    $log.debug("#{line_number}: #{src_coverage_data1[line_number]} #{src_coverage_data2[line_number]}")
+
+    if src_coverage_data1[line_number].is_a?(Fixnum) and src_coverage_data2[line_number].is_a?(Fixnum)
+      src_coverage_data1[line_number] += src_coverage_data2[line_number]
+
+    # If both were not numbers, and both are not Null, we need to raise an exception.
+    elsif !(src_coverage_data1[line_number].is_a?(NilClass) and src_coverage_data2[line_number].is_a?(NilClass))
+      raise ArgumentError, <<EOM
+Coverage data should be either Null or a Number!
+DATA1: #{src_coverage_data1[line_number]} is #{src_coverage_data1[line_number].class}
+DATA2: #{src_coverage_data2[line_number]} is #{src_coverage_data2[line_number].class}
+EOM
+    end
+    
+    line_number += 1
+  end
+end
 
 # Parse command line arguments:
 options = {}
@@ -71,6 +141,9 @@ options[:coverage_root] = './coverage'
 OptionParser.new do |parser|
   parser.on("-c", "--coverageRoot DIR", "Path to the coverage directory.") do |v|
     options[:coverage_root] = v
+  end
+  parser.on("-v", "--verbose", "Turn on verbose output.") do 
+    $log.level = Logger::DEBUG
   end
 end.parse!
 
@@ -81,14 +154,45 @@ json_files = Dir.glob(
 merged_dir = File.join(options[:coverage_root], 'merged')
 merged_result_set = File.join(merged_dir, '.resultset.json')
 
+skipped_files = Array.new
 for json_file in json_files
   begin
     json = File.read(json_file)
-    results.update(JSON.parse(json))
-    puts "Merging #{json_file}"
-  rescue
-    puts "Skipping #{json_file}, no valid JSON"
+    data = JSON.parse(json)
+
+    # Pull the file data out of the coverage hash
+    data.each {|key, value|
+      $log.info("Processing #{key}...")
+      coverage = value['coverage']
+
+      # The structure has to have a timestamp.   
+      # So I just arbitrarily grab the same one from the
+      # the merge files.   Last one wins.
+      results[data_title]['timestamp'] = value['timestamp']
+
+      # Process each file:
+      coverage.each {|file, coverage_data|
+        merge_file(file, coverage_data, results[data_title]['coverage'])
+      }
+
+      # We only expect one key at the top level, so break out.
+      break
+    }
+    
+    $log.info("\tMerged #{json_file}")
+  rescue JSON::ParserError => e
+    $log.error("\tSkipping #{json_file}, no valid JSON")
+    $log.error("\t#{e}")
+    skipped_files.push(json_file)
   end
+end
+
+# Show the skipped files if any where skipped
+if skipped_files.length > 0
+    $log.error("The following files were skipped:")
+    skipped_files.each do |file|
+        $log.error("\t#{file}")
+    end
 end
 
 if results.empty?
@@ -97,6 +201,7 @@ else
   puts "All results merged, compiling report: #{merged_result_set}"
 end
 
+# Write the merged data out:
 FileUtils.mkdir_p(merged_dir)
 File.open(merged_result_set, "w") do |f|
   f.puts JSON.pretty_generate(results)
