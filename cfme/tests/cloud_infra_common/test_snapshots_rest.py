@@ -7,101 +7,107 @@ from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import error
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
-from cfme.utils.log import logger
 from cfme.utils.rest import assert_response, delete_resources_from_collection
-from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda: current_version() < '5.8'),
     pytest.mark.long_running,
     pytest.mark.tier(2),
     test_requirements.snapshot,
-    pytest.mark.provider([VMwareProvider, OpenStackProvider], scope='module'),
+    pytest.mark.provider([VMwareProvider, RHEVMProvider, OpenStackProvider], scope='module'),
 ]
-
-
-@pytest.yield_fixture(scope='module')
-def vm_obj(provider, setup_provider_modscope, small_template_modscope):
-    """Creates new VM or instance"""
-    vm_name = random_vm_name('snpsht')
-    new_vm = VM.factory(vm_name, provider, template_name=small_template_modscope.name)
-
-    if not provider.mgmt.does_vm_exist(vm_name):
-        new_vm.create_on_provider(find_in_cfme=True, allow_skip='default')
-
-    yield new_vm
-
-    try:
-        provider.mgmt.delete_vm(new_vm.name)
-    except Exception:
-        logger.warning("Failed to delete vm `{}`.".format(new_vm.name))
 
 
 @pytest.fixture(scope='module')
 def collection(appliance, provider):
-    """Returns "vms" or "instances" collection based on provider type"""
+    """Returns "vms" or "instances" collection based on provider type."""
     if provider.one_of(InfraProvider):
         return appliance.rest_api.collections.vms
     return appliance.rest_api.collections.instances
 
 
-@pytest.yield_fixture(scope='function')
-def vm_snapshot(appliance, collection, vm_obj):
-    """Creates VM/instance snapshot using REST API
+@pytest.yield_fixture(scope='module')
+def vm(provider, appliance, collection, setup_provider_modscope, small_template_modscope):
+    """Creates new VM or instance."""
+    vm_name = random_vm_name('snpsht')
+    new_vm = VM.factory(vm_name, provider, template_name=small_template_modscope.name)
+
+    if not collection.find_by(name=vm_name):
+        new_vm.create_on_provider(find_in_cfme=True, allow_skip='default')
+
+    vm_rest = collection.get(name=vm_name)
+    yield vm_rest
+
+    vms = appliance.rest_api.collections.vms.find_by(name=vm_name)
+    if vms:
+        vm = vms[0]
+        vm.action.delete()
+        vm.wait_not_exists(num_sec=600, delay=5)
+
+
+def _delete_snapshot(vm, description):
+    """Deletes snapshot if it exists."""
+    to_delete = vm.snapshots.find_by(description=description)
+    if to_delete:
+        snap = to_delete[0]
+        snap.action.delete()
+        snap.wait_not_exists(num_sec=300, delay=5)
+
+
+@pytest.fixture(scope='function')
+def vm_snapshot(request, appliance, collection, vm):
+    """Creates VM/instance snapshot using REST API.
 
     Returns:
         Tuple with VM and snapshot resources in REST API
     """
     uid = fauxfactory.gen_alphanumeric(8)
-    snap_name = 'snpshot_{}'.format(uid)
-    vm = collection.get(name=vm_obj.name)
+    snap_desc = 'snapshot {}'.format(uid)
+    request.addfinalizer(lambda: _delete_snapshot(vm, snap_desc))
     vm.snapshots.action.create(
-        name=snap_name,
-        description='snapshot {}'.format(uid),
-        memory=False)
+        name='snapshot_{}'.format(uid),
+        description=snap_desc,
+        memory=False,
+    )
     assert_response(appliance)
     snap, __ = wait_for(
-        lambda: vm.snapshots.find_by(name=snap_name) or False,
-        num_sec=600, delay=5)
+        lambda: vm.snapshots.find_by(description=snap_desc) or False,
+        num_sec=800,
+        delay=5,
+        message='snapshot creation',
+    )
     snap = snap[0]
 
-    yield vm, snap
-
-    collection.reload()
-    to_delete = vm.snapshots.find_by(name=snap_name)
-    if to_delete:
-        vm.snapshots.action.delete(to_delete[0])
+    return vm, snap
 
 
 class TestRESTSnapshots(object):
-    """Tests actions with VM/instance snapshots using REST API"""
+    """Tests actions with VM/instance snapshots using REST API."""
 
     def test_create_snapshot(self, vm_snapshot):
-        """Creates VM/instance snapshot using REST API
+        """Creates VM/instance snapshot using REST API.
 
         Metadata:
             test_flag: rest
         """
         vm, snapshot = vm_snapshot
-        vm.snapshots.get(name=snapshot.name)
+        vm.snapshots.get(description=snapshot.description)
 
     @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
     def test_delete_snapshot_from_detail(self, appliance, vm_snapshot, method):
-        """Deletes VM/instance snapshot from detail using REST API
+        """Deletes VM/instance snapshot from detail using REST API.
 
         Metadata:
             test_flag: rest
         """
         __, snapshot = vm_snapshot
-        if method == 'post':
-            del_action = snapshot.action.delete.POST
-        else:
-            del_action = snapshot.action.delete.DELETE
+        del_action = getattr(snapshot.action.delete, method.upper())
 
         del_action()
         assert_response(appliance)
@@ -113,7 +119,7 @@ class TestRESTSnapshots(object):
         assert_response(appliance, http_status=404)
 
     def test_delete_snapshot_from_collection(self, vm_snapshot):
-        """Deletes VM/instance snapshot from collection using REST API
+        """Deletes VM/instance snapshot from collection using REST API.
 
         Metadata:
             test_flag: rest
@@ -122,10 +128,40 @@ class TestRESTSnapshots(object):
         delete_resources_from_collection(
             vm.snapshots, [snapshot], not_found=True, num_sec=300, delay=5)
 
-    @pytest.mark.uncollectif(lambda provider:
-            not provider.one_of(InfraProvider) or current_version() < '5.8')
-    def test_revert_snapshot(self, appliance, vm_snapshot):
-        """Reverts VM/instance snapshot using REST API
+    @pytest.mark.meta(
+        blockers=[BZ(1550551, forced_streams=['5.8', '5.9', 'upstream'],
+            unblock=lambda provider: not provider.one_of(RHEVMProvider))]
+    )
+    def test_delete_snapshot_race(self, request, appliance, collection, vm):
+        """Tests creation of snapshot while delete is in progress.
+
+        Testing race condition described in BZ 1550551
+
+        Expected result is either success or reasonable error message.
+        Not expected result is success where no snapshot is created.
+
+        Metadata:
+            test_flag: rest
+        """
+        # create and delete snapshot #1
+        __, snap1 = vm_snapshot(request, appliance, collection, vm)
+        snap1.action.delete()
+
+        # create snapshot #2 without waiting for delete
+        # of snapshot #1 to finish
+        try:
+            vm_snapshot(request, appliance, collection, vm)
+        except AssertionError as err:
+            # The `vm_snapshot` calls `assert_response` that checks status of the Task.
+            # AssertionError is raised when Task failed and Task message is included
+            # in error message.
+            # Error message can be different after BZ 1550551 is fixed.
+            if 'Please wait for the operation to finish' not in str(err):
+                raise
+
+    @pytest.mark.uncollectif(lambda provider: not provider.one_of(InfraProvider))
+    def test_revert_snapshot(self, appliance, provider, vm_snapshot):
+        """Reverts VM/instance snapshot using REST API.
 
         Metadata:
             test_flag: rest
@@ -133,4 +169,9 @@ class TestRESTSnapshots(object):
         __, snapshot = vm_snapshot
 
         snapshot.action.revert()
-        assert_response(appliance)
+        if provider.one_of(RHEVMProvider):
+            assert_response(appliance, success=False)
+            result = appliance.rest_api.response.json()
+            assert 'Revert is allowed only when vm is down' in result['message']
+        else:
+            assert_response(appliance)
