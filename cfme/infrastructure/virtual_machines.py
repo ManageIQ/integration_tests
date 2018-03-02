@@ -23,6 +23,7 @@ from cfme.exceptions import (
     VmNotFound, OptionNotAvailable, DestinationNotFound, ItemNotFound,
     VmOrInstanceNotFound)
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.services.requests import RequestsView
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.conf import cfme_data
@@ -887,33 +888,40 @@ class Vm(VM):
                 row.type.fill(disk.type)
                 # Unit first, then size (otherwise JS would try to recalculate the size...)
                 if self.provider.one_of(RHEVMProvider):
-                    # Workaround necessary until BZ 1524960 is resolved
+                    # TODO: Workaround necessary until BZ 1524960 is resolved
+                    # -- block start --
                     row[3].fill(disk.size_unit)
                 else:
-                    row[4].fill(disk.size_unit)
+                    if self.appliance.version < '5.9':
+                        unit_column = 4
+                    else:
+                        unit_column = 5
+                    # -- block end --
+                    row[unit_column].fill(disk.size_unit)
                     row.mode.fill(mode)
                     row.dependent.fill(dependent)
                 row.size.fill(disk.size)
                 row.actions.widget.click()
+                message = 'Add Disks'
             elif action == 'delete':
                 row = vm_recfg.disks_table.row(name=disk.filename)
-                row.delete_backing.fill(disk_change['delete_backing'])
+                # `delete_backing` removes disk from the env
+                row.delete_backing.fill(True)
                 row.actions.widget.click()
+                message = 'Remove Disks'
             else:
                 raise ValueError("Unknown disk change action; must be one of: add, delete")
 
         if cancel:
             vm_recfg.cancel_button.click()
-            # TODO Cannot use VM list view for flash messages here because we don't have one yet
-            vm_recfg.flash.assert_no_error()
-            vm_recfg.flash.assert_message('VM Reconfigure Request was cancelled by the user')
+            view = self.appliance.browser.create_view(InfraVmDetailsView)
+            view.flash.assert_success_message('VM Reconfigure Request was cancelled by the user')
         else:
             vm_recfg.submit_button.click()
-            # TODO Cannot use Requests view for flash messages here because we don't have one yet
-            vm_recfg.flash.assert_no_error()
-            vm_recfg.flash.assert_message("VM Reconfigure Request was saved")
-
-        # TODO This should (one day) return a VM reconfigure request obj that we can further use
+            view = self.appliance.browser.create_view(RequestsView)
+            view.flash.assert_success_message("VM Reconfigure Request was saved")
+            return self.appliance.collections.requests.instantiate(description="{} - {}".format(
+                self.name, message), partial_check=True)
 
     @property
     def cluster(self):
