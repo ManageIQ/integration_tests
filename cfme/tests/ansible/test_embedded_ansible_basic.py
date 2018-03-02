@@ -210,7 +210,7 @@ def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansib
 
     if credential.credential_type == "Amazon":
         wait_for_changes("Access Key")
-    if credential.credential_type == "Google Compute Engine":
+    elif credential.credential_type == "Google Compute Engine":
         wait_for_changes("Service Account Email Address")
     else:
         wait_for_changes("Username")
