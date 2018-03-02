@@ -3,7 +3,7 @@ from widgetastic.widget import Text
 from widgetastic_manageiq import Table, PaginationPane
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from navmazing import NavigateToSibling
+from navmazing import NavigateToSibling, NavigateToAttribute
 
 from . import CloudIntelReportsView
 from .reports import CustomSavedReportDetailsView
@@ -75,6 +75,15 @@ class SavedReport(Navigatable):
         else:
             view.flash.assert_no_error()
             view.flash.assert_message("Successfully deleted Saved Report from the CFME Database")
+
+
+@navigator.register(SavedReport, "All")
+class CustomReportAll(CFMENavigateStep):
+    VIEW = AllSavedReportsView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+
+    def step(self):
+        self.prerequisite_view.saved_reports.tree.click_path("All Saved Reports")
 
 
 @navigator.register(SavedReport, "Details")
