@@ -10,7 +10,9 @@ from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils.appliance import IPAppliance
 from cfme.utils.conf import env
 
+# Note we get our logging setup from this load too.
 from coverage_report_jenkins import main as coverage_report_jenkins
+from coverage_report_jenkins import logger
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -23,18 +25,18 @@ if __name__ == '__main__':
     # TODO: Upstream support
     group = 'downstream-' + ''.join(args.version.split('.')[:2]) + 'z'
     sprout = SproutClient.from_config()
-    logger.info('requesting an appliance from sprout for {}/{}'.format(group, args.version))
+    logger.info('requesting an appliance from sprout for %s/%s', group, args.version)
     pool_id = sprout.request_appliances(
         group,
         version=args.version,
         lease_time=env.sonarqube.scanner_lease)
-    logger.info('Requested pool {}'.format(pool_id))
+    logger.info('Requested pool %s', pool_id)
     result = None
     try:
         while not result or not (result['fulfilled'] and result['finished']):
             result = sprout.request_check(pool_id)
         appliance_ip = result['appliances'][0]['ip_address']
-        logger.info('received an appliance with IP address: {}'.format(appliance_ip))
+        logger.info('received an appliance with IP address: %s', appliance_ip)
         with IPAppliance(hostname=appliance_ip) as appliance:
             exit(
                 coverage_report_jenkins(

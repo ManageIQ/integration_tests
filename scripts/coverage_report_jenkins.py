@@ -156,9 +156,9 @@ def merge_coverage_data(ssh, coverage_dir):
     logger.info(str(cmd))
     percentage = re.search(r'LOC\s+\((\d+.\d+%)\)\s+covered\.', str(cmd))
     if percentage:
-        logger.info('COVERAGE={};'.format(percentage.groups()[0]))
+        logger.info('COVERAGE=%s', percentage.groups()[0])
     else:
-        logger.info('COVERAGE=unknown;')
+        logger.info('COVERAGE=unknown')
 
     # The sonar-scanner will actually need the .resultset.json file it
     # uses to be in /coverage/.resultset.json (i.e. the root of the coverarage
@@ -279,10 +279,10 @@ sonar.sources=opt/rh/cfme-gemset,var/www/miq/vmdb
         version=str(project_version).strip())
 
     # Write the config file locally and then copy to remote.
-    logger.info('Writing {}'.format(local_conf))
+    logger.info('Writing %s', local_conf)
     with open(local_conf, 'w') as f:
         f.write(config_data)
-    logger.info('Copying {} to appliance as {}'.format(local_conf, remote_conf))
+    logger.info('Copying %s to appliance as %s', local_conf, remote_conf)
     ssh.put_file(local_conf, remote_conf)
 
 
@@ -300,8 +300,8 @@ def run_sonar_scanner(ssh, scanner_dir, timeout):
         Nothing
     """
     logger.info('Running sonar scan. This may take a while.')
-    logger.info('   timeout={}'.format(timeout))
-    logger.info('   start_time={}'.format(time.strftime('%T')))
+    logger.info('   timeout=%s', timeout)
+    logger.info('   start_time=%s', time.strftime('%T'))
     scanner_executable = '{}/bin/sonar-scanner'.format(scanner_dir)
 
     # It's very important that we run the sonar-scanner from / as this
@@ -312,7 +312,7 @@ def run_sonar_scanner(ssh, scanner_dir, timeout):
     result = ssh.run_command(cmd, timeout=timeout)
     if not result:
         raise Exception("sonar scan failed!\ncmd: {}\noutput: {}".format(cmd, result))
-    logger.info('   end_time={}'.format(time.strftime('%T')))
+    logger.info('   end_time=%s', time.strftime('%T'))
 
 
 def sonar_scan(ssh, project_version, scanner_url, scanner_dir, server_url, timeout):
@@ -346,7 +346,7 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
                 '--jenkins-user and --jenkins-token not provided and credentials yaml does not '
                 'contain the jenkins_app entry with user and token')
     appliance_version = str(appliance.version).strip()
-    logger.info('Looking for appliance version {} in {}'.format(appliance_version, job_name))
+    logger.info('Looking for appliance version %s in %s', appliance_version, job_name)
     client = jenkins.Jenkins(jenkins_url, username=jenkins_user, password=jenkins_token)
     build_numbers = get_build_numbers(client, job_name)
     if not build_numbers:
@@ -360,13 +360,12 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
             if not artifacts:
                 raise ValueError()
         except (KeyError, ValueError):
-            logger.info('No artifacts for {}/{}'.format(job_name, build_number))
+            logger.info('No artifacts for %s/%s', job_name, build_number)
             continue
 
         artifacts = group_list_dict_by(artifacts, 'fileName')
         if 'appliance_version' not in artifacts:
-            logger.info(
-                'appliance_version not in artifacts of {}/{}'.format(job_name, build_number))
+            logger.info('appliance_version not in artifacts of %s/%s', job_name, build_number)
             continue
 
         build_appliance_version = download_artifact(
@@ -374,19 +373,17 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
             artifacts['appliance_version']['relativePath']).strip()
 
         if not build_appliance_version:
-            logger.info('Appliance version unspecified for build {}'.format(build_number))
+            logger.info('Appliance version unspecified for build %s', build_number)
             continue
 
         if Version(build_appliance_version) < Version(appliance_version):
             logger.info(
-                'Build {} already has lower version ({})'.format(
-                    build_number, build_appliance_version))
+                'Build %s already has lower version (%s)', build_number, build_appliance_version)
             logger.info('Ending here')
             break
 
         if 'coverage-results.tgz' not in artifacts:
-            logger.info(
-                'coverage-results.tgz not in artifacts of {}/{}'.format(job_name, build_number))
+            logger.info('coverage-results.tgz not in artifacts of %s/%s', job_name, build_number)
             continue
 
         if not check_artifact(
@@ -396,12 +393,13 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
             continue
 
         if build_appliance_version == appliance_version:
-            logger.info('Build {} was found to contain what is needed'.format(build_number))
+            logger.info('Build %s was found to contain what is needed', build_number)
             eligible_build_numbers.add(build_number)
         else:
             logger.info(
-                'Skipping build {} because it does not have correct version ({})'.format(
-                    build_number, build_appliance_version))
+                'Skipping build %s because it does not have correct version (%s)',
+                build_number,
+                build_appliance_version)
 
     if not eligible_build_numbers:
         raise Exception(
@@ -424,7 +422,7 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
 
         # Download and extract all the coverage data
         for build_number in eligible_build_numbers:
-            logger.info('Downloading the coverage data from build {}'.format(build_number))
+            logger.info('Downloading the coverage data from build %s', build_number)
             download_url = jenkins_artifact_url(
                 jenkins_user, jenkins_token, jenkins_url, job_name, build_number,
                 artifacts['coverage-results.tgz']['relativePath'])
@@ -435,7 +433,7 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
                 raise Exception('Could not download! - {}'.format(str(cmd)))
 
             # Extract coverage data
-            logger.info('Extracting the coverage data from build {}'.format(build_number))
+            logger.info('Extracting the coverage data from build %s', build_number)
             extract_command = ' && '.join([
                 'cd {}'.format(coverage_dir),
                 'tar xf tmp.tgz --strip-components=1',
