@@ -17,7 +17,7 @@ pytestmark = [
                          "Security Groups", "Network Ports", "Load Balancers"])
 def test_provider_relationships_navigation(provider, tested_part, appliance):
     view = navigate_to(provider, 'Details')
-    net_prov_name = view.entities.relationships.get_text_of('Network Manager')
+    net_prov_name = view.entities.summary("Relationships").get_text_of("Network Manager")
 
     collection = NetworkProviderCollection(appliance)
     network_provider = collection.instantiate(name=net_prov_name)
@@ -30,7 +30,7 @@ def test_provider_relationships_navigation(provider, tested_part, appliance):
 
 def test_provider_topology_navigation(provider, appliance):
     view = navigate_to(provider, 'Details')
-    net_prov_name = view.entities.relationships.get_text_of('Network Manager')
+    net_prov_name = view.entities.summary("Relationships").get_text_of("Network Manager")
 
     collection = NetworkProviderCollection(appliance)
     network_provider = collection.instantiate(name=net_prov_name)

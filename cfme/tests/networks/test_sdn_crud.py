@@ -18,9 +18,8 @@ def test_sdn_crud(provider, appliance):
         and functional references to components on detail page
     Prerequisites: Cloud provider in cfme
     """
-
     view = navigate_to(provider, 'Details')
-    net_prov_name = view.entities.relationships.get_text_of("Network Manager")
+    net_prov_name = view.entities.summary("Relationships").get_text_of("Network Manager")
     collection = appliance.collections.network_providers
     network_provider = collection.instantiate(name=net_prov_name)
 
