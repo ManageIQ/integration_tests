@@ -171,6 +171,7 @@ def test_retired_service(appliance, context):
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
+@pytest.mark.meta(blockers=[BZ(1551113, unblock=lambda provider: provider.type != 'scvmm')])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_monthly_charges(appliance, setup_provider, context, order_catalog_item_in_ops_ui,
         run_service_chargeback_report):
