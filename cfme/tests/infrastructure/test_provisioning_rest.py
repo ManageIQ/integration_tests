@@ -127,7 +127,7 @@ def test_provision_emails(request, provision_data, provider, appliance, smtp_tes
         return len(smtp_test.get_emails(
             subject_like="%%Your virtual machine request has Completed%%")) == 1
 
-    request.addfinalizer(lambda: clean_vm(vm_name, provider))
+    request.addfinalizer(lambda: clean_vm(appliance, vm_name))
 
     vm_name = provision_data["vm_fields"]["vm_name"]
     provision_data["vm_fields"]["vm_memory"] = "1024"
