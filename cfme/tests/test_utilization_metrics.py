@@ -52,6 +52,7 @@ def clean_setup_provider(request, provider):
     yield
     BaseProvider.clear_providers()
 
+
 @pytest.fixture(scope="module")
 def metrics_collection(appliance, clean_setup_provider, provider, enable_candu):
     """Check the db is gathering collection data for the given provider.
