@@ -313,14 +313,14 @@ class SSHClient(paramiko.SSHClient):
             while True:
                 # While the program is running loop through collecting line by line so that we don't
                 # fill the buffers up without a newline
-                if session.recv_ready():
+                if session.recv_ready:
                     try:
                         line = stdout.next()
                         write_output(line, self.f_stdout)
                     except StopIteration:
                         pass
 
-                if session.recv_stderr_ready():
+                if session.recv_stderr_ready:
                     try:
                         line = stderr.next()
                         write_output(line, self.f_stderr)
