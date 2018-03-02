@@ -122,6 +122,16 @@ class CredentialFormView(CredentialsBaseView):
         domain = Input(locator='.//input[@title="OpenStack domains define administrative '
             'boundaries. It is only needed for Keystone v3 authentication URLs"]')
 
+    @credential_form.register("Google Compute Engine")
+    class CredentialFormGCEView(View):
+        service_account = Input(locator='.//input[@title="The email address assigned to '
+            'the Google Compute Engine service account"]')
+        priv_key = TextInput(locator='.//textarea[@title="Contents of the PEM file associated with '
+            'the service account email"]')
+        project = Input(locator='.//input[@title="The GCE assigned identification. It is '
+            'constructed as two words followed by a three digit number, such as: '
+            'squeamish-ossifrage-123"]')
+
     cancel_button = Button("Cancel")
 
 
@@ -228,12 +238,18 @@ class Credential(BaseEntity):
             "project": updates.get("project"),
             "domain": updates.get("domain")
         }
+        gce_credential_fill_dict = {
+            "service_account": updates.get("service_account"),
+            "priv_key": updates.get("priv_key"),
+            "project": updates.get("project")
+        }
         credential_type_map = {
             "Machine": machine_credential_fill_dict,
             "Scm": scm_credential_fill_dict,
             "Amazon": amazon_credential_fill_dict,
             "VMware": vmware_credential_fill_dict,
-            "OpenStack": openstack_credential_fill_dict
+            "OpenStack": openstack_credential_fill_dict,
+            "Google Compute Engine": gce_credential_fill_dict
         }
         edit_page = navigate_to(self, "Edit")
         changed = edit_page.fill({"name": updates.get("name")})
@@ -323,12 +339,18 @@ class CredentialsCollection(BaseCollection):
             "project": credentials.get("project"),
             "domain": credentials.get("domain")
         }
+        gce_credential_fill_dict = {
+            "service_account": credentials.get("service_account"),
+            "priv_key": credentials.get("priv_key"),
+            "project": credentials.get("project")
+        }
         credential_type_map = {
             "Machine": machine_credential_fill_dict,
             "Scm": scm_credential_fill_dict,
             "Amazon": amazon_credential_fill_dict,
             "VMware": vmware_credential_fill_dict,
             "OpenStack": openstack_credential_fill_dict,
+            "Google Compute Engine": gce_credential_fill_dict
         }
 
         add_page.fill({"name": name, "credential_type": credential_type})
