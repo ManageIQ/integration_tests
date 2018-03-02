@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from selenium.common.exceptions import TimeoutException
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
@@ -19,23 +20,33 @@ STORAGE_SIZE = 1
 
 
 @pytest.yield_fixture(scope='module')
-def snapshot(appliance, provider):
-    volume_collection = appliance.collections.volumes
-    snapshot_collection = appliance.collections.volume_snapshots.filter({'provider': provider})
-
-    manager_name = '{} Cinder Manager'.format(provider.name)
+def volume(appliance, provider):
     # create new volume
+    volume_collection = appliance.collections.volumes
+    manager_name = '{} Cinder Manager'.format(provider.name)
     volume = volume_collection.create(name=fauxfactory.gen_alpha(),
                                       storage_manager=manager_name,
                                       tenant=provider.data['provisioning']['cloud_tenant'],
                                       size=STORAGE_SIZE,
                                       provider=provider)
+    yield volume
 
+    try:
+        if volume.exists:
+            volume.delete(wait=True)
+    except Exception as e:
+        logger.warning("{name}:{msg} Volume deletion - skipping...".format(
+            name=type(e).__name__,
+            msg=str(e)))
+
+
+@pytest.yield_fixture(scope='function')
+def snapshot(appliance, provider, volume):
     # create new snapshot for crated volume
+    snapshot_collection = appliance.collections.volume_snapshots.filter({'provider': provider})
     snapshot_name = fauxfactory.gen_alpha()
     volume.create_snapshot(snapshot_name)
     snapshot = snapshot_collection.instantiate(snapshot_name, provider)
-
     yield snapshot
 
     try:
@@ -46,36 +57,68 @@ def snapshot(appliance, provider):
             name=type(e).__name__,
             msg=str(e)))
 
-    try:
-        if volume.exists:
-            volume.delete(wait=False)
-    except Exception as e:
-        logger.warning("{name}:{msg} Volume deletion - skipping...".format(
-            name=type(e).__name__,
-            msg=str(e)))
+
+@pytest.mark.tier(3)
+def test_storage_snapshot_create_cancelled_validation(volume):
+    """ Test snapshot create cancelled
+
+    prerequisites:
+        * Storage Volume
+
+    Steps:
+        * Navigate to Snapshot create window
+        * Fill snapshot name
+        * Click Cancel button
+        * Assert flash message
+    """
+
+    snapshot_name = fauxfactory.gen_alpha()
+    volume.create_snapshot(snapshot_name, cancle=True)
 
 
 @pytest.mark.tier(3)
-def test_storage_volume_snapshot_crud(appliance, provider):
-    volume_collection = appliance.collections.volumes
+def test_storage_snapshot_create_reset_validation(volume):
+    """ Test snapshot create reset button validation
+
+    prerequisites:
+        * Storage Volume
+
+    Steps:
+        * Navigate to Snapshot create window
+        * Fill snapshot name
+        * Click Reset button
+        * Assert flash message
+    """
+
+    snapshot_name = fauxfactory.gen_alpha()
+    volume.create_snapshot(snapshot_name, reset=True)
+
+
+@pytest.mark.tier(1)
+def test_storage_volume_snapshot_crud(appliance, provider, volume):
+    """ Test storage snapshot crud
+
+    prerequisites:
+        * Volume
+
+    Steps:
+        * Create a snapshot
+        * Delete a snapshot
+    """
+
     snapshot_collection = appliance.collections.volume_snapshots.filter({'provider': provider})
-
-    manager_name = '{} Cinder Manager'.format(provider.name)
-
-    # create new volume
-    volume = volume_collection.create(name=fauxfactory.gen_alpha(),
-                                      storage_manager=manager_name,
-                                      tenant=provider.data['provisioning']['cloud_tenant'],
-                                      size=STORAGE_SIZE,
-                                      provider=provider)
 
     # create new snapshot
     snapshot_name = fauxfactory.gen_alpha()
     volume.create_snapshot(snapshot_name)
     snapshot = snapshot_collection.instantiate(snapshot_name, provider)
 
-    wait_for(lambda: snapshot.status == 'available',
-             delay=20, timeout=800, fail_func=snapshot.refresh)
+    try:
+        wait_for(lambda: snapshot.status == 'available',
+                 delay=20, timeout=1200, fail_func=snapshot.refresh)
+    except TimeoutException:
+        logger.error('Snapshot Creation fails:'
+                     'TimeoutException due to status not available (=error)')
 
     assert snapshot.exists
     assert snapshot.size == STORAGE_SIZE
@@ -83,11 +126,21 @@ def test_storage_volume_snapshot_crud(appliance, provider):
     # deleting snapshot
     snapshot.delete()
     assert not snapshot.exists
-    volume.delete(wait=False)
 
 
 @pytest.mark.tier(3)
 def test_storage_volume_snapshot_edit_tag_from_detail(snapshot):
+    """ Test tags for snapshot
+
+    prerequisites:
+        * snapshot
+
+    Steps:
+        * Navigate to Snapshot Detail page
+        * Add new Tag
+        * Remove Tag
+    """
+
     # add tag with category Department and tag communication
     snapshot.add_tag('Department', 'Communication')
     tag_available = snapshot.get_tags()

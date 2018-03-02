@@ -218,24 +218,39 @@ class Volume(BaseEntity):
                  timeout=1000,
                  fail_func=self.refresh)
 
-    def create_snapshot(self, name):
+    def create_snapshot(self, name, cancle=False, reset=False):
         """create snapshot of cloud volume"""
         initial_snapshot_count = self.snapshots_count
         view = navigate_to(self, 'Snapshot')
 
-        view.snapshot_name.fill(name)
-        view.save.click()
+        changed = view.snapshot_name.fill(name)
 
-        view = self.create_view(VolumeDetailsView)
-        wait_for(lambda: view.is_displayed, delay=5, timeout=50, message='waiting for view')
+        # For changes only Save and Reset button activate
+        if changed:
+            if reset:
+                view.reset.click()
+                view.flash.assert_message('All changes have been reset')
 
-        view.flash.assert_success_message('Snapshot for Cloud Volume "{}" '
-                                          'created'.format(self.name))
+            elif cancle:
+                view.cancel.click()
+                view = self.create_view(VolumeDetailsView)
+                wait_for(lambda: view.is_displayed, delay=2, timeout=10, message='waiting for view')
+                view.flash.assert_message(
+                    'Snapshot of Cloud Volume "{}" was cancelled by the user'.format(self.name))
 
-        wait_for(lambda: self.snapshots_count > initial_snapshot_count,
-                 delay=20,
-                 timeout=1000,
-                 fail_func=self.refresh)
+            else:
+                view.save.click()
+
+                view = self.create_view(VolumeDetailsView)
+                wait_for(lambda: view.is_displayed, delay=2, timeout=10, message='waiting for view')
+
+                view.flash.assert_success_message('Snapshot for Cloud Volume "{}" '
+                                                  'created'.format(self.name))
+
+                wait_for(lambda: self.snapshots_count > initial_snapshot_count,
+                         delay=20,
+                         timeout=1000,
+                         fail_func=self.refresh)
 
     @property
     def exists(self):

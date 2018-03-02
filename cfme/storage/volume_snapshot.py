@@ -1,15 +1,7 @@
 # -*- coding: utf-8 -*-
 import attr
-
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_manageiq import (
-    Accordion,
-    BaseEntitiesView,
-    BreadCrumb,
-    ItemsToolBarViewSelector,
-    ManageIQTree,
-    SummaryTable
-)
+
 from widgetastic_patternfly import Button, Dropdown
 from widgetastic.widget import View, Text, NoSuchElementException
 
@@ -18,8 +10,17 @@ from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import SnapshotNotFoundError, ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import (
+    Accordion,
+    BaseEntitiesView,
+    BreadCrumb,
+    ItemsToolBarViewSelector,
+    ManageIQTree,
+    SummaryTable
+)
 
 
 class VolumeSnapshotToolbar(View):
@@ -168,20 +169,20 @@ class VolumeSnapshot(BaseEntity, WidgetasticTaggable):
         view = navigate_to(self, 'Details')
         return view.entities.relationships.get_text_of('Cloud Tenants')
 
-    def delete(self):
+    def delete(self, wait=True):
         """Delete snapshot """
 
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Delete Cloud Volume Snapshot')
         view.flash.assert_success_message('Delete initiated for 1 Cloud Volume Snapshot.')
-
-        wait_for(
-            lambda: not self.exists,
-            message="Wait snapshot to disappear",
-            delay=20,
-            timeout=800,
-            fail_func=self.refresh
-        )
+        if wait:
+            wait_for(
+                lambda: not self.exists,
+                message="Wait snapshot to disappear",
+                delay=20,
+                timeout=800,
+                fail_func=self.refresh
+            )
 
 
 @attr.s
@@ -207,10 +208,14 @@ class VolumeSnapshotCollection(BaseCollection):
                     provider_name = item['Storage Manager'].split()[0]
                     provider = get_crud_by_name(provider_name)
                     snapshots.append(self.instantiate(name=item['Name'], provider=provider))
-            return snapshots
 
         except NoSuchElementException:
-            return None
+            if snapshots:
+                logger.error('VolumeSnapshotCollection: '
+                             'NoSuchElementException in the middle of entities read')
+            else:
+                logger.warning('The snapshot table is probably not present or empty')
+        return snapshots
 
 
 @navigator.register(VolumeSnapshotCollection, 'All')
