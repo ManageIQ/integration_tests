@@ -16,7 +16,7 @@ def collection(appliance):
     return appliance.collections.customization_templates
 
 
-@pytest.fixture(scope="module")
+@pytest.yield_fixture(scope="module")
 def image_type(appliance):
     image_type = appliance.collections.system_image_types.create(
         name=fauxfactory.gen_alphanumeric(8), provision_type=SystemImageType.VM_OR_INSTANCE)
