@@ -1,0 +1,28 @@
+import pytest
+import pytz
+from dateutil import parser
+
+from cfme.utils.appliance.implementations.ui import navigate_to
+
+
+@pytest.mark.tier(2)
+def test_configure_vmdb_last_start_time(appliance):
+    """
+        Go to Settings -> Configure -> Database
+        Compare Vmdb Last Start Time with output of command
+        "journalctl -u rh-postgresql{}-postgresql.service  --boot=0 | sed '4!d'"
+    """
+
+    view = navigate_to(appliance.server, 'DatabaseSummary')
+
+    for item in view.summary('Properties').get_text_of('Data Directory').split('/'):
+        if 'rh-postgresql' in item:
+            logs_last_start_time = appliance.ssh_client.run_command(
+                "journalctl -u {}-postgresql.service  --boot=0 | sed '4!d'".format(item))
+
+    ui_last_start_time = parser.parse(view.summary('Properties').get_text_of('Last Start Time'))
+
+    tz = pytz.timezone(appliance.ssh_client.run_command("date +'%Z'").output.strip())
+    ui_last_start_updated = ui_last_start_time.replace(
+        tzinfo=ui_last_start_time.tzinfo).astimezone(tz)
+    assert ui_last_start_updated.strftime('%Y-%m-%d %H:%M:%S %Z') in logs_last_start_time
