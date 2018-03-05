@@ -50,6 +50,7 @@ class RHEVMProvider(InfraProvider):
     db_types = ["Redhat::InfraManager"]
     endpoints_form = RHEVMEndpointForm
     discover_dict = {"rhevm": True}
+    settings_key = 'ems_redhat'
     # xpath locators for elements, to be used by selenium
     _console_connection_status_element = '//*[@id="connection-status"]|//*[@id="message-div"]'
     _canvas_element = '(//*[@id="remote-console"]/canvas|//*[@id="spice-screen"]/canvas)'

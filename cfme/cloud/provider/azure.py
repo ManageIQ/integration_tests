@@ -32,6 +32,7 @@ class AzureProvider(CloudProvider):
     db_types = ["Azure::CloudManager"]
     endpoints_form = AzureEndpointForm
     discover_name = "Azure"
+    settings_key = 'ems_azure'
 
     def __init__(self, name=None, endpoints=None, zone=None, key=None, region=None,
                  tenant_id=None, subscription_id=None, appliance=None):

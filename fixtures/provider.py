@@ -45,6 +45,7 @@ from cfme.common.provider import BaseProvider, all_types
 from fixtures.artifactor_plugin import fire_art_test_hook
 from fixtures.pytest_store import store
 from fixtures.templateloader import TEMPLATES
+from cfme.utils.appliance import ApplianceException
 from cfme.utils.providers import ProviderFilter, list_providers
 from cfme.utils.log import logger
 from collections import Mapping
@@ -75,6 +76,20 @@ def _artifactor_skip_providers(request, providers, skip_msg):
     pytest.skip(skip_msg)
 
 
+def enable_provider_regions(provider):
+    """Enable provider regions if necessary before attempting provider setup"""
+    disabled_regions = provider.appliance.get_disabled_regions(provider)
+    if getattr(provider, 'region', False) and provider.region in disabled_regions:
+        logger.info('Provider %s region "%s" is currently in disabled regions "%s", enabling',
+                    provider, provider.region, disabled_regions)
+        disabled_regions.remove(provider.region)
+        try:
+            provider.appliance.set_disabled_regions(provider, *disabled_regions)
+        except (ApplianceException, AssertionError) as ex:
+            pytest.skip('Exception setting disabled regions for provider: {}: {}'
+                        .format(provider, ex.message))
+
+
 def _setup_provider_verbose(request, provider, appliance=None):
     if appliance is None:
         appliance = store.current_appliance
@@ -98,6 +113,7 @@ def _setup_provider_verbose(request, provider, appliance=None):
                     p.wait_for_delete()
         store.terminalreporter.write_line(
             "Trying to set up provider {}\n".format(provider.key), green=True)
+        enable_provider_regions(provider)
         provider.setup()
         return True
     except Exception as e:

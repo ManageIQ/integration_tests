@@ -20,6 +20,7 @@ class VMwareProvider(InfraProvider):
     db_types = ["Vmware::InfraManager"]
     endpoints_form = VirtualCenterEndpointForm
     discover_dict = {"vmware": True}
+    settings_key = 'ems_vmware'
     # xpath locators for elements, to be used by selenium
     _console_connection_status_element = '//*[@id="connection-status"]|//*[@id="noVNC_status"]'
     _canvas_element = ('(//*[@id="remote-console" or @id="wmksContainer"]/canvas|'

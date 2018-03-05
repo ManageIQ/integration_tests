@@ -1861,6 +1861,60 @@ class IPAppliance(object):
         """
         return self.rest_api.get_entity_by_href(self.rest_api.server_info['server_href']).hostname
 
+    def get_disabled_regions(self, provider=None):
+        """Fetch appliance advanced config, get disabled regions for given provider's type
+
+        Only relevant for cloud providers azure and ec2 at the moment
+
+        Args:
+            provider: A BaseProvider object with settings_key attribute
+
+        Returns:
+            Default: Dict of ems_<provider> keys and values of disabled_regions map
+            when provider given: disabled_regions list from config
+            when no matching config found: None
+        """
+        ems_config = self.get_yaml_config()['ems']
+        if provider:
+            try:
+                prov_config = ems_config.get(getattr(provider, 'settings_key', None), {})  # safe
+                regions = prov_config['disabled_regions']  # KeyError
+            except KeyError:
+                regions = []
+        else:
+            regions = {ems_key: yaml['disabled_regions']
+                       for ems_key, yaml in ems_config.items()
+                       if 'disabled_regions' in yaml}
+
+        return regions
+
+    def set_disabled_regions(self, provider, *regions):
+        """Modify config to set disabled regions to given regions for the given provider's type
+
+        Only relevant for cloud providers azure and ec2 at the moment
+
+        Does NOT APPEND to the list of disabled regions, SETS it
+
+        Args:
+            provider: A BaseProvider object with settings_key attribute
+            *regions: none, one or many region names, on None enables all regions for provider type
+
+        Raises:
+            AssertionError - when the disabled regions don't match after setting
+            ApplianceException - when there's a KeyError modifying the yaml
+        """
+        yaml_conf = self.get_yaml_config()
+        try:
+            yaml_conf['ems'][getattr(provider, 'settings_key', None)]['disabled_regions'] = regions
+        except KeyError:
+            # catches not-found settings_key or 'None' when the provider doesn't have it
+            raise ApplianceException('Provider %s settings_key attribute not set '
+                                     'or not found in config %s'
+                                     .format(provider, yaml_conf['ems']))
+
+        self.set_yaml_config(yaml_conf)
+        assert self.get_disabled_regions(provider) == list(regions)  # its a tuple if empty
+
     @property
     def server_roles(self):
         """Return a dictionary of server roles from database"""

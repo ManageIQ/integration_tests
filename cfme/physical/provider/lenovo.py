@@ -15,6 +15,7 @@ class LenovoEndpoint(DefaultEndpoint):
             'api_port': self.api_port
         }
 
+
 class LenovoEndpointForm(DefaultEndpointForm):
     api_port = Input('default_api_port')
 
@@ -26,6 +27,7 @@ class LenovoProvider(PhysicalProvider):
     mgmt_class = LenovoSystem
     refresh_text = "Refresh Relationships and Power States"
     db_types = ["Lenovo::PhysicalInfraManager"]
+    settings_key = 'ems_lenovo'
 
     def __init__(self, appliance, name=None, key=None, endpoints=None):
         super(LenovoProvider, self).__init__(
