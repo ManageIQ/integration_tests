@@ -9,7 +9,6 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.services.catalogs.catalog_item import CatalogBundle, CatalogItem, EditCatalogItemView
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import error
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for_decorator
 
@@ -47,8 +46,8 @@ def test_order_catalog_item(appliance, provider, setup_provider, catalog_item, r
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-    assert provision_request.is_succeeded(), \
-        "Provisioning failed with the message {}".format(provision_request.rest.message)
+    msg = "Provisioning failed with the message {}".format(provision_request.rest.message)
+    assert provision_request.is_succeeded(), msg
 
 
 @pytest.mark.tier(2)
@@ -101,8 +100,8 @@ def test_order_catalog_bundle(appliance, provider, setup_provider, catalog_item,
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-    assert provision_request.is_succeeded(),\
-        "Provisioning failed with the message {}".format(provision_request.rest.message)
+    msg = "Provisioning failed with the message {}".format(provision_request.rest.message)
+    assert provision_request.is_succeeded(), msg
 
 
 # Note here this needs to be reduced, doesn't need to test against all providers

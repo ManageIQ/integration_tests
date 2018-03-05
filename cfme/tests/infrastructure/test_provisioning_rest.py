@@ -101,9 +101,9 @@ def test_provision(request, appliance, provision_data):
     provision_request = appliance.collections.requests.instantiate(description=vm_name,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-
-    assert provision_request.is_succeeded(), ("Provisioning failed with the message {}".format(
-        provision_request.rest.message))
+    msg = "Provisioning failed with the message {}".format(
+        provision_request.rest.message)
+    assert provision_request.is_succeeded(), msg
     found_vms = appliance.rest_api.collections.vms.find_by(name=vm_name)
     assert found_vms, 'VM `{}` not found'.format(vm_name)
 

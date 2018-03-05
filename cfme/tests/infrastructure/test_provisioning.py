@@ -175,8 +175,8 @@ def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_t
         handle_exception=True, num_sec=600)
 
     provision_request.wait_for_request(method='ui')
-    assert provision_request.is_succeeded(method='ui'), \
-        ("Provisioning failed with the message {}".format(provision_request.row.last_message.text))
+    msg = "Provisioning failed with the message {}".format(provision_request.row.last_message.text)
+    assert provision_request.is_succeeded(method='ui'), msg
 
     # Wait for e-mails to appear
     def verify():

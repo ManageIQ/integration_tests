@@ -577,9 +577,9 @@ def test_provision_with_boot_volume(request, testing_instance, provider, soft_as
             logger.info(
                 "Provision failed {}: {}".format(e, provision_request.request_state))
             raise e
-        assert provision_request.is_succeeded(method='ui'), (
-            "Provisioning failed with the message {}".format(
-                provision_request.row.last_message.text))
+        msg = "Provisioning failed with the message {}".format(
+            provision_request.row.last_message.text)
+        assert provision_request.is_succeeded(method='ui'), msg
         soft_assert(instance.name in provider.mgmt.volume_attachments(volume))
         soft_assert(provider.mgmt.volume_attachments(volume)[instance.name] == "/dev/vda")
         instance.delete_from_provider()  # To make it possible to delete the volume

@@ -91,5 +91,5 @@ def test_cloud_catalog_item(appliance, vm_name, setup_provider, provider, dialog
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-    assert provision_request.is_succeeded(), ("Request failed with the message {}".format(
-        provision_request.rest.message))
+    msg = "Request failed with the message {}".format(provision_request.rest.message)
+    assert provision_request.is_succeeded(), msg

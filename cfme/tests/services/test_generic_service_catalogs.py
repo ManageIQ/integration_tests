@@ -79,8 +79,8 @@ def test_service_generic_catalog_bundle(appliance, catalog_item):
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-    assert provision_request.is_succeeded(),\
-        ("Request failed with the message {}".format(provision_request.rest.message))
+    msg = "Request failed with the message {}".format(provision_request.rest.message)
+    assert provision_request.is_succeeded(), msg
 
 
 def test_bundles_in_bundle(appliance, catalog_item):
@@ -106,8 +106,8 @@ def test_bundles_in_bundle(appliance, catalog_item):
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-    assert provision_request.is_succeeded(),\
-        ("Request failed with the message {}".format(provision_request.rest.message))
+    msg = "Request failed with the message {}".format(provision_request.rest.message)
+    assert provision_request.is_succeeded(), msg
 
 
 def test_delete_dialog_before_parent_item(appliance, catalog_item):

@@ -53,8 +53,8 @@ class Request(BaseEntity):
     def wait_for_request_ui(self, num_sec=1200, delay=10):
         def _finished():
             self.update(method='ui')
-            return self.row.request_state.text in self.REQUEST_FINISHED_STATES and \
-                'Retry' not in self.row.last_message.text
+            return (self.row.request_state.text in self.REQUEST_FINISHED_STATES and
+                    'Retry' not in self.row.last_message.text)
 
         def last_message():
             logger.info("Last Request message in UI: '{}'".format(self.row.last_message))
