@@ -32,10 +32,14 @@ ATTRIBUTES_DATASET = [
 ]
 VALUE_UPDATES = ['2018-07-12', 'ADF231VRWQ1', '1']
 
+# TODO These should be factored into a single CRUD test
+
 
 @pytest.yield_fixture(scope='function')
 def add_delete_custom_attributes(provider):
     provider.add_custom_attributes(*ATTRIBUTES_DATASET)
+    view = refresh_and_navigate(provider, 'Details')
+    assert view.entities.summary('Custom Attributes').is_displayed
     yield
     try:
         provider.delete_custom_attributes(*ATTRIBUTES_DATASET)
@@ -54,10 +58,10 @@ def test_add_static_custom_attributes(add_delete_custom_attributes, provider):
     """
 
     view = refresh_and_navigate(provider, 'Details')
-    custom_attr_ui = view.entities.custom_attributes.read()
+    custom_attr_ui = view.entities.summary('Custom Attributes')
     for attr in ATTRIBUTES_DATASET:
-        assert attr.name in custom_attr_ui
-        assert custom_attr_ui[attr.name] == attr.value
+        assert attr.name in custom_attr_ui.fields
+        assert custom_attr_ui.get_text_of(attr.name) == attr.value
 
 
 @pytest.mark.polarion('CMP-10286')
@@ -78,15 +82,15 @@ def test_edit_static_custom_attributes(provider):
         edited_attribs[ii].value = value
     provider.edit_custom_attributes(*edited_attribs)
     view = refresh_and_navigate(provider, 'Details')
-    custom_attr_ui = view.entities.custom_attributes.read()
+    custom_attr_ui = view.entities.summary('Custom Attributes')
     for attr in edited_attribs:
-        assert attr.name in custom_attr_ui
-        assert custom_attr_ui[attr.name] == attr.value
+        assert attr.name in custom_attr_ui.fields
+        assert custom_attr_ui.get_text_of(attr.name) == attr.value
     provider.delete_custom_attributes(*edited_attribs)
 
 
 @pytest.mark.polarion('CMP-10285')
-def test_delete_static_custom_attributes(add_delete_custom_attributes, provider):
+def test_delete_static_custom_attributes(add_delete_custom_attributes, request, provider):
     """Tests deleting of static custom attributes from provider
     Steps:
         * Delete the static custom attributes that recently added (API)
@@ -98,9 +102,29 @@ def test_delete_static_custom_attributes(add_delete_custom_attributes, provider)
 
     provider.delete_custom_attributes(*ATTRIBUTES_DATASET)
     view = refresh_and_navigate(provider, 'Details')
-    if view.entities.custom_attributes.is_displayed:
+    if view.entities.summary('Custom Attributes').is_displayed:
         for attr in ATTRIBUTES_DATASET:
-            assert attr.name not in view.entities.custom_attributes
+            assert attr.name not in view.entities.summary('Custom Attributes').fields
+    else:
+        logger.info("No custom attributes table to check")
+        assert True
+
+    ca = CustomAttribute('test_value', 'This is a test', None)
+    request.addfinalizer(lambda: provider.delete_custom_attributes(ca))
+    provider.add_custom_attributes(ca)
+    provider.add_custom_attributes(*ATTRIBUTES_DATASET)
+    provider.browser.refresh()
+    for attr in ATTRIBUTES_DATASET:
+        assert attr.name in view.entities.summary('Custom Attributes').fields
+        assert view.entities.summary('Custom Attributes').get_text_of(attr.name) == attr.value
+    provider.delete_custom_attributes(*ATTRIBUTES_DATASET)
+    provider.browser.refresh()
+    if view.entities.summary('Custom Attributes').is_displayed:
+        for attr in ATTRIBUTES_DATASET:
+            assert attr.name not in view.entities.summary('Custom Attributes').fields
+    else:
+        logger.info("Custom Attributes Table does not exist. Expecting it to exist")
+        assert False
 
 
 @pytest.mark.polarion('CMP-10303')
@@ -120,8 +144,8 @@ def test_add_attribute_with_empty_name(provider):
         pytest.fail('You have added custom attribute with empty name'
                     'and didn\'t get an error!')
     view = refresh_and_navigate(provider, 'Details')
-    if view.entities.custom_attributes.is_displayed:
-        assert "" not in view.entities.custom_attributes.read()
+    if view.entities.summary('Custom Attributes').is_displayed:
+        assert "" not in view.entities.summary('Custom Attributes').fields
 
 
 @pytest.mark.polarion('CMP-10404')
@@ -134,8 +158,8 @@ def test_add_date_attr_with_wrong_value(provider):
                     '{} with value of {} and didn\'t get an error!'
                     .format(ca.field_type, ca.value))
     view = refresh_and_navigate(provider, 'Details')
-    if view.entities.custom_attributes.is_displayed:
-        assert 'nondate' not in view.entities.custom_attributes.read()
+    if view.entities.summary('Custom Attributes').is_displayed:
+        assert 'nondate' not in view.entities.summary('Custom Attributes').fields
 
 
 @pytest.mark.polarion('CMP-10405')
@@ -185,19 +209,19 @@ def test_add_already_exist_attribute(provider):
 
 
 @pytest.mark.polarion('CMP-10540')
-def test_very_long_name_with_special_characters(provider):
+def test_very_long_name_with_special_characters(request, provider):
     ca = CustomAttribute(get_random_string(1000), 'very_long_name', None)
+    request.addfinalizer(lambda: provider.delete_custom_attributes(ca))
     provider.add_custom_attributes(ca)
     view = refresh_and_navigate(provider, 'Details')
-    assert ca.name in view.entities.custom_attributes.read()
-    provider.delete_custom_attributes(ca)
+    assert ca.name in view.entities.summary('Custom Attributes').fields
 
 
 @pytest.mark.meta(blockers=[BZ(1540647, forced_streams=["5.8", "5.9"])])
 @pytest.mark.polarion('CMP-10541')
-def test_very_long_value_with_special_characters(provider):
+def test_very_long_value_with_special_characters(request, provider):
     ca = CustomAttribute('very_long_value', get_random_string(1000), None)
+    request.addfinalizer(lambda: provider.delete_custom_attributes(ca))
     provider.add_custom_attributes(ca)
     view = refresh_and_navigate(provider, 'Details')
-    assert ca.value == view.entities.custom_attributes.read().get('very_long_value')
-    provider.delete_custom_attributes(ca)
+    assert ca.value == view.entities.summary('Custom Attributes').get_text_of('very_long_value')
