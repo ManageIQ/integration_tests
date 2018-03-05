@@ -986,6 +986,16 @@ class RegionDiagnosticsView(ConfigurationView):
             self.title.text.startswith('Diagnostics Region '))
 
 
+class RegionDiagnosticsDatabaseView(RegionDiagnosticsView):
+
+    db_backup_settings_type = BootstrapSelect(id='log_protocol')
+    submit_db_garbage_collection_button = Button(alt="Run Database Garbage Collection Now")
+
+    @property
+    def is_displayed(self):
+        return self.database.is_active()
+
+
 @navigator.register(Region, 'Diagnostics')
 class RegionDiagnostics(CFMENavigateStep):
     VIEW = RegionDiagnosticsView
@@ -1060,7 +1070,7 @@ class RegionDiagnosticsServers(CFMENavigateStep):
 
 @navigator.register(Region, 'Database')
 class RegionDiagnosticsDatabase(CFMENavigateStep):
-    VIEW = RegionDiagnosticsView
+    VIEW = RegionDiagnosticsDatabaseView
     prerequisite = NavigateToSibling('Diagnostics')
 
     def am_i_here(self):
