@@ -967,10 +967,11 @@ class IPAppliance(object):
         """Returns an instance of the event listening class pointed to this appliance."""
         # There is no REST API for event streams on versions < 5.9
         if self.version <= '5.9':
-            from cfme.utils.events_db import EventListener
+            from cfme.utils.events_db import DbEventListener
+            return DbEventListener(self)
         else:
-            from cfme.utils.events import EventListener
-        return EventListener(self)
+            from cfme.utils.events import RestEventListener
+            return RestEventListener(self)
 
     def diagnose_evm_failure(self):
         """Go through various EVM processes, trying to figure out what fails

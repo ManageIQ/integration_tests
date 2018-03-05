@@ -118,7 +118,7 @@ class Event(object):
         return self
 
 
-class EventListener(Thread):
+class RestEventListener(Thread):
     """ EventListener accepts "expected" events, listens to db events and compares matched events
     with expected events. Runs callback function if expected events have it.
 
@@ -127,16 +127,13 @@ class EventListener(Thread):
     FILTER_ATTRS = ['event_type', 'target_type', 'target_id', 'source']
 
     def __init__(self, appliance):
-        super(EventListener, self).__init__()
+        super(RestEventListener, self).__init__()
         self._appliance = appliance
         self._events_to_listen = []
         self._last_processed_id = 0  # this is used to filter out old or processed events
         self._stop_event = ThreadEvent()
 
-    @property
-    def event_streams(self):
-        """ Event streams REST API collection."""
-        return self._appliance.rest_api.collections.event_streams
+        self.event_streams = appliance.rest_api.collections.event_streams
 
     def set_last_record(self):
         """ Sets last_processed_id to the latest event."""
@@ -195,7 +192,7 @@ class EventListener(Thread):
     def start(self):
         self.set_last_record()
         self._stop_event.clear()
-        super(EventListener, self).start()
+        super(RestEventListener, self).start()
         logger.info('Event Listener has been started')
 
     def stop(self):
@@ -204,7 +201,7 @@ class EventListener(Thread):
 
     @property
     def started(self):
-        return super(EventListener, self).is_alive()
+        return super(RestEventListener, self).is_alive()
 
     def run(self):
         """ Overrides ThreadEvent run to continuously process events"""
@@ -229,14 +226,17 @@ class EventListener(Thread):
                     continue
 
                 # Match events
-                got_event = None
-                for event_entity in matched_events:
-                    got_event = Event(self._appliance).build_from_entity(event_entity)
-                    if exp_event['event'].matches(got_event):
-                        if exp_event['callback']:
-                            exp_event['callback'](exp_event=exp_event['event'], got_event=got_event)
-                        exp_event['matched_events'].append(got_event)
-                self._last_processed_id = got_event.event_attrs['id'].value
+                try:
+                    for event_entity in matched_events:
+                            got_event = Event(self._appliance).build_from_entity(event_entity)
+                            if exp_event['event'].matches(got_event):
+                                if exp_event['callback']:
+                                    exp_event['callback'](exp_event=exp_event['event'],
+                                                          got_event=got_event)
+                                exp_event['matched_events'].append(got_event)
+                    self._last_processed_id = got_event.event_attrs['id'].value
+                except Exception:
+                    logger.exception("An exception during matching events occurred.")
 
                 if self._stop_event.is_set():
                     break

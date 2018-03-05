@@ -278,13 +278,13 @@ class Event(object):
         return self
 
 
-class EventListener(Thread):
+class DbEventListener(Thread):
     """
      accepts "expected" events, listens to db events and compares showed up events with expected
      events. Runs callback function if expected events have it.
     """
     def __init__(self, appliance):
-        super(EventListener, self).__init__()
+        super(DbEventListener, self).__init__()
         self._appliance = appliance
         self._tool = EventTool(self._appliance)
 
@@ -364,7 +364,7 @@ class EventListener(Thread):
         logger.info('Event Listener has been started')
         self.set_last_record()
         self._stop_event.clear()
-        super(EventListener, self).start()
+        super(DbEventListener, self).start()
 
     def stop(self):
         logger.info('Event Listener has been stopped')
@@ -375,7 +375,7 @@ class EventListener(Thread):
 
     @property
     def started(self):
-        return super(EventListener, self).is_alive()
+        return super(DbEventListener, self).is_alive()
 
     def process_events(self):
         """
