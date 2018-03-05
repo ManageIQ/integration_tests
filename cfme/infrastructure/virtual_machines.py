@@ -874,6 +874,11 @@ class Vm(VM):
         fill_data = {k: v for k, v in changes.iteritems() if k != 'disks'}
         vm_recfg.fill(fill_data)
 
+        if changes.get('memory') is True:
+            message = 'Memory'
+        elif changes.get('cpu') is True:
+            message = 'Processor'
+
         for disk_change in changes['disks']:
             action, disk = disk_change['action'], disk_change['disk']
             if action == 'add':
