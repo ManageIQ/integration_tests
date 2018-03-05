@@ -47,7 +47,7 @@ RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false
 RECOGNIZED_BY_IP = [
     "InfraManager", "ContainerManager", "Openstack::CloudManager"
 ]
-RECOGNIZED_BY_CREDS = ["CloudManager"]
+RECOGNIZED_BY_CREDS = ["CloudManager", "Nuage::NetworkManager"]
 
 # A helper for the IDs
 SEQ_FACT = 1e12

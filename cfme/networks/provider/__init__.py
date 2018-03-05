@@ -28,7 +28,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.log import logger
 
 
-@attr.s
+@attr.s(hash=False)
 class NetworkProvider(BaseProvider, WidgetasticTaggable, BaseEntity):
     """ Class representing network provider in sdn
 
