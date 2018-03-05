@@ -44,7 +44,7 @@ class Subnet(WidgetasticTaggable, BaseEntity):
         view.fill({'subnet_name': new_name,
                    'gateway': gateway})
         view.save.click()
-        view.flash.assert_success_message('Network Subnet "{}" updated'.format(new_name))
+        view.flash.assert_success_message('Cloud Subnet "{}" updated'.format(new_name))
         self.name = new_name
 
     def delete(self):
