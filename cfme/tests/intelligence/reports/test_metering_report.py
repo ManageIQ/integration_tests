@@ -8,6 +8,9 @@ from datetime import date
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
+from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.vm import VM
 from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -20,7 +23,8 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.ignore_stream('5.8'),
-    pytest.mark.provider([VMwareProvider, RHEVMProvider],
+    pytest.mark.provider([VMwareProvider, RHEVMProvider, AzureProvider, GCEProvider,
+        EC2Provider],
                          scope='module',
                          required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
     test_requirements.chargeback,
@@ -261,6 +265,7 @@ def metering_report(vm_ownership, provider):
 # Tests to validate usage reported in the Metering report for various metrics.
 # The usage reported in the report should be approximately equal to the
 # usage estimated in the resource_usage fixture, therefore a small deviation is fine.
+@pytest.mark.uncollectif(lambda provider: provider.category == 'cloud')
 def test_validate_cpu_usage(resource_usage, metering_report):
     """Test to validate CPU usage."""
     for groups in metering_report:
