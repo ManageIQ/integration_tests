@@ -6,6 +6,7 @@ class KubernetesProvider(ContainersProvider):
     type_name = "kubernetes"
     mgmt_class = Kubernetes
     db_types = ["Kubernetes::ContainerManager"]
+    settings_key = 'ems_kubernetes'
 
     def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None, port=None,
                  sec_protocol=None, hawkular_sec_protocol=None, provider_data=None, appliance=None):

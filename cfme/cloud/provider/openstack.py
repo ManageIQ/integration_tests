@@ -16,6 +16,8 @@ class OpenStackProvider(CloudProvider):
     mgmt_class = OpenstackSystem
     db_types = ["Openstack::CloudManager"]
     endpoints_form = OpenStackInfraEndpointForm
+    settings_key = 'ems_openstack'
+
     # xpath locators for elements, to be used by selenium
     _console_connection_status_element = '//*[@id="noVNC_status"]'
     _canvas_element = '//*[@id="noVNC_canvas"]'

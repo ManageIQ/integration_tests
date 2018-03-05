@@ -36,6 +36,7 @@ class GCEProvider(CloudProvider):
     mgmt_class = GoogleCloudSystem
     db_types = ["Google::CloudManager"]
     endpoints_form = GCEEndpointForm
+    settings_key = 'ems_google'
 
     def __init__(self, name=None, project=None, zone=None, region=None, region_name=None,
                  endpoints=None, key=None, appliance=None):

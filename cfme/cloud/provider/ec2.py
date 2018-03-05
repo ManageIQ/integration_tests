@@ -45,6 +45,7 @@ class EC2Provider(CloudProvider):
     db_types = ["Amazon::CloudManager"]
     endpoints_form = EC2EndpointForm
     discover_name = "Amazon EC2"
+    settings_key = 'ems_amazon'
 
     def __init__(
             self, name=None, endpoints=None, zone=None, key=None, region=None, region_name=None,

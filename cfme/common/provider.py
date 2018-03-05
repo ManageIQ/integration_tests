@@ -56,6 +56,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
     STATS_TO_MATCH = []
     db_types = ["Providers"]
     ems_events = []
+    settings_key = None
 
     def __hash__(self):
         return hash(self.key) ^ hash(type(self))
@@ -684,7 +685,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
     def wait_for_delete(self):
         try:
             provider_rest = self.appliance.rest_api.collections.providers.get(name=self.name)
-        except ValueError:
+        except (ValueError, APIException):  # if the record doesn't exist, APIException from 404
             return
 
         logger.info('Waiting for a provider to delete...')
