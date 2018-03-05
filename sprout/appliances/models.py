@@ -1178,10 +1178,6 @@ class AppliancePool(MetadataMixin):
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
                time_leased=60, preconfigured=True, yum_update=False, ram=None, cpu=None,
                provider_type=None, template_type=Template.DEFAULT_TEMPLATE_TYPE):
-        if template_type != Template.DEFAULT_TEMPLATE_TYPE:
-            container_q = ~Q(container=None) & ~Q(provider_type='openshift')
-        else:
-            container_q = Q(container=None)
         if owner.has_quotas:
             user_pools_count = cls.objects.filter(owner=owner).count()
             user_vms_count = Appliance.objects.filter(appliance_pool__owner=owner).count()
@@ -1203,22 +1199,23 @@ class AppliancePool(MetadataMixin):
         from appliances.tasks import request_appliance_pool
         # Retrieve latest possible
         if not version:
-            versions = Template.get_versions(container_q,
-                template_group=group, ready=True, usable=True, exists=True,
-                preconfigured=preconfigured, provider__working=True, provider__disabled=False,
-                **user_filter)
+            versions = Template.get_versions(template_group=group, ready=True, usable=True,
+                                             exists=True, preconfigured=preconfigured,
+                                             provider__working=True, provider__disabled=False,
+                                             **user_filter)
             if versions:
                 version = versions[0]
         if not date:
             if version is not None:
-                dates = Template.get_dates(container_q, template_group=group, version=version,
-                    ready=True, usable=True, exists=True, preconfigured=preconfigured,
-                    provider__working=True, provider__disabled=False, **user_filter)
+                dates = Template.get_dates(template_group=group, version=version, ready=True,
+                                           usable=True, exists=True, preconfigured=preconfigured,
+                                           rovider__working=True, provider__disabled=False,
+                                           **user_filter)
             else:
-                dates = Template.get_dates(container_q,
-                    template_group=group, ready=True, usable=True, exists=True,
-                    preconfigured=preconfigured, provider__working=True, provider__disabled=False,
-                    **user_filter)
+                dates = Template.get_dates(template_group=group, ready=True, usable=True,
+                                           exists=True, preconfigured=preconfigured,
+                                           provider__working=True, provider__disabled=False,
+                                           **user_filter)
             if dates:
                 date = dates[0]
         if isinstance(group, basestring):
