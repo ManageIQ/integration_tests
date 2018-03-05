@@ -545,7 +545,7 @@ class SubnetAddView(BaseLoggedInPage):
     title = Text('//div[@id="main-content"]//h1')
     network_manager = Select(id='ems_id')
     cloud_tenant = Select(name='cloud_tenant_id')
-    network = Select(name='cloud_network_id')
+    network = Select(name='network_id')
     subnet_name = TextInput(name='name')
     subnet_cidr = TextInput(name='cidr')
     gateway = TextInput(name='gateway_ip')

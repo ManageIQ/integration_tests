@@ -63,13 +63,15 @@ class Subnet(WidgetasticTaggable, BaseEntity):
     def cloud_network(self):
         """ Return name of network that subnet belongs to"""
         view = navigate_to(self, 'Details')
-        return view.entities.relationships.get_text_of('Cloud network')
+        field_name = 'Cloud Network' if self.appliance.version >= '5.9' else 'Cloud network'
+        return view.entities.relationships.get_text_of(field_name)
 
     @property
     def cidr(self):
         """ Return subnet's CIDR"""
         view = navigate_to(self, 'Details')
-        return view.entities.properties.get_text_of('Cidr')
+        field_name = 'CIDR' if self.appliance.version >= '5.9' else 'Cidr'
+        return view.entities.properties.get_text_of(field_name)
 
     @property
     def net_protocol(self):
@@ -86,7 +88,8 @@ class Subnet(WidgetasticTaggable, BaseEntity):
     def parent_provider(self):
         """ Return object of parent cloud provider """
         view = navigate_to(self, 'Details')
-        provider_name = view.entities.relationships.get_text_of('Parent ems cloud')
+        field_name = 'Parent Cloud Provider' if self.appliance.version >= '5.9' else 'Parent ems cloud'
+        provider_name = view.entities.relationships.get_text_of(field_name)
         return providers.get_crud_by_name(provider_name)
 
     @property
