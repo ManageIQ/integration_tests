@@ -241,7 +241,7 @@ def update(self, updates):
     assert view.is_displayed
 
 
-@MiqImplementationContext.external_for(MyService.exists, ViaUI)
+@MiqImplementationContext.external_for(MyService.exists.getter, ViaUI)
 def exists(self):
     try:
         navigate_to(self, 'Details')

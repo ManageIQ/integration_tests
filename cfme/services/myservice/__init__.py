@@ -17,7 +17,7 @@ class MyService(Updateable, Navigatable, WidgetasticTaggable, sentaku.modeling.E
     update = sentaku.ContextualMethod()
     retire = sentaku.ContextualMethod()
     retire_on_date = sentaku.ContextualMethod()
-    exists = sentaku.ContextualMethod()
+    exists = sentaku.ContextualProperty()
     delete = sentaku.ContextualMethod()
     set_ownership = sentaku.ContextualMethod()
     edit_tags = sentaku.ContextualMethod()
