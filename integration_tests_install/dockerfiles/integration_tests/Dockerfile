@@ -55,7 +55,7 @@ RUN dnf install -y https://dl.google.com/linux/direct/google-chrome-stable_curre
 #    /root/chrome_webdriver/chromedriver_linux64.zip
 
 # ===== CHROME DRIVER
-ENV CHROME_DRIVER_VERSION 2.34
+ENV CHROME_DRIVER_VERSION 2.35
 ENV CHROMEDRIVER_PATH /opt/chromedriver/
 RUN mkdir -p ${CHROMEDRIVER_PATH} && cd ${CHROMEDRIVER_PATH} && \
     curl -O http://chromedriver.storage.googleapis.com/$CHROME_DRIVER_VERSION/chromedriver_linux64.zip && \
@@ -64,7 +64,8 @@ RUN mkdir -p ${CHROMEDRIVER_PATH} && cd ${CHROMEDRIVER_PATH} && \
     rm -f ${CHROMEDRIVER_PATH}/chromedriver_linux64.zip
 
 # ===== SELENIUM
-ENV SELENIUM_VERSION 2.53
+# ENV SELENIUM_VERSION 2.53
+ENV SELENIUM_VERSION 3.10
 ENV SELENIUM_PATH /opt/selenium
 # selenium
 #ADD http://selenium-release.storage.googleapis.com/$SELENIUM_VERSION/selenium-server-standalone-$SELENIUM_VERSION.0.jar selenium/selenium_latest.jar
