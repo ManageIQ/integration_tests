@@ -27,6 +27,8 @@ Make sure the dependencies of the project are installed, usually facilitated wit
 
 Create a ``local_settings.py`` file in ``sprout/sprout/``. You should set up the database connection if not using SQlite, refer to Django documentation regarding that. You may override the settings from ``settings.py``. **MAKE SURE** the ``memcached`` and ``redis`` ports are set correctly, otherwise you may see errors or glitches. Make sure that you set up ``STATIC_ROOT`` for real deployment to a folder which can be served by nginx (more on that later).
 
+``HUBBER_URL`` also has to be set to point to HUBBER (``http://w.x.y.z/trackerbot``) so Sprout can start pulling informations and populate the database.
+
 Now, since everything is ready, you can prepare the database:
 
 .. code-block:: bash
@@ -47,6 +49,8 @@ For developing the user interface, run Django server like this:
 
 Because our configuration behaves badly, ``--noreload`` needs to be used which necessitates restarting the server in case you change python files. If you change the templates or other static files, it is not necessary.
 
+Remember to create at least one group and make sure each user is at least in one group. Make sure the providers get assigned to groups as well. No group means the provider will not be visible for anyone except superusers.
+
 Logserver
 =========
 
@@ -58,6 +62,8 @@ To run it:
 
     ./logserver.py
 
+After running some code, check the log directory (eg. ``tree log/``) and you will see the structure.
+
 Celery workers
 ==============
 
@@ -67,7 +73,15 @@ To start the celery workers, use this command:
 
     ./celery_runner worker --app=sprout.celery:app --concurrency=N --loglevel=INFO -Ofair
 
-Where ``N`` is the number of workers to launch
+Where ``N`` is the number of workers to launch.
+
+Because Sprout workers do a lot of I/O and not much of hard calculations, feel free to overcommit.
+
+Production Sprout has more than ``8 * Ncores`` workers + 8 Gunicorn UI workers and for most of the time it works fine.
+
+Sometimes a lot of tasks come together and swarm the workers, but give it some time and it will get fixed by itself.
+
+Workers do not have to be started for UI to work, since UI just generates tasks (which are not consumed), but that implies redis must be running, otherwise you will get errors.
 
 
 Celery Beat scheduler
@@ -89,6 +103,7 @@ To see the current state of workers, you can run the Celery Flower:
 
     ./celery_runner flower --app=sprout.celery:app
 
+Celery Flower runs on port 5555 and displays various stats about the "cluster" of workers.
 
 Production UI
 =============
@@ -147,8 +162,10 @@ Then you also need to collect all static files:
     ./manage.py collectstatic
 
 
-Update process
-==============
+Live update process
+===================
+
+Sprout supports a zero-downtime seamless live update process unless migrations are present. Short outage of the front-end happens when migrations have to be applied, BUT the integration_tests' Sprout client can wait for up to 1 minute in this case which - unless it explodes - is way longer than the usual stop, migrate, start process takes.
 
 In case of change only to the UI part of sprout (eg. not tasks, ...) and no migrations are pending:
 
@@ -156,10 +173,16 @@ In case of change only to the UI part of sprout (eg. not tasks, ...) and no migr
 
     kill -HUP $GUNICORN_PID
 
+This is unnoticeable to the users.
+
 If any migration is pending, you need to shut Gunicorn down (``SIGINT``), run the migrations and then start it again.
 
-Remember to collect the static files after update to them.
+Remember to collect the static files after any update to them.
 
-Workers can be stopped by sending ``SIGTERM`` signal to the worker main process. This triggers a graceful shutdown. Workers no longer accept new tasks and end after finishing the current task. If some workers seem to be stuck, you may send a ``SIGINT`` to the main process to trigger a less graceful but still clean exit. Use ``SIGKILL`` only as the last resort as it **WILL** cause a disruption.
+Workers can be stopped by sending ``SIGTERM`` signal to the worker main process. This triggers a graceful shutdown. Workers no longer accept new tasks and end after finishing the current task. If some workers seem to be stuck, you may send a ``SIGINT`` to the main process to trigger a less graceful but still clean exit. You can do that multiple times. Use ``SIGKILL`` only as the last resort as it **WILL** cause a disruption. Multiple SIGINTs usually work out fine.
 
 The other parts of Sprout (Beat, Flower, Logserver) can be stopped simply by using ``SIGINT``.
+
+It is recommended to wait for long tasks (appliance preconfiguration, template deployment, ...) to finish to have the update process as fast as possible.
+
+It is recommended to shut Celery Beat down first, send a ``SIGTERM`` to the worker and wait for it to stop (or ``SIGINT`` for impatient :) ). That will ensure the smoothest worker shutdown.
