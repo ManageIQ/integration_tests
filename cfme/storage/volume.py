@@ -234,7 +234,7 @@ class Volume(BaseEntity):
             elif cancel:
                 view.cancel.click()
                 view = self.create_view(VolumeDetailsView)
-                wait_for(lambda: view.is_displayed, delay=2, timeout=10, message='waiting for view')
+                view.wait_displayed(timeout='10s')
                 view.flash.assert_message(
                     'Snapshot of Cloud Volume "{}" was cancelled by the user'.format(self.name))
 
@@ -242,8 +242,7 @@ class Volume(BaseEntity):
                 view.save.click()
 
                 view = self.create_view(VolumeDetailsView)
-                wait_for(lambda: view.is_displayed, delay=2, timeout=10, message='waiting for view')
-
+                view.wait_displayed(timeout='10s')
                 view.flash.assert_success_message('Snapshot for Cloud Volume "{}" '
                                                   'created'.format(self.name))
 
