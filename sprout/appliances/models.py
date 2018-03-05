@@ -1261,20 +1261,6 @@ class AppliancePool(MetadataMixin):
         return super(AppliancePool, self).delete(*args, **kwargs)
 
     @property
-    def container_q(self):
-        if self.template_type != Template.DEFAULT_TEMPLATE_TYPE:
-            return ~Q(container=None) & ~Q(provider_type='openshift')
-        else:
-            return Q(container=None)
-
-    @property
-    def appliance_container_q(self):
-        if self.template_type != Template.DEFAULT_TEMPLATE_TYPE:
-            return ~Q(template__container=None) & ~Q(provider_type='openshift')
-        else:
-            return Q(template__container=None)
-
-    @property
     def filter_params(self):
         filter_params = {
             "template_group": self.group,
@@ -1302,10 +1288,8 @@ class AppliancePool(MetadataMixin):
 
     @property
     def possible_templates(self):
-        q = Template.objects.filter(
-            self.container_q,
-            ready=True, exists=True, usable=True,
-            **self.filter_params).select_related('provider').distinct().order_by()
+        q = Template.objects.filter(ready=True, exists=True, usable=True,
+                    **self.filter_params).select_related('provider').distinct().order_by()
         if self.provider_type is None:
             return list(q)
         else:
@@ -1481,8 +1465,7 @@ class AppliancePool(MetadataMixin):
     @property
     def num_shepherd_appliances(self):
         return len(
-            Appliance.objects.filter(
-                self.appliance_container_q, appliance_pool=None, **self.appliance_filter_params
+            Appliance.objects.filter(appliance_pool=None, **self.appliance_filter_params
             ).distinct())
 
     def __repr__(self):

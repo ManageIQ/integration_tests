@@ -688,7 +688,6 @@ def process_delayed_provision_tasks(self):
                 # Try freeing up some space in provider
                 for provider in task.pool.possible_providers:
                     appliances = provider.free_shepherd_appliances.exclude(
-                        task.pool.appliance_container_q,
                         **task.pool.appliance_filter_params)
                     if appliances:
                         appl = random.choice(appliances)
