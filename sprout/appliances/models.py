@@ -1108,7 +1108,6 @@ class AppliancePool(MetadataMixin):
         default=False, help_text="Used for marking the appliance pool as being deleted")
     finished = models.BooleanField(default=False, help_text="Whether fulfillment has been met.")
     yum_update = models.BooleanField(default=False, help_text="Whether to update appliances.")
-    is_container = models.BooleanField(default=False, help_text='Whether the pool uses containers.')
 
     override_memory = models.IntegerField(null=True, blank=True)
     override_cpu = models.IntegerField(null=True, blank=True)
@@ -1143,9 +1142,6 @@ class AppliancePool(MetadataMixin):
         if self.yum_update != source_pool.yum_update:
             raise ValueError('The yum_update of the pools differ')
 
-        if self.is_container != source_pool.is_container:
-            raise ValueError('The is_container of the pools differ')
-
         if self.override_memory != source_pool.override_memory:
             raise ValueError('The override_memory of the pools differ')
 
@@ -1173,7 +1169,6 @@ class AppliancePool(MetadataMixin):
             time_leased=time_leased,
             preconfigured=self.preconfigured,
             yum_update=self.yum_update,
-            container=self.is_container,
             ram=self.override_memory,
             cpu=self.override_cpu,
             provider_type=self.provider_type,
@@ -1181,9 +1176,9 @@ class AppliancePool(MetadataMixin):
 
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
-            time_leased=60, preconfigured=True, yum_update=False, container=False, ram=None,
-            cpu=None, provider_type=None, template_type=Template.DEFAULT_TEMPLATE_TYPE):
-        if container:
+               time_leased=60, preconfigured=True, yum_update=False, ram=None, cpu=None,
+               provider_type=None, template_type=Template.DEFAULT_TEMPLATE_TYPE):
+        if template_type != Template.DEFAULT_TEMPLATE_TYPE:
             container_q = ~Q(container=None) & ~Q(provider_type='openshift')
         else:
             container_q = Q(container=None)
@@ -1246,8 +1241,8 @@ class AppliancePool(MetadataMixin):
         req_params = dict(
             group=group, version=version, date=date, total_count=num_appliances, owner=owner,
             provider=provider, preconfigured=preconfigured, yum_update=yum_update,
-            is_container=container, override_memory=ram, override_cpu=cpu,
-            provider_type=provider_type, template_type=template_type)
+            override_memory=ram, override_cpu=cpu, provider_type=provider_type,
+            template_type=template_type)
         if num_appliances == 0:
             req_params['finished'] = True
         req = cls(**req_params)
@@ -1270,14 +1265,14 @@ class AppliancePool(MetadataMixin):
 
     @property
     def container_q(self):
-        if self.is_container:
+        if self.template_type != Template.DEFAULT_TEMPLATE_TYPE:
             return ~Q(container=None) & ~Q(provider_type='openshift')
         else:
             return Q(container=None)
 
     @property
     def appliance_container_q(self):
-        if self.is_container:
+        if self.template_type != Template.DEFAULT_TEMPLATE_TYPE:
             return ~Q(template__container=None) & ~Q(provider_type='openshift')
         else:
             return Q(template__container=None)
