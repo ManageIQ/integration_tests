@@ -4,6 +4,8 @@ import sys
 from collections import namedtuple
 from subprocess import check_call
 
+import select
+
 import diaper
 import fauxfactory
 import iso8601
@@ -311,33 +313,39 @@ class SSHClient(paramiko.SSHClient):
                     file.write(line)
 
             while True:
+                if session.exit_status_ready():
+                    break
+
                 # While the program is running loop through collecting line by line so that we don't
-                # fill the buffers up without a newline
-                if session.recv_ready:
+                # fill the buffers up without a newline.   Also, note that for long running programs if
+                # we try to read output when there is none (and in the case of stderr may never be any)
+                # we run the risk of blocking so long that the write buffer on the remote side will fill
+                # and the remote program will block on a write.   The blocking on our side occurs in
+                # paramiko's buffered_pipe.py's read() call, which will block if its internal buffer is
+                # is empty.
+                if session.recv_ready():
                     try:
                         line = stdout.next()
                         write_output(line, self.f_stdout)
                     except StopIteration:
                         pass
 
-                if session.recv_stderr_ready:
+                if session.recv_stderr_ready():
                     try:
                         line = stderr.next()
                         write_output(line, self.f_stderr)
                     except StopIteration:
                         pass
 
-                if session.exit_status_ready():
-                    # When the program finishes, we need to grab the rest of the output that is left
-                    # Though it's possible, we should have read enough of the buffers so that we can
-                    # just dump the rest.
-                    if session.recv_ready:
-                        for line in stdout:
-                            write_output(line, self.f_stdout)
-                    if session.recv_stderr_ready:
-                        for line in stderr:
-                            write_output(line, self.f_stderr)
-                    break
+            # When the program finishes, we need to grab the rest of the output that is left.
+            # Also, we don't have the issue of blocking reads because since the command is
+            # finished, any pending reads of SSH encrypted data will finish shortly and put in
+            # the buffer or for an empty file EOF will be reached as it will be closed.
+            for line in stdout:
+                write_output(line, self.f_stdout)
+            for line in stderr:
+                write_output(line, self.f_stderr)
+
             exit_status = session.recv_exit_status()
             if exit_status != 0:
                 logger.warning('Exit code %d!', exit_status)
