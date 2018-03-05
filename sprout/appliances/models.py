@@ -550,7 +550,6 @@ class Template(MetadataMixin):
         (DOCKER_VM, 'VM-based Docker container'),
         (OPENSHIFT_POD, 'Openshift pod'))
     DEFAULT_TEMPLATE_TYPE = TEMPLATE_TYPES[0][0]
-
     provider = models.ForeignKey(
         Provider, on_delete=models.CASCADE, help_text="Where does this template reside",
         related_name="provider_templates")
@@ -583,8 +582,8 @@ class Template(MetadataMixin):
             'Whether the appliance is located in a container in the VM. '
             'This then specifies the container name.'))
     ga_released = models.BooleanField(default=False)
-    template_type = models.CharField(
-        max_length=16, choices=TEMPLATE_TYPES, default=DEFAULT_TEMPLATE_TYPE)
+    template_type = models.CharField(max_length=16, choices=TEMPLATE_TYPES,
+                                     default=DEFAULT_TEMPLATE_TYPE)
 
     class Meta:
         ordering = ['name', 'original_name', 'provider', 'id']
@@ -1115,6 +1114,8 @@ class AppliancePool(MetadataMixin):
     override_cpu = models.IntegerField(null=True, blank=True)
 
     provider_type = models.CharField(max_length=32, null=True, blank=True)
+    template_type = models.CharField(max_length=16, choices=Template.TEMPLATE_TYPES,
+                                     default=Template.DEFAULT_TEMPLATE_TYPE)
 
     class Meta:
         ordering = ['id']
@@ -1175,12 +1176,13 @@ class AppliancePool(MetadataMixin):
             container=self.is_container,
             ram=self.override_memory,
             cpu=self.override_cpu,
-            provider_type=self.provider_type)
+            provider_type=self.provider_type,
+            template_type=self.template_type)
 
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
             time_leased=60, preconfigured=True, yum_update=False, container=False, ram=None,
-            cpu=None, provider_type=None):
+            cpu=None, provider_type=None, template_type=Template.DEFAULT_TEMPLATE_TYPE):
         if container:
             container_q = ~Q(container=None) & ~Q(provider_type='openshift')
         else:
@@ -1245,7 +1247,7 @@ class AppliancePool(MetadataMixin):
             group=group, version=version, date=date, total_count=num_appliances, owner=owner,
             provider=provider, preconfigured=preconfigured, yum_update=yum_update,
             is_container=container, override_memory=ram, override_cpu=cpu,
-            provider_type=provider_type)
+            provider_type=provider_type, template_type=template_type)
         if num_appliances == 0:
             req_params['finished'] = True
         req = cls(**req_params)
@@ -1288,6 +1290,7 @@ class AppliancePool(MetadataMixin):
             'provider__user_groups__in': self.owner.groups.all(),
             'provider__working': True,
             'provider__disabled': False,
+            'template_type': self.template_type
         }
         if self.version is not None:
             filter_params["version"] = self.version

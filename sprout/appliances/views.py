@@ -690,9 +690,11 @@ def request_pool(request):
                 ram = int(request.POST['ram'])
             if 'cpu' in request.POST:
                 cpu = int(request.POST['cpu'])
+
+        template_type = Template.DOCKER_VM if container else Template.VM
         pool_id = AppliancePool.create(
             request.user, group, version, date, provider, count, lease_time, preconfigured,
-            yum_update, container, ram, cpu, provider_type).id
+            yum_update, container, ram, cpu, provider_type, template_type).id
         messages.success(request, "Pool requested - id {}".format(pool_id))
     except Exception as e:
         messages.warning(request, "{}: {}".format(type(e).__name__, e))
