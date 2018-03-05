@@ -1,11 +1,15 @@
 import pytest
 import random
 
+from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.gce import GCEProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.wait import wait_for
 
 
-pytestmark = [pytest.mark.provider([EC2Provider], scope='module')]
+pytestmark = [pytest.mark.provider([EC2Provider, AzureProvider, GCEProvider, OpenStackProvider],
+                                   scope='module')]
 
 
 @pytest.yield_fixture(scope='module')
@@ -43,9 +47,9 @@ def test_topology_toggle_display(elements_collection):
     for state in (True, False):
         for legend in elements_collection.legends:
             if state:
-                elements_collection.enable_legend(legend)
-            else:
                 elements_collection.disable_legend(legend)
+            else:
+                elements_collection.enable_legend(legend)
             for element in elements_collection.all():
                 assert (
                     element.type != ''.join(legend.split()).rstrip('s') or
