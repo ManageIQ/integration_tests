@@ -686,7 +686,6 @@ def request_pool(request):
             if 'cpu' in request.POST:
                 cpu = int(request.POST['cpu'])
 
-        template_type = Template.DOCKER_VM if container else Template.VM
         pool_id = AppliancePool.create(
             request.user, group, version, date, provider, count, lease_time, preconfigured,
             yum_update, ram, cpu, provider_type, template_type).id

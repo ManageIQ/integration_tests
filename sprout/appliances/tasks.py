@@ -723,7 +723,7 @@ def replace_clone_to_pool(
 
 def clone_template_to_pool(template_id, appliance_pool_id, time_minutes):
     template = Template.objects.get(id=template_id)
-    if template.template_type != 'openshift_pod':
+    if template.template_type != Template.OPENSHIFT_POD:
         appliance_format = settings.APPLIANCE_FORMAT
     else:
         appliance_format = settings.OPENSHIFT_APPLIANCE_FORMAT
@@ -738,7 +738,7 @@ def clone_template_to_pool(template_id, appliance_pool_id, time_minutes):
             return
         # Apply also username
         new_appliance_name = "{}_{}".format(pool.owner.username, new_appliance_name)
-        if template.template_type == 'openshift_pod':
+        if template.template_type == Template.OPENSHIFT_POD:
             # openshift doesn't allow underscores to be used in project names
             new_appliance_name = new_appliance_name.replace('_', '-')
 
