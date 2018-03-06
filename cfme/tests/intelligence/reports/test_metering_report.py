@@ -8,14 +8,13 @@ from datetime import date
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
+from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm import VM
 from cfme.common.provider import BaseProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CustomReport
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -23,9 +22,10 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.ignore_stream('5.8'),
-    pytest.mark.provider([VMwareProvider, RHEVMProvider, AzureProvider, GCEProvider,
-        EC2Provider],
-                         scope='module',
+    pytest.mark.meta(blockers=[BZ(1511099, forced_streams=["5.9"],
+                                  unblock=lambda provider: not provider.one_of(GCEProvider)),
+                               ]),
+    pytest.mark.provider([CloudInfraProvider], scope='module',
                          required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
     test_requirements.chargeback,
 ]
@@ -267,7 +267,7 @@ def metering_report(vm_ownership, provider):
 # usage estimated in the resource_usage fixture, therefore a small deviation is fine.
 @pytest.mark.uncollectif(lambda provider: provider.category == 'cloud')
 def test_validate_cpu_usage(resource_usage, metering_report):
-    """Test to validate CPU usage."""
+    """Test to validate CPU usage.This metric is not collected for cloud providers."""
     for groups in metering_report:
         if groups["CPU Used"]:
             estimated_cpu_usage = resource_usage['cpu_used']
@@ -280,6 +280,8 @@ def test_validate_cpu_usage(resource_usage, metering_report):
             break
 
 
+@pytest.mark.uncollectif(
+    lambda provider: provider.one_of(EC2Provider) or provider.one_of(GCEProvider))
 def test_validate_memory_usage(resource_usage, metering_report):
     """Test to validate memory usage."""
     for groups in metering_report:
