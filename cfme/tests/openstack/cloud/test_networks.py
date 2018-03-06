@@ -199,7 +199,7 @@ def test_clear_router_gateway(router_with_gw):
              timeout=600, delay=10)
     router_with_gw.browser.refresh()
     view = navigate_to(router_with_gw, 'Details')
-    assert 'Cloud Network' not in view.entities.relationships.items
+    assert 'Cloud Network' not in view.entities.relationships.fields
 
 
 def test_add_gateway_to_router(router, ext_subnet):
