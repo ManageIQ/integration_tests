@@ -2,14 +2,77 @@
 """ A model of Workloads page in CFME
 """
 from navmazing import NavigateToAttribute
-from widgetastic.widget import Text
-from cfme.utils.appliance import Navigatable
-from cfme.base.ui import WorkloadsView
+from widgetastic.widget import Text, View
+from widgetastic_patternfly import Dropdown
+
+from cfme.base.login import BaseLoggedInPage
+from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from widgetastic_manageiq import Accordion, ManageIQTree, Search, ItemsToolBarViewSelector
 
 
-class WorkloadsVM(WorkloadsView):
+class WorkloadsView(BaseLoggedInPage):
+    search = View.nested(Search)
+
+    @property
+    def in_workloads(self):
+        return (self.logged_in_as_current_user and
+                self.navigation.currently_selected == ['Services', 'Workloads'])
+
+    @View.nested
+    class vms(Accordion):  # noqa
+        ACCORDION_NAME = "VMs & Instances"
+        tree = ManageIQTree()
+
+        def select_global_filter(self, filter_name):
+            self.tree.click_path("All VMs & Instances", "Global Filters", filter_name)
+
+        def select_my_filter(self, filter_name):
+            self.tree.click_path("All VMs & Instances", "My Filters", filter_name)
+
+        def clear_filter(self):
+            self.parent.search.clear_simple_search()
+            self.tree.click_path("All VMs & Instances")
+
+    @View.nested
+    class templates(Accordion):  # noqa
+        ACCORDION_NAME = "Templates & Images"
+        tree = ManageIQTree()
+
+        def select_global_filter(self, filter_name):
+            self.tree.click_path("All Templates & Images", "Global Filters", filter_name)
+
+        def select_my_filter(self, filter_name):
+            self.tree.click_path("All Templates & Images", "My Filters", filter_name)
+
+        def clear_filter(self):
+            self.parent.search.clear_simple_search()
+            self.tree.click_path("All Templates & Images")
+
+    @View.nested
+    class toolbar(View):  # noqa
+        """
+         represents workloads toolbar and its controls
+        """
+        configuration = Dropdown(text='Configuration')
+        policy = Dropdown(text='Policy')
+        lifecycle = Dropdown(text='Lifecycle')
+        download = Dropdown(text='Download')
+        view_selector = View.nested(ItemsToolBarViewSelector)
+
+
+class WorkloadsDefaultView(WorkloadsView):
     title = Text("#explorer_title_text")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_workloads and
+            self.title.text == 'All VMs & Instances' and
+            self.vms.is_opened)
+
+
+class WorkloadsVM(WorkloadsDefaultView):
 
     @property
     def is_displayed(self):
@@ -21,8 +84,7 @@ class WorkloadsVM(WorkloadsView):
                 "All VMs & Instances"])
 
 
-class WorkloadsTemplate(WorkloadsView):
-    title = Text("#explorer_title_text")
+class WorkloadsTemplate(WorkloadsDefaultView):
 
     @property
     def is_displayed(self):
@@ -34,23 +96,25 @@ class WorkloadsTemplate(WorkloadsView):
                 "All Templates & Images"])
 
 
-class VmsInstances(Navigatable):
+class BaseWorkloads(NavigatableMixin):
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+
+class VmsInstances(BaseWorkloads):
     """
         This is fake class mainly needed for navmazing navigation
 
     """
-    def __init__(self, appliance=None):
-        Navigatable.__init__(self, appliance)
+    pass
 
 
-class TemplatesImages(Navigatable):
+class TemplatesImages(BaseWorkloads):
     """
         This is fake class mainly needed for navmazing navigation
 
     """
-
-    def __init__(self, appliance=None):
-        Navigatable.__init__(self, appliance)
+    pass
 
 
 @navigator.register(VmsInstances, 'All')

@@ -8,6 +8,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.services.catalogs.catalog_item import CatalogBundle, CatalogItem, EditCatalogItemView
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.services.workloads import VmsInstances
 from cfme.utils import error
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -161,13 +162,13 @@ def test_request_with_orphaned_template(appliance, provider, setup_provider, cat
 
 
 @pytest.mark.tier(3)
-def test_advanced_search_registry_element(appliance, request):
+def test_advanced_search_registry_element(request):
     """
         Go to Services -> Workloads
         Advanced Search -> Registry element
         Element types select bar shouldn't disappear.
     """
-    view = navigate_to(appliance.server, 'WorkloadsDefault')
+    view = navigate_to(VmsInstances, 'All')
     view.search.open_advanced_search()
     request.addfinalizer(view.search.close_advanced_search)
     view.search.advanced_search_form.search_exp_editor.registry_form_view.fill({'type': "Registry"})

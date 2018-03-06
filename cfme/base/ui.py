@@ -27,7 +27,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, TimelinesView,
-                                  ParametrizedSummaryTable, ItemsToolBarViewSelector, Search)
+                                  ParametrizedSummaryTable)
 from . import Server, Region, Zone, ZoneCollection
 
 
@@ -1413,73 +1413,3 @@ class AutomateImportExport(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.navigation.select(
             *automate_menu_name(self.obj.appliance) + ['Import / Export'])
-
-
-class WorkloadsView(BaseLoggedInPage):
-    search = View.nested(Search)
-
-    @property
-    def in_workloads(self):
-        return (self.logged_in_as_current_user and
-                self.navigation.currently_selected == ['Services', 'Workloads'])
-
-    @View.nested
-    class vms(Accordion):  # noqa
-        ACCORDION_NAME = "VMs & Instances"
-        tree = ManageIQTree()
-
-        def select_global_filter(self, filter_name):
-            self.tree.click_path("All VMs & Instances", "Global Filters", filter_name)
-
-        def select_my_filter(self, filter_name):
-            self.tree.click_path("All VMs & Instances", "My Filters", filter_name)
-
-        def clear_filter(self):
-            self.parent.search.clear_simple_search()
-            self.tree.click_path("All VMs & Instances")
-
-    @View.nested
-    class templates(Accordion):  # noqa
-        ACCORDION_NAME = "Templates & Images"
-        tree = ManageIQTree()
-
-        def select_global_filter(self, filter_name):
-            self.tree.click_path("All Templates & Images", "Global Filters", filter_name)
-
-        def select_my_filter(self, filter_name):
-            self.tree.click_path("All Templates & Images", "My Filters", filter_name)
-
-        def clear_filter(self):
-            self.parent.search.clear_simple_search()
-            self.tree.click_path("All Templates & Images")
-
-    @View.nested
-    class toolbar(View):  # noqa
-        """
-         represents workloads toolbar and its controls
-        """
-        configuration = Dropdown(text='Configuration')
-        policy = Dropdown(text='Policy')
-        lifecycle = Dropdown(text='Lifecycle')
-        download = Dropdown(text='Download')
-        view_selector = View.nested(ItemsToolBarViewSelector)
-
-
-class WorkloadsDefaultView(WorkloadsView):
-    title = Text("#explorer_title_text")
-
-    @property
-    def is_displayed(self):
-        return (
-            self.in_workloads and
-            self.title.text == 'All VMs & Instances' and
-            self.vms.is_opened)
-
-
-@navigator.register(Server)
-class WorkloadsDefault(CFMENavigateStep):
-    VIEW = WorkloadsDefaultView
-    prerequisite = NavigateToSibling("LoggedIn")
-
-    def step(self):
-        self.view.navigation.select("Services", "Workloads")
