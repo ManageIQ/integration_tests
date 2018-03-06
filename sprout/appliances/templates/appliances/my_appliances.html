@@ -114,22 +114,16 @@ $(document).ready(function() {
         $.ajax({
                 type: "POST",
                 url: "{% url 'versions_for_group' %}",
-                data: {stream: $('select#stream').val(), preconfigured: $("#preconfigured").is(":checked"), container: $("#container").is(":checked")},
+                data: {stream: $('select#stream').val(), template_type: $('select#template_type').val(), preconfigured: $("#preconfigured").is(":checked")},
                 dataType: 'html'
          }).done(function(data){
             replaceSelectContents('version', data)
          });
     });
-    $('#preconfigured').change(function(){
+    $('#template_type').change(function(){
         $("select#stream").trigger("change");  // a bit stupid but no better idea right now
     });
-    $('#container').change(function(){
-        if($("#container").is(":checked")){
-            $('#preconfigured').prop('checked', true);
-            $('#preconfigured').prop('disabled', true);
-        } else {
-            $('#preconfigured').prop('disabled', false);
-        }
+    $('#preconfigured').change(function(){
         $("select#stream").trigger("change");  // a bit stupid but no better idea right now
     });
     $('select#version').change(function(){
@@ -137,7 +131,7 @@ $(document).ready(function() {
         $.ajax({
                 type: "POST",
                 url: "{% url 'date_for_group_and_version' %}",
-                data: {stream: $('select#stream').val(), version: $('select#version').val(), preconfigured: $("#preconfigured").is(":checked"), container: $("#container").is(":checked")},
+                data: {stream: $('select#stream').val(), template_type: $('select#template_type').val(), version: $('select#version').val(), preconfigured: $("#preconfigured").is(":checked")},
                 dataType: 'html'
          }).done(function(data){
             replaceSelectContents('date', data)
@@ -148,7 +142,7 @@ $(document).ready(function() {
         $.ajax({
                 type: "POST",
                 url: "{% url 'providers_for_date_group_and_version' %}",
-                data: {stream: $('select#stream').val(), version: $('select#version').val(), date: $('select#date').val(), preconfigured: $("#preconfigured").is(":checked"), container: $("#container").is(":checked"), provider_type: $('select#provider_type').val()},
+                data: {stream: $('select#stream').val(), template_type: $('select#template_type').val(), version: $('select#version').val(), date: $('select#date').val(), preconfigured: $("#preconfigured").is(":checked"), provider_type: $('select#provider_type').val()},
                 dataType: 'html'
          }).done(function(data){
             replaceSelectContents('provider', data, true)
@@ -565,19 +559,21 @@ $(document).ready(function() {
               </div>
             </div>
             <div class="form-group">
+              <label for="template_type" class="col-sm-3 control-label">Template Type:</label>
+              <div class="col-sm-8">
+                  <select class="form-control selectpicker" id="template_type" name="template_type" data-live-search="true" data-size="6">
+                    {% for id, name in template_types %}
+                    <option value="{{ id }}">{{ name }}</option>
+                    {% endfor %}
+                  </select>
+              </div>
+            </div>
+            <div class="form-group">
                 <label for="preconfigured" class="col-sm-3 control-label">Preconfigured?:</label>
                 <div class="col-sm-2">
                     <div class="checkbox">
                       <label>
                         <input type="checkbox" class="form-control" id="preconfigured" name="preconfigured" value="true" checked>
-                      </label>
-                    </div>
-                </div>
-                <label for="container" class="col-sm-2 control-label">Container?:</label>
-                <div class="col-sm-2">
-                    <div class="checkbox">
-                      <label>
-                        <input type="checkbox" class="form-control" id="container" name="container" value="true">
                       </label>
                     </div>
                 </div>

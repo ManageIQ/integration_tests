@@ -914,8 +914,11 @@ class Appliance(MetadataMixin):
 
     @property
     def containerized(self):
-        # only docker applianced are considered as containerized ones
-        return self.template.container is not None and self.provider.type != 'openshift'
+        return self.template.container is not None
+
+    @property
+    def is_openshift(self):
+        return self.provider.provider_type == 'openshift'
 
     def set_status(self, status):
         with transaction.atomic():
@@ -1202,20 +1205,20 @@ class AppliancePool(MetadataMixin):
             versions = Template.get_versions(template_group=group, ready=True, usable=True,
                                              exists=True, preconfigured=preconfigured,
                                              provider__working=True, provider__disabled=False,
-                                             **user_filter)
+                                             template_type=template_type, **user_filter)
             if versions:
                 version = versions[0]
         if not date:
             if version is not None:
                 dates = Template.get_dates(template_group=group, version=version, ready=True,
                                            usable=True, exists=True, preconfigured=preconfigured,
-                                           rovider__working=True, provider__disabled=False,
-                                           **user_filter)
+                                           provider__working=True, provider__disabled=False,
+                                           template_type=template_type, **user_filter)
             else:
                 dates = Template.get_dates(template_group=group, ready=True, usable=True,
                                            exists=True, preconfigured=preconfigured,
                                            provider__working=True, provider__disabled=False,
-                                           **user_filter)
+                                           template_type=template_type, **user_filter)
             if dates:
                 date = dates[0]
         if isinstance(group, basestring):

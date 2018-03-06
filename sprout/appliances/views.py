@@ -188,13 +188,9 @@ def shepherd(request):
 @only_authenticated
 def versions_for_group(request):
     group_id = request.POST.get("stream")
+    template_type = request.POST.get("template_type")
     latest_version = None
     preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
-    container = request.POST.get("container", "false").lower() == "true"
-    if container:
-        container_q = ~Q(container=None) & ~Q(provider_type='openshift')
-    else:
-        container_q = Q(container=None)
     if group_id == "<None>":
         versions = []
         group = None
@@ -204,13 +200,21 @@ def versions_for_group(request):
         except ObjectDoesNotExist:
             versions = []
         else:
+            filters = {
+                'template_group': group,
+                'ready': True,
+                'usable': True,
+                'exists': True,
+                'provider__working': True,
+                'provider__disabled': False,
+                'provider__user_groups__in': request.user.groups.all(),
+                'preconfigured': preconfigured,
+                'template_type': template_type
+            }
+
             versions = [
                 (version, Template.ga_version(version))
-                for version in Template.get_versions(
-                    container_q,
-                    template_group=group, ready=True, usable=True, exists=True,
-                    preconfigured=preconfigured, provider__working=True, provider__disabled=False,
-                    provider__user_groups__in=request.user.groups.all())]
+                for version in Template.get_versions(**filters)]
             if versions:
                 if versions[0][1]:
                     latest_version = '{} (GA)'.format(versions[0][0])
@@ -223,13 +227,9 @@ def versions_for_group(request):
 @only_authenticated
 def date_for_group_and_version(request):
     group_id = request.POST.get("stream")
+    template_type = request.POST.get("template_type")
     latest_date = None
     preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
-    container = request.POST.get("container", "false").lower() == "true"
-    if container:
-        container_q = ~Q(container=None) & ~Q(provider_type='openshift')
-    else:
-        container_q = Q(container=None)
     if group_id == "<None>":
         dates = []
     else:
@@ -248,16 +248,18 @@ def date_for_group_and_version(request):
                 "provider__working": True,
                 'provider__disabled': False,
                 "provider__user_groups__in": request.user.groups.all(),
+                'template_type': template_type
             }
+
             if version == "latest":
                 try:
-                    versions = Template.get_versions(container_q, **filters)
+                    versions = Template.get_versions(**filters)
                     filters["version"] = versions[0]
                 except IndexError:
                     pass  # No such thing as version for this template group
             else:
                 filters["version"] = version
-            dates = Template.get_dates(container_q, **filters)
+            dates = Template.get_dates(**filters)
             if dates:
                 latest_date = dates[0]
     return render(request, 'appliances/_dates.html', locals())
@@ -271,18 +273,11 @@ def providers_for_date_group_and_version(request):
     shepherd_appliances = {}
     group_id = request.POST.get("stream")
     provider_type = request.POST.get("provider_type")
+    template_type = request.POST.get("template_type")
     if provider_type == 'any' or not provider_type:
         provider_type = None
     preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
-    container = request.POST.get("container", "false").lower() == "true"
-    if container:
-        container_q = ~Q(container=None) & ~Q(provider_type='openshift')
-    else:
-        container_q = Q(container=None)
-    if container:
-        appliance_container_q = ~Q(template__container=None) & ~Q(provider_type='openshift')
-    else:
-        appliance_container_q = Q(template__container=None)
+
     if group_id == "<None>":
         providers = []
     else:
@@ -301,10 +296,12 @@ def providers_for_date_group_and_version(request):
                 "provider__working": True,
                 "provider__disabled": False,
                 "provider__user_groups__in": request.user.groups.all(),
+                "template_type": template_type,
             }
+
             if version == "latest":
                 try:
-                    versions = Template.get_versions(container_q, **filters)
+                    versions = Template.get_versions(**filters)
                     filters["version"] = versions[0]
                 except IndexError:
                     pass  # No such thing as version for this template group
@@ -313,16 +310,15 @@ def providers_for_date_group_and_version(request):
             date = request.POST.get("date")
             if date == "latest":
                 try:
-                    dates = Template.get_dates(container_q, **filters)
+                    dates = Template.get_dates(**filters)
                     filters["date"] = dates[0]
                 except IndexError:
                     pass  # No such thing as date for this template group
             else:
                 filters["date"] = parser.parse(date)
-            providers = Template.objects.filter(
-                container_q, **filters).values("provider").distinct()
+            providers = Template.objects.filter(**filters).values("provider").distinct()
             providers = sorted([p.values()[0] for p in providers])
-            providers = Provider.objects.filter(id__in=providers)
+            providers = list(Provider.objects.filter(id__in=providers))
             if provider_type is None:
                 providers = list(providers)
             else:
@@ -335,14 +331,16 @@ def providers_for_date_group_and_version(request):
                 appl_filter = dict(
                     appliance_pool=None, ready=True, template__provider=provider,
                     template__preconfigured=filters["preconfigured"],
-                    template__template_group=filters["template_group"])
+                    template__template_group=filters["template_group"],
+                    template__template_type=filters["template_type"])
                 if "date" in filters:
                     appl_filter["template__date"] = filters["date"]
 
                 if "version" in filters:
                     appl_filter["template__version"] = filters["version"]
+
                 shepherd_appliances[provider.id] = len(
-                    Appliance.objects.filter(appliance_container_q, **appl_filter))
+                    Appliance.objects.filter(**appl_filter))
                 total_shepherd_slots += shepherd_appliances[provider.id]
                 total_appliance_slots += provider.remaining_appliance_slots
                 total_provisioning_slots += provider.remaining_provisioning_slots
@@ -414,6 +412,7 @@ def my_appliances(request, show_user="my"):
     for group in available_groups:
         group_tuples.append((group.templates.order_by('-date')[0].date, group))
     group_tuples.sort(key=lambda gt: gt[0], reverse=True)
+    template_types = [t for t in Template.TEMPLATE_TYPES]
     can_order_pool = show_user == "my"
     new_pool_possible = True
     display_legend = False
@@ -662,6 +661,7 @@ def request_pool(request):
     try:
         group = request.POST["stream"]
         version = request.POST["version"]
+        template_type = request.POST["template_type"]
         if version == "latest":
             version = None
         date = request.POST["date"]
@@ -672,15 +672,10 @@ def request_pool(request):
             provider = None
         preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
         yum_update = request.POST.get("yum_update", "false").lower() == "true"
-        container = request.POST.get("container", "false").lower() == "true"
         provider_type = request.POST.get("provider_type", "any").lower()
         if not provider_type or provider_type == 'any':
             provider_type = None
-        if container:
-            # Container is preconfigured only
-            # We need to do this as the disabled checkbox for Preconfigured seems to not return
-            # the proper value.
-            preconfigured = True
+
         count = int(request.POST["count"])
         lease_time = int(request.POST.get("expiration", 60))
         ram = None
@@ -691,7 +686,6 @@ def request_pool(request):
             if 'cpu' in request.POST:
                 cpu = int(request.POST['cpu'])
 
-        template_type = Template.DOCKER_VM if container else Template.VM
         pool_id = AppliancePool.create(
             request.user, group, version, date, provider, count, lease_time, preconfigured,
             yum_update, ram, cpu, provider_type, template_type).id

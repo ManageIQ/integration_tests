@@ -141,6 +141,7 @@ CELERYD_MAX_TASKS_PER_CHILD = int(os.environ.get("MAX_TASKS_PER_WORKER", 50))
 # TODO: .mark_as_template implemented. Then it can be used.
 TEMPLATE_FORMAT = "s_tpl_{group}_{date}_{rnd}"
 APPLIANCE_FORMAT = "s_appl_{group}_{date}_{rnd}"
+OPENSHIFT_APPLIANCE_FORMAT = "s-appl-{group}-{date}-{rnd}"
 
 # General redis settings
 GENERAL_REDIS = dict(host='127.0.0.1', port=REDIS_PORT, db=int(os.environ.get("REDIS_GENERAL", 2)))
