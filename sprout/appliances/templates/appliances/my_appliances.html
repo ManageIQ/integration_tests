@@ -233,7 +233,7 @@ $(document).ready(function() {
 {% for pool in pools_paged %}
     <div class="panel panel-primary" id="pool-{{ pool.id }}">
         <div class="panel-heading">
-            <h2>#{{pool.id}} (<em>{{ pool.group.id }}</em>){% if pool.is_container %} (containers){% endif %}{% if pool.yum_update %} with YUM updated appliances{% endif %} - {% if pool.preconfigured %}Configured{% else %}Unconfigured{% endif %}{% if pool.description %} - "{{ pool.description }}"{% endif %} | 
+            <h2>#{{pool.id}} (<em>{{ pool.group.id }}</em>){% if pool.yum_update %} with YUM updated appliances{% endif %} - {% if pool.preconfigured %}Configured{% else %}Unconfigured{% endif %}{% if pool.description %} - "{{ pool.description }}"{% endif %} |
             {% if pool.version %}
                 Version: {{ pool.version }}
             {% endif %}

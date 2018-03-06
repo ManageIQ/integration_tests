@@ -1108,7 +1108,6 @@ class AppliancePool(MetadataMixin):
         default=False, help_text="Used for marking the appliance pool as being deleted")
     finished = models.BooleanField(default=False, help_text="Whether fulfillment has been met.")
     yum_update = models.BooleanField(default=False, help_text="Whether to update appliances.")
-    is_container = models.BooleanField(default=False, help_text='Whether the pool uses containers.')
 
     override_memory = models.IntegerField(null=True, blank=True)
     override_cpu = models.IntegerField(null=True, blank=True)
@@ -1143,9 +1142,6 @@ class AppliancePool(MetadataMixin):
         if self.yum_update != source_pool.yum_update:
             raise ValueError('The yum_update of the pools differ')
 
-        if self.is_container != source_pool.is_container:
-            raise ValueError('The is_container of the pools differ')
-
         if self.override_memory != source_pool.override_memory:
             raise ValueError('The override_memory of the pools differ')
 
@@ -1173,7 +1169,6 @@ class AppliancePool(MetadataMixin):
             time_leased=time_leased,
             preconfigured=self.preconfigured,
             yum_update=self.yum_update,
-            container=self.is_container,
             ram=self.override_memory,
             cpu=self.override_cpu,
             provider_type=self.provider_type,
@@ -1181,12 +1176,8 @@ class AppliancePool(MetadataMixin):
 
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
-            time_leased=60, preconfigured=True, yum_update=False, container=False, ram=None,
-            cpu=None, provider_type=None, template_type=Template.DEFAULT_TEMPLATE_TYPE):
-        if container:
-            container_q = ~Q(container=None) & ~Q(provider_type='openshift')
-        else:
-            container_q = Q(container=None)
+               time_leased=60, preconfigured=True, yum_update=False, ram=None, cpu=None,
+               provider_type=None, template_type=Template.DEFAULT_TEMPLATE_TYPE):
         if owner.has_quotas:
             user_pools_count = cls.objects.filter(owner=owner).count()
             user_vms_count = Appliance.objects.filter(appliance_pool__owner=owner).count()
@@ -1208,22 +1199,23 @@ class AppliancePool(MetadataMixin):
         from appliances.tasks import request_appliance_pool
         # Retrieve latest possible
         if not version:
-            versions = Template.get_versions(container_q,
-                template_group=group, ready=True, usable=True, exists=True,
-                preconfigured=preconfigured, provider__working=True, provider__disabled=False,
-                **user_filter)
+            versions = Template.get_versions(template_group=group, ready=True, usable=True,
+                                             exists=True, preconfigured=preconfigured,
+                                             provider__working=True, provider__disabled=False,
+                                             **user_filter)
             if versions:
                 version = versions[0]
         if not date:
             if version is not None:
-                dates = Template.get_dates(container_q, template_group=group, version=version,
-                    ready=True, usable=True, exists=True, preconfigured=preconfigured,
-                    provider__working=True, provider__disabled=False, **user_filter)
+                dates = Template.get_dates(template_group=group, version=version, ready=True,
+                                           usable=True, exists=True, preconfigured=preconfigured,
+                                           rovider__working=True, provider__disabled=False,
+                                           **user_filter)
             else:
-                dates = Template.get_dates(container_q,
-                    template_group=group, ready=True, usable=True, exists=True,
-                    preconfigured=preconfigured, provider__working=True, provider__disabled=False,
-                    **user_filter)
+                dates = Template.get_dates(template_group=group, ready=True, usable=True,
+                                           exists=True, preconfigured=preconfigured,
+                                           provider__working=True, provider__disabled=False,
+                                           **user_filter)
             if dates:
                 date = dates[0]
         if isinstance(group, basestring):
@@ -1246,8 +1238,8 @@ class AppliancePool(MetadataMixin):
         req_params = dict(
             group=group, version=version, date=date, total_count=num_appliances, owner=owner,
             provider=provider, preconfigured=preconfigured, yum_update=yum_update,
-            is_container=container, override_memory=ram, override_cpu=cpu,
-            provider_type=provider_type, template_type=template_type)
+            override_memory=ram, override_cpu=cpu, provider_type=provider_type,
+            template_type=template_type)
         if num_appliances == 0:
             req_params['finished'] = True
         req = cls(**req_params)
@@ -1267,20 +1259,6 @@ class AppliancePool(MetadataMixin):
                 task.delete()
 
         return super(AppliancePool, self).delete(*args, **kwargs)
-
-    @property
-    def container_q(self):
-        if self.is_container:
-            return ~Q(container=None) & ~Q(provider_type='openshift')
-        else:
-            return Q(container=None)
-
-    @property
-    def appliance_container_q(self):
-        if self.is_container:
-            return ~Q(template__container=None) & ~Q(provider_type='openshift')
-        else:
-            return Q(template__container=None)
 
     @property
     def filter_params(self):
@@ -1310,10 +1288,8 @@ class AppliancePool(MetadataMixin):
 
     @property
     def possible_templates(self):
-        q = Template.objects.filter(
-            self.container_q,
-            ready=True, exists=True, usable=True,
-            **self.filter_params).select_related('provider').distinct().order_by()
+        q = Template.objects.filter(ready=True, exists=True, usable=True,
+                    **self.filter_params).select_related('provider').distinct().order_by()
         if self.provider_type is None:
             return list(q)
         else:
@@ -1489,8 +1465,7 @@ class AppliancePool(MetadataMixin):
     @property
     def num_shepherd_appliances(self):
         return len(
-            Appliance.objects.filter(
-                self.appliance_container_q, appliance_pool=None, **self.appliance_filter_params
+            Appliance.objects.filter(appliance_pool=None, **self.appliance_filter_params
             ).distinct())
 
     def __repr__(self):
