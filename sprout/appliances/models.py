@@ -748,9 +748,9 @@ class Appliance(MetadataMixin):
     appliance_pool = models.ForeignKey("AppliancePool", null=True, on_delete=models.CASCADE,
         help_text="Which appliance pool this appliance belongs to.")
     name = models.CharField(max_length=64, help_text="Appliance's name as it is in the provider.")
-    ip_address = models.CharField(max_length=45, null=True, help_text="Appliance's IP address")
+    ip_address = models.CharField(max_length=64, null=True, help_text="Appliance's IP address")
 
-    openshift_ext_ip = models.CharField(max_length=45, null=True,
+    openshift_ext_ip = models.CharField(max_length=64, null=True,
                                         help_text="Openshift's project external ip")
     openshift_project = models.CharField(max_length=45, null=True,
                                          help_text="Openshift's project name")
