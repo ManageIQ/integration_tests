@@ -63,7 +63,7 @@ def ansible_repository(appliance, wait_for_ansible):
 
 
 @pytest.yield_fixture(scope="module")
-def ansible_credential(appliance, wait_for_ansible):
+def ansible_credential(appliance, ansible_repository):
     credential = appliance.collections.ansible_credentials.create(
         fauxfactory.gen_alpha(),
         "Machine",
@@ -128,7 +128,7 @@ def service_request(appliance, ansible_catalog_item):
     service_request_ = appliance.collections.requests.instantiate(description=request_descr)
     yield service_request_
 
-    if service_request_.exists:
+    if service_request_.exists():
         service_request_.remove_request()
 
 
@@ -239,12 +239,22 @@ def test_service_ansible_playbook_bundle(ansible_catalog_item):
     BZ(1515841, forced_streams=['5.9'])
 ])
 def test_service_ansible_playbook_provision_in_requests(appliance, ansible_catalog_item,
-                                                        service_catalog):
+                                                        service_catalog, request):
     """Tests if ansible playbook service provisioning is shown in service requests."""
     service_catalog.order()
     cat_item_name = ansible_catalog_item.name
     request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
     service_request = appliance.collections.requests.instantiate(description=request_descr)
+
+    @request.addfinalizer
+    def _finalize():
+        _service = MyService(appliance, cat_item_name)
+        if service_request.exists():
+            service_request.wait_for_request()
+            service_request.remove_request()
+        if _service.exists:
+            _service.delete()
+
     assert service_request.exists()
 
 
@@ -305,8 +315,8 @@ def test_service_ansible_playbook_order_retire(appliance, ansible_catalog_item, 
 
 
 @pytest.mark.meta(blockers=[BZ(1519275, forced_streams=['5.9'])])
-def test_service_ansible_playbook_plays_table(ansible_catalog_item, service_catalog,
-        service_request, service, soft_assert):
+def test_service_ansible_playbook_plays_table(service_catalog, service_request, service,
+        soft_assert):
     """Plays table in provisioned and retired service should contain at least one row."""
     service_catalog.order()
     service_request.wait_for_request()

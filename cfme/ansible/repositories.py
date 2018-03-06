@@ -174,7 +174,10 @@ class Repository(BaseEntity, Fillable):
         repo_list_page.flash.assert_no_error()
         repo_list_page.flash.assert_message(
             'Delete of Repository "{}" was successfully initiated.'.format(self.name))
-        wait_for(lambda: not self.exists, delay=10,
+        wait_for(
+            lambda: not self.exists,
+            delay=10,
+            timeout=120,
             fail_func=repo_list_page.browser.selenium.refresh)
 
     def refresh(self):
