@@ -4,8 +4,6 @@ import sys
 from collections import namedtuple
 from subprocess import check_call
 
-import select
-
 import diaper
 import fauxfactory
 import iso8601
