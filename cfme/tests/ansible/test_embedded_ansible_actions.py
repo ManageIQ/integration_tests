@@ -2,16 +2,12 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.common.vm import VM
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.services.myservice import MyService
-from cfme.utils import ports
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
-from cfme.utils.generators import random_vm_name
-from cfme.utils.net import net_check
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 from markers.env_markers.provider import ONE_PER_TYPE
@@ -78,29 +74,6 @@ def ansible_catalog_item(ansible_repository):
 
 
 @pytest.yield_fixture(scope="module")
-def vmware_vm(full_template_modscope, provider, setup_provider_modscope):
-    vm_obj = VM.factory(random_vm_name("ansible"), provider,
-                        template_name=full_template_modscope.name)
-    vm_obj.create_on_provider(allow_skip="default")
-    provider.mgmt.start_vm(vm_obj.name)
-    provider.mgmt.wait_vm_running(vm_obj.name)
-    # In order to have seamless SSH connection
-    vm_ip, _ = wait_for(
-        lambda: provider.mgmt.current_ip_address(vm_obj.name),
-        num_sec=300, delay=5, fail_condition={None}, message="wait for testing VM IP address.")
-    wait_for(
-        net_check, [ports.SSH, vm_ip], {"force": True},
-        num_sec=300, delay=5, message="testing VM's SSH available")
-    if not vm_obj.exists:
-        provider.refresh_provider_relationships()
-        vm_obj.wait_to_appear()
-    yield vm_obj
-    if provider.mgmt.does_vm_exist(vm_obj.name):
-        provider.mgmt.delete_vm(vm_obj.name)
-    provider.refresh_provider_relationships()
-
-
-@pytest.yield_fixture(scope="module")
 def ansible_action(appliance, ansible_catalog_item):
     action_collection = appliance.collections.actions
     action = action_collection.create(
@@ -119,11 +92,12 @@ def ansible_action(appliance, ansible_catalog_item):
 
 
 @pytest.yield_fixture(scope="module")
-def policy_for_testing(appliance, vmware_vm, provider, ansible_action):
+def policy_for_testing(appliance, full_template_vm_modscope, provider, ansible_action):
+    vm = full_template_vm_modscope
     policy = appliance.collections.policies.create(
         VMControlPolicy,
         fauxfactory.gen_alpha(),
-        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vmware_vm.name)
+        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm.name)
     )
     policy.assign_actions_to_event("Tag Complete", [ansible_action.description])
     policy_profile = appliance.collections.policy_profiles.create(
@@ -173,13 +147,14 @@ def service(appliance, ansible_catalog_item):
 
 @pytest.mark.tier(3)
 def test_action_run_ansible_playbook_localhost(request, ansible_catalog_item, ansible_action,
-        policy_for_testing, vmware_vm, ansible_credential, service_request, service):
+        policy_for_testing, full_template_vm_modscope, ansible_credential, service_request,
+        service):
     """Tests a policy with ansible playbook action against localhost.
     """
     with update(ansible_action):
         ansible_action.run_ansible_playbook = {"inventory": {"localhost": True}}
-    vmware_vm.add_tag("Service Level", "Gold")
-    request.addfinalizer(lambda: vmware_vm.remove_tag("Service Level", "Gold"))
+    full_template_vm_modscope.add_tag("Service Level", "Gold")
+    request.addfinalizer(lambda: full_template_vm_modscope.remove_tag("Service Level", "Gold"))
     wait_for(service_request.exists, num_sec=600)
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
@@ -189,45 +164,51 @@ def test_action_run_ansible_playbook_localhost(request, ansible_catalog_item, an
 
 @pytest.mark.tier(3)
 def test_action_run_ansible_playbook_manual_address(request, ansible_catalog_item, ansible_action,
-        policy_for_testing, vmware_vm, ansible_credential, service_request, service):
+        policy_for_testing, full_template_vm_modscope, ansible_credential, service_request,
+        service):
     """Tests a policy with ansible playbook action against manual address."""
+    vm = full_template_vm_modscope
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {"machine_credential": ansible_credential.name}
     with update(ansible_action):
         ansible_action.run_ansible_playbook = {
             "inventory": {
                 "specific_hosts": True,
-                "hosts": vmware_vm.ip_address
+                "hosts": vm.ip_address
             }
         }
-    vmware_vm.add_tag("Service Level", "Gold")
-    request.addfinalizer(lambda: vmware_vm.remove_tag("Service Level", "Gold"))
+    vm.add_tag("Service Level", "Gold")
+    request.addfinalizer(lambda: vm.remove_tag("Service Level", "Gold"))
     wait_for(service_request.exists, num_sec=600)
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
-    assert view.provisioning.details.get_text_of("Hosts") == vmware_vm.ip_address
+    assert view.provisioning.details.get_text_of("Hosts") == vm.ip_address
     assert view.provisioning.results.get_text_of("Status") == "successful"
 
 
 @pytest.mark.tier(3)
 def test_action_run_ansible_playbook_target_machine(request, ansible_catalog_item, ansible_action,
-        policy_for_testing, vmware_vm, ansible_credential, service_request, service):
+        policy_for_testing, full_template_vm_modscope, ansible_credential, service_request,
+        service):
     """Tests a policy with ansible playbook action against target machine."""
+    vm = full_template_vm_modscope
     with update(ansible_action):
         ansible_action.run_ansible_playbook = {"inventory": {"target_machine": True}}
-    vmware_vm.add_tag("Service Level", "Gold")
-    request.addfinalizer(lambda: vmware_vm.remove_tag("Service Level", "Gold"))
+    vm.add_tag("Service Level", "Gold")
+    request.addfinalizer(lambda: vm.remove_tag("Service Level", "Gold"))
     wait_for(service_request.exists, num_sec=600)
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
-    assert view.provisioning.details.get_text_of("Hosts") == vmware_vm.ip_address
+    assert view.provisioning.details.get_text_of("Hosts") == vm.ip_address
     assert view.provisioning.results.get_text_of("Status") == "successful"
 
 
 @pytest.mark.tier(3)
-def test_action_run_ansible_playbook_unavailable_address(request, ansible_catalog_item, vmware_vm,
-        ansible_action, policy_for_testing, ansible_credential, service_request, service):
+def test_action_run_ansible_playbook_unavailable_address(request, ansible_catalog_item,
+        full_template_vm_modscope, ansible_action, policy_for_testing, ansible_credential,
+        service_request, service):
     """Tests a policy with ansible playbook action against unavailable address."""
+    vm = full_template_vm_modscope
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {"machine_credential": ansible_credential.name}
     with update(ansible_action):
@@ -237,8 +218,8 @@ def test_action_run_ansible_playbook_unavailable_address(request, ansible_catalo
                 "hosts": "unavailable_address"
             }
         }
-    vmware_vm.add_tag("Service Level", "Gold")
-    request.addfinalizer(lambda: vmware_vm.remove_tag("Service Level", "Gold"))
+    vm.add_tag("Service Level", "Gold")
+    request.addfinalizer(lambda: vm.remove_tag("Service Level", "Gold"))
     wait_for(service_request.exists, num_sec=600)
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
@@ -247,9 +228,10 @@ def test_action_run_ansible_playbook_unavailable_address(request, ansible_catalo
 
 
 @pytest.mark.tier(3)
-def test_control_action_run_ansible_playbook_in_requests(request, vmware_vm, policy_for_testing,
-        service_request):
+def test_control_action_run_ansible_playbook_in_requests(request,
+        full_template_vm_modscope, policy_for_testing, service_request):
     """Checks if execution of the Action result in a Task/Request being created."""
-    vmware_vm.add_tag("Service Level", "Gold")
-    request.addfinalizer(lambda: vmware_vm.remove_tag("Service Level", "Gold"))
+    vm = full_template_vm_modscope
+    vm.add_tag("Service Level", "Gold")
+    request.addfinalizer(lambda: vm.remove_tag("Service Level", "Gold"))
     assert service_request.exists
