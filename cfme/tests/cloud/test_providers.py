@@ -403,7 +403,7 @@ def test_display_network_topology(appliance, openstack_provider):
     topology_col = appliance.collections.network_topology_elements
     view = navigate_to(topology_col, 'All')
     assert view.is_displayed
-    view.flash.assert_no_errors()
+    view.flash.assert_no_error()
 
 
 class TestProvidersRESTAPI(object):
