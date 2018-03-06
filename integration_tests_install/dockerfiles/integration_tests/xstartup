@@ -12,4 +12,5 @@ fluxbox &
 
 # Start the selenium server
 # xterm -maximized -e java -jar $CFME_ENV/selenium/selenium_latest.jar -ensureCleanSession -trustAllSSLCertificates &
-xterm -maximized -e java -jar $SELENIUM_PATH/selenium_latest.jar -ensureCleanSession -trustAllSSLCertificates &
+#xterm -maximized -e java -jar $SELENIUM_PATH/selenium_latest.jar -ensureCleanSession -trustAllSSLCertificates &
+xterm -maximized -e java -jar $SELENIUM_PATH/selenium_latest.jar &
