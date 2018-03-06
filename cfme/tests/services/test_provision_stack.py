@@ -131,31 +131,8 @@ def catalog_item(dialog, catalog, template, provider, dialog_name):
 
 
 @pytest.fixture
-def order_service(appliance, catalog_item, stack_data):
-    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
-                                       catalog_item.name, stack_data)
-    service_catalogs.order()
-
-
-@pytest.yield_fixture
-def provision_request(appliance, catalog_item, order_service):
-    provision_request = appliance.collections.requests.instantiate(catalog_item.name,
-                                                                   partial_check=True)
-    logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
-    provision_request.wait_for_request(method='ui')
-    yield provision_request
-    if provision_request.exists:
-        provision_request.remove_request()
-
-
-@pytest.yield_fixture
-def service(appliance, provision_request):
-    last_message = provision_request.get_request_row_from_ui()['Last Message'].text
-    service_name = last_message.split()[2].strip('[]')
-    service = MyService(appliance, service_name)
-    yield service
-    if service.exists:
-        service.delete()
+def service_catalogs(appliance, catalog_item, stack_data):
+    return ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name, stack_data)
 
 
 @pytest.fixture
@@ -163,57 +140,70 @@ def stack(appliance, provider, stack_data):
     return appliance.collections.stacks.instantiate(stack_data['stack_name'], provider=provider)
 
 
-def test_provision_stack(provision_request, stack):
+def _cleanup(appliance=None, provision_request=None, service=None):
+    if not service:
+        last_message = provision_request.get_request_row_from_ui()['Last Message'].text
+        service_name = last_message.split()[2].strip('[]')
+        myservice = MyService(appliance, service_name)
+    else:
+        myservice = service
+    if myservice.exists:
+        myservice.delete()
+
+
+def test_provision_stack(appliance, stack, service_catalogs, request):
     """Tests stack provisioning
 
     Metadata:
         test_flag: provision
     """
+    provision_request = service_catalogs.order()
+    provision_request.wait_for_request(method='ui')
+    request.addfinalizer(lambda: _cleanup(appliance, provision_request))
     assert provision_request.is_succeeded()
     stack.wait_for_exists()
 
 
-def test_reconfigure_service(service, provision_request):
+def test_reconfigure_service(appliance, service_catalogs, request):
     """Tests service reconfiguring
 
     Metadata:
         test_flag: provision
     """
+    provision_request = service_catalogs.order()
+    provision_request.wait_for_request(method='ui')
+    last_message = provision_request.get_request_row_from_ui()['Last Message'].text
+    service_name = last_message.split()[2].strip('[]')
+    myservice = MyService(appliance, service_name)
+    request.addfinalizer(lambda: _cleanup(service=myservice))
     assert provision_request.is_succeeded()
-    service.reconfigure_service()
+    myservice.reconfigure_service()
 
 
-def test_remove_template_provisioning(appliance, catalog_item, template, order_service, request):
+def test_remove_template_provisioning(appliance, template, service_catalogs, request):
     """Tests stack provisioning
 
     Metadata:
         test_flag: provision
     """
     # This is part of test - remove template and see if provision fails, so not added as finalizer
+    provision_request = service_catalogs.order()
     template.delete()
-    request_description = 'Provisioning Service [{}] from [{}]'.format(catalog_item.name,
-                                                                       catalog_item.name)
-    provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
-
-    @request.addfinalizer
-    def _finalize():
-        last_message = provision_request.get_request_row_from_ui()['Last Message'].text
-        service_name = last_message.split()[2].strip('[]')
-        myservice = MyService(appliance, service_name)
-        if myservice.exists:
-            myservice.delete
-
+    request.addfinalizer(lambda: _cleanup(appliance, provision_request))
     assert (provision_request.row.last_message.text == 'Service_Template_Provisioning failed' or
             provision_request.row.status.text == "Error")
 
 
-def test_retire_stack(appliance, provider, provision_request, stack):
+def test_retire_stack(appliance, provider, service_catalogs, stack, request):
     """Tests stack retirement
 
     Metadata:
         test_flag: provision
     """
+    provision_request = service_catalogs.order()
+    provision_request.wait_for_request(method='ui')
+    request.addfinalizer(lambda: _cleanup(appliance, provision_request))
     assert provision_request.is_succeeded()
     stack.wait_for_exists()
     stack.retire_stack()
