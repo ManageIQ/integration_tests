@@ -7,10 +7,9 @@ import pytest
 from selenium.common.exceptions import NoSuchElementException
 
 from cfme.infrastructure.provider import InfraProvider
-from fixtures.pytest_store import store
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
-
+from fixtures.pytest_store import store
 
 pytestmark = [
     pytest.mark.usefixtures("infra_provider"), pytest.mark.tier(3)]

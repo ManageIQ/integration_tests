@@ -3,9 +3,8 @@ import pytest
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils.wait import wait_for
 from cfme.utils.generators import random_vm_name
-
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider_modscope'),

@@ -1,8 +1,8 @@
 import pytest
+
 from cfme import test_requirements
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
-
 
 pytestmark = [
     test_requirements.ownership,

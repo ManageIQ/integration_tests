@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-import pytest
 import random
-from cfme.utils import conf
-from cfme.utils import error
+
+import pytest
 
 from cfme.infrastructure import host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.utils import conf
+from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
-
 
 pytestmark = [
     pytest.mark.tier(3),

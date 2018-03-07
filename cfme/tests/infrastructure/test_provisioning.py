@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
@@ -10,7 +11,6 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-from widgetastic.utils import partial_match
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
