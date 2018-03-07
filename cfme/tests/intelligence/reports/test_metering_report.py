@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# All providers that support C&U support Metering Reports.SCVMM doesn't support C&U.
+# Metering reports differ from Chargeback reports in that Metering reports report
+# only resource usage and not costs.
+
 import fauxfactory
 import math
 import pytest
@@ -283,7 +287,7 @@ def test_validate_cpu_usage(resource_usage, metering_report):
 @pytest.mark.uncollectif(
     lambda provider: provider.one_of(EC2Provider) or provider.one_of(GCEProvider))
 def test_validate_memory_usage(resource_usage, metering_report):
-    """Test to validate memory usage."""
+    """Test to validate memory usage.This metric is not collected for GCE, EC2."""
     for groups in metering_report:
         if groups["Memory Used"]:
             estimated_memory_usage = resource_usage['memory_used']
