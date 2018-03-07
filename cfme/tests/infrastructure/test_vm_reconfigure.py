@@ -3,7 +3,6 @@ import pytest
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 from cfme.utils.generators import random_vm_name
 
@@ -61,13 +60,20 @@ def test_vm_reconfig_add_remove_hw_cold(
         new_config.hw.mem_size = new_config.hw.mem_size_mb + 512
         new_config.hw.mem_size_unit = 'MB'
 
-    small_vm.reconfigure(new_config)
+    reconfigure_request = small_vm.reconfigure(new_config)
+    # VM reconfiguration verification
+    wait_for(reconfigure_request.is_succeeded, timeout=360, delay=45,
+             message="confirm that vm was reconfigured")
     wait_for(
         lambda: small_vm.configuration == new_config, timeout=360, delay=45,
         fail_func=small_vm.refresh_relationships,
         message="confirm that {} was added".format(change_type))
 
-    small_vm.reconfigure(orig_config)
+    # Reverting changes back
+    reconfigure_request = small_vm.reconfigure(orig_config)
+    # VM reconfiguration verification
+    wait_for(reconfigure_request.is_succeeded, timeout=360, delay=45,
+             message="confirm that vm was reconfigured")
     wait_for(
         lambda: small_vm.configuration == orig_config, timeout=360, delay=45,
         fail_func=small_vm.refresh_relationships,

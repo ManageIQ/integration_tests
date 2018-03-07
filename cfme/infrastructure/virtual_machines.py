@@ -874,6 +874,15 @@ class Vm(VM):
         fill_data = {k: v for k, v in changes.iteritems() if k != 'disks'}
         vm_recfg.fill(fill_data)
 
+        # Helpers for VM Reconfigure request
+        cpu_message = "Processor Sockets: {}{}".format(
+            changes.get("sockets", "1"), ", Processor Cores Per Socket: {}".format(
+                changes.get("cores_per_socket", "1"))) if changes.get("cpu", False) else None
+        ram_message = "Memory: {} {}".format(
+            changes.get("mem_size", "0"), changes.get("mem_size_unit", "MB")) if changes.get(
+            "memory", False) else None
+        disk_message = None
+
         for disk_change in changes['disks']:
             action, disk = disk_change['action'], disk_change['disk']
             if action == 'add':
@@ -902,16 +911,16 @@ class Vm(VM):
                     row.dependent.fill(dependent)
                 row.size.fill(disk.size)
                 row.actions.widget.click()
-                message = 'Add Disks'
+                disk_message = 'Add Disks'
             elif action == 'delete':
                 row = vm_recfg.disks_table.row(name=disk.filename)
                 # `delete_backing` removes disk from the env
                 row.delete_backing.fill(True)
                 row.actions.widget.click()
-                message = 'Remove Disks'
+                disk_message = 'Remove Disks'
             else:
                 raise ValueError("Unknown disk change action; must be one of: add, delete")
-
+        message = ", ".join(filter(None, [ram_message, cpu_message, disk_message]))
         if cancel:
             vm_recfg.cancel_button.click()
             view = self.appliance.browser.create_view(InfraVmDetailsView)
