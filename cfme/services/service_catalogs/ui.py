@@ -188,6 +188,7 @@ def order(self):
     view = self.create_view(RequestsView)
     view.flash.assert_no_error()
     view.flash.assert_message(msg, msg_type)
+    return self.appliance.collections.requests.instantiate(self.name, partial_check=True)
 
 
 @navigator.register(Server)
