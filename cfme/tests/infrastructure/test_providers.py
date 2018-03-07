@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-import uuid
 import fauxfactory
-
 import pytest
+import uuid
 
 from copy import copy, deepcopy
 

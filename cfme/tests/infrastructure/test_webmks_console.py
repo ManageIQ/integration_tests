@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Test for WebMKS Remote Consoles of VMware Providers."""
+from wait_for import wait_for
 import imghdr
 import pytest
 import socket
@@ -10,7 +11,6 @@ from cfme.utils import version, ssh
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
-from wait_for import wait_for
 from markers.env_markers.provider import providers
 
 

@@ -3,11 +3,11 @@ import pytest
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
-from fixtures.provider import setup_one_or_skip
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.update import update
+from fixtures.provider import setup_one_or_skip
 
 
 pytestmark = [test_requirements.tag, pytest.mark.tier(2)]
