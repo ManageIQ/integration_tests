@@ -26,7 +26,8 @@ from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, ViaUI, navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
-from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, TimelinesView)
+from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, TimelinesView,
+    ParametrizedSummaryTable)
 from . import Server, Region, Zone, ZoneCollection
 
 
@@ -577,6 +578,69 @@ class Advanced(CFMENavigateStep):
         self.prerequisite_view.advanced.select()
 
 
+class ServerDatabaseView(ConfigurationView):
+    @View.nested
+    class summary(Tab):  # noqa
+        TAB_NAME = "Summary"
+
+    @View.nested
+    class tables(Tab):  # noqa
+        TAB_NAME = "Tables"
+
+    @View.nested
+    class indexes(Tab):  # noqa
+        TAB_NAME = "Indexes"
+
+    @View.nested
+    class settings(Tab):  # noqa
+        TAB_NAME = "Settings"
+
+    @View.nested
+    class client_connections(Tab):  # noqa
+        TAB_NAME = "Client Connections"
+
+    @View.nested
+    class utilization(Tab):  # noqa
+        TAB_NAME = "Utilization"
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_configuration and
+            self.summary.is_displayed
+        )
+
+
+@navigator.register(Server)
+class Database(CFMENavigateStep):
+    VIEW = ServerDatabaseView
+    prerequisite = NavigateToSibling('Configuration')
+
+    def step(self):
+        self.prerequisite_view.accordions.database.tree.click_path('VMDB')
+
+
+class DatabaseSummaryView(ServerDatabaseView):
+    summary = ParametrizedSummaryTable()
+
+    @property
+    def is_displayed(self):
+        return (
+            self.summary.is_displayed and
+            self.summary.is_active() and
+            self.title.text == 'VMDB Summary'
+        )
+
+
+@navigator.register(Server)
+class DatabaseSummary(CFMENavigateStep):
+    VIEW = DatabaseSummaryView
+    prerequisite = NavigateToSibling('Database')
+
+    def step(self):
+        self.prerequisite_view.summary.select()
+
+
 class ServerDiagnosticsView(ConfigurationView):
     @View.nested
     class summary(Tab):  # noqa
@@ -922,6 +986,16 @@ class RegionDiagnosticsView(ConfigurationView):
             self.title.text.startswith('Diagnostics Region '))
 
 
+class RegionDiagnosticsDatabaseView(RegionDiagnosticsView):
+
+    db_backup_settings_type = BootstrapSelect(id='log_protocol')
+    submit_db_garbage_collection_button = Button(alt="Run Database Garbage Collection Now")
+
+    @property
+    def is_displayed(self):
+        return self.database.is_active()
+
+
 @navigator.register(Region, 'Diagnostics')
 class RegionDiagnostics(CFMENavigateStep):
     VIEW = RegionDiagnosticsView
@@ -996,7 +1070,7 @@ class RegionDiagnosticsServers(CFMENavigateStep):
 
 @navigator.register(Region, 'Database')
 class RegionDiagnosticsDatabase(CFMENavigateStep):
-    VIEW = RegionDiagnosticsView
+    VIEW = RegionDiagnosticsDatabaseView
     prerequisite = NavigateToSibling('Diagnostics')
 
     def am_i_here(self):
