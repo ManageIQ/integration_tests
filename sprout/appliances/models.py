@@ -752,7 +752,7 @@ class Appliance(MetadataMixin):
 
     openshift_ext_ip = models.CharField(max_length=64, null=True,
                                         help_text="Openshift's project external ip")
-    openshift_project = models.CharField(max_length=45, null=True,
+    openshift_project = models.CharField(max_length=64, null=True,
                                          help_text="Openshift's project name")
 
     datetime_leased = models.DateTimeField(null=True, help_text="When the appliance was leased")
