@@ -135,4 +135,5 @@ def test_pxe_servicecatalog(appliance, setup_provider, provider, catalog_item, r
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request(num_sec=3600)
-    assert provision_request.is_succeeded()
+    msg = "Provisioning failed with the message {}".format(provision_request.rest.message)
+    assert provision_request.is_succeeded(), msg

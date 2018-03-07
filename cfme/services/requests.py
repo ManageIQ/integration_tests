@@ -40,17 +40,27 @@ class Request(BaseEntity):
     def wait_for_request(self, num_sec=1800, delay=20):
         def _finished():
             self.rest.reload()
-            return self.rest.request_state.title() in self.REQUEST_FINISHED_STATES
+            return (self.rest.request_state.title() in self.REQUEST_FINISHED_STATES and
+                    'Retry' not in self.rest.message)
 
-        wait_for(_finished, num_sec=num_sec, delay=delay, message="Request finished")
+        def last_message():
+            logger.info("Last Request message: '{}'".format(self.rest.message))
+
+        wait_for(_finished, num_sec=num_sec, delay=delay, fail_func=last_message,
+                 message="Request finished")
 
     @wait_for_request.variant('ui')
     def wait_for_request_ui(self, num_sec=1200, delay=10):
         def _finished():
             self.update(method='ui')
-            return self.row.request_state.text in self.REQUEST_FINISHED_STATES
+            return (self.row.request_state.text in self.REQUEST_FINISHED_STATES and
+                    'Retry' not in self.row.last_message.text)
 
-        wait_for(_finished, num_sec=num_sec, delay=delay, message="Request finished")
+        def last_message():
+            logger.info("Last Request message in UI: '{}'".format(self.row.last_message))
+
+        wait_for(_finished, num_sec=num_sec, delay=delay, fail_func=last_message,
+                 message="Request finished")
 
     @property
     def rest(self):

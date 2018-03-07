@@ -4,7 +4,6 @@ import pytest
 from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils import normalize_text
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -176,7 +175,8 @@ def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_t
         handle_exception=True, num_sec=600)
 
     provision_request.wait_for_request(method='ui')
-    assert provision_request.is_succeeded(method='ui')
+    msg = "Provisioning failed with the message {}".format(provision_request.row.last_message.text)
+    assert provision_request.is_succeeded(method='ui'), msg
 
     # Wait for e-mails to appear
     def verify():

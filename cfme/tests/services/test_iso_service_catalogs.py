@@ -124,4 +124,5 @@ def test_rhev_iso_servicecatalog(appliance, setup_provider, provider, catalog_it
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-    assert provision_request.is_succeeded()
+    msg = "Provisioning failed with the message {}".format(provision_request.rest.message)
+    assert provision_request.is_succeeded(), msg

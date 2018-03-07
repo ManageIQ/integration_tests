@@ -100,7 +100,8 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
         # nav to requests page happens on successful provision
         logger.info('Waiting for cfme provision request for vm %s', vm_name)
         provision_request.wait_for_request()
-        assert provision_request.is_succeeded(method='ui')
+        msg = "Provisioning failed with the message {}".format(provision_request.rest.message)
+        assert provision_request.is_succeeded(), msg
         return vm
 
     return _provisioner

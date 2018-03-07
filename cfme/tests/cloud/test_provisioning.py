@@ -267,16 +267,15 @@ def test_provision_from_template_using_rest(
     request.addfinalizer(
         lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
 
-    request = appliance.rest_api.collections.provision_requests.action.create(**provision_data)[0]
+    response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)[0]
     assert_response(appliance)
 
-    def _finished():
-        request.reload()
-        if request.status.lower() in {"error"}:
-            pytest.fail("Error when provisioning: `{}`".format(request.message))
-        return request.request_state.lower() in {"finished", "provisioned"}
+    provision_request = appliance.collections.requests.instantiate(description=response.description)
 
-    wait_for(_finished, num_sec=3000, delay=10, message="REST provisioning finishes")
+    provision_request.wait_for_request()
+    assert provision_request.is_succeeded(), ("Provisioning failed with the message {}".format(
+        provision_request.rest.message))
+
     wait_for(
         lambda: provider.mgmt.does_vm_exist(vm_name),
         num_sec=1000, delay=5, message="VM {} becomes visible".format(vm_name))
@@ -420,16 +419,15 @@ def test_manual_placement_using_rest(
     request.addfinalizer(
         lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
 
-    request = appliance.rest_api.collections.provision_requests.action.create(**provision_data)[0]
+    response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)[0]
     assert_response(appliance)
 
-    def _finished():
-        request.reload()
-        if 'error' in request.status.lower():
-            pytest.fail("Error when provisioning: `{}`".format(request.message))
-        return request.request_state.lower() in ('finished', 'provisioned')
+    provision_request = appliance.collections.requests.instantiate(description=response.description)
 
-    wait_for(_finished, num_sec=3000, delay=10, message="REST provisioning finishes")
+    provision_request.wait_for_request()
+    assert provision_request.is_succeeded(), ("Provisioning failed with the message {}".format(
+        provision_request.rest.message))
+
     wait_for(
         lambda: provider.mgmt.does_vm_exist(vm_name),
         num_sec=1000, delay=5, message="VM {} becomes visible".format(vm_name))
@@ -579,9 +577,9 @@ def test_provision_with_boot_volume(request, testing_instance, provider, soft_as
             logger.info(
                 "Provision failed {}: {}".format(e, provision_request.request_state))
             raise e
-        assert provision_request.is_succeeded(method='ui'), (
-            "Provisioning failed with the message {}".format(
-                provision_request.row.last_message.text))
+        msg = "Provisioning failed with the message {}".format(
+            provision_request.row.last_message.text)
+        assert provision_request.is_succeeded(method='ui'), msg
         soft_assert(instance.name in provider.mgmt.volume_attachments(volume))
         soft_assert(provider.mgmt.volume_attachments(volume)[instance.name] == "/dev/vda")
         instance.delete_from_provider()  # To make it possible to delete the volume

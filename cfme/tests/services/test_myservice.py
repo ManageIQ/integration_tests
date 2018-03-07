@@ -55,7 +55,8 @@ def myservice(appliance, setup_provider, provider, catalog_item, request):
     service_request = appliance.collections.requests.instantiate(request_description,
                                                                  partial_check=True)
     service_request.wait_for_request()
-    assert service_request.is_succeeded()
+    assert service_request.is_succeeded(),\
+        ("Request failed with the message {}".format(service_request.rest.message))
 
     yield catalog_item.name, vm_name
 
