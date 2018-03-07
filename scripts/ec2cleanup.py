@@ -1,7 +1,8 @@
 import argparse
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from tabulate import tabulate
+from time import sleep
 
 from cfme.utils.path import log_path
 from cfme.utils.providers import list_provider_keys, get_mgmt
@@ -21,6 +22,8 @@ def parse_cmd_line():
                         help='List of ELBs, which should be excluded.')
     parser.add_argument('--exclude-enis', nargs='+',
                         help='List of ENIs, which should be excluded. ENI ID is allowed.')
+    parser.add_argument('--exclude_stacks', nargs='+',
+                       help='List of Stacks, which should be exclude')
     parser.add_argument("--output", dest="output", help="target file name, default "
                                                         "'cleanup_ec2.log' in utils.path.log_path",
                         default=log_path.join('cleanup_ec2.log').strpath)
@@ -129,7 +132,34 @@ def delete_unused_network_interfaces(provider_mgmt, excluded_enis, output):
         logger.exception('Exception in %r', delete_unused_network_interfaces.__name__)
 
 
-def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, output):
+def delete_stacks(provider_mgmt, excluded_stacks, output):
+    stack_list = []
+    provider_name = provider_mgmt.kwargs['name']
+    try:
+        for stack in provider_mgmt.list_stacks():
+            if excluded_stacks and stack.stack_name in excluded_stacks:
+                logger.info("  Excluding Stack name: %r", stack.stack_name)
+                continue
+            else:
+                today = datetime.utcnow().replace(tzinfo=None)
+                some_date = today - timedelta(days=1)
+                if stack.creation_time < some_date:
+                    stack_list.append([provider_name, stack.stack_name])
+                    provider_mgmt.delete_stack(stack.stack_name)
+                    # TODO: Remove once we have reliable Trottling-resistant aproach
+                    sleep(5)
+        logger.info("  Deleted CloudFormation Stacks: %r", stack_list)
+        with open(output, 'a+') as report:
+            if stack_list:
+                report.write(tabulate(tabular_data=stack_list,
+                                      headers=['Provider Key', 'Stack Name'],
+                                      tablefmt='orgtbl'))
+    except Exception:
+        # TODO don't diaper this whole method
+        logger.exception('Exception in %r', delete_stacks.__name__)
+
+
+def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, exclude_stacks, output):
     with open(output, 'w') as report:
         report.write('ec2cleanup.py, Address, Volume, LoadBalancer and Network Interface Cleanup')
         report.write("\nDate: {}\n".format(datetime.now()))
@@ -148,6 +178,10 @@ def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, output
         delete_unused_network_interfaces(provider_mgmt=provider_mgmt,
                                          excluded_enis=exclude_enis,
                                          output=output)
+        logger.info("Deleting old stacks...")
+        delete_stacks(provider_mgmt=provider_mgmt,
+                      excluded_stacks=exclude_stacks,
+                      output=output)
         logger.info("Releasing addresses...")
         delete_disassociated_addresses(provider_mgmt=provider_mgmt,
                                        excluded_eips=exclude_eips,
@@ -157,4 +191,4 @@ def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, output
 if __name__ == "__main__":
     args = parse_cmd_line()
     sys.exit(ec2cleanup(args.exclude_volumes, args.exclude_eips, args.exclude_elbs,
-                        args.exclude_enis, args.output))
+                        args.exclude_stacks, args.exclude_enis, args.output))
