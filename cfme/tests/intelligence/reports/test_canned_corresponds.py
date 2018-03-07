@@ -144,20 +144,11 @@ def test_datastores_summary(soft_assert, appliance, request):
     vms = adb['vms']
     host_storages = adb['host_storages']
 
-    path = ["Configuration Management", "Storage", "Datastores Summary"]
-    report = CannedSavedReport.new(path)
+    storages_in_db_list = []
+    report_rows_list = []
 
     storages_in_db = adb.session.query(storages.store_type, storages.free_space,
                                        storages.total_space, storages.name, storages.id).all()
-
-    assert len(storages_in_db) == len(list(report.data.rows))
-
-    @request.addfinalizer
-    def _finalize():
-        report.delete()
-
-    storages_in_db_list = []
-    report_rows_list = []
 
     for store in storages_in_db:
 
@@ -178,6 +169,15 @@ def test_datastores_summary(soft_assert, appliance, request):
         }
 
         storages_in_db_list.append(store_dict)
+
+    path = ["Configuration Management", "Storage", "Datastores Summary"]
+    report = CannedSavedReport.new(path)
+
+    assert len(storages_in_db) == len(list(report.data.rows))
+
+    @request.addfinalizer
+    def _finalize():
+        report.delete()
 
     for row in report.data.rows:
 
