@@ -418,7 +418,7 @@ class DetailsFromProvider(CFMENavigateStep):
 
     def prerequisite(self):
         prov_view = navigate_to(self.obj.provider, 'Details')
-        prov_view.entities.relationships.click_at('Datastores')
+        prov_view.entities.summary('Relationships').click_at('Datastores')
         return self.obj.create_view(DatastoresView)
 
     def step(self):
