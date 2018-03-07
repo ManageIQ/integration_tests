@@ -42,7 +42,8 @@ def template(provider, provisioning, setup_provider):
     dialog_name = "dialog_" + fauxfactory.gen_alphanumeric()
     template.create_service_dialog_from_template(dialog_name, template.template_name)
     yield template, dialog_name
-    template.delete()
+    if template.exists:
+        template.delete()
 
 
 @pytest.fixture(scope="function")

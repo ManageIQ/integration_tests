@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from widgetastic.widget import Text, Checkbox
-from widgetastic_patternfly import BootstrapSelect, Button, Input
+from widgetastic_patternfly import BootstrapSelect, Button, CandidateNotFound, Input
 from widgetastic_manageiq import ScriptBox, Table, PaginationPane
 from navmazing import NavigateToAttribute, NavigateToSibling
 from cfme.common import WidgetasticTaggable
@@ -197,6 +197,14 @@ class OrchestrationTemplate(Updateable, Pretty, Navigatable, WidgetasticTaggable
         view.flash.assert_success_message('Service Dialog "{}" was successfully created'.format(
             dialog_name))
         return template_name
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+            return True
+        except CandidateNotFound:
+            return False
 
 
 @navigator.register(OrchestrationTemplate, 'All')
