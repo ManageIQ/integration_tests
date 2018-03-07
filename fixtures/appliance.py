@@ -116,6 +116,12 @@ def temp_appliances_unconfig_modscope():
         yield appliances
 
 
+@pytest.yield_fixture(scope="module")
+def temp_appliances_unconfig_modscope_rhevm():
+    with temp_appliances(count=2, preconfigured=False, provider_type='rhevm') as appliances:
+        yield appliances
+
+
 @pytest.yield_fixture(scope="class")
 def temp_appliances_unconfig_clsscope():
     with temp_appliances(count=2, preconfigured=False) as appliances:

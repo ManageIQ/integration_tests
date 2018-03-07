@@ -33,17 +33,17 @@ def provision_vm(request, provider):
 
 
 @pytest.fixture(scope="module")
-def get_appliances(temp_appliances_unconfig_modscope):
+def get_appliances(temp_appliances_unconfig_modscope_rhevm):
     """Returns two database-owning appliances
 
     """
-    appl1 = temp_appliances_unconfig_modscope[0]
-    appl2 = temp_appliances_unconfig_modscope[1]
+    appl1 = temp_appliances_unconfig_modscope_rhevm[0]
+    appl2 = temp_appliances_unconfig_modscope_rhevm[1]
     appl1.configure(region=0)
     appl1.wait_for_web_ui()
     appl2.configure(region=0)
     appl2.wait_for_web_ui()
-    return temp_appliances_unconfig_modscope
+    return temp_appliances_unconfig_modscope_rhevm
 
 
 # TODO Refactore test in to fixtures
