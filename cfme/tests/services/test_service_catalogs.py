@@ -12,6 +12,7 @@ from cfme.services.workloads import VmsInstances
 from cfme.utils import error
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
+from cfme.utils.rest import assert_response
 from cfme.utils.wait import wait_for_decorator
 
 
@@ -73,7 +74,7 @@ def test_order_catalog_item_via_rest(
     assert len(template) == 1
     template, = template
     req = template.action.order()
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
 
     @wait_for_decorator(timeout="15m", delay=5)
     def request_finished():

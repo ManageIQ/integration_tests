@@ -10,7 +10,37 @@ from cfme.utils.wait import wait_for
 
 def assert_response(
         rest_obj, success=None, http_status=None, results_num=None, task_wait=600):
-    """Asserts that the response HTTP status code and content is as expected."""
+    """
+    Asserts that the response HTTP status code and content is as expected.
+
+    If specific http_status is not given, we simply check that the status was a
+    successful response code via requests.Response.__bool__()
+
+    If response status code is '204', ensures there is no content.
+
+    Example of verifying a success response:
+      assert_response(appliance)
+
+    Example of verifying a failure response:
+      with error.expected('ActiveRecord::RecordNotFound'):
+          collection.action.delete(some_stuff)
+      assert_response(appliance, http_status=404)
+
+
+    Note: For below args, 'results' refers to rest_obj.last_response.json()['results']
+
+    Args:
+        rest_obj -- instance of cfme.utils.Appliance (with rest_api attr defined)
+            or cfme.utils.appliance.MiqApi
+        success -- if defined, checks each result in results to ensure that result['success']
+            is equal to the value defined here
+        http_status (int or tuple of int) -- expected http response status codes, if None,
+            we simply verify that the response was a success
+        results_num (int) -- specifies expected number of results
+        task_wait (int) -- if any result in results contains a 'task_id', this method will polls
+            the API to ensure that task has moved to 'finished' and wait 'task_wait' seconds for
+            that state change to occur
+    """
 
     # check if `rest_obj` is an object with attribute referencing rest_api instance
     rest_api = rest_obj.rest_api if hasattr(rest_obj, 'rest_api') else rest_obj
@@ -18,10 +48,16 @@ def assert_response(
     last_response = rest_api.response
 
     if http_status:
-        assert last_response.status_code == http_status,\
+        # Convert single int to tuple if needed
+        if type(http_status) is int:
+            http_status = (http_status,)
+
+        # Check the response codes
+        assert last_response.status_code in http_status,\
             'The status code {} doesn\'t match the expected status code {}'.format(
                 last_response.status_code, http_status)
     else:
+        # No specific status_code specified, simply check if response was a success
         assert last_response, 'The request failed with {}'.format(last_response.status_code)
 
     try:
@@ -32,7 +68,7 @@ def assert_response(
             assert not last_response.text.strip(), 'No content expected'
             return
         else:
-            raise AssertionError('No content returned')
+            raise AssertionError('No JSON content returned')
 
     def _check_result(result):
         # check that result contains data to catch bugs like BZ 1414845

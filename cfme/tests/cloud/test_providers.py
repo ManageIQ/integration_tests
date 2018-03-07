@@ -21,6 +21,7 @@ from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
 from cfme.utils import error
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.rest import assert_response
 from cfme.utils.update import update
 from fixtures.provider import enable_provider_regions
 from fixtures.pytest_store import store
@@ -414,7 +415,7 @@ class TestProvidersRESTAPI(object):
         num_profiles = 2
         response = _arbitration_profiles(
             request, appliance.rest_api, cloud_provider, num=num_profiles)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         assert len(response) == num_profiles
 
         return response
@@ -432,7 +433,7 @@ class TestProvidersRESTAPI(object):
                 name=cloud_provider.name).cloud_networks
         else:
             networks = appliance.rest_api.collections.cloud_networks
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         assert networks
         assert len(networks) == networks.subcount
         assert len(networks.find_by(enabled=True)) >= 1
@@ -466,7 +467,7 @@ class TestProvidersRESTAPI(object):
         """
         for profile in arbitration_profiles:
             record = appliance.rest_api.collections.arbitration_profiles.get(id=profile.id)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
             assert record._data == profile._data
             assert 'ArbitrationProfile' in profile.type
 
@@ -480,13 +481,12 @@ class TestProvidersRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        status = 204 if method == 'delete' else 200
         for entity in arbitration_profiles:
             entity.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == status
+            assert_response(appliance)
             with error.expected('ActiveRecord::RecordNotFound'):
                 entity.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == 404
+            assert_response(appliance, http_status=404)
 
     @pytest.mark.tier(3)
     # arbitration_profiles were removed in versions >= 5.9'
@@ -499,10 +499,10 @@ class TestProvidersRESTAPI(object):
         """
         collection = appliance.rest_api.collections.arbitration_profiles
         collection.action.delete(*arbitration_profiles)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         with error.expected('ActiveRecord::RecordNotFound'):
             collection.action.delete(*arbitration_profiles)
-        assert appliance.rest_api.response.status_code == 404
+        assert_response(appliance, http_status=404)
 
     @pytest.mark.tier(3)
     # arbitration_profiles were removed in versions >= 5.9'
@@ -522,12 +522,12 @@ class TestProvidersRESTAPI(object):
             edited = []
             for i in range(response_len):
                 edited.append(arbitration_profiles[i].action.edit(**new[i]))
-                assert appliance.rest_api.response.status_code == 200
+                assert_response(appliance)
         else:
             for i in range(response_len):
                 new[i].update(arbitration_profiles[i]._ref_repr())
             edited = appliance.rest_api.collections.arbitration_profiles.action.edit(*new)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
         assert len(edited) == response_len
         for i in range(response_len):
             assert edited[i].availability_zone_id == zone.id
@@ -556,7 +556,7 @@ class TestProvidersRESTAPI(object):
             })
 
         response = creating_skeleton(request, appliance.rest_api, 'arbitration_rules', data)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         assert len(response) == num_rules
         for rule in response:
             record = appliance.rest_api.collections.arbitration_rules.get(id=rule.id)
@@ -582,6 +582,6 @@ class TestProvidersRESTAPI(object):
 
         response = creating_skeleton(request, appliance.rest_api, 'arbitration_rules', data)
         # this will fail once BZ 1433477 is fixed - change and expand the test accordingly
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         for rule in response:
             assert not hasattr(rule, 'arbitration_profile_id')

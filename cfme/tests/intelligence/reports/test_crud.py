@@ -13,6 +13,7 @@ from cfme.intelligence.reports.widgets.report_widgets import ReportWidget
 from cfme.intelligence.reports.widgets.rss_widgets import RSSFeedWidget
 from cfme.utils.blockers import BZ
 from cfme.utils.path import data_path
+from cfme.utils.rest import assert_response
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for_decorator
 
@@ -190,7 +191,7 @@ def test_dashboard_crud():
 def test_run_report(appliance):
     report = appliance.rest_api.collections.reports.get(name='VM Disk Usage')
     response = report.action.run()
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
 
     @wait_for_decorator(timeout="5m", delay=5)
     def rest_running_report_finishes():
@@ -220,11 +221,11 @@ def test_import_report(appliance):
         'options': {'save': 'true'}
     }
     response, = appliance.rest_api.collections.reports.action.execute_action("import", data)
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
     assert response['message'] == 'Imported Report: [{}]'.format(menu_name)
     report = appliance.rest_api.collections.reports.get(name=menu_name)
     assert report.name == menu_name
 
     response, = appliance.rest_api.collections.reports.action.execute_action("import", data)
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
     assert response['message'] == 'Skipping Report (already in DB): [{}]'.format(menu_name)

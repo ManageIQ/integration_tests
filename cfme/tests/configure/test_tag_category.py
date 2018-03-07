@@ -5,7 +5,7 @@ import pytest
 from cfme.configure.configuration.region_settings import Category
 from cfme.rest.gen_data import categories as _categories
 from cfme.utils import error
-from cfme.utils.rest import delete_resources_from_collection
+from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -26,7 +26,7 @@ class TestCategoriesViaREST(object):
     @pytest.fixture(scope="function")
     def categories(self, request, appliance):
         response = _categories(request, appliance.rest_api, num=5)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         assert len(response) == 5
         return response
 
@@ -39,7 +39,7 @@ class TestCategoriesViaREST(object):
         """
         for ctg in categories:
             record = appliance.rest_api.collections.categories.get(id=ctg.id)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
             assert record.name == ctg.name
 
     @pytest.mark.tier(3)
@@ -62,12 +62,12 @@ class TestCategoriesViaREST(object):
             for index in range(categories_len):
                 new[index].update(categories[index]._ref_repr())
             edited = collection.action.edit(*new)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
         else:
             edited = []
             for index in range(categories_len):
                 edited.append(categories[index].action.edit(**new[index]))
-                assert appliance.rest_api.response.status_code == 200
+                assert_response(appliance)
         assert categories_len == len(edited)
         for index in range(categories_len):
             record, _ = wait_for(
@@ -86,13 +86,12 @@ class TestCategoriesViaREST(object):
         Metadata:
             test_flag: rest
         """
-        status = 204 if method == "delete" else 200
         for ctg in categories:
             ctg.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == status
+            assert_response(appliance)
             with error.expected("ActiveRecord::RecordNotFound"):
                 ctg.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == 404
+            assert_response(appliance, http_status=404)
 
     @pytest.mark.tier(3)
     def test_delete_categories_from_collection(self, appliance, categories):
