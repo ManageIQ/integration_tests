@@ -5,12 +5,10 @@ from widgetastic_patternfly import Button as WButton
 
 from cfme import test_requirements
 from cfme.automate.simulation import simulate
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.generators import random_vm_name
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 from markers.env_markers.provider import ONE_PER_TYPE
@@ -147,22 +145,6 @@ def custom_vm_button(appliance, ansible_catalog_item):
     buttongroup.delete_if_exists()
 
 
-@pytest.yield_fixture(scope="module")
-def vmware_vm(full_template_modscope, provider):
-    vm_obj = VM.factory(random_vm_name("ansible"), provider,
-                        template_name=full_template_modscope.name)
-    vm_obj.create_on_provider(allow_skip="default")
-    provider.mgmt.start_vm(vm_obj.name)
-    provider.mgmt.wait_vm_running(vm_obj.name)
-    if not vm_obj.exists:
-        provider.refresh_provider_relationships()
-        vm_obj.wait_to_appear()
-    yield vm_obj
-    if provider.mgmt.does_vm_exist(vm_obj.name):
-        provider.mgmt.delete_vm(vm_obj.name)
-    provider.refresh_provider_relationships()
-
-
 @pytest.yield_fixture
 def service_request(appliance, ansible_catalog_item):
     request_desc = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
@@ -244,9 +226,9 @@ def test_ansible_playbook_button_crud(ansible_catalog_item, appliance, request):
     assert not button.exists
 
 
-def test_custom_button_order_ansible_playbook_service(setup_provider, vmware_vm, custom_vm_button,
+def test_custom_button_order_ansible_playbook_service(full_template_vm, custom_vm_button,
         service_request, service, appliance):
-    view = navigate_to(vmware_vm, "Details")
+    view = navigate_to(full_template_vm, "Details")
     view.toolbar.custom_button(custom_vm_button.group.text).item_select(custom_vm_button.text)
     submit_button = WButton(appliance.browser.widgetastic, "Submit")
     submit_button.click()
