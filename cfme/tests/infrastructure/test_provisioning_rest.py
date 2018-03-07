@@ -68,7 +68,7 @@ def get_provision_data(rest_api, provider, template_name, auto_approve=True):
     return result
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def provision_data(appliance, provider, small_template_modscope):
     return get_provision_data(appliance.rest_api, provider, small_template_modscope.name)
 
@@ -106,6 +106,41 @@ def test_provision(request, appliance, provision_data):
     assert provision_request.is_succeeded(), msg
     found_vms = appliance.rest_api.collections.vms.find_by(name=vm_name)
     assert found_vms, 'VM `{}` not found'.format(vm_name)
+
+
+@pytest.mark.meta(server_roles="+notifier")
+def test_provision_emails(request, provision_data, provider, appliance, smtp_test):
+    """
+    Test that redundant e-mails are not received when provisioning VM that has some
+    attributes set to values that differ from template's default.
+
+    Metadata:
+        test_flag: rest, provision
+    """
+    def check_one_approval_mail_received():
+        return len(smtp_test.get_emails(
+            subject_like="%%Your Virtual Machine configuration was Approved%%")) == 1
+
+    def check_one_completed_mail_received():
+        return len(smtp_test.get_emails(
+            subject_like="%%Your virtual machine request has Completed%%")) == 1
+
+    request.addfinalizer(lambda: clean_vm(appliance, vm_name))
+
+    vm_name = provision_data["vm_fields"]["vm_name"]
+    memory = int(provision_data["vm_fields"]["vm_memory"])
+    provision_data["vm_fields"]["vm_memory"] = str(memory / 2)
+    provision_data["vm_fields"]["number_of_cpus"] += 1
+
+    appliance.rest_api.collections.provision_requests.action.create(**provision_data)
+    assert appliance.rest_api.response.status_code == 200
+
+    request = appliance.collections.requests.instantiate(description=vm_name, partial_check=True)
+    request.wait_for_request()
+    assert provider.mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
+
+    wait_for(check_one_approval_mail_received, num_sec=90, delay=5)
+    wait_for(check_one_completed_mail_received, num_sec=90, delay=5)
 
 
 def test_create_pending_provision_requests(request, appliance, provider, small_template):
