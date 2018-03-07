@@ -29,7 +29,7 @@ class NuageEndpointForm(View):
         api_port = Input('default_api_port')
 
 
-@attr.s
+@attr.s(hash=False)
 class NuageProvider(NetworkProvider):
     """ Class representing network provider in sdn
 
