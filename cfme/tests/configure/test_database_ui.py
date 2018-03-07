@@ -5,9 +5,9 @@ from dateutil import parser
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log_validator import LogValidator
 
+
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
-# this is work starting 5.9
 def test_configure_vmdb_last_start_time(appliance):
     """
         Go to Settings -> Configure -> Database
