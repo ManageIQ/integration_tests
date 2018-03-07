@@ -225,8 +225,6 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
 
 @pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
                          'Must be RHEVM provider version >= 4')
-@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6744',
-    unblock=lambda provider: provider.name != 'rhv_cfme_integration')])
 def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request):
     """Tests revert snapshot
 
