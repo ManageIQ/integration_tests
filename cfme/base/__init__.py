@@ -1,3 +1,5 @@
+import json
+
 import attr
 import importscan
 import sentaku
@@ -58,6 +60,32 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
     @property
     def slave_servers(self):
         return self.zone.collections.servers.filter({'slave': True}).all()
+
+    @property
+    def api_settings_url(self):
+        return '/'.join([self.appliance.rest_api.collections.servers._href, self.sid, 'settings'])
+
+    def get_yaml_config(self):
+        """GET servers/:id/settings api endpoint to query server configuration"""
+        return self.appliance.rest_api.get(url=self.api_settings_url)
+
+    def set_yaml_config(self, data_dict):
+        """PATCH settings from the server's api/server/:id/settings endpoint
+
+        Args:
+            data_dict: dictionary of the changes to be made to the yaml configuration
+                       JSON dumps data_dict to pass as raw hash data to rest_api session
+        Raises:
+            AssertionError: On an http result >=400 (RequestsResponse.ok)
+        """
+        # Calling the _session patch method because the core patch will wrap data_dict in a list
+        # Failing with some data_dict, like 'authentication'
+        # https://bugzilla.redhat.com/show_bug.cgi?id=1553394
+        result = self.appliance.rest_api._session.patch(
+            url=self.api_settings_url,
+            data=json.dumps(data_dict)
+        )
+        assert result.ok
 
 
 @attr.s
@@ -125,6 +153,30 @@ class Zone(Pretty, BaseEntity, sentaku.modeling.ElementMixin):
         region_obj = self.appliance.collections.regions.instantiate(number=zone.region_number)
         return region_obj
 
+    @property
+    def api_settings_url(self):
+        return '/'.join([self.appliance.rest_api.collections.zones._href, self.id, 'settings'])
+
+    def get_yaml_config(self):
+        """"GET zones/:id/settings api endpoint to query zone configuration"""
+        return self.appliance.rest_api.get(self.api_settings_url)
+
+    def set_yaml_config(self, data_dict):
+        """PATCH settings from the zone's api/zones/:id/settings endpoint
+
+        Args:
+            data_dict: dictionary of the changes to be made to the yaml configuration
+                       JSON dumps data_dict to pass as raw hash data to rest_api session
+        Raises:
+            AssertionError: On an http result >=400 (RequestsResponse.ok)
+        """
+        # Calling the _session patch method because the core patch will wrap data_dict in a list
+        result = self.appliance.rest_api._session.patch(
+            url=self.api_settings_url,
+            data=json.dumps(data_dict)
+        )
+        assert result.ok
+
 
 @attr.s
 class ZoneCollection(BaseCollection, sentaku.modeling.ElementMixin):
@@ -167,6 +219,47 @@ class Region(BaseEntity, sentaku.modeling.ElementMixin):
         from cfme.configure.configuration.region_settings import Replication
         replication = Replication(self.appliance)
         return replication
+
+    @property
+    def api_settings_url(self):
+        """The region ID doesn't quite match the region number
+        https://bugzilla.redhat.com/show_bug.cgi?id=1552899
+
+        Look up the correct region ID for the object's region id (which is the 'number')
+
+        Raises:
+            KeyError if the region resource isn't found by the filter
+            AssertionError if more than one region matches the filter
+        """
+        filter_query = '?expand=resources&filter[]=region={}'.format(self.number)
+        region_filter = self.appliance.rest_api.get(
+            '{}{}'.format(self.appliance.rest_api.collections.regions._href, filter_query)
+        )
+        assert len(region_filter['resources']) == 1
+        region_id = region_filter['resources'][0]['id']
+        return '/'.join([self.appliance.rest_api.collections.regions._href,
+                         region_id,
+                         'settings'])
+
+    def get_yaml_config(self):
+        """"GET zones/:id/settings api endpoint to query region configuration"""
+        return self.appliance.rest_api.get(self.api_settings_url)
+
+    def set_yaml_config(self, data_dict):
+        """PATCH settings from the zone's api/zones/:id/settings endpoint
+
+        Args:
+            data_dict: dictionary of the changes to be made to the yaml configuration
+                       JSON dumps data_dict to pass as raw hash data to rest_api session
+        Raises:
+            AssertionError: On an http result >=400 (RequestsResponse.ok)
+        """
+        # Calling the _session patch method because the core patch will wrap data_dict in a list
+        result = self.appliance.rest_api._session.patch(
+            url=self.api_settings_url,
+            data=json.dumps(data_dict)
+        )
+        assert result.ok
 
 
 @attr.s
