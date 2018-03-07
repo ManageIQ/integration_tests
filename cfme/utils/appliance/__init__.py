@@ -27,7 +27,6 @@ from werkzeug.local import LocalStack, LocalProxy
 from cfme.utils import clear_property_cache
 from cfme.utils import conf, ssh, ports
 from cfme.utils.datafile import load_data_file
-from cfme.utils.events import EventListener
 from cfme.utils.log import logger, create_sublogger, logger_wrap
 from cfme.utils.net import net_check
 from cfme.utils.path import data_path, patches_path, scripts_path, conf_path
@@ -966,7 +965,13 @@ class IPAppliance(object):
 
     def event_listener(self):
         """Returns an instance of the event listening class pointed to this appliance."""
-        return EventListener(self)
+        # There is no REST API for event streams on versions < 5.9
+        if self.version <= '5.9':
+            from cfme.utils.events_db import DbEventListener
+            return DbEventListener(self)
+        else:
+            from cfme.utils.events import RestEventListener
+            return RestEventListener(self)
 
     def diagnose_evm_failure(self):
         """Go through various EVM processes, trying to figure out what fails

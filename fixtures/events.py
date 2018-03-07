@@ -108,7 +108,6 @@ def register_event(request, uses_event_listener, soft_assert, appliance):
     event_listener = appliance.event_listener()
     event_listener.reset_events()
     event_listener.start()
-    event_listener.set_last_record()
     yield event_listener
 
     event_listener.stop()
