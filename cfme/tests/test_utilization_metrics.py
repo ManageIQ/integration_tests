@@ -72,12 +72,8 @@ def metrics_collection(appliance, clean_setup_provider, provider, enable_candu):
     start_time = time.time()
     host_count = 0
     vm_count = 0
-    host_rising = False
-    vm_rising = False
     timeout = 900.0  # 15 min
     while time.time() < start_time + timeout:
-        last_host_count = host_count
-        last_vm_count = vm_count
         logger.info("name: %s, id: %s, vms: %s, hosts: %s",
             provider.key, mgmt_system_id, vm_count, host_count)
         # Count host and vm metrics for the provider we're testing
@@ -89,19 +85,11 @@ def metrics_collection(appliance, clean_setup_provider, provider, enable_candu):
             metrics_tbl.parent_ems_id == mgmt_system_id).filter(
             metrics_tbl.resource_type == "VmOrTemplate"
         ).count()
-
-        if host_rising is not True:
-            if host_count > last_host_count:
-                host_rising = True
-        if vm_rising is not True:
-            if vm_count > last_vm_count:
-                vm_rising = True
-
         # only vms are collected for cloud
-        if provider.category == "cloud" and vm_rising:
+        if provider.category == "cloud" and vm_count:
             return
         # both vms and hosts must be collected for infra
-        elif provider.category == "infra" and vm_rising and host_rising:
+        elif provider.category == "infra" and vm_count and host_count:
             return
         else:
             time.sleep(15)
