@@ -70,7 +70,7 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
             name=provider.name + fauxfactory.gen_alphanumeric(),
             credential=new_credential(),
             email='abc@example.com',
-            group=cb_group,
+            groups=cb_group,
             cost_center='Workload',
             value_assign='Database')
         vm.set_ownership(user=user.name)

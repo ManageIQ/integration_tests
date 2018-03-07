@@ -62,7 +62,7 @@ class BaseLoggedInPage(View):
         """ Return a list of the logged in user's assigned groups.
 
         Returns:
-            Version >= 5.9 - list off all groups the logged in user is assigned to
+            Version >= 5.9 - list of all groups the logged in user is assigned to
             Version < 5.9 - single item list containing the user's current group
         """
         group_list_locator = '{}/ul/li'.format(self.group_list_locator)

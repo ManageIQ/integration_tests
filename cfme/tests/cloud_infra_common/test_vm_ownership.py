@@ -1,7 +1,6 @@
 import fauxfactory
 import pytest
 
-import cfme.configure.access_control as ac
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.provider import CloudInfraProvider
@@ -115,7 +114,7 @@ def new_user(appliance, group_only_user_owned):
         name='user_' + fauxfactory.gen_alphanumeric(),
         credential=new_credential(),
         email='abc@redhat.com',
-        group=group_only_user_owned,
+        groups=[group_only_user_owned],
         cost_center='Workload',
         value_assign='Database'
     )
@@ -163,7 +162,9 @@ def test_user_ownership_crud(request, user1, setup_provider, provider, vm_crud):
 
 @pytest.mark.rhv3
 def test_group_ownership_on_user_only_role(request, user2, setup_provider, provider, vm_crud):
-    vm_crud.set_ownership(group=user2.group.description)
+    # user is only a member of a single group so it will always be the current group
+    user_group_name = user2.groups[0].description
+    vm_crud.set_ownership(group=user_group_name)
     with user2:
         assert not check_vm_exists(vm_crud), "vm exists! but shouldn't exist"
     vm_crud.set_ownership(user=user2.name)
@@ -174,7 +175,9 @@ def test_group_ownership_on_user_only_role(request, user2, setup_provider, provi
 @pytest.mark.rhv3
 def test_group_ownership_on_user_or_group_role(
         request, user3, setup_provider, provider, vm_crud):
-    vm_crud.set_ownership(group=user3.group.description)
+    # user is only a member of a single group so it will always be the current group
+    user_group_name = user3.groups[0].description
+    vm_crud.set_ownership(group=user_group_name)
     with user3:
         assert vm_crud.exists, "vm not found"
     vm_crud.unset_ownership()

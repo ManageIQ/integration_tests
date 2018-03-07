@@ -77,7 +77,7 @@ def user_restricted(appliance, group_with_tag, new_credential):
         name='user{}'.format(fauxfactory.gen_alphanumeric()),
         credential=new_credential,
         email='xyz@redhat.com',
-        group=group_with_tag,
+        groups=[group_with_tag],
         cost_center='Workload',
         value_assign='Database')
     yield user

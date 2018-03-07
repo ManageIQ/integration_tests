@@ -122,9 +122,7 @@ class User(Updateable, Pretty, BaseEntity):
         name: Name of the user
         credential: User's credentials
         email: User's email
-        group: User's group for assigment
         groups: Add User to multiple groups in Versions >= 5.9.
-            Overrides any single group assignment specified by 'group'
         cost_center: User's cost center
         value_assign: user's value to assign
         appliance: appliance under test
@@ -134,7 +132,6 @@ class User(Updateable, Pretty, BaseEntity):
     name = attr.ib(default=None)
     credential = attr.ib(default=None)
     email = attr.ib(default=None)
-    group = attr.ib(default=None)
     groups = attr.ib(default=None)
     cost_center = attr.ib(default=None)
     value_assign = attr.ib(default=None)
@@ -337,17 +334,15 @@ class UserCollection(BaseCollection):
         creds = Credential(principal=userid, secret=password)
         return self.instantiate(name=userid, credential=creds)
 
-    def create(self, name=None, credential=None, email=None, group=None, cost_center=None,
-               value_assign=None, groups=None, cancel=False):
+    def create(self, name=None, credential=None, email=None, groups=None, cost_center=None,
+               value_assign=None, cancel=False):
         """ User creation method
 
         Args:
             name: Name of the user
             credential: User's credentials
             email: User's email
-            group: User's group for assigment
             groups: Add User to multiple groups in Versions >= 5.9.
-                Overrides any single group assignment specified by 'group'
             cost_center: User's cost center
             value_assign: user's value to assign
             cancel: True - if you want to cancel user creation,
@@ -364,20 +359,22 @@ class UserCollection(BaseCollection):
             user_blocked_msg = ("Userid is not unique within region {}".format(
                 self.appliance.server.zone.region.number))
 
-        user = self.instantiate(
-            name=name, credential=credential, email=email, group=group, cost_center=cost_center,
-            value_assign=value_assign, groups=groups
-        )
+        if type(groups) is not list:
+            groups = [groups]
 
-        if user.groups and self.appliance.version < "5.9":
+        if self.appliance.version < "5.9" and len(groups) > 1:
             raise CFMEException(
                 "Assigning a user to multiple groups is only supported in CFME versions > 5.8")
 
-        if user.groups:
-            # view.fill supports iteration over a list when selecting pulldown list items
-            user_group_names = [getattr(ug, 'description', None) for ug in user.groups]
-        else:
-            user_group_names = getattr(user.group, 'description', None)
+        user = self.instantiate(
+            name=name, credential=credential, email=email, groups=groups, cost_center=cost_center,
+            value_assign=value_assign
+        )
+
+        # view.fill supports iteration over a list when selecting pulldown list items but
+        #   will throw an exception when the item doesn't appear in the list so filter out
+        #   null items since they "shouldn't" exist
+        user_group_names = [getattr(ug, 'description', None) for ug in user.groups if ug]
 
         view = navigate_to(self, 'Add')
         view.fill({

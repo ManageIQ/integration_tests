@@ -56,7 +56,7 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
         credential=Credential(principal='uid' + '{}'.format(fauxfactory.gen_alphanumeric()),
             secret='secret'),
         email='abc@example.com',
-        group=cb_group,
+        groups=cb_group,
         cost_center='Workload',
         value_assign='Database')
 

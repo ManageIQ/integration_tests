@@ -44,7 +44,7 @@ def new_credential():
                           secret='redhat')
 
 
-def new_user(appliance, group, groups=None, name=None, credential=None):
+def new_user(appliance, groups, name=None, credential=None):
     from fixtures.blockers import bug
 
     uppercase_username_bug = bug(1487199)
@@ -56,7 +56,6 @@ def new_user(appliance, group, groups=None, name=None, credential=None):
         name=name,
         credential=credential,
         email='xyz@redhat.com',
-        group=group,
         groups=groups,
         cost_center='Workload',
         value_assign='Database')
@@ -96,7 +95,7 @@ def test_user_crud(appliance, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
-    user = new_user(appliance, group)
+    user = new_user(appliance, [group])
     with update(user):
         user.name = "{}edited".format(user.name)
     copied_user = user.copy()
@@ -119,7 +118,7 @@ def test_user_assign_multiple_groups(appliance, request, group_collection):
 
     group_list = [group_collection.instantiate(description=names) for names in group_names]
 
-    user = new_user(appliance, group=None, groups=group_list)
+    user = new_user(appliance, groups=group_list)
 
     request.addfinalizer(user.delete)
     request.addfinalizer(user.appliance.server.login_admin)
@@ -136,7 +135,7 @@ def test_user_login(appliance, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
-    user = new_user(appliance, group)
+    user = new_user(appliance, [group])
     try:
         with user:
             navigate_to(appliance.server, 'Dashboard')
@@ -158,9 +157,9 @@ def test_user_duplicate_username(appliance, group_collection):
 
     credential = new_credential()
 
-    nu = new_user(appliance, group, credential=credential)
+    nu = new_user(appliance, [group], credential=credential)
     with pytest.raises(RBACOperationBlocked):
-        nu = new_user(appliance, group, credential=credential)
+        nu = new_user(appliance, [group], credential=credential)
 
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
@@ -182,9 +181,9 @@ def test_user_allow_duplicate_name(appliance, group_collection):
     name = 'user{}'.format(fauxfactory.gen_alphanumeric())
 
     # Create first user
-    new_user(appliance, group, name=name)
+    new_user(appliance, [group], name=name)
     # Create second user with same full name
-    nu = new_user(appliance, group, name=name)
+    nu = new_user(appliance, [group], name=name)
 
     assert nu.exists
 
@@ -199,7 +198,7 @@ def test_username_required_error_validation(appliance, group_collection):
             name="",
             credential=new_credential(),
             email='xyz@redhat.com',
-            group=group
+            groups=[group]
         )
 
 
@@ -213,7 +212,7 @@ def test_userid_required_error_validation(appliance, group_collection):
             name='user{}'.format(fauxfactory.gen_alphanumeric()),
             credential=Credential(principal='', secret='redhat'),
             email='xyz@redhat.com',
-            group=group
+            groups=[group]
         )
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
@@ -233,7 +232,7 @@ def test_user_password_required_error_validation(appliance, group_collection):
             credential=Credential(
                 principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret=None),
             email='xyz@redhat.com',
-            group=group)
+            groups=[group])
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
     navigate_to(appliance.server, 'Dashboard')
@@ -246,7 +245,7 @@ def test_user_group_error_validation(appliance):
             name='user{}'.format(fauxfactory.gen_alphanumeric()),
             credential=new_credential(),
             email='xyz@redhat.com',
-            group='')
+            groups=[''])
 
 
 @pytest.mark.tier(3)
@@ -258,7 +257,7 @@ def test_user_email_error_validation(appliance, group_collection):
             name='user{}'.format(fauxfactory.gen_alphanumeric()),
             credential=new_credential(),
             email='xyzdhat.com',
-            group=group)
+            groups=group)
 
 
 @pytest.mark.tier(2)
@@ -266,7 +265,7 @@ def test_user_edit_tag(appliance, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
-    user = new_user(appliance, group)
+    user = new_user(appliance, [group])
     user.edit_tags("Cost Center *", "Cost Center 001")
     assert ('Cost Center *', 'Cost Center 001') in user.get_tags(), "User edit tag failed"
     user.delete()
@@ -277,7 +276,7 @@ def test_user_remove_tag(appliance, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
-    user = new_user(appliance, group)
+    user = new_user(appliance, [group])
     user.edit_tags("Department", "Engineering")
     user.remove_tag("Department", "Engineering")
     navigate_to(user, 'Details')
@@ -313,7 +312,7 @@ def test_current_user_login_delete(appliance, request):
     group_name = "EvmGroup-super_administrator"
     group = group_collection(appliance).instantiate(description=group_name)
 
-    user = new_user(appliance, group)
+    user = new_user(appliance, [group])
     request.addfinalizer(user.delete)
     request.addfinalizer(user.appliance.server.login_admin)
     with user:
@@ -449,7 +448,7 @@ def test_delete_group_with_assigned_user(appliance, group_collection):
     role = 'EvmRole-approver'
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role)
-    new_user(appliance, group=group)
+    new_user(appliance, [group])
     with pytest.raises(RBACOperationBlocked):
         group.delete()
 
@@ -585,7 +584,7 @@ def test_assign_user_to_new_group(appliance, group_collection):
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role.name)
 
-    new_user(appliance, group=group)
+    new_user(appliance, [group])
 
 
 def _test_vm_provision(appliance):
@@ -631,7 +630,7 @@ def test_permission_edit(appliance, request, product_features):
                                  [(k, True) for k in product_features])
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection(appliance).create(description=group_description, role=role.name)
-    user = new_user(appliance, group=group)
+    user = new_user(appliance, [group])
     with user:
         try:
             navigate_to(vms.Vm, 'VMsOnly')
@@ -735,7 +734,7 @@ def test_permissions(appliance, product_features, allowed_actions, disallowed_ac
     role = _mk_role(appliance, product_features=product_features)
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection(appliance).create(description=group_description, role=role.name)
-    user = new_user(appliance, group=group)
+    user = new_user(appliance, [group])
     fails = {}
     try:
         with user:
@@ -838,7 +837,7 @@ def test_user_change_password(appliance, request):
     group_name = 'EvmGroup-user'
     group = group_collection(appliance).instantiate(description=group_name)
 
-    user = new_user(appliance, group=group)
+    user = new_user(appliance, [group])
 
     request.addfinalizer(user.delete)
     request.addfinalizer(appliance.server.login_admin)
@@ -1056,7 +1055,7 @@ def test_copied_user_password_inheritance(appliance, group_collection, request):
     """
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
-    user = new_user(appliance, group)
+    user = new_user(appliance, [group])
     request.addfinalizer(user.delete)
     view = navigate_to(user, 'Details')
     view.toolbar.configuration.item_select('Copy this User to a new User')
