@@ -22,7 +22,7 @@ from cfme.infrastructure.virtual_machines import (HostTemplatesOnlyAllView,
 from cfme.networks.views import NetworkProviderDetailsView, ProviderSecurityGroupAllView
 from cfme.storage.manager import ProviderStorageManagerAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
-from markers.env_markers.provider import ONE_PER_TYPE, ONE_PER_CATEGORY
+from markers.env_markers.provider import ONE, ONE_PER_TYPE
 
 
 HOST_RELATIONSHIPS = [
@@ -204,7 +204,7 @@ def prov_child_visibility(appliance, provider, request, tag, user_restricted):
 
 @pytest.mark.parametrize("relationship,item_cls", infra_test_items,
     ids=[rel[0] for rel in infra_test_items])
-@pytest.mark.provider([VMwareProvider], selector=ONE_PER_CATEGORY)
+@pytest.mark.provider([VMwareProvider], selector=ONE)
 # used VMwareProvider to cover all relationship as they have each of them
 def test_tagvis_infra_provider_children(prov_child_visibility, setup_provider, relationship,
                                         item_cls):
@@ -221,7 +221,7 @@ def test_tagvis_infra_provider_children(prov_child_visibility, setup_provider, r
 
 @pytest.mark.parametrize("relationship,item_cls", cloud_test_items,
     ids=[rel[0] for rel in cloud_test_items])
-@pytest.mark.provider([OpenStackProvider], selector=ONE_PER_CATEGORY)
+@pytest.mark.provider([OpenStackProvider], selector=ONE)
 # used OpenStackProvider to cover all relationship as they have each of them
 def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, relationship,
                                         item_cls):
