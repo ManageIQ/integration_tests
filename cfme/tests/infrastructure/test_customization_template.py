@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme.infrastructure.pxe import SystemImageType
 from cfme.utils import error
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -15,14 +16,25 @@ def collection(appliance):
     return appliance.collections.customization_templates
 
 
+@pytest.yield_fixture(scope="module")
+def image_type(appliance):
+    image_type = appliance.collections.system_image_types.create(
+        name=fauxfactory.gen_alphanumeric(8), provision_type=SystemImageType.VM_OR_INSTANCE)
+    yield image_type
+    image_type.delete()
+
+
 @pytest.mark.sauce
-def test_customization_template_crud(collection):
+@pytest.mark.parametrize("script_type", ["Kickstart", "Sysprep", "CloudInit"],
+                         ids=["kickstart", "sysprep", "cloudinit"])
+def test_customization_template_crud(collection, script_type, image_type):
     """Basic CRUD test for customization templates."""
 
-    template_crud = collection.create(name=fauxfactory.gen_alphanumeric(8),
+    template_crud = collection.create(name="{}_{}".format(script_type,
+                                                          fauxfactory.gen_alphanumeric(4)),
                                       description=fauxfactory.gen_alphanumeric(16),
-                                      image_type='RHEL-6',
-                                      script_type='Kickstart',
+                                      image_type=image_type.name,
+                                      script_type=script_type,
                                       script_data='Testing the script')
     with update(template_crud):
         template_crud.name = template_crud.name + "_update"
