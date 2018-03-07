@@ -132,6 +132,7 @@ class All(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Providers')
 
     def resetter(self):
+        self.appliance.browser.widgetastic.browser.refresh()
         tb = self.view.toolbar
         if 'Grid View' not in tb.view_selector.selected:
             tb.view_selector.select('Grid View')
