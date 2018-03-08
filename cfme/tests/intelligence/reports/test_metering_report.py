@@ -285,7 +285,7 @@ def test_validate_cpu_usage(resource_usage, metering_report):
 
 
 @pytest.mark.uncollectif(
-    lambda provider: provider.one_of(EC2Provider) or provider.one_of(GCEProvider))
+    lambda provider: provider.one_of(EC2Provider, GCEProvider))
 def test_validate_memory_usage(resource_usage, metering_report):
     """Test to validate memory usage.This metric is not collected for GCE, EC2."""
     for groups in metering_report:
