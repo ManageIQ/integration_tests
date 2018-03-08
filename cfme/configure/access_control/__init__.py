@@ -15,6 +15,7 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic_manageiq import (
     UpDownSelect, PaginationPane, SummaryFormItem, Table, BaseListEntity)
 
@@ -48,6 +49,8 @@ class AllUserView(ConfigurationView):
     """ All Users View."""
     toolbar = View.nested(AccessControlToolbar)
     entities = View.nested(UsersEntities)
+    table = Table("//div[@id='main_div']//table")
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
@@ -412,6 +415,32 @@ class UserCollection(BaseCollection):
         # To ensure tree update
         view.browser.refresh()
         return user
+
+    def delete(self, *users):
+        """
+        Delete user(s) using the Access Control EVM Users checklist
+        """
+        users = list(users)
+        full_name_header = 'Full Name'
+        delete_success_msg = 'EVM User "{}": Delete successful'
+        delete_blocked_msg = 'Default EVM User "{}" cannot be deleted'
+
+        view = navigate_to(self, 'All')
+        for user in users:
+            try:
+                find_row_kwargs = {full_name_header: user.name}
+                # This will refresh the page to find the item so you won't have multiple items
+                # selected per page
+                row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
+                row[0].check()
+                view.toolbar.configuration.item_select('Delete selected Users', handle_alert=True)
+                # Check that deleting the user wasn't blocked
+                view.flash.assert_message(delete_blocked_msg.format(user.name))
+                raise RBACOperationBlocked(view.flash.messages[0].text)
+            except NoSuchElementException:
+                break
+            except AssertionError:
+                view.flash.assert_success_message(delete_success_msg.format(user.name))
 
 
 @navigator.register(UserCollection, 'All')

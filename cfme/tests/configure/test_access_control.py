@@ -129,6 +129,15 @@ def test_user_assign_multiple_groups(appliance, request, group_collection):
         "User's assigned groups are different from expected groups")
 
 
+@pytest.mark.tier(2)
+def test_multiple_user_delete(appliance, group_collection):
+    group_name = 'EvmGroup-user'
+    group = group_collection.instantiate(description=group_name)
+
+    users = [new_user(appliance, group), new_user(appliance, group), new_user(appliance, group),]
+    appliance.collections.users.delete(*users)
+
+
 # @pytest.mark.meta(blockers=[1035399]) # work around instead of skip
 @pytest.mark.tier(2)
 def test_user_login(appliance, group_collection):
