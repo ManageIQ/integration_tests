@@ -28,6 +28,7 @@ pytestmark = [
 
 
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
+@pytest.mark.rhv1
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_myservice_crud(appliance, setup_provider, context, order_catalog_item_in_ops_ui):
     """Test Myservice crud in SSUI."""
@@ -43,6 +44,7 @@ def test_myservice_crud(appliance, setup_provider, context, order_catalog_item_i
 
 
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
+@pytest.mark.rhv3
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_retire_service(appliance, setup_provider, context, order_catalog_item_in_ops_ui):
     """Test retire service."""
@@ -53,6 +55,7 @@ def test_retire_service(appliance, setup_provider, context, order_catalog_item_i
 
 
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
+@pytest.mark.rhv3
 @pytest.mark.parametrize('context', [ViaSSUI])
 @pytest.mark.parametrize('order_catalog_item_in_ops_ui', [['console_test']], indirect=True)
 @pytest.mark.uncollectif(lambda provider: provider.one_of(VMwareProvider) and

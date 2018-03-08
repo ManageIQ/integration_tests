@@ -107,6 +107,7 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
     return _provisioner
 
 
+@pytest.mark.rhv2
 def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
     """ Tests change RAM and CPU in provisioning dialog.
 
@@ -148,6 +149,7 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
     soft_assert(memory == "2048 MB", "memory should be {}, is {}".format("2048 MB", memory))
 
 
+@pytest.mark.rhv3
 # Special parametrization in testgen above
 @pytest.mark.meta(blockers=[1209847, 1380782])
 @pytest.mark.parametrize("disk_format", ["Thin", "Thick", "Preallocated"])
@@ -191,6 +193,7 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_na
         assert thin != 'true', "The disk format should not be Thin"
 
 
+@pytest.mark.rhv3
 @pytest.mark.parametrize("started", [True, False])
 def test_power_on_or_off_after_provision(provisioner, prov_data, provider, started, vm_name):
     """ Tests setting the desired power state after provisioning.
@@ -221,6 +224,7 @@ def test_power_on_or_off_after_provision(provisioner, prov_data, provider, start
     )
 
 
+@pytest.mark.rhv3
 def test_tag(provisioner, prov_data, provider, vm_name):
     """ Tests tagging VMs using provisioning dialogs.
 
@@ -250,6 +254,7 @@ def test_tag(provisioner, prov_data, provider, vm_name):
     ), "Service Level: Gold not in tags ({})".format(tags)
 
 
+@pytest.mark.rhv3
 @pytest.mark.meta(blockers=[1204115])
 def test_provisioning_schedule(provisioner, provider, prov_data, vm_name):
     """ Tests provision scheduling.

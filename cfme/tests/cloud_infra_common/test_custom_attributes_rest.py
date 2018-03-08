@@ -18,7 +18,8 @@ pytestmark = [
     pytest.mark.long_running,
     pytest.mark.tier(2),
     pytest.mark.provider([CloudInfraProvider], scope='module'),
-    test_requirements.rest
+    test_requirements.rest,
+    pytest.mark.rhv3
 ]
 
 COLLECTIONS = ['providers', 'vms']
@@ -135,6 +136,7 @@ class TestCustomAttributesRESTAPI(object):
     @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
         _uncollectif(appliance, provider, collection_name)
     )
+    @pytest.mark.rhv2
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_add(self, request, collection_name, get_resource):
         """Test adding custom attributes to resource using REST API.

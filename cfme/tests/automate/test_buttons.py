@@ -108,6 +108,7 @@ def test_button_crud(appliance, dialog, request):
     assert not button.exists
 
 
+@pytest.mark.rhv3
 @pytest.mark.provider([InfraProvider], scope='function', selector=ONE)
 @pytest.mark.tier(3)
 def test_button_on_host(appliance, request, provider, setup_provider):

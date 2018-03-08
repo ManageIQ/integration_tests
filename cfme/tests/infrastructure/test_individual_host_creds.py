@@ -30,6 +30,7 @@ def get_host_data_by_name(provider_key, host_name):
     return None
 
 
+@pytest.mark.rhv1
 # Tests to automate BZ 1278904
 @pytest.mark.meta(blockers=[BZ(1516849,
                             forced_streams=['5.8', '5.9', 'upstream'],
@@ -54,6 +55,7 @@ def test_host_good_creds(appliance, request, setup_provider, provider):
         host_obj.credentials = host.get_credentials_from_config(host_data['credentials'])
 
 
+@pytest.mark.rhv3
 @pytest.mark.meta(blockers=[BZ(1516849,
                             forced_streams=['5.8', '5.9', 'upstream'],
                             unblock=lambda provider: not provider.one_of(RHEVMProvider))])

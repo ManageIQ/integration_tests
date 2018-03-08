@@ -94,6 +94,7 @@ def set_entity_quota_tag(request, entities, appliance):
     entities.remove_tag(tag, value)
 
 
+@pytest.mark.rhv2
 @pytest.mark.parametrize(
     ['set_entity_quota_tag', 'custom_prov_data'],
     [

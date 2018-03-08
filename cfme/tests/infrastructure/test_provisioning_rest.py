@@ -81,6 +81,7 @@ def clean_vm(appliance, vm_name):
         vm.wait_not_exists(num_sec=15, delay=2)
 
 
+@pytest.mark.rhv2
 # Here also available the ability to create multiple provision request, but used the save
 # href and method, so it doesn't make any sense actually
 def test_provision(request, appliance, provision_data):
@@ -108,6 +109,7 @@ def test_provision(request, appliance, provision_data):
     assert found_vms, 'VM `{}` not found'.format(vm_name)
 
 
+@pytest.mark.rhv3
 @pytest.mark.meta(server_roles="+notifier")
 def test_provision_emails(request, provision_data, provider, appliance, smtp_test):
     """
@@ -143,6 +145,7 @@ def test_provision_emails(request, provision_data, provider, appliance, smtp_tes
     wait_for(check_one_completed_mail_received, num_sec=90, delay=5)
 
 
+@pytest.mark.rhv3
 def test_create_pending_provision_requests(request, appliance, provider, small_template):
     """Tests creation and and auto-approval of pending provision request
     using /api/provision_requests.
@@ -176,6 +179,7 @@ def test_create_pending_provision_requests(request, appliance, provider, small_t
         delay=10)
 
 
+@pytest.mark.rhv3
 def test_provision_attributes(appliance, provider, small_template, soft_assert):
     """Tests that it's possible to display additional attributes in /api/provision_requests/:id.
 

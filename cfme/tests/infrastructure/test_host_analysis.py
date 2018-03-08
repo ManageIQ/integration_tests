@@ -52,6 +52,7 @@ def host_with_credentials(appliance, provider, host_name):
     test_host.update_credentials_rest(credentials=Host.Credential(principal="", secret=""))
 
 
+@pytest.mark.rhv1
 @pytest.mark.uncollectif(
     lambda provider: version.current_version() == version.UPSTREAM and provider.type == 'rhevm')
 def test_run_host_analysis(setup_provider_modscope, provider, host_type, host_name, register_event,

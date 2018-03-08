@@ -36,6 +36,7 @@ def report():
         logger.warning('Failed to delete report for path {} and time {}'.format(path, report_time))
 
 
+@pytest.mark.rhv3
 @pytest.mark.parametrize('view_mode', ['Hybrid View', 'Graph View', 'Tabular View'])
 @pytest.mark.meta(blockers=[BZ(1401560)])
 def test_report_view(report, view_mode):

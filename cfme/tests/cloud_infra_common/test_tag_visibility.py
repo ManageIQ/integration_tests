@@ -21,6 +21,7 @@ def tagged_vm(tag, has_no_providers_modscope, setup_provider_modscope, provider)
     tag_vm.remove_tag(tag=tag)
 
 
+@pytest.mark.rhv3
 def test_tag_vis_vm(tagged_vm, user_restricted):
     with user_restricted:
         assert tagged_vm.exists, "vm not found"

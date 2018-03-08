@@ -97,6 +97,7 @@ def vm_name():
     return vm_name
 
 
+@pytest.mark.rhv1
 def test_pxe_provision_from_template(appliance, provider, vm_name, smtp_test, setup_provider,
                                      request, setup_pxe_servers_vm_prov):
     """Tests provisioning via PXE

@@ -88,6 +88,7 @@ def test_discover_host(request, provider, appliance, host_ips):
         assert host in host_ips
 
 
+@pytest.mark.rhv2
 # Tests to automate BZ 1201092
 @pytest.mark.uncollectif(lambda provider: len(provider.data.get('hosts', {})) < 2)
 def test_multiple_host_good_creds(setup_provider, provider):
@@ -113,6 +114,7 @@ def test_multiple_host_good_creds(setup_provider, provider):
     view.flash.assert_success_message('Credentials/Settings saved successfully')
 
 
+@pytest.mark.rhv3
 @pytest.mark.meta(blockers=[BZ(1524411, forced_streams=['5.9', 'upstream'])])
 @pytest.mark.uncollectif(lambda provider: len(provider.data.get('hosts', {})) < 2)
 def test_multiple_host_bad_creds(setup_provider, provider):

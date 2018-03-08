@@ -74,6 +74,7 @@ def verify_action_result(rest_api, assert_success=True):
     return success, message
 
 
+@pytest.mark.rhv2
 def test_stop_vm_rest(appliance, vm_obj, verify_vm_running, soft_assert, from_detail):
     """Test stop of vm
 
@@ -104,6 +105,7 @@ def test_stop_vm_rest(appliance, vm_obj, verify_vm_running, soft_assert, from_de
     soft_assert(not verify_vm_power_state(vm, vm_obj.STATE_ON), "vm still running")
 
 
+@pytest.mark.rhv2
 def test_start_vm_rest(appliance, vm_obj, verify_vm_stopped, soft_assert, from_detail):
     """Test start vm
 
@@ -134,6 +136,7 @@ def test_start_vm_rest(appliance, vm_obj, verify_vm_stopped, soft_assert, from_d
     soft_assert(verify_vm_power_state(vm, vm_obj.STATE_ON), "vm not running")
 
 
+@pytest.mark.rhv2
 def test_suspend_vm_rest(appliance, vm_obj, verify_vm_running, soft_assert, from_detail):
     """Test suspend vm
 

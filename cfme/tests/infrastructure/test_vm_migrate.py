@@ -33,6 +33,7 @@ def new_vm(setup_provider_modscope, provider, request):
     return vm
 
 
+@pytest.mark.rhv1
 def test_vm_migrate(appliance, new_vm, provider):
     """Tests migration of a vm
 

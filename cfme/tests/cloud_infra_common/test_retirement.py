@@ -143,6 +143,7 @@ def generate_retirement_date_now():
     return datetime.utcnow()
 
 
+@pytest.mark.rhv1
 def test_retirement_now(retire_vm):
     """Tests on-demand retirement of an instance/vm
     """
@@ -189,6 +190,7 @@ def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged):
     verify_retirement_date(retire_ec2_s3_vm, expected_date=retire_times)
 
 
+@pytest.mark.rhv3
 @pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
 def test_set_retirement_date(retire_vm, warn):
     """Tests setting retirement date and verifies configured date is reflected in UI
@@ -228,6 +230,7 @@ def test_set_retirement_offset(retire_vm, warn):
                            expected_date=expected_dates)
 
 
+@pytest.mark.rhv3
 def test_unset_retirement_date(retire_vm):
     """Tests cancelling a scheduled retirement by removing the set date
     """
@@ -240,6 +243,7 @@ def test_unset_retirement_date(retire_vm):
     verify_retirement_date(retire_vm, expected_date='Never')
 
 
+@pytest.mark.rhv3
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('remove_date', [True, False], ids=['remove_date', 'set_future_date'])
 def test_resume_retired_instance(retire_vm, provider, remove_date):

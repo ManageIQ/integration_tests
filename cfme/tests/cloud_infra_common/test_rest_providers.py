@@ -47,6 +47,7 @@ def provider_rest(request, appliance, provider):
     return provider_rest
 
 
+@pytest.mark.rhv1
 def test_query_provider_attributes(provider, provider_rest, soft_assert):
     """Tests access to attributes of /api/providers.
 
@@ -74,6 +75,7 @@ def test_query_provider_attributes(provider, provider_rest, soft_assert):
             failure.type, failure.name, failure.response.status_code, failure.error))
 
 
+@pytest.mark.rhv3
 @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 def test_provider_options(appliance):
     """Tests that provider settings are present in OPTIONS listing.
@@ -85,6 +87,7 @@ def test_provider_options(appliance):
     assert 'provider_settings' in options['data']
 
 
+@pytest.mark.rhv3
 def test_create_provider(provider_rest):
     """Tests creating provider using REST API.
 
@@ -94,6 +97,7 @@ def test_create_provider(provider_rest):
     assert "ManageIQ::Providers::" in provider_rest.type
 
 
+@pytest.mark.rhv1
 def test_provider_refresh(provider_rest, appliance):
     """Test checking that refresh invoked from the REST API works.
 
@@ -124,6 +128,7 @@ def test_provider_refresh(provider_rest, appliance):
         assert task.status.lower() == "ok", "Task failed with status '{}'".format(task.status)
 
 
+@pytest.mark.rhv3
 def test_provider_edit(request, provider_rest, appliance):
     """Test editing a provider using REST API.
 
@@ -139,6 +144,7 @@ def test_provider_edit(request, provider_rest, appliance):
     assert provider_rest.name == new_name == edited.name
 
 
+@pytest.mark.rhv3
 # testing BZ1501941
 @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
 def test_provider_delete_from_detail(provider_rest, appliance, method):
@@ -161,6 +167,7 @@ def test_provider_delete_from_detail(provider_rest, appliance, method):
     assert_response(appliance, http_status=404)
 
 
+@pytest.mark.rhv3
 # testing BZ1501941
 def test_provider_delete_from_collection(provider_rest, appliance):
     """Tests deletion of the provider from collection using REST API.

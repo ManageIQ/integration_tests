@@ -183,6 +183,7 @@ class VMEvent(object):
             raise ValueError('Targets must not be empty')
 
 
+@pytest.mark.rhv2
 def test_timeline_events(new_vm, soft_assert):
     events_list = ['create', 'stop', 'start', 'suspend', 'start']
     targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)

@@ -32,6 +32,7 @@ def vm_crud(provider, setup_provider_modscope, small_template_modscope):
         vm.delete_from_provider()
 
 
+@pytest.mark.rhv2
 @pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider) and
                          BZ(1509020, forced_streams=['5.8', '5.9']).blocks,
                          'BZ 1509020')

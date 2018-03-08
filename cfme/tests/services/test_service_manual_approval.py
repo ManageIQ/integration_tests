@@ -54,6 +54,7 @@ def modify_instance(create_domain):
         instance.fields = {"approval_type": {"value": "manual"}}
 
 
+@pytest.mark.rhv3
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.tier(2)
 def test_service_manual_approval(appliance, provider, setup_provider, modify_instance,

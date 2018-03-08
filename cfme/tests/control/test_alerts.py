@@ -229,6 +229,7 @@ def setup_snmp(appliance):
     appliance.ssh_client.run_command("sed -i '$ d' /etc/snmp/snmptrapd.conf")
 
 
+@pytest.mark.rhv3
 @pytest.mark.meta(blockers=[BZ(1533451,
                             forced_streams=['5.8', '5.9', 'upstream'],
                             unblock=lambda provider: not provider.one_of(RHEVMProvider))])

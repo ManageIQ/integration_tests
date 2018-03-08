@@ -25,6 +25,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.rhv1
 @pytest.mark.tier(2)
 def test_order_catalog_item(appliance, provider, setup_provider, catalog_item, request,
                             register_event):
@@ -50,6 +51,7 @@ def test_order_catalog_item(appliance, provider, setup_provider, catalog_item, r
     assert provision_request.is_succeeded(), msg
 
 
+@pytest.mark.rhv3
 @pytest.mark.tier(2)
 def test_order_catalog_item_via_rest(
         request, appliance, provider, setup_provider, catalog_item, catalog):
@@ -78,6 +80,7 @@ def test_order_catalog_item_via_rest(
         return req.status.lower() == "ok" and req.request_state.lower() == "finished"
 
 
+@pytest.mark.rhv3
 @pytest.mark.tier(2)
 def test_order_catalog_bundle(appliance, provider, setup_provider, catalog_item, request):
     """Tests ordering a catalog bundle
@@ -104,6 +107,7 @@ def test_order_catalog_bundle(appliance, provider, setup_provider, catalog_item,
     assert provision_request.is_succeeded(), msg
 
 
+@pytest.mark.rhv3
 # Note here this needs to be reduced, doesn't need to test against all providers
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(3)
@@ -119,6 +123,7 @@ def test_no_template_catalog_item(provider, provisioning, setup_provider, vm_nam
         catalog_item.create()
 
 
+@pytest.mark.rhv3
 @pytest.mark.tier(3)
 def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_item):
     """Tests edit catalog item after deleting provider
@@ -138,6 +143,7 @@ def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_
         catalog_item.update(changes)
 
 
+@pytest.mark.rhv3
 @pytest.mark.tier(3)
 @pytest.mark.usefixtures('setup_provider')
 def test_request_with_orphaned_template(appliance, provider, setup_provider, catalog_item):
