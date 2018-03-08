@@ -10,6 +10,7 @@ from widgetastic.widget import Text, Checkbox, View, ParametrizedView, Table as 
 from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab, CandidateNotFound
 
 from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.intelligence.intel_timelines import IntelTimelinesView
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.blockers import BZ
@@ -574,3 +575,16 @@ class SavedReportDetails(CFMENavigateStep):
             self.obj.report.menu_name,
             self.obj.datetime_in_tree
         )
+
+
+@navigator.register(Report, 'Timelines')
+class CustomReportTimelines(CFMENavigateStep):
+    VIEW = IntelTimelinesView
+    prerequisite = NavigateToAttribute('appliance.server', 'IntelTimelines')
+
+    def step(self):
+        self.prerequisite_view.timelines.tree.click_path(self.obj.company_name_default(),
+                                                         'Custom', self.obj.title)
+        # Some reports can take a lot of time to load when there is a lot of events (VMs Power
+        # On/Off from last Week
+        self.prerequisite_view.browser.plugin.ensure_page_safe(timeout='7m')

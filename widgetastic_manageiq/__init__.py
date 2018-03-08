@@ -2468,7 +2468,7 @@ class TimelinesChart(View):
 
     def __init__(self, parent, locator=None, logger=None):
         super(TimelinesChart, self).__init__(parent=parent, logger=logger)
-        self.locator = locator or '//div[contains(@class, "timeline-container")]'
+        self.locator = locator or '//div[@id="tl_div"]'
 
     def get_categories(self, *categories):
         br = self.browser

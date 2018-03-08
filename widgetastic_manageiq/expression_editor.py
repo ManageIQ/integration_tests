@@ -379,12 +379,10 @@ def run_commands(command_list, clear_expression=True, context=None):
 
             - function1
             - function2
-            -
-                fill_fields:
+            - fill_fields:
                     field1: value
                     field2: value
-            -
-                do_other_things:
+            - do_other_things:
                     - 1
                     - 2
                     - 3
