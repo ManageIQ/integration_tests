@@ -36,14 +36,14 @@ def test_templates(provider, soft_assert):
     view = navigate_to(provider, 'Details')
     images = [i.name for i in provider.mgmt.images]
 
-    ui_images = view.entities.view.entities.relationships.get_text_of('Templates')
+    ui_images = view.entities.summary('Relationships').get_text_of('Templates')
     assert int(ui_images) == len(images)
 
     templates_view = navigate_to(provider, 'ProviderTemplates')
     template_names = templates_view.entities.entity_names
 
     for image in images:
-        soft_assert(image not in template_names, 'Missing template: {}'.format(image))
+        soft_assert(image in template_names, 'Missing template: {}'.format(image))
 
 
 def test_stacks(provider):
