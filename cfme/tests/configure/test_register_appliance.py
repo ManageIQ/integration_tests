@@ -3,6 +3,7 @@ import time
 
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils import conf, version
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
@@ -172,6 +173,20 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
     )
 
     request.addfinalizer(appliance.unregister)
+
+
+def test_rhsm_registration_check_repo_names(temp_appliance_preconfig_funcscope, soft_assert):
+    """ Checks default repo on a fresh appliance and checks """
+    ver = temp_appliance_preconfig_funcscope.version.series()
+    with temp_appliance_preconfig_funcscope:
+        view = navigate_to(RedHatUpdates, 'Edit')
+        soft_assert(
+            view.repo_name.value == 'cf-me-{}-for-rhel-7-rpms rhel-server-rhscl-7-rpms'.format(ver))
+        """checks current repo names"""
+        view.repo_default_name.click()
+        """resets repos with default button and checks they are also correct"""
+        soft_assert(
+            view.repo_name.value == 'cf-me-{}-for-rhel-7-rpms rhel-server-rhscl-7-rpms'.format(ver))
 
 
 @pytest.mark.meta(blockers=[BZ(1500878, forced_streams=['5.9', 'upstream'])])
