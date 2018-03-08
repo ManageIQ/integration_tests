@@ -13,6 +13,7 @@ from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.virtual_machines import Vm
 from cfme.utils import ssh, safe_string, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -208,9 +209,8 @@ def ssa_vm(request, local_setup_provider, provider, vm_analysis_provisioning_dat
     # TODO:  if rhev and iscsi, it need direct_lun
     if provider.type == 'rhevm':
         logger.info("Setting a relationship between VM and appliance")
-        cfme_rel = VM.CfmeRelationship(vm)
-        server_name = appliance.server.name
-        cfme_rel.set_relationship(str(server_name), configuration.server_id())
+        cfme_rel = Vm.CfmeRelationship(vm)
+        cfme_rel.set_relationship(appliance.server.name, appliance.server_id())
 
     yield vm
 
@@ -373,7 +373,9 @@ def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profile):
         c_users, c_groups, c_packages, c_services))
 
     soft_assert(c_lastanalyzed != 'Never', "Last Analyzed is set to Never")
-    soft_assert(e_os_type in details_os_icon.lower(),
+    # RHEL has 'Red Hat' in details_os_icon, but 'redhat' in quadicon_os_icon
+    os_type = e_os_type if e_os_type != 'redhat' else 'red hat'
+    soft_assert(os_type in details_os_icon.lower(),
                 "details icon: '{}' not in '{}'".format(e_os_type, details_os_icon))
     soft_assert(e_os_type in quadicon_os_icon.lower(),
                 "quad icon: '{}' not in '{}'".format(e_os_type, quadicon_os_icon))

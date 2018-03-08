@@ -830,7 +830,7 @@ class Vm(VM):
 
         def get_relationship(self):
             view = self.navigate()
-            rel = str(view.form.server.all_selected_options[0].text)
+            rel = str(view.form.server.all_selected_options[0])
             view.form.cancel_button.click()
             return rel
 
