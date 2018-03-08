@@ -88,6 +88,7 @@ pytest_plugins = (
 
     'markers',
 
+    'cfme.fixtures.ansible_fixtures',
     'cfme.fixtures.base',
     'cfme.fixtures.cli',
     'cfme.fixtures.configure_auth_mode',
