@@ -48,6 +48,7 @@ class VolumeSnapshotDetailsEntities(View):
 
 class VolumeSnapshotDetailSidebar(View):
     """The accordion on the Volume Snapshot details page"""
+
     @View.nested
     class properties(Accordion):  # noqa
         tree = ManageIQTree()
@@ -86,6 +87,7 @@ class VolumeSnapshotAllView(VolumeSnapshotView):
 
 class VolumeSnapshotDetailsView(VolumeSnapshotView):
     """The detail Volume Snapshot page"""
+
     @property
     def is_displayed(self):
         expected_title = '{} (Summary)'.format(self.context['object'].name)
@@ -224,7 +226,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-            self.prerequisite_view.navigation.select('Storage', 'Block Storage', 'Volume Snapshots')
+        self.prerequisite_view.navigation.select('Storage', 'Block Storage', 'Volume Snapshots')
 
 
 @navigator.register(VolumeSnapshot, 'Details')
