@@ -9,7 +9,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def wait_for_ansible(appliance):
     appliance.server.settings.enable_server_roles("embedded_ansible")
     appliance.wait_for_embedded_ansible()
@@ -17,7 +17,7 @@ def wait_for_ansible(appliance):
     appliance.server.settings.disable_server_roles("embedded_ansible")
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.yield_fixture(scope="module")
 def ansible_repository(appliance, wait_for_ansible):
     repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
@@ -40,7 +40,7 @@ def ansible_repository(appliance, wait_for_ansible):
         repository.delete()
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.yield_fixture(scope="module")
 def ansible_catalog_item(ansible_repository):
     cat_item = AnsiblePlaybookCatalogItem(
         fauxfactory.gen_alphanumeric(),
@@ -68,7 +68,7 @@ def ansible_catalog_item(ansible_repository):
         cat_item.delete()
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.yield_fixture(scope="module")
 def ansible_catalog(ansible_catalog_item):
     catalog_ = Catalog(fauxfactory.gen_alphanumeric(), items=[ansible_catalog_item.name])
     catalog_.create()
@@ -80,15 +80,15 @@ def ansible_catalog(ansible_catalog_item):
         ansible_catalog_item.catalog = None
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def ansible_service_catalog(appliance, ansible_catalog_item, ansible_catalog):
     service_catalog_ = ServiceCatalogs(appliance, ansible_catalog, ansible_catalog_item.name)
     return service_catalog_
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.yield_fixture(scope="module")
 def order_ansible_service_in_ops_ui(appliance, ansible_catalog_item,
-                                    ansible_service_catalog, request):
+                                    ansible_service_catalog):
     """Tests if ansible playbook service provisioning is shown in service requests."""
     ansible_service_catalog.order()
     cat_item_name = ansible_catalog_item.name
@@ -98,9 +98,7 @@ def order_ansible_service_in_ops_ui(appliance, ansible_catalog_item,
         service_request.wait_for_request()
         service_request.remove_request()
     yield cat_item_name
+    service = MyService(appliance, cat_item_name)
+    if service.exists:
+        service.delete()
 
-    @request.addfinalizer
-    def _finalize():
-        _service = MyService(appliance, cat_item_name)
-        if _service.exists:
-            _service.delete()
