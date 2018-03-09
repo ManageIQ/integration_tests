@@ -7,7 +7,6 @@ from cfme.services.myservice import MyService
 from cfme.utils import testgen
 from cfme.utils.log import logger
 
-
 pytestmark = [
     test_requirements.service,
     pytest.mark.tier(2),
@@ -99,3 +98,22 @@ def test_retire_ansible_service(appliance, catalog_item, request):
     assert order_request.is_succeeded(method='ui'), msg
     myservice = MyService(appliance, catalog_item.name)
     myservice.retire()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.ignore_stream('upstream')
+def test_order_tower_catalog_item_jobs(appliance, catalog_item, request):
+    """Tests order Ansible Tower catalog item and check status on Jobs page
+
+    Metadata:
+        test_flag: provision
+    """
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    service_catalogs.order()
+    logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
+    cells = {'Description': catalog_item.name}
+
+    order_request = appliance.collections.requests.instantiate(cells=cells, partial_check=True)
+    order_request.wait_for_request(method='ui')
+    msg = "Ansible Tower Job failed"
+    assert appliance.collections.ansible_tower_jobs.is_finished(), msg
