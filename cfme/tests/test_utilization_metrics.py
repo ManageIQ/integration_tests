@@ -137,7 +137,6 @@ def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
         query = query_metric_db(appliance, provider, 'cpu_usage_rate_average',
             vm_name)
         average_rate = attrgetter('cpu_usage_rate_average')
-
     for record in query:
         if average_rate(record) is not None:
             assert average_rate(record) > 0, 'Zero VM CPU Usage'
@@ -263,3 +262,6 @@ def test_raw_metric_host_disk(metrics_collection, appliance, provider):
         if record.disk_usage_rate_average is not None:
             assert record.disk_usage_rate_average > 0, 'Zero Host Disk IO'
             break
+
+    from time import sleep
+    sleep(8000)
