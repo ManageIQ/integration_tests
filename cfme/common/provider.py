@@ -11,9 +11,8 @@ from cfme.base.credential import (
 from cfme.common import Taggable
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, AddProviderError)
-from cfme.modeling.base import BaseEntity
+from cfme.modeling.base import BaseEntity, BaseCollection
 from cfme.utils import ParamClassName, version, conf
-from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator
 from cfme.utils.log import logger
 from cfme.utils.net import resolve_hostname
@@ -67,13 +66,14 @@ def prepare_endpoints(endpoints):
 
 
 @attr.s(hash=False)
-class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
+class BaseProvider(Taggable, Updateable, BaseEntity):
     # List of constants that every non-abstract subclass must have defined
 
     # TODO: Navigatable is used to ensure function until the reduced get_crud is
     # replaced by methods on collections. This will be fixed in next conversion PR
 
     _param_name = ParamClassName('name')
+
     STATS_TO_MATCH = []
     db_types = ["Providers"]
     ems_events = []
@@ -513,17 +513,6 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
             raise AssertionError("Provider wasn't deleted, status code {}".format(
                 response.status_code))
 
-    def setup(self):
-        """
-        Sets up the provider robustly
-        """
-        # TODO: Eventually this will become Sentakuified, but only after providers is CEMv3
-        if self.category in ['cloud', 'infra', 'physical']:
-            return self.create_rest(check_existing=True, validate_inventory=True)
-        else:
-            return self.create(cancel=False, validate_credentials=True,
-                               check_existing=True, validate_inventory=True)
-
     def delete_if_exists(self, *args, **kwargs):
         """Combines ``.exists`` and ``.delete()`` as a shortcut for ``request.addfinalizer``
 
@@ -792,6 +781,303 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
         else:
             return cls.get_credentials_from_config(cred_yaml_key, cred_type=cred_type)
 
+    def one_of(self, *classes):
+        """ Returns true if provider is an instance of any of the classes or sublasses there of"""
+        return isinstance(self, classes)
+
+    # These methods need to be overridden in the provider specific classes
+    def get_console_connection_status(self):
+        raise NotImplementedError("This method is not implemented for given provider")
+
+    def get_remote_console_canvas(self):
+        raise NotImplementedError("This method is not implemented for given provider")
+
+    def get_console_ctrl_alt_del_btn(self):
+        raise NotImplementedError("This method is not implemented for given provider")
+
+    def get_console_fullscreen_btn(self):
+        raise NotImplementedError("This method is not implemented for given provider")
+
+    def get_provider_details(self, provider_id):
+        """Returns the name, and type associated with the provider_id"""
+        # TODO: Move to ProviderCollection.find
+        logger.debug('Retrieving the provider details for ID: {}'.format(provider_id))
+
+        details = {}
+        try:
+            prov = self.appliance.rest_api.collections.providers.get(id=provider_id)
+        except APIException:
+            return None
+        details['id'] = prov.id
+        details['name'] = prov.name
+        details['type'] = prov.type
+
+        return details
+
+
+@attr.s
+class ProvidersCollection(BaseCollection):
+
+    ENTITY = BaseProvider
+
+    def create(self, cancel=False, validate_credentials=True, check_existing=False,
+               validate_inventory=False):
+        """
+        Creates a provider in the UI
+
+        Args:
+            cancel (boolean): Whether to cancel out of the creation.  The cancel is done
+                after all the information present in the Provider has been filled in the UI.
+            validate_credentials (boolean): Whether to validate credentials - if True and the
+                credentials are invalid, an error will be raised.
+            check_existing (boolean): Check if this provider already exists, skip if it does
+            validate_inventory (boolean): Whether or not to block until the provider stats in CFME
+                match the stats gleaned from the backend management system
+
+        Returns:
+            True if it was created, False if it already existed
+        """
+        if check_existing and self.exists:
+            created = False
+        else:
+            created = True
+
+            logger.info('Setting up Provider: %s', self.key)
+            add_view = navigate_to(self, 'Add')
+
+            if not cancel or (cancel and any(self.view_value_mapping.values())):
+                # Workaround for BZ#1526050
+                from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+                if self.appliance.version == '5.8.3.0' and self.one_of(VMwareProvider):
+                    add_view.fill({'prov_type': 'Red Hat Virtualization'})
+                elif '5.8.3.0' < self.appliance.version < '5.9':
+                    import warnings
+                    warnings.warn('REMOVE ME: BZ#1526050')
+                # filling main part of dialog
+                add_view.fill(self.view_value_mapping)
+
+            if not cancel or (cancel and self.endpoints):
+                # filling endpoints
+                for endpoint_name, endpoint in self.endpoints.items():
+                    try:
+                        # every endpoint class has name like 'default', 'events', etc.
+                        # endpoints view can have multiple tabs, the code below tries
+                        # to find right tab by passing endpoint name to endpoints view
+                        endp_view = getattr(self.endpoints_form(parent=add_view),
+                                            endpoint_name)
+                    except AttributeError:
+                        # tabs are absent in UI when there is only single (default) endpoint
+                        endp_view = self.endpoints_form(parent=add_view)
+
+                    endp_view.fill(endpoint.view_value_mapping)
+
+                    # filling credentials
+                    if hasattr(endpoint, 'credentials'):
+                        endp_view.fill(endpoint.credentials.view_value_mapping)
+                    # sometimes we have cases that we need to validate even though
+                    # there is no credentials, such as Hawkular endpoint
+                    if (validate_credentials and hasattr(endp_view, 'validate') and
+                            endp_view.validate.is_displayed):
+                        # there are some endpoints which don't demand validation like
+                        #  RSA key pair
+                        endp_view.validate.click()
+                        # Flash message widget is in add_view, not in endpoints tab
+                        logger.info(
+                            'Validating credentials flash message for endpoint %s',
+                            endpoint_name)
+                        add_view.flash.assert_no_error()
+                        add_view.flash.assert_success_message(
+                            'Credential validation was successful')
+
+            main_view = self.create_view(navigator.get_class(self, 'All').VIEW)
+            if cancel:
+                created = False
+                add_view.cancel.click()
+                cancel_text = ('Add of {} Provider was '
+                               'cancelled by the user'.format(self.string_name))
+
+                main_view.flash.assert_message(cancel_text)
+                main_view.flash.assert_no_error()
+            else:
+                add_view.add.click()
+                if main_view.is_displayed:
+                    success_text = '{} Providers "{}" was saved'.format(self.string_name,
+                                                                        self.name)
+                    main_view.flash.assert_message(success_text)
+                else:
+                    add_view.flash.assert_no_error()
+                    raise AssertionError("Provider wasn't added. It seems form isn't accurately"
+                                         " filled")
+
+        if validate_inventory:
+            self.validate()
+
+        return created
+
+    def _fill_provider_attributes(self, provider_attributes):
+        """Fills provider data.
+
+        Helper method for ``self.create_rest``
+        """
+        if getattr(self, "region", None):
+            provider_attributes["provider_region"] = version.pick(
+                self.region) if isinstance(self.region, dict) else self.region
+        if getattr(self, "project", None):
+            provider_attributes["project"] = self.project
+
+        if self.type_name == "azure":
+            provider_attributes["uid_ems"] = self.tenant_id
+            provider_attributes["provider_region"] = self.region.lower().replace(" ", "")
+            if getattr(self, "subscription_id", None):
+                provider_attributes["subscription"] = self.subscription_id
+
+    def _fill_default_endpoint_dicts(self, provider_attributes, connection_configs):
+        """Fills dicts with default endpoint data.
+
+        Helper method for ``self.create_rest``
+        """
+        default_connection = {
+            "endpoint": {"role": "default"}
+        }
+
+        endpoint_default = self.endpoints["default"]
+        if getattr(endpoint_default.credentials, "principal", None):
+            provider_attributes["credentials"] = {
+                "userid": endpoint_default.credentials.principal,
+                "password": endpoint_default.credentials.secret,
+            }
+        elif getattr(endpoint_default.credentials, "service_account", None):
+            default_connection["authentication"] = {
+                "type": "AuthToken",
+                "auth_type": "default",
+                "auth_key": endpoint_default.credentials.service_account,
+            }
+            connection_configs.append(default_connection)
+        else:
+            raise AssertionError("Provider wasn't added. "
+                "No credentials info found for provider {}.".format(self.name))
+
+        cert = getattr(endpoint_default, "ca_certs", None)
+        if cert and self.appliance.version >= "5.8":
+            default_connection["endpoint"]["certificate_authority"] = cert
+            connection_configs.append(default_connection)
+
+        if hasattr(endpoint_default, "verify_tls"):
+            default_connection["endpoint"]["verify_ssl"] = 1 if endpoint_default.verify_tls else 0
+            connection_configs.append(default_connection)
+        if getattr(endpoint_default, "api_port", None):
+            default_connection["endpoint"]["port"] = endpoint_default.api_port
+            connection_configs.append(default_connection)
+        if getattr(endpoint_default, "security_protocol", None):
+            security_protocol = endpoint_default.security_protocol.lower()
+            if security_protocol == "basic (ssl)":
+                security_protocol = "ssl"
+            default_connection["endpoint"]["security_protocol"] = security_protocol
+            connection_configs.append(default_connection)
+
+    def _fill_candu_endpoint_dicts(self, provider_attributes, connection_configs):
+        """Fills dicts with candu endpoint data.
+
+        Helper method for ``self.create_rest``
+        """
+        if "candu" not in self.endpoints:
+            return
+
+        endpoint_candu = self.endpoints["candu"]
+        if isinstance(provider_attributes["credentials"], dict):
+            provider_attributes["credentials"] = [provider_attributes["credentials"]]
+        provider_attributes["credentials"].append({
+            "userid": endpoint_candu.credentials.principal,
+            "password": endpoint_candu.credentials.secret,
+            "auth_type": "metrics",
+        })
+        candu_connection = {
+            "endpoint": {
+                "hostname": endpoint_candu.hostname,
+                "path": endpoint_candu.database,
+                "role": "metrics",
+            },
+        }
+        if getattr(endpoint_candu, "api_port", None):
+            candu_connection["endpoint"]["port"] = endpoint_candu.api_port
+        if hasattr(endpoint_candu, "verify_tls") and not endpoint_candu.verify_tls:
+            candu_connection["endpoint"]["verify_ssl"] = 0
+        connection_configs.append(candu_connection)
+
+    def _compile_connection_configurations(self, provider_attributes, connection_configs):
+        """Compiles togetger all dicts with data for ``connection_configurations``.
+
+        Helper method for ``self.create_rest``
+        """
+        provider_attributes["connection_configurations"] = []
+        appended = []
+        for config in connection_configs:
+            role = config["endpoint"]["role"]
+            if role not in appended:
+                provider_attributes["connection_configurations"].append(config)
+                appended.append(role)
+
+    def create_rest(self, check_existing=False, validate_inventory=False):
+        """
+        Creates a provider using REST
+
+        Args:
+            check_existing (boolean): Check if this provider already exists, skip if it does
+            validate_inventory (boolean): Whether or not to block until the provider stats in CFME
+                match the stats gleaned from the backend management system
+
+        Returns:
+            True if it was created, False if it already existed
+        """
+        if check_existing and self.exists:
+            return False
+
+        logger.info("Setting up provider via REST: %s", self.key)
+
+        # provider attributes
+        provider_attributes = {
+            "hostname": self.hostname,
+            "ipaddress": self.ip_address,
+            "name": self.name,
+            "type": "ManageIQ::Providers::{}".format(self.db_types[0]),
+        }
+
+        # data for provider_attributes['connection_configurations']
+        connection_configs = []
+
+        # produce final provider_attributes
+        self._fill_provider_attributes(provider_attributes)
+        self._fill_default_endpoint_dicts(provider_attributes, connection_configs)
+        self._fill_candu_endpoint_dicts(provider_attributes, connection_configs)
+        self._compile_connection_configurations(provider_attributes, connection_configs)
+
+        try:
+            self.appliance.rest_api.collections.providers.action.create(**provider_attributes)
+        except APIException as err:
+            raise AssertionError("Provider wasn't added: {}".format(err))
+
+        response = self.appliance.rest_api.response
+        if not response:
+            raise AssertionError("Provider wasn't added, status code {}".format(
+                response.status_code))
+
+        if validate_inventory:
+            self.validate()
+
+        self.appliance.rest_api.response = response
+        return True
+
+    def setup(self):
+        """
+        Sets up the provider robustly
+        """
+        # TODO: Eventually this will become Sentakuified, but only after providers is CEMv3
+        if self.category in ['cloud', 'infra', 'physical']:
+            return self.create_rest(check_existing=True, validate_inventory=True)
+        else:
+            return self.create(cancel=False, validate_credentials=True,
+                               check_existing=True, validate_inventory=True)
+
     # Move to collection
     @classmethod
     def clear_providers(cls):
@@ -810,19 +1096,6 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
     def one_of(self, *classes):
         """ Returns true if provider is an instance of any of the classes or sublasses there of"""
         return isinstance(self, classes)
-
-    # These methods need to be overridden in the provider specific classes
-    def get_console_connection_status(self):
-        raise NotImplementedError("This method is not implemented for given provider")
-
-    def get_remote_console_canvas(self):
-        raise NotImplementedError("This method is not implemented for given provider")
-
-    def get_console_ctrl_alt_del_btn(self):
-        raise NotImplementedError("This method is not implemented for given provider")
-
-    def get_console_fullscreen_btn(self):
-        raise NotImplementedError("This method is not implemented for given provider")
 
     def get_all_provider_ids(self):
         """
@@ -883,22 +1156,6 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
         except APIException:
             return None
         return template_ids
-
-    def get_provider_details(self, provider_id):
-        """Returns the name, and type associated with the provider_id"""
-        # TODO: Move to ProviderCollection.find
-        logger.debug('Retrieving the provider details for ID: {}'.format(provider_id))
-
-        details = {}
-        try:
-            prov = self.appliance.rest_api.collections.providers.get(id=provider_id)
-        except APIException:
-            return None
-        details['id'] = prov.id
-        details['name'] = prov.name
-        details['type'] = prov.type
-
-        return details
 
     def get_vm_details(self, vm_id):
         """
