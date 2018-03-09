@@ -62,12 +62,12 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
         return self.zone.collections.servers.filter({'slave': True}).all()
 
     @property
-    def api_settings_url(self):
+    def _api_settings_url(self):
         return '/'.join([self.appliance.rest_api.collections.servers._href, self.sid, 'settings'])
 
     def get_yaml_config(self):
         """GET servers/:id/settings api endpoint to query server configuration"""
-        return self.appliance.rest_api.get(url=self.api_settings_url)
+        return self.appliance.rest_api.get(url=self._api_settings_url)
 
     def set_yaml_config(self, data_dict):
         """PATCH settings from the server's api/server/:id/settings endpoint
@@ -82,7 +82,7 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
         # Failing with some data_dict, like 'authentication'
         # https://bugzilla.redhat.com/show_bug.cgi?id=1553394
         result = self.appliance.rest_api._session.patch(
-            url=self.api_settings_url,
+            url=self._api_settings_url,
             data=json.dumps(data_dict)
         )
         assert result.ok
@@ -154,12 +154,12 @@ class Zone(Pretty, BaseEntity, sentaku.modeling.ElementMixin):
         return region_obj
 
     @property
-    def api_settings_url(self):
+    def _api_settings_url(self):
         return '/'.join([self.appliance.rest_api.collections.zones._href, self.id, 'settings'])
 
     def get_yaml_config(self):
         """"GET zones/:id/settings api endpoint to query zone configuration"""
-        return self.appliance.rest_api.get(self.api_settings_url)
+        return self.appliance.rest_api.get(self._api_settings_url)
 
     def set_yaml_config(self, data_dict):
         """PATCH settings from the zone's api/zones/:id/settings endpoint
@@ -172,7 +172,7 @@ class Zone(Pretty, BaseEntity, sentaku.modeling.ElementMixin):
         """
         # Calling the _session patch method because the core patch will wrap data_dict in a list
         result = self.appliance.rest_api._session.patch(
-            url=self.api_settings_url,
+            url=self._api_settings_url,
             data=json.dumps(data_dict)
         )
         assert result.ok
@@ -221,7 +221,7 @@ class Region(BaseEntity, sentaku.modeling.ElementMixin):
         return replication
 
     @property
-    def api_settings_url(self):
+    def _api_settings_url(self):
         """The region ID doesn't quite match the region number
         https://bugzilla.redhat.com/show_bug.cgi?id=1552899
 
@@ -243,7 +243,7 @@ class Region(BaseEntity, sentaku.modeling.ElementMixin):
 
     def get_yaml_config(self):
         """"GET zones/:id/settings api endpoint to query region configuration"""
-        return self.appliance.rest_api.get(self.api_settings_url)
+        return self.appliance.rest_api.get(self._api_settings_url)
 
     def set_yaml_config(self, data_dict):
         """PATCH settings from the zone's api/zones/:id/settings endpoint
@@ -256,7 +256,7 @@ class Region(BaseEntity, sentaku.modeling.ElementMixin):
         """
         # Calling the _session patch method because the core patch will wrap data_dict in a list
         result = self.appliance.rest_api._session.patch(
-            url=self.api_settings_url,
+            url=self._api_settings_url,
             data=json.dumps(data_dict)
         )
         assert result.ok
