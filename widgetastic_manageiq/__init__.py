@@ -604,6 +604,10 @@ class ParametrizedSummaryTable(ParametrizedView):
     _table = SummaryTable(title=Parameter("title"))
 
     @property
+    def is_displayed(self):
+        return self._table.is_displayed
+
+    @property
     def fields(self):
         return self._table.fields
 
