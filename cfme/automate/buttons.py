@@ -66,6 +66,7 @@ class ButtonFormCommon(AutomateCustomizationView):
         class ButtonFormAnsibleView(View):  # noqa
             playbook_cat_item = BootstrapSelect('service_template_id')
             inventory = AutomateRadioGroup(locator=".//input[@name='inventory']/..")
+            hosts = Input(name='hosts')
 
         text = Input(name='name')
         display = Checkbox(name='display')
@@ -181,7 +182,8 @@ class BaseButton(BaseEntity, Updateable):
                 'form': {
                     'dialog': updates.get('dialog'),
                     'playbook_cat_item': updates.get('playbook_cat_item'),
-                    'inventory': updates.get('inventory')
+                    'inventory': updates.get('inventory'),
+                    'hosts': updates.get('hosts')
                 }
             },
             'advanced': {
@@ -253,6 +255,7 @@ class AnsiblePlaybookButton(BaseButton):
     image = attr.ib()
     playbook_cat_item = attr.ib()
     inventory = attr.ib()
+    hosts = attr.ib(default=None)
     system = attr.ib(default=None)
     request = attr.ib(default=None)
     open_url = attr.ib(default=None)
@@ -265,8 +268,8 @@ class ButtonCollection(BaseCollection):
     ENTITY = BaseButton
 
     def instantiate(self, group, text, hover, type='Default', dialog=None, playbook_cat_item=None,
-                    inventory=None, image=None, open_url=None, system=None, request=None,
-                    attributes=None):
+                    inventory=None, hosts=None, image=None, open_url=None, system=None,
+                    request=None, attributes=None):
         if image:
             pass
         elif self.appliance.version < '5.9':
@@ -280,11 +283,11 @@ class ButtonCollection(BaseCollection):
             args = [group, text, hover, image, dialog]
         elif type == 'Ansible Playbook':
             button_class = AnsiblePlaybookButton
-            args = [group, text, hover, image, playbook_cat_item, inventory]
+            args = [group, text, hover, image, playbook_cat_item, inventory, hosts]
         return button_class.from_collection(self, *args, **kwargs)
 
     def create(self, text, hover, type='Default', group=None, dialog=None, playbook_cat_item=None,
-               inventory=None, image=None, open_url=None, system=None, request=None,
+               inventory=None, hosts=None, image=None, open_url=None, system=None, request=None,
                attributes=None):
         self.group = group or self.parent
         if image:
@@ -304,7 +307,8 @@ class ButtonCollection(BaseCollection):
                 'form': {
                     'dialog': dialog,
                     'playbook_cat_item': playbook_cat_item,
-                    'inventory': inventory
+                    'inventory': inventory,
+                    'hosts': hosts
                 }
             },
             'advanced': {'system': system, 'request': request}
@@ -322,8 +326,8 @@ class ButtonCollection(BaseCollection):
             view.flash.assert_message('Custom Button "{}" was added'.format(hover))
         return self.instantiate(self.group, text, hover, type, dialog=dialog,
                                 playbook_cat_item=playbook_cat_item, inventory=inventory,
-                                image=image, open_url=open_url, system=system, request=request,
-                                attributes=attributes)
+                                hosts=hosts, image=image, open_url=open_url, system=system,
+                                request=request, attributes=attributes)
 
 
 @navigator.register(ButtonCollection, 'All')
