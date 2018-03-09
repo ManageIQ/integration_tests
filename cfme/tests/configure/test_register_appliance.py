@@ -178,6 +178,7 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
 def test_rhsm_registration_check_repo_names(temp_appliance_preconfig_funcscope, soft_assert):
     """ Checks default rpm repos on a fresh appliance """
     ver = temp_appliance_preconfig_funcscope.version.series()
+    # TODO We need the context manager here is that RedHatUpdates doesn't yet support Collections.
     with temp_appliance_preconfig_funcscope:
         view = navigate_to(RedHatUpdates, 'Edit')
         soft_assert(
