@@ -28,8 +28,8 @@ tzs = [
 
 
 @pytest.fixture(scope="function")
-def temp_appliance_time_crud(temp_appliance_preconfig_funcscope):
-    """Grab fresh appliance and set time and date prior to running tests"""
+def appliance_with_preset_time(temp_appliance_preconfig_funcscope):
+    """Grabs fresh appliance and sets time and date prior to running tests"""
     command_set = ('ap', '', '3', 'y', '2020-10-20', '09:58:00', 'y', '')
     temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
     return temp_appliance_preconfig_funcscope
@@ -82,21 +82,19 @@ def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
     app.appliance_console.run_commands(command_set)
 
     def date_changed():
-        return bool(app.ssh_client.run_command("date | grep 'Tue Oct 20 10:00'").success)
-
-    assert bool(app.ssh_client.run_command("date | grep 2020").success)
+        return app.ssh_client.run_command("date +%F-%T | grep 2020-10-20-10:00").success
     wait_for(date_changed)
 
 
-def test_appliance_console_db_maintenance_hourly(temp_appliance_time_crud):
+def test_appliance_console_db_maintenance_hourly(appliance_with_preset_time):
     """Test database hourly re-indexing through appliance console"""
-    app = temp_appliance_time_crud
+    app = appliance_with_preset_time
     command_set = ('ap', '', '7', 'y', 'n', '')
     app.appliance_console.run_commands(command_set)
 
     def maintenance_run():
-        return bool(app.ssh_client.run_command(
-            "grep REINDEX /var/www/miq/vmdb/log/hourly_continuous_pg_maint_stdout.log").success)
+        return app.ssh_client.run_command(
+            "grep REINDEX /var/www/miq/vmdb/log/hourly_continuous_pg_maint_stdout.log").success
 
     wait_for(maintenance_run, timeout=300)
 
@@ -107,18 +105,18 @@ def test_appliance_console_db_maintenance_hourly(temp_appliance_time_crud):
     ['weekly', '10', '2'],
     ['monthly', '10', '20']
 ], ids=['hour', 'day', 'week', 'month'])
-def test_appliance_console_db_maintenance_periodic(period, temp_appliance_time_crud):
+def test_appliance_console_db_maintenance_periodic(period, appliance_with_preset_time):
     """Tests full vacuums on database through appliance console"""
-    app = temp_appliance_time_crud
+    app = appliance_with_preset_time
     command_set = ['ap', '', '7', 'n', 'y']
     command_set.extend(period)
     app.appliance_console.run_commands(command_set)
 
     def maintenance_run():
-        return bool(app.ssh_client.run_command(
+        return app.ssh_client.run_command(
             "grep 'periodic vacuum full completed' "
             "/var/www/miq/vmdb/log/hourly_continuous_pg_maint_stdout.log"
-        ).success)
+        ).success
 
     wait_for(maintenance_run, timeout=300)
 
