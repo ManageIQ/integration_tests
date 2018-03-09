@@ -603,6 +603,9 @@ class ParametrizedSummaryTable(ParametrizedView):
     PARAMETERS = ("title", )
     _table = SummaryTable(title=Parameter("title"))
 
+    def __locator__(self):
+        return self._table.ROOT
+
     @property
     def fields(self):
         return self._table.fields
