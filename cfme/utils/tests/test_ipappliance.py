@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-from urlparse import urlparse
 import pytest
 
-from fixtures.pytest_store import store
-from cfme.utils.appliance import IPAppliance, DummyAppliance
+from cfme.utils.appliance import IPAppliance
 
 
 def test_ipappliance_from_hostname():

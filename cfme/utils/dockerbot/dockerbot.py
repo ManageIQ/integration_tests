@@ -11,7 +11,7 @@ import re
 import subprocess
 import sys
 import yaml
-import urlparse
+from six.moves.urllib.parse import urlsplit
 
 
 def _dgci(d, key):
@@ -459,7 +459,7 @@ class DockerBot(object):
             self.env_details['UPDATE_PIP'] = 'True'
         if self.args['wheel_host_url'] and self.args['update_pip']:
             self.env_details['WHEEL_HOST_URL'] = self.args['wheel_host_url']
-            self.env_details['WHEEL_HOST'] = urlparse.urlsplit(self.args['wheel_host_url']).netloc
+            self.env_details['WHEEL_HOST'] = urlsplit(self.args['wheel_host_url']).netloc
             print("  TRUSTED HOST: {}".format(self.env_details['WHEEL_HOST']))
             print("  WHEEL URL: {}".format(self.env_details['WHEEL_HOST_URL']))
         if self.args['provision_appliance']:

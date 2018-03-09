@@ -22,7 +22,7 @@ import re
 import datetime
 import sys
 import cfme.utils
-from urlparse import urljoin
+from six.moves.urllib.parse import urljoin
 from contextlib import closing
 from urllib2 import urlopen, HTTPError
 

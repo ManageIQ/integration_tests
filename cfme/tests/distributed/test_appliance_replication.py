@@ -2,7 +2,7 @@
 import pytest
 
 from time import sleep
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 
 from cfme.base.ui import ServerView
 from cfme.common.vm import VM

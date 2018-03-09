@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import re
 import six
-import xmlrpclib
+import six.moves.xmlrpc_client
 from github import Github
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 
 from fixtures.pytest_store import store
 from cfme.utils import classproperty, conf, version
@@ -195,7 +195,7 @@ class BZ(Blocker):
                 if bug.fixed_in is not None:
                     return version.current_version() < bug.fixed_in
             return result
-        except xmlrpclib.Fault as e:
+        except six.moves.xmlrpc_client.Fault as e:
             code = e.faultCode
             s = e.faultString.strip().split("\n")[0]
             logger.error("Bugzilla thrown a fault: %s/%s", code, s)
