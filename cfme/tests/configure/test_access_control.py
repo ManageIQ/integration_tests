@@ -129,12 +129,13 @@ def test_user_assign_multiple_groups(appliance, request, group_collection):
         "User's assigned groups are different from expected groups")
 
 
-@pytest.mark.tier(2)
-def test_multiple_user_delete(appliance, group_collection):
+def test_user_delete_multiple(appliance, group_collection):
+    """ Test that we can successfully delete user using the Access Control EVM Users checklist
+    """
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
-    users = [new_user(appliance, group), new_user(appliance, group), new_user(appliance, group),]
+    users = [new_user(appliance, group), new_user(appliance, group), new_user(appliance, group), ]
     appliance.collections.users.delete(*users)
 
 
@@ -354,6 +355,23 @@ def test_group_crud(group_collection):
     with update(group):
         group.description = "{}edited".format(group.description)
     group.delete()
+
+
+@pytest.mark.tier(2)
+def test_group_delete_multiple(group_collection):
+    """ Test that we can successfully delete groups using the Access Control EVM Groups checklist
+    """
+    role = 'EvmRole-user'
+
+    groups = [
+        group_collection.create(
+            description='grp{}'.format(fauxfactory.gen_alphanumeric()), role=role),
+        group_collection.create(
+            description='grp{}'.format(fauxfactory.gen_alphanumeric()), role=role),
+        group_collection.create(
+            description='grp{}'.format(fauxfactory.gen_alphanumeric()), role=role), ]
+
+    group_collection.delete(*groups)
 
 
 @pytest.mark.sauce

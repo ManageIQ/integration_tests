@@ -421,6 +421,7 @@ class UserCollection(BaseCollection):
         Delete user(s) using the Access Control EVM Users checklist
         """
         users = list(users)
+        delete_toolbar_txt = 'Delete selected Users'
         full_name_header = 'Full Name'
         delete_success_msg = 'EVM User "{}": Delete successful'
         delete_blocked_msg = 'Default EVM User "{}" cannot be deleted'
@@ -433,14 +434,19 @@ class UserCollection(BaseCollection):
                 # selected per page
                 row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
                 row[0].check()
-                view.toolbar.configuration.item_select('Delete selected Users', handle_alert=True)
+                view.toolbar.configuration.item_select(delete_toolbar_txt, handle_alert=True)
                 # Check that deleting the user wasn't blocked
                 view.flash.assert_message(delete_blocked_msg.format(user.name))
+                # Check to see if this operation failed due to lack of permissions --OR--
+                # it's a read-only account
                 raise RBACOperationBlocked(view.flash.messages[0].text)
             except NoSuchElementException:
                 break
             except AssertionError:
-                view.flash.assert_success_message(delete_success_msg.format(user.name))
+                # Delete operation wasn't blocked due to permissions so test for success
+                pass
+
+            view.flash.assert_success_message(delete_success_msg.format(user.name))
 
 
 @navigator.register(UserCollection, 'All')
@@ -967,6 +973,39 @@ class GroupCollection(BaseCollection):
         # To ensure that the group list is updated
         view.browser.refresh()
         return group
+
+    def delete(self, *groups):
+        """
+        Delete group(s) using the Access Control EVM Groups checklist
+        """
+        groups = list(groups)
+        delete_toolbar_txt = 'Delete selected Groups'
+        group_name_header = 'Name'
+        delete_success_msg = 'EVM Group "{}": Delete successful'
+        delete_blocked_msg = (
+            'EVM Group "{}": Error during delete: A read only group cannot be deleted.')
+
+        view = navigate_to(self, 'All')
+        for group in groups:
+            try:
+                find_row_kwargs = {group_name_header: group.description}
+                # This will refresh the page to find the item so you won't have multiple items
+                # selected per page
+                row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
+                row[0].check()
+                view.toolbar.configuration.item_select(delete_toolbar_txt, handle_alert=True)
+                # Check that deleting the group wasn't blocked
+                view.flash.assert_message(delete_blocked_msg.format(group.description))
+                # Check to see if this operation failed due to lack of permissions --OR--
+                # it's a read-only account
+                raise RBACOperationBlocked(view.flash.messages[0].text)
+            except NoSuchElementException:
+                break
+            except AssertionError:
+                # Delete operation wasn't blocked due to permissions so test for success
+                pass
+
+            view.flash.assert_success_message(delete_success_msg.format(group.description))
 
 
 @navigator.register(GroupCollection, 'All')
