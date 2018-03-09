@@ -310,6 +310,14 @@ class CustomReport(Updateable, Navigatable):
                 num_sec=300,
             )
 
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, "Details")
+            return True
+        except CandidateNotFound:
+            return False
+
 
 class CustomSavedReportDetailsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
