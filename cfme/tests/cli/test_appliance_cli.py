@@ -5,6 +5,53 @@ from cfme.utils import version
 from wait_for import wait_for
 
 
+tzs = [
+    ['Africa/Abidjan'],
+    ['America/Argentina/Buenos_Aires'],
+    ['Antarctica/Casey'],
+    ['Arctic/Longyearbyen'],
+    ['Asia/Aden'],
+    ['Atlantic/Azores'],
+    ['Australia/Adelaide'],
+    ['Europe/Amsterdam'],
+    ['Indian/Antananarivo'],
+    ['Pacific/Apia'],
+    ['UTC'],
+]
+
+
+@pytest.mark.uncollectif(lambda appliance: version.current_version() < '5.9')
+def test_appliance_console_cli_datetime(temp_appliance_preconfig_funcscope):
+    """Grab fresh appliance and set time and date through appliance_console_cli and check result"""
+    app = temp_appliance_preconfig_funcscope
+    app.ssh_client.run_command("appliance_console_cli --datetime 2020-10-20T09:59:00")
+
+    def date_changed():
+        return app.ssh_client.run_command("date +%F-%T | grep 2020-10-20-10:00").success
+    wait_for(date_changed)
+
+
+@pytest.mark.uncollectif(lambda appliance: version.current_version() < '5.9')
+@pytest.mark.parametrize('timezone', tzs, ids=[tz[0] for tz in tzs])
+def test_appliance_console_cli_set_timezone(timezone, temp_appliance_preconfig_modscope):
+    """Set and check timezones are set correctly through appliance conosle cli"""
+    app = temp_appliance_preconfig_modscope
+    app.ssh_client.run_command("appliance_console_cli --timezone {}".format(timezone))
+    app.appliance_console.timezone_check(timezone)
+
+
+def test_appliance_console_cli_db_maintenance_hourly(appliance_with_preset_time):
+    """Test database hourly re-indexing through appliance console"""
+    app = appliance_with_preset_time
+    app.ssh_client.run_command("appliance_console_cli --db-hourly-maintenance")
+
+    def maintenance_run():
+        return app.ssh_client.run_command(
+            "grep REINDEX /var/www/miq/vmdb/log/hourly_continuous_pg_maint_stdout.log").success
+
+    wait_for(maintenance_run, timeout=300)
+
+
 def test_appliance_console_cli_set_hostname(appliance):
     hostname = 'test.example.com'
     appliance.appliance_console_cli.set_hostname(hostname)
