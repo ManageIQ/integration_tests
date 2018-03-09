@@ -4,6 +4,7 @@ from widgetastic_patternfly import NoSuchElementException
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider, CloudInfraProvider
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm import VM, Template
 from cfme.common.provider import cleanup_vm
@@ -12,6 +13,7 @@ from cfme.common.vm_views import DriftAnalysis
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.host import Host
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.utils import ssh, safe_string, testgen
@@ -523,7 +525,11 @@ def test_ssa_packages(ssa_vm, soft_assert, appliance, ssa_profile):
         pytest.fail('Package {} was not found in details table after SSA run'.format(package_name))
 
 
-@pytest.mark.meta(blockers=[BZ(1528419, forced_streams=['5.8', '5.9'])])
+@pytest.mark.meta(blockers=
+    [BZ(1533590, forced_streams=['5.8', '5.9'],
+        unblock=lambda provider: not provider.one_of(EC2Provider)),
+    BZ(1553808, forced_streams=['5.8', '5.9'],
+        unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.long_running
 def test_ssa_files(appliance, ssa_vm, soft_assert):
     """Tests that instances can be scanned for specific file."""
