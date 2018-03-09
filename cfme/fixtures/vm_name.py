@@ -13,7 +13,11 @@ def vm_name(provider):
     yield vm_name
     try:
         logger.info('Cleaning up VM %s on provider %s', vm_name, provider.key)
-        provider.mgmt.delete_vm(vm_name)
+        scat_vm = "{}0001".format(vm_name)
+        if scat_vm in provider.mgmt.list_vm():
+            provider.mgmt.delete_vm("{}0001".format(vm_name))
+        else:
+            provider.mgmt.delete_vm(vm_name)
     except:
         # The mgmt_sys classes raise Exception :\
         logger.warning('Failed to clean up VM %s on provider %s', vm_name, provider.key)

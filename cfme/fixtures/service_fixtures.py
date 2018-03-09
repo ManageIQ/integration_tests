@@ -59,30 +59,31 @@ def create_catalog_item(provider, provisioning, vm_name, dialog, catalog, consol
         description="my catalog", display_in=True, catalog=catalog,
         dialog=dialog, catalog_name=catalog_name,
         provider=provider, prov_data=provisioning_data)
+    catalog_item.create()
     return catalog_item
 
 
-@pytest.fixture(scope="function")
-def order_catalog_item_in_ops_ui(appliance, provider, provisioning, vm_name, dialog, catalog,
-        console_template, request):
-    """
-        Fixture for SSUI tests.
-        Orders catalog item in OPS UI.
-    """
+@pytest.fixture
+def order_service(appliance, provider, provisioning, vm_name,
+                  dialog, catalog, console_template, request):
+    """ Orders service once the catalog item is created"""
     if hasattr(request, 'param'):
         catalog_item = create_catalog_item(provider, provisioning, vm_name, dialog, catalog,
-            console_template if 'console_test' in request.param else None)
+                                           console_template if 'console_test' in request.param else None)
     else:
         catalog_item = create_catalog_item(provider, provisioning, vm_name, dialog, catalog)
-    vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
-    request.addfinalizer(lambda: cleanup_vm("{}0001".format(vm_name), provider))
-    catalog_item.create()
-    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
+                                       catalog_item.name)
     service_catalogs.order()
-    logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
-    request_description = catalog_item.name
-    provision_request = appliance.collections.requests.instantiate(request_description,
-                                                                   partial_check=True)
-    provision_request.wait_for_request()
-    assert provision_request.is_finished()
     return catalog_item
+
+
+@pytest.fixture
+def provision_request(appliance, order_service):
+    """Checks if the service request is completed and provisioned"""
+    catalog_item = order_service
+    provision_request = appliance.collections.requests.instantiate(catalog_item.name,
+                                                                   partial_check=True)
+    provision_request.wait_for_request(method='ui')
+    return catalog_item, provision_request
+# TODO - remove request finally
