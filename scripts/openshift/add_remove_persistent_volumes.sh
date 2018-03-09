@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-#necessary external env variables: NFSHOST, NFSPATH, OSEUSER, OSEPASSWORD
+#necessary external env variables: NFSHOST, NFSPATH
 
 NFS_HOST=${NFSHOST}  #ex: '10.8.218.9'
 NFS_PATH=${NFSPATH}  #ex: "/exports/volumes/"
-ALIVEPVNUM=40
+ALIVEPVNUM=100
 
-oc login --username=${OSEUSER} --password=${OSEPASSWORD}
+oc login --username='system:admin'
 
 # removing old unused persistent volumes
 echo "looking for old unused persistent volumes"
@@ -16,7 +16,7 @@ do
 	do
 		PV_PATH=$(oc get --output=json pv/${pv}|\
 		          python -c "import sys, json; print json.load(sys.stdin)['spec']['nfs']['path']")
-		VOL_TO_DELETE=$(echo ${PV_PATH}|cut -d/ -f-4)
+		VOL_TO_DELETE=$(dirname ${PV_PATH})
 
         echo "removing unused pv ${pv}"
 		oc delete pv ${pv}
