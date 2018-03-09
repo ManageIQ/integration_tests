@@ -345,7 +345,7 @@ class NetworkRouterDetailsToolBar(View):
     """ Represents provider toolbar and its controls """
     configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
-    download = Button(title='Download')
+    download = Button(title='Download summary in PDF format')
 
 
 class NetworkRouterSideBar(View):

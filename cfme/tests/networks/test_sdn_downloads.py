@@ -1,6 +1,9 @@
 import pytest
 
 from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.exceptions import ManyEntitiesFound
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -8,7 +11,8 @@ from cfme.utils.blockers import BZ
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.meta(blockers=[BZ(1480577, forced_streams=["5.7", "5.8"])]),
-    pytest.mark.provider([AzureProvider], scope="module")
+    pytest.mark.provider([AzureProvider, EC2Provider, GCEProvider, OpenStackProvider],
+                         scope="module")
 ]
 FILETYPES = ["txt", "csv", "pdf"]
 extensions_mapping = {'txt': 'Text', 'csv': 'CSV', 'pdf': 'PDF'}
@@ -19,7 +23,8 @@ OBJECTCOLLECTIONS = [
     'network_ports',
     'network_security_groups',
     'network_subnets',
-    'network_routers'
+    'network_routers',
+
 ]
 
 
