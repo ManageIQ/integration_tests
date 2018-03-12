@@ -609,6 +609,13 @@ class Template(MetadataMixin):
 
     @property
     def possibly_bunk(self):
+        """This property gives an indication on a possibly bad status of a template.
+
+        It looks at the age of the template and the status to work it out.
+
+        If it returns True, it means there may be a problem with setting this template up.
+        If it returns False, it is most likely all right and no action is needed.
+        """
         if 'creation failed' in self.status:
             return True
         if 'Could not properly' in self.status:
