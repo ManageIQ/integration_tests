@@ -15,7 +15,22 @@ from widgetastic_manageiq import (Accordion, ManageIQTree, Calendar, SummaryTabl
                                   BaseNonInteractiveEntitiesView, ItemsToolBarViewSelector)
 
 
+class MyServiceToolbar(View):
+    """
+    Represents provider toolbar and its controls
+    """
+    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                                       '5.9': 'Refresh this page'}))
+    configuration = Dropdown(text='Configuration')
+    policy = Dropdown(text='Policy')
+    lifecycle = Dropdown(text='Lifecycle')
+    download = Dropdown(text='Download')
+    view_selector = View.nested(ItemsToolBarViewSelector)
+
+
 class MyServicesView(BaseLoggedInPage):
+    toolbar = View.nested(MyServiceToolbar)
+
     def in_myservices(self):
         return (
             self.logged_in_as_current_user and
@@ -25,33 +40,13 @@ class MyServicesView(BaseLoggedInPage):
     def is_displayed(self):
         return (
             self.in_myservices and
-            self.configuration.is_displayed and not
+            self.toolbar.configuration.is_displayed and not
             self.myservice.is_dimmed)
 
     @View.nested
     class myservice(Accordion):  # noqa
-        ACCORDION_NAME = "Services"
-
+        ACCORDION_NAME = 'Services'
         tree = ManageIQTree()
-
-    @View.nested
-    class toolbar(View):  # noqa
-        """
-         represents provider toolbar and its controls
-        """
-        configuration = Dropdown(text='Configuration')
-        policy = Dropdown(text='Policy')
-        lifecycle = Dropdown(text='Lifecycle')
-        download = Dropdown(text='Download')
-        view_selector = View.nested(ItemsToolBarViewSelector)
-
-    # TODO drop '_btn' suffix
-    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                       '5.9': 'Refresh this page'}))
-    configuration = Dropdown('Configuration')
-    policy_btn = Dropdown('Policy')
-    lifecycle_btn = Dropdown('Lifecycle')
-    download_choice = Dropdown('Download')
 
 
 class ServiceRetirementForm(MyServicesView):
@@ -76,22 +71,19 @@ class SetOwnershipForm(MyServicesView):
     select_group = BootstrapSelect('group_name')
 
 
-class MyServiceDetailsToolbar(View):
+class MyServiceDetailsToolbar(MyServiceToolbar):
     """View of toolbar widgets to nest"""
-    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                       '5.9': 'Refresh this page'}))
-
     @ParametrizedView.nested
     class custom_button(ParametrizedView):  # noqa
-        PARAMETERS = ("button_group", )
-        _dropdown = Dropdown(text=Parameter("button_group"))
+        PARAMETERS = ('button_group', )
+        _dropdown = Dropdown(text=Parameter('button_group'))
 
         def item_select(self, button, handle_alert=None):
             self._dropdown.item_select(button, handle_alert=handle_alert)
 
 
 class MyServiceDetailView(MyServicesView):
-    title = Text("#explorer_title_text")
+    title = Text('#explorer_title_text')
     toolbar = View.nested(MyServiceDetailsToolbar)
     entities = View.nested(BaseNonInteractiveEntitiesView)
 
@@ -130,7 +122,7 @@ class MyServiceDetailView(MyServicesView):
 
 
 class EditMyServiceView(ServiceEditForm):
-    title = Text("#explorer_title_text")
+    title = Text('#explorer_title_text')
 
     save_button = Button('Save')
     reset_button = Button('Reset')
@@ -146,7 +138,7 @@ class EditMyServiceView(ServiceEditForm):
 
 
 class SetOwnershipView(SetOwnershipForm):
-    title = Text("#explorer_title_text")
+    title = Text('#explorer_title_text')
 
     save_button = Button('Save')
 
@@ -159,7 +151,7 @@ class SetOwnershipView(SetOwnershipForm):
 
 
 class ServiceRetirementView(ServiceRetirementForm):
-    title = Text("#explorer_title_text")
+    title = Text('#explorer_title_text')
 
     save_button = Button('Save')
 
@@ -173,7 +165,7 @@ class ServiceRetirementView(ServiceRetirementForm):
 
 
 class ReconfigureServiceView(SetOwnershipForm):
-    title = Text("#explorer_title_text")
+    title = Text('#explorer_title_text')
 
     submit_button = Button('Submit')
 
@@ -198,7 +190,7 @@ class ServiceVMDetailsView(VMDetailsEntities):
 @MiqImplementationContext.external_for(MyService.retire, ViaUI)
 def retire(self):
     view = navigate_to(self, 'Details')
-    view.lifecycle_btn.item_select("Retire this Service", handle_alert=True)
+    view.toolbar.lifecycle.item_select('Retire this Service', handle_alert=True)
     view.flash.assert_no_error()
     if self.appliance.version < '5.8':
         view.flash.assert_success_message(
@@ -206,7 +198,7 @@ def retire(self):
                 current_appliance.product_name))
     # wait for service to retire
     wait_for(
-        lambda: view.details.lifecycle.get_text_of("Retirement State") == 'Retired',
+        lambda: view.details.lifecycle.get_text_of('Retirement State') == 'Retired',
         fail_func=view.toolbar.reload.click,
         num_sec=10 * 60, delay=3,
         message='Service Retirement wait')
@@ -219,7 +211,7 @@ def retire_on_date(self, retirement_date):
     view.save_button.click()
     view = navigate_to(self, 'Details')
     wait_for(
-        lambda: view.details.lifecycle.get_text_of("Retirement State") == 'Retired',
+        lambda: view.details.lifecycle.get_text_of('Retirement State') == 'Retired',
         fail_func=view.toolbar.reload.click,
         num_sec=10 * 60, delay=3,
         message='Service Retirement wait')
@@ -253,11 +245,11 @@ def exists(self):
 @MiqImplementationContext.external_for(MyService.delete, ViaUI)
 def delete(self):
     view = navigate_to(self, 'Details')
-    if self.appliance.version < "5.9":
+    if self.appliance.version < '5.9':
         remove_str = 'Remove Service'
     else:
         remove_str = 'Remove Service from Inventory'
-    view.configuration.item_select(remove_str, handle_alert=True)
+    view.toolbar.configuration.item_select(remove_str, handle_alert=True)
     view = self.create_view(MyServicesView)
     view.flash.assert_no_error()
     assert view.is_displayed
@@ -299,7 +291,7 @@ def check_vm_add(self, add_vm_name):
 @MiqImplementationContext.external_for(MyService.download_file, ViaUI)
 def download_file(self, extension):
     view = navigate_to(self, 'All')
-    view.download_choice.item_select("Download as {}".format(extension))
+    view.toolbar.download.item_select('Download as {}'.format(extension))
     view.flash.assert_no_error()
 
 
@@ -329,7 +321,7 @@ class MyServiceDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        path_start = "Active Services" if self.appliance.version > '5.8' else "All Services"
+        path_start = 'Active Services' if self.appliance.version > '5.8' else 'All Services'
         self.prerequisite_view.myservice.tree.click_path(path_start, self.obj.name)
 
 
@@ -340,7 +332,7 @@ class MyServiceEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.configuration.item_select('Edit this Service')
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this Service')
 
 
 @navigator.register(MyService, 'SetOwnership')
@@ -350,7 +342,7 @@ class MyServiceSetOwnership(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.configuration.item_select('Set Ownership')
+        self.prerequisite_view.toolbar.configuration.item_select('Set Ownership')
 
 
 @navigator.register(MyService, 'EditTagsFromDetails')
@@ -383,7 +375,7 @@ class MyServiceReconfigure(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.configuration.item_select('Reconfigure this Service')
+        self.prerequisite_view.toolbar.configuration.item_select('Reconfigure this Service')
 
 
 @navigator.register(MyService, 'VMDetails')

@@ -2,7 +2,6 @@
 """
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_patternfly import Dropdown, Button, View
-from widgetastic_manageiq import BaseEntitiesView
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
@@ -10,7 +9,8 @@ from cfme.exceptions import FlavorNotFound, ItemNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
-    ItemsToolBarViewSelector, SummaryTable, Text, Table, Accordion, ManageIQTree, BreadCrumb)
+    BaseEntitiesView, ItemsToolBarViewSelector, SummaryTable, Text, Table, Accordion, ManageIQTree,
+    BreadCrumb, PaginationPane)
 
 
 class FlavorView(BaseLoggedInPage):
@@ -57,14 +57,15 @@ class FlavorDetailsEntities(View):
 
 
 class FlavorAllView(FlavorView):
+    toolbar = FlavorToolBar()
+    paginator = PaginationPane()
+    including_entities = View.include(FlavorEntities, use_parent=True)
+
     @property
     def is_displayed(self):
         return (
             self.in_availability_zones and
             self.entities.title.text == 'Flavors')
-
-    toolbar = FlavorToolBar()
-    including_entities = View.include(FlavorEntities, use_parent=True)
 
 
 class ProviderFlavorAllView(FlavorAllView):

@@ -591,6 +591,11 @@ class AnsibleTower(ConfigManager):
         self.credentials = credentials
         self.key = key or name
 
+    @property
+    def ui_name(self):
+        """Return the name used in the UI"""
+        return '{} Automation Manager'.format(self.name)
+
 
 @navigator.register(ConfigManager, 'All')
 class MgrAll(CFMENavigateStep):

@@ -27,7 +27,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, TimelinesView,
-                                  ParametrizedSummaryTable)
+                                  ParametrizedSummaryTable, SummaryFormItem)
 from . import Server, Region, Zone, ZoneCollection
 
 
@@ -337,48 +337,6 @@ class Configuration(CFMENavigateStep):
             self.prerequisite_view.navigation.select('Settings', 'Configuration')
 
 
-class MySettingsView(BaseLoggedInPage):
-
-    @View.nested
-    class tabs(View):  # noqa
-
-        @View.nested
-        class visual_all(Tab):  # noqa
-            TAB_NAME = "Visual"
-
-        @View.nested
-        class default_views(Tab):  # noqa
-            TAB_NAME = "Default Views"
-
-        @View.nested
-        class default_filter(Tab):  # noqa
-            TAB_NAME = "Default Filters"
-
-        @View.nested
-        class time_profile(Tab):  # noqa
-            TAB_NAME = "Time Profiles"
-
-    @property
-    def is_displayed(self):
-        return (
-            self.tabs.visual_all.is_displayed and
-            self.tabs.default_views.is_displayed and
-            self.tabs.default_filter.is_displayed and
-            self.time_profile.is_displayed)
-
-
-@navigator.register(Server)
-class MySettings(CFMENavigateStep):
-    VIEW = MySettingsView
-    prerequisite = NavigateToSibling('LoggedIn')
-
-    def step(self):
-        if self.obj.appliance.version > '5.7':
-            self.prerequisite_view.settings.select_item('My Settings')
-        else:
-            self.prerequisite_view.navigation.select('Settings', 'My Settings')
-
-
 @navigator.register(Server)
 class About(CFMENavigateStep):
     VIEW = AboutView
@@ -645,6 +603,7 @@ class ServerDiagnosticsView(ConfigurationView):
     @View.nested
     class summary(Tab):  # noqa
         TAB_NAME = "Summary"
+        started_on = SummaryFormItem('EVM', 'Started On')
 
     @View.nested
     class workers(Tab):  # noqa

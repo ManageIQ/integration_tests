@@ -50,7 +50,7 @@ data_sets = (
 def test_start_page(appliance, soft_assert):
 
     for data_set in data_sets:
-        Visual().login_page = data_set.page_name
+        appliance.user.my_settings.visual.login_page = data_set.page_name
         login_page = navigate_to(appliance.server, 'LoginScreen')
         login_page.login_admin()
         view = appliance.browser.create_view(data_set.obj_view)

@@ -1,7 +1,6 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.configure.settings import DefaultView
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.catalogs.catalog_item import CatalogItem
@@ -24,13 +23,13 @@ def pytest_generate_tests(metafunc):
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
 
-        if not args["config_manager_obj"].yaml_data['provisioning']:
+        if not args['config_manager_obj'].yaml_data['provisioning']:
             continue
 
         new_idlist.append(idlist[i])
         new_argvalues.append(argvalues[i])
 
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope='module')
 
 
 @pytest.yield_fixture
@@ -44,7 +43,7 @@ def config_manager(config_manager_obj):
     config_manager_obj.delete()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope='function')
 def catalog_item(request, config_manager, dialog, catalog):
     config_manager_obj = config_manager
     provider_name = config_manager_obj.yaml_data.get('name')
@@ -65,7 +64,7 @@ def catalog_item(request, config_manager, dialog, catalog):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.ignore_stream("upstream")
+@pytest.mark.ignore_stream('upstream')
 def test_order_tower_catalog_item(appliance, catalog_item, request):
     """Tests order catalog item
     Metadata:
@@ -78,13 +77,14 @@ def test_order_tower_catalog_item(appliance, catalog_item, request):
     cells = {'Description': catalog_item.name}
     order_request = appliance.collections.requests.instantiate(cells=cells, partial_check=True)
     order_request.wait_for_request(method='ui')
-    msg = "Request failed with the message {}".format(order_request.row.last_message.text)
+    msg = 'Request failed with the message {}'.format(order_request.row.last_message.text)
     assert order_request.is_succeeded(method='ui'), msg
-    DefaultView.set_default_view("Configuration Management Providers", "List View")
+    appliance.user.my_settings.default_views.set_default_view('Configuration Management Providers',
+                                                              'List View')
 
 
 @pytest.mark.tier(2)
-@pytest.mark.ignore_stream("upstream")
+@pytest.mark.ignore_stream('upstream')
 def test_retire_ansible_service(appliance, catalog_item, request):
     """Tests order catalog item
     Metadata:

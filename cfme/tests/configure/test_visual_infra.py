@@ -5,7 +5,6 @@ import six
 from copy import copy
 
 from cfme import test_requirements
-from cfme.configure.settings import Visual
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.infrastructure import virtual_machines as vms  # NOQA
 from cfme.infrastructure.datastore import DatastoreCollection
@@ -14,15 +13,10 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
-              pytest.mark.usefixtures("infra_provider")]
+              pytest.mark.usefixtures('infra_provider')]
 
 # todo: infrastructure hosts, pools, stores, cluster are removed due to changing
 # navigation to navmazing. all items have to be put back once navigation change is fully done
-
-
-@pytest.fixture(scope="module")
-def visual(appliance):
-    return Visual(appliance=appliance)
 
 
 @pytest.fixture(scope='module', params=['datastores', 'hosts', InfraProvider, vms.Vm])
@@ -56,36 +50,36 @@ LANDING_PAGES = [
 ]
 
 
-@pytest.yield_fixture(scope="module")
-def set_grid(visual):
-    gridlimit = visual.grid_view_limit
+@pytest.yield_fixture(scope='module')
+def set_grid(appliance):
+    gridlimit = appliance.user.my_settings.visual.grid_view_limit
     yield
-    visual.grid_view_limit = gridlimit
+    appliance.user.my_settings.visual.grid_view_limit = gridlimit
 
 
-@pytest.yield_fixture(scope="module")
-def set_tile(visual):
-    tilelimit = visual.tile_view_limit
+@pytest.yield_fixture(scope='module')
+def set_tile(appliance):
+    tilelimit = appliance.user.my_settings.visual.tile_view_limit
     yield
-    visual.tile_view_limit = tilelimit
+    appliance.user.my_settings.visual.tile_view_limit = tilelimit
 
 
-@pytest.yield_fixture(scope="module")
-def set_list(visual):
-    listlimit = visual.list_view_limit
+@pytest.yield_fixture(scope='module')
+def set_list(appliance):
+    listlimit = appliance.user.my_settings.visual.list_view_limit
     yield
-    visual.list_view_limit = listlimit
+    appliance.user.my_settings.visual.list_view_limit = listlimit
 
 
-@pytest.yield_fixture(scope="module")
-def set_report(visual):
-    reportlimit = visual.report_view_limit
+@pytest.yield_fixture(scope='module')
+def set_report(appliance):
+    reportlimit = appliance.user.my_settings.visual.report_view_limit
     yield
-    visual.report_view_limit = reportlimit
+    appliance.user.my_settings.visual.report_view_limit = reportlimit
 
 
-def set_default_page(visual):
-    visual.set_login_page = "Cloud Intelligence / Dashboard"
+def set_default_page(appliance):
+    appliance.user.my_settings.visual.set_login_page = 'Cloud Intelligence / Dashboard'
 
 
 def go_to_grid(page):
@@ -93,43 +87,43 @@ def go_to_grid(page):
     view.toolbar.view_selector.select('Grid View')
 
 
-@pytest.yield_fixture(scope="module")
-def set_infra_provider_quad(visual):
-    visual.infra_provider_quad = False
+@pytest.yield_fixture(scope='module')
+def set_infra_provider_quad(appliance):
+    appliance.user.my_settings.visual.infra_provider_quad = False
     yield
-    visual.infra_provider_quad = True
+    appliance.user.my_settings.visual.infra_provider_quad = True
 
 
-@pytest.yield_fixture(scope="module")
-def set_host_quad(visual):
-    visual.host_quad = False
+@pytest.yield_fixture(scope='module')
+def set_host_quad(appliance):
+    appliance.user.my_settings.visual.host_quad = False
     yield
-    visual.host_quad = True
+    appliance.user.my_settings.visual.host_quad = True
 
 
-@pytest.yield_fixture(scope="module")
-def set_datastore_quad(visual):
-    visual.datastore_quad = False
+@pytest.yield_fixture(scope='module')
+def set_datastore_quad(appliance):
+    appliance.user.my_settings.visual.datastore_quad = False
     yield
-    visual.datastore_quad = True
+    appliance.user.my_settings.visual.datastore_quad = True
 
 
-@pytest.yield_fixture(scope="module")
-def set_vm_quad(visual):
-    visual.vm_quad = False
+@pytest.yield_fixture(scope='module')
+def set_vm_quad(appliance):
+    appliance.user.my_settings.visual.vm_quad = False
     yield
-    visual.vm_quad = True
+    appliance.user.my_settings.visual.vm_quad = True
 
 
-@pytest.yield_fixture(scope="module")
-def set_template_quad(visual):
-    visual.template_quad = False
+@pytest.yield_fixture(scope='module')
+def set_template_quad(appliance):
+    appliance.user.my_settings.visual.template_quad = False
     yield
-    visual.template_quad = True
+    appliance.user.my_settings.visual.template_quad = True
 
 
 @pytest.mark.meta(blockers=[1267148])
-def test_infra_grid_page_per_item(visual, request, page, value, set_grid, appliance):
+def test_infra_grid_page_per_item(appliance, request, page, value, set_grid):
     """ Tests grid items per page
 
     Metadata:
@@ -137,21 +131,21 @@ def test_infra_grid_page_per_item(visual, request, page, value, set_grid, applia
     """
     if isinstance(page, six.string_types):
         page = getattr(appliance.collections, page)
-    if visual.grid_view_limit != value:
-        visual.grid_view_limit = int(value)
+    if appliance.user.my_settings.visual.grid_view_limit != value:
+        appliance.user.my_settings.visual.grid_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
-    limit = visual.grid_view_limit
+    limit = appliance.user.my_settings.visual.grid_view_limit
     view = navigate_to(page, 'All', use_resetter=False)
-    view.toolbar.view_selector.select("Grid View")
+    view.toolbar.view_selector.select('Grid View')
     max_item = view.entities.paginator.max_item
     item_amt = view.entities.paginator.items_amount
     if int(item_amt) >= int(limit):
-        assert int(max_item) == int(limit), "Gridview Failed for page {}!".format(page)
+        assert int(max_item) == int(limit), 'Gridview Failed for page {}!'.format(page)
     assert int(max_item) <= int(item_amt)
 
 
 @pytest.mark.meta(blockers=[1267148])
-def test_infra_tile_page_per_item(visual, request, page, value, set_tile, appliance):
+def test_infra_tile_page_per_item(appliance, request, page, value, set_tile):
     """ Tests tile items per page
 
     Metadata:
@@ -159,21 +153,21 @@ def test_infra_tile_page_per_item(visual, request, page, value, set_tile, applia
     """
     if isinstance(page, six.string_types):
         page = getattr(appliance.collections, page)
-    if visual.tile_view_limit != value:
-        visual.tile_view_limit = int(value)
+    if appliance.user.my_settings.visual.tile_view_limit != value:
+        appliance.user.my_settings.visual.tile_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
-    limit = visual.tile_view_limit
+    limit = appliance.user.my_settings.visual.tile_view_limit
     view = navigate_to(page, 'All', use_resetter=False)
     view.toolbar.view_selector.select('Tile View')
     max_item = view.entities.paginator.max_item
     item_amt = view.entities.paginator.items_amount
     if int(item_amt) >= int(limit):
-        assert int(max_item) == int(limit), "Tileview Failed for page {}!".format(page)
+        assert int(max_item) == int(limit), 'Tileview Failed for page {}!'.format(page)
     assert int(max_item) <= int(item_amt)
 
 
 @pytest.mark.meta(blockers=[1267148])
-def test_infra_list_page_per_item(visual, request, page, value, set_list, appliance):
+def test_infra_list_page_per_item(appliance, request, page, value, set_list):
     """ Tests list items per page
 
     Metadata:
@@ -181,35 +175,35 @@ def test_infra_list_page_per_item(visual, request, page, value, set_list, applia
     """
     if isinstance(page, six.string_types):
         page = getattr(appliance.collections, page)
-    if visual.list_view_limit != value:
-        visual.list_view_limit = int(value)
+    if appliance.user.my_settings.visual.list_view_limit != value:
+        appliance.user.my_settings.visual.list_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
-    limit = visual.list_view_limit
+    limit = appliance.user.my_settings.visual.list_view_limit
     view = navigate_to(page, 'All', use_resetter=False)
     view.toolbar.view_selector.select('List View')
     max_item = view.entities.paginator.max_item
     item_amt = view.entities.paginator.items_amount
     if int(item_amt) >= int(limit):
-        assert int(max_item) == int(limit), "Listview Failed for page {}!".format(page)
+        assert int(max_item) == int(limit), 'Listview Failed for page {}!'.format(page)
     assert int(max_item) <= int(item_amt)
 
 
 @pytest.mark.meta(blockers=[1267148, 1273529])
-def test_infra_report_page_per_item(visual, value, set_report):
+def test_infra_report_page_per_item(appliance, value, set_report):
     """ Tests report items per page
 
     Metadata:
         test_flag: visuals
     """
-    visual.report_view_limit = value
-    path = ["Configuration Management", "Virtual Machines", "VMs Snapshot Summary"]
-    limit = visual.report_view_limit
+    appliance.user.my_settings.visual.report_view_limit = value
+    path = ['Configuration Management', 'Virtual Machines', 'VMs Snapshot Summary']
+    limit = appliance.user.my_settings.visual.report_view_limit
     report = CannedSavedReport.new(path)
     view = navigate_to(report, 'Details')
     max_item = view.paginator.max_item
     item_amt = view.paginator.items_amount
     if int(item_amt) >= int(limit):
-        assert int(max_item) == int(limit), "Reportview Failed!"
+        assert int(max_item) == int(limit), 'Reportview Failed!'
     assert int(max_item) <= int(item_amt)
 
 
@@ -223,8 +217,8 @@ def test_infra_start_page(visual, request, appliance, start_page):
         test_flag: visuals
     """
     request.addfinalizer(set_default_page)
-    if visual.login_page != start_page:
-        visual.login_page = start_page
+    if appliance.user.my_settings.visual.login_page != start_page:
+        appliance.user.my_settings.visual.login_page = start_page
     appliance.server.logout()
     appliance.server.login_admin()
     steps = map(lambda x: x.strip(), start_page.split('/'))
@@ -242,7 +236,7 @@ def test_infraprovider_noquads(request, set_infra_provider_quad):
         Visual Tab under "Show Infrastructure Provider Quadrants" option works properly.
     """
     view = navigate_to(InfraProvider, 'All')
-    view.toolbar.view_selector.select("Grid View")
+    view.toolbar.view_selector.select('Grid View')
     # Here data property will return an empty dict when the Quadrants option is deactivated.
     assert not view.entities.get_first_entity().data
 
@@ -254,7 +248,7 @@ def test_host_noquads(appliance, request, set_host_quad):
     """
     host_collection = appliance.collections.hosts
     view = navigate_to(host_collection, 'All')
-    view.toolbar.view_selector.select("Grid View")
+    view.toolbar.view_selector.select('Grid View')
     # Here data property will return an empty dict when the Quadrants option is deactivated.
     assert not view.entities.get_first_entity().data
 
@@ -266,7 +260,7 @@ def test_datastore_noquads(request, set_datastore_quad, appliance):
     """
     dc = DatastoreCollection(appliance)
     view = navigate_to(dc, 'All')
-    view.toolbar.view_selector.select("Grid View")
+    view.toolbar.view_selector.select('Grid View')
     # Here data property will return an empty dict when the Quadrants option is deactivated.
     assert not view.entities.get_first_entity().data
 
@@ -277,7 +271,7 @@ def test_vm_noquads(request, set_vm_quad):
         Visual Tab under "Show VM Quadrants" option works properly.
     """
     view = navigate_to(vms.Vm, 'VMsOnly')
-    view.toolbar.view_selector.select("Grid View")
+    view.toolbar.view_selector.select('Grid View')
     # Here data property will return an empty dict when the Quadrants option is deactivated.
     assert not view.entities.get_first_entity().data
 
@@ -289,6 +283,6 @@ def test_template_noquads(request, set_template_quad):
         Visual Tab under "Show Template Quadrants" option works properly.
     """
     view = navigate_to(vms.Template, 'TemplatesOnly')
-    view.toolbar.view_selector.select("Grid View")
+    view.toolbar.view_selector.select('Grid View')
     # Here data property will return an empty dict when the Quadrants option is deactivated.
     assert not view.entities.get_first_entity().data

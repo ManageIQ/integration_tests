@@ -12,18 +12,17 @@ from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.conf import credentials
 from cfme.utils.datafile import load_data_file
-from cfme.utils.log import logger
 from cfme.utils.path import orchestration_path
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.ignore_stream("upstream"),
+    pytest.mark.meta(server_roles='+automate'),
+    pytest.mark.ignore_stream('upstream'),
     test_requirements.stack,
     pytest.mark.tier(2),
     pytest.mark.usefixtures("setup_provider_modscope"),
     pytest.mark.provider([CloudProvider],
                          required_fields=[['provisioning', 'stack_provisioning']],
-                         scope="module"),
+                         scope='module'),
 ]
 
 
@@ -32,7 +31,7 @@ def stack_data(appliance, provider, provisioning):
     random_base = fauxfactory.gen_alphanumeric()
     stackname = 'test{}'.format(random_base)
     vm_name = 'test-{}'.format(random_base)
-    stack_timeout = "20"
+    stack_timeout = '20'
     if provider.one_of(AzureProvider):
         try:
             template = provider.data.templates.small_template
@@ -192,7 +191,7 @@ def test_remove_template_provisioning(appliance, template, service_catalogs, req
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(lambda: _cleanup(appliance, provision_request))
     assert (provision_request.row.last_message.text == 'Service_Template_Provisioning failed' or
-            provision_request.row.status.text == "Error")
+            provision_request.row.status.text == 'Error')
 
 
 def test_retire_stack(appliance, provider, service_catalogs, stack, request):

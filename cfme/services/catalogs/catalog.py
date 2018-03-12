@@ -99,7 +99,6 @@ class Catalog(Updateable, Pretty, Navigatable, WidgetasticTaggable):
         })
         view.add_button.click()
         view = self.create_view(CatalogsView)
-        view.flash.assert_success_message('Catalog "{}" was saved'.format(self.name))
         assert view.is_displayed
         view.flash.assert_no_error()
 

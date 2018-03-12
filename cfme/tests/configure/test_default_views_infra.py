@@ -2,7 +2,6 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.configure.settings import DefaultView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.services.catalogs.catalog_item import CatalogItem
@@ -26,18 +25,20 @@ gtl_params = {
     'My Services': MyService,
     'Catalog Items': CatalogItem,
     'VMs & Instances': VmsInstances,
-    'Templates & Images': TemplatesImages}
+    'Templates & Images': TemplatesImages
+}
 
 
-def set_and_test_default_view(group_name, view, page):
-    old_default = DefaultView.get_default_view(group_name)
-    DefaultView.set_default_view(group_name, view)
+def set_and_test_default_view(appliance, group_name, view, page):
+    default_views = appliance.user.my_settings.default_views
+    old_default = default_views.get_default_view(group_name)
+    default_views.set_default_view(group_name, view)
     dest = 'All'
     if group_name == 'VMs':
         dest = 'VMsOnly'
     selected_view = navigate_to(page, dest, use_resetter=False).toolbar.view_selector.selected
-    assert view == selected_view, "{} view setting failed".format(view)
-    DefaultView.set_default_view(group_name, old_default)
+    assert view == selected_view, '{} view setting failed'.format(view)
+    default_views.set_default_view(group_name, old_default)
 
 
 def check_vm_visibility(check=False):
@@ -61,54 +62,61 @@ def check_vm_visibility(check=False):
 # BZ 1283118 written against 5.5 has a mix of what default views do and don't work on different
 # pages in different releases
 
-
-@pytest.mark.parametrize('key', gtl_params, scope="module")
-def test_infra_tile_defaultview(key):
-    set_and_test_default_view(key, 'Tile View', gtl_params[key])
-
-
-@pytest.mark.parametrize('key', gtl_params, scope="module")
-def test_infra_list_defaultview(key):
-    set_and_test_default_view(key, 'List View', gtl_params[key])
+def _get_page(page, appliance):
+    """This is a bit of a hack, but I currently don't see a way around it"""
+    if page in [TemplatesImages, VmsInstances]:
+        return page(appliance)
+    return page
 
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
-def test_infra_grid_defaultview(key):
-    set_and_test_default_view(key, 'Grid View', gtl_params[key])
+def test_infra_tile_defaultview(appliance, key):
+    set_and_test_default_view(appliance, key, 'Tile View', _get_page(gtl_params[key], appliance))
 
 
-def set_and_test_view(group_name, view, selector_type='views_selector'):
-    old_default = DefaultView.get_default_view(group_name)
-    DefaultView.set_default_view(group_name, view)
+@pytest.mark.parametrize('key', gtl_params, scope="module")
+def test_infra_list_defaultview(appliance, key):
+    set_and_test_default_view(appliance, key, 'List View', _get_page(gtl_params[key], appliance))
+
+
+@pytest.mark.parametrize('key', gtl_params, scope="module")
+def test_infra_grid_defaultview(appliance, key):
+    set_and_test_default_view(appliance, key, 'Grid View', _get_page(gtl_params[key], appliance))
+
+
+def set_and_test_compare_view(appliance, group_name, expected_view, selector_type='views_selector'):
+    default_views = appliance.user.my_settings.default_views
+    old_default = default_views.get_default_view(group_name)
+    default_views.set_default_view(group_name, expected_view)
     vm_view = navigate_to(Vm, 'All')
     [e.check() for e in vm_view.entities.get_all()[:2]]
     vm_view.toolbar.configuration.item_select('Compare Selected items')
     selected_view = getattr(vm_view.actions, selector_type).selected
-    assert view == selected_view, "{} setting failed".format(view)
-    DefaultView.set_default_view(group_name, old_default)
+    assert expected_view == selected_view, '{} setting failed'.format(expected_view)
+    default_views.set_default_view(group_name, old_default)
 
 
-def test_infra_expanded_view():
-    set_and_test_view('Compare', 'Expanded View')
+def test_infra_expanded_view(appliance):
+    set_and_test_compare_view(appliance, 'Compare', 'Expanded View')
 
 
-def test_infra_compressed_view():
-    set_and_test_view('Compare', 'Compressed View')
+def test_infra_compressed_view(appliance):
+    set_and_test_compare_view(appliance, 'Compare', 'Compressed View')
 
 
-def test_infra_details_mode():
-    set_and_test_view('Compare Mode', 'Details Mode', 'modes_selector')
+def test_infra_details_mode(appliance):
+    set_and_test_compare_view(appliance, 'Compare Mode', 'Details Mode', 'modes_selector')
 
 
-def test_infra_exists_mode():
-    set_and_test_view('Compare Mode', 'Exists Mode', 'modes_selector')
+def test_infra_exists_mode(appliance):
+    set_and_test_compare_view(appliance, 'Compare Mode', 'Exists Mode', 'modes_selector')
 
 
-def test_vm_visibility_off():
-    DefaultView.set_default_view_switch_off()
+def test_vm_visibility_off(appliance):
+    appliance.user.my_settings.default_views.set_default_view_switch_off()
     assert not check_vm_visibility()
 
 
-def test_vm_visibility_on():
-    DefaultView.set_default_view_switch_on()
+def test_vm_visibility_on(appliance):
+    appliance.user.my_settings.default_views.set_default_view_switch_on()
     assert check_vm_visibility(True)

@@ -2,21 +2,19 @@ import attr
 import re
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
-from widgetastic_manageiq import Table, BootstrapSelect, BreadCrumb, Text, ViewButtonGroup
 from widgetastic_patternfly import (
-    BootstrapSwitch, Input, Button, CheckableBootstrapTreeview as CbTree, Dropdown)
+    BootstrapSwitch, Button, CheckableBootstrapTreeview, Dropdown, Input, Tab)
 
 from cfme.base import BaseEntity, BaseCollection
-from cfme.base.ui import MySettingsView
 from cfme.base.login import BaseLoggedInPage
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from widgetastic_manageiq import Table, BootstrapSelect, BreadCrumb, Text, ViewButtonGroup
 
 
 class TimeProfileForm(View):
@@ -37,19 +35,10 @@ class TimeProfileEntities(View):
 
 class TimeProfileView(BaseLoggedInPage):
     entities = View.nested(TimeProfileEntities)
-    mysetting = View.nested(MySettingsView)
     configuration = Dropdown('Configuration')
 
 
-class TimeProfileAllView(TimeProfileView):
-
-    @property
-    def is_displayed(self):
-        return self.mysetting.tabs.time_profile.is_active()
-
-
 class TimeProfileAddView(TimeProfileView):
-
     @View.nested
     class form(TimeProfileForm):    # noqa
         add = Button(VersionPick({Version.lowest(): 'Save', '5.9': 'Add'}))
@@ -60,7 +49,6 @@ class TimeProfileAddView(TimeProfileView):
 
 
 class TimeProfileEditView(TimeProfileView):
-
     @View.nested
     class form(TimeProfileForm):    # noqa
         reset = Button('Reset')
@@ -184,273 +172,374 @@ class TimeProfileCollection(BaseCollection):
         view.flash.assert_no_error()
 
 
-@navigator.register(TimeProfileCollection, 'All')
-class TimeProfileCollectionAll(CFMENavigateStep):
-    VIEW = TimeProfileAllView
-    prerequisite = NavigateToAttribute('appliance.server', 'MySettings')
+class VisualForm(View):
 
-    def step(self):
-        self.view.mysetting.tabs.time_profile.select()
+    @View.nested
+    class grid_tile_icons(View):    # noqa
+        infra_provider_quad = BootstrapSwitch('quadicons_ems')
+        cloud_provider_quad = BootstrapSwitch('quadicons_ems_cloud')
+        host_quad = BootstrapSwitch('quadicons_host')
+        datastore_quad = BootstrapSwitch('quadicons_storage')
+        vm_quad = BootstrapSwitch('quadicons_vm')
+        template_quad = BootstrapSwitch('quadicons_miq_template')
+        long_text = BootstrapSelect('quad_truncate')
 
+    @View.nested
+    class start_page(View):    # noqa
+        show_at_login = BootstrapSelect('start_page')
 
-@navigator.register(TimeProfileCollection, 'Add')
-class TimeProfileAdd(CFMENavigateStep):
-    VIEW = TimeProfileAddView
-    prerequisite = NavigateToSibling('All')
+    @View.nested
+    class default_items_per_page(View):  # noqa
+        grid_view = BootstrapSelect('perpage_grid')
+        tile_view = BootstrapSelect('perpage_tile')
+        list_view = BootstrapSelect('perpage_list')
+        reports = BootstrapSelect('perpage_reports')
 
-    def step(self):
-        self.view.configuration.item_select('Add a new Time Profile')
+    @View.nested
+    class topology_default_items(View):     # noqa
+        containers = BootstrapSelect('topology_containers_max_items')
 
-    def am_i_here(self):
-        return False
+    @View.nested
+    class display_settings(View):   # noqa
+        chart_theme = BootstrapSelect('display_reporttheme')
+        time_zone = BootstrapSelect('display_timezone')
+        locale = BootstrapSelect('display_locale')
 
-
-@navigator.register(TimeProfile, 'Edit')
-class TimeProfileEdit(CFMENavigateStep):
-    VIEW = TimeProfileEditView
-    prerequisite = NavigateToAttribute('parent', 'All')
-
-    def step(self):
-        self.view.entities.table.row(Description=self.obj.description)[0].check()
-        self.view.configuration.item_select('Edit selected Time Profile')
-
-    def am_i_here(self):
-        return False
-
-
-@navigator.register(TimeProfile, 'Copy')
-class TimeProfileCopy(CFMENavigateStep):
-    VIEW = TimeProfileAddView
-    prerequisite = NavigateToAttribute('parent', 'All')
-
-    def step(self):
-        self.view.entities.table.row(Description=self.obj.description)[0].check()
-        self.view.configuration.item_select('Copy selected Time Profile')
+    save = Button('Save')
+    reset = Button('Reset')
 
 
-class Visual(Updateable, Navigatable):
+class DefaultViewsForm(View):
+    @View.nested
+    class clouds(View):                                                                 # noqa
+        flavors = ViewButtonGroup('Clouds', 'Flavors')
+        instances = ViewButtonGroup('Clouds', 'Instances')
+        availability_zones = ViewButtonGroup('Clouds', 'Availability Zones')
+        images = ViewButtonGroup('Clouds', 'Images')
+        providers = ViewButtonGroup('Clouds', 'Cloud Providers')
+        stacks = ViewButtonGroup('Clouds', 'Stacks')
+
+    @View.nested
+    class general(View):                                                                # noqa
+        compare = ViewButtonGroup('General', 'Compare')
+        compare_mode = ViewButtonGroup('General', 'Compare Mode')
+
+    @View.nested
+    class infrastructure(View):                                                         # noqa
+        infrastructure_providers = ViewButtonGroup('Infrastructure', 'Infrastructure Providers')
+        configuration_management_providers = ViewButtonGroup('Infrastructure',
+                                                             'Configuration Management Providers')
+        vms = ViewButtonGroup('Infrastructure', 'VMs')
+
+    @View.nested
+    class services(View):                                                               # noqa
+        my_services = ViewButtonGroup('Services', 'My Services')
+        catalog_items = ViewButtonGroup('Services', 'Catalog Items')
+        templates = ViewButtonGroup('Services', 'Templates & Images')
+        vms_instances = ViewButtonGroup('Services', 'VMs & Instances')
+
+    @View.nested
+    class containers(View):                                                             # noqa
+        providers = ViewButtonGroup('Containers', 'Containers Providers')
+        nodes = ViewButtonGroup('Containers', 'Nodes')
+        pods = ViewButtonGroup('Containers', 'Pods')
+        services = ViewButtonGroup('Containers', 'Services')
+        routes = ViewButtonGroup('Containers', 'Routes')
+        containers = ViewButtonGroup('Containers', 'Containers')
+        projects = ViewButtonGroup('Containers', 'Projects')
+        replicators = ViewButtonGroup('Containers', 'Replicators')
+        images = ViewButtonGroup('Containers', 'Images')
+        image_registries = ViewButtonGroup('Containers', 'Image Registries')
+        builds = ViewButtonGroup('Containers', 'Builds')
+        volumes = ViewButtonGroup('Containers', 'Volumes')
+        templates = ViewButtonGroup('Containers', 'Templates')
+
+    @View.nested
+    class vm_visibility(View):                                                          # noqa
+        show_vms = BootstrapSwitch('display_vms')
+
+    save = Button('Save')
+
+
+class DefaultFiltersForm(View):
+    tree = CheckableBootstrapTreeview('df_treebox')
+    save = Button('Save')
+
+
+class TimeProfilesView(BaseLoggedInPage):
+    table = Table("//div[@id='main_div']//table")
+    help_block = Text("//span[contains(@class, 'help-block')]")
+    configuration = Dropdown('Configuration')
+
+
+class Visual(Updateable, NavigatableMixin):
+
+    def __init__(self, appliance, my_settings):
+        self.appliance = appliance
+        self.my_settings = my_settings
 
     @property
     def grid_view_limit(self):
-        view = navigate_to(self, 'All')
-        value = re.findall("\d+", view.visualitem.grid_view.read())
+        view = navigate_to(self.my_settings, 'Visual')
+        value = re.findall('\d+', view.tabs.visual.default_items_per_page.grid_view.read())
         return int(value[0])
 
     @grid_view_limit.setter
     def grid_view_limit(self, value):
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.my_settings, 'Visual')
         value_to_fill = str(value)
-        if view.visualitem.grid_view.fill(value_to_fill):
-            view.save.click()
+        if view.tabs.visual.default_items_per_page.grid_view.fill(value_to_fill):
+            view.tabs.visual.save.click()
 
     @property
     def tile_view_limit(self):
-        view = navigate_to(self, 'All')
-        value = re.findall("\d+", view.visualitem.tile_view.read())
+        view = navigate_to(self.my_settings, 'Visual')
+        value = re.findall('\d+', view.tabs.visual.default_items_per_page.tile_view.read())
         return int(value[0])
 
     @tile_view_limit.setter
     def tile_view_limit(self, value):
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.my_settings, 'Visual')
         value_to_fill = str(value)
-        if view.visualitem.tile_view.fill(value_to_fill):
-            view.save.click()
+        if view.tabs.visual.default_items_per_page.tile_view.fill(value_to_fill):
+            view.tabs.visual.save.click()
 
     @property
     def list_view_limit(self):
-        view = navigate_to(self, 'All')
-        value = re.findall("\d+", view.visualitem.list_view.read())
+        view = navigate_to(self.my_settings, 'Visual')
+        value = re.findall('\d+', view.tabs.visual.default_items_per_page.list_view.read())
         return int(value[0])
 
     @list_view_limit.setter
     def list_view_limit(self, value):
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.my_settings, 'Visual')
         value_to_fill = str(value)
-        if view.visualitem.list_view.fill(value_to_fill):
-            view.save.click()
+        if view.tabs.visual.default_items_per_page.list_view.fill(value_to_fill):
+            view.tabs.visual.save.click()
 
     @property
     def report_view_limit(self):
-        view = navigate_to(self, 'All')
-        value = re.findall("\d+", view.visualitem.reports.read())
+        view = navigate_to(self.my_settings, 'Visual')
+        value = re.findall('\d+', view.tabs.visual.default_items_per_page.reports.read())
         return int(value[0])
 
     @report_view_limit.setter
     def report_view_limit(self, value):
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.my_settings, 'Visual')
         value_to_fill = str(value)
-        if view.visualitem.reports.fill(value_to_fill):
-            view.save.click()
+        if view.tabs.visual.default_items_per_page.reports.fill(value_to_fill):
+            view.tabs.visual.save.click()
 
     @property
     def login_page(self):
-        view = navigate_to(self, 'All')
-        return view.visualstartpage.show_at_login.read()
+        view = navigate_to(self.my_settings, 'Visual')
+        return view.tabs.visual.start_page.show_at_login.read()
 
     @login_page.setter
     def login_page(self, value):
-        view = navigate_to(self, 'All')
-        if view.visualstartpage.show_at_login.fill(value):
-            view.save.click()
+        view = navigate_to(self.my_settings, 'Visual')
+        if view.tabs.visual.start_page.show_at_login.fill(value):
+            view.tabs.visual.save.click()
 
     @property
     def infra_provider_quad(self):
-        view = navigate_to(self, 'All')
-        return view.visualquadicons.infra_provider_quad.read()
+        view = navigate_to(self.my_settings, 'Visual')
+        return view.tabs.visual.grid_tile_icons.infra_provider_quad.read()
 
     @infra_provider_quad.setter
     def infra_provider_quad(self, value):
-        view = navigate_to(self, 'All')
-        if view.visualquadicons.infra_provider_quad.fill(value):
-            view.save.click()
+        view = navigate_to(self.my_settings, 'Visual')
+        if view.tabs.visual.grid_tile_icons.infra_provider_quad.fill(value):
+            view.tabs.visual.save.click()
 
     @property
     def host_quad(self):
-        view = navigate_to(self, 'All')
-        return view.visualquadicons.host_quad.read()
+        view = navigate_to(self.my_settings, 'Visual')
+        return view.tabs.visual.grid_tile_icons.host_quad.read()
 
     @host_quad.setter
     def host_quad(self, value):
-        view = navigate_to(self, 'All')
-        if view.visualquadicons.host_quad.fill(value):
-            view.save.click()
+        view = navigate_to(self.my_settings, 'Visual')
+        if view.tabs.visual.grid_tile_icons.host_quad.fill(value):
+            view.tabs.visual.save.click()
 
     @property
     def datastore_quad(self):
-        view = navigate_to(self, 'All')
-        return view.visualquadicons.datastore_quad.read()
+        view = navigate_to(self.my_settings, 'Visual')
+        return view.tabs.visual.grid_tile_icons.datastore_quad.read()
 
     @datastore_quad.setter
     def datastore_quad(self, value):
-        view = navigate_to(self, 'All')
-        if view.visualquadicons.datastore_quad.fill(value):
-            view.save.click()
+        view = navigate_to(self.my_settings, 'Visual')
+        if view.tabs.visual.grid_tile_icons.datastore_quad.fill(value):
+            view.tabs.visual.save.click()
 
     @property
     def vm_quad(self):
-        view = navigate_to(self, 'All')
-        return view.visualquadicons.vm_quad.read()
+        view = navigate_to(self.my_settings, 'Visual')
+        return view.tabs.visual.grid_tile_icons.vm_quad.read()
 
     @vm_quad.setter
     def vm_quad(self, value):
-        view = navigate_to(self, 'All')
-        if view.visualquadicons.vm_quad.fill(value):
-            view.save.click()
+        view = navigate_to(self.my_settings, 'Visual')
+        if view.tabs.visual.grid_tile_icons.vm_quad.fill(value):
+            view.tabs.visual.save.click()
 
     @property
     def template_quad(self):
-        view = navigate_to(self, 'All')
-        return view.visualquadicons.template_quad.read()
+        view = navigate_to(self.my_settings, 'Visual')
+        return view.tabs.visual.grid_tile_icons.template_quad.read()
 
     @template_quad.setter
     def template_quad(self, value):
-        view = navigate_to(self, 'All')
-        if view.visualquadicons.template_quad.fill(value):
-            view.save.click()
+        view = navigate_to(self.my_settings, 'Visual')
+        if view.tabs.visual.grid_tile_icons.template_quad.fill(value):
+            view.tabs.visual.save.click()
 
     @property
     def cloud_provider_quad(self):
-        view = navigate_to(self, 'All')
-        return view.visualquadicons.cloud_provider_quad.read()
+        view = navigate_to(self.my_settings, 'Visual')
+        return view.tabs.visual.grid_tile_icons.cloud_provider_quad.read()
 
     @cloud_provider_quad.setter
     def cloud_provider_quad(self, value):
-        view = navigate_to(self, 'All')
-        if view.visualquadicons.cloud_provider_quad.fill(value):
-            view.save.click()
+        view = navigate_to(self.my_settings, 'Visual')
+        if view.tabs.visual.grid_tile_icons.cloud_provider_quad.fill(value):
+            view.tabs.visual.save.click()
 
     @property
     def timezone(self):
-        view = navigate_to(self, 'All')
-        return view.visualdisplay.time_zone.read()
+        view = navigate_to(self.my_settings, 'Visual')
+        return view.tabs.visual.display_settings.time_zone.read()
 
     @timezone.setter
     def timezone(self, value):
-        view = navigate_to(self, 'All')
-        if view.visualdisplay.time_zone.fill(value):
-            view.save.click()
+        view = navigate_to(self.my_settings, 'Visual')
+        if view.tabs.visual.display_settings.time_zone.fill(value):
+            view.tabs.visual.save.click()
 
     @property
     def grid_view_entities(self):
-        view = navigate_to(self, 'All')
-        values = view.visualitem.grid_view.all_options
+        view = navigate_to(self.my_settings, 'Visual')
+        values = view.tabs.visual.default_items_per_page.grid_view.all_options
         text = [value.text for value in values]
         return text
 
     @property
     def tile_view_entities(self):
-        view = navigate_to(self, 'All')
-        values = view.visualitem.tile_view.all_options
+        view = navigate_to(self.my_settings, 'Visual')
+        values = view.tabs.visual.default_items_per_page.tile_view.all_options
         text = [value.text for value in values]
         return text
 
     @property
     def list_view_entities(self):
-        view = navigate_to(self, 'All')
-        values = view.visualitem.list_view.all_options
+        view = navigate_to(self.my_settings, 'Visual')
+        values = view.tabs.visual.default_items_per_page.list_view.all_options
         text = [value.text for value in values]
         return text
 
     @property
     def report_view_entities(self):
-        view = navigate_to(self, 'All')
-        values = view.visualitem.reports.all_options
+        view = navigate_to(self.my_settings, 'Visual')
+        values = view.tabs.visual.default_items_per_page.reports.all_options
         text = [value.text for value in values]
         return text
 
 
-class VisualTabForm(MySettingsView):
+class DefaultViews(Updateable, NavigatableMixin):
+    # Basic class for navigation to default views screen
+    look_up = {
+        'Flavors': ['clouds', 'flavors'],
+        'Instances': ['clouds', 'instances'],
+        'Availability Zones': ['clouds', 'availability_zones'],
+        'Images': ['clouds', 'images'],
+        'Cloud Providers': ['clouds', 'providers'],
+        'Stacks': ['clouds', 'stacks'],
+        'Compare': ['general', 'compare'],
+        'Compare Mode': ['general', 'compare_mode'],
+        'Infrastructure Providers': ['infrastructure', 'infrastructure_providers'],
+        'Configuration Management Providers': ['infrastructure',
+                                               'configuration_management_providers'],
+        'VMs': ['infrastructure', 'vms'],
+        'My Services': ['services', 'my_services'],
+        'Catalog Items': ['services', 'catalog_items'],
+        'Templates & Images': ['services', 'templates'],
+        'VMs & Instances': ['services', 'vms_instances'],
+        'Containers Providers': ['containers', 'providers'],
+        'Nodes': ['containers', 'nodes'],
+        'Pods': ['containers', 'pods'],
+        'Services': ['containers', 'services'],
+        'Routes': ['containers', 'routes'],
+        'Containers': ['containers', 'containers'],
+        'Projects': ['containers', 'projects'],
+        'Replicators': ['containers', 'replicators'],
+        'Container Images': ['containers', 'images'],
+        'Image Registries': ['containers', 'image_registries'],
+        'Builds': ['containers', 'builds'],
+        'Volumes': ['containers', 'volumes'],
+        'Templates': ['containers', 'templates']
+    }
 
-    @View.nested
-    class visualitem(View):  # noqa
-        grid_view = BootstrapSelect("perpage_grid")
-        tile_view = BootstrapSelect("perpage_tile")
-        list_view = BootstrapSelect("perpage_list")
-        reports = BootstrapSelect("perpage_reports")
+    def __init__(self, appliance, my_settings):
+        self.appliance = appliance
+        self.my_settings = my_settings
 
-    @View.nested
-    class visualstartpage(View):    # noqa
-        show_at_login = BootstrapSelect("start_page")
+    def set_default_view(self, button_group_names, defaults, fieldset=None):
+        """This function sets default views for the objects.
 
-    @View.nested
-    class visualquadicons(View):    # noqa
-        infra_provider_quad = BootstrapSwitch("quadicons_ems")
-        cloud_provider_quad = BootstrapSwitch("quadicons_ems_cloud")
-        host_quad = BootstrapSwitch("quadicons_host")
-        datastore_quad = BootstrapSwitch("quadicons_storage")
-        vm_quad = BootstrapSwitch("quadicons_vm")
-        template_quad = BootstrapSwitch("quadicons_miq_template")
-        long_text = BootstrapSelect("quad_truncate")
+        Args:
+            button_group_names: either the name of the button_group_name
+                                or list of the button groups to set the
+                                default view for.
+            defaults: the default view to set. in case that button_group_names
+                     is a list, you can either set 1 view and it'll be set
+                     for all the button_group_names or you can use a list
+                     (default view per button_group_name).
+        Raises:
+            AssertionError
+        """
+        if not isinstance(button_group_names, (list, tuple)):
+            button_group_names = [button_group_names]
+        if not isinstance(defaults, (list, tuple)):
+            defaults = [defaults] * len(button_group_names)
+        assert len(button_group_names) == len(defaults)
+        for button_group_name, default in zip(button_group_names, defaults):
+            view = navigate_to(self.my_settings, 'DefaultViews')
+            value = view.tabs.default_views
+            for attribute in self.look_up[button_group_name]:
+                value = getattr(value, attribute)
+            if value.active_button != default:
+                if value.fill(default):
+                    view.tabs.default_views.save.click()
 
-    @View.nested
-    class visualdisplay(View):   # noqa
-        chart_theme = BootstrapSelect("display_reporttheme")
-        time_zone = BootstrapSelect("display_timezone")
+    def get_default_view(self, button_group_name, fieldset=None):
+        view = navigate_to(self.my_settings, 'DefaultViews')
+        value = view.tabs.default_views
+        for attribute in self.look_up[button_group_name]:
+            value = getattr(value, attribute)
+        return value.active_button
 
-    save = Button("Save")
-    reset = Button("Reset")
+    def set_default_view_switch_on(self):
+        view = navigate_to(self.my_settings, 'DefaultViews')
+        if view.tabs.default_views.vm_visibility.show_vms.fill(True):
+            view.tabs.default_views.save.click()
+        return True
 
-
-@navigator.register(Visual, 'All')
-class VisualAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'MySettings')
-    VIEW = VisualTabForm
-
-    def step(self):
-        self.view.tabs.visual_all.select()
-
-
-class DefaultFilterForm(MySettingsView):
-    tree = CbTree('df_treebox')
-    save = Button('Save')
+    def set_default_view_switch_off(self):
+        view = navigate_to(self.my_settings, 'DefaultViews')
+        if view.tabs.default_views.vm_visibility.show_vms.fill(False):
+            view.tabs.default_views.save.click()
+        return True
 
 
-class DefaultFilter(Updateable, Pretty, Navigatable):
+class DefaultFilters(Updateable, Pretty, NavigatableMixin):
 
     pretty_attrs = ['name', 'filters']
 
-    def __init__(self, name=None, filters=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, appliance, my_settings, name=None, filters=None):
+        self.appliance = appliance
+        self.my_settings = my_settings
         self.name = name
         self.filters = filters or []
 
@@ -462,145 +551,177 @@ class DefaultFilter(Updateable, Pretty, Navigatable):
 
         Returns: None
         """
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.my_settings, 'DefaultFilters')
+        tree = view.tabs.default_filters.tree
         for path, check in updates['filters']:
-            fill_value = CbTree.CheckNode(path) if check else CbTree.UncheckNode(path)
-            if view.tree.fill(fill_value):
-                view.save.click()
+            fill_value = tree.CheckNode(path) if check else tree.UncheckNode(path)
+            if tree.fill(fill_value):
+                view.tabs.default_filters.save.click()
             else:
                 logger.info('No change to filter on update, not saving form.')
 
 
-@navigator.register(DefaultFilter, 'All')
-class DefaultFilterAll(CFMENavigateStep):
-    VIEW = DefaultFilterForm
-    prerequisite = NavigateToAttribute('appliance.server', 'MySettings')
+class TimeProfiles(Updateable, NavigatableMixin):
+
+    def __init__(self, appliance, my_settings):
+        self.appliance = appliance
+        self.my_settings = my_settings
+
+
+class MySettingsEntities(View):
+    table = Table('//div[@id="main_div"]//table')
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h3')
+
+
+class MySettingsView(BaseLoggedInPage):
+    """The My Settings page"""
+    entities = View.nested(MySettingsEntities)
+    configuration = Dropdown('Configuration')
+
+    @View.nested
+    class tabs(View):  # noqa
+        """The tabs on the page"""
+
+        @View.nested
+        class visual(Tab):  # noqa
+            TAB_NAME = 'Visual'
+            including_entities = View.include(VisualForm, use_parent=True)
+
+        @View.nested
+        class default_views(Tab):  # noqa
+            TAB_NAME = 'Default Views'
+            including_entities = View.include(DefaultViewsForm, use_parent=True)
+
+        @View.nested
+        class default_filters(Tab):  # noqa
+            TAB_NAME = 'Default Filters'
+            including_entities = View.include(DefaultFiltersForm, use_parent=True)
+
+        @View.nested
+        class time_profiles(Tab):  # noqa
+            TAB_NAME = 'Time Profiles'
+            including_entities = View.include(TimeProfilesView, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        return (
+            self.tabs.visual.is_displayed and
+            self.tabs.default_views.is_displayed and
+            self.tabs.default_filters.is_displayed and
+            self.tabs.time_profiles.is_displayed)
+
+
+class MySettings(Updateable, NavigatableMixin):
+    """The 'My Settings' page"""
+
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+    @property
+    def visual(self):
+        """The 'Visual' tab on the 'My Settings' page"""
+        return Visual(self.appliance, self)
+
+    @property
+    def default_views(self):
+        """The 'Default Views' tab on the 'My Settings' page"""
+        return DefaultViews(self.appliance, self)
+
+    @property
+    def default_filters(self):
+        """The 'Default Filters' tab on the 'My Settings' page"""
+        return DefaultFilters(self.appliance, self)
+
+    @property
+    def time_profiles(self):
+        """The 'Time Profiles' tab on the 'My Settings' page"""
+        return TimeProfiles(self.appliance, self)
+
+
+@navigator.register(MySettings, 'MySettings')
+class MySettingsStep(CFMENavigateStep):
+    VIEW = MySettingsView
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.view.tabs.default_filter.select()
+        """Go to the My Settings view"""
+        self.prerequisite_view.settings.select_item('My Settings')
 
 
-class DefaultViewForm(MySettingsView):
-    flavors = ViewButtonGroup("Clouds", "Flavors")
-    instances = ViewButtonGroup("Clouds", "Instances")
-    availability_zones = ViewButtonGroup("Clouds", "Availability Zones")
-    images = ViewButtonGroup("Clouds", "Images")
-    cloud_providers = ViewButtonGroup("Clouds", "Cloud Providers")
-    compare = ViewButtonGroup("General", "Compare")
-    compare_mode = ViewButtonGroup("General", "Compare Mode")
-    infrastructure_providers = ViewButtonGroup("Infrastructure", "Infrastructure Providers")
-    configuration_management_providers = ViewButtonGroup('Infrastructure',
-                                                         'Configuration Management Providers')
-    my_services = ViewButtonGroup("Services", "My Services")
-    catalog_items = ViewButtonGroup("Services", "Catalog Items")
-    templates = ViewButtonGroup("Services", "Templates & Images")
-    vms = ViewButtonGroup("Infrastructure", "VMs")
-    vms_instances = ViewButtonGroup("Services", "VMs & Instances")
-    cloud_stacks = ViewButtonGroup('Clouds', 'Stacks')
-
-    containers_providers = ViewButtonGroup("Containers", "Containers Providers")
-    container_nodes = ViewButtonGroup("Containers", "Nodes")
-    container_pods = ViewButtonGroup("Containers", "Pods")
-    container_services = ViewButtonGroup("Containers", "Services")
-    container_routes = ViewButtonGroup("Containers", "Routes")
-    container_containers = ViewButtonGroup("Containers", "Containers")
-    container_projects = ViewButtonGroup("Containers", "Projects")
-    container_replicators = ViewButtonGroup("Containers", "Replicators")
-    container_images = ViewButtonGroup("Containers", "Images")
-    container_image_registries = ViewButtonGroup("Containers", "Image Registries")
-    container_builds = ViewButtonGroup("Containers", "Builds")
-    container_volumes = ViewButtonGroup("Containers", "Volumes")
-    container_templates = ViewButtonGroup("Containers", "Templates")
-    vm_visibility = BootstrapSwitch("display_vms")
-    save = Button("Save")
-
-
-class DefaultView(Updateable, Navigatable):
-    # Basic class for navigation to default views screen
-    look_up = {'Flavors': "flavors",
-               'Instances': "instances",
-               'Availability Zones': "availability_zones",
-               'Images': "images",
-               'Cloud Providers': "cloud_providers",
-               'Compare': "compare",
-               'Compare Mode': "compare_mode",
-               'Infrastructure Providers': "infrastructure_providers",
-               'My Services': "my_services",
-               'Catalog Items': "catalog_items",
-               'Templates & Images': "templates",
-               'VMs': "vms",
-               'VMs & Instances': "vms_instances",
-               'Containers Providers': 'containers_providers',
-               'Nodes': 'container_nodes',
-               'Pods': 'container_pods',
-               'Services': 'container_services',
-               'Routes': 'container_routes',
-               'Containers': 'container_containers',
-               'Projects': 'container_projects',
-               'Replicators': 'container_replicators',
-               'Container Images': 'container_images',
-               'Image Registries': 'container_image_registries',
-               'Builds': 'container_builds',
-               'Volumes': 'container_volumes',
-               'Templates': 'container_templates',
-               'Configuration Management Providers': 'configuration_management_providers',
-               'Stacks': 'cloud_stacks'
-               }
-
-    def __init__(self, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-
-    @classmethod
-    def set_default_view(cls, button_group_names, defaults, fieldset=None):
-        """This function sets default views for the objects.
-
-        Args:
-            button_group_names: either the name of the button_group_name
-                                or list of the button groups to set the
-                                default view for.
-            defaults: the default view to set. in case that button_group_names
-                     is a list, you can either set 1 view and it'll be set
-                     for all the button_group_names or you can use a list
-                     (default view per button_group_name).
-        """
-        if not isinstance(button_group_names, (list, tuple)):
-            button_group_names = [button_group_names]
-        if not isinstance(defaults, (list, tuple)):
-            defaults = [defaults] * len(button_group_names)
-        assert len(button_group_names) == len(defaults)
-        navigate_to(cls, 'All')
-        for button_group_name, default in zip(button_group_names, defaults):
-            view = navigate_to(cls, 'All')
-            value = getattr(view, cls.look_up[button_group_name])
-            if value.active_button != default:
-                if value.fill(default):
-                    view.save.click()
-
-    @classmethod
-    def get_default_view(cls, button_group_name, fieldset=None):
-        view = navigate_to(cls, 'All')
-        value = getattr(view, cls.look_up[button_group_name])
-        return value.active_button
-
-    @classmethod
-    def set_default_view_switch_on(cls):
-        view = navigate_to(cls, 'All')
-        if view.vm_visibility.fill(True):
-            view.save.click()
-        return True
-
-    @classmethod
-    def set_default_view_switch_off(cls):
-        view = navigate_to(cls, 'All')
-        if view.vm_visibility.fill(False):
-            view.save.click()
-        return True
-
-
-@navigator.register(DefaultView, 'All')
-class DefaultViewAll(CFMENavigateStep):
-    VIEW = DefaultViewForm
-    prerequisite = NavigateToAttribute('appliance.server', 'MySettings')
+@navigator.register(MySettings, 'Visual')
+class VisualStep(CFMENavigateStep):
+    VIEW = MySettingsView
+    prerequisite = NavigateToSibling('MySettings')
 
     def step(self):
+        self.prerequisite_view.tabs.visual.select()
+
+    def resetter(self):
+        self.view.tabs.visual.select()
+
+
+@navigator.register(MySettings, 'DefaultViews')
+class DefaultViewsStep(CFMENavigateStep):
+    VIEW = MySettingsView
+    prerequisite = NavigateToSibling('MySettings')
+
+    def step(self):
+        self.prerequisite_view.tabs.default_views.select()
+
+    def resetter(self):
         self.view.tabs.default_views.select()
+
+
+@navigator.register(MySettings, 'DefaultFilters')
+class DefaultFiltersStep(CFMENavigateStep):
+    VIEW = MySettingsView
+    prerequisite = NavigateToSibling('MySettings')
+
+    def step(self):
+        self.prerequisite_view.tabs.default_filters.select()
+
+    def resetter(self):
+        self.view.tabs.default_filters.select()
+
+
+@navigator.register(TimeProfileCollection, 'All')
+class TimeProfileCollectionAll(CFMENavigateStep):
+    VIEW = MySettingsView
+    prerequisite = NavigateToAttribute('appliance.user.my_settings', 'MySettings')
+
+    def step(self):
+        self.prerequisite_view.tabs.time_profiles.select()
+
+    def resetter(self):
+        self.view.tabs.time_profiles.select()
+
+
+@navigator.register(TimeProfileCollection, 'Add')
+class TimeProfileAdd(CFMENavigateStep):
+    VIEW = TimeProfileAddView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        self.prerequisite_view.tabs.time_profiles.select()
+        self.prerequisite_view.configuration.item_select('Add a new Time Profile')
+
+
+@navigator.register(TimeProfile, 'Edit')
+class TimeProfileEdit(CFMENavigateStep):
+    VIEW = TimeProfileEditView
+    prerequisite = NavigateToAttribute('parent', 'All')
+
+    def step(self):
+        self.view.entities.table.row(Description=self.obj.description)[0].check()
+        self.view.configuration.item_select('Edit selected Time Profile')
+
+
+@navigator.register(TimeProfile, 'Copy')
+class TimeProfileCopy(CFMENavigateStep):
+    VIEW = TimeProfileAddView
+    prerequisite = NavigateToAttribute('parent', 'All')
+
+    def step(self):
+        self.view.entities.table.row(Description=self.obj.description)[0].check()
+        self.view.configuration.item_select('Copy selected Time Profile')
