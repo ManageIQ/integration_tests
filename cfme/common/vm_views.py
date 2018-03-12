@@ -5,7 +5,7 @@ import os
 from lxml.html import document_fromstring
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import (
-    View, Text, TextInput, ParametrizedView, Image, ConditionalSwitchableView)
+    View, TableRow, Text, TextInput, ParametrizedView, Image, ConditionalSwitchableView)
 from widgetastic_patternfly import (
     Dropdown, BootstrapSelect, Tab, Input, CheckableBootstrapTreeview)
 
@@ -137,29 +137,35 @@ def InstanceEntity():  # noqa
     })
 
 
+class SelectableTableRow(TableRow):
+
+    @property
+    def selected(self):
+        return 'selected' in self.browser.classes(self)
+
+
 class SelectTable(Table):
     """Wigdet for non-editable table. used for selecting value"""
+
+    Row = SelectableTableRow
+
     def fill(self, values):
-        """Clicks on item - fill by selecting required value"""
-        value = values.get('name', '<None>')
-        changed = False
-        if value != self.currently_selected:
-            changed = True
-            self.row(name=value).click()
-        return changed
+        """Clicks on item - fill by selecting required values"""
+        if self.row(**values).selected:
+            return False
+        else:
+            self.row(**values).click()
+            return True
 
     @property
     def currently_selected(self):
-        """Return Name of the selected row"""
-        selected = self.browser.elements(
-            ".//tr[@class='selected']/td[1]",
-            parent=self)
-        result = map(self.browser.text, selected)
-        if len(result) == 0:
+        """Return values of the selected row"""
+        for row in self.rows:
+            if row.selected:
+                return row.read()
+        else:
             self.logger.info('Nothing is currently selected')
             return None
-        else:
-            return result[0]
 
     def read(self):
         return self.currently_selected
