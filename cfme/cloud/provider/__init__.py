@@ -1,5 +1,6 @@
 """ A model of a Cloud Provider in CFME
 """
+import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from widgetastic.widget import View
@@ -12,7 +13,7 @@ from cfme.common.provider_views import (
     CloudProviderAddView, CloudProviderEditView, CloudProviderDetailsView, CloudProvidersView,
     CloudProvidersDiscoverView)
 from cfme.common.vm_views import VMToolbar, VMEntities
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
@@ -73,10 +74,11 @@ class CloudProviderImagesView(BaseLoggedInPage):
     including_entities = View.include(VMEntities, use_parent=True)
 
 
-class CloudProvider(Pretty, CloudInfraProvider):
+@attr.s
+class CloudProvider(Pretty, CloudInfraProvider, BaseEntity):
     """
     Abstract model of a cloud provider in cfme. See EC2Provider or OpenStackProvider.
-
+    TODO: update doc strings in this file
     Args:
         name: Name of the provider.
         endpoints: one or several provider endpoints like DefaultEndpoint. it should be either dict
@@ -102,12 +104,13 @@ class CloudProvider(Pretty, CloudInfraProvider):
     template_name = "Images"
     db_types = ["CloudManager"]
 
-    def __init__(self, name=None, endpoints=None, zone=None, key=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.zone = zone
-        self.key = key
-        self.endpoints = self._prepare_endpoints(endpoints)
+    name = attr.ib(default=None)
+    key = attr.ib(default=None)
+    zone = attr.ib(default=None)
+    endpoints = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self.endpoints = self._prepare_endpoints(self.endpoints)
 
     def as_fill_value(self):
         return self.name
@@ -123,7 +126,59 @@ class CloudProvider(Pretty, CloudInfraProvider):
         raise NotImplementedError("This provider doesn't support discovery")
 
 
+@attr.s
+class CloudProviderCollection(BaseCollection):
+    """Collection object for CloudProvider object
+    """
+
+    ENTITY = CloudProvider
+
+    def all(self):
+        view = navigate_to(self, 'All')
+        provs = view.entities.get_all(surf_pages=True)
+        return [self.instantiate(prov_class=self.ENTITY, name=p.name) for p in provs]
+
+    # todo: think over, need to get rid of this definition
+    def instantiate(self, prov_class=ENTITY, *args, **kwargs):
+        return prov_class.from_collection(self, *args, **kwargs)
+
+    def create(self, prov_class=ENTITY, *args, **kwargs):
+        # todo: update this later
+        obj = self.instantiate(prov_class, *args, **kwargs)
+        obj.create()
+
+    def discover(self, credential, discover_cls, cancel=False):
+        """
+        Discover cloud providers. Note: only starts discovery, doesn't
+        wait for it to finish.
+
+        Args:
+          credential (cfme.base.credential.Credential):  Discovery credentials.
+          cancel (boolean):  Whether to cancel out of the discover UI.
+          discover_cls: class of the discovery item
+        """
+        view = navigate_to(self, 'Discover')
+        if discover_cls:
+            view.fill({'discover_type': discover_cls.discover_name})
+            view.fields.fill(discover_cls.discover_dict(credential))
+
+        if cancel:
+            view.cancel.click()
+        else:
+            view.start.click()
+
+    # todo: combine with discover ?
+    def wait_for_new_provider(self):
+        view = navigate_to(self, 'All')
+        logger.info('Waiting for a provider to appear...')
+        wait_for(lambda: int(view.entities.paginator.items_amount), fail_condition=0,
+                 message="Wait for any provider to appear", num_sec=1000,
+                 fail_func=view.browser.refresh)
+
+
+# todo: to remove those register statements when all providers are turned into collections
 @navigator.register(CloudProvider, 'All')
+@navigator.register(CloudProviderCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = CloudProvidersView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -140,6 +195,7 @@ class All(CFMENavigateStep):
 
 
 @navigator.register(CloudProvider, 'Add')
+@navigator.register(CloudProviderCollection, 'Add')
 class New(CFMENavigateStep):
     VIEW = CloudProviderAddView
     prerequisite = NavigateToSibling('All')
@@ -149,6 +205,7 @@ class New(CFMENavigateStep):
 
 
 @navigator.register(CloudProvider, 'Discover')
+@navigator.register(CloudProviderCollection, 'Discover')
 class Discover(CFMENavigateStep):
     VIEW = CloudProvidersDiscoverView
     prerequisite = NavigateToSibling('All')
@@ -233,38 +290,3 @@ class Images(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.entities.summary("Relationships").click_at('Images')
-
-
-def get_all_providers():
-    """Returns list of all providers"""
-    view = navigate_to(CloudProvider, 'All')
-    return [item.name for item in view.entities.get_all(surf_pages=True)]
-
-
-def discover(credential, discover_cls, cancel=False):
-    """
-    Discover cloud providers. Note: only starts discovery, doesn't
-    wait for it to finish.
-
-    Args:
-      credential (cfme.base.credential.Credential):  Discovery credentials.
-      cancel (boolean):  Whether to cancel out of the discover UI.
-      discover_cls: class of the discovery item
-    """
-    view = navigate_to(CloudProvider, 'Discover')
-    if discover_cls:
-        view.fill({'discover_type': discover_cls.discover_name})
-        view.fields.fill(discover_cls.discover_dict(credential))
-
-    if cancel:
-        view.cancel.click()
-    else:
-        view.start.click()
-
-
-def wait_for_a_provider():
-    view = navigate_to(CloudProvider, 'All')
-    logger.info('Waiting for a provider to appear...')
-    wait_for(lambda: int(view.entities.paginator.items_amount), fail_condition=0,
-             message="Wait for any provider to appear", num_sec=1000,
-             fail_func=view.browser.refresh)

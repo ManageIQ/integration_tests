@@ -1,3 +1,5 @@
+import attr
+
 from widgetastic.widget import View
 from widgetastic_patternfly import Tab, Input, Button
 from wrapanapi.ec2 import EC2System
@@ -34,6 +36,7 @@ class EC2EndpointForm(View):
         validate = Button('Validate')
 
 
+@attr.s(hash=False)
 class EC2Provider(CloudProvider):
     """
      BaseProvider->CloudProvider->EC2Provider class.
@@ -46,13 +49,11 @@ class EC2Provider(CloudProvider):
     endpoints_form = EC2EndpointForm
     discover_name = "Amazon EC2"
 
-    def __init__(
-            self, name=None, endpoints=None, zone=None, key=None, region=None, region_name=None,
-            appliance=None):
-        super(EC2Provider, self).__init__(name=name, endpoints=endpoints,
-                                          zone=zone, key=key, appliance=appliance)
-        self.region = region
-        self.region_name = region_name
+    region = attr.ib(default=None)
+    region_name = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self.parent = self.appliance.collections.cloud_providers
 
     @property
     def view_value_mapping(self):
@@ -67,13 +68,13 @@ class EC2Provider(CloudProvider):
     def from_config(cls, prov_config, prov_key, appliance=None):
         """Returns the EC" object from configuration"""
         endpoint = EC2Endpoint(**prov_config['endpoints']['default'])
-        return cls(name=prov_config['name'],
+        return cls(appliance,
+                   name=prov_config['name'],
                    region=prov_config['region'],
                    region_name=prov_config['region_name'],
                    endpoints={endpoint.name: endpoint},
                    zone=prov_config['server_zone'],
-                   key=prov_key,
-                   appliance=appliance)
+                   key=prov_key)
 
     @staticmethod
     def discover_dict(credential):
