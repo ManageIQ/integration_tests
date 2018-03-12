@@ -15,6 +15,7 @@ from cfme.base.credential import Credential
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.provider import CloudInfraProvider
+from cfme.cloud.provider import CloudProvider
 from cfme.common.vm import VM
 from cfme.common.provider import BaseProvider
 from cfme.intelligence.reports.reports import CustomReport
@@ -269,7 +270,7 @@ def metering_report(vm_ownership, provider):
 # Tests to validate usage reported in the Metering report for various metrics.
 # The usage reported in the report should be approximately equal to the
 # usage estimated in the resource_usage fixture, therefore a small deviation is fine.
-@pytest.mark.uncollectif(lambda provider: provider.category == 'cloud')
+@pytest.mark.uncollectif(lambda provider: provider.one_of(CloudProvider))
 def test_validate_cpu_usage(resource_usage, metering_report):
     """Test to validate CPU usage.This metric is not collected for cloud providers."""
     for groups in metering_report:
