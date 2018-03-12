@@ -3,7 +3,7 @@ import json
 import six.moves.xmlrpc_client
 from functools import wraps
 
-from celery import chain
+from celery import chain, group
 from celery.result import AsyncResult
 from dateutil import parser
 from django.contrib import messages
@@ -1060,3 +1060,23 @@ def nuke_template(request):
         raise Http404('Template with ID {} does not exist!.'.format(template_id))
     task = nuke_template_configuration.delay(template.id)
     return HttpResponse(task.id)
+
+
+@only_authenticated
+def purge_templates(request):
+    if not request.user.is_superuser:
+        return go_home(request)
+    if request.method != 'POST':
+        return HttpResponseForbidden('Only POST allowed')
+
+    try:
+        template_ids = json.loads(request.POST['templates_json'])
+
+        group_tasks = []
+        for template_id in template_ids:
+            group_tasks.append(delete_template_from_provider.s(template_id))
+        return HttpResponse(group(group_tasks).apply_async().id)
+    except KeyError:
+        return HttpResponseForbidden('templates_json required')
+    except ValueError:
+        return HttpResponseForbidden('Malformed JSON')

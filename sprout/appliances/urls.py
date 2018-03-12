@@ -71,6 +71,7 @@ urlpatterns = [
     url(r'^ajax/vms/buttons/([a-z_A-Z0-9-]+)$', views.power_state_buttons,
         name="power_state_buttons"),
     url(r'^ajax/vms/action/([a-z_A-Z0-9-]+)$', views.vm_action, name="vm_action"),
+    url(r'^ajax/purge_templates$', views.purge_templates, name="purge_templates"),
     # Bugs
     url(r'^bq$', views.view_bug_queries, name='view_bug_queries'),
     url(r'^bq/new$', views.new_bug_query, name='new_bug_query'),
