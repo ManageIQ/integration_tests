@@ -20,7 +20,7 @@ tzs = [
 ]
 
 
-@pytest.mark.uncollectif(lambda appliance: version.current_version() < '5.9')
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 def test_appliance_console_cli_datetime(temp_appliance_preconfig_funcscope):
     """Grab fresh appliance and set time and date through appliance_console_cli and check result"""
     app = temp_appliance_preconfig_funcscope
@@ -31,9 +31,9 @@ def test_appliance_console_cli_datetime(temp_appliance_preconfig_funcscope):
     wait_for(date_changed)
 
 
-@pytest.mark.uncollectif(lambda appliance: version.current_version() < '5.9')
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 @pytest.mark.parametrize('timezone', tzs, ids=[tz[0] for tz in tzs])
-def test_appliance_console_cli_set_timezone(timezone, temp_appliance_preconfig_modscope):
+def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modscope):
     """Set and check timezones are set correctly through appliance conosle cli"""
     app = temp_appliance_preconfig_modscope
     app.ssh_client.run_command("appliance_console_cli --timezone {}".format(timezone))
