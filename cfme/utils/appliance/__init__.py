@@ -244,6 +244,7 @@ class IPAppliance(object):
         'container': 'container',
         'pod': 'container',
         'openshift_creds': 'openshift_creds',
+        'is_dev': 'is_dev',
         'db_host': 'db_host',
         'db_port': 'db_port',
         'ssh_port': 'ssh_port',
@@ -274,7 +275,9 @@ class IPAppliance(object):
 
     def __init__(
             self, hostname, ui_protocol='https', ui_port=None, browser_steal=False, project=None,
-            container=None, openshift_creds=None, db_host=None, db_port=None, ssh_port=None):
+            container=None, openshift_creds=None, db_host=None, db_port=None, ssh_port=None,
+            is_dev=False
+    ):
         if not isinstance(hostname, six.string_types):
             raise TypeError('Appliance\'s hostname must be a string!')
         self.hostname = hostname
@@ -300,6 +303,7 @@ class IPAppliance(object):
         self.container = container
         self.project = project
         self.openshift_creds = openshift_creds or {}
+        self.is_dev = is_dev
         self._user = None
         self.appliance_console = ApplianceConsole(self)
         self.appliance_console_cli = ApplianceConsoleCli(self)
@@ -926,11 +930,15 @@ class IPAppliance(object):
                 'is_pod': self.is_pod,
                 'port': self.ssh_port,
             }
+        if self.is_dev:
+            connect_kwargs.update({'is_dev': True})
         ssh_client = ssh.SSHClient(**connect_kwargs)
         try:
             ssh_client.get_transport().is_active()
             logger.info('default appliance ssh credentials are valid')
         except Exception as e:
+            if self.is_dev:
+                raise Exception('SSH access on a dev alliance, (unsupported)')
             logger.error(e)
             logger.error('default appliance ssh credentials failed, trying establish ssh connection'
                          ' using ssh private key')
@@ -2735,6 +2743,7 @@ class DummyAppliance(object):
     version = attr.ib(default=Version('5.8.0'), convert=_version_for_version_or_stream)
     is_downstream = True
     is_pod = False
+    is_dev = False
     build = 'missing :)'
     managed_known_providers = []
 

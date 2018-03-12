@@ -1,17 +1,15 @@
 import pytest
 
-
-from fixtures.artifactor_plugin import fire_art_hook
-
+from cfme.utils.appliance import DummyAppliance
 from cfme.utils.log import logger
 from cfme.utils.path import data_path
-from cfme.utils.appliance import DummyAppliance
+from fixtures.artifactor_plugin import fire_art_hook
 
 
 @pytest.fixture(scope="session", autouse=True)
 def ensure_websocket_role_disabled(appliance):
     # TODO: This is a temporary solution until we find something better.
-    if isinstance(appliance, DummyAppliance):
+    if isinstance(appliance, DummyAppliance) or appliance.is_dev:
         return
     server_settings = appliance.server.settings
     roles = server_settings.server_roles_db
@@ -23,7 +21,7 @@ def ensure_websocket_role_disabled(appliance):
 @pytest.fixture(scope="session", autouse=True)
 def fix_merkyl_workaround(request, appliance):
     """Workaround around merkyl not opening an iptables port for communication"""
-    if isinstance(appliance, DummyAppliance):
+    if isinstance(appliance, DummyAppliance) or appliance.is_dev:
         return
     ssh_client = appliance.ssh_client
     if ssh_client.run_command('test -s /etc/init.d/merkyl').rc != 0:
@@ -45,7 +43,7 @@ def fix_missing_hostname(appliance):
     Note: Affects RHOS-based appliances but can't hurt the others so
           it's applied on all.
     """
-    if isinstance(appliance, DummyAppliance):
+    if isinstance(appliance, DummyAppliance) or appliance.is_dev:
         return
     ssh_client = appliance.ssh_client
     logger.info("Checking appliance's /etc/hosts for its own hostname")

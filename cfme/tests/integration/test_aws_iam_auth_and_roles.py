@@ -26,6 +26,7 @@ def auth_groups():
 
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('group_name, context', auth_groups())
+@pytest.mark.uncollectif(lambda appliance: appliance.is_dev, reason="Is a rails server")
 @pytest.mark.meta(blockers=[
     BZ(1531499,
        forced_streams=['5.8'],

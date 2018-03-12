@@ -410,7 +410,9 @@ class UserAll(CFMENavigateStep):
 @navigator.register(UserCollection, 'Add')
 class UserAdd(CFMENavigateStep):
     VIEW = AddUserView
-    prerequisite = NavigateToSibling('All')
+    def prerequisite(self):
+        navigate_to(self.obj.appliance.server, 'Configuration')
+        return navigate_to(self.obj, 'All')
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select("Add a new User")
@@ -422,8 +424,13 @@ class UserDetails(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
-        self.prerequisite_view.accordions.accesscontrol.tree.click_path(
-            self.obj.appliance.server_region_string(), 'Users', self.obj.name)
+        try:
+            self.prerequisite_view.accordions.accesscontrol.tree.click_path(
+                self.obj.appliance.server_region_string(), 'Users', self.obj.name)
+        except CandidateNotFound:
+            self.obj.appliance.browser.widgetastic.refresh()
+            self.prerequisite_view.accordions.accesscontrol.tree.click_path(
+                self.obj.appliance.server_region_string(), 'Users', self.obj.name)
 
 
 @navigator.register(User, 'Edit')

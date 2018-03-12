@@ -1,5 +1,8 @@
+import tempfile
+
 import pytest
 from os import path as os_path
+from wait_for import wait_for
 
 from cfme.base.ui import navigate_to
 from cfme.utils import version, os
@@ -7,20 +10,28 @@ from cfme.utils.appliance import ApplianceException
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger
-from cfme.utils.version import get_stream
 from cfme.utils.repo_gen import process_url, build_file
-from wait_for import wait_for
-import tempfile
+from cfme.utils.version import get_stream
+
+pytestmark = [pytest.mark.uncollectif(lambda appliance: appliance.is_dev, reason="rails server")]
 
 
 def pytest_generate_tests(metafunc):
     if metafunc.function in {test_upgrade_single_inplace, test_db_migrate_replication}:
         return
+
     argnames, argvalues, idlist = ['db_url', 'db_version', 'db_desc'], [], []
     db_backups = cfme_data.get('db_backups', {})
     if not db_backups:
-        return []
+        pytest.skip('No db backup information available!')
     for key, data in db_backups.iteritems():
+        for key, data in db_backups.iteritems():
+            argvalues.append((data.url, data.version, data.desc))
+            idlist.append(key)
+        # Once we can access the appliance in here, we can do
+        # if data.version >= appliance.version or \
+        #         get_stream(data.version) == get_stream(appliance.version):
+        #     continue
         argvalues.append((data.url, data.version, data.desc))
         idlist.append(key)
     return metafunc.parametrize(argnames=argnames, argvalues=argvalues, ids=idlist)
@@ -74,10 +85,6 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope_upgrade, appliance):
 
 @pytest.mark.ignore_stream('5.5', 'upstream')
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(
-    lambda db_version:
-        db_version >= version.current_version() or
-        version.get_stream(db_version) == version.current_stream())
 @pytest.mark.meta(
     blockers=[BZ(1354466, unblock=lambda db_url: 'ldap' not in db_url)])
 def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):

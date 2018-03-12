@@ -114,6 +114,7 @@ class SSHClient(paramiko.SSHClient):
         self._container = connect_kwargs.pop('container', None)
         self._project = connect_kwargs.pop('project', None)
         self.is_pod = connect_kwargs.pop('is_pod', False)
+        self.is_dev = connect_kwargs.pop('is_dev', False)
         self.oc_username = connect_kwargs.pop('oc_username', None)
         self.oc_password = connect_kwargs.pop('oc_password', False)
         self.f_stdout = connect_kwargs.pop('stdout', sys.stdout)
@@ -203,6 +204,8 @@ class SSHClient(paramiko.SSHClient):
         return self._transport and self._transport.active
 
     def connect(self, hostname=None, **kwargs):
+        if self.is_dev:
+            raise Exception('SSH is not allowed using a dev appliance!')
         """See paramiko.SSHClient.connect"""
         if hostname and hostname != self._connect_kwargs['hostname']:
             self._connect_kwargs['hostname'] = hostname

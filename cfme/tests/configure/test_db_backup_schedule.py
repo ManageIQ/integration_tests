@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
+
 import fauxfactory
 import pytest
-
-from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from six.moves.urllib.parse import urlparse
+
 from cfme.utils import conf, testgen
-from cfme.utils.ssh import SSHClient
-from cfme.utils.wait import wait_for
 from cfme.utils.pretty import Pretty
-from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.providers import get_mgmt
+from cfme.utils.ssh import SSHClient
+from cfme.utils.virtual_machines import deploy_template
+from cfme.utils.wait import wait_for
 
 PROTOCOL_TYPES = ('smb', 'nfs')
 
@@ -90,7 +91,9 @@ def pytest_generate_tests(metafunc):
         argnames = 'db_backup_data'
         argvalues = []
         ids = []
-        machine_data = data["log_db_depot_template"]
+        machine_data = data.get("log_db_depot_template")
+        if not machine_data:
+            pytest.skip('No log_db_depot information available!')
         for protocol in data["protocols"]:
             if protocol in PROTOCOL_TYPES and data["protocols"][protocol].get('use_for_db_backups',
                                                                               False):

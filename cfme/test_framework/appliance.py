@@ -3,14 +3,13 @@ import pytest
 import six.moves.urllib.parse
 import warnings
 
-from fixtures import terminalreporter
 from cfme.utils import conf
-
-from cfme.utils.path import log_path
 from cfme.utils.appliance import (
     load_appliances_from_config, stack,
     DummyAppliance, IPAppliance,
     ApplianceSummoningWarning)
+from cfme.utils.path import log_path
+from fixtures import terminalreporter
 
 warnings.simplefilter('error', ApplianceSummoningWarning)
 
@@ -65,7 +64,8 @@ def pytest_configure(config):
         for appliance in appliances:
             reporter.write_line('* {!r}'.format(appliance), cyan=True)
     appliance = appliances[0]
-    appliance.set_session_timeout(86400)
+    if not appliance.is_dev:
+        appliance.set_session_timeout(86400)
     stack.push(appliance)
     plugin = ApplianceHolderPlugin(appliance, appliances)
     config.pluginmanager.register(plugin, "appliance-holder")
