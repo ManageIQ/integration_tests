@@ -11,8 +11,11 @@ Usage:
 2.scripts/image_upload_glance.py --image cfme-rhevm-5.8.2.1-1.x86_64.qcow2 \
                                  --image_name_in_glance cfme-rhevm-5.8.2.1-1.x86_64.qcow2 \
                                  --provider glance11 \
+3.scripts/image_upload_glance.py --image_name_in_glance cfme-5922.qcow2 \
+                                 --provider glance11-server \
+                                 --url http://user:pswd@xyz:8080/cfme-rhevm-5.9.0.22-1.x86_64.qcow2
 
-If disk_format is not passed, it defaults to qcow2.
+Note : If disk_format is not passed, it defaults to qcow2.
 """
 import argparse
 import sys
@@ -27,16 +30,19 @@ def parse_cmd_line():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('--image', help='Image to be uploaded to Glance', required=True)
+    # Either --url or --image should be present, but not both.
     parser.add_argument('--image_name_in_glance', help='Image name in Glance', required=True)
     parser.add_argument('--provider', help='Glance provider key in cfme_data', required=True)
     parser.add_argument('--disk_format', help='Disk format of image', default='qcow2')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--image', help='Image to be uploaded to Glance')
+    group.add_argument('--url', help='Add a backend location url to an image')
 
     args = parser.parse_args()
     return args
 
 
-def upload_to_glance(image, image_name_in_glance, provider, disk_format):
+def upload_to_glance(image, image_name_in_glance, provider, disk_format, url):
     """
     Upload iso/qcow2/ova images to Glance.
     """
@@ -65,12 +71,15 @@ def upload_to_glance(image, image_name_in_glance, provider, disk_format):
     glance.images.update(glance_img.id, container_format="bare")
     glance.images.update(glance_img.id, disk_format=disk_format)
     glance.images.update(glance_img.id, visibility="public")
-    glance.images.upload(glance_img.id, open(image, 'rb'))
+    if image:
+        glance.images.upload(glance_img.id, open(image, 'rb'))
+    elif url:
+        glance.images.add_location(glance_img.id, url, {})
 
 
 def run(**kwargs):
     upload_to_glance(kwargs['image'], kwargs['image_name_in_glance'], kwargs['provider'],
-        kwargs['disk_format'])
+        kwargs['disk_format'], kwargs['url'])
 
 
 if __name__ == "__main__":
