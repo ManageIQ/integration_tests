@@ -27,6 +27,14 @@ tzs = [
 ]
 
 
+@pytest.fixture(scope="function")
+def appliance_with_preset_time(temp_appliance_preconfig_funcscope):
+    """Grabs fresh appliance and sets time and date prior to running tests"""
+    command_set = ('ap', '', '3', 'y', '2020-10-20', '09:58:00', 'y', '')
+    temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
+    return temp_appliance_preconfig_funcscope
+
+
 @pytest.mark.smoke
 def test_appliance_console(appliance):
     """'ap | tee /tmp/opt.txt)' saves stdout to file, 'ap' launch appliance_console."""
@@ -65,6 +73,52 @@ def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modsc
     temp_appliance_preconfig_modscope.appliance_console.run_commands(command_set)
 
     temp_appliance_preconfig_modscope.appliance_console.timezone_check(timezone)
+
+
+def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
+    """Grab fresh appliance and set time and date through appliance_console and check result"""
+    app = temp_appliance_preconfig_funcscope
+    command_set = ('ap', '', '3', 'y', '2020-10-20', '09:58:00', 'y', '')
+    app.appliance_console.run_commands(command_set)
+
+    def date_changed():
+        return app.ssh_client.run_command("date +%F-%T | grep 2020-10-20-10:00").success
+    wait_for(date_changed)
+
+
+def test_appliance_console_db_maintenance_hourly(appliance_with_preset_time):
+    """Test database hourly re-indexing through appliance console"""
+    app = appliance_with_preset_time
+    command_set = ('ap', '', '7', 'y', 'n', '')
+    app.appliance_console.run_commands(command_set)
+
+    def maintenance_run():
+        return app.ssh_client.run_command(
+            "grep REINDEX /var/www/miq/vmdb/log/hourly_continuous_pg_maint_stdout.log").success
+
+    wait_for(maintenance_run, timeout=300)
+
+
+@pytest.mark.parametrize('period', [
+    ['hourly'],
+    ['daily', '10'],
+    ['weekly', '10', '2'],
+    ['monthly', '10', '20']
+], ids=['hour', 'day', 'week', 'month'])
+def test_appliance_console_db_maintenance_periodic(period, appliance_with_preset_time):
+    """Tests full vacuums on database through appliance console"""
+    app = appliance_with_preset_time
+    command_set = ['ap', '', '7', 'n', 'y']
+    command_set.extend(period)
+    app.appliance_console.run_commands(command_set)
+
+    def maintenance_run():
+        return app.ssh_client.run_command(
+            "grep 'periodic vacuum full completed' "
+            "/var/www/miq/vmdb/log/hourly_continuous_pg_maint_stdout.log"
+        ).success
+
+    wait_for(maintenance_run, timeout=300)
 
 
 def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
