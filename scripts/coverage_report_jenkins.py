@@ -405,6 +405,8 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
         raise Exception(
             'Could not find any coverage reports for {} in {}'.format(appliance_version, job_name))
 
+    eligible_build_numbers = sorted(eligible_build_numbers)
+
     # Stop the evm service, not needed at all
     logger.info('Stopping evmserverd')
     appliance.evmserverd.stop()
@@ -414,7 +416,6 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
     # Upload the merger
     logger.info('Installing coverage merger')
     appliance.coverage._upload_coverage_merger()
-    eligible_build_numbers = sorted(eligible_build_numbers)
     with appliance.ssh_client as ssh:
         if not ssh.run_command('mkdir -p {}'.format(coverage_dir)):
             raise Exception(
@@ -458,7 +459,7 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Upload coverage data from jenkins job to sonarqube')
     parser.add_argument('jenkins_url')
     parser.add_argument('jenkins_job_name')
     parser.add_argument('work_appliance_ip')
@@ -472,3 +473,4 @@ if __name__ == '__main__':
             args.jenkins_user,
             args.jenkins_token,
             args.jenkins_job_name))
+
