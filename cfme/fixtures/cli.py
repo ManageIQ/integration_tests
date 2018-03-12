@@ -80,6 +80,14 @@ def dedicated_db_appliance(app_creds, unconfigured_appliance):
     yield app
 
 
+@pytest.fixture(scope="function")
+def appliance_with_preset_time(temp_appliance_preconfig_funcscope):
+    """Grabs fresh appliance and sets time and date prior to running tests"""
+    temp_appliance_preconfig_funcscope.ssh_client.run_command(
+        "appliance_console_cli --datetime 2020-10-20T09:58:00")
+    return temp_appliance_preconfig_funcscope
+
+
 @pytest.yield_fixture()
 def ipa_crud(configured_appliance, ipa_creds):
     configured_appliance.appliance_console_cli.configure_ipa(ipa_creds['ipaserver'],
