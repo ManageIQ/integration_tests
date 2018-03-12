@@ -1,3 +1,5 @@
+import attr
+
 from wrapanapi.virtualcenter import VMWareSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
@@ -13,6 +15,7 @@ class VirtualCenterEndpointForm(DefaultEndpointForm):
     pass
 
 
+@attr.s(hash=False)
 class VMwareProvider(InfraProvider):
     catalog_name = "VMware"
     type_name = "virtualcenter"
@@ -34,17 +37,6 @@ class VMwareProvider(InfraProvider):
         ('vm_start', {'event_type': 'VmPoweredOnEvent', 'vm_or_template_id': None}),
         ('vm_delete', {'event_type': 'VmRemovedEvent', 'vm_or_template_id': None})
     ]
-
-    def __init__(self, name=None, endpoints=None, key=None, zone=None, hostname=None,
-                 ip_address=None, start_ip=None, end_ip=None, provider_data=None, appliance=None):
-        super(VMwareProvider, self).__init__(
-            name=name, endpoints=endpoints, zone=zone, key=key, provider_data=provider_data,
-            appliance=appliance)
-        self.hostname = hostname
-        self.start_ip = start_ip
-        self.end_ip = end_ip
-        if ip_address:
-            self.ip_address = ip_address
 
     def deployment_helper(self, deploy_args):
         """ Used in utils.virtual_machines """

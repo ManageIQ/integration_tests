@@ -6,7 +6,6 @@ from six.moves.urllib.parse import urlparse
 
 from cfme.base.ui import ServerView
 from cfme.common.vm import VM
-from cfme.infrastructure.provider import wait_for_a_provider
 from cfme.utils.appliance import provision_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
@@ -125,11 +124,11 @@ def test_appliance_replicate_between_regions(request, virtualcenter_provider):
     with appl1.ipapp:
         configure_db_replication(appl2.hostname)
         virtualcenter_provider.create()
-        wait_for_a_provider()
+        appl1.collections.infra_providers.wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
-        wait_for_a_provider()
+        appl2.collections.infra_providers.wait_for_a_provider()
         assert virtualcenter_provider.exists
 
 
@@ -151,11 +150,11 @@ def test_external_database_appliance(request, virtualcenter_provider, appliance)
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
         virtualcenter_provider.create()
-        wait_for_a_provider()
+        appl1.collections.infra_providers.wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
-        wait_for_a_provider()
+        appl2.collections.infra_providers.wait_for_a_provider()
         assert virtualcenter_provider.exists
 
 
@@ -187,11 +186,11 @@ def test_appliance_replicate_sync_role_change(request, virtualcenter_provider, a
                  delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
         assert replication_conf.get_replication_status()
         virtualcenter_provider.create()
-        wait_for_a_provider()
+        appl1.collections.infra_providers.wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
-        wait_for_a_provider()
+        appl2.collections.infra_providers.wait_for_a_provider()
         assert virtualcenter_provider.exists
 
 
@@ -224,11 +223,11 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, virtualcente
         wait_for(replication_conf.get_replication_status, fail_condition=False, num_sec=360,
                  delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
         assert replication_conf.get_replication_status()
-        wait_for_a_provider()
+        appl1.collections.infra_providers.wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
-        wait_for_a_provider()
+        appl2.collections.infra_providers.wait_for_a_provider()
         assert virtualcenter_provider.exists
 
 
@@ -258,11 +257,11 @@ def test_appliance_replicate_database_disconnection(request, virtualcenter_provi
                  delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
         assert replication_conf.get_replication_status()
         virtualcenter_provider.create()
-        wait_for_a_provider()
+        appl1.collections.infra_providers.wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
-        wait_for_a_provider()
+        appl2.collections.infra_providers.wait_for_a_provider()
         assert virtualcenter_provider.exists
 
 
@@ -293,11 +292,11 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, virtua
         wait_for(replication_conf.get_replication_status, fail_condition=False, num_sec=360,
                  delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
         assert replication_conf.get_replication_status()
-        wait_for_a_provider()
+        appl1.collections.infra_providers.wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
-        wait_for_a_provider()
+        appl2.collections.infra_providers.wait_for_a_provider()
         assert virtualcenter_provider.exists
 
 
@@ -321,7 +320,7 @@ def test_distributed_vm_power_control(request, test_vm, virtualcenter_provider, 
     with appl1.ipapp:
         configure_db_replication(appl2.hostname)
         virtualcenter_provider.create()
-        wait_for_a_provider()
+        appl1.collections.infra_providers.wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True
 
