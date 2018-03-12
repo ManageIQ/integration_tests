@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.common.provider import cleanup_vm
+from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.services.catalogs.catalog_items import EditCatalogItemView
@@ -39,7 +39,7 @@ def test_order_catalog_item(appliance, provider, catalog_item, request,
         test_flag: provision
     """
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
-    request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
+    request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())
 
     register_event(target_type='Service', target_name=catalog_item.name,
                    event_type='service_provisioned')
@@ -64,7 +64,7 @@ def test_order_catalog_item_via_rest(
         test_flag: provision, rest
     """
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
+    request.addfinalizer(lambda: VM.factory(vm_name, provider).cleanup_on_provider())
     request.addfinalizer(catalog_item.delete)
     catalog = appliance.rest_api.collections.service_catalogs.find_by(name=catalog.name)
     assert len(catalog) == 1
@@ -92,7 +92,7 @@ def test_order_catalog_bundle(appliance, provider, catalog_item, request):
     """
 
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
-    request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
+    request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())
     bundle_name = fauxfactory.gen_alphanumeric()
     catalog_bundle = appliance.collections.catalog_bundles.create(
         bundle_name, description="catalog_bundle",

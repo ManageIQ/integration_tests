@@ -48,12 +48,7 @@ def retire_vm(small_template, provider):
     vm = VM.factory(random_vm_name('retire'), provider, template_name=small_template.name)
     vm.create_on_provider(find_in_cfme=True, allow_skip="default", timeout=1200)
     yield vm
-
-    try:
-        provider.mgmt.delete_vm(vm.name)
-    except Exception:
-        logger.warning('Failed to delete vm from provider: {}'.format(vm.name))
-
+    vm.cleanup_on_provider()
 
 @pytest.yield_fixture(scope="function")
 def retire_ec2_s3_vm(provider):
@@ -66,12 +61,7 @@ def retire_ec2_s3_vm(provider):
                     template_name='amzn-ami-pv-2015.03.rc-1.x86_64-s3')
     vm.create_on_provider(find_in_cfme=True, allow_skip="default", timeout=1200)
     yield vm
-
-    try:
-        provider.mgmt.delete_vm(vm.name)
-    except Exception:
-        logger.warning('Failed to delete vm from provider: {}'.format(vm.name))
-
+    vm.cleanup_on_provider()
 
 def verify_retirement_state(retire_vm):
     """Verify the vm/instance is in the 'retired' state in the UI and assert its power state

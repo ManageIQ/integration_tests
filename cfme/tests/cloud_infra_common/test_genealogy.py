@@ -60,10 +60,8 @@ def test_vm_genealogy_detected(
     """
     vm_crud.create_on_provider(find_in_cfme=True, allow_skip="default")
 
-    @request.addfinalizer
-    def _():
-        if provider.mgmt.does_vm_exist(vm_crud.name):
-            provider.mgmt.delete_vm(vm_crud.name)
+    request.addfinalizer(lambda: vm_crud.cleanup_on_provider())
+
     provider.mgmt.wait_vm_steady(vm_crud.name)
 
     if from_edit:

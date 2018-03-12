@@ -2,7 +2,7 @@
 import fauxfactory
 import pytest
 
-from cfme.common.provider import cleanup_vm
+from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
@@ -95,7 +95,7 @@ def test_iso_provision_from_template(appliance, provider, vm_name, smtp_test, da
             ('pxe_template', 'host', 'datastore', 'iso_file', 'iso_kickstart',
              'iso_root_password', 'iso_image_type', 'vlan'))
 
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
+    request.addfinalizer(lambda: VM.factory(vm_name, provider).cleanup_on_provider())
 
     provisioning_data = {
         'catalog': {

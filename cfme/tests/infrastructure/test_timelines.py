@@ -28,9 +28,7 @@ def new_vm(request, provider):
     logger.info('Will create  %r on Provider: %r', vm.name, vm.provider.name)
     vm.create_on_provider(find_in_cfme=False, timeout=500)
     yield vm
-    logger.debug('Fixture new_vm teardown! Name: %r Provider: %r', vm.name, vm.provider.name)
-    vm.provider.mgmt.delete_vm(vm.name)
-
+    vm.cleanup_on_provider()
 
 @pytest.fixture(scope="module")
 def mark_vm_as_appliance(new_vm, appliance):

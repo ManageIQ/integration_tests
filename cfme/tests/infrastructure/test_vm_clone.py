@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 
-from cfme.common.provider import cleanup_vm
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.log import logger
@@ -44,7 +43,7 @@ def create_vm(appliance, provider, setup_provider, request):
 @pytest.mark.usefixtures("setup_provider")
 @pytest.mark.long_running
 def test_vm_clone(appliance, provider, clone_vm_name, request, create_vm):
-    request.addfinalizer(lambda: cleanup_vm(clone_vm_name, provider))
+    request.addfinalizer(lambda: VM.factory(clone_vm_name, provider).cleanup_on_provider())
     provision_type = 'VMware'
     create_vm.clone_vm("email@xyz.com", "first", "last", clone_vm_name, provision_type)
     request_description = clone_vm_name

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from cfme.exceptions import OptionNotAvailable
 from cfme.utils import version, deferred_verpick
+from cfme.utils.log import logger
+
 from . import Instance
 
 
@@ -75,3 +77,18 @@ class AzureInstance(Instance):
             self.provider.mgmt.delete_vm(self.name)
         else:
             raise OptionNotAvailable(option + " is not a supported action")
+
+    def cleanup_on_provider(self):
+        """
+        Clean up a VM on an azure provider.
+
+        Runs VM.cleanup_on_provider() to delete the VM, then also deletes NICs/PIPs associated
+        with the VM. Exceptions raised are logged only.
+        """
+        super(AzureInstance, self).cleanup_on_provider()
+        logger.info("cleanup: removing NICs/PIPs for VM '{}'".format(self.name))
+        try:
+            self.remove_nics_by_search(self.name, self.provider.mgmt.resource_group)
+            self.remove_pips_by_search(self.name, self.provider.mgmt.resource_group)
+        except Exception:
+            logger.exception("cleanup: failed to cleanup NICs/PIPs for VM '{}'".format(self.name))

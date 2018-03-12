@@ -6,9 +6,10 @@ import pytest
 from dateutil.relativedelta import relativedelta
 from six.moves.urllib.parse import urlparse
 
+from cfme.common.vm import VM
 from cfme.utils import conf, testgen
 from cfme.utils.pretty import Pretty
-from cfme.utils.providers import get_mgmt
+from cfme.utils.providers import get_crud
 from cfme.utils.ssh import SSHClient
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
@@ -104,7 +105,7 @@ def pytest_generate_tests(metafunc):
         testgen.parametrize(metafunc, argnames, argvalues, ids=ids)
 
 
-@pytest.fixture(scope="module")
+@pytest.yield_fixture(scope="module")
 def db_depot_machine_ip(request):
     """ Deploy vm for depot test
 
@@ -115,16 +116,13 @@ def db_depot_machine_ip(request):
     data = conf.cfme_data.get("log_db_operations", {})
     depot_provider_key = data["log_db_depot_template"]["provider"]
     depot_template_name = data["log_db_depot_template"]["template_name"]
-    prov = get_mgmt(depot_provider_key)
+    prov_crud = get_crud(depot_provider_key)
     deploy_template(depot_provider_key,
                     depot_machine_name,
                     template_name=depot_template_name)
 
-    def fin():
-        prov.delete_vm(depot_machine_name)
-    request.addfinalizer(fin)
-    return prov.get_ip_address(depot_machine_name)
-
+    yield prov_crud.mgmt.get_ip_address(depot_machine_name)
+    VM.factory(depot_machine_name, prov_crud).cleanup_on_provider()
 
 def get_schedulable_datetime():
     """ Returns datetime for closest schedulable time (every 5 minutes)

@@ -10,7 +10,7 @@ from widgetastic_patternfly import CheckableBootstrapTreeview as CbTree
 
 from cfme import test_requirements
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.provider import cleanup_vm
+from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -77,7 +77,7 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
         base_view = vm.appliance.browser.create_view(BaseLoggedInPage)
         base_view.flash.assert_no_error()
 
-        request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
+        request.addfinalizer(lambda: VM.factory(vm_name, provider).cleanup_on_provider())
         request_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
         provision_request = appliance.collections.requests.instantiate(
             description=request_description)

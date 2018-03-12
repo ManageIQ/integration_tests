@@ -31,15 +31,6 @@ def create_instance(provider):
         provider.mgmt.set_name(
             instance.name, 'test_terminated_{}'.format(fauxfactory.gen_alphanumeric(8)))
         instance.create_on_provider(allow_skip="default", find_in_cfme=True)
-    return instance
-
-
-def cleanup_instance(provider, instance):
-    logger.info('Fixture cleanup, deleting test instance: %s', instance.name)
-    try:
-        provider.mgmt.delete_vm(instance.name)
-    except Exception:
-        logger.exception('Exception when deleting testing_instance: %s', instance.name)
 
 
 @pytest.yield_fixture(scope="function")
@@ -48,7 +39,7 @@ def testing_instance(provider):
     """
     instance = create_instance(provider)
     yield instance
-    cleanup_instance(provider, instance)
+    instance.cleanup_on_provider()
 
 
 @pytest.yield_fixture(scope="function")
@@ -57,7 +48,7 @@ def testing_instance2(provider):
     """
     instance2 = create_instance(provider)
     yield instance2
-    cleanup_instance(provider, instance2)
+    instance.cleanup_on_provider()
 
 
 # This fixture must be named 'vm_name' because its tied to cfme/fixtures/virtual_machine

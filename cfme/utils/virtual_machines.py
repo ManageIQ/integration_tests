@@ -2,6 +2,7 @@
 """
 import pytest
 
+from cfme.common.vm import VM
 from cfme.utils.providers import get_crud
 from fixtures.pytest_store import store
 from novaclient.exceptions import OverLimit as OSOverLimit
@@ -9,27 +10,6 @@ from ovirtsdk.infrastructure.errors import RequestError as RHEVRequestError
 from ssl import SSLError
 from cfme.utils.log import logger
 from cfme.utils.mgmt_system import exceptions
-
-
-def _vm_cleanup(mgmt, vm_name):
-    """Separated to make the logic able to propagate the exceptions directly."""
-    try:
-        logger.info("VM/Instance status: %s", mgmt.vm_status(vm_name))
-    except Exception as f:
-        logger.error(
-            "Could not retrieve VM/Instance status: %s: %s", type(f).__name__, str(f))
-    logger.info('Attempting cleanup on VM/instance %s', vm_name)
-    try:
-        if mgmt.does_vm_exist(vm_name):
-            # Stop the vm first
-            logger.warning('Destroying VM/instance %s', vm_name)
-            if mgmt.delete_vm(vm_name):
-                logger.info('VM/instance %s destroyed', vm_name)
-            else:
-                logger.error('Error destroying VM/instance %s', vm_name)
-    except Exception as f:
-        logger.error(
-            'Could not destroy VM/instance %s (%s: %s)', vm_name, type(f).__name__, str(f))
 
 
 def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **deploy_args):
@@ -75,7 +55,7 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
         except Exception as e:
             logger.error('Could not provisioning VM/instance %s (%s: %s)',
                 vm_name, type(e).__name__, str(e))
-            _vm_cleanup(provider_crud.mgmt, vm_name)
+            VM.factory(vm_name, provider_crud).cleanup_on_provider()
             raise
     except skip_exceptions as e:
         e_c = type(e)

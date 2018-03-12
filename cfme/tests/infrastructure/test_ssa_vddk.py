@@ -73,8 +73,7 @@ def vm(request, provider, small_template_modscope, ssa_analysis_profile):
     @request.addfinalizer
     def _finalize():
         try:
-            if provider.mgmt.does_vm_exist(vm_obj.name):
-                provider.mgmt.delete_vm(vm_obj.name)
+            vm_obj.cleanup_on_provider()
             provider.refresh_provider_relationships()
         except Exception as e:
             logger.exception(e)

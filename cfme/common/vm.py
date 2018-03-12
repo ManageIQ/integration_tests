@@ -774,6 +774,37 @@ class VM(BaseVM):
         else:
             raise ValueError("Invalid state '{}'".format(state))
 
+    def cleanup_on_provider(self):
+        """
+        Method to remove a VM from the provider after tests.
+
+        Checks that the VM exists on the provider, ensures it is in 'powered off' state,
+        and deletes it. Any exceptions raised during delete will be logged only.
+        :return:
+        """
+        if not self.provider.mgmt.does_vm_exist(self.name):
+            logger.info(
+                "VM '{}' on provider '{}' does not exist, no cleanup to do".format(
+                    self.name, self.provider.key)
+            )
+
+        # Ensure the VM is in a state to be deleted
+        logger.info(
+            "cleanup: ensuring VM '{}' on provider '{}' is powered off".format(
+                self.name, self.provider.key)
+        )
+        self.ensure_state_on_provider(self.STOPPED)
+        try:
+            logger.info(
+                "cleanup: deleting VM '{}' on provider '{}'".format(
+                    self.name, self.provider.key)
+            )
+            self.provider.mgmt.delete_vm(self.name)
+        except Exception:
+            # The mgmt_sys classes raise Exception :\
+            logger.exception(
+                "cleanup: failed for VM '{}' on provider '{}'".format(self.name, self.provider.key))
+
     def set_retirement_date(self, when=None, offset=None, warn=None):
         """Overriding common method to use widgetastic views/widgets properly
 

@@ -15,7 +15,6 @@ import fauxfactory
 import pytest
 from functools import partial
 
-from cfme.common.provider import cleanup_vm
 from cfme.common.vm import VM
 from cfme.control.explorer import conditions, policies
 from cfme.infrastructure.provider import InfraProvider
@@ -145,7 +144,7 @@ def _get_vm(request, provider, template_name, vm_name):
     except TimedOutError as e:
         logger.exception(e)
         try:
-            provider.mgmt.delete_vm(vm_name)
+            VM.factory(vm_name, provider).cleanup_on_provider()
         except TimedOutError:
             logger.warning("Could not delete VM %s!", vm_name)
         finally:
@@ -153,20 +152,7 @@ def _get_vm(request, provider, template_name, vm_name):
             pytest.skip("{} is quite likely overloaded! Check its status!\n{}: {}".format(
                 provider.key, type(e).__name__, str(e)))
 
-    @request.addfinalizer
-    def _finalize():
-        """if getting REST object failed, we would not get the VM deleted! So explicit teardown."""
-        logger.info("Shutting down VM with name %s", vm_name)
-        if (provider.one_of(InfraProvider, OpenStackProvider, AzureProvider) and
-                provider.mgmt.is_vm_suspended(vm_name)):
-            logger.info("Powering up VM %s to shut it down correctly.", vm_name)
-            provider.mgmt.start_vm(vm_name)
-        if provider.mgmt.is_vm_running(vm_name):
-            logger.info("Powering off VM %s", vm_name)
-            provider.mgmt.stop_vm(vm_name)
-        if provider.mgmt.does_vm_exist(vm_name):
-            logger.info("Deleting VM %s in %s", vm_name, provider.mgmt.__class__.__name__)
-            provider.mgmt.delete_vm(vm_name)
+    request.addfinalizer(lambda: VM.factory(vm_name, provider).cleanup_on_provider())
 
     # Make it appear in the provider
     provider.refresh_provider_relationships()
@@ -857,7 +843,7 @@ def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, poli
         with update(compliance_policy):
             compliance_policy.scope = (
                 "fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name))
-        cleanup_vm(clone_vm_name, provider)
+        VM.factory(clone_vm_name, provider).cleanup_on_provider()
 
     vm_big.crud.clone_vm(fauxfactory.gen_email(), "first", "last", clone_vm_name, "VMware")
     request_description = clone_vm_name

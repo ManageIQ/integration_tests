@@ -4,7 +4,6 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.simulation import simulate
-from cfme.common.provider import cleanup_vm
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.service_catalogs import ServiceCatalogs
@@ -31,8 +30,7 @@ def new_vm(provider, setup_provider, small_template_modscope):
     vm = VM.factory(vm_name, provider, small_template_modscope.name)
     vm.create_on_provider(find_in_cfme=True, timeout=700, allow_skip="default")
     yield vm
-    if provider.mgmt.does_vm_exist(vm.name):
-        provider.mgmt.delete_vm(vm.name)
+    vm.cleanup_on_provider()
     provider.refresh_provider_relationships()
 
 
@@ -51,7 +49,7 @@ def copy_domain(request, appliance):
 @pytest.yield_fixture(scope='function')
 def myservice(appliance, provider, catalog_item, request):
     vm_name = catalog_item.provisioning_data["catalog"]["vm_name"]
-    request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
+    request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
