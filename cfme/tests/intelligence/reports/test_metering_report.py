@@ -2,6 +2,8 @@
 # All providers that support C&U support Metering Reports.SCVMM doesn't support C&U.
 # Metering reports differ from Chargeback reports in that Metering reports report
 # only resource usage and not costs.
+#
+# Metering Reports have been introduced in 59.
 
 import fauxfactory
 import math
