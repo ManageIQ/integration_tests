@@ -62,13 +62,11 @@ class NuageProvider(NetworkProvider):
         'security_groups': SecurityGroupCollection,
     }
 
-    endpoints = attr.ib(default=None)
     key = attr.ib(default=None)
     api_version = attr.ib(default=None)
     api_version_name = attr.ib(default=None)
 
     def __attrs_post_init__(self):
-        self.endpoints = self._prepare_endpoints(self.endpoints)
         self.parent = self.appliance.collections.network_providers
 
     @property
@@ -99,11 +97,13 @@ class NuageProvider(NetworkProvider):
                 if expected_endpoint.name == endp:
                     endpoints[endp] = expected_endpoint(**prov_config['endpoints'][endp])
 
-        return cls(name=prov_config['name'],
-                   endpoints=endpoints,
-                   api_version=prov_config['api_version'],
-                   api_version_name=prov_config['api_version_name'],
-                   key=prov_key)
+        return cls.appliance.collections.network_providers.instantiate(
+            prov_class=cls,
+            ame=prov_config['name'],
+            endpoints=endpoints,
+            api_version=prov_config['api_version'],
+            api_version_name=prov_config['api_version_name'],
+            key=prov_key)
 
     @property
     def view_value_mapping(self):

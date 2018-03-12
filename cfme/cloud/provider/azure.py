@@ -1,3 +1,5 @@
+import attr
+
 from wrapanapi.msazure import AzureSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
@@ -22,6 +24,7 @@ class AzureEndpointForm(DefaultEndpointForm):
     pass
 
 
+@attr.s(hash=False)
 class AzureProvider(CloudProvider):
     """
      BaseProvider->CloudProvider->AzureProvider class.
@@ -35,13 +38,9 @@ class AzureProvider(CloudProvider):
     discover_name = "Azure"
     settings_key = 'ems_azure'
 
-    def __init__(self, name=None, endpoints=None, zone=None, key=None, region=None,
-                 tenant_id=None, subscription_id=None, appliance=None):
-        super(AzureProvider, self).__init__(name=name, endpoints=endpoints,
-                                            zone=zone, key=key, appliance=appliance)
-        self.region = region  # Region can be a string or a dict for version pick
-        self.tenant_id = tenant_id
-        self.subscription_id = subscription_id
+    region = attr.ib(default=None)
+    tenant_id = attr.ib(default=None)
+    subscription_id = attr.ib(default=None)
 
     @property
     def view_value_mapping(self):
@@ -64,7 +63,8 @@ class AzureProvider(CloudProvider):
         endpoint = AzureEndpoint(**prov_config['endpoints']['default'])
         # HACK: stray domain entry in credentials, so ensure it is not there
         endpoint.credentials.domain = None
-        return cls(
+        return cls.appliance.collections.cloud_providers.instantiate(
+            prov_class=cls,
             name=prov_config['name'],
             region=prov_config.get('region'),
             tenant_id=prov_config['tenant_id'],

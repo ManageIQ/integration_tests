@@ -95,7 +95,7 @@ class OpenstackInfraProvider(InfraProvider):
         else:
             start_ip = end_ip = prov_config.get('ipaddress')
         return cls.appliance.collections.infra_providers.instantiate(
-            prov_class=OpenstackInfraProvider,
+            prov_class=cls,
             name=prov_config['name'],
             endpoints=endpoints,
             key=prov_key,

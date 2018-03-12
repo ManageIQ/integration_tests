@@ -10,7 +10,7 @@ from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.instance import Instance
-from cfme.cloud.provider import discover, wait_for_a_provider, CloudProvider
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
@@ -43,7 +43,9 @@ def enable_regions(provider):
                          reason='no more support for cloud provider discovery')
 def test_empty_discovery_form_validation_cloud(appliance):
     """ Tests that the flash message is correct when discovery form is empty."""
-    discover(None, AzureProvider)
+    collection = appliance.collections.cloud_providers
+
+    collection.discover(None, AzureProvider)
     view = appliance.browser.create_view(CloudProvidersDiscoverView)
     view.flash.assert_message('Client ID, Client Key, Azure Tenant ID and '
                               'Subscription ID are required')
@@ -55,16 +57,18 @@ def test_empty_discovery_form_validation_cloud(appliance):
                          reason='no more support for cloud provider discovery')
 def test_discovery_cancelled_validation_cloud(appliance):
     """ Tests that the flash message is correct when discovery is cancelled."""
-    discover(None, AzureProvider, cancel=True)
+    collection = appliance.collections.cloud_providers
+    collection.discover(None, AzureProvider, cancel=True)
     view = appliance.browser.create_view(CloudProvidersView)
     view.flash.assert_success_message('Cloud Providers Discovery was cancelled by the user')
 
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_add_cancelled_validation_cloud(request):
+def test_add_cancelled_validation_cloud(request, appliance):
     """Tests that the flash message is correct when add is cancelled."""
-    prov = EC2Provider()
+    collection = appliance.collections.cloud_providers
+    prov = collection.instantiate(prov_class=EC2Provider)
     request.addfinalizer(prov.delete_if_exists)
     try:
         prov.create(cancel=True)
@@ -83,8 +87,8 @@ def test_discovery_password_mismatch_validation_cloud(appliance):
         principal=fauxfactory.gen_alphanumeric(5),
         secret=fauxfactory.gen_alphanumeric(5),
         verify_secret=fauxfactory.gen_alphanumeric(7))
-
-    discover(cred, EC2Provider)
+    collection = appliance.collections.cloud_providers
+    collection.discover(cred, EC2Provider)
     view = appliance.browser.create_view(CloudProvidersView)
     view.flash.assert_message('Password/Verify Password do not match')
 
@@ -98,10 +102,10 @@ def test_providers_discovery_amazon(appliance):
     # out to specific credential keys
     # amazon_creds = get_credentials_from_config('cloudqe_amazon')
     # discover(amazon_creds, EC2Provider)
-
+    collection = appliance.collections.cloud_providers
     view = appliance.browser.create_view(CloudProvidersView)
     view.flash.assert_success_message('Amazon Cloud Providers: Discovery successfully initiated')
-    wait_for_a_provider()
+    collection.wait_for_new_provider()
 
 
 @pytest.mark.uncollectif(lambda provider: (store.current_appliance.version >= '5.9' or
@@ -110,7 +114,7 @@ def test_providers_discovery_amazon(appliance):
                          reason='no more support for cloud provider discovery')
 @test_requirements.discovery
 @pytest.mark.tier(1)
-def test_providers_discovery(request, provider):
+def test_providers_discovery(request, appliance, provider):
     """Tests provider discovery
 
     Metadata:
@@ -128,12 +132,14 @@ def test_providers_discovery(request, provider):
             secret=provider.default_endpoint.credentials.secret,
             verify_secret=provider.default_endpoint.credentials.secret)
 
-    discover(cred, provider)
+    collection = appliance.collections.cloud_providers
+
+    collection.discover(cred, provider)
     view = provider.create_view(CloudProvidersView)
     view.flash.assert_success_message('Cloud Providers: Discovery successfully initiated')
 
     request.addfinalizer(CloudProvider.clear_providers)
-    wait_for_a_provider()
+    collection.wait_for_new_provider()
 
 
 @pytest.mark.tier(3)
@@ -197,23 +203,22 @@ def test_cloud_provider_crud(provider, enable_regions):
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_type_required_validation_cloud(request):
+def test_type_required_validation_cloud(request, appliance):
     """Test to validate type while adding a provider"""
-    prov = CloudProvider()
-    request.addfinalizer(prov.delete_if_exists)
-    view = navigate_to(prov, 'Add')
+    collection = appliance.collections.cloud_providers
+    view = navigate_to(collection, 'Add')
     view.fill({'name': 'foo'})
     assert not view.add.active
 
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_name_required_validation_cloud(request):
+def test_name_required_validation_cloud(request, appliance):
     """Tests to validate the name while adding a provider"""
-    prov = EC2Provider(
-        name=None,
-        region='US East (Northern Virginia)')
-
+    collection = appliance.collections.cloud_providers
+    prov = collection.instantiate(prov_class=EC2Provider,
+                                  name=None,
+                                  region='US East (Northern Virginia)')
     request.addfinalizer(prov.delete_if_exists)
     with pytest.raises(AssertionError):
         prov.create()
@@ -223,9 +228,11 @@ def test_name_required_validation_cloud(request):
 
 
 @pytest.mark.tier(3)
-def test_region_required_validation(request, soft_assert):
+def test_region_required_validation(request, soft_assert, appliance):
     """Tests to validate the region while adding a provider"""
-    prov = EC2Provider(name=fauxfactory.gen_alphanumeric(5), region=None)
+    collection = appliance.collections.cloud_providers
+    prov = collection.instantiate(prov_class=EC2Provider, name=fauxfactory.gen_alphanumeric(5),
+                                  region=None)
 
     request.addfinalizer(prov.delete_if_exists)
     with pytest.raises(AssertionError):
@@ -236,12 +243,15 @@ def test_region_required_validation(request, soft_assert):
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_host_name_required_validation_cloud(request):
+def test_host_name_required_validation_cloud(request, appliance):
     """Test to validate the hostname while adding a provider"""
-    prov = OpenStackProvider(
-        name=fauxfactory.gen_alphanumeric(5),
-        hostname=None,
-        ip_address=fauxfactory.gen_ipaddr(prefix=[10]))
+    endpoint = RHOSEndpoint(hostname=None,
+                            ip_address=fauxfactory.gen_ipaddr(prefix=[10]),
+                            security_protocol=None)
+    collection = appliance.collections.cloud_providers
+    prov = collection.instantiate(prov_class=OpenStackProvider,
+                                  name=fauxfactory.gen_alphanumeric(5),
+                                  endpoints=endpoint)
 
     request.addfinalizer(prov.delete_if_exists)
     # It must raise an exception because it keeps on the form
@@ -252,13 +262,16 @@ def test_host_name_required_validation_cloud(request):
 
 
 @pytest.mark.tier(3)
-def test_api_port_blank_validation(request):
+def test_api_port_blank_validation(request, appliance):
     """Test to validate blank api port while adding a provider"""
     endpoint = RHOSEndpoint(hostname=fauxfactory.gen_alphanumeric(5),
                             ip_address=fauxfactory.gen_ipaddr(prefix=[10]),
                             api_port='',
                             security_protocol='Non-SSL')
-    prov = OpenStackProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
+    collection = appliance.collections.cloud_providers
+    prov = collection.instantiate(prov_class=OpenStackProvider,
+                                  name=fauxfactory.gen_alphanumeric(5),
+                                  endpoints=endpoint)
 
     request.addfinalizer(prov.delete_if_exists)
     # It must raise an exception because it keeps on the form
@@ -271,21 +284,23 @@ def test_api_port_blank_validation(request):
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
                          reason='EC2 option not available')
-def test_user_id_max_character_validation():
+def test_user_id_max_character_validation(appliance):
     cred = Credential(principal=fauxfactory.gen_alphanumeric(51), secret='')
-    discover(cred, EC2Provider)
+    collection = appliance.collections.cloud_providers
+    collection.discover(cred, EC2Provider)
 
 
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
                          reason='EC2 option not available')
-def test_password_max_character_validation():
+def test_password_max_character_validation(appliance):
     password = fauxfactory.gen_alphanumeric(51)
     cred = Credential(
         principal=fauxfactory.gen_alphanumeric(5),
         secret=password,
         verify_secret=password)
-    discover(cred, EC2Provider)
+    collection = appliance.collections.cloud_providers
+    collection.discover(cred, EC2Provider)
 
 
 @pytest.mark.tier(3)
@@ -300,12 +315,15 @@ def test_name_max_character_validation_cloud(request, cloud_provider):
 
 
 @pytest.mark.tier(3)
-def test_hostname_max_character_validation_cloud():
+def test_hostname_max_character_validation_cloud(appliance):
     """Test to validate max character for hostname field"""
     endpoint = RHOSEndpoint(hostname=fauxfactory.gen_alphanumeric(256),
                             api_port=None,
                             security_protocol=None)
-    prov = OpenStackProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
+    collection = appliance.collections.cloud_providers
+    prov = collection.instantiate(prov_class=OpenStackProvider,
+                                  name=fauxfactory.gen_alphanumeric(5),
+                                  endpoints=endpoint)
     try:
         prov.create()
     except MoveTargetOutOfBoundsException:
@@ -318,12 +336,15 @@ def test_hostname_max_character_validation_cloud():
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_api_port_max_character_validation_cloud():
+def test_api_port_max_character_validation_cloud(appliance):
     """Test to validate max character for api port field"""
     endpoint = RHOSEndpoint(hostname=fauxfactory.gen_alphanumeric(5),
                             api_port=fauxfactory.gen_alphanumeric(16),
                             security_protocol='Non-SSL')
-    prov = OpenStackProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
+    collection = appliance.collections.cloud_providers
+    prov = collection.instantiate(prov_class=OpenStackProvider,
+                                  name=fauxfactory.gen_alphanumeric(5),
+                                  endpoints=endpoint)
     try:
         prov.create()
     except AssertionError:
@@ -333,10 +354,9 @@ def test_api_port_max_character_validation_cloud():
 
 
 @pytest.mark.tier(3)
-def test_openstack_provider_has_api_version():
+def test_openstack_provider_has_api_version(appliance):
     """Check whether the Keystone API version field is present for Openstack."""
-    prov = CloudProvider()
-    view = navigate_to(prov, 'Add')
+    view = navigate_to(appliance.collections.cloud_providers, 'Add')
     view.fill({"prov_type": "OpenStack"})
     assert view.api_version.is_displayed, "API version select is not visible"
 

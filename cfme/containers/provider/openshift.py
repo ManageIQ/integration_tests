@@ -1,6 +1,7 @@
+import attr
+from cached_property import cached_property
 from os import path
 
-from cached_property import cached_property
 from wrapanapi.containers.providers.rhopenshift import Openshift
 
 from cfme.common.provider import DefaultEndpoint
@@ -75,6 +76,7 @@ class AlertsEndpoint(ServiceBasedEndpoint):
     name = 'alerts'
 
 
+@attr.s(hash=False)
 class OpenshiftProvider(ContainersProvider):
     num_route = ['num_route']
     STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + num_route
@@ -84,45 +86,15 @@ class OpenshiftProvider(ContainersProvider):
     endpoints_form = ContainersProviderEndpointsForm
     settings_key = 'ems_openshift'
 
-    def __init__(
-            self,
-            name=None,
-            key=None,
-            zone=None,
-            metrics_type=None,
-            alerts_type=None,
-            provider_data=None,
-            endpoints=None,
-            appliance=None,
-            http_proxy=None,
-            adv_http=None,
-            adv_https=None,
-            no_proxy=None,
-            image_repo=None,
-            image_reg=None,
-            image_tag=None,
-            cve_loc=None,
-            virt_type=None):
-
-        self.http_proxy = http_proxy
-        self.adv_http = adv_http
-        self.adv_https = adv_https
-        self.no_proxy = no_proxy
-        self.image_repo = image_repo
-        self.image_reg = image_reg
-        self.image_tag = image_tag
-        self.cve_loc = cve_loc
-        self.virt_type = virt_type
-
-        super(OpenshiftProvider, self).__init__(
-            name=name,
-            key=key,
-            zone=zone,
-            metrics_type=metrics_type,
-            provider_data=provider_data,
-            alerts_type=alerts_type,
-            endpoints=endpoints,
-            appliance=appliance)
+    http_proxy = attr.ib(default=None)
+    adv_http = attr.ib(default=None)
+    adv_https = attr.ib(default=None)
+    no_proxy = attr.ib(default=None)
+    image_repo = attr.ib(default=None)
+    image_reg = attr.ib(default=None)
+    image_tag = attr.ib(default=None)
+    cve_loc = attr.ib(default=None)
+    virt_type = attr.ib(default=None)
 
     def create(self, **kwargs):
 
@@ -135,7 +107,6 @@ class OpenshiftProvider(ContainersProvider):
                                                           "Prometheus Provider Profile")
             node_profile = alert_profiles.instantiate(NodeAlertProfile,
                                                       "Prometheus node Profile")
-
             for profile in [provider_profile, node_profile]:
                 profile.assign_to("The Enterprise")
 
@@ -152,15 +123,10 @@ class OpenshiftProvider(ContainersProvider):
     @property
     def view_value_mapping(self):
 
-        mapping = {
-            'name': self.name,
-            'zone': self.zone
-        }
-
-        mapping['prov_type'] = (
-            'OpenShift Container Platform'
-            if self.appliance.is_downstream
-            else 'OpenShift')
+        mapping = {'name': self.name,
+                   'zone': self.zone,
+                   'prov_type': ('OpenShift Container Platform' if self.appliance.is_downstream
+                                 else 'OpenShift')}
 
         if self.appliance.version >= '5.9':
             mapping['metrics_type'] = self.metrics_type
@@ -240,7 +206,8 @@ class OpenshiftProvider(ContainersProvider):
              'image_repo', 'image_reg', 'image_tag', 'cve_loc')
         ]
 
-        return cls(
+        return cls.appliance.collections.containers_providers.instantiate(
+            prov_class=cls,
             name=prov_config.get('name'),
             key=prov_key,
             zone=prov_config.get('server_zone'),
@@ -256,8 +223,7 @@ class OpenshiftProvider(ContainersProvider):
             image_reg=image_reg,
             image_tag=image_tag,
             cve_loc=cve_loc,
-            virt_type=prov_config.get('virt_type')
-        )
+            virt_type=prov_config.get('virt_type'))
 
     def custom_attributes(self):
         """returns custom attributes"""

@@ -8,6 +8,7 @@ from cfme.common.provider import CANDUEndpoint, DefaultEndpoint, DefaultEndpoint
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.exceptions import ItemNotFound
 from cfme.services.catalogs.catalog_items import RHVCatalogItem
+from cfme.utils import version
 from . import InfraProvider
 
 
@@ -98,7 +99,7 @@ class RHEVMProvider(InfraProvider):
         else:
             start_ip = end_ip = prov_config.get('ipaddress')
         return cls.appliance.collections.infra_providers.instantiate(
-            prov_class=RHEVMProvider,
+            prov_class=cls,
             name=prov_config['name'],
             endpoints=endpoints,
             zone=prov_config.get('server_zone', 'default'),

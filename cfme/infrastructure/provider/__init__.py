@@ -21,7 +21,7 @@ from cfme.common.provider_views import (InfraProviderAddView,
 from cfme.exceptions import DestinationNotFound
 from cfme.infrastructure.cluster import ClusterView, ClusterToolbar
 from cfme.infrastructure.host import Host
-from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
@@ -46,7 +46,7 @@ class ProviderClustersView(ClusterView):
 
 
 @attr.s(hash=False)
-class InfraProvider(Pretty, CloudInfraProvider, Fillable, BaseEntity):
+class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     """
     Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.
 
@@ -78,17 +78,16 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable, BaseEntity):
     vm_name = "Virtual Machines"
 
     name = attr.ib(default=None)
-    endpoints = attr.ib(default=None)
     key = attr.ib(default=None)
     zone = attr.ib(default=None)
-    hostname = attr.ib(default=None)
-    ip_address = attr.ib(default=None)
+    # hostname = attr.ib(default=None) # defined in CloudInfraProvider class
+    # ip_address = attr.ib(default=None) # defined in CloudInfraProvider class
     start_ip = attr.ib(default=None)
     end_ip = attr.ib(default=None)
     provider_data = attr.ib(default=None)
 
     def __attrs_post_init__(self):
-        self.endpoints = self._prepare_endpoints(self.endpoints)
+        super(InfraProvider, self).__attrs_post_init__()
         self.parent = self.appliance.collections.infra_providers
 
     @variable(alias='db')
@@ -220,8 +219,19 @@ class InfraProviderCollection(BaseCollection):
         return prov_class.from_collection(self, *args, **kwargs)
 
     def create(self, prov_class, *args, **kwargs):
-        obj = self.instantiate(prov_class, *args, **kwargs)
-        obj.create()
+        # ugly workaround until I move everything to main class
+        class_attrs = [at.name for at in attr.fields(prov_class)]
+        init_kwargs = {}
+        create_kwargs = {}
+        for name, value in kwargs.items():
+            if name not in class_attrs:
+                create_kwargs[name] = value
+            else:
+                init_kwargs[name] = value
+
+        obj = self.instantiate(prov_class, *args, **init_kwargs)
+        obj.create(**create_kwargs)
+        return obj
 
     def discover(self, discover_cls, cancel=False, start_ip=None, end_ip=None):
         """

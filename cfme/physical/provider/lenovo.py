@@ -1,3 +1,5 @@
+import attr
+
 from widgetastic_patternfly import Input
 from wrapanapi.lenovo import LenovoSystem
 
@@ -20,6 +22,7 @@ class LenovoEndpointForm(DefaultEndpointForm):
     api_port = Input('default_api_port')
 
 
+@attr.s(hash=False)
 class LenovoProvider(PhysicalProvider):
     type_name = 'lenovo'
     endpoints_form = LenovoEndpointForm
@@ -29,17 +32,14 @@ class LenovoProvider(PhysicalProvider):
     db_types = ["Lenovo::PhysicalInfraManager"]
     settings_key = 'ems_lenovo'
 
-    def __init__(self, appliance, name=None, key=None, endpoints=None):
-        super(LenovoProvider, self).__init__(
-            appliance=appliance, name=name, key=key, endpoints=endpoints
-        )
-
     @classmethod
     def from_config(cls, prov_config, prov_key):
         endpoint = LenovoEndpoint(**prov_config['endpoints']['default'])
-        return cls(name=prov_config['name'],
-                   endpoints={endpoint.name: endpoint},
-                   key=prov_key)
+        return cls.appliance.collections.physical_providers.instantiate(
+            prov_class=cls,
+            name=prov_config['name'],
+            endpoints={endpoint.name: endpoint},
+            key=prov_key)
 
     @property
     def view_value_mapping(self):

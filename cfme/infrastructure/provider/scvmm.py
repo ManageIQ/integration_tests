@@ -66,7 +66,7 @@ class SCVMMProvider(InfraProvider):
         else:
             start_ip = end_ip = prov_config.get('ipaddress')
         return cls.appliance.collections.infra_providers.instantiate(
-            prov_class=SCVMMProvider,
+            prov_class=cls,
             name=prov_config['name'],
             endpoints={endpoint.name: endpoint},
             key=prov_key,
