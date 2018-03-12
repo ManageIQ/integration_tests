@@ -1,6 +1,7 @@
 import attr
 from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.exceptions import MoveTargetOutOfBoundsException
 
 from cfme.exceptions import DestinationNotFound
 from cfme.common import WidgetasticTaggable
@@ -21,7 +22,8 @@ from cfme.networks.views import (
     OneProviderNetworkPortView,
     OneProviderNetworkRouterView,
     OneProviderSecurityGroupView,
-    OneProviderSubnetView
+    OneProviderSubnetView,
+    NetworkProviderEditView
 )
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -144,6 +146,73 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable, BaseEntity):
 
         return created
 
+    def update(self, updates, cancel=False, validate_credentials=True):
+        """
+        Updates a provider in the UI.  Better to use utils.update.update context
+        manager than call this directly.
+
+        Args:
+           updates (dict): fields that are changing.
+           cancel (boolean): whether to cancel out of the update.
+           validate_credentials (boolean): whether credentials have to be validated
+        """
+        edit_view = navigate_to(self, 'Edit')
+
+        # filling main part of dialog
+        endpoints = updates.pop('endpoints', None)
+        if updates:
+            edit_view.fill(updates)
+
+        # filling endpoints
+        if endpoints:
+            endpoints = self._prepare_endpoints(endpoints)
+
+            for endpoint in endpoints.values():
+                # every endpoint class has name like 'default', 'events', etc.
+                # endpoints view can have multiple tabs, the code below tries
+                # to find right tab by passing endpoint name to endpoints view
+                try:
+                    endp_view = getattr(self.endpoints_form(parent=edit_view), endpoint.name)
+                except AttributeError:
+                    # tabs are absent in UI when there is only single (default) endpoint
+                    endp_view = self.endpoints_form(parent=edit_view)
+                endp_view.fill(endpoint.view_value_mapping)
+
+                # filling credentials
+                # the code below looks for existing endpoint equal to passed one and
+                # compares their credentials. it fills passed credentials
+                # if credentials are different
+                cur_endpoint = self.endpoints[endpoint.name]
+                if hasattr(endpoint, 'credentials'):
+                    if not hasattr(cur_endpoint, 'credentials') or \
+                            endpoint.credentials != cur_endpoint.credentials:
+                        if hasattr(endp_view, 'change_password'):
+                            endp_view.change_password.click()
+                        elif hasattr(endp_view, 'change_key'):
+                            endp_view.change_key.click()
+                        else:
+                            NotImplementedError(
+                                "Such endpoint doesn't have change password/key button")
+
+                        endp_view.fill(endpoint.credentials.view_value_mapping)
+                if (validate_credentials and hasattr(endp_view, 'validate') and
+                        endp_view.validate.is_displayed):
+                    endp_view.validate.click()
+                    self._post_validate_checks(edit_view)
+
+        if cancel:
+            edit_view.cancel.click()
+            self._post_cancel_edit_checks()
+        else:
+            edit_view.save.click()
+            if endpoints:
+                for endp_name, endp in endpoints.items():
+                    self.endpoints[endp_name] = endp
+            if updates:
+                self.name = updates.get('name', self.name)
+
+            self._post_update_checks(edit_view)
+
     def _post_validate_checks(self, add_view):
         add_view.flash.assert_no_error()
         add_view.flash.assert_success_message(
@@ -155,6 +224,13 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable, BaseEntity):
                        'cancelled by the user'.format(self.string_name))
         main_view.flash.assert_message(cancel_text)
 
+    def _post_cancel_edit_checks(self):
+        main_view = self.create_view(navigator.get_class(self, 'All').VIEW)
+        main_view.flash.assert_no_error()
+        cancel_text = ('Edit of {} Manager was '
+                       'cancelled by the user'.format(self.string_name))
+        main_view.flash.assert_message(cancel_text)
+
     def _post_create_checks(self, main_view, add_view=None):
         main_view.flash.assert_no_error()
         if main_view.is_displayed:
@@ -163,6 +239,19 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable, BaseEntity):
         else:
             add_view.flash.assert_no_error()
             raise AssertionError("Provider wasn't added. It seems form isn't accurately filled")
+
+    def _post_update_checks(self, edit_view):
+        details_view = self.create_view(navigator.get_class(self, 'Details').VIEW)
+        main_view = self.create_view(navigator.get_class(self, 'All').VIEW)
+        main_view.flash.assert_no_error()
+        success_text = '{} Manager "{}" was saved'.format(self.string_name, self.name)
+        if main_view.is_displayed:
+            main_view.flash.assert_message(success_text)
+        elif details_view.is_displayed:
+            details_view.flash.assert_message(success_text)
+        else:
+            edit_view.flash.assert_no_error()
+            raise AssertionError("Provider wasn't updated. It seems form isn't accurately filled")
 
     def delete(self, cancel=True):
         """
@@ -230,6 +319,16 @@ class Details(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name).click()
+
+
+@navigator.register(NetworkProvider, 'Edit')
+class Edit(CFMENavigateStep):
+    VIEW = NetworkProviderEditView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
+        self.prerequisite_view.toolbar.configuration.item_select('Edit Selected Network Provider')
 
 
 @navigator.register(NetworkProvider, 'CloudSubnets')

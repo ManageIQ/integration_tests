@@ -1,9 +1,10 @@
 import attr
 from widgetastic.widget import View
-from widgetastic_patternfly import Tab, BootstrapSelect, Input
+from widgetastic_patternfly import Tab, BootstrapSelect, Input, Button
+from widgetastic_manageiq import RadioGroup
 from wrapanapi.nuage import NuageSystem
 
-from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
+from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm, EventsEndpoint
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.networks.security_group import SecurityGroupCollection
 from cfme.utils import version
@@ -27,6 +28,19 @@ class NuageEndpointForm(View):
         TAB_NAME = 'Default'
         security_protocol = BootstrapSelect('default_security_protocol')
         api_port = Input('default_api_port')
+
+    @View.nested
+    class events(Tab, BeforeFillMixin):
+        TAB_NAME = 'Events'
+        event_stream = RadioGroup(locator='//div[@id="amqp"]')
+        # below controls which appear only if amqp is chosen
+        security_protocol = BootstrapSelect('amqp_security_protocol')
+        hostname = Input('amqp_hostname')
+        api_port = Input('amqp_api_port')
+        username = Input('amqp_userid')
+        password = Input('amqp_password')
+
+        validate = Button('Validate')
 
 
 @attr.s(hash=False)
@@ -69,9 +83,24 @@ class NuageProvider(NetworkProvider):
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
-        endpoint = NuageEndpoint(**prov_config['endpoints']['default'])
+        """
+        Returns the NuageProvider object based on cfme_data.yaml and credentials.eyaml.
+
+        Args:
+            prov_config: corresponding section of cfme_data.yaml for this provider
+            prov_key: key of this provider, as specified in cfme_data.yaml
+            appliance: appliance
+
+        Returns: NuageProvider object filled with all the data
+        """
+        endpoints = {}
+        for endp in prov_config['endpoints']:
+            for expected_endpoint in (NuageEndpoint, EventsEndpoint):
+                if expected_endpoint.name == endp:
+                    endpoints[endp] = expected_endpoint(**prov_config['endpoints'][endp])
+
         return cls(appliance, name=prov_config['name'],
-                   endpoints={endpoint.name: endpoint},
+                   endpoints=endpoints,
                    api_version=prov_config['api_version'],
                    api_version_name=prov_config['api_version_name'],
                    key=prov_key)

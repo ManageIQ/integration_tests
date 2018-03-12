@@ -3,7 +3,7 @@ from widgetastic_patternfly import (Dropdown, Accordion, Button, TextInput,
                                     BootstrapSwitch, BootstrapSelect)
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.provider_views import ProviderAddView
+from cfme.common.provider_views import ProviderAddView, ProviderEditView
 from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
                                   BaseEntitiesView)
 
@@ -93,6 +93,15 @@ class NetworkProviderDetailsView(BaseLoggedInPage):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Providers'] and
                 self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
+
+
+class NetworkProviderEditView(ProviderEditView):
+    """ Represents Network Provider Edit View """
+    @property
+    def is_displayed(self):
+        return (super(NetworkProviderEditView, self).is_displayed and
+                self.navigation.currently_selected == ['Networks', 'Providers'] and
+                self.title.text.startswith('Edit Network Provider'))
 
 
 class BalancerToolBar(View):

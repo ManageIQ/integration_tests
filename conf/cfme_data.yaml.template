@@ -180,6 +180,12 @@ management_systems:
                 credentials: nuage
                 security_protocol: Non-SSL
                 api_port: 5000
+            events:
+                event_stream: AMQP
+                hostname: 10.0.0.1
+                api_port: 5672
+                security_protocol: Non-SSL
+                credentials: nuage_events
     openshift:
         name: openshift
         type: openshift
