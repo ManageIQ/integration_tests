@@ -504,18 +504,11 @@ def test_ssa_packages(ssa_vm, soft_assert, appliance, ssa_profile):
 
     expected = ssa_vm.ssh.run_command(package_number_command).output.strip('\n')
 
-    def get_number_of_packages(ssa_vm):
-        ssa_vm.smartstate_scan(wait_for_task_result=True)
-        view = navigate_to(ssa_vm, 'Details')
-        return view.entities.summary('Configuration').get_text_of('Packages')
+    ssa_vm.smartstate_scan(wait_for_task_result=True)
 
-    current = get_number_of_packages(ssa_vm)
-    if int(current) == 0:
-        # It sometimes happens that after first SSA the number of packages in UI is 0
-        # It's probably not a product bug since it cannot be reproduced manually
-        expected = ssa_vm.ssh.run_command(package_number_command).output.strip('\n')
-        current = get_number_of_packages(ssa_vm)
-
+    # Check that all data has been fetched
+    view = navigate_to(ssa_vm, 'Details')
+    current = view.entities.summary('Configuration').get_text_of('Packages')
     assert current == expected
 
     # Make sure new package is listed
