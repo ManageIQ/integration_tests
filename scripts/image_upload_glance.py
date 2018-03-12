@@ -30,11 +30,13 @@ def parse_cmd_line():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('--image', help='Image to be uploaded to Glance', required=False)
+    # Either --url or --image should be present, but not both.
     parser.add_argument('--image_name_in_glance', help='Image name in Glance', required=True)
     parser.add_argument('--provider', help='Glance provider key in cfme_data', required=True)
     parser.add_argument('--disk_format', help='Disk format of image', default='qcow2')
-    parser.add_argument('--url', help='Add a backend location url to an image', required=False)
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--image', help='Image to be uploaded to Glance')
+    group.add_argument('--url', help='Add a backend location url to an image')
 
     args = parser.parse_args()
     return args
