@@ -7,8 +7,8 @@ from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from widgetastic.utils import Fillable
 
 from cfme.base.ui import Server
-from cfme.common import TagPageView
-from cfme.common.provider import CloudInfraProvider
+from cfme.common import TagPageView, WidgetasticTaggable
+from cfme.common.provider import BaseProvider, PolicyProfileAssignable
 from cfme.common.provider_views import (InfraProviderAddView,
                                         InfraProviderEditView,
                                         InfraProviderDetailsView,
@@ -25,6 +25,7 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
+from cfme.utils.net import resolve_hostname
 from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
@@ -46,7 +47,8 @@ class ProviderClustersView(ClusterView):
 
 
 @attr.s(hash=False)
-class InfraProvider(Pretty, CloudInfraProvider, Fillable, BaseEntity):
+class InfraProvider(BaseProvider, PolicyProfileAssignable, WidgetasticTaggable, Pretty, Fillable,
+                    BaseEntity):
     """
     Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.
 
@@ -72,6 +74,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable, BaseEntity):
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
     string_name = "Infrastructure"
     templates_destination_name = "Templates"
+    refresh_text = "Refresh Relationships and Power States"
     template_name = "Templates"
     db_types = ["InfraManager"]
     hosts_menu_item = "Hosts"
@@ -90,6 +93,30 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable, BaseEntity):
     def __attrs_post_init__(self):
         self.endpoints = self._prepare_endpoints(self.endpoints)
         self.parent = self.appliance.collections.network_providers
+
+    @property
+    def hostname(self):
+        return getattr(self.default_endpoint, "hostname", None)
+
+    @hostname.setter
+    def hostname(self, value):
+        if self.default_endpoint:
+            if value:
+                self.default_endpoint.hostname = value
+        else:
+            logger.warn("can't set hostname because default endpoint is absent")
+
+    @property
+    def ip_address(self):
+        return getattr(self.default_endpoint, "ipaddress", resolve_hostname(str(self.hostname)))
+
+    @ip_address.setter
+    def ip_address(self, value):
+        if self.default_endpoint:
+            if value:
+                self.default_endpoint.ipaddress = value
+        else:
+            logger.warn("can't set ipaddress because default endpoint is absent")
 
     @variable(alias='db')
     def num_datastore(self):
@@ -161,6 +188,38 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable, BaseEntity):
         view = navigate_to(self, "Details")
         return int(view.entities.summary("Relationships").get_text_of("Clusters"))
 
+    @variable(alias="db")
+    def num_template(self):
+        """ Returns the providers number of templates, as shown on the Details page."""
+        ext_management_systems = self.appliance.db.client["ext_management_systems"]
+        vms = self.appliance.db.client["vms"]
+        temlist = list(self.appliance.db.client.session.query(vms.name)
+                       .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
+                       .filter(ext_management_systems.name == self.name)
+                       .filter(vms.template == True))  # NOQA
+        return len(temlist)
+
+    @num_template.variant('ui')
+    def num_template_ui(self):
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of(self.template_name))
+
+    @variable(alias="db")
+    def num_vm(self):
+        """ Returns the providers number of instances, as shown on the Details page."""
+        ext_management_systems = self.appliance.db.client["ext_management_systems"]
+        vms = self.appliance.db.client["vms"]
+        vmlist = list(self.appliance.db.client.session.query(vms.name)
+                      .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
+                      .filter(ext_management_systems.name == self.name)
+                      .filter(vms.template == False))  # NOQA
+        return len(vmlist)
+
+    @num_vm.variant('ui')
+    def num_vm_ui(self):
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of(self.vm_name))
+
     @property
     def hosts(self):
         """Returns list of :py:class:`cfme.infrastructure.host.Host` that should belong to this
@@ -192,6 +251,35 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable, BaseEntity):
     @property
     def view_value_mapping(self):
         return {'name': self.name}
+
+    def load_all_provider_instances(self):
+        return self.load_all_provider_vms()
+
+    def load_all_provider_vms(self):
+        """ Loads the list of instances that are running under the provider.
+
+        """
+        view = navigate_to(self, 'Details')
+        if view.entities.summary("Relationships").get_text_of(self.vm_name) == "0":
+            return False
+        else:
+            view.entities.summary("Relationships").click_at(self.vm_name)
+            return True
+
+    def load_all_provider_images(self):
+        self.load_all_provider_templates()
+
+    def load_all_provider_templates(self):
+        """ Loads the list of images that are available under the provider.
+
+        """
+        # todo: replace these methods with new nav location
+        view = navigate_to(self, 'Details')
+        if view.entities.summary("Relationships").get_text_of(self.template_name) == "0":
+            return False
+        else:
+            view.entities.summary("Relationships").click_at(self.template_name)
+            return True
 
 
 # todo: update all docstrings
