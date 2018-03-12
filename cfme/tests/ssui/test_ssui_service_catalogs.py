@@ -1,9 +1,13 @@
+import fauxfactory
 import pytest
 
+from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme import test_requirements
 from cfme.utils.appliance import ViaSSUI
+from cfme.utils.providers import ProviderFilter
+from markers.env_markers.provider import providers
 
 
 pytestmark = [
@@ -11,21 +15,24 @@ pytestmark = [
     test_requirements.ssui,
     pytest.mark.long_running,
     pytest.mark.ignore_stream("upstream"),
-    pytest.mark.provider([InfraProvider],
-                         required_fields=[['provisioning', 'template'],
-                                          ['provisioning', 'host'],
-                                          ['provisioning', 'datastore']],
-                         scope="module"),
+    pytest.mark.provider(gen_func=providers,
+                         filters=[ProviderFilter(classes=[InfraProvider, CloudProvider],
+                                                 required_fields=['provisioning'])])
 ]
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_service_catalog_crud(appliance, setup_provider, context, order_catalog_item_in_ops_ui):
+def test_service_catalog_crud(appliance, setup_provider,
+                              context, provision_request):
     """Tests Service Catalog in SSUI."""
 
-    service_name = order_catalog_item_in_ops_ui.name
+    catalog_item, provision_request = provision_request
     with appliance.context.use(context):
-        appliance.server.login()
-        service = ServiceCatalogs(appliance, name=service_name)
+        if appliance.version >= '5.9':
+            dialog_values = {'service_name': "ssui_{}".format(fauxfactory.gen_alphanumeric())}
+            service = ServiceCatalogs(appliance, name=catalog_item.name,
+                                      dialog_values=dialog_values)
+        else:
+            service = ServiceCatalogs(appliance, name=catalog_item.name)
         service.add_to_shopping_cart()
         service.order()

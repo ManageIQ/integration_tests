@@ -7,7 +7,6 @@ import pytest
 import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.services.dashboard import Dashboard
 from cfme import test_requirements
 from cfme.utils.appliance import ViaSSUI
@@ -89,8 +88,8 @@ def assign_chargeback_rate(new_compute_rate):
 
 @pytest.fixture(scope="function")
 def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
-        order_catalog_item_in_ops_ui):
-    catalog_item = order_catalog_item_in_ops_ui
+                                  provision_request):
+    catalog_item, provision_request = provision_request
     vmname = '{}0001'.format(catalog_item.provisioning_data['catalog']["vm_name"])
 
     def verify_records_rollups_table(appliance, provider):
@@ -129,11 +128,10 @@ def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
 
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_total_services(appliance, setup_provider, context, order_catalog_item_in_ops_ui):
+def test_total_services(appliance, setup_provider, context, provision_request):
     """Tests total services count displayed on dashboard."""
 
     with appliance.context.use(context):
-        appliance.server.login()
         dashboard = Dashboard(appliance)
         assert dashboard.total_services() == dashboard.results()
 
@@ -144,7 +142,6 @@ def test_current_service(appliance, context):
     """Tests current services count displayed on dashboard."""
 
     with appliance.context.use(context):
-        appliance.server.login()
         dashboard = Dashboard(appliance)
         assert dashboard.current_services() == dashboard.results()
 
@@ -155,7 +152,6 @@ def test_retiring_soon(appliance, context):
     """Tests retiring soon(int displayed) service count on dashboard."""
 
     with appliance.context.use(context):
-        appliance.server.login()
         dashboard = Dashboard(appliance)
         assert dashboard.retiring_soon() == dashboard.results()
 
@@ -166,20 +162,16 @@ def test_retired_service(appliance, context):
     """Tests count of retired services(int) displayed on dashboard."""
 
     with appliance.context.use(context):
-        appliance.server.login()
         dashboard = Dashboard(appliance)
         assert dashboard.retired_services() == dashboard.results()
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
-@pytest.mark.meta(blockers=[BZ(1551113, unblock=lambda provider: not provider.one_of(
-    SCVMMProvider))])
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_monthly_charges(appliance, setup_provider, context, order_catalog_item_in_ops_ui,
+def test_monthly_charges(appliance, setup_provider, context, provision_request,
         run_service_chargeback_report):
     """Tests chargeback data"""
     with appliance.context.use(context):
-        appliance.server.login()
         dashboard = Dashboard(appliance)
         monthly_charges = dashboard.monthly_charges()
         logger.info('Monthly charges is {}'.format(monthly_charges))
@@ -192,7 +184,6 @@ def test_total_requests(appliance, context):
     """Tests total requests displayed."""
 
     with appliance.context.use(context):
-        appliance.server.login()
         dashboard = Dashboard(appliance)
         dashboard.total_requests()
 
@@ -202,7 +193,6 @@ def test_pending_requests(appliance, context):
     """Tests pending requests displayed on dashboard."""
 
     with appliance.context.use(context):
-        appliance.server.login()
         dashboard = Dashboard(appliance)
         dashboard.pending_requests()
 
@@ -212,7 +202,6 @@ def test_approved_requests(appliance, context):
     """Tests approved requests displayed on dashboard."""
 
     with appliance.context.use(context):
-        appliance.server.login()
         dashboard = Dashboard(appliance)
         dashboard.approved_requests()
 
@@ -222,6 +211,5 @@ def test_denied_requests(appliance, context):
     """Tests denied requests displayed on dashboard."""
 
     with appliance.context.use(context):
-        appliance.server.login()
         dashboard = Dashboard(appliance)
         dashboard.denied_requests()

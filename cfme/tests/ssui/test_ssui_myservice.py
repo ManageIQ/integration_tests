@@ -28,44 +28,40 @@ pytestmark = [
 
 
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
-@pytest.mark.rhv1
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_myservice_crud(appliance, setup_provider, context, order_catalog_item_in_ops_ui):
+def test_myservice_crud(appliance, setup_provider, context, provision_request):
     """Test Myservice crud in SSUI."""
-    service_name = order_catalog_item_in_ops_ui.name
+    catalog_item, provision_request = provision_request
     with appliance.context.use(context):
-        my_service = MyService(appliance, service_name)
+        my_service = MyService(appliance, catalog_item.name)
         my_service.set_ownership("Administrator", "EvmGroup-approver")
-        my_service.update({'description': '{}_edited'.format(service_name)})
-        # No tag management in 5.7
+        my_service.update({'description': '{}_edited'.format(catalog_item.name)})
         if appliance.version > "5.8":
             my_service.edit_tags("Cost Center", "Cost Center 001")
         my_service.delete()
 
 
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
-@pytest.mark.rhv3
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_retire_service(appliance, setup_provider, context, order_catalog_item_in_ops_ui):
+def test_retire_service(appliance, setup_provider, context, provision_request):
     """Test retire service."""
-    service_name = order_catalog_item_in_ops_ui.name
+    catalog_item, provision_request = provision_request
     with appliance.context.use(context):
-        my_service = MyService(appliance, service_name)
+        my_service = MyService(appliance, catalog_item.name)
         my_service.retire()
 
 
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
-@pytest.mark.rhv3
 @pytest.mark.parametrize('context', [ViaSSUI])
-@pytest.mark.parametrize('order_catalog_item_in_ops_ui', [['console_test']], indirect=True)
+@pytest.mark.parametrize('provision_request', [['console_test']], indirect=True)
 @pytest.mark.uncollectif(lambda provider: provider.one_of(VMwareProvider) and
                          provider.version >= 6.5,
                          'VNC consoles are unsupported on VMware ESXi 6.5 and later')
 def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
-        configure_console_vnc, order_catalog_item_in_ops_ui, take_screenshot,
+        configure_console_vnc, provision_request, take_screenshot,
         console_template, provider):
     """Test Myservice VM Console in SSUI."""
-    catalog_item = order_catalog_item_in_ops_ui
+    catalog_item, provision_request = provision_request
     service_name = catalog_item.name
     console_vm_username = credentials[catalog_item.provider.data.templates.console_template
                             .creds].username
@@ -138,3 +134,4 @@ def test_vm_console(request, appliance, setup_provider, context, configure_webso
                 take_screenshot("ConsoleScreenshot")
                 vm_console.switch_to_appliance()
                 raise e
+

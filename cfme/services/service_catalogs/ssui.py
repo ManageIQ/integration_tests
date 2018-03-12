@@ -5,7 +5,7 @@ from widgetastic.widget import Text
 from widgetastic_patternfly import Input, Button, BootstrapSelect
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
-from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs, BaseOrderForm
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ssui import (
     navigator,
@@ -14,7 +14,7 @@ from cfme.utils.appliance.implementations.ssui import (
     ViaSSUI
 )
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import SSUIServiceCatalogcard, SSUIInput, Notification
+from widgetastic_manageiq import SSUIServiceCatalogcard, Notification
 
 
 class ServiceCatalogsView(SSUIBaseLoggedInPage):
@@ -32,35 +32,8 @@ class ServiceCatalogsView(SSUIBaseLoggedInPage):
         return self.in_service_catalogs and self.title.text == "Service Catalog"
 
 
-class OrderForm(ServiceCatalogsView):
-    title = Text('#explorer_title_text')
-
-    service_name = SSUIInput()
-    timeout = Input(name='stack_timeout')
-    db_user = Input(name="param_DBUser__protected")
-    db_root_password = Input(name='param_DBRootPassword__protected')
-    select_instance_type = BootstrapSelect("param_InstanceType")
-    stack_name = Input(name='stack_name')
-    stack_timeout = Input(name='stack_timeout')
-    resource_group = BootstrapSelect("resource_group")
-    mode = BootstrapSelect('deploy_mode')
-    vm_name = Input(name="param_virtualMachineName")
-    vm_user = Input(name='param_adminUserName')
-    vm_password = Input(name="param_adminPassword__protected")
-    vm_size = BootstrapSelect('param_virtualMachineSize')
-    user_image = BootstrapSelect("param_userImageName")
-    os_type = BootstrapSelect('param_operatingSystemType')
-    key_name = Input(name="param_KeyName")
-    ssh_location = Input(name="param_SSHLocation")
-
-    flavor = Input(name='param_flavor')
-    image = Input(name="param_image")
-    key = Input(name='param_key')
-    private_network = Input(name="param_private_network")
-    default_select_value = BootstrapSelect('service_level')
-
-    machine_credential = BootstrapSelect("credential")
-    hosts = Input(name="hosts")
+class OrderForm(ServiceCatalogsView, BaseOrderForm):
+    pass
 
 
 class DetailsServiceCatalogsView(OrderForm):
