@@ -9,6 +9,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 
 from widgetastic.utils import partial_match
@@ -35,6 +36,20 @@ def template_name(provisioning):
 def roottenant(appliance):
     return appliance.collections.tenants.get_root_tenant()
 
+
+@pytest.fixture(scope='module')
+def tenants_setup(appliance):
+    tenants = appliance.collections.tenants
+    my_company = tenants.get_root_tenant()
+    test_parent = tenants.create(name='test_parent{}'.format(fauxfactory.gen_alphanumeric()),
+                                 description='test_parent{}'.format(fauxfactory.gen_alphanumeric()),
+                                 parent=my_company)
+    test_child = tenants.create(name='test_child{}'.format(fauxfactory.gen_alphanumeric()),
+                                description='test_child{}'.format(fauxfactory.gen_alphanumeric()),
+                                parent=test_parent)
+    yield test_parent, test_child
+    test_child.delete()
+    test_parent.delete()
 
 @pytest.fixture
 def prov_data(vm_name, provisioning):
@@ -174,3 +189,31 @@ def test_tenant_quota_vm_reconfigure(appliance, provider, setup_provider, set_ro
     setattr(new_config.hw, custom_prov_data['change'], custom_prov_data['value'])
     small_vm.reconfigure(new_config)
     assert small_vm.configuration != original_config
+
+
+@pytest.mark.parametrize(
+    ['parent_quota', 'child_quota', 'flash_text'],
+    [
+        [('cpu', '1'), ('cpu', '2'), 'Cpu'],
+        [('memory', '1'), ('memory', '2'), 'Mem'],
+        [('storage', '1'), ('storage', '2'), 'Storage'],
+        [('vm', '1'), ('vm', '2'), 'Vms'],
+        [('template', '1'), ('template', '2'), 'Templates']
+    ],
+    ids=['cpu', 'memory', 'storage', 'vm', 'template']
+)
+def test_setting_child_quota_more_than_parent(tenants_setup, parent_quota, child_quota,
+                                              flash_text):
+    test_parent, test_child = tenants_setup
+    view = navigate_to(test_parent, 'ManageQuotas', wait_for_view=True)
+    view.form.fill({'{}_cb'.format(parent_quota[0]): True,
+                    '{}_txt'.format(parent_quota[0]): parent_quota[1]})
+    view.save_button.click()
+    view = navigate_to(test_child, 'ManageQuotas', wait_for_view=True)
+    view.form.fill({'{}_cb'.format(child_quota[0]): True,
+                    '{}_txt'.format(child_quota[0]): child_quota[1]})
+    view.save_button.click()
+    view.flash.assert_message('Error when saving tenant quota: Validation failed: {} allocated '
+                              'quota is over allocated, parent tenant does not have enough quota'.
+                              format(flash_text))
+
