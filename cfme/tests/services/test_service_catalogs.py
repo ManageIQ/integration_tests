@@ -8,9 +8,12 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.services.catalogs.catalog_item import CatalogBundle, CatalogItem, EditCatalogItemView
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.services.workloads import VmsInstances
 from cfme.utils import error
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for_decorator
+
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -162,3 +165,17 @@ def test_request_with_orphaned_template(appliance, provider, setup_provider, cat
     provider.wait_for_delete()
     provision_request.wait_for_request(method='ui')
     assert provision_request.row.status.text == 'Error'
+
+
+@pytest.mark.tier(3)
+def test_advanced_search_registry_element(request, appliance):
+    """
+        Go to Services -> Workloads
+        Advanced Search -> Registry element
+        Element types select bar shouldn't disappear.
+    """
+    view = navigate_to(VmsInstances(appliance=appliance), 'All')
+    view.search.open_advanced_search()
+    request.addfinalizer(view.search.close_advanced_search)
+    view.search.advanced_search_form.search_exp_editor.registry_form_view.fill({'type': "Registry"})
+    assert view.search.advanced_search_form.search_exp_editor.registry_form_view.type.is_displayed

@@ -27,7 +27,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, TimelinesView,
-    ParametrizedSummaryTable)
+                                  ParametrizedSummaryTable)
 from . import Server, Region, Zone, ZoneCollection
 
 

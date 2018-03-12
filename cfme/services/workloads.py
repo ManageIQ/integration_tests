@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 """ A model of Workloads page in CFME
 """
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import View, Text
-from widgetastic_manageiq import Accordion, ManageIQTree, Search, ItemsToolBarViewSelector
+from navmazing import NavigateToAttribute
+from widgetastic.widget import Text, View
 from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.utils.appliance import Navigatable
-from cfme.base import Server
+from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from widgetastic_manageiq import Accordion, ManageIQTree, Search, ItemsToolBarViewSelector
 
 
 class WorkloadsView(BaseLoggedInPage):
@@ -62,19 +61,6 @@ class WorkloadsView(BaseLoggedInPage):
         view_selector = View.nested(ItemsToolBarViewSelector)
 
 
-class WorkloadsVM(WorkloadsView):
-    title = Text("#explorer_title_text")
-
-    @property
-    def is_displayed(self):
-        return (
-            self.in_workloads and
-            self.title.text == 'All VMs & Instances' and
-            self.vms.is_opened and
-            self.vms.tree.currently_selected == [
-                "All VMs & Instances"])
-
-
 class WorkloadsDefaultView(WorkloadsView):
     title = Text("#explorer_title_text")
 
@@ -86,8 +72,19 @@ class WorkloadsDefaultView(WorkloadsView):
             self.vms.is_opened)
 
 
-class WorkloadsTemplate(WorkloadsView):
-    title = Text("#explorer_title_text")
+class WorkloadsVM(WorkloadsDefaultView):
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_workloads and
+            self.title.text == 'All VMs & Instances' and
+            self.vms.is_opened and
+            self.vms.tree.currently_selected == [
+                "All VMs & Instances"])
+
+
+class WorkloadsTemplate(WorkloadsDefaultView):
 
     @property
     def is_displayed(self):
@@ -99,32 +96,25 @@ class WorkloadsTemplate(WorkloadsView):
                 "All Templates & Images"])
 
 
-class VmsInstances(Navigatable):
+class BaseWorkloads(NavigatableMixin):
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+
+class VmsInstances(BaseWorkloads):
     """
         This is fake class mainly needed for navmazing navigation
 
     """
-    def __init__(self, appliance=None):
-        Navigatable.__init__(self, appliance)
+    pass
 
 
-class TemplatesImages(Navigatable):
+class TemplatesImages(BaseWorkloads):
     """
         This is fake class mainly needed for navmazing navigation
 
     """
-
-    def __init__(self, appliance=None):
-        Navigatable.__init__(self, appliance)
-
-
-@navigator.register(Server)
-class WorkloadsDefault(CFMENavigateStep):
-    VIEW = WorkloadsDefaultView
-    prerequisite = NavigateToSibling("LoggedIn")
-
-    def step(self):
-        self.view.navigation.select("Services", "Workloads")
+    pass
 
 
 @navigator.register(VmsInstances, 'All')
