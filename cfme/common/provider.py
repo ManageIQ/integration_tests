@@ -18,7 +18,6 @@ from cfme.utils.stats import tol_check
 from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for, RefreshTimer
-from . import PolicyProfileAssignable
 
 
 # TODO: Move to collection when it happens
