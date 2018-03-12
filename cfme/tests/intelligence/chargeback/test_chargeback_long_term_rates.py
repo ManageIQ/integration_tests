@@ -103,30 +103,6 @@ def enable_candu(provider, appliance):
 
 
 @pytest.yield_fixture(scope="module")
-def assign_default_rate(provider):
-    # Assign default Compute rate to the Enterprise and then queue the Chargeback report.
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
-            'Enterprise': {'Rate': 'Default'}
-        })
-    enterprise.computeassign()
-    enterprise.storageassign()
-    logger.info('Assigning DEFAULT Compute rate')
-
-    yield
-
-    # Resetting the Chargeback rate assignment
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
-            'Enterprise': {'Rate': '<Nothing>'}
-        })
-    enterprise.computeassign()
-    enterprise.storageassign()
-
-
-@pytest.yield_fixture(scope="module")
 def assign_custom_rate(new_compute_rate, provider):
     # Assign custom Compute rate to the Enterprise and then queue the Chargeback report.
     description = new_compute_rate
@@ -317,42 +293,11 @@ def resource_cost(appliance, provider, metric_description, usage, description, r
 
     # Check what tier the usage belongs to and then compute the usage cost based on Fixed and
     # Variable Chargeback rates.
+    pytest.set_trace()
     for d in list_of_rates:
         if usage >= d['start'] and usage < d['finish']:
-            cost = (d['variable_rate'] * usage) + (d['fixed_rate'] * consumed_hours)
+            cost = ((d['variable_rate'] * usage) + (d['fixed_rate'] * consumed_hours)) / 24
             return cost
-
-
-@pytest.fixture(scope="module")
-def chargeback_costs_default(resource_usage, appliance, provider):
-    # Estimate Chargeback costs using default Chargeback rate and resource usage from the DB.
-    average_cpu_used_in_mhz = resource_usage['average_cpu_used_in_mhz']
-    average_memory_used_in_mb = resource_usage['average_memory_used_in_mb']
-    average_network_io = resource_usage['average_network_io']
-    average_disk_io = resource_usage['average_disk_io']
-    average_storage_used = resource_usage['average_storage_used']
-    consumed_hours = resource_usage['consumed_hours']
-
-    cpu_used_cost = resource_cost(appliance, provider, 'Used CPU',
-        average_cpu_used_in_mhz, 'Default', 'Compute', consumed_hours)
-
-    memory_used_cost = resource_cost(appliance, provider, 'Used Memory',
-        average_memory_used_in_mb, 'Default', 'Compute', consumed_hours)
-
-    network_used_cost = resource_cost(appliance, provider, 'Used Network I/O',
-        average_network_io, 'Default', 'Compute', consumed_hours)
-
-    disk_used_cost = resource_cost(appliance, provider, 'Used Disk I/O',
-        average_disk_io, 'Default', 'Compute', consumed_hours)
-
-    storage_used_cost = resource_cost(appliance, provider, 'Used Disk Storage',
-        average_storage_used, 'Default', 'Storage', consumed_hours)
-
-    return {"cpu_used_cost": cpu_used_cost,
-            "memory_used_cost": memory_used_cost,
-            "network_used_cost": network_used_cost,
-            "disk_used_cost": disk_used_cost,
-            "storage_used_cost": storage_used_cost}
 
 
 @pytest.fixture(scope="module")
@@ -390,35 +335,6 @@ def chargeback_costs_custom(resource_usage, new_compute_rate, appliance, provide
 
 
 @pytest.yield_fixture(scope="module")
-def chargeback_report_default(vm_ownership, assign_default_rate, provider):
-    # Create a Chargeback report based on the default rate; Queue the report.
-    owner = vm_ownership
-    data = {
-        'menu_name': 'cb_' + provider.name,
-        'title': 'cb_' + provider.name,
-        'base_report_on': 'Chargeback for Vms',
-        'report_fields': ['Memory Used', 'Memory Used Cost', 'Owner',
-        'CPU Used', 'CPU Used Cost',
-        'Disk I/O Used', 'Disk I/O Used Cost',
-        'Network I/O Used', 'Network I/O Used Cost',
-        'Storage Used', 'Storage Used Cost'],
-        'filter': {
-            'filter_show_costs': 'Owner',
-            'filter_owner': owner,
-            'interval_end': 'Today (partial)'
-        }
-    }
-    report = CustomReport(is_candu=True, **data)
-    report.create()
-
-    logger.info('Queuing chargeback report with default rate for {} provider'.format(provider.name))
-    report.queue(wait_for_finish=True)
-
-    yield list(report.get_saved_reports()[0].data.rows)
-    report.delete()
-
-
-@pytest.yield_fixture(scope="module")
 def chargeback_report_custom(vm_ownership, assign_custom_rate, provider):
     # Create a Chargeback report based on a custom rate; Queue the report
     owner = vm_ownership
@@ -444,7 +360,7 @@ def chargeback_report_custom(vm_ownership, assign_custom_rate, provider):
     report.queue(wait_for_finish=True)
 
     yield list(report.get_saved_reports()[0].data.rows)
-    report.delete()
+    # report.delete()
 
 
 @pytest.yield_fixture(scope="module")
@@ -454,111 +370,27 @@ def new_compute_rate():
         desc = 'custom_' + fauxfactory.gen_alphanumeric()
         compute = rates.ComputeRate(description=desc,
                     fields={'Used CPU':
-                            {'per_time': 'Hourly', 'variable_rate': '3'},
+                            {'per_time': 'Daily', 'variable_rate': '72'},
                             'Used Disk I/O':
-                            {'per_time': 'Hourly', 'variable_rate': '2'},
+                            {'per_time': 'Daily', 'variable_rate': '48'},
                             'Used Memory':
-                            {'per_time': 'Hourly', 'variable_rate': '2'}})
+                            {'per_time': 'Daily', 'variable_rate': '48'}})
         compute.create()
         if not BZ(1532368, forced_streams=['5.9']).blocks:
             storage = rates.StorageRate(description=desc,
                     fields={'Used Disk Storage':
-                            {'per_time': 'Hourly', 'variable_rate': '3'}})
+                            {'per_time': 'Daily', 'variable_rate': '72'}})
             storage.create()
         yield desc
     finally:
-        compute.delete()
+        # compute.delete()
         if not BZ(1532368, forced_streams=['5.9']).blocks:
             storage.delete()
 
 
-@pytest.mark.rhv3
 # Tests to validate costs reported in the Chargeback report for various metrics.
 # The costs reported in the Chargeback report should be approximately equal to the
 # costs estimated in the chargeback_costs_default/chargeback_costs_custom fixtures.
-@pytest.mark.uncollectif(lambda provider: provider.category == 'cloud')
-def test_validate_default_rate_cpu_usage_cost(chargeback_costs_default, chargeback_report_default):
-    """Test to validate CPU usage cost.
-       Calculation is based on default Chargeback rate.
-    """
-    for groups in chargeback_report_default:
-        if groups["CPU Used Cost"]:
-            estimated_cpu_usage_cost = chargeback_costs_default['cpu_used_cost']
-            cost_from_report = groups["CPU Used Cost"]
-            cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_cpu_usage_cost - 1.0 <= float(cost) \
-                <= estimated_cpu_usage_cost + 1.0, 'Estimated cost and report cost do not match'
-            break
-
-
-@pytest.mark.rhv2
-@pytest.mark.uncollectif(lambda provider: provider.one_of(GCEProvider))
-def test_validate_default_rate_memory_usage_cost(chargeback_costs_default,
-        chargeback_report_default):
-    """Test to validate memory usage cost.
-       Calculation is based on default Chargeback rate.
-
-    """
-    for groups in chargeback_report_default:
-        if groups["Memory Used Cost"]:
-            estimated_memory_usage_cost = chargeback_costs_default['memory_used_cost']
-            cost_from_report = groups["Memory Used Cost"]
-            cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_memory_usage_cost - 1.0 <= float(cost) \
-                <= estimated_memory_usage_cost + 1.0, 'Estimated cost and report cost do not match'
-            break
-
-
-@pytest.mark.rhv3
-def test_validate_default_rate_network_usage_cost(chargeback_costs_default,
-        chargeback_report_default):
-    """Test to validate network usage cost.
-       Calculation is based on default Chargeback rate.
-
-    """
-    for groups in chargeback_report_default:
-        if groups["Network I/O Used Cost"]:
-            estimated_network_usage_cost = chargeback_costs_default['network_used_cost']
-            cost_from_report = groups["Network I/O Used Cost"]
-            cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_network_usage_cost - 1.0 <= float(cost) \
-                <= estimated_network_usage_cost + 1.0, 'Estimated cost and report cost do not match'
-            break
-
-
-@pytest.mark.rhv3
-def test_validate_default_rate_disk_usage_cost(chargeback_costs_default, chargeback_report_default):
-    """Test to validate disk usage cost.
-       Calculation is based on default Chargeback rate.
-
-    """
-    for groups in chargeback_report_default:
-        if groups["Disk I/O Used Cost"]:
-            estimated_disk_usage_cost = chargeback_costs_default['disk_used_cost']
-            cost_from_report = groups["Disk I/O Used Cost"]
-            cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_disk_usage_cost - 1.0 <= float(cost) \
-                <= estimated_disk_usage_cost + 1.0, 'Estimated cost and report cost do not match'
-            break
-
-
-@pytest.mark.rhv3
-def test_validate_default_rate_storage_usage_cost(chargeback_costs_default,
-        chargeback_report_default):
-    """Test to validate stoarge usage cost.
-       Calculation is based on default Chargeback rate.
-    """
-    for groups in chargeback_report_default:
-        if groups["Storage Used Cost"]:
-            estimated_storage_usage_cost = chargeback_costs_default['storage_used_cost']
-            cost_from_report = groups["Storage Used Cost"]
-            cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_storage_usage_cost - 1.0 <= float(cost) \
-                <= estimated_storage_usage_cost + 1.0, 'Estimated cost and report cost do not match'
-            break
-
-
-@pytest.mark.rhv3
 @pytest.mark.uncollectif(lambda provider: provider.category == 'cloud')
 def test_validate_custom_rate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate CPU usage cost.
@@ -575,7 +407,6 @@ def test_validate_custom_rate_cpu_usage_cost(chargeback_costs_custom, chargeback
             break
 
 
-@pytest.mark.rhv1
 @pytest.mark.uncollectif(lambda provider: provider.one_of(GCEProvider))
 def test_validate_custom_rate_memory_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate memory usage cost.
@@ -592,7 +423,6 @@ def test_validate_custom_rate_memory_usage_cost(chargeback_costs_custom, chargeb
             break
 
 
-@pytest.mark.rhv3
 def test_validate_custom_rate_network_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate network usage cost.
        Calculation is based on custom Chargeback rate.
@@ -608,7 +438,6 @@ def test_validate_custom_rate_network_usage_cost(chargeback_costs_custom, charge
             break
 
 
-@pytest.mark.rhv3
 def test_validate_custom_rate_disk_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate disk usage cost.
        Calculation is based on custom Chargeback rate.
@@ -624,7 +453,6 @@ def test_validate_custom_rate_disk_usage_cost(chargeback_costs_custom, chargebac
             break
 
 
-@pytest.mark.rhv3
 def test_validate_custom_rate_storage_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate stoarge usage cost.
        Calculation is based on custom Chargeback rate.
