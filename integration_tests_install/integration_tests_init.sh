@@ -150,6 +150,7 @@ function run_config {
     -v ${PLAY_LOCATION}:/projects/ansible_virtenv/ansible_work \
     -v ${WORKDIR}:/projects/cfme_vol/ \
     -v ~/.ssh:/home/${USERNAME}/.ssh:ro \
+    --security-opt=label=type:spc_t \
     -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
     ${ENV_VARS_CONF} \
     ${DOCK_IMG_CFG} \
@@ -176,6 +177,7 @@ function run_command {
     -v ~/.ssh:/home/${USERNAME}/.ssh:ro \
     -v ~/:${HOME} \
     -v /var/tmp/bashrc:${HOME}/.bashrc \
+    --security-opt=label=type:spc_t \
     -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
     ${ENV_VARS} \
     ${DOCK_IMG} \
