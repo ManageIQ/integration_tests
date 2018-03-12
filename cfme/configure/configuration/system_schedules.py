@@ -261,7 +261,7 @@ class SystemSchedule(BaseEntity, Updateable, Pretty):
     def select(self):
         """ Select the checkbox for current schedule """
         view = navigate_to(self.parent, 'All')
-        row = view.table.row(name=self.name)
+        row = view.paginator.find_row_on_pages(view.table, name=self.name)
         row[0].check()
         return view
 
