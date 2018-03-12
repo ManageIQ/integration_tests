@@ -138,6 +138,9 @@ def test_user_delete_multiple(appliance, group_collection):
     users = [new_user(appliance, group), new_user(appliance, group), new_user(appliance, group), ]
     appliance.collections.users.delete(*users)
 
+    for user in users:
+        assert not user.exists, "Failed to delete user using the Access Control EVM Users checklist"
+
 
 # @pytest.mark.meta(blockers=[1035399]) # work around instead of skip
 @pytest.mark.tier(2)
@@ -373,6 +376,10 @@ def test_group_delete_multiple(group_collection):
 
     group_collection.delete(*groups)
 
+    for group in groups:
+        assert not group.exists, (
+            "Failed to delete group using the Access Control EVM Groups checklist")
+
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
@@ -602,6 +609,17 @@ def test_delete_roles_with_assigned_group(appliance, group_collection):
 
     with pytest.raises(RBACOperationBlocked):
         role.delete()
+
+
+@pytest.mark.tier(2)
+def test_role_delete_multiple(appliance):
+    """ Test that we can successfully delete roles using the Access Control Roles checklist
+    """
+    roles = [new_role(appliance), new_role(appliance), new_role(appliance), ]
+    appliance.collections.roles.delete(*roles)
+
+    for role in roles:
+        assert not role.exists, "Failed to delete role using the Access Control Roles checklist"
 
 
 @pytest.mark.tier(3)
