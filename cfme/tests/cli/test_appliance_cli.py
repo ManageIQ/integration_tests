@@ -40,6 +40,7 @@ def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modsc
     app.appliance_console.timezone_check(timezone)
 
 
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 def test_appliance_console_cli_db_maintenance_hourly(appliance_with_preset_time):
     """Test database hourly re-indexing through appliance console"""
     app = appliance_with_preset_time
