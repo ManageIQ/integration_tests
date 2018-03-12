@@ -479,6 +479,8 @@ def test_ssa_groups(ssa_vm, appliance, ssa_profile):
 
 
 @pytest.mark.long_running
+@pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_ssa_packages(ssa_vm, soft_assert, appliance, ssa_profile):
     """ Tests SSA fetches correct results for packages
 
