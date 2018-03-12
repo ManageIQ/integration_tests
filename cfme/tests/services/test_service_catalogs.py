@@ -162,13 +162,13 @@ def test_request_with_orphaned_template(appliance, provider, setup_provider, cat
 
 
 @pytest.mark.tier(3)
-def test_advanced_search_registry_element(request):
+def test_advanced_search_registry_element(request, appliance):
     """
         Go to Services -> Workloads
         Advanced Search -> Registry element
         Element types select bar shouldn't disappear.
     """
-    view = navigate_to(VmsInstances, 'All')
+    view = navigate_to(VmsInstances(appliance=appliance), 'All')
     view.search.open_advanced_search()
     request.addfinalizer(view.search.close_advanced_search)
     view.search.advanced_search_form.search_exp_editor.registry_form_view.fill({'type': "Registry"})
