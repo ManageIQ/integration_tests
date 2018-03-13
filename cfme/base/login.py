@@ -15,6 +15,9 @@ class BaseLoggedInPage(View):
     )
     help = NavDropdown('.//li[./a[@id="dropdownMenu1"]]|.//li[./a[@id="help-menu"]]')
     settings = NavDropdown('.//li[./a[@id="dropdownMenu2"]]')
+    # 5.9 Locator for Settings item that replaces current group name when user has multiple groups
+    group_list_locator = (
+        './/ul/li[contains(@class, "dropdown-submenu") and contains(., "Change Group")]')
     navigation = VerticalNavigation('#maintab')
 
     @property
@@ -44,7 +47,35 @@ class BaseLoggedInPage(View):
 
     @property
     def current_groupname(self):
-        return self.settings.items[1].strip()
+        # TODO: Move these locators and accessors to a widget "Group Dropdown" widget
+        # 5.9 Locators for finding current group when user has multiple groups
+        current_group_locator = '{}/ul/li/a[@title="Currently Selected Group"]'.format(
+            self.group_list_locator)
+        current_group_marker = ' (Current Group)'
+        try:
+            current_group = self.browser.element(current_group_locator)
+            return self.browser.text(current_group).replace(current_group_marker, '')
+        except NoSuchElementException:
+            return self.settings.items[1].strip()
+
+    @property
+    def group_names(self):
+        """ Return a list of the logged in user's assigned groups.
+
+        Returns:
+            Version >= 5.9 - list of all groups the logged in user is assigned to
+            Version < 5.9 - single item list containing the user's current group
+        """
+        # TODO: Move these locators and accessors to a widget "Group Dropdown" widget
+        group_list_locator = '{}/ul/li'.format(self.group_list_locator)
+        current_group_marker = ' (Current Group)'
+
+        group_list = self.browser.elements(group_list_locator)
+        if group_list:
+            return [
+                self.browser.text(group).replace(current_group_marker, '') for group in group_list]
+        else:
+            return [self.current_groupname]
 
     @property
     def logged_in(self):
