@@ -12,6 +12,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.stack import ProviderStackAllView
 from cfme.cloud.tenant import ProviderTenantAllView
 from cfme.common.host_views import ProviderAllHostsView
+from cfme.common.provider import CloudInfraProvider
 from cfme.common.provider_views import InfraProviderDetailsView
 from cfme.common.vm_views import HostAllVMsView, ProviderAllVMsView
 from cfme.infrastructure.cluster import ClusterDetailsView, ProviderAllClustersView
@@ -22,6 +23,8 @@ from cfme.infrastructure.virtual_machines import (HostTemplatesOnlyAllView,
 from cfme.networks.views import NetworkProviderDetailsView, ProviderSecurityGroupAllView
 from cfme.storage.manager import ProviderStorageManagerAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 from markers.env_markers.provider import ONE, ONE_PER_TYPE
 
 
@@ -121,6 +124,17 @@ def get_obj(relationship, appliance, **kwargs):
 def host(appliance, provider):
     host_collection = appliance.collections.hosts
     return random.choice(host_collection.all(provider))
+
+
+def wait_for_relationship_refresh(provider):
+    view = navigate_to(provider, 'Details')
+    logger.info('Waiting for relationship refresh')
+    wait_for(
+        lambda: (view.entities.summary("Status").get_text_of('Last Refresh') ==
+                 'Success - Less Than A Minute Ago'),
+        delay=15,
+        timeout=110,
+        fail_func=view.browser.refresh)
 
 
 @pytest.mark.parametrize("relationship,view", HOST_RELATIONSHIPS,
@@ -236,3 +250,9 @@ def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, r
         2. Login as restricted user, providers child not visible for user
     """
     prov_child_visibility(relationship, item_cls, visibility=False)
+
+
+@pytest.mark.provider([CloudInfraProvider])
+def test_provider_refresh_relationship(provider, setup_provider):
+    provider.refresh_provider_relationships(method='ui')
+    wait_for_relationship_refresh(provider)
