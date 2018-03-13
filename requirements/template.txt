@@ -8,3 +8,4 @@ ovirt-engine-sdk-python<4.0.0
 pycurl
 
 virtualenv
+pytest-repeat

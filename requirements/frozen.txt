@@ -132,6 +132,7 @@ Pygments==2.2.0
 PyJWT==1.5.0
 pyparsing==2.2.0
 pytest==3.2.0
+pytest-repeat==0.4.1
 pytesseract==0.1.7
 python-bugzilla==2.1.0
 python-cinderclient==2.2.0
