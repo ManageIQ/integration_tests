@@ -5,6 +5,7 @@ from widgetastic_manageiq import (SummaryFormItem, Table, Dropdown, PaginationPa
                                   Calendar)
 from widgetastic_patternfly import Input, BootstrapSelect, Button
 from widgetastic.widget import View
+from widgetastic.exceptions import NoSuchElementException
 
 from cfme.base.ui import ConfigurationView
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -276,6 +277,15 @@ class SystemSchedule(BaseEntity, Updateable, Pretty):
         view = navigate_to(self.parent, 'All')
         row = view.table.row(name=self.name)
         return row['Next Run Time'].read()
+
+    @property
+    def exists(self):
+        view = navigate_to(self.parent, 'All')
+        try:
+            view.paginator.find_row_on_pages(view.table, name=self.name)
+            return True
+        except NoSuchElementException:
+            return False
 
 
 @attr.s
