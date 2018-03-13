@@ -332,8 +332,8 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider),
-    reason='Services and Packages collection seems unreliable - either from product of FW side.')
+@pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.long_running
 def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profile):
     """ Tests SSA can be performed and returns sane results
