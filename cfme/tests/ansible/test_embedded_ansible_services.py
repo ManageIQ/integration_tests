@@ -416,3 +416,23 @@ def test_custom_button_ansible_credential_list(custom_service_button, service_ca
     credentials_dropdown = BootstrapSelect(appliance.browser.widgetastic, id="credential")
     all_options = [option.text for option in credentials_dropdown.all_options]
     assert ["<Default>", "CFME Default Credential"] == all_options
+
+
+def test_ansible_group_id_in_payload(service_catalog, service_request, service):
+    """Test if group id is presented in manageiq payload.
+    https://bugzilla.redhat.com/show_bug.cgi?id=1480019
+    In order to get manageiq payload the service's standard output should be parsed.
+    """
+    service_catalog.order()
+    service_request.wait_for_request()
+    view = navigate_to(service, "Details")
+    stdout = view.provisioning.standart_output
+    wait_for(lambda: stdout.is_displayed, timeout=10)
+    pre = stdout.text
+    json_str = pre.split("--------------------------------")
+    # Standard output has several sections splitted by --------------------------------
+    # Required data is located in 6th section
+    # Then we need to replace or remove some characters to get a parsable json string
+    result_dict = json.loads(json_str[5].replace('", "', "").replace('\\"', '"').replace(
+        '\\, "', '",').split('" ] } PLAY')[0])
+    assert "group" in result_dict["manageiq"]
