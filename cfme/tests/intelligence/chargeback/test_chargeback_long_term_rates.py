@@ -391,10 +391,9 @@ def new_compute_rate():
 # Tests to validate costs reported in the Chargeback report for various metrics.
 # The costs reported in the Chargeback report should be approximately equal to the
 # costs estimated in the chargeback_costs_default/chargeback_costs_custom fixtures.
-@pytest.mark.uncollectif(lambda provider: provider.category == 'cloud')
+@pytest.mark.uncollectif(lambda provider: provider.one_of == 'cloud')
 def test_validate_custom_rate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_custom):
-    """Test to validate CPU usage cost.
-       Calculation is based on custom Chargeback rate.
+    """Test to validate CPU usage cost.Calculation is based on custom Chargeback rate.
 
     """
     for groups in chargeback_report_custom:
@@ -423,6 +422,7 @@ def test_validate_custom_rate_memory_usage_cost(chargeback_costs_custom, chargeb
             break
 
 
+@pytest.mark.parametrize('interval', ids=['daily_rate', 'weekly_rate', 'monthly_rate'])
 def test_validate_custom_rate_network_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate network usage cost.
        Calculation is based on custom Chargeback rate.
