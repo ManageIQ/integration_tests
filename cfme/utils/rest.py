@@ -35,6 +35,9 @@ def assert_response(
             raise AssertionError('No content returned')
 
     def _check_result(result):
+        # check that result contains data to catch bugs like BZ 1414845
+        assert result, 'The result should not be empty'
+
         if success is not None:
             assert 'success' in result
             assert result['success'] is success
