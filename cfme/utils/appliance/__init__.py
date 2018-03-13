@@ -4,7 +4,6 @@ import socket
 import traceback
 from copy import copy
 from datetime import datetime
-from tempfile import NamedTemporaryFile
 from textwrap import dedent
 from time import sleep, time
 from six.moves.urllib.parse import urlparse
@@ -18,7 +17,6 @@ import requests
 import sentaku
 import six
 import warnings
-import yaml
 from cached_property import cached_property
 from debtcollector import removals
 from manageiq_client.api import APIException, ManageIQClient as VanillaMiqApi
@@ -26,7 +24,6 @@ from werkzeug.local import LocalStack, LocalProxy
 
 from cfme.utils import clear_property_cache
 from cfme.utils import conf, ssh, ports
-from cfme.utils.datafile import load_data_file
 from cfme.utils.log import logger, create_sublogger, logger_wrap
 from cfme.utils.net import net_check
 from cfme.utils.path import data_path, patches_path, scripts_path, conf_path
@@ -1967,44 +1964,22 @@ class IPAppliance(object):
         return 'storage' in self.get_yaml_config().get('product', {})
 
     def get_yaml_config(self):
-        writeout = self.ssh_client.run_rails_command(
-            '"File.open(\'/tmp/yam_dump.yaml\', \'w\') '
-            '{|f| f.write(Settings.to_hash.deep_stringify_keys.to_yaml) }"'
-        )
-        if writeout.rc:
-            logger.error("Config couldn't be found")
-            logger.error(writeout.output)
-            raise Exception('Error obtaining config')
-        base_data = self.ssh_client.run_command('cat /tmp/yam_dump.yaml')
-        if base_data.rc:
-            logger.error("Config couldn't be found")
-            logger.error(base_data.output)
-            raise Exception('Error obtaining config')
-        try:
-            return yaml.load(base_data.output)
-        except:
-            logger.debug(base_data.output)
-            raise
+        """Get settings from the base api/settings endpoint for appliance"""
+        return self.rest_api.get(self.rest_api.collections.settings._href)
 
     def set_yaml_config(self, data_dict):
-        temp_yaml = NamedTemporaryFile()
-        dest_yaml = '/tmp/conf.yaml'
-        yaml.dump(data_dict, temp_yaml, default_flow_style=False)
-        self.ssh_client.put_file(temp_yaml.name, dest_yaml)
-        # Build and send ruby script
-        dest_ruby = '/tmp/set_conf.rb'
+        """PATCH settings from the master server's api/server/:id/settings endpoint
 
-        ruby_template = data_path.join('utils', 'cfmedb_set_config.rbt')
-        ruby_replacements = {
-            'config_file': dest_yaml
-        }
-        temp_ruby = load_data_file(ruby_template.strpath, ruby_replacements)
-        self.ssh_client.put_file(temp_ruby.name, dest_ruby)
-
-        # Run it
-        result = self.ssh_client.run_rails_command(dest_ruby)
-        if not result:
-            raise Exception('Unable to set config: {!r}:{!r}'.format(result.rc, result.output))
+        Args:
+            data_dict: dictionary of the changes to be made to the yaml configuration
+                       JSON dumps data_dict to pass as raw hash data to rest_api session
+        Raises:
+            ApplianceException when server_id isn't set
+        """
+        # Can only modify through server ID, raise if that's not set yet
+        if self.server_id() is None:
+            raise ApplianceException('No server id is set, cannot modify yaml config via REST')
+        return self.server.set_yaml_config(data_dict)
 
     def set_session_timeout(self, timeout=86400, quiet=True):
         """Sets the timeout of UI timeout.
