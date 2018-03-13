@@ -47,6 +47,7 @@ class BaseLoggedInPage(View):
 
     @property
     def current_groupname(self):
+        # TODO: Move these locators and accessors to a widget "Group Dropdown" widget
         # 5.9 Locators for finding current group when user has multiple groups
         current_group_locator = '{}/ul/li/a[@title="Currently Selected Group"]'.format(
             self.group_list_locator)
@@ -65,6 +66,7 @@ class BaseLoggedInPage(View):
             Version >= 5.9 - list of all groups the logged in user is assigned to
             Version < 5.9 - single item list containing the user's current group
         """
+        # TODO: Move these locators and accessors to a widget "Group Dropdown" widget
         group_list_locator = '{}/ul/li'.format(self.group_list_locator)
         current_group_marker = ' (Current Group)'
 
