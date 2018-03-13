@@ -8,7 +8,6 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm import VM, Template
 from cfme.common.provider import cleanup_vm
-from cfme.configure import configuration
 from cfme.common.vm_views import DriftAnalysis
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.control.explorer.policies import VMControlPolicy
@@ -522,11 +521,10 @@ def test_ssa_packages(ssa_vm, soft_assert, appliance, ssa_profile):
         pytest.fail('Package {} was not found in details table after SSA run'.format(package_name))
 
 
-@pytest.mark.meta(blockers=
-    [BZ(1533590, forced_streams=['5.8', '5.9'],
-        unblock=lambda provider: not provider.one_of(EC2Provider)),
+@pytest.mark.meta(blockers=[BZ(1533590, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider: not provider.one_of(EC2Provider)),
     BZ(1553808, forced_streams=['5.8', '5.9'],
-        unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.long_running
 def test_ssa_files(appliance, ssa_vm, soft_assert):
     """Tests that instances can be scanned for specific file."""
