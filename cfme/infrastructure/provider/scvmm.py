@@ -31,6 +31,7 @@ class SCVMMProvider(InfraProvider):
         'Credential validation was not successful: '
         'Unable to connect: WinRM::WinRMAuthorizationError'
     )
+    settings_key = 'ems_scvmm'
 
     def __init__(self, name=None, endpoints=None, key=None, zone=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None, appliance=None):

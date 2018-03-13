@@ -2,12 +2,12 @@
 # pylint: disable=E1101
 # pylint: disable=W0621
 import uuid
-import fauxfactory
 
+import fauxfactory
 import pytest
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 
-from cfme.utils import error
+from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.instance import Instance
 from cfme.cloud.provider import discover, wait_for_a_provider, CloudProvider
@@ -15,19 +15,22 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider, RHOSEndpoint
-from cfme.common.provider_views import (CloudProviderAddView,
-                                        CloudProvidersView,
-                                        CloudProvidersDiscoverView)
-from cfme import test_requirements
-
-from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
-from cfme.utils.update import update
+from cfme.common.provider_views import (
+    CloudProviderAddView, CloudProvidersView, CloudProvidersDiscoverView)
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
+from cfme.utils import error
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.update import update
+from fixtures.provider import enable_provider_regions
 from fixtures.pytest_store import store
 
 pytestmark = [pytest.mark.provider([CloudProvider], scope="function")]
+
+
+@pytest.fixture(scope='function')
+def enable_regions(provider):
+    enable_provider_regions(provider)
 
 
 @pytest.mark.tier(3)
@@ -132,7 +135,7 @@ def test_providers_discovery(request, provider):
 @pytest.mark.tier(3)
 @pytest.mark.usefixtures('has_no_cloud_providers')
 @test_requirements.discovery
-def test_provider_add_with_bad_credentials(provider):
+def test_provider_add_with_bad_credentials(provider, enable_regions):
     """ Tests provider add with bad credentials
 
     Metadata:
@@ -167,10 +170,8 @@ def test_provider_add_with_bad_credentials(provider):
 @pytest.mark.tier(1)
 @pytest.mark.smoke
 @pytest.mark.usefixtures('has_no_cloud_providers')
-@pytest.mark.uncollectif(lambda provider: BZ(1529174, forced_streams=['5.9']).blocks and
-                         provider.one_of(EC2Provider))
 @test_requirements.discovery
-def test_provider_crud(provider):
+def test_provider_crud(provider, enable_regions):
     """ Tests provider add with good credentials
 
     Metadata:
@@ -337,7 +338,8 @@ def test_openstack_provider_has_api_version():
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider))
+@pytest.mark.uncollectif(lambda provider:
+                         not provider.one_of(EC2Provider) or 'govcloud' in provider.data.tags)
 def test_select_key_pair_none_while_provisioning(request, has_no_cloud_providers, provider):
     """
         GH Issue: https://github.com/ManageIQ/manageiq/issues/10575

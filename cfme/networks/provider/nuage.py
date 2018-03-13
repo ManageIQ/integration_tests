@@ -56,6 +56,7 @@ class NuageProvider(NetworkProvider):
     db_types = ['Nuage::NetworkManager']
     endpoints_form = NuageEndpointForm
     mgmt_class = NuageSystem
+    settings_key = 'ems_nuage'
 
     _collections = {
         'security_groups': SecurityGroupCollection,

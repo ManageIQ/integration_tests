@@ -98,6 +98,7 @@ class OpenshiftProvider(ContainersProvider):
     mgmt_class = Openshift
     db_types = ["Openshift::ContainerManager"]
     endpoints_form = ContainersProviderEndpointsForm
+    settings_key = 'ems_openshift'
 
     def __init__(
             self,
