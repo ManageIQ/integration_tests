@@ -12,7 +12,6 @@ from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.node import Node
 
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -23,7 +22,6 @@ tested_objects = [Service, Route, Project, Pod, Image, Container, ImageRegistry,
 
 
 @pytest.mark.polarion('CMP-10575')
-@pytest.mark.meta(blockers=[BZ(1441196)])
 def test_containers_summary_objects(provider, soft_assert):
     """ Containers overview page > Widgets > Widgets summary
        This test checks that the amount of a selected object in the system is shown correctly
@@ -43,7 +41,7 @@ def test_containers_summary_objects(provider, soft_assert):
     view = navigate_to(provider, 'Details')
     for obj in tested_objects:
         sb_val = status_box_values[obj]
-        ui_val = int(view.entities.relationships.get_text_of(obj.PLURAL))
+        ui_val = int(view.entities.summary('Relationships').get_text_of(obj.PLURAL))
         soft_assert(sb_val == ui_val,
             '{}: Mismatch between status box ({}) value in Containers overview'
             'and provider\'s relationships table ({}):'
