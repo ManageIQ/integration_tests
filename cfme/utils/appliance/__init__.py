@@ -4,7 +4,6 @@ import socket
 import traceback
 from copy import copy
 from datetime import datetime
-from tempfile import NamedTemporaryFile
 from textwrap import dedent
 from time import sleep, time
 from urlparse import urlparse
@@ -18,7 +17,6 @@ import requests
 import sentaku
 import six
 import warnings
-import yaml
 from cached_property import cached_property
 from debtcollector import removals
 from manageiq_client.api import APIException, ManageIQClient as VanillaMiqApi
@@ -26,7 +24,6 @@ from werkzeug.local import LocalStack, LocalProxy
 
 from cfme.utils import clear_property_cache
 from cfme.utils import conf, ssh, ports
-from cfme.utils.datafile import load_data_file
 from cfme.utils.log import logger, create_sublogger, logger_wrap
 from cfme.utils.net import net_check
 from cfme.utils.path import data_path, patches_path, scripts_path, conf_path
