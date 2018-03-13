@@ -298,7 +298,7 @@ def providers(metafunc, filters=None, selector=ALL):
     # a real type/version
     need_prov_keys = False
     for filter in filters:
-        if isinstance(filter, ProviderFilter):
+        if isinstance(filter, ProviderFilter) and filter.classes:
             for filt in filter.classes:
                 if hasattr(filt, 'type_name'):
                     need_prov_keys = True
@@ -311,7 +311,8 @@ def providers(metafunc, filters=None, selector=ALL):
         # If no provider is sound then we append the DataProvider, and a skip mark. This means
         # that the environment didn't have that particular provider. Boo hoo!
         if the_prov:
-            argvalues.append(pytest.param(the_prov))
+            provider.key = the_prov.key
+            argvalues.append(pytest.param(provider))
         else:
             argvalues.append(
                 pytest.param(
@@ -341,9 +342,9 @@ def providers(metafunc, filters=None, selector=ALL):
             idlist.append(the_id)
 
         # Add provider to argnames if missing
-        if 'provider' in metafunc.fixturenames and 'provider' not in argnames:
+        if 'provider_data' in metafunc.fixturenames and 'provider_data' not in argnames:
             metafunc.function = pytest.mark.uses_testgen()(metafunc.function)
-            argnames.append('provider')
+            argnames.append('provider_data')
         if metafunc.config.getoption('sauce') or selector == ONE:
             break
     return argnames, argvalues, idlist

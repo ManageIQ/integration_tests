@@ -104,6 +104,7 @@ def uncollectif(item):
             # The test has already been uncollected
             if arg_names and not values:
                 return True, None
+            arg_names = ['provider_data' if arg == 'provider' else arg for arg in arg_names]
             args = [values[arg] for arg in arg_names]
         except KeyError:
             missing_argnames = list(set(arg_names) - set(item._request.funcargnames))

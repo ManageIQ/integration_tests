@@ -36,19 +36,20 @@ as a result. If this counter reaches a predefined number of failures (see ``SETU
 the failing provider will be added to the list of problematic providers and no further attempts
 to set it up will be made.
 """
-import pytest
 import random
-import six
+from collections import Mapping
 from collections import defaultdict
+
+import pytest
+import six
 
 from cfme.common.provider import BaseProvider, all_types
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.fixtures.pytest_store import store
 from cfme.fixtures.templateloader import TEMPLATES
 from cfme.utils.appliance import ApplianceException
-from cfme.utils.providers import ProviderFilter, list_providers
 from cfme.utils.log import logger
-from collections import Mapping
+from cfme.utils.providers import ProviderFilter, list_providers
 
 # List of problematic providers that will be ignored
 _problematic_providers = set()
@@ -382,3 +383,9 @@ def console_template(provider):
 @pytest.fixture(scope="module")
 def console_template_modscope(provider):
     return _get_template(provider, 'console_template')
+
+
+@pytest.fixture(scope="function")
+def provider(provider_data):
+    from cfme.utils.providers import get_crud
+    return get_crud(provider_data.key)
