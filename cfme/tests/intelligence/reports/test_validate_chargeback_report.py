@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+#
+# Chargeback reports are supported for all infra and cloud providers.
 
 import math
 from datetime import date
@@ -11,41 +13,36 @@ import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.provider import BaseProvider
+from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm import VM
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CustomReport
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-from fixtures.provider import setup_or_skip
 
 pytestmark = [
     pytest.mark.tier(2),
-    pytest.mark.meta(blockers=[BZ(1531600, forced_streams=["5.9"]),
-                               BZ(1511099, forced_streams=["5.7", "5.8"],
+    pytest.mark.meta(blockers=[BZ(1511099, forced_streams=["5.9"],
                                   unblock=lambda provider: not provider.one_of(GCEProvider)),
-                               BZ(1531554, forced_streams=["5.8"])]),
-    pytest.mark.provider([VMwareProvider, RHEVMProvider, AzureProvider, GCEProvider],
-                         scope='module',
+                               ]),
+    pytest.mark.provider([CloudInfraProvider], scope='module',
                          required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
     test_requirements.chargeback,
 ]
 
+# Allowed deviation between the reported value in the Chargeback report and the estimated value.
+DEVIATION = 1
+
 
 @pytest.yield_fixture(scope="module")
-def clean_setup_provider(request, provider):
-    BaseProvider.clear_providers()
-    setup_or_skip(request, provider)
+def clean_setup_provider(request, has_no_providers_modscope, setup_provider_modscope,
+        provider):
     yield
     BaseProvider.clear_providers()
-
-
-def new_credential():
-    return Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret='secret')
 
 
 @pytest.yield_fixture(scope="module")
@@ -68,7 +65,8 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
     try:
         user = appliance.collections.users.create(
             name=provider.name + fauxfactory.gen_alphanumeric(),
-            credential=new_credential(),
+            credential=Credential(principal='uid' + '{}'.format(fauxfactory.gen_alphanumeric()),
+                secret='secret'),
             email='abc@example.com',
             groups=cb_group,
             cost_center='Workload',
@@ -476,7 +474,7 @@ def new_compute_rate():
 # Tests to validate costs reported in the Chargeback report for various metrics.
 # The costs reported in the Chargeback report should be approximately equal to the
 # costs estimated in the chargeback_costs_default/chargeback_costs_custom fixtures.
-@pytest.mark.uncollectif(lambda provider: provider.category == 'cloud')
+@pytest.mark.uncollectif(lambda provider: provider.one_of(CloudProvider))
 def test_validate_default_rate_cpu_usage_cost(chargeback_costs_default, chargeback_report_default):
     """Test to validate CPU usage cost.
        Calculation is based on default Chargeback rate.
@@ -486,13 +484,14 @@ def test_validate_default_rate_cpu_usage_cost(chargeback_costs_default, chargeba
             estimated_cpu_usage_cost = chargeback_costs_default['cpu_used_cost']
             cost_from_report = groups["CPU Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_cpu_usage_cost - 1.0 <= float(cost) \
-                <= estimated_cpu_usage_cost + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_cpu_usage_cost - DEVIATION <= float(cost) \
+                <= estimated_cpu_usage_cost + DEVIATION, \
+                'Estimated cost and report cost do not match'
             break
 
 
 @pytest.mark.rhv2
-@pytest.mark.uncollectif(lambda provider: provider.one_of(GCEProvider))
+@pytest.mark.uncollectif(lambda provider: provider.one_of(EC2Provider, GCEProvider))
 def test_validate_default_rate_memory_usage_cost(chargeback_costs_default,
         chargeback_report_default):
     """Test to validate memory usage cost.
@@ -504,8 +503,9 @@ def test_validate_default_rate_memory_usage_cost(chargeback_costs_default,
             estimated_memory_usage_cost = chargeback_costs_default['memory_used_cost']
             cost_from_report = groups["Memory Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_memory_usage_cost - 1.0 <= float(cost) \
-                <= estimated_memory_usage_cost + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_memory_usage_cost - DEVIATION <= float(cost) \
+                <= estimated_memory_usage_cost + DEVIATION, \
+                'Estimated cost and report cost do not match'
             break
 
 
@@ -521,8 +521,9 @@ def test_validate_default_rate_network_usage_cost(chargeback_costs_default,
             estimated_network_usage_cost = chargeback_costs_default['network_used_cost']
             cost_from_report = groups["Network I/O Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_network_usage_cost - 1.0 <= float(cost) \
-                <= estimated_network_usage_cost + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_network_usage_cost - DEVIATION <= float(cost) \
+                <= estimated_network_usage_cost + DEVIATION, \
+                'Estimated cost and report cost do not match'
             break
 
 
@@ -537,8 +538,9 @@ def test_validate_default_rate_disk_usage_cost(chargeback_costs_default, chargeb
             estimated_disk_usage_cost = chargeback_costs_default['disk_used_cost']
             cost_from_report = groups["Disk I/O Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_disk_usage_cost - 1.0 <= float(cost) \
-                <= estimated_disk_usage_cost + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_disk_usage_cost - DEVIATION <= float(cost) \
+                <= estimated_disk_usage_cost + DEVIATION, \
+                'Estimated cost and report cost do not match'
             break
 
 
@@ -553,13 +555,14 @@ def test_validate_default_rate_storage_usage_cost(chargeback_costs_default,
             estimated_storage_usage_cost = chargeback_costs_default['storage_used_cost']
             cost_from_report = groups["Storage Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_storage_usage_cost - 1.0 <= float(cost) \
-                <= estimated_storage_usage_cost + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_storage_usage_cost - DEVIATION <= float(cost) \
+                <= estimated_storage_usage_cost + DEVIATION, \
+                'Estimated cost and report cost do not match'
             break
 
 
 @pytest.mark.rhv3
-@pytest.mark.uncollectif(lambda provider: provider.category == 'cloud')
+@pytest.mark.uncollectif(lambda provider: provider.one_of(CloudProvider))
 def test_validate_custom_rate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate CPU usage cost.
        Calculation is based on custom Chargeback rate.
@@ -570,13 +573,14 @@ def test_validate_custom_rate_cpu_usage_cost(chargeback_costs_custom, chargeback
             estimated_cpu_usage_cost = chargeback_costs_custom['cpu_used_cost']
             cost_from_report = groups["CPU Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_cpu_usage_cost - 1.0 <= float(cost) \
-                <= estimated_cpu_usage_cost + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_cpu_usage_cost - DEVIATION <= float(cost) \
+                <= estimated_cpu_usage_cost + DEVIATION, \
+                'Estimated cost and report cost do not match'
             break
 
 
 @pytest.mark.rhv1
-@pytest.mark.uncollectif(lambda provider: provider.one_of(GCEProvider))
+@pytest.mark.uncollectif(lambda provider: provider.one_of(EC2Provider, GCEProvider))
 def test_validate_custom_rate_memory_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate memory usage cost.
        Calculation is based on custom Chargeback rate.
@@ -587,8 +591,9 @@ def test_validate_custom_rate_memory_usage_cost(chargeback_costs_custom, chargeb
             estimated_memory_usage_cost = chargeback_costs_custom['memory_used_cost']
             cost_from_report = groups["Memory Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_memory_usage_cost - 1.0 <= float(cost) \
-                <= estimated_memory_usage_cost + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_memory_usage_cost - DEVIATION <= float(cost) \
+                <= estimated_memory_usage_cost + DEVIATION, \
+                'Estimated cost and report cost do not match'
             break
 
 
@@ -603,8 +608,9 @@ def test_validate_custom_rate_network_usage_cost(chargeback_costs_custom, charge
             estimated_network_usage_cost = chargeback_costs_custom['network_used_cost']
             cost_from_report = groups["Network I/O Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_network_usage_cost - 1.0 <= float(cost) \
-                <= estimated_network_usage_cost + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_network_usage_cost - DEVIATION <= float(cost) \
+                <= estimated_network_usage_cost + DEVIATION, \
+                'Estimated cost and report cost do not match'
             break
 
 
@@ -619,8 +625,9 @@ def test_validate_custom_rate_disk_usage_cost(chargeback_costs_custom, chargebac
             estimated_disk_usage_cost = chargeback_costs_custom['disk_used_cost']
             cost_from_report = groups["Disk I/O Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_disk_usage_cost - 1.0 <= float(cost) \
-                <= estimated_disk_usage_cost + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_disk_usage_cost - DEVIATION <= float(cost) \
+                <= estimated_disk_usage_cost + DEVIATION, \
+                'Estimated cost and report cost do not match'
             break
 
 
@@ -634,6 +641,7 @@ def test_validate_custom_rate_storage_usage_cost(chargeback_costs_custom, charge
             estimated_storage_usage_cost = chargeback_costs_custom['storage_used_cost']
             cost_from_report = groups["Storage Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_storage_usage_cost - 1.0 <= float(cost) \
-                <= estimated_storage_usage_cost + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_storage_usage_cost - DEVIATION <= float(cost) \
+                <= estimated_storage_usage_cost + DEVIATION, \
+                'Estimated cost and report cost do not match'
             break
