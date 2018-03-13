@@ -7,7 +7,7 @@ from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-
+from cfme.storage.volume import VolumeDetailsView, VolumeSnapshotView
 
 pytestmark = [
     test_requirements.storage,
@@ -41,12 +41,17 @@ def volume(appliance, provider):
 
 
 @pytest.yield_fixture(scope='function')
-def snapshot(appliance, provider, volume):
+def snapshot(volume):
     # create new snapshot for crated volume
-    snapshot_collection = appliance.collections.volume_snapshots.filter({'provider': provider})
     snapshot_name = fauxfactory.gen_alpha()
-    volume.create_snapshot(snapshot_name)
-    snapshot = snapshot_collection.instantiate(snapshot_name, provider)
+    snapshot = volume.create_snapshot(snapshot_name)
+
+    try:
+        wait_for(lambda: snapshot.status == 'available',
+                 delay=20, timeout=1200, fail_func=snapshot.refresh)
+    except TimeoutException:
+        logger.error('Snapshot Creation fails:'
+                     'TimeoutException due to status not available (=error)')
     yield snapshot
 
     try:
@@ -74,6 +79,10 @@ def test_storage_snapshot_create_cancelled_validation(volume):
 
     snapshot_name = fauxfactory.gen_alpha()
     volume.create_snapshot(snapshot_name, cancel=True)
+    view = volume.create_view(VolumeDetailsView)
+    view.wait_displayed(timeout='10s')
+    view.flash.assert_message(
+        'Snapshot of Cloud Volume "{}" was cancelled by the user'.format(volume.name))
 
 
 @pytest.mark.tier(3)
@@ -92,10 +101,12 @@ def test_storage_snapshot_create_reset_validation(volume):
 
     snapshot_name = fauxfactory.gen_alpha()
     volume.create_snapshot(snapshot_name, reset=True)
+    view = volume.create_view(VolumeSnapshotView)
+    view.flash.assert_message('All changes have been reset')
 
 
 @pytest.mark.tier(1)
-def test_storage_volume_snapshot_crud(appliance, provider, volume):
+def test_storage_volume_snapshot_crud(volume):
     """ Test storage snapshot crud
 
     prerequisites:
@@ -106,13 +117,23 @@ def test_storage_volume_snapshot_crud(appliance, provider, volume):
         * Delete a snapshot
     """
 
-    snapshot_collection = appliance.collections.volume_snapshots.filter({'provider': provider})
-
     # create new snapshot
+    initial_snapshot_count = volume.snapshots_count
     snapshot_name = fauxfactory.gen_alpha()
-    volume.create_snapshot(snapshot_name)
-    snapshot = snapshot_collection.instantiate(snapshot_name, provider)
+    snapshot = volume.create_snapshot(snapshot_name)
+    view = volume.create_view(VolumeDetailsView)
+    view.wait_displayed(timeout='10s')
+    view.flash.assert_success_message(
+        'Snapshot for Cloud Volume "{}" created'.format(volume.name))
 
+    # check for volume relationship tables snapshot count
+    try:
+        wait_for(lambda: volume.snapshots_count > initial_snapshot_count,
+                 delay=20, timeout=1000, fail_func=volume.refresh)
+    except TimeoutException:
+        logger.error('Snapshot count increment fails')
+
+    # check for status of snapshot
     try:
         wait_for(lambda: snapshot.status == 'available',
                  delay=20, timeout=1200, fail_func=snapshot.refresh)

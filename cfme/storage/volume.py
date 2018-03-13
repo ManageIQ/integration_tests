@@ -18,8 +18,8 @@ from widgetastic.widget import View, Text
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import VolumeNotFoundError, ItemNotFound
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError
 
@@ -220,7 +220,7 @@ class Volume(BaseEntity):
 
     def create_snapshot(self, name, cancel=False, reset=False):
         """create snapshot of cloud volume"""
-        initial_snapshot_count = self.snapshots_count
+        snapshot_collection = self.appliance.collections.volume_snapshots
         view = navigate_to(self, 'Snapshot')
 
         changed = view.snapshot_name.fill(name)
@@ -229,27 +229,15 @@ class Volume(BaseEntity):
         if changed:
             if reset:
                 view.reset.click()
-                view.flash.assert_message('All changes have been reset')
+                return None
 
             elif cancel:
                 view.cancel.click()
-                view = self.create_view(VolumeDetailsView)
-                view.wait_displayed(timeout='10s')
-                view.flash.assert_message(
-                    'Snapshot of Cloud Volume "{}" was cancelled by the user'.format(self.name))
+                return None
 
             else:
                 view.save.click()
-
-                view = self.create_view(VolumeDetailsView)
-                view.wait_displayed(timeout='10s')
-                view.flash.assert_success_message('Snapshot for Cloud Volume "{}" '
-                                                  'created'.format(self.name))
-
-                wait_for(lambda: self.snapshots_count > initial_snapshot_count,
-                         delay=20,
-                         timeout=1000,
-                         fail_func=self.refresh)
+                return snapshot_collection.instantiate(name, self.provider)
 
     @property
     def exists(self):
