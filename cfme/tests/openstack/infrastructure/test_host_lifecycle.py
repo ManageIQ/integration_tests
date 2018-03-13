@@ -15,13 +15,16 @@ pytestmark = [
 
 @pytest.fixture(scope='module')
 def host(provider):
+    # TODO: Implement .filter() for OpenstackNode with all()
     """Find a host for test scenario"""
-    view = navigate_to(OpenstackNode, 'All')
-    hosts = view.entities.get_all()
+    host_collection = provider.appliance.collections.openstack_nodes
+    hosts = host_collection.all(provider)
     # Find a compute host with no instances on it
-    for h in hosts:
-        if 'Compute' in h.name and h.data['no_vm'] == 0:
-            return OpenstackNode(h.name, provider=provider)
+    for host in hosts:
+        view = navigate_to(host, 'Details')
+        vms = int(view.entities.summary('Relationships').get_text_of('VMs'))
+        if 'Compute' in host.name and vms == 0:
+            return host
     raise HostNotFound('There is no proper host for tests')
 
 
@@ -50,6 +53,7 @@ def test_scale_provider_down(provider, host, has_mistral_service):
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
     host.name = host_uuid  # host's name is changed after scale down
     host.browser.refresh()
+    view = navigate_to(host, 'Details')
     prov_state = view.entities.summary('Openstack Hardware').get_text_of('Provisioning State')
     assert prov_state == 'available'
 

@@ -111,6 +111,7 @@ setup(
             'dashboards = cfme.dashboard:DashboardCollection',
             'clusters = cfme.infrastructure.cluster:ClusterCollection',
             'hosts = cfme.infrastructure.host:HostCollection',
+            'openstack_nodes = cfme.infrastructure.openstack_node:OpenstackNodeCollection',
             'physical_servers = cfme.physical.physical_server:PhysicalServerCollection',
             'deployment_roles = cfme.infrastructure.deployment_roles:DeploymentRoleCollection',
             'customization_templates = cfme.infrastructure.pxe:CustomizationTemplateCollection',
