@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-from selenium.common.exceptions import TimeoutException
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for
+from cfme.utils.wait import wait_for, TimedOutError
 from cfme.storage.volume import VolumeDetailsView, VolumeSnapshotView
 
 pytestmark = [
@@ -49,7 +48,7 @@ def snapshot(volume):
     try:
         wait_for(lambda: snapshot.status == 'available',
                  delay=20, timeout=1200, fail_func=snapshot.refresh)
-    except TimeoutException:
+    except TimedOutError:
         logger.error('Snapshot Creation fails:'
                      'TimeoutException due to status not available (=error)')
     yield snapshot
@@ -130,14 +129,14 @@ def test_storage_volume_snapshot_crud(volume):
     try:
         wait_for(lambda: volume.snapshots_count > initial_snapshot_count,
                  delay=20, timeout=1000, fail_func=volume.refresh)
-    except TimeoutException:
+    except TimedOutError:
         logger.error('Snapshot count increment fails')
 
     # check for status of snapshot
     try:
         wait_for(lambda: snapshot.status == 'available',
                  delay=20, timeout=1200, fail_func=snapshot.refresh)
-    except TimeoutException:
+    except TimedOutError:
         logger.error('Snapshot Creation fails:'
                      'TimeoutException due to status not available (=error)')
 
