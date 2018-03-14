@@ -4,15 +4,17 @@ from widgetastic_patternfly import NoSuchElementException
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider, CloudInfraProvider
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm import VM, Template
 from cfme.common.provider import cleanup_vm
-from cfme.configure import configuration
 from cfme.common.vm_views import DriftAnalysis
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.host import Host
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.virtual_machines import Vm
 from cfme.utils import ssh, safe_string, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -208,9 +210,8 @@ def ssa_vm(request, local_setup_provider, provider, vm_analysis_provisioning_dat
     # TODO:  if rhev and iscsi, it need direct_lun
     if provider.type == 'rhevm':
         logger.info("Setting a relationship between VM and appliance")
-        cfme_rel = VM.CfmeRelationship(vm)
-        server_name = appliance.server.name
-        cfme_rel.set_relationship(str(server_name), configuration.server_id())
+        cfme_rel = Vm.CfmeRelationship(vm)
+        cfme_rel.set_relationship(appliance.server.name, appliance.server_id())
 
     yield vm
 
@@ -330,6 +331,8 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
 
 
 @pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.long_running
 def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profile):
     """ Tests SSA can be performed and returns sane results
@@ -373,7 +376,9 @@ def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profile):
         c_users, c_groups, c_packages, c_services))
 
     soft_assert(c_lastanalyzed != 'Never', "Last Analyzed is set to Never")
-    soft_assert(e_os_type in details_os_icon.lower(),
+    # RHEL has 'Red Hat' in details_os_icon, but 'redhat' in quadicon_os_icon
+    os_type = e_os_type if e_os_type != 'redhat' else 'red hat'
+    soft_assert(os_type in details_os_icon.lower(),
                 "details icon: '{}' not in '{}'".format(e_os_type, details_os_icon))
     soft_assert(e_os_type in quadicon_os_icon.lower(),
                 "quad icon: '{}' not in '{}'".format(e_os_type, quadicon_os_icon))
@@ -473,6 +478,8 @@ def test_ssa_groups(ssa_vm, appliance, ssa_profile):
 
 
 @pytest.mark.long_running
+@pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_ssa_packages(ssa_vm, soft_assert, appliance, ssa_profile):
     """ Tests SSA fetches correct results for packages
 
@@ -514,7 +521,10 @@ def test_ssa_packages(ssa_vm, soft_assert, appliance, ssa_profile):
         pytest.fail('Package {} was not found in details table after SSA run'.format(package_name))
 
 
-@pytest.mark.meta(blockers=[BZ(1528419, forced_streams=['5.8', '5.9'])])
+@pytest.mark.meta(blockers=[BZ(1533590, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider: not provider.one_of(EC2Provider)),
+    BZ(1553808, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.long_running
 def test_ssa_files(appliance, ssa_vm, soft_assert):
     """Tests that instances can be scanned for specific file."""
