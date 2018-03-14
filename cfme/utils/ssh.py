@@ -278,7 +278,7 @@ class SSHClient(paramiko.SSHClient):
         container = container or self._container
         if self.is_pod and not ensure_host:
             # This command will be executed in the context of the host provider
-            command_to_run = 'source /etc/default/evm; ' + command
+            command_to_run = '[[ -f /etc/default/evm ]] && source /etc/default/evm; ' + command
             oc_cmd = 'oc exec --namespace={proj} {pod} -- bash -c {cmd}'.format(
                 proj=self._project, pod=container, cmd=quote(command_to_run))
             command = oc_cmd
