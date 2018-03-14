@@ -106,6 +106,8 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
 
 
 @pytest.mark.rhv1
+@pytest.mark.meta(blockers=[BZ(1552059, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
                          'Must be RHEVM provider version >= 4')
 def test_snapshot_crud(small_test_vm, provider):
