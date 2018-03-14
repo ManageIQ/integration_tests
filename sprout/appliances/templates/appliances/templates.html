@@ -26,7 +26,7 @@
             {% if zstream %}<td rowspan={{ zstream_rowspans|keyvalue:zstream }}>{{ zstream }}</td>{% endif %}
             {% if version %}<td rowspan={{ version_rowspans|keyvalue:version }}>{{ version }}</td>{% endif %}
             {% if date %}<td rowspan={{ date_version_rowspans|keyvalue:datetuple }}>{{ date }}</td>{% endif %}
-            <td><input type="checkbox" class="deletecb" id="checkbox-{{ template.id }}" data-templateid="{{ template.id }}" {% if not template.suggested_delete %}disabled{% endif %}></td>
+            <td><input type="checkbox" class="deletecb" id="checkbox-{{ template.id }}" data-templateid="{{ template.id }}" {% if not template.suggested_delete or not request.user.is_superuser %}disabled{% endif %}></td>
             <td><a href="{% url 'specific_provider' provider.id %}#template-{{ template.id }}">{{ provider.id }}</a></td>
             <td>
                 {% if template.suggested_delete %}<strong>{% endif %}
@@ -35,7 +35,7 @@
             </td>
             <td><span class="glyphicon glyphicon-{% if template.preconfigured %}ok{% else %}remove{% endif %}"></span></td>
             <td>
-                {% if template.suggested_delete %}
+                {% if template.suggested_delete and request.user.is_superuser %}
                     <button class="btn btn-danger btn-xs delete-template" data-template="{{ template.id }}" id="button-{{ template.id }}"><span class="glyphicon glyphicon-trash"></span> Delete from provider</button>
                     <span class="spinner spinner-xs spinner-inline" id="spinner-{{ template.id }}"></span>
                 {% else %}

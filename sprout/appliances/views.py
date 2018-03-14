@@ -1049,10 +1049,12 @@ def template_configurations(request):
     return render(request, 'appliances/template_conf.html', locals())
 
 
+@only_authenticated
 def nuke_template(request):
-    if not request.user.is_authenticated() or not (
-            request.user.is_superuser or request.user.is_staff):
+    if not request.user.is_superuser:
         return HttpResponseForbidden("Only authenticated superusers can operate this action.")
+    if request.method != 'POST':
+        return HttpResponseForbidden('Only POST allowed')
     template_id = request.POST["template_id"]
     try:
         template = Template.objects.get(id=template_id)
@@ -1065,7 +1067,7 @@ def nuke_template(request):
 @only_authenticated
 def purge_templates(request):
     if not request.user.is_superuser:
-        return go_home(request)
+        return HttpResponseForbidden("Only authenticated superusers can operate this action.")
     if request.method != 'POST':
         return HttpResponseForbidden('Only POST allowed')
 
