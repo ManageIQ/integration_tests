@@ -255,7 +255,7 @@ class SSHClient(paramiko.SSHClient):
 
     def run_command(
             self, command, timeout=RUNCMD_TIMEOUT, reraise=False, ensure_host=False,
-            ensure_user=False):
+            ensure_user=False, container=None):
         """Run a command over SSH.
 
         Args:
@@ -266,7 +266,7 @@ class SSHClient(paramiko.SSHClient):
                 container or such that we might be using by default.
             ensure_user: Ensure that the command is run as the user we logged in, so in case we are
                 not root, setting this to True will prevent from running sudo.
-
+            container: allows to temporarily override default container
         Returns:
             A :py:class:`SSHResult` instance.
         """
@@ -275,15 +275,16 @@ class SSHClient(paramiko.SSHClient):
         original_command = command
         uses_sudo = False
         logger.info("Running command %r", command)
+        container = container or self._container
         if self.is_pod and not ensure_host:
             # This command will be executed in the context of the host provider
             command_to_run = 'source /etc/default/evm; ' + command
             oc_cmd = 'oc exec --namespace={proj} {pod} -- bash -c {cmd}'.format(
-                proj=self._project, pod=self._container, cmd=quote(command_to_run))
+                proj=self._project, pod=container, cmd=quote(command_to_run))
             command = oc_cmd
             ensure_host = True
         elif self.is_container and not ensure_host:
-            command = 'docker exec {} bash -c {}'.format(self._container, quote(
+            command = 'docker exec {} bash -c {}'.format(container, quote(
                 'source /etc/default/evm; ' + command))
 
         if self.username != 'root' and not ensure_user:
