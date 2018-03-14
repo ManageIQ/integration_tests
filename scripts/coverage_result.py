@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 from coverage import CoverageData
+import six
 try:
     from cfme.utils.path import project_path, log_path
 except ImportError:
@@ -45,7 +46,7 @@ def compute_coverage(branch):
 
     line_count = 0
     completed_lines = 0
-    for file_changed, lines in file_data.iteritems():
+    for file_changed, lines in six.iteritems(file_data):
         for line in lines:
             line_count += 1
             used_lines = coverage_data.lines(file_changed)

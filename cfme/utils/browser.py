@@ -1,4 +1,5 @@
 """Core functionality for starting, restarting, and stopping a selenium browser."""
+from __future__ import absolute_import
 import atexit
 import json
 import threading
@@ -25,6 +26,7 @@ from cfme.utils import conf, tries, clear_property_cache
 from cfme.utils.log import logger as log  # TODO remove after artifactor handler
 from cfme.utils.path import data_path
 from fixtures.pytest_store import store, write_line
+import six
 
 # import logging
 # log = logging.getLogger('cfme.browser')
@@ -48,7 +50,7 @@ def _load_firefox_profile():
     profile_dict = json.loads(profile_json)
 
     profile = FirefoxProfile(firefox_profile_tmpdir)
-    for pref in profile_dict.iteritems():
+    for pref in six.iteritems(profile_dict):
         profile.set_preference(*pref)
     profile.update_preferences()
     return profile
@@ -77,7 +79,7 @@ class Wharf(object):
         if self.docker_id is not None:
             return self.docker_id
         checkout = self._get('checkout')
-        self.docker_id, self.config = checkout.items()[0]
+        self.docker_id, self.config = list(checkout.items())[0]
         self._start_renew_thread()
         log.info('Checked out webdriver container %s', self.docker_id)
         log.debug("%r", checkout)

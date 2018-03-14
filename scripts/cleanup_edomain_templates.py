@@ -272,7 +272,7 @@ def make_kwargs(args, cfme_data, **kwargs):
                 kwargs[akey] = aval
 
     for akey, aval in args_kwargs.items():
-        if akey not in kwargs.keys():
+        if akey not in list(kwargs.keys()):
             kwargs[akey] = aval
 
     return kwargs

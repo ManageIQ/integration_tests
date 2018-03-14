@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Page model for Automation/Anisble/Credentials"""
+from __future__ import absolute_import
 import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
@@ -15,6 +16,7 @@ from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFME
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import ParametrizedSummaryTable, Table
+import six
 
 
 class CredentialsBaseView(BaseLoggedInPage):
@@ -199,7 +201,7 @@ class Credential(BaseEntity):
         super(Credential, self).__init__(collection)
         self.name = name
         self.credential_type = credential_type
-        for key, value in credentials.iteritems():
+        for key, value in six.iteritems(credentials):
             setattr(self, key, value)
 
     __repr__ = object.__repr__

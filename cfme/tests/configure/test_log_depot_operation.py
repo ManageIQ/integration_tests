@@ -5,6 +5,7 @@
 Author: Milan Falešník <mfalesni@redhat.com>
 Since: 2013-02-20
 """
+from __future__ import absolute_import
 from datetime import datetime
 
 import fauxfactory
@@ -20,6 +21,7 @@ from cfme.utils.providers import get_mgmt
 from cfme.utils.update import update
 from cfme.utils.version import current_version
 from cfme.utils.virtual_machines import deploy_template
+import six
 
 pytestmark = [test_requirements.log_depot]
 
@@ -82,7 +84,7 @@ def pytest_generate_tests(metafunc):
     if not data:
         pytest.skip('No log_db_operations information!')
     creds = conf.credentials[data['credentials']]
-    for protocol, proto_data in data['protocols'].iteritems():
+    for protocol, proto_data in six.iteritems(data['protocols']):
         if proto_data['use_for_log_collection']:
             depots.append([LogDepotType(
                 protocol, creds,

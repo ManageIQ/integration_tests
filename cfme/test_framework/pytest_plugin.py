@@ -4,7 +4,9 @@ cfme main plugin
 this loads all of the elemental cfme plugins and prepares configuration
 """
 
+from __future__ import absolute_import
 import pytest
+import six
 
 
 @pytest.mark.tryfirst
@@ -24,7 +26,7 @@ def pytest_collection_finish(session):
     store.terminalreporter.write(
         "Uncollection Stats:\n", bold=True)
 
-    for reason, value in store.uncollection_stats.iteritems():
+    for reason, value in six.iteritems(store.uncollection_stats):
         store.terminalreporter.write(
             " {}: {}\n".format(reason, value), bold=True)
     store.terminalreporter.write(

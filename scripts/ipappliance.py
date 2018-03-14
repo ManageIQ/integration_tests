@@ -19,7 +19,7 @@ Returns the resulting value of the call written to the stdout, one line per appl
 Logs its actions to stderr.
 
 """
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 import argparse
 import inspect
 import json
@@ -29,6 +29,7 @@ from threading import Lock
 from concurrent import futures
 import traceback
 from cfme.utils.appliance import IPAppliance
+import six
 
 lock = Lock()
 
@@ -103,7 +104,7 @@ def main(args):
     log_callback('Calling {}({}, {}) on {}'.format(
         args.action_name,
         ", ".join(map(repr, action_args)),
-        ", ".join("{}={}".format(k, repr(v)) for k, v in action_kwargs.iteritems()),
+        ", ".join("{}={}".format(k, repr(v)) for k, v in six.iteritems(action_kwargs)),
         ", ".join(args.appliances)))
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:

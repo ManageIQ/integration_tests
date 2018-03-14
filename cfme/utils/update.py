@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from contextlib import contextmanager
 from copy import copy
+import six
 
 
 def public_fields(o):
@@ -8,7 +10,7 @@ def public_fields(o):
     """
     if not hasattr(o, '__dict__'):
         return dict()
-    return dict((key, value) for key, value in o.__dict__.iteritems()
+    return dict((key, value) for key, value in six.iteritems(o.__dict__)
                 if not key.startswith('_'))
 
 

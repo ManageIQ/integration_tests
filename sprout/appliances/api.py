@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import inspect
 import json
 import re
@@ -17,6 +18,7 @@ from appliances.tasks import (
     appliance_power_on, appliance_power_off, appliance_suspend, appliance_rename,
     connect_direct_lun, disconnect_direct_lun, mark_appliance_ready, wait_appliance_ready)
 from sprout.log import create_logger
+import six
 
 
 def json_response(data):
@@ -104,7 +106,7 @@ class JSONApi(object):
         if request.method != 'POST':
             return json_success({
                 "available_methods": sorted(
-                    map(lambda m: m.description, self._methods.itervalues()),
+                    map(lambda m: m.description, six.itervalues(self._methods)),
                     key=lambda m: m["name"]),
             })
         try:

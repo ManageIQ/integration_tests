@@ -70,7 +70,7 @@ class EmailServer(SMTPServer):
         if isinstance(payload, list):
             # Message can have multiple payloads, so let's join them for simplicity
             payload = "\n".join([x.get_payload().strip() for x in payload])
-        d = dict(message.items())
+        d = dict(list(message.items()))
         with db_lock:
             global connection
             cursor = connection.cursor()

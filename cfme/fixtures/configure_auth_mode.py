@@ -17,7 +17,7 @@ def get_auth_settings(appliance):
 
 @pytest.fixture(scope='session')
 def available_auth_modes():
-    return auth_data.get('auth_providers', {}).keys()
+    return list(auth_data.get('auth_providers', {}).keys())
 
 
 @pytest.yield_fixture(scope='module')

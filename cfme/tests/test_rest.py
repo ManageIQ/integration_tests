@@ -36,7 +36,7 @@ def a_provider(request):
 
 @pytest.fixture(scope='module')
 def api_version(appliance):
-    entry_point = appliance.rest_api._versions.values()[0]
+    entry_point = list(appliance.rest_api._versions.values())[0]
     return appliance.new_rest_api_instance(entry_point=entry_point)
 
 
@@ -244,7 +244,7 @@ def test_settings_collection(appliance):
     # the "settings" collection is untypical as it doesn't have "resources" and
     # for this reason can't be reloaded (bug in api client)
     body = appliance.rest_api.get(appliance.rest_api.collections.settings._href)
-    assert all(item in body.keys() for item in ('product', 'prototype'))
+    assert all(item in body for item in ('product', 'prototype'))
 
 
 def test_identity(appliance):

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
+from __future__ import absolute_import
 from copy import copy
 
 import attr
@@ -8,7 +9,7 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Checkbox, Table, Text, TextInput, View
 from widgetastic_patternfly import Button, Input
 
-from actions import Action
+from .actions import Action
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
@@ -18,6 +19,7 @@ from cfme.utils.update import Updateable
 from widgetastic_manageiq import BootstrapSwitchSelect, MultiBoxSelect, SummaryFormItem, Dropdown
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 from . import ControlExplorerView
+import six
 
 
 class PoliciesAllView(ControlExplorerView):
@@ -390,7 +392,7 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
         elif isinstance(actions, list) or isinstance(actions, tuple) or isinstance(actions, set):
             true_actions.extend(actions)
         elif isinstance(actions, dict):
-            for action, is_true in actions.iteritems():
+            for action, is_true in six.iteritems(actions):
                 if is_true:
                     true_actions.append(action)
                 else:

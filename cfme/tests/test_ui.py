@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 from cfme.utils.appliance.implementations.ui import navigate_to
+import six
 
 
 def traverse(dic, paths, path=None):
@@ -9,7 +11,7 @@ def traverse(dic, paths, path=None):
             np.append(item)
             paths.append(np)
     elif isinstance(dic, dict):
-        for k, v in dic.iteritems():
+        for k, v in six.iteritems(dic):
             np = path[:]
             np.append(k)
             traverse(v, paths, np)

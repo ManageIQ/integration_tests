@@ -124,7 +124,10 @@ def get_provider_templates(provider_key, template_providers, unresponsive_provid
         if cfme_data['management_systems'][provider_key]['type'] == 'gce':
             # get_private_images returns a dictionary with items list that has tuple with list of
             #  template dictionaries in the 1st spot, hence `.items()[0][1]`
-            templates = [t.get('name') for t in provider_mgmt.get_private_images().items()[0][1]]
+            templates = [
+                t.get('name')
+                for t in list(provider_mgmt.get_private_images().items())[0][1]
+            ]
         else:
             templates = provider_mgmt.list_template()
         print(provider_key, 'returned {} templates'.format(len(templates)))
