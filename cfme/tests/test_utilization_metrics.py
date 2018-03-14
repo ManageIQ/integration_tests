@@ -125,8 +125,10 @@ def query_metric_db(appliance, provider, metric, vm_name=None, host_name=None):
 
 @pytest.mark.rhv2
 # Tests to check that specific metrics are being collected
-@pytest.mark.meta(blockers=[BZ(1511099, forced_streams=["5.8", "5.9", "upstream"],
-                               unblock=lambda provider: not provider.one_of(GCEProvider))])
+@pytest.mark.meta(
+    blockers=[BZ(1511099, forced_streams=["5.8", "5.9", "upstream"],
+    unblock=lambda provider: not provider.one_of(GCEProvider))]
+)
 def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
     if provider.category == "infra":
@@ -168,9 +170,12 @@ def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
 @pytest.mark.rhv2
 @pytest.mark.meta(
     blockers=[BZ(1408963, forced_streams=["5.8", "upstream"],
-                 unblock=lambda provider: not provider.one_of(RHEVMProvider))])
-@pytest.mark.meta(blockers=[BZ(1511099, forced_streams=["5.8", "5.9", "upstream"],
-                               unblock=lambda provider: not provider.one_of(GCEProvider))])
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))]
+)
+@pytest.mark.meta(
+    blockers=[BZ(1511099, forced_streams=["5.8", "5.9", "upstream"],
+    unblock=lambda provider: not provider.one_of(GCEProvider))]
+)
 def test_raw_metric_vm_network(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
     query = query_metric_db(appliance, provider, 'net_usage_rate_average',
@@ -185,8 +190,10 @@ def test_raw_metric_vm_network(metrics_collection, appliance, provider):
 @pytest.mark.rhv2
 @pytest.mark.uncollectif(
     lambda provider: provider.one_of(EC2Provider))
-@pytest.mark.meta(blockers=[BZ(1511099, forced_streams=["5.8", "5.9", "upstream"],
-                               unblock=lambda provider: not provider.one_of(GCEProvider))])
+@pytest.mark.meta(
+    blockers=[BZ(1511099, forced_streams=["5.8", "5.9", "upstream"],
+    unblock=lambda provider: not provider.one_of(GCEProvider))]
+)
 def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
     query = query_metric_db(appliance, provider, 'disk_usage_rate_average',
@@ -245,7 +252,7 @@ def test_raw_metric_host_network(metrics_collection, appliance, provider):
     lambda provider: provider.one_of(CloudProvider))
 @pytest.mark.meta(
     blockers=[BZ(1424589, forced_streams=["5.8", "upstream"],
-        unblock=lambda provider: not provider.one_of(RHEVMProvider))]
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))]
 )
 def test_raw_metric_host_disk(metrics_collection, appliance, provider):
     host_name = get_host_name(provider)
