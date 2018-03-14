@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-import argparse
+import click
 import jenkins
 import os
 import re
@@ -8,6 +8,7 @@ import requests
 import subprocess
 import time
 
+from collections import namedtuple
 from requests.auth import HTTPBasicAuth
 from six.moves.urllib.parse import urlsplit, urlunsplit
 
@@ -100,7 +101,8 @@ def check_artifact(
         artifact_path):
     """Verify that artifact exists
 
-    Verify artifact exists for a particular job.
+    Verify artifact exists for a particular jenkins build and could potentially be
+    downloaded
 
     Args:
         jenkins_username:  Jenkins login.
@@ -199,7 +201,13 @@ def merge_coverage_data(ssh, coverage_dir):
     # The sonar-scanner will actually need the .resultset.json file it
     # uses to be in /coverage/.resultset.json (i.e. the root of the coverarage
     # directory), so lets create a symlink:
-    ssh.run_command('ln -s merged/.resultset.json {}/.resultset.json'.format(coverage_dir))
+    merged_resultset = '{}/merged/.resultset.json'.format(coverage_dir)
+    resultset_link = '{}/.resultset.json'.format(coverage_dir)
+    if not ssh.run_command('if [ -e "{}" ]; then rm -f {}; fi'.format(
+            resultset_link, resultset_link)):
+        Exception('Failed to remove link {}'.format(resultset_link))
+    if not ssh.run_command('ln -s {} {}'.format(merged_resultset, resultset_link)):
+        Exception('Failed to link {} to {}'.format(merged_resultset, resultset_link))
 
 
 def pull_merged_coverage_data(ssh, coverage_dir):
@@ -374,106 +382,217 @@ def sonar_scan(ssh, project_name, project_version, scanner_url, scanner_dir, ser
     run_sonar_scanner(ssh, scanner_dir, timeout)
 
 
-def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
-    if not jenkins_user or not jenkins_token:
-        try:
-            from cfme.utils import conf
-            jenkins_user = conf.credentials.jenkins_app.user
-            jenkins_token = conf.credentials.jenkins_app.token
-        except (AttributeError, KeyError):
-            raise ValueError(
-                '--jenkins-user and --jenkins-token not provided and credentials yaml does not '
-                'contain the jenkins_app entry with user and token')
-    appliance_version = str(appliance.version).strip()
-    logger.info('Looking for appliance version %s in %s', appliance_version, job_name)
-    client = jenkins.Jenkins(jenkins_url, username=jenkins_user, password=jenkins_token)
-    build_numbers = get_build_numbers(client, job_name)
+def get_eligible_builds(jenkins_data, jenkins_job, cfme_version):
+    """Get eligible builds for a specified jenkins job
+
+    An eligible build will be for the specified appliance version, and contain
+    the code coverage data.  We return these builds as a list of named tuples
+    with the following keys: number, job, coverage_archive.
+
+    Args:
+        jenkins_data:   Named tupple with these attributes:  url, user, token, client
+        jenkins_job:  Jenkins job name such as downstream-59z-tests
+        cfme_version:  Versuion CFME sources this coverage is against.
+
+    Returns:
+        List of eligible builds.  Each build is a named tuple with the following
+        keys:  number, job, coverage_archive.
+    """
+    logger.info('Looking for CFME version %s in %s', cfme_version, jenkins_job)
+    build_numbers = get_build_numbers(jenkins_data.client, jenkins_job)
     if not build_numbers:
-        raise Exception('No builds for job {}'.format(job_name))
+        raise Exception('No builds for job {}'.format(jenkins_job))
 
     # Find the builds with appliance version
-    eligible_build_numbers = set()
+    eligible_builds = set()
     for build_number in build_numbers:
+        build = namedtuple('Build', ['number', 'job', 'coverage_archive'])
+        build.number = build_number
+        build.job = jenkins_job
+
+        # Acquire the artifacts from this build
         try:
-            artifacts = client.get_build_info(job_name, build_number)['artifacts']
+            artifacts = jenkins_data.client.get_build_info(jenkins_job, build_number)['artifacts']
             if not artifacts:
                 raise ValueError()
         except (KeyError, ValueError):
-            logger.info('No artifacts for %s/%s', job_name, build_number)
+            logger.info('No artifacts for %s/%s', jenkins_job, build_number)
             continue
-
         artifacts = group_list_dict_by(artifacts, 'fileName')
+
+        # Make sure that the appliance version is in these artifacts, and it is the
+        # the same as the version for which we are gathering coverage data.  If this is
+        # not the case this is not an eligible build.
         if 'appliance_version' not in artifacts:
-            logger.info('appliance_version not in artifacts of %s/%s', job_name, build_number)
+            logger.info('appliance_version not in artifacts of %s/%s', jenkins_job, build_number)
             continue
-
         build_appliance_version = download_artifact(
-            jenkins_user, jenkins_token, jenkins_url, job_name, build_number,
+            jenkins_data.user,
+            jenkins_data.token,
+            jenkins_data.url,
+            jenkins_job,
+            build_number,
             artifacts['appliance_version']['relativePath']).strip()
-
         if not build_appliance_version:
             logger.info('Appliance version unspecified for build %s', build_number)
             continue
 
-        if Version(build_appliance_version) < Version(appliance_version):
+        # Build versions that are less than the target version are invalid
+        if Version(build_appliance_version) < Version(cfme_version):
             logger.info(
-                'Build %s already has lower version (%s)', build_number, build_appliance_version)
+                'Build %s already has lower version (%s) than target version (%s)',
+                build_number, build_appliance_version, cfme_version)
             logger.info('Ending here')
             break
 
+        # We must have the actual coverage data tarball in the artifacts.
+        # If we do set it in our build object.
         if 'coverage-results.tgz' not in artifacts:
-            logger.info('coverage-results.tgz not in artifacts of %s/%s', job_name, build_number)
+            logger.info('coverage-results.tgz not in artifacts of %s/%s', jenkins_job, build_number)
             continue
+        build.coverage_archive = artifacts['coverage-results.tgz']['relativePath']
 
         if not check_artifact(
-                jenkins_user, jenkins_token, jenkins_url, job_name, build_number,
+                jenkins_data.user,
+                jenkins_data.token,
+                jenkins_data.url,
+                jenkins_job,
+                build_number,
                 artifacts['coverage-results.tgz']['relativePath']):
-            logger.info('Coverage archive not possible to be downloaded, skipping')
+            logger.info('Coverage archive could not possibly be downloaded, skipping')
             continue
 
-        if build_appliance_version == appliance_version:
+        if build_appliance_version == cfme_version:
             logger.info('Build %s was found to contain what is needed', build_number)
-            eligible_build_numbers.add(build_number)
+            eligible_builds.add(build)
         else:
             logger.info(
                 'Skipping build %s because it does not have correct version (%s)',
                 build_number,
                 build_appliance_version)
 
-    if not eligible_build_numbers:
+    if not eligible_builds:
         raise Exception(
-            'Could not find any coverage reports for {} in {}'.format(appliance_version, job_name))
+            'Could not find any coverage reports for {} in {}'.format(
+                cfme_version,
+                jenkins_job))
 
-    eligible_build_numbers = sorted(eligible_build_numbers)
+    return eligible_builds
 
+
+def setup_appliance_for_merger(appliance, ssh):
+    """Setup appliance for code coverage merger
+
+    Stops the evm service, and then installs the coverage_merger.rb
+    script and dependent libraries.
+
+    Args:
+        appliance: CFME appliance object
+        ssh:  ssh object
+
+    Returns:
+        Nothing
+    """
     # Stop the evm service, not needed at all
     logger.info('Stopping evmserverd')
     appliance.evmserverd.stop()
+
     # Install the coverage tools on the appliance
     logger.info('Installing simplecov')
     appliance.coverage._install_simplecov()
+
     # Upload the merger
     logger.info('Installing coverage merger')
     appliance.coverage._upload_coverage_merger()
-    with appliance.ssh_client as ssh:
-        if not ssh.run_command('mkdir -p {}'.format(coverage_dir)):
-            raise Exception(
-                'Could not create coverage directory on the appliance: {}'.format(coverage_dir))
 
-        # Download and extract all the coverage data
-        for build_number in eligible_build_numbers:
-            logger.info('Downloading the coverage data from build %s', build_number)
+    if not ssh.run_command('mkdir -p {}'.format(coverage_dir)):
+        raise Exception(
+            'Could not create coverage directory on the appliance: {}'.format(coverage_dir))
+
+
+def cleanup_coverage_data_wave(ssh, coverage_dir):
+    """Cleanup Coverage Data Wave
+
+    Cleans up coverage data leftover from previous wave, and puts the
+    merged .resultset.json file in a place it will be picked up for merger
+    in the next wave.
+
+    Args:
+        ssh:  ssh object
+        coverage_dir: directory where coverage data is extracted.
+
+    Returns:
+        Nothing
+    """
+    # Remove result set files.   They are all in directories like: $ip/$pid.
+    # So we will remove recursively directories and their contents that start with
+    # a number under the coverage directory.
+    if not ssh.run_command('cd {}; rm -rf [0-9]*'.format(coverage_dir)):
+        raise Exception('Could not cleanup old resultset files.')
+
+    # Move merged resultset where it will be treated like a resultset to be merged.
+    # We will create a directory like 1/1 and move the merged resultset under that.
+    merged_data_dir = '{}/1/1'.format(coverage_dir)
+    merged_resultset = '{}/merged/.resultset.json'.format(coverage_dir)
+    if not ssh.run_command('mkdir -p {}'.format(merged_data_dir)):
+        raise Exception('Could not make new merged data dir: {}'.format(merged_data_dir))
+    if not ssh.run_command('mv {} {}'.format(merged_resultset, merged_data_dir)):
+        raise Exception('Could not move merged result set, {}, to merged data dir, {}'.format(
+            merged_resultset, merged_data_dir))
+
+    # Remove merged directory.
+    merged_dir = '{}/merged'.format(coverage_dir)
+    if not ssh.run_command('rm -rf {}'.format(merged_dir)):
+        raise Exception('Failed removing merged directory, {}'.format(merged_dir))
+
+
+def download_and_merge_coverage_data(ssh, builds, jenkins_data, wave_size):
+    """Download and merge coverage data in waves.
+
+    Download the coverage tarballs from from the specified builds in waves, merging
+    the coverage data a few tarballs at a time.
+
+    Args:
+        ssh:  ssh object
+        builds:  jenkins job builds from which to pull coverage data.
+        jenkins_data:  Named tupple with these attributes:  url, user, token, client
+        wave_size:  How many coverage tarballs to extract at a time when merging
+
+    Returns:
+        Nothing
+    """
+    # Note, this is totally based around the fact that coverage_merger.rb
+    # doesn't care where a .resultset.json file (i.e. ruby code coverage
+    # data file) comes from, such that we can reuse the merged data file
+    # with successive waves of coverage data from different jenkins builds.
+    #
+    # What we will do for each wave is:
+    #
+    #   * extract some coverage data tarballs.
+    #   * merge those.
+    #   * cleanup the old data, and make the merged data look like just another
+    #     result set.  On the last wave there is no cleanup.
+    i = 0
+    wave = 1
+    while i < len(builds):
+        logger.info('Processing wave #%s of coverage tarballs.', wave)
+        build_wave = builds[i:i + wave_size]
+        for build in build_wave:
+            logger.info('Downloading the coverage data from build %s', build.number)
             download_url = jenkins_artifact_url(
-                jenkins_user, jenkins_token, jenkins_url, job_name, build_number,
-                artifacts['coverage-results.tgz']['relativePath'])
+                jenkins_data.user,
+                jenkins_data.token,
+                jenkins_data.url,
+                build.job,
+                build.number,
+                build.coverage_archive)
             cmd = ssh.run_command('curl -k -o {}/tmp.tgz {}'.format(
                 coverage_dir,
                 quote(download_url)))
             if cmd.failed:
                 raise Exception('Could not download! - {}'.format(str(cmd)))
 
-            # Extract coverage data
-            logger.info('Extracting the coverage data from build %s', build_number)
+            logger.info('Extracting the coverage data from build %s', build.number)
             extract_command = ' && '.join([
                 'cd {}'.format(coverage_dir),
                 'tar xf tmp.tgz --strip-components=1',
@@ -485,6 +604,88 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
         merge_coverage_data(
             ssh=ssh,
             coverage_dir=coverage_dir)
+
+        # Increment index and wave count
+        i += wave_size
+        wave += 1
+
+        # We have to cleanup the coverage data we just extracted, move
+        # the merged .resultset.json file, and remove the merged data directory.
+        # We move the .resultset.json files so that it will be seen as just another
+        # result set to merge in the next wave, and the merged data directory is removed
+        # so coverage_merger.rb won't get confused by results already being where it drops
+        # it's results.   However it is important that we don't do that
+        # on the last wave, as we want the merge results to be available after the
+        # last wave.
+        #
+        # XXX: Yes, this is a hack.  Not even one I am proud of.
+        if i < len(builds):
+            cleanup_coverage_data_wave(
+                ssh=ssh,
+                coverage_dir=coverage_dir,
+            )
+
+
+def aggregate_coverage(appliance, jenkins_url, jenkins_user, jenkins_token, jenkins_jobs,
+        wave_size):
+    """ Aggregates code coverage data across the builds of specified jenkins jobs
+
+    Given the version of the specified appliance, find all builds for the specified jenkins
+    jobs for that version, and aggregate all the coverage data.   After this do a sonar scan
+    of the aggregated coverage data, and send to configured sonarqube.
+
+    Args:
+        appliance:  CFME appliance to use as a source of source code, and as a workspace
+            for coverage data merger.
+        jenkins_url:  URL to Jenkins server
+        jenkins_user: Jenkins user name
+        jenkins_token:  Jenkins user authentication token.
+        jenkins_jobs:  Jenkins job names from which to aggregate coverage data
+        wave_size:  How many coverage tarballs to extract at a time when merging
+
+    Returns:
+        Nothing
+    """
+    appliance_version = str(appliance.version).strip()
+
+    # Get Jenkins creds from config if none specified.
+    if not jenkins_user or not jenkins_token:
+        try:
+            from cfme.utils import conf
+            jenkins_user = conf.credentials.jenkins_app.user
+            jenkins_token = conf.credentials.jenkins_app.token
+        except (AttributeError, KeyError):
+            raise ValueError(
+                '--jenkins-user and --jenkins-token not provided and credentials yaml does not '
+                'contain the jenkins_app entry with user and token')
+
+    # Acquire jenkins client and put jenkins data into a named tupple for ease of passing
+    # around (i.e. to reduce the number of arguments on functions)
+    jenkins_client = jenkins.Jenkins(jenkins_url, username=jenkins_user, password=jenkins_token)
+    jenkins_data = namedtuple('Jenkins', ['url', 'user', 'token', 'client'])
+    jenkins_data.url = jenkins_url
+    jenkins_data.user = jenkins_user
+    jenkins_data.token = jenkins_token
+    jenkins_data.client = jenkins_client
+
+    # Get the eligible builds for all jobs specified.
+    logger.info('Jenkins Jobs: %s', ' '.join(jenkins_jobs))
+    eligible_builds = set()
+    for jenkins_job in jenkins_jobs:
+        eligible_builds.update(get_eligible_builds(
+            jenkins_data,
+            jenkins_job,
+            appliance_version))
+    eligible_builds = sorted(eligible_builds, key=lambda build: build.number)
+
+    # Merge data and do sonar scan
+    with appliance.ssh_client as ssh:
+        setup_appliance_for_merger(appliance, ssh)
+        download_and_merge_coverage_data(
+            ssh=ssh,
+            builds=eligible_builds,
+            jenkins_data=jenkins_data,
+            wave_size=wave_size)
         pull_merged_coverage_data(
             ssh=ssh,
             coverage_dir=coverage_dir)
@@ -498,19 +699,29 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
             timeout=scan_timeout)
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description='Upload coverage data from jenkins job to sonarqube')
-    parser.add_argument('jenkins_url')
-    parser.add_argument('jenkins_job_name')
-    parser.add_argument('work_appliance_ip')
-    parser.add_argument('--jenkins-user', default=None)
-    parser.add_argument('--jenkins-token', default=None)
-    args = parser.parse_args()
-    with IPAppliance(hostname=args.work_appliance_ip) as appliance:
-        exit(main(
+@click.command()
+@click.argument('jenkins_url')
+@click.argument('appliance_ip')
+@click.option('--jenkins-jobs', 'jenkins_jobs', multiple=True,
+    help='Jenkins job names from which to aggregate coverage data')
+@click.option('--jenkins-user', 'jenkins_user', default=None,
+    help='Jenkins user name')
+@click.option('--jenkins-token', 'jenkins_token', default=None,
+    help='Jenkins user authentication token')
+@click.option('--wave-size', 'wave_size', default=10,
+    help='How many coverage tarballs to extract at a time when merging')
+def coverage_report_jenkins(jenkins_url, jenkins_job, jenkins_user, jenkins_token, appliance_ip,
+        wave_size):
+    """Aggregate coverage data from jenkins job(s) and upload to sonarqube"""
+    with IPAppliance(hostname=appliance_ip) as appliance:
+        exit(aggregate_coverage(
             appliance,
-            args.jenkins_url,
-            args.jenkins_user,
-            args.jenkins_token,
-            args.jenkins_job_name))
+            jenkins_url,
+            jenkins_user,
+            jenkins_token,
+            jenkins_job,
+            wave_size))
+
+
+if __name__ == '__main__':
+    coverage_report_jenkins()
