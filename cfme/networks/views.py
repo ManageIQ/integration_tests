@@ -5,7 +5,7 @@ from widgetastic_patternfly import (Dropdown, Accordion, Button, TextInput,
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.provider_views import ProviderAddView, ProviderEditView
 from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
-                                  BaseEntitiesView)
+                                  BaseEntitiesView, ParametrizedSummaryTable)
 
 
 class NetworkProviderToolBar(View):
@@ -82,11 +82,14 @@ class NetworkProviderDetailsView(BaseLoggedInPage):
     @View.nested
     class entities(View):  # noqa
         """ Represents details page when it's switched to Summary/Table view """
+        # TODO: remove all SummaryTables in favor of ParametrizedSummaryTable when safe
         properties = SummaryTable(title="Properties")
         relationships = SummaryTable(title="Relationships")
         status = SummaryTable(title="Status")
         overview = SummaryTable(title="Overview")
         smart_management = SummaryTable(title="Smart Management")
+
+        summary = ParametrizedSummaryTable
 
     @property
     def is_displayed(self):
