@@ -4,15 +4,16 @@ import pytz
 from datetime import datetime, timedelta
 from dateutil import parser
 
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.base.ui import BaseLoggedInPage
-from cfme.utils.update import update
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
 from cfme.utils.hosts import setup_host_creds
+from cfme.utils.update import update
 
 pytestmark = [
-    pytest.mark.provider([VMwareProvider], required_fields=['hosts'], scope="module"),
+    pytest.mark.provider([VMwareProvider], required_fields=['hosts'], scope="module", selector=ONE),
     pytest.mark.usefixtures("setup_provider_modscope")
 ]
 
@@ -78,11 +79,16 @@ def test_schedule_crud(appliance, current_time):
 
 def test_schedule_analysis_in_the_past(appliance, current_time, request):
     past_time = current_time - timedelta(minutes=5)
+    if round_min(past_time.minute) == 0:
+        past_time = past_time + timedelta(hours=1)
+        past_time_minute = '00'
+    else:
+        past_time_minute = str(round_min(past_time.minute))
     schedule = appliance.collections.system_schedules.create(
         name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
         start_hour=str(past_time.hour),
-        start_minute=str(past_time.minute)
+        start_minute=str(past_time_minute)
     )
     request.addfinalizer(schedule.delete)
     view = appliance.browser.create_view(BaseLoggedInPage)
@@ -134,7 +140,7 @@ def test_schedule_timer(appliance, run_types, host_with_credentials, request):
     tz_name = tz_list[2]
     tz_num = tz_list[-1][:-1]
     date = current_time.replace(tzinfo=pytz.timezone(tz_name))
-    start_date = date + timedelta(minutes=5)
+    start_date = date + timedelta(minutes=10)
     view = navigate_to(appliance.collections.system_schedules, 'Add')
     available_list = view.time_zone.all_options
     # bz is here
@@ -147,7 +153,6 @@ def test_schedule_timer(appliance, run_types, host_with_credentials, request):
         start_date_minute = '00'
     else:
         start_date_minute = str(round_min(start_date.minute))
-
     schedule = appliance.collections.system_schedules.create(
         name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
@@ -165,8 +170,6 @@ def test_schedule_timer(appliance, run_types, host_with_credentials, request):
     def _finalize():
         if schedule.exists:
             schedule.delete()
-        # clear_time = current_time.replace(tzinfo=pytz.timezone(tz_name))
-        # appliance.ssh_client.run_command("date {}".format(clear_time.strftime('%m%d%H%M%Y')))
 
     wait_for(lambda: schedule.last_run_date != '',
              delay=60, timeout="10m", fail_func=appliance.server.browser.refresh,
@@ -176,7 +179,7 @@ def test_schedule_timer(appliance, run_types, host_with_credentials, request):
         next_date = parser.parse(schedule.next_run_date)
         up = {time_diff: time_num}
 
-        next_run_date = start_date + timedelta(minutes=-5, **up)
+        next_run_date = start_date + timedelta(minutes=-10, **up)
         appliance.ssh_client.run_command("date {}".format(next_run_date.strftime('%m%d%H%M%Y')))
 
         wait_for(

@@ -208,7 +208,7 @@ class SystemSchedule(BaseEntity, Updateable, Pretty):
             'time_zone': updates.get('time_zone'),
             'start_date': updates.get('start_date'),
             'start_hour': updates.get('start_hour'),
-            'start_minute': updates.get('start_min'),
+            'start_minute': updates.get('start_minute'),
             'database_backup': {
                 'depot_name': updates.get('depot_name'),
                 'backup_type': updates.get('backup_type'),
