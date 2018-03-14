@@ -5,13 +5,13 @@ from widgetastic_patternfly import Button as WButton
 
 from cfme import test_requirements
 from cfme.automate.simulation import simulate
+from cfme.control.explorer import alert_profiles
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.update import update
-from cfme.utils.wait import wait_for
+from cfme.utils.wait import TimedOutError, wait_for
 from markers.env_markers.provider import ONE_PER_TYPE
 
 
@@ -102,6 +102,43 @@ def instance(klass, method):
         fields={"execute": {"value": method.name}})
 
 
+@pytest.fixture
+def management_event_class(appliance, namespace):
+    appliance.collections.domains\
+        .instantiate("ManageIQ")\
+        .namespaces.instantiate("System")\
+        .namespaces.instantiate("Event")\
+        .namespaces.instantiate("CustomEvent")\
+        .classes.instantiate(name="Alert")\
+        .copy_to(namespace.domain)
+    return appliance.collections.domains\
+        .instantiate(namespace.domain.name)\
+        .namespaces.instantiate("System")\
+        .namespaces.instantiate("Event")\
+        .namespaces.instantiate("CustomEvent")\
+        .classes.instantiate(name="Alert")
+
+
+@pytest.fixture
+def management_event_method(management_event_class, ansible_repository):
+    return management_event_class.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        location="playbook",
+        repository=ansible_repository.name,
+        playbook="copy_file_example.yml",
+        machine_credential="CFME Default Credential",
+        playbook_input_parameters=[("key", "value", "string")]
+    )
+
+
+@pytest.fixture
+def management_event_instance(management_event_class, management_event_method):
+    return management_event_class.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={"meth1": {"value": management_event_method.name}})
+
+
 @pytest.yield_fixture(scope="module")
 def ansible_catalog_item(ansible_repository):
     cat_item = AnsiblePlaybookCatalogItem(
@@ -163,6 +200,35 @@ def service(appliance, ansible_catalog_item):
         service_.delete()
 
 
+@pytest.yield_fixture
+def alert(appliance, management_event_instance):
+    alert = appliance.collections.alerts.create(
+        "Trigger by Un-Tag Complete {}".format(fauxfactory.gen_alpha(length=4)),
+        active=True,
+        based_on="VM and Instance",
+        evaluate="Nothing",
+        driving_event="Company Tag: Un-Tag Complete",
+        notification_frequency="1 Minute",
+        mgmt_event=management_event_instance.name,
+    )
+    yield alert
+    if alert.exists:
+        alert.delete()
+
+
+@pytest.yield_fixture
+def alert_profile(appliance, alert, full_template_vm_modscope):
+    alert_profile = appliance.collections.alert_profiles.create(
+        alert_profiles.VMInstanceAlertProfile,
+        "Alert profile for {}".format(full_template_vm_modscope.name),
+        alerts=[alert]
+    )
+    alert_profile.assign_to("The Enterprise")
+    yield
+    if alert_profile.exists:
+        alert_profile.delete()
+
+
 def test_automate_ansible_playbook_method_type_crud(appliance, ansible_repository, domain,
         namespace, klass):
     """CRUD test for ansible playbook method."""
@@ -193,8 +259,8 @@ def test_automate_ansible_playbook_method_type(request, appliance, domain, names
         }
     )
     request.addfinalizer(lambda: appliance.ssh_client.run_command(
-        "if [ -f \"/var/tmp/modified-release\" ]; then rm \"/var/tmp/modified-release\""))
-    assert appliance.ssh_client.run_command("[ -f \"/var/tmp/modified-release\" ]").success
+        '[[ -f "/var/tmp/modified-release" ]] && rm -f "/var/tmp/modified-release"'))
+    assert appliance.ssh_client.run_command('[ -f "/var/tmp/modified-release" ]').success
 
 
 def test_ansible_playbook_button_crud(ansible_catalog_item, appliance, request):
@@ -225,18 +291,34 @@ def test_ansible_playbook_button_crud(ansible_catalog_item, appliance, request):
     assert not button.exists
 
 
-@pytest.mark.meta(blockers=[BZ(1548562, forced_streams=["5.9"])])
-def test_embedded_ansible_custom_button(full_template_vm, custom_vm_button, service_request,
-                                        service, appliance):
-    view = navigate_to(full_template_vm, "Details")
+def test_custom_button_order_ansible_playbook_service(full_template_vm_modscope, custom_vm_button,
+        service_request, service, appliance):
+    view = navigate_to(full_template_vm_modscope, "Details")
     view.toolbar.custom_button(custom_vm_button.group.text).item_select(custom_vm_button.text)
     submit_button = WButton(appliance.browser.widgetastic, "Submit")
     submit_button.click()
     wait_for(service_request.exists, num_sec=600)
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
+    hosts = view.provisioning.details.get_text_of("Hosts")
     if custom_vm_button.inventory == "Localhost":
-        assert view.provisioning.details.get_text_of("Hosts") == "localhost"
+        assert hosts == "localhost"
     else:
-        assert view.provisioning.details.get_text_of("Hosts") == full_template_vm.ip_address
+        assert hosts == full_template_vm_modscope.ip_address
     assert view.provisioning.results.get_text_of("Status") == "successful"
+
+
+def test_alert_run_ansible_playbook(full_template_vm_modscope, alert_profile, request, appliance):
+    """Tests execution of an ansible playbook method by triggering a management event from an
+    alert.
+    """
+    full_template_vm_modscope.add_tag("Service Level", "Gold")
+    full_template_vm_modscope.remove_tag("Service Level", "Gold")
+    request.addfinalizer(lambda: appliance.ssh_client.run_command(
+        '[[ -f "/var/tmp/modified-release" ]] && rm -f "/var/tmp/modified-release"'))
+    try:
+        wait_for(
+            lambda: appliance.ssh_client.run_command('[ -f "/var/tmp/modified-release" ]').success,
+            timeout=60)
+    except TimedOutError:
+        pytest.fail("Ansible playbook method hasn't been executed.")

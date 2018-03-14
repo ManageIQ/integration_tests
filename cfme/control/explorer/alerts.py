@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
 import attr
+import six
 
 from copy import copy
 from navmazing import NavigateToAttribute, NavigateToSibling
@@ -48,7 +49,12 @@ class AlertFormCommon(ControlExplorerView):
         operator = BootstrapSelect("select_operator")
 
         def fill(self, values):
-            new_values = dict(type=values[0], **values[1])
+            if isinstance(values, six.string_types):
+                new_values = dict(type=values)
+            elif isinstance(values, (list, tuple)):
+                new_values = dict(type=values[0], **values[1])
+            else:
+                raise TypeError("Evaluate part should be a string or tuple.")
             return View.fill(self, new_values)
 
     driving_event = BootstrapSelect("exp_event")
