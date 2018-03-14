@@ -16,6 +16,14 @@ pytestmark = [
     pytest.mark.usefixtures("setup_provider_modscope")
 ]
 
+run_types = (
+    ['Once', None, None],
+    ['Hourly', 'hours', 1],
+    ['Daily', 'days', 1],
+    ['Weekly', 'weeks', 1],
+    ['Monthly', 'weeks', 4]
+)
+
 
 @pytest.yield_fixture(scope='module')
 def host_with_credentials(appliance, provider, ):
@@ -53,10 +61,10 @@ def test_schedule_crud(appliance, current_time):
     updates = {
         'name': fauxfactory.gen_alphanumeric(),
         'description': fauxfactory.gen_alphanumeric(),
-        }
+    }
     schedule.update(updates, cancel=True)
-    view.flash.assert_message('Edit of Schedule "{}" was cancelled by the user'.format(
-        schedule.name))
+    view.flash.assert_message(
+        'Edit of Schedule "{}" was cancelled by the user'.format(schedule.name))
     schedule.update(updates, reset=True)
     view.flash.assert_message('All changes have been reset')
     with update(schedule):
@@ -115,15 +123,6 @@ def test_inactive_schedule(appliance, current_time):
     assert not schedule.next_run_date
 
 
-run_types = (
-   ['Once', None, None],
-   ['Hourly', 'hours', 1],
-   ['Daily', 'days', 1],
-   ['Weekly', 'weeks', 1],
-   ['Monthly', 'weeks', 4]
-)
-
-
 @pytest.mark.parametrize('run_types', run_types, ids=[type[0] for type in run_types])
 def test_schedule_timer(appliance, run_types, host_with_credentials, current_time, request):
 
@@ -163,10 +162,10 @@ def test_schedule_timer(appliance, run_types, host_with_credentials, current_tim
 
     @request.addfinalizer
     def _finalize():
-        clear_time = current_time.replace(tzinfo=pytz.timezone(tz_name))
-        appliance.ssh_client.run_command("date {}".format(clear_time.strftime('%m%d%H%M%Y')))
         if schedule.exists:
             schedule.delete()
+        clear_time = current_time.replace(tzinfo=pytz.timezone(tz_name))
+        appliance.ssh_client.run_command("date {}".format(clear_time.strftime('%m%d%H%M%Y')))
 
     wait_for(lambda: schedule.last_run_date != '',
              delay=60, timeout="10m", fail_func=appliance.server.browser.refresh,
