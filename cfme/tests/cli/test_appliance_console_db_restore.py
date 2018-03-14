@@ -1,0 +1,476 @@
+import fauxfactory
+import pytest
+
+from collections import namedtuple
+from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.common.vm import VM
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.ssh import SSHClient
+from cfme.utils.conf import credentials, cfme_data
+from cfme.utils.log import logger
+from cfme.utils.providers import list_providers_by_class
+from fixtures.pytest_store import store
+from wait_for import wait_for
+
+TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
+REPOSITORIES = ["https://github.com/lcouzens/ansible_playbooks"]
+
+
+def provider_app_crud(provider_class, appliance):
+    try:
+        prov = list_providers_by_class(provider_class)[0]
+        prov.appliance = appliance
+        return prov
+    except IndexError:
+        pytest.skip("No {} providers available (required)".format(provider_class.type))
+
+
+def provision_vm(request, provider):
+    """Function to provision appliance to the provider being tested"""
+    vm_name = "test_rest_db_" + fauxfactory.gen_alphanumeric()
+    vm = VM.factory(vm_name, provider)
+    request.addfinalizer(vm.delete_from_provider)
+    if not provider.mgmt.does_vm_exist(vm_name):
+        logger.info("deploying %s on provider %s", vm_name, provider.key)
+        vm.create_on_provider(allow_skip="default")
+    else:
+        logger.info("recycling deployed vm %s on provider %s", vm_name, provider.key)
+    vm.provider.refresh_provider_relationships()
+    return vm
+
+
+@pytest.fixture(scope="module")
+def get_appliances_with_providers(temp_appliances_unconfig_modscope_rhevm):
+    """Returns two database-owning appliances, configures first appliance with providers and
+    takes a backup prior to running tests.
+
+    """
+    appl1, appl2 = temp_appliances_unconfig_modscope_rhevm
+    # configure appliances
+    appl1.configure(region=0)
+    appl1.wait_for_web_ui()
+    appl2.configure(region=0)
+    appl2.wait_for_web_ui()
+    # Add infra/cloud providers and create db backup
+    provider_app_crud(VMwareProvider, appl1).setup()
+    provider_app_crud(EC2Provider, appl1).setup()
+    appl1.db.backup()
+    return temp_appliances_unconfig_modscope_rhevm
+
+
+@pytest.fixture(scope="function")
+def get_replicated_appliances_with_providers(temp_appliances_unconfig_modscope_rhevm):
+    """Returns two database-owning appliances, configures first appliance with provider,
+    enables embedded ansible, takes a pg_backup and copys it to second appliance
+    prior to running tests.
+
+    """
+    appl1, appl2 = temp_appliances_unconfig_modscope_rhevm
+    # configure appliances
+    appl1.configure(region=0)
+    appl1.wait_for_web_ui()
+    appl2.configure(region=99)
+    appl2.wait_for_web_ui()
+    # configure replication between appliances
+    appl1.set_pglogical_replication(replication_type=':remote')
+    appl2.set_pglogical_replication(replication_type=':global')
+    appl2.add_pglogical_replication_subscription(appl1.hostname)
+    # Add infra/cloud providers and create db backups
+    provider_app_crud(VMwareProvider, appl1).setup()
+    provider_app_crud(EC2Provider, appl1).setup()
+    appl1.ssh_client.run_command("pg_basebackup -x -Ft -z -D /tmp/backup")
+    appl2.ssh_client.run_command("pg_basebackup -x -Ft -z -D /tmp/backup")
+    return temp_appliances_unconfig_modscope_rhevm
+
+
+@pytest.fixture(scope="function")
+def get_appliances_with_ansible(temp_appliance_preconfig_funcscope):
+    """Returns two database-owning appliances, configures first appliance with provider,
+    enables embedded ansible, takes a pg_backup and copys it to second appliance
+    prior to running tests.
+
+    """
+    appl1 = temp_appliance_preconfig_funcscope
+    # Add infra provider, enable embedded ansible and create pg_basebackup
+    provider_app_crud(VMwareProvider, appl1).setup()
+    appl1.enable_embedded_ansible_role()
+    assert appl1.is_embedded_ansible_running
+    appl1.ssh_client.run_command("pg_basebackup -x -Ft -z -D /tmp/backup")
+    return temp_appliance_preconfig_funcscope
+
+
+@pytest.fixture(scope="module")
+def get_ext_appliances_with_providers(temp_appliances_unconfig_modscope_rhevm, app_creds_modscope):
+    """Returns two database-owning appliances, configures first appliance with providers and
+    takes a backup prior to running tests.
+
+    """
+    appl1, appl2 = temp_appliances_unconfig_modscope_rhevm
+    app_ip = appl1.hostname
+    # configure appliances
+    appl1.configure(region=0)
+    appl1.wait_for_web_ui()
+    appl2.appliance_console_cli.configure_appliance_external_join(
+        app_ip, app_creds_modscope['username'], app_creds_modscope['password'], 'vmdb_production',
+        app_ip, app_creds_modscope['sshlogin'], app_creds_modscope['sshpass'])
+    appl2.wait_for_web_ui()
+    # Add infra/cloud providers and create db backup
+    provider_app_crud(VMwareProvider, appl1).setup()
+    provider_app_crud(EC2Provider, appl1).setup()
+    appl1.db.backup()
+    return temp_appliances_unconfig_modscope_rhevm
+
+
+@pytest.fixture(scope="function")
+def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
+    """Configure HA environment
+
+    Appliance one configuring dedicated database, 'ap' launch appliance_console,
+    '' clear info screen, '5' setup db, '1' Creates v2_key, '1' selects internal db,
+    '1' use partition, 'y' create dedicated db, 'pwd' db password, 'pwd' confirm db password + wait
+    360 secs and '' finish.
+
+    Appliance two creating region in dedicated database, 'ap' launch appliance_console, '' clear
+    info screen, '5' setup db, '2' fetch v2_key, 'app0_ip' appliance ip address, '' default user,
+    'pwd' appliance password, '' default v2_key location, '2' create region in external db, '0' db
+    region number, 'y' confirm create region in external db 'app0_ip', '' ip and default port for
+    dedicated db, '' use default db name, '' default username, 'pwd' db password, 'pwd' confirm db
+    password + wait 360 seconds and '' finish.
+
+    Appliance one configuring primary node for replication, 'ap' launch appliance_console, '' clear
+    info screen, '6' configure db replication, '1' configure node as primary, '1' cluster node
+    number set to 1, '' default dbname, '' default user, 'pwd' password, 'pwd' confirm password,
+    'app0_ip' primary appliance ip, confirm settings and wait 360 seconds to configure, '' finish.
+
+
+    Appliance three configuring standby node for replication, 'ap' launch appliance_console, ''
+    clear info screen, '6' configure db replication, '1' configure node as primary, '1' cluster node
+    number set to 1, '' default dbname, '' default user, 'pwd' password, 'pwd' confirm password,
+    'app0_ip' primary appliance ip, confirm settings and wait 360 seconds to configure, '' finish.
+
+
+    Appliance two configuring automatic failover of database nodes, 'ap' launch appliance_console,
+    '' clear info screen '9' configure application database failover monitor, '1' start failover
+    monitor. wait 30 seconds for service to start '' finish.
+
+    """
+    appl1, appl2, appl3 = unconfigured_appliances
+    app0_ip = appl1.hostname
+    app1_ip = appl2.hostname
+    pwd = app_creds['password']
+    # Configure first appliance as dedicated database
+    command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+    appl1.appliance_console.run_commands(command_set)
+    wait_for(lambda: appl1.db.is_dedicated_active)
+    # Configure EVM webui appliance with create region in dedicated database
+    command_set = ('ap', '', '5', '2', app0_ip, '', pwd, '', '2', '0', 'y', app0_ip, '', '', '',
+        pwd, TimedCommand(pwd, 360), '')
+    appl3.appliance_console.run_commands(command_set)
+    appl3.wait_for_evm_service()
+    appl3.wait_for_web_ui()
+    # Configure primary replication node
+    command_set = ('ap', '', '6', '1', '1', '', '', pwd, pwd, app0_ip, 'y',
+        TimedCommand('y', 60), '')
+    appl1.appliance_console.run_commands(command_set)
+    # Configure secondary replication node
+    command_set = ('ap', '', '6', '2', '1', '2', '', '', pwd, pwd, app0_ip, app1_ip, 'y',
+        TimedCommand('y', 60), '')
+    appl2.appliance_console.run_commands(command_set)
+    # Configure automatic failover on EVM appliance
+    command_set = ('ap', '', '9', TimedCommand('1', 30), '')
+    appl3.appliance_console.run_commands(command_set)
+
+    def is_ha_monitor_started(appliance):
+        return bool(appliance.ssh_client.run_command(
+            "grep {} /var/www/miq/vmdb/config/failover_databases.yml".format(app1_ip)).success)
+    wait_for(is_ha_monitor_started, func_args=[appl3], timeout=300, handle_exception=True)
+    # Add infra/cloud providers and create db backup
+    provider_app_crud(VMwareProvider, appl3).setup()
+    provider_app_crud(EC2Provider, appl3).setup()
+    appl1.db.backup()
+
+    return unconfigured_appliances
+
+
+def fetch_v2key(appl1, appl2):
+    # Fetch v2_key and database.yml from the first appliance
+    rand_v2_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
+    rand_yml_filename = "/tmp/database_yml_{}".format(fauxfactory.gen_alphanumeric())
+    appl1.ssh_client.get_file("/var/www/miq/vmdb/certs/v2_key", rand_v2_filename)
+    appl2.ssh_client.put_file(rand_v2_filename, "/var/www/miq/vmdb/certs/v2_key")
+    appl1.ssh_client.get_file("/var/www/miq/vmdb/config/database.yml", rand_yml_filename)
+    appl2.ssh_client.put_file(rand_yml_filename, "/var/www/miq/vmdb/config/database.yml")
+
+
+def fetch_db_local(appl1, appl2):
+    # Fetch db from the first appliance
+    dump_filename = "/tmp/db_dump_{}".format(fauxfactory.gen_alphanumeric())
+    appl1.ssh_client.get_file("/tmp/evm_db.backup", dump_filename)
+    appl2.ssh_client.put_file(dump_filename, "/tmp/evm_db.backup")
+
+
+def setup_nfs_samba_backup(appl1):
+    # Fetch db from first appliance and push it to nfs/samba server
+    connect_kwargs = {
+        'hostname': cfme_data['network_share']['hostname'],
+        'username': credentials['ssh']['username'],
+        'password': credentials['depot_credentials']['password']
+    }
+    loc = cfme_data['network_share']['nfs_path']
+    nfs_smb = SSHClient(**connect_kwargs)
+    dump_filename = "/tmp/db_dump_{}".format(fauxfactory.gen_alphanumeric())
+    appl1.ssh_client.get_file("/tmp/evm_db.backup", dump_filename)
+    nfs_smb.put_file(dump_filename, "{}share.backup".format(loc))
+
+
+@pytest.mark.tier(2)
+@pytest.mark.uncollectif(
+    lambda: not store.current_appliance.is_downstream)
+def test_appliance_console_restore_db_local(request, soft_assert, get_appliances_with_providers):
+    """ Test single appliance backup and restore, configures appliance with providers,
+    backs up database, restores it to fresh appliance and checks for matching providers.
+    """
+    appl1, appl2 = get_appliances_with_providers
+    # Transfer v2_key and db backup from first appliance to second appliance
+    fetch_v2key(appl1, appl2)
+    fetch_db_local(appl1, appl2)
+    # Restore DB on the second appliance
+    appl2.evmserverd.stop()
+    appl2.db.drop()
+    appl2.db.create()
+    command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
+    appl2.appliance_console.run_commands(command_set)
+    appl2.start_evm_service()
+    appl2.wait_for_web_ui()
+    # Assert providers on the second appliance
+    assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (
+        'Restored DB is missing some providers'
+    )
+    # Verify that existing provider can detect new VMs on the second appliance
+    virtual_crud = provider_app_crud(VMwareProvider, appl2)
+    vm = provision_vm(request, virtual_crud)
+    soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
+
+
+@pytest.mark.tier(2)
+@pytest.mark.uncollectif(
+    lambda: not store.current_appliance.is_downstream or store.current_appliance.version < '5.9')
+def test_appliance_console_restore_pg_basebackup_ansible(
+        request, soft_assert, get_appliances_with_ansible):
+    appl1 = get_appliances_with_ansible
+    providers_before_restore = set(appl1.managed_provider_names)
+    # Restore DB on the second appliance
+    appl1.evmserverd.stop()
+    command_set = ('ap', '', '4', '1', '/tmp/backup/base.tar.gz', TimedCommand('y', 60), '')
+    appl1.appliance_console.run_commands(command_set)
+    appl1.start_evm_service()
+    appl1.wait_for_web_ui()
+    # Assert providers on the second appliance
+    assert providers_before_restore == set(appl1.managed_provider_names), (
+        'Restored DB is missing some providers'
+    )
+    # Verify that existing provider can detect new VMs on the second appliance
+    virtual_crud = provider_app_crud(VMwareProvider, appl1)
+    vm = provision_vm(request, virtual_crud)
+    soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
+    # bug in ansible stops it working first time after restore, requires reboot
+    appl1.reboot()
+    assert wait_for(func=lambda: appl1.is_embedded_ansible_running, num_sec=30)
+    assert wait_for(func=lambda: appl1.is_rabbitmq_running, num_sec=30)
+    assert wait_for(func=lambda: appl1.is_nginx_running, num_sec=30)
+    assert appl1.ssh_client.run_command(
+        'curl -kL https://localhost/ansibleapi | grep "Ansible Tower REST API"')
+    repositories = appl1.collections.ansible_repositories
+    repository = repositories.create(
+        'example',
+        REPOSITORIES[0],
+        description='example')
+    view = navigate_to(repository, "Details")
+    refresh = view.toolbar.refresh.click
+    wait_for(
+        lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
+        timeout=60,
+        fail_func=refresh
+    )
+
+
+@pytest.mark.tier(2)
+@pytest.mark.uncollectif(
+    lambda: not store.current_appliance.is_downstream or store.current_appliance.version < '5.9')
+def test_appliance_console_restore_pg_basebackup_replicated(
+        request, soft_assert, get_replicated_appliances_with_providers):
+    appl1, appl2 = get_replicated_appliances_with_providers
+    providers_before_restore = set(appl1.managed_provider_names)
+    # Restore DB on the second appliance
+    appl1.evmserverd.stop()
+    appl2.evmserverd.stop()
+    command_set = ('ap', '', '4', '1', '/tmp/backup/base.tar.gz', TimedCommand('y', 60), '')
+    appl1.appliance_console.run_commands(command_set)
+    appl2.appliance_console.run_commands(command_set)
+    appl1.start_evm_service()
+    appl2.start_evm_service()
+    appl1.wait_for_web_ui()
+    appl2.wait_for_web_ui()
+    # Assert providers exist after restore and replicated to second appliances
+    assert providers_before_restore == set(appl1.managed_provider_names), (
+        'Restored DB is missing some providers'
+    )
+    assert providers_before_restore == set(appl2.managed_provider_names), (
+        'Restored DB is missing some providers'
+    )
+    # Verify that existing provider can detect new VMs on both apps
+    virtual_crud_appl1 = provider_app_crud(VMwareProvider, appl1)
+    virtual_crud_appl2 = provider_app_crud(VMwareProvider, appl2)
+    vm1 = provision_vm(request, virtual_crud_appl1)
+    vm2 = provision_vm(request, virtual_crud_appl2)
+    soft_assert(vm1.provider.mgmt.is_vm_running(vm1.name), "vm running")
+    soft_assert(vm2.provider.mgmt.is_vm_running(vm2.name), "vm running")
+
+
+@pytest.mark.tier(2)
+@pytest.mark.uncollectif(
+    lambda: not store.current_appliance.is_downstream)
+def test_appliance_console_restore_db_external(
+        request, soft_assert, get_ext_appliances_with_providers):
+    """Configure ext environment with providers, run backup/restore on configuration,
+    Confirm that providers still exist after restore and provisioning works.
+    """
+    appl1, appl2 = get_ext_appliances_with_providers
+    # Restore DB on the second appliance
+    providers_before_restore = set(appl1.managed_provider_names)
+    appl1.evmserverd.stop()
+    appl2.evmserverd.stop()
+    appl1.db.drop()
+    appl1.db.create()
+    command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
+    appl1.appliance_console.run_commands(command_set)
+    appl1.start_evm_service()
+    appl1.wait_for_web_ui()
+    appl2.start_evm_service()
+    appl2.wait_for_web_ui()
+    # Assert providers after restore on both apps
+    assert providers_before_restore == set(appl1.managed_provider_names), (
+        'Restored DB is missing some providers'
+    )
+    assert providers_before_restore == set(appl2.managed_provider_names), (
+        'Restored DB is missing some providers'
+    )
+    # Verify that existing provider can detect new VMs on both apps
+    virtual_crud_appl1 = provider_app_crud(VMwareProvider, appl1)
+    virtual_crud_appl2 = provider_app_crud(VMwareProvider, appl2)
+    vm1 = provision_vm(request, virtual_crud_appl1)
+    vm2 = provision_vm(request, virtual_crud_appl2)
+    soft_assert(vm1.provider.mgmt.is_vm_running(vm1.name), "vm running")
+    soft_assert(vm2.provider.mgmt.is_vm_running(vm2.name), "vm running")
+
+
+@pytest.mark.tier(2)
+@pytest.mark.uncollectif(
+    lambda: not store.current_appliance.is_downstream)
+def test_appliance_console_restore_db_ha(request, soft_assert, get_ha_appliances_with_providers):
+    """Configure HA environment with providers, run backup/restore on configuration,
+    Confirm that ha failover continues to work correctly and providers still exist.
+    """
+    appl1, appl2, appl3 = get_ha_appliances_with_providers
+    providers_before_restore = set(appl3.managed_provider_names)
+    # Restore DB on the second appliance
+    appl3.evmserverd.stop()
+    appl1.ssh_client.run_command("systemctl stop rh-postgresql95-repmgr")
+    appl2.ssh_client.run_command("systemctl stop rh-postgresql95-repmgr")
+    appl1.db.drop()
+    appl1.db.create()
+    command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
+    appl1.appliance_console.run_commands(command_set)
+    appl1.ssh_client.run_command("systemctl start rh-postgresql95-repmgr")
+    appl2.ssh_client.run_command("systemctl start rh-postgresql95-repmgr")
+    appl3.start_evm_service()
+    appl3.wait_for_web_ui()
+    # Assert providers still exist after restore
+    assert providers_before_restore == set(appl3.managed_provider_names), (
+        'Restored DB is missing some providers'
+    )
+    # Cause failover to occur
+    rc, out = appl1.ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
+    assert rc == 0, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(out)
+
+    def is_failover_started(appliance):
+        return bool(appliance.ssh_client.run_command(
+            "grep 'Starting to execute failover' /var/www/miq/vmdb/log/ha_admin.log").success)
+    wait_for(is_failover_started, func_args=[appl3], timeout=450, handle_exception=True)
+    appl3.wait_for_evm_service()
+    appl3.wait_for_web_ui()
+    # Assert providers still exist after ha failover
+    assert providers_before_restore == set(appl3.managed_provider_names), (
+        'Restored DB is missing some providers'
+    )
+    # Verify that existing provider can detect new VMs after restore/failover
+    virtual_crud = provider_app_crud(VMwareProvider, appl3)
+    vm = provision_vm(request, virtual_crud)
+    soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
+
+
+@pytest.mark.tier(2)
+@pytest.mark.uncollectif(
+    lambda: not store.current_appliance.is_downstream)
+def test_appliance_console_restore_db_nfs(request, soft_assert, get_appliances_with_providers):
+    """ Test single appliance backup and restore through nfs, configures appliance with providers,
+        backs up database, restores it to fresh appliance and checks for matching providers.
+    """
+    appl1, appl2 = get_appliances_with_providers
+    host = cfme_data['network_share']['hostname']
+    loc = cfme_data['network_share']['nfs_path']
+    nfs_dump = 'nfs://{}{}share.backup'.format(host, loc)
+    # Transfer v2_key and db backup from first appliance to second appliance
+    fetch_v2key(appl1, appl2)
+    setup_nfs_samba_backup(appl1)
+    # Restore DB on the second appliance
+    appl2.evmserverd.stop()
+    appl2.db.drop()
+    appl2.db.create()
+    command_set = ('ap', '', '4', '2', nfs_dump, TimedCommand('y', 60), '')
+    appl2.appliance_console.run_commands(command_set)
+    appl2.start_evm_service()
+    appl2.wait_for_web_ui()
+    # Assert providers on the second appliance
+    assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (
+        'Restored DB is missing some providers'
+    )
+    # Verify that existing provider can detect new VMs on the second appliance
+    virtual_crud = provider_app_crud(VMwareProvider, appl2)
+    vm = provision_vm(request, virtual_crud)
+    soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
+
+
+@pytest.mark.tier(2)
+@pytest.mark.uncollectif(
+    lambda: not store.current_appliance.is_downstream)
+def test_appliance_console_restore_db_samba(request, soft_assert, get_appliances_with_providers):
+    """ Test single appliance backup and restore through smb, configures appliance with providers,
+        backs up database, restores it to fresh appliance and checks for matching providers.
+    """
+    appl1, appl2 = get_appliances_with_providers
+    host = cfme_data['network_share']['hostname']
+    loc = cfme_data['network_share']['smb_path']
+    smb_dump = 'smb://{}{}share.backup'.format(host, loc)
+    pwd = credentials['depot_credentials']['password']
+    usr = credentials['depot_credentials']['username']
+    # Transfer v2_key and db backup from first appliance to second appliance
+    fetch_v2key(appl1, appl2)
+    setup_nfs_samba_backup(appl1)
+    # Restore DB on the second appliance
+    appl2.evmserverd.stop()
+    appl2.db.drop()
+    appl2.db.create()
+    command_set = ('ap', '', '4', '3', smb_dump, usr, pwd, TimedCommand('y', 60), '')
+    appl2.appliance_console.run_commands(command_set)
+    appl2.start_evm_service()
+    appl2.wait_for_web_ui()
+    # Assert providers on the second appliance
+    assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (
+        'Restored DB is missing some providers'
+    )
+    # Verify that existing provider can detect new VMs on the second appliance
+    virtual_crud = provider_app_crud(VMwareProvider, appl2)
+    vm = provision_vm(request, virtual_crud)
+    soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
