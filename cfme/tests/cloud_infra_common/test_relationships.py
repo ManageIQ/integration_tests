@@ -97,7 +97,7 @@ def _fix_item(appliance, item):
 RELATIONSHIPS = {
     "Infrastructure Provider", "Availability zones", "Availability Zones", "Flavors",
     "Security Groups", "Instances", "Images", "Orchestration stacks", "Orchestration Stacks",
-    "Storage Managers"}
+    "Storage Managers", "Cloud Tenants", "Cloud tenants"}
 
 
 def get_obj(relationship, appliance, **kwargs):
