@@ -122,12 +122,17 @@ class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssi
 
     def all(self):
         # container_images has ems_id, join with ext_mgmgt_systems on id for provider name
+        # TODO Update to use REST API instead of DB queries
         image_table = self.appliance.db.client['container_images']
         ems_table = self.appliance.db.client['ext_management_systems']
         image_query = (
             self.appliance.db.client.session
                 .query(image_table.name, image_table.image_ref, ems_table.name)
                 .join(ems_table, image_table.ems_id == ems_table.id))
+        if self.filters.get('archived'):
+            image_query = image_query.filter(image_table.deleted_on.isnot(None))
+        if self.filters.get('active'):
+            image_query = image_query.filter(image_table.deleted_on.is_(None))
         provider = None
         # filtered
         if self.filters.get('provider'):

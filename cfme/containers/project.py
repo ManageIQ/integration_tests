@@ -45,12 +45,17 @@ class ProjectCollection(GetRandomInstancesMixin, BaseCollection):
 
     def all(self):
         # container_projects table has ems_id, join with ext_mgmgt_systems on id for provider name
+        # TODO Update to use REST API instead of DB queries
         project_table = self.appliance.db.client['container_projects']
         ems_table = self.appliance.db.client['ext_management_systems']
         project_query = (
             self.appliance.db.client.session
                 .query(project_table.name, ems_table.name)
                 .join(ems_table, project_table.ems_id == ems_table.id))
+        if self.filters.get('archived'):
+            project_query = project_query.filter(project_table.deleted_on.isnot(None))
+        if self.filters.get('active'):
+            project_query = project_query.filter(project_table.deleted_on.is_(None))
         provider = None
         # filtered
         if self.filters.get('provider'):

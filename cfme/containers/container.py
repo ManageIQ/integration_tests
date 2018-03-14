@@ -69,6 +69,7 @@ class ContainerCollection(GetRandomInstancesMixin, BaseCollection):
     def all(self):
         # containers table has ems_id, join with ext_mgmgt_systems on id for provider name
         # Then join with container_groups on the id for the pod
+        # TODO Update to use REST API instead of DB queries
         container_table = self.appliance.db.client['containers']
         ems_table = self.appliance.db.client['ext_management_systems']
         pod_table = self.appliance.db.client['container_groups']
@@ -82,6 +83,10 @@ class ContainerCollection(GetRandomInstancesMixin, BaseCollection):
                 .query(container_table.name, pod_table.name, ems_table.name)
                 .join(ems_table, container_table.ems_id == ems_table.id)
                 .join(pod_table, container_pod_id == pod_table.id))
+        if self.filters.get('archived'):
+            container_query = container_query.filter(container_table.deleted_on.isnot(None))
+        if self.filters.get('active'):
+            container_query = container_query.filter(container_table.deleted_on.is_(None))
         provider = None
         # filtered
         if self.filters.get('provider'):
