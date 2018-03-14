@@ -124,15 +124,16 @@ def test_inactive_schedule(appliance, current_time):
 
 
 @pytest.mark.parametrize('run_types', run_types, ids=[type[0] for type in run_types])
-def test_schedule_timer(appliance, run_types, host_with_credentials, current_time, request):
+def test_schedule_timer(appliance, run_types, host_with_credentials, request):
 
     run_time, time_diff, time_num = run_types
-    full_list = appliance.ssh_client.run_command("timedatectl | grep 'Time zone'")\
+    current_time = parser.parse(appliance.ssh_client.run_command('date').output)
+    tz_list = appliance.ssh_client.run_command("timedatectl | grep 'Time zone'")\
         .output.strip().split(' ')
 
-    tz_name = full_list[2]
-    tz_num = full_list[-1][:-1]
-    date = datetime.now(pytz.timezone(tz_name))
+    tz_name = tz_list[2]
+    tz_num = tz_list[-1][:-1]
+    date = current_time.replace(tzinfo=pytz.timezone(tz_name))
     start_date = date + timedelta(minutes=5)
     view = navigate_to(appliance.collections.system_schedules, 'Add')
     available_list = view.time_zone.all_options
@@ -164,8 +165,8 @@ def test_schedule_timer(appliance, run_types, host_with_credentials, current_tim
     def _finalize():
         if schedule.exists:
             schedule.delete()
-        clear_time = current_time.replace(tzinfo=pytz.timezone(tz_name))
-        appliance.ssh_client.run_command("date {}".format(clear_time.strftime('%m%d%H%M%Y')))
+        # clear_time = current_time.replace(tzinfo=pytz.timezone(tz_name))
+        # appliance.ssh_client.run_command("date {}".format(clear_time.strftime('%m%d%H%M%Y')))
 
     wait_for(lambda: schedule.last_run_date != '',
              delay=60, timeout="10m", fail_func=appliance.server.browser.refresh,
