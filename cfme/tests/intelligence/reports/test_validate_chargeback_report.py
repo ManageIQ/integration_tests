@@ -16,7 +16,6 @@ from cfme.base.credential import Credential
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
-from cfme.common.provider import BaseProvider
 from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm import VM
 from cfme.intelligence.reports.reports import CustomReport
@@ -31,18 +30,12 @@ pytestmark = [
                                ]),
     pytest.mark.provider([CloudInfraProvider], scope='module',
                          required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
+    pytest.mark.usefixtures('has_no_providers_modscope', 'setup_provider_modscope'),
     test_requirements.chargeback,
 ]
 
 # Allowed deviation between the reported value in the Chargeback report and the estimated value.
 DEVIATION = 1
-
-
-@pytest.yield_fixture(scope="module")
-def clean_setup_provider(request, has_no_providers_modscope, setup_provider_modscope,
-        provider):
-    yield
-    BaseProvider.clear_providers()
 
 
 @pytest.yield_fixture(scope="module")
@@ -484,8 +477,8 @@ def test_validate_default_rate_cpu_usage_cost(chargeback_costs_default, chargeba
             estimated_cpu_usage_cost = chargeback_costs_default['cpu_used_cost']
             cost_from_report = groups["CPU Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_cpu_usage_cost - DEVIATION <= float(cost) \
-                <= estimated_cpu_usage_cost + DEVIATION, \
+            assert estimated_cpu_usage_cost - DEVIATION <= float(cost) <= \
+                estimated_cpu_usage_cost + DEVIATION, \
                 'Estimated cost and report cost do not match'
             break
 
@@ -503,8 +496,8 @@ def test_validate_default_rate_memory_usage_cost(chargeback_costs_default,
             estimated_memory_usage_cost = chargeback_costs_default['memory_used_cost']
             cost_from_report = groups["Memory Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_memory_usage_cost - DEVIATION <= float(cost) \
-                <= estimated_memory_usage_cost + DEVIATION, \
+            assert estimated_memory_usage_cost - DEVIATION <= float(cost) <= \
+                estimated_memory_usage_cost + DEVIATION, \
                 'Estimated cost and report cost do not match'
             break
 
@@ -521,8 +514,8 @@ def test_validate_default_rate_network_usage_cost(chargeback_costs_default,
             estimated_network_usage_cost = chargeback_costs_default['network_used_cost']
             cost_from_report = groups["Network I/O Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_network_usage_cost - DEVIATION <= float(cost) \
-                <= estimated_network_usage_cost + DEVIATION, \
+            assert estimated_network_usage_cost - DEVIATION <= float(cost) <= \
+                estimated_network_usage_cost + DEVIATION, \
                 'Estimated cost and report cost do not match'
             break
 
@@ -538,8 +531,8 @@ def test_validate_default_rate_disk_usage_cost(chargeback_costs_default, chargeb
             estimated_disk_usage_cost = chargeback_costs_default['disk_used_cost']
             cost_from_report = groups["Disk I/O Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_disk_usage_cost - DEVIATION <= float(cost) \
-                <= estimated_disk_usage_cost + DEVIATION, \
+            assert estimated_disk_usage_cost - DEVIATION <= float(cost) <= \
+                estimated_disk_usage_cost + DEVIATION, \
                 'Estimated cost and report cost do not match'
             break
 
@@ -555,8 +548,8 @@ def test_validate_default_rate_storage_usage_cost(chargeback_costs_default,
             estimated_storage_usage_cost = chargeback_costs_default['storage_used_cost']
             cost_from_report = groups["Storage Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_storage_usage_cost - DEVIATION <= float(cost) \
-                <= estimated_storage_usage_cost + DEVIATION, \
+            assert estimated_storage_usage_cost - DEVIATION <= float(cost) <= \
+                estimated_storage_usage_cost + DEVIATION, \
                 'Estimated cost and report cost do not match'
             break
 
@@ -573,8 +566,8 @@ def test_validate_custom_rate_cpu_usage_cost(chargeback_costs_custom, chargeback
             estimated_cpu_usage_cost = chargeback_costs_custom['cpu_used_cost']
             cost_from_report = groups["CPU Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_cpu_usage_cost - DEVIATION <= float(cost) \
-                <= estimated_cpu_usage_cost + DEVIATION, \
+            assert estimated_cpu_usage_cost - DEVIATION <= float(cost) <= \
+                estimated_cpu_usage_cost + DEVIATION, \
                 'Estimated cost and report cost do not match'
             break
 
@@ -591,8 +584,8 @@ def test_validate_custom_rate_memory_usage_cost(chargeback_costs_custom, chargeb
             estimated_memory_usage_cost = chargeback_costs_custom['memory_used_cost']
             cost_from_report = groups["Memory Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_memory_usage_cost - DEVIATION <= float(cost) \
-                <= estimated_memory_usage_cost + DEVIATION, \
+            assert estimated_memory_usage_cost - DEVIATION <= float(cost) <= \
+                estimated_memory_usage_cost + DEVIATION, \
                 'Estimated cost and report cost do not match'
             break
 
@@ -608,8 +601,8 @@ def test_validate_custom_rate_network_usage_cost(chargeback_costs_custom, charge
             estimated_network_usage_cost = chargeback_costs_custom['network_used_cost']
             cost_from_report = groups["Network I/O Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_network_usage_cost - DEVIATION <= float(cost) \
-                <= estimated_network_usage_cost + DEVIATION, \
+            assert estimated_network_usage_cost - DEVIATION <= float(cost) <= \
+                estimated_network_usage_cost + DEVIATION, \
                 'Estimated cost and report cost do not match'
             break
 
@@ -625,8 +618,8 @@ def test_validate_custom_rate_disk_usage_cost(chargeback_costs_custom, chargebac
             estimated_disk_usage_cost = chargeback_costs_custom['disk_used_cost']
             cost_from_report = groups["Disk I/O Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_disk_usage_cost - DEVIATION <= float(cost) \
-                <= estimated_disk_usage_cost + DEVIATION, \
+            assert estimated_disk_usage_cost - DEVIATION <= float(cost) <= \
+                estimated_disk_usage_cost + DEVIATION, \
                 'Estimated cost and report cost do not match'
             break
 
@@ -641,7 +634,7 @@ def test_validate_custom_rate_storage_usage_cost(chargeback_costs_custom, charge
             estimated_storage_usage_cost = chargeback_costs_custom['storage_used_cost']
             cost_from_report = groups["Storage Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_storage_usage_cost - DEVIATION <= float(cost) \
-                <= estimated_storage_usage_cost + DEVIATION, \
+            assert estimated_storage_usage_cost - DEVIATION <= float(cost) <= \
+                estimated_storage_usage_cost + DEVIATION, \
                 'Estimated cost and report cost do not match'
             break
