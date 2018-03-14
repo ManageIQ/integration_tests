@@ -3,7 +3,7 @@ import json
 import six.moves.xmlrpc_client
 from functools import wraps
 
-from celery import chain
+from celery import chain, group
 from celery.result import AsyncResult
 from dateutil import parser
 from django.contrib import messages
@@ -1049,10 +1049,12 @@ def template_configurations(request):
     return render(request, 'appliances/template_conf.html', locals())
 
 
+@only_authenticated
 def nuke_template(request):
-    if not request.user.is_authenticated() or not (
-            request.user.is_superuser or request.user.is_staff):
+    if not request.user.is_superuser:
         return HttpResponseForbidden("Only authenticated superusers can operate this action.")
+    if request.method != 'POST':
+        return HttpResponseForbidden('Only POST allowed')
     template_id = request.POST["template_id"]
     try:
         template = Template.objects.get(id=template_id)
@@ -1060,3 +1062,23 @@ def nuke_template(request):
         raise Http404('Template with ID {} does not exist!.'.format(template_id))
     task = nuke_template_configuration.delay(template.id)
     return HttpResponse(task.id)
+
+
+@only_authenticated
+def purge_templates(request):
+    if not request.user.is_superuser:
+        return HttpResponseForbidden("Only authenticated superusers can operate this action.")
+    if request.method != 'POST':
+        return HttpResponseForbidden('Only POST allowed')
+
+    try:
+        template_ids = json.loads(request.POST['templates_json'])
+
+        group_tasks = []
+        for template_id in template_ids:
+            group_tasks.append(delete_template_from_provider.s(template_id))
+        return HttpResponse(group(group_tasks).apply_async().id)
+    except KeyError:
+        return HttpResponseForbidden('templates_json required')
+    except ValueError:
+        return HttpResponseForbidden('Malformed JSON')

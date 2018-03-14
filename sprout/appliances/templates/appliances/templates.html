@@ -7,11 +7,14 @@
 {% endfor %}
 </ul>
 
+<button class="btn btn-danger btn-lg" id="purge_all"><span class="glyphicon glyphicon-trash"></span> Purge!</button>
+
 <table class="table">
     <thead>
         <th>Stream</th>
         <th>Version</th>
         <th>Date</th>
+        <th><input type="checkbox" id="checkall"></th>
         <th>Provider</th>
         <th>Name</th>
         <th>Configured</th>
@@ -23,6 +26,7 @@
             {% if zstream %}<td rowspan={{ zstream_rowspans|keyvalue:zstream }}>{{ zstream }}</td>{% endif %}
             {% if version %}<td rowspan={{ version_rowspans|keyvalue:version }}>{{ version }}</td>{% endif %}
             {% if date %}<td rowspan={{ date_version_rowspans|keyvalue:datetuple }}>{{ date }}</td>{% endif %}
+            <td><input type="checkbox" class="deletecb" id="checkbox-{{ template.id }}" data-templateid="{{ template.id }}" {% if not template.suggested_delete or not request.user.is_superuser %}disabled{% endif %}></td>
             <td><a href="{% url 'specific_provider' provider.id %}#template-{{ template.id }}">{{ provider.id }}</a></td>
             <td>
                 {% if template.suggested_delete %}<strong>{% endif %}
@@ -31,7 +35,7 @@
             </td>
             <td><span class="glyphicon glyphicon-{% if template.preconfigured %}ok{% else %}remove{% endif %}"></span></td>
             <td>
-                {% if template.suggested_delete %}
+                {% if template.suggested_delete and request.user.is_superuser %}
                     <button class="btn btn-danger btn-xs delete-template" data-template="{{ template.id }}" id="button-{{ template.id }}"><span class="glyphicon glyphicon-trash"></span> Delete from provider</button>
                     <span class="spinner spinner-xs spinner-inline" id="spinner-{{ template.id }}"></span>
                 {% else %}
@@ -45,6 +49,27 @@
 
 <script type="text/javascript">
 $(document).ready(function() {
+
+    function deleteButtonStateCheck(){
+        var n = $("input:enabled:checked.deletecb").length;
+        if(n > 0)
+            $("#purge_all").removeClass("disabled");
+        else
+            $("#purge_all").addClass("disabled");
+    }
+
+    $("#checkall").change(function(){
+        var cb = $(this);
+        var checked = cb.is(':checked');
+        $("input:enabled.deletecb").attr('checked', checked);
+        deleteButtonStateCheck();
+    });
+
+    $("input.deletecb").change(deleteButtonStateCheck);
+
+    deleteButtonStateCheck();
+
+
     function waitForDeletionFinish(template, task_id){
         $.ajax({
             type: "POST",
@@ -94,6 +119,29 @@ $(document).ready(function() {
             $("#spinner-" + template).hide();
             $("#button-" + template).show();
         })
+    });
+
+    // Bulk template deletion
+    $("button#purge_all").click(function(){
+        if(confirm("Do you really want to purge all the selected templates?")){
+
+            var ids = $("input:enabled:checked.deletecb").map(function(){
+                return parseInt($(this).attr("data-templateid"));
+            });
+            var new_ids = [];
+            for(i = 0; i < ids.length; i++)
+                new_ids.push(ids[i]);
+            $.ajax({
+                type: "POST",
+                url: "{% url 'purge_templates' %}",
+                data: {templates_json: JSON.stringify(new_ids)},
+                dataType: 'html'
+            }).done(function(data){
+                addAlert("info", "Deletion of the selected templates initiated. No progress tracking available.");
+            }).fail(function(xhr, textStatus, errorThrown){
+                addAlert("danger", "Error during template delete request " + template + ": '" + xhr.responseText + "'.");
+            });
+        }
     });
 })
 </script>
