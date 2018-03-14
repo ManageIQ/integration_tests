@@ -50,6 +50,27 @@ def test_retire_service(appliance, setup_provider, context, provision_request):
         my_service = MyService(appliance, catalog_item.name)
         my_service.retire()
 
+        @request.addfinalizer
+        def _finalize():
+            my_service.delete()
+
+
+@pytest.mark.parametrize('context', [ViaSSUI])
+def test_service_start(appliance, setup_provider, context, provision_request, provider):
+    """Test service stop"""
+    catalog_item, provision_request = provision_request
+    with appliance.context.use(context):
+        my_service = MyService(appliance, catalog_item.name)
+        if provider.one_of(InfraProvider):
+            # For Infra providers vm is provisioned.Hence Stop option is shown
+            my_service.service_power(power='Stop', status='stopped')
+        else:
+            my_service.service_power(power='Start', status='started')
+
+        @request.addfinalizer
+        def _finalize():
+            my_service.delete()
+
 
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
@@ -134,4 +155,3 @@ def test_vm_console(request, appliance, setup_provider, context, configure_webso
                 take_screenshot("ConsoleScreenshot")
                 vm_console.switch_to_appliance()
                 raise e
-
