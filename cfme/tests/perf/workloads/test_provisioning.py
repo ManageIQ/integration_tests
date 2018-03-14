@@ -6,6 +6,7 @@ from cfme.utils.conf import cfme_performance
 from cfme.utils.grafana import get_scenario_dashboard_urls
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud
+from cfme.utils.rest import assert_response
 from cfme.utils.smem_memory_monitor import add_workload_quantifiers, test_ts, SmemMemoryMonitor
 from cfme.utils.wait import wait_for
 from cfme.utils.workloads import get_provisioning_scenarios
@@ -153,7 +154,7 @@ def test_provisioning(appliance, request, scenario):
         provision_data = get_provision_data(appliance.rest_api, prov, template.name)
         vm_name = provision_data["vm_fields"]["vm_name"]
         response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         provision_request = response[0]
 
         def _finished():

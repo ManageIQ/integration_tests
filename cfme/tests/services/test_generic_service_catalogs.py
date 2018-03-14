@@ -9,7 +9,7 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import error
 from cfme.utils.log import logger
-from cfme.utils.rest import delete_resources_from_collection
+from cfme.utils.rest import assert_response, delete_resources_from_collection
 from selenium.common.exceptions import NoSuchElementException
 
 
@@ -131,13 +131,12 @@ class TestServiceCatalogViaREST(object):
         Metadata:
             test_flag: rest
         """
-        status = 204 if method == "delete" else 200
         for scl in service_catalogs:
             scl.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == status
+            assert_response(appliance)
             with error.expected("ActiveRecord::RecordNotFound"):
                 scl.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == 404
+            assert_response(appliance, http_status=404)
 
     def test_delete_service_catalogs(self, appliance, service_catalogs):
         """Tests delete service catalogs via rest.
@@ -161,7 +160,7 @@ class TestServiceCatalogViaREST(object):
         for ctl in service_catalogs:
             new_name = fauxfactory.gen_alphanumeric()
             response = ctl.action.edit(name=new_name)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
             assert response.name == new_name
             ctl.reload()
             assert ctl.name == new_name
@@ -188,7 +187,7 @@ class TestServiceCatalogViaREST(object):
                 "name": new_name,
             })
         response = appliance.rest_api.collections.service_catalogs.action.edit(*scls_data_edited)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         assert len(response) == len(new_names)
         for index, resource in enumerate(response):
             assert resource.name == new_names[index]

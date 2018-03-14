@@ -2,6 +2,7 @@ import pytest
 from cfme import test_requirements
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
+from cfme.utils.rest import assert_response
 
 
 pytestmark = [
@@ -33,7 +34,7 @@ class TestVmOwnershipRESTAPI(object):
             "owner": {"href": user.href}
         }
         rest_vm.action.set_ownership(**data)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         rest_vm.reload()
         assert hasattr(rest_vm, "evm_owner_id")
         assert rest_vm.evm_owner_id == user.id
@@ -52,7 +53,7 @@ class TestVmOwnershipRESTAPI(object):
             "group": {"href": group.href}
         }
         appliance.rest_api.collections.vms.action.set_ownership(rest_vm, **data)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         rest_vm.reload()
         assert hasattr(rest_vm, "miq_group_id")
         assert rest_vm.miq_group_id == group.id
@@ -79,7 +80,7 @@ class TestVmOwnershipRESTAPI(object):
             responses = [rest_vm.action.set_owner(owner="admin")]
         else:
             responses = appliance.rest_api.collections.vms.action.set_owner(rest_vm, owner="admin")
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         for response in responses:
             assert response["success"] is True, "Could not set owner"
         rest_vm.reload()

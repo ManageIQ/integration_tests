@@ -135,7 +135,7 @@ def test_provision_emails(request, provision_data, provider, appliance, smtp_tes
     provision_data["vm_fields"]["number_of_cpus"] += 1
 
     appliance.rest_api.collections.provision_requests.action.create(**provision_data)
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
 
     request = appliance.collections.requests.instantiate(description=vm_name, partial_check=True)
     request.wait_for_request()

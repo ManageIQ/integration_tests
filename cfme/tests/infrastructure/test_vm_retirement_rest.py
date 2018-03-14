@@ -5,6 +5,7 @@ import pytest
 from cfme import test_requirements
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
+from cfme.utils.rest import assert_response
 from cfme.utils.wait import wait_for
 
 
@@ -47,7 +48,7 @@ def test_retire_vm_now(appliance, vm, from_collection):
         appliance.rest_api.collections.vms.action.retire(retire_vm)
     else:
         retire_vm.action.retire()
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
 
     def _finished():
         retire_vm.reload()
@@ -94,7 +95,7 @@ def test_retire_vm_future(appliance, vm, from_collection):
         appliance.rest_api.collections.vms.action.retire(future)
     else:
         retire_vm.action.retire(**future)
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
 
     def _finished():
         retire_vm.reload()

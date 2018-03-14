@@ -9,7 +9,7 @@ from cfme import test_requirements
 from cfme.rest.gen_data import rates as _rates
 from cfme.utils import error
 from cfme.utils.blockers import BZ
-from cfme.utils.rest import delete_resources_from_collection
+from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 from cfme.utils.appliance.implementations.ui import navigator
@@ -183,7 +183,7 @@ class TestRatesViaREST(object):
     @pytest.fixture(scope="function")
     def rates(self, request, appliance):
         response = _rates(request, appliance.rest_api)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         return response
 
     @pytest.mark.tier(3)
@@ -195,7 +195,7 @@ class TestRatesViaREST(object):
         """
         for rate in rates:
             record = appliance.rest_api.collections.rates.get(id=rate.id)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
             assert record.description == rate.description
 
     @pytest.mark.tier(3)
@@ -220,14 +220,14 @@ class TestRatesViaREST(object):
                     "description": new_description,
                 })
             edited = appliance.rest_api.collections.rates.action.edit(*rates_data_edited)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
         else:
             edited = []
             for rate in rates:
                 new_description = "test_rate_{}".format(fauxfactory.gen_alphanumeric().lower())
                 new_descriptions.append(new_description)
                 edited.append(rate.action.edit(description=new_description))
-                assert appliance.rest_api.response.status_code == 200
+                assert_response(appliance)
         assert len(edited) == len(rates)
         for index, rate in enumerate(rates):
             record, _ = wait_for(
@@ -247,13 +247,12 @@ class TestRatesViaREST(object):
         Metadata:
             test_flag: rest
         """
-        status = 204 if method == "delete" else 200
         for rate in rates:
             rate.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == status
+            assert_response(appliance)
             with error.expected("ActiveRecord::RecordNotFound"):
                 rate.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == 404
+            assert_response(appliance, http_status=404)
 
     @pytest.mark.tier(3)
     def test_delete_rates_from_collection(self, appliance, rates):
