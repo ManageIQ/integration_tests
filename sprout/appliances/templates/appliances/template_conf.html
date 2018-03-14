@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Template Configuration{% endblock %}
+{% block body %}
+<h2>Templates running a configuration</h2>
+<table class="table">
+    <thead>
+        <th>Age</th>
+        <th>Name</th>
+        <th>Provider</th>
+        <th>Group</th>
+        <th>Version</th>
+        <th>Date</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </thead>
+    <tbody>
+        {% for template in templates_configuring %}
+        <tr {% if template.possibly_bunk %}style="background-color: orange;"{% endif %} id="template-{{ template.id }}">
+            <td>{{ template.age }}</td>
+            <td>{{ template.name }}</td>
+            <td>{{ template.provider.id }}</td>
+            <td>{{ template.template_group.id }}</td>
+            <td>{{ template.version }}</td>
+            <td>{{ template.date }}</td>
+            <td>{{ template.status }}</td>
+            <td>{% if template.possibly_bunk %}<button class="btn btn-danger btn-lg nuke-template" data-template="{{ template.id }}" id="button-{{ template.id }}"><span class="glyphicon glyphicon-screenshot"></span> Nuke!</button><span class="spinner spinner-xs spinner-inline" id="spinner-{{ template.id }}"></span>{% endif %}</td>
+        </tr>
+        {% empty %}
+            <tr><td colspan="8">No templates configuring at this moment.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script type="text/javascript">
+$(document).ready(function() {
+    $('.spinner').hide();
+
+    function waitForNukeFinish(template, task_id){
+        $.ajax({
+            type: "POST",
+            url: "{% url 'task_result' %}",
+            dataType: "json",
+            data: JSON.stringify({task_id: task_id}),
+        }).done(function(data){
+            if(data === null){
+                // Still waiting
+                setTimeout(function(){ waitForNukeFinish(template, task_id); }, 800 + (600*Math.random() - 300));
+            } else if(data === true) {
+                addAlert("success", "Deletion of the template " + template + " was successfully finished.");
+                $("#spinner-" + template).hide();
+                // Make it visually distinguishable.
+                $("#template-" + template).css('text-decoration', 'line-through');
+                $("#template-" + template).css('background-color', 'lightgrey');
+                $("#template-" + template).css('color', 'grey');
+            } else if(data === false){
+                addAlert("danger", "Failed to delete template " + template);
+                $("#spinner-" + template).hide();
+                $("#button-" + template).show();
+            } else {
+                addAlert("danger", "Unexpected response " + data + " while deleting template " + template);
+                $("#spinner-" + template).hide();
+                $("#button-" + template).show();
+            }
+        }).fail(function(xhr, textStatus, errorThrown){
+            addAlert("danger", "Error during deleting the template " + template + ": '" + xhr.responseText + "'.");
+            $("#spinner-" + template).hide();
+            $("#button-" + template).show();
+        });
+    }
+
+    $('button.nuke-template').click(function(){
+        var e = $(this);
+        var template = e.attr("data-template");
+        $("#spinner-" + template).show();
+        $("#button-" + template).hide();
+        $.ajax({
+            type: "POST",
+            url: "{% url 'nuke_template' %}",
+            data: {template_id: template},
+            dataType: 'html'
+        }).done(function(data){
+            addAlert("info", "Nuke of the template configuration " + template + " initiated");
+            waitForNukeFinish(template, data);
+        }).fail(function(xhr, textStatus, errorThrown){
+            addAlert("danger", "Error during template nuke request " + template + ": '" + xhr.responseText + "'.");
+            $("#spinner-" + template).hide();
+            $("#button-" + template).show();
+        })
+    });
+});
+</script>
+{% endblock %}

@@ -25,6 +25,8 @@ urlpatterns = [
     url(r'^providers/([^/]+)/disable$', views.provider_enable_disable,
         {"disabled": True}, name="provider_disable"),
     url(r'^templates$', views.templates, name="templates"),
+    url(r'^template_configuration$', views.template_configurations, name="template_configurations"),
+    url(r'^nuke_template$', views.nuke_template, name="nuke_template"),
     url(r'^templates/(?P<group_id>[^/]+)$', views.templates, name="group_templates"),
     url(r'^templates/(?P<group_id>[^/]+)/(?P<prov_id>[^/]+)$', views.templates,
         name="group_provider_templates"),
