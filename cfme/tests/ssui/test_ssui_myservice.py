@@ -43,7 +43,9 @@ def test_myservice_crud(appliance, setup_provider, context, provision_request):
 
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_retire_service(appliance, setup_provider, context, provision_request):
+def test_retire_service(appliance, setup_provider,
+                        context, provision_request,
+                        request):
     """Test retire service."""
     catalog_item, provision_request = provision_request
     with appliance.context.use(context):
@@ -56,7 +58,8 @@ def test_retire_service(appliance, setup_provider, context, provision_request):
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_service_start(appliance, setup_provider, context, provision_request, provider):
+def test_service_start(appliance, setup_provider, context,
+                       provision_request, provider, request):
     """Test service stop"""
     catalog_item, provision_request = provision_request
     with appliance.context.use(context):
