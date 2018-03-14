@@ -54,9 +54,10 @@ def test_retire_service(appliance, setup_provider, context, provision_request):
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
 @pytest.mark.parametrize('provision_request', [['console_test']], indirect=True)
-@pytest.mark.uncollectif(lambda provider: provider.one_of(VMwareProvider) and
-                         provider.version >= 6.5,
-                         'VNC consoles are unsupported on VMware ESXi 6.5 and later')
+@pytest.mark.uncollectif(lambda provider:
+    provider.one_of(VMwareProvider) and provider.version >= 6.5 or
+    'html5_console' in provider.data.excluded_test_flags,
+    'VNC consoles are unsupported on VMware ESXi 6.5 and later')
 def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
         configure_console_vnc, provision_request, take_screenshot,
         console_template, provider):
