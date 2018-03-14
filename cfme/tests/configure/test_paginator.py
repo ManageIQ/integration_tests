@@ -1,3 +1,4 @@
+import fauxfactory
 import pytest
 
 from widgetastic.exceptions import NoSuchElementException
@@ -71,12 +72,14 @@ details_pages = [
     ('tag', Tag, 'All', False),
 ]
 
+
 def check_paginator_for_page(view):
     try:
         view.browser.element("//div[@id='paging_div']/div")
         return True
     except NoSuchElementException:
         return False
+
 
 @pytest.mark.parametrize('place_info', general_list_pages,
                          ids=['{}_{}'.format(set_type[0], set_type[2].lower())
@@ -102,18 +105,20 @@ def test_paginator(appliance, place_info):
 def test_paginator_details_page(appliance, place_info):
     place_name, place_class, place_navigation, paginator_expected_result = place_info
     # First lets check for existing content
-    if place_class != 'tag':
-        if not place_class:
-            test_class = getattr(appliance.collections, place_name)
-            view = navigate_to(test_class, 'All')
-            table = view.table if hasattr(view, 'table') else view.entities.table
+    if place_class in ['users', 'groups', 'roles', 'tenants']:
+        test_class = getattr(appliance.collections, place_name)
+        view = navigate_to(test_class, 'All')
+        table = view.table if hasattr(view, 'table') else view.entities.table
         if table.is_displayed:
             view.entities.table[0].click()
-        else:
-            test_class = place_class()
-            # Need to create item
-    else:
-        cg = Category(name='department',description='Department')
+    elif place_class == 'tag':
+        cg = Category(name='department', description='Department')
         test_class = place_class(category=cg)
+        view = navigate_to(test_class, place_navigation)
+    else:
+        test_class = place_class.create(
+            name=fauxfactory.gen_alphanumeric(),
+            description=fauxfactory.gen_alphanumeric(),
+        )
         view = navigate_to(test_class, place_navigation)
     assert check_paginator_for_page(view) == paginator_expected_result
