@@ -1,0 +1,67 @@
+"""Plugin for collection of appliance logs
+
+Options in env.yaml will define what files to collect, will default to the set below
+log_collector:
+    local_dir: log/appliance/  # Local to log_path
+    log_files:
+        - /var/www/miq/vmdb/log/evm.log
+        - /var/www/miq/vmdb/log/production.log
+        - /var/www/miq/vmdb/log/automation.log
+
+Log files will be tarred and written to log_path
+"""
+import pytest
+
+from cfme.utils.path import log_path
+from cfme.utils.conf import env
+from cfme.utils.log import logger
+
+
+DEFAULT_FILES = ['/var/www/miq/vmdb/log/evm.log',
+                 '/var/www/miq/vmdb/log/production.log',
+                 '/var/www/miq/vmdb/log/automation.log']
+
+DEFAULT_LOCAL = log_path
+
+
+def pytest_addoption(parser):
+    parser.addoption('--collect-logs', action='store_true',
+                     help=('Collect logs from all appliances and store locally at session '
+                           'shutdown.  Configured via log_collector in env.yaml'))
+
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_unconfigure(config):
+    yield  # since hookwrapper, let hookimpl run
+    if config.getoption('--collect-logs'):
+        logger.info('Starting log collection on appliances')
+        log_files = DEFAULT_FILES
+        local_dir = DEFAULT_LOCAL
+        try:
+            log_files = env.log_collector.log_files
+        except (AttributeError, KeyError):
+            logger.info('No log_collector.log_files in env, use default files: %s', log_files)
+            pass
+        try:
+            local_dir = log_path.join(env.log_collector.local_dir)
+        except (AttributeError, KeyError):
+            logger.info('No log_collector.local_dir in env, use default local_dir: %s', local_dir)
+            pass
+
+        # Handle local dir existing
+        local_dir.ensure(dir=True)
+
+        holder = config.pluginmanager.get_plugin('appliance-holder')
+        written_files = []
+        for app in holder.appliances:
+            with app.ssh_client as ssh_client:
+                tar_file = 'log-collector-{}.tar.gz'.format(
+                    app.hostname)
+                logger.debug('Creating tar file on app %s:%s with log files %s',
+                             app, tar_file, ' '.join(log_files))
+                tar_cmd = 'tar -czvf {tar} {files}'.format(tar=tar_file,
+                                                           files=' '.join(log_files))
+                assert ssh_client.run_command(tar_cmd)
+                ssh_client.get_file(tar_file, local_dir.strpath)
+            written_files.append(tar_file)
+        logger.info('Wrote the following files to local log path: %s', written_files)
