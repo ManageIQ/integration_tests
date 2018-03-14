@@ -151,8 +151,9 @@ def gen_project_key(name, version):
     # at the beginning.
     match = re.search('^(?P<major>\d+)\.(?P<minor>\d+)', version)
     if not match:
-        raise Exception(
-            'Invalid version string given.  Expect #.#[... .#] received: {}'.format(version))
+        raise ValueError(
+            'Start of version string must match: "(\d+).(\d+)", e.g. 5.9  received: {}'.format(
+                version))
 
     project_key = '{name}_{major}_{minor}_ruby_coverage'.format(
         name=name,
@@ -502,7 +503,8 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Upload coverage data from jenkins job to sonarqube')
+    parser = argparse.ArgumentParser(
+        description='Upload coverage data from jenkins job to sonarqube')
     parser.add_argument('jenkins_url')
     parser.add_argument('jenkins_job_name')
     parser.add_argument('work_appliance_ip')
@@ -516,4 +518,3 @@ if __name__ == '__main__':
             args.jenkins_user,
             args.jenkins_token,
             args.jenkins_job_name))
-
