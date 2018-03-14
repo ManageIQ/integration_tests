@@ -39,7 +39,7 @@ DEVIATION = 1
 
 
 @pytest.yield_fixture(scope="module")
-def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
+def vm_ownership(enable_candu, provider, appliance):
     # In these tests, chargeback reports are filtered on VM owner.So,VMs have to be
     # assigned ownership.
     vm_name = provider.data['cap_and_util']['chargeback_vm']
@@ -270,7 +270,7 @@ def resource_usage(vm_ownership, appliance, provider):
         if record.derived_vm_used_disk_storage:
             average_storage_used = average_storage_used + record.derived_vm_used_disk_storage
 
-    # Convert storage used in Bytes to GB
+    # Convert storage used in bytes to GB
     average_storage_used = average_storage_used * math.pow(2, -30)
 
     return {"average_cpu_used_in_mhz": average_cpu_used_in_mhz,
