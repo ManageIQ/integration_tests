@@ -34,7 +34,7 @@ def test_embedded_ansible_disable(enabled_embedded_appliance):
     assert wait_for(func=lambda: enabled_embedded_appliance.is_nginx_running, num_sec=30)
     enabled_embedded_appliance.disable_embedded_ansible_role()
 
-    def is_superviserd_stopped(enabled_embedded_appliance):
+    def is_supervisord_stopped(enabled_embedded_appliance):
         """Checks if supervisord has stopped"""
         return_code, output = enabled_embedded_appliance.ssh_client.run_command(
             'systemctl status supervisord | grep inactive',
@@ -61,7 +61,7 @@ def test_embedded_ansible_disable(enabled_embedded_appliance):
                                                                  ensure_host=True).failed
 
     if not enabled_embedded_appliance.is_pod:
-        assert wait_for(is_superviserd_stopped, func_args=[enabled_embedded_appliance], num_sec=180)
+        assert wait_for(is_supervisord_stopped, func_args=[enabled_embedded_appliance], num_sec=180)
         assert wait_for(is_rabbitmq_stopped, func_args=[enabled_embedded_appliance], num_sec=60)
         assert wait_for(is_nginx_stopped, func_args=[enabled_embedded_appliance], num_sec=30)
     else:
