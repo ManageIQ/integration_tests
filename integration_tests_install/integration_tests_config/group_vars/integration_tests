@@ -65,7 +65,7 @@ yaml_local_repo_yn_help: "{{ help_prompt }} Local files will be copied into conf
 # yaml local repo path
 yaml_local_repo:
 yaml_local_repo_question: "Type relative path to your $CFME_WORKDIR which contains YAML files:"
-yaml_local_repo: "{{ help_prompt }} No help..."
+yaml_local_repo_help: "{{ help_prompt }} No help..."
 ############################
 
 base_url:
