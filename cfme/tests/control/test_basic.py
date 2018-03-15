@@ -56,6 +56,8 @@ COMPLIANCE_POLICIES = [
     policies.PodCompliancePolicy,
     policies.ContainerNodeCompliancePolicy,
     policies.ContainerImageCompliancePolicy,
+    policies.ProviderCompliancePolicy,
+    policies.PhysicalInfrastructureCompliancePolicy
 ]
 
 CONTROL_POLICIES = [
@@ -64,10 +66,16 @@ CONTROL_POLICIES = [
     policies.ReplicatorControlPolicy,
     policies.PodControlPolicy,
     policies.ContainerNodeControlPolicy,
-    policies.ContainerImageControlPolicy
+    policies.ContainerImageControlPolicy,
+    policies.ProviderControlPolicy,
+    policies.PhysicalInfrastructureControlPolicy
 ]
 
 POLICIES = COMPLIANCE_POLICIES + CONTROL_POLICIES
+PHYS_POLICIES = (
+    policies.PhysicalInfrastructureCompliancePolicy,
+    policies.PhysicalInfrastructureControlPolicy
+)
 
 CONDITIONS = [
     conditions.HostCondition,
@@ -79,11 +87,13 @@ CONDITIONS = [
     conditions.ProviderCondition
 ]
 
+
 PolicyAndCondition = namedtuple('PolicyAndCondition', ['name', 'policy', 'condition'])
 POLICIES_AND_CONDITIONS = [
     PolicyAndCondition(name=obj[0].__name__, policy=obj[0], condition=obj[1])
     for obj in zip(CONTROL_POLICIES, CONDITIONS)
 ]
+
 
 EVENTS = [
     "Datastore Analysis Complete",
@@ -256,13 +266,18 @@ def alert_profile_collection(appliance):
 
 
 @pytest.yield_fixture
-def two_random_policies(policy_collection):
+def two_random_policies(appliance, policy_collection):
+    # Physical Infrastucture policies excluded
+    if appliance.version < "5.9":
+        policies = [policy_class for policy_class in POLICIES if policy_class not in PHYS_POLICIES]
+    else:
+        policies = POLICIES
     policy_1 = policy_collection.create(
-        random.choice(POLICIES),
+        random.choice(policies),
         fauxfactory.gen_alphanumeric()
     )
     policy_2 = policy_collection.create(
-        random.choice(POLICIES),
+        random.choice(policies),
         fauxfactory.gen_alphanumeric()
     )
     yield policy_1, policy_2
@@ -317,9 +332,13 @@ def condition_prerequisites(request, condition_collection, appliance):
 
 
 @pytest.yield_fixture(params=CONTROL_POLICIES, ids=lambda policy_class: policy_class.__name__)
-def control_policy(request, policy_collection):
-    policy_class = request.param
-    policy = policy_collection.create(policy_class, fauxfactory.gen_alphanumeric())
+def control_policy_class(request):
+    return request.param
+
+
+@pytest.yield_fixture
+def control_policy(control_policy_class, policy_collection):
+    policy = policy_collection.create(control_policy_class, fauxfactory.gen_alphanumeric())
     yield policy
     policy.delete()
 
@@ -369,6 +388,8 @@ def alert_profile(alert_profile_class, alert_collection, alert_profile_collectio
 def policy_and_condition(request, policy_collection, condition_collection, appliance):
     condition_class = request.param.condition
     policy_class = request.param.policy
+    if policy_class in PHYS_POLICIES and appliance.version < "5.9":
+        pytest.skip("Physical Infrastructure Policies are available in CFME 5.9 and newer.")
     expression = "fill_field({} : Name, =, {})".format(
         condition_class.FIELD_VALUE.pick(appliance.version),
         fauxfactory.gen_alphanumeric()
@@ -422,6 +443,8 @@ def test_action_crud(action_collection):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
+@pytest.mark.uncollectif(lambda appliance, policy_class: (
+    policy_class in PHYS_POLICIES and appliance.version < "5.9"))
 def test_policy_crud(policy_collection, policy_class):
     # CR
     policy = policy_collection.create(policy_class, fauxfactory.gen_alphanumeric())
@@ -433,14 +456,20 @@ def test_policy_crud(policy_collection, policy_class):
 
 
 @pytest.mark.tier(3)
-def test_policy_copy(policy):
+@pytest.mark.uncollectif(lambda appliance, policy_class: (
+    policy_class in PHYS_POLICIES and appliance.version < "5.9"))
+def test_policy_copy(policy_class, policy):
     random_policy_copy = policy.copy()
     assert random_policy_copy.exists
     random_policy_copy.delete()
 
 
 @pytest.mark.tier(3)
-def test_assign_two_random_events_to_control_policy(control_policy, soft_assert):
+@pytest.mark.uncollectif(lambda appliance, control_policy_class: (
+    control_policy_class is policies.PhysicalInfrastructureControlPolicy and
+    appliance.version < "5.9"))
+def test_assign_two_random_events_to_control_policy(control_policy, control_policy_class,
+                                                    soft_assert):
     random_events = random.sample(EVENTS, 2)
     control_policy.assign_events(*random_events)
     soft_assert(control_policy.is_event_assigned(random_events[0]))
@@ -448,8 +477,11 @@ def test_assign_two_random_events_to_control_policy(control_policy, soft_assert)
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1491576, forced_streams=["5.7.4"])])
-def test_control_assign_actions_to_event(request, policy, action):
+@pytest.mark.uncollectif(lambda appliance, policy_class: (
+    policy_class in PHYS_POLICIES and appliance.version < "5.9"))
+@pytest.mark.meta(blockers=[BZ(1565576, forced_streams=["5.9"],
+                  unblock=lambda policy_class: policy_class is not PHYS_POLICIES[0])])
+def test_control_assign_actions_to_event(request, policy_class, policy, action):
     if type(policy) in CONTROL_POLICIES:
         event = random.choice(EVENTS)
         policy.assign_events(event)
@@ -464,7 +496,8 @@ def test_control_assign_actions_to_event(request, policy, action):
 
 
 @pytest.mark.tier(3)
-def test_assign_condition_to_control_policy(request, policy_and_condition):
+def test_assign_condition_to_control_policy(request, policy_and_condition, condition_collection,
+                                            policy_collection):
     """This test checks if a condition is assigned to a control policy.
     Steps:
         * Create a control policy.

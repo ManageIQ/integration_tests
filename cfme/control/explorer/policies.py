@@ -454,10 +454,155 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
         return true_actions + false_actions
 
 
+class HostCompliancePolicy(BasePolicy):
+
+    TYPE = "Compliance"
+    TREE_NODE = "Host"
+    PRETTY = deferred_verpick({LOWEST: "Host / Node"})
+
+
+class VMCompliancePolicy(BasePolicy):
+
+    TYPE = "Compliance"
+    TREE_NODE = "Vm"
+    PRETTY = deferred_verpick({LOWEST: "VM and Instance"})
+
+
+class ReplicatorCompliancePolicy(BasePolicy):
+
+    TYPE = "Compliance"
+    TREE_NODE = "Replicator"
+    PRETTY = deferred_verpick({
+        LOWEST: TREE_NODE,
+        "5.9.2": "Container Replicator"
+    })
+
+
+class PodCompliancePolicy(BasePolicy):
+
+    TYPE = "Compliance"
+    TREE_NODE = "Pod"
+    PRETTY = deferred_verpick({
+        LOWEST: TREE_NODE,
+        "5.9.2": "Container Pod"
+    })
+
+
+class ContainerNodeCompliancePolicy(BasePolicy):
+
+    TYPE = "Compliance"
+    TREE_NODE = "Container Node"
+    PRETTY = deferred_verpick({
+        LOWEST: "Node",
+        "5.9.2": TREE_NODE
+    })
+
+
+class ContainerImageCompliancePolicy(BasePolicy):
+
+    TYPE = "Compliance"
+    TREE_NODE = "Container Image"
+    PRETTY = deferred_verpick({LOWEST: TREE_NODE})
+
+
+class ProviderCompliancePolicy(BasePolicy):
+
+    TYPE = "Compliance"
+    TREE_NODE = "Provider"
+    PRETTY = deferred_verpick({LOWEST: TREE_NODE})
+
+
+class PhysicalInfrastructureCompliancePolicy(BasePolicy):
+
+    TYPE = "Compliance"
+    TREE_NODE = "Physical Infrastructure"
+    PRETTY = deferred_verpick({LOWEST: "Physical Server"})
+
+
+class HostControlPolicy(BasePolicy):
+
+    TYPE = "Control"
+    TREE_NODE = "Host"
+    PRETTY = deferred_verpick({LOWEST: "Host / Node"})
+
+
+class VMControlPolicy(BasePolicy):
+
+    TYPE = "Control"
+    TREE_NODE = "Vm"
+    PRETTY = deferred_verpick({LOWEST: "VM and Instance"})
+
+
+class ReplicatorControlPolicy(BasePolicy):
+
+    TYPE = "Control"
+    TREE_NODE = "Replicator"
+    PRETTY = deferred_verpick({
+        LOWEST: TREE_NODE,
+        "5.9.2": "Container Replicator"
+    })
+
+
+class PodControlPolicy(BasePolicy):
+
+    TYPE = "Control"
+    TREE_NODE = "Pod"
+    PRETTY = deferred_verpick({
+        LOWEST: TREE_NODE,
+        "5.9.2": "Container Pod"
+    })
+
+
+class ContainerNodeControlPolicy(BasePolicy):
+
+    TYPE = "Control"
+    TREE_NODE = "Container Node"
+    PRETTY = deferred_verpick({
+        LOWEST: "Node",
+        "5.9.2": TREE_NODE
+    })
+
+
+class ContainerImageControlPolicy(BasePolicy):
+
+    TYPE = "Control"
+    TREE_NODE = "Container Image"
+    PRETTY = deferred_verpick({LOWEST: TREE_NODE})
+
+
+class ProviderControlPolicy(BasePolicy):
+
+    TYPE = "Control"
+    TREE_NODE = "Provider"
+    PRETTY = deferred_verpick({LOWEST: TREE_NODE})
+
+
+class PhysicalInfrastructureControlPolicy(BasePolicy):
+
+    TYPE = "Control"
+    TREE_NODE = "Physical Infrastructure"
+    PRETTY = deferred_verpick({LOWEST: "Physical Server"})
+
+
 @attr.s
 class PolicyCollection(BaseCollection):
 
     ENTITY = BasePolicy
+    HOST_COMPLIANCE_POLICY = HostCompliancePolicy
+    VM_COMPLIANCE_POLICY = VMCompliancePolicy
+    REPLICATOR_COMPLIANCE_POLICY = ReplicatorCompliancePolicy
+    POD_COMPLIANCE_POLICY = PodCompliancePolicy
+    CONTAINERNODE_COMPLIANCE_POLICY = ContainerNodeCompliancePolicy
+    PROVIDER_COMPLIANCE_POLICY = ProviderCompliancePolicy
+    PHYSICAL_INFRASTRUCTURE_COMPLIANCE_POLICY = PhysicalInfrastructureCompliancePolicy
+    HOST_CONTROL_POLICY = HostControlPolicy
+    VM_CONTROL_POLICY = VMControlPolicy
+    REPLICATOR_CONTROL_POLICY = ReplicatorControlPolicy
+    POD_CONTROL_POLICY = PodControlPolicy
+    CONTAINERNODE_CONTROL_POLICY = ContainerNodeControlPolicy
+    CONTAINERIMAGE_CONTROL_POLICY = ContainerImageControlPolicy
+    PROVIDER_CONTROL_POLICY = ProviderControlPolicy
+    PHYSICAL_INFRASTRUCTURE_CONTROL_POLICY = PhysicalInfrastructureControlPolicy
 
     # A rare collection override of instantiate
     def instantiate(self, policy_class, description, active=True, scope=None, notes=None):
@@ -549,105 +694,3 @@ class PolicyEventDetails(CFMENavigateStep):
             self.obj.description,
             self.obj.context_event
         )
-
-
-class HostCompliancePolicy(BasePolicy):
-
-    TYPE = "Compliance"
-    TREE_NODE = "Host"
-    PRETTY = deferred_verpick({LOWEST: "Host / Node"})
-
-
-class VMCompliancePolicy(BasePolicy):
-
-    TYPE = "Compliance"
-    TREE_NODE = "Vm"
-    PRETTY = deferred_verpick({LOWEST: "VM and Instance"})
-
-
-class ReplicatorCompliancePolicy(BasePolicy):
-
-    TYPE = "Compliance"
-    TREE_NODE = "Replicator"
-    PRETTY = deferred_verpick({
-        LOWEST: "Replicator",
-        "5.9.2": "Container Replicator"
-    })
-
-
-class PodCompliancePolicy(BasePolicy):
-
-    TYPE = "Compliance"
-    TREE_NODE = "Pod"
-    PRETTY = deferred_verpick({
-        LOWEST: "Pod",
-        "5.9.2": "Container Pod"
-    })
-
-
-class ContainerNodeCompliancePolicy(BasePolicy):
-
-    TYPE = "Compliance"
-    TREE_NODE = "Container Node"
-    PRETTY = deferred_verpick({
-        LOWEST: "Node",
-        "5.9.2": "Container Node"
-    })
-
-
-class ContainerImageCompliancePolicy(BasePolicy):
-
-    TYPE = "Compliance"
-    TREE_NODE = "Container Image"
-    PRETTY = deferred_verpick({LOWEST: "Container Image"})
-
-
-class HostControlPolicy(BasePolicy):
-
-    TYPE = "Control"
-    TREE_NODE = "Host"
-    PRETTY = deferred_verpick({LOWEST: "Host / Node"})
-
-
-class VMControlPolicy(BasePolicy):
-
-    TYPE = "Control"
-    TREE_NODE = "Vm"
-    PRETTY = deferred_verpick({LOWEST: "VM and Instance"})
-
-
-class ReplicatorControlPolicy(BasePolicy):
-
-    TYPE = "Control"
-    TREE_NODE = "Replicator"
-    PRETTY = deferred_verpick({
-        LOWEST: "Replicator",
-        "5.9.2": "Container Replicator"
-    })
-
-
-class PodControlPolicy(BasePolicy):
-
-    TYPE = "Control"
-    TREE_NODE = "Pod"
-    PRETTY = deferred_verpick({
-        LOWEST: "Pod",
-        "5.9.2": "Container Pod"
-    })
-
-
-class ContainerNodeControlPolicy(BasePolicy):
-
-    TYPE = "Control"
-    TREE_NODE = "Container Node"
-    PRETTY = deferred_verpick({
-        LOWEST: "Node",
-        "5.9.2": "Container Node"
-    })
-
-
-class ContainerImageControlPolicy(BasePolicy):
-
-    TYPE = "Control"
-    TREE_NODE = "Container Image"
-    PRETTY = deferred_verpick({LOWEST: "Container Image"})
