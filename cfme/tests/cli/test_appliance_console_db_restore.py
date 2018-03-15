@@ -40,13 +40,13 @@ def provision_vm(request, provider):
     return vm
 
 
-@pytest.fixture(scope="module")
-def get_appliances_with_providers(temp_appliances_unconfig_modscope_rhevm):
+@pytest.fixture(scope="function")
+def get_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm):
     """Returns two database-owning appliances, configures first appliance with providers and
     takes a backup prior to running tests.
 
     """
-    appl1, appl2 = temp_appliances_unconfig_modscope_rhevm
+    appl1, appl2 = temp_appliances_unconfig_funcscope_rhevm
     # configure appliances
     appl1.configure(region=0)
     appl1.wait_for_web_ui()
@@ -56,17 +56,17 @@ def get_appliances_with_providers(temp_appliances_unconfig_modscope_rhevm):
     provider_app_crud(VMwareProvider, appl1).setup()
     provider_app_crud(EC2Provider, appl1).setup()
     appl1.db.backup()
-    return temp_appliances_unconfig_modscope_rhevm
+    return temp_appliances_unconfig_funcscope_rhevm
 
 
 @pytest.fixture(scope="function")
-def get_replicated_appliances_with_providers(temp_appliances_unconfig_modscope_rhevm):
+def get_replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm):
     """Returns two database-owning appliances, configures first appliance with provider,
     enables embedded ansible, takes a pg_backup and copys it to second appliance
     prior to running tests.
 
     """
-    appl1, appl2 = temp_appliances_unconfig_modscope_rhevm
+    appl1, appl2 = temp_appliances_unconfig_funcscope_rhevm
     # configure appliances
     appl1.configure(region=0)
     appl1.wait_for_web_ui()
@@ -81,7 +81,7 @@ def get_replicated_appliances_with_providers(temp_appliances_unconfig_modscope_r
     provider_app_crud(EC2Provider, appl1).setup()
     appl1.ssh_client.run_command("pg_basebackup -x -Ft -z -D /tmp/backup")
     appl2.ssh_client.run_command("pg_basebackup -x -Ft -z -D /tmp/backup")
-    return temp_appliances_unconfig_modscope_rhevm
+    return temp_appliances_unconfig_funcscope_rhevm
 
 
 @pytest.fixture(scope="function")
@@ -100,13 +100,13 @@ def get_appliances_with_ansible(temp_appliance_preconfig_funcscope):
     return temp_appliance_preconfig_funcscope
 
 
-@pytest.fixture(scope="module")
-def get_ext_appliances_with_providers(temp_appliances_unconfig_modscope_rhevm, app_creds_modscope):
+@pytest.fixture(scope="function")
+def get_ext_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm, app_creds_modscope):
     """Returns two database-owning appliances, configures first appliance with providers and
     takes a backup prior to running tests.
 
     """
-    appl1, appl2 = temp_appliances_unconfig_modscope_rhevm
+    appl1, appl2 = temp_appliances_unconfig_funcscope_rhevm
     app_ip = appl1.hostname
     # configure appliances
     appl1.configure(region=0)
@@ -119,7 +119,7 @@ def get_ext_appliances_with_providers(temp_appliances_unconfig_modscope_rhevm, a
     provider_app_crud(VMwareProvider, appl1).setup()
     provider_app_crud(EC2Provider, appl1).setup()
     appl1.db.backup()
-    return temp_appliances_unconfig_modscope_rhevm
+    return temp_appliances_unconfig_funcscope_rhevm
 
 
 @pytest.fixture(scope="function")
@@ -238,7 +238,6 @@ def test_appliance_console_restore_db_local(request, soft_assert, get_appliances
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
     appl2.db.drop()
-    appl2.db.create()
     command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
     appl2.start_evm_service()
@@ -342,7 +341,6 @@ def test_appliance_console_restore_db_external(
     appl1.evmserverd.stop()
     appl2.evmserverd.stop()
     appl1.db.drop()
-    appl1.db.create()
     command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
     appl1.start_evm_service()
@@ -379,7 +377,6 @@ def test_appliance_console_restore_db_ha(request, soft_assert, get_ha_appliances
     appl1.ssh_client.run_command("systemctl stop rh-postgresql95-repmgr")
     appl2.ssh_client.run_command("systemctl stop rh-postgresql95-repmgr")
     appl1.db.drop()
-    appl1.db.create()
     command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
     appl1.ssh_client.run_command("systemctl start rh-postgresql95-repmgr")
@@ -427,7 +424,6 @@ def test_appliance_console_restore_db_nfs(request, soft_assert, get_appliances_w
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
     appl2.db.drop()
-    appl2.db.create()
     command_set = ('ap', '', '4', '2', nfs_dump, TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
     appl2.start_evm_service()
@@ -461,7 +457,6 @@ def test_appliance_console_restore_db_samba(request, soft_assert, get_appliances
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
     appl2.db.drop()
-    appl2.db.create()
     command_set = ('ap', '', '4', '3', smb_dump, usr, pwd, TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
     appl2.start_evm_service()
