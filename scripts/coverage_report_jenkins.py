@@ -124,13 +124,9 @@ def get_build_numbers(client, job_name):
 
 
 def gen_project_key(name, version):
-    """Generate project name based on Central CI rules
+    """Generate sonar project key
 
-    The Central CI docs found here:
-
-        https://docs.engineering.redhat.com/display/CentralCI/Code+Quality+Management
-
-    Document that a project key should take the form of:
+    The key will take the form of:
 
         <project-name>_<major_version>_<minor_version>_<language>_<coverage|static|full-analysis>
 
