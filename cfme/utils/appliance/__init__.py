@@ -6,7 +6,6 @@ from copy import copy
 from datetime import datetime
 from textwrap import dedent
 from time import sleep, time
-from six.moves.urllib.parse import urlparse
 
 import attr
 import dateutil.parser
@@ -17,9 +16,11 @@ import requests
 import sentaku
 import six
 import warnings
+import yaml
 from cached_property import cached_property
 from debtcollector import removals
 from manageiq_client.api import APIException, ManageIQClient as VanillaMiqApi
+from six.moves.urllib.parse import urlparse
 from werkzeug.local import LocalStack, LocalProxy
 
 from cfme.utils import clear_property_cache
@@ -2019,7 +2020,27 @@ class IPAppliance(object):
 
     def get_yaml_config(self):
         """Get settings from the base api/settings endpoint for appliance"""
-        return self.rest_api.get(self.rest_api.collections.settings._href)
+        if self.version > '5.9':
+            return self.rest_api.get(self.rest_api.collections.settings._href)
+        else:
+            writeout = self.ssh_client.run_rails_command(
+                '"File.open(\'/tmp/yam_dump.yaml\', \'w\') '
+                '{|f| f.write(Settings.to_hash.deep_stringify_keys.to_yaml) }"'
+            )
+            if writeout.rc:
+                logger.error("Config couldn't be found")
+                logger.error(writeout.output)
+                raise Exception('Error obtaining config')
+            base_data = self.ssh_client.run_command('cat /tmp/yam_dump.yaml')
+            if base_data.rc:
+                logger.error("Config couldn't be found")
+                logger.error(base_data.output)
+                raise Exception('Error obtaining config')
+            try:
+                return yaml.load(base_data.output)
+            except:
+                logger.debug(base_data.output)
+                raise
 
     def set_yaml_config(self, data_dict):
         """PATCH settings from the master server's api/server/:id/settings endpoint

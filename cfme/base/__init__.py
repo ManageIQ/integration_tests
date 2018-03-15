@@ -63,7 +63,9 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
 
     @property
     def _api_settings_url(self):
-        return '/'.join([self.appliance.rest_api.collections.servers._href, self.sid, 'settings'])
+        return '/'.join(
+            [self.appliance.rest_api.collections.servers._href, str(self.sid), 'settings']
+        )
 
     def get_yaml_config(self):
         """GET servers/:id/settings api endpoint to query server configuration"""
@@ -158,7 +160,7 @@ class Zone(Pretty, BaseEntity, sentaku.modeling.ElementMixin):
 
     @property
     def _api_settings_url(self):
-        return '/'.join([self.appliance.rest_api.collections.zones._href, self.id, 'settings'])
+        return '/'.join([self.appliance.rest_api.collections.zones._href, str(self.id), 'settings'])
 
     def get_yaml_config(self):
         """"GET zones/:id/settings api endpoint to query zone configuration"""
@@ -241,7 +243,7 @@ class Region(BaseEntity, sentaku.modeling.ElementMixin):
         assert len(region_filter['resources']) == 1
         region_id = region_filter['resources'][0]['id']
         return '/'.join([self.appliance.rest_api.collections.regions._href,
-                         region_id,
+                         str(region_id),
                          'settings'])
 
     def get_yaml_config(self):
