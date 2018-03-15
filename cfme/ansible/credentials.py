@@ -199,7 +199,7 @@ class Credential(BaseEntity):
         super(Credential, self).__init__(collection)
         self.name = name
         self.credential_type = credential_type
-        for key, value in credentials.iteritems():
+        for key, value in credentials.items():
             setattr(self, key, value)
 
     __repr__ = object.__repr__

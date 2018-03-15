@@ -79,7 +79,7 @@ def resolve_blockers(item, blockers):
     # We will however add only those that are not in the global_env otherwise we could overwrite
     # our own stuff.
     params = extract_fixtures_values(item)
-    for funcarg, value in params.iteritems():
+    for funcarg, value in params.items():
         if funcarg not in global_env:
             global_env[funcarg] = value
 
