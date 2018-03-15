@@ -165,7 +165,7 @@ def set_ownership(self, owner, group):
         assert view.notification.assert_message("Setting ownership.")
     else:
         assert view.notification.assert_message("{} ownership was saved."
-                                               .format(self.name))
+                                                .format(self.name))
 
 
 @MiqImplementationContext.external_for(MyService.edit_tags, ViaSSUI)
