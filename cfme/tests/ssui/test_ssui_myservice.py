@@ -64,11 +64,17 @@ def test_service_start(appliance, setup_provider, context,
     catalog_item, provision_request = provision_request
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
+        view_cls = navigator.get_class(my_service, 'Details').VIEW
+        view = my_service.appliance.browser.create_view(view_cls)
         if provider.one_of(InfraProvider):
             # For Infra providers vm is provisioned.Hence Stop option is shown
             my_service.service_power(power='Stop', status='stopped')
+            view.notification.assert_message(
+                "{} was {}.".format(catalog_item.name, 'stopped'))
         else:
             my_service.service_power(power='Start', status='started')
+            view.notification.assert_message(
+                "{} was {}.".format(catalog_item.name, 'started'))
 
         @request.addfinalizer
         def _finalize():
