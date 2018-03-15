@@ -565,17 +565,9 @@ class ServerDatabaseView(ConfigurationView):
     def is_displayed(self):
         return (
             self.in_configuration and
-            self.summary.is_displayed
+            self.summary.is_displayed and
+            self.title.text == 'VMDB Summary'
         )
-
-
-@navigator.register(Server)
-class Database(CFMENavigateStep):
-    VIEW = ServerDatabaseView
-    prerequisite = NavigateToSibling('Configuration')
-
-    def step(self):
-        self.prerequisite_view.accordions.database.tree.click_path('VMDB')
 
 
 class DatabaseSummaryView(ServerDatabaseView):
@@ -594,31 +586,40 @@ class DatabaseTablesView(ServerDatabaseView):
 
     @property
     def is_displayed(self):
-        return self.tables.is_active()
+        return self.tables.is_active() and self.title.text == 'All VMDB Tables'
 
 
 class DatabaseIndexesView(ServerDatabaseView):
     @property
     def is_displayed(self):
-        return self.indexes.is_active()
+        return self.indexes.is_active() and self.title.text == 'All VMDB Indexes'
 
 
 class DatabaseSettingsView(ServerDatabaseView):
     @property
     def is_displayed(self):
-        return self.settings.is_active()
+        return self.settings.is_active() and self.title.text == 'VMDB Settings'
 
 
 class DatabaseClientConnectionsView(ServerDatabaseView):
     @property
     def is_displayed(self):
-        return self.client_connections.is_active()
+        return self.client_connections.is_active() and self.title.text == 'VMDB Client Connections'
 
 
 class DatabaseUtilizationView(ServerDatabaseView):
     @property
     def is_displayed(self):
-        return self.utilization.is_active()
+        return self.utilization.is_active() and self.title.text == 'VMDB Utilization'
+
+
+@navigator.register(Server)
+class Database(CFMENavigateStep):
+    VIEW = ServerDatabaseView
+    prerequisite = NavigateToSibling('Configuration')
+
+    def step(self):
+        self.prerequisite_view.accordions.database.tree.click_path('VMDB')
 
 
 @navigator.register(Server)
@@ -898,7 +899,7 @@ class RegionView(ConfigurationView):
 
     @View.nested
     class imports(Tab):  # noqa
-        TAB_NAME = "Import"
+        TAB_NAME = "Import Variables"
 
     @View.nested
     class replication(Tab):  # noqa
@@ -999,10 +1000,7 @@ class HelpMenu(CFMENavigateStep):
         return False
 
     def step(self):
-        if self.obj.appliance.version < '5.9':
-            self.prerequisite_view.imports.select()
-        else:
-            self.prerequisite_view.tags.imports.select()
+        self.prerequisite_view.help_menu.select()
 
 
 class ZoneListView(ConfigurationView):
@@ -1204,7 +1202,7 @@ class ZoneView(ConfigurationView):
 
     @View.nested
     class smart_proxy_affinity(Tab):  # noqa
-        TAB_NAME = "Zone"
+        TAB_NAME = "SmartProxy Affinity"
 
 
 # Zone Details #
@@ -1234,7 +1232,7 @@ class ZoneDetails(CFMENavigateStep):
             self.obj.description))))
         for row in rows:
             row.click()
-            self.zone.select()
+            self.view.zone.select()
             break
         else:
             raise ZoneNotFound(
@@ -1252,7 +1250,7 @@ class SmartProxyAffinity(CFMENavigateStep):
             self.obj.description))))
         for row in rows:
             row.click()
-            self.smart_proxy_affinity.select()
+            self.view.smart_proxy_affinity.select()
             break
         else:
             raise ZoneNotFound(
