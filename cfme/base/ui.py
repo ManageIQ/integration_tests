@@ -36,7 +36,6 @@ def address(self):
     logger.info("USING UI ADDRESS")
     return self.appliance.url
 
-
 class LoginPage(View):
     flash = FlashMessages('//div[@class="flash_text_div"]')
 
@@ -98,16 +97,23 @@ class LoginPage(View):
             self.extra.appliance.user = user
 
     def update_password(
-            self, username, password, new_password, verify_password=None,
-            method='click_on_login'):
+            self, user, new_password, verify_password=None, method='click_on_login'):
         self.show_update_password()
         self.fill({
-            'username': username,
-            'password': password,
+            'username': user.credential.principal,
+            'password': user.credential.secret,
             'new_password': new_password,
             'verify_password': verify_password if verify_password is not None else new_password
         })
         self.submit_login(method)
+        logged_in_view = self.browser.create_view(BaseLoggedInPage)
+        if logged_in_view.logged_in:
+            if user.name is None:
+                name = logged_in_view.current_fullname
+                self.logger.info(
+                    'setting the appliance.user.name to %r because it was not specified', name)
+                user.name = name
+            self.extra.appliance.user = user
 
     def logged_in_as_user(self, user):
         return False
@@ -147,6 +153,38 @@ def logged_in(self):
 
 
 LOGIN_METHODS = ['click_on_login', 'press_enter_after_password', '_js_auth_fn']
+
+
+@MiqImplementationContext.external_for(Server.update_password, ViaUI)
+def update_password(self, new_password, verify_password=None, user=None, method=LOGIN_METHODS[1]):
+    if not user:
+        username = conf.credentials['default']['username']
+        password = conf.credentials['default']['password']
+        cred = Credential(principal=username, secret=password)
+        user = self.appliance.collections.users.instantiate(credential=cred, name='Administrator')
+
+    logged_in_view = self.appliance.browser.create_view(BaseLoggedInPage)
+
+    if not logged_in_view.logged_in_as_user(user):
+        if logged_in_view.logged_in:
+            logged_in_view.logout()
+
+        from cfme.utils.appliance.implementations.ui import navigate_to
+        login_view = navigate_to(self.appliance.server, 'LoginScreen')
+
+        logger.debug('Changing password for user %s', user.credential.principal)
+
+        login_view.update_password(user=user,
+                                   new_password=new_password,
+                                   verify_password=verify_password,
+                                   method=method)
+
+        try:
+            assert logged_in_view.is_displayed
+        except AssertionError:
+            login_view.flash.assert_no_error()
+
+    return logged_in_view
 
 
 @MiqImplementationContext.external_for(Server.login, ViaUI)
