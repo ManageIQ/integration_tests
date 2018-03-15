@@ -1,3 +1,5 @@
+import attr
+
 from widgetastic.widget import View
 from widgetastic_patternfly import Tab, Input
 from wrapanapi.vcloud import VmwareCloudSystem
@@ -40,6 +42,7 @@ class VmwareCloudEndpointForm(View):
         api_port = Input('default_api_port')
 
 
+@attr.s(hash=False)
 class VmwareCloudProvider(CloudProvider):
     STATS_TO_MATCH = ['num_availability_zone', 'num_orchestration_stack', 'num_vm']
     in_version = ('5.9', version.LATEST)
@@ -48,10 +51,11 @@ class VmwareCloudProvider(CloudProvider):
     db_types = ["Vmware::CloudManager"]
     endpoints_form = VmwareCloudEndpointForm
 
-    def __init__(self, api_version=None, api_version_name=None, **kwargs):
-        super(VmwareCloudProvider, self).__init__(**kwargs)
-        self.api_version = api_version
-        self.api_version_name = api_version_name
+    api_version = attr.ib(default=None)
+    api_version_name = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self.parent = self.appliance.collections.cloud_providers
 
     @property
     def mgmt(self):
@@ -72,11 +76,12 @@ class VmwareCloudProvider(CloudProvider):
             'vmware_cloud_api_version': self.api_version_name
         }
 
+    # todo: remove appliance everywhere
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
         """Returns the vcloud object from configuration"""
         endpoint = VmwareCloudEndpoint(**prov_config['endpoints']['default'])
-        return cls(appliance=appliance,
+        return cls(appliance,
                    name=prov_config['name'],
                    endpoints={endpoint.name: endpoint},
                    api_version=prov_config['api_version'],

@@ -10,7 +10,7 @@ from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.instance import Instance
-from cfme.cloud.provider import discover, wait_for_a_provider, CloudProvider
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -40,7 +40,9 @@ def enable_regions(provider):
                          reason='no more support for cloud provider discovery')
 def test_empty_discovery_form_validation_cloud(appliance):
     """ Tests that the flash message is correct when discovery form is empty."""
-    discover(None, AzureProvider)
+    collection = appliance.collections.cloud_providers
+
+    collection.discover(None, AzureProvider)
     view = appliance.browser.create_view(CloudProvidersDiscoverView)
     view.flash.assert_message('Client ID, Client Key, Azure Tenant ID and '
                               'Subscription ID are required')
@@ -52,7 +54,8 @@ def test_empty_discovery_form_validation_cloud(appliance):
                          reason='no more support for cloud provider discovery')
 def test_discovery_cancelled_validation_cloud(appliance):
     """ Tests that the flash message is correct when discovery is cancelled."""
-    discover(None, AzureProvider, cancel=True)
+    collection = appliance.collections.cloud_providers
+    collection.discover(None, AzureProvider, cancel=True)
     view = appliance.browser.create_view(CloudProvidersView)
     view.flash.assert_success_message('Cloud Providers Discovery was cancelled by the user')
 
@@ -80,8 +83,8 @@ def test_discovery_password_mismatch_validation_cloud(appliance):
         principal=fauxfactory.gen_alphanumeric(5),
         secret=fauxfactory.gen_alphanumeric(5),
         verify_secret=fauxfactory.gen_alphanumeric(7))
-
-    discover(cred, EC2Provider)
+    collection = appliance.collections.cloud_providers
+    collection.discover(cred, EC2Provider)
     view = appliance.browser.create_view(CloudProvidersView)
     view.flash.assert_message('Password/Verify Password do not match')
 
@@ -95,10 +98,10 @@ def test_providers_discovery_amazon(appliance):
     # out to specific credential keys
     # amazon_creds = get_credentials_from_config('cloudqe_amazon')
     # discover(amazon_creds, EC2Provider)
-
+    collection = appliance.collections.cloud_providers
     view = appliance.browser.create_view(CloudProvidersView)
     view.flash.assert_success_message('Amazon Cloud Providers: Discovery successfully initiated')
-    wait_for_a_provider()
+    collection.wait_for_new_provider()
 
 
 @pytest.mark.uncollectif(lambda provider: (store.current_appliance.version >= '5.9' or
@@ -107,7 +110,7 @@ def test_providers_discovery_amazon(appliance):
                          reason='no more support for cloud provider discovery')
 @test_requirements.discovery
 @pytest.mark.tier(1)
-def test_providers_discovery(request, provider):
+def test_providers_discovery(request, appliance, provider):
     """Tests provider discovery
 
     Metadata:
@@ -125,12 +128,14 @@ def test_providers_discovery(request, provider):
             secret=provider.default_endpoint.credentials.secret,
             verify_secret=provider.default_endpoint.credentials.secret)
 
-    discover(cred, provider)
+    collection = appliance.collections.cloud_providers
+
+    collection.discover(cred, provider)
     view = provider.create_view(CloudProvidersView)
     view.flash.assert_success_message('Cloud Providers: Discovery successfully initiated')
 
     request.addfinalizer(CloudProvider.clear_providers)
-    wait_for_a_provider()
+    collection.wait_for_new_provider()
 
 
 @pytest.mark.tier(3)
@@ -268,21 +273,23 @@ def test_api_port_blank_validation(request):
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
                          reason='EC2 option not available')
-def test_user_id_max_character_validation():
+def test_user_id_max_character_validation(appliance):
     cred = Credential(principal=fauxfactory.gen_alphanumeric(51), secret='')
-    discover(cred, EC2Provider)
+    collection = appliance.collections.cloud_providers
+    collection.discover(cred, EC2Provider)
 
 
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
                          reason='EC2 option not available')
-def test_password_max_character_validation():
+def test_password_max_character_validation(appliance):
     password = fauxfactory.gen_alphanumeric(51)
     cred = Credential(
         principal=fauxfactory.gen_alphanumeric(5),
         secret=password,
         verify_secret=password)
-    discover(cred, EC2Provider)
+    collection = appliance.collections.cloud_providers
+    collection.discover(cred, EC2Provider)
 
 
 @pytest.mark.tier(3)

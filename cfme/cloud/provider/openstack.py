@@ -1,3 +1,5 @@
+import attr
+
 from wrapanapi.openstack import OpenstackSystem
 
 from cfme.common.provider import EventsEndpoint
@@ -6,6 +8,7 @@ from cfme.infrastructure.provider.openstack_infra import RHOSEndpoint, OpenStack
 from . import CloudProvider
 
 
+@attr.s(hash=False)
 class OpenStackProvider(CloudProvider):
     """
      BaseProvider->CloudProvider->OpenStackProvider class.
@@ -23,28 +26,26 @@ class OpenStackProvider(CloudProvider):
     _canvas_element = '//*[@id="noVNC_canvas"]'
     _ctrl_alt_del_xpath = '//*[@id="sendCtrlAltDelButton"]'
 
-    def __init__(self, name=None, endpoints=None, zone=None, key=None, hostname=None,
-                 ip_address=None, api_port=None, api_version=None, sec_protocol=None,
-                 amqp_sec_protocol=None, keystone_v3_domain_id=None, tenant_mapping=None,
-                 infra_provider=None, appliance=None):
-        super(OpenStackProvider, self).__init__(name=name, endpoints=endpoints,
-                                                zone=zone, key=key, appliance=appliance)
-        self.hostname = hostname
-        self.ip_address = ip_address
-        self.api_port = api_port
-        self.api_version = api_version
-        self.keystone_v3_domain_id = keystone_v3_domain_id
-        self.infra_provider = infra_provider
-        self.sec_protocol = sec_protocol
-        self.tenant_mapping = tenant_mapping
-        self.amqp_sec_protocol = amqp_sec_protocol
+    hostname = attr.ib(default=None)
+    ip_address = attr.ib(default=None)
+    api_port = attr.ib(default=None)
+    api_version = attr.ib(default=None)
+    sec_protocol = attr.ib(default=None)
+    amqp_sec_protocol = attr.ib(default=None)
+    keystone_v3_domain_id = attr.ib(default=None)
+    tenant_mapping = attr.ib(default=None)
+    infra_provider = attr.ib(default=None)
 
+    def __attrs_post_init__(self):
+        self.parent = self.appliance.collections.cloud_providers
+
+    # todo: move it to collections later
     def create(self, *args, **kwargs):
         # Override the standard behaviour to actually create the underlying infra first.
         if self.infra_provider:
             self.infra_provider.create(validate_credentials=True, validate_inventory=True,
                                        check_existing=True)
-        if self.appliance.version >= "5.6" and 'validate_credentials' not in kwargs:
+        if 'validate_credentials' not in kwargs:
             # 5.6 requires validation, so unless we specify, we want to validate
             kwargs['validate_credentials'] = True
         return super(OpenStackProvider, self).create(*args, **kwargs)
@@ -92,7 +93,8 @@ class OpenStackProvider(CloudProvider):
         if not api_version:
             api_version = 'Keystone v2'
 
-        return cls(name=prov_config['name'],
+        return cls(appliance,
+                   name=prov_config['name'],
                    hostname=prov_config['hostname'],
                    ip_address=prov_config['ipaddress'],
                    api_port=prov_config['port'],
@@ -103,8 +105,7 @@ class OpenStackProvider(CloudProvider):
                    keystone_v3_domain_id=prov_config.get('domain_id', None),
                    sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),
                    tenant_mapping=prov_config.get('tenant_mapping', False),
-                   infra_provider=infra_provider,
-                   appliance=appliance)
+                   infra_provider=infra_provider)
 
     # Following methods will only work if the remote console window is open
     # and if selenium focused on it. These will not work if the selenium is
