@@ -20,8 +20,9 @@ def test_embedded_ansible_enable(enabled_embedded_appliance):
     assert wait_for(func=lambda: enabled_embedded_appliance.is_embedded_ansible_running, num_sec=30)
     assert wait_for(func=lambda: enabled_embedded_appliance.is_rabbitmq_running, num_sec=30)
     assert wait_for(func=lambda: enabled_embedded_appliance.is_nginx_running, num_sec=30)
+    endpoint = 'api' if enabled_embedded_appliance.is_pod else 'ansibleapi'
     assert enabled_embedded_appliance.ssh_client.run_command(
-        'curl -kL https://localhost/ansibleapi | grep "Ansible Tower REST API"',
+        'curl -kL https://localhost/{endp} | grep "Ansible Tower REST API"'.format(endp=endpoint),
         container=enabled_embedded_appliance._ansible_pod_name)
 
 
@@ -54,6 +55,14 @@ def test_embedded_ansible_disable(enabled_embedded_appliance):
             container=enabled_embedded_appliance._ansible_pod_name)
         return return_code == 0
 
-    assert wait_for(is_superviserd_stopped, func_args=[enabled_embedded_appliance], num_sec=180)
-    assert wait_for(is_rabbitmq_stopped, func_args=[enabled_embedded_appliance], num_sec=60)
-    assert wait_for(is_nginx_stopped, func_args=[enabled_embedded_appliance], num_sec=30)
+    def is_ansible_pod_stopped(enabled_embedded_appliance):
+        # todo: implement appropriate methods in appliance
+        return enabled_embedded_appliance.ssh_client.run_command('oc get pods|grep ansible',
+                                                                 ensure_host=True).failed
+
+    if not enabled_embedded_appliance.is_pod:
+        assert wait_for(is_superviserd_stopped, func_args=[enabled_embedded_appliance], num_sec=180)
+        assert wait_for(is_rabbitmq_stopped, func_args=[enabled_embedded_appliance], num_sec=60)
+        assert wait_for(is_nginx_stopped, func_args=[enabled_embedded_appliance], num_sec=30)
+    else:
+        assert wait_for(is_ansible_pod_stopped, func_args=[enabled_embedded_appliance], num_sec=180)
