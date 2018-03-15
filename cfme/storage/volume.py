@@ -18,8 +18,8 @@ from widgetastic.widget import View, Text
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import VolumeNotFoundError, ItemNotFound
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError
 
@@ -147,6 +147,18 @@ class VolumeBackupView(VolumeView):
     cancel = Button('Cancel')
 
 
+class VolumeSnapshotView(VolumeView):
+    @property
+    def is_displayed(self):
+        return False
+
+    snapshot_name = TextInput(name='snapshot_name')
+
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+
 @attr.s
 class Volume(BaseEntity):
 
@@ -206,6 +218,27 @@ class Volume(BaseEntity):
                  timeout=1000,
                  fail_func=self.refresh)
 
+    def create_snapshot(self, name, cancel=False, reset=False):
+        """create snapshot of cloud volume"""
+        snapshot_collection = self.appliance.collections.volume_snapshots
+        view = navigate_to(self, 'Snapshot')
+
+        changed = view.snapshot_name.fill(name)
+
+        # For changes only Save and Reset button activate
+        if changed:
+            if reset:
+                view.reset.click()
+                return None
+
+            elif cancel:
+                view.cancel.click()
+                return None
+
+            else:
+                view.save.click()
+                return snapshot_collection.instantiate(name, self.provider)
+
     @property
     def exists(self):
         try:
@@ -232,7 +265,7 @@ class Volume(BaseEntity):
         """ size of storage cloud volume.
 
         Returns:
-            :py:class:`str' size of volume.
+            :py:class:`str` size of volume.
         """
         view = navigate_to(self, 'Details')
         return view.entities.properties.get_text_of('Size')
@@ -242,7 +275,7 @@ class Volume(BaseEntity):
         """ cloud tenants for volume.
 
         Returns:
-            :py:class:`str' respective tenants.
+            :py:class:`str` respective tenants.
         """
         view = navigate_to(self, 'Details')
         return view.entities.relationships.get_text_of('Cloud Tenants')
@@ -252,10 +285,20 @@ class Volume(BaseEntity):
         """ number of available backups for volume.
 
         Returns:
-            :py:class:`int' backup count.
+            :py:class:`int` backup count.
         """
         view = navigate_to(self, 'Details')
         return int(view.entities.relationships.get_text_of('Cloud Volume Backups'))
+
+    @property
+    def snapshots_count(self):
+        """ number of available snapshots for volume.
+
+        Returns:
+            :py:class:`int` snapshot count.
+        """
+        view = navigate_to(self, 'Details')
+        return int(view.entities.relationships.get_text_of('Cloud Volume Snapshots'))
 
 
 @attr.s
@@ -287,7 +330,7 @@ class VolumeCollection(BaseCollection):
         view.flash.assert_success_message(base_message.format(name))
 
         volume = self.instantiate(name, provider)
-        wait_for(lambda: volume.exists, delay=20, timeout=500, fail_func=volume.refresh)
+        wait_for(lambda: volume.exists, delay=50, timeout=1500, fail_func=volume.refresh)
 
         return volume
 
@@ -365,4 +408,14 @@ class VolumeBackup(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Create a Backup of this Cloud '
+                                                                 'Volume')
+
+
+@navigator.register(Volume, 'Snapshot')
+class VolumeSnapshot(CFMENavigateStep):
+    VIEW = VolumeSnapshotView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select('Create a Snapshot of this Cloud '
                                                                  'Volume')

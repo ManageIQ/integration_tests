@@ -345,6 +345,10 @@ class BackupNotFoundError(CFMEException):
     """Raised when volume backup not found"""
 
 
+class SnapshotNotFoundError(CFMEException):
+    """Raised when volume snapshot not found"""
+
+
 class RBACOperationBlocked(CFMEException):
     """
     Raised when a Role Based Access Control operation is blocked from execution due to invalid
