@@ -1,54 +1,68 @@
 # -*- coding: utf-8 -*-
 import pytest
+import fauxfactory
 
-from cfme.exceptions import ItemNotFound
 from cfme import test_requirements
-from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-
-from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.storage.volume import VolumeAllView
 
 
 pytestmark = [
     pytest.mark.tier(3),
     test_requirements.storage,
-    pytest.mark.usefixtures('openstack_provider', 'setup_provider'),
-    pytest.mark.provider([CloudProvider]),
+    pytest.mark.ignore_stream("upstream"),
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.provider([OpenStackProvider], scope='module'),
 ]
 
-
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_volume_navigation(openstack_provider, appliance):
-    # grab a volume name, the table returns a generator so use next
-
-    collection = appliance.collections.volumes
-    view = navigate_to(collection, 'All')
-
-    try:
-        volume_name = view.entities.get_first_entity().name
-    except(StopIteration, ItemNotFound):
-        pytest.skip('Skipping volume navigation for details, no volumes present')
-
-    volume = collection.instantiate(name=volume_name, provider=openstack_provider)
-
-    assert view.is_displayed
-
-    view = navigate_to(volume, 'Details')
-    assert view.is_displayed
-
-    view = navigate_to(collection, 'Add')
-    assert view.is_displayed
+STORAGE_SIZE = 1
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_volume_collective_crud(openstack_provider, appliance):
-    collection = appliance.collections.volumes
-    view = navigate_to(collection, 'All')
+def test_storage_volume_create_cancelled_validation(appliance, provider):
+    """ Test Attach instance to storage volume cancelled
 
-    volumes = [collection.instantiate(name=item.name, provider=openstack_provider)
-              for item in view.entities.get_all()]
+    prerequisites:
+        * Storage provider
 
-    if volumes:
-        collection.delete(*volumes)
-    else:
-        pytest.skip("Skipping volume collective deletion, no volumes present")
+    Steps:
+        * Navigate to storage add volume page
+        * Click Cancel button
+        * Assert flash message
+    """
+    volume_collection = appliance.collections.volumes
+    manager_name = '{} Cinder Manager'.format(provider.name)
+    volume_collection.create(name=fauxfactory.gen_alpha(),
+                             storage_manager=manager_name,
+                             tenant=provider.data['provisioning']['cloud_tenant'],
+                             size=STORAGE_SIZE,
+                             provider=provider,
+                             cancel=True)
+
+    view = volume_collection.create_view(VolumeAllView)
+    view.flash.assert_message('Add of new Cloud Volume was cancelled by the user')
+
+
+@pytest.mark.tier(1)
+def test_storage_volume_crud(appliance, provider):
+    """ Test storage volume crud
+
+    prerequisites:
+        * Storage provider
+
+    Steps:
+        * Crate new volume
+        * Delete volume
+    """
+    # create volume
+    volume_collection = appliance.collections.volumes
+    manager_name = '{} Cinder Manager'.format(provider.name)
+    volume = volume_collection.create(name=fauxfactory.gen_alpha(),
+                                      storage_manager=manager_name,
+                                      tenant=provider.data['provisioning']['cloud_tenant'],
+                                      size=STORAGE_SIZE,
+                                      provider=provider)
+    assert volume.exists
+
+    # delete volume
+    volume.delete(wait=True)
+    assert not volume.exists

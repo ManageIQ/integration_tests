@@ -306,7 +306,7 @@ class VolumeCollection(BaseCollection):
     """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
     ENTITY = Volume
 
-    def create(self, name, storage_manager, tenant, size, provider):
+    def create(self, name, storage_manager, tenant, provider, size=1, cancel=False):
         """Create new storage volume
 
         Args:
@@ -315,24 +315,29 @@ class VolumeCollection(BaseCollection):
             tenant: tenant name
             size: volume size in GB
             provider: provider
+            cancel: bool
 
         Returns:
             object for the :py:class: cfme.storage.volume.Volume
         """
 
         view = navigate_to(self, 'Add')
-        view.form.fill({'storage_manager': storage_manager,
-                        'tenant': tenant,
-                        'volume_name': name,
-                        'size': size})
-        view.form.add.click()
-        base_message = 'Cloud Volume "{}" created'
-        view.flash.assert_success_message(base_message.format(name))
 
-        volume = self.instantiate(name, provider)
-        wait_for(lambda: volume.exists, delay=50, timeout=1500, fail_func=volume.refresh)
+        if not cancel:
+            view.form.fill({'storage_manager': storage_manager,
+                            'tenant': tenant,
+                            'volume_name': name,
+                            'size': size})
+            view.form.add.click()
+            base_message = 'Cloud Volume "{}" created'
+            view.flash.assert_success_message(base_message.format(name))
 
-        return volume
+            volume = self.instantiate(name, provider)
+            wait_for(lambda: volume.exists, delay=50, timeout=1500, fail_func=volume.refresh)
+            return volume
+        else:
+            view.form.cancel.click()
+            return None
 
     def delete(self, *volumes):
         """Delete one or more Volumes from list of Volumes
