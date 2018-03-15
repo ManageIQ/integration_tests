@@ -228,7 +228,7 @@ def test_quadicon_terminate(appliance, provider, testing_instance, ensure_vm_run
                                                                 timeout=1200))
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider, OpenStackProvider))
 def test_stop(appliance, provider, testing_instance, ensure_vm_running, soft_assert):
     """ Tests instance stop
 
@@ -358,8 +358,7 @@ def test_hard_reboot_unsupported(testing_instance):
     view.flash.assert_message("Reset does not apply to at least one of the selected items")
 
 
-@pytest.mark.uncollectif(lambda provider: (not provider.one_of(OpenStackProvider) and
-                                           not provider.one_of(AzureProvider)))
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider, OpenStackProvider))
 def test_suspend(appliance, provider, testing_instance, ensure_vm_running, soft_assert):
     """ Tests instance suspend
 
@@ -394,8 +393,7 @@ def test_unpause(appliance, provider, testing_instance, ensure_vm_paused, soft_a
 
 
 
-@pytest.mark.uncollectif(lambda provider: (not provider.one_of(OpenStackProvider) and
-                                           not provider.one_of(AzureProvider)))
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider, OpenStackProvider))
 def test_resume(appliance, provider, testing_instance, ensure_vm_suspended, soft_assert):
     """ Tests instance resume
 
@@ -467,9 +465,9 @@ class TestInstanceRESTAPI(object):
             assert success
         return success, message
 
-    @pytest.mark.uncollectif(lambda provider: provider.one_of(OpenStackProvider))
+    @pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider, OpenStackProvider))
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
-    def testest_stop(self, provider, testing_instance, ensure_vm_running,
+    def test_stop(self, provider, testing_instance, ensure_vm_running,
             soft_assert, appliance, from_detail):
         """ Tests instance stop
 

@@ -724,10 +724,16 @@ class VM(BaseVM):
         vm = self.name
 
         def _suspended():
-            return mgmt.can_suspend and mgmt.is_vm_suspended(vm)
+            try:
+                return mgmt.can_suspend and mgmt.is_vm_suspended(vm)
+            except (NotImplementedError, exceptions.ActionNotSupported):
+                return False
 
         def _paused():
-            return mgmt.can_pause and mgmt.is_vm_paused(vm)
+            try:
+                return mgmt.can_pause and mgmt.is_vm_paused(vm)
+            except (NotImplementedError, exceptions.ActionNotSupported):
+                return False
 
         if state == self.STATE_ON:
             return self._handle_transition(
