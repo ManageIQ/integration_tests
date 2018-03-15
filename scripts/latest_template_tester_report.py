@@ -12,7 +12,6 @@ from cfme.utils import trackerbot
 from cfme.utils.conf import cfme_data
 from cfme.utils.path import template_path, log_path
 from cfme.utils.providers import list_provider_keys
-from cfme.utils.ssh import SSHClient
 from cfme.utils.wait import wait_for
 
 template_env = Environment(
@@ -35,16 +34,6 @@ def parse_cmd_line():
                         default=log_path.join('template_tester_results.log').strpath)
     args = parser.parse_args()
     return args
-
-
-# TODO is this completely unused?
-def make_ssh_client(rhevip, sshname, sshpass):
-    connect_kwargs = {
-        'username': sshname,
-        'password': sshpass,
-        'hostname': rhevip
-    }
-    return SSHClient(**connect_kwargs)
 
 
 def get_latest_tested_template_on_stream(api, template_stream_name, template_name):
