@@ -53,16 +53,16 @@ def test_retire_service(appliance, setup_provider, context, provision_request):
 
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
-@pytest.mark.parametrize('provision_request', [['console_test']], indirect=True)
+@pytest.mark.parametrize('order_service', [['console_test']], indirect=True)
 @pytest.mark.uncollectif(lambda provider:
     provider.one_of(VMwareProvider) and provider.version >= 6.5 or
     'html5_console' in provider.data.excluded_test_flags,
     'VNC consoles are unsupported on VMware ESXi 6.5 and later')
 def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
-        configure_console_vnc, provision_request, take_screenshot,
+        configure_console_vnc, order_service, take_screenshot,
         console_template, provider):
     """Test Myservice VM Console in SSUI."""
-    catalog_item, provision_request = provision_request
+    catalog_item, provision_request = order_service
     service_name = catalog_item.name
     console_vm_username = credentials[catalog_item.provider.data.templates.console_template
                             .creds].username
@@ -135,4 +135,3 @@ def test_vm_console(request, appliance, setup_provider, context, configure_webso
                 take_screenshot("ConsoleScreenshot")
                 vm_console.switch_to_appliance()
                 raise e
-
