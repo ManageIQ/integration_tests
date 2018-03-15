@@ -54,11 +54,11 @@ class Bugzilla(object):
 
     @property
     def bug_count(self):
-        return len(self.__bug_cache.keys())
+        return len(self.__bug_cache)
 
     @property
     def bugs(self):
-        for bug in self.__bug_cache.itervalues():
+        for bug in self.__bug_cache.values():
             yield bug
 
     def products(self, *names):
