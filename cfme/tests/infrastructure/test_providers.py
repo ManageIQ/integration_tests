@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 import uuid
-import fauxfactory
-
-import pytest
-
 from copy import copy, deepcopy
+
+import fauxfactory
+import pytest
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
@@ -17,7 +16,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider, VirtualCe
 from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
-
 
 pytestmark = [
     test_requirements.discovery,

@@ -1,9 +1,9 @@
 import pytest
+
 from cfme import test_requirements
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.rest import assert_response
-
 
 pytestmark = [
     test_requirements.ownership,
