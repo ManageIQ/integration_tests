@@ -54,6 +54,17 @@ class ServiceBasedEndpoint(DefaultEndpoint):
         return out
 
 
+class VirtualizationEndpoint(ServiceBasedEndpoint):
+    """Represents virtualization Endpoint"""
+    name = 'virtualization'
+
+    @property
+    def view_value_mapping(self):
+        # values like host, port are taken from Default endpoint
+        # and not editable in Virtualization endpoint, only token can be added
+        return {'kubevirt_token': self.token}
+
+
 class MetricsEndpoint(ServiceBasedEndpoint):
     """Represents metrics Endpoint"""
     name = 'metrics'
@@ -90,7 +101,8 @@ class OpenshiftProvider(ContainersProvider):
             image_repo=None,
             image_reg=None,
             image_tag=None,
-            cve_loc=None):
+            cve_loc=None,
+            virt_type=None):
 
         self.http_proxy = http_proxy
         self.adv_http = adv_http
@@ -100,6 +112,7 @@ class OpenshiftProvider(ContainersProvider):
         self.image_reg = image_reg
         self.image_tag = image_tag
         self.cve_loc = cve_loc
+        self.virt_type = virt_type
 
         super(OpenshiftProvider, self).__init__(
             name=name,
@@ -169,6 +182,9 @@ class OpenshiftProvider(ContainersProvider):
             mapping['alerts_type'] = None
             mapping['proxy'] = None
             mapping['advanced'] = None
+
+        if self.virt_type and not self.appliance.is_downstream:
+            mapping['virt_type'] = self.virt_type
 
         return mapping
 
@@ -240,7 +256,8 @@ class OpenshiftProvider(ContainersProvider):
             image_repo=image_repo,
             image_reg=image_reg,
             image_tag=image_tag,
-            cve_loc=cve_loc
+            cve_loc=cve_loc,
+            virt_type=prov_config.get('virt_type')
         )
 
     def custom_attributes(self):

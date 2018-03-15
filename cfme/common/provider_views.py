@@ -523,10 +523,11 @@ class ContainerProviderAddViewUpdated(ContainerProviderAddView, ContainerProvide
     """
      Additional widgets for builds 5.9 and up
     """
-    COND_WIDGETS = ['prov_type', 'metrics_type', 'alerts_type']
+    COND_WIDGETS = ['prov_type', 'metrics_type', 'alerts_type', 'virt_type']
 
     metrics_type = BootstrapSelect(id='metrics_selection')
     alerts_type = BootstrapSelect(id='alerts_selection')
+    virt_type = BootstrapSelect(id='virtualization_selection')
 
     def before_fill(self, values):
         for widget in self.COND_WIDGETS:
@@ -620,6 +621,7 @@ class ContainerProviderEditViewUpdated(ContainerProviderEditView, ContainerProvi
 
     metrics_type = BootstrapSelect(id='metrics_selection')
     alerts_type = BootstrapSelect(id='alerts_selection')
+    virt_type = BootstrapSelect(id='virtualization_selection')
 
     def before_fill(self, values):
         for widget in self.COND_WIDGETS:

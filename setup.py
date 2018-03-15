@@ -37,6 +37,7 @@ setup(
             'scvmm = cfme.infrastructure.provider.scvmm:SCVMMProvider',
             'rhevm = cfme.infrastructure.provider.rhevm:RHEVMProvider',
             'openstack_infra = cfme.infrastructure.provider.openstack_infra:OpenstackInfraProvider',
+            'kubevirt = cfme.infrastructure.provider.kubevirt:KubeVirtProvider'
         ],
         'manageiq.provider_types.cloud': [
             'ec2 = cfme.cloud.provider.ec2:EC2Provider',
