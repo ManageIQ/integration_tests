@@ -155,7 +155,9 @@ setup(
                 'cfme.generic_objects.definition:GenericObjectDefinitionCollection'),
             ('generic_objects = '
                 'cfme.generic_objects.instance:GenericObjectInstanceCollection'),
-            'catalogs = cfme.services.catalogs.catalog:CatalogCollection'
+            'catalogs = cfme.services.catalogs.catalog:CatalogCollection',
+            ('orchestration_templates = '
+                'cfme.services.catalogs.orchestration_template:OrchestrationTemplatesCollection')
         ],
         'pytest11':
         [
