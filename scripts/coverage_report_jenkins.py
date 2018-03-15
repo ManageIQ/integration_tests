@@ -123,6 +123,42 @@ def get_build_numbers(client, job_name):
     return [build['number'] for build in client.get_job_info(job_name)['builds']]
 
 
+def gen_project_key(name, version):
+    """Generate sonar project key
+
+    The key will take the form of:
+
+        <project-name>_<major_version>_<minor_version>_<language>_<coverage|static|full-analysis>
+
+    So given the name CFME and version 5.9.0.21, and that CFME is in ruby and we are
+    gathering coverage data, our project_key would be:
+
+        CFME_5_9_ruby_coverage
+
+    Args:
+        name:   application name
+        version:  A version like a.b.c.d where a major version and b is the minor version.
+            Actually minimally just need a.b, but any components after a.b are fine.
+    Returns:
+        a valid Central CI project key for sonarqube.
+    """
+    # I'm on purpose allowing for any number of version components after 2
+    # in case the version string changes (but still has major and minor at
+    # at the beginning.
+    match = re.search('^(?P<major>\d+)\.(?P<minor>\d+)', version)
+    if not match:
+        raise ValueError(
+            'Start of version string must match: "(\d+).(\d+)", e.g. 5.9  received: {}'.format(
+                version))
+
+    project_key = '{name}_{major}_{minor}_ruby_coverage'.format(
+        name=name,
+        major=match.group('major'),
+        minor=match.group('minor'))
+
+    return project_key
+
+
 def merge_coverage_data(ssh, coverage_dir):
     """Merge coverage data
 
@@ -188,7 +224,7 @@ def pull_merged_coverage_data(ssh, coverage_dir):
     logger.info('Done!')
 
 
-def install_sonar_scanner(ssh, project_version, scanner_url, scanner_dir, server_url):
+def install_sonar_scanner(ssh, project_name, project_version, scanner_url, scanner_dir, server_url):
     """ Install sonar-scanner application
 
     Pulls the sonar-scanner application to the appliance from scanner_url,
@@ -270,13 +306,15 @@ def install_sonar_scanner(ssh, project_version, scanner_url, scanner_dir, server
     local_conf = os.path.join(log_path.strpath, project_conf)
     remote_conf = '/{}'.format(project_conf)
     config_data = '''
-sonar.projectKey=CFME
-sonar.projectName=CFME
+sonar.projectKey={project_key}
+sonar.projectName={project_name}
 sonar.projectVersion={version}
 sonar.language=ruby
 sonar.sources=opt/rh/cfme-gemset,var/www/miq/vmdb
 '''.format(
-        version=str(project_version).strip())
+        project_name=project_name,
+        project_key=gen_project_key(name=project_name, version=project_version),
+        version=project_version)
 
     # Write the config file locally and then copy to remote.
     logger.info('Writing %s', local_conf)
@@ -315,13 +353,14 @@ def run_sonar_scanner(ssh, scanner_dir, timeout):
     logger.info('   end_time=%s', time.strftime('%T'))
 
 
-def sonar_scan(ssh, project_version, scanner_url, scanner_dir, server_url, timeout):
+def sonar_scan(ssh, project_name, project_version, scanner_url, scanner_dir, server_url, timeout):
     """Run the sonar scan
 
     In addition to running the scan, handles the installation of the sonar-scanner software.
 
     Args:
         ssh: ssh object (cfme.utils.ssh)
+        project_name: Name of software.
         project_version: Version of project to be scanned.
         scanner_url:  Where to pull the sonar-scanner software from
         scanner_dir:  Installation directory of sonar-scanner
@@ -331,7 +370,7 @@ def sonar_scan(ssh, project_version, scanner_url, scanner_dir, server_url, timeo
     Returns:
         Nothing
     """
-    install_sonar_scanner(ssh, project_version, scanner_url, scanner_dir, server_url)
+    install_sonar_scanner(ssh, project_name, project_version, scanner_url, scanner_dir, server_url)
     run_sonar_scanner(ssh, scanner_dir, timeout)
 
 
@@ -451,7 +490,8 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
             coverage_dir=coverage_dir)
         sonar_scan(
             ssh=ssh,
-            project_version=appliance.version,
+            project_name='CFME',
+            project_version=str(appliance.version).strip(),
             scanner_url=sonar_scanner_url,
             scanner_dir=scanner_dir,
             server_url=sonar_server_url,
@@ -459,7 +499,8 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Upload coverage data from jenkins job to sonarqube')
+    parser = argparse.ArgumentParser(
+        description='Upload coverage data from jenkins job to sonarqube')
     parser.add_argument('jenkins_url')
     parser.add_argument('jenkins_job_name')
     parser.add_argument('work_appliance_ip')
@@ -473,4 +514,3 @@ if __name__ == '__main__':
             args.jenkins_user,
             args.jenkins_token,
             args.jenkins_job_name))
-
