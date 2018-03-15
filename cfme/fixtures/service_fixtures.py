@@ -2,7 +2,6 @@
 import pytest
 from widgetastic.utils import partial_match
 
-from cfme.common.provider import cleanup_vm
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.rest.gen_data import dialog as _dialog
@@ -19,7 +18,7 @@ def dialog(request, appliance):
 
 @pytest.yield_fixture(scope="function")
 def catalog(request, appliance):
-    return _catalog(request, appliance.rest_api)
+    return _catalog(request, appliance)
 
 
 @pytest.fixture(scope="function")

@@ -144,7 +144,7 @@ def catalog_bundle(request, dialog, service_catalog_obj, appliance, a_provider):
 
 @pytest.fixture(scope="function")
 def service_catalog_obj(request, appliance):
-    return _service_catalog_obj(request, appliance.rest_api)
+    return _service_catalog_obj(request, appliance)
 
 
 @pytest.fixture(scope="function")

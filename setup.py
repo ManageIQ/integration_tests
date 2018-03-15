@@ -154,7 +154,8 @@ setup(
             ('generic_object_definitions = '
                 'cfme.generic_objects.definition:GenericObjectDefinitionCollection'),
             ('generic_objects = '
-                'cfme.generic_objects.instance:GenericObjectInstanceCollection')
+                'cfme.generic_objects.instance:GenericObjectInstanceCollection'),
+            'catalogs = cfme.services.catalogs.catalog:CatalogCollection'
         ],
         'pytest11':
         [

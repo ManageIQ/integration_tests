@@ -7,7 +7,6 @@ from widgetastic_patternfly import BootstrapSelect
 
 from cfme import test_requirements
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
-from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
@@ -105,9 +104,10 @@ def ansible_catalog_item(ansible_repository):
 
 
 @pytest.yield_fixture(scope="module")
-def catalog(ansible_catalog_item):
-    catalog_ = Catalog(fauxfactory.gen_alphanumeric(), items=[ansible_catalog_item.name])
-    catalog_.create()
+def catalog(appliance, ansible_catalog_item):
+    catalog_ = appliance.collections.catalogs.create(fauxfactory.gen_alphanumeric(),
+                                                     description='my catalog',
+                                                     items=[ansible_catalog_item.name])
     ansible_catalog_item.catalog = catalog_
     yield catalog_
 
