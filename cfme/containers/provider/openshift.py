@@ -14,7 +14,6 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.ocp_cli import OcpCli
 from cfme.utils.varmeth import variable
 from cfme.utils import version, ssh
-from cfme.utils.wait import TimedOutError
 
 
 class CustomAttribute(object):
@@ -386,30 +385,3 @@ class OpenshiftProvider(ContainersProvider):
             self.appliance.restart_evm_service()
             self.appliance.wait_for_evm_service()
             self.appliance.wait_for_web_ui()
-
-    @variable(alias='rest')
-    def is_refreshed(self, refresh_timer=None, refresh_delta=600):
-        """ Overrides cfme.common.provider.BaseProvider#is_refreshed.
-            Add validate_status check after provider creation,
-            In order to make sure that openshift provider data refresh completed
-                Args:
-                    refresh_timer : wait_for.RefreshTimer Object or None
-                    refresh_delta : refresh delta between times on second
-                Returns:
-                     Boolean or TimedOutError exception in case data referesh didn't completed
-        """
-        valid = False
-        # check refresh time
-        if not super(OpenshiftProvider, self).is_refreshed():
-            return valid
-
-        # check the detail page matches the Providers information
-        try:
-            self.validate_stats(ui=False)
-            valid = True
-        except TimedOutError:
-            raise TimedOutError(
-                'Timeout exceeded, openShift provider data refresh did not completed on time'
-            )
-        finally:
-            return valid
