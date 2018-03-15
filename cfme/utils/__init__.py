@@ -269,7 +269,7 @@ def process_shell_output(value):
         for entry in sorted(value):
             result_lines.append(entry)
     elif isinstance(value, dict):
-        for key, value in value.iteritems():
+        for key, value in value.items():
             result_lines.append('{}={}'.format(key, value))
     elif isinstance(value, str):
         result_lines.append(value)

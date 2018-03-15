@@ -30,7 +30,7 @@ def categorize(iterable, cat):
         cat: Category specification dictionary
     """
     for item in iterable:
-        for cond, func in cat.iteritems():
+        for cond, func in cat.items():
             if callable(cond) and cond(item):
                 func(item)
                 break

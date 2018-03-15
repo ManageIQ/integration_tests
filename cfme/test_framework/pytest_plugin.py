@@ -24,7 +24,7 @@ def pytest_collection_finish(session):
     store.terminalreporter.write(
         "Uncollection Stats:\n", bold=True)
 
-    for reason, value in store.uncollection_stats.iteritems():
+    for reason, value in store.uncollection_stats.items():
         store.terminalreporter.write(
             " {}: {}\n".format(reason, value), bold=True)
     store.terminalreporter.write(

@@ -871,7 +871,7 @@ class Vm(VM):
         vm_recfg = navigate_to(self, 'Reconfigure', wait_for_view=True)
 
         # We gotta add disks separately
-        fill_data = {k: v for k, v in changes.iteritems() if k != 'disks'}
+        fill_data = {k: v for k, v in changes.items() if k != 'disks'}
         vm_recfg.fill(fill_data)
 
         # Helpers for VM Reconfigure request

@@ -387,10 +387,10 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
         true_actions, false_actions = [], []
         if isinstance(actions, Action):
             true_actions.append(actions)
-        elif isinstance(actions, list) or isinstance(actions, tuple) or isinstance(actions, set):
+        elif isinstance(actions, (list, tuple, set)):
             true_actions.extend(actions)
         elif isinstance(actions, dict):
-            for action, is_true in actions.iteritems():
+            for action, is_true in actions.items():
                 if is_true:
                     true_actions.append(action)
                 else:

@@ -92,7 +92,7 @@ class CandidateNotFound(CFMEException):
 
     @property
     def message(self):
-        return ", ".join("{}: {}".format(k, v) for k, v in self.d.iteritems())
+        return ", ".join("{}: {}".format(k, v) for k, v in self.d.items())
 
     def __str__(self):
         return self.message

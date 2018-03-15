@@ -976,7 +976,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
         # TODO: Move to TemplateCollection
         result_list = []
         all_template_details = self.get_all_template_details()
-        for provider, templates in template_dict.iteritems():
+        for provider, templates in template_dict.items():
             for template_name in templates:
                 inner_tuple = ()
                 for id in all_template_details:

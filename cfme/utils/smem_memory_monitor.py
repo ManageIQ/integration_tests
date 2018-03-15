@@ -5,6 +5,7 @@ import os
 import time
 import traceback
 import yaml
+import six
 
 from cfme.utils.conf import cfme_performance
 from cfme.utils.log import logger
@@ -985,7 +986,7 @@ def get_scenario_html(scenario_data):
 
 def create_dict(attr_dict):
     main_dict = dict(attr_dict)
-    for key, value in main_dict.iteritems():
+    for key, value in six.iteritems(main_dict):
         if type(value) == AttrDict:
             main_dict[key] = create_dict(value)
     return main_dict
