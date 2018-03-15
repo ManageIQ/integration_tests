@@ -8,6 +8,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
+from cfme.services.myservice.ssui import DetailsMyServiceView
 from cfme.utils import ssh
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.blockers import BZ
@@ -64,8 +65,7 @@ def test_service_start(appliance, setup_provider, context,
     catalog_item, provision_request = provision_request
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
-        view_cls = navigator.get_class(my_service, 'Details').VIEW
-        view = my_service.appliance.browser.create_view(view_cls)
+        view = my_service.create_view(DetailsMyServiceView)
         if provider.one_of(InfraProvider):
             # For Infra providers vm is provisioned.Hence Stop option is shown
             my_service.service_power(power='Stop', status='stopped')
