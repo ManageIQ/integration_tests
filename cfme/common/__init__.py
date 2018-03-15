@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException, RowNotFound
-from widgetastic_patternfly import BootstrapSelect, Button, CheckableBootstrapTreeview
+from widgetastic_patternfly import (BootstrapSelect, Button, CheckableBootstrapTreeview,
+    DropdownItemNotFound)
 from widgetastic.widget import Table, Text, View
 
 from cfme.base.login import BaseLoggedInPage
@@ -356,7 +357,7 @@ class Taggable(object):
             tag_table = entities.summary('Smart Management')
         tags_text = tag_table.get_text_of(tenant)
         if tags_text != 'No {} have been assigned'.format(tenant):
-            for tag in list(tags_text):
+            for tag in list(tags_text if not isinstance(tags_text, basestring) else (tags_text, )):
                 tag_category, tag_name = tag.split(':')
                 tags.append(Tag(category=Category(display_name=tag_category),
                                 display_name=tag_name.strip()))
@@ -387,7 +388,11 @@ class EditTagsFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
+        try:
+            self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
+        except DropdownItemNotFound:
+            self.prerequisite_view.toolbar.policy.item_select(
+                "Edit 'My Company' Tags for this {}".format(self.obj.__class__.__name__))
 
 
 @navigator.register(Taggable, 'EditTags')
@@ -412,7 +417,11 @@ class EditTagsFromListCollection(CFMENavigateStep):
                     surf_pages=True, name=name).check()
         else:
             self.prerequisite_view.entities.get_entity(surf_pages=True, name=self.obj.name).check()
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
+        try:
+            self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
+        except DropdownItemNotFound:
+            self.prerequisite_view.toolbar.policy.item_select(
+                "Edit 'My Company' Tags for this {}".format(self.obj.__class__.__name__))
 
 
 class Validatable(object):

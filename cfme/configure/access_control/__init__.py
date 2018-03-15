@@ -8,6 +8,7 @@ from widgetastic_patternfly import (
 
 from cfme.base.credential import Credential
 from cfme.base.ui import ConfigurationView
+from cfme.common import WidgetasticTaggable
 from cfme.exceptions import CFMEException, RBACOperationBlocked
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -16,7 +17,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
-    UpDownSelect, PaginationPane, SummaryFormItem, Table, BaseListEntity)
+    UpDownSelect, PaginationPane, SummaryFormItem, Table, BaseListEntity, SummaryForm)
 
 
 class AccessControlToolbar(View):
@@ -66,9 +67,14 @@ class AddUserView(UserForm):
         return self.accordions.accesscontrol.is_opened and self.title.text == "Adding a new User"
 
 
+class DetailsUserEntities(View):
+    smart_management = SummaryForm('Smart Management')
+
+
 class DetailsUserView(ConfigurationView):
     """ User Details view."""
     toolbar = View.nested(AccessControlToolbar)
+    entities = View.nested(DetailsUserEntities)
 
     @property
     def is_displayed(self):
@@ -96,26 +102,26 @@ class EditUserView(UserForm):
         )
 
 
-class EditTagsUserView(ConfigurationView):
-    """ Tags edit for Users view."""
-    tag_table = Table("//div[@id='assignments_div']//table")
-    select_tag = BootstrapSelect(id='tag_cat')
-    select_value = BootstrapSelect(id='tag_add')
-
-    save_button = Button('Save')
-    cancel_button = Button('Cancel')
-    reset_button = Button('Reset')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.accordions.accesscontrol.is_opened and
-            self.title.text == 'Editing My Company Tags for "EVM Users"'
-        )
+# class EditTagsUserView(ConfigurationView):
+#     """ Tags edit for Users view."""
+#     tag_table = Table("//div[@id='assignments_div']//table")
+#     select_tag = BootstrapSelect(id='tag_cat')
+#     select_value = BootstrapSelect(id='tag_add')
+#
+#     save_button = Button('Save')
+#     cancel_button = Button('Cancel')
+#     reset_button = Button('Reset')
+#
+#     @property
+#     def is_displayed(self):
+#         return (
+#             self.accordions.accesscontrol.is_opened and
+#             self.title.text == 'Editing My Company Tags for "EVM Users"'
+#         )
 
 
 @attr.s
-class User(Updateable, Pretty, BaseEntity):
+class User(Updateable, Pretty, BaseEntity, WidgetasticTaggable):
     """ Class represents an user in CFME UI
 
     Args:
@@ -254,43 +260,43 @@ class User(Updateable, Pretty, BaseEntity):
             view = self.create_view(DetailsUserView)
         assert view.is_displayed
 
-    def edit_tags(self, tag, value):
-        """ Edits tag for existing user
-
-        Args:
-            tag: Tag category
-            value: Tag name
-        """
-        view = navigate_to(self, 'EditTags')
-        view.fill({'select_tag': tag,
-                   'select_value': value})
-        view.save_button.click()
-        view = self.create_view(DetailsUserView)
-        view.flash.assert_success_message('Tag edits were successfully saved')
-        assert view.is_displayed
-
-    def remove_tag(self, tag, value):
-        """ Remove tag from existing user
-
-        Args:
-            tag: Tag category
-            value: Tag name
-        """
-        view = navigate_to(self, 'EditTags')
-        row = view.tag_table.row(category=tag, assigned_value=value)
-        row[0].click()
-        view.save_button.click()
-        view = self.create_view(DetailsUserView)
-        view.flash.assert_success_message('Tag edits were successfully saved')
-        assert view.is_displayed
-
-    def get_tags(self):
-        tags = []
-        view = navigate_to(self, 'EditTags')
-        for row in view.tag_table:
-            tags.append((row.category.text, row.assigned_value.text))
-        view.cancel_button.click()
-        return tags
+    # def edit_tags(self, tag, value):
+    #     """ Edits tag for existing user
+    #
+    #     Args:
+    #         tag: Tag category
+    #         value: Tag name
+    #     """
+    #     view = navigate_to(self, 'EditTags')
+    #     view.fill({'select_tag': tag,
+    #                'select_value': value})
+    #     view.save_button.click()
+    #     view = self.create_view(DetailsUserView)
+    #     view.flash.assert_success_message('Tag edits were successfully saved')
+    #     assert view.is_displayed
+    #
+    # def remove_tag(self, tag, value):
+    #     """ Remove tag from existing user
+    #
+    #     Args:
+    #         tag: Tag category
+    #         value: Tag name
+    #     """
+    #     view = navigate_to(self, 'EditTags')
+    #     row = view.tag_table.row(category=tag, assigned_value=value)
+    #     row[0].click()
+    #     view.save_button.click()
+    #     view = self.create_view(DetailsUserView)
+    #     view.flash.assert_success_message('Tag edits were successfully saved')
+    #     assert view.is_displayed
+    #
+    # def get_tags(self):
+    #     tags = []
+    #     view = navigate_to(self, 'EditTags')
+    #     for row in view.tag_table:
+    #         tags.append((row.category.text, row.assigned_value.text))
+    #     view.cancel_button.click()
+    #     return tags
 
     # TODO update elements, after 1469035 fix
     def change_stored_password(self, changes=None, cancel=False):
@@ -459,14 +465,14 @@ class UserEdit(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this User')
 
 
-@navigator.register(User, 'EditTags')
-class UserTagsEdit(CFMENavigateStep):
-    VIEW = EditTagsUserView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.toolbar.policy.item_select(
-            "Edit 'My Company' Tags for this User")
+# @navigator.register(User, 'EditTags')
+# class UserTagsEdit(CFMENavigateStep):
+#     VIEW = EditTagsUserView
+#     prerequisite = NavigateToSibling('Details')
+#
+#     def step(self):
+#         self.prerequisite_view.toolbar.policy.item_select(
+#             "Edit 'My Company' Tags for this User")
 
 
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -525,9 +531,14 @@ class AddGroupView(GroupForm):
         )
 
 
+class DetailsGroupEntities(View):
+    smart_management = SummaryForm('Smart Management')
+
+
 class DetailsGroupView(ConfigurationView):
     """ Details Group View in CFME UI """
     toolbar = View.nested(AccessControlToolbar)
+    entities = View.nested(DetailsGroupEntities)
 
     @property
     def is_displayed(self):
@@ -588,27 +599,27 @@ class EditGroupSequenceView(ConfigurationView):
         )
 
 
-class GroupEditTagsView(ConfigurationView):
-    """ Edit Groups Tags View in CFME UI """
-    tag_table = Table("//div[@id='assignments_div']//table")
-
-    select_tag = BootstrapSelect(id='tag_cat')
-    select_value = BootstrapSelect(id='tag_add')
-
-    save_button = Button('Save')
-    cancel_button = Button('Cancel')
-    reset_button = Button('Reset')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.accordions.accesscontrol.is_opened and
-            self.title.text == 'Editing My Company Tags for "EVM Groups"'
-        )
+# class GroupEditTagsView(ConfigurationView):
+#     """ Edit Groups Tags View in CFME UI """
+#     tag_table = Table("//div[@id='assignments_div']//table")
+#
+#     select_tag = BootstrapSelect(id='tag_cat')
+#     select_value = BootstrapSelect(id='tag_add')
+#
+#     save_button = Button('Save')
+#     cancel_button = Button('Cancel')
+#     reset_button = Button('Reset')
+#
+#     @property
+#     def is_displayed(self):
+#         return (
+#             self.accordions.accesscontrol.is_opened and
+#             self.title.text == 'Editing My Company Tags for "EVM Groups"'
+#         )
 
 
 @attr.s
-class Group(BaseEntity):
+class Group(BaseEntity, WidgetasticTaggable):
     """Represents a group in CFME UI
 
     Properties:
@@ -766,43 +777,43 @@ class Group(BaseEntity):
             assert view.is_displayed, (
                 "Access Control Group {} Detail View is not displayed".format(self.description))
 
-    def edit_tags(self, tag, value):
-        """ Edits tag for existing group
-
-        Args:
-            tag: Tag category
-            value: Tag name
-        """
-        view = navigate_to(self, 'EditTags')
-        view.fill({'select_tag': tag,
-                   'select_value': value})
-        view.save_button.click()
-        view = self.create_view(DetailsGroupView)
-        view.flash.assert_success_message('Tag edits were successfully saved')
-        assert view.is_displayed
-
-    def remove_tag(self, tag, value):
-        """ Delete tag for existing group
-
-        Args:
-            tag: Tag category
-            value: Tag name
-        """
-        view = navigate_to(self, 'EditTags')
-        row = view.tag_table.row(category=tag, assigned_value=value)
-        row[0].click()
-        view.save_button.click()
-        view = self.create_view(DetailsGroupView)
-        view.flash.assert_success_message('Tag edits were successfully saved')
-        assert view.is_displayed
-
-    def get_tags(self):
-        tags = []
-        view = navigate_to(self, 'EditTags')
-        for row in view.tag_table:
-            tags.append((row.category.text, row.assigned_value.text))
-        view.cancel_button.click()
-        return tags
+    # def edit_tags(self, tag, value):
+    #     """ Edits tag for existing group
+    #
+    #     Args:
+    #         tag: Tag category
+    #         value: Tag name
+    #     """
+    #     view = navigate_to(self, 'EditTags')
+    #     view.fill({'select_tag': tag,
+    #                'select_value': value})
+    #     view.save_button.click()
+    #     view = self.create_view(DetailsGroupView)
+    #     view.flash.assert_success_message('Tag edits were successfully saved')
+    #     assert view.is_displayed
+    #
+    # def remove_tag(self, tag, value):
+    #     """ Delete tag for existing group
+    #
+    #     Args:
+    #         tag: Tag category
+    #         value: Tag name
+    #     """
+    #     view = navigate_to(self, 'EditTags')
+    #     row = view.tag_table.row(category=tag, assigned_value=value)
+    #     row[0].click()
+    #     view.save_button.click()
+    #     view = self.create_view(DetailsGroupView)
+    #     view.flash.assert_success_message('Tag edits were successfully saved')
+    #     assert view.is_displayed
+    #
+    # def get_tags(self):
+    #     tags = []
+    #     view = navigate_to(self, 'EditTags')
+    #     for row in view.tag_table:
+    #         tags.append((row.category.text, row.assigned_value.text))
+    #     view.cancel_button.click()
+    #     return tags
 
     def set_group_order(self, updated_order):
         """ Sets group order for group lookup
@@ -988,15 +999,15 @@ class GroupEdit(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Group')
 
 
-@navigator.register(Group, 'EditTags')
-class GroupTagsEdit(CFMENavigateStep):
-    VIEW = GroupEditTagsView
-
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.toolbar.policy.item_select(
-            "Edit 'My Company' Tags for this Group")
+# @navigator.register(Group, 'EditTags')
+# class GroupTagsEdit(CFMENavigateStep):
+#     VIEW = GroupEditTagsView
+#
+#     prerequisite = NavigateToSibling('Details')
+#
+#     def step(self):
+#         self.prerequisite_view.toolbar.policy.item_select(
+#             "Edit 'My Company' Tags for this Group")
 
 
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1360,8 +1371,14 @@ class AddTenantView(ConfigurationView):
         )
 
 
+class DetailsTenantEntities(View):
+    smart_management = SummaryForm('Smart Management')
+
+
 class DetailsTenantView(ConfigurationView):
     """ Details Tenant View """
+    entities = View.nested(DetailsTenantEntities)
+    #Todo move to entities
     toolbar = View.nested(AccessControlToolbar)
     name = Text('Name')
     description = Text('Description')
@@ -1406,7 +1423,7 @@ class EditTenantView(View):
 
 
 @attr.s
-class Tenant(Updateable, BaseEntity):
+class Tenant(Updateable, BaseEntity, WidgetasticTaggable):
     """ Class representing CFME tenants in the UI.
     * Kudos to mfalesni *
 
