@@ -2,7 +2,6 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage.manager import StorageManagerDetailsView
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -11,8 +10,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 pytestmark = [
     pytest.mark.tier(3),
     test_requirements.storage,
-    pytest.mark.usefixtures('openstack_provider', 'setup_provider'),
-    pytest.mark.provider([CloudProvider])
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.provider([OpenStackProvider])
 ]
 
 
@@ -31,7 +30,6 @@ def collection_manager(request, openstack_provider, appliance):
     yield collection, manager
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
 def test_manager_navigation(collection_manager):
     collection, manager = collection_manager
     view = navigate_to(collection, 'All')
@@ -43,7 +41,6 @@ def test_manager_navigation(collection_manager):
     manager.refresh()
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
 def test_storage_manager_edit_tag(collection_manager):
     """ Test add and remove tag to storage manager
 
@@ -68,7 +65,6 @@ def test_storage_manager_edit_tag(collection_manager):
     assert not tag_available
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
 def test_storage_manager_delete(collection_manager):
     """ Test delete storage manager
 
