@@ -19,7 +19,7 @@ from cfme.utils.providers import ProviderFilter
 from cfme.utils.ssh import SSHClient
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
-from markers.env_markers.provider import providers
+from cfme.markers.env_markers.provider import providers
 from . import do_scan, wait_for_ssa_enabled
 
 

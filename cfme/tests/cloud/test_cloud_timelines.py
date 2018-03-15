@@ -15,7 +15,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-from markers.env_markers.provider import providers
+from cfme.markers.env_markers.provider import providers
 
 
 cloud_prov_only = ProviderFilter(classes=[CloudProvider])

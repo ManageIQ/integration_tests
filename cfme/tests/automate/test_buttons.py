@@ -7,7 +7,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
-from markers.env_markers.provider import ONE
+from cfme.markers.env_markers.provider import ONE
 
 pytestmark = [
     test_requirements.automate,

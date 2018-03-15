@@ -15,7 +15,7 @@ from cfme.utils.log import logger
 from cfme.utils.conf import credentials
 from cfme.utils.providers import ProviderFilter
 from wait_for import wait_for
-from markers.env_markers.provider import providers
+from cfme.markers.env_markers.provider import providers
 
 
 pytestmark = [

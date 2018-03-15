@@ -23,9 +23,8 @@ from cfme.infrastructure.virtual_machines import (HostTemplatesOnlyAllView,
 from cfme.networks.views import NetworkProviderDetailsView, ProviderSecurityGroupAllView
 from cfme.storage.manager import ProviderStorageManagerAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.log import logger
+from cfme.markers.env_markers.provider import ONE, ONE_PER_TYPE
 from cfme.utils.wait import wait_for
-from markers.env_markers.provider import ONE, ONE_PER_TYPE
 
 
 HOST_RELATIONSHIPS = [

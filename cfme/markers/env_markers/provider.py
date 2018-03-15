@@ -4,7 +4,7 @@ import pytest
 
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter, list_providers
-from markers.env import EnvironmentMarker
+from cfme.markers.env import EnvironmentMarker
 from cfme.utils.pytest_shortcuts import fixture_filter
 
 

@@ -7,7 +7,7 @@ from cfme.services.service_catalogs import ServiceCatalogs
 from cfme import test_requirements
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.providers import ProviderFilter
-from markers.env_markers.provider import providers
+from cfme.markers.env_markers.provider import providers
 
 
 pytestmark = [

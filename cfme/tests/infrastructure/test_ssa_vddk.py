@@ -10,7 +10,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.hosts import setup_host_creds
 from cfme.utils.log import logger
-from markers.env_markers.provider import ONE_PER_VERSION
+from cfme.markers.env_markers.provider import ONE_PER_VERSION
 
 pytestmark = [
     pytest.mark.tier(3),

@@ -51,7 +51,7 @@ class TCPEnvironmentMarker(EnvironmentMarker):
 
 
 def pytest_generate_tests(metafunc):
-    from markers.env_markers.provider import ProviderEnvironmentMarker
+    from cfme.markers.env_markers.provider import ProviderEnvironmentMarker
     markers = [
         BrowserEnvironmentMarker(),
         TCPEnvironmentMarker(),
