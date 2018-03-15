@@ -85,5 +85,6 @@ def provision_request(appliance, order_service):
     provision_request = appliance.collections.requests.instantiate(catalog_item.name,
                                                                    partial_check=True)
     provision_request.wait_for_request(method='ui')
+    assert provision_request.is_succeeded()
     return catalog_item, provision_request
 # TODO - remove request finally

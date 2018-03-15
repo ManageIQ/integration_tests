@@ -229,6 +229,20 @@ def retire(self):
     assert view.notification.assert_message("{} was retired.".format(self.name))
 
 
+@MiqImplementationContext.external_for(MyService.service_power, ViaSSUI)
+def service_power(self, power=None, status=None):
+    view = navigate_to(self, 'Details', wait_for_view=True)
+    view.power_operations.item_select(power)
+    view = self.create_view(DetailsMyServiceView)
+    wait_for(
+        lambda: view.is_displayed, delay=3, num_sec=300,
+        message="waiting for view to be displayed"
+    )
+    # TODO - remove sleep when BZ 1518954 is fixed
+    time.sleep(10)
+    # TODO - assert vm state through rest api
+
+
 @navigator.register(MyService, 'All')
 class MyServiceAll(SSUINavigateStep):
     VIEW = MyServicesView
