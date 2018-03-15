@@ -57,7 +57,6 @@ def test_retire_service(appliance, setup_provider,
             my_service.delete()
 
 
-
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_service_start(appliance, setup_provider, context,
                        provision_request, provider, request):
