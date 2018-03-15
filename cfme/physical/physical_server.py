@@ -5,7 +5,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from cached_property import cached_property
 from wrapanapi.lenovo import LenovoSystem
 
-from cfme.common import PolicyProfileAssignable, WidgetasticTaggable
+from cfme.common import PolicyProfileAssignable, Taggable
 from cfme.common.physical_server_views import (
     PhysicalServerDetailsView,
     PhysicalServerManagePoliciesView,
@@ -29,7 +29,7 @@ from cfme.utils.wait import wait_for
 
 
 @attr.s
-class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticTaggable):
+class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
     """Model of an Physical Server in cfme.
 
     Args:

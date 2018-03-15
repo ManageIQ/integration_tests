@@ -6,14 +6,14 @@ from widgetastic.widget import ParametrizedView, Select, Text, View
 from widgetastic_patternfly import Button, Input, BootstrapSelect
 from widgetastic.utils import deflatten_dict, Parameter, ParametrizedString, VersionPick
 
-from cfme.common import WidgetasticTaggable
+from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.utils.update import Updateable
 from cfme.utils.version import Version
 
 
-class ServiceCatalogs(Navigatable, WidgetasticTaggable, Updateable, sentaku.modeling.ElementMixin):
+class ServiceCatalogs(Navigatable, Taggable, Updateable, sentaku.modeling.ElementMixin):
     """
         Service Catalogs main class to context switch between ui
         and ssui. All the below methods are implemented in both ui

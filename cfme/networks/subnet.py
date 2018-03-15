@@ -2,7 +2,7 @@ import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 
-from cfme.common import WidgetasticTaggable
+from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.networks.views import SubnetDetailsView, SubnetView, SubnetAddView, SubnetEditView
@@ -12,7 +12,7 @@ from cfme.utils.wait import wait_for
 
 
 @attr.s
-class Subnet(WidgetasticTaggable, BaseEntity):
+class Subnet(Taggable, BaseEntity):
     """Class representing subnets in sdn"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'

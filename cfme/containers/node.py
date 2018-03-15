@@ -10,7 +10,7 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
 from widgetastic_manageiq import Button, Text, TimelinesView, BreadCrumb
 
-from cfme.common import WidgetasticTaggable, TagPageView, PolicyProfileAssignable
+from cfme.common import Taggable, TagPageView, PolicyProfileAssignable
 from cfme.containers.provider import (Labelable,
     ContainerObjectAllBaseView, LoggingableView, ContainerObjectDetailsBaseView,
     GetRandomInstancesMixin)
@@ -52,7 +52,7 @@ class NodeDetailsView(ContainerObjectDetailsBaseView):
 
 
 @attr.s
-class Node(BaseEntity, WidgetasticTaggable, Labelable, PolicyProfileAssignable):
+class Node(BaseEntity, Taggable, Labelable, PolicyProfileAssignable):
     """Node Class"""
     PLURAL = 'Nodes'
     all_view = NodeAllView

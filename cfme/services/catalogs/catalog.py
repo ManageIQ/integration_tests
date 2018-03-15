@@ -6,7 +6,7 @@ from widgetastic_manageiq import MultiBoxSelect
 from widgetastic_patternfly import Button, Input
 from navmazing import NavigateToAttribute, NavigateToSibling
 
-from cfme.common import WidgetasticTaggable
+from cfme.common import Taggable
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.update import Updateable
 from cfme.utils.pretty import Pretty
@@ -85,7 +85,7 @@ class EditCatalogView(CatalogForm):
 
 
 @attr.s
-class Catalog(BaseEntity, Updateable, Pretty, WidgetasticTaggable):
+class Catalog(BaseEntity, Updateable, Pretty, Taggable):
 
     name = attr.ib()
     description = attr.ib()

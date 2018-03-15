@@ -6,7 +6,7 @@ from widgetastic_patternfly import BootstrapSelect, Button, CandidateNotFound, I
 from widgetastic_manageiq import ScriptBox, Table, PaginationPane
 from navmazing import NavigateToAttribute, NavigateToSibling
 
-from cfme.common import WidgetasticTaggable
+from cfme.common import Taggable
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
@@ -128,7 +128,7 @@ class AddDialogView(DialogForm):
 
 
 @attr.s
-class OrchestrationTemplate(BaseEntity, Updateable, Pretty, WidgetasticTaggable):
+class OrchestrationTemplate(BaseEntity, Updateable, Pretty, Taggable):
 
     template_type = attr.ib()
     template_name = attr.ib()

@@ -5,7 +5,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown, Button
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import WidgetasticTaggable
+from cfme.common import Taggable
 from cfme.exceptions import AvailabilityZoneNotFound, ItemNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
@@ -116,7 +116,7 @@ class CloudAvailabilityZoneTimelinesView(TimelinesView, AvailabilityZoneView):
             self.is_timelines)
 
 
-class AvailabilityZone(WidgetasticTaggable, Navigatable):
+class AvailabilityZone(Taggable, Navigatable):
     _param_name = "AvailabilityZone"
 
     def __init__(self, name, provider, appliance=None):

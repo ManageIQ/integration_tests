@@ -5,7 +5,7 @@ from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 from wrapanapi.containers.image_registry import ImageRegistry as ApiImageRegistry
 
-from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.common import Taggable, TagPageView
 from cfme.containers.provider import (ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
                                       GetRandomInstancesMixin)
@@ -24,7 +24,7 @@ class ImageRegistryDetailsView(ContainerObjectDetailsBaseView):
 
 
 @attr.s
-class ImageRegistry(BaseEntity, WidgetasticTaggable, Navigatable):
+class ImageRegistry(BaseEntity, Taggable, Navigatable):
 
     PLURAL = 'Image Registries'
     all_view = ImageRegistryAllView

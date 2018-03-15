@@ -6,7 +6,7 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 
 from wrapanapi.containers.service import Service as ApiService
 
-from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.common import Taggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
     ContainerObjectDetailsBaseView, GetRandomInstancesMixin)
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -23,7 +23,7 @@ class ServiceDetailsView(ContainerObjectDetailsBaseView):
 
 
 @attr.s
-class Service(BaseEntity, WidgetasticTaggable, Labelable):
+class Service(BaseEntity, Taggable, Labelable):
 
     PLURAL = 'Container Services'
     all_view = ServiceAllView

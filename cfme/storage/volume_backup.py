@@ -8,7 +8,7 @@ from widgetastic.widget import View, Text, NoSuchElementException
 from widgetastic_patternfly import BootstrapSelect, Button, Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import TagPageView, WidgetasticTaggable
+from cfme.common import TagPageView, Taggable
 from cfme.exceptions import BackupNotFoundError, ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
@@ -116,7 +116,7 @@ class VolumeRestoreView(VolumeBackupView):
 
 
 @attr.s
-class VolumeBackup(BaseEntity, WidgetasticTaggable):
+class VolumeBackup(BaseEntity, Taggable):
     """ Model of an Storage Volume Backups in cfme
 
     Args:
@@ -269,7 +269,7 @@ class Details(CFMENavigateStep):
 
 @navigator.register(VolumeBackup, 'EditTagsFromDetails')
 class BackupDetailEditTag(CFMENavigateStep):
-    """ This navigation destination help to WidgetasticTaggable"""
+    """ This navigation destination help to Taggable"""
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 

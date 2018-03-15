@@ -233,7 +233,7 @@ class TagPageView(BaseLoggedInPage):
         )
 
 
-class WidgetasticTaggable(object):
+class Taggable(object):
     """
     This class can be inherited by any class that honors tagging.
     Class should have following
@@ -381,7 +381,7 @@ class WidgetasticTaggable(object):
             view.flash.assert_success_message('Tag edits were successfully saved')
 
 
-@navigator.register(WidgetasticTaggable, 'EditTagsFromDetails')
+@navigator.register(Taggable, 'EditTagsFromDetails')
 class EditTagsFromDetails(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
@@ -390,7 +390,7 @@ class EditTagsFromDetails(CFMENavigateStep):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
-@navigator.register(WidgetasticTaggable, 'EditTags')
+@navigator.register(Taggable, 'EditTags')
 class EditTagsFromListCollection(CFMENavigateStep):
     VIEW = TagPageView
 

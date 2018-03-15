@@ -5,7 +5,7 @@ from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 from wrapanapi.containers.volume import Volume as ApiVolume
 
-from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.common import Taggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
                                       GetRandomInstancesMixin)
@@ -23,7 +23,7 @@ class VolumeDetailsView(ContainerObjectDetailsBaseView):
 
 
 @attr.s
-class Volume(BaseEntity, WidgetasticTaggable, Labelable):
+class Volume(BaseEntity, Taggable, Labelable):
 
     PLURAL = 'Volumes'
     all_view = VolumeAllView

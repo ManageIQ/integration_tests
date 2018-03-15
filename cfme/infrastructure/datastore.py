@@ -9,7 +9,7 @@ from widgetastic.widget import ParametrizedView, View, Text
 from widgetastic_patternfly import Dropdown, Accordion
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import WidgetasticTaggable
+from cfme.common import Taggable
 from cfme.common.host_views import HostsView
 from cfme.configure.tasks import is_datastore_analysis_finished, TasksView
 from cfme.exceptions import ItemNotFound, MenuItemNotFound
@@ -194,7 +194,7 @@ class RegisteredHostsView(HostsView):
 
 
 @attr.s
-class Datastore(Pretty, BaseEntity, WidgetasticTaggable):
+class Datastore(Pretty, BaseEntity, Taggable):
     """ Model of an infrastructure datastore in cfme
 
     Args:

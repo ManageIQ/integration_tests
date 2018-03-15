@@ -5,7 +5,7 @@ from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
 from wrapanapi.containers.template import Template as ApiTemplate
 
-from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.common import Taggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
     ContainerObjectDetailsBaseView, GetRandomInstancesMixin)
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -22,7 +22,7 @@ class TemplateDetailsView(ContainerObjectDetailsBaseView):
 
 
 @attr.s
-class Template(BaseEntity, WidgetasticTaggable, Labelable):
+class Template(BaseEntity, Taggable, Labelable):
 
     PLURAL = 'Templates'
     all_view = TemplateAllView

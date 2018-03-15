@@ -7,7 +7,7 @@ from widgetastic_patternfly import BootstrapSelect, Dropdown, Tab
 
 from cfme.base.credential import Credential as BaseCredential
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.common import Taggable, TagPageView
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils import ParamClassName
 from cfme.utils import version, conf
@@ -478,7 +478,7 @@ class ConfigProfile(Pretty, Navigatable):
         return list()
 
 
-class ConfigSystem(Pretty, Navigatable, WidgetasticTaggable):
+class ConfigSystem(Pretty, Navigatable, Taggable):
     """The tags pages of the config system"""
     pretty_attrs = ['name', 'manager_key']
 

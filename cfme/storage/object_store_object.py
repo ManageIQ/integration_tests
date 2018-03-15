@@ -5,7 +5,7 @@ from widgetastic.widget import View, Text, NoSuchElementException
 from widgetastic_patternfly import Button, Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import TagPageView, WidgetasticTaggable
+from cfme.common import TagPageView, Taggable
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
@@ -93,7 +93,7 @@ class ObjectStoreObjectDetailsView(ObjectStoreObjectView):
 
 
 @attr.s
-class ObjectStoreObject(BaseEntity, WidgetasticTaggable):
+class ObjectStoreObject(BaseEntity, Taggable):
     """ Model of an Storage Object Store Object in cfme
 
     Args:

@@ -9,7 +9,7 @@ from widgetastic_patternfly import (
 )
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import TagPageView, WidgetasticTaggable, PolicyProfileAssignable
+from cfme.common import TagPageView, Taggable, PolicyProfileAssignable
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
@@ -116,7 +116,7 @@ class StorageManagerDetailsView(StorageManagerView):
 
 
 @attr.s
-class StorageManager(BaseEntity, WidgetasticTaggable, PolicyProfileAssignable):
+class StorageManager(BaseEntity, Taggable, PolicyProfileAssignable):
     """ Model of an storage manager in cfme
 
     Args:
