@@ -5,7 +5,7 @@ import fauxfactory
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage.volume import VolumeAllView
-
+from cfme.utils.update import update
 
 pytestmark = [
     pytest.mark.tier(3),
@@ -62,6 +62,14 @@ def test_storage_volume_crud(appliance, provider):
                                       size=STORAGE_SIZE,
                                       provider=provider)
     assert volume.exists
+
+    # update volume
+    old_name = volume.name
+    with update(volume):
+        volume.name = fauxfactory.gen_alpha()
+
+    with update(volume):
+        volume.name = old_name
 
     # delete volume
     volume.delete(wait=True)

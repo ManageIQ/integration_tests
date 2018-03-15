@@ -176,16 +176,15 @@ class Volume(BaseEntity):
         except TimedOutError:
             logger.error('Timed out waiting for Volume to disappear, continuing')
 
-    def edit(self, name):
+    def update(self, updates):
         """Edit cloud volume"""
         view = navigate_to(self, 'Edit')
-        view.volume_name.fill(name)
+        view.fill({'volume_name': updates.get('name')})
+
         view.save.click()
 
-        view.flash.assert_success_message('Cloud Volume "{}" updated'.format(name))
-
-        self.name = name
-        wait_for(lambda: self.exists, delay=20, timeout=500, fail_func=self.refresh)
+        view.flash.assert_success_message('Cloud Volume "{}" updated'.format(updates.get('name')))
+        wait_for(lambda: not self.exists, delay=20, timeout=500, fail_func=self.refresh)
 
     def delete(self, wait=True):
         """Delete the Volume"""
