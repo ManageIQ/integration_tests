@@ -8,6 +8,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
+from cfme.services.myservice.ssui import DetailsMyServiceView
 from cfme.utils import ssh
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.blockers import BZ
@@ -43,12 +44,41 @@ def test_myservice_crud(appliance, setup_provider, context, provision_request):
 
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_retire_service(appliance, setup_provider, context, provision_request):
+def test_retire_service(appliance, setup_provider,
+                        context, provision_request,
+                        request):
     """Test retire service."""
     catalog_item, provision_request = provision_request
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
         my_service.retire()
+
+        @request.addfinalizer
+        def _finalize():
+            my_service.delete()
+
+
+@pytest.mark.parametrize('context', [ViaSSUI])
+def test_service_start(appliance, setup_provider, context,
+                       provision_request, provider, request):
+    """Test service stop"""
+    catalog_item, provision_request = provision_request
+    with appliance.context.use(context):
+        my_service = MyService(appliance, catalog_item.name)
+        view = my_service.create_view(DetailsMyServiceView)
+        if provider.one_of(InfraProvider):
+            # For Infra providers vm is provisioned.Hence Stop option is shown
+            my_service.service_power(power='Stop', status='stopped')
+            view.notification.assert_message(
+                "{} was {}.".format(catalog_item.name, 'stopped'))
+        else:
+            my_service.service_power(power='Start', status='started')
+            view.notification.assert_message(
+                "{} was {}.".format(catalog_item.name, 'started'))
+
+        @request.addfinalizer
+        def _finalize():
+            my_service.delete()
 
 
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
@@ -135,4 +165,3 @@ def test_vm_console(request, appliance, setup_provider, context, configure_webso
                 take_screenshot("ConsoleScreenshot")
                 vm_console.switch_to_appliance()
                 raise e
-

@@ -25,6 +25,7 @@ class MyService(Updateable, Navigatable, WidgetasticTaggable, sentaku.modeling.E
     download_file = sentaku.ContextualMethod()
     reconfigure_service = sentaku.ContextualMethod()
     launch_vm_console = sentaku.ContextualMethod()
+    service_power = sentaku.ContextualMethod()
 
     def __init__(self, appliance, name=None, description=None, vm_name=None):
         self.appliance = appliance
