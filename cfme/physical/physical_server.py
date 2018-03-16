@@ -10,6 +10,7 @@ from cfme.common.physical_server_views import (
     PhysicalServerDetailsView,
     PhysicalServerManagePoliciesView,
     PhysicalServersView,
+    PhysicalServerProvisionView,
     PhysicalServerTimelinesView
 )
 from cfme.exceptions import (
@@ -68,58 +69,87 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
             view.browser.refresh()
             view.flush_widget_cache()
 
-    def execute_button(self, button_group, button, handle_alert=False):
+    def _execute_button(self, button, option, handle_alert=False):
         view = navigate_to(self, "Details")
-        view.toolbar.custom_button(button_group).item_select(button, handle_alert=handle_alert)
+        view.toolbar.custom_button(button).item_select(option, handle_alert=handle_alert)
+        return view
 
-    def power_on(self):
-        view = navigate_to(self, "Details")
-        view.toolbar.power.item_select("Power On", handle_alert=True)
+    def _execute_action_button(self, button, option, handle_alert=True, **kwargs):
+        target = kwargs.get("target", None)
+        provider = kwargs.get("provider", None)
+        desired_state = kwargs.get("desired_state", None)
 
-    def power_off(self):
-        view = navigate_to(self, "Details")
-        view.toolbar.power.item_select("Power Off", handle_alert=True)
+        view = self._execute_button(button, option, handle_alert=handle_alert)
+
+        if desired_state:
+            self._wait_for_state_change(desired_state, target, provider, view)
+        elif handle_alert:
+            wait_for(
+                lambda: view.flash.is_displayed,
+                message="Wait for the handle alert to appear...",
+                num_sec=5,
+                delay=2
+            )
+
+    def power_on(self, **kwargs):
+        self._execute_action_button("Power", "Power On", **kwargs)
+
+    def power_off(self, **kwargs):
+        self._execute_action_button("Power", "Power Off", **kwargs)
+
+    def power_off_immediately(self, **kwargs):
+        self._execute_action_button("Power", "Power Off Immediately", **kwargs)
+
+    def restart(self, **kwargs):
+        self._execute_action_button("Power", "Restart", **kwargs)
+
+    def restart_immediately(self, **kwargs):
+        self._execute_action_button("Power", "Restart Immediately", **kwargs)
+
+    def refresh(self, provider, handle_alert=False):
+        last_refresh = provider.last_refresh_date()
+        self._execute_button("Configuration", "Refresh Relationships and Power States",
+                             handle_alert)
+        wait_for(
+            lambda: last_refresh != provider.last_refresh_date(),
+            message="Wait for the server to be refreshed...",
+            num_sec=300,
+            delay=5
+        )
 
     @variable(alias='ui')
     def power_state(self):
         view = navigate_to(self, "Details")
-        return view.entities.summary("Power Management").get_text_of("Power State")
+        return view.entities.power_management.get_text_of("Power State")
 
     @variable(alias='ui')
     def cores_capacity(self):
         view = navigate_to(self, "Details")
-        return view.entities.summary("Properties").get_text_of("CPU total cores")
+        return view.entities.properties.get_text_of("CPU total cores")
 
     @variable(alias='ui')
     def memory_capacity(self):
         view = navigate_to(self, "Details")
-        return view.entities.summary("Properties").get_text_of("Total memory (mb)")
+        return view.entities.properties.get_text_of("Total memory (mb)")
 
-    def refresh(self, cancel=False):
-        """Perform 'Refresh Relationships and Power States' for the server.
-
-        Args:
-            cancel (bool): Whether the action should be cancelled, default to False
-        """
-        view = navigate_to(self, "Details")
-        view.toolbar.configuration.item_select("Refresh Relationships and Power States",
-            handle_alert=cancel)
-
-    def wait_for_physical_server_state_change(self, desired_state, timeout=300):
+    def _wait_for_state_change(self, desired_state, target, provider, view, timeout=300, delay=10):
         """Wait for PhysicalServer to come to desired state. This function waits just the needed amount of
            time thanks to wait_for.
 
         Args:
             desired_state (str): 'on' or 'off'
+            target (str): The name of the method that most be used to compare with the desired_state
+            view (object): The view that most be refreshed to verify if the value was changed
+            provider (object): 'LenovoProvider'
             timeout (int): Specify amount of time (in seconds) to wait until TimedOutError is raised
+            delay (int): Specify amount of time (in seconds) to repeat each time.
         """
-        view = navigate_to(self.parent, "All")
 
-        def _looking_for_state_change():
-            entity = view.entities.get_entity(name=self.name)
-            return "currentstate-{}".format(desired_state) in entity.data['state']
+        def _is_state_changed():
+            self.refresh(provider, handle_alert=True)
+            return desired_state == getattr(self, target)()
 
-        wait_for(_looking_for_state_change, fail_func=view.browser.refresh, num_sec=timeout)
+        wait_for(_is_state_changed, fail_func=view.browser.refresh, num_sec=timeout, delay=delay)
 
     @property
     def exists(self):
@@ -225,6 +255,7 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Wi
                 msg = "Provider does not know how to get '{}'"
                 raise ProviderHasNoProperty(msg.format(inventory))
 
+
 @attr.s
 class PhysicalServerCollection(BaseCollection):
     """Collection object for the :py:class:`cfme.infrastructure.host.PhysicalServer`."""
@@ -261,6 +292,24 @@ class PhysicalServerCollection(BaseCollection):
                                     provider=provider or get_crud_by_name(ems_name)))
         return physical_servers
 
+    def find_by(self, provider, ph_name):
+        """returning all physical_servers objects"""
+        physical_server_table = self.appliance.db.client['physical_servers']
+        ems_table = self.appliance.db.client['ext_management_systems']
+        physical_server_query = (
+            self.appliance.db.client.session
+                .query(physical_server_table.name, ems_table.name)
+                .join(ems_table, physical_server_table.ems_id == ems_table.id))
+        provider = None
+
+        if self.filters.get('provider'):
+            provider = self.filters.get('provider')
+            physical_server_query = physical_server_query.filter(ems_table.name == provider.name)
+
+        for name, ems_name in physical_server_query.all():
+            if ph_name == name:
+                return self.instantiate(name=name, provider=provider or get_crud_by_name(ems_name))
+
     def power_on(self, *physical_servers):
         view = self.select_entity_rows(physical_servers)
         view.toolbar.power.item_select("Power On", handle_alert=True)
@@ -295,6 +344,15 @@ class ManagePolicies(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.policy.item_select("Manage Policies")
+
+
+@navigator.register(PhysicalServer)
+class Provision(CFMENavigateStep):
+    VIEW = PhysicalServerProvisionView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self):
+        self.prerequisite_view.toolbar.lifecycle.item_select("Provision Physical Server")
 
 
 @navigator.register(PhysicalServer)
