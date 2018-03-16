@@ -65,8 +65,9 @@ def test_storage_volume_crud(appliance, provider):
 
     # update volume
     old_name = volume.name
+    new_name = fauxfactory.gen_alpha()
     with update(volume):
-        volume.name = fauxfactory.gen_alpha()
+        volume.name = new_name
 
     with update(volume):
         volume.name = old_name

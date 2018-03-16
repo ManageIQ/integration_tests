@@ -337,7 +337,6 @@ class VolumeCollection(BaseCollection):
             return volume
         else:
             view.form.cancel.click()
-            return None
 
     def delete(self, *volumes):
         """Delete one or more Volumes from list of Volumes
