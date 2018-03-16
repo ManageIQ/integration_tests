@@ -6,7 +6,7 @@ from widgetastic_patternfly import Button, Dropdown
 from widgetastic.widget import View, Text, NoSuchElementException
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import TagPageView, WidgetasticTaggable
+from cfme.common import TagPageView, Taggable
 from cfme.exceptions import SnapshotNotFoundError, ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
@@ -103,7 +103,7 @@ class VolumeSnapshotDetailsView(VolumeSnapshotView):
 
 
 @attr.s
-class VolumeSnapshot(BaseEntity, WidgetasticTaggable):
+class VolumeSnapshot(BaseEntity, Taggable):
     """ Model of an Storage Volume Snapshots in cfme
 
     Args:
@@ -244,7 +244,7 @@ class Details(CFMENavigateStep):
 
 @navigator.register(VolumeSnapshot, 'EditTagsFromDetails')
 class SnapshotDetailEditTag(CFMENavigateStep):
-    """ This navigation destination help to WidgetasticTaggable"""
+    """ This navigation destination help to Taggable"""
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
