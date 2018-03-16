@@ -1,20 +1,15 @@
-from cached_property import cached_property
 from os import path
+
+from cached_property import cached_property
 from wrapanapi.containers.providers.rhopenshift import Openshift
-
-from . import ContainersProvider
-
-from cfme.containers.provider import (
-    ContainersProviderDefaultEndpoint, ContainersProviderEndpointsForm
-)
 
 from cfme.common.provider import DefaultEndpoint
 from cfme.control.explorer.alert_profiles import ProviderAlertProfile, NodeAlertProfile
+from cfme.utils import ssh
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.ocp_cli import OcpCli
 from cfme.utils.varmeth import variable
-from cfme.utils import ssh
-from cfme.utils.wait import TimedOutError
+from . import ContainersProvider, ContainersProviderDefaultEndpoint, ContainersProviderEndpointsForm
 
 
 class CustomAttribute(object):
