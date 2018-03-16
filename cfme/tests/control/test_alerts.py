@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+
 import fauxfactory
 import pytest
-from datetime import datetime, timedelta
 
 from cfme import test_requirements
 from cfme.control.explorer import alert_profiles, policies
@@ -10,6 +11,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data, credentials
@@ -19,9 +21,7 @@ from cfme.utils.providers import ProviderFilter
 from cfme.utils.ssh import SSHClient
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
-from cfme.markers.env_markers.provider import providers
 from . import do_scan, wait_for_ssa_enabled
-
 
 pf1 = ProviderFilter(classes=[InfraProvider])
 pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)
@@ -184,13 +184,11 @@ def setup_for_alerts(alert_profile_collection, action_collection, policy_collect
 
 @pytest.yield_fixture(scope="module")
 def set_performance_capture_threshold(appliance):
-    yaml = appliance.get_yaml_config()
-    yaml["performance"]["capture_threshold_with_alerts"]["vm"] = "3.minutes"
-    appliance.set_yaml_config(yaml)
+    yaml_data = {"performance": {"capture_threshold_with_alerts": {"vm": "3.minutes"}}}
+    appliance.set_yaml_config(yaml_data)
     yield
-    yaml = appliance.get_yaml_config()
-    yaml["performance"]["capture_threshold_with_alerts"]["vm"] = "20.minutes"
-    appliance.set_yaml_config(yaml)
+    yaml_data = {"performance": {"capture_threshold_with_alerts": {"vm": "20.minutes"}}}
+    appliance.set_yaml_config(yaml_data)
 
 
 @pytest.yield_fixture(scope="module")
