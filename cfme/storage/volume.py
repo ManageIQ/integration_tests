@@ -21,6 +21,7 @@ from cfme.exceptions import VolumeNotFoundError, ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
+from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for, TimedOutError
 
 
@@ -160,7 +161,7 @@ class VolumeSnapshotView(VolumeView):
 
 
 @attr.s
-class Volume(BaseEntity):
+class Volume(BaseEntity, Updateable):
 
     name = attr.ib()
     provider = attr.ib()
@@ -176,16 +177,15 @@ class Volume(BaseEntity):
         except TimedOutError:
             logger.error('Timed out waiting for Volume to disappear, continuing')
 
-    def edit(self, name):
+    def update(self, updates):
         """Edit cloud volume"""
         view = navigate_to(self, 'Edit')
-        view.volume_name.fill(name)
+        view.fill({'volume_name': updates.get('name')})
+
         view.save.click()
 
-        view.flash.assert_success_message('Cloud Volume "{}" updated'.format(name))
-
-        self.name = name
-        wait_for(lambda: self.exists, delay=20, timeout=500, fail_func=self.refresh)
+        view.flash.assert_success_message('Cloud Volume "{}" updated'.format(updates.get('name')))
+        wait_for(lambda: not self.exists, delay=20, timeout=500, fail_func=self.refresh)
 
     def delete(self, wait=True):
         """Delete the Volume"""
@@ -306,7 +306,7 @@ class VolumeCollection(BaseCollection):
     """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
     ENTITY = Volume
 
-    def create(self, name, storage_manager, tenant, size, provider):
+    def create(self, name, storage_manager, tenant, provider, size=1, cancel=False):
         """Create new storage volume
 
         Args:
@@ -315,24 +315,28 @@ class VolumeCollection(BaseCollection):
             tenant: tenant name
             size: volume size in GB
             provider: provider
+            cancel: bool
 
         Returns:
             object for the :py:class: cfme.storage.volume.Volume
         """
 
         view = navigate_to(self, 'Add')
-        view.form.fill({'storage_manager': storage_manager,
-                        'tenant': tenant,
-                        'volume_name': name,
-                        'size': size})
-        view.form.add.click()
-        base_message = 'Cloud Volume "{}" created'
-        view.flash.assert_success_message(base_message.format(name))
 
-        volume = self.instantiate(name, provider)
-        wait_for(lambda: volume.exists, delay=50, timeout=1500, fail_func=volume.refresh)
+        if not cancel:
+            view.form.fill({'storage_manager': storage_manager,
+                            'tenant': tenant,
+                            'volume_name': name,
+                            'size': size})
+            view.form.add.click()
+            base_message = 'Cloud Volume "{}" created'
+            view.flash.assert_success_message(base_message.format(name))
 
-        return volume
+            volume = self.instantiate(name, provider)
+            wait_for(lambda: volume.exists, delay=50, timeout=1500, fail_func=volume.refresh)
+            return volume
+        else:
+            view.form.cancel.click()
 
     def delete(self, *volumes):
         """Delete one or more Volumes from list of Volumes
