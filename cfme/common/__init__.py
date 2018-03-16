@@ -357,7 +357,8 @@ class Taggable(object):
             tag_table = entities.summary('Smart Management')
         tags_text = tag_table.get_text_of(tenant)
         if tags_text != 'No {} have been assigned'.format(tenant):
-            for tag in list(tags_text if not isinstance(tags_text, basestring) else (tags_text, )):
+            # check for users/groups page in case one tag string is returned
+            for tag in [tags_text] if isinstance(tags_text, basestring) else list(tags_text):
                 tag_category, tag_name = tag.split(':')
                 tags.append(Tag(category=Category(display_name=tag_category),
                                 display_name=tag_name.strip()))
@@ -392,7 +393,7 @@ class EditTagsFromDetails(CFMENavigateStep):
             self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
         except DropdownItemNotFound:
             self.prerequisite_view.toolbar.policy.item_select(
-                "Edit 'My Company' Tags for this {}".format(self.obj.__class__.__name__))
+                "Edit 'My Company' Tags for this {}".format(type(self.obj).__name__))
 
 
 @navigator.register(Taggable, 'EditTags')
@@ -421,7 +422,7 @@ class EditTagsFromListCollection(CFMENavigateStep):
             self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
         except DropdownItemNotFound:
             self.prerequisite_view.toolbar.policy.item_select(
-                "Edit 'My Company' Tags for this {}".format(self.obj.__class__.__name__))
+                "Edit 'My Company' Tags for this {}".format(type(self.obj).__name__))
 
 
 class Validatable(object):

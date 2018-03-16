@@ -279,11 +279,11 @@ def test_user_remove_tag(appliance, group_collection):
     group = group_collection.instantiate(description=group_name)
 
     user = new_user(appliance, [group])
-    user.edit_tag(category="Department", tag="Engineering")
+    user.add_tag(category="Department", tag="Engineering")
     user.remove_tag("Department", "Engineering")
     navigate_to(user, 'Details')
-    assert (tag.category.display_name == 'Department' and tag.display_name == 'Engineering'
-            for tag not in user.get_tags()), 'Remove User tag failed'
+    assert (tag.category.display_name != 'Department' and tag.display_name != 'Engineering'
+            for tag in user.get_tags()), 'Remove User tag failed'
     user.delete()
 
 
@@ -416,8 +416,8 @@ def test_group_remove_tag(group_collection):
     navigate_to(group, 'Edit')
     group.add_tag(category="Department", tag="Engineering")
     group.remove_tag(category="Department", tag="Engineering")
-    assert (tag.category.display_name == 'Department' and tag.display_name == 'Engineering'
-            for tag not in group.get_tags()), "Group User tag failed"
+    assert (tag.category.display_name != 'Department' and tag.display_name != 'Engineering'
+            for tag in group.get_tags()), "Group User tag failed"
     group.delete()
 
 
