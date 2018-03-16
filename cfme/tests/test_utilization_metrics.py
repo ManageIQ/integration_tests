@@ -251,7 +251,7 @@ def test_raw_metric_host_network(metrics_collection, appliance, provider):
 @pytest.mark.uncollectif(
     lambda provider: provider.one_of(CloudProvider))
 @pytest.mark.meta(
-    blockers=[BZ(1424589, forced_streams=["5.8", "upstream"],
+    blockers=[BZ(1424589, forced_streams=["5.8", "5.9", "upstream"],
     unblock=lambda provider: not provider.one_of(RHEVMProvider))]
 )
 def test_raw_metric_host_disk(metrics_collection, appliance, provider):
