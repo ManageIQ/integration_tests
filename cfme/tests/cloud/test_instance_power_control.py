@@ -43,7 +43,7 @@ def testing_instance(setup_provider, provider):
         logger.exception('Exception when deleting testing_instance: %s', instance.name)
 
 
-# This fixture must be named 'vm_name' because its tied to fixtures/virtual_machine
+# This fixture must be named 'vm_name' because its tied to cfme/fixtures/virtual_machine
 @pytest.fixture(scope="function")
 def vm_name(testing_instance):
     # Pull it out of the testing instance
