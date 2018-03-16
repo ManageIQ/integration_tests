@@ -70,7 +70,7 @@ class ContainersProviderEndpointsForm(View):
         api_port = Input('default_api_port')
 
     @View.nested
-    class hawkular(Tab, BeforeFillMixin):  # NOQA
+    class metrics(Tab, BeforeFillMixin):  # NOQA
         TAB_NAME = VersionPick({
             Version.lowest(): 'Hawkular',
             '5.9': 'Metrics'
@@ -91,15 +91,18 @@ class ContainersProviderEndpointsForm(View):
             Version.lowest(): Input('hawkular_api_port'),
             '5.9': Input('metrics_api_port')
         })
+
         validate = Button('Validate')
 
     @View.nested
     class alerts(Tab, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Alerts'
+
         sec_protocol = BootstrapSelect(id='prometheus_alerts_security_protocol')
         trusted_ca_certificates = TextInput('prometheus_alerts_tls_ca_certs')
         hostname = Input('prometheus_alerts_hostname')
         api_port = Input('prometheus_alerts_api_port')
+
         validate = Button('Validate')
 
 

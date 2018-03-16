@@ -1,19 +1,15 @@
-from cached_property import cached_property
 from os import path
 
+from cached_property import cached_property
 from wrapanapi.containers.providers.rhopenshift import Openshift
 
-from . import ContainersProvider
-
-from cfme.containers.provider import (
-    ContainersProviderDefaultEndpoint, ContainersProviderEndpointsForm
-)
-
 from cfme.common.provider import DefaultEndpoint
+from cfme.control.explorer.alert_profiles import ProviderAlertProfile, NodeAlertProfile
+from cfme.utils import ssh
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.ocp_cli import OcpCli
 from cfme.utils.varmeth import variable
-from cfme.utils import version, ssh
+from . import ContainersProvider, ContainersProviderDefaultEndpoint, ContainersProviderEndpointsForm
 
 
 class CustomAttribute(object):
@@ -41,17 +37,13 @@ class OpenshiftDefaultEndpoint(ContainersProviderDefaultEndpoint):
             return str("".join(stdout.readlines()))
 
 
-class HawkularEndpoint(DefaultEndpoint):
-    """Represents Hawkular Endpoint"""
-    name = 'hawkular'
+class ServiceBasedEndpoint(DefaultEndpoint):
 
     @property
     def view_value_mapping(self):
-        out = {
-            'hostname': self.hostname,
-            'api_port': self.api_port,
-            'sec_protocol': self.sec_protocol
-        }
+        out = {'hostname': self.hostname,
+               'api_port': self.api_port,
+               'sec_protocol': self.sec_protocol}
 
         if out['sec_protocol'] and self.sec_protocol.lower() == 'ssl trusting custom ca':
             out['trusted_ca_certificates'] = OpenshiftDefaultEndpoint.get_ca_cert(
@@ -62,32 +54,14 @@ class HawkularEndpoint(DefaultEndpoint):
         return out
 
 
-class AlertsEndpoint(DefaultEndpoint):
+class MetricsEndpoint(ServiceBasedEndpoint):
+    """Represents metrics Endpoint"""
+    name = 'metrics'
+
+
+class AlertsEndpoint(ServiceBasedEndpoint):
     """Represents Alerts Endpoint"""
     name = 'alerts'
-
-    @property
-    def view_value_mapping(self):
-
-        out = {}
-
-        out['hostname'] = version.pick({
-            version.LOWEST: None,
-            '5.9': self.hostname})
-        out['api_port'] = version.pick({
-            version.LOWEST: None,
-            '5.9': self.api_port})
-        out['sec_protocol'] = version.pick({
-            version.LOWEST: None,
-            '5.9': self.sec_protocol})
-
-        if out['sec_protocol'] and self.sec_protocol.lower() == 'ssl trusting custom ca':
-            out['trusted_ca_certificates'] = OpenshiftDefaultEndpoint.get_ca_cert(
-                {"username": self.ssh_creds.principal,
-                 "password": self.ssh_creds.secret,
-                 "hostname": self.master_hostname})
-
-        return out
 
 
 class OpenshiftProvider(ContainersProvider):
@@ -136,6 +110,23 @@ class OpenshiftProvider(ContainersProvider):
             alerts_type=alerts_type,
             endpoints=endpoints,
             appliance=appliance)
+
+    def create(self, **kwargs):
+
+        # Enable alerts collection before adding the provider to avoid missing active
+        # alert after adding the provider
+        # For more info: https://bugzilla.redhat.com/show_bug.cgi?id=1514950
+        if self.appliance.version >= '5.9' and getattr(self, "alerts_type") == "Prometheus":
+            alert_profiles = self.appliance.collections.alert_profiles
+            provider_profile = alert_profiles.instantiate(ProviderAlertProfile,
+                                                          "Prometheus Provider Profile")
+            node_profile = alert_profiles.instantiate(NodeAlertProfile,
+                                                      "Prometheus node Profile")
+
+            for profile in [provider_profile, node_profile]:
+                profile.assign_to("The Enterprise")
+
+        super(OpenshiftProvider, self).create(**kwargs)
 
     @cached_property
     def cli(self):
@@ -217,11 +208,10 @@ class OpenshiftProvider(ContainersProvider):
             if OpenshiftDefaultEndpoint.name == endp:
                 prov_config['endpoints'][endp]['token'] = token_creds.token
                 endpoints[endp] = OpenshiftDefaultEndpoint(**prov_config['endpoints'][endp])
-            elif HawkularEndpoint.name == endp:
-                endpoints[endp] = HawkularEndpoint(**prov_config['endpoints'][endp])
+            elif MetricsEndpoint.name == endp:
+                endpoints[endp] = MetricsEndpoint(**prov_config['endpoints'][endp])
             elif AlertsEndpoint.name == endp:
                 endpoints[endp] = AlertsEndpoint(**prov_config['endpoints'][endp])
-            # TODO Add Prometheus and logic for having to select or the other based on metrcis_type
             else:
                 raise Exception('Unsupported endpoint type "{}".'.format(endp))
 
