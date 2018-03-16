@@ -56,7 +56,30 @@ def wait_for_requests(requests):
     wait_for(_finished, num_sec=45, delay=5, message="requests finished")
 
 
-COLLECTIONS_REMOVED_IN_59 = {
+COLLECTIONS_NEWER_THAN_58 = {
+    "alert_definition_profiles",
+    "automate_workspaces",
+    "cloud_subnets",
+    "cloud_tenants",
+    "cloud_volumes",
+    "container_nodes",
+    "container_projects",
+    "custom_button_sets",
+    "custom_buttons",
+    "event_streams",
+    "firmwares",
+    "floating_ips",
+    "generic_object_definitions",
+    "generic_objects",
+    "guest_devices",
+    "metric_rollups",
+    "network_routers",
+    "physical_servers",
+    "regions",
+}
+
+
+COLLECTIONS_OBSOLETED_IN_59 = {
     "arbitration_profiles",
     "arbitration_rules",
     "arbitration_settings",
@@ -65,35 +88,109 @@ COLLECTIONS_REMOVED_IN_59 = {
 }
 
 
-COLLECTIONS_ALL = {
-    "actions", "alert_definitions", "alerts", "arbitration_profiles",
-    "arbitration_rules", "arbitration_settings", "authentications", "automate",
-    "automate_domains", "automation_requests", "availability_zones",
-    "blueprints", "categories", "chargebacks", "cloud_networks", "clusters",
-    "conditions", "configuration_script_payloads",
-    "configuration_script_sources", "container_deployments", "currencies",
-    "data_stores", "events", "features", "flavors", "groups", "hosts",
-    "instances", "load_balancers", "measures", "notifications",
-    "orchestration_templates", "pictures", "policies", "policy_actions",
-    "policy_profiles", "providers", "provision_dialogs", "provision_requests",
-    "rates", "reports", "request_tasks", "requests", "resource_pools",
-    "results", "roles", "security_groups", "servers", "service_catalogs",
-    "service_dialogs", "service_orders", "service_requests",
-    "service_templates", "services", "settings", "tags", "tasks", "templates",
-    "tenants", "users", "virtual_templates", "vms", "zones"
+COLLECTIONS_IN_59 = {
+    "actions",
+    "alert_definition_profiles",
+    "alert_definitions",
+    "alerts",
+    "authentications",
+    "automate",
+    "automate_domains",
+    "automate_workspaces",
+    "automation_requests",
+    "availability_zones",
+    "categories",
+    "chargebacks",
+    "cloud_networks",
+    "cloud_subnets",
+    "cloud_tenants",
+    "cloud_volumes",
+    "clusters",
+    "conditions",
+    "configuration_script_payloads",
+    "configuration_script_sources",
+    "container_deployments",
+    "container_nodes",
+    "container_projects",
+    "currencies",
+    "custom_button_sets",
+    "custom_buttons",
+    "data_stores",
+    "event_streams",
+    "events",
+    "features",
+    "firmwares",
+    "flavors",
+    "floating_ips",
+    "generic_object_definitions",
+    "generic_objects",
+    "groups",
+    "guest_devices",
+    "hosts",
+    "instances",
+    "load_balancers",
+    "measures",
+    "metric_rollups",
+    "network_routers",
+    "notifications",
+    "orchestration_templates",
+    "physical_servers",
+    "pictures",
+    "policies",
+    "policy_actions",
+    "policy_profiles",
+    "providers",
+    "provision_dialogs",
+    "provision_requests",
+    "rates",
+    "regions",
+    "reports",
+    "request_tasks",
+    "requests",
+    "resource_pools",
+    "results",
+    "roles",
+    "security_groups",
+    "servers",
+    "service_catalogs",
+    "service_dialogs",
+    "service_orders",
+    "service_requests",
+    "service_templates",
+    "services",
+    "settings",
+    "tags",
+    "tasks",
+    "templates",
+    "tenants",
+    "users",
+    "vms",
+    "zones",
 }
 
 
-# non-typical collections without "id" and "resources"
-COLLECTIONS_OMMITED = {"settings"}
+COLLECTIONS_IN_UPSTREAM = COLLECTIONS_IN_59
+COLLECTIONS_IN_58 = (COLLECTIONS_IN_59 | COLLECTIONS_OBSOLETED_IN_59) - COLLECTIONS_NEWER_THAN_58
+COLLECTIONS_ALL = COLLECTIONS_IN_59 | COLLECTIONS_IN_58
+# non-typical collections without "id" and "resources", or additional parameters are required
+COLLECTIONS_OMMITED = {"automate_workspaces", "metric_rollups", "settings"}
+
+
+def _collection_not_in_this_version(appliance, collection_name):
+    return (
+        (collection_name not in COLLECTIONS_IN_UPSTREAM and appliance.version.is_in_series(
+            'upstream')) or
+        (collection_name not in COLLECTIONS_IN_59 and appliance.version.is_in_series('5.9')) or
+        (collection_name not in COLLECTIONS_IN_58 and appliance.version.is_in_series('5.8'))
+    )
 
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
     lambda appliance, collection_name:
-        (collection_name in COLLECTIONS_OMMITED) or
-        (collection_name in COLLECTIONS_REMOVED_IN_59 and appliance.version >= "5.9")
+        collection_name in COLLECTIONS_OMMITED or
+        _collection_not_in_this_version(appliance, collection_name)
 )
 def test_query_simple_collections(appliance, collection_name):
     """This test tries to load each of the listed collections. 'Simple' collection means that they
@@ -113,8 +210,8 @@ def test_query_simple_collections(appliance, collection_name):
 @pytest.mark.parametrize('collection_name', COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
     lambda appliance, collection_name:
-        (collection_name in COLLECTIONS_OMMITED) or
-        (collection_name in COLLECTIONS_REMOVED_IN_59 and appliance.version >= '5.9')
+        collection_name in COLLECTIONS_OMMITED or
+        _collection_not_in_this_version(appliance, collection_name)
 )
 def test_collections_actions(appliance, collection_name):
     """Tests that there are only actions with POST methods in collections.
@@ -141,8 +238,8 @@ def test_collections_actions(appliance, collection_name):
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
     lambda appliance, collection_name:
-        (collection_name in COLLECTIONS_OMMITED) or
-        (collection_name in COLLECTIONS_REMOVED_IN_59 and appliance.version >= "5.9")
+        collection_name in COLLECTIONS_OMMITED or
+        _collection_not_in_this_version(appliance, collection_name)
 )
 def test_query_with_api_version(api_version, collection_name):
     """Loads each of the listed collections using /api/<version>/<collection>.
@@ -166,7 +263,8 @@ COLLECTIONS_BUGGY_ATTRS = {"results", "service_catalogs", "automate", "categorie
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
     lambda appliance, collection_name:
-        (collection_name in COLLECTIONS_REMOVED_IN_59 and appliance.version >= "5.9")
+        collection_name == 'metric_rollups' or  # needs additional parameters
+        _collection_not_in_this_version(appliance, collection_name)
 )
 # testing GH#ManageIQ/manageiq:15754
 def test_select_attributes(appliance, collection_name):
@@ -468,8 +566,9 @@ COLLECTIONS_BUGGY_HREF_SLUG_IN_58 = {'policy_actions', 'automate_domains'}
 @pytest.mark.uncollectif(
     lambda appliance, collection_name:
         collection_name == 'automate' or  # doesn't have 'href'
+        collection_name == 'metric_rollups' or  # needs additional parameters
         (collection_name in COLLECTIONS_BUGGY_HREF_SLUG_IN_58 and appliance.version < '5.9') or
-        (collection_name in COLLECTIONS_REMOVED_IN_59 and appliance.version >= '5.9')
+        _collection_not_in_this_version(appliance, collection_name)
 )
 @pytest.mark.meta(blockers=[
     BZ(
