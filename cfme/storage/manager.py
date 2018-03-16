@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import attr
-from navmazing import NavigateToAttribute
+from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View, NoSuchElementException, Text
 from widgetastic_patternfly import (
@@ -9,7 +9,7 @@ from widgetastic_patternfly import (
 )
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import WidgetasticTaggable, PolicyProfileAssignable
+from cfme.common import TagPageView, WidgetasticTaggable, PolicyProfileAssignable
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
@@ -148,14 +148,22 @@ class StorageManager(BaseEntity, WidgetasticTaggable, PolicyProfileAssignable):
                 self.storage_title)
             view.flash.assert_success_message(msg)
 
-    def delete(self, wait=True):
+    def delete(self):
         """Delete storage manager"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select(
-            'Remove this {}'.format(self.storage_title), handle_alert=True)
+            'Remove this {} from Inventory'.format(self.storage_title), handle_alert=True)
 
-        msg = "Delete initiated for 1 {} from the CFME Database".format(self.storage_title)
-        view.flash.assert_success_message(msg)
+        view = self.create_view(StorageManagerDetailsView)
+        view.flash.assert_no_error()
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+            return True
+        except ItemNotFound:
+            return False
 
 
 @attr.s
@@ -196,3 +204,13 @@ class StorageManagerDetails(CFMENavigateStep):
             row.click()
         except NoSuchElementException:
             raise ItemNotFound('Could not locate {}'.format(self.obj.name))
+
+
+@navigator.register(StorageManager, 'EditTagsFromDetails')
+class StorageManagerDetailEditTag(CFMENavigateStep):
+    """ This navigation destination help to WidgetasticTaggable"""
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
