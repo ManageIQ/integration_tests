@@ -21,6 +21,7 @@ from cfme.exceptions import VolumeNotFoundError, ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
+from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for, TimedOutError
 
 
@@ -160,7 +161,7 @@ class VolumeSnapshotView(VolumeView):
 
 
 @attr.s
-class Volume(BaseEntity):
+class Volume(BaseEntity, Updateable):
 
     name = attr.ib()
     provider = attr.ib()
