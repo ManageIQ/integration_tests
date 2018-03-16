@@ -2179,16 +2179,18 @@ class IPAppliance(object):
                                 username='root', password=None):
         """Sets up rubyrep replication via advanced configuration settings yaml."""
         password = password or self._encrypt_string(conf.credentials['ssh']['password'])
-        dest = {'workers': {'worker_base': {'replication_worker': {'replication': {
+        yaml_data = {'workers': {'worker_base': {'replication_worker': {'replication': {
             'destination': {}}}}}
         }
+        dest = yaml_data['workers']['worker_base']['replication_worker']['replication'][
+            'destination']
         dest['database'] = database
         dest['username'] = username
         dest['password'] = password
         dest['port'] = port
         dest['host'] = host
-        logger.debug('Dest: {}'.format(dest))
-        self.set_yaml_config(dest)
+        logger.debug('Dest: {}'.format(yaml_data))
+        self.set_yaml_config(yaml_data)
 
     def wait_for_miq_server_workers_started(self, evm_tail=None, poll_interval=5):
         """Waits for the CFME's workers to be started by tailing evm.log for:
