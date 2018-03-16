@@ -57,8 +57,8 @@ class ScheduleAddEditEntities(View):
     run_timer = BootstrapSelect("timer_typ")
     time_zone = BootstrapSelect("time_zone")
     starting_date = Calendar("start_date")
-    hour = BootstrapSelect("start_hour")
-    minute = BootstrapSelect("start_min")
+    start_hour = BootstrapSelect("start_hour")
+    start_min = BootstrapSelect("start_min")
     # Buttons
     cancel_button = Button("Cancel")
 
@@ -66,7 +66,7 @@ class ScheduleAddEditEntities(View):
 class ScheduleAllView(ConfigurationView):
     """ Shedule All view on the shedule configuration page"""
     toolbar = View.nested(ScheduleToolbar)
-    table = Table(locator="//div[@id='records_div' or @id='main_div']//table")
+    table = Table('//div[@id="main_div"]//table')
     paginator = PaginationPane()
 
     @property
@@ -239,8 +239,8 @@ class SystemSchedule(BaseEntity, Updateable, Pretty):
     def select(self):
         """ Select the checkbox for current schedule """
         view = navigate_to(self.parent, 'All')
-        row = view.find_row_on_pages(view.table, name=self.name)
-        row.check()
+        row = view.table.row(name=self.name)
+        row[0].check()
         return view
 
     @property

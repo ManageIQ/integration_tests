@@ -1,5 +1,7 @@
 import fauxfactory
 import pytest
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from widgetastic_patternfly import NoSuchElementException
 
 from cfme import test_requirements
@@ -9,6 +11,8 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm import VM, Template
 from cfme.common.provider import cleanup_vm
 from cfme.common.vm_views import DriftAnalysis
+from cfme.configure import configuration
+from cfme.configure.tasks import is_vm_analysis_finished, TasksView
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.host import Host
@@ -282,6 +286,41 @@ def detect_system_type(vm):
         return WINDOWS
 
 
+@pytest.fixture(scope="module")
+def schedule_ssa(appliance, ssa_vm, ssa_profile, wait_for_task_result=True):
+    dt = datetime.utcnow()
+    delta_min = 5 - (dt.minute % 5)
+    if delta_min < 3:  # If the schedule would be set to run in less than 2mins
+        delta_min += 5  # Pad with 5 minutes
+    dt += relativedelta(minutes=delta_min)
+    # Extract Hour and Minute in string format
+    hour = dt.strftime('%-H')
+    minute = dt.strftime('%-M')
+    schedule_args = {
+        'name': 'test_ssa_schedule{}'.format(fauxfactory.gen_alpha()),
+        'description': 'Testing SSA via Schedule',
+        'active': True,
+        'filter_level1': 'A single VM',
+        'filter_level2': ssa_vm.name,
+        'run_type': "Once",
+        'run_every': None,
+        'time_zone': "(GMT+00:00) UTC",
+        'start_hour': hour,
+        'start_min': minute
+    }
+    ss = appliance.collections.system_schedules.create(**schedule_args)
+    ss.enable()
+    if wait_for_task_result:
+        view = appliance.browser.create_view(TasksView)
+        wait_for(
+            is_vm_analysis_finished,
+            func_args=[ssa_vm.name],
+            delay=5, timeout="15m",
+            fail_func=view.reload.click
+        )
+    return ss
+
+
 @pytest.mark.tier(1)
 @pytest.mark.long_running
 def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_provisioning_data,
@@ -333,6 +372,75 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
 @pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+@pytest.mark.long_running
+def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, appliance):
+    """ Tests SSA can be performed and returns sane results
+
+    Metadata:
+        test_flag: vm_analysis
+    """
+    e_users = None
+    e_groups = None
+    e_packages = None
+    e_services = None
+    e_os_type = ssa_vm.system_type['os_type']
+
+    if ssa_vm.system_type != WINDOWS:
+        e_users = ssa_vm.ssh.run_command("cat /etc/passwd | wc -l").output.strip('\n')
+        e_groups = ssa_vm.ssh.run_command("cat /etc/group | wc -l").output.strip('\n')
+        e_packages = ssa_vm.ssh.run_command(
+            ssa_vm.system_type['package-number']).output.strip('\n')
+        e_services = ssa_vm.ssh.run_command(
+            ssa_vm.system_type['services-number']).output.strip('\n')
+
+    logger.info("Expecting to have %s users, %s groups, %s packages and %s services", e_users,
+                e_groups, e_packages, e_services)
+    # Check release and quadicon
+    quadicon_os_icon = ssa_vm.find_quadicon().data['os']
+    view = navigate_to(ssa_vm, 'Details')
+    details_os_icon = view.entities.summary('Properties').get_text_of('Operating System')
+    logger.info("Icons: %s, %s", details_os_icon, quadicon_os_icon)
+    c_lastanalyzed = ssa_vm.last_analysed
+    c_users = view.entities.summary('Security').get_text_of('Users')
+    c_groups = view.entities.summary('Security').get_text_of('Groups')
+    c_packages = 0
+    c_services = 0
+    if ssa_vm.system_type != WINDOWS:
+        c_packages = view.entities.summary('Configuration').get_text_of('Packages')
+        c_services = view.entities.summary('Configuration').get_text_of('Init Processes')
+
+    logger.info("SSA shows %s users, %s groups %s packages and %s services", c_users, c_groups,
+                c_packages, c_services)
+
+    soft_assert(c_lastanalyzed != 'Never', "Last Analyzed is set to Never")
+    soft_assert(e_os_type in details_os_icon.lower(),
+                "details icon: '{}' not in '{}'".format(e_os_type, details_os_icon))
+    soft_assert(e_os_type in quadicon_os_icon.lower(),
+                "quad icon: '{}' not in '{}'".format(e_os_type, quadicon_os_icon))
+
+    if ssa_vm.system_type != WINDOWS:
+        soft_assert(c_users == e_users, "users: '{}' != '{}'".format(c_users, e_users))
+        soft_assert(c_groups == e_groups, "groups: '{}' != '{}'".format(c_groups, e_groups))
+        soft_assert(c_packages == e_packages, "packages: '{}' != '{}'".format(c_packages,
+                                                                      e_packages))
+        soft_assert(c_services == e_services,
+                    "services: '{}' != '{}'".format(c_services, e_services))
+    else:
+        # Make sure windows-specific data is not empty
+        c_patches = view.entities.summary('Security').get_text_of('Patches')
+        c_applications = view.entities.summary('Configuration').get_text_of('Applications')
+        c_win32_services = view.entities.summary('Configuration').get_text_of('Win32 Services')
+        c_kernel_drivers = view.entities.summary('Configuration').get_text_of('Kernel Drivers')
+        c_fs_drivers = view.entities.summary('Configuration').get_text_of('File System Drivers')
+
+        soft_assert(c_patches != '0', "patches: '{}' != '0'".format(c_patches))
+        soft_assert(c_applications != '0', "applications: '{}' != '0'".format(c_applications))
+        soft_assert(c_win32_services != '0', "win32 services: '{}' != '0'".format(c_win32_services))
+        soft_assert(c_kernel_drivers != '0', "kernel drivers: '{}' != '0'".format(c_kernel_drivers))
+        soft_assert(c_fs_drivers != '0', "fs drivers: '{}' != '0'".format(c_fs_drivers))
+
+
+@pytest.mark.tier(2)
 @pytest.mark.long_running
 def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profile):
     """ Tests SSA can be performed and returns sane results
