@@ -230,7 +230,7 @@ def retire(self):
 
 
 @MiqImplementationContext.external_for(MyService.service_power, ViaSSUI)
-def service_power(self, power=None, status=None):
+def service_power(self, power=None):
     view = navigate_to(self, 'Details', wait_for_view=True)
     view.power_operations.item_select(power)
     view = self.create_view(DetailsMyServiceView)

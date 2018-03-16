@@ -66,12 +66,12 @@ def test_service_start(appliance, setup_provider, context,
         my_service = MyService(appliance, catalog_item.name)
         if provider.one_of(InfraProvider):
             # For Infra providers vm is provisioned.Hence Stop option is shown
-            my_service.service_power(power='Stop', status='stopped')
+            my_service.service_power(power='Stop')
             view = my_service.create_view(DetailsMyServiceView)
             view.notification.assert_message(
                 "{} was {}.".format(catalog_item.name, 'stopped'))
         else:
-            my_service.service_power(power='Start', status='started')
+            my_service.service_power(power='Start')
             view = my_service.create_view(DetailsMyServiceView)
             view.notification.assert_message(
                 "{} was {}.".format(catalog_item.name, 'started'))
