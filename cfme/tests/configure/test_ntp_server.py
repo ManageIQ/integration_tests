@@ -1,14 +1,14 @@
+from datetime import datetime, timedelta
 from functools import partial
 
+import fauxfactory
+import pytest
+
 from cfme import test_requirements
-from datetime import datetime, timedelta
 from cfme.utils.browser import quit
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-import fauxfactory
-import pytest
-
 
 pytestmark = [test_requirements.configuration]
 
@@ -112,12 +112,12 @@ def test_ntp_server_check(request, appliance, ntp_servers_keys, empty_ntp_dict):
         appliance.server.settings.update_ntp_servers(dict(zip(
             ntp_servers_keys, [ntp_server for ntp_server in cfme_data['clock_servers']])))
         yaml_config = appliance.get_yaml_config()
-        ntp = yaml_config.get("ntp")
-        if not ntp:
-            yaml_config["ntp"] = {}
+        ntp_updates = yaml_config.get("ntp")
+        if not ntp_updates:
+            ntp_updates = {"ntp": {}}
         # adding the ntp interval to 1 minute and updating the configuration
-        yaml_config["ntp"]["interval"] = '1.minutes'
-        appliance.set_yaml_config(yaml_config)
+        ntp_updates["ntp"]["interval"] = '1.minutes'
+        appliance.set_yaml_config(ntp_updates)
         # restarting the evmserverd for NTP to work
         appliance.restart_evm_service(rude=True)
         appliance.wait_for_web_ui(timeout=1200)

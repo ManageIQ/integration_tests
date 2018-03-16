@@ -1,9 +1,11 @@
 """Functions that performance tests use."""
-from fixtures.pytest_store import store
-from cfme.utils.ssh import SSHClient, SSHTail
-from cfme.utils.log import logger
-import numpy
 import time
+
+import numpy
+
+from cfme.utils.log import logger
+from cfme.utils.ssh import SSHClient, SSHTail
+from fixtures.pytest_store import store
 
 
 def collect_log(ssh_client, log_prefix, local_file_name, strip_whitespace=False):
@@ -101,8 +103,8 @@ def set_rails_loglevel(level, validate_against_worker='MiqUiWorker'):
         evm_tail = SSHTail('/var/www/miq/vmdb/log/evm.log')
         evm_tail.set_initial_file_end()
 
-        yaml['log']['level_rails'] = level
-        store.current_appliance.set_yaml_config(yaml)
+        yaml_data = {'log': {'level_rails': level}}
+        store.current_appliance.set_yaml_config(yaml_data)
 
         attempts = 0
         detected = False

@@ -4,6 +4,7 @@ import socket
 import traceback
 from copy import copy
 from datetime import datetime
+from tempfile import NamedTemporaryFile
 from textwrap import dedent
 from time import sleep, time
 
@@ -25,6 +26,7 @@ from werkzeug.local import LocalStack, LocalProxy
 
 from cfme.utils import clear_property_cache
 from cfme.utils import conf, ssh, ports
+from cfme.utils.datafile import load_data_file
 from cfme.utils.log import logger, create_sublogger, logger_wrap
 from cfme.utils.net import net_check
 from cfme.utils.path import data_path, patches_path, scripts_path, conf_path
@@ -1688,8 +1690,7 @@ class IPAppliance(object):
             ssh.run_command('ldconfig')
 
             log_callback('Modifying YAML configuration')
-            c_yaml = self.get_yaml_config()
-            c_yaml['product']['storage'] = True
+            c_yaml = {'product': {'storage': True}}
             self.set_yaml_config(c_yaml)
 
             # To mark that we installed netapp
@@ -1915,9 +1916,10 @@ class IPAppliance(object):
             AssertionError - when the disabled regions don't match after setting
             ApplianceException - when there's a KeyError modifying the yaml
         """
-        yaml_conf = self.get_yaml_config()
         try:
-            yaml_conf['ems'][getattr(provider, 'settings_key', None)]['disabled_regions'] = regions
+            yaml_conf = {
+                'ems': {getattr(provider, 'settings_key', None): {'disabled_regions': regions}}
+            }
         except KeyError:
             # catches not-found settings_key or 'None' when the provider doesn't have it
             raise ApplianceException('Provider %s settings_key attribute not set '
@@ -1965,9 +1967,10 @@ class IPAppliance(object):
         ansible_new = roles.get('embedded_ansible', False)
         enabling_ansible = ansible_old is False and ansible_new is True
 
-        yaml = self.get_yaml_config()
-        yaml['server']['role'] = ','.join([role for role, boolean in roles.items() if boolean])
-        self.set_yaml_config(yaml)
+        yaml_data = {
+            'server': {'role': ','.join([role for role, boolean in roles.items() if boolean])}
+        }
+        self.set_yaml_config(yaml_data)
         timeout = 600 if enabling_ansible else 300
         wait_for(lambda: self.server_roles == roles, num_sec=timeout, delay=15)
         if enabling_ansible:
@@ -2063,9 +2066,32 @@ class IPAppliance(object):
             ApplianceException when server_id isn't set
         """
         # Can only modify through server ID, raise if that's not set yet
-        if self.server_id() is None:
-            raise ApplianceException('No server id is set, cannot modify yaml config via REST')
-        return self.server.set_yaml_config(data_dict)
+        if self.version < '5.9':
+            data_dict_base = self.get_yaml_config()
+            data_dict_base.update(data_dict)
+
+            temp_yaml = NamedTemporaryFile()
+            dest_yaml = '/tmp/conf.yaml'
+            yaml.dump(data_dict_base, temp_yaml, default_flow_style=False)
+            self.ssh_client.put_file(temp_yaml.name, dest_yaml)
+            # Build and send ruby script
+            dest_ruby = '/tmp/set_conf.rb'
+
+            ruby_template = data_path.join('utils', 'cfmedb_set_config.rbt')
+            ruby_replacements = {
+                'config_file': dest_yaml
+            }
+            temp_ruby = load_data_file(ruby_template.strpath, ruby_replacements)
+            self.ssh_client.put_file(temp_ruby.name, dest_ruby)
+
+            # Run it
+            result = self.ssh_client.run_rails_command(dest_ruby)
+            if not result:
+                raise Exception('Unable to set config: {!r}:{!r}'.format(result.rc, result.output))
+        else:
+            if self.server_id() is None:
+                raise ApplianceException('No server id is set, cannot modify yaml config via REST')
+            return self.server.set_yaml_config(data_dict)
 
     def set_session_timeout(self, timeout=86400, quiet=True):
         """Sets the timeout of UI timeout.
@@ -2077,8 +2103,8 @@ class IPAppliance(object):
         try:
             vmdb_config = self.get_yaml_config()
             if vmdb_config["session"]["timeout"] != timeout:
-                vmdb_config["session"]["timeout"] = timeout
-                self.set_yaml_config(vmdb_config)
+                yaml_data = {"session": {"timeout": timeout}}
+                self.set_yaml_config(yaml_data)
         except Exception as ex:
             logger.error('Setting session timeout failed:')
             logger.exception(ex)
@@ -2112,9 +2138,8 @@ class IPAppliance(object):
         logger.debug('Cleaned appliance in: {}'.format(round(time() - starttime, 2)))
 
     def set_full_refresh_threshold(self, threshold=100):
-        yaml = self.get_yaml_config()
-        yaml['ems_refresh']['full_refresh_threshold'] = threshold
-        self.set_yaml_config(yaml)
+        yaml_data = {'ems_refresh': {'full_refresh_threshold': threshold}}
+        self.set_yaml_config(yaml_data)
 
     def set_cap_and_util_all_via_rails(self):
         """Turns on Collect for All Clusters and Collect for all Datastores without using Web UI."""
@@ -2154,25 +2179,16 @@ class IPAppliance(object):
                                 username='root', password=None):
         """Sets up rubyrep replication via advanced configuration settings yaml."""
         password = password or self._encrypt_string(conf.credentials['ssh']['password'])
-        yaml = self.get_yaml_config()
-        if 'replication_worker' in yaml['workers']['worker_base']:
-            dest = yaml['workers']['worker_base']['replication_worker']['replication'][
-                'destination']
-            dest['database'] = database
-            dest['username'] = username
-            dest['password'] = password
-            dest['port'] = port
-            dest['host'] = host
-        else:  # 5.5 configuration:
-            dest = yaml['workers']['worker_base'][':replication_worker'][':replication'][
-                ':destination']
-            dest[':database'] = database
-            dest[':username'] = username
-            dest[':password'] = password
-            dest[':port'] = port
-            dest[':host'] = host
-            logger.debug('Dest: {}'.format(dest))
-        self.set_yaml_config(yaml)
+        dest = {'workers': {'worker_base': {'replication_worker': {'replication': {
+            'destination': {}}}}}
+        }
+        dest['database'] = database
+        dest['username'] = username
+        dest['password'] = password
+        dest['port'] = port
+        dest['host'] = host
+        logger.debug('Dest: {}'.format(dest))
+        self.set_yaml_config(dest)
 
     def wait_for_miq_server_workers_started(self, evm_tail=None, poll_interval=5):
         """Waits for the CFME's workers to be started by tailing evm.log for:
@@ -2540,8 +2556,7 @@ class Appliance(IPAppliance):
             Database must be up and running and evm service must be (re)started afterwards
             for the name change to take effect.
         """
-        vmdb_config = self.get_yaml_config()
-        vmdb_config['server']['name'] = new_name
+        vmdb_config = {'server': {'name': new_name}}
         self.set_yaml_config(vmdb_config)
         self.name = new_name
 
