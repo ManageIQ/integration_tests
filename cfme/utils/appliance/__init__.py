@@ -1728,27 +1728,38 @@ class IPAppliance(object):
                  num_sec=timeout)
 
     @property
+    def _ansible_pod_name(self):
+        if self.is_pod:
+            get_ansible_name = "basename $(oc get pods -lname=ansible -o name)"
+            return str(self.ssh_client.run_command(get_ansible_name, ensure_host=True)).strip()
+        else:
+            return None
+
+    @property
     def is_supervisord_running(self):
-        output = self.ssh_client.run_command("systemctl status supervisord")
+        output = self.ssh_client.run_command("systemctl status supervisord",
+                                             container=self._ansible_pod_name)
         return output.success
 
     @property
     def is_nginx_running(self):
-        output = self.ssh_client.run_command("systemctl status nginx")
+        output = self.ssh_client.run_command("systemctl status nginx",
+                                             container=self._ansible_pod_name)
         return output.success
 
     @property
     def is_rabbitmq_running(self):
-        output = self.ssh_client.run_command("systemctl status rabbitmq-server")
+        output = self.ssh_client.run_command("systemctl status rabbitmq-server",
+                                             container=self._ansible_pod_name)
         return output.success
 
     @property
-    def is_embedded_ensible_role_enabled(self):
+    def is_embedded_ansible_role_enabled(self):
         return self.server_roles.get("embedded_ansible", False)
 
     @property
     def is_embedded_ansible_running(self):
-        return self.is_embedded_ensible_role_enabled and self.is_supervisord_running
+        return self.is_embedded_ansible_role_enabled and self.is_supervisord_running
 
     def wait_for_embedded_ansible(self, timeout=900):
         """Waits for embedded ansible to be ready
