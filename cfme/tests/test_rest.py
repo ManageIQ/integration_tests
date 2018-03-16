@@ -110,6 +110,34 @@ def test_query_simple_collections(appliance, collection_name):
 
 
 @pytest.mark.tier(3)
+@pytest.mark.parametrize('collection_name', COLLECTIONS_ALL)
+@pytest.mark.uncollectif(
+    lambda appliance, collection_name:
+        (collection_name in COLLECTIONS_OMMITED) or
+        (collection_name in COLLECTIONS_REMOVED_IN_59 and appliance.version >= '5.9')
+)
+def test_collections_actions(appliance, collection_name):
+    """Tests that there are only actions with POST methods in collections.
+
+    Other methods (like DELETE) are allowed for individual resources inside collections,
+    not in collections itself.
+
+    Testing BZ 1392595
+
+    Metadata:
+        test_flag: rest
+    """
+    collection_href = '{}/{}'.format(appliance.rest_api._entry_point, collection_name)
+    response = appliance.rest_api.get(collection_href)
+    actions = response.get('actions')
+    if not actions:
+        # nothing to test in this collection
+        return
+    for action in actions:
+        assert action['method'].lower() == 'post'
+
+
+@pytest.mark.tier(3)
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
     lambda appliance, collection_name:
