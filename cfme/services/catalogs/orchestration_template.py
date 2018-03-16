@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
+import attr
+
 from widgetastic.widget import Text, Checkbox
 from widgetastic_patternfly import BootstrapSelect, Button, CandidateNotFound, Input
 from widgetastic_manageiq import ScriptBox, Table, PaginationPane
 from navmazing import NavigateToAttribute, NavigateToSibling
+
 from cfme.common import WidgetasticTaggable
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-
 
 from . import ServicesCatalogView
 
@@ -125,38 +127,17 @@ class AddDialogView(DialogForm):
         )
 
 
-class OrchestrationTemplate(Updateable, Pretty, Navigatable, WidgetasticTaggable):
+@attr.s
+class OrchestrationTemplate(BaseEntity, Updateable, Pretty, WidgetasticTaggable):
 
-    def __init__(self, template_type=None, template_name=None, description=None,
-                 draft=None, content=None, appliance=None):
-        Navigatable.__init__(self, appliance)
-        self.template_type = template_type
-        self.template_name = template_name
-        self.description = description
-        self.draft = draft
-        self.content = content
-
-    def create(self, content):
-        view = navigate_to(self, "AddTemplate")
-        if self.template_type == "CloudFormation Templates":
-            temp_type = "Amazon CloudFormation"
-        elif self.template_type == "Heat Templates":
-            temp_type = "OpenStack Heat"
-        elif self.template_type == "Azure Templates":
-            temp_type = "Microsoft Azure"
-        else:
-            raise Exception("ERROR template_type needs to be one of the above")
-        view.fill({'name': self.template_name,
-                   'description': self.description,
-                   'template_type': temp_type,
-                   'content': content})
-        view.add_button.click()
-        view = self.create_view(DetailsTemplateView)
-        view.flash.assert_success_message('Orchestration Template '
-                                          '"{}" was saved'.format(self.template_name))
+    template_type = attr.ib()
+    template_name = attr.ib()
+    content = attr.ib()
+    description = attr.ib(default=None)
+    draft = attr.ib(default=None)
 
     def update(self, updates):
-        view = navigate_to(self, "Edit")
+        view = navigate_to(self, 'Edit')
         view.fill({'description': updates.get('description'),
                    'name': updates.get('template_name'),
                    'draft': updates.get('draft'),
@@ -166,7 +147,7 @@ class OrchestrationTemplate(Updateable, Pretty, Navigatable, WidgetasticTaggable
             self.template_name))
 
     def delete(self):
-        view = navigate_to(self, "Details")
+        view = navigate_to(self, 'Details')
         msg = "Remove this Orchestration Template"
         if self.appliance.version >= '5.9':
             msg = '{} from Inventory'.format(msg)
@@ -175,12 +156,12 @@ class OrchestrationTemplate(Updateable, Pretty, Navigatable, WidgetasticTaggable
             self.template_name))
 
     def delete_all_templates(self):
-        view = navigate_to(self, "TemplateType")
+        view = navigate_to(self, 'TemplateType')
         view.paginator.check_all()
         view.configuration.item_select("Remove selected Orchestration Templates", handle_alert=True)
 
     def copy_template(self, template_name, content, draft=None, description=None):
-        view = navigate_to(self, "CopyTemplate")
+        view = navigate_to(self, 'CopyTemplate')
         view.fill({'name': template_name,
                    'content': content,
                    'draft': draft,
@@ -191,7 +172,7 @@ class OrchestrationTemplate(Updateable, Pretty, Navigatable, WidgetasticTaggable
             template_name))
 
     def create_service_dialog_from_template(self, dialog_name, template_name):
-        view = navigate_to(self, "AddDialog")
+        view = navigate_to(self, 'AddDialog')
         view.fill({'name': dialog_name})
         view.add_button.click()
         view.flash.assert_success_message('Service Dialog "{}" was successfully created'.format(
@@ -207,7 +188,30 @@ class OrchestrationTemplate(Updateable, Pretty, Navigatable, WidgetasticTaggable
             return False
 
 
-@navigator.register(OrchestrationTemplate, 'All')
+@attr.s
+class OrchestrationTemplatesCollection(BaseCollection):
+    """A collection for the :py:class:`cfme.services.catalogs.orchestration_template`"""
+    ENTITY = OrchestrationTemplate
+
+    def create(self, template_name, description, template_type,
+               temp_type, draft=None, content=None):
+        self.template_type = template_type
+        view = navigate_to(self, 'AddTemplate')
+        view.fill({'name': template_name,
+                   'description': description,
+                   'template_type': temp_type,
+                   'draft': draft,
+                   'content': content})
+        view.add_button.click()
+        template = self.instantiate(template_type=template_type, description=description,
+                                    template_name=template_name, content=content, draft=draft)
+        view = self.create_view(DetailsTemplateView)
+        view.flash.assert_success_message('Orchestration Template '
+                                          '"{}" was saved'.format(template_name))
+        return template
+
+
+@navigator.register(OrchestrationTemplatesCollection)
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
@@ -221,21 +225,22 @@ class All(CFMENavigateStep):
         return self.view.is_displayed
 
 
-@navigator.register(OrchestrationTemplate, 'Details')
+@navigator.register(OrchestrationTemplate)
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     VIEW = DetailsTemplateView
 
     def step(self):
         self.view.orchestration_templates.tree.click_path("All Orchestration Templates",
-                                                    self.obj.template_type, self.obj.template_name)
+                                                          self.obj.template_type,
+                                                          self.obj.template_name)
 
     def am_i_here(self, *args, **kwargs):
         return self.view.is_displayed
 
 
-@navigator.register(OrchestrationTemplate, 'TemplateType')
+@navigator.register(OrchestrationTemplatesCollection)
 class TemplateType(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -246,7 +251,7 @@ class TemplateType(CFMENavigateStep):
                                                           self.obj.template_type)
 
 
-@navigator.register(OrchestrationTemplate, 'AddDialog')
+@navigator.register(OrchestrationTemplate)
 class AddDialog(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
@@ -257,8 +262,8 @@ class AddDialog(CFMENavigateStep):
         self.view.toolbar.configuration.item_select(item_name)
 
 
-@navigator.register(OrchestrationTemplate, 'Edit')
-class EditTemplate(CFMENavigateStep):
+@navigator.register(OrchestrationTemplate)
+class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     VIEW = EditTemplateView
@@ -267,7 +272,7 @@ class EditTemplate(CFMENavigateStep):
         self.view.toolbar.configuration.item_select("Edit this Orchestration Template")
 
 
-@navigator.register(OrchestrationTemplate, 'AddTemplate')
+@navigator.register(OrchestrationTemplatesCollection)
 class AddTemplate(CFMENavigateStep):
     prerequisite = NavigateToSibling('TemplateType')
 
@@ -277,7 +282,7 @@ class AddTemplate(CFMENavigateStep):
         self.view.toolbar.configuration.item_select("Create new Orchestration Template")
 
 
-@navigator.register(OrchestrationTemplate, 'CopyTemplate')
+@navigator.register(OrchestrationTemplate)
 class CopyTemplate(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
