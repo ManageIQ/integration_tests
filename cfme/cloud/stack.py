@@ -5,7 +5,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Button, Dropdown, BootstrapNav
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import WidgetasticTaggable
+from cfme.common import Taggable
 from cfme.exceptions import CandidateNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
@@ -224,7 +224,7 @@ class StackResourcesView(StackView):
 
 
 @attr.s
-class Stack(Pretty, BaseEntity, WidgetasticTaggable):
+class Stack(Pretty, BaseEntity, Taggable):
     _param_name = "Stack"
     pretty_attrs = ['name']
 

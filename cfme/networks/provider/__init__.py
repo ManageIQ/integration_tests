@@ -4,7 +4,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 
 from cfme.exceptions import DestinationNotFound
-from cfme.common import WidgetasticTaggable
+from cfme.common import Taggable
 from cfme.common.provider import BaseProvider
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.networks.balancer import BalancerCollection
@@ -31,7 +31,7 @@ from cfme.utils.log import logger
 
 
 @attr.s(hash=False)
-class NetworkProvider(BaseProvider, WidgetasticTaggable, BaseEntity):
+class NetworkProvider(BaseProvider, Taggable, BaseEntity):
     """ Class representing network provider in sdn
 
     Note: Network provider can be added to cfme database

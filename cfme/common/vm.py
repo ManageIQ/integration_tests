@@ -4,7 +4,7 @@ from datetime import datetime, date, timedelta
 from wrapanapi import exceptions
 
 from cfme.infrastructure.provider import InfraProvider
-from cfme.common import WidgetasticTaggable
+from cfme.common import Taggable
 from cfme.common.vm_console import VMConsole
 from cfme.common.vm_views import DriftAnalysis, DriftHistory, VMPropertyDetailView
 from cfme.configure.tasks import is_vm_analysis_finished, TasksView
@@ -51,7 +51,7 @@ class _TemplateMixin(object):
     pass
 
 
-class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable, Navigatable):
+class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, Navigatable):
     """Base VM and Template class that holds the largest common functionality between VMs,
     instances, templates and images.
 

@@ -10,7 +10,7 @@ from widgetastic.widget import Text
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
                                       GetRandomInstancesMixin)
-from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.common import Taggable, TagPageView
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from cfme.utils.providers import get_crud_by_name
@@ -45,7 +45,7 @@ class ContainerDetailsView(ContainerObjectDetailsBaseView):
 
 
 @attr.s
-class Container(BaseEntity, WidgetasticTaggable, Labelable):
+class Container(BaseEntity, Taggable, Labelable):
     """Container Class"""
     PLURAL = 'Containers'
     all_view = ContainerAllView

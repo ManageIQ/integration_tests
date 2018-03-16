@@ -8,7 +8,7 @@ from selenium.common.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick
 
 from cfme.base.credential import Credential as BaseCredential
-from cfme.common import PolicyProfileAssignable, WidgetasticTaggable
+from cfme.common import PolicyProfileAssignable, Taggable
 from cfme.common.host_views import (
     HostAddView,
     HostDetailsView,
@@ -34,7 +34,7 @@ from cfme.utils.wait import wait_for
 
 
 @attr.s
-class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticTaggable):
+class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
     """Model of an infrastructure host in cfme.
 
     Args:

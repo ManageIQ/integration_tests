@@ -4,7 +4,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_patternfly import Dropdown, Button, View
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import WidgetasticTaggable
+from cfme.common import Taggable
 from cfme.exceptions import FlavorNotFound, ItemNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
@@ -95,7 +95,7 @@ class FlavorDetailsView(FlavorView):
     entities = FlavorDetailsEntities()
 
 
-class Flavor(WidgetasticTaggable, Navigatable):
+class Flavor(Taggable, Navigatable):
     """
     Flavor class to support navigation
     """

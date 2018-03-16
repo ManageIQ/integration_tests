@@ -7,7 +7,7 @@ from widgetastic_patternfly import Button, Input
 
 from cfme.base.credential import (
     Credential, EventsCredential, TokenCredential, SSHCredential, CANDUCredential)
-from cfme.common import WidgetasticTaggable
+from cfme.common import Taggable
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, AddProviderError)
 from cfme.utils import ParamClassName, version, conf
@@ -50,7 +50,7 @@ def provider_db_mapping():
     return {v.db_types[0]: v for k, v in all_types().items()}
 
 
-class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
+class BaseProvider(Taggable, Updateable, Navigatable):
     # List of constants that every non-abstract subclass must have defined
     _param_name = ParamClassName('name')
     STATS_TO_MATCH = []
@@ -987,7 +987,7 @@ class BaseProvider(WidgetasticTaggable, Updateable, Navigatable):
         return result_list
 
 
-class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, WidgetasticTaggable):
+class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, Taggable):
     vm_name = ""
     template_name = ""
     detail_page_suffix = 'provider'

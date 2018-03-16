@@ -6,7 +6,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Button, Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import WidgetasticTaggable
+from cfme.common import Taggable
 from cfme.exceptions import ResourcePoolNotFound, ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -100,7 +100,7 @@ class ResourcePoolDetailsView(ResourcePoolView):
 
 
 @attr.s
-class ResourcePool(Pretty, BaseEntity, WidgetasticTaggable):
+class ResourcePool(Pretty, BaseEntity, Taggable):
     """ Model of an infrastructure Resource pool in cfme
 
     Args:

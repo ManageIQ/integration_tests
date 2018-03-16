@@ -7,7 +7,7 @@ from widgetastic.utils import VersionPick, Version
 from widgetastic_patternfly import Dropdown, Button
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import WidgetasticTaggable
+from cfme.common import Taggable
 from cfme.exceptions import KeyPairNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
@@ -111,7 +111,7 @@ class KeyPairAddView(KeyPairView):
 
 
 @attr.s
-class KeyPair(BaseEntity, WidgetasticTaggable):
+class KeyPair(BaseEntity, Taggable):
     """ Automate Model page of KeyPairs
 
     Args:

@@ -5,7 +5,7 @@ from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
 from wrapanapi.containers.project import Project as ApiProject
 
-from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.common import Taggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
                                       GetRandomInstancesMixin)
@@ -23,7 +23,7 @@ class ProjectDetailsView(ContainerObjectDetailsBaseView):
 
 
 @attr.s
-class Project(BaseEntity, WidgetasticTaggable, Labelable):
+class Project(BaseEntity, Taggable, Labelable):
 
     PLURAL = 'Projects'
     all_view = ProjectAllView

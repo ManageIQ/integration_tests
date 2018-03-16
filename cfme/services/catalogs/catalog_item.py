@@ -7,7 +7,7 @@ from widgetastic.widget import Text, Checkbox, View
 from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound, Tab
 from widgetastic.utils import VersionPick, Version
 
-from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.common import Taggable, TagPageView
 from cfme.common.vm_views import BasicProvisionFormView
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -201,7 +201,7 @@ class EditCatalogBundleView(CatalogBundleFormView):
             self.title.text == 'Editing Catalog Bundle "{}"'.format(self.obj.name)
 
 
-class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
+class CatalogItem(Updateable, Pretty, Navigatable, Taggable):
 
     BUTTON_ICON_NAME = VersionPick({Version.lowest(): "Button Image 1",
                                     '5.9': "broom"})

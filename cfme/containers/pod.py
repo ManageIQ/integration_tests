@@ -7,7 +7,7 @@ from wrapanapi.containers.pod import Pod as ApiPod
 from widgetastic_manageiq import NestedSummaryTable, SummaryTable
 from widgetastic.widget import View
 
-from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.common import Taggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
                                       ContainerObjectDetailsEntities,
@@ -30,7 +30,7 @@ class PodDetailsView(ContainerObjectDetailsBaseView):
 
 
 @attr.s
-class Pod(BaseEntity, WidgetasticTaggable, Labelable):
+class Pod(BaseEntity, Taggable, Labelable):
     """Pod Class"""
     PLURAL = 'Pods'
     all_view = PodAllView

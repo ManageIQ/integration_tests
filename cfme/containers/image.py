@@ -5,7 +5,7 @@ from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 from wrapanapi.containers.image import Image as ApiImage
 
-from cfme.common import (WidgetasticTaggable, PolicyProfileAssignable,
+from cfme.common import (Taggable, PolicyProfileAssignable,
                          TagPageView)
 from cfme.containers.provider import (Labelable,
                                       ContainerObjectAllBaseView,
@@ -37,7 +37,7 @@ class ImageDetailsView(ContainerObjectDetailsBaseView):
 
 
 @attr.s
-class Image(BaseEntity, WidgetasticTaggable, Labelable, LoadDetailsMixin, PolicyProfileAssignable):
+class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssignable):
 
     PLURAL = 'Container Images'
     all_view = ImageAllView

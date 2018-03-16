@@ -1,7 +1,7 @@
 import attr
 from navmazing import NavigateToAttribute
 
-from cfme.common import WidgetasticTaggable
+from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.networks.views import NetworkPortDetailsView, NetworkPortView
@@ -10,7 +10,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 
 
 @attr.s
-class NetworkPort(WidgetasticTaggable, BaseEntity):
+class NetworkPort(Taggable, BaseEntity):
     """Class representing network ports in sdn"""
     in_version = ('5.8', version.LATEST)
     category = "networks"

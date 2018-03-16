@@ -7,7 +7,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Button, Dropdown
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import WidgetasticTaggable
+from cfme.common import Taggable
 from cfme.configure.tasks import is_cluster_analysis_finished, TasksView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -132,7 +132,7 @@ class ClusterTimelinesView(TimelinesView, ClusterView):
 
 
 @attr.s
-class Cluster(Pretty, BaseEntity, WidgetasticTaggable):
+class Cluster(Pretty, BaseEntity, Taggable):
     """ Model of an infrastructure cluster in cfme
 
     Args:

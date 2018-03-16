@@ -8,7 +8,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapNav, Button, Dropdown, Input
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import WidgetasticTaggable
+from cfme.common import Taggable
 from cfme.exceptions import TenantNotFound, DestinationNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
@@ -177,7 +177,7 @@ class TenantEditView(TenantView):
 
 
 @attr.s
-class Tenant(BaseEntity, WidgetasticTaggable):
+class Tenant(BaseEntity, Taggable):
     """Tenant Class
 
     """

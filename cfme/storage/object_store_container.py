@@ -14,7 +14,7 @@ from widgetastic_patternfly import Button, Dropdown
 from widgetastic.widget import View, Text, NoSuchElementException
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import TagPageView, WidgetasticTaggable
+from cfme.common import TagPageView, Taggable
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -93,7 +93,7 @@ class ObjectStoreContainerDetailsView(ObjectStoreContainerView):
 
 
 @attr.s
-class ObjectStoreContainer(BaseEntity, WidgetasticTaggable):
+class ObjectStoreContainer(BaseEntity, Taggable):
     """ Model of an Storage Object Store Containers in cfme
 
     Args:
@@ -156,7 +156,7 @@ class Details(CFMENavigateStep):
 
 @navigator.register(ObjectStoreContainer, 'EditTagsFromDetails')
 class ObjectDetailEditTag(CFMENavigateStep):
-    """ This navigation destination help to WidgetasticTaggable"""
+    """ This navigation destination help to Taggable"""
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 

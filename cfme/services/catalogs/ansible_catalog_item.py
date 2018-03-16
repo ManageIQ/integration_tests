@@ -17,7 +17,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFME
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
 from . import ServicesCatalogView
-from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.common import Taggable, TagPageView
 
 
 class BootstrapSelect(VanillaBootstrapSelect):
@@ -206,7 +206,7 @@ class DetailsEntitiesAnsibleCatalogItemView(View):
 
 
 class DetailsAnsibleCatalogItemView(ServicesCatalogView):
-    """Has to be in view standards, changed for WidgetasticTaggable.get_tags()"""
+    """Has to be in view standards, changed for Taggable.get_tags()"""
     entities = View.nested(DetailsEntitiesAnsibleCatalogItemView)
 
     @property
@@ -219,7 +219,7 @@ class DetailsAnsibleCatalogItemView(ServicesCatalogView):
         )
 
 
-class AnsiblePlaybookCatalogItem(Updateable, Navigatable, WidgetasticTaggable):
+class AnsiblePlaybookCatalogItem(Updateable, Navigatable, Taggable):
     """Represents Ansible Playbook catalog item.
 
     Example:
