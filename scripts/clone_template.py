@@ -238,17 +238,30 @@ def main(**kwargs):
             else:
                 app_args = (kwargs['provider'], deploy_args['vm_name'])
                 app_kwargs = {}
-
+                ocp_creds = cred[provider_dict['credentials']]
+                ssh_creds = cred[provider_dict['ssh_creds']]
                 if provider_type == 'openshift':
                     app_kwargs = {
                         'project': output['project'],
                         'db_host': output['external_ip'],
                         'hostname': ip,
+                        'openshift_creds': {
+                            'hostname': provider_dict['hostname'],
+                            'username': ocp_creds['username'],
+                            'password': ocp_creds['password'],
+                            'ssh': {
+                                'username': ssh_creds['username'],
+                                'password': ssh_creds['password'],
+                            },
+                        }
                     }
                 app = Appliance.from_provider(*app_args, **app_kwargs)
             if provider_type == 'gce':
                 with app as ipapp:
                     ipapp.configure_gce()
+            elif provider_type == 'openshift':
+                # openshift appliances don't need any additional configuration
+                pass
             else:
                 app.configure()
             logger.info('Successfully Configured the appliance.')
