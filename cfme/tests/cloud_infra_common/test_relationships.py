@@ -143,7 +143,7 @@ def wait_for_relationship_refresh(provider):
 
 @pytest.mark.parametrize("relationship,view", HOST_RELATIONSHIPS,
     ids=[rel[0] for rel in HOST_RELATIONSHIPS])
-@pytest.mark.provider([InfraProvider])
+@pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE)
 def test_host_relationships(appliance, provider, setup_provider, host, relationship, view):
     """Tests relationship navigation for a host"""
     host_view = navigate_to(host, "Details")
@@ -157,7 +157,7 @@ def test_host_relationships(appliance, provider, setup_provider, host, relations
 
 @pytest.mark.parametrize("relationship,view", INFRA_PROVIDER_RELATIONSHIPS,
     ids=[rel[0] for rel in INFRA_PROVIDER_RELATIONSHIPS])
-@pytest.mark.provider([InfraProvider])
+@pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE)
 def test_infra_provider_relationships(appliance, provider, setup_provider, relationship, view):
     """Tests relationship navigation for an infrastructure provider"""
     provider_view = navigate_to(provider, "Details")
@@ -170,7 +170,7 @@ def test_infra_provider_relationships(appliance, provider, setup_provider, relat
 
 @pytest.mark.parametrize("relationship,view", CLOUD_PROVIDER_RELATIONSHIPS,
     ids=[rel[0] for rel in CLOUD_PROVIDER_RELATIONSHIPS])
-@pytest.mark.provider([CloudProvider])
+@pytest.mark.provider([CloudProvider], selector=ONE_PER_TYPE)
 def test_cloud_provider_relationships(appliance, provider, setup_provider, relationship, view):
     """Tests relationship navigation for a cloud provider"""
     # Version dependent strings
