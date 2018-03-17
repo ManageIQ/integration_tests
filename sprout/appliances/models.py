@@ -884,6 +884,8 @@ class Appliance(MetadataMixin):
             cpu=self.cpu,
             created_on=apply_if_not_none(self.created_on, "isoformat"),
             modified_on=apply_if_not_none(self.modified_on, "isoformat"),
+            project=self.openshift_project,
+            db_host=self.openshift_ext_ip,
         )
 
     @property
