@@ -1,11 +1,1 @@
-appliances:
-- db_host: 10.8.218.104
-  hostname: 2g228m.ocp-sprout-01.cmqe.lab.eng.rdu2.redhat.com
-  openshift_creds:
-    hostname: infra-ocp-master-sprout-01.cmqe.lab.eng.rdu2.redhat.com
-    password: dog8code
-    ssh:
-      password: dog8code
-      username: root
-    username: admin
-  project: blablabla8
+
