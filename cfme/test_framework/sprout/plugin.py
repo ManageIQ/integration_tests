@@ -80,8 +80,27 @@ def mangle_in_sprout_appliances(config):
     appliances = config.option.appliances
     log.info("Appliances were provided:")
     for appliance in requested_appliances:
+        provider_data = conf.cfme_data['management_systems'][appliance['provider']]
         url = "https://{}/".format(appliance["ip_address"])
-        appliances.append(url)
+        appliance_args = {'hostname': url}
+        if provider_data['type'] == 'openshift':
+            ocp_creds = conf.credentials[provider_data['credentials']]
+            ssh_creds = conf.credentials[provider_data['ssh_creds']]
+            extra_args = {
+                'container': appliance['container'],
+                'db_host': appliance['db_host'],
+                'project': appliance['project'],
+                'openshift_creds': {
+                    'username': ocp_creds['username'],
+                    'password': ocp_creds['password'],
+                    'ssh': {
+                        'username': ssh_creds['username'],
+                        'password': ssh_creds['password'],
+                    }
+                }
+            }
+            appliance_args.update(extra_args)
+        appliances.append(appliance_args)
         log.info("- %s is %s", url, appliance['name'])
 
     mgr.reset_timer()

@@ -21,18 +21,18 @@ def pytest_addoption(parser):
 
 def appliances_from_cli(cli_appliances):
     appliance_config = dict(appliances=[])
-    for appliance_url in cli_appliances:
-        parsed_url = six.moves.urllib.parse.urlparse(appliance_url)
+    for appliance_data in cli_appliances:
+        parsed_url = six.moves.urllib.parse.urlparse(appliance_data['hostname'])
         if not parsed_url.hostname:
             raise ValueError(
-                "Invalid appliance url: {}".format(appliance_url)
+                "Invalid appliance url: {}".format(appliance_data)
             )
 
-        appliance = dict(
+        appliance = appliance_data.update(dict(
             hostname=parsed_url.hostname,
             ui_protocol=parsed_url.scheme if parsed_url.scheme else "https",
             ui_port=parsed_url.port if parsed_url.port else 443,
-        )
+        ))
 
         appliance_config['appliances'].append(appliance)
 
