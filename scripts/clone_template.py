@@ -279,11 +279,38 @@ def main(**kwargs):
         return 10
 
     if kwargs.get('outfile') or kwargs.get('deploy'):
+        # todo: to get rid of those scripts in jenkins or develop them from scratch
         with open(kwargs['outfile'], 'w') as outfile:
-            outfile.write("appliance_ip_address={}\n".format(ip))
+            if provider_type == 'openshift':
+                output_data = {
+                    'appliances':
+                        [
+                            {
+                                'project': output['project'],
+                                'db_host': output['external_ip'],
+                                'hostname': ip,
+                                'openshift_creds': {
+                                    'hostname': provider_dict['hostname'],
+                                    'username': ocp_creds['username'],
+                                    'password': ocp_creds['password'],
+                                    'ssh': {
+                                        'username': ssh_creds['username'],
+                                        'password': ssh_creds['password'],
+                                    }
+                                },
+                            },
+                        ],
+                }
+            else:
+                output_data = {
+                    'appliances':
+                        [{'hostname': ip}]
+                }
+            yaml_data = yaml.safe_dump(output_data, default_flow_style=False)
+            outfile.write(yaml_data)
 
-    # In addition to the outfile, drop the ip address on stdout for easy parsing
-    print(ip)
+        # In addition to the outfile, drop the ip address on stdout for easy parsing
+        print(yaml_data)
 
 
 if __name__ == "__main__":
