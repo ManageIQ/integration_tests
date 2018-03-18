@@ -36,14 +36,12 @@ def volume(appliance, provider):
         logger.warning('Exception during volume deletion - skipping..')
 
 
-@pytest.mark.meta(blockers=[BZ(1502609, forced_streams=["5.9"])])
 def test_create_volume(volume, provider):
     assert volume.exists
     assert volume.size == '{} GB'.format(VOLUME_SIZE)
     assert volume.tenant == provider.data['provisioning']['cloud_tenant']
 
 
-@pytest.mark.meta(blockers=[BZ(1502609, forced_streams=["5.9"])])
 def test_edit_volume(volume, appliance):
     new_name = fauxfactory.gen_alpha()
     volume.edit(new_name)
@@ -51,7 +49,6 @@ def test_edit_volume(volume, appliance):
     assert view.entities.get_entity(name=new_name, surf_pages=True)
 
 
-@pytest.mark.meta(blockers=[BZ(1502609, forced_streams=["5.9"])])
 def test_delete_volume(volume):
     volume.delete()
     assert not volume.exists
