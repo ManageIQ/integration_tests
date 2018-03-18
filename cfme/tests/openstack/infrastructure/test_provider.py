@@ -15,8 +15,8 @@ pytestmark = [
 def test_api_port(provider):
     view_details = navigate_to(provider, 'Details')
     port = provider.data['endpoints']['default']['api_port']
-    assert int(view_details.entities.properties.get_text_of('API Port')) == port, 'Invalid API Port'
-
+    api_port = int(view_details.entities.summary('Properties').get_text_of('API Port'))
+    assert api_port == port, 'Invalid API Port'
 
 def test_credentials_quads(provider):
     view = navigate_to(provider, 'All')
