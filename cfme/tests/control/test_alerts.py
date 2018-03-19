@@ -113,8 +113,8 @@ def vddk_url(provider):
 
 
 @pytest.yield_fixture(scope="function")
-def configure_fleecing(appliance, provider, vm, vddk_url):
-    view = navigate_to(vm, "Details")
+def configure_fleecing(appliance, provider, full_template_vm, vddk_url):
+    view = navigate_to(full_template_vm, "Details")
     host = view.entities.summary("Relationships").get_text_of("Host")
     setup_host_creds(provider, host)
     appliance.install_vddk(vddk_url=vddk_url)
