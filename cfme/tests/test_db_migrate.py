@@ -25,9 +25,6 @@ def pytest_generate_tests(metafunc):
     if not db_backups:
         pytest.skip('No db backup information available!')
     for key, data in db_backups.iteritems():
-        for key, data in db_backups.iteritems():
-            argvalues.append((data.url, data.version, data.desc))
-            idlist.append(key)
         # Once we can access the appliance in here, we can do
         # if data.version >= appliance.version or \
         #         get_stream(data.version) == get_stream(appliance.version):
