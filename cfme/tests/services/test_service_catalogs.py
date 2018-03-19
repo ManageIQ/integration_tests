@@ -18,7 +18,8 @@ from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('vm_name', 'catalog_item', 'uses_infra_providers'),
+    pytest.mark.usefixtures('setup_provider', 'vm_name',
+                            'catalog_item', 'uses_infra_providers'),
     test_requirements.service,
     pytest.mark.long_running,
     pytest.mark.provider([InfraProvider],
@@ -31,7 +32,7 @@ pytestmark = [
 
 @pytest.mark.rhv1
 @pytest.mark.tier(2)
-def test_order_catalog_item(appliance, provider, setup_provider, catalog_item, request,
+def test_order_catalog_item(appliance, provider, catalog_item, request,
                             register_event):
     """Tests order catalog item
     Metadata:
@@ -58,7 +59,7 @@ def test_order_catalog_item(appliance, provider, setup_provider, catalog_item, r
 @pytest.mark.rhv3
 @pytest.mark.tier(2)
 def test_order_catalog_item_via_rest(
-        request, appliance, provider, setup_provider, catalog_item, catalog):
+        request, appliance, provider, catalog_item, catalog):
     """Same as :py:func:`test_order_catalog_item`, but using REST.
     Metadata:
         test_flag: provision, rest
@@ -86,7 +87,7 @@ def test_order_catalog_item_via_rest(
 
 @pytest.mark.rhv3
 @pytest.mark.tier(2)
-def test_order_catalog_bundle(appliance, provider, setup_provider, catalog_item, request):
+def test_order_catalog_bundle(appliance, provider, catalog_item, request):
     """Tests ordering a catalog bundle
     Metadata:
         test_flag: provision
@@ -115,7 +116,7 @@ def test_order_catalog_bundle(appliance, provider, setup_provider, catalog_item,
 # Note here this needs to be reduced, doesn't need to test against all providers
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(3)
-def test_no_template_catalog_item(provider, provisioning, setup_provider, vm_name, dialog, catalog):
+def test_no_template_catalog_item(provider, provisioning, vm_name, dialog, catalog):
     """Tests no template catalog item
     Metadata:
         test_flag: provision
@@ -129,7 +130,7 @@ def test_no_template_catalog_item(provider, provisioning, setup_provider, vm_nam
 
 @pytest.mark.rhv3
 @pytest.mark.tier(3)
-def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_item):
+def test_edit_catalog_after_deleting_provider(provider, catalog_item):
     """Tests edit catalog item after deleting provider
     Metadata:
         test_flag: provision
@@ -149,8 +150,7 @@ def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_
 
 @pytest.mark.rhv3
 @pytest.mark.tier(3)
-@pytest.mark.usefixtures('setup_provider')
-def test_request_with_orphaned_template(appliance, provider, setup_provider, catalog_item):
+def test_request_with_orphaned_template(appliance, provider, catalog_item):
     """Tests edit catalog item after deleting provider
     Metadata:
         test_flag: provision
