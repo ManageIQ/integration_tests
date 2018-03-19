@@ -2,7 +2,6 @@ import argparse
 import sys
 from datetime import datetime, timedelta
 from tabulate import tabulate
-from time import sleep
 
 from cfme.utils.path import log_path
 from cfme.utils.providers import list_provider_keys, get_mgmt
@@ -23,7 +22,7 @@ def parse_cmd_line():
     parser.add_argument('--exclude-enis', nargs='+',
                         help='List of ENIs, which should be excluded. ENI ID is allowed.')
     parser.add_argument('--exclude_stacks', nargs='+',
-                       help='List of Stacks, which should be exclude')
+                       help='List of Stacks, which should be excluded')
     parser.add_argument("--output", dest="output", help="target file name, default "
                                                         "'cleanup_ec2.log' in utils.path.log_path",
                         default=log_path.join('cleanup_ec2.log').strpath)
@@ -146,8 +145,6 @@ def delete_stacks(provider_mgmt, excluded_stacks, output):
                 if stack.creation_time < some_date:
                     stack_list.append([provider_name, stack.stack_name])
                     provider_mgmt.delete_stack(stack.stack_name)
-                    # TODO: Remove once we have reliable Trottling-resistant aproach
-                    sleep(5)
         logger.info("  Deleted CloudFormation Stacks: %r", stack_list)
         with open(output, 'a+') as report:
             if stack_list:
@@ -191,4 +188,4 @@ def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, exclud
 if __name__ == "__main__":
     args = parse_cmd_line()
     sys.exit(ec2cleanup(args.exclude_volumes, args.exclude_eips, args.exclude_elbs,
-                        args.exclude_stacks, args.exclude_enis, args.output))
+                        args.exclude_enis, args.exclude_stacks, args.output))
