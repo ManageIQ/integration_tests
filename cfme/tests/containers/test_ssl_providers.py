@@ -97,9 +97,10 @@ def test_add_provider_ssl(provider, default_sec_protocol, soft_assert, sync_ssl_
     new_provider = copy(provider)
     endpoints = {'default': new_provider.endpoints['default']}
     endpoints['default'].sec_protocol = default_sec_protocol
+
     new_provider.endpoints = endpoints
     new_provider.metrics_type = 'Disabled'
-
+    new_provider.alerts_type = 'Disabled'
     try:
         new_provider.setup()
     except AssertionError:
@@ -111,12 +112,12 @@ def test_add_provider_ssl(provider, default_sec_protocol, soft_assert, sync_ssl_
 
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS, ids=[
-    'Default: {} /  Hawkular: {}'.format(
+    'Default: {} /  Metrics: {}'.format(
         ti.args[1].default_sec_protocol, ti.args[1].hawkular_sec_protocol)
     for ti in TEST_ITEMS])
 @pytest.mark.usefixtures('has_no_containers_providers')
-def test_add_hawkular_provider_ssl(provider, appliance, test_item, soft_assert,
-                                   sync_ssl_certificate):
+def test_add_mertics_provider_ssl(provider, appliance, test_item, soft_assert,
+                                  sync_ssl_certificate):
     """This test checks adding container providers with 3 different security protocols:
     SSL trusting custom CA, SSL without validation and SSL
     The test checks the Default Endpoint as well as the Hawkular Endpoint
@@ -130,7 +131,7 @@ def test_add_hawkular_provider_ssl(provider, appliance, test_item, soft_assert,
         """
     new_provider = copy(provider)
     new_provider.endpoints['default'].sec_protocol = test_item.default_sec_protocol
-    new_provider.endpoints['hawkular'].sec_protocol = test_item.hawkular_sec_protocol
+    new_provider.endpoints['metrics'].sec_protocol = test_item.hawkular_sec_protocol
     try:
         new_provider.setup()
         view = appliance.browser.create_view(ContainerProvidersView)
@@ -139,7 +140,7 @@ def test_add_hawkular_provider_ssl(provider, appliance, test_item, soft_assert,
     except AssertionError:
         soft_assert(False, provider.name + ' wasn\'t added successfully using ' +
                     test_item.default_sec_protocol + ' security protocol and ' +
-                    test_item.hawkular_sec_protocol + ' hawkular security protocol')
+                    test_item.hawkular_sec_protocol + ' metrics security protocol')
     else:
         new_provider.delete(cancel=False)
         new_provider.wait_for_delete()
