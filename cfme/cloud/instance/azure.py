@@ -88,7 +88,7 @@ class AzureInstance(Instance):
         super(AzureInstance, self).cleanup_on_provider()
         logger.info("cleanup: removing NICs/PIPs for VM '{}'".format(self.name))
         try:
-            self.remove_nics_by_search(self.name, self.provider.mgmt.resource_group)
-            self.remove_pips_by_search(self.name, self.provider.mgmt.resource_group)
+            self.provider.mgmt.remove_nics_by_search(self.name, self.provider.mgmt.resource_group)
+            self.provider.mgmt.remove_pips_by_search(self.name, self.provider.mgmt.resource_group)
         except Exception:
             logger.exception("cleanup: failed to cleanup NICs/PIPs for VM '{}'".format(self.name))
