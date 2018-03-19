@@ -1,7 +1,7 @@
 import fauxfactory
 import pytest
-
 from collections import namedtuple
+
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -28,7 +28,7 @@ def provider_app_crud(provider_class, appliance):
 
 def provision_vm(request, provider):
     """Function to provision appliance to the provider being tested"""
-    vm_name = "test_rest_db_" + fauxfactory.gen_alphanumeric()
+    vm_name = "test_rest_db_{}".format(fauxfactory.gen_alphanumeric())
     vm = VM.factory(vm_name, provider)
     request.addfinalizer(vm.delete_from_provider)
     if not provider.mgmt.does_vm_exist(vm_name):
@@ -225,9 +225,8 @@ def setup_nfs_samba_backup(appl1):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(
-    lambda: not store.current_appliance.is_downstream)
-def test_appliance_console_restore_db_local(request, soft_assert, get_appliances_with_providers):
+@pytest.mark.uncollectif(lambda: not store.current_appliance.is_downstream)
+def test_appliance_console_restore_db_local(request, get_appliances_with_providers):
     """ Test single appliance backup and restore, configures appliance with providers,
     backs up database, restores it to fresh appliance and checks for matching providers.
     """
@@ -249,14 +248,13 @@ def test_appliance_console_restore_db_local(request, soft_assert, get_appliances
     # Verify that existing provider can detect new VMs on the second appliance
     virtual_crud = provider_app_crud(VMwareProvider, appl2)
     vm = provision_vm(request, virtual_crud)
-    soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
+    assert vm.provider.mgmt.is_vm_running(vm.name), "vm running"
 
 
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(
     lambda: not store.current_appliance.is_downstream or store.current_appliance.version < '5.9')
-def test_appliance_console_restore_pg_basebackup_ansible(
-        request, soft_assert, get_appliances_with_ansible):
+def test_appliance_console_restore_pg_basebackup_ansible(request, get_appliances_with_ansible):
     appl1 = get_appliances_with_ansible
     providers_before_restore = set(appl1.managed_provider_names)
     # Restore DB on the second appliance
@@ -272,13 +270,13 @@ def test_appliance_console_restore_pg_basebackup_ansible(
     # Verify that existing provider can detect new VMs on the second appliance
     virtual_crud = provider_app_crud(VMwareProvider, appl1)
     vm = provision_vm(request, virtual_crud)
-    soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
+    assert vm.provider.mgmt.is_vm_running(vm.name), "vm running"
     # bug in ansible stops it working first time after restore, requires reboot
     appl1.reboot()
-    assert wait_for(func=lambda: appl1.is_embedded_ansible_running, num_sec=30)
-    assert wait_for(func=lambda: appl1.is_rabbitmq_running, num_sec=30)
-    assert wait_for(func=lambda: appl1.is_nginx_running, num_sec=30)
-    assert appl1.ssh_client.run_command(
+    wait_for(func=lambda: appl1.is_embedded_ansible_running, num_sec=30)
+    wait_for(func=lambda: appl1.is_rabbitmq_running, num_sec=30)
+    wait_for(func=lambda: appl1.is_nginx_running, num_sec=30)
+    appl1.ssh_client.run_command(
         'curl -kL https://localhost/ansibleapi | grep "Ansible Tower REST API"')
     repositories = appl1.collections.ansible_repositories
     repository = repositories.create(
@@ -298,7 +296,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(
 @pytest.mark.uncollectif(
     lambda: not store.current_appliance.is_downstream or store.current_appliance.version < '5.9')
 def test_appliance_console_restore_pg_basebackup_replicated(
-        request, soft_assert, get_replicated_appliances_with_providers):
+        request, get_replicated_appliances_with_providers):
     appl1, appl2 = get_replicated_appliances_with_providers
     providers_before_restore = set(appl1.managed_provider_names)
     # Restore DB on the second appliance
@@ -323,15 +321,13 @@ def test_appliance_console_restore_pg_basebackup_replicated(
     virtual_crud_appl2 = provider_app_crud(VMwareProvider, appl2)
     vm1 = provision_vm(request, virtual_crud_appl1)
     vm2 = provision_vm(request, virtual_crud_appl2)
-    soft_assert(vm1.provider.mgmt.is_vm_running(vm1.name), "vm running")
-    soft_assert(vm2.provider.mgmt.is_vm_running(vm2.name), "vm running")
+    assert vm1.provider.mgmt.is_vm_running(vm1.name), "vm running"
+    assert vm2.provider.mgmt.is_vm_running(vm2.name), "vm running"
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(
-    lambda: not store.current_appliance.is_downstream)
-def test_appliance_console_restore_db_external(
-        request, soft_assert, get_ext_appliances_with_providers):
+@pytest.mark.uncollectif(lambda: not store.current_appliance.is_downstream)
+def test_appliance_console_restore_db_external(request, get_ext_appliances_with_providers):
     """Configure ext environment with providers, run backup/restore on configuration,
     Confirm that providers still exist after restore and provisioning works.
     """
@@ -359,14 +355,13 @@ def test_appliance_console_restore_db_external(
     virtual_crud_appl2 = provider_app_crud(VMwareProvider, appl2)
     vm1 = provision_vm(request, virtual_crud_appl1)
     vm2 = provision_vm(request, virtual_crud_appl2)
-    soft_assert(vm1.provider.mgmt.is_vm_running(vm1.name), "vm running")
-    soft_assert(vm2.provider.mgmt.is_vm_running(vm2.name), "vm running")
+    assert vm1.provider.mgmt.is_vm_running(vm1.name), "vm running"
+    assert vm2.provider.mgmt.is_vm_running(vm2.name), "vm running"
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(
-    lambda: not store.current_appliance.is_downstream)
-def test_appliance_console_restore_db_ha(request, soft_assert, get_ha_appliances_with_providers):
+@pytest.mark.uncollectif(lambda: not store.current_appliance.is_downstream)
+def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_providers):
     """Configure HA environment with providers, run backup/restore on configuration,
     Confirm that ha failover continues to work correctly and providers still exist.
     """
@@ -404,13 +399,12 @@ def test_appliance_console_restore_db_ha(request, soft_assert, get_ha_appliances
     # Verify that existing provider can detect new VMs after restore/failover
     virtual_crud = provider_app_crud(VMwareProvider, appl3)
     vm = provision_vm(request, virtual_crud)
-    soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
+    assert vm.provider.mgmt.is_vm_running(vm.name), "vm running"
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(
-    lambda: not store.current_appliance.is_downstream)
-def test_appliance_console_restore_db_nfs(request, soft_assert, get_appliances_with_providers):
+@pytest.mark.uncollectif(lambda: not store.current_appliance.is_downstream)
+def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers):
     """ Test single appliance backup and restore through nfs, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
     """
@@ -435,13 +429,12 @@ def test_appliance_console_restore_db_nfs(request, soft_assert, get_appliances_w
     # Verify that existing provider can detect new VMs on the second appliance
     virtual_crud = provider_app_crud(VMwareProvider, appl2)
     vm = provision_vm(request, virtual_crud)
-    soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
+    assert vm.provider.mgmt.is_vm_running(vm.name), "vm running"
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(
-    lambda: not store.current_appliance.is_downstream)
-def test_appliance_console_restore_db_samba(request, soft_assert, get_appliances_with_providers):
+@pytest.mark.uncollectif(lambda: not store.current_appliance.is_downstream)
+def test_appliance_console_restore_db_samba(request, get_appliances_with_providers):
     """ Test single appliance backup and restore through smb, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
     """
@@ -468,4 +461,4 @@ def test_appliance_console_restore_db_samba(request, soft_assert, get_appliances
     # Verify that existing provider can detect new VMs on the second appliance
     virtual_crud = provider_app_crud(VMwareProvider, appl2)
     vm = provision_vm(request, virtual_crud)
-    soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
+    assert vm.provider.mgmt.is_vm_running(vm.name), "vm running"
