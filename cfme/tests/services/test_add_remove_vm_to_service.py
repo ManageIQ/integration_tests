@@ -15,9 +15,8 @@ from cfme.utils.log import logger
 
 pytestmark = [
     test_requirements.service,
-    pytest.mark.usefixtures("vm_name"),
-    pytest.mark.usefixtures("catalog_item"),
-    pytest.mark.usefixtures('uses_infra_providers'),
+    pytest.mark.usefixtures('setup_provider', 'vm_name',
+                            'catalog_item', 'uses_infra_providers'),
     pytest.mark.long_running,
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.tier(3),

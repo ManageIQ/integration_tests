@@ -19,7 +19,7 @@ from cfme.utils.appliance import ViaUI
 
 
 pytestmark = [
-    pytest.mark.usefixtures("vm_name", "catalog_item"),
+    pytest.mark.usefixtures('setup_provider', 'vm_name', 'catalog_item'),
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.long_running,
     test_requirements.service,
@@ -40,7 +40,7 @@ def needs_firefox():
 
 
 @pytest.yield_fixture(scope='function')
-def myservice(appliance, setup_provider, provider, catalog_item, request):
+def myservice(appliance, provider, catalog_item, request):
     """Tests my service
 
     Metadata:
