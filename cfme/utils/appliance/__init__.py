@@ -2408,10 +2408,14 @@ class Appliance(IPAppliance):
             except AttributeError:
                 return False
 
-        ec, tc = wait_for(is_ip_available,
-                          delay=5,
-                          num_sec=600)
-        hostname = str(ec)
+        if 'hostname' in kwargs:
+            hostname = kwargs.pop('hostname')
+        else:
+            ec, tc = wait_for(is_ip_available,
+                              delay=5,
+                              num_sec=600)
+            hostname = str(ec)
+
         appliance = cls(hostname=hostname, **kwargs)
         appliance.vm_name = vm_name
         appliance.provider = provider

@@ -11,7 +11,9 @@ from cfme.utils.conf import cfme_data, credentials as cred, provider_data
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.path import log_path
 from cfme.utils.providers import get_mgmt
+from cfme.utils.trackerbot import api
 from cfme.utils.wait import wait_for
+
 
 # log to stdout
 add_stdout_handler(logger)
@@ -187,11 +189,17 @@ def main(**kwargs):
         deploy_args['ssh_key'] = '{user_name}:{public_key}'.format(
             user_name=cred['ssh']['ssh-user'],
             public_key=cred['ssh']['public_key'])
+    elif provider_type == 'openshift':
+        trackerbot = api()
+        raw_tags = trackerbot.providertemplate().get(provider=kwargs['provider'],
+                                                     template=deploy_args['template'])['objects']
+        raw_tags = raw_tags[-1]['template'].get('custom_data', "{}")
+        deploy_args["tags"] = yaml.safe_load(raw_tags.replace("u'", '"').replace("'", '"'))['TAGS']
     # Do it!
     try:
         logger.info('Cloning {} to {} on {}'.format(deploy_args['template'], deploy_args['vm_name'],
                                                     kwargs['provider']))
-        provider.deploy_template(**deploy_args)
+        output = provider.deploy_template(**deploy_args)
     except Exception as e:
         logger.exception(e)
         logger.error('provider.deploy_template failed')
@@ -210,14 +218,17 @@ def main(**kwargs):
         logger.error("VM is not running")
         return 10
 
-    try:
-        ip, time_taken = wait_for(provider.get_ip_address, [deploy_args['vm_name']], num_sec=1200,
-                                  fail_condition=None)
-        logger.info('IP Address returned is {}'.format(ip))
-    except Exception as e:
-        logger.exception(e)
-        logger.error('IP address not returned')
-        return 10
+    if provider_type == 'openshift':
+        ip = output['url']
+    else:
+        try:
+            ip, _ = wait_for(provider.get_ip_address, [deploy_args['vm_name']], num_sec=1200,
+                             fail_condition=None)
+            logger.info('IP Address returned is {}'.format(ip))
+        except Exception as e:
+            logger.exception(e)
+            logger.error('IP address not returned')
+            return 10
 
     try:
         if kwargs.get('configure'):
@@ -225,10 +236,32 @@ def main(**kwargs):
             if kwargs.get('deploy'):
                 app = IPAppliance(hostname=ip)
             else:
-                app = Appliance.from_provider(kwargs['provider'], deploy_args['vm_name'])
+                app_args = (kwargs['provider'], deploy_args['vm_name'])
+                app_kwargs = {}
+                ocp_creds = cred[provider_dict['credentials']]
+                ssh_creds = cred[provider_dict['ssh_creds']]
+                if provider_type == 'openshift':
+                    app_kwargs = {
+                        'project': output['project'],
+                        'db_host': output['external_ip'],
+                        'hostname': ip,
+                        'openshift_creds': {
+                            'hostname': provider_dict['hostname'],
+                            'username': ocp_creds['username'],
+                            'password': ocp_creds['password'],
+                            'ssh': {
+                                'username': ssh_creds['username'],
+                                'password': ssh_creds['password'],
+                            },
+                        }
+                    }
+                app = Appliance.from_provider(*app_args, **app_kwargs)
             if provider_type == 'gce':
                 with app as ipapp:
                     ipapp.configure_gce()
+            elif provider_type == 'openshift':
+                # openshift appliances don't need any additional configuration
+                pass
             else:
                 app.configure()
             logger.info('Successfully Configured the appliance.')
@@ -246,11 +279,38 @@ def main(**kwargs):
         return 10
 
     if kwargs.get('outfile') or kwargs.get('deploy'):
+        # todo: to get rid of those scripts in jenkins or develop them from scratch
         with open(kwargs['outfile'], 'w') as outfile:
-            outfile.write("appliance_ip_address={}\n".format(ip))
+            if provider_type == 'openshift':
+                output_data = {
+                    'appliances':
+                        [
+                            {
+                                'project': output['project'],
+                                'db_host': output['external_ip'],
+                                'hostname': ip,
+                                'openshift_creds': {
+                                    'hostname': provider_dict['hostname'],
+                                    'username': ocp_creds['username'],
+                                    'password': ocp_creds['password'],
+                                    'ssh': {
+                                        'username': ssh_creds['username'],
+                                        'password': ssh_creds['password'],
+                                    }
+                                },
+                            },
+                        ],
+                }
+            else:
+                output_data = {
+                    'appliances':
+                        [{'hostname': ip}]
+                }
+            yaml_data = yaml.safe_dump(output_data, default_flow_style=False)
+            outfile.write(yaml_data)
 
-    # In addition to the outfile, drop the ip address on stdout for easy parsing
-    print(ip)
+        # In addition to the outfile, drop the ip address on stdout for easy parsing
+        print(yaml_data)
 
 
 if __name__ == "__main__":
