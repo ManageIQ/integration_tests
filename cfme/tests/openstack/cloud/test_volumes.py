@@ -7,7 +7,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
-
+from cfme.utils.update import update
 
 pytestmark = [
     pytest.mark.usefixtures("setup_provider_modscope"),
@@ -46,7 +46,8 @@ def test_create_volume(volume, provider):
 @pytest.mark.meta(blockers=[BZ(1502609, forced_streams=["5.9"])])
 def test_edit_volume(volume, appliance):
     new_name = fauxfactory.gen_alpha()
-    volume.edit(new_name)
+    with update(volume):
+        volume.name = new_name
     view = navigate_to(appliance.collections.volumes, 'All')
     assert view.entities.get_entity(name=new_name, surf_pages=True)
 
