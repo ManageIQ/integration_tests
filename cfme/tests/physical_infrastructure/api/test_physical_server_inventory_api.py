@@ -30,7 +30,7 @@ def test_get_hardware_attributes(appliance, physical_server, attribute):
     assert physical_server.hardware[attribute] is not None
 
 
-def test_get_asset_details(appliance, physical_server):
-    physical_server.reload(attributes=['asset_details'])
+def test_get_asset_detail(appliance, physical_server):
+    physical_server.reload(attributes=['asset_detail'])
     assert_response(appliance)
-    assert physical_server.asset_details is not None
+    assert physical_server.asset_detail is not None
