@@ -2,7 +2,6 @@
 """
 import pytest
 
-from cfme.common.vm import VM
 from cfme.utils.providers import get_crud
 from fixtures.pytest_store import store
 from novaclient.exceptions import OverLimit as OSOverLimit
@@ -55,7 +54,7 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
         except Exception as e:
             logger.error('Could not provisioning VM/instance %s (%s: %s)',
                 vm_name, type(e).__name__, str(e))
-            VM.factory(vm_name, provider_crud).cleanup_on_provider()
+            provider_crud.mgmt.delete_vm(vm_name)
             raise
     except skip_exceptions as e:
         e_c = type(e)
