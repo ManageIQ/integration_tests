@@ -793,7 +793,7 @@ class VM(BaseVM):
             "cleanup: ensuring VM '{}' on provider '{}' is powered off".format(
                 self.name, self.provider.key)
         )
-        self.ensure_state_on_provider(self.STOPPED)
+        self.ensure_state_on_provider(self.STATE_OFF)
         try:
             logger.info(
                 "cleanup: deleting VM '{}' on provider '{}'".format(
