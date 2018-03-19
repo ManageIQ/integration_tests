@@ -113,10 +113,10 @@ class OpenshiftProvider(ContainersProvider):
 
     def create(self, **kwargs):
 
+        # Enable C&U for any provider with metrics provider
         if getattr(self, "metrics_type") != "Disabled":
-            server = self.appliance.server.settings
-            server.enable_server_roles('ems_metrics_coordinator', 'ems_metrics_collector',
-                                       'ems_metrics_processor')
+            self.appliance.server.settings.enable_server_roles(
+                'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
 
         # Enable alerts collection before adding the provider to avoid missing active
         # alert after adding the provider
