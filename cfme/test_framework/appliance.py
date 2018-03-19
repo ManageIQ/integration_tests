@@ -28,7 +28,8 @@ def appliances_from_cli(cli_appliances):
                 "Invalid appliance url: {}".format(appliance_data)
             )
 
-        appliance = appliance_data.update(dict(
+        appliance = appliance_data.copy()
+        appliance.update(dict(
             hostname=parsed_url.hostname,
             ui_protocol=parsed_url.scheme if parsed_url.scheme else "https",
             ui_port=parsed_url.port if parsed_url.port else 443,
@@ -53,6 +54,7 @@ def pytest_configure(config):
         reporter.write_line('Retrieved these appliances from the --appliance parameters', red=True)
     elif config.getoption('--use-sprout'):
         from .sprout.plugin import mangle_in_sprout_appliances
+
         mangle_in_sprout_appliances(config)
         appliances = appliances_from_cli(config.option.appliances)
         reporter.write_line('Retrieved these appliances from the --sprout-* parameters', red=True)
