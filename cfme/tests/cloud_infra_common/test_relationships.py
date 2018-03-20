@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-import pytest
 import random
+
+import pytest
 
 from cfme.cloud.availability_zone import ProviderAvailabilityZoneAllView, AvailabilityZone
 from cfme.cloud.flavor import ProviderFlavorAllView, Flavor
@@ -20,12 +21,12 @@ from cfme.infrastructure.datastore import HostAllDatastoresView, ProviderAllData
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import (HostTemplatesOnlyAllView,
                                                   ProviderTemplatesOnlyAllView, Vm, Template)
+from cfme.markers.env_markers.provider import ONE, ONE_PER_TYPE
 from cfme.networks.views import NetworkProviderDetailsView, ProviderSecurityGroupAllView
 from cfme.storage.manager import ProviderStorageManagerAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.markers.env_markers.provider import ONE, ONE_PER_TYPE
+from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-
 
 HOST_RELATIONSHIPS = [
     ("Infrastructure Provider", InfraProviderDetailsView),
