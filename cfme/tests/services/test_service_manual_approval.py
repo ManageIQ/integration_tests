@@ -66,7 +66,6 @@ def test_service_manual_approval(appliance, provider, modify_instance,
     """
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
-    catalog_item.create()
 
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()

@@ -40,7 +40,6 @@ def test_order_catalog_item(appliance, provider, catalog_item, request,
     """
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
-    catalog_item.create()
 
     register_event(target_type='Service', target_name=catalog_item.name,
                    event_type='service_provisioned')
@@ -66,7 +65,6 @@ def test_order_catalog_item_via_rest(
     """
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
-    catalog_item.create()
     request.addfinalizer(catalog_item.delete)
     catalog = appliance.rest_api.collections.service_catalogs.find_by(name=catalog.name)
     assert len(catalog) == 1
@@ -95,7 +93,6 @@ def test_order_catalog_bundle(appliance, provider, catalog_item, request):
 
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
-    catalog_item.create()
     bundle_name = fauxfactory.gen_alphanumeric()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog,
@@ -135,7 +132,6 @@ def test_edit_catalog_after_deleting_provider(provider, catalog_item):
     Metadata:
         test_flag: provision
     """
-    catalog_item.create()
     provider.delete(cancel=False)
     changes = {'description': 'my edited description'}
     if provider.appliance.version > '5.9.0.20' and provider.one_of(RHEVMProvider):
@@ -155,7 +151,6 @@ def test_request_with_orphaned_template(appliance, provider, catalog_item):
     Metadata:
         test_flag: provision
     """
-    catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
