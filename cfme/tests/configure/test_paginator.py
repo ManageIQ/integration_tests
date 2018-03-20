@@ -6,6 +6,7 @@ from widgetastic.exceptions import NoSuchElementException
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.configure.configuration.region_settings import Category, Tag, MapTags, RedHatUpdates
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 general_list_pages = [
     ('servers', None, 'Details', False),
@@ -38,7 +39,6 @@ general_list_pages = [
     ('regions', None, 'Servers', True),
     ('regions', None, 'ServersByRoles', False),
     ('regions', None, 'RolesByServers', False),
-
     ('zones', None, 'Details', False),
     ('zones', None, 'SmartProxyAffinity', False),
     ('zones', None, 'Diagnostics', False),
@@ -54,7 +54,6 @@ general_list_pages = [
     ('map_tags', MapTags, 'All', False),
     ('red_hat_updates', RedHatUpdates, 'Details', False),
     ('analysis_profile', AnalysisProfile, 'All', True),
-    ('system_schedules', None, 'All', True),
     ('system_schedules', None, 'Add', False),
     ('users', None, 'All', True),
     ('groups', None, 'All', True),
@@ -68,6 +67,7 @@ details_pages = [
     ('roles', None, 'Details', False),
     ('tenants', None, 'Details', False),
     ('analysis_profile', AnalysisProfile, 'Details', False),
+    ('system_schedules', None, 'All', True),
     ('system_schedules', None, 'Details', False),
     ('tag', Tag, 'All', False),
 ]
@@ -81,10 +81,23 @@ def check_paginator_for_page(view):
         return False
 
 
+@pytest.yield_fixture(scope='module')
+def schedule(appliance):
+    schedule = appliance.collections.system_schedules.create(
+        name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric()
+    )
+    yield schedule
+    schedule.delete()
+
+
 @pytest.mark.parametrize('place_info', general_list_pages,
                          ids=['{}_{}'.format(set_type[0], set_type[2].lower())
                               for set_type in general_list_pages])
 def test_paginator(appliance, place_info):
+    """
+        Check paginator is visible for config pages
+    """
     place_name, place_class, place_navigation, paginator_expected_result = place_info
     if appliance.version < '5.9' and place_navigation == 'HelpMenu':
         pytest.skip('No Help Menu tab for 5.8 version')
@@ -93,6 +106,8 @@ def test_paginator(appliance, place_info):
     else:
         test_class = getattr(appliance.collections, place_name)
         if place_name == 'regions':
+            if BZ(1558605, forced_streams=['5.8']).blocks and place_navigation == 'Servers':
+                pytest.skip('1558605 bz for 5.8')
             test_class = test_class.instantiate()
         elif place_name == 'servers':
             test_class = test_class.get_master()
@@ -105,9 +120,11 @@ def test_paginator(appliance, place_info):
 @pytest.mark.parametrize('place_info', details_pages,
                          ids=['{}_{}'.format(set_type[0], set_type[2].lower())
                               for set_type in details_pages])
-def test_paginator_details_page(appliance, place_info, request):
+def test_paginator_details_page(appliance, place_info, schedule):
+    """
+        Check paginator is visible for access control pages + schedules
+    """
     place_name, place_class, place_navigation, paginator_expected_result = place_info
-    # First lets check for existing content
     if place_name == 'tag':
         cg = Category(name='department', description='Department')
         test_class = place_class(category=cg)
@@ -116,13 +133,6 @@ def test_paginator_details_page(appliance, place_info, request):
         test_class = place_class if place_class else getattr(appliance.collections, place_name)
         view = navigate_to(test_class, 'All')
         table = view.table if hasattr(view, 'table') else view.entities.table
-        if table.is_displayed:
+        if place_navigation == 'Details':
             table[0].click()
-        else:
-            test_class = test_class.create(
-                name=fauxfactory.gen_alphanumeric(),
-                description=fauxfactory.gen_alphanumeric(),
-            )
-            request.addfinalizer(test_class.delete)
-            view = navigate_to(test_class, place_navigation)
     assert check_paginator_for_page(view) == paginator_expected_result
