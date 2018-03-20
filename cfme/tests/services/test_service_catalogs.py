@@ -65,7 +65,6 @@ def test_order_catalog_item_via_rest(
     """
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
-    catalog_item.create()
     request.addfinalizer(catalog_item.delete)
     catalog = appliance.rest_api.collections.service_catalogs.find_by(name=catalog.name)
     assert len(catalog) == 1
