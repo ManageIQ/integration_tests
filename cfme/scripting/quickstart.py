@@ -120,6 +120,12 @@ OS_PACKAGES_SPECS = [
      " python-virtualenv gcc postgresql libxml2-dev"
      " libxslt1-dev libzmq3-dev libcurl4-openssl-dev"
      " g++ openssl libffi-dev python-dev libtesseract3"
+     " libpng-dev libfreetype6-dev libssl-dev"),
+
+    ("Ubuntu", "16.04.4 LTS (Xenial Xerus)", "openssl",
+     " python-virtualenv gcc postgresql libxml2-dev"
+     " libxslt1-dev libzmq3-dev libcurl4-openssl-dev"
+     " g++ openssl libffi-dev python-dev libtesseract3"
      " libpng-dev libfreetype6-dev libssl-dev")
 ]
 
@@ -202,7 +208,7 @@ def pip_json_list(venv):
 
 
 def install_system_packages():
-    if INSTALL_COMMAND:
+    if INSTALL_COMMAND and REQUIRED_PACKAGES:
         run_cmd_or_exit(INSTALL_COMMAND + REQUIRED_PACKAGES, shell=True)
     else:
         print("WARNING: unknown distribution,",
