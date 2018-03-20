@@ -1,12 +1,17 @@
 import pytest
-from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.networks.views import (CloudNetworkView, SubnetView, NetworkRouterView, SecurityGroupView,
-                                 NetworkPortView, BalancerView, FloatingIpView)
-from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 
+from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.gce import GCEProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
+from cfme.networks.views import (CloudNetworkView, SubnetView, NetworkRouterView, SecurityGroupView,
+                                 NetworkPortView, BalancerView, FloatingIpView, )
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
+    pytest.mark.provider([AzureProvider, EC2Provider, GCEProvider, OpenStackProvider],
+                         selector=ONE_PER_CATEGORY, scope='function'),
     pytest.mark.usefixtures('setup_provider')
 ]
 
@@ -41,8 +46,7 @@ def child_visibility(appliance, network_provider, relationship, view):
 
 @pytest.mark.parametrize("relationship,view", network_test_items,
                          ids=[rel[0] for rel in network_test_items])
-@pytest.mark.provider([OpenStackProvider], selector=ONE_PER_CATEGORY)
-def test_tagvis_network_provider_children(provider, appliance, request, relationship, view,
+def test_sdn_tagvis_network_provider_children(provider, appliance, request, relationship, view,
                                           tag, user_restricted):
     prov_view = navigate_to(provider, 'Details')
     net_prov_name = prov_view.entities.summary("Relationships").get_text_of("Network Manager")
