@@ -71,7 +71,7 @@ def test_vm_capture(request, provider, setup_provider, register_event):
         vm.refresh_relationships()
 
     # # deferred delete vm
-    request.addfinalizer(vm.delete_from_provider)
+    request.addfinalizer(vm.cleanup_on_provider)
 
     def cmp_function(_, y):
         # In 5.9 version `y` is a dict, not a yaml stream.

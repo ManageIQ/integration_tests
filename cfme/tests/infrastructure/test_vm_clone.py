@@ -32,7 +32,7 @@ def create_vm(appliance, provider, setup_provider, request):
 
     @request.addfinalizer
     def _cleanup():
-        vm.delete_from_provider()
+        vm.cleanup_on_provider()
 
     if not provider.mgmt.does_vm_exist(vm.name):
         logger.info("deploying %s on provider %s", vm.name, provider.key)

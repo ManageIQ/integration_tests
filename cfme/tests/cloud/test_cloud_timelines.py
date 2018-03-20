@@ -38,7 +38,7 @@ def ec2_sleep():
 def new_instance(request, provider):
     instance = Instance.factory(random_vm_name("timelines", max_length=16), provider)
 
-    request.addfinalizer(instance.delete_from_provider)
+    request.addfinalizer(instance.cleanup_on_provider)
 
     if not provider.mgmt.does_vm_exist(instance.name):
         logger.info("deploying %s on provider %s", instance.name, provider.key)

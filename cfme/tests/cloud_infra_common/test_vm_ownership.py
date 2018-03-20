@@ -26,7 +26,7 @@ def vm_crud(provider):
     yield vm
 
     try:
-        vm.delete_from_provider()
+        vm.cleanup_on_provider()
     except Exception:
         logger.exception('Exception deleting test vm "%s" on %s', vm.name, provider.name)
 

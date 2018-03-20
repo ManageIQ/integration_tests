@@ -528,7 +528,7 @@ def test_provision_from_template_with_attached_disks(request, testing_instance, 
             soft_assert(vm_name in provider.mgmt.volume_attachments(volume_id))
         for volume, device in device_mapping:
             soft_assert(provider.mgmt.volume_attachments(volume)[vm_name] == device)
-        instance.delete_from_provider()  # To make it possible to delete the volume
+        instance.cleanup_on_provider()  # To make it possible to delete the volume
         wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
 
 
@@ -655,7 +655,7 @@ def test_provision_with_additional_volume(request, testing_instance, provider, s
         volume = provider.mgmt.get_volume(volume_id)
         assert volume.size == 3
     finally:
-        instance.delete_from_provider()
+        instance.cleanup_on_provider()
         wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
         if "volume_id" in locals():  # To handle the case of 1st or 2nd assert
             if provider.mgmt.volume_exists(volume_id):

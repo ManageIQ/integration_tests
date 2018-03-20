@@ -22,7 +22,7 @@ def provision_vm(request, provider):
     """Function to provision appliance to the provider being tested"""
     vm_name = "test_rest_db_" + fauxfactory.gen_alphanumeric()
     vm = VM.factory(vm_name, provider)
-    request.addfinalizer(vm.delete_from_provider)
+    request.addfinalizer(vm.cleanup_on_provider)
     if not provider.mgmt.does_vm_exist(vm_name):
         logger.info("deploying %s on provider %s", vm_name, provider.key)
         vm.create_on_provider(allow_skip="default")

@@ -54,7 +54,7 @@ def test_provision_cloud_init(request, setup_provider, provider, provisioning,
 
     instance = Instance.factory(vm_name, provider, image)
 
-    request.addfinalizer(instance.delete_from_provider)
+    request.addfinalizer(instance.cleanup_on_provider)
     # TODO: extend inst_args for other providers except EC2 if needed
     inst_args = {
         'request': {'email': 'image_provisioner@example.com',

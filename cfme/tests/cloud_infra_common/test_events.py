@@ -29,7 +29,7 @@ def vm_crud(provider, setup_provider_modscope, small_template_modscope):
         template_name=template.name)
     yield vm
     if vm.does_vm_exist_on_provider():
-        vm.delete_from_provider()
+        vm.cleanup_on_provider()
 
 
 @pytest.mark.rhv2
