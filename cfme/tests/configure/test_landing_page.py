@@ -1,6 +1,5 @@
 import pytest
 
-from cfme.configure.settings import Visual
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
@@ -10,7 +9,6 @@ LANDING_PAGES = [
     'Cloud Intel / Chargeback',
     'Cloud Intel / Timelines',
     'Cloud Intel / RSS',
-    'Consumption / Dashboard',
     'Services / My Services',
     'Services / Catalogs',
     'Services / Workloads / VMs & Instances',
@@ -72,7 +70,6 @@ LANDING_PAGES = [
     'Middleware / Datasources',
     'Middleware / Messagings',
     'Middleware / Topology',
-    'Datawarehouse / Providers',
     'Storage / Block Storage / Managers',
     'Storage / Block Storage / Volumes',
     'Storage / Block Storage / Volume Snapshots',
@@ -105,13 +102,18 @@ LANDING_PAGES = [
     'Red Hat Access Insights']
 
 
-def set_landing_page(value, appliance):
+@pytest.yield_fixture(scope='module')
+def my_settings(appliance):
+    return appliance.user.my_settings
+
+
+def set_landing_page(value, appliance, my_settings):
     # page_list contains the list of pages which show some error or alerts after login.
     page_list = []
-    view = navigate_to(Visual, 'All')
+    view = navigate_to(my_settings, 'Visual')
     if (not any(substring in value for substring in page_list) and
-            view.visualstartpage.show_at_login.fill(value)):
-        view.save.click()
+            view.tabs.visual.start_page.show_at_login.fill(value)):
+        view.tabs.visual.save.click()
     # This block will redirect to My setting page and update the startpage value to next parameter.
     # except NoSuchElementException:
     #     browser.start(url_key="{}/configuration/index".format(appliance.server.address))
@@ -123,18 +125,18 @@ def set_landing_page(value, appliance):
     return logged_in_page.is_displayed
 
 
-def set_to_default(page):
-    view = navigate_to(Visual, 'All')
-    view.visualstartpage.show_at_login.fill(page)
-    view.save.click()
+def set_to_default(page, my_settings):
+    view = navigate_to(my_settings, 'Visual')
+    view.tabs.visual.start_page.show_at_login.fill(page)
+    view.tabs.visual.save.click()
 
 
 @pytest.mark.parametrize('start_page', LANDING_PAGES, scope="module")
-def test_landing_page_admin(start_page, appliance, request):
+def test_landing_page_admin(start_page, appliance, my_settings, request):
     """
             This test checks the functioning of the landing page; 'Start at Login'
             option on 'Visual' tab of setting page for administrator. This test case doesn't
             check the exact page but verifies that all the landing page options works properly.
     """
-    request.addfinalizer(lambda: set_to_default('Cloud Intel / Dashboard'))
-    assert set_landing_page(start_page, appliance)
+    request.addfinalizer(lambda: set_to_default('Cloud Intel / Dashboard', my_settings))
+    assert set_landing_page(start_page, appliance, my_settings)
