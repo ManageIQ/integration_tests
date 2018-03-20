@@ -44,6 +44,7 @@ class BaseLoggedInPage(View):
     @property
     def current_fullname(self):
         try:
+            # When the view isn't displayed self.settings.text is None, resulting in AttributeError
             return self.settings.text.strip().split('|', 1)[0].strip()
         except AttributeError:
             return None
