@@ -255,8 +255,10 @@ def cleanup_vms(texts, max_hours=24, providers=None, tags=None, prompt=True):
     # setup provider filter with cleanup (default), tags, and providers (from cli opts)
     filters = [ProviderFilter(required_fields=[('cleanup', True)])]
     if tags:
+        logger.info('Adding required_tags ProviderFilter for: %s', tags)
         filters.append(ProviderFilter(required_tags=tags))
     if providers:
+        logger.info('Adding keys ProviderFilter for: %s', providers)
         filters.append(ProviderFilter(keys=providers))
 
     # Just want keys, use list_providers with no global filters to include disabled.
