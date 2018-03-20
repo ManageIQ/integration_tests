@@ -18,7 +18,7 @@ from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('vm_name', 'catalog_item', 'uses_infra_providers'),
+    pytest.mark.usefixtures('vm_name', 'uses_infra_providers'),
     test_requirements.service,
     pytest.mark.long_running,
     pytest.mark.provider([InfraProvider],
@@ -65,7 +65,6 @@ def test_order_catalog_item_via_rest(
     """
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
-    catalog_item.create()
     request.addfinalizer(catalog_item.delete)
     catalog = appliance.rest_api.collections.service_catalogs.find_by(name=catalog.name)
     assert len(catalog) == 1
