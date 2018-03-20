@@ -351,7 +351,7 @@ class MyServiceEditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.policy_btn.item_select('Edit Tags')
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(MyService, 'SetRetirement')
@@ -362,9 +362,9 @@ class MyServiceSetRetirement(CFMENavigateStep):
 
     def step(self):
         if self.appliance.version < '5.8':
-            self.prerequisite_view.lifecycle_btn.item_select('Set Retirement Date')
+            self.prerequisite_view.toolbar.lifecycle.item_select('Set Retirement Date')
         else:
-            self.prerequisite_view.lifecycle_btn.item_select(
+            self.prerequisite_view.toolbar.lifecycle.item_select(
                 'Set Retirement Dates for this Service')
 
 
