@@ -59,9 +59,16 @@ def pytest_unconfigure(config):
                     app.hostname)
                 logger.debug('Creating tar file on app %s:%s with log files %s',
                              app, tar_file, ' '.join(log_files))
-                tar_cmd = 'tar -czvf {tar} {files}'.format(tar=tar_file,
-                                                           files=' '.join(log_files))
-                assert ssh_client.run_command(tar_cmd)
+                # wrap the files in ls, redirecting stderr, to ignore files that don't exist
+                tar_result = ssh_client.run_command(
+                    'tar -czvf {tar} $(ls {files} 2>/dev/null)'
+                    .format(tar=tar_file, files=' '.join(log_files)))
+                try:
+                    assert tar_result.success
+                except AssertionError:
+                    logger.exception('Tar command non-zero RC when collecting logs on %s: %s',
+                                     app, tar_result.output)
+                    continue
                 ssh_client.get_file(tar_file, local_dir.strpath)
             written_files.append(tar_file)
         logger.info('Wrote the following files to local log path: %s', written_files)
