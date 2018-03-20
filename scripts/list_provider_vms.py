@@ -1,12 +1,12 @@
+#!/usr/bin/env python2
 import argparse
 from tabulate import tabulate
 from multiprocessing import Process, Queue
 
 from wrapanapi.exceptions import VMError
 
-from cfme.utils.conf import cfme_data
 from cfme.utils.path import log_path
-from cfme.utils.providers import get_mgmt, list_provider_keys
+from cfme.utils.providers import get_mgmt, ProviderFilter, list_providers
 
 
 # Constant for report
@@ -28,32 +28,14 @@ def parse_cmd_line():
                         action='append',
                         help='A provider tag to match a group of providers instead of all '
                              'providers from cfme_data. Can be used multiple times')
-    parser.add_argument('provider',
+    parser.add_argument('--provider',
                         default=None,
-                        nargs='*',
+                        action='append',
                         help='Provider keys, can be user multiple times. If none are given '
                              'the script will use all providers from cfme_data or match tags')
 
     args = parser.parse_args()
     return args
-
-
-def process_tags(provider_keys, tags=None):
-    """
-    Process the tags provided on command line to build a list of provider keys that match
-    :param tags: list of tags to match against cfme_data
-    :param provider_keys list of provider_keys to append to
-    :return: list or provider keys matching tags
-    """
-    # Check for tags first, build list of provider_keys from it
-    if tags:
-        all_provider_keys = list_provider_keys()
-        for key in all_provider_keys:
-            # need to check tags list against yaml tags list for intersection of a single tag
-            yaml_tags = cfme_data['management_systems'][key]['tags']
-            if any(tag in tags for tag in yaml_tags):
-                print('Matched tag from {} on provider {}:tags:{}'.format(tags, key, yaml_tags))
-                provider_keys.add(key)
 
 
 def list_vms(provider_key, output_queue):
@@ -117,9 +99,14 @@ def list_vms(provider_key, output_queue):
 if __name__ == "__main__":
     args = parse_cmd_line()
     # providers as a set when processing tags to ensure unique entries
-    providers = set(args.provider)
-    process_tags(providers, args.tag)
-    providers = providers or list_provider_keys()
+    filters = []
+    if args.provider:
+        filters.append(ProviderFilter(keys=args.provider))
+    if args.tag:
+        filters.append(ProviderFilter(required_tags=args.tag))
+
+    # don't include global filter to keep disabled in the list
+    providers = [prov.key for prov in list_providers(filters, use_global_filters=False)]
 
     queue = Queue()  # for MP output
     proc_list = [

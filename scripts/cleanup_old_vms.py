@@ -12,9 +12,8 @@ import pytz
 from tabulate import tabulate
 
 from cfme.utils.log import logger, add_stdout_handler
-from cfme.utils.conf import cfme_data
 from cfme.utils.path import log_path
-from cfme.utils.providers import list_provider_keys, get_mgmt
+from cfme.utils.providers import get_mgmt, list_providers, ProviderFilter
 
 # Constant strings for the report
 PASS = 'PASS'
@@ -40,8 +39,11 @@ def parse_cmd_line():
                         help='Max hours since the VM was created or last powered on '
                              '(varies by provider, default 24)')
     parser.add_argument('--provider', dest='providers', action='append', default=None,
-                        help='Provider(s) to inspect, can be used multiple times',
+                        help='Provider(s) to inspect, can be used multiple times.',
                         metavar='PROVIDER')
+    parser.add_argument('--tag', dest='tags', action='append', default=None,
+                        help='Tag to filter providers by, like "extcloud". '
+                             'Can be used multiple times')
     parser.add_argument('--outfile', dest='outfile',
                         default=log_path.join('cleanup_old_vms.log').strpath,
                         help='outfile to list ')
@@ -227,7 +229,7 @@ def delete_vm(provider_key, vm_name, age, result_queue):
         result_queue.put(VmReport(provider_key, vm_name, age, status, result))
 
 
-def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
+def cleanup_vms(texts, max_hours=24, providers=None, tags=None, prompt=True):
     """
     Main method for the cleanup process
     Generates regex match objects
@@ -241,6 +243,7 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
         texts (list): List of regex strings to match with
         max_hours (int): age limit for deletion
         providers (list): List of provider keys to scan and cleanup
+        tags (list): List of tags to filter providers by
         prompt (bool): Whether or not to prompt the user before deleting vms
     Returns:
         int: return code, 0 on success, otherwise raises exception
@@ -249,14 +252,19 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
     # Compile regex, strip leading/trailing single quotes from cli arg
     matchers = [re.compile(text.strip("'"), re.IGNORECASE) for text in texts]
 
-    providers_to_scan = []
-    for provider_key in providers or list_provider_keys():
-        # check for cleanup boolean
-        if not cfme_data['management_systems'][provider_key].get('cleanup', False):
-            logger.info('SKIPPING %r, cleanup set to false or missing in yaml', provider_key)
-            continue
-        logger.info('SCANNING %r', provider_key)
-        providers_to_scan.append(provider_key)
+    # setup provider filter with cleanup (default), tags, and providers (from cli opts)
+    filters = [ProviderFilter(required_fields=[('cleanup', True)])]
+    if tags:
+        logger.info('Adding required_tags ProviderFilter for: %s', tags)
+        filters.append(ProviderFilter(required_tags=tags))
+    if providers:
+        logger.info('Adding keys ProviderFilter for: %s', providers)
+        filters.append(ProviderFilter(keys=providers))
+
+    # Just want keys, use list_providers with no global filters to include disabled.
+    providers_to_scan = [prov.key for prov in list_providers(filters, use_global_filters=False)]
+    logger.info('Potential providers for cleanup, filtered with given tags and provider keys: \n%s',
+                '\n'.join(providers_to_scan))
 
     # scan providers for vms with name matches
     # manager = Manager()
@@ -322,4 +330,5 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
 
 if __name__ == "__main__":
     args = parse_cmd_line()
-    sys.exit(cleanup_vms(args.text_to_match, args.max_hours, args.providers, args.prompt))
+    sys.exit(cleanup_vms(args.text_to_match, args.max_hours, args.providers, args.tags,
+                         args.prompt))
