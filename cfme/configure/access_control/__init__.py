@@ -8,7 +8,7 @@ from widgetastic_patternfly import (
 
 from cfme.base.credential import Credential
 from cfme.base.ui import ConfigurationView
-from cfme.common import WidgetasticTaggable
+from cfme.common import Taggable
 from cfme.exceptions import CFMEException, RBACOperationBlocked
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -103,7 +103,7 @@ class EditUserView(UserForm):
 
 
 @attr.s
-class User(Updateable, Pretty, BaseEntity, WidgetasticTaggable):
+class User(Updateable, Pretty, BaseEntity, Taggable):
     """ Class represents an user in CFME UI
 
     Args:
@@ -535,7 +535,7 @@ class EditGroupSequenceView(ConfigurationView):
 
 
 @attr.s
-class Group(BaseEntity, WidgetasticTaggable):
+class Group(BaseEntity, Taggable):
     """Represents a group in CFME UI
 
     Properties:
@@ -1290,7 +1290,7 @@ class EditTenantView(View):
 
 
 @attr.s
-class Tenant(Updateable, BaseEntity, WidgetasticTaggable):
+class Tenant(Updateable, BaseEntity, Taggable):
     """ Class representing CFME tenants in the UI.
     * Kudos to mfalesni *
 
