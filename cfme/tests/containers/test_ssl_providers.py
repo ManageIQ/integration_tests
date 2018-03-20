@@ -24,7 +24,7 @@ DEFAULT_SEC_PROTOCOLS = (
     pytest.mark.polarion('CMP-10599')('SSL')
 )
 
-checked_item = namedtuple('TestItem', ['default_sec_protocol', 'hawkular_sec_protocol'])
+checked_item = namedtuple('TestItem', ['default_sec_protocol', 'metrics_sec_protocol'])
 TEST_ITEMS = (
     pytest.mark.polarion('CMP-10593')
     (checked_item('SSL trusting custom CA', 'SSL trusting custom CA')),
@@ -113,7 +113,7 @@ def test_add_provider_ssl(provider, default_sec_protocol, soft_assert, sync_ssl_
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS, ids=[
     'Default: {} /  Metrics: {}'.format(
-        ti.args[1].default_sec_protocol, ti.args[1].hawkular_sec_protocol)
+        ti.args[1].default_sec_protocol, ti.args[1].metrics_sec_protocol)
     for ti in TEST_ITEMS])
 @pytest.mark.usefixtures('has_no_containers_providers')
 def test_add_mertics_provider_ssl(provider, appliance, test_item, soft_assert,
@@ -131,16 +131,20 @@ def test_add_mertics_provider_ssl(provider, appliance, test_item, soft_assert,
         """
     new_provider = copy(provider)
     new_provider.endpoints['default'].sec_protocol = test_item.default_sec_protocol
-    new_provider.endpoints['metrics'].sec_protocol = test_item.hawkular_sec_protocol
+    new_provider.endpoints['metrics'].sec_protocol = test_item.metrics_sec_protocol
     try:
         new_provider.setup()
         view = appliance.browser.create_view(ContainerProvidersView)
         view.flash.assert_success_message(
             'Containers Providers "' + provider.name + '" was saved')
     except AssertionError:
-        soft_assert(False, provider.name + ' wasn\'t added successfully using ' +
-                    test_item.default_sec_protocol + ' security protocol and ' +
-                    test_item.hawkular_sec_protocol + ' metrics security protocol')
+        soft_assert(False,
+                    ("{provider_name} wasn't added successfully using {default_sec_protocol} "
+                     "security protocol and {metrics_sec_protocol} "
+                     "metrics security protocol").format(
+                        provider_name=provider.name,
+                        default_sec_protocol=test_item.default_sec_protocol,
+                        metrics_sec_protocol=test_item.metrics_sec_protocol))
     else:
         new_provider.delete(cancel=False)
         new_provider.wait_for_delete()
