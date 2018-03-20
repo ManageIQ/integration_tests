@@ -18,7 +18,7 @@ from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('vm_name', 'catalog_item', 'uses_infra_providers'),
+    pytest.mark.usefixtures('vm_name', 'uses_infra_providers'),
     test_requirements.service,
     pytest.mark.long_running,
     pytest.mark.provider([InfraProvider],
