@@ -2,6 +2,7 @@
 import pytest
 import random
 
+from cfme.utils.log import logger
 from cfme.cloud.availability_zone import ProviderAvailabilityZoneAllView, AvailabilityZone
 from cfme.cloud.flavor import ProviderFlavorAllView, Flavor
 from cfme.cloud.instance import Instance
