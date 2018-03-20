@@ -15,9 +15,8 @@ from cfme.utils.log import logger
 
 pytestmark = [
     test_requirements.service,
-    pytest.mark.usefixtures("vm_name"),
-    pytest.mark.usefixtures("catalog_item"),
-    pytest.mark.usefixtures('uses_infra_providers'),
+    pytest.mark.usefixtures('setup_provider', 'vm_name',
+                            'catalog_item', 'uses_infra_providers'),
     pytest.mark.long_running,
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.tier(3),
@@ -50,10 +49,9 @@ def copy_domain(request, appliance):
 
 
 @pytest.yield_fixture(scope='function')
-def myservice(appliance, setup_provider, provider, catalog_item, request):
+def myservice(appliance, provider, catalog_item, request):
     vm_name = catalog_item.provisioning_data["catalog"]["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
-    catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)

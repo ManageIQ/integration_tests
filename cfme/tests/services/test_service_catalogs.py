@@ -18,7 +18,8 @@ from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('vm_name', 'catalog_item', 'uses_infra_providers'),
+    pytest.mark.usefixtures('setup_provider', 'vm_name',
+                            'catalog_item', 'uses_infra_providers'),
     test_requirements.service,
     pytest.mark.long_running,
     pytest.mark.provider([InfraProvider],
@@ -31,7 +32,7 @@ pytestmark = [
 
 @pytest.mark.rhv1
 @pytest.mark.tier(2)
-def test_order_catalog_item(appliance, provider, setup_provider, catalog_item, request,
+def test_order_catalog_item(appliance, provider, catalog_item, request,
                             register_event):
     """Tests order catalog item
     Metadata:
@@ -39,7 +40,6 @@ def test_order_catalog_item(appliance, provider, setup_provider, catalog_item, r
     """
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
-    catalog_item.create()
 
     register_event(target_type='Service', target_name=catalog_item.name,
                    event_type='service_provisioned')
@@ -58,14 +58,13 @@ def test_order_catalog_item(appliance, provider, setup_provider, catalog_item, r
 @pytest.mark.rhv3
 @pytest.mark.tier(2)
 def test_order_catalog_item_via_rest(
-        request, appliance, provider, setup_provider, catalog_item, catalog):
+        request, appliance, provider, catalog_item, catalog):
     """Same as :py:func:`test_order_catalog_item`, but using REST.
     Metadata:
         test_flag: provision, rest
     """
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
-    catalog_item.create()
     request.addfinalizer(catalog_item.delete)
     catalog = appliance.rest_api.collections.service_catalogs.find_by(name=catalog.name)
     assert len(catalog) == 1
@@ -86,7 +85,7 @@ def test_order_catalog_item_via_rest(
 
 @pytest.mark.rhv3
 @pytest.mark.tier(2)
-def test_order_catalog_bundle(appliance, provider, setup_provider, catalog_item, request):
+def test_order_catalog_bundle(appliance, provider, catalog_item, request):
     """Tests ordering a catalog bundle
     Metadata:
         test_flag: provision
@@ -94,7 +93,6 @@ def test_order_catalog_bundle(appliance, provider, setup_provider, catalog_item,
 
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
-    catalog_item.create()
     bundle_name = fauxfactory.gen_alphanumeric()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog,
@@ -115,7 +113,7 @@ def test_order_catalog_bundle(appliance, provider, setup_provider, catalog_item,
 # Note here this needs to be reduced, doesn't need to test against all providers
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(3)
-def test_no_template_catalog_item(provider, provisioning, setup_provider, vm_name, dialog, catalog):
+def test_no_template_catalog_item(provider, provisioning, vm_name, dialog, catalog):
     """Tests no template catalog item
     Metadata:
         test_flag: provision
@@ -129,12 +127,11 @@ def test_no_template_catalog_item(provider, provisioning, setup_provider, vm_nam
 
 @pytest.mark.rhv3
 @pytest.mark.tier(3)
-def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_item):
+def test_edit_catalog_after_deleting_provider(provider, catalog_item):
     """Tests edit catalog item after deleting provider
     Metadata:
         test_flag: provision
     """
-    catalog_item.create()
     provider.delete(cancel=False)
     changes = {'description': 'my edited description'}
     if provider.appliance.version > '5.9.0.20' and provider.one_of(RHEVMProvider):
@@ -149,13 +146,11 @@ def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_
 
 @pytest.mark.rhv3
 @pytest.mark.tier(3)
-@pytest.mark.usefixtures('setup_provider')
-def test_request_with_orphaned_template(appliance, provider, setup_provider, catalog_item):
+def test_request_with_orphaned_template(appliance, provider, catalog_item):
     """Tests edit catalog item after deleting provider
     Metadata:
         test_flag: provision
     """
-    catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
