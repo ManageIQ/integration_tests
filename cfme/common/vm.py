@@ -606,7 +606,7 @@ class VM(BaseVM):
             return False
 
     def delete_from_provider(self):
-        """ 
+        """
         Delete VM/instance from provider.
 
         You cannot expect additional cleanup of attached resources by calling this method. You
