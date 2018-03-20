@@ -247,18 +247,17 @@ class RestEventListener(Thread):
         Returns None if there is no matched events."""
         evt.process_id()
 
-        if 'target_id' in evt.event_attrs:
-            q = Q('id', '>', self._last_processed_id)  # ensure we get only new events
+        q = Q('id', '>', self._last_processed_id)  # ensure we get only new events
 
-            used_filters = set(self.FILTER_ATTRS).intersection(set(evt.event_attrs))
-            for filter_attr in used_filters:
-                evt_attr = evt.event_attrs[filter_attr]
-                if evt_attr.value:
-                    q &= Q(filter_attr, '=', evt_attr.value)
-            result = self.event_streams.filter(q)
+        used_filters = set(self.FILTER_ATTRS).intersection(set(evt.event_attrs))
+        for filter_attr in used_filters:
+            evt_attr = evt.event_attrs[filter_attr]
+            if evt_attr.value:
+                q &= Q(filter_attr, '=', evt_attr.value)
+        result = self.event_streams.filter(q)
 
-            if len(result):
-                return result
+        if len(result):
+            return result
 
     @property
     def got_events(self):

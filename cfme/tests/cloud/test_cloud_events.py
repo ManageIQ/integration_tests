@@ -7,7 +7,6 @@ from cfme.common.vm import VM
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.utils.generators import random_vm_name
 
-
 pytestmark = [
     pytest.mark.tier(3),
     pytest.mark.provider([AzureProvider], scope='module')
@@ -26,7 +25,7 @@ def test_manage_nsg_group(provider, setup_provider, register_event):
     # we need to check raw data by regexps, since many azure events aren't parsed by CFME yet
 
     def add_cmp(_, y):
-        data = yaml.load(y)
+        data = yaml.load(y) if provider.appliance.version < '5.9' else y
         return (data['resourceId'].endswith(nsg_name) and
                 (data['status']['value'] == 'Accepted' and
                  data['subStatus']['value'] == 'Created') or
@@ -40,7 +39,7 @@ def test_manage_nsg_group(provider, setup_provider, register_event):
                    event_type='networkSecurityGroups_write_EndRequest')
 
     def rm_cmp(_, y):
-        data = yaml.load(y)
+        data = yaml.load(y) if provider.appliance.version < '5.9' else y
         return data['resourceId'].endswith(nsg_name) and data['status']['value'] == 'Succeeded'
 
     fd_rm_attr = {'full_data': 'will be ignored',
@@ -71,8 +70,9 @@ def test_vm_capture(request, provider, setup_provider, register_event):
     request.addfinalizer(vm.delete_from_provider)
 
     def cmp_function(_, y):
-        data = yaml.load(y)
+        data = yaml.load(y) if provider.appliance.version < '5.9' else y
         return data['resourceId'].endswith(vm.name) and data['status']['value'] == 'Succeeded'
+
     full_data_attr = {'full_data': 'will be ignored',
                       'cmp_func': cmp_function}
 
