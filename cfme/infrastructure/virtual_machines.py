@@ -211,7 +211,7 @@ class HostTemplatesOnlyAllView(TemplatesOnlyAllView):
         if self.browser.product_version < "5.9":
             title = "{} (All Templates)".format(self.context["object"].name)
         else:
-            title = "{} (All Miq Templates)".format(self.context["object"].name)
+            title = "{} (All VM Templates)".format(self.context["object"].name)
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Hosts'] and
