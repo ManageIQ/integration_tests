@@ -370,8 +370,6 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.long_running
 def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, appliance):
     """ Tests SSA can be performed and returns sane results
@@ -442,6 +440,8 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, appliance):
 
 @pytest.mark.tier(2)
 @pytest.mark.long_running
+@pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profile):
     """ Tests SSA can be performed and returns sane results
 
