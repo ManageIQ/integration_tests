@@ -158,7 +158,9 @@ setup(
                 'cfme.generic_objects.instance:GenericObjectInstanceCollection'),
             'catalogs = cfme.services.catalogs.catalog:CatalogCollection',
             ('orchestration_templates = '
-                'cfme.services.catalogs.orchestration_template:OrchestrationTemplatesCollection')
+                'cfme.services.catalogs.orchestration_template:OrchestrationTemplatesCollection'),
+            ('dashboard_report_widgets = '
+                'cfme.intelligence.reports.widgets:DashboardReportWidgetsCollection')
         ],
         'pytest11':
         [

@@ -2,10 +2,6 @@
 import fauxfactory
 import pytest
 
-from cfme.intelligence.reports.widgets.menu_widgets import MenuWidget
-from cfme.intelligence.reports.widgets.report_widgets import ReportWidget
-from cfme.intelligence.reports.widgets.chart_widgets import ChartWidget
-from cfme.intelligence.reports.widgets.rss_widgets import RSSFeedWidget
 from cfme.intelligence.reports.dashboards import DefaultDashboard
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
@@ -24,9 +20,11 @@ def dashboard(default_widgets):
 
 
 @pytest.yield_fixture(scope="function")
-def custom_widgets():
+def custom_widgets(appliance):
+    collection = appliance.collections.dashboard_report_widgets
     ws = [
-        MenuWidget(
+        collection.create(
+            collection.MENU,
             fauxfactory.gen_alphanumeric(),
             description=fauxfactory.gen_alphanumeric(),
             active=True,
@@ -35,7 +33,8 @@ def custom_widgets():
                 "Compute / Clouds / Providers": fauxfactory.gen_alphanumeric(),
             },
             visibility="<To All Users>"),
-        ReportWidget(
+        collection.create(
+            collection.REPORT,
             fauxfactory.gen_alphanumeric(),
             description=fauxfactory.gen_alphanumeric(),
             active=True,
@@ -44,23 +43,24 @@ def custom_widgets():
             rows="10",
             timer={"run": "Hourly", "hours": "Hour"},
             visibility="<To All Users>"),
-        ChartWidget(
+        collection.create(
+            collection.CHART,
             fauxfactory.gen_alphanumeric(),
             description=fauxfactory.gen_alphanumeric(),
             active=True,
             filter="Configuration Management/Virtual Machines/Vendor and Guest OS",
             timer={"run": "Hourly", "hours": "Hour"},
             visibility="<To All Users>"),
-        RSSFeedWidget(
+        collection.create(
+            collection.RSS,
             fauxfactory.gen_alphanumeric(),
             description=fauxfactory.gen_alphanumeric(),
             active=True,
             type="Internal",
             feed="Administrative Events",
             rows="8",
-            visibility="<To All Users>"),
+            visibility="<To All Users>")
     ]
-    map(lambda w: w.create(), ws)
     yield ws
     map(lambda w: w.delete(), ws)
 

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Page model for Cloud Intel / Reports / Dashboard Widgets / RSS Feeds"""
+import attr
 from widgetastic.widget import TextInput
 from widgetastic_manageiq import Calendar
 from widgetastic_patternfly import BootstrapSelect
@@ -38,24 +39,17 @@ class EditRSSWidgetView(BaseEditDashboardWidgetView, RSSWidgetFormCommon):
     pass
 
 
+@attr.s
 class RSSFeedWidget(BaseDashboardReportWidget):
 
     TYPE = "RSS Feeds"
     TITLE = "RSS Feed"
     pretty_attrs = ["title", "description", "type", "feed", "visibility"]
-
-    def __init__(self,
-            title, description=None, active=None, type=None, feed=None, external=None, rows=None,
-            timer=None, visibility=None):
-        self.title = title
-        self.description = description
-        self.active = active
-        self.type = type
-        self.feed = feed
-        self.external = external
-        self.rows = rows
-        self.timer = timer or {}
-        self.visibility = visibility
+    type = attr.ib(default=None)
+    feed = attr.ib(default=None)
+    external = attr.ib(default=None)
+    rows = attr.ib(default=None)
+    timer = attr.ib(default=attr.Factory(dict))
 
     @property
     def fill_dict(self):

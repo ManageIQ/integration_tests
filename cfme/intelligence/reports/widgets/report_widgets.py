@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Page model for Cloud Intel / Reports / Dashboard Widgets / Reports"""
+import attr
 from widgetastic_manageiq import Calendar
 from widgetastic_patternfly import BootstrapSelect
 
@@ -42,26 +43,30 @@ class EditReportWidgetView(BaseEditDashboardWidgetView, ReportWidgetFormCommon):
     pass
 
 
+@attr.s
 class ReportWidget(BaseDashboardReportWidget):
 
     TYPE = "Reports"
     TITLE = "Report"
     pretty_attrs = ["description", "filter", "visibility"]
+    filter = attr.ib(default=None)
+    subfilter = attr.ib(init=False)
+    repfilter = attr.ib(init=False)
+    rows = attr.ib(default=None)
+    timer = attr.ib(default=None)
+    columns = attr.ib(default=None)
+    column1 = attr.ib(init=False)
+    column2 = attr.ib(init=False)
+    column3 = attr.ib(init=False)
+    column4 = attr.ib(init=False)
 
-    def __init__(self, title, description=None, active=None, filter=None, columns=None, rows=None,
-            timer=None, visibility=None):
-        self.title = title
-        self.description = description
-        self.active = active
-        self.filter, self.subfilter, self.repfilter = filter
+    def __attrs_post_init__(self):
+        self.filter, self.subfilter, self.repfilter = self.filter
         for i in range(1, 5):
             try:
-                setattr(self, "column{}".format(i), columns[i])
+                setattr(self, "column{}".format(i), self.columns[i])
             except IndexError:
                 setattr(self, "column{}".format(i), None)
-        self.rows = rows
-        self.timer = timer
-        self.visibility = visibility
 
     @property
     def fill_dict(self):

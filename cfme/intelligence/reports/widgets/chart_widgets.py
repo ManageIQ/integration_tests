@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Page model for Cloud Intel / Reports / Dashboard Widgets / Charts"""
+import attr
 from widgetastic_manageiq import Calendar
 from widgetastic_patternfly import BootstrapSelect
 
@@ -34,20 +35,14 @@ class EditChartWidgetView(BaseEditDashboardWidgetView, ChartWidgetFormCommon):
     pass
 
 
+@attr.s
 class ChartWidget(BaseDashboardReportWidget):
 
     TYPE = "Charts"
     TITLE = "Chart"
     pretty_attrs = ["title", "description", "filter", "visibility"]
-
-    def __init__(self,
-            title, description=None, active=None, filter=None, timer=None, visibility=None):
-        self.title = title
-        self.description = description
-        self.active = active
-        self.filter = filter
-        self.timer = timer
-        self.visibility = visibility
+    filter = attr.ib(default=None)
+    timer = attr.ib(default=attr.Factory(dict))
 
     @property
     def fill_dict(self):

@@ -7,10 +7,6 @@ from cfme import test_requirements
 from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.intelligence.reports.reports import CustomReport
 from cfme.intelligence.reports.schedules import ScheduleCollection
-from cfme.intelligence.reports.widgets.chart_widgets import ChartWidget
-from cfme.intelligence.reports.widgets.menu_widgets import MenuWidget
-from cfme.intelligence.reports.widgets.report_widgets import ReportWidget
-from cfme.intelligence.reports.widgets.rss_widgets import RSSFeedWidget
 from cfme.utils.blockers import BZ
 from cfme.utils.path import data_path
 from cfme.utils.rest import assert_response
@@ -95,9 +91,9 @@ def test_reports_disable_enable_schedule(schedule_data, appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1388144, forced_streams=["5.7", "upstream"])])
-def test_menuwidget_crud():
-    w = MenuWidget(
+def test_menuwidget_crud(appliance):
+    w = appliance.collections.dashboard_report_widgets.create(
+        appliance.collections.dashboard_report_widgets.MENU,
         fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
         active=True,
@@ -107,7 +103,6 @@ def test_menuwidget_crud():
         },
         visibility="<To All Users>"
     )
-    w.create()
     with update(w):
         w.active = False
     w.delete()
@@ -115,9 +110,9 @@ def test_menuwidget_crud():
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1388144, forced_streams=["5.7", "upstream"])])
-def test_reportwidget_crud():
-    w = ReportWidget(
+def test_reportwidget_crud(appliance):
+    w = appliance.collections.dashboard_report_widgets.create(
+        appliance.collections.dashboard_report_widgets.REPORT,
         fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
         active=True,
@@ -127,7 +122,6 @@ def test_reportwidget_crud():
         timer={"run": "Hourly", "hours": "Hour"},
         visibility="<To All Users>"
     )
-    w.create()
     with update(w):
         w.active = False
     w.delete()
@@ -135,9 +129,9 @@ def test_reportwidget_crud():
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1388144, forced_streams=["5.7", "upstream"])])
-def test_chartwidget_crud():
-    w = ChartWidget(
+def test_chartwidget_crud(appliance):
+    w = appliance.collections.dashboard_report_widgets.create(
+        appliance.collections.dashboard_report_widgets.CHART,
         fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
         active=True,
@@ -145,7 +139,6 @@ def test_chartwidget_crud():
         timer={"run": "Hourly", "hours": "Hour"},
         visibility="<To All Users>"
     )
-    w.create()
     with update(w):
         w.active = False
     w.delete()
@@ -153,9 +146,9 @@ def test_chartwidget_crud():
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1388144, forced_streams=["5.7", "upstream"])])
-def test_rssfeedwidget_crud():
-    w = RSSFeedWidget(
+def test_rssfeedwidget_crud(appliance):
+    w = appliance.collections.dashboard_report_widgets.create(
+        appliance.collections.dashboard_report_widgets.RSS,
         fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
         active=True,
@@ -164,7 +157,6 @@ def test_rssfeedwidget_crud():
         rows="8",
         visibility="<To All Users>"
     )
-    w.create()
     # Basic update
     with update(w):
         w.active = False
