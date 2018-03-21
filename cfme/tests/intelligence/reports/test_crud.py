@@ -82,6 +82,19 @@ def test_schedule_crud(schedule_data, appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
+@test_requirements.report
+def test_reports_disable_enable_schedule(schedule_data, appliance):
+    schedules = appliance.collections.schedules
+    schedule = schedules.create(**schedule_data)
+    schedules.disable_schedules(schedule)
+    assert not schedule.enabled
+    schedules.enable_schedules(schedule)
+    assert schedule.enabled
+    schedule.delete()
+
+
+@pytest.mark.sauce
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1388144, forced_streams=["5.7", "upstream"])])
 def test_menuwidget_crud():
     w = MenuWidget(
