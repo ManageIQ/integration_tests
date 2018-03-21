@@ -19,6 +19,10 @@ from cfme.utils.path import log_path
 from cfme.utils.quote import quote
 from cfme.utils.version import Version
 
+# Create a few classes using namedtuple.
+Build = namedtuple('Build', ['number', 'job', 'coverage_archive'])
+Jenkins = namedtuple('Jenkins', ['url', 'user', 'token', 'client'])
+
 # log to stdout too
 add_stdout_handler(logger)
 
@@ -406,9 +410,6 @@ def get_eligible_builds(jenkins_data, jenkins_job, cfme_version):
     # Find the builds with appliance version
     eligible_builds = set()
     for build_number in build_numbers:
-        build = namedtuple('Build', ['number', 'job', 'coverage_archive'])
-        build.number = build_number
-        build.job = jenkins_job
 
         # Acquire the artifacts from this build
         try:
@@ -450,7 +451,14 @@ def get_eligible_builds(jenkins_data, jenkins_job, cfme_version):
         if 'coverage-results.tgz' not in artifacts:
             logger.info('coverage-results.tgz not in artifacts of %s/%s', jenkins_job, build_number)
             continue
-        build.coverage_archive = artifacts['coverage-results.tgz']['relativePath']
+
+        # We have all the data to instantiate our Build object, so lets do it.
+        # Note, we could fill out its data members a little at a time because
+        # a namedtuple's data members are immutable.
+        build = Build(
+            number=build_number,
+            job=jenkins_job,
+            coverage_archive=artifacts['coverage-results.tgz']['relativePath'])
 
         if not check_artifact(
                 jenkins_data.user,
@@ -662,11 +670,11 @@ def aggregate_coverage(appliance, jenkins_url, jenkins_user, jenkins_token, jenk
     # Acquire jenkins client and put jenkins data into a named tupple for ease of passing
     # around (i.e. to reduce the number of arguments on functions)
     jenkins_client = jenkins.Jenkins(jenkins_url, username=jenkins_user, password=jenkins_token)
-    jenkins_data = namedtuple('Jenkins', ['url', 'user', 'token', 'client'])
-    jenkins_data.url = jenkins_url
-    jenkins_data.user = jenkins_user
-    jenkins_data.token = jenkins_token
-    jenkins_data.client = jenkins_client
+    jenkins_data = Jenkins(
+        url=jenkins_url,
+        user=jenkins_user,
+        token=jenkins_token,
+        client=jenkins_client)
 
     # Get the eligible builds for all jobs specified.
     logger.info('Jenkins Jobs: %s', ' '.join(jenkins_jobs))
@@ -710,7 +718,7 @@ def aggregate_coverage(appliance, jenkins_url, jenkins_user, jenkins_token, jenk
     help='Jenkins user authentication token')
 @click.option('--wave-size', 'wave_size', default=10,
     help='How many coverage tarballs to extract at a time when merging')
-def coverage_report_jenkins(jenkins_url, jenkins_job, jenkins_user, jenkins_token, appliance_ip,
+def coverage_report_jenkins(jenkins_url, jenkins_jobs, jenkins_user, jenkins_token, appliance_ip,
         wave_size):
     """Aggregate coverage data from jenkins job(s) and upload to sonarqube"""
     with IPAppliance(hostname=appliance_ip) as appliance:
@@ -719,7 +727,7 @@ def coverage_report_jenkins(jenkins_url, jenkins_job, jenkins_user, jenkins_toke
             jenkins_url,
             jenkins_user,
             jenkins_token,
-            jenkins_job,
+            jenkins_jobs,
             wave_size))
 
 
