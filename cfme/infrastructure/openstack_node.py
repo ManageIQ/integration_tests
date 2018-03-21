@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """A model of an Openstack Infrastructure Node in CFME."""
 
-from cfme.infrastructure.host import Host
+import attr
+
+from cfme.infrastructure.host import Host, HostCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
@@ -32,3 +34,10 @@ class OpenstackNode(Host):
         view.toolbar.configuration.item_select('Introspect Node', handle_alert=True)
         exp_msg = '"{}": Introspect successfully initiated'.format(self.name)
         view.flash.assert_success_message(exp_msg)
+
+
+@attr.s
+class OpenstackNodeCollection(HostCollection):
+    """Collection object for the :py:class:`cfme.infrastructure.openstack_node.OpenstackNode`."""
+
+    ENTITY = OpenstackNode
