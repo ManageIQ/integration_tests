@@ -2058,7 +2058,7 @@ class IPAppliance(object):
             self.server.update_advanced_settings(settings_dict)
 
     def set_proxy(self, host, port, user=None, password=None, prov_type=None):
-        vmdb_config = self.get_yaml_config()
+        vmdb_config = self.advanced_settings
         proxy_type = prov_type or 'default'
         settings = {'host': host,
                     'port': port,
@@ -2070,7 +2070,7 @@ class IPAppliance(object):
             logger.error('Incorrect provider type')
             logger.exception(ex)
             raise Exception('Impossible to create proxy with current provider type')
-        return self.set_yaml_config(vmdb_config)
+        return self.update_advanced_settings(vmdb_config)
 
     def set_session_timeout(self, timeout=86400, quiet=True):
         """Sets the timeout of UI timeout.
