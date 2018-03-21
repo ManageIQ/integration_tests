@@ -23,6 +23,8 @@ def parse_cmd_line():
                         help='List of ENIs, which should be excluded. ENI ID is allowed.')
     parser.add_argument('--exclude_stacks', nargs='+',
                        help='List of Stacks, which should be excluded')
+    parser.add_argument('--stack-template',
+                        help='Stack name template to be removed', default="test", type=str)
     parser.add_argument("--output", dest="output", help="target file name, default "
                                                         "'cleanup_ec2.log' in utils.path.log_path",
                         default=log_path.join('cleanup_ec2.log').strpath)
@@ -131,12 +133,14 @@ def delete_unused_network_interfaces(provider_mgmt, excluded_enis, output):
         logger.exception('Exception in %r', delete_unused_network_interfaces.__name__)
 
 
-def delete_stacks(provider_mgmt, excluded_stacks, output):
+def delete_stacks(provider_mgmt, excluded_stacks, stack_template, output):
     stack_list = []
     provider_name = provider_mgmt.kwargs['name']
     try:
-        for stack in provider_mgmt.list_stacks():
-            if excluded_stacks and stack.stack_name in excluded_stacks:
+        for stack in provider_mgmt.list_stack():
+            if (excluded_stacks and
+                    stack.stack_name in excluded_stacks or
+                    not stack.stack_name.startswith(stack_template)):
                 logger.info("  Excluding Stack name: %r", stack.stack_name)
                 continue
             else:
@@ -156,7 +160,8 @@ def delete_stacks(provider_mgmt, excluded_stacks, output):
         logger.exception('Exception in %r', delete_stacks.__name__)
 
 
-def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, exclude_stacks, output):
+def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, exclude_stacks,
+               stack_template, output):
     with open(output, 'w') as report:
         report.write('ec2cleanup.py, Address, Volume, LoadBalancer and Network Interface Cleanup')
         report.write("\nDate: {}\n".format(datetime.now()))
@@ -178,6 +183,7 @@ def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, exclud
         logger.info("Deleting old stacks...")
         delete_stacks(provider_mgmt=provider_mgmt,
                       excluded_stacks=exclude_stacks,
+                      stack_template=stack_template,
                       output=output)
         logger.info("Releasing addresses...")
         delete_disassociated_addresses(provider_mgmt=provider_mgmt,
@@ -188,4 +194,4 @@ def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, exclud
 if __name__ == "__main__":
     args = parse_cmd_line()
     sys.exit(ec2cleanup(args.exclude_volumes, args.exclude_eips, args.exclude_elbs,
-                        args.exclude_enis, args.exclude_stacks, args.output))
+                        args.exclude_enis, args.exclude_stacks, args.stack_template, args.output))
