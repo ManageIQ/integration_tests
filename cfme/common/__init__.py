@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import six
 from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException, RowNotFound
 from widgetastic_patternfly import (BootstrapSelect, Button, CheckableBootstrapTreeview,
@@ -358,7 +359,7 @@ class Taggable(object):
         tags_text = tag_table.get_text_of(tenant)
         if tags_text != 'No {} have been assigned'.format(tenant):
             # check for users/groups page in case one tag string is returned
-            for tag in [tags_text] if isinstance(tags_text, basestring) else list(tags_text):
+            for tag in [tags_text] if isinstance(tags_text, six.string_types) else list(tags_text):
                 tag_category, tag_name = tag.split(':')
                 tags.append(Tag(category=Category(display_name=tag_category),
                                 display_name=tag_name.strip()))
@@ -389,6 +390,8 @@ class EditTagsFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
+        # not for all entities we have select like 'Edit Tags',
+        # users, groups, tenants have specific dropdown title
         try:
             self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
         except DropdownItemNotFound:
@@ -418,6 +421,8 @@ class EditTagsFromListCollection(CFMENavigateStep):
                     surf_pages=True, name=name).check()
         else:
             self.prerequisite_view.entities.get_entity(surf_pages=True, name=self.obj.name).check()
+        # not for all entities we have select like 'Edit Tags',
+        # users, groups, tenants have specific dropdown title
         try:
             self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
         except DropdownItemNotFound:

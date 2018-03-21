@@ -267,9 +267,10 @@ def test_user_edit_tag(appliance, group_collection):
 
     user = new_user(appliance, [group])
     user.add_tag(category="Cost Center *", tag="Cost Center 001")
-    assert (
-        tag.category.display_name == 'Cost Center *' and tag.display_name == 'Cost Center 001'
-        for tag in user.get_tags()), 'Assigned tag was not found on the details page'
+    assert any([
+        tag.category.display_name == 'Cost Center' and tag.display_name == 'Cost Center 001'
+        for tag in user.get_tags()
+    ]), 'Assigned tag was not found on the details page'
     user.delete()
 
 
@@ -282,8 +283,10 @@ def test_user_remove_tag(appliance, group_collection):
     user.add_tag(category="Department", tag="Engineering")
     user.remove_tag("Department", "Engineering")
     navigate_to(user, 'Details')
-    assert (tag.category.display_name != 'Department' and tag.display_name != 'Engineering'
-            for tag in user.get_tags()), 'Remove User tag failed'
+    assert not any([
+        tag.category.display_name == 'Department' and tag.display_name == 'Engineering'
+        for tag in user.get_tags()
+    ]), 'Remove User tag failed'
     user.delete()
 
 
@@ -401,9 +404,10 @@ def test_group_edit_tag(group_collection):
     group = group_collection.create(description=group_description, role=role)
 
     group.add_tag(category="Cost Center *", tag="Cost Center 001")
-    assert (
-        tag.category.display_name == 'Cost Center *' and tag.display_name == 'Cost Center 001'
-        for tag in group.get_tags()), 'Group edit tag failed'
+    assert any([
+        tag.category.display_name == 'Cost Center' and tag.display_name == 'Cost Center 001'
+        for tag in group.get_tags()
+    ]), 'Group edit tag failed'
     group.delete()
 
 
@@ -416,8 +420,10 @@ def test_group_remove_tag(group_collection):
     navigate_to(group, 'Edit')
     group.add_tag(category="Department", tag="Engineering")
     group.remove_tag(category="Department", tag="Engineering")
-    assert (tag.category.display_name != 'Department' and tag.display_name != 'Engineering'
-            for tag in group.get_tags()), "Group User tag failed"
+    assert not any([
+        tag.category.display_name == 'Department' and tag.display_name == 'Engineering'
+        for tag in group.get_tags()
+    ]), 'Remove Group User tag failed'
     group.delete()
 
 
