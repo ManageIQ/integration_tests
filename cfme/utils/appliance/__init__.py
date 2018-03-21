@@ -1731,7 +1731,8 @@ class IPAppliance(object):
     @property
     def _ansible_pod_name(self):
         if self.is_pod:
-            get_ansible_name = "basename $(oc get pods -lname=ansible -o name)"
+            get_ansible_name = ("basename $(oc get pods -lname=ansible "
+                                "-o name --namespace={n})".format(n=self.project))
             return str(self.ssh_client.run_command(get_ansible_name, ensure_host=True)).strip()
         else:
             return None
