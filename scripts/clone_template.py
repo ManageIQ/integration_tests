@@ -238,9 +238,9 @@ def main(**kwargs):
             else:
                 app_args = (kwargs['provider'], deploy_args['vm_name'])
                 app_kwargs = {}
-                ocp_creds = cred[provider_dict['credentials']]
-                ssh_creds = cred[provider_dict['ssh_creds']]
                 if provider_type == 'openshift':
+                    ocp_creds = cred[provider_dict['credentials']]
+                    ssh_creds = cred[provider_dict['ssh_creds']]
                     app_kwargs = {
                         'project': output['project'],
                         'db_host': output['external_ip'],
