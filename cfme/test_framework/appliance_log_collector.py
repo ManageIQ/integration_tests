@@ -1,12 +1,14 @@
 """Plugin for collection of appliance logs
 
 Options in env.yaml will define what files to collect, will default to the set below
-log_collector:
-    local_dir: log/appliance/  # Local to log_path
-    log_files:
-        - /var/www/miq/vmdb/log/evm.log
-        - /var/www/miq/vmdb/log/production.log
-        - /var/www/miq/vmdb/log/automation.log
+
+.. code-block::yaml
+    log_collector:
+        local_dir: log/appliance/  # Local to log_path
+        log_files:
+            - /var/www/miq/vmdb/log/evm.log
+            - /var/www/miq/vmdb/log/production.log
+            - /var/www/miq/vmdb/log/automation.log
 
 Log files will be tarred and written to log_path
 """

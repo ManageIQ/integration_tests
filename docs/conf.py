@@ -100,7 +100,7 @@ release = '0'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ['_build', 'dockerbot']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 # default_role = None
@@ -292,5 +292,6 @@ MOCK_MODULES = ['git', 'pycurl', 'wrapanapi', 'ovirt-engine-sdk-python', 'wrapan
                 'wrapanapi.containers.replicator', 'wrapanapi.containers.deployment_config',
                 'wrapanapi.containers.node', 'wrapanapi.containers.image',
                 'wrapanapi.containers.image_registry', 'wrapanapi.containers.container',
+                'wrapanapi.vcloud', 'wrapanapi.nuage', 'wrapanapi.lenovo',
                 'ovirtsdk.xml', 'ovirtsdk.infrastructure', 'ovirtsdk.infrastructure.errors']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)

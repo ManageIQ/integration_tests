@@ -396,24 +396,28 @@ def composite_uncollect(build, source='jenkins'):
 @attr.s
 class TemplateName(object):
     """Generate a template name from given link, a timestamp, and optional version string
+
     This method should handle naming templates from the following URL types:
-        - http://<build-server-address>/builds/manageiq/master/latest/
-        - http://<build-server-address>/builds/manageiq/gaprindashvili/stable/
-        - http://<build-server-address>/builds/manageiq/fine/stable/
-        - http://<build-server-address>/builds/cfme/5.8/stable/
-        - http://<build-server-address>/builds/cfme/5.9/latest/
+
+    - http://<build-server-address>/builds/manageiq/master/latest/
+    - http://<build-server-address>/builds/manageiq/gaprindashvili/stable/
+    - http://<build-server-address>/builds/manageiq/fine/stable/
+    - http://<build-server-address>/builds/cfme/5.8/stable/
+    - http://<build-server-address>/builds/cfme/5.9/latest/
 
     These builds fall into a few categories:
-        - MIQ nightly (master/latest)  (upstream)
-        - MIQ stable (<name>/stable)  (upstream_stable, upstream_fine, etc)
-        - CFME nightly (<stream>/latest)  (downstream-nightly)
-        - CFME stream (<stream>/stable)  (downstream-<stream>)
+
+    - MIQ nightly (master/latest)  (upstream)
+    - MIQ stable (<name>/stable)  (upstream_stable, upstream_fine, etc)
+    - CFME nightly (<stream>/latest)  (downstream-nightly)
+    - CFME stream (<stream>/stable)  (downstream-<stream>)
 
     The generated template names should follow the syntax with 5 digit version numbers:
-        - MIQ nightly: miq-nightly-<yyyymmdd>  (miq-nightly-201711212330)
-        - MIQ stable: miq-<name>-<number>-yyyymmdd  (miq-fine-4-20171024, miq-gapri-20180130)
-        - CFME nightly: cfme-nightly-<version>-<yyyymmdd>  (cfme-nightly-59000-20170901)
-        - CFME stream: cfme-<version>-<yyyymmdd>  (cfme-57402-20171202)
+
+    - MIQ nightly: miq-nightly-<yyyymmdd>  (miq-nightly-201711212330)
+    - MIQ stable: miq-<name>-<number>-yyyymmdd  (miq-fine-4-20171024, miq-gapri-20180130)
+    - CFME nightly: cfme-nightly-<version>-<yyyymmdd>  (cfme-nightly-59000-20170901)
+    - CFME stream: cfme-<version>-<yyyymmdd>  (cfme-57402-20171202)
 
     Release names for upstream will be truncated to 5 letters (thanks gaprindashvili...)
     """

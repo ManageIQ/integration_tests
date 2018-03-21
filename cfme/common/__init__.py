@@ -102,13 +102,16 @@ class PolicyProfileAssignable(object):
                 coverage goes in, PolicyProfile objects will be also passable.
             conditions: entities should match to
 
-        Ex:
-            collection = appliance.collections.container_images
-            # assign OpenSCAP policy
-            collection.assign_policy_profiles_multiple_entities(random_image_instances,
-                            conditions=[{'name': 'dotnet/dotnet-20-rhel7'},
-                                        {'name': 'dotnet/dotnet-20-runtime-rhel7'}],
-                            'OpenSCAP profile')
+        Usage:
+
+            .. code-block:: python
+
+                collection = appliance.collections.container_images
+                # assign OpenSCAP policy
+                collection.assign_policy_profiles_multiple_entities(random_image_instances,
+                                conditions=[{'name': 'dotnet/dotnet-20-rhel7'},
+                                            {'name': 'dotnet/dotnet-20-runtime-rhel7'}],
+                                'OpenSCAP profile')
         """
         map(self.assigned_policy_profiles.add, policy_profile_names)
         self._assign_or_unassign_policy_profiles_multiple_entities(
@@ -124,13 +127,16 @@ class PolicyProfileAssignable(object):
                 coverage goes in, PolicyProfile objects will be also passable.
             conditions: entities should match to
 
-        Ex:
-            collection = appliance.collections.container_images
-            # unassign OpenSCAP policy
-            collection.unassign_policy_profiles_multiple_entities(random_image_instances,
-                            conditions=[{'name': 'dotnet/dotnet-20-rhel7'},
-                                        {'name': 'dotnet/dotnet-20-runtime-rhel7'}],
-                            'OpenSCAP profile')
+        Usage:
+
+            .. code-block:: python
+
+                collection = appliance.collections.container_images
+                # unassign OpenSCAP policy
+                collection.unassign_policy_profiles_multiple_entities(random_image_instances,
+                                conditions=[{'name': 'dotnet/dotnet-20-rhel7'},
+                                            {'name': 'dotnet/dotnet-20-runtime-rhel7'}],
+                                'OpenSCAP profile')
         """
         for pp_name in policy_profile_names:
             try:

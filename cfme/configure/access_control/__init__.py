@@ -1210,9 +1210,11 @@ class RoleCollection(BaseCollection):
 
     def create(self, name=None, vm_restriction=None, product_features=None, cancel=False):
         """ Create role method
+
         Args:
             cancel: True - if you want to cancel role creation,
                     by default, role will be created
+
         Raises:
             RBACOperationBlocked: If operation is blocked due to current user
                 not having appropriate permissions OR update is not allowed

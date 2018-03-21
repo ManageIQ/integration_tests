@@ -146,6 +146,7 @@ class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssi
 
     def check_compliance_multiple_images(self, image_entities, check_on_entity=True, timeout=240):
         """Initiates compliance check and waits for it to finish on several Images.
+
         Args:
             image_entities: list of Image entities that need to perform compliance check on them
             check_on_entity (bool): check the compliance status on the entity summary view if True,
