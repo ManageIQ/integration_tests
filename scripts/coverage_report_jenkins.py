@@ -479,12 +479,6 @@ def get_eligible_builds(jenkins_data, jenkins_job, cfme_version):
                 build_number,
                 build_appliance_version)
 
-    if not eligible_builds:
-        raise Exception(
-            'Could not find any coverage reports for {} in {}'.format(
-                cfme_version,
-                jenkins_job))
-
     return eligible_builds
 
 
@@ -684,6 +678,11 @@ def aggregate_coverage(appliance, jenkins_url, jenkins_user, jenkins_token, jenk
             jenkins_data,
             jenkins_job,
             appliance_version))
+    if not eligible_builds:
+        raise Exception(
+            'Could not find any coverage reports for {} in {}'.format(
+                appliance_version,
+                ', '.join(jenkins_jobs)))
     eligible_builds = sorted(eligible_builds, key=lambda build: build.number)
 
     # Merge data and do sonar scan
