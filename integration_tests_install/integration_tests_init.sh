@@ -174,13 +174,13 @@ function run_command {
   fi
   
   # Get value from config file 
-  if [ $(sed -n 's/^mount_ssh_keys: \(.*\).*$/\1/gp' .vars_config.yml) = "y" ]; then
+  if [ "$(sed -n 's/^mount_ssh_keys: \(.*\).*$/\1/gp' .vars_config.yml)" = "y" ]; then
     SSH_VOL="-v ~/.ssh:/home/${USERNAME}/.ssh:ro \\"
   else
-    SSH_VOL=" \"
+    SSH_VOL=" \\"
   fi
   
-  PROJECTS_VOL=$(sed -n 's/^projects: \(.*\).*$/\1/gp' .vars_config.yml)
+  PROJECTS_DIR=$(sed -n 's/^projects: \(.*\).*$/\1/gp' .vars_config.yml)
 
 
   docker run -it --rm \
@@ -192,7 +192,7 @@ function run_command {
     -v /etc/group:/etc/group:ro \
     -v ${WORKDIR}:/projects/cfme_vol/ \
     ${SSH_VOL}
-    -v ${PROJECTS_VOL}:${HOME}/${PROJECTS_VOL} \
+    -v ${PROJECTS_DIR}:${HOME}/${PROJECTS_DIR} \
     -v /var/tmp/bashrc:${HOME}/.bashrc \
     --security-opt=label=type:spc_t \
     -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
