@@ -2,8 +2,13 @@
 import six
 from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException, RowNotFound
-from widgetastic_patternfly import (BootstrapSelect, Button, CheckableBootstrapTreeview,
-    DropdownItemNotFound)
+from widgetastic_patternfly import (
+    BootstrapSelect,
+    Button,
+    CheckableBootstrapTreeview,
+    DropdownItemNotFound,
+    SelectItemNotFound
+)
 from widgetastic.widget import Table, Text, View
 
 from cfme.base.login import BaseLoggedInPage
@@ -280,7 +285,7 @@ class Taggable(object):
                 "tag_category": '{} *'.format(category),
                 "tag_name": tag
             })
-        except NoSuchElementException:
+        except (NoSuchElementException, SelectItemNotFound):
             updated = view.form.fill({
                 "tag_category": category,
                 "tag_name": tag
