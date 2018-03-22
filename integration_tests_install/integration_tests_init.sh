@@ -152,6 +152,7 @@ function run_config {
     -v ~/.ssh:/home/${USERNAME}/.ssh:ro \
     --security-opt=label=type:spc_t \
     -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
+    -e PROJECTS=$PROJECTS \
     ${ENV_VARS_CONF} \
     ${DOCK_IMG_CFG} \
     ${1}
@@ -166,6 +167,22 @@ function run_command {
   # We create temporary file on the host system which is mounted into container later on
   echo "source /etc/bashrc" > /var/tmp/bashrc
 
+  # Check if we need to mount .ssh directory
+  if [ ! -f .vars_config.yml ];then
+    echo ".vars_config.yml not found!!! Run ./integration_tests_init.sh init..."
+    exit 1
+  fi
+  
+  # Get value from config file 
+  if [ $(sed -n 's/^mount_ssh_keys: \(.*\).*$/\1/gp' .vars_config.yml) = "y" ]; then
+    SSH_VOL="-v ~/.ssh:/home/${USERNAME}/.ssh:ro \\"
+  else
+    SSH_VOL=" \"
+  fi
+  
+  PROJECTS_VOL=$(sed -n 's/^projects: \(.*\).*$/\1/gp' .vars_config.yml)
+
+
   docker run -it --rm \
     -w /projects/cfme_vol/integration_tests \
     -u ${USER_ID}:${GROUP_ID} \
@@ -174,8 +191,8 @@ function run_command {
     -v /etc/passwd:/etc/passwd:ro \
     -v /etc/group:/etc/group:ro \
     -v ${WORKDIR}:/projects/cfme_vol/ \
-    -v ~/.ssh:/home/${USERNAME}/.ssh:ro \
-    -v ~/:${HOME} \
+    ${SSH_VOL}
+    -v ${PROJECTS_VOL}:${HOME}/${PROJECTS_VOL} \
     -v /var/tmp/bashrc:${HOME}/.bashrc \
     --security-opt=label=type:spc_t \
     -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \

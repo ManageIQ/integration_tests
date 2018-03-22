@@ -9,6 +9,7 @@
     username: "{{ lookup('env','USERNAME') }}"
     groupname: "{{ lookup('env','GROUPNAME') }}"
     debug: "{{ lookup('env','DEBUG') }}"
+    projects: "{{ lookup('env','PROJECTS') }}"
   
   tasks:
     - pause: prompt="Welcome to ManageIQ integration tests configuration \n
@@ -28,6 +29,7 @@
         - "{{ username }}"
         - "{{ groupname }}"
         - "{{ debug }}"
+        - "{{ projects }}"
       when: debug
       register: shell
     
@@ -193,6 +195,7 @@
     - name: Writing all prompted variables into variable file
       lineinfile: "dest={{ vars_config }} regexp='^{{ item.key }}:' line='{{ item.key }}: {{ item.value }}'"
       with_items:
+        - { key: 'projects', value: "{{ projects }}" }
         - { key: 'mount_ssh_keys', value: "{{ mount_ssh_keys_p.key }}"}
         - { key: 'pull_requests', value: "{{ pull_requests_p.key }}"}
         - { key: 'git_account_username', value: "{{ git_account_username_p.key|default('') }}"}
