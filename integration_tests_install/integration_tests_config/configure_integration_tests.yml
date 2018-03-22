@@ -337,6 +337,7 @@
     - debug: msg="{{item | basename }}"
       with_fileglob: 
         - "{{ cfme_vol }}/{{ yaml_remote_repo_basename }}/complete/*.*yaml"
+      when: yaml_remote_repo_yn_p.key == "y"
       # when: item | basename != 'env.yaml'
       
     - name: Create symlinks for (remote) YAML repo
