@@ -308,12 +308,13 @@
     - name: get basename from git remote repo
       set_fact:
         yaml_remote_repo_basename: "{{ yaml_remote_repo | basename | regex_replace('\\.git','') }}"
+      when: yaml_remote_repo_yn_p.key == "y"
 
     - name: Clone remote YAML repo - Add username into repo url - regexp
       git: repo="{{ yaml_remote_repo }}" dest="{{ cfme_vol }}/{{ yaml_remote_repo_basename }}" clone=yes remote={{ yaml_remote_name | default('origin') }}
       # git: repo="{{ yaml_remote_repo | regex_replace("^(.+)//(.+)$", "\\1//" + yaml_remote_repo_username + "@\\2") }}" dest="{{ cfme_vol }}/cfme-qe-yamls" clone=yes
       become_user: "{{ username }}"
-      when: yaml_remote_repo_yn_p.key == "y"
+      when: yaml_remote_repo_yn_p.key == "y" 
 
     - name: Configure origin for remote YAML repo
       git_config: repo="{{ cfme_vol }}/{{ yaml_remote_repo_basename }}" scope=local name="{{ item.name }}" value="{{ item.value }}"
