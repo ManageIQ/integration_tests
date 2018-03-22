@@ -2,6 +2,7 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage.manager import StorageManagerDetailsView
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -11,11 +12,17 @@ pytestmark = [
     pytest.mark.tier(3),
     test_requirements.storage,
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([OpenStackProvider])
+    pytest.mark.provider([OpenStackProvider], scope='module')
 ]
 
 
 MANAGER_TYPE = ['Swift Manager', 'Cinder Manager']
+
+
+@pytest.yield_fixture(scope='module')
+def provider_cleanup():
+    yield
+    CloudProvider.clear_providers()
 
 
 @pytest.yield_fixture(params=MANAGER_TYPE,
@@ -65,7 +72,7 @@ def test_storage_manager_edit_tag(collection_manager):
     assert not tag_available
 
 
-def test_storage_manager_delete(collection_manager):
+def test_storage_manager_delete(collection_manager, provider_cleanup):
     """ Test delete storage manager
 
     prerequisites:
