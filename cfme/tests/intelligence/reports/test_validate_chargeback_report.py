@@ -200,7 +200,7 @@ def resource_usage(vm_ownership, appliance, provider):
 
         rc, out = appliance.ssh_client.run_rails_command(
             "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
-            vm.perf_capture('realtime', 1.hour.ago.utc, Time.now.utc)\""
+            vm.perf_capture('realtime', 4.hour.ago.utc, Time.now.utc)\""
             .format(provider.id, repr(vm_name)))
         assert rc == 0, "Failed to capture VM C&U data:".format(out)
 
@@ -234,7 +234,7 @@ def resource_usage(vm_ownership, appliance, provider):
         'ems_metrics_coordinator', 'ems_metrics_collector')
     rc, out = appliance.ssh_client.run_rails_command(
         "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
-        vm.perf_rollup_range(1.hour.ago.utc, Time.now.utc,'realtime')\"".
+        vm.perf_rollup_range(4.hour.ago.utc, Time.now.utc,'realtime')\"".
         format(provider.id, repr(vm_name)))
     assert rc == 0, "Failed to rollup VM C&U data:".format(out)
 
@@ -260,10 +260,12 @@ def resource_usage(vm_ownership, appliance, provider):
            record.derived_memory_used or
            record.net_usage_rate_average or
            record.disk_usage_rate_average):
-            average_cpu_used_in_mhz = average_cpu_used_in_mhz + record.cpu_usagemhz_rate_average
-            average_memory_used_in_mb = average_memory_used_in_mb + record.derived_memory_used
-            average_network_io = average_network_io + record.net_usage_rate_average
-            average_disk_io = average_disk_io + record.disk_usage_rate_average
+            average_cpu_used_in_mhz = average_cpu_used_in_mhz
+            + round(record.cpu_usagemhz_rate_average)
+            average_memory_used_in_mb = average_memory_used_in_mb
+            + round(record.derived_memory_used)
+            average_network_io = average_network_io + round(record.net_usage_rate_average)
+            average_disk_io = average_disk_io + round(record.disk_usage_rate_average)
 
     for record in appliance.db.client.session.query(rollups).filter(
             rollups.id.in_(result.subquery())):
