@@ -168,7 +168,7 @@ function run_command {
   echo "source /etc/bashrc" > /var/tmp/bashrc
 
   # Check if we need to mount .ssh directory
-  if [ ! -f .vars_config.yml ];then
+  if [ ! -f ${WORKDIR}/.vars_config.yml ];then
     echo ".vars_config.yml not found!!! Run ./integration_tests_init.sh init..."
     exit 1
   fi
@@ -180,7 +180,7 @@ function run_command {
     SSH_VOL=" \\"
   fi
   
-  PROJECTS_DIR=$(sed -n 's/^projects: \(.*\).*$/\1/gp' .vars_config.yml)
+  # PROJECTS_DIR=$(sed -n 's/^projects: \(.*\).*$/\1/gp' .vars_config.yml)
 
 
   docker run -it --rm \
@@ -192,7 +192,6 @@ function run_command {
     -v /etc/group:/etc/group:ro \
     -v ${WORKDIR}:/projects/cfme_vol/ \
     ${SSH_VOL}
-    -v ${PROJECTS_DIR}:${HOME}/${PROJECTS_DIR} \
     -v /var/tmp/bashrc:${HOME}/.bashrc \
     --security-opt=label=type:spc_t \
     -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
@@ -200,6 +199,9 @@ function run_command {
     ${DOCK_IMG} \
     bash -c ". /etc/bashrc; pip install -e .; $1"
 }
+    #-v ${PROJECTS_DIR}:${HOME}/${PROJECTS_DIR} \
+
+
     # bash -c ". /etc/bashrc; deactivate; source ../cfme_venv/bin/activate; cp ../../bin/chromedriver ../cfme_venv/bin; $1"
     # -v /home/patchkez/projects/integration_tests_files/wrapanapi/wrapanapi/:/projects/cfme_vol/cfme_venv/lib/python2.7/site-packages/wrapanapi/ \
 
