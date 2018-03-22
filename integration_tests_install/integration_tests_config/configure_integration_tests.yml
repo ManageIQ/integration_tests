@@ -235,13 +235,13 @@
     # already been cloned locally.
 
     - name: Set ManageIQ repo to be ssh
-      set_fect:
+      set_fact:
         manageiq_repo: "git://github.com/ManageIQ/integration_tests.git"  
       register: manageiq_repo
       when: mount_ssh_keys = 'y'
     
     - name: Set ManageIQ to be https
-      set_fect:
+      set_fact:
         manageiq_repo: "https://github.com/ManageIQ/integration_tests"  
       register: manageiq_repo
       when: mount_ssh_keys = 'y'
