@@ -52,9 +52,13 @@ def get_vm(appliance, provider, vm_obj):
         collection = appliance.rest_api.collections.instances
 
     def _get_vm():
+        if not provider.mgmt.does_vm_exist(vm_obj.name):
+            vms = collection.find_by(name=vm_obj.name)
+            if not vms:
+                vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip='default')
         vms = collection.find_by(name=vm_obj.name)
         if not vms:
-            vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip='default')
+            provider.refresh_provider_relationships()
             vms = collection.find_by(name=vm_obj.name)
         return vms[0]
 
