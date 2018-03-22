@@ -7,6 +7,7 @@ from cfme import test_requirements
 from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.intelligence.reports.reports import CustomReport
 from cfme.intelligence.reports.schedules import ScheduleCollection
+from cfme.intelligence.reports.widgets import AllDashboardWidgetsView
 from cfme.utils.blockers import BZ
 from cfme.utils.path import data_path
 from cfme.utils.rest import assert_response
@@ -103,6 +104,8 @@ def test_menuwidget_crud(appliance):
         },
         visibility="<To All Users>"
     )
+    view = w.create_view(AllDashboardWidgetsView)
+    view.flash.assert_message('Widget "{}" was saved'.format(w.title))
     with update(w):
         w.active = False
     w.delete()
@@ -122,6 +125,8 @@ def test_reportwidget_crud(appliance):
         timer={"run": "Hourly", "hours": "Hour"},
         visibility="<To All Users>"
     )
+    view = w.create_view(AllDashboardWidgetsView)
+    view.flash.assert_message('Widget "{}" was saved'.format(w.title))
     with update(w):
         w.active = False
     w.delete()
@@ -139,6 +144,8 @@ def test_chartwidget_crud(appliance):
         timer={"run": "Hourly", "hours": "Hour"},
         visibility="<To All Users>"
     )
+    view = w.create_view(AllDashboardWidgetsView)
+    view.flash.assert_message('Widget "{}" was saved'.format(w.title))
     with update(w):
         w.active = False
     w.delete()
@@ -157,6 +164,8 @@ def test_rssfeedwidget_crud(appliance):
         rows="8",
         visibility="<To All Users>"
     )
+    view = w.create_view(AllDashboardWidgetsView)
+    view.flash.assert_message('Widget "{}" was saved'.format(w.title))
     # Basic update
     with update(w):
         w.active = False

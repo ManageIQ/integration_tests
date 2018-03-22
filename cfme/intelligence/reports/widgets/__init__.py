@@ -85,15 +85,13 @@ class BaseDashboardReportWidget(BaseEntity, Updateable, Pretty):
             "Delete this Widget from the Database",
             handle_alert=not cancel
         )
-        if cancel:
-            assert view.is_displayed
-            view.flash.assert_no_error()
-        else:
+        if not cancel:
             view = self.create_view(AllDashboardWidgetsView)
-            assert view.is_displayed
-            view.flash.assert_no_error()
+        assert view.is_displayed
+        view.flash.assert_no_error()
 
 
+@attr.s
 class DashboardReportWidgetsCollection(BaseCollection):
     ENTITY = BaseDashboardReportWidget
 
@@ -128,7 +126,6 @@ class DashboardReportWidgetsCollection(BaseCollection):
         view = dashboard_widget.create_view(AllDashboardWidgetsView)
         assert view.is_displayed
         view.flash.assert_no_error()
-        view.flash.assert_message('Widget "{}" was saved'.format(dashboard_widget.title))
         return dashboard_widget
 
 

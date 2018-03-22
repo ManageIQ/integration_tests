@@ -53,7 +53,7 @@ class ReportWidget(BaseDashboardReportWidget):
     subfilter = attr.ib(init=False)
     repfilter = attr.ib(init=False)
     rows = attr.ib(default=None)
-    timer = attr.ib(default=None)
+    timer = attr.ib(default=attr.Factory(dict))
     columns = attr.ib(default=None)
     column1 = attr.ib(init=False)
     column2 = attr.ib(init=False)
