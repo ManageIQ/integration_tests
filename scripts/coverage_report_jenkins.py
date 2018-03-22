@@ -14,7 +14,7 @@ from requests.auth import HTTPBasicAuth
 from six.moves.urllib.parse import urlsplit, urlunsplit
 
 from cfme.utils.appliance import IPAppliance
-from cfme.utils.conf import env
+from cfme.utils.conf import credentials, env
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.path import log_path
 from cfme.utils.quote import quote
@@ -27,12 +27,10 @@ Jenkins = namedtuple('Jenkins', ['url', 'user', 'token', 'client'])
 # log to stdout too
 add_stdout_handler(logger)
 
-# Global variables
+# Globals
+# TODO:  Make these config items
 coverage_dir = '/coverage'
-scan_timeout = env.sonarqube.get('scan_timeout', 600)
 scanner_dir = '/root/scanner'
-sonar_server_url = env.sonarqube.url
-sonar_scanner_url = env.sonarqube.scanner_url
 
 
 class SSHCmdException(Exception):
@@ -301,7 +299,8 @@ def pull_merged_coverage_data(ssh, coverage_dir):
     logger.info('Done!')
 
 
-def install_sonar_scanner(ssh, project_name, project_version, scanner_url, scanner_dir, server_url):
+def install_sonar_scanner(ssh, project_name, project_version, scanner_url, scanner_dir, server_url,
+        sonar_creds):
     """ Install sonar-scanner application
 
     Pulls the sonar-scanner application to the appliance from scanner_url,
@@ -315,6 +314,7 @@ def install_sonar_scanner(ssh, project_name, project_version, scanner_url, scann
         project_version: Version of project to be scanned.
         scanner_url:  Where to get the scanner from.
         scanner_dir:  Where to install the scanner on the appliance.
+        sonar_creds:  SonarCreds object.
         server_url:  Where to send scan data to (i.e. what sonarqube)
 
     Returns:
@@ -384,6 +384,8 @@ def install_sonar_scanner(ssh, project_name, project_version, scanner_url, scann
     #
     # Hear is an example config:
     #
+    #   sonar.login=bob
+    #   sonar.password=buoyant
     #   sonar.projectKey=CFME5.9-11
     #   sonar.projectName=CFME-11
     #   sonar.projectVersion=5.9.0.17
@@ -392,13 +394,23 @@ def install_sonar_scanner(ssh, project_name, project_version, scanner_url, scann
     project_conf = 'sonar-project.properties'
     local_conf = os.path.join(log_path.strpath, project_conf)
     remote_conf = '/{}'.format(project_conf)
+    sonar_auth_snippet = ''
+    if sonar_creds is not None:
+        sonar_auth_snippet = '''
+sonar.login={login}
+sonar.password={password}
+'''.format(
+            login=sonar_creds.username,
+            password=sonar_creds.password)
     config_data = '''
 sonar.projectKey={project_key}
 sonar.projectName={project_name}
 sonar.projectVersion={version}
 sonar.language=ruby
 sonar.sources=opt/rh/cfme-gemset,var/www/miq/vmdb
+{auth_snippet}
 '''.format(
+        auth_snippet=sonar_auth_snippet,
         project_name=project_name,
         project_key=gen_project_key(name=project_name, version=project_version),
         version=project_version)
@@ -438,7 +450,8 @@ def run_sonar_scanner(ssh, scanner_dir, timeout):
     logger.info('   end_time=%s', time.strftime('%T'))
 
 
-def sonar_scan(ssh, project_name, project_version, scanner_url, scanner_dir, server_url, timeout):
+def sonar_scan(ssh, project_name, project_version, scanner_url, scanner_dir, server_url,
+        sonar_creds, timeout):
     """Run the sonar scan
 
     In addition to running the scan, handles the installation of the sonar-scanner software.
@@ -450,12 +463,20 @@ def sonar_scan(ssh, project_name, project_version, scanner_url, scanner_dir, ser
         scanner_url:  Where to pull the sonar-scanner software from
         scanner_dir:  Installation directory of sonar-scanner
         server_url:  sonarqube URL.
+        sonar_creds:  SonarCreds object.
         timeout:  timeout in seconds
 
     Returns:
         Nothing
     """
-    install_sonar_scanner(ssh, project_name, project_version, scanner_url, scanner_dir, server_url)
+    install_sonar_scanner(
+        ssh,
+        project_name,
+        project_version,
+        scanner_url,
+        scanner_dir,
+        server_url,
+        sonar_creds)
     run_sonar_scanner(ssh, scanner_dir, timeout)
 
 
@@ -737,6 +758,13 @@ def aggregate_coverage(appliance, jenkins_url, jenkins_user, jenkins_token, jenk
     Returns:
         Nothing
     """
+    # Gather config data:
+    scan_timeout = env.sonarqube.get('scan_timeout', 600)
+    sonar_server_url = env.sonarqube.url
+    sonar_scanner_url = env.sonarqube.scanner_url
+    sonar_creds = None
+    if env.sonarqube.credentials is not None:
+        sonar_creds = credentials[env.sonarqube.credentials]
     appliance_version = str(appliance.version).strip()
 
     # Get Jenkins creds from config if none specified.
@@ -792,6 +820,7 @@ def aggregate_coverage(appliance, jenkins_url, jenkins_user, jenkins_token, jenk
             scanner_url=sonar_scanner_url,
             scanner_dir=scanner_dir,
             server_url=sonar_server_url,
+            sonar_creds=sonar_creds,
             timeout=scan_timeout)
 
 
