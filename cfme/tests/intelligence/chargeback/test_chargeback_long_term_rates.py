@@ -29,6 +29,8 @@ pytestmark = [
                                BZ(1511099, forced_streams=["5.7", "5.8"],
                                   unblock=lambda provider: not provider.one_of(GCEProvider)),
                                BZ(1531554, forced_streams=["5.8"])]),
+    pytest.mark.parametrize('interval', ['daily', 'weekly', 'monthly'],
+        ids=['daily_rate', 'weekly_rate', 'monthly_rate']),
     pytest.mark.provider([VMwareProvider, RHEVMProvider, AzureProvider, GCEProvider],
                          scope='module',
                          required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
@@ -364,17 +366,17 @@ def chargeback_report_custom(vm_ownership, assign_custom_rate, provider):
 
 
 @pytest.yield_fixture(scope="module")
-def new_compute_rate():
+def new_compute_rate(interval):
     # Create a new Compute Chargeback rate
     try:
         desc = 'custom_' + fauxfactory.gen_alphanumeric()
         compute = rates.ComputeRate(description=desc,
                     fields={'Used CPU':
-                            {'per_time': 'Daily', 'variable_rate': '72'},
+                            {'per_time': interval, 'variable_rate': '72'},
                             'Used Disk I/O':
-                            {'per_time': 'Daily', 'variable_rate': '48'},
+                            {'per_time': interval, 'variable_rate': '48'},
                             'Used Memory':
-                            {'per_time': 'Daily', 'variable_rate': '48'}})
+                            {'per_time': interval, 'variable_rate': '48'}})
         compute.create()
         if not BZ(1532368, forced_streams=['5.9']).blocks:
             storage = rates.StorageRate(description=desc,
@@ -392,7 +394,7 @@ def new_compute_rate():
 # The costs reported in the Chargeback report should be approximately equal to the
 # costs estimated in the chargeback_costs_default/chargeback_costs_custom fixtures.
 @pytest.mark.uncollectif(lambda provider: provider.one_of == 'cloud')
-def test_validate_custom_rate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_custom):
+def test_validate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate CPU usage cost.Calculation is based on custom Chargeback rate.
 
     """
@@ -407,7 +409,7 @@ def test_validate_custom_rate_cpu_usage_cost(chargeback_costs_custom, chargeback
 
 
 @pytest.mark.uncollectif(lambda provider: provider.one_of(GCEProvider))
-def test_validate_custom_rate_memory_usage_cost(chargeback_costs_custom, chargeback_report_custom):
+def test_validate_memory_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate memory usage cost.
        Calculation is based on custom Chargeback rate.
 
@@ -422,8 +424,8 @@ def test_validate_custom_rate_memory_usage_cost(chargeback_costs_custom, chargeb
             break
 
 
-@pytest.mark.parametrize('interval', ids=['daily_rate', 'weekly_rate', 'monthly_rate'])
-def test_validate_custom_rate_network_usage_cost(chargeback_costs_custom, chargeback_report_custom):
+def test_validate_network_usage_cost(chargeback_costs_custom, chargeback_report_custom,
+        interval):
     """Test to validate network usage cost.
        Calculation is based on custom Chargeback rate.
 
@@ -438,7 +440,7 @@ def test_validate_custom_rate_network_usage_cost(chargeback_costs_custom, charge
             break
 
 
-def test_validate_custom_rate_disk_usage_cost(chargeback_costs_custom, chargeback_report_custom):
+def test_validate_disk_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate disk usage cost.
        Calculation is based on custom Chargeback rate.
 
@@ -453,7 +455,7 @@ def test_validate_custom_rate_disk_usage_cost(chargeback_costs_custom, chargebac
             break
 
 
-def test_validate_custom_rate_storage_usage_cost(chargeback_costs_custom, chargeback_report_custom):
+def test_validate_storage_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate stoarge usage cost.
        Calculation is based on custom Chargeback rate.
     """
