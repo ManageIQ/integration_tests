@@ -311,14 +311,15 @@ def poke_trackerbot(self):
                 with transaction.atomic():
                     tpl = Template(
                         provider=provider, template_group=group, original_name=template_name,
-                        name=template_name, preconfigured=False, date=date, custom_data=custom_data,
+                        name=template_name, preconfigured=False, date=date,
+                        custom_data=processed_custom_data,
                         version=template_version, ready=True, exists=True, usable=True)
                     tpl.save()
                     if provider.provider_type == 'openshift':
                         tpl.custom_data = yaml.safe_load(processed_custom_data)
                         tpl.container = 'cloudforms-0'
                         tpl.template_type = Template.OPENSHIFT_POD
-                        tpl.save(update_fields=['container', 'template_type'])
+                        tpl.save(update_fields=['container', 'template_type', 'custom_data'])
                     original_template = tpl
                     self.logger.info("Created a new template #{}".format(tpl.id))
         # If the provider is set to not preconfigure templates, do not bother even doing it.
