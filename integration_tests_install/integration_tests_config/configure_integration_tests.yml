@@ -238,13 +238,13 @@
       set_fact:
         manageiq_repo: "git://github.com/ManageIQ/integration_tests.git"  
       register: manageiq_repo
-      when: mount_ssh_keys = "y"
+      when: mount_ssh_keys == "y"
     
     - name: Set ManageIQ to be https
       set_fact:
         manageiq_repo: "https://github.com/ManageIQ/integration_tests"  
       register: manageiq_repo
-      when: mount_ssh_keys = "n"
+      when: mount_ssh_keys == "n"
 
     - name: Check if repo exists locally
       git: repo="{{ manageiq_repo }}" dest="{{ cfme_vol }}/integration_tests" update=no clone=no version=master remote={{ git_remote_name | default('origin') }}
