@@ -5,6 +5,11 @@ vars_config: "{{ cfme_vol }}/.vars_config.yml"
 accepted_keys_yn: ['y', 'n']
 help_prompt: "[HELP]: "
 
+# Ask user if he would like to use his ssh private keys for cloning repo - usefull for 
+mount_ssh_keys:
+mount_ssh_keys_question: "Would you like to use your ssh keys for cloning repositories? Type \"y\" or \"n\""
+mount_ssh_keys_help: "{{ help_prompt }} If you answer 'y' here, your $HOME/.ssh directory will be mounted read only to the container."
+
 # Ask user if he will be creating new PRs or just run tests
 pull_requests:
 pull_requests_question: "Are you going to create new Pull Requests against ManageIQ/integration_tests upstream master repository? Type \"y\" or \"n\""
