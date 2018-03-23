@@ -58,3 +58,9 @@ def test_restart_immediately(physical_server, provider):
 def test_lifecycle_provision(physical_server):
     view = navigate_to(physical_server, "Provision")
     assert view.is_displayed
+
+
+# Monitoring Button
+def test_monitoring_button(physical_server):
+    view = navigate_to(physical_server, "Timelines")
+    assert view.is_displayed
