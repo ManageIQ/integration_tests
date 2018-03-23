@@ -81,7 +81,7 @@ class OrderServiceCatalogView(OrderForm):
 
 @MiqImplementationContext.external_for(ServiceCatalogs.order, ViaUI)
 def order(self):
-    view = navigate_to(self, 'Order')
+    view = navigate_to(self, 'Order', wait_for_view=True)
     if self.stack_data:
         view.fill(self.stack_data)
     if self.dialog_values:
