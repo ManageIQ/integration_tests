@@ -137,7 +137,12 @@
     - name: "6.1)"
       action: custom_prompt prompt="{{ yaml_remote_repo_yn_question }} - [{{ yaml_remote_repo_yn }}]:" accepted_keys="{{ accepted_keys_yn }}" help_message="{{ yaml_remote_repo_yn_help }}"
       register: yaml_remote_repo_yn_p
+      when: any_yaml_p.key == "y"
 #      when: any_yaml_p.key == "y" and pull_requests_p.key != "n"
+
+    - set_fact:
+        yaml_remote_repo_yn_p: 'n'
+      when: any_yaml_p.key == "y"
 
       # Ask for URL for remote YAML repo 
     - name: "6.2)"
@@ -202,7 +207,7 @@
         - { key: 'git_full_name', value: "{{ git_full_name_p.key|default('') }}"}
         - { key: 'git_email', value: "{{ git_email_p.key|default('') }}"}
         - { key: 'gpg_public_key', value: "{{ gpg_public_key_p.key|default('') }}"}
-        - { key: 'any_yaml', value: "{{ any_yaml_p.key|default('') }}"}
+        - { key: 'any_yaml', value: "{{ any_yaml_p.key|default('n') }}"}
         - { key: 'yaml_remote_repo_yn', value: "{{ yaml_remote_repo_yn_p.key|default('') }}"}
         - { key: 'yaml_remote_repo', value: "{{ yaml_remote_repo_p.key|default('') }}"}
         - { key: 'yaml_remote_repo_username', value: "{{ yaml_remote_repo_username_p.key|default('') }}"}
@@ -240,13 +245,11 @@
     - name: Set ManageIQ repo to be ssh
       set_fact:
         manageiq_repo: "git://github.com/ManageIQ/integration_tests.git"  
-      register: manageiq_repo
       when: mount_ssh_keys == "y"
     
     - name: Set ManageIQ to be https
       set_fact:
         manageiq_repo: "https://github.com/ManageIQ/integration_tests"  
-      register: manageiq_repo
       when: mount_ssh_keys == "n"
 
     - name: Check if repo exists locally
@@ -311,13 +314,15 @@
     - name: get basename from git remote repo
       set_fact:
         yaml_remote_repo_basename: "{{ yaml_remote_repo | basename | regex_replace('\\.git','') }}"
-      when: yaml_remote_repo_yn_p.key == "y"
+      # when: yaml_remote_repo_yn_p.key == "y"
+      when: yaml_remote_repo_yn == "y"
 
     - name: Clone remote YAML repo - Add username into repo url - regexp
       git: repo="{{ yaml_remote_repo }}" dest="{{ cfme_vol }}/{{ yaml_remote_repo_basename }}" clone=yes remote={{ yaml_remote_name | default('origin') }}
       # git: repo="{{ yaml_remote_repo | regex_replace("^(.+)//(.+)$", "\\1//" + yaml_remote_repo_username + "@\\2") }}" dest="{{ cfme_vol }}/cfme-qe-yamls" clone=yes
       become_user: "{{ username }}"
-      when: yaml_remote_repo_yn_p.key == "y" 
+      # when: yaml_remote_repo_yn_p.key == "y"
+      when: yaml_remote_repo_yn == "y"
 
     - name: Configure origin for remote YAML repo
       git_config: repo="{{ cfme_vol }}/{{ yaml_remote_repo_basename }}" scope=local name="{{ item.name }}" value="{{ item.value }}"
@@ -331,7 +336,8 @@
         - { name: 'remote.origin.url', value: "{{ yaml_remote_repo | regex_replace('^(.+)//(.+)/(.+)/(.+)$', '\\1//\\2/{{ yaml_remote_repo_username }}/\\4') }}" }
         - { name: 'remote.origin.fetch', value: '+refs/heads/*:refs/remotes/origin/*' }
       become_user: "{{ username }}"
-      when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
+      # when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
+      when: pull_requests != "n" and yaml_remote_repo_yn == "y"
  
     - name: Add YAML password/key if it is defined into .yaml_key file
       template: src=templates/yaml_key.j2 dest="{{ cfme_vol }}/integration_tests/.yaml_key"
@@ -340,7 +346,8 @@
     - debug: msg="{{item | basename }}"
       with_fileglob: 
         - "{{ cfme_vol }}/{{ yaml_remote_repo_basename }}/complete/*.*yaml"
-      when: yaml_remote_repo_yn_p.key == "y"
+      when: yaml_remote_repo_yn == "y"
+      # when: yaml_remote_repo_yn_p.key == "y"
       # when: item | basename != 'env.yaml'
       
     - name: Create symlinks for (remote) YAML repo
@@ -348,14 +355,23 @@
       with_fileglob: 
         - "{{ cfme_vol }}/{{ yaml_remote_repo_basename }}/complete/*.*yaml"
       #when: yaml_remote_repo_yn_p.key == "y" and ((pull_requests == "y") and ( item | basename != 'env.yaml'))
-      when: yaml_remote_repo_yn_p.key == "y"
+      when: yaml_remote_repo_yn == "y"
+      # when: yaml_remote_repo_yn_p.key == "y"
     
     - name: Create symlinks for (local) YAML repo (symlinks to remote repo will be overwritten if name is the same)
       file: src="../../{{ yaml_local_repo }}/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
       with_fileglob:
         # - /projects/cfme_env/cfme_vol/{{ yaml_local_repo }}/*.*yaml 
         - "{{ cfme_vol }}/{{ yaml_local_repo }}/*.*yaml"
-      when: yaml_local_repo_yn_p.key == "y"
+      when: yaml_local_repo_yn == "y"
+      # when: yaml_local_repo_yn_p.key == "y"
+    
+    - name: Create symlinks to default yaml files
+      file: src="../integration_tests_install/integration_tests_config/basic_yamls/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
+      with_fileglob:
+        - "{{ cfme_vol }}/integration_tests/integration_tests_install/integration_tests_config/basic_yamls/*.*yaml"
+      when: any_yaml == "n"
+      # when: yaml_local_repo_yn_p.key == "n"
 
     - name: Update env.local.yaml
       template: src=templates/env.local.yaml.j2 dest="{{ cfme_vol }}/integration_tests/conf/env.local.yaml"

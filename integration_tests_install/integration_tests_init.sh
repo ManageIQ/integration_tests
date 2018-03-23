@@ -134,9 +134,25 @@ function return_vnc_port {
   VNC_PORT=${VNC_PORT_DEFAULT}
 }
 
+function do_ssh {
+# Get value from config file 
+if [ ! -f ${WORKDIR}/.vars_config.yml ];then
+  SSH_VOL=""
+else
+  if [ "$(sed -n 's/^mount_ssh_keys: \(.*\).*$/\1/gp' ${WORKDIR}/.vars_config.yml)" = "y" ]; then
+    SSH_VOL="-v ${HOME}/.ssh:/home/${USERNAME}/.ssh:ro"
+  else
+    SSH_VOL=""
+  fi
+fi
+}
+
+
 function run_config {
   # Check if new image is available on Docker registry
   check_4_new_img
+  
+  do_ssh
 
   # If this file exists, it means user was notified about new image and image must be pulled when executing script with init argument.
   if [ -f ${DO_NOT_CHECK} ]; then
@@ -149,7 +165,7 @@ function run_config {
     -v $(dirname $SSH_AUTH_SOCK):$(dirname $SSH_AUTH_SOCK):rw \
     -v ${PLAY_LOCATION}:/projects/ansible_virtenv/ansible_work \
     -v ${WORKDIR}:/projects/cfme_vol/ \
-    -v ~/.ssh:/home/${USERNAME}/.ssh:ro \
+    ${SSH_VOL} -v /var/tmp/bashrc:${HOME}/.bashrc \
     --security-opt=label=type:spc_t \
     -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
     -e PROJECTS=$PROJECTS \
@@ -158,11 +174,14 @@ function run_config {
     ${1}
 }
 
+
 function run_command {
   # Check if new image is available on Docker registry
   check_4_new_img
 
   return_vnc_port
+  do_ssh
+
   log "VNC port is $VNC_PORT" 
   # We create temporary file on the host system which is mounted into container later on
   echo "source /etc/bashrc" > /var/tmp/bashrc
@@ -173,15 +192,6 @@ function run_command {
     exit 1
   fi
   
-  # Get value from config file 
-  if [ "$(sed -n 's/^mount_ssh_keys: \(.*\).*$/\1/gp' ${WORKDIR}/.vars_config.yml)" = "y" ]; then
-    SSH_VOL="-v ~/.ssh:/home/${USERNAME}/.ssh:ro \\"
-  else
-    SSH_VOL=""
-  fi
-  
-  # PROJECTS_DIR=$(sed -n 's/^projects: \(.*\).*$/\1/gp' .vars_config.yml)
-
 
   docker run -it --rm \
     -w /projects/cfme_vol/integration_tests \
