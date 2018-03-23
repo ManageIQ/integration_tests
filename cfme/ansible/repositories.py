@@ -226,12 +226,11 @@ class RepositoryCollection(BaseCollection):
         repo_list_page = self.create_view(RepositoryAllView)
         assert repo_list_page.is_displayed
         repo_list_page.flash.assert_no_error()
-        if self.appliance.version < "5.9":
-            repo_list_page.flash.assert_message(
-                'Add of Repository "{}" was successfully initialized.'.format(name))
+        if self.appliance.version < "5.9.2":
+            initiated_message = 'Add of Repository "{}" was successfully initialized.'.format(name)
         else:
-            repo_list_page.flash.assert_message(
-                'Add of Repository "{}" was successfully initiated.'.format(name))
+            initiated_message = 'Add of Repository "{}" was successfully initiated.'.format(name)
+        repo_list_page.flash.assert_message(initiated_message)
 
         repository = self.instantiate(
             name,
