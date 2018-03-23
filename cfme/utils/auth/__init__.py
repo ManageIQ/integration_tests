@@ -143,15 +143,20 @@ class OpenLDAPSAuthProvider(MIQAuthProvider):
 @attr.s
 class FreeIPAAuthProvider(MIQAuthProvider):
     """freeipa can be used with ldap auth config or external
+
     For ldap config:
-        3 hosts can be configured
-        bind_dn is used for admin user validation
-        ipa realm and ipadomain are not part of config
-        user_type will use the cfme.utils.auth.USER_TYPES dict
+
+    * 3 hosts can be configured
+    * bind_dn is used for admin user validation
+    * ipa realm and ipadomain are not part of config
+    * user_type will use the cfme.utils.auth.USER_TYPES dict
+
     For external config:
-        1 host is configured as --ipaserver
-        realm and domain are optional params
-        all user type, suffix, base/bind_dn, get_groups/roles/referrals args are not used
+
+    * 1 host is configured as --ipaserver
+    * realm and domain are optional params
+    * all user type, suffix, base/bind_dn, get_groups/roles/referrals args are not used
+
     """
     auth_type = 'freeipa'
     view_class = LdapAuthenticationView  # TODO could be SSL view, but ATM no difference in widgets

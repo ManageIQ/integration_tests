@@ -151,30 +151,30 @@ class VolumeBackup(BaseEntity, Taggable):
 
     @property
     def size(self):
-        """ size of cloud volume backup.
+        """size of cloud volume backup.
 
         Returns:
-            :py:class:`int' size of volume backup in GB.
+            :py:class:`int` size of volume backup in GB.
         """
         view = navigate_to(self, 'Details')
         return int(view.entities.properties.get_text_of('Size').split()[0])
 
     @property
     def status(self):
-        """ Present status of cloud volume backup.
+        """Present status of cloud volume backup.
 
         Returns:
-            :py:class:`str' status [available/restoring] of volume backup.
+            :py:class:`str` status [available/restoring] of volume backup.
         """
         view = navigate_to(self, 'Details')
         return view.entities.properties.get_text_of('Status')
 
     @property
     def volume(self):
-        """ volume name of backup.
+        """volume name of backup.
 
         Returns:
-            :py:class:`str' respective volume name.
+            :py:class:`str` respective volume name.
         """
         view = navigate_to(self, 'Details')
         return view.entities.relationships.get_text_of('Cloud Volume')

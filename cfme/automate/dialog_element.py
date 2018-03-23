@@ -1,15 +1,13 @@
 import attr
-
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Checkbox, Image, Text
-from widgetastic_patternfly import Button, Input, BootstrapSelect
-from widgetastic_manageiq import ManageIQTree, Table, TextInput, DragandDrop
 from widgetastic.xpath import quote
+from widgetastic_patternfly import Button, Input, BootstrapSelect
 
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.wait import wait_for
-
+from widgetastic_manageiq import ManageIQTree, Table, TextInput, DragandDrop
 from . import AutomateCustomizationView, AddBoxView
 
 
@@ -116,9 +114,9 @@ class Element(BaseEntity):
            of two elements are then interchanged to test for error.
 
         Args:
-            add_element - flag if second element needs to be added.
-            second_element - The second element to be added to the dialog.
-            element_data - Already existing first element's data.
+            add_element: flag if second element needs to be added.
+            second_element: The second element to be added to the dialog.
+            element_data: Already existing first element's data.
         """
         view = navigate_to(self, 'Edit')
         view.element_tree.click_path(*self.tree_path[1:])

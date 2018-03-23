@@ -195,16 +195,16 @@ class RegisteredHostsView(HostsView):
 
 @attr.s
 class Datastore(Pretty, BaseEntity, Taggable):
-    """ Model of an infrastructure datastore in cfme
+    """Model of an infrastructure datastore in cfme
 
     Args:
         name: Name of the datastore.
         provider: provider this datastore is attached to.
+
     """
 
     pretty_attrs = ['name', 'provider_key']
     _param_name = ParamClassName('name')
-
     name = attr.ib()
     provider = attr.ib()
     type = attr.ib(default=None)
@@ -295,7 +295,7 @@ class Datastore(Pretty, BaseEntity, Taggable):
         """ number of attached hosts.
 
         Returns:
-            :py:class:`int' host count.
+            :py:class:`int` host count.
         """
         view = navigate_to(self, 'Details')
         return int(view.entities.relationships.get_text_of('Hosts'))
@@ -305,7 +305,7 @@ class Datastore(Pretty, BaseEntity, Taggable):
         """ number of attached VMs.
 
         Returns:
-            :py:class:`int' vm count.
+            :py:class:`int` vm count.
         """
         view = navigate_to(self, 'Details')
         return int(view.entities.relationships.get_text_of('Managed VMs'))
@@ -334,7 +334,7 @@ class Datastore(Pretty, BaseEntity, Taggable):
 
 @attr.s
 class DatastoreCollection(BaseCollection):
-    """Collection class for `cfme.infrastructure.datastore.Datastore`"""
+    """Collection class for :py:class:`cfme.infrastructure.datastore.Datastore`"""
     ENTITY = Datastore
 
     def delete(self, *datastores):

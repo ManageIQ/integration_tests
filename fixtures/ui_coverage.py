@@ -13,6 +13,8 @@ simultaneously in multiple processes. To solve this, each process records its
 output to its own directory (configured in coverage_hook).  You end up with a
 directory structure like this:
 
+.. code-block:: text
+
     coverage-\
              |-$ip1-\
              .      |-$pid1-\

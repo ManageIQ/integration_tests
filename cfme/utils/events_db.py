@@ -90,11 +90,12 @@ class EventTool(object):
     def query_miq_events(self, target_type=None, target_id=None, event_type=None, since=None,
                          until=None, from_id=None):
         """Checks whether an event occured.
+
         Args:
             target_type: What kind of object is the target of the event (MiqServer, VmOrTemplate)
             target_id: What is the ID of the object (or name, see :py:meth:`process_id`).
             event_type: Type of the event. Ideally one of the :py:meth:`all_event_types` but other
-                kinds of events exist too.
+                        kinds of events exist too.
             since: Since when you want to check it. UTC
             until: Until what time you want to check it.
         """
@@ -129,12 +130,14 @@ class EventTool(object):
     @contextmanager
     def ensure_event_happens(self, target_type, target_id, event_type):
         """Context manager usable for one-off checking of the events.
+
         See also: :py:meth:`query_miq_events`
+
         Args:
             target_type: What kind of object is the target of the event (MiqServer, VmOrTemplate)
             target_id: What is the ID of the object (or name, see :py:meth:`process_id`).
             event_type: Type of the event. Ideally one of the :py:meth:`all_event_types` but other
-                kinds of events exist too.
+                     kinds of events exist too.
         """
         time_started = datetime.utcnow()
         yield
@@ -329,11 +332,13 @@ class DbEventListener(Thread):
         accepts one or many events
         callback function will be called when event arrived in event_streams.
         callback will receive expected event and got event as params.
+
         Args:
             evts: list of events which EventListener should listen to
             callback: callback function that will be called if event is received
             first_event: EventListener waits for only first event of such type.
-              it ignores such event in future if first matching event is found.
+                         it ignores such event in future if first matching event is found.
+
         By default EventListener collects and receives all matching events.
         """
         if 'callback' in kwargs:

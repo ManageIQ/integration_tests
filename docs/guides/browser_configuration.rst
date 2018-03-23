@@ -74,7 +74,7 @@ For example::
 
 
 Appliance hostname
---------
+------------------
 
 Regardless of which Webdriver you use, ``hostname`` must be set for each appliance listed in ``appliances``.
 It is assumed that the website at the ``hostname`` will be a working CFME UI. You can specify ``ui_protocol``

@@ -42,7 +42,6 @@ This class will be used to represent your providers type in the ManageIQ system.
 of reference and will become your go to point of contact for all provider type related operations.
 
 An example of a new provider type is below, we will take a moment to walk through the various parts of it.
-This
 
 .. code-block::python
 
@@ -121,7 +120,7 @@ Now that we have a provider type, or perhaps we already have one, we need to cre
 This class is a specific implementation of the provider. Anything which is not common across either
 the providers as a whole, or the even within the category of the provider, is recorded here.
 
-.. code-block::python
+.. code-block:: python
 
     from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 

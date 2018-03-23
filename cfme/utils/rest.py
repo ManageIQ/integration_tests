@@ -19,13 +19,18 @@ def assert_response(
     If response status code is '204', ensures there is no content.
 
     Example of verifying a success response:
-      assert_response(appliance)
+
+    .. code-block:: python
+
+        assert_response(appliance)
 
     Example of verifying a failure response:
-      with error.expected('ActiveRecord::RecordNotFound'):
-          collection.action.delete(some_stuff)
-      assert_response(appliance, http_status=404)
 
+    .. code-block:: python
+
+        with error.expected('ActiveRecord::RecordNotFound'):
+          collection.action.delete(some_stuff)
+        assert_response(appliance, http_status=404)
 
     Note: For below args, 'results' refers to rest_obj.last_response.json()['results']
 
