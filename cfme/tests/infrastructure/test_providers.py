@@ -15,6 +15,7 @@ from cfme.infrastructure.provider import discover, wait_for_a_provider, InfraPro
 from cfme.infrastructure.provider.rhevm import RHEVMProvider, RHEVMEndpoint
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider, VirtualCenterEndpoint
 from cfme.utils import error
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
@@ -23,6 +24,24 @@ pytestmark = [
     test_requirements.discovery,
     pytest.mark.tier(3),
     pytest.mark.provider([InfraProvider], scope="function"),
+]
+
+discovery_ips = [
+    {'from': ['120', '120', '120', '120'], 'to': '119',
+     'msg': "Infrastructure Providers Discovery returned: "
+            "Ending address must be greater than starting address"},
+    {'from': ['333', '120', '120', '120'], 'to': '120',
+     'msg': "Infrastructure Providers Discovery returned: IP address octets must be 0 to 255"},
+    {'from': ['120', '333', '120', '120'], 'to': '120',
+     'msg': "Infrastructure Providers Discovery returned: IP address octets must be 0 to 255"},
+    {'from': ['120', '120', '333', '120'], 'to': '120',
+     'msg': "Infrastructure Providers Discovery returned: IP address octets must be 0 to 255"},
+    {'from': ['120', '120', '120', '333'], 'to': '120',
+     'msg': "Infrastructure Providers Discovery returned: IP address octets must be 0 to 255"},
+    {'from': ['120', '', '', ''], 'to': '120',
+     'msg': "Infrastructure Providers Discovery returned: Starting address is malformed"},
+    {'from': ['120', '120', '120', '120'], 'to': '',
+     'msg': "Infrastructure Providers Discovery returned: Ending address is malformed"}
 ]
 
 
@@ -234,3 +253,46 @@ def test_infrastructure_add_provider_trailing_whitespaces():
     assert view.username.help_block == "Spaces are prohibited"
     view = prov.create_view(InfraProviderAddView)
     assert not view.add.active
+
+
+def test_infra_discovery_screen(appliance):
+    view = navigate_to(InfraProvider, 'Discover')
+    assert view.is_displayed
+    assert view.vmware.is_displayed
+    assert view.scvmm.is_displayed
+    assert view.rhevm.is_displayed
+
+    view.vmware.click()
+    assert view.vmware.selected
+    view.vmware.click()
+    assert not view.vmware.selected
+
+    view.scvmm.click()
+    assert view.scvmm.selected
+    view.scvmm.click()
+    assert not view.scvmm.selected
+
+    view.rhevm.click()
+    assert view.rhevm.selected
+    view.rhevm.click()
+    assert not view.rhevm.selected
+
+    if appliance.version >= '5.9.2':
+        view.osp_infra.click()
+        assert view.osp_infra.selected
+        view.osp_infra.click()
+        assert not view.osp_infra.selected
+
+    view.start.click()
+    assert view.flash.assert_message("At least 1 item must be selected for discovery")
+
+    view.vmware.click()
+    for ips in discovery_ips:
+        from_ips = ips['from']
+        view.fill({"from_ip1": from_ips[0],
+                   "from_ip2": from_ips[1],
+                   "from_ip3": from_ips[2],
+                   "from_ip4": from_ips[3],
+                   "to_ip4": ips['to']})
+        view.start.click()
+        view.flash.assert_message(ips['msg'])
