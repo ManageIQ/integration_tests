@@ -54,6 +54,17 @@ def test_restart_immediately(physical_server, provider):
     view.flash.assert_message('Requested Server restart_now for the selected server')
 
 
+# Policy Button
+def test_manage_policies_button(physical_server):
+    view = navigate_to(physical_server, "ManagePolicies")
+    assert view.is_displayed
+
+
+def test_edit_tag_button(physical_server):
+    view = navigate_to(physical_server, "EditTag")
+    assert view.is_displayed
+
+
 # Lifecycle Button
 def test_lifecycle_provision(physical_server):
     view = navigate_to(physical_server, "Provision")

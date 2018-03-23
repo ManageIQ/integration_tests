@@ -161,7 +161,17 @@ class PhysicalServerManagePoliciesView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return False
+        return self.entities.get_id_by_name(self.context["object"].name) is not None
+
+
+class PhysicalServerEditTagView(BaseLoggedInPage):
+    """PhysicalServer's Edit Tag view"""
+    breadcrumb = BreadCrumb(locator='.//ol[@class="breadcrumb"]')
+
+    @property
+    def is_displayed(self):
+        title = "Tag Assignment"
+        return self.breadcrumb.active_location == title
 
 
 class PhysicalServersToolbar(View):

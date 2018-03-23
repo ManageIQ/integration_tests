@@ -9,6 +9,7 @@ from cfme.common import PolicyProfileAssignable, Taggable
 from cfme.common.physical_server_views import (
     PhysicalServerDetailsView,
     PhysicalServerManagePoliciesView,
+    PhysicalServerEditTagView,
     PhysicalServersView,
     PhysicalServerProvisionView,
     PhysicalServerTimelinesView
@@ -353,6 +354,15 @@ class Provision(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.lifecycle.item_select("Provision Physical Server")
+
+
+@navigator.register(PhysicalServer)
+class EditTag(CFMENavigateStep):
+    VIEW = PhysicalServerEditTagView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self):
+        self.prerequisite_view.toolbar.policy.item_select("Edit Tags")
 
 
 @navigator.register(PhysicalServer)
