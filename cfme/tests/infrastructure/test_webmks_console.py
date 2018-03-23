@@ -89,7 +89,7 @@ def test_webmks_vm_console(request, appliance, provider, vm_obj, configure_webso
         def _get_user_count_before_login():
             try:
                 result = ssh_client.run_command("who --count", ensure_user=True)
-                return result.rc == 0, result
+                return result.success, result
             except socket.error as e:
                 if e.errno == socket.errno.ECONNRESET:
                     logger.exception("Socket Error Occured: [104] Connection Reset by peer.")

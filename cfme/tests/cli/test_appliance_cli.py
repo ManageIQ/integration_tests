@@ -56,9 +56,9 @@ def test_appliance_console_cli_db_maintenance_hourly(appliance_with_preset_time)
 def test_appliance_console_cli_set_hostname(appliance):
     hostname = 'test.example.com'
     appliance.appliance_console_cli.set_hostname(hostname)
-    return_code, output = appliance.ssh_client.run_command("hostname -f")
-    assert output.strip() == hostname
-    assert return_code == 0
+    result = appliance.ssh_client.run_command("hostname -f")
+    assert result.success
+    assert result.output.strip() == hostname
 
 
 def test_appliance_console_cli_internal_fetch_key(app_creds, unconfigured_appliance, appliance):
@@ -187,8 +187,8 @@ def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
             "grep {} /var/www/miq/vmdb/config/failover_databases.yml".format(app1_ip)).success)
     wait_for(is_ha_monitor_started, func_args=[apps[2]], timeout=300, handle_exception=True)
     # Cause failover to occur
-    rc, out = apps[0].ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
-    assert rc == 0, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(out)
+    result = apps[0].ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
+    assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
 
     def is_failover_started(appliance):
         return bool(appliance.ssh_client.run_command(

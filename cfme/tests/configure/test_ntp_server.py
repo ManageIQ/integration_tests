@@ -24,22 +24,22 @@ def empty_ntp_dict(ntp_servers_keys):
 
 
 def appliance_date(appliance):
-    status, msg = appliance.ssh_client.run_command("date --iso-8601=hours")
-    return datetime.strptime(msg.rsplit('-', 1)[0], '%Y-%m-%dT%H')
+    result = appliance.ssh_client.run_command("date --iso-8601=hours")
+    return datetime.strptime(result.output.rsplit('-', 1)[0], '%Y-%m-%dT%H')
 
 
 def check_ntp_grep(appliance, clock):
-    status, msg = appliance.ssh_client.run_command(
+    result = appliance.ssh_client.run_command(
         "cat /etc/chrony.conf| grep {}".format(clock))
-    return not bool(status)
+    return not bool(result.rc)
 
 
 def clear_ntp_settings(appliance, empty_ntp_dict):
     ntp_file_date_stamp = appliance.ssh_client.run_command(
-        "stat --format '%y' /etc/chrony.conf")[1]
+        "stat --format '%y' /etc/chrony.conf").output
     appliance.server.settings.update_ntp_servers(empty_ntp_dict)
     wait_for(lambda: ntp_file_date_stamp != appliance.ssh_client.run_command(
-        "stat --format '%y' /etc/chrony.conf")[1], num_sec=60, delay=10)
+        "stat --format '%y' /etc/chrony.conf").output, num_sec=60, delay=10)
 
 
 @pytest.mark.tier(2)
@@ -61,11 +61,11 @@ def test_ntp_crud(request, appliance, empty_ntp_dict, ntp_servers_keys):
 def test_ntp_server_max_character(request, appliance, ntp_servers_keys, empty_ntp_dict):
     request.addfinalizer(partial(clear_ntp_settings, appliance, empty_ntp_dict))
     ntp_file_date_stamp = appliance.ssh_client.run_command(
-        "stat --format '%y' /etc/chrony.conf")[1]
+        "stat --format '%y' /etc/chrony.conf").output
     appliance.server.settings.update_ntp_servers(dict(zip(
         ntp_servers_keys, [fauxfactory.gen_alphanumeric() for _ in range(3)])))
     wait_for(lambda: ntp_file_date_stamp != appliance.ssh_client.run_command(
-        "stat --format '%y' /etc/chrony.conf")[1], num_sec=60, delay=10)
+        "stat --format '%y' /etc/chrony.conf").output, num_sec=60, delay=10)
 
 
 @pytest.mark.tier(3)
@@ -73,12 +73,12 @@ def test_ntp_conf_file_update_check(request, appliance, empty_ntp_dict, ntp_serv
 
     request.addfinalizer(lambda: appliance.server.settings.update_ntp_servers(empty_ntp_dict))
     ntp_file_date_stamp = appliance.ssh_client.run_command(
-        "stat --format '%y' /etc/chrony.conf")[1]
+        "stat --format '%y' /etc/chrony.conf").output
     # Adding the ntp server values
     appliance.server.settings.update_ntp_servers(dict(zip(
         ntp_servers_keys, [ntp_server for ntp_server in cfme_data['clock_servers']])))
     wait_for(lambda: ntp_file_date_stamp != appliance.ssh_client.run_command(
-        "stat --format '%y' /etc/chrony.conf")[1], num_sec=60, delay=10)
+        "stat --format '%y' /etc/chrony.conf").output, num_sec=60, delay=10)
     for clock in cfme_data['clock_servers']:
         status, wait_time = wait_for(lambda: check_ntp_grep(appliance, clock),
             fail_condition=False, num_sec=60, delay=5)
@@ -86,10 +86,10 @@ def test_ntp_conf_file_update_check(request, appliance, empty_ntp_dict, ntp_serv
 
     # Unsetting the ntp server values
     ntp_file_date_stamp = appliance.ssh_client.run_command(
-        "stat --format '%y' /etc/chrony.conf")[1]
+        "stat --format '%y' /etc/chrony.conf").output
     appliance.server.settings.update_ntp_servers(empty_ntp_dict)
     wait_for(lambda: ntp_file_date_stamp != appliance.ssh_client.run_command(
-        "stat --format '%y' /etc/chrony.conf")[1], num_sec=60, delay=10)
+        "stat --format '%y' /etc/chrony.conf").output, num_sec=60, delay=10)
     for clock in cfme_data['clock_servers']:
         status, wait_time = wait_for(lambda: check_ntp_grep(appliance, clock),
             fail_condition=True, num_sec=60, delay=5)

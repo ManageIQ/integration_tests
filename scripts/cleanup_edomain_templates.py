@@ -54,10 +54,10 @@ def parse_cmd_line():
 def is_ovirt_engine_running(provider_mgmt):
     try:
         with make_ssh_client(provider_mgmt) as ssh_client:
-            stdout = ssh_client.run_command('systemctl status ovirt-engine')[1]
+            stdout = ssh_client.run_command('systemctl status ovirt-engine').output
             # fallback to sysV commands if necessary
             if 'command not found' in stdout:
-                stdout = ssh_client.run_command('service ovirt-engine status')[1]
+                stdout = ssh_client.run_command('service ovirt-engine status').output
         return 'running' in stdout
     except Exception as e:
         logger.exception(e)
@@ -131,12 +131,12 @@ def cleanup_empty_dir_on_edomain(provider_mgmt, edomain):
               .format(provider_name, path))
 
         with make_ssh_client(provider_mgmt) as ssh_client:
-            exit_status, output = ssh_client.run_command(command)
+            result = ssh_client.run_command(command)
 
-        if exit_status != 0:
+        if result.failed:
             print('RHEVM:{} Error deleting empty directories on path {}'
                   .format(provider_name, path))
-            print(output)
+            print(result.output)
         print('RHEVM:{} successfully deleted empty directories on path {}'
               .format(provider_name, path))
     except Exception as e:

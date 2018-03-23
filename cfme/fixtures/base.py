@@ -24,7 +24,7 @@ def fix_merkyl_workaround(request, appliance):
     if isinstance(appliance, DummyAppliance) or appliance.is_dev:
         return
     ssh_client = appliance.ssh_client
-    if ssh_client.run_command('test -s /etc/init.d/merkyl').rc != 0:
+    if ssh_client.run_command('test -s /etc/init.d/merkyl').failed:
         logger.info('Rudely overwriting merkyl init.d on appliance;')
         local_file = data_path.join("bundles").join("merkyl").join("merkyl")
         remote_file = "/etc/init.d/merkyl"
@@ -47,7 +47,7 @@ def fix_missing_hostname(appliance):
         return
     ssh_client = appliance.ssh_client
     logger.info("Checking appliance's /etc/hosts for its own hostname")
-    if ssh_client.run_command('grep $(hostname) /etc/hosts').rc != 0:
+    if ssh_client.run_command('grep $(hostname) /etc/hosts').failed:
         logger.info("Adding it's hostname to its /etc/hosts")
         # Append hostname to the first line (127.0.0.1)
         ret = ssh_client.run_command('sed -i "1 s/$/ $(hostname)/" /etc/hosts')

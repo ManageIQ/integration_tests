@@ -20,9 +20,9 @@ def collect_log(ssh_client, log_prefix, local_file_name, strip_whitespace=False)
 
     ssh_client.run_command('rm -f {}'.format(dest_file_gz))
 
-    status, out = ssh_client.run_command('ls -1 {}-*'.format(log_file))
-    if status == 0:
-        files = out.strip().split('\n')
+    result = ssh_client.run_command('ls -1 {}-*'.format(log_file))
+    if result.success:
+        files = result.output.strip().split('\n')
         for lfile in sorted(files):
             ssh_client.run_command('cp {} {}-2.gz'.format(lfile, lfile))
             ssh_client.run_command('gunzip {}-2.gz'.format(lfile))
@@ -80,15 +80,17 @@ def generate_statistics(the_list, decimals=2):
 def get_worker_pid(worker_type):
     """Obtains the pid of the first worker with the worker_type specified"""
     with SSHClient() as ssh_client:
-        exit_status, out = ssh_client.run_command('systemctl status evmserverd 2> /dev/null | grep '
-            '-m 1 \'{}\' | awk \'{{print $7}}\''.format(worker_type))
-    worker_pid = str(out).strip()
-    if out:
+        result = ssh_client.run_command(
+            'systemctl status evmserverd 2> /dev/null | grep -m 1 \'{}\' | awk \'{{print $7}}\''
+            .format(worker_type)
+        )
+    worker_pid = str(result.output).strip()
+    if result.output:
         logger.info('Obtained {} PID: {}'.format(worker_type, worker_pid))
     else:
         logger.error('Could not obtain {} PID, check evmserverd running or if specific role is'
-            ' enabled...'.format(worker_type))
-        assert out
+                     ' enabled...'.format(worker_type))
+        assert result.output
     return worker_pid
 
 

@@ -323,11 +323,11 @@ class IPAppliance(object):
 
     def is_registration_complete(self, used_repo_or_channel):
         """ Checks if an appliance has the correct repos enabled with RHSM or SAT6 """
-        ret, out = self.ssh_client.run_command('yum repolist enabled')
+        result = self.ssh_client.run_command('yum repolist enabled')
         # Check that the specified (or default) repo (can be multiple, separated by a space)
         # is enabled and that there are packages available
         for repo in used_repo_or_channel.split(' '):
-            if (repo not in out) or (not re.search(r'repolist: [^0]', out)):
+            if (repo not in result.output) or (not re.search(r'repolist: [^0]', result.output)):
                 return False
         return True
 
@@ -616,7 +616,7 @@ class IPAppliance(object):
             # Seals the VM in order to work when spawned again.
             ssh_client.run_command("rm -rf /etc/ssh/ssh_host_*", ensure_host=True)
             if ssh_client.run_command(
-                    "grep '^HOSTNAME' /etc/sysconfig/network", ensure_host=True).rc == 0:
+                    "grep '^HOSTNAME' /etc/sysconfig/network", ensure_host=True).success:
                 # Replace it
                 ssh_client.run_command(
                     "sed -i -r -e 's/^HOSTNAME=.*$/HOSTNAME=localhost.localdomain/' "
@@ -654,9 +654,9 @@ class IPAppliance(object):
         try:
             # Let's not log passwords
             logging.disable(logging.CRITICAL)
-            rc, out = self.ssh_client.run_rails_command(
+            result = self.ssh_client.run_rails_command(
                 "\"puts MiqPassword.encrypt('{}')\"".format(string))
-            return out.strip()
+            return result.output.strip()
         finally:
             logging.disable(logging.NOTSET)
 
@@ -761,9 +761,9 @@ class IPAppliance(object):
     @cached_property
     def miqqe_version(self):
         """Returns version of applied JS patch or None if not present"""
-        rc, out = self.ssh_client.run_command('grep "[0-9]\+" /var/www/miq/vmdb/.miqqe_version')
-        if rc == 0:
-            return int(out)
+        result = self.ssh_client.run_command('grep "[0-9]\+" /var/www/miq/vmdb/.miqqe_version')
+        if result.success:
+            return int(result.output)
         return None
 
     @property
@@ -821,7 +821,7 @@ class IPAppliance(object):
                 # return result.output
 
                 res = self.ssh_client.run_command('cat /etc/redhat-release')
-                if res.rc != 0:
+                if res.failed:
                     raise RuntimeError('Unable to retrieve /etc/redhat-release')
                 version_string = res.output.strip()
                 if 'CentOS' in version_string:
@@ -854,7 +854,7 @@ class IPAppliance(object):
         except (AttributeError, KeyError, IOError):
             self.log.exception('appliance.build could not be retrieved from REST, falling back')
             res = self.ssh_client.run_command('cat /var/www/miq/vmdb/BUILD')
-            if res.rc != 0:
+            if res.failed:
                 raise RuntimeError('Unable to retrieve appliance VMDB version')
             return res.output.strip("\n")
 
@@ -864,7 +864,7 @@ class IPAppliance(object):
         # rhel and centos appliances
         res = self.ssh_client.run_command(
             r"cat /etc/redhat-release | sed 's/.* release \(.*\) (.*/\1/' #)")
-        if res.rc != 0:
+        if res.failed:
             raise RuntimeError('Unable to retrieve appliance OS version')
         return Version(res.output)
 
@@ -898,7 +898,7 @@ class IPAppliance(object):
         Usage:
 
             with appliance.ssh_client as ssh:
-                status, output = ssh.run_command('...')
+                result = ssh.run_command('...')
 
         Note:
 
@@ -1005,7 +1005,7 @@ class IPAppliance(object):
             # postgres isn't running, try to start it
             cmd = 'systemctl restart {}-postgresql'.format(self.db.postgres_version)
             result = self.db.ssh_client.run_command(cmd)
-            if result.rc != 0:
+            if result.failed:
                 return 'postgres failed to start:\n{}'.format(result.output)
             else:
                 return 'postgres was not running for unknown reasons'
@@ -1035,12 +1035,12 @@ class IPAppliance(object):
 
         # checking whether chrony is installed
         check_cmd = 'yum list installed chrony'
-        if client.run_command(check_cmd).rc != 0:
+        if client.run_command(check_cmd).failed:
             raise ApplianceException("Chrony isn't installed")
 
         # # checking whether it is enabled and enable it
         is_enabled_cmd = 'systemctl is-enabled chronyd'
-        if client.run_command(is_enabled_cmd).rc != 0:
+        if client.run_command(is_enabled_cmd).failed:
             logger.debug("chrony will start on system startup")
             client.run_command('systemctl enable chronyd')
             client.run_command('systemctl daemon-reload')
@@ -1072,13 +1072,13 @@ class IPAppliance(object):
             logger.info("chrony's config file hasn't been changed")
             conf_file_updated = False
 
-        if conf_file_updated or client.run_command('systemctl status chronyd').rc != 0:
+        if conf_file_updated or client.run_command('systemctl status chronyd').failed:
             logger.debug('restarting chronyd')
             client.run_command('systemctl restart chronyd')
 
         # check that chrony is running correctly now
         result = client.run_command('chronyc tracking')
-        if result.rc == 0:
+        if result.success:
             logger.info('chronyc is running correctly')
         else:
             raise ApplianceException("chrony doesn't work. "
@@ -1137,13 +1137,13 @@ class IPAppliance(object):
         When this issue is resolved, this method will do nothing.
         """
         client = self.ssh_client
-        status, out = client.run_command("ls /opt/rh/cfme-gemset")
-        if status != 0:
+        result = client.run_command("ls /opt/rh/cfme-gemset")
+        if result.failed:
             return  # Not needed
         log_callback('Fixing Gemfile issue')
         # Check if the error is there
-        status, out = client.run_rails_command("puts 1")
-        if status == 0:
+        result = client.run_rails_command("puts 1")
+        if result.success:
             return  # All OK!
         client.run_command('echo "export BUNDLE_GEMFILE=/var/www/miq/vmdb/Gemfile" >> /etc/bashrc')
         # To be 100% sure
@@ -1161,21 +1161,21 @@ class IPAppliance(object):
         store.terminalreporter.write_line(
             'THIS IS NOT STUCK. Just wait until it\'s done, it will be only done once', red=True)
         store.terminalreporter.write_line('Phase 1 of 2: rake assets:clobber')
-        status, out = client.run_rake_command("assets:clobber")
-        if status != 0:
+        result = client.run_rake_command("assets:clobber")
+        if result.failed:
             msg = 'Appliance {} failed to nuke old assets'.format(self.hostname)
             log_callback(msg)
             raise ApplianceException(msg)
 
         store.terminalreporter.write_line('Phase 2 of 2: rake assets:precompile')
-        status, out = client.run_rake_command("assets:precompile")
-        if status != 0:
+        result = client.run_rake_command("assets:precompile")
+        if result.failed:
             msg = 'Appliance {} failed to precompile assets'.format(self.hostname)
             log_callback(msg)
             raise ApplianceException(msg)
 
         store.terminalreporter.write_line('Asset precompilation done')
-        return status
+        return result.rc
 
     @logger_wrap("Clone automate domain: {}")
     def clone_domain(self, source="ManageIQ", dest="Default", log_callback=None):
@@ -1199,16 +1199,16 @@ class IPAppliance(object):
             source)
         export_cmd = 'evm:automate:export {}'.format(export_opts)
         log_callback('Exporting domain ({}) ...'.format(export_cmd))
-        status, output = client.run_rake_command(export_cmd)
-        if status != 0:
+        result = client.run_rake_command(export_cmd)
+        if result.failed:
             msg = 'Failed to export {} domain'.format(source)
             log_callback(msg)
             raise ApplianceException(msg)
 
         ro_fix_cmd = ("sed -i 's/system: true/system: false/g' "
                       "/tmp/{}/{}/__domain__.yaml".format(source, source))
-        status, output = client.run_command(ro_fix_cmd)
-        if status != 0:
+        result = client.run_command(ro_fix_cmd)
+        if result.failed:
             msg = 'Setting {} domain to read/write failed'.format(dest)
             log_callback(msg)
             raise ApplianceException(msg)
@@ -1217,13 +1217,13 @@ class IPAppliance(object):
         import_opts += ' OVERWRITE=true IMPORT_AS={} ENABLED=true'.format(dest)
         import_cmd = 'evm:automate:import {}'.format(import_opts)
         log_callback('Importing domain ({}) ...'.format(import_cmd))
-        status, output = client.run_rake_command(import_cmd)
-        if status != 0:
+        result = client.run_rake_command(import_cmd)
+        if result.failed:
             msg = 'Failed to import {} domain'.format(dest)
             log_callback(msg)
             raise ApplianceException(msg)
 
-        return status, output
+        return result.rc, result.output
 
     @logger_wrap("Deploying Merkyl: {}")
     def deploy_merkyl(self, start=False, log_callback=None):
@@ -1270,11 +1270,11 @@ class IPAppliance(object):
         name_regexp = re.compile(r"^\[update-([^\]]+)\]")
         baseurl_regexp = re.compile(r"baseurl\s*=\s*([^\s]+)")
         for repofile in self.get_repofile_list():
-            rc, out = self.ssh_client.run_command("cat /etc/yum.repos.d/{}".format(repofile))
-            if rc != 0:
+            result = self.ssh_client.run_command("cat /etc/yum.repos.d/{}".format(repofile))
+            if result.failed:
                 # Something happened meanwhile?
                 continue
-            out = out.strip()
+            out = result.output.strip()
             name_match = name_regexp.search(out)
             if name_match is None:
                 continue
@@ -1348,7 +1348,7 @@ class IPAppliance(object):
         logger.info("%s repository %s", "Enabling" if enable else "Disabling", repo_id)
         return self.ssh_client.run_command(
             "sed -i 's/^enabled=./enabled={}/' /etc/yum.repos.d/{}.repo".format(
-                1 if enable else 0, repo_id)).rc == 0
+                1 if enable else 0, repo_id)).success
 
     @logger_wrap("Update RHEL: {}")
     def update_rhel(self, *urls, **kwargs):
@@ -1415,7 +1415,7 @@ class IPAppliance(object):
             raise KeyboardInterrupt(msg)
 
         self.log.error(result.output)
-        if result.rc != 0:
+        if result.failed:
             self.log.error('appliance update failed')
             msg = 'Appliance {} failed to update RHEL, error in logs'.format(self.hostname)
             log_callback(msg)
@@ -1428,11 +1428,11 @@ class IPAppliance(object):
 
     def utc_time(self):
         client = self.ssh_client
-        status, output = client.run_command('date --iso-8601=seconds -u')
-        if not status:
-            return dateutil.parser.parse(output)
+        result = client.run_command('date --iso-8601=seconds -u')
+        if result.success:
+            return dateutil.parser.parse(result.output)
         else:
-            raise Exception("Couldn't get datetime: {}".format(output))
+            raise Exception("Couldn't get datetime: {}".format(result.output))
 
     def _check_appliance_ui_wait_fn(self):
         # Get the URL, don't verify ssl cert
@@ -1482,14 +1482,15 @@ class IPAppliance(object):
         """
         log_callback("Running command '{}' against the evmserverd service".format(command))
         with self.ssh_client as ssh:
-            status, output = ssh.run_command('systemctl {} evmserverd'.format(command))
+            result = ssh.run_command('systemctl {} evmserverd'.format(command))
 
-        if expected_exit_code is not None and status != expected_exit_code:
-            msg = 'Failed to {} evmserverd on {}\nError: {}'.format(command, self.hostname, output)
+        if expected_exit_code is not None and result.rc != expected_exit_code:
+            msg = ('Failed to {} evmserverd on {}\nError: {}'
+                   .format(command, self.hostname, result.output))
             log_callback(msg)
             raise ApplianceException(msg)
 
-        return status
+        return result.rc
 
     @logger_wrap("Status of EVM service: {}")
     def is_evm_service_running(self, log_callback=None):
@@ -1526,7 +1527,7 @@ class IPAppliance(object):
                     # Don't care if it's still running
                     pass
                 log_callback('killing any remaining processes and restarting postgres')
-                status, msg = ssh.run_command(
+                ssh.run_command(
                     'killall -9 ruby; systemctl restart {}-postgresql'
                     .format(self.db.postgres_version))
                 log_callback('Waiting for database to be available')
@@ -1555,7 +1556,7 @@ class IPAppliance(object):
         client = self.ssh_client
 
         old_uptime = client.uptime()
-        status, out = client.run_command('reboot')
+        client.run_command('reboot')
 
         wait_for(lambda: client.uptime() < old_uptime, handle_exception=True,
             num_sec=600, message='appliance to reboot', delay=10)
@@ -1593,7 +1594,7 @@ class IPAppliance(object):
 
         with self.ssh_client as client:
             is_already_installed = False
-            if client.run_command('test -d /usr/lib/vmware-vix-disklib/lib64')[0] == 0:
+            if client.run_command('test -d /usr/lib/vmware-vix-disklib/lib64').success:
                 is_already_installed = True
 
             if not is_already_installed or force:
@@ -1604,24 +1605,28 @@ class IPAppliance(object):
                 # download
                 log_callback('Downloading VDDK')
                 result = client.run_command('curl {} -o {}'.format(vddk_url, filename))
-                if result.rc != 0:
+                if result.failed:
                     log_raise(Exception, "Could not download VDDK")
 
                 # install
                 log_callback('Installing vddk')
-                status, out = client.run_command(
+                result = client.run_command(
                     'yum -y install {}'.format(filename))
-                if status != 0:
+                if result.failed:
                     log_raise(
-                        Exception, 'VDDK installation failure (rc: {})\n{}'.format(out, status))
+                        Exception,
+                        'VDDK installation failure (rc: {})\n{}'.format(result.rc, result.output)
+                    )
 
                 # verify
                 log_callback('Verifying vddk')
-                status, out = client.run_command('ldconfig -p | grep vix')
-                if len(out) < 2:
+                result = client.run_command('ldconfig -p | grep vix')
+                if len(result.output) < 2:
                     log_raise(
                         Exception,
-                        "Potential installation issue, libraries not detected\n{}".format(out))
+                        "Potential installation issue, libraries not detected\n{}"
+                        .format(result.output)
+                    )
 
     @logger_wrap("Uninstall VDDK: {}")
     def uninstall_vddk(self, log_callback=None):
@@ -1629,10 +1634,12 @@ class IPAppliance(object):
         with self.ssh_client as client:
             is_installed = client.run_command('test -d /usr/lib/vmware-vix-disklib/lib64').success
             if is_installed:
-                status, out = client.run_command('yum -y remove vmware-vix-disklib')
-                if status != 0:
-                    log_callback('VDDK removing failure (rc: {})\n{}'.format(out, status))
-                    raise Exception('VDDK removing failure (rc: {})\n{}'.format(out, status))
+                result = client.run_command('yum -y remove vmware-vix-disklib')
+                if result.failed:
+                    log_callback('VDDK removing failure (rc: {})\n{}'
+                                 .format(result.rc, result.output))
+                    raise Exception('VDDK removing failure (rc: {})\n{}'
+                                    .format(result.rc, result.output))
                 else:
                     log_callback('VDDK has been successfully removed.')
             else:
@@ -1662,27 +1669,28 @@ class IPAppliance(object):
 
         with self.ssh_client as ssh:
             log_callback('Downloading SDK from {}'.format(sdk_url))
-            status, out = ssh.run_command(
+            result = ssh.run_command(
                 'wget {url} -O {file} > /root/unzip.out 2>&1'.format(
                     url=sdk_url, file=filename))
-            if status != 0:
-                log_raise(Exception, 'Could not download Netapp SDK: {}'.format(out))
+            if result.failed:
+                log_raise(Exception, 'Could not download Netapp SDK: {}'.format(result.output))
 
             log_callback('Extracting SDK ({})'.format(filename))
-            status, out = ssh.run_command(
+            result = ssh.run_command(
                 'unzip -o -d /var/www/miq/vmdb/lib/ {}'.format(filename))
-            if status != 0:
-                log_raise(Exception, 'Could not extract Netapp SDK: {}'.format(out))
+            if result.failed:
+                log_raise(Exception, 'Could not extract Netapp SDK: {}'.format(result.output))
 
             path = '/var/www/miq/vmdb/lib/{}/lib/linux-64'.format(foldername)
             # Check if we haven't already added this line
-            if ssh.run_command("grep -F '{}' /etc/default/evm".format(path)).rc != 0:
+            if ssh.run_command("grep -F '{}' /etc/default/evm".format(path)).failed:
                 log_callback('Installing SDK ({})'.format(foldername))
-                status, out = ssh.run_command(
+                result = ssh.run_command(
                     'echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:{}" >> /etc/default/evm'.format(
                         path))
-                if status != 0:
-                    log_raise(Exception, 'SDK installation failure ($?={}): {}'.format(status, out))
+                if result.failed:
+                    log_raise(Exception, 'SDK installation failure ($?={}): {}'
+                              .format(result.rc, result.output))
             else:
                 log_callback("Not needed to install, already done")
 

@@ -21,8 +21,8 @@ from cfme.utils.virtual_machines import deploy_template, _vm_cleanup
 
 
 def command_run(ssh_client, command, message):
-    exit_status, output = ssh_client.run_command(command)
-    if exit_status != 0:
+    result = ssh_client.run_command(command)
+    if result.failed:
         raise CUCommandException(message)
 
 
@@ -46,25 +46,25 @@ def config_cu_vm(ssh_client):
     logger.info('Setting up cron jobs on the CU VM')
 
     command_run(ssh_client, "cd /etc/init.d; wget {}/cu-disk-script.sh".format(url),
-        "CU: There was an error downloading disk script file")
+                "CU: There was an error downloading disk script file")
     command_run(ssh_client, "cd /etc/init.d; wget {}/cu-network-script.sh".format(url),
-        "CU: There was an error downloading network script file")
+                "CU: There was an error downloading network script file")
     command_run(ssh_client,
-        "chmod +x /etc/init.d/cu-disk-script.sh /etc/init.d/cu-network-script.sh",
-        "CU: There was an error running chmod")
+                "chmod +x /etc/init.d/cu-disk-script.sh /etc/init.d/cu-network-script.sh",
+                "CU: There was an error running chmod")
     command_run(ssh_client, "cd /tmp; wget {}/crontab.in".format(url),
-        "CU: There was an error downloading crontab.in")
+                "CU: There was an error downloading crontab.in")
     command_run(ssh_client, "crontab /tmp/crontab.in",
-        "CU: There was an error running crontab:")
+                "CU: There was an error running crontab:")
     command_run(ssh_client, "yum install -y iperf",
-        "CU: There was an error installing iperf")
+                "CU: There was an error installing iperf")
     command_run(ssh_client, "yum install -y pv",
-        "CU: There was an error installing pv")
+                "CU: There was an error installing pv")
 
     # The cron jobs run at reboot.Hence,a reboot is required.
     logger.info('Rebooting vm after setting up cron jobs')
     command_run(ssh_client, "reboot &",
-        "CU: There was an error running reboot")
+                "CU: There was an error running reboot")
 
 
 def vm_running(provider, vm_name):
@@ -86,7 +86,7 @@ def cu_vm(provider, vm_name, template):
 
     # TODO methods deploy_template calls don't accept resourcepool and  allowed_datastores as kwargs
     deploy_template(provider, vm_name, template,
-        resourcepool=resource_pool, allowed_datastores=datastore)
+                    resourcepool=resource_pool, allowed_datastores=datastore)
 
     prov_mgmt = get_mgmt(provider)
     vm_running(prov_mgmt, vm_name)
@@ -110,7 +110,7 @@ def cu_vm(provider, vm_name, template):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('--provider', help='provider key in cfme_data')
     parser.add_argument('--template', help='the name of the template to clone')

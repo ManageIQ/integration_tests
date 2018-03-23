@@ -115,10 +115,10 @@ def make_ssh_client(rhevip, sshname, sshpass):
 def is_ovirt_engine_running(rhevm_ip, sshname, sshpass):
     try:
         with make_ssh_client(rhevm_ip, sshname, sshpass) as ssh_client:
-            stdout = ssh_client.run_command('systemctl status ovirt-engine')[1]
+            stdout = ssh_client.run_command('systemctl status ovirt-engine').output
             # fallback to sysV commands if necessary
             if 'command not found' in stdout:
-                stdout = ssh_client.run_command('service ovirt-engine status')[1]
+                stdout = ssh_client.run_command('service ovirt-engine status').output
         return 'running' in stdout
     except Exception:
         logger.exception('RHEVM: While checking status of ovirt engine, an exception happened')

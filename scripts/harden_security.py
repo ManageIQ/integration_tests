@@ -63,11 +63,11 @@ def main():
     def generate_key(address):
         with SSHClient(hostname=address, **ssh_creds) as client:
             print('Connecting to Appliance...')
-            status, out = client.run_command(
+            result = client.run_command(
                 'ruby /var/www/miq/vmdb/tools/fix_auth.rb --key --verbose')
-            if status != 0:
+            if result.failed:
                 print('Creating new encryption key failed.')
-                print(out)
+                print(result.output)
                 sys.exit(1)
             else:
                 print('New encryption key created.')
@@ -79,31 +79,31 @@ def main():
     def update_db_yaml(address):
         with SSHClient(hostname=address, **ssh_creds) as client:
             client.run_command('cd /var/www/miq/vmdb')
-            status, out = client.run_rails_command(
+            result = client.run_rails_command(
                 '\'puts MiqPassword.encrypt("smartvm");\'')
-            if status != 0:
+            if result.failed:
                 print('Retrieving encrypted db password failed on {}'.format(address))
                 sys.exit(1)
             else:
-                encrypted_pass = out
-                status, out = client.run_command(
+                encrypted_pass = result.output
+                result = client.run_command(
                     ('cd /var/www/miq/vmdb; '
                      'sed -i.`date +%m-%d-%Y` "s/password:'
                      ' .*/password: {}/g" config/database.yml'.format(re.escape(encrypted_pass))))
-                if status != 0:
+                if result.failed:
                     print('Updating database.yml failed on {}'.format(address))
-                    print(out)
+                    print(result.output)
                     sys.exit(1)
                 else:
                     print('Updating database.yml succeeded on {}'.format(address))
 
     def update_password(address):
         with SSHClient(hostname=address, **ssh_creds) as client:
-            status, out = client.run_command(
+            result = client.run_command(
                 'ruby /var/www/miq/vmdb/tools/fix_auth.rb --hostname localhost --password smartvm')
-            if status != 0:
+            if result.failed:
                 print('Updating DB password failed on {}'.format(address))
-                print(out)
+                print(result.output)
                 sys.exit(1)
             else:
                 print('DB password updated on {}'.format(address))
@@ -116,8 +116,8 @@ def main():
     def restart_appliance(address):
         print('Restarting evmserverd on {}'.format(address))
         with SSHClient(hostname=address, **ssh_creds) as client:
-            status, out = client.run_command('systemctl restart evmserverd')
-            if status != 0:
+            result = client.run_command('systemctl restart evmserverd')
+            if result.failed:
                 print("Restarting evmserverd failed on {}".format(address))
                 sys.exit(1)
             else:

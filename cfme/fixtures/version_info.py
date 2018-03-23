@@ -22,10 +22,10 @@ def get_system_versions(ssh_client):
     starttime = time.time()
     system_dict = {}
 
-    kernel_name = str((ssh_client.run_command('uname -s')[1]))[:-1]
-    kernel_release = str((ssh_client.run_command('uname -r')[1]))[:-1]
-    kernel_version = str((ssh_client.run_command('uname -v')[1]))[:-1]
-    operating_system = str((ssh_client.run_command('cat /etc/system-release')[1]))[:-1]
+    kernel_name = str(ssh_client.run_command('uname -s').output)[:-1]
+    kernel_release = str(ssh_client.run_command('uname -r').output)[:-1]
+    kernel_version = str(ssh_client.run_command('uname -v').output)[:-1]
+    operating_system = str(ssh_client.run_command('cat /etc/system-release').output)[:-1]
 
     system_dict['kernel_name'] = kernel_name
     system_dict['kernel_release'] = kernel_release
@@ -42,13 +42,13 @@ def get_process_versions(ssh_client):
     starttime = time.time()
     process_dict = {}
 
-    ruby = str(ssh_client.run_command('ruby -v')[1])
+    ruby = str(ssh_client.run_command('ruby -v').output)
     rubyv = ruby[ruby.find(' ') + 1:find_nth_pos(ruby, ".", 2) + 2]
-    rails = str(ssh_client.run_command('rails -v')[1])
+    rails = str(ssh_client.run_command('rails -v').output)
     railsv = rails[rails.find(' ') + 1:find_nth_pos(rails, ".", 2) + 2]
-    postgres = str(ssh_client.run_command('postgres --version')[1])
+    postgres = str(ssh_client.run_command('postgres --version').output)
     postgresv = postgres[postgres.find('.') - 1:-1]
-    httpd = str(ssh_client.run_command('httpd -v')[1])
+    httpd = str(ssh_client.run_command('httpd -v').output)
     httpdv = httpd[httpd.find('/') + 1: httpd.find(' ', httpd.find('/'))]
 
     process_dict['ruby'] = rubyv
@@ -65,7 +65,7 @@ def get_gem_versions(ssh_client):
     """get version information for gems"""
     starttime = time.time()
     gem_dict = {}
-    gem_list = str(ssh_client.run_command('gem query --local')[1]).split('\n')
+    gem_list = str(ssh_client.run_command('gem query --local').output).split('\n')
 
     for gem in gem_list:
         if gem == '':

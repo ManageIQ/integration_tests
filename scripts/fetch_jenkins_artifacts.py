@@ -25,12 +25,11 @@ def main():
     # Init SSH client
     with SSHClient(**ssh_kwargs) as ssh_client:
         # generate installed rpm list
-        status, out = ssh_client.run_command('rpm -qa | sort > /tmp/installed_rpms.txt')
+        ssh_client.run_command('rpm -qa | sort > /tmp/installed_rpms.txt')
         ssh_client.get_file('/tmp/installed_rpms.txt', 'installed_rpms.txt')
 
         # compress logs dir
-        status, out = ssh_client.run_command('cd /var/www/miq/vmdb; '
-                                             'tar zcvf /tmp/appliance_logs.tgz log')
+        ssh_client.run_command('cd /var/www/miq/vmdb; tar zcf /tmp/appliance_logs.tgz log')
         ssh_client.get_file('/tmp/appliance_logs.tgz', 'appliance_logs.tgz')
 
 

@@ -63,15 +63,17 @@ class ApplianceDB(AppliancePlugin):
         if self.is_partition_extended:
             return
         with self.appliance.ssh_client as ssh:
-            rc, out = ssh.run_command("df -h")
-            self.logger.info("File systems before extending the DB partition:\n{}".format(out))
+            result = ssh.run_command("df -h")
+            self.logger.info("File systems before extending the DB partition:\n{}"
+                             .format(result.output))
             ssh.run_command("umount /repo")
             ssh.run_command("lvreduce --force --size -9GB /dev/mapper/VG--CFME-lv_repo")
             ssh.run_command("mkfs.xfs -f /dev/mapper/VG--CFME-lv_repo")
             ssh.run_command("lvextend --resizefs --size +9GB /dev/mapper/VG--CFME-lv_var")
             ssh.run_command("mount -a")
-            rc, out = ssh.run_command("df -h")
-            self.logger.info("File systems after extending the DB partition:\n{}".format(out))
+            result = ssh.run_command("df -h")
+            self.logger.info("File systems after extending the DB partition:\n{}"
+                             .format(result.output))
             ssh.run_command("touch /var/www/miq/vmdb/.db_partition_extended")
 
     def drop(self):
@@ -82,9 +84,9 @@ class ApplianceDB(AppliancePlugin):
         def _db_dropped():
             self.appliance.db.restart_db_service
             self.appliance.ssh_client.run_command('dropdb vmdb_production', timeout=15)
-            rc, out = self.appliance.ssh_client.run_command(
+            result = self.appliance.ssh_client.run_command(
                 "psql -l | grep vmdb_production | wc -l", timeout=15)
-            return rc == 0
+            return result.success
         wait_for(_db_dropped, delay=5, timeout=60, message="drop the vmdb_production DB")
 
     def create(self):
@@ -92,17 +94,18 @@ class ApplianceDB(AppliancePlugin):
 
             Note: EVM service has to be stopped for this to work.
         """
-        rc, out = self.appliance.ssh_client.run_command('createdb vmdb_production', timeout=30)
-        assert rc == 0, "Failed to create clean database: {}".format(out)
+        result = self.appliance.ssh_client.run_command('createdb vmdb_production', timeout=30)
+        assert result.success, "Failed to create clean database: {}".format(result.output)
 
     def migrate(self):
         """migrates a given database and updates REGION/GUID files"""
         ssh = self.ssh_client
-        rc, out = ssh.run_rake_command("db:migrate", timeout=300)
-        assert rc == 0, "Failed to migrate new database: {}".format(out)
-        rc, out = ssh.run_rake_command(
+        result = ssh.run_rake_command("db:migrate", timeout=300)
+        assert result.success, "Failed to migrate new database: {}".format(result.output)
+        result = ssh.run_rake_command(
             'db:migrate:status 2>/dev/null | grep "^\s*down"', timeout=30)
-        assert rc != 0, "Migration failed; migrations in 'down' state found: {}".format(out)
+        assert result.failed, ("Migration failed; migrations in 'down' state found: {}"
+                               .format(result.output))
         # fetch GUID and REGION from the DB and use it to replace data in /var/www/miq/vmdb/GUID
         # and /var/www/miq/vmdb/REGION respectively
         data_query = {
@@ -111,38 +114,38 @@ class ApplianceDB(AppliancePlugin):
         }
         for data_type, db_query in data_query.items():
             data_filepath = '/var/www/miq/vmdb/{}'.format(data_type.upper())
-            rc, out = ssh.run_command(
+            result = ssh.run_command(
                 'psql -d vmdb_production -t -c "{}"'.format(db_query), timeout=15)
-            assert rc == 0, "Failed to fetch {}: {}".format(data_type, out)
-            db_data = out.strip()
+            assert result.success, "Failed to fetch {}: {}".format(data_type, result.output)
+            db_data = result.output.strip()
             assert db_data, "No {} found in database; query '{}' returned no records".format(
                 data_type, db_query)
-            rc, out = ssh.run_command(
+            result = ssh.run_command(
                 "echo -n '{}' > {}".format(db_data, data_filepath), timeout=15)
-            assert rc == 0, "Failed to replace data in {} with '{}': {}".format(
-                data_filepath, db_data, out)
+            assert result.success, "Failed to replace data in {} with '{}': {}".format(
+                data_filepath, db_data, result.output)
 
     def automate_reset(self):
-        rc, out = self.ssh_client.run_rake_command("evm:automate:reset", timeout=300)
-        assert rc == 0, "Failed to reset automate: {}".format(out)
+        result = self.ssh_client.run_rake_command("evm:automate:reset", timeout=300)
+        assert result.success, "Failed to reset automate: {}".format(result.output)
 
     def fix_auth_key(self):
-        rc, out = self.ssh_client.run_command("fix_auth -i invalid", timeout=45)
-        assert rc == 0, "Failed to change invalid passwords: {}".format(out)
+        result = self.ssh_client.run_command("fix_auth -i invalid", timeout=45)
+        assert result.success, "Failed to change invalid passwords: {}".format(result.output)
         # fix db password
 
     def fix_auth_dbyml(self):
-        rc, out = self.ssh_client.run_command("fix_auth --databaseyml -i {}".format(
+        result = self.ssh_client.run_command("fix_auth --databaseyml -i {}".format(
             credentials['database']['password']), timeout=45)
-        assert rc == 0, "Failed to change invalid password: {}".format(out)
+        assert result.success, "Failed to change invalid password: {}".format(result.output)
 
     def reset_user_pass(self):
-        rc, out = self.ssh_client.run_rails_command(
+        result = self.ssh_client.run_rails_command(
             '"u = User.find_by_userid(\'admin\'); u.password = \'{}\'; u.save!"'
             .format(self.appliance.user.credential.secret))
-        assert rc == 0, "Failed to change UI password of {} to {}:" \
+        assert result.success, "Failed to change UI password of {} to {}:" \
             .format(self.appliance.user.credential.principal,
-                    self.appliance.user.credential.secret, out)
+                    self.appliance.user.credential.secret, result.output)
 
     @property
     def ssh_client(self, **connect_kwargs):
@@ -161,10 +164,10 @@ class ApplianceDB(AppliancePlugin):
         """
         from . import ApplianceException
         self.logger.info('Backing up database')
-        status, output = self.appliance.ssh_client.run_command(
+        result = self.appliance.ssh_client.run_command(
             'pg_dump --format custom --file {} vmdb_production'.format(
                 database_path))
-        if status != 0:
+        if result.failed:
             msg = 'Failed to backup database'
             self.logger.error(msg)
             raise ApplianceException(msg)
@@ -175,18 +178,19 @@ class ApplianceDB(AppliancePlugin):
         """
         from . import ApplianceException
         self.logger.info('Restoring database')
-        status, output = self.appliance.ssh_client.run_rake_command(
+        result = self.appliance.ssh_client.run_rake_command(
             'evm:db:restore:local --trace -- --local-file "{}"'.format(database_path))
-        if status != 0:
+        if result.failed:
             msg = 'Failed to restore database on appl {}, output is {}'.format(self.address,
-                output)
+                result.output)
             self.logger.error(msg)
             raise ApplianceException(msg)
         if self.appliance.version > '5.8':
-            status, output = self.ssh_client.run_command("fix_auth --databaseyml -i {}".format(
+            result = self.ssh_client.run_command("fix_auth --databaseyml -i {}".format(
                 conf.credentials['database'].password), timeout=45)
-            if status != 0:
-                self.logger.error("Failed to change invalid db password: {}".format(output))
+            if result.failed:
+                self.logger.error("Failed to change invalid db password: {}"
+                                  .format(result.output))
 
     def setup(self, **kwargs):
         """Configure database
@@ -254,8 +258,8 @@ class ApplianceDB(AppliancePlugin):
             "/opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf".format(scl=scl))
 
         # restart postgres
-        status, out = client.run_command("systemctl restart {scl}-postgresql".format(scl=scl))
-        return status
+        result = client.run_command("systemctl restart {scl}-postgresql".format(scl=scl))
+        return result.rc
 
     def enable_internal(self, region=0, key_address=None, db_password=None, ssh_password=None,
                         db_disk=None):
@@ -306,9 +310,9 @@ class ApplianceDB(AppliancePlugin):
             if db_disk:
                 command_options = ' '.join([command_options, '--dbdisk {}'.format(db_disk)])
 
-            status, out = client.run_command(' '.join([base_command, command_options]))
-            if status != 0 or 'failed' in out.lower():
-                raise Exception('Could not set up the database:\n{}'.format(out))
+            result = client.run_command(' '.join([base_command, command_options]))
+            if result.failed or 'failed' in result.output.lower():
+                raise Exception('Could not set up the database:\n{}'.format(result.output))
         else:
             # no cli, use the enable internal db script
             rbt_repl = {
@@ -326,12 +330,12 @@ class ApplianceDB(AppliancePlugin):
             client.put_file(rb.name, remote_file)
 
             # Run the rb script, clean it up when done
-            status, out = client.run_command('ruby {}'.format(remote_file))
+            result = client.run_command('ruby {}'.format(remote_file))
             client.run_command('rm {}'.format(remote_file))
 
-        self.logger.info('Output from appliance db configuration: %s', out)
+        self.logger.info('Output from appliance db configuration: %s', result.output)
 
-        return status, out
+        return result.rc, result.output
 
     def enable_external(self, db_address, region=0, db_name=None, db_username=None,
                         db_password=None):
@@ -369,7 +373,7 @@ class ApplianceDB(AppliancePlugin):
                 client.put_file(rand_filename, "/var/www/miq/vmdb/certs/v2_key")
 
             # enable external DB with cli
-            status, out = client.run_command(
+            result = client.run_command(
                 'appliance_console_cli '
                 '--hostname {0} --region {1} --dbname {2} --username {3} --password {4}'.format(
                     self.address, region, db_name, db_username, db_password
@@ -395,26 +399,26 @@ class ApplianceDB(AppliancePlugin):
             client.put_file(rb.name, remote_file)
 
             # Run the rb script, clean it up when done
-            status, out = client.run_command('ruby {}'.format(remote_file))
+            result = client.run_command('ruby {}'.format(remote_file))
             client.run_command('rm {}'.format(remote_file))
 
-        if status != 0:
+        if result.failed:
             self.logger.error('error enabling external db')
-            self.logger.error(out)
+            self.logger.error(result.output)
             msg = ('Appliance {} failed to enable external DB running on {}'
                   .format(self.appliance.hostname, db_address))
             self.logger.error(msg)
             from . import ApplianceException
             raise ApplianceException(msg)
 
-        return status, out
+        return result.rc, result.output
 
     @property
     def is_dedicated_active(self):
-        return_code, output = self.appliance.ssh_client.run_command(
+        result = self.appliance.ssh_client.run_command(
             "systemctl status {}-postgresql.service | grep running".format(
                 self.postgres_version))
-        return return_code == 0
+        return result.success
 
     def wait_for(self, timeout=600):
         """Waits for appliance database to be ready
@@ -454,7 +458,7 @@ class ApplianceDB(AppliancePlugin):
                                                    user=conf.credentials['database']['username'],
                                                    pwd=conf.credentials['database']['password'])
         result = self.ssh_client.run_command(db_check_command, ensure_host=ensure_host)
-        return result.rc == 0
+        return result.success
 
     @property
     def has_database(self):
@@ -467,7 +471,7 @@ class ApplianceDB(AppliancePlugin):
                                                    user=conf.credentials['database']['username'],
                                                    pwd=conf.credentials['database']['password'])
         result = self.ssh_client.run_command(db_check_command, ensure_host=ensure_host)
-        return result.rc == 0
+        return result.success
 
     @property
     def has_tables(self):
@@ -480,7 +484,7 @@ class ApplianceDB(AppliancePlugin):
                                                    user=conf.credentials['database']['username'],
                                                    pwd=conf.credentials['database']['password'])
         result = self.ssh_client.run_command(db_check_command, ensure_host=ensure_host)
-        return result.rc == 0
+        return result.success
 
     def start_db_service(self):
         """Starts the postgresql service via systemctl"""

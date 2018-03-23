@@ -15,9 +15,9 @@ def check_appliance(appliance):
 
 def test_ssh_client_run_command(appliance):
     # Make sure the ssh command runner works
-    exit_status, output = appliance.ssh_client.run_command('echo Testing!')
-    assert exit_status == 0
-    assert 'Testing!' in output
+    result = appliance.ssh_client.run_command('echo Testing!')
+    assert result.success
+    assert 'Testing!' in result.output
 
 
 def test_scp_client_can_put_a_file(appliance, tmpdir):
@@ -25,9 +25,9 @@ def test_scp_client_can_put_a_file(appliance, tmpdir):
     tmpfile = tmpdir.mkdir("sub").join("temp.txt")
     tmpfile.write("content")
     appliance.ssh_client.put_file(str(tmpfile), '/tmp')
-    exit_status, output = appliance.ssh_client.run_command("ls /tmp/{}".format(tmpfile.basename))
-    assert exit_status == 0
-    assert tmpfile.basename in output
+    result = appliance.ssh_client.run_command("ls /tmp/{}".format(tmpfile.basename))
+    assert result.success
+    assert tmpfile.basename in result.output
     appliance.ssh_client.get_file("/tmp/{}".format(tmpfile.basename), str(tmpdir))
     assert "content" in tmpfile.read()
     # Clean up the server

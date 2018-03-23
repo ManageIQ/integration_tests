@@ -36,24 +36,24 @@ def test_embedded_ansible_disable(enabled_embedded_appliance):
 
     def is_supervisord_stopped(enabled_embedded_appliance):
         """Checks if supervisord has stopped"""
-        return_code, output = enabled_embedded_appliance.ssh_client.run_command(
+        result = enabled_embedded_appliance.ssh_client.run_command(
             'systemctl status supervisord | grep inactive',
             container=enabled_embedded_appliance._ansible_pod_name)
-        return return_code == 0
+        return result.success
 
     def is_rabbitmq_stopped(enabled_embedded_appliance):
         """Checks if rabbitmq-server has stopped"""
-        return_code, output = enabled_embedded_appliance.ssh_client.run_command(
+        result = enabled_embedded_appliance.ssh_client.run_command(
             'systemctl status rabbitmq-server | grep inactive',
             container=enabled_embedded_appliance._ansible_pod_name)
-        return return_code == 0
+        return result.success
 
     def is_nginx_stopped(enabled_embedded_appliance):
         """Checks if nginx has stopped"""
-        return_code, output = enabled_embedded_appliance.ssh_client.run_command(
+        result = enabled_embedded_appliance.ssh_client.run_command(
             'systemctl status nginx | grep inactive',
             container=enabled_embedded_appliance._ansible_pod_name)
-        return return_code == 0
+        return result.success
 
     def is_ansible_pod_stopped(enabled_embedded_appliance):
         # todo: implement appropriate methods in appliance

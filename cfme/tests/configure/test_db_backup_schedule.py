@@ -227,13 +227,13 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip, applia
     # ---- Check if the db backup file exists
     with get_ssh_client(db_depot_uri, db_backup_data.credentials) as ssh_client:
 
-        assert ssh_client.run_command('cd "{}"'.format(path_on_host), ensure_user=True)[0] == 0,\
-            "Could not cd into '{}' over ssh".format(path_on_host)
+        assert ssh_client.run_command('cd "{}"'.format(path_on_host), ensure_user=True).success, (
+            "Could not cd into '{}' over ssh".format(path_on_host))
         # Find files no more than 5 minutes old, count them and remove newline
         file_check_cmd = "find {}/* -cmin -5 | wc -l | tr -d '\n' ".format(full_path)
 
         wait_for(
-            lambda: ssh_client.run_command(file_check_cmd, ensure_user=True)[1] == '1',
+            lambda: ssh_client.run_command(file_check_cmd, ensure_user=True).output == '1',
             delay=5,
             num_sec=60,
             message="File '{}' not found on share".format(full_path)
