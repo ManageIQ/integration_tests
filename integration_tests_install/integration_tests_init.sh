@@ -177,7 +177,7 @@ function run_command {
   if [ "$(sed -n 's/^mount_ssh_keys: \(.*\).*$/\1/gp' ${WORKDIR}/.vars_config.yml)" = "y" ]; then
     SSH_VOL="-v ~/.ssh:/home/${USERNAME}/.ssh:ro \\"
   else
-    SSH_VOL=" \\"
+    SSH_VOL=""
   fi
   
   # PROJECTS_DIR=$(sed -n 's/^projects: \(.*\).*$/\1/gp' .vars_config.yml)
