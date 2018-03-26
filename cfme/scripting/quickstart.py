@@ -36,6 +36,12 @@ def mk_parser(default_venv_path):
     parser.add_argument("--config-path", default="../cfme-qe-yamls/complete/")
     return parser
 
+
+def args_for_current_venv():
+    parser = mk_parser(sys.prefix)
+    return parser.parse_args([])
+
+
 PRISTINE_ENV = dict(os.environ)
 
 OS_RELEASE_FILE = '/etc/os-release'
