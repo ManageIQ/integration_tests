@@ -270,8 +270,13 @@ def poke_trackerbot(self):
         template_name = template["template"]["name"]
         ga_released = template['template']['ga_released']
         date = parse_template(template_name).datestamp
+
+        # nasty trackerbot slightly corrupts json data and it is parsed in wrong way
+        # as a result
         custom_data = template['template'].get('custom_data', "{}")
         processed_custom_data = custom_data.replace("u'", '"').replace("'", '"')
+        processed_custom_data = yaml.safe_load(processed_custom_data)
+
         if not date:
             # Not a CFME/MIQ template, ignore it.
             continue
@@ -285,10 +290,8 @@ def poke_trackerbot(self):
                 original_template.ga_released = ga_released
                 original_template.save(update_fields=['ga_released'])
             if provider.provider_type == 'openshift':
-                if custom_data and original_template.custom_data != custom_data:
-                    # nasty trackerbot slightly corrupts json data and it is parsed in wrong way
-                    # as a result
-                    original_template.custom_data = yaml.safe_load(processed_custom_data)
+                if original_template.custom_data != custom_data:
+                    original_template.custom_data = processed_custom_data
                 original_template.template_type = Template.OPENSHIFT_POD
                 original_template.container = 'cloudforms-0'
                 original_template.save(update_fields=['custom_data',
@@ -311,12 +314,11 @@ def poke_trackerbot(self):
                 with transaction.atomic():
                     tpl = Template(
                         provider=provider, template_group=group, original_name=template_name,
-                        name=template_name, preconfigured=False, date=date,
-                        custom_data=processed_custom_data,
-                        version=template_version, ready=True, exists=True, usable=True)
+                        name=template_name, preconfigured=False, date=date, ready=True, exists=True,
+                        usable=True, version=template_version)
                     tpl.save()
                     if provider.provider_type == 'openshift':
-                        tpl.custom_data = yaml.safe_load(processed_custom_data)
+                        tpl.custom_data = processed_custom_data
                         tpl.container = 'cloudforms-0'
                         tpl.template_type = Template.OPENSHIFT_POD
                         tpl.save(update_fields=['container', 'template_type', 'custom_data'])
