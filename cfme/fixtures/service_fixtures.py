@@ -9,6 +9,7 @@ from cfme.rest.gen_data import service_catalog_obj as _catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.log import logger
+from fixtures.provider import console_template
 
 
 @pytest.fixture(scope="function")
@@ -27,13 +28,20 @@ def catalog_item(provider, provisioning, vm_name, dialog, catalog):
     return catalog_item
 
 
-def create_catalog_item(provider, provisioning, vm_name, dialog, catalog, console_template=None):
+def create_catalog_item(provider, provisioning, vm_name, dialog, catalog, console_test=False):
+    """Method that creates catalog item for given provider type.
+
+        Args:
+            console_test: Variable to tell if test is console test or not. True or False. By
+                default False.
+            Other args are fixtures.
+    """
     catalog_item_type = provider.catalog_name
     provision_type, template, host, datastore, iso_file, vlan = map(provisioning.get,
         ('provision_type', 'template', 'host', 'datastore', 'iso_file', 'vlan'))
-    if console_template:
-        logger.info("Console template name : {}".format(console_template.name))
-        template = console_template.name
+    if console_test:
+        template = console_template(provider).name
+        logger.info("Console template name : {}".format(template))
     item_name = dialog.label
     if provider.one_of(InfraProvider):
         catalog_name = template
@@ -63,26 +71,21 @@ def create_catalog_item(provider, provisioning, vm_name, dialog, catalog, consol
 
 
 @pytest.fixture
-def order_service(appliance, provider, provisioning, vm_name,
-                  dialog, catalog, console_template, request):
+def order_service(appliance, provider, provisioning, vm_name, dialog, catalog, request):
     """ Orders service once the catalog item is created"""
+
     if hasattr(request, 'param'):
-        catalog_item = create_catalog_item(provider, provisioning, vm_name, dialog, catalog,
-                                           console_template if 'console_test' in request.param else None)
+        catalog_item = create_catalog_item(
+            provider, provisioning, vm_name, dialog, catalog,
+            console_test=True if 'console_test' in request.param else None
+        )
     else:
         catalog_item = create_catalog_item(provider, provisioning, vm_name, dialog, catalog)
-    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
-                                       catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
-    return catalog_item
-
-
-@pytest.fixture
-def provision_request(appliance, order_service):
-    """Checks if the service request is completed and provisioned"""
-    catalog_item = order_service
     provision_request = appliance.collections.requests.instantiate(catalog_item.name,
-                                                                   partial_check=True)
+        partial_check=True)
     provision_request.wait_for_request(method='ui')
+    assert provision_request.is_succeeded()
     return catalog_item, provision_request
 # TODO - remove request finally
