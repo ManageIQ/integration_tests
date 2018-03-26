@@ -27,20 +27,20 @@ pytestmark = [
 ]
 
 discovery_ips = [
-    {'from': ['120', '120', '120', '120'], 'to': '119',
+    {'from': ['10', '120', '120', '120'], 'to': '119',
      'msg': "Infrastructure Providers Discovery returned: "
             "Ending address must be greater than starting address"},
     {'from': ['333', '120', '120', '120'], 'to': '120',
      'msg': "Infrastructure Providers Discovery returned: IP address octets must be 0 to 255"},
-    {'from': ['120', '333', '120', '120'], 'to': '120',
+    {'from': ['10', '333', '120', '120'], 'to': '120',
      'msg': "Infrastructure Providers Discovery returned: IP address octets must be 0 to 255"},
-    {'from': ['120', '120', '333', '120'], 'to': '120',
+    {'from': ['10', '120', '333', '120'], 'to': '120',
      'msg': "Infrastructure Providers Discovery returned: IP address octets must be 0 to 255"},
-    {'from': ['120', '120', '120', '333'], 'to': '120',
+    {'from': ['10', '120', '120', '333'], 'to': '120',
      'msg': "Infrastructure Providers Discovery returned: IP address octets must be 0 to 255"},
-    {'from': ['120', '', '', ''], 'to': '120',
+    {'from': ['10', '', '', ''], 'to': '120',
      'msg': "Infrastructure Providers Discovery returned: Starting address is malformed"},
-    {'from': ['120', '120', '120', '120'], 'to': '',
+    {'from': ['10', '120', '120', '120'], 'to': '',
      'msg': "Infrastructure Providers Discovery returned: Ending address is malformed"}
 ]
 
@@ -278,6 +278,7 @@ def test_infra_discovery_screen(appliance):
     assert not view.rhevm.selected
 
     if appliance.version >= '5.9.2':
+        assert view.osp_infra.is_displayed
         view.osp_infra.click()
         assert view.osp_infra.selected
         view.osp_infra.click()
