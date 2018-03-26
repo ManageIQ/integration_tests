@@ -308,4 +308,9 @@ class VMInstanceAlertProfile(BaseAlertProfile):
 
 class NodeAlertProfile(BaseAlertProfile):
 
-    TYPE = "Node"
+    @property
+    def TYPE(self):  # noqa
+        if self.appliance.version < "5.9.2":
+            return "Node"
+        else:
+            return "Container Node"
