@@ -13,9 +13,14 @@ class GoogleCloudTemplateUpload(BaseTemplateUpload):
     bucket_name = 'cfme-images'
 
     def get_creds(self, creds_type=None, **kwargs):
-        creds = {'hostname': cfme_data.template_upload.template_upload_ec2['aws_cli_tool_client'],
-                 'username': credentials.host_default['username'],
-                 'password': credentials.host_default['password']}
+        default_hostname = cfme_data.template_upload.template_upload_ec2['aws_cli_tool_client']
+        default_username = credentials.host_default['username']
+        default_password = credentials.host_default['password']
+        creds = {
+            'hostname': default_hostname,
+            'username': default_username,
+            'password': default_password
+        }
         return creds
 
     def download_image(self):

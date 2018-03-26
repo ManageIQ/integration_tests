@@ -17,11 +17,11 @@ from cfme.utils.template.gce import GoogleCloudTemplateUpload
 from cfme.utils.log import logger, add_stdout_handler
 
 add_stdout_handler(logger)
+PROVIDER_TYPES = ['openstack', 'virtualcenter', 'scvmm', 'gce']
+ALL_STREAMS = cfme_data['basic_info']['cfme_images_url']
 
 
 class TemplateUpload(object):
-    provider_types = ['openstack', 'virtualcenter', 'scvmm', 'gce']
-
     def factory(self, type_, *args, **kwargs):
         if type_ == 'openstack':
             return OpenstackTemplateUpload(*args, **kwargs)
@@ -36,57 +36,39 @@ class TemplateUpload(object):
             return GoogleCloudTemplateUpload(*args, **kwargs)
 
 
-ALL_STREAMS = cfme_data['basic_info']['cfme_images_url']
-
-
 def parse_cmd_line():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(argument_default=None)
+
+    provider_group = parser.add_mutually_exclusive_group(required=True)
+    provider_group.add_argument(
+        '--provider-type', dest='provider_type', choices=PROVIDER_TYPES,
+        help='Provider type')
+    provider_group.add_argument(
+        '--provider', nargs='+', dest='provider',
+        help='Specific providers list')
+
     parser.add_argument(
-        '--provider-type',
-        dest='provider_type',
-        help='Type of provider to upload to: virtualcenter, rhevm, openstack, gce, scvmm, etc.',
-        default=None)
-    parser.add_argument(
-        '--provider',
-        nargs='+',
-        dest='provider',
-        help='Specific provider to upload to: vsphere65-nested, rhos11, etc.',
-        default=None)
-    parser.add_argument(
-        '--stream',
-        nargs='+',
-        dest='stream',
+        '--stream', nargs='+', dest='stream',
         help='CFME stream template to deploy(downstream-59z, upstream_stable etc). '
-             'Please check the cfme_data file for current streams.',
-        default=None)
+             'Please check the cfme_data file for current streams.')
     parser.add_argument(
-        '--stream-url',
-        dest='stream_url',
-        help='URL for the stream build.',
-        default=None)
+        '--stream-url', dest='stream_url',
+        help='URL for the stream build. Please use with --stream.')
     parser.add_argument(
-        '--image-url',
-        dest='image_url',
-        help='URL for the image file to be uploaded',
-        default=None)
+        '--image-url', dest='image_url',
+        help='URL for the image file to be uploaded. Please use with --stream.')
     parser.add_argument(
-        '--provider-data',
-        dest='provider_data',
+        '--provider-data', dest='provider_data',
         help='Local yaml file path, to use instead of conf/cfme_data. '
-             'Useful for template upload/deploy by non-CFMEQE.',
-        default=None)
+             'Useful for template upload/deploy by non-CFMEQE.')
     parser.add_argument(
-        '--template-name',
-        dest='template_name',
-        help='Set the name of the template',
-        default=None)
+        '--template-name', dest='template_name',
+        help='Set the name of the template')
     parser.add_argument(
-        '--print-name-only',
-        dest='print_name_only',
-        action="store_true",
+        '--print-name-only', dest='print_name_only', action="store_true",
         help='Only print the template name that will be generated without actually running it.')
-    cmd_line_args = parser.parse_args()
-    return cmd_line_args
+
+    return parser.parse_known_args()
 
 
 def get_image_url(stream, upload_url):
@@ -126,7 +108,9 @@ def check_args(cmd_args):
 
 
 if __name__ == '__main__':
-    cmd_args = parse_cmd_line()
+    cmd_line_args = parse_cmd_line()
+    cmd_args = cmd_line_args[0]
+    specific_args = cmd_line_args[1]
 
     if not check_args(cmd_args):
         sys.exit(1)
@@ -143,8 +127,8 @@ if __name__ == '__main__':
         provider_type = cmd_args.provider_type
 
     if not provider_type or cmd_args.provider:
-        provider_types = template_upload.provider_types
-    elif provider_type in template_upload.provider_types:
+        provider_types = PROVIDER_TYPES
+    elif provider_type in PROVIDER_TYPES:
         provider_types = [provider_type, ]
     else:
         logger.error('Template upload for %r is not implemented yet.', provider_type)
@@ -184,7 +168,8 @@ if __name__ == '__main__':
                     'image_url': cmd_args.image_url,
                     'template_name': template_name,
                     'provider_data': provider_data,
-                    'provider': provider
+                    'provider': provider,
+                    'cmd_line_args': specific_args
                 }
 
                 # Using factory to obtain needed class

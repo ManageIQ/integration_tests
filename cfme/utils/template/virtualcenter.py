@@ -23,7 +23,6 @@ class VirtualCenterTemplateUpload(BaseTemplateUpload):
         return creds
 
     def upload_template(self):
-        template_upload = self.provider_data.template_upload
         cmd_args = [
             "ovftool --noSSLVerify",
             "--datastore={}".format(self.provider_data.provisioning.datastore),
@@ -31,13 +30,15 @@ class VirtualCenterTemplateUpload(BaseTemplateUpload):
             "--vCloudTemplate=True",
             "--overwrite",
             self.image_url,
-            "'vi://{}:{}@{}/{}/host/{}'".format(self.mgmt.username, self.mgmt.password,
-                                                self.mgmt.hostname, template_upload.datacenter,
-                                                template_upload.cluster)
+            "'vi://{}:{}@{}/{}/host/{}'".format(self.mgmt.username,
+                                                self.mgmt.password,
+                                                self.mgmt.hostname,
+                                                self.template_upload_data.datacenter,
+                                                self.template_upload_data.cluster)
         ]
 
-        if 'proxy' in template_upload.keys():
-            cmd_args.append("--proxy={}".format(template_upload.proxy))
+        if 'proxy' in self.template_upload_data.keys():
+            cmd_args.append("--proxy={}".format(self.template_upload_data.proxy))
 
         command = ' '.join(cmd_args)
 

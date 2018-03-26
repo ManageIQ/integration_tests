@@ -1,6 +1,6 @@
 from threading import Lock
 from contextlib import closing
-from urllib2 import urlopen, HTTPError
+from urllib2 import urlopen, URLError
 
 from fauxfactory import gen_alphanumeric
 
@@ -28,7 +28,8 @@ class BaseTemplateUpload(object):
     log_name = None
     image_pattern = None
 
-    def __init__(self, stream=None, provider=None, template_name=None, **kwargs):
+    def __init__(self, stream=None, provider=None, template_name=None,
+                 cmd_line_args=None, **kwargs):
         """
         Required params:
             :param stream: name of stream
@@ -44,9 +45,13 @@ class BaseTemplateUpload(object):
         self._image_url = kwargs.get('image_url')
         self._provider_data = kwargs.get('provider_data')
 
+        self._cmd_line_args = cmd_line_args
+
         self.stream = stream
         self.provider = provider
         self.template_name = template_name
+
+        self.kwargs = kwargs
 
     @property
     def stream_url(self):
@@ -83,8 +88,8 @@ class BaseTemplateUpload(object):
             try:
                 with closing(urlopen(self.stream_url)) as stream_dir:
                     string_from_url = stream_dir.read()
-            except HTTPError:
-                logger.error("Cannot get image URL from %s", self.stream_url)
+            except URLError as e:
+                logger.error("Cannot get image URL from %s: %s", self.stream_url, e.reason.strerror)
                 raise TemplateUploadException("Cannot get image URL.")
             else:
                 image_name = self.image_pattern.findall(string_from_url)
@@ -194,7 +199,7 @@ class BaseTemplateUpload(object):
                 self.mgmt.deploy_template(**deploy_args)
 
         except TemplateUploadException:
-            logger.exception('%s:%s Failed to upload template %s',
-                             self.log_name, self.provider, self.template_name)
+            logger.error('%s:%s Failed to upload template %s',
+                         self.log_name, self.provider, self.template_name)
         finally:
             self.teardown()
