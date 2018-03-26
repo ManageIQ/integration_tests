@@ -74,6 +74,8 @@ def metrics_collection(appliance, clean_setup_provider, provider, enable_candu):
     vm_count = 0
     timeout = 1200.0  # 20 min
     while time.time() < start_time + timeout:
+        # ToDo: Refactor code with wait_for
+
         logger.info("name: %s, id: %s, vms: %s, hosts: %s",
             provider.key, mgmt_system_id, vm_count, host_count)
         # Count host and vm metrics for the provider we're testing
