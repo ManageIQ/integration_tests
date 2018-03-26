@@ -8,7 +8,7 @@ from widgetastic_patternfly import (
     BootstrapSelect, Button, Input, CheckableBootstrapTreeview as CbTree)
 
 from . import ControlExplorerView
-from cfme.utils import ParamClassName
+from cfme.utils import ParamClassName, version
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
@@ -308,4 +308,4 @@ class VMInstanceAlertProfile(BaseAlertProfile):
 
 class NodeAlertProfile(BaseAlertProfile):
 
-    TYPE = "Node"
+    TYPE = version.pick({version.LOWEST: "Node", "5.9.2": "Container Node"})
