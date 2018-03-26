@@ -43,7 +43,11 @@ class BaseLoggedInPage(View):
 
     @property
     def current_fullname(self):
-        return self.settings.text.strip().split('|', 1)[0].strip()
+        try:
+            # When the view isn't displayed self.settings.text is None, resulting in AttributeError
+            return self.settings.text.strip().split('|', 1)[0].strip()
+        except AttributeError:
+            return None
 
     @property
     def current_groupname(self):

@@ -186,10 +186,10 @@ def login(self, user=None, method=LOGIN_METHODS[1]):
 
         login_view.log_in(user, method=method)
         logged_in_view.flush_widget_cache()
-        user.name = logged_in_view.current_fullname
         try:
             assert logged_in_view.is_displayed
             assert logged_in_view.logged_in_as_user
+            user.name = logged_in_view.current_fullname
             self.appliance.user = user
         except AssertionError:
             login_view.flash.assert_no_error()
