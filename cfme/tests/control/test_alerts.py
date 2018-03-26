@@ -185,10 +185,10 @@ def setup_for_alerts(alert_profile_collection, action_collection, policy_collect
 @pytest.yield_fixture(scope="module")
 def set_performance_capture_threshold(appliance):
     yaml_data = {"performance": {"capture_threshold_with_alerts": {"vm": "3.minutes"}}}
-    appliance.set_yaml_config(yaml_data)
+    appliance.update_advanced_settings(yaml_data)
     yield
     yaml_data = {"performance": {"capture_threshold_with_alerts": {"vm": "20.minutes"}}}
-    appliance.set_yaml_config(yaml_data)
+    appliance.update_advanced_settings(yaml_data)
 
 
 @pytest.yield_fixture(scope="module")
@@ -379,11 +379,11 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, full_
     setup_for_alerts(request, [alert])
 
     def _snmp_arrived():
-        rc, stdout = appliance.ssh_client.run_command(
+        result = appliance.ssh_client.run_command(
             "journalctl --no-pager /usr/sbin/snmptrapd | grep {}".format(match_string))
-        if rc != 0:
+        if result.failed:
             return False
-        elif stdout:
+        elif result.output:
             return True
         else:
             return False

@@ -1702,7 +1702,7 @@ class IPAppliance(object):
 
             log_callback('Modifying YAML configuration')
             c_yaml = {'product': {'storage': True}}
-            self.set_yaml_config(c_yaml)
+            self.update_advanced_settings(c_yaml)
 
             # To mark that we installed netapp
             ssh.run_command("touch /var/www/miq/vmdb/HAS_NETAPP")
@@ -1790,7 +1790,7 @@ class IPAppliance(object):
     @cached_property
     def get_host_address(self):
         try:
-            server = self.get_yaml_config().get('server')
+            server = self.advanced_settings.get('server')
             if server:
                 return server.get('host')
         except Exception as e:
@@ -1899,17 +1899,20 @@ class IPAppliance(object):
             when provider given: disabled_regions list from config
             when no matching config found: None
         """
-        ems_config = self.get_yaml_config()['ems']
-        if provider:
+        ems_config = self.advanced_settings.get('ems')
+        if provider and ems_config:
             try:
                 prov_config = ems_config.get(getattr(provider, 'settings_key', None), {})  # safe
                 regions = prov_config['disabled_regions']  # KeyError
             except KeyError:
                 regions = []
-        else:
+        elif ems_config:
             regions = {ems_key: yaml['disabled_regions']
                        for ems_key, yaml in ems_config.items()
                        if 'disabled_regions' in yaml}
+        else:
+            # 'ems' was NOT in advanced_settings
+            regions = {}
 
         return regions
 
@@ -1938,7 +1941,7 @@ class IPAppliance(object):
                                      'or not found in config %s'
                                      .format(provider, yaml_conf['ems']))
 
-        self.set_yaml_config(yaml_conf)
+        self.update_advanced_settings(yaml_conf)
         assert self.get_disabled_regions(provider) == list(regions)  # its a tuple if empty
 
     @property
@@ -1979,10 +1982,9 @@ class IPAppliance(object):
         ansible_new = roles.get('embedded_ansible', False)
         enabling_ansible = ansible_old is False and ansible_new is True
 
-        yaml_data = {
-            'server': {'role': ','.join([role for role, boolean in roles.items() if boolean])}
-        }
-        self.set_yaml_config(yaml_data)
+        server_data = self.advanced_settings.get('server', {})
+        server_data['role'] = ','.join([role for role, boolean in roles.items() if boolean])
+        self.update_advanced_settings({'server': server_data})
         timeout = 600 if enabling_ansible else 300
         wait_for(lambda: self.server_roles == roles, num_sec=timeout, delay=15)
         if enabling_ansible:
@@ -2027,7 +2029,7 @@ class IPAppliance(object):
 
     @cached_property
     def company_name(self):
-        return self.get_yaml_config()["server"]["company"]
+        return self.advanced_settings["server"]["company"]
 
     def host_id(self, hostname):
         hosts = list(
@@ -2042,9 +2044,10 @@ class IPAppliance(object):
 
     @cached_property
     def is_storage_enabled(self):
-        return 'storage' in self.get_yaml_config().get('product', {})
+        return 'storage' in self.advanced_settings.get('product', {})
 
-    def get_yaml_config(self):
+    @property
+    def advanced_settings(self):
         """Get settings from the base api/settings endpoint for appliance"""
         if self.version > '5.9':
             return self.rest_api.get(self.rest_api.collections.settings._href)
@@ -2068,8 +2071,12 @@ class IPAppliance(object):
                 logger.debug(base_data.output)
                 raise
 
-    def set_yaml_config(self, data_dict):
+    def update_advanced_settings(self, settings_dict):
         """PATCH settings from the master server's api/server/:id/settings endpoint
+
+        Uses REST API for CFME 5.9+, uses rails console on lower versions
+
+        Will automatically update existing settings dictionary with settings_dict
 
         Args:
             data_dict: dictionary of the changes to be made to the yaml configuration
@@ -2079,8 +2086,8 @@ class IPAppliance(object):
         """
         # Can only modify through server ID, raise if that's not set yet
         if self.version < '5.9':
-            data_dict_base = self.get_yaml_config()
-            data_dict_base.update(data_dict)
+            data_dict_base = self.advanced_settings
+            data_dict_base.update(settings_dict)
 
             temp_yaml = NamedTemporaryFile()
             dest_yaml = '/tmp/conf.yaml'
@@ -2103,7 +2110,7 @@ class IPAppliance(object):
         else:
             if self.server_id() is None:
                 raise ApplianceException('No server id is set, cannot modify yaml config via REST')
-            return self.server.set_yaml_config(data_dict)
+            self.server.update_advanced_settings(settings_dict)
 
     def set_session_timeout(self, timeout=86400, quiet=True):
         """Sets the timeout of UI timeout.
@@ -2113,10 +2120,10 @@ class IPAppliance(object):
             quiet: Whether to ignore any errors
         """
         try:
-            vmdb_config = self.get_yaml_config()
-            if vmdb_config["session"]["timeout"] != timeout:
-                yaml_data = {"session": {"timeout": timeout}}
-                self.set_yaml_config(yaml_data)
+            session_config = self.advanced_settings.get('session', {})
+            if session_config.get('timeout') != timeout:
+                session_config['timeout'] = timeout
+                self.update_advanced_settings({'session': session_config})
         except Exception as ex:
             logger.error('Setting session timeout failed:')
             logger.exception(ex)
@@ -2151,7 +2158,7 @@ class IPAppliance(object):
 
     def set_full_refresh_threshold(self, threshold=100):
         yaml_data = {'ems_refresh': {'full_refresh_threshold': threshold}}
-        self.set_yaml_config(yaml_data)
+        self.update_advanced_settings(yaml_data)
 
     def set_cap_and_util_all_via_rails(self):
         """Turns on Collect for All Clusters and Collect for all Datastores without using Web UI."""
@@ -2202,7 +2209,7 @@ class IPAppliance(object):
         dest['port'] = port
         dest['host'] = host
         logger.debug('Dest: {}'.format(yaml_data))
-        self.set_yaml_config(yaml_data)
+        self.update_advanced_settings(yaml_data)
 
     def wait_for_miq_server_workers_started(self, evm_tail=None, poll_interval=5):
         """Waits for the CFME's workers to be started by tailing evm.log for:
@@ -2570,13 +2577,6 @@ class Appliance(IPAppliance):
             roles = self.server.settings.server_roles_db
             if not roles["smartproxy"]:
                 self.server.settings.enable_server_roles("smartproxy")
-                # web ui crashes
-                if str(self.version).startswith("5.2.5") or str(self.version).startswith("5.5"):
-                    try:
-                        self.wait_for_web_ui(timeout=300, running=False)
-                    except Exception:
-                        pass
-                    self.wait_for_web_ui(running=True)
 
             # add provider
             log_callback('Setting up provider...')
@@ -2612,7 +2612,7 @@ class Appliance(IPAppliance):
             for the name change to take effect.
         """
         vmdb_config = {'server': {'name': new_name}}
-        self.set_yaml_config(vmdb_config)
+        self.update_advanced_settings(vmdb_config)
         self.name = new_name
 
     def destroy(self):
