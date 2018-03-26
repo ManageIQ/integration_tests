@@ -4,7 +4,6 @@ import pytest
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm
-from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.myservice import MyService
 from cfme.services.workloads import VmsInstances, TemplatesImages
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -16,14 +15,14 @@ pytestmark = [pytest.mark.tier(3),
 
 
 # TODO refactor for setup_provider parametrization with new 'latest' tag
-# TODO: infrastructure hosts, pools, stores, clusters are removed
-# due to navmazing. all items have to be put back once navigation change is fully done
+# TODO: infrastructure hosts, pools, stores, clusters, catalog items are removed
+# due to navmazing or collections. all items have to be put back once navigation change is fully
+# done
 
 gtl_params = {
     'Infrastructure Providers': InfraProvider,
     'VMs': Vm,
     'My Services': MyService,
-    'Catalog Items': CatalogItem,
     'VMs & Instances': VmsInstances,
     'Templates & Images': TemplatesImages
 }

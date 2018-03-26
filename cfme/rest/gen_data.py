@@ -5,7 +5,6 @@ from widgetastic.utils import partial_match
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.utils import version
 from cfme.utils.log import logger
 from cfme.utils.rest import create_resource
@@ -230,8 +229,8 @@ def service_templates_ui(request, appliance, service_dialog=None, service_catalo
     if not service_catalog:
         service_catalog = service_catalog_obj(request, appliance)
 
-    catalog_item_type = a_provider.catalog_name if a_provider else 'Generic'
-    provisioning_args = {}
+    cat_items_col = appliance.collections.catalog_items
+    catalog_item_type = a_provider.catalog_item_type if a_provider else cat_items_col.GENERIC
 
     catalog_items = []
     new_names = []
@@ -244,8 +243,8 @@ def service_templates_ui(request, appliance, service_dialog=None, service_catalo
             vm_name = 'test_rest_{}'.format(fauxfactory.gen_alphanumeric())
 
             provisioning_data = {
-                'catalog': {'vm_name': vm_name,
-                            },
+                'catalog': {'catalog_name': {'name': template},
+                            'vm_name': vm_name},
                 'environment': {'host_name': {'name': host},
                                 'datastore_name': {'name': datastore},
                                 },
@@ -259,24 +258,16 @@ def service_templates_ui(request, appliance, service_dialog=None, service_catalo
                 provisioning_data['catalog']['provision_type'] = 'VMware'
                 provisioning_data['network']['vlan'] = partial_match(vlan)
 
-            provisioning_args = dict(
-                catalog_name=template,
-                provider=a_provider,
-                prov_data=provisioning_data
-            )
-
         new_name = 'item_{}'.format(fauxfactory.gen_alphanumeric())
         new_names.append(new_name)
-        catalog_items.append(
-            CatalogItem(
-                item_type=catalog_item_type,
-                name=new_name,
-                description='my catalog',
-                display_in=True,
-                catalog=service_catalog,
-                dialog=service_dialog,
-                **provisioning_args
-            )
+        cat_items_col.create(
+            catalog_item_type,
+            name=new_name,
+            description='my catalog',
+            display_in=True,
+            catalog=service_catalog,
+            dialog=service_dialog,
+            prov_data=provisioning_data
         )
 
     for catalog_item in catalog_items:

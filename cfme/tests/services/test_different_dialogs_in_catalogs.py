@@ -6,7 +6,6 @@ from widgetastic.utils import partial_match
 from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
-from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
@@ -59,18 +58,16 @@ def catalog(appliance):
 
 
 @pytest.fixture(scope="function")
-def catalog_item(provider, provisioning, vm_name, tagcontrol_dialog, catalog):
+def catalog_item(appliance, provider, provisioning, vm_name, tagcontrol_dialog, catalog):
     template, host, datastore, iso_file, vlan = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'vlan'))
 
     provisioning_data = {
-        'catalog': {'vm_name': vm_name,
-                    },
+        'catalog': {'catalog_name': {'name': template, 'provider': provider.name},
+                    'vm_name': vm_name},
         'environment': {'host_name': {'name': host},
-                        'datastore_name': {'name': datastore},
-                        },
-        'network': {'vlan': partial_match(vlan),
-                    },
+                        'datastore_name': {'name': datastore}},
+        'network': {'vlan': partial_match(vlan)},
     }
 
     if provider.type == 'rhevm':
@@ -78,10 +75,12 @@ def catalog_item(provider, provisioning, vm_name, tagcontrol_dialog, catalog):
     elif provider.type == 'virtualcenter':
         provisioning_data['catalog']['provision_type'] = 'VMware'
     item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type=provider.catalog_name, name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog,
-                  dialog=tagcontrol_dialog, catalog_name=template,
-                  provider=provider, prov_data=provisioning_data)
+    catalog_item = appliance.collections.catalog_items.create(
+        provider.catalog_item_type,
+        name=item_name,
+        description="my catalog", display_in=True, catalog=catalog,
+        dialog=tagcontrol_dialog, catalog_name=template,
+        prov_data=provisioning_data)
     return catalog_item
 
 
@@ -96,7 +95,6 @@ def test_tagdialog_catalog_item(appliance, provider, catalog_item, request):
     """
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
-    catalog_item.create()
     dialog_values = {'service_level': "Gold"}
     service_catalogs = ServiceCatalogs(appliance, catalog=catalog_item.catalog,
                                        name=catalog_item.name,

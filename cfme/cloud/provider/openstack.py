@@ -3,6 +3,7 @@ from wrapanapi.openstack import OpenstackSystem
 from cfme.common.provider import EventsEndpoint
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.provider.openstack_infra import RHOSEndpoint, OpenStackInfraEndpointForm
+from cfme.services.catalogs.catalog_items import OpenStackCatalogItem
 from . import CloudProvider
 
 
@@ -11,7 +12,7 @@ class OpenStackProvider(CloudProvider):
      BaseProvider->CloudProvider->OpenStackProvider class.
      represents CFME provider and operations available in UI
     """
-    catalog_name = "OpenStack"
+    catalog_item_type = OpenStackCatalogItem
     type_name = "openstack"
     mgmt_class = OpenstackSystem
     db_types = ["Openstack::CloudManager"]

@@ -9,7 +9,6 @@ from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
-from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
 from cfme.utils.blockers import GH
@@ -74,34 +73,33 @@ def setup_iso_datastore(setup_provider_modscope, iso_cust_template, iso_datastor
         iso_cust_template.create()
 
 
-@pytest.yield_fixture(scope="function")
-def catalog_item(setup_provider, provider, vm_name, dialog, catalog, provisioning):
+@pytest.fixture(scope="function")
+def catalog_item(appliance, setup_provider, provider, vm_name, dialog, catalog, provisioning):
     iso_template, host, datastore, iso_file, iso_kickstart,\
         iso_root_password, iso_image_type, vlan = map(provisioning.get, ('pxe_template', 'host',
                                 'datastore', 'iso_file', 'iso_kickstart',
                                 'iso_root_password', 'iso_image_type', 'vlan'))
 
     provisioning_data = {
-        'catalog': {'vm_name': vm_name,
+        'catalog': {'catalog_name': {'name': iso_template, 'provider': provider.name},
+                    'vm_name': vm_name,
                     'provision_type': 'ISO',
-                    'iso_file': {'name': iso_file},
-                    },
+                    'iso_file': {'name': iso_file}},
         'environment': {'host_name': {'name': host},
-                        'datastore_name': {'name': datastore},
-                        },
+                        'datastore_name': {'name': datastore}},
         'customize': {'custom_template': {'name': iso_kickstart},
-                      'root_password': iso_root_password,
-                      },
-        'network': {'vlan': partial_match(vlan),
-                    },
+                      'root_password': iso_root_password},
+        'network': {'vlan': partial_match(vlan)},
     }
 
     item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type="RHEV", name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog,
-                  dialog=dialog, catalog_name=iso_template,
-                  provider=provider, prov_data=provisioning_data)
-    yield catalog_item
+    return appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.RHV,
+        name=item_name,
+        description="my catalog", display_in=True, catalog=catalog,
+        dialog=dialog,
+        prov_data=provisioning_data
+    )
 
 
 @pytest.mark.rhv1
@@ -116,7 +114,6 @@ def test_rhev_iso_servicecatalog(appliance, setup_provider, provider, catalog_it
     """
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
-    catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     # nav to requests page happens on successful provision

@@ -5,7 +5,6 @@ from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
@@ -113,17 +112,17 @@ def catalog(appliance):
 
 
 @pytest.yield_fixture
-def catalog_item(dialog, catalog, template, provider, dialog_name):
+def catalog_item(appliance, dialog, catalog, template, provider, dialog_name):
     item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type="Orchestration",
-                               name=item_name,
-                               description="my catalog",
-                               display_in=True,
-                               catalog=catalog,
-                               dialog=dialog_name,
-                               orch_template=template,
-                               provider=provider)
-    catalog_item.create()
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.ORCHESTRATION,
+        name=item_name,
+        description="my catalog",
+        display_in=True,
+        catalog=catalog,
+        dialog=dialog_name,
+        orch_template=template
+    )
     yield catalog_item
     if catalog_item.exists:
         catalog_item.delete()

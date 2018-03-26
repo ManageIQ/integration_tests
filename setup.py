@@ -94,6 +94,9 @@ setup(
             'ansible_repositories = cfme.ansible.repositories:RepositoryCollection',
             'buttons = cfme.automate.buttons:ButtonCollection',
             'button_groups = cfme.automate.buttons:ButtonGroupCollection',
+            ('catalog_bundles = '
+                'cfme.services.catalogs.catalog_items.catalog_bundles:CatalogBundlesCollection'),
+            'catalog_items = cfme.services.catalogs.catalog_items:CatalogItemsCollection',
             'datastores = cfme.infrastructure.datastore:DatastoreCollection',
             'service_dialogs = cfme.automate.dialog_collection_pick:collection_pick',
             'domains = cfme.automate.explorer.domain:DomainCollection',

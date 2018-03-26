@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 from cfme.utils.version import current_version
@@ -148,8 +147,9 @@ def ansible_repository(appliance):
 
 
 @pytest.yield_fixture(scope="module")
-def catalog_item(ansible_repository):
-    cat_item = AnsiblePlaybookCatalogItem(
+def catalog_item(appliance, ansible_repository):
+    cat_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
         fauxfactory.gen_alphanumeric(),
         fauxfactory.gen_alphanumeric(),
         provisioning={
@@ -160,7 +160,6 @@ def catalog_item(ansible_repository):
             "provisioning_dialog_name": fauxfactory.gen_alphanumeric()
         }
     )
-    cat_item.create()
     yield cat_item
 
     if cat_item.exists:

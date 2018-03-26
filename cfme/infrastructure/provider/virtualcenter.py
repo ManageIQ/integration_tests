@@ -2,6 +2,7 @@ from wrapanapi.virtualcenter import VMWareSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from cfme.exceptions import ItemNotFound
+from cfme.services.catalogs.catalog_items import VMwareCatalogItem
 from . import InfraProvider
 
 
@@ -14,7 +15,7 @@ class VirtualCenterEndpointForm(DefaultEndpointForm):
 
 
 class VMwareProvider(InfraProvider):
-    catalog_name = "VMware"
+    catalog_item_type = VMwareCatalogItem
     type_name = "virtualcenter"
     mgmt_class = VMWareSystem
     db_types = ["Vmware::InfraManager"]

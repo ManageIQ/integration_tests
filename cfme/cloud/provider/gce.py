@@ -4,6 +4,7 @@ from wrapanapi.google import GoogleCloudSystem
 
 from cfme.base.credential import ServiceAccountCredential
 from cfme.common.provider import DefaultEndpoint
+from cfme.services.catalogs.catalog_items import GoogleCatalogItem
 from . import CloudProvider
 
 
@@ -31,7 +32,7 @@ class GCEProvider(CloudProvider):
      BaseProvider->CloudProvider->GCEProvider class.
      represents CFME provider and operations available in UI
     """
-    catalog_name = "Google"
+    catalog_item_type = GoogleCatalogItem
     type_name = "gce"
     mgmt_class = GoogleCloudSystem
     db_types = ["Google::CloudManager"]

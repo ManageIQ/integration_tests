@@ -23,7 +23,6 @@ from cfme.rest.gen_data import (
     services as _services,
     vm as _vm,
 )
-from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
@@ -123,14 +122,13 @@ def catalog_bundle(request, dialog, service_catalog_obj, appliance, a_provider):
 
     uid = fauxfactory.gen_alphanumeric()
     bundle_name = 'test_rest_bundle_{}'.format(uid)
-    bundle = CatalogBundle(
-        name=bundle_name,
+    bundle = appliance.collections.catalog_bundles.create(
+        bundle_name,
         description='Test REST Bundle {}'.format(uid),
         display_in=True,
         catalog=service_catalog_obj,
         dialog=dialog,
         catalog_items=[item.name for item in catalog_items])
-    bundle.create()
 
     catalog_rest = appliance.rest_api.collections.service_catalogs.get(
         name=service_catalog_obj.name)

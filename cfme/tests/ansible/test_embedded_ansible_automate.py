@@ -7,7 +7,6 @@ from cfme import test_requirements
 from cfme.automate.simulation import simulate
 from cfme.control.explorer import alert_profiles
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
@@ -140,8 +139,9 @@ def management_event_instance(management_event_class, management_event_method):
 
 
 @pytest.yield_fixture(scope="module")
-def ansible_catalog_item(ansible_repository):
-    cat_item = AnsiblePlaybookCatalogItem(
+def ansible_catalog_item(appliance, ansible_repository):
+    cat_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
         fauxfactory.gen_alphanumeric(),
         fauxfactory.gen_alphanumeric(),
         display_in_catalog=True,
@@ -154,7 +154,6 @@ def ansible_catalog_item(ansible_repository):
             "extra_vars": [("some_var", "some_value")]
         }
     )
-    cat_item.create()
     yield cat_item
 
     if cat_item.exists:

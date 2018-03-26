@@ -1,6 +1,7 @@
 from wrapanapi.msazure import AzureSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
+from cfme.services.catalogs.catalog_items import AzureCatalogItem
 from cfme.utils.version import pick
 from . import CloudProvider
 
@@ -26,7 +27,7 @@ class AzureProvider(CloudProvider):
      BaseProvider->CloudProvider->AzureProvider class.
      represents CFME provider and operations available in UI
     """
-    catalog_name = "Azure"
+    catalog_item_type = AzureCatalogItem
     type_name = "azure"
     mgmt_class = AzureSystem
     db_types = ["Azure::CloudManager"]

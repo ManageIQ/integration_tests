@@ -4,8 +4,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.rest.gen_data import service_catalogs as _service_catalogs
-from cfme.services.catalogs.catalog_item import CatalogBundle
-from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import error
 from cfme.utils.log import logger
@@ -21,22 +19,24 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope="function")
-def catalog_item(dialog, catalog):
+@pytest.fixture(scope="function")
+def catalog_item(appliance, dialog, catalog):
     item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type="Generic", name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog,
-                  dialog=dialog)
-    catalog_item.create()
-    yield catalog_item
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC,
+        name=item_name,
+        description="my catalog", display_in=True, catalog=catalog,
+        dialog=dialog)
+    return catalog_item
 
 
 def test_delete_catalog_deletes_service(appliance, dialog, catalog):
     item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type="Generic", name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog,
-                  dialog=dialog)
-    catalog_item.create()
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC,
+        name=item_name,
+        description="my catalog", display_in=True, catalog=catalog,
+        dialog=dialog)
     catalog.delete()
     service_catalogs = ServiceCatalogs(appliance, catalog, catalog_item.name)
     with error.expected(NoSuchElementException):
@@ -50,17 +50,17 @@ def test_delete_catalog_item_deletes_service(appliance, catalog_item):
         service_catalogs.order()
 
 
-def test_service_circular_reference(catalog_item):
+def test_service_circular_reference(appliance, catalog_item):
     bundle_name = "first_" + fauxfactory.gen_alphanumeric()
-    catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
-                   display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
-                   catalog_items=[catalog_item.name])
-    catalog_bundle.create()
+    catalog_bundle = appliance.collections.catalog_bundles.create(
+        bundle_name, description="catalog_bundle",
+        display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
+        catalog_items=[catalog_item.name])
     sec_bundle_name = "sec_" + fauxfactory.gen_alphanumeric()
-    sec_catalog_bundle = CatalogBundle(name=sec_bundle_name, description="catalog_bundle",
-                   display_in=True, catalog=catalog_item.catalog,
-                   dialog=catalog_item.dialog, catalog_items=[bundle_name])
-    sec_catalog_bundle.create()
+    sec_catalog_bundle = appliance.collections.catalog_bundles.create(
+        sec_bundle_name, description="catalog_bundle",
+        display_in=True, catalog=catalog_item.catalog,
+        dialog=catalog_item.dialog, catalog_items=[bundle_name])
     with error.expected("Error during 'Resource Add': Adding resource <{}> to Service <{}> "
                         "will create a circular reference".format(sec_bundle_name, bundle_name)):
         catalog_bundle.update({'catalog_items': sec_catalog_bundle.name})
@@ -68,10 +68,10 @@ def test_service_circular_reference(catalog_item):
 
 def test_service_generic_catalog_bundle(appliance, catalog_item):
     bundle_name = "generic_" + fauxfactory.gen_alphanumeric()
-    catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
-                   display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
-                   catalog_items=[catalog_item.name])
-    catalog_bundle.create()
+    appliance.collections.catalog_bundles.create(
+        bundle_name, description="catalog_bundle",
+        display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
+        catalog_items=[catalog_item.name])
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, bundle_name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
@@ -85,20 +85,20 @@ def test_service_generic_catalog_bundle(appliance, catalog_item):
 
 def test_bundles_in_bundle(appliance, catalog_item):
     bundle_name = "first_" + fauxfactory.gen_alphanumeric()
-    catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
-                   display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
-                   catalog_items=[catalog_item.name])
-    catalog_bundle.create()
+    appliance.collections.catalog_bundles.create(
+        bundle_name, description="catalog_bundle",
+        display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
+        catalog_items=[catalog_item.name])
     sec_bundle_name = "sec_" + fauxfactory.gen_alphanumeric()
-    sec_catalog_bundle = CatalogBundle(name=sec_bundle_name, description="catalog_bundle",
-                   display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
-                   catalog_items=[bundle_name])
-    sec_catalog_bundle.create()
+    appliance.collections.catalog_bundles.create(
+        sec_bundle_name, description="catalog_bundle",
+        display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
+        catalog_items=[bundle_name])
     third_bundle_name = "third_" + fauxfactory.gen_alphanumeric()
-    third_catalog_bundle = CatalogBundle(name=third_bundle_name, description="catalog_bundle",
-                   display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
-                   catalog_items=[bundle_name, sec_bundle_name])
-    third_catalog_bundle.create()
+    third_catalog_bundle = appliance.collections.catalog_bundles.create(
+        third_bundle_name, description="catalog_bundle",
+        display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
+        catalog_items=[bundle_name, sec_bundle_name])
     service_catalogs = ServiceCatalogs(appliance, third_catalog_bundle.catalog, third_bundle_name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
