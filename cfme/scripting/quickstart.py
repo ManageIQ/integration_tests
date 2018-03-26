@@ -10,13 +10,13 @@ import json
 import hashlib
 from pipes import quote
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--mk-virtualenv", default="../cfme_venv")
-parser.add_argument("--system-site-packages", action="store_true")
-parser.add_argument("--config-path", default="../cfme-qe-yamls/complete/")
+LEGACY_BASENAMES = ('cfme_tests', 'integration_tests')
 
 IS_SCRIPT = sys.argv[0] == __file__
 CWD = os.getcwd()  # we expect to be in the workdir
+
+USE_LEGACY_VENV_PATH = os.path.basename(CWD) in LEGACY_BASENAMES
+
 IS_ROOT = os.getuid() == 0
 REDHAT_RELEASE_FILE = '/etc/redhat-release'
 CREATED = object()
@@ -25,6 +25,16 @@ HAS_DNF = os.path.exists('/usr/bin/dnf')
 HAS_YUM = os.path.exists('/usr/bin/yum')
 HAS_APT = os.path.exists('/usr/bin/apt')
 IN_VIRTUALENV = getattr(sys, 'real_prefix', None) is not None
+
+
+def mk_parser(default_venv_path):
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--mk-virtualenv",
+        default=default_venv_path)
+    parser.add_argument("--system-site-packages", action="store_true")
+    parser.add_argument("--config-path", default="../cfme-qe-yamls/complete/")
+    return parser
 
 PRISTINE_ENV = dict(os.environ)
 
@@ -305,7 +315,7 @@ def print_packages_diff(old, new):
 
 
 def version_changes(old, new):
-    names = sorted(set(old) & set(new))
+    names = sorted(set(old) | set(new))
     for name in names:
         initial = old.get(name, 'missing')
         afterwards = new.get(name, 'removed')
@@ -338,6 +348,9 @@ def ensure_pycurl_works(venv_path):
 
 
 def main(args):
+    if __package__ is None:
+        print("ERROR: quickstart must be invoked as module")
+        sys.exit(1)
     if not IN_VIRTUALENV:
         # invoked from outside, its ok to be slow
         install_system_packages()
@@ -356,4 +369,5 @@ def main(args):
 
 
 if IS_SCRIPT:
+    parser = mk_parser("../cfme_venv" if USE_LEGACY_VENV_PATH else '.cfme_venv')
     main(parser.parse_args())
