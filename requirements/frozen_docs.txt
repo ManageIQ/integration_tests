@@ -23,7 +23,7 @@ diaper==1.3
 docker-py==1.10.6
 docker-pycreds==0.2.1
 docutils==0.13.1
-dump2polarion==0.19
+dump2polarion==0.21
 entrypoints==0.2.2
 enum34==1.1.6
 fauxfactory==2.1.0

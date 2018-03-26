@@ -33,7 +33,7 @@ docker-py==1.10.6
 docker-pycreds==0.2.1
 docutils==0.13.1
 dogpile.cache==0.6.3
-dump2polarion==0.20
+dump2polarion==0.21
 entrypoints==0.2.2
 enum34==1.1.6
 fauxfactory==2.1.0
