@@ -78,10 +78,10 @@ def new_role(appliance, name=None):
 def check_item_visibility(tag):
     def _check_item_visibility(item, user_restricted):
         category_name = ' '.join((tag.category.display_name, '*'))
-        item.edit_tags(category_name, tag.display_name)
+        item.add_tag(category=category_name, tag=tag.display_name)
         with user_restricted:
             assert item.exists
-        item.remove_tag(category_name, tag.display_name)
+        item.remove_tag(category=category_name, tag=tag.display_name)
         with user_restricted:
             assert not item.exists
 
@@ -266,8 +266,11 @@ def test_user_edit_tag(appliance, group_collection):
     group = group_collection.instantiate(description=group_name)
 
     user = new_user(appliance, [group])
-    user.edit_tags("Cost Center *", "Cost Center 001")
-    assert ('Cost Center *', 'Cost Center 001') in user.get_tags(), "User edit tag failed"
+    user.add_tag(category="Cost Center *", tag="Cost Center 001")
+    assert any([
+        tag.category.display_name == 'Cost Center' and tag.display_name == 'Cost Center 001'
+        for tag in user.get_tags()
+    ]), 'Assigned tag was not found on the details page'
     user.delete()
 
 
@@ -277,10 +280,13 @@ def test_user_remove_tag(appliance, group_collection):
     group = group_collection.instantiate(description=group_name)
 
     user = new_user(appliance, [group])
-    user.edit_tags("Department", "Engineering")
+    user.add_tag(category="Department", tag="Engineering")
     user.remove_tag("Department", "Engineering")
     navigate_to(user, 'Details')
-    assert ('Department', 'Engineering') not in user.get_tags(), "Remove User tag failed"
+    assert not any([
+        tag.category.display_name == 'Department' and tag.display_name == 'Engineering'
+        for tag in user.get_tags()
+    ]), 'Remove User tag failed'
     user.delete()
 
 
@@ -397,8 +403,11 @@ def test_group_edit_tag(group_collection):
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role)
 
-    group.edit_tags("Cost Center *", "Cost Center 001")
-    assert ('Cost Center *', 'Cost Center 001') in group.get_tags(), "Group edit tag failed"
+    group.add_tag(category="Cost Center *", tag="Cost Center 001")
+    assert any([
+        tag.category.display_name == 'Cost Center' and tag.display_name == 'Cost Center 001'
+        for tag in group.get_tags()
+    ]), 'Group edit tag failed'
     group.delete()
 
 
@@ -409,9 +418,12 @@ def test_group_remove_tag(group_collection):
     group = group_collection.create(description=group_description, role=role)
 
     navigate_to(group, 'Edit')
-    group.edit_tags("Department", "Engineering")
-    group.remove_tag("Department", "Engineering")
-    assert ('Department', 'Engineering') not in group.get_tags(), "Group User tag failed"
+    group.add_tag(category="Department", tag="Engineering")
+    group.remove_tag(category="Department", tag="Engineering")
+    assert not any([
+        tag.category.display_name == 'Department' and tag.display_name == 'Engineering'
+        for tag in group.get_tags()
+    ]), 'Remove Group User tag failed'
     group.delete()
 
 
