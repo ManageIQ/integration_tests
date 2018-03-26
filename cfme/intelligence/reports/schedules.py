@@ -168,6 +168,13 @@ class Schedule(Updateable, Pretty, BaseEntity):
         view = navigate_to(self, "Details")
         view.configuration.item_select("Queue up this Schedule to run now")
 
+    @property
+    def enabled(self):
+        view = navigate_to(self.parent, "All")
+        for item in view.schedules_table.read():
+            if item['Name'] == self.name:
+                return item['Active'] == 'True'
+
 
 @attr.s
 class ScheduleCollection(BaseCollection):
@@ -217,7 +224,7 @@ class ScheduleCollection(BaseCollection):
         try:
             for schedule in schedules:
                 name = str(schedule)
-                cell = view.table.row(name=name)[0]
+                cell = view.schedules_table.row(name=name)[0]
                 cell.check()
         except NoSuchElementException:
             failed_selections.append(name)
@@ -238,7 +245,7 @@ class ScheduleCollection(BaseCollection):
         Raises: :py:class:`NameError` when some of the schedules were not found.
         """
         view = self._select_schedules(schedules)
-        view.configuration.item_select(action, handle_alert=not cancel)
+        view.configuration.item_select(action)
         # TODO https://bugzilla.redhat.com/show_bug.cgi?id=1441101
         # view.flash.assert_no_errors()
 
