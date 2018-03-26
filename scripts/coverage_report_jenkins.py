@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 import click
+import diaper
 import jenkins
 import os
 import py
@@ -13,6 +14,7 @@ from collections import namedtuple
 from requests.auth import HTTPBasicAuth
 from six.moves.urllib.parse import urlsplit, urlunsplit
 
+from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils.appliance import IPAppliance
 from cfme.utils.conf import env
 from cfme.utils.log import logger, add_stdout_handler
@@ -473,8 +475,8 @@ def get_eligible_builds(jenkins_data, jenkins_job, cfme_version):
         cfme_version:  Versuion CFME sources this coverage is against.
 
     Returns:
-        List of eligible builds.  Each build is a named tuple with the following
-        keys:  number, job, coverage_archive.
+        List of eligible builds.  Each build is a (:obj:`collections.namedtuple`)
+        with the following keys:  number, job, coverage_archive.
     """
     logger.info('Looking for CFME version %s in %s', cfme_version, jenkins_job)
     build_numbers = get_build_numbers(jenkins_data.client, jenkins_job)
@@ -797,7 +799,10 @@ def aggregate_coverage(appliance, jenkins_url, jenkins_user, jenkins_token, jenk
 
 @click.command()
 @click.argument('jenkins_url')
-@click.argument('appliance_ip')
+@click.option('--appliance-ip', 'appliance_ip', default=None,
+    help='IP of an existing appliance')
+@click.option('--find-appliance', 'appliance_version', default=None,
+    help='Allows one to specify a version of an appliance to acquire')
 @click.option('--jenkins-jobs', 'jenkins_jobs', multiple=True,
     help='Jenkins job names from which to aggregate coverage data')
 @click.option('--jenkins-user', 'jenkins_user', default=None,
@@ -807,17 +812,53 @@ def aggregate_coverage(appliance, jenkins_url, jenkins_user, jenkins_token, jenk
 @click.option('--wave-size', 'wave_size', default=10,
     help='How many coverage tarballs to extract at a time when merging')
 def coverage_report_jenkins(jenkins_url, jenkins_jobs, jenkins_user, jenkins_token, appliance_ip,
-        wave_size):
+        appliance_version, wave_size):
     """Aggregate coverage data from jenkins job(s) and upload to sonarqube"""
-    with IPAppliance(hostname=appliance_ip) as appliance:
-        exit(aggregate_coverage(
-            appliance,
-            jenkins_url,
-            jenkins_user,
-            jenkins_token,
-            jenkins_jobs,
-            wave_size))
+    if appliance_ip is None and appliance_version is None:
+        ValueError('Must specify either --appliance-ip or --find-appliance')
+    if appliance_ip is not None and appliance_version is not None:
+        ValueError('--appliance-ip and --find-appliance are mutually exclusive options')
 
+    # Find appliance using sprout if asked to do so:
+    if appliance_version is not None:
+        # TODO: Upstream support
+        group = 'downstream-' + ''.join(appliance_version.split('.')[:2]) + 'z'
+        sprout = SproutClient.from_config()
+        logger.info('requesting an appliance from sprout for %s/%s', group, appliance_version)
+        pool_id = sprout.request_appliances(
+            group,
+            version=appliance_version,
+            lease_time=env.sonarqube.scanner_lease)
+        logger.info('Requested pool %s', pool_id)
+        result = None
+        try:
+            while not result or not (result['fulfilled'] and result['finished']):
+                result = sprout.request_check(pool_id)
+            appliance_ip = result['appliances'][0]['ip_address']
+            logger.info('Received an appliance with IP address: %s', appliance_ip)
+
+            with IPAppliance(hostname=appliance_ip) as appliance:
+                exit(aggregate_coverage(
+                    appliance,
+                    jenkins_url,
+                    jenkins_user,
+                    jenkins_token,
+                    jenkins_jobs,
+                    wave_size))
+
+        finally:
+            with diaper:
+                sprout.destroy_pool(pool_id)
+    else:
+        # Use and existing appliance.
+        with IPAppliance(hostname=appliance_ip) as appliance:
+            exit(aggregate_coverage(
+                appliance,
+                jenkins_url,
+                jenkins_user,
+                jenkins_token,
+                jenkins_jobs,
+                wave_size))
 
 if __name__ == '__main__':
     coverage_report_jenkins()
