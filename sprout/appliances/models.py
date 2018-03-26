@@ -907,6 +907,10 @@ class Appliance(MetadataMixin):
         return self.template.provider
 
     @property
+    def url(self):
+        return "https://{}/".format(self.ip_address)
+
+    @property
     def preconfigured(self):
         return self.template.preconfigured
 
