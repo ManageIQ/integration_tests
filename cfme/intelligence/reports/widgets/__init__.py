@@ -1,25 +1,30 @@
-# -*- coding: utf-8 -*-
-"""Page model for Cloud Intel / Reports / Dashboard Widgets"""
-from cfme.utils.wait import wait_for
-from cfme.utils.pretty import Pretty
-from cfme.utils.update import Updateable
-from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+import attr
+from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Text, Checkbox
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_patternfly import Button, Input, BootstrapSelect
-from navmazing import NavigateToAttribute
+
 from cfme.intelligence.reports import CloudIntelReportsView
+from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils.wait import wait_for
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 
 
-class BaseDashboardReportWidget(Updateable, Pretty, Navigatable):
+@attr.s
+class BaseDashboardReportWidget(BaseEntity, Updateable, Pretty):
 
     # This string is a title of a widget type in the tree
     TYPE = None
     # This string is a part of widgets title
     TITLE = None
     pretty_attrs = []
+    title = attr.ib()
+    description = attr.ib()
+    active = attr.ib()
+    visibility = attr.ib(default=None)
 
     def generate(self, wait=True, cancel=False, **kwargs):
         view = navigate_to(self, "Details")
@@ -46,32 +51,21 @@ class BaseDashboardReportWidget(Updateable, Pretty, Navigatable):
         view = navigate_to(self, "Details")
         return view.status_info.text
 
-    def create(self):
-        """Create this Widget in the UI."""
-        view = navigate_to(self, "Add")
-        view.fill(self.fill_dict)
-        view.add_button.click()
-        view = self.create_view(AllDashboardWidgetsView)
-        assert view.is_displayed
-        view.flash.assert_no_error()
-        view.flash.assert_message('Widget "{}" was saved'.format(self.title))
-
     def update(self, updates):
         """Update this Widget in the UI.
 
         Args:
             updates: Provided by update() context manager.
-            cancel: Whether to cancel the update (default False).
         """
+        # In order to update the tree in the side menu we have to refresh a whole page
+        self.browser.refresh()
         view = navigate_to(self, "Edit")
-        changed = view.fill(updates)
-        if changed:
-            view.save_button.click()
-        else:
-            view.cancel_button.click()
-        for attr, value in updates.items():
-            setattr(self, attr, value)
-        view = self.create_view(DashboardWidgetDetailsView)
+        changed = view.fill_with(
+            updates,
+            on_change=view.save_button.click,
+            no_change=view.cancel_button.click
+        )
+        view = self.create_view(DashboardWidgetDetailsView, override=updates)
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
@@ -91,13 +85,48 @@ class BaseDashboardReportWidget(Updateable, Pretty, Navigatable):
             "Delete this Widget from the Database",
             handle_alert=not cancel
         )
-        if cancel:
-            assert view.is_displayed
-            view.flash.assert_no_error()
-        else:
+        if not cancel:
             view = self.create_view(AllDashboardWidgetsView)
-            assert view.is_displayed
-            view.flash.assert_no_error()
+        assert view.is_displayed
+        view.flash.assert_no_error()
+
+
+@attr.s
+class DashboardReportWidgetsCollection(BaseCollection):
+    ENTITY = BaseDashboardReportWidget
+
+    @property
+    def CHART(self):  # noqa
+        from cfme.intelligence.reports.widgets.chart_widgets import ChartWidget
+        return ChartWidget
+
+    @property
+    def MENU(self):  # noqa
+        from cfme.intelligence.reports.widgets.menu_widgets import MenuWidget
+        return MenuWidget
+
+    @property
+    def RSS(self):  # noqa
+        from cfme.intelligence.reports.widgets.rss_widgets import RSSFeedWidget
+        return RSSFeedWidget
+
+    @property
+    def REPORT(self):  # noqa
+        from cfme.intelligence.reports.widgets.report_widgets import ReportWidget
+        return ReportWidget
+
+    def instantiate(self, widget_class, *args, **kwargs):
+        return widget_class.from_collection(self, *args, **kwargs)
+
+    def create(self, widget_class, *args, **kwargs):
+        """Create this Widget in the UI."""
+        dashboard_widget = self.instantiate(widget_class, *args, **kwargs)
+        view = navigate_to(dashboard_widget, "Add")
+        view.fill_with(dashboard_widget.fill_dict, on_change=view.add_button.click)
+        view = dashboard_widget.create_view(AllDashboardWidgetsView)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        return dashboard_widget
 
 
 class DashboardWidgetsView(CloudIntelReportsView):
@@ -130,8 +159,9 @@ class DashboardWidgetDetailsView(DashboardWidgetsView):
 
     title = Text("#explorer_title_text")
     status_info = SummaryFormItem("Status", "Current Status")
-    reload_button = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                '5.9': 'Refresh this page'}))
+    reload_button = Button(title=VersionPick({
+        Version.lowest(): 'Reload current display',
+        '5.9': 'Refresh this page'}))
 
     @property
     def is_displayed(self):
@@ -197,10 +227,7 @@ class BaseNewDashboardWidgetStep(CFMENavigateStep):
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
     def step(self):
-        self.view.dashboard_widgets.tree.click_path(
-            "All Widgets",
-            self.obj.TYPE
-        )
+        self.view.dashboard_widgets.tree.click_path("All Widgets", self.obj.TYPE)
         self.view.configuration.item_select("Add a new Widget")
 
 
@@ -210,15 +237,12 @@ class BaseDashboardWidgetDetailsStep(CFMENavigateStep):
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
     def step(self):
-        self.view.dashboard_widgets.tree.click_path(
-            "All Widgets",
-            self.obj.TYPE,
-            self.obj.title
-        )
+        self.view.dashboard_widgets.tree.click_path("All Widgets", self.obj.TYPE, self.obj.title)
 
 
 class BaseEditDashboardWidgetStep(BaseDashboardWidgetDetailsStep):
+    VIEW = None
+    prerequisite = NavigateToSibling("Details")
 
     def step(self):
-        super(BaseEditDashboardWidgetStep, self).step()
         self.view.configuration.item_select("Edit this Widget")

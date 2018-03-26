@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Page model for Cloud Intel / Reports / Dashboard Widgets / Menus"""
+import attr
 from widgetastic_manageiq import MenuShortcutsPicker
 
 from cfme.utils.appliance.implementations.ui import navigator
@@ -30,18 +31,13 @@ class EditMenuWidgetView(BaseEditDashboardWidgetView, MenuWidgetFormCommon):
     pass
 
 
+@attr.s
 class MenuWidget(BaseDashboardReportWidget):
 
     TYPE = "Menus"
     TITLE = "Menu"
     pretty_attrs = ["description", "shortcuts", "visibility"]
-
-    def __init__(self, title, description=None, active=None, shortcuts=None, visibility=None):
-        self.title = title
-        self.description = description
-        self.active = active
-        self.shortcuts = shortcuts
-        self.visibility = visibility
+    shortcuts = attr.ib(default=None)
 
     @property
     def fill_dict(self):
