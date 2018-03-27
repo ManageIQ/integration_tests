@@ -48,12 +48,17 @@ class GCEProvider(CloudProvider):
 
     @property
     def view_value_mapping(self):
-        return {
+        endpoints = {
             'name': self.name,
             'prov_type': 'Google Compute Engine',
             'region': self.region_name,
             'project_id': self.project
         }
+
+        if self.appliance.version >= '5.9.2':
+            # from 5.9.2 we are not supporting region selection for GCE
+            del endpoints['region']
+        return endpoints
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
