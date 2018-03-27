@@ -3,12 +3,21 @@
 
 
 import pytest
-from cfme.utils.log import logger
-from cfme.utils.wait import wait_for
+from cfme.common.vm import VM
+
+
+def _get_vm_obj_if_exists_on_provider(provider, vm_name):
+    vm = VM.factory(vm_name, provider)
+    if not vm.does_vm_exist_on_provider():
+        raise ValueError(
+            "Unable to ensure VM state: "
+            "VM '{}' does not exist on provider '{}'".format(vm_name, provider.key)
+        )
+    return vm
 
 
 @pytest.fixture(scope="function")
-def verify_vm_running(provider, vm_name):
+def ensure_vm_running(provider, vm_name):
     """ Ensures that the VM/instance is in running state for the test
 
     Uses calls to the actual provider api; it will start the vm if necessary.
@@ -17,25 +26,12 @@ def verify_vm_running(provider, vm_name):
         provider: Provider class object
         vm_name: Name of the VM/instance
     """
-
-    def _wait_for_vm_running():
-        if provider.mgmt.is_vm_running(vm_name):
-            return True
-        elif provider.mgmt.is_vm_stopped(vm_name) or \
-                provider.mgmt.can_suspend and provider.mgmt.is_vm_suspended(vm_name) or \
-                provider.mgmt.can_pause and provider.mgmt.is_vm_paused(vm_name):
-            provider.mgmt.start_vm(vm_name)
-
-        logger.debug("Sleeping 15secs...(current state: {}, needed state: running)".format(
-            provider.mgmt.vm_status(vm_name)
-        ))
-        return False
-
-    return wait_for(_wait_for_vm_running, num_sec=360, delay=15)
+    vm = _get_vm_obj_if_exists_on_provider(provider, vm_name)
+    return vm.ensure_state_on_provider(vm.STATE_ON)
 
 
 @pytest.fixture(scope="function")
-def verify_vm_stopped(provider, vm_name):
+def ensure_vm_stopped(provider, vm_name):
     """ Ensures that the VM/instance is stopped for the test
 
     Uses calls to the actual provider api; it will stop the vm if necessary.
@@ -44,26 +40,11 @@ def verify_vm_stopped(provider, vm_name):
         provider: Provider class object
         vm_name: Name of the VM/instance
     """
-
-    def _wait_for_vm_stopped():
-        if provider.mgmt.is_vm_stopped(vm_name):
-            return True
-        elif provider.mgmt.is_vm_running(vm_name):
-            provider.mgmt.stop_vm(vm_name)
-        elif provider.mgmt.can_suspend and provider.mgmt.is_vm_suspended(vm_name) or \
-                provider.mgmt.can_pause and provider.mgmt.is_vm_paused(vm_name):
-            provider.mgmt.start_vm(vm_name)
-
-        logger.debug("Sleeping 15secs...(current state: {}, needed state: stopped)".format(
-            provider.mgmt.vm_status(vm_name)
-        ))
-        return False
-
-    return wait_for(_wait_for_vm_stopped, num_sec=360, delay=15)
-
+    vm = _get_vm_obj_if_exists_on_provider(provider, vm_name)
+    return vm.ensure_state_on_provider(vm.STATE_OFF)
 
 @pytest.fixture(scope="function")
-def verify_vm_suspended(provider, vm_name):
+def ensure_vm_suspended(provider, vm_name):
     """ Ensures that the VM/instance is suspended for the test
 
     Uses calls to the actual provider api; it will suspend the vm if necessary.
@@ -72,26 +53,12 @@ def verify_vm_suspended(provider, vm_name):
         provider.mgmt: Provider class object
         vm_name: Name of the VM/instance
     """
-
-    def _wait_for_vm_suspended():
-        if provider.mgmt.is_vm_suspended(vm_name):
-            return True
-        elif provider.mgmt.is_vm_running(vm_name):
-            provider.mgmt.suspend_vm(vm_name)
-        elif provider.mgmt.is_vm_stopped(vm_name) or \
-                provider.mgmt.can_pause and provider.mgmt.is_vm_paused(vm_name):
-            provider.mgmt.start_vm(vm_name)
-
-        logger.debug("Sleeping 15secs...(current state: {}, needed state: suspended)".format(
-            provider.mgmt.vm_status(vm_name)
-        ))
-        return False
-
-    return wait_for(_wait_for_vm_suspended, num_sec=360, delay=15)
+    vm = _get_vm_obj_if_exists_on_provider(provider, vm_name)
+    return vm.ensure_state_on_provider(vm.STATE_SUSPENDED)
 
 
 @pytest.fixture(scope="function")
-def verify_vm_paused(provider, vm_name):
+def ensure_vm_paused(provider, vm_name):
     """ Ensures that the VM/instance is paused for the test
 
     Uses calls to the actual provider api; it will pause the vm if necessary.
@@ -100,19 +67,6 @@ def verify_vm_paused(provider, vm_name):
         provider.mgmt: Provider class object
         vm_name: Name of the VM/instance
     """
+    vm = _get_vm_obj_if_exists_on_provider(provider, vm_name)
+    return vm.ensure_state_on_provider(vm.STATE_PAUSED)
 
-    def _wait_for_vm_paused():
-        if provider.mgmt.is_vm_paused(vm_name):
-            return True
-        elif provider.mgmt.is_vm_running(vm_name):
-            provider.mgmt.pause_vm(vm_name)
-        elif provider.mgmt.is_vm_stopped(vm_name) or \
-                provider.mgmt.can_suspend and provider.mgmt.is_vm_suspended(vm_name):
-            provider.mgmt.start_vm(vm_name)
-
-        logger.debug("Sleeping 15secs...(current state: {}, needed state: paused)".format(
-            provider.mgmt.vm_status(vm_name)
-        ))
-        return False
-
-    return wait_for(_wait_for_vm_paused, num_sec=360, delay=15)

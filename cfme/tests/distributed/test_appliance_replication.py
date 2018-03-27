@@ -303,7 +303,7 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, virtua
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
-def test_distributed_vm_power_control(request, test_vm, virtualcenter_provider, verify_vm_running,
+def test_distributed_vm_power_control(request, test_vm, virtualcenter_provider, ensure_vm_running,
                                       register_event, soft_assert):
     """Tests that a replication parent appliance can control the power state of a
     VM being managed by a replication child appliance.
