@@ -400,7 +400,7 @@ def test_display_network_topology(appliance, openstack_provider):
     """
     floating_ips_collection = appliance.collections.network_floating_ips
     view = navigate_to(floating_ips_collection, "All")
-    if view.entities.entity_names:
+    if not view.entities.get_all():
         pytest.skip("No Floating IPs needed for this test")
 
     topology_col = appliance.collections.network_topology_elements
