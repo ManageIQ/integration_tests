@@ -17,6 +17,7 @@ from widgetastic_patternfly import Button, Dropdown
 from widgetastic.widget import View, Text
 
 from cfme.base.ui import BaseLoggedInPage
+from cfme.common import TagPageView, Taggable
 from cfme.exceptions import VolumeNotFoundError, ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
@@ -161,7 +162,7 @@ class VolumeSnapshotView(VolumeView):
 
 
 @attr.s
-class Volume(BaseEntity, Updateable):
+class Volume(BaseEntity, Updateable, Taggable):
 
     name = attr.ib()
     provider = attr.ib()
@@ -423,3 +424,13 @@ class VolumeSnapshot(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Create a Snapshot of this Cloud '
                                                                  'Volume')
+
+
+@navigator.register(Volume, 'EditTagsFromDetails')
+class VolumeDetailEditTag(CFMENavigateStep):
+    """ This navigation destination help to Taggable"""
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
