@@ -1,7 +1,6 @@
 import fauxfactory
 import pytest
 
-from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
@@ -41,8 +40,10 @@ def ansible_repository(appliance, wait_for_ansible):
 
 
 @pytest.yield_fixture(scope="module")
-def ansible_catalog_item(ansible_repository):
-    cat_item = AnsiblePlaybookCatalogItem(
+def ansible_catalog_item(appliance, ansible_repository):
+    collection = appliance.collections.catalog_items
+    cat_item = collection.create(
+        collection.ANSIBLE_PLAYBOOK,
         fauxfactory.gen_alphanumeric(),
         fauxfactory.gen_alphanumeric(),
         display_in_catalog=True,
@@ -61,7 +62,6 @@ def ansible_catalog_item(ansible_repository):
             "extra_vars": [("some_var", "some_value")]
         }
     )
-    cat_item.create()
     yield cat_item
 
     if cat_item.exists:

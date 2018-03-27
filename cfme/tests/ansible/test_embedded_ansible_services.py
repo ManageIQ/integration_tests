@@ -6,8 +6,6 @@ import pytest
 from widgetastic_patternfly import BootstrapSelect
 
 from cfme import test_requirements
-from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
-from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -76,8 +74,9 @@ def ansible_credential(appliance, ansible_repository):
 
 
 @pytest.yield_fixture(scope="module")
-def ansible_catalog_item(ansible_repository):
-    cat_item = AnsiblePlaybookCatalogItem(
+def ansible_catalog_item(appliance, ansible_repository):
+    cat_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
         fauxfactory.gen_alphanumeric(),
         fauxfactory.gen_alphanumeric(),
         display_in_catalog=True,
@@ -96,7 +95,6 @@ def ansible_catalog_item(ansible_repository):
             "extra_vars": [("some_var", "some_value")]
         }
     )
-    cat_item.create()
     yield cat_item
 
     if cat_item.exists:
@@ -161,15 +159,16 @@ def custom_service_button(appliance, ansible_catalog_item):
 
 @pytest.mark.tier(1)
 @pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
-def test_service_ansible_playbook_available():
-    view = navigate_to(AnsiblePlaybookCatalogItem("", "", provisioning={}), "PickItemType")
+def test_service_ansible_playbook_available(appliance):
+    view = navigate_to(appliance.collections.catalog_items, "Choose Type")
     assert "Ansible Playbook" in [option.text for option in view.catalog_item_type.all_options]
 
 
 @pytest.mark.tier(1)
 @pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
-def test_service_ansible_playbook_crud(ansible_repository):
-    cat_item = AnsiblePlaybookCatalogItem(
+def test_service_ansible_playbook_crud(appliance, ansible_repository):
+    cat_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
         fauxfactory.gen_alphanumeric(),
         fauxfactory.gen_alphanumeric(),
         provisioning={
@@ -180,7 +179,6 @@ def test_service_ansible_playbook_crud(ansible_repository):
             "provisioning_dialog_name": fauxfactory.gen_alphanumeric()
         }
     )
-    cat_item.create()
     assert cat_item.exists
     with update(cat_item):
         new_name = "edited_{}".format(fauxfactory.gen_alphanumeric())
@@ -215,8 +213,10 @@ def test_service_ansible_playbook_tagging(ansible_catalog_item):
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
-def test_service_ansible_playbook_negative():
-    view = navigate_to(AnsiblePlaybookCatalogItem("", "", {}), "Add")
+def test_service_ansible_playbook_negative(appliance):
+    collection = appliance.collections.catalog_items
+    cat_item = collection.instantiate(collection.ANSIBLE_PLAYBOOK, "", "", {})
+    view = navigate_to(cat_item, "Add")
     view.fill({
         "name": fauxfactory.gen_alphanumeric(),
         "description": fauxfactory.gen_alphanumeric()
@@ -226,9 +226,9 @@ def test_service_ansible_playbook_negative():
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
-def test_service_ansible_playbook_bundle(ansible_catalog_item):
+def test_service_ansible_playbook_bundle(appliance, ansible_catalog_item):
     """Ansible playbooks are not designed to be part of a cloudforms service bundle."""
-    view = navigate_to(CatalogBundle(), "BundleAdd")
+    view = navigate_to(appliance.collections.catalog_bundles, "Add")
     options = view.resources.select_resource.all_options
     assert ansible_catalog_item.name not in [o.text for o in options]
 
@@ -264,7 +264,9 @@ def test_service_ansible_playbook_confirm(appliance, soft_assert):
     """Tests after selecting playbook additional widgets appear and are pre-populated where
     possible.
     """
-    view = navigate_to(AnsiblePlaybookCatalogItem, "Add")
+    collection = appliance.collections.catalog_items
+    cat_item = collection.instantiate(collection.ANSIBLE_PLAYBOOK, "", "", {})
+    view = navigate_to(cat_item, "Add")
     assert view.provisioning.is_displayed
     assert view.retirement.is_displayed
     soft_assert(view.provisioning.repository.is_displayed)

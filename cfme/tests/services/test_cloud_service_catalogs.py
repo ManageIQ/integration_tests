@@ -9,7 +9,6 @@ from cfme.common.provider import cleanup_vm
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.azure import AzureProvider
-from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme import test_requirements
 from cfme.utils.generators import random_vm_name
@@ -45,8 +44,8 @@ def test_cloud_catalog_item(appliance, vm_name, setup_provider, provider, dialog
     item_name = "{}-service-{}".format(provider.name, fauxfactory.gen_alphanumeric())
 
     inst_args = {
-        'catalog': {'vm_name': vm_name
-                    },
+        'catalog': {'catalog_name': {'name': image, 'provider': provider.name},
+                    'vm_name': vm_name},
         'environment': {
             'availability_zone': provisioning.get('availability_zone', None),
             'security_groups': [provisioning.get('security_group', None)],
@@ -73,17 +72,16 @@ def test_cloud_catalog_item(appliance, vm_name, setup_provider, provider, dialog
                 'admin_username': provisioning['customize_username'],
                 'root_password': provisioning['customize_password']}})
 
-    catalog_item = CatalogItem(item_type=provisioning['item_type'],
-                               name=item_name,
-                               description="my catalog",
-                               display_in=True,
-                               catalog=catalog,
-                               dialog=dialog,
-                               catalog_name=image,
-                               provider=provider,
-                               prov_data=inst_args)
+    catalog_item = appliance.collections.catalog_items.create(
+        provider.catalog_item_type,
+        name=item_name,
+        description="my catalog",
+        display_in=True,
+        catalog=catalog,
+        dialog=dialog,
+        prov_data=inst_args
+    )
     request.addfinalizer(catalog_item.delete)
-    catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', item_name)

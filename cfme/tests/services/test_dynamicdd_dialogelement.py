@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 
-from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme import test_requirements
@@ -104,9 +103,9 @@ def copy_instance(request, copy_domain, appliance):
 @pytest.mark.meta(blockers=[BZ(1514584, forced_streams=["5.7", "5.8", "5.9"])])
 def test_dynamicdropdown_dialog(appliance, dialog, catalog):
     item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type="Generic", name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog,
-                  dialog=dialog)
-    catalog_item.create()
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC, name=item_name,
+        description="my catalog", display_in=True, catalog=catalog,
+        dialog=dialog)
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()

@@ -5,7 +5,8 @@ from wrapanapi.rhevm import RHEVMSystem
 from cfme.common.provider import CANDUEndpoint, DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.exceptions import ItemNotFound
-from cfme.utils import version, deferred_verpick
+from cfme.services.catalogs.catalog_items import RHVCatalogItem
+from cfme.utils import version
 from . import InfraProvider
 
 
@@ -41,10 +42,7 @@ class RHEVMEndpointForm(View):
 
 
 class RHEVMProvider(InfraProvider):
-    catalog_name = deferred_verpick({
-        version.LOWEST: 'RHEV',
-        '5.9.0.17': 'Red Hat Virtualization',
-    })
+    catalog_item_type = RHVCatalogItem
     type_name = "rhevm"
     mgmt_class = RHEVMSystem
     db_types = ["Redhat::InfraManager"]

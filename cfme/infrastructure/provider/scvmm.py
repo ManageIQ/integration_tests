@@ -2,6 +2,7 @@ from widgetastic_patternfly import BootstrapSelect, Input
 from wrapanapi.scvmm import SCVMMSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
+from cfme.services.catalogs.catalog_items import SCVMMCatalogItem
 from . import InfraProvider
 
 
@@ -20,7 +21,7 @@ class SCVMMEndpointForm(DefaultEndpointForm):
 
 
 class SCVMMProvider(InfraProvider):
-    catalog_name = "SCVMM"
+    catalog_item_type = SCVMMCatalogItem
     STATS_TO_MATCH = ['num_template', 'num_vm']
     type_name = "scvmm"
     mgmt_class = SCVMMSystem

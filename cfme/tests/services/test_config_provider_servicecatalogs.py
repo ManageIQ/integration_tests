@@ -3,7 +3,6 @@ import pytest
 from cfme import test_requirements
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
-from cfme.services.catalogs.catalog_item import CatalogItem
 
 from cfme.utils import testgen
 from cfme.utils.log import logger
@@ -43,22 +42,23 @@ def config_manager(config_manager_obj):
     config_manager_obj.delete()
 
 
-@pytest.fixture(scope='function')
-def catalog_item(request, config_manager, dialog, catalog):
+@pytest.fixture(scope="function")
+def catalog_item(appliance, request, config_manager, dialog, catalog):
     config_manager_obj = config_manager
     provider_name = config_manager_obj.yaml_data.get('name')
     provisioning_data = config_manager_obj.yaml_data['provisioning_data']
     item_type, provider_type, template = map(provisioning_data.get,
                                             ('item_type', 'provider_type', 'template'))
-    catalog_item = CatalogItem(item_type=item_type,
-                               name=dialog.label,
-                               description="my catalog",
-                               display_in=True,
-                               catalog=catalog,
-                               dialog=dialog,
-                               provider='{} Automation Manager'.format(provider_name),
-                               provider_type=provider_type,
-                               config_template=template)
+
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.ANSIBLE_TOWER,
+        name=dialog.label,
+        description="my catalog",
+        display_in=True,
+        catalog=catalog,
+        dialog=dialog,
+        provider='{} Automation Manager'.format(provider_name),
+        config_template=template)
     request.addfinalizer(catalog_item.delete)
     return catalog_item
 
@@ -70,7 +70,6 @@ def test_order_tower_catalog_item(appliance, catalog_item, request):
     Metadata:
         test_flag: provision
     """
-    catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
@@ -90,7 +89,6 @@ def test_retire_ansible_service(appliance, catalog_item, request):
     Metadata:
         test_flag: provision
     """
-    catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)

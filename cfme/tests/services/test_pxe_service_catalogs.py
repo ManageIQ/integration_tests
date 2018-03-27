@@ -7,7 +7,6 @@ from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
-from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
 from cfme.utils.conf import cfme_data
@@ -82,8 +81,9 @@ def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
     pxe_server.set_pxe_image_type(provisioning['pxe_image'], provisioning['pxe_image_type'])
 
 
-@pytest.yield_fixture(scope="function")
-def catalog_item(provider, vm_name, dialog, catalog, provisioning, setup_pxe_servers_vm_prov):
+@pytest.fixture(scope="function")
+def catalog_item(appliance, provider, vm_name, dialog, catalog, provisioning,
+                 setup_pxe_servers_vm_prov):
     # generate_tests makes sure these have values
     pxe_template, host, datastore, pxe_server, pxe_image, pxe_kickstart, pxe_root_password,\
         pxe_image_type, pxe_vlan = map(
@@ -94,27 +94,24 @@ def catalog_item(provider, vm_name, dialog, catalog, provisioning, setup_pxe_ser
         )
 
     provisioning_data = {
-        'catalog': {'provision_type': 'PXE',
+        'catalog': {'catalog_name': {'name': pxe_template, 'provider': provider.name},
+                    'provision_type': 'PXE',
                     'pxe_server': pxe_server,
                     'pxe_image': {'name': pxe_image},
-                    'vm_name': vm_name,
-                    },
+                    'vm_name': vm_name},
         'environment': {'datastore_name': {'name': datastore},
-                        'host_name': {'name': host},
-                        },
+                        'host_name': {'name': host}},
         'customize': {'root_password': pxe_root_password,
-                      'custom_template': {'name': pxe_kickstart},
-                      },
-        'network': {'vlan': partial_match(pxe_vlan),
-                    },
+                      'custom_template': {'name': pxe_kickstart}},
+        'network': {'vlan': partial_match(pxe_vlan)},
     }
 
     item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type=provider.catalog_name, name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog,
-                  dialog=dialog, catalog_name=pxe_template,
-                  provider=provider, prov_data=provisioning_data)
-    yield catalog_item
+    return appliance.collections.catalog_items.create(
+        provider.catalog_item_type,
+        name=item_name,
+        description="my catalog", display_in=True, catalog=catalog,
+        dialog=dialog, prov_data=provisioning_data)
 
 
 @pytest.mark.rhv1
@@ -125,9 +122,8 @@ def test_pxe_servicecatalog(appliance, setup_provider, provider, catalog_item, r
     Metadata:
         test_flag: pxe, provision
     """
-    vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
+    vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
-    catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     # nav to requests page happens on successful provision
