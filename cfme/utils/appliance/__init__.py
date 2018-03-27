@@ -2882,11 +2882,7 @@ def get_or_create_current_appliance():
 current_appliance = LocalProxy(get_or_create_current_appliance)
 
 
-@removals.removed_class(
-    "CurrentAppliance", message=("The CurrentAppliance descriptor is being phased out"
-                                 "in favour of collections.")
-)
-class CurrentAppliance(object):
+class _CurrentAppliance(object):
     def __get__(self, instance, owner):
         return get_or_create_current_appliance()
 
@@ -2917,13 +2913,21 @@ class NavigatableMixin(object):
             view_class, additional_context={'object': new_obj})
 
 
+class NavigatableDeprecationWarning(DeprecationWarning):
+    pass
+
+
+warnings.simplefilter('ignore', NavigatableDeprecationWarning)
+
+
 @removals.removed_class(
     "Navigatable", message=("Navigatable is being deprecated in favour of using Collections "
-                            "objects with the NavigatableMixin")
+                            "objects with the NavigatableMixin"),
+    category=NavigatableDeprecationWarning,
 )
 class Navigatable(NavigatableMixin):
 
-    appliance = CurrentAppliance()
+    appliance = _CurrentAppliance()
 
     def __init__(self, appliance=None):
         self.appliance = appliance or get_or_create_current_appliance()

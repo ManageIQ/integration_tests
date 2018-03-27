@@ -462,6 +462,19 @@ perflog = Perflog()
 def _configure_warnings():
     # Capture warnings
     warnings.simplefilter('once')
+    # hack to avoid circular imports
+    maybe_appliance = sys.modules.get('cfme.utils.appliance')
+    if maybe_appliance is not None:
+        # TODO opt-out
+        warnings.simplefilter(
+            'ignore', maybe_appliance.NavigatableDeprecationWarning)
+
+        warnings.simplefilter('error',
+            maybe_appliance.ApplianceSummoningWarning)
+
+    warnings.filterwarnings(
+        'ignore', module='entrypoints',
+        message=".*read_file.*", category=DeprecationWarning)
     logging.captureWarnings(True)
     wlog = logging.getLogger('py.warnings')
     wlog.addFilter(WarningsRelpathFilter())
