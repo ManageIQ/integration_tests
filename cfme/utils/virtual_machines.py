@@ -52,9 +52,12 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
             vm_name = provider_crud.mgmt.deploy_template(timeout=timeout, **deploy_args)
             logger.info("Provisioned VM/instance %s", vm_name)  # instance ID in case of EC2
         except Exception as e:
-            logger.error('Could not provisioning VM/instance %s (%s: %s)',
+            logger.exception('Could not provisioning VM/instance %s (%s: %s)',
                 vm_name, type(e).__name__, str(e))
-            provider_crud.mgmt.delete_vm(vm_name)
+            try:
+                provider_crud.mgmt.delete_vm(vm_name)
+            except Exception:
+                logger.exception("Unable to clean up vm:", vm_name)
             raise
     except skip_exceptions as e:
         e_c = type(e)
