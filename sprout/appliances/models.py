@@ -886,6 +886,7 @@ class Appliance(MetadataMixin):
             modified_on=apply_if_not_none(self.modified_on, "isoformat"),
             project=self.openshift_project,
             db_host=self.openshift_ext_ip,
+            url=self.url,
         )
 
     @property
