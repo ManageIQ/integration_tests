@@ -69,9 +69,10 @@ def ansible_catalog_item(ansible_repository):
 
 
 @pytest.yield_fixture(scope="module")
-def ansible_catalog(ansible_catalog_item):
-    catalog_ = Catalog(fauxfactory.gen_alphanumeric(), items=[ansible_catalog_item.name])
-    catalog_.create()
+def ansible_catalog(appliance, ansible_catalog_item):
+    catalog_ = appliance.collections.catalogs.create(fauxfactory.gen_alphanumeric(),
+                                                     description="my ansible catalog",
+                                                     items=[ansible_catalog_item.name])
     ansible_catalog_item.catalog = catalog_
     yield catalog_
 
