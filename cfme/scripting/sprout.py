@@ -41,14 +41,22 @@ def main():
 @click.option('--populate-yaml', is_flag=True, default=False,
               help="Populate the yaml with the appliance")
 @click.option('--provider', default=None, help="Which provider to use")
+@click.option('--provider-type', 'provider_type', default=None,
+              help='A provider type to select from')
+@click.option('--template-type', 'template_type', default=None, help='A template type')
+@click.option('--preconfigured/--notconfigured', default=True,
+              help='Whether the appliance is configured')
 def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
-             override_ram, override_cpu, populate_yaml, provider):
+             override_ram, override_cpu, populate_yaml, provider, provider_type, template_type,
+             preconfigured):
     """checks out a sprout provisioning request, and returns it on exit"""
     override_cpu = override_cpu or None
     override_ram = override_ram or None
     sr = SproutProvisioningRequest(group=group, count=appliances, version=version, date=date,
                                    lease_time=timeout, provision_timeout=provision_timeout,
-                                   desc=desc, cpu=override_cpu, ram=override_ram, provider=provider)
+                                   desc=desc, cpu=override_cpu, ram=override_ram, provider=provider,
+                                   provider_type=provider_type, template_type=template_type,
+                                   preconfigured=preconfigured)
     print(sr)
     sm = SproutManager()
 
