@@ -141,6 +141,16 @@ class PhysicalServerTimelinesView(TimelinesView, ComputePhysicalInfrastructureSe
                 super(TimelinesView, self).is_displayed)
 
 
+class PhysicalServerProvisionView(BaseLoggedInPage):
+    """Represents the Provision Physical Server page."""
+    breadcrumb = BreadCrumb(locator='.//ol[@class="breadcrumb"]')
+
+    @property
+    def is_displayed(self):
+        title = "Add PhysicalServer"
+        return self.breadcrumb.active_location == title
+
+
 class PhysicalServerManagePoliciesView(BaseLoggedInPage):
     """PhysicalServer's Manage Policies view."""
     policies = BootstrapTreeview("protectbox")
