@@ -54,6 +54,25 @@ def test_restart_immediately(physical_server, provider):
     view.flash.assert_message('Requested Server restart_now for the selected server')
 
 
+# Identify Button
+def test_turn_on_led(physical_server, provider):
+    physical_server.turn_on_led()
+    view = provider.create_view(PhysicalServerDetailsView, physical_server)
+    view.flash.assert_message('Requested Server turn_on_loc_led for the selected server')
+
+
+def test_turn_off_led(physical_server, provider):
+    physical_server.turn_off_led()
+    view = provider.create_view(PhysicalServerDetailsView, physical_server)
+    view.flash.assert_message('Requested Server turn_off_loc_led for the selected server')
+
+
+def test_turn_blink_led(physical_server, provider):
+    physical_server.turn_blink_led()
+    view = provider.create_view(PhysicalServerDetailsView, physical_server)
+    view.flash.assert_message('Requested Server blink_loc_led for the selected server')
+
+
 # Lifecycle Button
 def test_lifecycle_provision(physical_server):
     view = navigate_to(physical_server, "Provision")

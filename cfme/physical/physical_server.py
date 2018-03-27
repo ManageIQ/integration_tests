@@ -117,6 +117,15 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Ta
             delay=5
         )
 
+    def turn_on_led(self, **kwargs):
+        self._execute_action_button('Identify', 'Turn On LED', **kwargs)
+
+    def turn_off_led(self, **kwargs):
+        self._execute_action_button('Identify', 'Turn Off LED', **kwargs)
+
+    def turn_blink_led(self, **kwargs):
+        self._execute_action_button('Identify', 'Blink LED', **kwargs)
+
     @variable(alias='ui')
     def power_state(self):
         view = navigate_to(self, "Details")
