@@ -43,6 +43,13 @@ def pytest_addoption(parser):
         default=0, help="Override CPU core count. 0 means no override.")
     group._addoption(
         '--sprout-provider', dest='sprout_provider', default=None, help="Which provider to use.")
+    group._addoption('--sprout-provider-type', dest='sprout_provider_type', default=None,
+        help="Sprout provider type - openshift, etc")
+    group._addoption('--sprout-template-type', dest='sprout_template_type', default=None,
+        help="Specifies which template type to use openshift_pod, virtual_machine, docker_vm")
+    group._addoption('--sprout-ignore-preconfigured', dest='sprout_template_preconfigured',
+                     default=True, action="store_false",
+                     help="Allows to use not preconfigured templates")
 
 
 def dump_pool_info(log, pool_data):
@@ -73,9 +80,29 @@ def mangle_in_sprout_appliances(config):
     appliances = config.option.appliances
     log.info("Appliances were provided:")
     for appliance in requested_appliances:
-        url = "https://{}/".format(appliance["ip_address"])
-        appliances.append(url)
-        log.info("- %s is %s", url, appliance['name'])
+
+        appliance_args = {'hostname': appliance['url']}
+        provider_data = conf.cfme_data['management_systems'].get(appliance['provider'])
+        if provider_data and provider_data['type'] == 'openshift':
+            ocp_creds = conf.credentials[provider_data['credentials']]
+            ssh_creds = conf.credentials[provider_data['ssh_creds']]
+            extra_args = {
+                'container': appliance['container'],
+                'db_host': appliance['db_host'],
+                'project': appliance['project'],
+                'openshift_creds': {
+                    'hostname': provider_data['hostname'],
+                    'username': ocp_creds['username'],
+                    'password': ocp_creds['password'],
+                    'ssh': {
+                        'username': ssh_creds['username'],
+                        'password': ssh_creds['password'],
+                    }
+                }
+            }
+            appliance_args.update(extra_args)
+        appliances.append(appliance_args)
+        log.info("- %s is %s", appliance['url'], appliance['name'])
 
     mgr.reset_timer()
     template_name = requested_appliances[0]["template_name"]
@@ -96,6 +123,9 @@ class SproutProvisioningRequest(object):
     count = attr.ib()
     version = attr.ib()
     provider = attr.ib()
+    provider_type = attr.ib()
+    template_type = attr.ib()
+    preconfigured = attr.ib()
     date = attr.ib()
     lease_time = attr.ib()
     desc = attr.ib()
@@ -111,6 +141,9 @@ class SproutProvisioningRequest(object):
             count=config.option.sprout_appliances,
             version=config.option.sprout_version,
             provider=config.option.sprout_provider,
+            provider_type=config.option.sprout_provider_type,
+            template_type=config.option.sprout_template_type,
+            preconfigured=config.option.sprout_template_preconfigured,
             date=config.option.sprout_date,
             lease_time=config.option.sprout_timeout,
             desc=config.option.sprout_desc,
@@ -160,15 +193,22 @@ class SproutManager(object):
             if jenkins_job:
                 self.clean_jenkins_job(jenkins_job)
 
+        kargs = {
+            'count': provision_request.count,
+            'version': provision_request.version,
+            'provider': provision_request.provider,
+            'provider_type': provision_request.provider_type,
+            'preconfigured': provision_request.preconfigured,
+            'date': provision_request.date,
+            'lease_time': provision_request.lease_time,
+            'cpu': provision_request.cpu,
+            'ram': provision_request.ram,
+        }
+        if provision_request.template_type:
+            kargs['template_type'] = provision_request.template_type
+
         self.pool = self.client.request_appliances(
-            provision_request.group,
-            count=provision_request.count,
-            version=provision_request.version,
-            provider=provision_request.provider,
-            date=provision_request.date,
-            lease_time=provision_request.lease_time,
-            cpu=provision_request.cpu,
-            ram=provision_request.ram,
+            provision_request.group, **kargs
         )
         log.info("Pool %s. Waiting for fulfillment ...", self.pool)
 
