@@ -8,6 +8,7 @@ log () {
 
 # Runs given command and appends the stdout and stderr output to setup.txt
 run_n_log () {
+    echo "cmd: $1" >> $ARTIFACTOR_DIR/setup.txt
     eval "$1" >> $ARTIFACTOR_DIR/setup.txt 2>&1
 }
 
