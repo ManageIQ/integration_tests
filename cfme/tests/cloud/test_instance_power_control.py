@@ -48,7 +48,7 @@ def testing_instance2(provider):
     """
     instance2 = create_instance(provider)
     yield instance2
-    instance.cleanup_on_provider()
+    instance2.cleanup_on_provider()
 
 
 # This fixture must be named 'vm_name' because its tied to cfme/fixtures/virtual_machine
