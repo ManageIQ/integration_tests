@@ -13,7 +13,6 @@ from cached_property import cached_property
 from cfme.utils import os
 from cfme.utils.conf import cfme_data
 from functools import partial
-from .setup_ansible import setup_ansible
 from cfme.utils.repo_gen import process_url, build_file
 
 
@@ -135,18 +134,6 @@ def reboot_appliance(appliance_ip, wait_for_ui):
     """Reboots an appliance"""
     app = get_appliance(appliance_ip)
     app.reboot(wait_for_ui)
-
-
-@main.command('setup-ansible', help='Setups embedded ansible on an appliance')
-@click.argument('appliance_ip', default=None, required=False)
-@click.option('--license', required=True, type=click.Path(exists=True))
-def setup_embedded_ansible(appliance_ip, license):
-    """Setups embedded ansible on an appliance"""
-    app = get_appliance(appliance_ip)
-    if not app.is_downstream:
-        setup_ansible(app, license)
-    else:
-        print("It can be done only against upstream appliances.")
 
 
 @main.command('setup-webmks', help='Setups VMware WebMKS on an appliance by downloading'
