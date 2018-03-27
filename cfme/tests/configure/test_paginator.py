@@ -94,20 +94,22 @@ def schedule(appliance):
 @pytest.mark.parametrize('place_info', general_list_pages,
                          ids=['{}_{}'.format(set_type[0], set_type[2].lower())
                               for set_type in general_list_pages])
+@pytest.mark.uncollectif(
+    lambda place_info, appliance:
+        (appliance.version < '5.9' and 'HelpMenu' in place_info) or
+        ('regions' in place_info and 'Servers'in place_info and
+            BZ(1558605, forced_streams=['5.8']).blocks)
+)
 def test_paginator(appliance, place_info):
     """
         Check paginator is visible for config pages
     """
     place_name, place_class, place_navigation, paginator_expected_result = place_info
-    if appliance.version < '5.9' and place_navigation == 'HelpMenu':
-        pytest.skip('No Help Menu tab for 5.8 version')
     if place_class:
         test_class = place_class
     else:
         test_class = getattr(appliance.collections, place_name)
         if place_name == 'regions':
-            if BZ(1558605, forced_streams=['5.8']).blocks and place_navigation == 'Servers':
-                pytest.skip('1558605 bz for 5.8')
             test_class = test_class.instantiate()
         elif place_name == 'servers':
             test_class = test_class.get_master()
