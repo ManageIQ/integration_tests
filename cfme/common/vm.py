@@ -957,3 +957,12 @@ class Template(BaseVM, _TemplateMixin):
     def does_template_exist_on_provider(self):
         """Check if template exists on provider itself"""
         return self.provider.mgmt.does_template_exist(self.name)
+
+
+def cleanup_vm(vm_name, provider):
+    try:
+        logger.info('Cleaning up VM %s on provider %s', vm_name, provider.key)
+        provider.mgmt.delete_vm(vm_name)
+    except:
+        # The mgmt_sys classes raise Exception :\
+        logger.warning('Failed to clean up VM %s on provider %s', vm_name, provider.key)

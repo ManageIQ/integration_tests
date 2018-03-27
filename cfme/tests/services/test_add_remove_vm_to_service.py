@@ -4,8 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.simulation import simulate
-from cfme.common.provider import cleanup_vm
-from cfme.common.vm import VM
+from cfme.common.vm import VM, cleanup_vm
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService

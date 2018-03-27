@@ -15,8 +15,7 @@ import fauxfactory
 import pytest
 from functools import partial
 
-from cfme.common.provider import cleanup_vm
-from cfme.common.vm import VM
+from cfme.common.vm import VM, cleanup_vm
 from cfme.control.explorer import conditions, policies
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
