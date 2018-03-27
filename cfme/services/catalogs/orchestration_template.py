@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import attr
 
-from widgetastic.widget import Text, Checkbox
+from widgetastic.widget import View, Text, Checkbox
 from widgetastic_patternfly import BootstrapSelect, Button, CandidateNotFound, Input
-from widgetastic_manageiq import ScriptBox, Table, PaginationPane
+from widgetastic_manageiq import ScriptBox, Table, PaginationPane, SummaryTable
 from navmazing import NavigateToAttribute, NavigateToSibling
 
 from cfme.common import Taggable
@@ -38,9 +38,13 @@ class CopyTemplateForm(ServicesCatalogView):
     cancel_button = Button('Cancel')
 
 
-class TemplateForm(CopyTemplateForm):
+class TemplateForm(ServicesCatalogView):
     title = Text('#explorer_title_text')
     template_type = BootstrapSelect("type")
+    name = Input(name='name')
+    description = Input(name="description")
+    draft = Checkbox(name='draft')
+    content = ScriptBox(locator="//pre[@class=' CodeMirror-line ']/span")
 
 
 class AddTemplateView(TemplateForm):
@@ -80,15 +84,20 @@ class CopyTemplateView(CopyTemplateForm):
         )
 
 
-class DetailsTemplateView(ServicesCatalogView):
+class DetailsTemplateEntities(View):
     title = Text('#explorer_title_text')
+    smart_management = SummaryTable(title='Smart Management')
+
+
+class DetailsTemplateView(ServicesCatalogView):
+    entities = View.nested(DetailsTemplateEntities)
 
     @property
     def is_displayed(self):
         """ Removing last 's' character from template_type.
         For ex. 'CloudFormation Templates' ->  'CloudFormation Template'"""
         return (
-            self.title.text == '{} "{}"'.format(self.context['object'].template_type[:-1],
+            self.entities.title.text == '{} "{}"'.format(self.context['object'].template_type[:-1],
                                                 self.context['object'].template_name) and
             self.orchestration_templates.is_opened
         )
@@ -170,14 +179,21 @@ class OrchestrationTemplate(BaseEntity, Updateable, Pretty, Taggable):
         view.add_button.click()
         view.flash.assert_success_message('Orchestration Template "{}" was saved'.format(
             template_name))
+        return self.parent.instantiate(template_type=self.template_type,
+                                       description=description,
+                                       template_name=template_name,
+                                       content=content,
+                                       draft=draft)
 
-    def create_service_dialog_from_template(self, dialog_name, template_name):
+    def create_service_dialog_from_template(self, dialog_name):
         view = navigate_to(self, 'AddDialog')
         view.fill({'name': dialog_name})
         view.add_button.click()
         view.flash.assert_success_message('Service Dialog "{}" was successfully created'.format(
             dialog_name))
-        return template_name
+        service_dialog = self.parent.parent.collections.service_dialogs.instantiate(
+            label=dialog_name)
+        return service_dialog
 
     @property
     def exists(self):
