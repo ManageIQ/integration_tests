@@ -10,7 +10,7 @@ from widgetastic_patternfly import CheckableBootstrapTreeview as CbTree
 
 from cfme import test_requirements
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.provider import cleanup_vm
+from cfme.common.vm import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider

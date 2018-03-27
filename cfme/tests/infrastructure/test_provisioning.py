@@ -2,7 +2,7 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.common.provider import cleanup_vm
+from cfme.common.vm import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils import normalize_text

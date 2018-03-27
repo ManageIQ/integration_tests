@@ -8,8 +8,7 @@ from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider, CloudInfraProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.common.vm import VM, Template
-from cfme.common.provider import cleanup_vm
+from cfme.common.vm import VM, Template, cleanup_vm
 from cfme.common.vm_views import DriftAnalysis
 from cfme.configure import configuration
 from cfme.configure.tasks import is_vm_analysis_finished, TasksView

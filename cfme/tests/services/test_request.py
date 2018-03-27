@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.common.provider import cleanup_vm
+from cfme.common.vm import cleanup_vm
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme import test_requirements

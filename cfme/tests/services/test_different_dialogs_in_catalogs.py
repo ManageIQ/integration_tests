@@ -4,7 +4,7 @@ import pytest
 from widgetastic.utils import partial_match
 
 from cfme import test_requirements
-from cfme.common.provider import cleanup_vm
+from cfme.common.vm import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.blockers import BZ

@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.common.provider import cleanup_vm
+from cfme.common.vm import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.services.catalogs.catalog_items import EditCatalogItemView

@@ -2,7 +2,7 @@
 import fauxfactory
 import pytest
 
-from cfme.common.provider import cleanup_vm
+from cfme.common.vm import cleanup_vm
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.infrastructure.pxe import get_template_from_config

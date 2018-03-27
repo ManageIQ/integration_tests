@@ -2,8 +2,7 @@
 import fauxfactory
 import pytest
 
-from cfme.common.provider import cleanup_vm
-from cfme.common.vm import VM
+from cfme.common.vm import VM, cleanup_vm
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.log import logger
 

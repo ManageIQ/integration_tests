@@ -5,7 +5,7 @@ import pytest
 from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
-from cfme.common.provider import cleanup_vm
+from cfme.common.vm import cleanup_vm
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.azure import AzureProvider
