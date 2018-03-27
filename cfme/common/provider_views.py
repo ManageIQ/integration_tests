@@ -197,6 +197,7 @@ class InfraProvidersDiscoverView(BaseLoggedInPage):
     vmware = Checkbox('discover_type_virtualcenter')
     scvmm = Checkbox('discover_type_scvmm')
     rhevm = Checkbox('discover_type_rhevm')
+    osp_infra = Checkbox('discover_type_openstack_infra')
 
     from_ip1 = Input('from_first')
     from_ip2 = Input('from_second')
