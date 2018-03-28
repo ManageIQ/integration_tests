@@ -11,13 +11,6 @@ import pytest
 
 
 @attr.s
-class DummyApplianceWithCollection(DummyAppliance):
-    def __attrs_post_init__(self):
-        from cfme.modeling.base import EntityCollections
-        self.collections = EntityCollections.for_appliance(self)
-
-
-@attr.s
 class MyEntity(BaseEntity):
     name = attr.ib()
 
@@ -49,7 +42,7 @@ class MyNewCollection(BaseCollection):
 
 @pytest.fixture
 def dummy_appliance():
-    return DummyApplianceWithCollection()
+    return DummyAppliance()
 
 
 def test_appliance_collections_dir(dummy_appliance):
@@ -103,11 +96,11 @@ def test_parent_walker(dummy_appliance):
     obj = MyNewCollection(dummy_appliance).instantiate('name')
     new_obj = obj.collections.entities.instantiate('boop')
     assert parent_of_type(new_obj, MyNewEntity) == obj
-    assert parent_of_type(new_obj, DummyApplianceWithCollection) == dummy_appliance
+    assert parent_of_type(new_obj, DummyAppliance) == dummy_appliance
 
 
 def test_declared_entity_collections(dummy_appliance):
     obj = MyEntityWithDeclared(dummy_appliance)
     new_obj = obj.collections.entities.instantiate('boop')
     assert parent_of_type(new_obj, MyEntityWithDeclared) is obj
-    assert parent_of_type(new_obj, DummyApplianceWithCollection) is dummy_appliance
+    assert parent_of_type(new_obj, DummyAppliance) is dummy_appliance
