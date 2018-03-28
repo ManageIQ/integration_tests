@@ -271,8 +271,8 @@ def main(**kwargs):
         if not kwargs.get('deploy'):
             app = Appliance.from_provider(kwargs['provider'], deploy_args['vm_name'])
             ssh_client = app.ssh_client()
-            status, output = ssh_client.run_command('find /root/anaconda-post.log')
-            if status == 0:
+            result = ssh_client.run_command('find /root/anaconda-post.log')
+            if result.success:
                 ssh_client.get_file('/root/anaconda-post.log',
                                     log_path.join('anaconda-post.log').strpath)
             ssh_client.close()

@@ -180,13 +180,13 @@ class SmemMemoryMonitor(Thread):
         # Available memory could potentially be better metric
         appliance_results[plottime] = {}
 
-        exit_status, meminfo_raw = self.ssh_client.run_command('cat /proc/meminfo')
-        if exit_status:
-            logger.error('Exit_status nonzero in get_appliance_memory: {}, {}'.format(exit_status,
-                meminfo_raw))
+        result = self.ssh_client.run_command('cat /proc/meminfo')
+        if result.failed:
+            logger.error('Exit_status nonzero in get_appliance_memory: {}, {}'
+                         .format(result.rc, result.output))
             del appliance_results[plottime]
         else:
-            meminfo_raw = meminfo_raw.replace('kB', '').strip()
+            meminfo_raw = result.output.replace('kB', '').strip()
             meminfo = OrderedDict((k.strip(), v.strip()) for k, v in
                 (value.strip().split(':') for value in meminfo_raw.split('\n')))
             appliance_results[plottime]['total'] = float(meminfo['MemTotal']) / 1024
@@ -206,13 +206,13 @@ class SmemMemoryMonitor(Thread):
             appliance_results[plottime]['swap_free'] = float(meminfo['SwapFree']) / 1024
 
     def get_evm_workers(self):
-        exit_status, worker_types = self.ssh_client.run_command(
+        result = self.ssh_client.run_command(
             'psql -t -q -d vmdb_production -c '
             '\"select pid,type from miq_workers where miq_server_id = \'{}\'\"'.format(
                 self.miq_server_id))
-        if worker_types.strip():
+        if result.output.strip():
             workers = {}
-            for worker in worker_types.strip().split('\n'):
+            for worker in result.output.strip().split('\n'):
                 pid_worker = worker.strip().split('|')
                 if len(pid_worker) == 2:
                     workers[pid_worker[0].strip()] = pid_worker[1].strip()
@@ -224,9 +224,9 @@ class SmemMemoryMonitor(Thread):
 
     # Old method of obtaining per process memory (Appliances without smem)
     # def get_pids_memory(self):
-    #     exit_status, ps_memory = self.ssh_client.run_command(
+    #     result = self.ssh_client.run_command(
     #         'ps -A -o pid,rss,vsz,comm,cmd | sed 1d')
-    #     pids_memory = ps_memory.strip().split('\n')
+    #     pids_memory = result.output.strip().split('\n')
     #     memory_by_pid = {}
     #     for line in pids_memory:
     #         values = [s for s in line.strip().split(' ') if s]
@@ -240,19 +240,19 @@ class SmemMemoryMonitor(Thread):
 
     def get_miq_server_id(self):
         # Obtain the Miq Server GUID:
-        exit_status, miq_server_guid = self.ssh_client.run_command('cat /var/www/miq/vmdb/GUID')
-        logger.info('Obtained appliance GUID: {}'.format(miq_server_guid.strip()))
+        result = self.ssh_client.run_command('cat /var/www/miq/vmdb/GUID')
+        logger.info('Obtained appliance GUID: {}'.format(result.output.strip()))
         # Get server id:
-        exit_status, miq_server_id = self.ssh_client.run_command(
+        result = self.ssh_client.run_command(
             'psql -t -q -d vmdb_production -c "select id from miq_servers where guid = \'{}\'"'
-            ''.format(miq_server_guid.strip()))
-        logger.info('Obtained miq_server_id: {}'.format(miq_server_id.strip()))
-        self.miq_server_id = miq_server_id.strip()
+            ''.format(result.output.strip()))
+        logger.info('Obtained miq_server_id: {}'.format(result.output.strip()))
+        self.miq_server_id = result.output.strip()
 
     def get_pids_memory(self):
-        exit_status, smem_out = self.ssh_client.run_command(
+        result = self.ssh_client.run_command(
             'smem -c \'pid rss pss uss vss swap name command\' | sed 1d')
-        pids_memory = smem_out.strip().split('\n')
+        pids_memory = result.output.strip().split('\n')
         memory_by_pid = {}
         for line in pids_memory:
             if line.strip():
@@ -271,7 +271,7 @@ class SmemMemoryMonitor(Thread):
                 except Exception as e:
                     logger.error('Processing smem output error: {}'.format(e.__class__.__name__, e))
                     logger.error('Issue with pid: {} line: {}'.format(pid, line))
-                    logger.error('Complete smem output: {}'.format(smem_out))
+                    logger.error('Complete smem output: {}'.format(result.output))
         return memory_by_pid
 
     def _real_run(self):

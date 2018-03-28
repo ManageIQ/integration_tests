@@ -25,29 +25,29 @@ pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
     lambda package: "rhn" in package and store.current_appliance.is_pod)
 def test_rpms_present(appliance, package):
     """Verifies nfs-util rpms are in place needed for pxe & nfs operations"""
-    exit, stdout = appliance.ssh_client.run_command('rpm -q {}'.format(package))
-    assert 'is not installed' not in stdout
-    assert exit == 0
+    result = appliance.ssh_client.run_command('rpm -q {}'.format(package))
+    assert 'is not installed' not in result.output
+    assert result.success
 
 
 @pytest.mark.uncollectif(store.current_appliance.is_pod)
 def test_selinux_enabled(appliance):
     """Verifies selinux is enabled"""
-    stdout = appliance.ssh_client.run_command('getenforce')[1]
-    assert 'Enforcing' in stdout
+    result = appliance.ssh_client.run_command('getenforce').output
+    assert 'Enforcing' in result
 
 
 @pytest.mark.uncollectif(store.current_appliance.is_pod)
 def test_firewalld_running(appliance):
     """Verifies iptables service is running on the appliance"""
-    stdout = appliance.ssh_client.run_command('systemctl status firewalld')[1]
-    assert 'active (running)' in stdout
+    result = appliance.ssh_client.run_command('systemctl status firewalld').output
+    assert 'active (running)' in result
 
 
 def test_evm_running(appliance):
     """Verifies overall evm service is running on the appliance"""
-    stdout = appliance.ssh_client.run_command('systemctl status evmserverd')[1]
-    assert 'active (running)' in stdout
+    result = appliance.ssh_client.run_command('systemctl status evmserverd').output
+    assert 'active (running)' in result
 
 
 @pytest.mark.parametrize('service', [
@@ -67,7 +67,7 @@ def test_service_enabled(appliance, service):
     else:
         cmd = 'chkconfig | grep {} | grep -q "5:on"'.format(service)
     result = appliance.ssh_client.run_command(cmd)
-    assert result.rc == 0, result.output
+    assert result.success, result.output
 
 
 @pytest.mark.ignore_stream("upstream")
@@ -80,9 +80,9 @@ def test_service_enabled(appliance, service):
 def test_iptables_rules(appliance, proto, port):
     """Verifies key iptable rules are in place"""
     # get the current iptables state, nicely formatted for us by iptables-save
-    res = appliance.ssh_client.run_command('iptables-save')
+    result = appliance.ssh_client.run_command('iptables-save')
     # get everything from the input chain
-    input_rules = filter(lambda line: line.startswith('-A IN'), res.output.splitlines())
+    input_rules = filter(lambda line: line.startswith('-A IN'), result.output.splitlines())
 
     # filter to make sure we have a rule that matches the given proto and port
     def rule_filter(rule):
@@ -100,17 +100,17 @@ def test_iptables_rules(appliance, proto, port):
 # this is based on expected changes tracked in github/ManageIQ/cfme_build repo
 def test_memory_total(appliance):
     """Verifies that the total memory on the box is >= 6GB"""
-    stdout = appliance.ssh_client.run_command(
-        'free -g | grep Mem: | awk \'{ print $2 }\'')[1]
-    assert stdout >= 6
+    result = appliance.ssh_client.run_command(
+        'free -g | grep Mem: | awk \'{ print $2 }\'').output
+    assert int(result) >= 6
 
 
 # this is based on expected changes tracked in github/ManageIQ/cfme_build repo
 def test_cpu_total(appliance):
     """Verifies that the total number of cpus is >= 4"""
-    stdout = appliance.ssh_client.run_command(
-        'lscpu | grep ^CPU\(s\): | awk \'{ print $2 }\'')[1]
-    assert stdout >= 4
+    result = appliance.ssh_client.run_command(
+        'lscpu | grep ^CPU\(s\): | awk \'{ print $2 }\'').output
+    assert int(result) >= 4
 
 
 @pytest.mark.ignore_stream("upstream")
@@ -122,11 +122,9 @@ def test_certificates_present(appliance, soft_assert):
     "/etc/pki/product/167.pem", "/etc/pki/product/201.pem"]
 
     for cert in known_certs:
-        cert_path_vaild = appliance.ssh_client.run_command("test -f '{}'".format(cert))[0] == 0
-        if cert_path_vaild:
-            rc, output = appliance.ssh_client.run_command(
+        assert appliance.ssh_client.run_command("test -f '{}'".format(cert)).success
+        assert appliance.ssh_client.run_command(
                 "openssl verify -CAfile /etc/rhsm/ca/redhat-uep.pem '{}'".format(cert))
-        assert rc == 0
 
 
 @pytest.mark.ignore_stream("upstream")
@@ -144,7 +142,7 @@ def test_html5_ssl_files_present(appliance, soft_assert):
 
     for ssl_file in ssl_files:
         # Test for files existance
-        assert appliance.ssh_client.run_command("test -f '{}'".format(ssl_file)) == 0
+        assert appliance.ssh_client.run_command("test -f '{}'".format(ssl_file)).success
 
 
 @pytest.mark.ignore_stream("upstream")
@@ -159,15 +157,14 @@ def test_db_connection(appliance):
 
 
 def test_asset_precompiled(appliance):
-    file_exists = appliance.ssh_client.run_command(
-        "test -d /var/www/miq/vmdb/public/assets").rc == 0
-    assert file_exists, "Assets not precompiled"
+    assert appliance.ssh_client.run_command("test -d /var/www/miq/vmdb/public/assets").success, (
+        "Assets not precompiled")
 
 
 @pytest.mark.ignore_stream("upstream")
 def test_keys_included(appliance, soft_assert):
     keys = ['v0_key', 'v1_key', 'v2_key']
     for k in keys:
-        file_exists = appliance.ssh_client.run_command(
-            "test -e /var/www/miq/vmdb/certs/{}".format(k))[0] == 0
-        soft_assert(file_exists, "{} was not included in the build".format(k))
+        soft_assert(appliance.ssh_client.run_command(
+            "test -e /var/www/miq/vmdb/certs/{}".format(k)).success,
+            "{} was not included in the build".format(k))

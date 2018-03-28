@@ -18,18 +18,18 @@ def customer_db_migrate(temp_appliance_preconfig):
     db_desc = cfme_data['db_backups']['MBU_LAB']['desc']
     logger.info("Downloading database: {}".format(db_desc))
     url_basename = os_path.basename(db_url)
-    rc, out = app.ssh_client.run_command(
+    result = app.ssh_client.run_command(
         'curl -o "/{}" "{}"'.format(url_basename, db_url), timeout=30)
-    assert rc == 0, "Failed to download database: {}".format(out)
+    assert result.success, "Failed to download database: {}".format(result.output)
 
     # Stop EVM service and drop vmdb_production DB
     app.evmserverd.stop()
     app.db.drop()
     app.db.create()
     # restore new DB
-    rc, out = app.ssh_client.run_command(
+    result = app.ssh_client.run_command(
         'pg_restore -v --dbname=vmdb_production /{}'.format(url_basename), timeout=600)
-    assert rc == 0, "Failed to restore new database: {}".format(out)
+    assert result.success, "Failed to restore new database: {}".format(result.output)
     app.db.migrate()
     app.db.fix_auth_key()
     app.db.fix_auth_dbyml()
@@ -37,8 +37,8 @@ def customer_db_migrate(temp_appliance_preconfig):
     try:
         app.start_evm_service()
     except ApplianceException:
-        rc, out = app.ssh_client.run_rake_command("evm:start")
-        assert rc == 0, "Couldn't start evmserverd: {}".format(out)
+        result = app.ssh_client.run_rake_command("evm:start")
+        assert result.success, "Couldn't start evmserverd: {}".format(result.output)
     app.wait_for_web_ui(timeout=600)
     app.db.reset_user_pass()
     # Disable roles in the UI

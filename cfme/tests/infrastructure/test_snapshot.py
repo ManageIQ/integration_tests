@@ -180,7 +180,7 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     # and wait for successful completition of the ssh command.
     # The 'fail_func' ensures we close the connection that failed with exception.
     # Without this, the connection would hang there and wait_for would fail with timeout.
-    wait_for(lambda: ssh_client.run_command('touch snapshot1.txt').rc == 0, num_sec=400,
+    wait_for(lambda: ssh_client.run_command('touch snapshot1.txt').success, num_sec=400,
              delay=20, handle_exception=True, fail_func=ssh_client.close(),
              message="Waiting for successful SSH connection")
     # Create first snapshot
@@ -213,7 +213,7 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     full_test_vm.wait_for_vm_state_change(desired_state=full_test_vm.STATE_ON, timeout=900)
     soft_assert(full_test_vm.provider.mgmt.is_vm_running(full_test_vm.name), "vm not running")
     # Wait for successful ssh connection
-    wait_for(lambda: ssh_client.run_command('test -e snapshot1.txt').rc == 0,
+    wait_for(lambda: ssh_client.run_command('test -e snapshot1.txt').success,
              num_sec=400, delay=20, handle_exception=True, fail_func=ssh_client.close(),
              message="Waiting for successful SSH connection after revert")
     try:

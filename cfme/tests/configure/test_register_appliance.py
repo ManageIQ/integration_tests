@@ -220,10 +220,10 @@ def test_rh_updates(appliance_preupdate, appliance):
 
     def is_package_updated(appliance):
         """Checks if cfme-appliance package is at version 99"""
-        return_code, output = appliance.ssh_client.run_command('rpm -qa cfme-appliance | grep 99')
-        return return_code == 0
+        result = appliance.ssh_client.run_command('rpm -qa cfme-appliance | grep 99')
+        return result.success
 
     wait_for(is_package_updated, func_args=[appliance_preupdate], num_sec=900)
-    return_code, output = appliance_preupdate.ssh_client.run_command(
+    result = appliance_preupdate.ssh_client.run_command(
         'rpm -qa cfme-appliance | grep 99')
-    assert return_code == 0
+    assert result.success

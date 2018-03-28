@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import socket
 import sys
-from collections import namedtuple
 from subprocess import check_call
 
+import attr
 import diaper
 import fauxfactory
 import iso8601
@@ -27,7 +27,8 @@ from fixtures.pytest_store import store
 RUNCMD_TIMEOUT = 1200.0
 
 
-class SSHResult(namedtuple("SSHResult", ["rc", "output"])):
+@attr.s(frozen=True)
+class SSHResult(object):
     """Allows rich comparison for more convenient testing.
 
     Given you have ``result`` which is an instance of :py:class:`SSHResult`, you can do as follows
@@ -49,6 +50,10 @@ class SSHResult(namedtuple("SSHResult", ["rc", "output"])):
     But it still subclasses the original class therefore all old behaviour is kept. But you don't
     have to expand the tuple or pull the value out if you are checking only one of them.
     """
+    command = attr.ib()
+    rc = attr.ib()
+    output = attr.ib(repr=False)
+
     def __str__(self):
         return self.output
 
@@ -148,7 +153,7 @@ class SSHClient(paramiko.SSHClient):
     @cached_property
     def vmdb_version(self):
         res = self.run_command('cat /var/www/miq/vmdb/VERSION')
-        if res.rc != 0:
+        if res.failed:
             raise RuntimeError('Unable to retrieve appliance VMDB version')
         version_string = res.output
         return Version(version_string)
@@ -351,7 +356,7 @@ class SSHClient(paramiko.SSHClient):
             exit_status = session.recv_exit_status()
             if exit_status != 0:
                 logger.warning('Exit code %d!', exit_status)
-            return SSHResult(exit_status, ''.join(output))
+            return SSHResult(rc=exit_status, output=''.join(output), command=command)
         except paramiko.SSHException:
             if reraise:
                 raise
@@ -366,7 +371,7 @@ class SSHClient(paramiko.SSHClient):
 
         # Returning two things so tuple unpacking the return works even if the ssh client fails
         # Return whatever we have in the output
-        return SSHResult(1, ''.join(output))
+        return SSHResult(rc=1, output=''.join(output), command=command)
 
     def cpu_spike(self, seconds=60, cpus=2, **kwargs):
         """Creates a CPU spike of specific length and processes.
@@ -519,19 +524,19 @@ class SSHClient(paramiko.SSHClient):
 
         # If already patched with current file, exit
         logger.info('Checking if already patched')
-        rc, out = self.run_command(
+        result = self.run_command(
             'patch {} {} -f --dry-run -R'.format(remote_path, diff_remote_path))
-        if rc == 0:
+        if result.success:
             return False
 
         # If we have a .bak file available, it means the file is already patched
         # by some older patch; in that case, replace the file-to-be-patched by the .bak first
         logger.info("Checking if %s.bak is available", remote_path)
-        rc, out = self.run_command('test -e {}.bak'.format(remote_path))
-        if rc == 0:
+        result = self.run_command('test -e {}.bak'.format(remote_path))
+        if result.success:
             logger.info("%s.bak found; using it to replace %s", remote_path, remote_path)
-            rc, out = self.run_command('mv {}.bak {}'.format(remote_path, remote_path))
-            if rc != 0:
+            result = self.run_command('mv {}.bak {}'.format(remote_path, remote_path))
+            if result.failed:
                 raise Exception(
                     "Unable to replace {} with {}.bak".format(remote_path, remote_path))
         else:
@@ -540,17 +545,17 @@ class SSHClient(paramiko.SSHClient):
         # If not patched and there's MD5 checksum available, check it
         if md5:
             logger.info("MD5 sum check in progress for %s", remote_path)
-            rc, out = self.run_command('md5sum -c - <<< "{} {}"'.format(md5, remote_path))
-            if rc == 0:
+            result = self.run_command('md5sum -c - <<< "{} {}"'.format(md5, remote_path))
+            if result.success:
                 logger.info('MD5 sum check result: file not changed')
             else:
                 logger.warning('MD5 sum check result: file has been changed!')
 
         # Create the backup and patch
-        rc, out = self.run_command(
+        result = self.run_command(
             'patch {} {} -f -b -z .bak'.format(remote_path, diff_remote_path))
-        if rc != 0:
-            raise Exception("Unable to patch file {}: {}".format(remote_path, out))
+        if result.failed:
+            raise Exception("Unable to patch file {}: {}".format(remote_path, result.output))
         return True
 
     def get_build_datetime(self):
@@ -561,7 +566,7 @@ class SSHClient(paramiko.SSHClient):
         return self.get_build_datetime().date()
 
     def is_appliance_downstream(self):
-        return self.run_command("stat /var/www/miq/vmdb/BUILD").rc == 0
+        return self.run_command("stat /var/www/miq/vmdb/BUILD").success
 
     def uptime(self):
         out = self.run_command('cat /proc/uptime')[1]
@@ -580,7 +585,7 @@ class SSHClient(paramiko.SSHClient):
         return res.output.split()[0]
 
     def appliance_has_netapp(self):
-        return self.run_command("stat /var/www/miq/vmdb/HAS_NETAPP").rc == 0
+        return self.run_command("stat /var/www/miq/vmdb/HAS_NETAPP").success
 
     @property
     def status(self):

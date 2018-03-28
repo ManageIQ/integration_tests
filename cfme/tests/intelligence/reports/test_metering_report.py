@@ -171,7 +171,7 @@ def resource_usage(vm_ownership, appliance, provider):
             "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
             vm.perf_capture('realtime', 2.hour.ago.utc, Time.now.utc)\""
             .format(provider.id, repr(vm_name)))
-        assert ret.rc == 0, "Failed to capture VM C&U data:".format(ret.output)
+        assert ret.success, "Failed to capture VM C&U data:".format(ret.output)
 
         with appliance.db.client.transaction:
             result = (
@@ -206,7 +206,7 @@ def resource_usage(vm_ownership, appliance, provider):
         "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
         vm.perf_rollup_range(2.hour.ago.utc, Time.now.utc,'realtime')\"".
         format(provider.id, repr(vm_name)))
-    assert ret.rc == 0, "Failed to rollup VM C&U data:".format(ret.out)
+    assert ret.success, "Failed to rollup VM C&U data:".format(ret.out)
 
     wait_for(verify_records_rollups_table, [appliance, provider, vm_name], timeout=600,
         fail_condition=False, message='Waiting for hourly rollups')

@@ -198,11 +198,11 @@ def resource_usage(vm_ownership, appliance, provider):
         ems = appliance.db.client['ext_management_systems']
         metrics = appliance.db.client['metrics']
 
-        rc, out = appliance.ssh_client.run_rails_command(
+        result = appliance.ssh_client.run_rails_command(
             "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
             vm.perf_capture('realtime', 1.hour.ago.utc, Time.now.utc)\""
             .format(provider.id, repr(vm_name)))
-        assert rc == 0, "Failed to capture VM C&U data:".format(out)
+        assert result.success, "Failed to capture VM C&U data:".format(result.output)
 
         with appliance.db.client.transaction:
             result = (
@@ -232,11 +232,11 @@ def resource_usage(vm_ownership, appliance, provider):
 
     appliance.server.settings.disable_server_roles(
         'ems_metrics_coordinator', 'ems_metrics_collector')
-    rc, out = appliance.ssh_client.run_rails_command(
+    result = appliance.ssh_client.run_rails_command(
         "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
         vm.perf_rollup_range(1.hour.ago.utc, Time.now.utc,'realtime')\"".
         format(provider.id, repr(vm_name)))
-    assert rc == 0, "Failed to rollup VM C&U data:".format(out)
+    assert result.success, "Failed to rollup VM C&U data:".format(result.output)
 
     wait_for(verify_records_rollups_table, [appliance, provider], timeout=600, fail_condition=False,
         message='Waiting for hourly rollups')

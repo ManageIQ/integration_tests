@@ -121,9 +121,9 @@ def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
     wait_for(verify_records_rollups_table, [appliance, provider], timeout=3600,
         message='Waiting for hourly rollups')
 
-    rc, out = appliance.ssh_client.run_rails_command(
+    result = appliance.ssh_client.run_rails_command(
         'Service.queue_chargeback_reports')
-    assert rc == 0, "Failed to run Service Chargeback report".format(out)
+    assert result.success, "Failed to run Service Chargeback report".format(result.output)
 
 
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])

@@ -139,7 +139,7 @@ class RHEVMSystem(RHEVMSystemBase):
                 'hostname': ip_addr
             }
             with SSHClient(**ssh_kwargs) as ssh_client:
-                status, out = ssh_client.run_command('pvscan', timeout=5 * 60)
+                ssh_client.run_command('pvscan', timeout=5 * 60)
 
         # remove it
         else:

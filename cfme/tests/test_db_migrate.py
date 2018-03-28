@@ -90,9 +90,9 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
     logger.info("Downloading database: {}".format(db_desc))
     url_basename = os_path.basename(db_url)
     loc = "/tmp/"
-    rc, out = app.ssh_client.run_command(
+    result = app.ssh_client.run_command(
         'curl -o "{}{}" "{}"'.format(loc, url_basename, db_url), timeout=30)
-    assert rc == 0, "Failed to download database: {}".format(out)
+    assert result.success, "Failed to download database: {}".format(result.output)
     # The v2_key is potentially here
     v2key_url = os_path.join(os_path.dirname(db_url), "v2_key")
     # Stop EVM service and drop vmdb_production DB
@@ -100,19 +100,19 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
     app.db.drop()
     app.db.create()
     # restore new DB
-    rc, out = app.ssh_client.run_command(
+    result = app.ssh_client.run_command(
         'pg_restore -v --dbname=vmdb_production {}{}'.format(loc, url_basename), timeout=600)
-    assert rc == 0, "Failed to restore new database: {}".format(out)
+    assert result.success, "Failed to restore new database: {}".format(result.output)
     app.db.migrate()
     # fetch v2_key
     try:
-        rc, out = app.ssh_client.run_command(
+        result = app.ssh_client.run_command(
             'curl "{}"'.format(v2key_url), timeout=15)
-        assert rc == 0, "Failed to download v2_key: {}".format(out)
-        assert ":key:" in out, "Not a v2_key file: {}".format(out)
-        rc, out = app.ssh_client.run_command(
+        assert result.success, "Failed to download v2_key: {}".format(result.output)
+        assert ":key:" in result.output, "Not a v2_key file: {}".format(result.output)
+        result = app.ssh_client.run_command(
             'curl -o "/var/www/miq/vmdb/certs/v2_key" "{}"'.format(v2key_url), timeout=15)
-        assert rc == 0, "Failed to download v2_key: {}".format(out)
+        assert result.success, "Failed to download v2_key: {}".format(result.output)
     # or change all invalid (now unavailable) passwords to 'invalid'
     except AssertionError:
         app.db.fix_auth_key()
@@ -121,8 +121,8 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
     try:
         app.start_evm_service()
     except ApplianceException:
-        rc, out = app.ssh_client.run_rake_command("evm:start")
-        assert rc == 0, "Couldn't start evmserverd: {}".format(out)
+        result = app.ssh_client.run_rake_command("evm:start")
+        assert result.success, "Couldn't start evmserverd: {}".format(result.output)
     app.wait_for_web_ui(timeout=600)
     app.db.reset_user_pass()
     wait_for(lambda: navigate_to(app.server, 'LoginScreen'), handle_exception=True)
@@ -141,9 +141,9 @@ def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance
     logger.info("Downloading database: {}".format(dbversion))
     db_url = cfme_data['db_backups'][dbversion]['url']
     url_basename = os_path.basename(db_url)
-    rc, out = app.ssh_client.run_command(
+    result = app.ssh_client.run_command(
         'curl -o "/tmp/{}" "{}"'.format(url_basename, db_url), timeout=30)
-    assert rc == 0, "Failed to download database: {}".format(out)
+    assert result.success, "Failed to download database: {}".format(result.output)
     # The v2_key is potentially here
     v2key_url = os_path.join(os_path.dirname(db_url), "v2_key")
     # Stop EVM service and drop vmdb_production DB
@@ -151,19 +151,19 @@ def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance
     app.db.drop()
     app.db.create()
     # restore new DB and migrate it
-    rc, out = app.ssh_client.run_command(
+    result = app.ssh_client.run_command(
         'pg_restore -v --dbname=vmdb_production /tmp/{}'.format(url_basename), timeout=600)
-    assert rc == 0, "Failed to restore new database: {}".format(out)
+    assert result.success, "Failed to restore new database: {}".format(result.output)
     app.db.migrate()
     # fetch v2_key
     try:
-        rc, out = app.ssh_client.run_command(
+        result = app.ssh_client.run_command(
             'curl "{}"'.format(v2key_url), timeout=15)
-        assert rc == 0, "Failed to download v2_key: {}".format(out)
-        assert ":key:" in out, "Not a v2_key file: {}".format(out)
-        rc, out = app.ssh_client.run_command(
+        assert result.success, "Failed to download v2_key: {}".format(result.output)
+        assert ":key:" in result.output, "Not a v2_key file: {}".format(result.output)
+        result = app.ssh_client.run_command(
             'curl -o "/var/www/miq/vmdb/certs/v2_key" "{}"'.format(v2key_url), timeout=15)
-        assert rc == 0, "Failed to download v2_key: {}".format(out)
+        assert result.success, "Failed to download v2_key: {}".format(result.output)
     # or change all invalid (now unavailable) passwords to 'invalid'
     except AssertionError:
         app.db.fix_auth_key()
@@ -172,8 +172,8 @@ def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance
     try:
         app.start_evm_service()
     except ApplianceException:
-        rc, out = app.ssh_client.run_rake_command("evm:start")
-        assert rc == 0, "Couldn't start evmserverd: {}".format(out)
+        result = app.ssh_client.run_rake_command("evm:start")
+        assert result.success, "Couldn't start evmserverd: {}".format(result.output)
     app.wait_for_web_ui(timeout=600)
     # Reset user's password, just in case (necessary for customer DBs)
     app.db.reset_user_pass()
@@ -192,8 +192,8 @@ def test_upgrade_single_inplace(appliance_preupdate, appliance):
     """Tests appliance upgrade between streams"""
     ver = '95' if appliance.version >= '5.8' else '94'
     appliance_preupdate.evmserverd.stop()
-    rc, out = appliance_preupdate.ssh_client.run_command('yum update -y', timeout=3600)
-    assert rc == 0, "update failed {}".format(out)
+    result = appliance_preupdate.ssh_client.run_command('yum update -y', timeout=3600)
+    assert result.success, "update failed {}".format(result.output)
     appliance_preupdate.db.migrate()
     appliance_preupdate.db.automate_reset()
     appliance_preupdate.db.restart_db_service()

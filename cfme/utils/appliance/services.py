@@ -15,17 +15,17 @@ class SystemdService(AppliancePlugin):
 
     def _run_service_command(self, command, expected_exit_code=None):
         with self.appliance.ssh_client as ssh:
-            status, output = ssh.run_command('systemctl {} {}'.format(
+            result = ssh.run_command('systemctl {} {}'.format(
                 quote(command), quote(self.unit_name)))
 
-        if expected_exit_code is not None and status != expected_exit_code:
+        if expected_exit_code is not None and result.rc != expected_exit_code:
             # TODO: Bring back address
             msg = 'Failed to {} {}\nError: {}'.format(
-                command, self.unit_name, output)
+                command, self.unit_name, result.output)
             self.logger.error(msg)
             raise SystemdException(msg)
 
-        return status
+        return result.rc
 
     def stop(self):
         self._run_service_command('stop', expected_exit_code=0)

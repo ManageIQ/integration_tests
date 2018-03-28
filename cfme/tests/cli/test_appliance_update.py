@@ -86,8 +86,8 @@ def test_update_yum(appliance_preupdate, appliance):
 
     appliance_preupdate.evmserverd.stop()
     with appliance_preupdate.ssh_client as ssh:
-        rc, out = ssh.run_command('yum update -y', timeout=3600)
-        assert rc == 0, "update failed {}".format(out)
+        result = ssh.run_command('yum update -y', timeout=3600)
+        assert result.success, "update failed {}".format(result.output)
     appliance_preupdate.evmserverd.start()
     appliance_preupdate.wait_for_web_ui()
     assert appliance.version == appliance_preupdate.version

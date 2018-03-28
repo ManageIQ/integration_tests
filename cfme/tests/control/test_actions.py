@@ -464,9 +464,11 @@ def test_action_prevent_ssa(request, appliance, configure_fleecing, vm, vm_on, p
     try:
         do_scan(vm.crud)
     except TimedOutError:
-        rc, _ = appliance.ssh_client.run_command("grep 'Prevent current event from proceeding.*"
-            "VM Analysis Request.*{}' /var/www/miq/vmdb/log/policy.log".format(vm.name))
-        assert rc == 0, "Action \"Prevent current event from proceeding\" hasn't been invoked"
+        result = appliance.ssh_client.run_command(
+            "grep 'Prevent current event from proceeding.*VM Analysis Request.*{}'"
+            " /var/www/miq/vmdb/log/policy.log".format(vm.name)
+        )
+        assert result.success, 'Action "Prevent current event from proceeding" hasn\'t been invoked'
     else:
         pytest.fail("CFME did not prevent analysing the VM {}".format(vm.name))
 
@@ -499,9 +501,12 @@ def test_action_prevent_host_ssa(request, appliance, host, host_policy):
             num_sec=60, delay=5, fail_func=view.browser.refresh,
             message="Check if Drift History field is changed")
     except TimedOutError:
-            rc, _ = appliance.ssh_client.run_command("grep 'Prevent current event from proceeding.*"
-                "Host Analysis Request.*{}' /var/www/miq/vmdb/log/policy.log".format(host.name))
-            assert rc == 0, "Action \"Prevent current event from proceeding\" hasn't been invoked"
+            result = appliance.ssh_client.run_command(
+                "grep 'Prevent current event from proceeding.*Host Analysis Request.*{}' "
+                "/var/www/miq/vmdb/log/policy.log".format(host.name)
+            )
+            assert result.success, (
+                'Action "Prevent current event from proceeding" hasn\'t been invoked')
     else:
         pytest.fail("CFME did not prevent analysing the Host {}".format(host.name))
 
@@ -529,11 +534,11 @@ def test_action_power_on_logged(request, vm, vm_off, appliance, policy_for_testi
 
     # Search the logs
     def search_logs():
-        rc, stdout = appliance.ssh_client.run_command(
+        result = appliance.ssh_client.run_command(
             "cat /var/www/miq/vmdb/log/policy.log | grep '{}'".format(policy_desc))
-        if rc != 0:  # Nothing found, so shortcut
+        if result.failed:  # Nothing found, so shortcut
             return False
-        for line in stdout.strip().split("\n"):
+        for line in result.output.strip().split("\n"):
             if "Policy success" not in line:
                 continue
             match_string = "policy: [{}], event: [VM Power On], entity name: [{}]".format(
@@ -569,12 +574,12 @@ def test_action_power_on_audit(request, vm, vm_off, appliance, policy_for_testin
 
     # Search the logs
     def search_logs():
-        rc, stdout = appliance.ssh_client.run_command(
+        result = appliance.ssh_client.run_command(
             "cat /var/www/miq/vmdb/log/audit.log | grep '{}'".format(policy_desc)
         )
-        if rc != 0:  # Nothing found, so shortcut
+        if result.failed:  # Nothing found, so shortcut
             return False
-        for line in stdout.strip().split("\n"):
+        for line in result.output.strip().split("\n"):
             if "Policy success" not in line or "MiqAction.action_audit" not in line:
                 continue
             match_string = "policy: [{}], event: [VM Power On]".format(policy_desc)
@@ -727,14 +732,14 @@ def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm
 
 #     # Search the logs
 #     def search_logs():
-#         rc, stdout = ssh_client.run_command(
+#         result = ssh_client.run_command(
 #             "cat /var/www/miq/vmdb/log/automation.log | grep 'MiqAeEvent.build_evm_event' |"
 #             " grep 'event=<\"vm_poweroff\">' | grep 'id: {}'".format(vm.api.object.id)
 #             # not guid, but the ID
 #         )
-#         if rc != 0:  # Nothing found, so shortcut
+#         if result.failed:  # Nothing found, so shortcut
 #             return False
-#         found = [event for event in stdout.strip().split("\n") if len(event) > 0]
+#         found = [event for event in result.output.strip().split("\n") if len(event) > 0]
 #         if not found:
 #             return False
 #         else:

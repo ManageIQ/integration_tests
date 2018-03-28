@@ -132,20 +132,20 @@ def test_priority(
         execute_methods=True
     )
     wait_for(
-        lambda: ssh_client.run_command("cat {}".format(FILE_LOCATION))[0] == 0,
+        lambda: ssh_client.run_command("cat {}".format(FILE_LOCATION)).success,
         num_sec=120, delay=0.5, message="wait for file to appear"
     )
     request.addfinalizer(lambda: ssh_client.run_command("rm -f {}".format(FILE_LOCATION)))
-    rc, stdout = ssh_client.run_command("cat {}".format(FILE_LOCATION))
-    assert stdout.strip() == original_method_write_data
+    result = ssh_client.run_command("cat {}".format(FILE_LOCATION))
+    assert result.output.strip() == original_method_write_data
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
     # END OF FIRST SIMULATION
     # We've checked that the automate method works, so let's copy them to new domain
     original_method.copy_to(copy_domain)
-    copied_method = copy_domain\
-        .namespaces.instantiate(name='System')\
-        .classes.instantiate(name='Request')\
-        .methods.instantiate(name=original_method.name)
+    copied_method = (copy_domain
+        .namespaces.instantiate(name='System')
+        .classes.instantiate(name='Request')
+        .methods.instantiate(name=original_method.name))
     # Set up a different thing to write to the file
     with update(copied_method):
         copied_method.script = METHOD_TORSO.format(copy_method_write_data)
@@ -162,11 +162,11 @@ def test_priority(
         execute_methods=True
     )
     wait_for(
-        lambda: ssh_client.run_command("cat {}".format(FILE_LOCATION))[0] == 0,
+        lambda: ssh_client.run_command("cat {}".format(FILE_LOCATION)).success,
         num_sec=120, delay=0.5, message="wait for file to appear"
     )
-    rc, stdout = ssh_client.run_command("cat {}".format(FILE_LOCATION))
-    assert stdout.strip() == copy_method_write_data
+    result = ssh_client.run_command("cat {}".format(FILE_LOCATION))
+    assert result.output.strip() == copy_method_write_data
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
     # END OF SECOND SIMULATION
     # And last shot, now again with default domain
@@ -182,10 +182,10 @@ def test_priority(
         execute_methods=True
     )
     wait_for(
-        lambda: ssh_client.run_command("cat {}".format(FILE_LOCATION))[0] == 0,
+        lambda: ssh_client.run_command("cat {}".format(FILE_LOCATION)).success,
         num_sec=120, delay=0.5, message="wait for file to appear"
     )
-    rc, stdout = ssh_client.run_command("cat {}".format(FILE_LOCATION))
-    assert stdout.strip() == original_method_write_data
+    result = ssh_client.run_command("cat {}".format(FILE_LOCATION))
+    assert result.output.strip() == original_method_write_data
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
     # END OF LAST SIMULATION

@@ -104,11 +104,8 @@ addr = socket.gethostbyname('%s')
 socket.create_connection((addr, %d), timeout=10)
 sys.exit(0)
             "''' % (addr, port)
-            ret, out = ssh_client.run_command(cmd)
-            if ret == 0:
-                _ports[addr][port] = True
-            else:
-                _ports[addr][port] = False
+            result = ssh_client.run_command(cmd)
+            _ports[addr][port] = result.success
     return _ports[addr][port]
 
 

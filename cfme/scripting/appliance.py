@@ -65,8 +65,8 @@ def upgrade_appliance(appliance_ip, cfme_only, update_to):
     print('Stopping EVM')
     app.evmserverd.stop()
     print('Running yum update')
-    rc, out = app.ssh_client.run_command('yum update {}'.format(cfme), timeout=3600)
-    assert rc == 0, "update failed {}".format(out)
+    result = app.ssh_client.run_command('yum update {}'.format(cfme), timeout=3600)
+    assert result.success, "update failed {}".format(result.output)
     print('Running database migration')
     app.db.migrate()
     app.db.automate_reset()
@@ -90,9 +90,9 @@ def backup_migrate(appliance_ip, db_url, keys_url, backup):
     app = get_appliance(appliance_ip)
     if db_url:
         print('Downloading database backup')
-        rc, out = app.ssh_client.run_command(
+        result = app.ssh_client.run_command(
             'curl -o "/evm_db.backup" "{}"'.format(db_url), timeout=30)
-        assert rc == 0, "Failed to download database: {}".format(out)
+        assert result.success, "Failed to download database: {}".format(result.output)
         backup = '/evm_db.backup'
     else:
         backup = backup
@@ -102,19 +102,19 @@ def backup_migrate(appliance_ip, db_url, keys_url, backup):
     app.db.drop()
     app.db.create()
     print('Restoring database from backup')
-    rc, out = app.ssh_client.run_command(
+    result = app.ssh_client.run_command(
         'pg_restore -v --dbname=vmdb_production {}'.format(backup), timeout=600)
-    assert rc == 0, "Failed to restore new database: {}".format(out)
+    assert result.success, "Failed to restore new database: {}".format(result.output)
     print('Running database migration')
     app.db.migrate()
     app.db.automate_reset()
     if keys_url:
-        rc, out = app.ssh_client.run_command(
+        result = app.ssh_client.run_command(
             'curl -o "/var/www/miq/vmdb/certs/v2_key" "{}v2_key"'.format(keys_url), timeout=15)
-        assert rc == 0, "Failed to download v2_key: {}".format(out)
-        rc, out = app.ssh_client.run_command(
+        assert result.success, "Failed to download v2_key: {}".format(result.output)
+        result = app.ssh_client.run_command(
             'curl -o "/var/www/miq/vmdb/GUID" "{}GUID"'.format(keys_url), timeout=15)
-        assert rc == 0, "Failed to download GUID: {}".format(out)
+        assert result.success, "Failed to download GUID: {}".format(result.output)
     else:
         app.db.fix_auth_key()
     app.db.fix_auth_dbyml()

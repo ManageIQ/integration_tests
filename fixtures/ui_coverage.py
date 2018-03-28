@@ -221,8 +221,8 @@ class CoverageManager(object):
             'cd {config};'
             'grep -q "{require}" preinitializer.rb || echo -e "\\n{require}" >> preinitializer.rb'
         )
-        x, out = self.ipapp.ssh_client.run_command(command_template.format(**replacements))
-        return x == 0
+        result = self.ipapp.ssh_client.run_command(command_template.format(**replacements))
+        return result.success
 
     def _touch_all_the_things(self):
         self.log.info('Establishing baseline coverage by requiring ALL THE THINGS')
@@ -237,7 +237,7 @@ class CoverageManager(object):
         t.start()
 
     def _still_touching_all_the_things(self):
-        return self.ipapp.ssh_client.run_command('pgrep -f thing_toucher.rb', timeout=10).rc == 0
+        return self.ipapp.ssh_client.run_command('pgrep -f thing_toucher.rb', timeout=10).success
 
     def _stop_touching_all_the_things(self):
         self.log.info('Waiting for baseline coverage generator to finish')
