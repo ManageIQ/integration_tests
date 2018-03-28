@@ -67,22 +67,23 @@ def template_type(request):
 def created_template(appliance, template_type):
     method = METHOD_TORSO.replace('CloudFormation', fauxfactory.gen_alphanumeric())
     collection = appliance.collections.orchestration_templates
-    template = collection.create(template_type=templates.get(template_type)[1],
-                                 temp_type=templates.get(template_type)[0],
+    template = collection.create(template_group=templates.get(template_type)[1],
+                                 template_type=templates.get(template_type)[0],
                                  template_name=fauxfactory.gen_alphanumeric(),
-                                 description="my template", content=method)
+                                 description="my template",
+                                 content=method)
     yield template
     template.delete()
 
 
 def test_orchestration_template_crud(appliance, template_type):
-    template_type = template_type
     method = METHOD_TORSO.replace('CloudFormation', fauxfactory.gen_alphanumeric())
     collection = appliance.collections.orchestration_templates
-    template = collection.create(template_type=templates.get(template_type)[1],
-                                 temp_type=templates.get(template_type)[0],
+    template = collection.create(template_group=templates.get(template_type)[1],
+                                 template_type=templates.get(template_type)[0],
                                  template_name=fauxfactory.gen_alphanumeric(),
-                                 description="my template", content=method)
+                                 description="my template",
+                                 content=method)
     assert template.exists
     with update(template):
         template.description = "my edited description"
@@ -90,7 +91,7 @@ def test_orchestration_template_crud(appliance, template_type):
     assert not template.exists
 
 
-def test_copy_template(created_template, template_type):
+def test_copy_template(created_template):
     """Tests Orchestration template copy"""
     copied_method = METHOD_TORSO_copied.replace('CloudFormation', fauxfactory.gen_alphanumeric())
     template = created_template
@@ -104,12 +105,12 @@ def test_name_required_error_validation(appliance, template_type):
     flash_msg = \
         "Error during 'Orchestration Template creation': Validation failed: Name can't be blank"
     copied_method = METHOD_TORSO_copied.replace('CloudFormation', fauxfactory.gen_alphanumeric())
-    tmpl_type = templates.get(template_type)[1]
-    temp_type = templates.get(template_type)[0]
     collection = appliance.collections.orchestration_templates
     with pytest.raises(Exception, match=flash_msg):
-        collection.create(template_type=tmpl_type, template_name=None,
-                          temp_type=temp_type, description="my template",
+        collection.create(template_group=templates.get(template_type)[1],
+                          template_type=templates.get(template_type)[0],
+                          template_name=None,
+                          description="my template",
                           content=copied_method)
 
 
@@ -117,12 +118,12 @@ def test_empty_all_fields_error_validation(appliance, template_type):
     """Tests error validation if we try to create template with all empty fields"""
     flash_msg = \
         "Error during Orchestration Template creation: new template content cannot be empty"
-    tmpl_type = templates.get(template_type)[1]
-    temp_type = templates.get(template_type)[0]
     collection = appliance.collections.orchestration_templates
     with pytest.raises(Exception, match=flash_msg):
-        collection.create(template_type=tmpl_type, template_name=None,
-                          temp_type=temp_type, description=None,
+        collection.create(template_group=templates.get(template_type)[1],
+                          template_type=templates.get(template_type)[0],
+                          template_name=None,
+                          description=None,
                           content='')
 
 
@@ -130,13 +131,13 @@ def test_empty_content_error_validation(appliance, template_type):
     """Tests error validation if content wasn't added during template creation"""
     flash_msg = \
         "Error during Orchestration Template creation: new template content cannot be empty"
-    tmpl_type = templates.get(template_type)[1]
-    temp_type = templates.get(template_type)[0]
     collection = appliance.collections.orchestration_templates
     with pytest.raises(Exception, match=flash_msg):
-        collection.create(template_type=tmpl_type, temp_type=temp_type,
+        collection.create(template_group=templates.get(template_type)[1],
+                          template_type=templates.get(template_type)[0],
                           template_name=fauxfactory.gen_alphanumeric(),
-                          description="my template", content='')
+                          description="my template",
+                          content='')
 
 
 def test_tag_orchestration_template(tag, created_template):
@@ -156,8 +157,6 @@ def test_duplicated_content_error_validation(appliance, created_template, templa
                                              action):
     """Tests that we are not allowed to have duplicated content in different templates"""
     collection = appliance.collections.orchestration_templates
-    tmpl_type = templates.get(template_type)[1]
-    temp_type = templates.get(template_type)[0]
     if action == "copy":
         copy_name = created_template.template_name + "_copied"
         flash_msg = ("Unable to create a new template copy \"{}\": old and new template content "
@@ -168,11 +167,11 @@ def test_duplicated_content_error_validation(appliance, created_template, templa
         flash_msg = "Error during 'Orchestration Template creation': " \
                     "Validation failed: Md5 of content already exists (content must be unique)"
         with pytest.raises(Exception, match=flash_msg):
-            collection.create(template_type=tmpl_type, temp_type=temp_type,
+            collection.create(template_group=templates.get(template_type)[1],
+                              template_type=templates.get(template_type)[0],
                               template_name=fauxfactory.gen_alphanumeric(),
                               description="my template",
-                              content=created_template.content,
-                              )
+                              content=created_template.content)
 
 
 @pytest.mark.uncollectif(lambda template_type: template_type == "vApp" or template_type == "VNF",

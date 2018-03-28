@@ -94,10 +94,10 @@ class DetailsTemplateView(ServicesCatalogView):
 
     @property
     def is_displayed(self):
-        """ Removing last 's' character from template_type.
+        """ Removing last 's' character from template_group.
         For ex. 'CloudFormation Templates' ->  'CloudFormation Template'"""
         return (
-            self.entities.title.text == '{} "{}"'.format(self.context['object'].template_type[:-1],
+            self.entities.title.text == '{} "{}"'.format(self.context['object'].template_group[:-1],
                                                 self.context['object'].template_name) and
             self.orchestration_templates.is_opened
         )
@@ -112,7 +112,7 @@ class TemplateTypeView(ServicesCatalogView):
     @property
     def is_displayed(self):
         return (
-            self.title.text == 'All {}'.format(self.context['object'].template_type) and
+            self.title.text == 'All {}'.format(self.context['object'].template_group) and
             self.orchestration_templates.is_opened
         )
 
@@ -139,7 +139,7 @@ class AddDialogView(DialogForm):
 @attr.s
 class OrchestrationTemplate(BaseEntity, Updateable, Pretty, Taggable):
 
-    template_type = attr.ib()
+    template_group = attr.ib()
     template_name = attr.ib()
     content = attr.ib()
     description = attr.ib(default=None)
@@ -179,7 +179,7 @@ class OrchestrationTemplate(BaseEntity, Updateable, Pretty, Taggable):
         view.add_button.click()
         view.flash.assert_success_message('Orchestration Template "{}" was saved'.format(
             template_name))
-        return self.parent.instantiate(template_type=self.template_type,
+        return self.parent.instantiate(template_group=self.template_group,
                                        description=description,
                                        template_name=template_name,
                                        content=content,
@@ -209,17 +209,17 @@ class OrchestrationTemplatesCollection(BaseCollection):
     """A collection for the :py:class:`cfme.services.catalogs.orchestration_template`"""
     ENTITY = OrchestrationTemplate
 
-    def create(self, template_name, description, template_type,
-               temp_type, draft=None, content=None):
-        self.template_type = template_type
+    def create(self, template_name, description, template_group,
+               template_type, draft=None, content=None):
+        self.template_group = template_group
         view = navigate_to(self, 'AddTemplate')
         view.fill({'name': template_name,
                    'description': description,
-                   'template_type': temp_type,
+                   'template_type': template_type,
                    'draft': draft,
                    'content': content})
         view.add_button.click()
-        template = self.instantiate(template_type=template_type, description=description,
+        template = self.instantiate(template_group=template_group, description=description,
                                     template_name=template_name, content=content, draft=draft)
         view = self.create_view(DetailsTemplateView)
         view.flash.assert_success_message('Orchestration Template '
@@ -249,7 +249,7 @@ class Details(CFMENavigateStep):
 
     def step(self):
         self.view.orchestration_templates.tree.click_path("All Orchestration Templates",
-                                                          self.obj.template_type,
+                                                          self.obj.template_group,
                                                           self.obj.template_name)
 
     def am_i_here(self, *args, **kwargs):
@@ -264,7 +264,7 @@ class TemplateType(CFMENavigateStep):
 
     def step(self):
         self.view.orchestration_templates.tree.click_path("All Orchestration Templates",
-                                                          self.obj.template_type)
+                                                          self.obj.template_group)
 
 
 @navigator.register(OrchestrationTemplate)
