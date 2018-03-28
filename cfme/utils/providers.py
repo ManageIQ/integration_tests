@@ -229,14 +229,12 @@ global_filters['enabled_only'] = ProviderFilter(required_tags=['disabled'], inve
 global_filters['restrict_version'] = ProviderFilter(restrict_version=True)
 
 
-def list_providers(filters=None, use_global_filters=True, appliance=None):
+def list_providers(filters=None, use_global_filters=True):
     """ Lists provider crud objects, global filter optional
 
     Args:
         filters: List if :py:class:`ProviderFilter` or None
         use_global_filters: Will apply global filters as well if `True`, will not otherwise
-        appliance: Optional :py:class:`utils.appliance.IPAppliance` to be passed to provider CRUD
-            objects
 
     Note: Requires the framework to be pointed at an appliance to succeed.
 
@@ -249,13 +247,13 @@ def list_providers(filters=None, use_global_filters=True, appliance=None):
     filters = filters or []
     if use_global_filters:
         filters = filters + global_filters.values()
-    providers = [get_crud(prov_key, appliance=appliance) for prov_key in providers_data]
+    providers = [get_crud(prov_key) for prov_key in providers_data]
     for prov_filter in filters:
         providers = filter(prov_filter, providers)
     return providers
 
 
-def list_providers_by_class(prov_class, use_global_filters=True, appliance=None):
+def list_providers_by_class(prov_class, use_global_filters=True):
     """ Lists provider crud objects of a specific class (or its subclasses), global filter optional
 
     Args:
@@ -269,7 +267,7 @@ def list_providers_by_class(prov_class, use_global_filters=True, appliance=None)
     Returns: List of provider crud objects.
     """
     pf = ProviderFilter(classes=[prov_class])
-    return list_providers(filters=[pf], use_global_filters=use_global_filters, appliance=appliance)
+    return list_providers(filters=[pf], use_global_filters=use_global_filters)
 
 
 def list_provider_keys(provider_type=None):
@@ -304,7 +302,7 @@ def get_class_from_type(prov_type):
         raise UnknownProviderType("Unknown provider type: {}!".format(prov_type))
 
 
-def get_crud(provider_key, appliance=None):
+def get_crud(provider_key):
     """ Creates a Provider object given a management_system key in cfme_data.
 
     Usage:
@@ -316,10 +314,10 @@ def get_crud(provider_key, appliance=None):
     prov_type = prov_config.get('type')
 
     return get_class_from_type(prov_type).from_config(
-        prov_config, provider_key, appliance=appliance)
+        prov_config, provider_key)
 
 
-def get_crud_by_name(provider_name, appliance=None):
+def get_crud_by_name(provider_name):
     """ Creates a Provider object given a management_system name in cfme_data.
 
     Usage:
@@ -329,7 +327,7 @@ def get_crud_by_name(provider_name, appliance=None):
     """
     for provider_key, provider_data in providers_data.items():
         if provider_data.get("name") == provider_name:
-            return get_crud(provider_key, appliance=appliance)
+            return get_crud(provider_key)
     raise NameError("Could not find provider {}".format(provider_name))
 
 

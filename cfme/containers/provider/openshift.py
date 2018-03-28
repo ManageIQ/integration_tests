@@ -207,7 +207,7 @@ class OpenshiftProvider(ContainersProvider):
         return int(view.entities.summary("Relationships").get_text_of("Container Templates"))
 
     @classmethod
-    def from_config(cls, prov_config, prov_key, appliance=None):
+    def from_config(cls, prov_config, prov_key):
 
         endpoints = {}
         token_creds = cls.process_credential_yaml_key(prov_config['credentials'], cred_type='token')
@@ -248,7 +248,6 @@ class OpenshiftProvider(ContainersProvider):
             alerts_type=prov_config.get('alerts_type'),
             endpoints=endpoints,
             provider_data=prov_config,
-            appliance=appliance,
             http_proxy=http_proxy,
             adv_http=adv_http,
             adv_https=adv_https,

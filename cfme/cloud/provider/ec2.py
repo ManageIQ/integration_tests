@@ -66,7 +66,7 @@ class EC2Provider(CloudProvider):
         }
 
     @classmethod
-    def from_config(cls, prov_config, prov_key, appliance=None):
+    def from_config(cls, prov_config, prov_key):
         """Returns the EC" object from configuration"""
         endpoint = EC2Endpoint(**prov_config['endpoints']['default'])
         return cls(name=prov_config['name'],
@@ -74,8 +74,7 @@ class EC2Provider(CloudProvider):
                    region_name=prov_config['region_name'],
                    endpoints={endpoint.name: endpoint},
                    zone=prov_config['server_zone'],
-                   key=prov_key,
-                   appliance=appliance)
+                   key=prov_key)
 
     @staticmethod
     def discover_dict(credential):
