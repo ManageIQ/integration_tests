@@ -292,7 +292,7 @@ def resource_cost(appliance, metric_description, usage, description, rate_type,
 
 
 @pytest.fixture(scope="module")
-def chargeback_costs_custom(resource_usage, new_compute_rate, appliance):
+def chargeback_costs_custom(resource_usage, new_compute_rate, appliance, interval):
     # Estimate Chargeback costs using custom Chargeback rate and resource usage from the DB.
     description = new_compute_rate
 
@@ -304,19 +304,19 @@ def chargeback_costs_custom(resource_usage, new_compute_rate, appliance):
     consumed_hours = resource_usage['consumed_hours']
 
     cpu_used_cost = resource_cost(appliance, 'Used CPU',
-        average_cpu_used_in_mhz, description, 'Compute', consumed_hours)
+        average_cpu_used_in_mhz, description, 'Compute', consumed_hours, interval)
 
     memory_used_cost = resource_cost(appliance, 'Used Memory',
-        average_memory_used_in_mb, description, 'Compute', consumed_hours)
+        average_memory_used_in_mb, description, 'Compute', consumed_hours, interval)
 
     network_used_cost = resource_cost(appliance, 'Used Network I/O',
-        average_network_io, description, 'Compute', consumed_hours)
+        average_network_io, description, 'Compute', consumed_hours, interval)
 
     disk_used_cost = resource_cost(appliance, 'Used Disk I/O',
-        average_disk_io, description, 'Compute', consumed_hours)
+        average_disk_io, description, 'Compute', consumed_hours, interval)
 
     storage_used_cost = resource_cost(appliance, 'Used Disk Storage',
-        average_storage_used, description, 'Storage', consumed_hours)
+        average_storage_used, description, 'Storage', consumed_hours, interval)
 
     return {"cpu_used_cost": cpu_used_cost,
             "memory_used_cost": memory_used_cost,
