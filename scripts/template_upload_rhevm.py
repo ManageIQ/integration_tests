@@ -21,7 +21,7 @@ from cfme.utils import net, trackerbot
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.providers import get_mgmt, list_provider_keys
-from cfme.utils.ssh import SSHClient
+from cfme.utils import ssh
 from cfme.utils.wait import wait_for
 
 lock = Lock()
@@ -103,18 +103,9 @@ def add_glance(api, provider):
         logger.exception("RHV:%r add_glance failed:", provider)
 
 
-def make_ssh_client(rhevip, sshname, sshpass):
-    connect_kwargs = {
-        'username': sshname,
-        'password': sshpass,
-        'hostname': rhevip
-    }
-    return SSHClient(**connect_kwargs)
-
-
 def is_ovirt_engine_running(rhevm_ip, sshname, sshpass):
     try:
-        with make_ssh_client(rhevm_ip, sshname, sshpass) as ssh_client:
+        with ssh.make_client(rhevm_ip, sshname, sshpass) as ssh_client:
             stdout = ssh_client.run_command('systemctl status ovirt-engine')[1]
             # fallback to sysV commands if necessary
             if 'command not found' in stdout:
@@ -434,7 +425,7 @@ def cleanup_empty_dir_on_edomain(path, edomainip, sshname, sshpass, provider_ip,
         command += 'rmdir {}'.format(temp_path)
         logger.info("RHEVM:%r Deleting the empty directories on edomain/vms file...", provider)
 
-        with make_ssh_client(provider_ip, sshname, sshpass) as ssh_client:
+        with ssh.make_client(provider_ip, sshname, sshpass) as ssh_client:
             result = ssh_client.run_command(command)
         if result.failed:
             logger.error("RHEVM:%r Error while deleting the empty directories on path: \n %r",
@@ -677,7 +668,7 @@ def upload_template(rhevip, sshname, sshpass, username, password,
             logger.info("RHEVM:%r The script will now end.", provider)
             return True
         logger.info("RHEVM:%r Downloading .ova file...", provider)
-        with make_ssh_client(rhevip, sshname, sshpass) as ssh_client:
+        with ssh.make_client(rhevip, sshname, sshpass) as ssh_client:
             download_ova(ssh_client, kwargs.get('image_url'))
             try:
                 logger.info("RHEVM:%r Templatizing .ova file", provider)

@@ -18,7 +18,7 @@ from cfme.utils import net, ports, trackerbot
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.providers import list_provider_keys
-from cfme.utils.ssh import SSHClient
+from cfme.utils import ssh
 from cfme.utils.wait import wait_for
 
 lock = Lock()
@@ -38,15 +38,6 @@ def parse_cmd_line():
                         help="Provider of RHOS service", default=None)
     args = parser.parse_args()
     return args
-
-
-def make_ssh_client(rhosip, sshname, sshpass):
-    connect_kwargs = {
-        'username': sshname,
-        'password': sshpass,
-        'hostname': rhosip
-    }
-    return SSHClient(**connect_kwargs)
 
 
 def make_export(username, password, tenant_id, auth_url):
@@ -196,7 +187,7 @@ def upload_template(rhosip, sshname, sshpass, username, password, auth_url, prov
 
         export = make_export(username, password, kwargs.get('tenant_id'), auth_url)
 
-        with make_ssh_client(rhosip, sshname, sshpass) as ssh_client:
+        with ssh.make_client(rhosip, sshname, sshpass) as ssh_client:
             if not check_image_exists(template_name, export, ssh_client):
                 output = upload_qc2_file(ssh_client,
                                          kwargs.get('image_url'),

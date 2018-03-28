@@ -17,7 +17,7 @@ from cfme.utils import net, trackerbot
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.providers import list_provider_keys
-from cfme.utils.ssh import SSHClient
+from cfme.utils import ssh
 from wrapanapi import VMWareSystem
 
 # ovftool sometimes refuses to cooperate. We can try it multiple times to be sure.
@@ -54,15 +54,6 @@ def parse_cmd_line():
     return args
 
 
-def make_ssh_client(rhevip, sshname, sshpass):
-    connect_kwargs = {
-        'username': sshname,
-        'password': sshpass,
-        'hostname': rhevip
-    }
-    return SSHClient(**connect_kwargs)
-
-
 def upload_ova(hostname, username, password, name, datastore,
                cluster, datacenter, url, provider, proxy,
                ovf_tool_client, default_user, default_pass):
@@ -81,7 +72,7 @@ def upload_ova(hostname, username, password, name, datastore,
     logger.info("VSPHERE:%r Running OVFTool", provider)
 
     command = ' '.join(cmd_args)
-    with make_ssh_client(ovf_tool_client, default_user, default_pass) as ssh_client:
+    with ssh.make_client(ovf_tool_client, default_user, default_pass) as ssh_client:
         try:
             result = ssh_client.run_command(command)[1]
         except Exception:

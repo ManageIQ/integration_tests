@@ -18,7 +18,7 @@ from threading import Lock, Thread
 from cfme.utils import trackerbot
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger, add_stdout_handler
-from cfme.utils.ssh import SSHClient
+from cfme.utils import ssh
 from cfme.utils.providers import list_provider_keys
 
 lock = Lock()
@@ -73,15 +73,6 @@ def make_kwargs(args, **kwargs):
             sys.exit(127)
 
     return kwargs
-
-
-def make_ssh_client(ssh_host, ssh_user, ssh_pass):
-    connect_kwargs = {
-        'username': ssh_user,
-        'password': ssh_pass,
-        'hostname': ssh_host
-    }
-    return SSHClient(**connect_kwargs)
 
 
 def download_image_file(image_url, ssh_client):
@@ -200,7 +191,7 @@ def run(**kwargs):
     user = kwargs.get('ssh_user') or credentials['host_default']['username']
     passwd = kwargs.get('ssh_pass') or credentials['host_default']['password']
     # Download file once and thread uploading to different gce regions
-    with make_ssh_client(host, user, passwd) as ssh_client:
+    with ssh.make_client(host, user, passwd) as ssh_client:
         file_name, file_path = download_image_file(kwargs.get('image_url'), ssh_client)
 
     thread_queue = []
@@ -214,7 +205,7 @@ def run(**kwargs):
         template_name = kwargs.get('template_name')
         bucket_name = kwargs.get('bucket_name')
         stream = kwargs.get('stream')
-        with make_ssh_client(host, user, passwd) as ssh_client:
+        with ssh.make_client(host, user, passwd) as ssh_client:
             thread = Thread(target=upload_template,
                             args=(provider,
                                   template_name,

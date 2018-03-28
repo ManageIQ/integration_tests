@@ -20,7 +20,6 @@ from cfme.utils import trackerbot
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.providers import get_mgmt, list_provider_keys
-from cfme.utils.ssh import SSHClient
 from cfme.utils.wait import wait_for
 
 lock = Lock()
@@ -86,15 +85,6 @@ def check_for_ami(ec2, ami_name):
         return None
 
     return id
-
-
-def make_ssh_client(rhevip, sshname, sshpass):
-    connect_kwargs = {
-        'username': sshname,
-        'password': sshpass,
-        'hostname': rhevip
-    }
-    return SSHClient(**connect_kwargs)
 
 
 def download_image_file(image_url):

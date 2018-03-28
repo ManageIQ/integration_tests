@@ -21,9 +21,8 @@ from cfme.utils import net, trackerbot
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.providers import get_mgmt, list_provider_keys
-from cfme.utils.ssh import SSHClient
 from cfme.utils.wait import wait_for
-
+from cfme.utils import ssh
 lock = Lock()
 
 add_stdout_handler(logger)
@@ -57,18 +56,9 @@ def parse_cmd_line():
     return args
 
 
-def make_ssh_client(rhevip, sshname, sshpass):
-    connect_kwargs = {
-        'username': sshname,
-        'password': sshpass,
-        'hostname': rhevip
-    }
-    return SSHClient(**connect_kwargs)
-
-
 def is_ovirt_engine_running(rhevm_ip, sshname, sshpass):
     try:
-        with make_ssh_client(rhevm_ip, sshname, sshpass) as ssh_client:
+        with ssh.make_client(rhevm_ip, sshname, sshpass) as ssh_client:
             stdout = ssh_client.run_command('systemctl status ovirt-engine')[1]
             # fallback to sysV commands if necessary
             if 'command not found' in stdout:

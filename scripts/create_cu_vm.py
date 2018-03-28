@@ -16,7 +16,7 @@ from cfme.exceptions import CUCommandException
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import get_mgmt
-from cfme.utils.ssh import SSHClient
+from cfme.utils import ssh
 from cfme.utils.virtual_machines import deploy_template, _vm_cleanup
 
 
@@ -24,15 +24,6 @@ def command_run(ssh_client, command, message):
     exit_status, output = ssh_client.run_command(command)
     if exit_status != 0:
         raise CUCommandException(message)
-
-
-def make_ssh_client(ip, sshname, sshpass):
-    connect_kwargs = {
-        'username': sshname,
-        'password': sshpass,
-        'hostname': ip
-    }
-    return SSHClient(**connect_kwargs)
 
 
 def config_cu_vm(ssh_client):
@@ -98,7 +89,7 @@ def cu_vm(provider, vm_name, template):
     sshpass = credentials[vm_ssh_creds]['password']
 
     # Create cron jobs to generate disk and network activity on the CU VM.
-    with make_ssh_client(ip, sshname, sshpass) as ssh_client:
+    with ssh.make_client(ip, sshname, sshpass) as ssh_client:
         try:
             config_cu_vm(ssh_client)
         except CUCommandException:
