@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-
+#
+# Tests to validate chargeback costs for daily, weekly, monthly rates.
+#
+# All infra and cloud providers support chargeback reports.
+# But, in order to validate costs for different rates, running the tests on just one provider
+# should suffice.
 import math
 from datetime import date
 
@@ -29,9 +34,8 @@ pytestmark = [
     test_requirements.chargeback,
 ]
 
-
-def new_credential():
-    return Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret='secret')
+# Allowed deviation between the reported value in the Chargeback report and the estimated value.
+DEVIATION = 1
 
 
 @pytest.yield_fixture(scope="module")
@@ -54,7 +58,8 @@ def vm_ownership(enable_candu, provider, appliance):
     try:
         user = appliance.collections.users.create(
             name=provider.name + fauxfactory.gen_alphanumeric(),
-            credential=new_credential(),
+            credential=Credential(principal='uid' + '{}'.format(fauxfactory.gen_alphanumeric()),
+                secret='secret'),
             email='abc@example.com',
             groups=cb_group,
             cost_center='Workload',
@@ -169,11 +174,12 @@ def resource_usage(vm_ownership, appliance, provider):
         ems = appliance.db.client['ext_management_systems']
         metrics = appliance.db.client['metrics']
 
-        rc, out = appliance.ssh_client.run_rails_command(
+        # Capture real-time C&U data
+        ret = appliance.ssh_client.run_rails_command(
             "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
             vm.perf_capture('realtime', 1.hour.ago.utc, Time.now.utc)\""
             .format(provider.id, repr(vm_name)))
-        assert rc == 0, "Failed to capture VM C&U data:".format(out)
+        assert ret.rc == 0, "Failed to capture VM C&U data:".format(ret.output)
 
         with appliance.db.client.transaction:
             result = (
@@ -203,11 +209,12 @@ def resource_usage(vm_ownership, appliance, provider):
 
     appliance.server.settings.disable_server_roles(
         'ems_metrics_coordinator', 'ems_metrics_collector')
-    rc, out = appliance.ssh_client.run_rails_command(
+    # Perfrom rollup of C&U data.
+    ret = appliance.ssh_client.run_rails_command(
         "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
         vm.perf_rollup_range(1.hour.ago.utc, Time.now.utc,'realtime')\"".
         format(provider.id, repr(vm_name)))
-    assert rc == 0, "Failed to rollup VM C&U data:".format(out)
+    assert ret.rc == 0, "Failed to rollup VM C&U data:".format(ret.out)
 
     wait_for(verify_records_rollups_table, [appliance, provider], timeout=600, fail_condition=False,
         message='Waiting for hourly rollups')
@@ -352,7 +359,7 @@ def chargeback_report_custom(vm_ownership, assign_custom_rate, interval):
     report.queue(wait_for_finish=True)
 
     yield list(report.get_saved_reports()[0].data.rows)
-    # report.delete()
+    report.delete()
 
 
 @pytest.yield_fixture(scope="module")
@@ -391,8 +398,9 @@ def test_validate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_cust
             estimated_cpu_usage_cost = chargeback_costs_custom['cpu_used_cost']
             cost_from_report = groups["CPU Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_cpu_usage_cost - 1.0 <= float(cost) \
-                <= estimated_cpu_usage_cost + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_cpu_usage_cost - DEVIATION <= float(cost) \
+                <= estimated_cpu_usage_cost + DEVIATION, \
+                'Estimated cost and report cost do not match'
             break
 
 
@@ -407,8 +415,9 @@ def test_validate_memory_usage_cost(chargeback_costs_custom, chargeback_report_c
             estimated_memory_usage_cost = chargeback_costs_custom['memory_used_cost']
             cost_from_report = groups["Memory Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_memory_usage_cost - 1.0 <= float(cost) \
-                <= estimated_memory_usage_cost + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_memory_usage_cost - DEVIATION <= float(cost) \
+                <= estimated_memory_usage_cost + DEVIATION, \
+                'Estimated cost and report cost do not match'
             break
 
 
@@ -423,8 +432,9 @@ def test_validate_network_usage_cost(chargeback_costs_custom, chargeback_report_
             estimated_network_usage_cost = chargeback_costs_custom['network_used_cost']
             cost_from_report = groups["Network I/O Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_network_usage_cost - 1.0 <= float(cost) \
-                <= estimated_network_usage_cost + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_network_usage_cost - DEVIATION <= float(cost) \
+                <= estimated_network_usage_cost + DEVIATION, \
+                'Estimated cost and report cost do not match'
             break
 
 
@@ -439,8 +449,9 @@ def test_validate_disk_usage_cost(chargeback_costs_custom, chargeback_report_cus
             estimated_disk_usage_cost = chargeback_costs_custom['disk_used_cost']
             cost_from_report = groups["Disk I/O Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_disk_usage_cost - 1.0 <= float(cost) \
-                <= estimated_disk_usage_cost + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_disk_usage_cost - DEVIATION <= float(cost) \
+                <= estimated_disk_usage_cost + DEVIATION, \
+                'Estimated cost and report cost do not match'
             break
 
 
@@ -454,6 +465,7 @@ def test_validate_storage_usage_cost(chargeback_costs_custom, chargeback_report_
             estimated_storage_usage_cost = chargeback_costs_custom['storage_used_cost']
             cost_from_report = groups["Storage Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_storage_usage_cost - 1.0 <= float(cost) \
-                <= estimated_storage_usage_cost + 1.0, 'Estimated cost and report cost do not match'
+            assert estimated_storage_usage_cost - DEVIATION <= float(cost) \
+                <= estimated_storage_usage_cost + DEVIATION, \
+                'Estimated cost and report cost do not match'
             break
