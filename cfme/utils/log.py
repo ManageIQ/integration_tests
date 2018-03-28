@@ -465,12 +465,20 @@ def _configure_warnings():
     # hack to avoid circular imports
     maybe_appliance = sys.modules.get('cfme.utils.appliance')
     if maybe_appliance is not None:
-        # TODO opt-out
-        warnings.simplefilter(
-            'ignore', maybe_appliance.NavigatableDeprecationWarning)
+        # TODO opt-out, follow up with the location of configuring things
+        # these currently cause warnings in case something bad happens
+        # the followup will reposition the setup so it no longer incurrs the issues
+        try:
+            warnings.simplefilter(
+                'ignore', maybe_appliance.NavigatableDeprecationWarning)
+        except AttributeError:
+            pass
+        try:
+            warnings.simplefilter('error',
 
-        warnings.simplefilter('error',
-            maybe_appliance.ApplianceSummoningWarning)
+                maybe_appliance.ApplianceSummoningWarning)
+        except AttributeError:
+            pass
 
     warnings.filterwarnings(
         'ignore', module='entrypoints',
