@@ -472,7 +472,7 @@ def get_eligible_builds(jenkins_data, jenkins_job, cfme_version):
         jenkins_data: (:obj:`collections.namedtuple`) with these
                       attributes:  url, user, token, client
         jenkins_job:  Jenkins job name such as downstream-59z-tests
-        cfme_version:  Versuion CFME sources this coverage is against.
+        cfme_version:  Version CFME sources this coverage is against.
 
     Returns:
         List of eligible builds.  Each build is a (:obj:`collections.namedtuple`)
@@ -822,7 +822,7 @@ def coverage_report_jenkins(jenkins_url, jenkins_jobs, jenkins_user, jenkins_tok
     # Find appliance using sprout if asked to do so:
     if appliance_version is not None:
         # TODO: Upstream support
-        group = 'downstream-' + ''.join(appliance_version.split('.')[:2]) + 'z'
+        group = 'downstream-{}z'.format(''.join(appliance_version.split('.')[:2]))
         sprout = SproutClient.from_config()
         logger.info('requesting an appliance from sprout for %s/%s', group, appliance_version)
         pool_id = sprout.request_appliances(
