@@ -11,17 +11,11 @@ import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.cloud.provider.azure import AzureProvider
-from cfme.cloud.provider.gce import GCEProvider
-from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CustomReport
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-from fixtures.provider import setup_or_skip
 
 pytestmark = [
     pytest.mark.tier(2),
@@ -290,10 +284,10 @@ def resource_cost(appliance, metric_description, usage, description, rate_type,
                 cost = ((d['variable_rate'] * usage) + (d['fixed_rate'] * consumed_hours)) / 24
             elif interval == 'Weekly':
                 cost = ((d['variable_rate'] * usage) +
-                    d['fixed_rate'] * consumed_hours)) / (24 * 7)
+                (d['fixed_rate'] * consumed_hours)) / (24 * 7)
             elif interval == 'Monthly':
                 cost = ((d['variable_rate'] * usage) +
-                    (d['fixed_rate'] * consumed_hours)) / (24 * 30)
+                (d['fixed_rate'] * consumed_hours)) / (24 * 30)
             return cost
 
 
