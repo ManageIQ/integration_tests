@@ -568,21 +568,39 @@ class ReplicatorCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
     TREE_NODE = "Replicator"
-    PRETTY = "Replicator"
+
+    @property
+    def PRETTY(self):  # noqa
+        if self.appliance.version < "5.9.2":
+            return "Replicator"
+        else:
+            return "Container Replicator"
 
 
 class PodCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
     TREE_NODE = "Pod"
-    PRETTY = "Pod"
+
+    @property
+    def PRETTY(self):  # noqa
+        if self.appliance.version < "5.9.2":
+            return "Pod"
+        else:
+            return "Container Pod"
 
 
 class ContainerNodeCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
     TREE_NODE = "Container Node"
-    PRETTY = "Node"
+
+    @property
+    def PRETTY(self):  # noqa
+        if self.appliance.version < "5.9.2":
+            return "Node"
+        else:
+            return "Container Node"
 
 
 class ContainerImageCompliancePolicy(BasePolicy):
@@ -610,21 +628,39 @@ class ReplicatorControlPolicy(BasePolicy):
 
     TYPE = "Control"
     TREE_NODE = "Replicator"
-    PRETTY = "Replicator"
+
+    @property
+    def PRETTY(self):  # noqa
+        if self.appliance.version < "5.9.2":
+            return "Replicator"
+        else:
+            return "Container Replicator"
 
 
 class PodControlPolicy(BasePolicy):
 
     TYPE = "Control"
     TREE_NODE = "Pod"
-    PRETTY = "Pod"
+
+    @property
+    def PRETTY(self):  # noqa
+        if self.appliance.version < "5.9.2":
+            return "Pod"
+        else:
+            return "Container Pod"
 
 
 class ContainerNodeControlPolicy(BasePolicy):
 
     TYPE = "Control"
     TREE_NODE = "Container Node"
-    PRETTY = "Node"
+
+    @property
+    def PRETTY(self):  # noqa
+        if self.appliance.version < "5.9.2":
+            return "Node"
+        else:
+            return "Container Node"
 
 
 class ContainerImageControlPolicy(BasePolicy):

@@ -334,22 +334,40 @@ class VMCondition(BaseCondition):
 class ReplicatorCondition(BaseCondition):
 
     TREE_NODE = "Replicator"
-    PRETTY = "Replicator"
     FIELD_VALUE = "Replicator"
+
+    @property
+    def PRETTY(self):  # noqa
+        if self.appliance.version < "5.9.2":
+            return "Replicator"
+        else:
+            return "Container Replicator"
 
 
 class PodCondition(BaseCondition):
 
     TREE_NODE = "Pod"
-    PRETTY = "Pod"
     FIELD_VALUE = "Pod"
+
+    @property
+    def PRETTY(self):  # noqa
+        if self.appliance.version < "5.9.2":
+            return "Pod"
+        else:
+            return "Container Pod"
 
 
 class ContainerNodeCondition(BaseCondition):
 
     TREE_NODE = "Container Node"
-    PRETTY = "Node"
     FIELD_VALUE = "Node"
+
+    @property
+    def PRETTY(self):  # noqa
+        if self.appliance.version < "5.9.2":
+            return "Node"
+        else:
+            return "Container Node"
 
 
 class ContainerImageCondition(BaseCondition):
