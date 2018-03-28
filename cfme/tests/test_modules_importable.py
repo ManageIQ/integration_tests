@@ -26,7 +26,7 @@ KNOWN_FAILURES = set(ROOT.dirpath().join(x) for x in[
 @pytest.mark.long_running
 def test_import_own_module(module_path):
     if module_path in KNOWN_FAILURES:
-        pytest.skip("%s is a known failed path" % ROOT.dirpath().bestrelpath(module_path))
+        pytest.skip("{} is a known failed path".format(ROOT.dirpath().bestrelpath(module_path)))
     subprocess.check_call(
         [sys.executable, '-c',
         'import sys, py;py.path.local(sys.argv[1]).pyimport()', str(module_path)])

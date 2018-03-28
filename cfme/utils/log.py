@@ -471,14 +471,14 @@ def _configure_warnings():
         try:
             warnings.simplefilter(
                 'ignore', maybe_appliance.NavigatableDeprecationWarning)
-        except AttributeError as e:
-            warnings.warn("incomplete appliance module: %s" % e)
+        except AttributeError:
+            pass
         try:
             warnings.simplefilter('error',
 
                 maybe_appliance.ApplianceSummoningWarning)
-        except AttributeError as e:
-            warnings.warn("incomplete appliance module: %s" % e)
+        except AttributeError:
+            pass
 
     warnings.filterwarnings(
         'ignore', module='entrypoints',
