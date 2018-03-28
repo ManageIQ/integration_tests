@@ -12,8 +12,9 @@ import cfme.intelligence.chargeback.rates as rates
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.vm import VM
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CustomReport
+from cfme.markers.env_markers.provider import ONE
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -21,7 +22,7 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.parametrize('interval', ['Daily', 'Weekly', 'Monthly'],
         ids=['daily_rate', 'weekly_rate', 'monthly_rate'], scope='module'),
-    pytest.mark.provider([RHEVMProvider],
+    pytest.mark.provider([VMwareProvider], selector=ONE,
                        scope='module',
                        required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
     pytest.mark.usefixtures('has_no_providers_modscope', 'setup_provider_modscope'),
