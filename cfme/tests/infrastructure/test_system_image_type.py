@@ -22,7 +22,7 @@ def test_system_image_type_crud(appliance):
     sys_image_type.delete(cancel=False)
 
 
-def test_duplicate_name_error_validation(appliance):
+def test_system_image_duplicate_name_error_validation(appliance):
     """
     Tests a System Image for duplicate name.
     """
@@ -38,7 +38,7 @@ def test_duplicate_name_error_validation(appliance):
     sys_image_type.delete(cancel=False)
 
 
-def test_name_required_error_validation(appliance):
+def test_name_required_error_validation_system_image(appliance):
     """
     Tests a System Image with no name.
     """

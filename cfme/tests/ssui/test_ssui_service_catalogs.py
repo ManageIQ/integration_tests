@@ -1,14 +1,13 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import providers
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme import test_requirements
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.providers import ProviderFilter
-from cfme.markers.env_markers.provider import providers
-
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -22,8 +21,8 @@ pytestmark = [
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_service_catalog_crud(appliance, setup_provider,
-                              context, order_service):
+def test_service_catalog_crud_ssui(appliance, setup_provider,
+                                   context, order_service):
     """Tests Service Catalog in SSUI."""
 
     catalog_item = order_service

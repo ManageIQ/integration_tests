@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.common.vm import VM
@@ -10,7 +11,6 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-from widgetastic.utils import partial_match
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
@@ -34,7 +34,7 @@ def vm_name():
 @pytest.mark.rhv1
 @pytest.mark.tier(1)
 @pytest.mark.parametrize('auto', [True, False], ids=["Auto", "Manual"])
-def test_provision_from_template(appliance, setup_provider, provider, vm_name, smtp_test,
+def test_infra_provision_from_template(appliance, setup_provider, provider, vm_name, smtp_test,
                                  request, provisioning, auto):
     """ Tests provisioning from a template
 

@@ -163,7 +163,7 @@ def wait_for_instance_state(soft_assert, provider, instance, state):
 
     elif state == "terminated":
         # don't check state on the provider, since vm could be gone
-        check_state_func = lambda vm: True  # noqa 
+        check_state_func = lambda vm: True  # noqa
         desired_ui_state = (
             instance.STATE_TERMINATED,
             instance.STATE_ARCHIVED,
@@ -415,7 +415,7 @@ def test_terminate(provider, testing_instance, ensure_vm_running, soft_assert, a
     wait_for_instance_state(soft_assert, provider, testing_instance, state="terminated")
 
 
-def test_power_options_from_on(provider, testing_instance, ensure_vm_running, soft_assert):
+def test_instance_power_options_from_on(provider, testing_instance, ensure_vm_running, soft_assert):
     """ Tests available power options from ON state
 
     Metadata:
@@ -425,7 +425,8 @@ def test_power_options_from_on(provider, testing_instance, ensure_vm_running, so
     check_power_options(soft_assert, testing_instance, 'on')
 
 
-def test_power_options_from_off(provider, testing_instance, ensure_vm_stopped, soft_assert):
+def test_instance_power_options_from_off(provider, testing_instance,
+                                         ensure_vm_stopped, soft_assert):
     """ Tests available power options from OFF state
 
     Metadata:

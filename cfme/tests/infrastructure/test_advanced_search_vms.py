@@ -54,11 +54,11 @@ def vm_advanced_search():
     view.entities.search.remove_search_filters()
 
 
-def test_can_open_advanced_search(vm_advanced_search):
+def test_can_open_vm_advanced_search(vm_advanced_search):
     vm_advanced_search.entities.search.open_advanced_search()
 
 
-def test_filter_without_user_input(vm_advanced_search, vms, subset_of_vms,
+def test_vm_filter_without_user_input(vm_advanced_search, vms, subset_of_vms,
                                    expression_for_vms_subset):
     # Set up the filter
     vm_advanced_search.entities.search.advanced_search(expression_for_vms_subset)
@@ -70,7 +70,8 @@ def test_filter_without_user_input(vm_advanced_search, vms, subset_of_vms,
 
 
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
-def test_filter_with_user_input(vm_advanced_search, vms, subset_of_vms, expression_for_vms_subset):
+def test_vm_filter_with_user_input(
+        vm_advanced_search, vms, subset_of_vms, expression_for_vms_subset):
     vm = sample(subset_of_vms, 1)[0]
     # Set up the filter
     vm_advanced_search.entities.search.advanced_search(
@@ -83,7 +84,7 @@ def test_filter_with_user_input(vm_advanced_search, vms, subset_of_vms, expressi
 
 
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
-def test_filter_with_user_input_and_cancellation(vm_advanced_search, vms, subset_of_vms,
+def test_vm_filter_with_user_input_and_cancellation(vm_advanced_search, vms, subset_of_vms,
                                                  expression_for_vms_subset):
     vm = sample(subset_of_vms, 1)[0]
     # Set up the filter
@@ -95,7 +96,7 @@ def test_filter_with_user_input_and_cancellation(vm_advanced_search, vms, subset
     vm_advanced_search.flash.assert_no_error()
 
 
-def test_filter_save_cancel(vm_advanced_search, vms, subset_of_vms, expression_for_vms_subset):
+def test_vm_filter_save_cancel(vm_advanced_search, vms, subset_of_vms, expression_for_vms_subset):
     filter_name = fauxfactory.gen_alphanumeric()
     # Set up the filter
     vm_advanced_search.entities.search.save_filter(
@@ -108,7 +109,7 @@ def test_filter_save_cancel(vm_advanced_search, vms, subset_of_vms, expression_f
         vm_advanced_search.entities.search.load_filter(filter_name)  # does not exist
 
 
-def test_filter_save_and_load(request, vm_advanced_search, vms, subset_of_vms,
+def test_vm_filter_save_and_load(request, vm_advanced_search, vms, subset_of_vms,
                               expression_for_vms_subset):
     filter_name = fauxfactory.gen_alphanumeric()
     vm = sample(subset_of_vms, 1)[0]
@@ -131,7 +132,7 @@ def test_filter_save_and_load(request, vm_advanced_search, vms, subset_of_vms,
     assert vm in virtual_machines.get_all_vms(do_not_navigate=True)
 
 
-def test_filter_save_and_cancel_load(request, vm_advanced_search):
+def test_vm_filter_save_and_cancel_load(request, vm_advanced_search):
     filter_name = fauxfactory.gen_alphanumeric()
     # Set up the filter
     vm_advanced_search.entities.search.save_filter(
@@ -149,7 +150,7 @@ def test_filter_save_and_cancel_load(request, vm_advanced_search):
     vm_advanced_search.flash.assert_no_error()
 
 
-def test_filter_save_and_load_cancel(request, vms, subset_of_vms, vm_advanced_search):
+def test_vm_filter_save_and_load_cancel(request, vms, subset_of_vms, vm_advanced_search):
     filter_name = fauxfactory.gen_alphanumeric()
     vm = sample(subset_of_vms, 1)[0]
     # Set up the filter
@@ -173,7 +174,7 @@ def test_filter_save_and_load_cancel(request, vms, subset_of_vms, vm_advanced_se
     vm_advanced_search.flash.assert_no_error()
 
 
-def test_quick_search_without_filter(request, vms, subset_of_vms):
+def test_quick_search_without_vm_filter(request, vms, subset_of_vms):
     view = navigate_to(Vm, 'VMsOnly')
     view.flash.assert_no_error()
     vm = sample(subset_of_vms, 1)[0]
@@ -187,7 +188,7 @@ def test_quick_search_without_filter(request, vms, subset_of_vms):
     assert len(all_vms_visible) == 1 and vm in all_vms_visible
 
 
-def test_quick_search_with_filter(vm_advanced_search, vms, subset_of_vms,
+def test_quick_search_with_vm_filter(vm_advanced_search, vms, subset_of_vms,
                                   expression_for_vms_subset):
     vm_advanced_search.entities.search.advanced_search(expression_for_vms_subset)
     vm_advanced_search.flash.assert_no_error()
@@ -200,7 +201,7 @@ def test_quick_search_with_filter(vm_advanced_search, vms, subset_of_vms,
     assert len(all_vms_visible) == 1 and chosen_vm in all_vms_visible
 
 
-def test_can_delete_filter(vm_advanced_search):
+def test_can_delete_vm_filter(vm_advanced_search):
     filter_name = fauxfactory.gen_alphanumeric()
     vm_advanced_search.entities.search.save_filter(
         "fill_count(Virtual Machine.Files, >, 0)", filter_name)
@@ -214,7 +215,7 @@ def test_can_delete_filter(vm_advanced_search):
     vm_advanced_search.flash.assert_no_error()
 
 
-def test_delete_button_should_appear_after_save(request, vm_advanced_search):
+def test_delete_button_should_appear_after_save_vm(request, vm_advanced_search):
     """Delete button appears only after load, not after save"""
     filter_name = fauxfactory.gen_alphanumeric()
     vm_advanced_search.entities.search.save_filter(
@@ -229,7 +230,7 @@ def test_delete_button_should_appear_after_save(request, vm_advanced_search):
         pytest.fail("Could not delete filter right after saving!")
 
 
-def test_cannot_delete_more_than_once(vm_advanced_search):
+def test_cannot_delete_vm_filter_more_than_once(vm_advanced_search):
     """When Delete button appars, it does not want to go away"""
     filter_name = fauxfactory.gen_alphanumeric()
     vm_advanced_search.entities.search.save_filter(

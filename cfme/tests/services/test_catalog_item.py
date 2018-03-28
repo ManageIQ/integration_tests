@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-
 from selenium.common.exceptions import NoSuchElementException
 
 import cfme.tests.configure.test_access_control as tac
-from cfme.base.login import BaseLoggedInPage
 from cfme import test_requirements
+from cfme.base.login import BaseLoggedInPage
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.update import update
@@ -101,7 +100,7 @@ def test_add_button(catalog_item, appliance):
     view.flash.assert_success_message(message)
 
 
-def test_edit_tags(catalog_item):
+def test_edit_tags_catalog_item(catalog_item):
     catalog_item.add_tag("Cost Center *", "Cost Center 001")
     catalog_item.remove_tag("Cost Center *", "Cost Center 001")
 

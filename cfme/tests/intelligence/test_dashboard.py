@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
-import re
+from random import sample
 
 import fauxfactory
 import pytest
+import re
 import requests
-from random import sample
 
 from cfme import test_requirements
 from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
-
 
 pytestmark = [
     test_requirements.dashboard,
@@ -95,7 +94,7 @@ def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards):
         pytest.fail("No dashboard selection tabs present on dashboard!")
 
 
-def test_verify_rss_links(dashboards):
+def test_verify_rss_links_from_dashboards(dashboards):
     """This test verifies that RSS links on dashboard are working.
 
     Prerequisities:

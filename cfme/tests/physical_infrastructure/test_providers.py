@@ -14,7 +14,7 @@ pytest_generate_tests = testgen.generate([LenovoProvider], scope="function")
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 @test_requirements.discovery
-def test_provider_crud(provider, has_no_providers):
+def test_physical_infra_provider_crud(provider, has_no_providers):
     """Tests provider add with good credentials
 
     Metadata:
