@@ -41,7 +41,7 @@ def test_workload_smartstate_analysis(appliance, request, scenario):
         'test_name': 'SmartState Analysis',
         'appliance_roles': ', '.join(roles_smartstate),
         'scenario': scenario}
-    monitor_thread = SmemMemoryMonitor(appliance.ssh_client(), scenario_data)
+    monitor_thread = SmemMemoryMonitor(scenario_data, appliance)
 
     def cleanup_workload(scenario, from_ts, quantifiers, scenario_data):
         starttime = time.time()
@@ -51,7 +51,7 @@ def test_workload_smartstate_analysis(appliance, request, scenario):
         monitor_thread.grafana_urls = g_urls
         monitor_thread.signal = False
         monitor_thread.join()
-        add_workload_quantifiers(quantifiers, scenario_data)
+        add_workload_quantifiers(quantifiers, scenario_data, appliance)
         timediff = time.time() - starttime
         logger.info('Finished cleaning up monitoring thread in {}'.format(timediff))
     request.addfinalizer(lambda: cleanup_workload(scenario, from_ts, quantifiers, scenario_data))

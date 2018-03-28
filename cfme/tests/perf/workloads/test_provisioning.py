@@ -88,7 +88,7 @@ def test_provisioning(appliance, request, scenario):
         'test_name': 'Provisioning',
         'appliance_roles': ', '.join(roles_provisioning),
         'scenario': scenario}
-    monitor_thread = SmemMemoryMonitor(appliance.ssh_client(), scenario_data)
+    monitor_thread = SmemMemoryMonitor(scenario_data, appliance)
 
     provision_order = []
 
@@ -110,7 +110,7 @@ def test_provisioning(appliance, request, scenario):
         quantifiers['VMs_To_Delete_In_Finalizer'] = final_vm_size
         quantifiers['VMs_Deleted_In_Finalizer'] = final_vm_size - len(vms_to_cleanup)
         quantifiers['Leftover_VMs'] = vms_to_cleanup
-        add_workload_quantifiers(quantifiers, scenario_data)
+        add_workload_quantifiers(quantifiers, scenario_data, appliance)
         timediff = time.time() - starttime
         logger.info('Finished cleaning up monitoring thread in {}'.format(timediff))
 
