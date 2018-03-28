@@ -54,6 +54,11 @@ def pytest_unconfigure(config):
         local_dir.ensure(dir=True)
 
         holder = config.pluginmanager.get_plugin('appliance-holder')
+        if holder is None:
+            # No appliances to fetch logs from
+            logger.warning('No logs collected, appliance holder is empty')
+            return
+
         written_files = []
         for app in holder.appliances:
             with app.ssh_client as ssh_client:
