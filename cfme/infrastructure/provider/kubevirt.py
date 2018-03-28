@@ -17,8 +17,8 @@ class KubeVirtProvider(InfraProvider):
             appliance=kwargs.get('appliance'))
 
     def create(self, *args, **kwargs):
-        # KubeVirt infra provider is automatically added in appliance when adding a container provider,
-        # with selecting the virtualization option
+        # KubeVirt infra provider is automatically added in appliance when adding
+        # a container provider, with selecting the virtualization option
         # so Override the standard behaviour to actually create the parent container provider first
         return self.parent_provider.create()
 
