@@ -8,7 +8,9 @@ from cfme.automate.simulation import simulate
 from cfme.control.explorer import alert_profiles
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
+from cfme.services.service_catalogs.ui import OrderServiceCatalogView
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.conf import credentials
 from cfme.utils.update import update
 from cfme.utils.wait import TimedOutError, wait_for
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -51,6 +53,19 @@ def ansible_repository(appliance, wait_for_ansible):
 
     if repository.exists:
         repository.delete()
+
+
+@pytest.yield_fixture(scope="module")
+def ansible_credential(appliance, ansible_repository, full_template_modscope):
+    credential = appliance.collections.ansible_credentials.create(
+        fauxfactory.gen_alpha(),
+        "Machine",
+        username=credentials[full_template_modscope["creds"]]["username"],
+        password=credentials[full_template_modscope["creds"]]["password"]
+    )
+    yield credential
+    if credential.exists:
+        credential.delete()
 
 
 @pytest.yield_fixture(scope='module')
@@ -160,20 +175,16 @@ def ansible_catalog_item(appliance, ansible_repository):
         cat_item.delete()
 
 
-@pytest.yield_fixture(params=["Localhost", "Target Machine", "Specific Hosts"],
-                      ids=["localhost", "target_machine", "specific_hosts"])
-def custom_vm_button(appliance, ansible_catalog_item, request, full_template_vm):
+@pytest.yield_fixture(scope="module")
+def custom_vm_button(appliance, ansible_catalog_item):
     buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
         type=appliance.collections.button_groups.VM_INSTANCE)
-    hosts = full_template_vm.ip_address if request.param == "Specific Hosts" else None
     button = buttongroup.buttons.create(
         type="Ansible Playbook",
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
-        inventory=request.param,
-        hosts=hosts,
         playbook_cat_item=ansible_catalog_item.name)
     yield button
     button.delete_if_exists()
@@ -185,8 +196,7 @@ def service_request(appliance, ansible_catalog_item):
     request_desc = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
     service_request_ = appliance.collections.requests.instantiate(request_desc)
     yield service_request_
-
-    if service_request_.exists:
+    if service_request_.exists():
         service_request_.remove_request()
 
 
@@ -290,20 +300,58 @@ def test_ansible_playbook_button_crud(ansible_catalog_item, appliance, request):
     assert not button.exists
 
 
-def test_custom_button_order_ansible_playbook_service(full_template_vm_modscope, custom_vm_button,
-        service_request, service, appliance):
+def test_embedded_ansible_custom_button_localhost(full_template_vm_modscope, custom_vm_button,
+        appliance, service_request, service, ansible_catalog_item):
+    with update(custom_vm_button):
+        custom_vm_button.inventory = "Localhost"
     view = navigate_to(full_template_vm_modscope, "Details")
     view.toolbar.custom_button(custom_vm_button.group.text).item_select(custom_vm_button.text)
-    submit_button = WButton(appliance.browser.widgetastic, "Submit")
-    submit_button.click()
+    order_dialog_view = appliance.browser.create_view(OrderServiceCatalogView)
+    order_dialog_view.submit_button.wait_displayed()
+    order_dialog_view.fields("credential").fill("CFME Default Credential")
+    order_dialog_view.submit_button.click()
     wait_for(service_request.exists, num_sec=600)
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
     hosts = view.provisioning.details.get_text_of("Hosts")
-    if custom_vm_button.inventory == "Localhost":
-        assert hosts == "localhost"
-    else:
-        assert hosts == full_template_vm_modscope.ip_address
+    assert hosts == "localhost"
+    assert view.provisioning.results.get_text_of("Status") == "successful"
+
+
+def test_embedded_ansible_custom_button_target_machine(full_template_vm_modscope, custom_vm_button,
+        ansible_credential, appliance, service_request, service):
+    with update(custom_vm_button):
+        custom_vm_button.inventory = "Target Machine"
+    view = navigate_to(full_template_vm_modscope, "Details")
+    view.toolbar.custom_button(custom_vm_button.group.text).item_select(custom_vm_button.text)
+    order_dialog_view = appliance.browser.create_view(OrderServiceCatalogView)
+    order_dialog_view.submit_button.wait_displayed()
+    order_dialog_view.fields("credential").fill(ansible_credential.name)
+    order_dialog_view.submit_button.click()
+    wait_for(service_request.exists, num_sec=600)
+    service_request.wait_for_request()
+    view = navigate_to(service, "Details")
+    hosts = view.provisioning.details.get_text_of("Hosts")
+    assert hosts == full_template_vm_modscope.ip_address
+    assert view.provisioning.results.get_text_of("Status") == "successful"
+
+
+def test_embedded_ansible_custom_button_specific_hosts(full_template_vm_modscope, custom_vm_button,
+        ansible_credential, appliance, service_request, service):
+    with update(custom_vm_button):
+        custom_vm_button.inventory = "Specific Hosts"
+        custom_vm_button.hosts = full_template_vm_modscope.ip_address
+    view = navigate_to(full_template_vm_modscope, "Details")
+    view.toolbar.custom_button(custom_vm_button.group.text).item_select(custom_vm_button.text)
+    order_dialog_view = appliance.browser.create_view(OrderServiceCatalogView)
+    order_dialog_view.submit_button.wait_displayed()
+    order_dialog_view.fields("credential").fill(ansible_credential.name)
+    order_dialog_view.submit_button.click()
+    wait_for(service_request.exists, num_sec=600)
+    service_request.wait_for_request()
+    view = navigate_to(service, "Details")
+    hosts = view.provisioning.details.get_text_of("Hosts")
+    assert hosts == full_template_vm_modscope.ip_address
     assert view.provisioning.results.get_text_of("Status") == "successful"
 
 

@@ -206,8 +206,12 @@ class BaseButton(BaseEntity, Updateable):
                 view.flash.assert_message(
                     'Custom Button "{}" was saved'.format(updates.get('hover', self.hover)))
         else:
-            view.flash.assert_message(
-                'Edit of Button "{}" was cancelled by the user'.format(self.text))
+            if self.appliance.version < '5.9':
+                view.flash.assert_message(
+                    'Edit of Button "{}" was cancelled by the user'.format(self.text))
+            else:
+                view.flash.assert_message(
+                    'Edit of Custom Button "{}" was cancelled by the user'.format(self.text))
 
     def delete(self, cancel=False):
         view = navigate_to(self, 'Details')
