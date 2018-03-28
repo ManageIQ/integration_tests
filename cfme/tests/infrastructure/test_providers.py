@@ -150,6 +150,8 @@ def test_api_port_max_character_validation_infra():
 
 @pytest.mark.rhv1
 @pytest.mark.usefixtures('has_no_infra_providers')
+@pytest.mark.meta(blockers=[BZ(1559796, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.tier(1)
 def test_providers_discovery(request, provider):
     """Tests provider discovery
