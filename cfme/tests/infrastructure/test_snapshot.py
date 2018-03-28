@@ -50,22 +50,14 @@ def provision_vm(provider, template):
 def small_test_vm(setup_provider_modscope, provider, small_template_modscope, request):
     vm = provision_vm(provider, small_template_modscope)
     yield vm
-
-    try:
-        vm.delete_from_provider()
-    except Exception:
-        logger.exception('Exception deleting test vm "%s" on %s', vm.name, provider.name)
+    vm.cleanup_on_provider()
 
 
 @pytest.yield_fixture(scope="module")
 def full_test_vm(setup_provider_modscope, provider, full_template_modscope, request):
     vm = provision_vm(provider, full_template_modscope)
     yield vm
-
-    try:
-        vm.delete_from_provider()
-    except Exception:
-        logger.exception('Exception deleting test vm "%s" on %s', vm.name, provider.name)
+    vm.cleanup_on_provider()
 
 
 def new_snapshot(test_vm, has_name=True, memory=False, create_description=True):

@@ -4,8 +4,8 @@ import pytest
 from widgetastic.utils import partial_match
 
 from cfme import test_requirements
-from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
+from cfme.common.vm import VM
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
@@ -94,7 +94,7 @@ def test_tagdialog_catalog_item(appliance, provider, catalog_item, request):
         test_flag: provision
     """
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
-    request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
+    request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())
     dialog_values = {'service_level': "Gold"}
     service_catalogs = ServiceCatalogs(appliance, catalog=catalog_item.catalog,
                                        name=catalog_item.name,

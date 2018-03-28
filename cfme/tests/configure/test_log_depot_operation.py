@@ -12,11 +12,12 @@ import pytest
 import re
 
 from cfme import test_requirements
+from cfme.common.vm import VM
 from cfme.utils import conf, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.ftp import FTPClient
-from cfme.utils.providers import get_mgmt
+from cfme.utils.providers import get_crud
 from cfme.utils.update import update
 from cfme.utils.version import current_version
 from cfme.utils.virtual_machines import deploy_template
@@ -107,12 +108,12 @@ def depot_machine_ip():
     data = conf.cfme_data.get("log_db_operations", {})
     depot_provider_key = data["log_db_depot_template"]["provider"]
     depot_template_name = data["log_db_depot_template"]["template_name"]
-    prov = get_mgmt(depot_provider_key)
+    prov_crud = get_crud(depot_provider_key)
     deploy_template(depot_provider_key,
                     depot_machine_name,
                     template_name=depot_template_name)
-    yield prov.get_ip_address(depot_machine_name)
-    prov.delete_vm(depot_machine_name)
+    yield prov_crud.mgmt.get_ip_address(depot_machine_name)
+    VM.factory(depot_machine_name, prov_crud).cleanup_on_provider()
 
 
 @pytest.fixture(scope="module")

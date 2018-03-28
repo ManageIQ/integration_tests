@@ -25,7 +25,7 @@ def small_vm(provider, small_template_modscope):
 
     yield vm
 
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
 
 
 @pytest.fixture(scope='function')

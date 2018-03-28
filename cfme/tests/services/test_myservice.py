@@ -3,7 +3,7 @@ import pytest
 from datetime import datetime
 
 from cfme import test_requirements
-from cfme.common.provider import cleanup_vm
+from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
@@ -59,7 +59,7 @@ def myservice(appliance, provider, catalog_item, request):
 
     yield catalog_item.name, vm_name
 
-    cleanup_vm(vm_name, provider)
+    VM.factory(vm_name, provider).cleanup_on_provider()
 
 
 @pytest.mark.parametrize('context', [ViaUI])

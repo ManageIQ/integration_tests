@@ -104,8 +104,7 @@ def compliance_vm(configure_fleecing, provider, full_template_modscope):
     if not vm.exists:
         vm.wait_to_appear(timeout=900)
     yield vm
-    if provider.mgmt.does_vm_exist(vm.name):
-        provider.mgmt.delete_vm(vm.name)
+    vm.cleanup_on_provider()
     provider.refresh_provider_relationships()
 
 

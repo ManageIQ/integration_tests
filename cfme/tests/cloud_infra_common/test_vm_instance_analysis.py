@@ -9,7 +9,6 @@ from cfme.cloud.provider import CloudProvider, CloudInfraProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm import VM, Template
-from cfme.common.provider import cleanup_vm
 from cfme.common.vm_views import DriftAnalysis
 from cfme.configure import configuration
 from cfme.configure.tasks import is_vm_analysis_finished, TasksView
@@ -169,7 +168,7 @@ def ssa_vm(request, local_setup_provider, provider, vm_analysis_provisioning_dat
     """ Fixture to provision instance on the provider """
     vm_name = 'test-ssa-{}-{}'.format(fauxfactory.gen_alphanumeric(), analysis_type)
     vm = VM.factory(vm_name, provider, template_name=vm_analysis_provisioning_data.image)
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
+    request.addfinalizer(lambda: vm.cleanup_on_provider())
 
     provision_data = vm_analysis_provisioning_data.copy()
     del provision_data['image']

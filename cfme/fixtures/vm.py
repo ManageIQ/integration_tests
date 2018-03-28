@@ -27,8 +27,7 @@ def _create_vm(request, template, provider, vm_name):
 
     @request.addfinalizer
     def _cleanup():
-        if provider.mgmt.does_vm_exist(vm_obj.name):
-            provider.mgmt.delete_vm(vm_obj.name)
+        vm_obj.cleanup_on_provider()
         provider.refresh_provider_relationships()
 
     return vm_obj

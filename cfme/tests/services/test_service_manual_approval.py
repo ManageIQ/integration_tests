@@ -2,7 +2,7 @@
 import fauxfactory
 import pytest
 
-from cfme.common.provider import cleanup_vm
+from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.automate.explorer.domain import DomainCollection
@@ -65,7 +65,7 @@ def test_service_manual_approval(appliance, provider, modify_instance,
         test_flag: provision
     """
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
-    request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
+    request.addfinalizer(lambda: VM.factory(vm_name, provider).cleanup_on_provider())
 
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()

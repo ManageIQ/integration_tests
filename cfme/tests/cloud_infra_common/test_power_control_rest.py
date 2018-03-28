@@ -28,20 +28,13 @@ def vm_name():
     return random_vm_name('pwrctl')
 
 
-@pytest.fixture(scope="function")
+@pytest.yield_fixture(scope="function")
 def vm_obj(request, provider, setup_provider, small_template, vm_name):
     vm_obj = VM.factory(vm_name, provider, template_name=small_template.name)
 
-    @request.addfinalizer
-    def _delete_vm():
-        try:
-            provider.mgmt.delete_vm(vm_obj.name)
-        except Exception:
-            logger.warning("Failed to delete vm `{}`.".format(vm_obj.name))
-
     vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip="default")
-    return vm_obj
-
+    yield vm_obj
+    vm_obj.cleanup_on_provider()
 
 def wait_for_vm_state_change(vm_obj, state):
     vm = vm_obj.get_vm_via_rest()

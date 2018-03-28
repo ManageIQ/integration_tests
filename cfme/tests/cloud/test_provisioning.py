@@ -17,6 +17,7 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.common.vm import VM
 from cfme.utils import error
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
@@ -117,7 +118,7 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name, t
 
     logger.info('Fixture cleanup, deleting test instance: %s', instance.name)
     try:
-        instance.delete_from_provider()
+        instance.cleanup_on_provider()
     except Exception as ex:
         logger.warning('Exception while deleting instance fixture, continuing: {}'
                        .format(ex.message))
@@ -265,7 +266,8 @@ def test_provision_from_template_using_rest(
                              'root_password': vm_password}})
 
     request.addfinalizer(
-        lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
+        lambda: VM.factory(vm_name, provider).cleanup_on_provider()
+    )
 
     response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)[0]
     assert_response(appliance)
@@ -417,7 +419,8 @@ def test_manual_placement_using_rest(
         provision_data['vm_fields']['cloud_tenant'] = cloud_tenant_id
 
     request.addfinalizer(
-        lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
+        lambda: VM.factory(vm_name, provider).cleanup_on_provider()
+    )
 
     response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)[0]
     assert_response(appliance)
@@ -525,7 +528,7 @@ def test_provision_from_template_with_attached_disks(request, testing_instance, 
             soft_assert(vm_name in provider.mgmt.volume_attachments(volume_id))
         for volume, device in device_mapping:
             soft_assert(provider.mgmt.volume_attachments(volume)[vm_name] == device)
-        instance.delete_from_provider()  # To make it possible to delete the volume
+        instance.cleanup_on_provider()  # To make it possible to delete the volume
         wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
 
 
@@ -652,7 +655,7 @@ def test_provision_with_additional_volume(request, testing_instance, provider, s
         volume = provider.mgmt.get_volume(volume_id)
         assert volume.size == 3
     finally:
-        instance.delete_from_provider()
+        instance.cleanup_on_provider()
         wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
         if "volume_id" in locals():  # To handle the case of 1st or 2nd assert
             if provider.mgmt.volume_exists(volume_id):

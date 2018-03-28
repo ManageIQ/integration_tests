@@ -1081,15 +1081,6 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, Taggable):
             return True
 
 
-def cleanup_vm(vm_name, provider):
-    try:
-        logger.info('Cleaning up VM %s on provider %s', vm_name, provider.key)
-        provider.mgmt.delete_vm(vm_name)
-    except:
-        # The mgmt_sys classes raise Exception :\
-        logger.warning('Failed to clean up VM %s on provider %s', vm_name, provider.key)
-
-
 class DefaultEndpoint(object):
     credential_class = Credential
     name = 'default'

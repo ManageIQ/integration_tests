@@ -2,7 +2,7 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.common.provider import cleanup_vm
+from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils import normalize_text
@@ -52,7 +52,7 @@ def test_provision_from_template(appliance, setup_provider, provider, vm_name, s
 
     template = provisioning['template']
 
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
+    request.addfinalizer(lambda: VM.factory(vm_name, provider).cleanup_on_provider())
 
     provisioning_data = {
         'catalog': {
@@ -108,7 +108,7 @@ def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_t
     # It will provision two of them
     vm_names = [vm_name + "001", vm_name + "002"]
     request.addfinalizer(
-        lambda: [cleanup_vm(vmname, provider) for vmname in vm_names])
+        lambda: [VM.factory(name, provider).cleanup_on_provider() for name in vm_names])
 
     provisioning_data = {
         'catalog': {
@@ -154,13 +154,14 @@ def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_t
         provision_request.edit_request(values=modifications)
         vm_names = [new_vm_name]  # Will be just one now
         request.addfinalizer(
-            lambda: cleanup_vm(new_vm_name, provider))
+            lambda: VM.factory(new_vm_name, provider).cleanup_on_provider()
+        )
     else:
         # Manual approval
         provision_request.approve_request(method='ui', reason="Approved")
         vm_names = [vm_name + "001", vm_name + "002"]  # There will be two VMs
         request.addfinalizer(
-            lambda: [cleanup_vm(vmname, provider) for vmname in vm_names])
+            lambda: [VM.factory(name, provider).cleanup_on_provider() for name in vm_names])
     wait_for(
         lambda:
         len(filter(

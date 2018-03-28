@@ -606,31 +606,31 @@ class VM(BaseVM):
             return False
 
     def delete_from_provider(self):
-        logger.info("Begin delete_from_provider")
-        if self.provider.mgmt.does_vm_exist(self.name):
-            # InfraProviders require VM to be stopped before removal
-            if self.provider.one_of(InfraProvider):
-                try:
-                    if self.provider.mgmt.is_vm_suspended(self.name):
-                        logger.debug("Powering up VM %s to shut it down correctly on %s.",
-                                    self.name, self.provider.key)
-                        self.provider.mgmt.start_vm(self.name)
-                        self.provider.mgmt.wait_vm_steady(self.name)
-                        self.provider.mgmt.stop_vm(self.name)
-                        self.provider.mgmt.wait_vm_steady(self.name)
-                except exceptions.ActionNotSupported:
-                    # Action is not supported on mgmt system. Simply continue
-                    pass
-            # One more check (for the suspended one)
-            if self.provider.mgmt.does_vm_exist(self.name):
-                try:
-                    logger.info("Mgmt System delete_vm")
-                    return self.provider.mgmt.delete_vm(self.name)
-                except exceptions.VMInstanceNotFound:
-                    # Does not exist already
-                    return True
-        else:
+        """
+        Delete VM/instance from provider.
+
+        You cannot expect additional cleanup of attached resources by calling this method. You
+        should use cleanup_on_provider() to guarantee that.
+        """
+        logger.info("Begin delete_from_provider for VM '{}'".format(self.name))
+        if not self.provider.mgmt.does_vm_exist(self.name):
+            logger.info("VM does '{}' not exist on provider, nothing to delete".format(self.name))
             return True
+
+        # Some providers require VM to be stopped before removal
+        logger.info(
+            "delete: ensuring VM '{}' on provider '{}' is powered off".format(
+                self.name, self.provider.key)
+        )
+        self.ensure_state_on_provider(self.STATE_OFF)
+
+        logger.info("delete: removing VM '{}'".format(self.name))
+        try:
+            return self.provider.mgmt.delete_vm(self.name)
+        except Exception:
+            logger.exception("delete for vm '{}' failed".format(self.name))
+
+        return True
 
     def create_on_provider(self, timeout=900, find_in_cfme=False, delete_on_failure=True, **kwargs):
         """Create the VM on the provider via MgmtSystem. `deploy_template` handles errors during
@@ -773,6 +773,18 @@ class VM(BaseVM):
             )
         else:
             raise ValueError("Invalid state '{}'".format(state))
+
+    def cleanup_on_provider(self):
+        """
+        Method to remove a VM from the provider after tests.
+
+        Checks that the VM exists on the provider, ensures it is in 'powered off' state,
+        and deletes it. Any exceptions raised during delete will be logged only.
+
+        This method may be overriden at the provider-specific level to delete and
+        then do some additional work afterwards (like deleting resources attached to this VM)
+        """
+        self.delete_from_provider()
 
     def set_retirement_date(self, when=None, offset=None, warn=None):
         """Overriding common method to use widgetastic views/widgets properly

@@ -5,7 +5,7 @@ import pytest
 from widgetastic.utils import partial_match
 
 from cfme import test_requirements
-from cfme.common.provider import cleanup_vm
+from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
@@ -113,7 +113,7 @@ def test_rhev_iso_servicecatalog(appliance, setup_provider, provider, catalog_it
         test_flag: iso, provision
     """
     vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
-    request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
+    request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     # nav to requests page happens on successful provision

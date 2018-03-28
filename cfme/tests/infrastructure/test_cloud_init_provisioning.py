@@ -2,7 +2,7 @@
 import fauxfactory
 import pytest
 
-from cfme.common.provider import cleanup_vm
+from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.infrastructure.pxe import get_template_from_config
@@ -47,7 +47,7 @@ def test_provision_cloud_init(appliance, setup_provider, provider, setup_ci_temp
     template = provisioning.get('ci-image') or provisioning['image']['name']
     host, datastore, vlan = map(provisioning.get, ('host', 'datastore', 'vlan'))
 
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
+    request.addfinalizer(lambda: VM.factory(vm_name, provider).cleanup_on_provider())
 
     provisioning_data = {
         'catalog': {

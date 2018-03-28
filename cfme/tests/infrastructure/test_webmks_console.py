@@ -28,17 +28,13 @@ def vm_obj(request, provider, setup_provider, console_template, vm_name):
     """VM creation/deletion fixture.
 
     Create a VM on the provider with the given template, and return the vm_obj.
-    Also, remove VM from provider using nested function _delete_vm
-    after the test is completed.
+
+    Clean up VM when test is done.
     """
     vm_obj = VM.factory(vm_name, provider, template_name=console_template.name)
     vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip="default")
     yield vm_obj
-    try:
-        vm_obj.delete_from_provider()
-    except Exception:
-        logger.warning("Failed to delete vm `{}`.".format(vm_obj.name))
-
+    vm_obj.cleanup_on_provider()
 
 @pytest.yield_fixture
 def ssh_client(vm_obj, console_template):

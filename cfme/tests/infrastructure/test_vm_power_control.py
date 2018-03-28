@@ -41,7 +41,7 @@ def testing_vm(request, provider, vm_name):
     @request.addfinalizer
     def _cleanup():
         if provider.mgmt.does_vm_exist(vm.name):
-            vm.delete_from_provider()
+            vm.cleanup_on_provider()
         if_scvmm_refresh_provider(provider)
 
     if not provider.mgmt.does_vm_exist(vm.name):
@@ -74,7 +74,7 @@ def testing_vm_tools(request, provider, vm_name, full_template):
 
     @request.addfinalizer
     def _cleanup():
-        vm.delete_from_provider()
+        vm.cleanup_on_provider()
         if_scvmm_refresh_provider(provider)
 
     if not provider.mgmt.does_vm_exist(vm.name):

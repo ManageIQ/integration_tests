@@ -32,18 +32,11 @@ def vm_obj(request, provider, setup_provider, console_template, vm_name):
     """
     Create a VM on the provider with the given template, and return the vm_obj.
 
-    Also, it will remove VM from provider using nested function _delete_vm
-    after the test is completed.
-
+    Cleanup VM when done
     """
     vm_obj = VM.factory(vm_name, provider, template_name=console_template.name)
 
-    @request.addfinalizer
-    def _delete_vm():
-        try:
-            vm_obj.delete_from_provider()
-        except Exception:
-            logger.warning("Failed to delete vm `{}`.".format(vm_obj.name))
+    request.addfinalizer(lambda: vm_obj.cleanup_on_provider())
 
     vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip="default")
     if provider.one_of(OpenStackProvider):

@@ -35,11 +35,7 @@ def vm_obj(provider, setup_provider_modscope, small_template_modscope):
 
     yield new_vm
 
-    if provider.mgmt.does_vm_exist(new_vm.name):
-        try:
-            provider.mgmt.delete_vm(new_vm.name)
-        except Exception:
-            logger.warning('Failed to delete vm `{}`.'.format(new_vm.name))
+    new_vm.cleanup_on_provider()
 
 
 @pytest.fixture(scope='module')

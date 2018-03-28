@@ -4,9 +4,9 @@ import pytest
 from widgetastic.utils import partial_match
 
 from cfme import test_requirements
-from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
+from cfme.common.vm import VM
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
 from cfme.utils.conf import cfme_data
@@ -122,8 +122,8 @@ def test_pxe_servicecatalog(appliance, setup_provider, provider, catalog_item, r
     Metadata:
         test_flag: pxe, provision
     """
-    vm_name = catalog_item.prov_data['catalog']["vm_name"]
-    request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
+    vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
+    request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     # nav to requests page happens on successful provision

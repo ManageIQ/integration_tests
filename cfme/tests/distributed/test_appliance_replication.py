@@ -99,11 +99,7 @@ def test_vm(virtualcenter_provider):
     else:
         logger.info("recycling deployed vm %r on provider %r", vm_name, virtualcenter_provider.key)
     yield vm
-
-    try:
-        virtualcenter_provider.mgmt.delete_vm(vm_name=vm_name)
-    except Exception:
-        logger.exception('Failed deleting VM "%r" on "%r"', vm_name, virtualcenter_provider.name)
+    vm.cleanup_on_provider()
 
 
 @pytest.mark.tier(2)

@@ -21,7 +21,7 @@ def new_vm(provider, request):
         vm = Vm.factory(random_vm_name(context='cockpit'), provider)
     if not provider.mgmt.does_vm_exist(vm.name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
-        request.addfinalizer(vm.delete_from_provider)
+        request.addfinalizer(vm.cleanup_on_provider)
     return vm
 
 
