@@ -148,7 +148,11 @@ def delete_stacks(provider_mgmt, excluded_stacks, stack_template, output):
                 some_date = today - timedelta(days=1)
                 if stack.creation_time < some_date:
                     stack_list.append([provider_name, stack.stack_name])
-                    provider_mgmt.delete_stack(stack.stack_name)
+                    try:
+                        provider_mgmt.delete_stack(stack.stack_name)
+                    except Exception as e:
+                        logger.error(e)
+                        continue
         logger.info("  Deleted CloudFormation Stacks: %r", stack_list)
         with open(output, 'a+') as report:
             if stack_list:
