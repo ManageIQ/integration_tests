@@ -70,6 +70,12 @@ class ContainersProviderEndpointsForm(View):
         api_port = Input('default_api_port')
 
     @View.nested
+    class virtualization(Tab, BeforeFillMixin):  # NOQA
+        TAB_NAME = 'Virtualization'
+        kubevirt_token = Input('kubevirt_password')
+        validate = Button('Validate')
+
+    @View.nested
     class metrics(Tab, BeforeFillMixin):  # NOQA
         TAB_NAME = VersionPick({
             Version.lowest(): 'Hawkular',
