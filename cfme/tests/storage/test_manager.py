@@ -2,7 +2,6 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage.manager import StorageManagerDetailsView
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -22,7 +21,7 @@ MANAGER_TYPE = ['Swift Manager', 'Cinder Manager']
 @pytest.yield_fixture(scope='module')
 def provider_cleanup():
     yield
-    CloudProvider.clear_providers()
+    OpenStackProvider.clear_providers()
 
 
 @pytest.yield_fixture(params=MANAGER_TYPE,
