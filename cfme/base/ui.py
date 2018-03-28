@@ -565,17 +565,9 @@ class ServerDatabaseView(ConfigurationView):
     def is_displayed(self):
         return (
             self.in_configuration and
-            self.summary.is_displayed
+            self.summary.is_displayed and
+            self.title.text == 'VMDB Summary'
         )
-
-
-@navigator.register(Server)
-class Database(CFMENavigateStep):
-    VIEW = ServerDatabaseView
-    prerequisite = NavigateToSibling('Configuration')
-
-    def step(self):
-        self.prerequisite_view.accordions.database.tree.click_path('VMDB')
 
 
 class DatabaseSummaryView(ServerDatabaseView):
@@ -590,6 +582,46 @@ class DatabaseSummaryView(ServerDatabaseView):
         )
 
 
+class DatabaseTablesView(ServerDatabaseView):
+
+    @property
+    def is_displayed(self):
+        return self.tables.is_active() and self.title.text == 'All VMDB Tables'
+
+
+class DatabaseIndexesView(ServerDatabaseView):
+    @property
+    def is_displayed(self):
+        return self.indexes.is_active() and self.title.text == 'All VMDB Indexes'
+
+
+class DatabaseSettingsView(ServerDatabaseView):
+    @property
+    def is_displayed(self):
+        return self.settings.is_active() and self.title.text == 'VMDB Settings'
+
+
+class DatabaseClientConnectionsView(ServerDatabaseView):
+    @property
+    def is_displayed(self):
+        return self.client_connections.is_active() and self.title.text == 'VMDB Client Connections'
+
+
+class DatabaseUtilizationView(ServerDatabaseView):
+    @property
+    def is_displayed(self):
+        return self.utilization.is_active() and self.title.text == 'VMDB Utilization'
+
+
+@navigator.register(Server)
+class Database(CFMENavigateStep):
+    VIEW = ServerDatabaseView
+    prerequisite = NavigateToSibling('Configuration')
+
+    def step(self):
+        self.prerequisite_view.accordions.database.tree.click_path('VMDB')
+
+
 @navigator.register(Server)
 class DatabaseSummary(CFMENavigateStep):
     VIEW = DatabaseSummaryView
@@ -597,6 +629,51 @@ class DatabaseSummary(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.summary.select()
+
+
+@navigator.register(Server)
+class DatabaseTables(CFMENavigateStep):
+    VIEW = DatabaseTablesView
+    prerequisite = NavigateToSibling('Database')
+
+    def step(self):
+        self.prerequisite_view.tables.select()
+
+
+@navigator.register(Server)
+class DatabaseIndexes(CFMENavigateStep):
+    VIEW = DatabaseIndexesView
+    prerequisite = NavigateToSibling('Database')
+
+    def step(self):
+        self.prerequisite_view.indexes.select()
+
+
+@navigator.register(Server)
+class DatabaseSettings(CFMENavigateStep):
+    VIEW = DatabaseSettingsView
+    prerequisite = NavigateToSibling('Database')
+
+    def step(self):
+        self.prerequisite_view.settings.select()
+
+
+@navigator.register(Server)
+class DatabaseClientConnections(CFMENavigateStep):
+    VIEW = DatabaseClientConnectionsView
+    prerequisite = NavigateToSibling('Database')
+
+    def step(self):
+        self.prerequisite_view.client_connections.select()
+
+
+@navigator.register(Server)
+class DatabaseUtilization(CFMENavigateStep):
+    VIEW = DatabaseUtilizationView
+    prerequisite = NavigateToSibling('Database')
+
+    def step(self):
+        self.prerequisite_view.utilization.select()
 
 
 class ServerDiagnosticsView(ConfigurationView):
@@ -644,6 +721,12 @@ class ServerDiagnosticsView(ConfigurationView):
                 self.context['object'].name, self.context['object'].sid)]
 
 
+class ServerDiagnosticsCollectLogsView(ServerDiagnosticsView):
+    @property
+    def is_displayed(self):
+        return self.collectlogs.is_active()
+
+
 @navigator.register(Server)
 class Diagnostics(CFMENavigateStep):
     VIEW = ServerDiagnosticsView
@@ -683,6 +766,20 @@ class DiagnosticsWorkers(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.workers.select()
+
+
+@navigator.register(Server)
+class ServerDiagnosticsCollectLogs(CFMENavigateStep):
+    VIEW = ServerDiagnosticsCollectLogsView
+    prerequisite = NavigateToSibling('Diagnostics')
+
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.cfmelog.is_displayed and
+            self.view.cfmelog.is_active)
+
+    def step(self):
+        self.prerequisite_view.cfmelog.select()
 
 
 @navigator.register(Server)
@@ -802,11 +899,15 @@ class RegionView(ConfigurationView):
 
     @View.nested
     class imports(Tab):  # noqa
-        TAB_NAME = "Import"
+        TAB_NAME = "Import Variables"
 
     @View.nested
     class replication(Tab):  # noqa
         TAB_NAME = "Replication"
+
+    @View.nested
+    class help_menu(Tab):   # noqa
+        TAB_NAME = "Help Menu"
 
     company_categories = View.nested(CompanyCategories)
     company_tags = View.nested(CompanyTags)
@@ -831,6 +932,12 @@ class RegionChangeNameView(RegionView):
     def is_displayed(self):
         return self.region_description.is_displayed and super(RegionChangeNameView,
                                                               self).is_displayed
+
+
+class HelpMenuView(RegionView):
+    @property
+    def is_displayed(self):
+        return self.help_menu.is_active()
 
 
 @navigator.register(Region, 'Details')
@@ -863,7 +970,10 @@ class ImportTags(CFMENavigateStep):
         return False
 
     def step(self):
-        self.prerequisite_view.importtags.select()
+        if self.obj.appliance.version < '5.9':
+            self.prerequisite_view.import_tags.select()
+        else:
+            self.prerequisite_view.tags.import_tags.select()
 
 
 @navigator.register(Region)
@@ -875,7 +985,22 @@ class Import(CFMENavigateStep):
         return False
 
     def step(self):
-        self.prerequisite_view.imports.select()
+        if self.obj.appliance.version < '5.9':
+            self.prerequisite_view.imports.select()
+        else:
+            self.prerequisite_view.tags.imports.select()
+
+
+@navigator.register(Region)
+class HelpMenu(CFMENavigateStep):
+    VIEW = HelpMenuView
+    prerequisite = NavigateToSibling('Details')
+
+    def am_i_here(self):
+        return False
+
+    def step(self):
+        self.prerequisite_view.help_menu.select()
 
 
 class ZoneListView(ConfigurationView):
@@ -1069,14 +1194,31 @@ class ZoneForm(ConfigurationView):
     cancel_button = Button('Cancel')
 
 
+class ZoneView(ConfigurationView):
+
+    @View.nested
+    class zone(Tab):  # noqa
+        TAB_NAME = "Zone"
+
+    @View.nested
+    class smart_proxy_affinity(Tab):  # noqa
+        TAB_NAME = "SmartProxy Affinity"
+
+
 # Zone Details #
-class ZoneDetailsView(ConfigurationView):
+class ZoneDetailsView(ZoneView):
     configuration = Dropdown('Configuration')
 
     @property
     def is_displayed(self):
         return self.title.text.startswith(
             'Settings Zone "{}"'.format(self.context['object'].description))
+
+
+class ZoneSmartProxyAffinityView(ZoneView):
+    @property
+    def is_displayed(self):
+        return self.smart_proxy_affinity.is_active()
 
 
 @navigator.register(Zone, 'Details')
@@ -1090,11 +1232,29 @@ class ZoneDetails(CFMENavigateStep):
             self.obj.description))))
         for row in rows:
             row.click()
+            self.view.zone.select()
             break
         else:
             raise ZoneNotFound(
                 "No unique Zones with the description '{}'".format(self.obj.description))
 
+
+@navigator.register(Zone, 'SmartProxyAffinity')
+class SmartProxyAffinity(CFMENavigateStep):
+    VIEW = ZoneSmartProxyAffinityView
+
+    prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Zones')
+
+    def step(self):
+        rows = self.prerequisite_view.table.rows((1, re.compile(r'Zone\s?\:\s?{}'.format(
+            self.obj.description))))
+        for row in rows:
+            row.click()
+            self.view.smart_proxy_affinity.select()
+            break
+        else:
+            raise ZoneNotFound(
+                "No unique Zones with the description '{}'".format(self.obj.description))
 
 # Zone Add #
 class ZoneAddView(ZoneForm):
@@ -1161,6 +1321,12 @@ class ZoneDiagnosticsView(ConfigurationView):
                 self.context['object'].description))
 
 
+class ZoneCollectLogsView(ZoneDiagnosticsView):
+    @property
+    def is_displayed(self):
+        return self.collectlogs.is_active()
+
+
 @navigator.register(Zone, 'Diagnostics')
 class ZoneDiagnostics(CFMENavigateStep):
     VIEW = ZoneDiagnosticsView
@@ -1206,6 +1372,15 @@ class ZoneCANDUGapCollection(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.candugapcollection.select()
+
+
+@navigator.register(Zone)
+class ZoneCollectLogs(CFMENavigateStep):
+    VIEW = ZoneCollectLogsView
+    prerequisite = NavigateToSibling('Diagnostics')
+
+    def step(self):
+        self.prerequisite_view.collectlogs.select()
 
 
 @Zone.exists.external_getter_implemented_for(ViaUI)
