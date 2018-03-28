@@ -1,3 +1,5 @@
+import attr
+
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Tab, Input, BootstrapSwitch, Button
 from wrapanapi.rhevm import RHEVMSystem
@@ -6,7 +8,6 @@ from cfme.common.provider import CANDUEndpoint, DefaultEndpoint, DefaultEndpoint
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.exceptions import ItemNotFound
 from cfme.services.catalogs.catalog_items import RHVCatalogItem
-from cfme.utils import version
 from . import InfraProvider
 
 
@@ -47,6 +48,7 @@ class RHEVMEndpointForm(View):
         validate = Button('Validate')
 
 
+@attr.s(hash=False)
 class RHEVMProvider(InfraProvider):
     catalog_item_type = RHVCatalogItem
     type_name = "rhevm"
@@ -69,17 +71,6 @@ class RHEVMProvider(InfraProvider):
         ('vm_delete', {'event_type': 'USER_REMOVE_VM_FINISHED', 'vm_or_template_id': None})
     ]
 
-    def __init__(self, name=None, endpoints=None, zone=None, key=None, hostname=None,
-                 ip_address=None, start_ip=None, end_ip=None, provider_data=None, appliance=None):
-        super(RHEVMProvider, self).__init__(
-            name=name, endpoints=endpoints, zone=zone, key=key, provider_data=provider_data,
-            appliance=appliance)
-        self.hostname = hostname
-        self.start_ip = start_ip
-        self.end_ip = end_ip
-        if ip_address:
-            self.ip_address = ip_address
-
     @property
     def view_value_mapping(self):
         return {
@@ -94,7 +85,7 @@ class RHEVMProvider(InfraProvider):
         return {}
 
     @classmethod
-    def from_config(cls, prov_config, prov_key, appliance=None):
+    def from_config(cls, prov_config, prov_key):
         endpoints = {}
         for endp in prov_config['endpoints']:
             for expected_endpoint in (RHEVMEndpoint, CANDUEndpoint):
@@ -106,13 +97,14 @@ class RHEVMProvider(InfraProvider):
             end_ip = prov_config['discovery_range']['end']
         else:
             start_ip = end_ip = prov_config.get('ipaddress')
-        return cls(name=prov_config['name'],
-                   endpoints=endpoints,
-                   zone=prov_config.get('server_zone', 'default'),
-                   key=prov_key,
-                   start_ip=start_ip,
-                   end_ip=end_ip,
-                   appliance=appliance)
+        return cls.appliance.collections.infra_providers.instantiate(
+            prov_class=RHEVMProvider,
+            name=prov_config['name'],
+            endpoints=endpoints,
+            zone=prov_config.get('server_zone', 'default'),
+            key=prov_key,
+            start_ip=start_ip,
+            end_ip=end_ip)
 
     # Following methods will only work if the remote console window is open
     # and if selenium focused on it. These will not work if the selenium is

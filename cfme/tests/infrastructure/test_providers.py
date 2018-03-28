@@ -10,7 +10,7 @@ from cfme.base.credential import Credential
 from cfme.common.provider_views import (InfraProviderAddView,
                                         InfraProvidersView,
                                         InfraProvidersDiscoverView)
-from cfme.infrastructure.provider import discover, wait_for_a_provider, InfraProvider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider, RHEVMEndpoint
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider, VirtualCenterEndpoint
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -45,7 +45,8 @@ discovery_ips = [
 @pytest.mark.sauce
 def test_empty_discovery_form_validation_infra(appliance):
     """ Tests that the flash message is correct when discovery form is empty."""
-    discover(None)
+    collection = appliance.collections.infra_providers
+    collection.discover(None)
     view = appliance.browser.create_view(InfraProvidersDiscoverView)
     view.flash.assert_message('At least 1 item must be selected for discovery')
 
@@ -53,7 +54,8 @@ def test_empty_discovery_form_validation_infra(appliance):
 @pytest.mark.sauce
 def test_discovery_cancelled_validation_infra(appliance):
     """ Tests that the flash message is correct when discovery is cancelled."""
-    discover(None, cancel=True)
+    collection = appliance.collections.infra_providers
+    collection.discover(None, cancel=True)
     view = appliance.browser.create_view(InfraProvidersView)
     view.flash.assert_success_message('Infrastructure Providers '
                                       'Discovery was cancelled by the user')
@@ -150,18 +152,20 @@ def test_api_port_max_character_validation_infra():
 @pytest.mark.meta(blockers=[BZ(1559796, forced_streams=['5.8', '5.9'],
     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.tier(1)
-def test_providers_discovery(request, provider):
+def test_providers_discovery(request, appliance, provider):
     """Tests provider discovery
 
     Metadata:
         test_flag: crud
     """
-    provider.discover()
+    appliance.collections.infra_providers.discover(provider, cancel=False,
+                                                   start_ip=provider.start_ip,
+                                                   end_ip=provider.end_ip)
     view = provider.create_view(InfraProvidersView)
     view.flash.assert_success_message('Infrastructure Providers: Discovery successfully initiated')
 
     request.addfinalizer(InfraProvider.clear_providers)
-    wait_for_a_provider()
+    appliance.collections.infra_providers.wait_for_a_provider()
 
 
 @pytest.mark.rhv1

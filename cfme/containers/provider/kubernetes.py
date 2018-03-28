@@ -30,7 +30,7 @@ class KubernetesProvider(ContainersProvider):
                 'hawkular_sec_protocol': kwargs.get('hawkular_sec_protocol')}
 
     @staticmethod
-    def from_config(prov_config, prov_key, appliance=None):
+    def from_config(prov_config, prov_key):
         token_creds = KubernetesProvider.process_credential_yaml_key(
             prov_config['credentials'], cred_type='token')
         return KubernetesProvider(
@@ -42,5 +42,4 @@ class KubernetesProvider(ContainersProvider):
             port=prov_config['port'],
             sec_protocol=prov_config.get('sec_protocol'),
             hawkular_sec_protocol=prov_config.get('hawkular_sec_protocol'),
-            provider_data=prov_config,
-            appliance=appliance)
+            provider_data=prov_config)

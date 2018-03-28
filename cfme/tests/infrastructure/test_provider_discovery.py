@@ -4,7 +4,7 @@ from itertools import combinations
 from cfme.utils import testgen
 from cfme.utils.providers import get_crud
 from cfme.utils.wait import wait_for_decorator
-from cfme.infrastructure.provider import discover, InfraProvider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -88,9 +88,10 @@ def delete_providers_after_test():
 
 @pytest.mark.tier(2)
 @pytest.mark.usefixtures('has_no_infra_providers', 'delete_providers_after_test')
-def test_discover_infra(providers_for_discover, start_ip, max_range):
+def test_discover_infra(appliance, providers_for_discover, start_ip, max_range):
+    collection = appliance.collections.infra_providers
     for provider in providers_for_discover:
-        discover(provider, False, start_ip, max_range)
+        collection.discover(provider, False, start_ip, max_range)
 
     @wait_for_decorator(num_sec=count_timeout(start_ip, max_range), delay=5)
     def _wait_for_all_providers():

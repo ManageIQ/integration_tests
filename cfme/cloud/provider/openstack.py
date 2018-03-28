@@ -77,7 +77,7 @@ class OpenStackProvider(CloudProvider):
         return {}
 
     @classmethod
-    def from_config(cls, prov_config, prov_key, appliance=None):
+    def from_config(cls, prov_config, prov_key):
         endpoints = {}
         endpoints[RHOSEndpoint.name] = RHOSEndpoint(**prov_config['endpoints'][RHOSEndpoint.name])
 
@@ -87,7 +87,7 @@ class OpenStackProvider(CloudProvider):
 
         from cfme.utils.providers import get_crud
         infra_prov_key = prov_config.get('infra_provider_key')
-        infra_provider = get_crud(infra_prov_key, appliance=appliance) if infra_prov_key else None
+        infra_provider = get_crud(infra_prov_key) if infra_prov_key else None
         api_version = prov_config.get('api_version', None)
 
         if not api_version:
@@ -104,8 +104,7 @@ class OpenStackProvider(CloudProvider):
                    keystone_v3_domain_id=prov_config.get('domain_id', None),
                    sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),
                    tenant_mapping=prov_config.get('tenant_mapping', False),
-                   infra_provider=infra_provider,
-                   appliance=appliance)
+                   infra_provider=infra_provider)
 
     # Following methods will only work if the remote console window is open
     # and if selenium focused on it. These will not work if the selenium is
