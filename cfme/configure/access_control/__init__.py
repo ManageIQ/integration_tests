@@ -12,6 +12,7 @@ from cfme.common import Taggable
 from cfme.exceptions import CFMEException, RBACOperationBlocked
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -242,7 +243,6 @@ class User(Updateable, Pretty, BaseEntity, Taggable):
             view = self.create_view(DetailsUserView)
         assert view.is_displayed
 
-
     # TODO update elements, after 1469035 fix
     def change_stored_password(self, changes=None, cancel=False):
         """ Changes user password
@@ -378,6 +378,7 @@ class UserAll(CFMENavigateStep):
 @navigator.register(UserCollection, 'Add')
 class UserAdd(CFMENavigateStep):
     VIEW = AddUserView
+
     def prerequisite(self):
         navigate_to(self.obj.appliance.server, 'Configuration')
         return navigate_to(self.obj, 'All')
@@ -1004,6 +1005,12 @@ class Role(Updateable, Pretty, BaseEntity):
             flash_message = 'Edit of Role was cancelled by the user'
         view = self.create_view(DetailsRoleView, override=updates)
         view.flash.assert_message(flash_message)
+
+        # The accordion may not refresh after a role name update
+        # See BZ https://bugzilla.redhat.com/show_bug.cgi?id=1561698
+        if BZ(1561698, forced_streams=['5.9']).blocks:
+            self.appliance.browser.widgetastic.refresh()
+
         assert view.is_displayed
 
     def delete(self, cancel=True):
