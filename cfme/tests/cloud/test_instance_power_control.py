@@ -31,6 +31,7 @@ def create_instance(provider):
         provider.mgmt.set_name(
             instance.name, 'test_terminated_{}'.format(fauxfactory.gen_alphanumeric(8)))
         instance.create_on_provider(allow_skip="default", find_in_cfme=True)
+    return instance
 
 
 @pytest.yield_fixture(scope="function")
