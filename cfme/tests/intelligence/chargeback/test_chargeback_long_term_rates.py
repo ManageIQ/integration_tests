@@ -372,6 +372,8 @@ def new_compute_rate(interval):
                             {'per_time': interval, 'variable_rate': '720'},
                             'Used Disk I/O':
                             {'per_time': interval, 'variable_rate': '720'},
+                            'Used Network I/O':
+                            {'per_time': interval, 'variable_rate': '720'},
                             'Used Memory':
                             {'per_time': interval, 'variable_rate': '720'}})
         compute.create()
