@@ -131,6 +131,13 @@ class BaseTemplateUpload(object):
         """ Returns provider_data[provider][template_upload] if exists."""
         return self.provider_data.get('template_upload', {})
 
+    @staticmethod
+    def from_template_upload(key):
+        return cfme_data.template_upload.get(key, {})
+
+    def from_credentials(self, key):
+        return credentials[self.provider_data[key]]
+
     def get_creds(self, creds_type=None, **kwargs):
         """ Returns credentials mapping."""
         if creds_type == 'ssh' and "ssh_creds" in self.provider_data.keys():
