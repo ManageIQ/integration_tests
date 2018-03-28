@@ -70,7 +70,7 @@ rhci-qe-data
 
 # pytest cache
 .cache/
-
+.pytest_cache/
 # *~ backup files
 *~
 
