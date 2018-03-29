@@ -201,7 +201,7 @@ def resource_usage(vm_ownership, appliance, provider):
         return False
 
     wait_for(verify_records_metrics_table, [appliance, provider], timeout=600,
-        fail_condition=False, message='Waiting for VM real-time data')
+        message='Waiting for VM real-time data')
 
     # New C&U data may sneak in since 1)C&U server roles are running and 2)collection for clusters
     # and hosts is on.This would mess up our Chargeback calculations, so we are disabling C&U
@@ -216,7 +216,7 @@ def resource_usage(vm_ownership, appliance, provider):
         format(provider.id, repr(vm_name)))
     assert ret.rc == 0, "Failed to rollup VM C&U data:".format(ret.out)
 
-    wait_for(verify_records_rollups_table, [appliance, provider], timeout=600, fail_condition=False,
+    wait_for(verify_records_rollups_table, [appliance, provider], timeout=600,
         message='Waiting for hourly rollups')
 
     # Since we are collecting C&U data for > 1 hour, there will be multiple hourly records per VM
@@ -359,7 +359,8 @@ def chargeback_report_custom(vm_ownership, assign_custom_rate, interval):
     report.queue(wait_for_finish=True)
 
     yield list(report.get_saved_reports()[0].data.rows)
-    report.delete()
+    if report.exists:
+        report.delete()
 
 
 @pytest.yield_fixture(scope="module")
