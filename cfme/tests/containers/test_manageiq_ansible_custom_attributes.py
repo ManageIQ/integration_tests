@@ -1,13 +1,11 @@
 import pytest
 
-from cfme.containers.provider import ContainersProvider
+from cfme.containers.provider import ContainersProvider, refresh_and_navigate
 from cfme.utils.ansible import (setup_ansible_script, run_ansible,
     fetch_miq_ansible_module, create_tmp_directory, remove_tmp_files)
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import GH
 
 pytestmark = [
-    pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6484')]),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1),
     pytest.mark.provider([ContainersProvider], scope='function')]
@@ -40,11 +38,11 @@ def ansible_custom_attributes():
 
 def verify_custom_attributes(provider, custom_attributes_to_verify):
     view = navigate_to(provider, 'Details')
-    assert view.entities.custom_attributes.is_displayed
-    custom_attributes = view.entities.custom_attributes.read()
+    assert view.entities.summary('Custom Attributes').is_displayed
     for custom_attribute in custom_attributes_to_verify:
-        assert (str(custom_attributes.get(custom_attribute['name'])) ==
-                str(custom_attribute['value']))
+        assert (
+            str(view.entities.summary('Custom Attributes').get_text_of(custom_attribute['name']) ==
+                str(custom_attribute['value'])))
 
 
 @pytest.mark.polarion('CMP-10559')
@@ -62,6 +60,12 @@ def test_manageiq_ansible_add_custom_attributes(ansible_custom_attributes, provi
                          script_type='custom_attributes')
     run_ansible('add_custom_attributes')
     verify_custom_attributes(provider, custom_attributes_to_add)
+    setup_ansible_script(provider, script='remove_custom_attributes',
+                         values_to_update=custom_attributes_to_add,
+                         script_type='custom_attributes')
+    run_ansible('remove_custom_attributes')
+    view = refresh_and_navigate(provider, 'Details')
+    assert not view.entities.summary('Custom Attributes').is_displayed
 
 
 @pytest.mark.polarion('CMP-10560')
@@ -79,6 +83,12 @@ def test_manageiq_ansible_edit_custom_attributes(ansible_custom_attributes, prov
                          script_type='custom_attributes')
     run_ansible('add_custom_attributes')
     verify_custom_attributes(provider, custom_attributes_to_edit)
+    setup_ansible_script(provider, script='remove_custom_attributes',
+                         values_to_update=custom_attributes_to_edit,
+                         script_type='custom_attributes')
+    run_ansible('remove_custom_attributes')
+    view = refresh_and_navigate(provider, 'Details')
+    assert not view.entities.summary('Custom Attributes').is_displayed
 
 
 @pytest.mark.polarion('CMP-10561')
@@ -96,7 +106,14 @@ def test_manageiq_ansible_add_custom_attributes_same_name(ansible_custom_attribu
                          values_to_update=custom_attributes_to_edit,
                          script_type='custom_attributes')
     run_ansible('add_custom_attributes')
+    run_ansible('add_custom_attributes')
     verify_custom_attributes(provider, custom_attributes_to_edit)
+    setup_ansible_script(provider, script='remove_custom_attributes',
+                         values_to_update=custom_attributes_to_edit,
+                         script_type='custom_attributes')
+    run_ansible('remove_custom_attributes')
+    view = refresh_and_navigate(provider, 'Details')
+    assert not view.entities.summary('Custom Attributes').is_displayed
 
 
 @pytest.mark.polarion('CMP-10562')
@@ -116,7 +133,8 @@ def test_manageiq_ansible_add_custom_attributes_bad_user(ansible_custom_attribut
                          script_type='custom_attributes')
     run_result = run_ansible('add_custom_attributes_bad_user')
     assert 'Authentication failed' in run_result
-    verify_custom_attributes(provider, custom_attributes_to_edit)
+    view = refresh_and_navigate(provider, 'Details')
+    assert not view.entities.summary('Custom Attributes').is_displayed
 
 
 @pytest.mark.polarion('CMP-10563')
@@ -130,9 +148,13 @@ def test_manageiq_ansible_remove_custom_attributes(ansible_custom_attributes, pr
          were removed under Providers menu
 
         """
+    setup_ansible_script(provider, script='add_custom_attributes',
+                         values_to_update=custom_attributes_to_add,
+                         script_type='custom_attributes')
+    run_ansible('add_custom_attributes')
     setup_ansible_script(provider, script='remove_custom_attributes',
-                         values_to_update=custom_attributes_to_edit,
+                         values_to_update=custom_attributes_to_add,
                          script_type='custom_attributes')
     run_ansible('remove_custom_attributes')
-    view = navigate_to(provider, 'Details')
-    assert not view.entities.custom_attributes.is_displayed
+    view = refresh_and_navigate(provider, 'Details')
+    assert not view.entities.summary('Custom Attributes').is_displayed
