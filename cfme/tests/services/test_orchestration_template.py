@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+import re
 
 from cfme.utils.update import update
 from cfme import test_requirements
@@ -166,6 +167,7 @@ def test_duplicated_content_error_validation(appliance, created_template, templa
     elif action == "create":
         flash_msg = "Error during 'Orchestration Template creation': " \
                     "Validation failed: Md5 of content already exists (content must be unique)"
+        flash_msg = re.escape(flash_msg)
         with pytest.raises(Exception, match=flash_msg):
             collection.create(template_group=templates.get(template_type)[1],
                               template_type=templates.get(template_type)[0],
