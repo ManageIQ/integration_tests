@@ -40,8 +40,8 @@ DEVIATION = 1
 
 @pytest.yield_fixture(scope="module")
 def vm_ownership(enable_candu, provider, appliance):
-    # In these tests, chargeback reports are filtered on VM owner.So,VMs have to be
-    # assigned ownership.
+    """In these tests, chargeback reports are filtered on VM owner.So,VMs have to be
+    assigned ownership."""
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
     if not provider.mgmt.does_vm_exist(vm_name):
@@ -57,7 +57,7 @@ def vm_ownership(enable_candu, provider, appliance):
     user = None
     try:
         user = appliance.collections.users.create(
-            name=provider.name + fauxfactory.gen_alphanumeric(),
+            name=provider.name + '{}'.format(fauxfactory.gen_alphanumeric()),
             credential=Credential(principal='uid' + '{}'.format(fauxfactory.gen_alphanumeric()),
                 secret='secret'),
             email='abc@example.com',
@@ -76,9 +76,8 @@ def vm_ownership(enable_candu, provider, appliance):
 
 @pytest.yield_fixture(scope="module")
 def enable_candu(appliance):
-    # C&U data collection consumes a lot of memory and CPU.So, we are disabling some server roles
-    # that are not needed for Chargeback reporting.
-
+    """C&U data collection consumes a lot of memory and CPU.So, we are disabling some server roles
+    that are not needed for Chargeback reporting."""
     candu = appliance.collections.candus
     server_info = appliance.server.settings
     original_roles = server_info.server_roles_db
@@ -95,7 +94,7 @@ def enable_candu(appliance):
 
 @pytest.yield_fixture(scope="module")
 def assign_custom_rate(new_compute_rate):
-    # Assign custom Compute rate to the Enterprise and then queue the Chargeback report.
+    """Assign custom Compute rate to the Enterprise and then queue the Chargeback report."""
     description = new_compute_rate
     enterprise = cb.Assign(
         assign_to="The Enterprise",
@@ -119,7 +118,7 @@ def assign_custom_rate(new_compute_rate):
 
 
 def verify_records_rollups_table(appliance, provider):
-    # Verify that hourly rollups are present in the metric_rollups table.
+    """Verify that hourly rollups are present in the metric_rollups table."""
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
     ems = appliance.db.client['ext_management_systems']
@@ -135,18 +134,17 @@ def verify_records_rollups_table(appliance, provider):
 
     for record in appliance.db.client.session.query(rollups).filter(
             rollups.id.in_(result.subquery())):
-        if (record.cpu_usagemhz_rate_average or
-           record.cpu_usage_rate_average or
-           record.derived_memory_used or
-           record.net_usage_rate_average or
-           record.disk_usage_rate_average):
-            return True
+        return any([record.cpu_usagemhz_rate_average,
+           record.cpu_usage_rate_average,
+           record.derived_memory_used,
+           record.net_usage_rate_average,
+           record.disk_usage_rate_average])
     return False
 
 
 @pytest.fixture(scope="module")
 def resource_usage(vm_ownership, appliance, provider):
-    # Retrieve resource usage values from metric_rollups table.
+    """Retrieve resource usage values from metric_rollups table."""
     average_cpu_used_in_mhz = 0
     average_memory_used_in_mb = 0
     average_network_io = 0
@@ -169,8 +167,6 @@ def resource_usage(vm_ownership, appliance, provider):
 
     def verify_records_metrics_table(appliance, provider):
         # Verify that rollups are present in the metric_rollups table.
-        vm_name = provider.data['cap_and_util']['chargeback_vm']
-
         ems = appliance.db.client['ext_management_systems']
         metrics = appliance.db.client['metrics']
 
@@ -192,12 +188,11 @@ def resource_usage(vm_ownership, appliance, provider):
 
         for record in appliance.db.client.session.query(metrics).filter(
                 metrics.id.in_(result.subquery())):
-            if (record.cpu_usagemhz_rate_average or
-               record.cpu_usage_rate_average or
-               record.derived_memory_used or
-               record.net_usage_rate_average or
-               record.disk_usage_rate_average):
-                return True
+            return any([record.cpu_usagemhz_rate_average,
+               record.cpu_usage_rate_average,
+               record.derived_memory_used,
+               record.net_usage_rate_average,
+               record.disk_usage_rate_average])
         return False
 
     wait_for(verify_records_metrics_table, [appliance, provider], timeout=600,
@@ -233,20 +228,11 @@ def resource_usage(vm_ownership, appliance, provider):
     for record in appliance.db.client.session.query(rollups).filter(
             rollups.id.in_(result.subquery())):
         consumed_hours = consumed_hours + 1
-        if (record.cpu_usagemhz_rate_average or
-           record.cpu_usage_rate_average or
-           record.derived_memory_used or
-           record.net_usage_rate_average or
-           record.disk_usage_rate_average):
-            average_cpu_used_in_mhz = average_cpu_used_in_mhz + record.cpu_usagemhz_rate_average
-            average_memory_used_in_mb = average_memory_used_in_mb + record.derived_memory_used
-            average_network_io = average_network_io + record.net_usage_rate_average
-            average_disk_io = average_disk_io + record.disk_usage_rate_average
-
-    for record in appliance.db.client.session.query(rollups).filter(
-            rollups.id.in_(result.subquery())):
-        if record.derived_vm_used_disk_storage:
-            average_storage_used = average_storage_used + record.derived_vm_used_disk_storage
+        average_cpu_used_in_mhz = average_cpu_used_in_mhz + record.cpu_usagemhz_rate_average
+        average_memory_used_in_mb = average_memory_used_in_mb + record.derived_memory_used
+        average_network_io = average_network_io + record.net_usage_rate_average
+        average_disk_io = average_disk_io + record.disk_usage_rate_average
+        average_storage_used = average_storage_used + record.derived_vm_used_disk_storage
 
     # Convert storage used in Bytes to GB
     average_storage_used = average_storage_used * math.pow(2, -30)
@@ -261,7 +247,7 @@ def resource_usage(vm_ownership, appliance, provider):
 
 def resource_cost(appliance, metric_description, usage, description, rate_type,
         consumed_hours, interval):
-    # Query the DB for Chargeback rates
+    """Query the DB for Chargeback rates"""
     tiers = appliance.db.client['chargeback_tiers']
     details = appliance.db.client['chargeback_rate_details']
     cb_rates = appliance.db.client['chargeback_rates']
@@ -301,7 +287,7 @@ def resource_cost(appliance, metric_description, usage, description, rate_type,
 
 @pytest.fixture(scope="module")
 def chargeback_costs_custom(resource_usage, new_compute_rate, appliance, interval):
-    # Estimate Chargeback costs using custom Chargeback rate and resource usage from the DB.
+    """Estimate Chargeback costs using custom Chargeback rate and resource usage from the DB."""
     description = new_compute_rate
 
     average_cpu_used_in_mhz = resource_usage['average_cpu_used_in_mhz']
@@ -335,7 +321,7 @@ def chargeback_costs_custom(resource_usage, new_compute_rate, appliance, interva
 
 @pytest.yield_fixture(scope="module")
 def chargeback_report_custom(vm_ownership, assign_custom_rate, interval):
-    # Create a Chargeback report based on a custom rate; Queue the report
+    """Create a Chargeback report based on a custom rate; Queue the report"""
     owner = vm_ownership
     data = {
         'menu_name': interval,
@@ -365,7 +351,7 @@ def chargeback_report_custom(vm_ownership, assign_custom_rate, interval):
 
 @pytest.yield_fixture(scope="module")
 def new_compute_rate(interval):
-    # Create a new Compute Chargeback rate
+    """Create a new Compute Chargeback rate"""
     try:
         desc = 'custom_' + interval
         compute = rates.ComputeRate(description=desc,
@@ -393,9 +379,7 @@ def new_compute_rate(interval):
 # costs estimated in the chargeback_costs_default/chargeback_costs_custom fixtures.
 def test_validate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_custom,
         interval, provider):
-    """Test to validate CPU usage cost.Calculation is based on custom Chargeback rate.
-
-    """
+    """Test to validate CPU usage cost."""
     for groups in chargeback_report_custom:
         if groups["CPU Used Cost"]:
             estimated_cpu_usage_cost = chargeback_costs_custom['cpu_used_cost']
@@ -409,10 +393,7 @@ def test_validate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_cust
 
 def test_validate_memory_usage_cost(chargeback_costs_custom, chargeback_report_custom,
         interval, provider):
-    """Test to validate memory usage cost.
-       Calculation is based on custom Chargeback rate.
-
-    """
+    """Test to validate memory usage cost."""
     for groups in chargeback_report_custom:
         if groups["Memory Used Cost"]:
             estimated_memory_usage_cost = chargeback_costs_custom['memory_used_cost']
@@ -426,10 +407,7 @@ def test_validate_memory_usage_cost(chargeback_costs_custom, chargeback_report_c
 
 def test_validate_network_usage_cost(chargeback_costs_custom, chargeback_report_custom,
         interval, provider):
-    """Test to validate network usage cost.
-       Calculation is based on custom Chargeback rate.
-
-    """
+    """Test to validate network usage cost."""
     for groups in chargeback_report_custom:
         if groups["Network I/O Used Cost"]:
             estimated_network_usage_cost = chargeback_costs_custom['network_used_cost']
@@ -443,10 +421,7 @@ def test_validate_network_usage_cost(chargeback_costs_custom, chargeback_report_
 
 def test_validate_disk_usage_cost(chargeback_costs_custom, chargeback_report_custom,
         interval, provider):
-    """Test to validate disk usage cost.
-       Calculation is based on custom Chargeback rate.
-
-    """
+    """Test to validate disk usage cost."""
     for groups in chargeback_report_custom:
         if groups["Disk I/O Used Cost"]:
             estimated_disk_usage_cost = chargeback_costs_custom['disk_used_cost']
@@ -459,16 +434,19 @@ def test_validate_disk_usage_cost(chargeback_costs_custom, chargeback_report_cus
 
 
 def test_validate_storage_usage_cost(chargeback_costs_custom, chargeback_report_custom,
-        interval, provider):
-    """Test to validate stoarge usage cost.
-       Calculation is based on custom Chargeback rate.
-    """
+        interval, provider, soft_assert):
+    """Test to validate stoarge usage cost."""
     for groups in chargeback_report_custom:
         if groups["Storage Used Cost"]:
             estimated_storage_usage_cost = chargeback_costs_custom['storage_used_cost']
             cost_from_report = groups["Storage Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
+            soft_assert(estimated_storage_usage_cost - DEVIATION <=
+                float(cost) <= estimated_storage_usage_cost + DEVIATION,
+                'Estimated cost and report cost do not match')
+            """
             assert estimated_storage_usage_cost - DEVIATION <= float(cost) \
                 <= estimated_storage_usage_cost + DEVIATION, \
                 'Estimated cost and report cost do not match'
             break
+            """
