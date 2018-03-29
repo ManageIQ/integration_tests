@@ -4,6 +4,9 @@ from . import InfraProvider
 
 
 class KubeVirtProvider(InfraProvider):
+    type_name = "kubevirt"
+    settings_key = 'ems_kubevirt'
+    mgmt_class = None
 
     def __init__(self, parent_provider, **kwargs):
 
