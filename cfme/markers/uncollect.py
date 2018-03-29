@@ -52,9 +52,12 @@ Note:
 
 """
 import inspect
+
 import pytest
 
-MARKDECORATOR_TYPE = type(pytest.mark.slip)
+from cfme.utils.log import logger
+
+MARKDECORATOR_TYPE = type(pytest.mark.skip)
 
 
 # work around https://github.com/pytest-dev/pytest/issues/2400
@@ -68,23 +71,24 @@ def get_uncollect_function(marker_or_markdecorator):
 def uncollectif(item):
     """ Evaluates if an item should be uncollected
 
-    Tests markers against a supplied lambda from the marker object to determine
+    Tests markers against a supplied lambda from the markers object to determine
     if the item should be uncollected or not.
     """
 
     from cfme.utils.pytest_shortcuts import extract_fixtures_values
-    marker = item.get_marker('uncollectif')
-    if marker:
-        from cfme.utils.log import logger
+    markers = item.get_marker('uncollectif')
+    if not markers:
+        return False, None
+    for mark in markers:
         log_msg = 'Trying uncollecting {}: {}'.format(
             item.name,
-            marker.kwargs.get('reason', 'No reason given'))
-
+            mark.kwargs.get('reason', 'No reason given'))
+        logger.debug(log_msg)
         try:
-            arg_names = inspect.getargspec(get_uncollect_function(marker)).args
+            arg_names = inspect.getargspec(get_uncollect_function(mark)).args
         except TypeError:
             logger.debug(log_msg)
-            return not bool(marker.args[0])
+            return not bool(mark.args[0]), mark.kwargs.get('reason', 'No reason given')
 
         holder = item.config.pluginmanager.getplugin('appliance-holder')
         if holder:
@@ -98,7 +102,7 @@ def uncollectif(item):
             values.update(global_vars)
             # The test has already been uncollected
             if arg_names and not values:
-                return
+                return True, None
             args = [values[arg] for arg in arg_names]
         except KeyError:
             missing_argnames = list(set(arg_names) - set(item._request.funcargnames))
@@ -109,12 +113,13 @@ def uncollectif(item):
             else:
                 raise Exception("Failed to uncollect {}, best guess a fixture wasn't "
                                 "ready".format(func_name))
-        retval = marker.args[0](*args)
+        retval = mark.args[0](*args)
         if retval:
-            logger.debug(log_msg)
-        return not retval
+            # shortcut
+            return retval, mark.kwargs.get('reason', "No reason given")
+
     else:
-        return True
+        return False, None
 
 
 def pytest_collection_modifyitems(session, config, items):
@@ -127,18 +132,16 @@ def pytest_collection_modifyitems(session, config, items):
     with log_path.join('uncollected.log').open('w') as f:
         for item in items:
             # First filter out all items who have the uncollect mark
-            if item.get_marker('uncollect') or not uncollectif(item):
-                # if a uncollect marker has been added,
-                # give it priority for the explanation
-                uncollect = item.get_marker('uncollect')
-                marker = uncollect or item.get_marker('uncollectif')
-                if marker:
-                    reason = marker.kwargs.get('reason', "No reason given")
-                else:
-                    reason = None
-                f.write("{} - {}\n".format(item.name, reason))
+            uncollect_marker = item.get_marker('uncollect')
+            if uncollect_marker:
+                uncollect_reason = uncollect_marker.kwargs.get('reason', "No reason given")
+                f.write("{} - {}\n".format(item.name, uncollect_reason))
             else:
-                new_items.append(item)
+                uncollectif_result, uncollectif_reason = uncollectif(item)
+                if uncollectif_result:
+                    f.write("{} - {}\n".format(item.name, uncollectif_reason))
+                else:
+                    new_items.append(item)
 
     items[:] = new_items
 
