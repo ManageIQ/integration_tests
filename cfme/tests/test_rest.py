@@ -18,6 +18,7 @@ from cfme.utils.providers import ProviderFilter
 from cfme.utils.rest import (
     assert_response,
     delete_resources_from_collection,
+    delete_resources_from_detail,
     query_resource_attributes,
 )
 from cfme.utils.wait import wait_for, TimedOutError
@@ -848,14 +849,7 @@ class TestArbitrationSettingsRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        for setting in arbitration_settings:
-            del_action = getattr(setting.action.delete, method.upper())
-            del_action()
-            assert_response(appliance)
-
-            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-                del_action()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(arbitration_settings, method)
 
     def test_delete_arbitration_settings_from_collection(self, appliance, arbitration_settings):
         """Tests delete arbitration settings from collection.
@@ -864,11 +858,7 @@ class TestArbitrationSettingsRESTAPI(object):
             test_flag: rest
         """
         collection = appliance.rest_api.collections.arbitration_settings
-        collection.action.delete(*arbitration_settings)
-        assert_response(appliance)
-        with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-            collection.action.delete(*arbitration_settings)
-        assert_response(appliance, http_status=404)
+        delete_resources_from_collection(collection, arbitration_settings)
 
     @pytest.mark.parametrize(
         "from_detail", [True, False],
@@ -935,12 +925,7 @@ class TestArbitrationRulesRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        for entity in arbitration_rules:
-            entity.action.delete.POST()
-            assert_response(appliance)
-            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-                entity.action.delete.POST()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(arbitration_rules, 'post')
 
     def test_delete_arbitration_rules_from_collection(self, arbitration_rules, appliance):
         """Tests delete arbitration rules from collection.
@@ -949,11 +934,7 @@ class TestArbitrationRulesRESTAPI(object):
             test_flag: rest
         """
         collection = appliance.rest_api.collections.arbitration_rules
-        collection.action.delete(*arbitration_rules)
-        assert_response(appliance)
-        with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-            collection.action.delete(*arbitration_rules)
-        assert_response(appliance, http_status=404)
+        delete_resources_from_collection(collection, arbitration_rules)
 
     @pytest.mark.parametrize(
         'from_detail', [True, False],
@@ -1037,18 +1018,9 @@ class TestNotificationsRESTAPI(object):
         # BZ 1420872 was fixed for >= 5.9 only
         if method == 'delete' and appliance.version < '5.9':
             pytest.skip("Affected by BZ1420872, cannot test.")
-        collection = appliance.rest_api.collections.notifications
-        collection.reload()
-        notifications = [collection[-i] for i in range(1, 3)]
 
-        for entity in notifications:
-            del_action = getattr(entity.action.delete, method.upper())
-            del_action()
-            assert_response(appliance)
-
-            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-                del_action()
-            assert_response(appliance, http_status=404)
+        notifications = appliance.rest_api.collections.notifications.all[-3:]
+        delete_resources_from_detail(notifications, method)
 
     def test_delete_notifications_from_collection(self, appliance, generate_notifications):
         """Tests delete notifications from collection.
@@ -1057,8 +1029,7 @@ class TestNotificationsRESTAPI(object):
             test_flag: rest
         """
         collection = appliance.rest_api.collections.notifications
-        collection.reload()
-        notifications = [collection[-i] for i in range(1, 3)]
+        notifications = collection.all[-3:]
         delete_resources_from_collection(collection, notifications)
 
 

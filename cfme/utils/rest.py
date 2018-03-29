@@ -53,7 +53,7 @@ def assert_response(
 
     if http_status:
         # Convert single int to tuple if needed
-        if type(http_status) is int:
+        if isinstance(http_status, int):
             http_status = (http_status,)
 
         # Check the response codes
@@ -174,6 +174,32 @@ def delete_resources_from_collection(
     else:
         collection.action.delete(*resources)
         _assert_response(success=False)
+
+
+def delete_resources_from_detail(
+        resources, method, not_found=False, num_sec=10, delay=2, check_response=True):
+    """Checks that delete from detail works as expected."""
+    _api = resources[0].collection._api
+
+    def _assert_response(*args, **kwargs):
+        if check_response:
+            assert_response(_api, *args, **kwargs)
+
+    for resource in resources:
+        del_action = getattr(resource.action.delete, method.upper())
+        del_action()
+        _assert_response()
+
+    # Wait for resource non-existence in separate loop so the delete actions are
+    # not delayed by waiting for the previously deleted resource to disappear.
+    # This way the combined wait time is likely to be much shorter.
+    for resource in resources:
+        resource.wait_not_exists(num_sec=num_sec, delay=delay)
+
+        if not_found:
+            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
+                del_action()
+            _assert_response(http_status=404)
 
 
 def query_resource_attributes(resource, soft_assert=None):
