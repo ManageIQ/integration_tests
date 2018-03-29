@@ -265,8 +265,8 @@ class CustomReport(Updateable, Navigatable):
             assert view.is_displayed
             view.flash.assert_no_error()
         else:
-            # This check needs because after deleting the last custom report
-            # whole "My Company (All EVM Groups)" branch in the tree will be removed.
+            # This check is needed because after deleting the last custom report,
+            # the whole "My Company (All EVM Groups)" branch in the tree will be removed.
             if custom_reports_number > 1:
                 view = self.create_view(AllCustomReportsView)
                 assert view.is_displayed
