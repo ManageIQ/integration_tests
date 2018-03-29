@@ -530,8 +530,10 @@ class ContainerProviderAddViewUpdated(ContainerProviderAddView, ContainerProvide
     virt_type = BootstrapSelect(id='virtualization_selection')
 
     def before_fill(self, values):
-        for widget in self.COND_WIDGETS:
-            getattr(self, widget).fill(values.get(widget))
+        for widget_name in self.COND_WIDGETS:
+            widget = getattr(self, widget_name)
+            if widget.is_displayed:
+                widget.fill(values.get(widget_name))
 
 
 class PhysicalProviderAddView(ProviderAddView):
