@@ -288,28 +288,29 @@ def policy(policy_collection, policy_class):
 
 @pytest.yield_fixture(params=CONDITIONS, ids=lambda condition_class: condition_class.__name__,
     scope="module")
-def condition_for_expressions(request, condition_collection):
+def condition_for_expressions(request, condition_collection, appliance):
     condition_class = request.param
     condition = condition_collection.create(
         condition_class,
         fauxfactory.gen_alphanumeric(),
-        expression="fill_field({} : Name, IS NOT EMPTY)".format(condition_class.FIELD_VALUE),
-        scope="fill_field({} : Name, INCLUDES, {})".format(condition_class.FIELD_VALUE,
-            fauxfactory.gen_alpha())
+        expression="fill_field({} : Name, IS NOT EMPTY)".format(
+            condition_class.FIELD_VALUE.pick(appliance.version)),
+        scope="fill_field({} : Name, INCLUDES, {})".format(
+            condition_class.FIELD_VALUE.pick(appliance.version), fauxfactory.gen_alpha())
     )
     yield condition
     condition.delete()
 
 
 @pytest.fixture(params=CONDITIONS, ids=lambda condition_class: condition_class.__name__)
-def condition_prerequisites(request, condition_collection):
+def condition_prerequisites(request, condition_collection, appliance):
     condition_class = request.param
     expression = "fill_field({} : Name, =, {})".format(
-        condition_class.FIELD_VALUE,
+        condition_class.FIELD_VALUE.pick(appliance.version),
         fauxfactory.gen_alphanumeric()
     )
     scope = "fill_field({} : Name, =, {})".format(
-        condition_class.FIELD_VALUE,
+        condition_class.FIELD_VALUE.pick(appliance.version),
         fauxfactory.gen_alphanumeric()
     )
     return condition_class, scope, expression
@@ -365,11 +366,11 @@ def alert_profile(alert_profile_class, alert_collection, alert_profile_collectio
 
 
 @pytest.yield_fixture(params=POLICIES_AND_CONDITIONS, ids=lambda item: item.name)
-def policy_and_condition(request, policy_collection, condition_collection):
+def policy_and_condition(request, policy_collection, condition_collection, appliance):
     condition_class = request.param.condition
     policy_class = request.param.policy
     expression = "fill_field({} : Name, =, {})".format(
-        condition_class.FIELD_VALUE,
+        condition_class.FIELD_VALUE.pick(appliance.version),
         fauxfactory.gen_alphanumeric()
     )
     condition = condition_collection.create(
