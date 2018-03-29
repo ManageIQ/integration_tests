@@ -218,6 +218,8 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
 
 
 @pytest.mark.rhv1
+@pytest.mark.meta(blockers=[BZ(1561618, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
                          'Must be RHEVM provider version >= 4')
 def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request):
