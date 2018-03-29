@@ -11,7 +11,6 @@ from cfme.rest.gen_data import (
     tenants as _tenants,
     vm as _vm,
 )
-from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.update import update
@@ -169,7 +168,7 @@ class TestTagsViaREST(object):
         for tag in tags:
             tag.action.delete(force_method=method)
             assert_response(appliance)
-            with error.expected("ActiveRecord::RecordNotFound"):
+            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
                 tag.action.delete(force_method=method)
             assert_response(appliance, http_status=404)
 
@@ -194,7 +193,8 @@ class TestTagsViaREST(object):
             "name": "test_tag_{}".format(fauxfactory.gen_alphanumeric().lower()),
             "description": "test_tag_{}".format(fauxfactory.gen_alphanumeric().lower())
         }
-        with error.expected("BadRequestError: Category id, href or name needs to be specified"):
+        msg = "BadRequestError: Category id, href or name needs to be specified"
+        with pytest.raises(Exception, match=msg):
             appliance.rest_api.collections.tags.action.create(data)
         assert_response(appliance, http_status=400)
 

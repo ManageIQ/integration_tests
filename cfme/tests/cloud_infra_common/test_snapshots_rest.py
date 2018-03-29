@@ -9,7 +9,6 @@ from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.rest import assert_response, delete_resources_from_collection
@@ -114,7 +113,7 @@ class TestRESTSnapshots(object):
         snapshot.wait_not_exists(num_sec=300, delay=5)
 
         # testing BZ 1466225
-        with error.expected('ActiveRecord::RecordNotFound'):
+        with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
             del_action()
         assert_response(appliance, http_status=404)
 

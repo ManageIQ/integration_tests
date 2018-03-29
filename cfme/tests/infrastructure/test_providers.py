@@ -14,7 +14,6 @@ from cfme.common.provider_views import (InfraProviderAddView,
 from cfme.infrastructure.provider import discover, wait_for_a_provider, InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider, RHEVMEndpoint
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider, VirtualCenterEndpoint
-from cfme.utils import error
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
@@ -179,7 +178,7 @@ def test_provider_add_with_bad_credentials(provider):
         verify_secret='reallybad'
     )
 
-    with error.expected(provider.bad_credentials_error_msg):
+    with pytest.raises(Exception, match=provider.bad_credentials_error_msg):
         provider.create(validate_credentials=True)
 
 

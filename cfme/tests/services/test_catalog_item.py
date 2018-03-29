@@ -7,7 +7,6 @@ from selenium.common.exceptions import NoSuchElementException
 import cfme.tests.configure.test_access_control as tac
 from cfme.base.login import BaseLoggedInPage
 from cfme import test_requirements
-from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.update import update
@@ -111,7 +110,7 @@ def test_edit_tags(catalog_item):
 @pytest.mark.meta(blockers=[BZ(1531512, forced_streams=["5.8", "5.9", "upstream"])])
 def test_catalog_item_duplicate_name(catalog_item):
     catalog_item.create()
-    with error.expected("Name has already been taken"):
+    with pytest.raises(Exception, match="Name has already been taken"):
         catalog_item.create()
 
 

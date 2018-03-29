@@ -4,7 +4,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
-from cfme.utils import error
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate]
@@ -61,7 +60,7 @@ def test_instance_crud(klass):
 def test_duplicate_instance_disallowed(request, klass):
     name = fauxfactory.gen_alphanumeric()
     klass.instances.create(name=name)
-    with error.expected("Name has already been taken"):
+    with pytest.raises(Exception, match="Name has already been taken"):
         klass.instances.create(name=name)
 
 

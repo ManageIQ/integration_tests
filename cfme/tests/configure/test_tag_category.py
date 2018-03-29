@@ -4,7 +4,6 @@ import pytest
 
 from cfme.configure.configuration.region_settings import Category
 from cfme.rest.gen_data import categories as _categories
-from cfme.utils import error
 from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
@@ -89,7 +88,7 @@ class TestCategoriesViaREST(object):
         for ctg in categories:
             ctg.action.delete(force_method=method)
             assert_response(appliance)
-            with error.expected("ActiveRecord::RecordNotFound"):
+            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
                 ctg.action.delete(force_method=method)
             assert_response(appliance, http_status=404)
 

@@ -4,7 +4,6 @@ import pytest
 import fauxfactory
 
 from cfme import test_requirements
-from cfme.utils import error
 from cfme.utils.rest import assert_response, query_resource_attributes
 from cfme.utils.testgen import config_managers, generate
 from cfme.utils.wait import wait_for
@@ -138,7 +137,7 @@ class TestAuthenticationsRESTAPI(object):
 
             # the BZ1476869 is fixed for versions >= 5.9
             if appliance.version >= '5.9':
-                with error.expected('ActiveRecord::RecordNotFound'):
+                with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
                     auth.action.delete.POST()
                 assert_response(appliance, http_status=404)
 
@@ -155,7 +154,7 @@ class TestAuthenticationsRESTAPI(object):
 
             # the BZ1476869 is fixed for versions >= 5.9
             if appliance.version >= '5.9':
-                with error.expected('ActiveRecord::RecordNotFound'):
+                with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
                     auth.action.delete.DELETE()
                 assert_response(appliance, http_status=404)
 

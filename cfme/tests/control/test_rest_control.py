@@ -2,7 +2,6 @@
 """This module contains control REST API specific tests."""
 import pytest
 import fauxfactory
-from cfme.utils import error
 
 from cfme import test_requirements
 from cfme.rest.gen_data import conditions as _conditions
@@ -65,7 +64,7 @@ class TestConditionsRESTAPI(object):
                 message="Check if a condition doesn't exist"
             )
 
-            with error.expected('ActiveRecord::RecordNotFound'):
+            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
                 del_action()
             assert_response(appliance, http_status=404)
 
@@ -156,7 +155,7 @@ class TestPoliciesRESTAPI(object):
                 message="Check if a policy doesn't exist"
             )
 
-            with error.expected('ActiveRecord::RecordNotFound'):
+            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
                 policy.action.delete.POST()
             assert_response(appliance, http_status=404)
 
@@ -179,7 +178,7 @@ class TestPoliciesRESTAPI(object):
                 message="Check if a policy doesn't exist"
             )
 
-            with error.expected('ActiveRecord::RecordNotFound'):
+            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
                 policy.action.delete.DELETE()
             assert_response(appliance, http_status=404)
 

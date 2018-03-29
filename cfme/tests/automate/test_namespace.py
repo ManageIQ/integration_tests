@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme.automate.explorer.domain import DomainCollection
-from cfme.utils import error
 from cfme.utils.update import update
 
 
@@ -67,7 +66,7 @@ def test_duplicate_namespace_disallowed(request, parent_namespace):
     ns = parent_namespace.namespaces.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha())
-    with error.expected("Name has already been taken"):
+    with pytest.raises(Exception, match="Name has already been taken"):
         parent_namespace.namespaces.create(
             name=ns.name,
             description=ns.description)

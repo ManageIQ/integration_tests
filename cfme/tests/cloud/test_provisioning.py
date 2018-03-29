@@ -18,7 +18,6 @@ from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm import VM
-from cfme.utils import error
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.rest import assert_response
@@ -465,7 +464,7 @@ def original_request_class(appliance):
 
 @pytest.fixture(scope="module")
 def modified_request_class(request, domain, original_request_class):
-    with error.handler("error: Error during 'Automate Class copy'"):
+    with pytest.raises(Exception, match="error: Error during 'Automate Class copy'"):
         # methods of this class might have been copied by other fixture, so this error can occur
         original_request_class.copy_to(domain)
     klass = domain\

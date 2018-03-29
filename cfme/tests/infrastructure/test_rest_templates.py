@@ -5,7 +5,6 @@ from cfme import test_requirements
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import mark_vm_as_template
 from cfme.rest.gen_data import vm as _vm
-from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import (
     assert_response,
@@ -101,7 +100,7 @@ def test_delete_template_from_detail_post(appliance, template):
     """
     template.action.delete.POST()
     assert_response(appliance)
-    with error.expected("ActiveRecord::RecordNotFound"):
+    with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
         template.action.delete.POST()
     assert_response(appliance, http_status=404)
 
@@ -115,7 +114,7 @@ def test_delete_template_from_detail_delete(appliance, template):
     """
     template.action.delete.DELETE()
     assert_response(appliance)
-    with error.expected("ActiveRecord::RecordNotFound"):
+    with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
         template.action.delete.DELETE()
     assert_response(appliance, http_status=404)
 

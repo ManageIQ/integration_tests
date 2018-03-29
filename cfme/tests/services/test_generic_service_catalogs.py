@@ -5,7 +5,6 @@ import pytest
 from cfme import test_requirements
 from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.utils import error
 from cfme.utils.log import logger
 from cfme.utils.rest import assert_response, delete_resources_from_collection
 from selenium.common.exceptions import NoSuchElementException
@@ -39,14 +38,14 @@ def test_delete_catalog_deletes_service(appliance, dialog, catalog):
         dialog=dialog)
     catalog.delete()
     service_catalogs = ServiceCatalogs(appliance, catalog, catalog_item.name)
-    with error.expected(NoSuchElementException):
+    with pytest.raises(NoSuchElementException):
         service_catalogs.order()
 
 
 def test_delete_catalog_item_deletes_service(appliance, catalog_item):
     catalog_item.delete()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
-    with error.expected(NoSuchElementException):
+    with pytest.raises(NoSuchElementException):
         service_catalogs.order()
 
 
@@ -61,8 +60,9 @@ def test_service_circular_reference(appliance, catalog_item):
         sec_bundle_name, description="catalog_bundle",
         display_in=True, catalog=catalog_item.catalog,
         dialog=catalog_item.dialog, catalog_items=[bundle_name])
-    with error.expected("Error during 'Resource Add': Adding resource <{}> to Service <{}> "
-                        "will create a circular reference".format(sec_bundle_name, bundle_name)):
+    msg = ("Error during 'Resource Add': Adding resource <{}> to Service <{}> "
+           "will create a circular reference".format(sec_bundle_name, bundle_name))
+    with pytest.raises(Exception, match=msg):
         catalog_bundle.update({'catalog_items': sec_catalog_bundle.name})
 
 
@@ -115,7 +115,7 @@ def test_delete_dialog_before_parent_item(appliance, catalog_item):
     dialog = service_dialog.instantiate(label=catalog_item.dialog.label)
     error_message = ('Dialog \"{}\": Error during delete: Dialog cannot be'
         ' deleted because it is connected to other components.').format(catalog_item.dialog.label)
-    with error.expected(error_message):
+    with pytest.raises(Exception, match=error_message):
         dialog.delete()
 
 
@@ -134,7 +134,7 @@ class TestServiceCatalogViaREST(object):
         for scl in service_catalogs:
             scl.action.delete(force_method=method)
             assert_response(appliance)
-            with error.expected("ActiveRecord::RecordNotFound"):
+            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
                 scl.action.delete(force_method=method)
             assert_response(appliance, http_status=404)
 

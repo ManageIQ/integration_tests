@@ -2,7 +2,6 @@
 import pytest
 import random
 from cfme.utils import conf
-from cfme.utils import error
 
 from cfme.infrastructure import host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -67,6 +66,6 @@ def test_host_bad_creds(appliance, request, setup_provider, provider):
     host_collection = appliance.collections.hosts
     host_obj = host_collection.instantiate(name=test_host.name, provider=provider)
 
-    with error.expected(msgs[provider.type]):
+    with pytest.raises(Exception, match=msgs[provider.type]):
         with update(host_obj, validate_credentials=True):
             host_obj.credentials = host.get_credentials_from_config('bad_credentials')

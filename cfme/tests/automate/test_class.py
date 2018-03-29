@@ -4,7 +4,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
-from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
@@ -91,7 +90,7 @@ def test_schema_duplicate_field_disallowed(request, domain):
     )
     field = fauxfactory.gen_alpha()
     a_class.schema.add_field(name=field, type='Relationship')
-    with error.expected('Name has already been taken'):
+    with pytest.raises(Exception, match='Name has already been taken'):
         a_class.schema.add_field(name=field, type='Relationship')
 
 
@@ -100,7 +99,7 @@ def test_schema_duplicate_field_disallowed(request, domain):
 def test_duplicate_class_disallowed(namespace):
     name = fauxfactory.gen_alphanumeric()
     namespace.classes.create(name=name)
-    with error.expected("Name has already been taken"):
+    with pytest.raises(Exception, match="Name has already been taken"):
         namespace.classes.create(name=name)
 
 

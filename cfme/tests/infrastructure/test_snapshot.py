@@ -10,9 +10,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVmSnapshotAddView, Vm
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils import error
 from cfme.utils.blockers import BZ
-from cfme.utils.blockers import GH
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -256,7 +254,7 @@ def test_revert_on_running_vm(small_test_vm):
     snapshot.create()
     small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_ON, cancel=False)
     small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_ON)
-    with error.expected('Could not find an element'):
+    with pytest.raises(Exception, match='Could not find an element'):
         snapshot.revert_to()
 
 

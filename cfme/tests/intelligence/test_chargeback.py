@@ -7,7 +7,6 @@ import pytest
 import cfme.intelligence.chargeback.rates as cb
 from cfme import test_requirements
 from cfme.rest.gen_data import rates as _rates
-from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.update import update
@@ -250,7 +249,7 @@ class TestRatesViaREST(object):
         for rate in rates:
             rate.action.delete(force_method=method)
             assert_response(appliance)
-            with error.expected("ActiveRecord::RecordNotFound"):
+            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
                 rate.action.delete(force_method=method)
             assert_response(appliance, http_status=404)
 

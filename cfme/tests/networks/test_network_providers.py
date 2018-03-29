@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 
-from cfme.utils import error
 from cfme.utils.update import update
 from cfme.utils.blockers import BZ
 from cfme.common.provider_views import NetworkProvidersView
@@ -44,7 +43,7 @@ def test_provider_add_with_bad_credentials(provider):
     default_credentials.principal = "bad"
     default_credentials.secret = 'notyourday'
 
-    with error.expected(flash):
+    with pytest.raises(Exception, match=flash):
         provider.create(validate_credentials=True)
 
 

@@ -5,7 +5,6 @@ from cfme import test_requirements
 from cfme.common.provider import CloudInfraProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import (
     assert_response,
@@ -162,7 +161,7 @@ def test_provider_delete_from_detail(provider_rest, appliance, method):
     # testing BZ1525498
     assert_response(appliance)
     provider_rest.wait_not_exists(num_sec=50)
-    with error.expected("ActiveRecord::RecordNotFound"):
+    with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
         del_action()
     assert_response(appliance, http_status=404)
 
