@@ -10,9 +10,11 @@ from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab, Candidat
 from cfme.utils import ParamClassName
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
+from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (PaginationPane, Table, ReportToolBarViewSelector,
                                   NonJSPaginationPane)
@@ -269,8 +271,9 @@ class CustomReport(Updateable, Navigatable):
                 view = self.create_view(AllCustomReportsView)
                 assert view.is_displayed
             view.flash.assert_no_error()
-            view.flash.assert_message(
-                'Report "{}": Delete successful'.format(self.menu_name))
+            if not (BZ.bugzilla.get_bug(1561779).is_opened and current_version() >= '5.9'):
+                view.flash.assert_message(
+                    'Report "{}": Delete successful'.format(self.menu_name))
 
     def get_saved_reports(self):
         view = navigate_to(self, "Details")
