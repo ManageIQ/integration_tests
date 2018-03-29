@@ -7,7 +7,6 @@ from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.log import logger
-from cfme.utils import error
 
 
 pytestmark = [
@@ -62,5 +61,5 @@ def test_vm_clone(appliance, provider, clone_vm_name, create_vm):
 def test_vm_clone_neg(provider, clone_vm_name, create_vm):
     """Tests that we can't clone non-VMware VM"""
     provision_type = 'VMware'
-    with error.expected(DropdownItemNotFound):
+    with pytest.raises(DropdownItemNotFound):
             create_vm.clone_vm("email@xyz.com", "first", "last", clone_vm_name, provision_type)
