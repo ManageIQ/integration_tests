@@ -19,9 +19,9 @@ MANAGER_TYPE = ['Swift Manager', 'Cinder Manager']
 
 
 @pytest.yield_fixture(scope='module')
-def provider_cleanup():
+def provider_cleanup(provider):
     yield
-    OpenStackProvider.clear_providers()
+    provider.delete()
 
 
 @pytest.yield_fixture(params=MANAGER_TYPE,
