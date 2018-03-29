@@ -177,7 +177,7 @@ def delete_resources_from_collection(
 
 
 def delete_resources_from_detail(
-        resources, method, not_found=False, num_sec=10, delay=2, check_response=True):
+        resources, method, num_sec=10, delay=2, check_response=True):
     """Checks that delete from detail works as expected."""
     _api = resources[0].collection._api
 
@@ -196,10 +196,9 @@ def delete_resources_from_detail(
     for resource in resources:
         resource.wait_not_exists(num_sec=num_sec, delay=delay)
 
-        if not_found:
-            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-                del_action()
-            _assert_response(http_status=404)
+        with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
+            del_action()
+        _assert_response(http_status=404)
 
 
 def query_resource_attributes(resource, soft_assert=None):
