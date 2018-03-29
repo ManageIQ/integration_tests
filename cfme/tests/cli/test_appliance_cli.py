@@ -1,7 +1,6 @@
 import pytest
 
 from cfme.utils.log_validator import LogValidator
-from cfme.utils import version
 from wait_for import wait_for
 
 
@@ -19,8 +18,13 @@ tzs = [
     ['UTC'],
 ]
 
+requires_59 = pytest.mark.uncollectif(
+    lambda appliance: appliance.version < '5.9',
+    reason="this test requires an appliance version >= 5.9"
+)
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+
+@requires_59
 def test_appliance_console_cli_datetime(temp_appliance_preconfig_funcscope):
     """Grab fresh appliance and set time and date through appliance_console_cli and check result"""
     app = temp_appliance_preconfig_funcscope
@@ -31,7 +35,7 @@ def test_appliance_console_cli_datetime(temp_appliance_preconfig_funcscope):
     wait_for(date_changed)
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+@requires_59
 @pytest.mark.parametrize('timezone', tzs, ids=[tz[0] for tz in tzs])
 def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modscope):
     """Set and check timezones are set correctly through appliance conosle cli"""
@@ -40,7 +44,7 @@ def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modsc
     app.appliance_console.timezone_check(timezone)
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+@requires_59
 def test_appliance_console_cli_db_maintenance_hourly(appliance_with_preset_time):
     """Test database hourly re-indexing through appliance console"""
     app = appliance_with_preset_time
@@ -130,7 +134,7 @@ def test_appliance_console_cli_ipa(ipa_crud, configured_appliance, no_ipa_config
     assert wait_for(lambda: not configured_appliance.sssd.running)
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
+@requires_59
 def test_appliance_console_cli_extend_storage(unconfigured_appliance):
     unconfigured_appliance.ssh_client.run_command('appliance_console_cli -t auto')
 
@@ -139,7 +143,7 @@ def test_appliance_console_cli_extend_storage(unconfigured_appliance):
     wait_for(is_storage_extended)
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
+@requires_59
 def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
     unconfigured_appliance.ssh_client.run_command('appliance_console_cli -l auto')
 
@@ -148,7 +152,7 @@ def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
     wait_for(is_storage_extended)
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
+@requires_59
 def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, app_creds):
     unconfigured_appliance.appliance_console_cli.configure_appliance_dedicated_db(
         app_creds['username'], app_creds['password'], 'vmdb_production',
@@ -157,7 +161,9 @@ def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, ap
     wait_for(lambda: unconfigured_appliance.db.is_dedicated_active)
 
 
-@pytest.mark.uncollectif(lambda appliance: version.current_version() < '5.9.1')
+@pytest.mark.uncollectif(
+    lambda appliance: appliance.version < '5.9.1',
+    reason="this test requires appliance version < 5.9.1")
 def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
     """Tests the configuration of HA with three appliances including failover to standby node"""
     apps = unconfigured_appliances

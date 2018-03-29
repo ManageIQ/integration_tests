@@ -2,12 +2,12 @@
 import pytest
 
 from widgetastic.utils import partial_match
-
+import miq_version
 from cfme import test_requirements
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils import testgen, version
+from cfme.utils import testgen
 
 pytestmark = [
     test_requirements.smartstate,
@@ -57,7 +57,8 @@ def host_with_credentials(appliance, provider, host_name):
 
 @pytest.mark.rhv1
 @pytest.mark.uncollectif(
-    lambda provider: version.current_version() == version.UPSTREAM and provider.type == 'rhevm')
+    lambda provider, appliance:
+    appliance.version == miq_version.UPSTREAM and provider.type == 'rhevm')
 def test_run_host_analysis(setup_provider_modscope, provider, host_type, host_name, register_event,
                            soft_assert, host_with_credentials):
     """ Run host SmartState analysis

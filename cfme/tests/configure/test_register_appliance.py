@@ -2,7 +2,7 @@ import pytest
 import time
 
 from cfme.configure.configuration.region_settings import RedHatUpdates
-from cfme.utils import conf, version
+from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.blockers import BZ
@@ -30,8 +30,9 @@ def pytest_generate_tests(metafunc):
     argvalues = []
     idlist = []
 
-    stream = version.current_stream()
     try:
+        holder = metafunc.config.pluginmanager.get_plugin('appliance-holder')
+        stream = holder.held_appliance.version.stream()
         all_reg_data = conf.cfme_data.get('redhat_updates', {})['streams'][stream]
     except KeyError:
         logger.warning('Could not find rhsm data for stream in yaml')

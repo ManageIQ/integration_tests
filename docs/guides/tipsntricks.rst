@@ -74,7 +74,7 @@ There are times when conditions dictate that we don't need to run a test if a ce
 is true. Imagine you don't want to run a test if the appliance version is below a certain value.
 In these instances, you can use ``uncollectif`` which is a pytest marker::
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.3')
+    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
     def test_my_feature():
         # Test the new feature
         pass

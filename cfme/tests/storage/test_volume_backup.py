@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.utils import version
 from cfme.utils.log import logger
 
 
@@ -66,7 +65,7 @@ def test_storage_volume_backup_edit_tag_from_detail(backup):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 def test_storage_volume_backup_delete(backup):
     """ Volume backup deletion method not support by 5.8 """
 
