@@ -491,7 +491,7 @@ class TestUsersViaREST(object):
         group_handles = [{'href': group.href} for group in groups]
 
         user = users[0]
-        with error.expected('BadRequestError'):
+        with pytest.raises(Exception, match='BadRequestError'):
             user.action.edit(miq_groups=group_handles)
         assert_response(appliance, http_status=400)
 
@@ -563,7 +563,7 @@ class TestUsersViaREST(object):
         assert_response(appliance)
         user.reload()
         assert user.current_group.id == groups[0].id
-        with error.expected('BadRequestError: Invalid attribute'):
+        with pytest.raises(Exception, match='BadRequestError: Invalid attribute'):
             user.action.edit(current_group=group_handles[1])
         assert_response(appliance, http_status=400)
 
@@ -587,7 +587,7 @@ class TestUsersViaREST(object):
         assert_response(appliance)
         user.reload()
         assert user.current_group.id == groups[0].id
-        with error.expected('Can only edit authenticated user\'s current group'):
+        with pytest.raises(Exception, match='Can only edit authenticated user\'s current group'):
             user.action.set_current_group(current_group=group_handles[1])
         assert_response(appliance, http_status=400)
 
