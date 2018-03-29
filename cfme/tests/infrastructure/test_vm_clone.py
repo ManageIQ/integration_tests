@@ -2,18 +2,22 @@
 import fauxfactory
 import pytest
 
+from widgetastic_patternfly import DropdownItemNotFound
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.log import logger
 
 
 pytestmark = [
     pytest.mark.meta(roles="+automate"),
-    pytest.mark.provider([VMwareProvider],
+    pytest.mark.provider([InfraProvider],
                          required_fields=[['provisioning', 'template'],
                                           ['provisioning', 'host'],
                                           ['provisioning', 'datastore']],
                          scope="module"),
+    pytest.mark.usefixtures("setup_provider"),
+    pytest.mark.long_running,
 ]
 
 
@@ -24,7 +28,7 @@ def clone_vm_name():
 
 
 @pytest.fixture
-def create_vm(appliance, provider, setup_provider, request):
+def create_vm(appliance, provider, request):
     """Fixture to provision vm to the provider being tested"""
     vm_name = 'test_clone_{}'.format(fauxfactory.gen_alphanumeric())
     vm = VM.factory(vm_name, provider)
@@ -37,13 +41,12 @@ def create_vm(appliance, provider, setup_provider, request):
     if not provider.mgmt.does_vm_exist(vm.name):
         logger.info("deploying %s on provider %s", vm.name, provider.key)
         vm.create_on_provider(allow_skip="default", find_in_cfme=True)
-    return vm
+    yield vm
+    vm.cleanup_on_provider()
 
 
-@pytest.mark.usefixtures("setup_provider")
-@pytest.mark.long_running
-def test_vm_clone(appliance, provider, clone_vm_name, request, create_vm):
-    request.addfinalizer(lambda: VM.factory(clone_vm_name, provider).cleanup_on_provider())
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+def test_vm_clone(appliance, provider, clone_vm_name, create_vm):
     provision_type = 'VMware'
     create_vm.clone_vm("email@xyz.com", "first", "last", clone_vm_name, provision_type)
     request_description = clone_vm_name
@@ -52,3 +55,11 @@ def test_vm_clone(appliance, provider, clone_vm_name, request, create_vm):
     request_row.wait_for_request(method='ui')
     msg = "Request failed with the message {}".format(request_row.row.last_message.text)
     assert request_row.is_succeeded(method='ui'), msg
+
+
+@pytest.mark.uncollectif(lambda provider: provider.one_of(VMwareProvider))
+def test_vm_clone_neg(provider, clone_vm_name, create_vm):
+    """Tests that we can't clone non-VMware VM"""
+    provision_type = 'VMware'
+    with pytest.raises(DropdownItemNotFound):
+            create_vm.clone_vm("email@xyz.com", "first", "last", clone_vm_name, provision_type)
