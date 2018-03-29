@@ -1006,12 +1006,13 @@ class Role(Updateable, Pretty, BaseEntity):
         view = self.create_view(DetailsRoleView, override=updates)
         view.flash.assert_message(flash_message)
 
-        # The accordion may not refresh after a role name update
+        # Typically this would be a safe check but BZ 1561698 will sometimes cause the accordion
+        #  to fail to update the role name w/o a manual refresh causing is_displayed to fail
+        # Instead of inserting a blind refresh, just disable this until the bug is resolved since
+        #  it's a good check for accordion UI failures
         # See BZ https://bugzilla.redhat.com/show_bug.cgi?id=1561698
-        if BZ(1561698, forced_streams=['5.9']).blocks:
-            self.appliance.browser.widgetastic.refresh()
-
-        assert view.is_displayed
+        if not BZ(1561698, forced_streams=['5.9']).blocks:
+            assert view.is_displayed
 
     def delete(self, cancel=True):
         """ Delete existing role
