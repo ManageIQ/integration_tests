@@ -1,7 +1,6 @@
 import fauxfactory
 import pytest
 from cfme.configure.configuration.region_settings import Category, Tag
-from cfme.utils import error
 from cfme.utils.update import update
 from cfme.utils.testgen import config_managers, generate
 
@@ -61,7 +60,7 @@ def test_config_manager_add_invalid_url(request, config_manager_obj):
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.url = 'https://invalid_url'
     error_message = 'getaddrinfo: Name or service not known'
-    with error.expected(error_message):
+    with pytest.raises(Exception, match=error_message):
         config_manager_obj.create()
 
 
@@ -69,7 +68,8 @@ def test_config_manager_add_invalid_url(request, config_manager_obj):
 def test_config_manager_add_invalid_creds(request, config_manager_obj):
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.credentials.principal = 'invalid_user'
-    with error.expected('Credential validation was not successful: 401 Unauthorized'):
+    msg = 'Credential validation was not successful: 401 Unauthorized'
+    with pytest.raises(Exception, match=msg):
         config_manager_obj.create()
 
 

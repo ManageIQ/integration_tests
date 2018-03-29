@@ -13,7 +13,6 @@ from cfme.exceptions import RBACOperationBlocked
 from cfme.infrastructure import virtual_machines as vms
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
-from cfme.utils import error
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
@@ -193,7 +192,7 @@ def test_username_required_error_validation(appliance, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
-    with error.expected("Name can't be blank"):
+    with pytest.raises(Exception, match="Name can't be blank"):
         appliance.collections.users.create(
             name="",
             credential=new_credential(),
@@ -207,7 +206,7 @@ def test_userid_required_error_validation(appliance, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
-    with error.expected("Userid can't be blank"):
+    with pytest.raises(Exception, match="Userid can't be blank"):
         appliance.collections.users.create(
             name='user{}'.format(fauxfactory.gen_alphanumeric()),
             credential=Credential(principal='', secret='redhat'),
@@ -226,7 +225,7 @@ def test_user_password_required_error_validation(appliance, group_collection):
 
     check = "Password can't be blank"
 
-    with error.expected(check):
+    with pytest.raises(Exception, match=check):
         appliance.collections.users.create(
             name='user{}'.format(fauxfactory.gen_alphanumeric()),
             credential=Credential(
@@ -240,7 +239,7 @@ def test_user_password_required_error_validation(appliance, group_collection):
 
 @pytest.mark.tier(3)
 def test_user_group_error_validation(appliance):
-    with error.expected("A User must be assigned to a Group"):
+    with pytest.raises(Exception, match="A User must be assigned to a Group"):
         appliance.collections.users.create(
             name='user{}'.format(fauxfactory.gen_alphanumeric()),
             credential=new_credential(),
@@ -252,7 +251,7 @@ def test_user_group_error_validation(appliance):
 def test_user_email_error_validation(appliance, group_collection):
     group = group_collection.instantiate(description='EvmGroup-user')
 
-    with error.expected("Email must be a valid email address"):
+    with pytest.raises(Exception, match="Email must be a valid email address"):
         appliance.collections.users.create(
             name='user{}'.format(fauxfactory.gen_alphanumeric()),
             credential=new_credential(),
@@ -431,7 +430,7 @@ def test_group_remove_tag(group_collection):
 def test_group_description_required_error_validation(group_collection):
     error_text = "Description can't be blank"
 
-    with error.expected(error_text):
+    with pytest.raises(Exception, match=error_text):
         group_collection.create(description=None, role='EvmRole-approver')
 
     # Navigating away from this page will create an "Abandon Changes" alert
@@ -527,7 +526,7 @@ def test_role_crud(appliance):
 
 @pytest.mark.tier(3)
 def test_rolename_required_error_validation(appliance):
-    with error.expected("Name can't be blank"):
+    with pytest.raises(Exception, match="Name can't be blank"):
         appliance.collections.roles.create(
             name=None,
             vm_restriction='Only User Owned'
@@ -644,20 +643,15 @@ def test_permission_edit(appliance, request, product_features):
     group = group_collection(appliance).create(description=group_description, role=role.name)
     user = new_user(appliance, [group])
     with user:
-        try:
+        with pytest.raises(Exception, message='Incorrect permissions set'):
             navigate_to(vms.Vm, 'VMsOnly')
-        except Exception:
-            pytest.fail('Incorrect permissions set')
     appliance.server.login_admin()
     role.update({'product_features': [(['Everything'], True)] +
                                      [(k, False) for k in product_features]
                  })
     with user:
-        try:
-            with error.expected(Exception):
-                navigate_to(vms.Vm, 'VMsOnly')
-        except error.UnexpectedSuccessException:
-            pytest.fail('Permissions have not been updated')
+        with pytest.raises(Exception, message='Permissions have not been updated'):
+            navigate_to(vms.Vm, 'VMsOnly')
 
     @request.addfinalizer
     def _delete_user_group_role():
@@ -751,7 +745,7 @@ def test_permissions(appliance, product_features, allowed_actions, disallowed_ac
     try:
         with user:
             appliance.server.login(user)
-
+            # TODO: split this test into 2 parameterized tests
             for name, action_thunk in sorted(allowed_actions.items()):
                 try:
                     action_thunk(appliance)
@@ -760,9 +754,9 @@ def test_permissions(appliance, product_features, allowed_actions, disallowed_ac
 
             for name, action_thunk in sorted(disallowed_actions.items()):
                 try:
-                    with error.expected(Exception):
+                    with pytest.raises(Exception):
                         action_thunk(appliance)
-                except error.UnexpectedSuccessException:
+                except pytest.fail.Exception:
                     fails[name] = "{}: {}".format(name, traceback.format_exc())
 
             if fails:
@@ -1009,7 +1003,7 @@ def tenant_unique_tenant_project_name_on_parent_level(request, appliance, object
         msg = 'Error when adding a new tenant: Validation failed: Name should be unique per parent'
     else:
         msg = 'Failed to add a new tenant resource - Name should be unique per parent'
-    with error.expected(msg):
+    with pytest.raises(Exception, match=msg):
         tenant2 = object_type.create(
             name=name_of_tenant,
             description=tenant_description,
@@ -1057,7 +1051,8 @@ def test_delete_default_tenant(appliance):
     for row in view.table.rows():
         if row.name.text == roottenant.name:
             row[0].check()
-    with error.handler('Default Tenant "{}" can not be deleted'.format(roottenant.name)):
+    msg = 'Default Tenant "{}" can not be deleted'.format(roottenant.name)
+    with pytest.raises(Exception, match=msg):
         view.toolbar.configuration.item_select('Delete selected items', handle_alert=True)
 
 

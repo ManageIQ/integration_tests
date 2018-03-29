@@ -19,7 +19,6 @@ from cfme.common.provider_views import (
     CloudProviderAddView, CloudProvidersView, CloudProvidersDiscoverView)
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
-from cfme.utils import error
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.rest import assert_response
 from cfme.utils.update import update
@@ -164,7 +163,7 @@ def test_provider_add_with_bad_credentials(provider, enable_regions):
             if endp_name != 'default':
                 del provider.endpoints[endp_name]
 
-    with error.expected(flash):
+    with pytest.raises(Exception, match=flash):
         provider.create(validate_credentials=True)
 
 
@@ -484,7 +483,7 @@ class TestProvidersRESTAPI(object):
         for entity in arbitration_profiles:
             entity.action.delete(force_method=method)
             assert_response(appliance)
-            with error.expected('ActiveRecord::RecordNotFound'):
+            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
                 entity.action.delete(force_method=method)
             assert_response(appliance, http_status=404)
 
@@ -500,7 +499,7 @@ class TestProvidersRESTAPI(object):
         collection = appliance.rest_api.collections.arbitration_profiles
         collection.action.delete(*arbitration_profiles)
         assert_response(appliance)
-        with error.expected('ActiveRecord::RecordNotFound'):
+        with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
             collection.action.delete(*arbitration_profiles)
         assert_response(appliance, http_status=404)
 

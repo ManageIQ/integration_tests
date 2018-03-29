@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """Helper functions for tests using REST API."""
-
+import pytest
 from collections import namedtuple
 
 from cfme.exceptions import OptionNotAvailable
-from cfme.utils import error
 from cfme.utils.wait import wait_for
 
 
@@ -169,7 +168,7 @@ def delete_resources_from_collection(
 
     current_version = collection._api.server_info.get('version')
     if not_found or current_version < '5.9':
-        with error.expected('ActiveRecord::RecordNotFound'):
+        with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
             collection.action.delete(*resources)
         _assert_response(http_status=404)
     else:

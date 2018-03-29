@@ -2,7 +2,6 @@
 import pytest
 
 from cfme.physical.provider.lenovo import LenovoProvider
-from cfme.utils import error
 from cfme.utils.rest import assert_response
 from cfme.utils.wait import wait_for
 
@@ -34,22 +33,22 @@ def get_server_attr(attr_name, provider, physical_server):
 
 def test_get_physical_server(physical_server, appliance):
     existent_server = appliance.rest_api.get_entity('physical_servers', physical_server.id)
-    existent_server.reload
+    existent_server.reload()
     assert_response(appliance)
 
 
 def test_get_nonexistent_physical_server(appliance):
     nonexistent = appliance.rest_api.get_entity('physical_servers', 999999)
-    with error.expected('ActiveRecord::RecordNotFound'):
+    with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
         nonexistent.reload()
     assert_response(appliance, http_status=404)
 
 
 def test_invalid_action(physical_server, appliance):
     payload = {
-        "action" : "invalid_action"
+        "action": "invalid_action"
     }
-    with error.expected('Api::BadRequestError'):
+    with pytest.raises(Exception, match='Api::BadRequestError'):
         appliance.rest_api.post(physical_server.href, **payload)
 
 
@@ -68,8 +67,12 @@ actions = [
     ("turn_on_loc_led", "location_led_state", "On"),
     ("turn_off_loc_led", "location_led_state", "Off")
 ]
-@pytest.mark.parametrize("action, verification_attr, desired_state", actions, ids=[action[0] for action in actions])
-def test_server_actions(physical_server, appliance, provider, action, verification_attr, desired_state):
+
+
+@pytest.mark.parametrize("action, verification_attr, desired_state",
+                         actions, ids=[action[0] for action in actions])
+def test_server_actions(physical_server, appliance, provider, action,
+                        verification_attr, desired_state):
     """ Test the physical server actions sending the action request, waiting the task be complete on MiQ
         and then waiting the state of some attribute of physical server be change
     Params:
@@ -79,10 +82,11 @@ def test_server_actions(physical_server, appliance, provider, action, verificati
     Metadata:
         test_flag: rest
     """
+
+    def condition():
+        server_attr = get_server_attr(verification_attr, provider, physical_server)
+        return server_attr.lower() == desired_state.lower()
+
     assert getattr(physical_server.action, action)()
     assert_response(appliance)
-    wait_for(
-        lambda: get_server_attr(verification_attr, provider, physical_server).lower() == desired_state.lower(),
-        num_sec=TIMEOUT,
-        delay=DELAY
-    )
+    wait_for(condition, num_sec=TIMEOUT, delay=DELAY)

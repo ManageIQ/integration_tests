@@ -4,7 +4,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.version import current_version
@@ -115,7 +114,7 @@ class TestReposRESTAPI(object):
             assert_response(appliance, success=False)
         else:
             # testing BZ 1477520
-            with error.expected('ActiveRecord::RecordNotFound'):
+            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
                 del_action()
             assert_response(appliance, http_status=404)
 

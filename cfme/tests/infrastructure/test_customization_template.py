@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme.infrastructure.pxe import SystemImageType
-from cfme.utils import error
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
@@ -44,7 +43,7 @@ def test_customization_template_crud(collection, script_type, image_type):
 def test_name_required_error_validation(collection):
     """Test to validate name in customization templates."""
 
-    with error.expected('Name is required'):
+    with pytest.raises(Exception, match='Name is required'):
         collection.create(
             name=None,
             description=fauxfactory.gen_alphanumeric(16),
@@ -56,7 +55,7 @@ def test_name_required_error_validation(collection):
 def test_type_required_error_validation(collection):
     """Test to validate type in customization templates."""
 
-    with error.expected('Type is required'):
+    with pytest.raises(Exception, match='Type is required'):
         collection.create(
             name=fauxfactory.gen_alphanumeric(8),
             description=fauxfactory.gen_alphanumeric(16),
@@ -68,7 +67,7 @@ def test_type_required_error_validation(collection):
 def test_pxe_image_type_required_error_validation(collection):
     """Test to validate pxe image type in customization templates."""
 
-    with error.expected("Pxe_image_type can't be blank"):
+    with pytest.raises(Exception, match="Pxe_image_type can't be blank"):
         collection.create(
             name=fauxfactory.gen_alphanumeric(8),
             description=fauxfactory.gen_alphanumeric(16),
@@ -90,7 +89,7 @@ def test_duplicate_name_error_validation(collection):
         script_type='Kickstart',
         script_data='Testing the script')
 
-    with error.expected('Name has already been taken'):
+    with pytest.raises(Exception, match='Name has already been taken'):
         collection.create(
             name=name,
             description=description,

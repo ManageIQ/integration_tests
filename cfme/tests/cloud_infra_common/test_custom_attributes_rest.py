@@ -7,10 +7,8 @@ from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import CloudInfraProvider, InfraProvider
-from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
-from cfme.utils.log import logger
 from cfme.utils.rest import assert_response, delete_resources_from_collection
 
 
@@ -161,7 +159,7 @@ class TestCustomAttributesRESTAPI(object):
         for entity in attributes:
             entity.action.delete.POST()
             assert_response(appliance)
-            with error.expected('ActiveRecord::RecordNotFound'):
+            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
                 entity.action.delete.POST()
             assert_response(appliance, http_status=404)
 
@@ -180,7 +178,7 @@ class TestCustomAttributesRESTAPI(object):
         for entity in attributes:
             entity.action.delete.DELETE()
             assert_response(appliance)
-            with error.expected('ActiveRecord::RecordNotFound'):
+            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
                 entity.action.delete.DELETE()
             assert_response(appliance, http_status=404)
 
@@ -281,13 +279,13 @@ class TestCustomAttributesRESTAPI(object):
             body.append({'section': 'bad_section'})
         if from_detail:
             for i in range(response_len):
-                with error.expected('Api::BadRequestError'):
+                with pytest.raises(Exception, match='Api::BadRequestError'):
                     attributes[i].action.edit(**body[i])
                 assert_response(appliance, http_status=400)
         else:
             for i in range(response_len):
                 body[i].update(attributes[i]._ref_repr())
-            with error.expected('Api::BadRequestError'):
+            with pytest.raises(Exception, match='Api::BadRequestError'):
                 resource.custom_attributes.action.edit(*body)
             assert_response(appliance, http_status=400)
 
@@ -317,6 +315,6 @@ class TestCustomAttributesRESTAPI(object):
             'value': 'ca_value_{}'.format(uid),
             'section': 'bad_section'
         }
-        with error.expected('Api::BadRequestError'):
+        with pytest.raises(Exception, match='Api::BadRequestError'):
             resource.custom_attributes.action.add(body)
         assert_response(appliance, http_status=400)

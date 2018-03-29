@@ -23,7 +23,6 @@ from cfme.rest.gen_data import (
     services as _services,
     vm as _vm,
 )
-from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.rest import (
@@ -293,7 +292,7 @@ class TestServiceRESTAPI(object):
         for service in services:
             service.action.delete.POST()
             assert_response(appliance)
-            with error.expected("ActiveRecord::RecordNotFound"):
+            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
                 service.action.delete.POST()
             assert_response(appliance, http_status=404)
 
@@ -306,7 +305,7 @@ class TestServiceRESTAPI(object):
         for service in services:
             service.action.delete.DELETE()
             assert_response(appliance)
-            with error.expected("ActiveRecord::RecordNotFound"):
+            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
                 service.action.delete.DELETE()
             assert_response(appliance, http_status=404)
 
@@ -535,7 +534,7 @@ class TestServiceRESTAPI(object):
             delay=10,
         )
         for gen in child, parent, grandparent:
-            with error.expected("ActiveRecord::RecordNotFound"):
+            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
                 gen.action.delete()
 
     def test_add_service_parent(self, request, appliance):
@@ -712,7 +711,7 @@ class TestServiceDialogsRESTAPI(object):
             assert_response(appliance)
 
             dialog.wait_not_exists(num_sec=10, delay=2)
-            with error.expected("ActiveRecord::RecordNotFound"):
+            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
                 del_action()
             assert_response(appliance, http_status=404)
 
@@ -783,7 +782,7 @@ class TestServiceTemplateRESTAPI(object):
         for service_template in service_templates:
             service_template.action.delete.POST()
             assert_response(appliance)
-            with error.expected("ActiveRecord::RecordNotFound"):
+            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
                 service_template.action.delete.POST()
             assert_response(appliance, http_status=404)
 
@@ -796,7 +795,7 @@ class TestServiceTemplateRESTAPI(object):
         for service_template in service_templates:
             service_template.action.delete.DELETE()
             assert_response(appliance)
-            with error.expected("ActiveRecord::RecordNotFound"):
+            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
                 service_template.action.delete.DELETE()
             assert_response(appliance, http_status=404)
 
@@ -1075,7 +1074,7 @@ class TestServiceCatalogsRESTAPI(object):
                 delay=5
             )
 
-            with error.expected('ActiveRecord::RecordNotFound'):
+            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
                 del_action()
             assert_response(appliance, http_status=404)
 
@@ -1197,7 +1196,7 @@ class TestPendingRequestsRESTAPI(object):
 
         del_action()
         assert_response(appliance)
-        with error.expected('ActiveRecord::RecordNotFound'):
+        with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
             del_action()
         assert_response(appliance, http_status=404)
 
@@ -1382,7 +1381,7 @@ class TestBlueprintsRESTAPI(object):
 
             del_action()
             assert_response(appliance)
-            with error.expected("ActiveRecord::RecordNotFound"):
+            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
                 del_action()
             assert_response(appliance, http_status=404)
 
@@ -1396,7 +1395,7 @@ class TestBlueprintsRESTAPI(object):
         collection = appliance.rest_api.collections.blueprints
         collection.action.delete(*blueprints)
         assert_response(appliance)
-        with error.expected("ActiveRecord::RecordNotFound"):
+        with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
             collection.action.delete(*blueprints)
         assert_response(appliance, http_status=404)
 
@@ -1486,7 +1485,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
         for ent in orchestration_templates:
             ent.action.delete.POST()
             assert_response(appliance)
-            with error.expected("ActiveRecord::RecordNotFound"):
+            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
                 ent.action.delete.POST()
             assert_response(appliance, http_status=404)
 
@@ -1501,7 +1500,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
         for ent in orchestration_templates:
             ent.action.delete.DELETE()
             assert_response(appliance)
-            with error.expected("ActiveRecord::RecordNotFound"):
+            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
                 ent.action.delete.DELETE()
             assert_response(appliance, http_status=404)
 
@@ -1597,13 +1596,13 @@ class TestOrchestrationTemplatesRESTAPI(object):
             })
         if from_detail:
             for i in range(num_orch_templates):
-                with error.expected("content must be unique"):
+                with pytest.raises(Exception, match="content must be unique"):
                     orchestration_templates[i].action.copy(**new[i])
                 assert_response(appliance, http_status=400)
         else:
             for i in range(num_orch_templates):
                 new[i].update(orchestration_templates[i]._ref_repr())
-            with error.expected("content must be unique"):
+            with pytest.raises(Exception, match="content must be unique"):
                 appliance.rest_api.collections.orchestration_templates.action.copy(*new)
             assert_response(appliance, http_status=400)
 
@@ -1625,7 +1624,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
             'draft': False,
             'content': TEMPLATE_TORSO.replace('CloudFormation', uniq)
         }
-        with error.expected('Api::BadRequestError'):
+        with pytest.raises(Exception, match='Api::BadRequestError'):
             appliance.rest_api.collections.orchestration_templates.action.create(payload)
         assert_response(appliance, http_status=400)
 
@@ -1776,7 +1775,7 @@ class TestServiceOrderCart(object):
         Metadata:
             test_flag: rest
         """
-        with error.expected('Cannot copy a service order in the cart state'):
+        with pytest.raises(Exception, match='Cannot copy a service order in the cart state'):
             cart.action.copy(name='new_cart')
         assert_response(appliance, http_status=400)
 
@@ -1814,7 +1813,7 @@ class TestServiceOrderCart(object):
             assert service_name == new_service.name
 
         # when cart is ordered, it can not longer be accessed using /api/service_orders/cart
-        with error.expected('ActiveRecord::RecordNotFound'):
+        with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
             appliance.rest_api.get('{}/cart'.format(cart.collection._href))
 
     @pytest.mark.tier(3)
@@ -1832,7 +1831,7 @@ class TestServiceOrderCart(object):
 
         del_action()
         assert_response(appliance)
-        with error.expected('ActiveRecord::RecordNotFound'):
+        with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
             del_action()
         assert_response(appliance, http_status=404)
 

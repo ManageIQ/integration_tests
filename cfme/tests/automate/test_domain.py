@@ -4,7 +4,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.import_export import AutomateGitRepository
-from cfme.utils import error
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 
@@ -90,7 +89,7 @@ def test_duplicate_domain_disallowed(request, appliance):
         description=fauxfactory.gen_alpha(),
         enabled=True)
     request.addfinalizer(domain.delete_if_exists)
-    with error.expected("Name has already been taken"):
+    with pytest.raises(Exception, match="Name has already been taken"):
         appliance.collections.domains.create(
             name=domain.name,
             description=domain.description,
@@ -123,7 +122,7 @@ def test_domain_cannot_edit_builtin(appliance):
 
 @pytest.mark.tier(2)
 def test_domain_name_wrong(appliance):
-    with error.expected('Name may contain only'):
+    with pytest.raises(Exception, match='Name may contain only'):
         appliance.collections.domains.create(name='with space')
 
 

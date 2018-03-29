@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 
-from cfme.utils import error
 from cfme.utils.appliance import current_appliance
 from cfme.utils.update import update
 
@@ -82,7 +81,7 @@ def test_zone_add_dupe(appliance, request):
             .format(appliance.server.zone.region.number)
     else:
         error_flash = "Name has already been taken"
-    with error.expected(error_flash):
+    with pytest.raises(Exception, match=error_flash):
         zc.create(
             name=name,
             description=description)
@@ -106,7 +105,7 @@ def test_zone_add_maxlength(request, soft_assert):
 @pytest.mark.sauce
 def test_zone_add_blank_name():
     zc = current_appliance.collections.zones
-    with error.expected("Name can't be blank"):
+    with pytest.raises(Exception, match="Name can't be blank"):
         zc.create(
             name='',
             description=fauxfactory.gen_alphanumeric(8)
@@ -117,7 +116,7 @@ def test_zone_add_blank_name():
 @pytest.mark.sauce
 def test_zone_add_blank_description():
     zc = current_appliance.collections.zones
-    with error.expected("Description is required"):
+    with pytest.raises(Exception, match="Description is required"):
         zc.create(
             name=fauxfactory.gen_alphanumeric(5),
             description=''

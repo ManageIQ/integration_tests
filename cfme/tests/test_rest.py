@@ -13,7 +13,6 @@ from cfme.rest.gen_data import arbitration_rules as _arbitration_rules
 from cfme.rest.gen_data import arbitration_settings as _arbitration_settings
 from cfme.rest.gen_data import automation_requests_data
 from cfme.rest.gen_data import vm as _vm
-from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.rest import (
@@ -527,7 +526,7 @@ def test_rest_paging(appliance, paging):
         '?limit={}&offset={}'.format(limit, offset))
     if limit == 0:
         # testing BZ1489885
-        with error.expected('Api::BadRequestError'):
+        with pytest.raises(Exception, match='Api::BadRequestError'):
             appliance.rest_api.get(url_string)
         return
     else:
@@ -636,7 +635,7 @@ def test_collection_class_invalid(appliance, a_provider):
     Metadata:
         test_flag: rest
     """
-    with error.expected('Invalid collection_class'):
+    with pytest.raises(Exception, match='Invalid collection_class'):
         appliance.rest_api.collections.vms.query_string(
             collection_class='ManageIQ::Providers::Nonexistent::Vm')
 
@@ -728,7 +727,7 @@ class TestPicturesRESTAPI(object):
         """
         collection = appliance.rest_api.collections.pictures
         count = collection.count
-        with error.expected('Extension must be'):
+        with pytest.raises(Exception, match='Extension must be'):
             collection.action.create({
                 "extension": "xcf",
                 "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcS"
@@ -745,7 +744,7 @@ class TestPicturesRESTAPI(object):
         """
         collection = appliance.rest_api.collections.pictures
         count = collection.count
-        with error.expected('invalid base64'):
+        with pytest.raises(Exception, match='invalid base64'):
             collection.action.create({
                 "extension": "png",
                 "content": "invalid"})
@@ -854,7 +853,7 @@ class TestArbitrationSettingsRESTAPI(object):
             del_action()
             assert_response(appliance)
 
-            with error.expected('ActiveRecord::RecordNotFound'):
+            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
                 del_action()
             assert_response(appliance, http_status=404)
 
@@ -867,7 +866,7 @@ class TestArbitrationSettingsRESTAPI(object):
         collection = appliance.rest_api.collections.arbitration_settings
         collection.action.delete(*arbitration_settings)
         assert_response(appliance)
-        with error.expected('ActiveRecord::RecordNotFound'):
+        with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
             collection.action.delete(*arbitration_settings)
         assert_response(appliance, http_status=404)
 
@@ -939,7 +938,7 @@ class TestArbitrationRulesRESTAPI(object):
         for entity in arbitration_rules:
             entity.action.delete.POST()
             assert_response(appliance)
-            with error.expected('ActiveRecord::RecordNotFound'):
+            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
                 entity.action.delete.POST()
             assert_response(appliance, http_status=404)
 
@@ -952,7 +951,7 @@ class TestArbitrationRulesRESTAPI(object):
         collection = appliance.rest_api.collections.arbitration_rules
         collection.action.delete(*arbitration_rules)
         assert_response(appliance)
-        with error.expected('ActiveRecord::RecordNotFound'):
+        with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
             collection.action.delete(*arbitration_rules)
         assert_response(appliance, http_status=404)
 
@@ -1047,7 +1046,7 @@ class TestNotificationsRESTAPI(object):
             del_action()
             assert_response(appliance)
 
-            with error.expected('ActiveRecord::RecordNotFound'):
+            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
                 del_action()
             assert_response(appliance, http_status=404)
 

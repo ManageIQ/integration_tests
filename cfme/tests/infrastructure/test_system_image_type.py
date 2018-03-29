@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme.infrastructure.pxe import SystemImageType
-from cfme.utils import error
 from cfme.utils.update import update
 
 pytestmark = [pytest.mark.tier(3)]
@@ -32,7 +31,7 @@ def test_duplicate_name_error_validation(appliance):
     sys_image_type = collection.create(
         name=name,
         provision_type=SystemImageType.VM_OR_INSTANCE)
-    with error.expected('Name has already been taken'):
+    with pytest.raises(Exception, match='Name has already been taken'):
         collection.create(
             name=name,
             provision_type=SystemImageType.VM_OR_INSTANCE)
@@ -44,7 +43,7 @@ def test_name_required_error_validation(appliance):
     Tests a System Image with no name.
     """
     collection = appliance.collections.system_image_types
-    with error.expected('Name is required'):
+    with pytest.raises(Exception, match='Name is required'):
         collection.create(
             name=None,
             provision_type=SystemImageType.VM_OR_INSTANCE)

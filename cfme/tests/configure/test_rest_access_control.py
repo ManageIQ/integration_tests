@@ -10,7 +10,6 @@ from cfme.rest.gen_data import (
     tenants as _tenants,
     users as _users,
 )
-from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import (
     assert_response,
@@ -103,7 +102,7 @@ class TestTenantsViaREST(object):
             assert_response(appliance)
 
             tenant.wait_not_exists(num_sec=10, delay=2)
-            with error.expected("ActiveRecord::RecordNotFound"):
+            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
                 del_action()
             assert_response(appliance, http_status=404)
 
@@ -197,7 +196,7 @@ class TestRolesViaREST(object):
             assert_response(appliance)
 
             role.wait_not_exists(num_sec=10, delay=2)
-            with error.expected("ActiveRecord::RecordNotFound"):
+            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
                 del_action()
             assert_response(appliance, http_status=404)
 
@@ -231,7 +230,7 @@ class TestRolesViaREST(object):
         assert found_role.name == role_data["name"]
         role.action.delete()
         assert_response(appliance)
-        with error.expected("ActiveRecord::RecordNotFound"):
+        with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
             role.action.delete()
         assert_response(appliance, http_status=404)
 
@@ -343,7 +342,7 @@ class TestGroupsViaREST(object):
             assert_response(appliance)
 
             group.wait_not_exists(num_sec=10, delay=2)
-            with error.expected("ActiveRecord::RecordNotFound"):
+            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
                 del_action()
             assert_response(appliance, http_status=404)
 
@@ -584,7 +583,7 @@ class TestUsersViaREST(object):
         assert user.current_group.id == groups[0].id
         user_auth = (user.userid, data[0]['password'])
         user_api = appliance.new_rest_api_instance(auth=user_auth)
-        with error.expected('User must belong to group'):
+        with pytest.raises(Exception, match='User must belong to group'):
             user_api.post(user.href, action='set_current_group', current_group=group_handles[1])
 
     @pytest.mark.tier(3)
@@ -605,7 +604,7 @@ class TestUsersViaREST(object):
         # login using new password
         assert appliance.new_rest_api_instance(auth=new_user_auth)
         # try to login using old password
-        with error.expected('Authentication failed'):
+        with pytest.raises(Exception, match='Authentication failed'):
             appliance.new_rest_api_instance(auth=user_auth)
 
     @pytest.mark.tier(3)
@@ -639,7 +638,7 @@ class TestUsersViaREST(object):
             assert_response(appliance)
 
             user.wait_not_exists(num_sec=10, delay=2)
-            with error.expected("ActiveRecord::RecordNotFound"):
+            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
                 del_action()
             assert_response(appliance, http_status=404)
 

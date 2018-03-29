@@ -3,9 +3,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.control import import_export
-from cfme.utils import error
 from cfme.utils.path import data_path
-from cfme.utils.version import current_version
 
 pytestmark = [
     test_requirements.control,
@@ -34,12 +32,8 @@ def test_import_policies(appliance, import_policy_file):
 
 
 def test_control_import_invalid_yaml_file(appliance, import_invalid_yaml_file):
-    if current_version() < "5.5":
-        error_message = ("Error during 'Policy Import': undefined method `collect' "
-                         'for "Invalid yaml":String')
-    else:
-        error_message = "Error during 'Policy Import': Invalid YAML file"
-    with error.expected(error_message):
+    error_message = "Error during 'Policy Import': Invalid YAML file"
+    with pytest.raises(Exception, match=error_message):
         import_export.import_file(appliance, import_invalid_yaml_file)
 
 

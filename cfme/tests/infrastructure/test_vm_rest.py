@@ -5,7 +5,6 @@ import pytest
 from cfme import test_requirements
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
-from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import (
     assert_response,
@@ -111,7 +110,7 @@ def test_delete_vm_from_detail(vm, appliance, method):
     del_action()
     assert_response(appliance)
     vm.wait_not_exists(num_sec=300, delay=10)
-    with error.expected('ActiveRecord::RecordNotFound'):
+    with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
         del_action()
     assert_response(appliance, http_status=404)
 

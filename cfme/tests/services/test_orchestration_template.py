@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme.cloud.provider import CloudProvider
-from cfme.utils import error
 from cfme.utils.update import update
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -86,7 +85,7 @@ def test_name_required_error_validation(appliance, provisioning, create_template
     template_type = provisioning['stack_provisioning']['template_type']
     temp_type = provisioning['stack_provisioning']['template_type_dd']
     collection = appliance.collections.orchestration_templates
-    with error.expected(flash_msg):
+    with pytest.raises(Exception, match=flash_msg):
         collection.create(template_type=template_type, template_name=None,
                           temp_type=temp_type, description="my template",
                           content=create_template)
@@ -98,7 +97,7 @@ def test_all_fields_required_error_validation(appliance, provisioning, create_te
     template_type = provisioning['stack_provisioning']['template_type']
     temp_type = provisioning['stack_provisioning']['template_type_dd']
     collection = appliance.collections.orchestration_templates
-    with error.expected(flash_msg):
+    with pytest.raises(Exception, match=flash_msg):
         collection.create(template_type=template_type, template_name=None,
                           temp_type=temp_type, description=None,
                           content=create_template)
@@ -110,7 +109,7 @@ def test_new_template_required_error_validation(appliance, provisioning):
     template_type = provisioning['stack_provisioning']['template_type']
     temp_type = provisioning['stack_provisioning']['template_type_dd']
     collection = appliance.collections.orchestration_templates
-    with error.expected(flash_msg):
+    with pytest.raises(Exception, match=flash_msg):
         collection.create(template_type=template_type, temp_type=temp_type,
                           template_name=fauxfactory.gen_alphanumeric(),
                           description="my template", content='')

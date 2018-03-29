@@ -9,7 +9,6 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.services.catalogs.catalog_items import EditCatalogItemView
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.workloads import VmsInstances
-from cfme.utils import error
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.rest import assert_response
@@ -122,7 +121,7 @@ def test_no_template_catalog_item(provider, provisioning, vm_name, dialog, catal
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type=provider.catalog_name, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog, dialog=dialog)
-    with error.expected("'Catalog/Name' is required"):
+    with pytest.raises(Exception, match="'Catalog/Name' is required"):
         catalog_item.create()
 
 

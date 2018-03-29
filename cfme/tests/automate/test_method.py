@@ -4,7 +4,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
-from cfme.utils import error
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 
@@ -102,7 +101,7 @@ def test_duplicate_method_disallowed(request, klass):
         location='inline',
         script='$evm.log(:info, ":P")',
     )
-    with error.expected("Name has already been taken"):
+    with pytest.raises(Exception, match="Name has already been taken"):
         klass.methods.create(
             name=name,
             location='inline',
