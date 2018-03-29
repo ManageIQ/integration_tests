@@ -3,6 +3,7 @@ import pytest
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.utils.blockers import GH
 from cfme.utils.wait import wait_for
 from cfme.utils.generators import random_vm_name
 
@@ -82,6 +83,7 @@ def test_vm_reconfig_add_remove_hw_cold(
 
 
 @pytest.mark.rhv1
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6996')])
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
 @pytest.mark.parametrize(
     'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
