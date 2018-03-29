@@ -8,6 +8,7 @@ from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider, CloudInfraProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.cloud.instance import Instance
 from cfme.common.vm import VM, Template
 from cfme.common.provider import cleanup_vm
 from cfme.common.vm_views import DriftAnalysis
@@ -112,7 +113,15 @@ def vm_analysis_provisioning_data(provider, analysis_type):
     vma_data = provider.data.vm_analysis_new
     provisioning_data = vma_data.provisioning
 
-    if not isinstance(provider, CloudProvider):
+    if provider.type == 'azure':
+        provisioning_data.setdefault('instance_type', vma_data.provisioning.instance_type)
+        provisioning_data.setdefault('virtual_net',
+                                     vma_data.provisioning.virtual_net)
+        provisioning_data.setdefault('security_group', vma_data.provisioning.security_group)
+        provisioning_data.setdefault('cloud_network', vma_data.provisioning.cloud_network)
+        provisioning_data.setdefault('resource_group', vma_data.provisioning.resource_group)
+
+    elif not isinstance(provider, CloudProvider):
         provisioning_data.setdefault('host', vma_data.provisioning.host)
         provisioning_data.setdefault('datastore', vma_data.provisioning.datastore)
         provisioning_data.setdefault('vlan', vma_data.provisioning.vlan)
@@ -173,8 +182,11 @@ def ssa_vm(request, local_setup_provider, provider, vm_analysis_provisioning_dat
 
     provision_data = vm_analysis_provisioning_data.copy()
     del provision_data['image']
-
-    vm.create_on_provider(find_in_cfme=True, **provision_data)
+    if provider.type == 'azure':
+        vm = Instance(name=vm_name, provider=provider)
+        vm.create_on_provider()
+    else:
+        vm.create_on_provider(find_in_cfme=True, **provision_data)
 
     if provider.one_of(OpenStackProvider):
         public_net = provider.data['public_network']
