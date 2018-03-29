@@ -117,6 +117,8 @@ def uncollectif(item):
         if retval:
             # shortcut
             return retval, mark.kwargs.get('reason', "No reason given")
+        else:
+            return False, None
 
     else:
         return False, None
