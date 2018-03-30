@@ -163,8 +163,7 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
                          (not provider.one_of(RHEVMProvider) and disk_format == "Preallocated") or
                          # Temporarily, our storage domain cannot handle Preallocated disks
                          (provider.one_of(RHEVMProvider) and disk_format == "Preallocated") or
-                         (provider.one_of(SCVMMProvider)) or
-                         (provider.key == "vsphere55" and disk_format == "Thick"))
+                         (provider.one_of(SCVMMProvider)))
 def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_name):
     """ Tests disk format selection in provisioning dialog.
 
@@ -181,6 +180,10 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_na
     Metadata:
         test_flag: provision
     """
+
+    if provider.key == "vsphere55" and disk_format == "Thick":
+        pytest.skip("Vsphere55 provider with disk_format == Thick isn't supported")
+
     prov_data['catalog']['vm_name'] = vm_name
     prov_data['hardware']["disk_format"] = disk_format
     template_name = provider.data['provisioning']['template']

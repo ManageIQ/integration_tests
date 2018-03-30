@@ -362,8 +362,7 @@ def test_openstack_provider_has_api_version(appliance):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda provider:
-                         not provider.one_of(EC2Provider) or 'govcloud' in provider.data.tags)
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider))
 def test_select_key_pair_none_while_provisioning(appliance, request, has_no_cloud_providers,
                                                  provider):
     """
@@ -377,6 +376,9 @@ def test_select_key_pair_none_while_provisioning(appliance, request, has_no_clou
         4. Select None in Guest Access Key Pair
         5. None should be selected
     """
+    if 'govcloud' in provider.data.tags:
+        pytest.skip("providers with such tag aren't supported for some reason")
+
     provider.region_name = 'South America (Sao Paulo)'
     request.addfinalizer(provider.delete_if_exists)
 

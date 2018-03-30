@@ -37,7 +37,6 @@ class EnvironmentMarker(object):
         elif self.PARAM_BY_DEFAULT:
             metafunc.fixturenames.append(self.NAME)
             testgen.parametrize(metafunc, self.NAME, self.CHOICES)  # ALL THE THINGS
-            #testgen.parametrize(metafunc, self.NAME, [self.CHOICES[0]])
         else:
             return
 
@@ -75,7 +74,3 @@ def pytest_generate_tests(metafunc):
 
 
 glob = {}
-#def pytest_collection_modifyitems(items):
-#    import pdb; pdb.set_trace()
-
-#    print {item.callspec.id for item in items}

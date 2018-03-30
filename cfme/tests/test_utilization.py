@@ -6,6 +6,7 @@ import time
 from cfme import test_requirements
 from cfme.fixtures.pytest_store import store
 
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.provider import BaseProvider
 from cfme.containers.provider import ContainersProvider
 from cfme.fixtures.provider import setup_or_skip
@@ -53,7 +54,7 @@ def clean_setup_provider(request, provider):
 
 
 @pytest.mark.uncollectif(
-    lambda provider: current_version() < "5.7" and provider.type == 'gce')
+    lambda provider: current_version() < "5.7" and provider.one_of(GCEProvider))
 def test_metrics_collection(clean_setup_provider, provider, enable_candu):
     """Check the db is gathering collection data for the given provider
 

@@ -5,7 +5,8 @@ from distutils.version import LooseVersion
 
 from cfme.markers.env import EnvironmentMarker
 from cfme.utils.log import logger
-from cfme.utils.providers import ProviderFilter, list_providers
+from cfme.utils.path import project_path
+from cfme.utils.providers import ProviderFilter, list_providers, all_types
 from cfme.utils.pytest_shortcuts import fixture_filter
 from cfme.utils.version import Version
 
@@ -57,7 +58,8 @@ class DPFilter(ProviderFilter):
         """ Filters by provider (base) classes """
         if self.classes is None:
             return None
-        return any([prov_class in all_types()[provider.type_name].__mro__ for prov_class in self.classes])
+        return any([prov_class in all_types()[provider.type_name].__mro__
+                    for prov_class in self.classes])
 
 
 def _param_check(metafunc, argnames, argvalues):
@@ -158,7 +160,7 @@ def all_required(miq_version, filters=None):
     """
     # Load the supportability YAML and extrace the providers portion
     stream = Version(miq_version).series()
-    with open('supportability.yaml') as f:
+    with open(project_path.join('supportability.yaml').strpath) as f:
         data = yaml.load(f)
     data_for_stream = data[stream]['providers']
 
@@ -185,7 +187,8 @@ def all_required(miq_version, filters=None):
                 for ver in vers
             ])
 
-    nfilters = [DPFilter(classes=f.classes) for f in filters if isinstance(f, ProviderFilter)]
+    nfilters = [DPFilter(classes=pf.classes, inverted=pf.inverted)
+                for pf in filters if isinstance(pf, ProviderFilter)]
     for prov_filter in nfilters:
         dprovs = filter(prov_filter, dprovs)
     return dprovs
@@ -283,13 +286,13 @@ def providers(metafunc, filters=None, selector=ALL):
         for a_prov in available_providers:
             try:
                 assert a_prov.version
-                if a_prov.version == provider.version and \
-                        a_prov.type == provider.type_name and \
-                        a_prov.category == provider.category:
+                if (a_prov.version == provider.version and
+                        a_prov.type == provider.type_name and
+                        a_prov.category == provider.category):
                     return a_prov
             except (AssertionError, KeyError):
-                if a_prov.type == provider.type_name and \
-                        a_prov.category == provider.category:
+                if (a_prov.type == provider.type_name and
+                        a_prov.category == provider.category):
                     return a_prov
         else:
             return None
@@ -314,11 +317,14 @@ def providers(metafunc, filters=None, selector=ALL):
             provider.key = the_prov.key
             argvalues.append(pytest.param(provider))
         else:
-            argvalues.append(
-                pytest.param(
-                    provider, marks=pytest.mark.skip("Environment for this provider, not available")
-                )
-            )
+            # psav, are you sure this is correct that we collect providers which are absent ?
+            continue
+            # argvalues.append(
+            #     pytest.param(
+            #         provider, marks=pytest.mark.skip("Environment for this provider,
+            # not available")
+            #     )
+            # )
 
         # Use the provider key for idlist, helps with readable parametrized test output
         # TODO: handle EC2
@@ -342,9 +348,9 @@ def providers(metafunc, filters=None, selector=ALL):
             idlist.append(the_id)
 
         # Add provider to argnames if missing
-        if 'provider_data' in metafunc.fixturenames and 'provider_data' not in argnames:
+        if 'provider' in metafunc.fixturenames and 'provider' not in argnames:
             metafunc.function = pytest.mark.uses_testgen()(metafunc.function)
-            argnames.append('provider_data')
+            argnames.append('provider')
         if metafunc.config.getoption('sauce') or selector == ONE:
             break
     return argnames, argvalues, idlist
@@ -369,7 +375,7 @@ def providers_by_class(metafunc, classes, required_fields=None, selector=ALL):
         # Using the parametrize wrapper
         pytest_generate_tests = testgen.parametrize([GCEProvider], scope='module')
     """
-    pf = ProviderFilter(classes=classes, required_fields=required_fields)
+    pf = DPFilter(classes=classes, required_fields=required_fields)
     return providers(metafunc, filters=[pf], selector=selector)
 
 

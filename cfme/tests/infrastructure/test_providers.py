@@ -13,6 +13,7 @@ from cfme.common.provider_views import (InfraProviderAddView,
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider, RHEVMEndpoint
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider, VirtualCenterEndpoint
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
@@ -191,8 +192,9 @@ def test_infra_provider_add_with_bad_credentials(provider):
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
 @pytest.mark.smoke
-@pytest.mark.meta(blockers=[BZ(1450527, unblock=lambda provider: provider.type != 'scvmm')])
-def test_infra_provider_crud(provider):
+@pytest.mark.meta(blockers=[BZ(1450527,
+                               unblock=lambda provider: not provider.one_of(SCVMMProvider))])
+def test_provider_crud(provider):
     """Tests provider add with good credentials
 
     Metadata:
@@ -217,15 +219,16 @@ def test_infra_provider_crud(provider):
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
 @pytest.mark.parametrize('verify_tls', [False, True], ids=['no_tls', 'tls'])
-@pytest.mark.uncollectif(lambda provider:
-    not (provider.one_of(RHEVMProvider) and
-         provider.endpoints.get('default').__dict__.get('verify_tls')))
 def test_provider_rhv_create_delete_tls(request, provider, verify_tls):
     """Tests RHV provider creation with and without TLS encryption
 
     Metadata:
        test_flag: crud
     """
+    if not(provider.one_of(RHEVMProvider) and
+           provider.endpoints.get('default').__dict__.get('verify_tls')):
+        pytest.skip("provider with such value isn't supported for some reason")
+
     prov = copy(provider)
     request.addfinalizer(lambda: prov.delete_if_exists(cancel=False))
 

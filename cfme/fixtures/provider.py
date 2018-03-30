@@ -36,12 +36,15 @@ as a result. If this counter reaches a predefined number of failures (see ``SETU
 the failing provider will be added to the list of problematic providers and no further attempts
 to set it up will be made.
 """
+import pytest
 import random
+import six
+import sys
 from collections import Mapping
 from collections import defaultdict
-
-import pytest
-import six
+from _pytest.compat import getimfunc
+from _pytest.fixtures import call_fixture_func
+from _pytest.outcomes import TEST_OUTCOME
 
 from cfme.common.provider import BaseProvider, all_types
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
@@ -385,7 +388,33 @@ def console_template_modscope(provider):
     return _get_template(provider, 'console_template')
 
 
-@pytest.fixture(scope="function")
-def provider(provider_data):
-    from cfme.utils.providers import get_crud
-    return get_crud(provider_data.key)
+@pytest.mark.hookwrapper
+def pytest_fixture_setup(fixturedef, request):
+    # this is workaround which allows us to get rid of provider instantiation during collection time
+    # it also allows to prevent collection calls against DummyAppliance
+    if fixturedef.argname == 'provider':
+        kwargs = {}
+        for argname in fixturedef.argnames:
+            fixdef = request._get_active_fixturedef(argname)
+            result, arg_cache_key, exc = fixdef.cached_result
+            request._check_scope(argname, request.scope, fixdef.scope)
+            kwargs[argname] = result
+
+        fixturefunc = fixturedef.func
+        if request.instance is not None:
+            fixturefunc = getimfunc(fixturedef.func)
+            if fixturefunc != fixturedef.func:
+                fixturefunc = fixturefunc.__get__(request.instance)
+        my_cache_key = request.param_index
+        try:
+            provider_data = call_fixture_func(fixturefunc, request, kwargs)
+        except TEST_OUTCOME:
+            fixturedef.cached_result = (None, my_cache_key, sys.exc_info())
+            raise
+        from cfme.utils.providers import get_crud
+        provider = get_crud(provider_data.key)
+        fixturedef.cached_result = (provider, my_cache_key, None)
+        request.param = provider
+        yield provider
+    else:
+        yield

@@ -7,11 +7,24 @@
         - 6.5
       - rhevm:
         - 4.1
+        - 4.2
+      - scvmm:
+        - 2012
+        - 2016
     cloud:
       - openstack:
-        - 8
-        - 9
-        - 10
+        - 11
+      - ec2
+      - gce
+      - azure:
+        - common
+        - msdn
+    containers:
+      - openshift:
+        - 3.6
+        - 3.9
+#    kubevirt:
+#      - kubevirt
 '5.9':
   providers:
     infra:
@@ -21,14 +34,21 @@
         - 6.5
       - rhevm:
         - 4.1
+        - 4.2
+      - scvmm:
+        - 2012
+        - 2016
     cloud:
       - openstack:
-        - 8
-        - 9
-        - 10
         - 11
       - ec2
+      - gce
+      - azure:
+        - common
+        - msdn
     containers:
       - openshift:
-        - 3.5
         - 3.6
+        - 3.9
+#    kubevirt:
+#      - kubevirt

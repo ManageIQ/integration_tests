@@ -7,8 +7,6 @@ from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.utils import testgen
-from cfme.utils.conf import cfme_data
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 
@@ -16,48 +14,59 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('uses_infra_providers'),
     test_requirements.service,
-    pytest.mark.tier(2)
+    pytest.mark.tier(2),
+    pytest.mark.provider([InfraProvider], required_fields=[
+        ['provisioning', 'pxe_server'],
+        ['provisioning', 'pxe_image'],
+        ['provisioning', 'pxe_image_type'],
+        ['provisioning', 'pxe_kickstart'],
+        ['provisioning', 'pxe_template'],
+        ['provisioning', 'datastore'],
+        ['provisioning', 'host'],
+        ['provisioning', 'pxe_root_password'],
+        ['provisioning', 'vlan']
+    ], scope="module")
 ]
 
-
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, [InfraProvider], required_fields=[
-            ['provisioning', 'pxe_server'],
-            ['provisioning', 'pxe_image'],
-            ['provisioning', 'pxe_image_type'],
-            ['provisioning', 'pxe_kickstart'],
-            ['provisioning', 'pxe_template'],
-            ['provisioning', 'datastore'],
-            ['provisioning', 'host'],
-            ['provisioning', 'pxe_root_password'],
-            ['provisioning', 'vlan']
-        ])
-    pargnames, pargvalues, pidlist = testgen.pxe_servers(metafunc)
-    argnames = argnames
-    pxe_server_names = [pval[0] for pval in pargvalues]
-
-    new_idlist = []
-    new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-
-        if args['provider'].type == "scvmm":
-            continue
-
-        pxe_server_name = args['provider'].data['provisioning']['pxe_server']
-        if pxe_server_name not in pxe_server_names:
-            continue
-
-        pxe_cust_template = args['provider'].data['provisioning']['pxe_kickstart']
-        if pxe_cust_template not in cfme_data.get('customization_templates', {}).keys():
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+#
+# def pytest_generate_tests(metafunc):
+#     # Filter out providers without provisioning data or hosts defined
+#     argnames, argvalues, idlist = testgen.providers_by_class(
+#         metafunc, [InfraProvider], required_fields=[
+#             ['provisioning', 'pxe_server'],
+#             ['provisioning', 'pxe_image'],
+#             ['provisioning', 'pxe_image_type'],
+#             ['provisioning', 'pxe_kickstart'],
+#             ['provisioning', 'pxe_template'],
+#             ['provisioning', 'datastore'],
+#             ['provisioning', 'host'],
+#             ['provisioning', 'pxe_root_password'],
+#             ['provisioning', 'vlan']
+#         ])
+#     pargnames, pargvalues, pidlist = testgen.pxe_servers(metafunc)
+#     argnames = argnames
+#     pxe_server_names = [pval[0] for pval in pargvalues]
+#
+#     new_idlist = []
+#     new_argvalues = []
+#     for i, argvalue_tuple in enumerate(argvalues):
+#         args = dict(zip(argnames, argvalue_tuple))
+#
+#         if args['provider'].type == "scvmm":
+#             continue
+#
+#         pxe_server_name = args['provider'].data['provisioning']['pxe_server']
+#         if pxe_server_name not in pxe_server_names:
+#             continue
+#
+#         pxe_cust_template = args['provider'].data['provisioning']['pxe_kickstart']
+#         if pxe_cust_template not in cfme_data.get('customization_templates', {}).keys():
+#             continue
+#
+#         new_idlist.append(idlist[i])
+#         new_argvalues.append(argvalues[i])
+#
+#     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
 @pytest.fixture(scope='module')
