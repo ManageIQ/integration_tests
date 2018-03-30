@@ -37,6 +37,12 @@ pytestmark = [
 # Allowed deviation between the reported value in the Chargeback report and the estimated value.
 DEVIATION = 1
 
+divisor = {
+    'Daily': 24,
+    'Weekly': 24 * 7,
+    'Monthly': 24 * 30
+}
+
 
 @pytest.yield_fixture(scope="module")
 def vm_ownership(enable_candu, provider, appliance):
@@ -55,23 +61,22 @@ def vm_ownership(enable_candu, provider, appliance):
 
     vm = VM.factory(vm_name, provider)
     user = None
-    try:
-        user = appliance.collections.users.create(
-            name=provider.name + '{}'.format(fauxfactory.gen_alphanumeric()),
-            credential=Credential(principal='uid' + '{}'.format(fauxfactory.gen_alphanumeric()),
-                secret='secret'),
-            email='abc@example.com',
-            groups=cb_group,
-            cost_center='Workload',
-            value_assign='Database')
-        vm.set_ownership(user=user.name)
-        logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
+    user = appliance.collections.users.create(
+        name=provider.name + '{}'.format(fauxfactory.gen_alphanumeric()),
+        credential=Credential(principal='uid' + '{}'.format(fauxfactory.gen_alphanumeric()),
+            secret='secret'),
+        email='abc@example.com',
+        groups=cb_group,
+        cost_center='Workload',
+        value_assign='Database')
+    vm.set_ownership(user=user.name)
+    logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
 
-        yield user.name
-    finally:
-        vm.unset_ownership()
-        if user:
-            user.delete()
+    yield user.name
+
+    vm.unset_ownership()
+    if user:
+        user.delete()
 
 
 @pytest.yield_fixture(scope="module")
@@ -274,14 +279,8 @@ def resource_cost(appliance, metric_description, usage, description, rate_type,
     # Variable Chargeback rates.
     for d in list_of_rates:
         if usage >= d['start'] and usage < d['finish']:
-            if interval == 'Daily':
-                cost = ((d['variable_rate'] * usage) + (d['fixed_rate'] * consumed_hours)) / 24
-            elif interval == 'Weekly':
-                cost = ((d['variable_rate'] * usage) +
-                (d['fixed_rate'] * consumed_hours)) / (24 * 7)
-            elif interval == 'Monthly':
-                cost = ((d['variable_rate'] * usage) +
-                (d['fixed_rate'] * consumed_hours)) / (24 * 30)
+            cost = ((d['variable_rate'] * usage) +
+                (d['fixed_rate'] * consumed_hours)) / divisor[interval]
             return cost
 
 
@@ -345,6 +344,7 @@ def chargeback_report_custom(vm_ownership, assign_custom_rate, interval):
     report.queue(wait_for_finish=True)
 
     yield list(report.get_saved_reports()[0].data.rows)
+
     if report.exists:
         report.delete()
 
@@ -352,85 +352,81 @@ def chargeback_report_custom(vm_ownership, assign_custom_rate, interval):
 @pytest.yield_fixture(scope="module")
 def new_compute_rate(interval):
     """Create a new Compute Chargeback rate"""
-    try:
-        desc = 'custom_' + interval
-        compute = rates.ComputeRate(description=desc,
-                    fields={'Used CPU':
-                            {'per_time': interval, 'variable_rate': '720'},
-                            'Used Disk I/O':
-                            {'per_time': interval, 'variable_rate': '720'},
-                            'Used Network I/O':
-                            {'per_time': interval, 'variable_rate': '720'},
-                            'Used Memory':
-                            {'per_time': interval, 'variable_rate': '720'}})
-        compute.create()
-        storage = rates.StorageRate(description=desc,
-                    fields={'Used Disk Storage':
-                            {'per_time': interval, 'variable_rate': '720'}})
-        storage.create()
-        yield desc
-    finally:
-        compute.delete()
-        storage.delete()
+    desc = 'custom_' + interval
+    compute = rates.ComputeRate(description=desc,
+                fields={'Used CPU':
+                       {'per_time': interval, 'variable_rate': '720'},
+                       'Used Disk I/O':
+                       {'per_time': interval, 'variable_rate': '720'},
+                       'Used Network I/O':
+                       {'per_time': interval, 'variable_rate': '720'},
+                       'Used Memory':
+                       {'per_time': interval, 'variable_rate': '720'}})
+    compute.create()
+    storage = rates.StorageRate(description=desc,
+                fields={'Used Disk Storage':
+                        {'per_time': interval, 'variable_rate': '720'}})
+    storage.create()
+
+    yield desc
+
+    compute.delete()
+    storage.delete()
 
 
 # Tests to validate costs reported in the Chargeback report for various metrics.
 # The costs reported in the Chargeback report should be approximately equal to the
-# costs estimated in the chargeback_costs_default/chargeback_costs_custom fixtures.
+# costs estimated in the chargeback_costs_custom fixtures.
 def test_validate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_custom,
-        interval, provider):
+        interval, provider, soft_assert):
     """Test to validate CPU usage cost."""
     for groups in chargeback_report_custom:
         if groups["CPU Used Cost"]:
             estimated_cpu_usage_cost = chargeback_costs_custom['cpu_used_cost']
             cost_from_report = groups["CPU Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_cpu_usage_cost - DEVIATION <= float(cost) \
-                <= estimated_cpu_usage_cost + DEVIATION, \
-                'Estimated cost and report cost do not match'
-            break
+            soft_assert(estimated_cpu_usage_cost - DEVIATION <=
+                float(cost) <= estimated_cpu_usage_cost + DEVIATION,
+                'Estimated cost and report cost do not match')
 
 
 def test_validate_memory_usage_cost(chargeback_costs_custom, chargeback_report_custom,
-        interval, provider):
+        interval, provider, soft_assert):
     """Test to validate memory usage cost."""
     for groups in chargeback_report_custom:
         if groups["Memory Used Cost"]:
             estimated_memory_usage_cost = chargeback_costs_custom['memory_used_cost']
             cost_from_report = groups["Memory Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_memory_usage_cost - DEVIATION <= float(cost) \
-                <= estimated_memory_usage_cost + DEVIATION, \
-                'Estimated cost and report cost do not match'
-            break
+            soft_assert(estimated_memory_usage_cost - DEVIATION <=
+                float(cost) <= estimated_memory_usage_cost + DEVIATION,
+                'Estimated cost and report cost do not match')
 
 
 def test_validate_network_usage_cost(chargeback_costs_custom, chargeback_report_custom,
-        interval, provider):
+        interval, provider, soft_assert):
     """Test to validate network usage cost."""
     for groups in chargeback_report_custom:
         if groups["Network I/O Used Cost"]:
             estimated_network_usage_cost = chargeback_costs_custom['network_used_cost']
             cost_from_report = groups["Network I/O Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_network_usage_cost - DEVIATION <= float(cost) \
-                <= estimated_network_usage_cost + DEVIATION, \
-                'Estimated cost and report cost do not match'
-            break
+            soft_assert(estimated_network_usage_cost - DEVIATION <=
+                float(cost) <= estimated_network_usage_cost + DEVIATION,
+                'Estimated cost and report cost do not match')
 
 
 def test_validate_disk_usage_cost(chargeback_costs_custom, chargeback_report_custom,
-        interval, provider):
+        interval, provider, soft_assert):
     """Test to validate disk usage cost."""
     for groups in chargeback_report_custom:
         if groups["Disk I/O Used Cost"]:
             estimated_disk_usage_cost = chargeback_costs_custom['disk_used_cost']
             cost_from_report = groups["Disk I/O Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
-            assert estimated_disk_usage_cost - DEVIATION <= float(cost) \
-                <= estimated_disk_usage_cost + DEVIATION, \
-                'Estimated cost and report cost do not match'
-            break
+            soft_assert(estimated_disk_usage_cost - DEVIATION <=
+                float(cost) <= estimated_disk_usage_cost + DEVIATION,
+                'Estimated cost and report cost do not match')
 
 
 def test_validate_storage_usage_cost(chargeback_costs_custom, chargeback_report_custom,
@@ -444,9 +440,3 @@ def test_validate_storage_usage_cost(chargeback_costs_custom, chargeback_report_
             soft_assert(estimated_storage_usage_cost - DEVIATION <=
                 float(cost) <= estimated_storage_usage_cost + DEVIATION,
                 'Estimated cost and report cost do not match')
-            """
-            assert estimated_storage_usage_cost - DEVIATION <= float(cost) \
-                <= estimated_storage_usage_cost + DEVIATION, \
-                'Estimated cost and report cost do not match'
-            break
-            """
