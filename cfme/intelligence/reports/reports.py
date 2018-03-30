@@ -10,6 +10,7 @@ from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab, Candidat
 from cfme.utils import ParamClassName
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
@@ -263,14 +264,15 @@ class CustomReport(Updateable, Navigatable):
             assert view.is_displayed
             view.flash.assert_no_error()
         else:
-            # This check needs because after deleting the last custom report
-            # whole "My Company (All EVM Groups)" branch in the tree will be removed.
+            # This check is needed because after deleting the last custom report,
+            # the whole "My Company (All EVM Groups)" branch in the tree will be removed.
             if custom_reports_number > 1:
                 view = self.create_view(AllCustomReportsView)
                 assert view.is_displayed
             view.flash.assert_no_error()
-            view.flash.assert_message(
-                'Report "{}": Delete successful'.format(self.menu_name))
+            if not BZ(1561779, forced_streams=['5.9']).blocks:
+                view.flash.assert_message(
+                    'Report "{}": Delete successful'.format(self.menu_name))
 
     def get_saved_reports(self):
         view = navigate_to(self, "Details")
