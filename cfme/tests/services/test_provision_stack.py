@@ -5,7 +5,6 @@ from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.conf import credentials
@@ -85,16 +84,17 @@ def dialog_name():
 
 @pytest.yield_fixture
 def template(appliance, provider, provisioning, dialog_name, stack):
-    template_type = provisioning['stack_provisioning']['template_type']
-    temp_type = provisioning['stack_provisioning']['template_type_dd']
+    template_group = provisioning['stack_provisioning']['template_type']
+    template_type = provisioning['stack_provisioning']['template_type_dd']
     template_name = fauxfactory.gen_alphanumeric()
     file = provisioning['stack_provisioning']['data_file']
     data_file = load_data_file(str(orchestration_path.join(file)))
     content = data_file.read().replace('CFMETemplateName', template_name)
     collection = appliance.collections.orchestration_templates
-    template = collection.create(template_type=template_type, template_name=template_name,
-                                 temp_type=temp_type, description="my template", content=content)
-    template.create_service_dialog_from_template(dialog_name, template.template_name)
+    template = collection.create(template_group=template_group, template_name=template_name,
+                                 template_type=template_type, description="my template",
+                                 content=content)
+    template.create_service_dialog_from_template(dialog_name)
     yield template
     if stack.exists:
         stack.retire_stack()
