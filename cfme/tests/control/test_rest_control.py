@@ -9,6 +9,7 @@ from cfme.rest.gen_data import policies as _policies
 from cfme.utils.rest import (
     assert_response,
     delete_resources_from_collection,
+    delete_resources_from_detail,
     query_resource_attributes,
 )
 from cfme.utils.version import current_version
@@ -47,26 +48,13 @@ class TestConditionsRESTAPI(object):
             assert record.description == condition.description
 
     @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
-    def test_delete_conditions_from_detail(self, conditions, appliance, method):
+    def test_delete_conditions_from_detail(self, conditions, method):
         """Tests delete conditions from detail.
 
         Metadata:
             test_flag: rest
         """
-        for condition in conditions:
-            del_action = getattr(condition.action.delete, method.upper())
-            del_action()
-            assert_response(appliance)
-
-            condition.wait_not_exists(
-                num_sec=100,
-                delay=5,
-                message="Check if a condition doesn't exist"
-            )
-
-            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-                del_action()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(conditions, method=method, num_sec=100, delay=5)
 
     def test_delete_conditions_from_collection(self, conditions, appliance):
         """Tests delete conditions from collection.
@@ -139,28 +127,16 @@ class TestPoliciesRESTAPI(object):
             record = appliance.rest_api.collections.policies.get(id=policy.id)
             assert record.description == policy.description
 
-    def test_delete_policies_from_detail_post(self, policies, appliance):
+    def test_delete_policies_from_detail_post(self, policies):
         """Tests delete policies from detail using POST method.
 
         Metadata:
             test_flag: rest
         """
-        for policy in policies:
-            policy.action.delete.POST()
-            assert_response(appliance)
-
-            policy.wait_not_exists(
-                num_sec=100,
-                delay=5,
-                message="Check if a policy doesn't exist"
-            )
-
-            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-                policy.action.delete.POST()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(policies, method='POST', num_sec=100, delay=5)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.9')
-    def test_delete_policies_from_detail_delete(self, policies, appliance):
+    def test_delete_policies_from_detail_delete(self, policies):
         """Tests delete policies from detail using DELETE method.
 
         Testing BZ 1435773
@@ -168,19 +144,7 @@ class TestPoliciesRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        for policy in policies:
-            policy.action.delete.DELETE()
-            assert_response(appliance)
-
-            policy.wait_not_exists(
-                num_sec=100,
-                delay=5,
-                message="Check if a policy doesn't exist"
-            )
-
-            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-                policy.action.delete.DELETE()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(policies, method='DELETE', num_sec=100, delay=5)
 
     def test_delete_policies_from_collection(self, policies, appliance):
         """Tests delete policies from collection.

@@ -28,6 +28,7 @@ from cfme.utils.providers import ProviderFilter
 from cfme.utils.rest import (
     assert_response,
     delete_resources_from_collection,
+    delete_resources_from_detail,
     get_vms_in_service,
     query_resource_attributes,
 )
@@ -283,31 +284,21 @@ class TestServiceRESTAPI(object):
             assert service.name == new_names[i]
 
     # POST method is not available on < 5.8, as described in BZ 1414852
-    def test_delete_service_post(self, appliance, services):
+    def test_delete_service_post(self, services):
         """Tests deleting services from detail using POST method.
 
         Metadata:
             test_flag: rest
         """
-        for service in services:
-            service.action.delete.POST()
-            assert_response(appliance)
-            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-                service.action.delete.POST()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(services, method='POST')
 
-    def test_delete_service_delete(self, appliance, services):
+    def test_delete_service_delete(self, services):
         """Tests deleting services from detail using DELETE method.
 
         Metadata:
             test_flag: rest
         """
-        for service in services:
-            service.action.delete.DELETE()
-            assert_response(appliance)
-            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-                service.action.delete.DELETE()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(services, method='DELETE')
 
     def test_delete_services(self, appliance, services):
         """Tests deleting services from collection.
@@ -699,21 +690,13 @@ class TestServiceDialogsRESTAPI(object):
             assert dialog.description == new_descriptions[index]
 
     @pytest.mark.parametrize("method", ["post", "delete"])
-    def test_delete_service_dialog(self, appliance, service_dialogs, method):
+    def test_delete_service_dialog(self, service_dialogs, method):
         """Tests deleting service dialogs from detail.
 
         Metadata:
             test_flag: rest
         """
-        for dialog in service_dialogs:
-            del_action = getattr(dialog.action.delete, method.upper())
-            del_action()
-            assert_response(appliance)
-
-            dialog.wait_not_exists(num_sec=10, delay=2)
-            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-                del_action()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(service_dialogs, method=method)
 
     def test_delete_service_dialogs(self, appliance, service_dialogs):
         """Tests deleting service dialogs from collection.
@@ -773,31 +756,21 @@ class TestServiceTemplateRESTAPI(object):
         delete_resources_from_collection(collection, service_templates)
 
     # POST method is not available on < 5.8, as described in BZ 1427338
-    def test_delete_service_template_post(self, appliance, service_templates):
+    def test_delete_service_template_post(self, service_templates):
         """Tests deleting service templates from detail using POST method.
 
         Metadata:
             test_flag: rest
         """
-        for service_template in service_templates:
-            service_template.action.delete.POST()
-            assert_response(appliance)
-            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-                service_template.action.delete.POST()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(service_templates, method='POST')
 
-    def test_delete_service_template_delete(self, appliance, service_templates):
+    def test_delete_service_template_delete(self, service_templates):
         """Tests deleting service templates from detail using DELETE method.
 
         Metadata:
             test_flag: rest
         """
-        for service_template in service_templates:
-            service_template.action.delete.DELETE()
-            assert_response(appliance)
-            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-                service_template.action.delete.DELETE()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(service_templates, method='DELETE')
 
     def test_assign_unassign_service_template_to_service_catalog(self, appliance, service_catalogs,
             service_templates):
@@ -1053,30 +1026,13 @@ class TestServiceCatalogsRESTAPI(object):
         assert len(children) == NUM_BUNDLE_ITEMS
 
     @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
-    def test_delete_catalog_from_detail(self, appliance, service_catalogs, method):
+    def test_delete_catalog_from_detail(self, service_catalogs, method):
         """Tests delete service catalogs from detail using REST API.
 
         Metadata:
             test_flag: rest
         """
-        for catalog in service_catalogs:
-            if method == 'post':
-                del_action = catalog.action.delete.POST
-            else:
-                del_action = catalog.action.delete.DELETE
-
-            del_action()
-            assert_response(appliance)
-            wait_for(
-                lambda: not appliance.rest_api.collections.service_catalogs.find_by(
-                    name=catalog.name),
-                num_sec=100,
-                delay=5
-            )
-
-            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-                del_action()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(service_catalogs, method=method, num_sec=100, delay=5)
 
     def test_delete_catalog_from_collection(self, appliance, service_catalogs):
         """Tests delete service catalogs from detail using REST API.
@@ -1183,22 +1139,13 @@ class TestPendingRequestsRESTAPI(object):
         assert pending_request.approval_state.lower() == 'pending_approval'
 
     @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
-    def test_delete_pending_request_from_detail(self, appliance, pending_request, method):
+    def test_delete_pending_request_from_detail(self, pending_request, method):
         """Tests deleting pending service request from detail using the REST API.
 
         Metadata:
             test_flag: rest
         """
-        if method == 'delete':
-            del_action = pending_request.action.delete.DELETE
-        else:
-            del_action = pending_request.action.delete.POST
-
-        del_action()
-        assert_response(appliance)
-        with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-            del_action()
-        assert_response(appliance, http_status=404)
+        delete_resources_from_detail([pending_request], method=method)
 
     def test_delete_pending_request_from_collection(self, appliance, pending_request):
         """Tests deleting pending service request from detail using the REST API.
@@ -1367,23 +1314,13 @@ class TestBlueprintsRESTAPI(object):
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
-    def test_delete_blueprints_from_detail(self, appliance, blueprints, method):
+    def test_delete_blueprints_from_detail(self, blueprints, method):
         """Tests deleting blueprints from detail.
 
         Metadata:
             test_flag: rest
         """
-        for blueprint in blueprints:
-            if method == "delete":
-                del_action = blueprint.action.delete.DELETE
-            else:
-                del_action = blueprint.action.delete.POST
-
-            del_action()
-            assert_response(appliance)
-            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-                del_action()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(blueprints, method=method)
 
     @pytest.mark.tier(3)
     def test_delete_blueprints_from_collection(self, appliance, blueprints):
@@ -1393,11 +1330,7 @@ class TestBlueprintsRESTAPI(object):
             test_flag: rest
         """
         collection = appliance.rest_api.collections.blueprints
-        collection.action.delete(*blueprints)
-        assert_response(appliance)
-        with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-            collection.action.delete(*blueprints)
-        assert_response(appliance, http_status=404)
+        delete_resources_from_collection(collection, blueprints)
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
@@ -1475,34 +1408,22 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
     @pytest.mark.tier(3)
     @pytest.mark.meta(blockers=[BZ(1414881, forced_streams=['5.7', '5.8', 'upstream'])])
-    def test_delete_orchestration_templates_from_detail_post(self, orchestration_templates,
-            appliance):
+    def test_delete_orchestration_templates_from_detail_post(self, orchestration_templates):
         """Tests deleting orchestration templates from detail using POST method.
 
         Metadata:
             test_flag: rest
         """
-        for ent in orchestration_templates:
-            ent.action.delete.POST()
-            assert_response(appliance)
-            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-                ent.action.delete.POST()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(orchestration_templates, method='POST')
 
     @pytest.mark.tier(3)
-    def test_delete_orchestration_templates_from_detail_delete(self, orchestration_templates,
-            appliance):
+    def test_delete_orchestration_templates_from_detail_delete(self, orchestration_templates):
         """Tests deleting orchestration templates from detail using DELETE method.
 
         Metadata:
             test_flag: rest
         """
-        for ent in orchestration_templates:
-            ent.action.delete.DELETE()
-            assert_response(appliance)
-            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-                ent.action.delete.DELETE()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(orchestration_templates, method='DELETE')
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
@@ -1818,22 +1739,13 @@ class TestServiceOrderCart(object):
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
-    def test_delete_cart_from_detail(self, appliance, cart, method):
+    def test_delete_cart_from_detail(self, cart, method):
         """Tests deleting cart from detail.
 
         Metadata:
             test_flag: rest
         """
-        if method == 'delete':
-            del_action = cart.action.delete.DELETE
-        else:
-            del_action = cart.action.delete.POST
-
-        del_action()
-        assert_response(appliance)
-        with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-            del_action()
-        assert_response(appliance, http_status=404)
+        delete_resources_from_detail([cart], method=method)
 
     @pytest.mark.tier(3)
     def test_delete_cart_from_collection(self, appliance, cart):

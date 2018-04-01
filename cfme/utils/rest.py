@@ -154,7 +154,7 @@ def create_resource(rest_api, col_name, col_data, col_action='create', substr_se
 
 
 def delete_resources_from_collection(
-        collection, resources, not_found=False, num_sec=10, delay=2, check_response=True):
+        collection, resources, not_found=None, num_sec=10, delay=2, check_response=True):
     """Checks that delete from collection works as expected."""
     def _assert_response(*args, **kwargs):
         if check_response:
@@ -166,28 +166,36 @@ def delete_resources_from_collection(
     for resource in resources:
         resource.wait_not_exists(num_sec=num_sec, delay=delay)
 
+    def _response_success_false():
+        collection.action.delete(*resources)
+        _assert_response(success=False)
+
     current_version = collection._api.server_info.get('version')
-    if not_found or current_version < '5.9':
+    if not_found is False:
+        _response_success_false()
+    # On version < 5.9 when one resource in a list of resources to delete is missing,
+    # the whole request fails with 'RecordNotFound'. It's not the case only
+    # for resources in the "configuration_script_sources" collection ATM.
+    elif not_found or current_version < '5.9':
         with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
             collection.action.delete(*resources)
         _assert_response(http_status=404)
     else:
-        collection.action.delete(*resources)
-        _assert_response(success=False)
+        _response_success_false()
 
 
 def delete_resources_from_detail(
-        resources, method, num_sec=10, delay=2, check_response=True):
+        resources, method='POST', num_sec=10, delay=2, check_response=True):
     """Checks that delete from detail works as expected."""
-    _api = resources[0].collection._api
+    method = method.upper()
+    rest_api = resources[0].collection._api
 
     def _assert_response(*args, **kwargs):
         if check_response:
-            assert_response(_api, *args, **kwargs)
+            assert_response(rest_api, *args, **kwargs)
 
     for resource in resources:
-        del_action = getattr(resource.action.delete, method.upper())
-        del_action()
+        getattr(resource.action.delete, method)()
         _assert_response()
 
     # Wait for resource non-existence in separate loop so the delete actions are
@@ -197,7 +205,7 @@ def delete_resources_from_detail(
         resource.wait_not_exists(num_sec=num_sec, delay=delay)
 
         with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-            del_action()
+            getattr(resource.action.delete, method)()
         _assert_response(http_status=404)
 
 

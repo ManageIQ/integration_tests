@@ -12,7 +12,11 @@ from cfme.rest.gen_data import (
     vm as _vm,
 )
 from cfme.utils.blockers import BZ
-from cfme.utils.rest import assert_response, delete_resources_from_collection
+from cfme.utils.rest import (
+    assert_response,
+    delete_resources_from_collection,
+    delete_resources_from_detail,
+)
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -159,18 +163,13 @@ class TestTagsViaREST(object):
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
-    def test_delete_tags_from_detail(self, appliance, tags, method):
+    def test_delete_tags_from_detail(self, tags, method):
         """Tests deleting tags from detail.
 
         Metadata:
             test_flag: rest
         """
-        for tag in tags:
-            tag.action.delete(force_method=method)
-            assert_response(appliance)
-            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-                tag.action.delete(force_method=method)
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(tags, method=method)
 
     @pytest.mark.tier(3)
     def test_delete_tags_from_collection(self, appliance, tags):

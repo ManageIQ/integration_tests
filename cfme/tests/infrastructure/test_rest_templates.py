@@ -9,6 +9,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.rest import (
     assert_response,
     delete_resources_from_collection,
+    delete_resources_from_detail,
     query_resource_attributes,
 )
 
@@ -90,7 +91,7 @@ def test_set_ownership(appliance, template, from_detail):
 
 
 @pytest.mark.tier(2)
-def test_delete_template_from_detail_post(appliance, template):
+def test_delete_template_from_detail_post(template):
     """Tests deletion of template from detail using POST method.
 
     Testing BZ1422807
@@ -98,25 +99,17 @@ def test_delete_template_from_detail_post(appliance, template):
     Metadata:
         test_flag: rest
     """
-    template.action.delete.POST()
-    assert_response(appliance)
-    with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-        template.action.delete.POST()
-    assert_response(appliance, http_status=404)
+    delete_resources_from_detail([template], method='POST')
 
 
 @pytest.mark.tier(2)
-def test_delete_template_from_detail_delete(appliance, template):
+def test_delete_template_from_detail_delete(template):
     """Tests deletion of template from detail using DELETE method.
 
     Metadata:
         test_flag: rest
     """
-    template.action.delete.DELETE()
-    assert_response(appliance)
-    with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-        template.action.delete.DELETE()
-    assert_response(appliance, http_status=404)
+    delete_resources_from_detail([template], method='DELETE')
 
 
 @pytest.mark.tier(2)

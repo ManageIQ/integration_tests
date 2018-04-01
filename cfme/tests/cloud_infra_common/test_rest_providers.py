@@ -9,6 +9,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.rest import (
     assert_response,
     delete_resources_from_collection,
+    delete_resources_from_detail,
     query_resource_attributes,
 )
 from cfme.utils.wait import wait_for
@@ -144,36 +145,26 @@ def test_provider_edit(request, provider_rest, appliance):
 
 
 @pytest.mark.rhv3
-# testing BZ1501941
 @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
-def test_provider_delete_from_detail(provider_rest, appliance, method):
+def test_provider_delete_from_detail(provider_rest, method):
     """Tests deletion of the provider from detail using REST API.
+
+    Testing BZs 1525498, 1501941
 
     Metadata:
         test_flag: rest
     """
-    if method == "delete":
-        del_action = provider_rest.action.delete.DELETE
-    else:
-        del_action = provider_rest.action.delete.POST
-
-    del_action()
-    # testing BZ1525498
-    assert_response(appliance)
-    provider_rest.wait_not_exists(num_sec=50)
-    with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-        del_action()
-    assert_response(appliance, http_status=404)
+    delete_resources_from_detail([provider_rest], method=method, num_sec=50)
 
 
 @pytest.mark.rhv3
-# testing BZ1501941
 def test_provider_delete_from_collection(provider_rest, appliance):
     """Tests deletion of the provider from collection using REST API.
+
+    Testing BZs 1525498, 1501941
 
     Metadata:
         test_flag: rest
     """
     collection = appliance.rest_api.collections.providers
-    # testing BZ1525498
     delete_resources_from_collection(collection, [provider_rest], num_sec=50)

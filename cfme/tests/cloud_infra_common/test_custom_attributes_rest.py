@@ -9,7 +9,11 @@ from cfme.common.vm import VM
 from cfme.infrastructure.provider import CloudInfraProvider, InfraProvider
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
-from cfme.utils.rest import assert_response, delete_resources_from_collection
+from cfme.utils.rest import (
+    assert_response,
+    delete_resources_from_collection,
+    delete_resources_from_detail,
+)
 
 
 pytestmark = [
@@ -148,38 +152,28 @@ class TestCustomAttributesRESTAPI(object):
         _uncollectif(appliance, provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
-    def test_delete_from_detail_post(self, request, collection_name, appliance, get_resource):
+    def test_delete_from_detail_post(self, request, collection_name, get_resource):
         """Test deleting custom attributes from detail using POST method.
 
         Metadata:
             test_flag: rest
         """
         attributes = add_custom_attributes(request, get_resource[collection_name]())
-        for entity in attributes:
-            entity.action.delete.POST()
-            assert_response(appliance)
-            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-                entity.action.delete.POST()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(attributes, method='POST')
 
     @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
         appliance.version < '5.9' or  # BZ 1422596 was not fixed for versions < 5.9
         _uncollectif(appliance, provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
-    def test_delete_from_detail_delete(self, request, collection_name, appliance, get_resource):
+    def test_delete_from_detail_delete(self, request, collection_name, get_resource):
         """Test deleting custom attributes from detail using DELETE method.
 
         Metadata:
             test_flag: rest
         """
         attributes = add_custom_attributes(request, get_resource[collection_name]())
-        for entity in attributes:
-            entity.action.delete.DELETE()
-            assert_response(appliance)
-            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-                entity.action.delete.DELETE()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(attributes, method='DELETE')
 
     @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
         _uncollectif(appliance, provider, collection_name)
