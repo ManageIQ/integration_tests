@@ -16,7 +16,7 @@ pytestmark = [
 
 @pytest.fixture
 def vm_name():
-    vm_name = random_vm_name('cnvvm')
+    vm_name = random_vm_name('k6tvm')
     return vm_name
 
 
@@ -29,7 +29,7 @@ def test_vm(provider, vm_name):
     vm.cleanup_on_provider()
 
 
-def test_cnv_provider_crud(provider):
+def test_k6t_provider_crud(provider):
     provider.create()
 
     with update(provider):
@@ -40,12 +40,13 @@ def test_cnv_provider_crud(provider):
 
 
 @pytest.mark.parametrize('custom_prov_data',
-                         [{}, {'hardware': {'cpu_cores':'8', 'memory':'8192'}}],
+                         [{}, {'hardware': {'cpu_cores': '8', 'memory': '8192'}}],
                          ids=['via_lifecycle', 'override_template_values']
                          )
-def test_cnv_vm_crud(request, appliance, provider, vm_name, provisioning,
+def test_k6t_vm_crud(request, appliance, provider, vm_name, provisioning,
                      custom_prov_data):
-    provider.create() #TODO: replace with setup_provider fixture
+    provider.create()
+    # TODO: replace with setup_provider fixture
     template = provisioning['template']
 
     provisioning_data = {
