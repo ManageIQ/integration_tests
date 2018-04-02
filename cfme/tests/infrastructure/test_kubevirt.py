@@ -11,7 +11,7 @@ pytestmark = [
 ]
 
 
-def test_cnv_provider_crud(provider):
+def test_k6t_provider_crud(provider):
     provider.create()
 
     with update(provider):
