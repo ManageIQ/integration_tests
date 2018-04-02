@@ -435,8 +435,14 @@ class TestProvidersRESTAPI(object):
         assert_response(appliance)
         assert networks
         assert len(networks) == networks.subcount
-        assert len(networks.find_by(enabled=True)) >= 1
-        assert 'CloudNetwork' in networks[0].type
+
+        enabled_networks = 0
+        networks.reload(expand=True)
+        for network in networks:
+            assert 'CloudNetwork' in network.type
+            if network.enabled is True:
+                enabled_networks += 1
+        assert enabled_networks >= 1
 
     @pytest.mark.tier(3)
     def test_security_groups_query(self, cloud_provider, appliance):
