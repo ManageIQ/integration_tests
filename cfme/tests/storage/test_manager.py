@@ -21,7 +21,8 @@ MANAGER_TYPE = ['Swift Manager', 'Cinder Manager']
 @pytest.yield_fixture(scope='module')
 def provider_cleanup(provider):
     yield
-    provider.delete()
+    provider.delete_rest()
+    provider.wait_for_delete()
 
 
 @pytest.yield_fixture(params=MANAGER_TYPE,
