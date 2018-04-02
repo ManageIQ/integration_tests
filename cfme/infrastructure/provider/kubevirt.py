@@ -11,7 +11,6 @@ class KubeVirtProvider(InfraProvider):
     def __init__(self, parent_provider, **kwargs):
 
         self.parent_provider = parent_provider
-
         super(KubeVirtProvider, self).__init__(
             name=kwargs.get('name'),
             endpoints=kwargs.get('endpoints'),

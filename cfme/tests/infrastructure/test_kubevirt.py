@@ -15,7 +15,7 @@ pytestmark = [
 
 @pytest.fixture
 def vm_name():
-    vm_name = random_vm_name('provt')
+    vm_name = random_vm_name('cnvvm')
     return vm_name
 
 
@@ -29,9 +29,13 @@ def test_cnv_provider_crud(provider):
     provider.wait_for_delete()
 
 
-def test_cnv_vm_crud(request, appliance, provider, setup_provider, vm_name,
-                     provisioning):
-
+@pytest.mark.parametrize('custom_prov_data',
+                         [{}, {'hardware': {'cpu_cores':'8', 'memory':'8192'}}],
+                         ids=['via_lifecycle', 'override_template_values']
+                         )
+def test_cnv_vm_crud(request, appliance, provider, vm_name, provisioning,
+                     custom_prov_data):
+    provider.create() #TODO: replace with setup_provider fixture
     template = provisioning['template']
 
     provisioning_data = {
@@ -39,5 +43,6 @@ def test_cnv_vm_crud(request, appliance, provider, setup_provider, vm_name,
             'vm_name': vm_name
         }
     }
+    provisioning_data.update(custom_prov_data)
 
     do_vm_provisioning(appliance, template, provider, vm_name, provisioning_data, request)
