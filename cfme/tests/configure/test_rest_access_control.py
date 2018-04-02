@@ -401,9 +401,14 @@ class TestUsersViaREST(object):
             assert appliance.new_rest_api_instance(auth=user_auth)
 
     @pytest.mark.tier(3)
-    @pytest.mark.meta(blockers=[BZ(1547445, forced_streams=['5.8'])])
+    @pytest.mark.uncollectif(
+        lambda appliance: appliance.version < '5.9',
+        reason='fix for BZ 1486041 was not back ported to 5.8'
+    )
     def test_create_uppercase_user(self, request, appliance):
         """Tests creating user with userid containing uppercase letters.
+
+        Testing BZ 1486041
 
         Metadata:
             test_flag: rest
@@ -472,7 +477,34 @@ class TestUsersViaREST(object):
             assert record[0].name == edited[index].name == user.name
 
     @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(
+        lambda appliance: appliance.version >= '5.9',
+        reason='negative test checking missing miq_groups support on < 5.9'
+    )
     @pytest.mark.meta(blockers=[BZ(1549085, forced_streams=['5.8'])])
+    def test_unsupported_user_groups(self, appliance, users):
+        """Tests that miq_groups are not supported on 5.8.
+
+        Tests BZ 1549085
+
+        Metadata:
+            test_flag: rest
+        """
+        group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
+        groups = [appliance.rest_api.collections.groups.get(description=desc)
+                  for desc in group_descriptions]
+        group_handles = [{'href': group.href} for group in groups]
+
+        user = users[0]
+        with pytest.raises(Exception, match='BadRequestError'):
+            user.action.edit(miq_groups=group_handles)
+        assert_response(appliance, http_status=400)
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(
+        lambda appliance: appliance.version < '5.9',
+        reason='miq_groups are not supported on < 5.9'
+    )
     @pytest.mark.parametrize('group_by', ['id', 'href', 'description'])
     def test_edit_user_groups(self, appliance, users, group_by):
         """Tests editing user group.
@@ -520,9 +552,14 @@ class TestUsersViaREST(object):
             assert edited[index].id == user.id
 
     @pytest.mark.tier(3)
-    @pytest.mark.meta(blockers=[BZ(1549086, forced_streams=['5.8', '5.9', 'upstream'])])
-    def test_change_current_group(self, request, appliance):
-        """Tests that it's possible to edit current group.
+    @pytest.mark.uncollectif(
+        lambda appliance: appliance.version < '5.9',
+        reason='miq_groups are not supported on < 5.9'
+    )
+    def test_edit_current_group(self, request, appliance):
+        """Tests that editing current group using "edit" action is not supported.
+
+        Testing BZ 1549086
 
         Metadata:
             test_flag: rest
@@ -537,11 +574,42 @@ class TestUsersViaREST(object):
         assert_response(appliance)
         user.reload()
         assert user.current_group.id == groups[0].id
-        user.action.edit(current_group=group_handles[1])
-        assert_response(appliance)
+        with pytest.raises(Exception, match='BadRequestError: Invalid attribute'):
+            user.action.edit(current_group=group_handles[1])
+        assert_response(appliance, http_status=400)
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+    @pytest.mark.uncollectif(
+        lambda appliance: appliance.version < '5.9',
+        reason='miq_groups are not supported on < 5.9'
+    )
+    def test_change_current_group_as_admin(self, request, appliance):
+        """Tests that it's possible to edit current group.
+
+        Testing BZ 1549086
+
+        Metadata:
+            test_flag: rest
+        """
+        group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
+        groups = [appliance.rest_api.collections.groups.get(description=desc)
+                  for desc in group_descriptions]
+        group_handles = [{'href': group.href} for group in groups]
+        users, __ = self.users_data(request, appliance, num=1)
+        user = users[0]
+        user.action.edit(miq_groups=group_handles)
+        assert_response(appliance)
+        user.reload()
+        assert user.current_group.id == groups[0].id
+        with pytest.raises(Exception, match='Can only edit authenticated user\'s current group'):
+            user.action.set_current_group(current_group=group_handles[1])
+        assert_response(appliance, http_status=400)
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(
+        lambda appliance: appliance.version < '5.9',
+        reason='miq_groups are not supported on < 5.9'
+    )
     def test_change_current_group_as_user(self, request, appliance):
         """Tests that users can update their own group.
 
@@ -564,7 +632,10 @@ class TestUsersViaREST(object):
         assert_response(user_api)
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+    @pytest.mark.uncollectif(
+        lambda appliance: appliance.version < '5.9',
+        reason='miq_groups are not supported on < 5.9'
+    )
     def test_change_unassigned_group_as_user(self, request, appliance):
         """Tests that users can't update their own group to a group they don't belong to.
 
