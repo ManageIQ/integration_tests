@@ -7,7 +7,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Text, Checkbox, TextInput
 from widgetastic_manageiq import Calendar, AlertEmail, Table, PaginationPane
-from widgetastic_patternfly import Button, BootstrapSelect
+from widgetastic_patternfly import Button, BootstrapSelect, FlashMessages
 
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -28,6 +28,9 @@ class SchedulesAllView(CloudIntelReportsView):
 
 
 class SchedulesFormCommon(CloudIntelReportsView):
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")] | '
+                          './/div[starts-with(@class, "flash_text_div") or @id="flash_text_div"]')
     # Basic Information
     title = Text("#explorer_title_text")
     name = TextInput(name="name")
@@ -128,8 +131,8 @@ class Schedule(Updateable, Pretty, BaseEntity):
 
     @property
     def exists(self):
-        schedules = self.appliance.db["miq_schedules"]
-        return self.appliance.db.session\
+        schedules = self.appliance.db.client["miq_schedules"]
+        return self.appliance.db.client.session\
             .query(schedules.name)\
             .filter(schedules.name == self.name)\
             .count() > 0

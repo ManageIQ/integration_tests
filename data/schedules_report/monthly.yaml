@@ -1,0 +1,18 @@
+name: testing schedule 1
+description: description of testing schedule 1
+filter:
+    - Events
+    - Policy
+    - Policy Events for Last Week
+active: True
+timer:
+    run: Monthly
+    hours: Month
+emails:
+    - test1@example.test
+    - test2@example.test
+email_options:
+  send_if_empty: True
+  txt: True
+  csv: True
+  pdf: True
