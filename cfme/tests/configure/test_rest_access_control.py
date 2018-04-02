@@ -401,8 +401,10 @@ class TestUsersViaREST(object):
             assert appliance.new_rest_api_instance(auth=user_auth)
 
     @pytest.mark.tier(3)
-    # fix for BZ 1486041 was not back ported to 5.8
-    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+    @pytest.mark.uncollectif(
+        lambda appliance: appliance.version < '5.9',
+        reason='fix for BZ 1486041 was not back ported to 5.8'
+    )
     def test_create_uppercase_user(self, request, appliance):
         """Tests creating user with userid containing uppercase letters.
 
@@ -475,7 +477,10 @@ class TestUsersViaREST(object):
             assert record[0].name == edited[index].name == user.name
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda appliance: appliance.version >= '5.9')
+    @pytest.mark.uncollectif(
+        lambda appliance: appliance.version >= '5.9',
+        reason='negative test checking missing miq_groups support on < 5.9'
+    )
     @pytest.mark.meta(blockers=[BZ(1549085, forced_streams=['5.8'])])
     def test_unsupported_user_groups(self, appliance, users):
         """Tests that miq_groups are not supported on 5.8.
@@ -496,7 +501,10 @@ class TestUsersViaREST(object):
         assert_response(appliance, http_status=400)
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+    @pytest.mark.uncollectif(
+        lambda appliance: appliance.version < '5.9',
+        reason='miq_groups are not supported on < 5.9'
+    )
     @pytest.mark.parametrize('group_by', ['id', 'href', 'description'])
     def test_edit_user_groups(self, appliance, users, group_by):
         """Tests editing user group.
@@ -544,7 +552,10 @@ class TestUsersViaREST(object):
             assert edited[index].id == user.id
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+    @pytest.mark.uncollectif(
+        lambda appliance: appliance.version < '5.9',
+        reason='miq_groups are not supported on < 5.9'
+    )
     def test_edit_current_group(self, request, appliance):
         """Tests that editing current group using "edit" action is not supported.
 
@@ -568,7 +579,10 @@ class TestUsersViaREST(object):
         assert_response(appliance, http_status=400)
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+    @pytest.mark.uncollectif(
+        lambda appliance: appliance.version < '5.9',
+        reason='miq_groups are not supported on < 5.9'
+    )
     def test_change_current_group_as_admin(self, request, appliance):
         """Tests that it's possible to edit current group.
 
@@ -592,7 +606,10 @@ class TestUsersViaREST(object):
         assert_response(appliance, http_status=400)
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+    @pytest.mark.uncollectif(
+        lambda appliance: appliance.version < '5.9',
+        reason='miq_groups are not supported on < 5.9'
+    )
     def test_change_current_group_as_user(self, request, appliance):
         """Tests that users can update their own group.
 
@@ -615,7 +632,10 @@ class TestUsersViaREST(object):
         assert_response(user_api)
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+    @pytest.mark.uncollectif(
+        lambda appliance: appliance.version < '5.9',
+        reason='miq_groups are not supported on < 5.9'
+    )
     def test_change_unassigned_group_as_user(self, request, appliance):
         """Tests that users can't update their own group to a group they don't belong to.
 
