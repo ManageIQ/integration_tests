@@ -30,9 +30,9 @@ pytestmark = [
 
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_myservice_crud(appliance, setup_provider, context, provision_request):
+def test_myservice_crud(appliance, setup_provider, context, order_service):
     """Test Myservice crud in SSUI."""
-    catalog_item, provision_request = provision_request
+    catalog_item = order_service
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
         my_service.set_ownership("Administrator", "EvmGroup-approver")
@@ -45,9 +45,9 @@ def test_myservice_crud(appliance, setup_provider, context, provision_request):
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_retire_service(appliance, setup_provider,
-                        context, provision_request, request):
+                        context, order_service, request):
     """Test retire service."""
-    catalog_item, provision_request = provision_request
+    catalog_item = order_service
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
         my_service.retire()
@@ -59,9 +59,9 @@ def test_retire_service(appliance, setup_provider,
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_service_start(appliance, setup_provider, context,
-                       provision_request, provider, request):
+                       order_service, provider, request):
     """Test service stop"""
-    catalog_item, provision_request = provision_request
+    catalog_item = order_service
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
         if provider.one_of(InfraProvider):
@@ -92,7 +92,7 @@ def test_vm_console(request, appliance, setup_provider, context, configure_webso
         configure_console_vnc, order_service, take_screenshot,
         console_template, provider):
     """Test Myservice VM Console in SSUI."""
-    catalog_item, provision_request = order_service
+    catalog_item = order_service
     service_name = catalog_item.name
     console_vm_username = credentials[catalog_item.provider.data.templates.console_template
                             .creds].username

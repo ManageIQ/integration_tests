@@ -23,10 +23,10 @@ pytestmark = [
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_service_catalog_crud(appliance, setup_provider,
-                              context, provision_request):
+                              context, order_service):
     """Tests Service Catalog in SSUI."""
 
-    catalog_item, provision_request = provision_request
+    catalog_item = order_service
     with appliance.context.use(context):
         if appliance.version >= '5.9':
             dialog_values = {'service_name': "ssui_{}".format(fauxfactory.gen_alphanumeric())}
