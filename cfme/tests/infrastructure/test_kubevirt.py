@@ -19,7 +19,7 @@ def vm_name():
     return vm_name
 
 
-def test_cnv_prsovider_crud(provider):
+def test_cnv_provider_crud(provider):
     provider.create()
 
     with update(provider):
