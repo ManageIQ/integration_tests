@@ -29,7 +29,8 @@ def test_cnv_provider_crud(provider):
     provider.wait_for_delete()
 
 
-def test_cnv_vm_crud(request, appliance, provider, setup_provider, vm_name):
+def test_cnv_vm_crud(request, appliance, provider, setup_provider, vm_name,
+                     provisioning):
 
     template = provisioning['template']
 
