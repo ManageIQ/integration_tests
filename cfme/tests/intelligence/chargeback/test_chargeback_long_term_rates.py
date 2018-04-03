@@ -238,11 +238,16 @@ def resource_usage(vm_ownership, appliance, provider):
     for record in appliance.db.client.session.query(rollups).filter(
             rollups.id.in_(result.subquery())):
         consumed_hours = consumed_hours + 1
-        average_cpu_used_in_mhz = average_cpu_used_in_mhz + record.cpu_usagemhz_rate_average
-        average_memory_used_in_mb = average_memory_used_in_mb + record.derived_memory_used
-        average_network_io = average_network_io + record.net_usage_rate_average
-        average_disk_io = average_disk_io + record.disk_usage_rate_average
         average_storage_used = average_storage_used + record.derived_vm_used_disk_storage
+        if any([record.cpu_usagemhz_rate_average,
+           record.cpu_usage_rate_average,
+           record.derived_memory_used,
+           record.net_usage_rate_average,
+           record.disk_usage_rate_average]):
+            average_cpu_used_in_mhz = average_cpu_used_in_mhz + record.cpu_usagemhz_rate_average
+            average_memory_used_in_mb = average_memory_used_in_mb + record.derived_memory_used
+            average_network_io = average_network_io + record.net_usage_rate_average
+            average_disk_io = average_disk_io + record.disk_usage_rate_average
 
     # Convert storage used in Bytes to GB
     average_storage_used = average_storage_used * math.pow(2, -30)
@@ -357,7 +362,7 @@ def chargeback_report_custom(vm_ownership, assign_custom_rate, interval):
 @pytest.yield_fixture(scope="module")
 def new_compute_rate(interval):
     """Create a new Compute Chargeback rate"""
-    desc = 'custom_' + '{}'.format(interval)
+    desc = 'custom_{}'.format(interval)
     compute = rates.ComputeRate(description=desc,
                 fields={'Used CPU':
                        {'per_time': interval, 'variable_rate': '720'},
@@ -379,9 +384,6 @@ def new_compute_rate(interval):
     storage.delete()
 
 
-# Tests to validate costs reported in the Chargeback report for various metrics.
-# The costs reported in the Chargeback report should be approximately equal to the
-# costs estimated in the chargeback_costs_custom fixtures.
 def test_validate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_custom,
         interval, provider, soft_assert):
     """Test to validate CPU usage cost reported in chargeback reports.
