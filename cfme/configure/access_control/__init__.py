@@ -12,6 +12,7 @@ from cfme.common import Taggable
 from cfme.exceptions import CFMEException, RBACOperationBlocked
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -242,7 +243,6 @@ class User(Updateable, Pretty, BaseEntity, Taggable):
             view = self.create_view(DetailsUserView)
         assert view.is_displayed
 
-
     # TODO update elements, after 1469035 fix
     def change_stored_password(self, changes=None, cancel=False):
         """ Changes user password
@@ -378,6 +378,7 @@ class UserAll(CFMENavigateStep):
 @navigator.register(UserCollection, 'Add')
 class UserAdd(CFMENavigateStep):
     VIEW = AddUserView
+
     def prerequisite(self):
         navigate_to(self.obj.appliance.server, 'Configuration')
         return navigate_to(self.obj, 'All')
@@ -1004,7 +1005,14 @@ class Role(Updateable, Pretty, BaseEntity):
             flash_message = 'Edit of Role was cancelled by the user'
         view = self.create_view(DetailsRoleView, override=updates)
         view.flash.assert_message(flash_message)
-        assert view.is_displayed
+
+        # Typically this would be a safe check but BZ 1561698 will sometimes cause the accordion
+        #  to fail to update the role name w/o a manual refresh causing is_displayed to fail
+        # Instead of inserting a blind refresh, just disable this until the bug is resolved since
+        #  it's a good check for accordion UI failures
+        # See BZ https://bugzilla.redhat.com/show_bug.cgi?id=1561698
+        if not BZ(1561698, forced_streams=['5.9']).blocks:
+            assert view.is_displayed
 
     def delete(self, cancel=True):
         """ Delete existing role
