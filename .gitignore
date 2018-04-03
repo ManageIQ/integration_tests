@@ -78,6 +78,7 @@ rhci-qe-data
 # exclude conf
 conf/*.yaml
 conf/*.eyaml
+conf/*.backup
 conf/README
 # yaml key
 .yaml_key
