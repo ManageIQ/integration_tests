@@ -3,23 +3,22 @@ import re
 from cfme.utils.log import logger
 from cfme.utils.template.base import BaseTemplateUpload
 
-from cfme.utils.conf import cfme_data, credentials
-
 
 class GoogleCloudTemplateUpload(BaseTemplateUpload):
     provider_type = 'gce'
     log_name = 'GCE'
     image_pattern = re.compile(r'<a href="?\'?([^"\']*gce[^"\'>]*)')
-    bucket_name = 'cfme-images'
+
+    @property
+    def bucket_name(self):
+        return self.from_template_upload('template_upload_gce').get('bucket_name')
 
     def get_creds(self, creds_type=None, **kwargs):
-        default_hostname = cfme_data.template_upload.template_upload_ec2['aws_cli_tool_client']
-        default_username = credentials.host_default['username']
-        default_password = credentials.host_default['password']
+        host_default = self.from_credentials('host_default')
         creds = {
-            'hostname': default_hostname,
-            'username': default_username,
-            'password': default_password
+            'hostname': self.from_template_upload('template_upload_ec2').get('aws_cli_tool_client'),
+            'username': host_default['username'],
+            'password': host_default['password']
         }
         return creds
 

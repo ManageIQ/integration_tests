@@ -13,11 +13,12 @@ from cfme.utils.template.openstack import OpenstackTemplateUpload
 from cfme.utils.template.virtualcenter import VirtualCenterTemplateUpload
 from cfme.utils.template.scvmm import SCVMMTemplateUpload
 from cfme.utils.template.gce import GoogleCloudTemplateUpload
+from cfme.utils.template.ec2 import EC2TemplateUpload
 
 from cfme.utils.log import logger, add_stdout_handler
 
 add_stdout_handler(logger)
-PROVIDER_TYPES = ['openstack', 'virtualcenter', 'scvmm', 'gce']
+PROVIDER_TYPES = ['openstack', 'virtualcenter', 'scvmm', 'gce', 'ec2']
 ALL_STREAMS = cfme_data['basic_info']['cfme_images_url']
 
 
@@ -34,6 +35,9 @@ class TemplateUpload(object):
 
         if type_ == 'gce':
             return GoogleCloudTemplateUpload(*args, **kwargs)
+
+        if type_ == 'ec2':
+            return EC2TemplateUpload(*args, **kwargs)
 
 
 def parse_cmd_line():
@@ -96,10 +100,6 @@ def prepare_provider_data(custom_data):
 
 
 def check_args(cmd_args):
-    if cmd_args.provider_data and not cmd_args.provider:
-        logger.warning("Please provide provider name with --provider")
-        return False
-
     if cmd_args.stream_url and not cmd_args.stream:
         logger.warning("Please provide stream name with --stream")
         return False
@@ -156,7 +156,10 @@ if __name__ == '__main__':
             continue
 
         for provider_type in provider_types:
-            providers = filter(lambda x: x in list_provider_keys(provider_type), cmd_args.provider)
+            providers = list_provider_keys(provider_type)
+
+            if cmd_args.provider:
+                providers = filter(lambda x: x in providers, cmd_args.provider)
 
             for provider in providers:
                 if provider not in list_provider_keys(provider_type):

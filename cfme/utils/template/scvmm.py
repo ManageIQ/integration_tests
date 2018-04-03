@@ -58,11 +58,20 @@ class SCVMMTemplateUpload(BaseTemplateUpload):
         self.mgmt.run_script(script)
 
     def run(self):
-        logger.info("{}:{} Uploading VHD image to Library VHD folder.".format(
-            self.log_name, self.provider))
+        template_upload_scvmm = self.from_template_upload('template_upload_scvmm')
 
-        self.upload_vhd()
+        if template_upload_scvmm.get('disk'):
+            logger.info("{}:{} Uploading VHD image to Library VHD folder.".format(
+                self.log_name, self.provider))
+            self.upload_vhd()
+        else:
+            logger.info("{}:{} Skipped uploading VHD image.".format(
+                self.log_name, self.provider))
 
-        logger.info("{}:{} Adding HW Resource File and Template to Library".format(
-            self.log_name, self.provider))
-        self.make_template()
+        if template_upload_scvmm.get('template'):
+            logger.info("{}:{} Adding HW Resource File and Template to Library".format(
+                self.log_name, self.provider))
+            self.make_template()
+        else:
+            logger.info("{}:{} Skipped adding HW Resource File and Template.".format(
+                self.log_name, self.provider))
