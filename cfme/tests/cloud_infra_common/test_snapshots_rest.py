@@ -11,7 +11,11 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
-from cfme.utils.rest import assert_response, delete_resources_from_collection
+from cfme.utils.rest import (
+    assert_response,
+    delete_resources_from_collection,
+    delete_resources_from_detail,
+)
 from cfme.utils.wait import wait_for
 
 
@@ -99,23 +103,16 @@ class TestRESTSnapshots(object):
         vm.snapshots.get(description=snapshot.description)
 
     @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
-    def test_delete_snapshot_from_detail(self, appliance, vm_snapshot, method):
+    def test_delete_snapshot_from_detail(self, vm_snapshot, method):
         """Deletes VM/instance snapshot from detail using REST API.
+
+        Testing BZ 1466225
 
         Metadata:
             test_flag: rest
         """
         __, snapshot = vm_snapshot
-        del_action = getattr(snapshot.action.delete, method.upper())
-
-        del_action()
-        assert_response(appliance)
-        snapshot.wait_not_exists(num_sec=300, delay=5)
-
-        # testing BZ 1466225
-        with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-            del_action()
-        assert_response(appliance, http_status=404)
+        delete_resources_from_detail([snapshot], method=method, num_sec=300, delay=5)
 
     def test_delete_snapshot_from_collection(self, vm_snapshot):
         """Deletes VM/instance snapshot from collection using REST API.

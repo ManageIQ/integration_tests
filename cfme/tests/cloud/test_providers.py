@@ -20,7 +20,11 @@ from cfme.common.provider_views import (
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.rest import assert_response
+from cfme.utils.rest import (
+    assert_response,
+    delete_resources_from_collection,
+    delete_resources_from_detail,
+)
 from cfme.utils.update import update
 from fixtures.provider import enable_provider_regions
 from fixtures.pytest_store import store
@@ -480,18 +484,13 @@ class TestProvidersRESTAPI(object):
     # arbitration_profiles were removed in versions >= 5.9'
     @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9')
     @pytest.mark.parametrize('method', ['post', 'delete'])
-    def test_delete_arbitration_profiles_from_detail(self, appliance, arbitration_profiles, method):
+    def test_delete_arbitration_profiles_from_detail(self, arbitration_profiles, method):
         """Tests delete arbitration profiles from detail.
 
         Metadata:
             test_flag: rest
         """
-        for entity in arbitration_profiles:
-            entity.action.delete(force_method=method)
-            assert_response(appliance)
-            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-                entity.action.delete(force_method=method)
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(arbitration_profiles, method=method)
 
     @pytest.mark.tier(3)
     # arbitration_profiles were removed in versions >= 5.9'
@@ -503,11 +502,7 @@ class TestProvidersRESTAPI(object):
             test_flag: rest
         """
         collection = appliance.rest_api.collections.arbitration_profiles
-        collection.action.delete(*arbitration_profiles)
-        assert_response(appliance)
-        with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-            collection.action.delete(*arbitration_profiles)
-        assert_response(appliance, http_status=404)
+        delete_resources_from_collection(collection, arbitration_profiles)
 
     @pytest.mark.tier(3)
     # arbitration_profiles were removed in versions >= 5.9'

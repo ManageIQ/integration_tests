@@ -5,7 +5,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.utils.blockers import BZ
-from cfme.utils.rest import assert_response
+from cfme.utils.rest import assert_response, delete_resources_from_collection
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
@@ -100,11 +100,7 @@ class TestReposRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        if method == 'post':
-            del_action = repository.action.delete.POST
-        else:
-            del_action = repository.action.delete.DELETE
-
+        del_action = getattr(repository.action.delete, method.upper())
         del_action()
         assert_response(appliance)
         repository.wait_not_exists(num_sec=300, delay=5)
@@ -124,12 +120,9 @@ class TestReposRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        appliance.rest_api.collections.configuration_script_sources.action.delete.POST(repository)
-        assert_response(appliance)
-        repository.wait_not_exists(num_sec=300, delay=5)
-
-        appliance.rest_api.collections.configuration_script_sources.action.delete.POST(repository)
-        assert_response(appliance, success=False)
+        collection = appliance.rest_api.collections.configuration_script_sources
+        delete_resources_from_collection(
+            collection, [repository], not_found=False, num_sec=300, delay=5)
 
 
 class TestPayloadsRESTAPI(object):

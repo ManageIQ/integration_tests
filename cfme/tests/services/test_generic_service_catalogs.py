@@ -2,12 +2,17 @@
 import fauxfactory
 import pytest
 
+from selenium.common.exceptions import NoSuchElementException
+
 from cfme import test_requirements
 from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.log import logger
-from cfme.utils.rest import assert_response, delete_resources_from_collection
-from selenium.common.exceptions import NoSuchElementException
+from cfme.utils.rest import (
+    assert_response,
+    delete_resources_from_collection,
+    delete_resources_from_detail,
+)
 
 
 pytestmark = [
@@ -125,18 +130,13 @@ class TestServiceCatalogViaREST(object):
         return _service_catalogs(request, appliance.rest_api)
 
     @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
-    def test_delete_service_catalog(self, appliance, service_catalogs, method):
+    def test_delete_service_catalog(self, service_catalogs, method):
         """Tests delete service catalog via rest.
 
         Metadata:
             test_flag: rest
         """
-        for scl in service_catalogs:
-            scl.action.delete(force_method=method)
-            assert_response(appliance)
-            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-                scl.action.delete(force_method=method)
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(service_catalogs, method=method)
 
     def test_delete_service_catalogs(self, appliance, service_catalogs):
         """Tests delete service catalogs via rest.

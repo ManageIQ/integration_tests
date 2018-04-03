@@ -849,7 +849,7 @@ class TestArbitrationSettingsRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        delete_resources_from_detail(arbitration_settings, method)
+        delete_resources_from_detail(arbitration_settings, method=method)
 
     def test_delete_arbitration_settings_from_collection(self, appliance, arbitration_settings):
         """Tests delete arbitration settings from collection.
@@ -925,7 +925,7 @@ class TestArbitrationRulesRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        delete_resources_from_detail(arbitration_rules, 'post')
+        delete_resources_from_detail(arbitration_rules, method='POST')
 
     def test_delete_arbitration_rules_from_collection(self, arbitration_rules, appliance):
         """Tests delete arbitration rules from collection.
@@ -1020,7 +1020,7 @@ class TestNotificationsRESTAPI(object):
             pytest.skip("Affected by BZ1420872, cannot test.")
 
         notifications = appliance.rest_api.collections.notifications.all[-3:]
-        delete_resources_from_detail(notifications, method)
+        delete_resources_from_detail(notifications, method=method)
 
     def test_delete_notifications_from_collection(self, appliance, generate_notifications):
         """Tests delete notifications from collection.

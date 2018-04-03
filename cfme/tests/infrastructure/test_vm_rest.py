@@ -9,6 +9,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.rest import (
     assert_response,
     delete_resources_from_collection,
+    delete_resources_from_detail,
     query_resource_attributes,
 )
 from cfme.utils.wait import wait_for, wait_for_decorator
@@ -105,14 +106,8 @@ def test_edit_vm(request, vm, appliance, from_detail):
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
-def test_delete_vm_from_detail(vm, appliance, method):
-    del_action = getattr(vm.action.delete, method.upper())
-    del_action()
-    assert_response(appliance)
-    vm.wait_not_exists(num_sec=300, delay=10)
-    with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-        del_action()
-    assert_response(appliance, http_status=404)
+def test_delete_vm_from_detail(vm, method):
+    delete_resources_from_detail([vm], method=method, num_sec=300, delay=10)
 
 
 @pytest.mark.tier(3)

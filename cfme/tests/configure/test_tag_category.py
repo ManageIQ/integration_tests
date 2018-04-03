@@ -4,7 +4,11 @@ import pytest
 
 from cfme.configure.configuration.region_settings import Category
 from cfme.rest.gen_data import categories as _categories
-from cfme.utils.rest import assert_response, delete_resources_from_collection
+from cfme.utils.rest import (
+    assert_response,
+    delete_resources_from_collection,
+    delete_resources_from_detail,
+)
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -79,18 +83,13 @@ class TestCategoriesViaREST(object):
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
-    def test_delete_categories_from_detail(self, appliance, categories, method):
+    def test_delete_categories_from_detail(self, categories, method):
         """Tests deleting categories from detail.
 
         Metadata:
             test_flag: rest
         """
-        for ctg in categories:
-            ctg.action.delete(force_method=method)
-            assert_response(appliance)
-            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-                ctg.action.delete(force_method=method)
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(categories, method=method)
 
     @pytest.mark.tier(3)
     def test_delete_categories_from_collection(self, appliance, categories):
