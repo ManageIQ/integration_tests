@@ -6,11 +6,10 @@
 # But, in order to validate costs for different rates, running the tests on just one provider
 # should suffice.
 import math
-from datetime import date
-
 import fauxfactory
 import pytest
 import re
+from datetime import date
 
 import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
@@ -47,7 +46,8 @@ divisor = {
 @pytest.yield_fixture(scope="module")
 def vm_ownership(enable_candu, provider, appliance):
     """In these tests, chargeback reports are filtered on VM owner.So,VMs have to be
-    assigned ownership."""
+    assigned ownership.
+    """
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
     if not provider.mgmt.does_vm_exist(vm_name):
@@ -60,9 +60,8 @@ def vm_ownership(enable_candu, provider, appliance):
     cb_group = group_collection.instantiate(description='EvmGroup-user')
 
     vm = VM.factory(vm_name, provider)
-    user = None
     user = appliance.collections.users.create(
-        name=provider.name + '{}'.format(fauxfactory.gen_alphanumeric()),
+        name='{}_{}'.format(provider.name, fauxfactory.gen_alphanumeric()),
         credential=Credential(principal='uid' + '{}'.format(fauxfactory.gen_alphanumeric()),
             secret='secret'),
         email='abc@example.com',
@@ -82,7 +81,8 @@ def vm_ownership(enable_candu, provider, appliance):
 @pytest.yield_fixture(scope="module")
 def enable_candu(appliance):
     """C&U data collection consumes a lot of memory and CPU.So, we are disabling some server roles
-    that are not needed for Chargeback reporting."""
+    that are not needed for Chargeback reporting.
+    """
     candu = appliance.collections.candus
     server_info = appliance.server.settings
     original_roles = server_info.server_roles_db
@@ -147,9 +147,47 @@ def verify_records_rollups_table(appliance, provider):
     return False
 
 
+def verify_records_metrics_table(appliance, provider):
+    """Verify that rollups are present in the metric_rollups table."""
+    vm_name = provider.data['cap_and_util']['chargeback_vm']
+
+    ems = appliance.db.client['ext_management_systems']
+    metrics = appliance.db.client['metrics']
+
+    # Capture real-time C&U data
+    ret = appliance.ssh_client.run_rails_command(
+        "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
+        vm.perf_capture('realtime', 1.hour.ago.utc, Time.now.utc)\""
+        .format(provider.id, repr(vm_name)))
+    assert ret.success, "Failed to capture VM C&U data:".format(ret.output)
+
+    with appliance.db.client.transaction:
+        result = (
+            appliance.db.client.session.query(metrics.id)
+            .join(ems, metrics.parent_ems_id == ems.id)
+            .filter(metrics.capture_interval_name == 'realtime',
+            metrics.resource_name == vm_name,
+            ems.name == provider.name, metrics.timestamp >= date.today())
+        )
+
+    for record in appliance.db.client.session.query(metrics).filter(
+            metrics.id.in_(result.subquery())):
+        return any([record.cpu_usagemhz_rate_average,
+            record.cpu_usage_rate_average,
+            record.derived_memory_used,
+            record.net_usage_rate_average,
+            record.disk_usage_rate_average])
+    return False
+
+
 @pytest.fixture(scope="module")
 def resource_usage(vm_ownership, appliance, provider):
-    """Retrieve resource usage values from metric_rollups table."""
+    """Retrieve resource usage values from metric_rollups table.
+
+    Chargeback reporting is done on hourly and daily rollup values and not real-time values.So, we
+    are capturing C&U data and forcing hourly rollups by running commands through
+    the Rails console.
+    """
     average_cpu_used_in_mhz = 0
     average_memory_used_in_mb = 0
     average_network_io = 0
@@ -166,40 +204,6 @@ def resource_usage(vm_ownership, appliance, provider):
     appliance.db.client.session.query(metrics).delete()
     appliance.db.client.session.query(rollups).delete()
 
-    # Chargeback reporting is done on hourly and daily rollup values and not real-time values.So, we
-    # are capturing C&U data and forcing hourly rollups by running these commands through
-    # the Rails console.
-
-    def verify_records_metrics_table(appliance, provider):
-        # Verify that rollups are present in the metric_rollups table.
-        ems = appliance.db.client['ext_management_systems']
-        metrics = appliance.db.client['metrics']
-
-        # Capture real-time C&U data
-        ret = appliance.ssh_client.run_rails_command(
-            "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
-            vm.perf_capture('realtime', 1.hour.ago.utc, Time.now.utc)\""
-            .format(provider.id, repr(vm_name)))
-        assert ret.rc == 0, "Failed to capture VM C&U data:".format(ret.output)
-
-        with appliance.db.client.transaction:
-            result = (
-                appliance.db.client.session.query(metrics.id)
-                .join(ems, metrics.parent_ems_id == ems.id)
-                .filter(metrics.capture_interval_name == 'realtime',
-                metrics.resource_name == vm_name,
-                ems.name == provider.name, metrics.timestamp >= date.today())
-            )
-
-        for record in appliance.db.client.session.query(metrics).filter(
-                metrics.id.in_(result.subquery())):
-            return any([record.cpu_usagemhz_rate_average,
-               record.cpu_usage_rate_average,
-               record.derived_memory_used,
-               record.net_usage_rate_average,
-               record.disk_usage_rate_average])
-        return False
-
     wait_for(verify_records_metrics_table, [appliance, provider], timeout=600,
         message='Waiting for VM real-time data')
 
@@ -209,12 +213,13 @@ def resource_usage(vm_ownership, appliance, provider):
 
     appliance.server.settings.disable_server_roles(
         'ems_metrics_coordinator', 'ems_metrics_collector')
+
     # Perfrom rollup of C&U data.
     ret = appliance.ssh_client.run_rails_command(
         "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
         vm.perf_rollup_range(1.hour.ago.utc, Time.now.utc,'realtime')\"".
         format(provider.id, repr(vm_name)))
-    assert ret.rc == 0, "Failed to rollup VM C&U data:".format(ret.out)
+    assert ret.success, "Failed to rollup VM C&U data:".format(ret.out)
 
     wait_for(verify_records_rollups_table, [appliance, provider], timeout=600,
         message='Waiting for hourly rollups')
@@ -263,12 +268,12 @@ def resource_cost(appliance, metric_description, usage, description, rate_type,
 
     with appliance.db.client.transaction:
         result = (
-            appliance.db.client.session.query(tiers).
-            join(details, tiers.chargeback_rate_detail_id == details.id).
-            join(cb_rates, details.chargeback_rate_id == cb_rates.id).
-            filter(details.description == metric_description).
-            filter(cb_rates.rate_type == rate_type).
-            filter(cb_rates.description == description).all()
+            appliance.db.client.session.query(tiers)
+            .join(details, tiers.chargeback_rate_detail_id == details.id)
+            .join(cb_rates, details.chargeback_rate_id == cb_rates.id)
+            .filter(details.description == metric_description)
+            .filter(cb_rates.rate_type == rate_type)
+            .filter(cb_rates.description == description).all()
         )
     for row in result:
         tiered_rate = {var: getattr(row, var) for var in ['variable_rate', 'fixed_rate', 'start',
@@ -352,7 +357,7 @@ def chargeback_report_custom(vm_ownership, assign_custom_rate, interval):
 @pytest.yield_fixture(scope="module")
 def new_compute_rate(interval):
     """Create a new Compute Chargeback rate"""
-    desc = 'custom_' + interval
+    desc = 'custom_' + '{}'.format(interval)
     compute = rates.ComputeRate(description=desc,
                 fields={'Used CPU':
                        {'per_time': interval, 'variable_rate': '720'},
@@ -379,7 +384,10 @@ def new_compute_rate(interval):
 # costs estimated in the chargeback_costs_custom fixtures.
 def test_validate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_custom,
         interval, provider, soft_assert):
-    """Test to validate CPU usage cost."""
+    """Test to validate CPU usage cost reported in chargeback reports.
+    The cost reported in the Chargeback report should be approximately equal to the
+    cost estimated in the chargeback_costs_custom fixture.
+    """
     for groups in chargeback_report_custom:
         if groups["CPU Used Cost"]:
             estimated_cpu_usage_cost = chargeback_costs_custom['cpu_used_cost']
@@ -392,7 +400,10 @@ def test_validate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_cust
 
 def test_validate_memory_usage_cost(chargeback_costs_custom, chargeback_report_custom,
         interval, provider, soft_assert):
-    """Test to validate memory usage cost."""
+    """Test to validate memory usage cost reported in chargeback reports.
+    The cost reported in the Chargeback report should be approximately equal to the
+    cost estimated in the chargeback_costs_custom fixture.
+    """
     for groups in chargeback_report_custom:
         if groups["Memory Used Cost"]:
             estimated_memory_usage_cost = chargeback_costs_custom['memory_used_cost']
@@ -405,7 +416,10 @@ def test_validate_memory_usage_cost(chargeback_costs_custom, chargeback_report_c
 
 def test_validate_network_usage_cost(chargeback_costs_custom, chargeback_report_custom,
         interval, provider, soft_assert):
-    """Test to validate network usage cost."""
+    """Test to validate network usage cost reported in chargeback reports.
+    The cost reported in the Chargeback report should be approximately equal to the
+    cost estimated in the chargeback_costs_custom fixture.
+    """
     for groups in chargeback_report_custom:
         if groups["Network I/O Used Cost"]:
             estimated_network_usage_cost = chargeback_costs_custom['network_used_cost']
@@ -418,7 +432,10 @@ def test_validate_network_usage_cost(chargeback_costs_custom, chargeback_report_
 
 def test_validate_disk_usage_cost(chargeback_costs_custom, chargeback_report_custom,
         interval, provider, soft_assert):
-    """Test to validate disk usage cost."""
+    """Test to validate disk usage cost reported in chargeback reports.
+    The cost reported in the Chargeback report should be approximately equal to the
+    cost estimated in the chargeback_costs_custom fixture.
+    """
     for groups in chargeback_report_custom:
         if groups["Disk I/O Used Cost"]:
             estimated_disk_usage_cost = chargeback_costs_custom['disk_used_cost']
@@ -431,7 +448,10 @@ def test_validate_disk_usage_cost(chargeback_costs_custom, chargeback_report_cus
 
 def test_validate_storage_usage_cost(chargeback_costs_custom, chargeback_report_custom,
         interval, provider, soft_assert):
-    """Test to validate stoarge usage cost."""
+    """Test to validate storage usage cost reported in chargeback reports.
+    The cost reported in the Chargeback report should be approximately equal to the
+    cost estimated in the chargeback_costs_custom fixture.
+    """
     for groups in chargeback_report_custom:
         if groups["Storage Used Cost"]:
             estimated_storage_usage_cost = chargeback_costs_custom['storage_used_cost']

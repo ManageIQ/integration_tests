@@ -318,10 +318,6 @@ class CustomReport(Updateable, Navigatable):
         except CandidateNotFound:
             return False
 
-    def delete_if_exists(self):
-        if self.exists:
-            self.delete()
-
 
 class CustomSavedReportDetailsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
