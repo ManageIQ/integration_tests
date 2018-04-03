@@ -1,12 +1,10 @@
+import pytest
 from distutils.version import LooseVersion
 
-import pytest
-
+from cfme.markers.env import EnvironmentMarker
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter, list_providers
-from cfme.markers.env import EnvironmentMarker
 from cfme.utils.pytest_shortcuts import fixture_filter
-
 
 ONE = 'one'
 ALL = 'all'
@@ -196,9 +194,21 @@ class ProviderEnvironmentMarker(EnvironmentMarker):
 
     def process_env_mark(self, metafunc):
         if hasattr(metafunc.function, self.NAME):
-            args = getattr(metafunc.function, self.NAME).args
-            kwargs = getattr(metafunc.function, self.NAME).kwargs.copy()
+            mark = None
+            for mark in getattr(metafunc.function, self.NAME):
+                if 'override' in mark.kwargs.keys() and mark.kwargs['override']:
+                    break
+            else:
+                if len(getattr(metafunc.function, self.NAME)._marks) >= 2:
+                    raise Exception(
+                        "You have an override provider without "
+                        "specifying the override flag [{}]".format(metafunc.function.__name__)
+                    )
 
+            args = mark.args
+            kwargs = mark.kwargs.copy()
+            if 'override' in kwargs:
+                kwargs.pop('override')
             scope = kwargs.pop('scope', 'function')
             indirect = kwargs.pop('indirect', False)
             filter_unused = kwargs.pop('filter_unused', True)
