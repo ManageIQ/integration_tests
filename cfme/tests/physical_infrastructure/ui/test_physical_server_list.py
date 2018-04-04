@@ -25,7 +25,6 @@ def test_physical_servers_view_dropdowns(physical_server_collection):
 
     configuration_items = physical_servers_view.toolbar.configuration.items
     assert "Refresh Relationships and Power States" in configuration_items
-    assert "Remove Physical Servers from Inventory" in configuration_items
 
     power_items = physical_servers_view.toolbar.power.items
     assert "Power On" in power_items
