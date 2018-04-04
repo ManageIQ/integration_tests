@@ -1,5 +1,5 @@
-Style Guide
-===========
+Contributors Guide
+==================
 
 General Guidelines
 ------------------
@@ -68,6 +68,48 @@ All requests require 2 approvals from two reviewers, after which time, the contr
 may, permissions allowing, merge the commit him/herself.
 
 **Reviewers must never approve their own pull requests.**
+
+Release Candidates and Tagging
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The MIQ/integration_tests maintainers will use a two week release schedule, with a release candidate
+(RC) commit tagged on the last Friday in the cycle.  When this RC tag is set, new PRs are not
+accepted for merging unless fixing things that were broken in the current release cycle.
+This 2-3 day period is commonly called the 'dev-freeze'.
+
+Release tags will be created on the following Tuesday, and the downstream-stable branch updated
+to the release tag commit.
+
+Releases are tagged with a version number in the format ``\d+\.\d+\.\d+``,
+for example ``17.25.0``.
+
+The release candidate commits will be tagged on Friday with a ``downstream-stable-rc`` tag,
+and a version numbered tag that will match the version number of the *next* release.
+For example, the Friday before ``17.25.0`` is released we create an RC tag ``17.25.0-rc``.
+
+This means we have a tag, ``downstream-stable-rc`` that moves each time an RC commit is selected,
+and a 2nd tag pointing to the same commit with a ``-rc`` suffix.
+
+This process breaks down to something like the following. This example is for release ``18.30.0``
+
+#. On Friday, reviewers feverishly merge any PRs that have passed review and have good PRT results.
+#. Once all merge-able PRs have been considered, a ``master`` branch commit is selected for RC.
+#. For this example, the commit is ``abcde1234``
+#. A Maintainer creates ``18.30.0-rc`` tag, and force updates ``downstream-stable-rc`` tag
+#. Both tags point to ``abcde1234``
+#. We are now in dev-freeze, and no PRs will be merged until release (exception below)
+#. RC test jobs start, using the ``downstream-stable-rc`` tag as their git ref.
+#. Everyone has a great weekend and the RC jobs run a full test run against all providers
+#. Monday/Tuesday, test results are analyzed
+#. PRs are opened against any new failures, labeled with ``rc-regression-fix``
+#. ``rc-regression-fix`` PRs are reviewed, tested, and merged  (exception for dev-freeze)
+#. Tuesday, a ``master`` branch commit is selected for release, ``abcde1235``
+#. The ``18.30.0`` tag is created
+#. The ``downstream-stable`` branch is updated (fast-forward)
+#. Both ``downstream-stable`` branch and ``18.30.0`` point to commit ``abcde1235``
+#. Release email sent with changelist of the included PRs
+#. 'dev-freeze' is over, and PRs can now be merged at-will into ``master``
+
 
 Code Style
 ^^^^^^^^^^
