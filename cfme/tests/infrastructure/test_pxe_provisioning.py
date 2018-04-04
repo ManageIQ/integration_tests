@@ -98,6 +98,7 @@ def vm_name():
 
 
 @pytest.mark.rhv1
+@pytest.mark.meta(blockers=[BZ(1561934, forced_streams=['5.8', '5.9'])])
 def test_pxe_provision_from_template(appliance, provider, vm_name, smtp_test, setup_provider,
                                      request, setup_pxe_servers_vm_prov):
     """Tests provisioning via PXE
