@@ -6,6 +6,7 @@ from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.rest.gen_data import dialog as _dialog
 from cfme.rest.gen_data import service_catalog_obj as _catalog
+from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.log import logger
 from fixtures.provider import console_template
@@ -38,7 +39,7 @@ def create_catalog_item(appliance, provider, provisioning, vm_name, dialog, cata
     if provider.one_of(InfraProvider):
         catalog_name = template
         provisioning_data = {
-            'catalog': {'catalog_name': {'name': template, 'provider': provider.name},
+            'catalog': {'catalog_name': {'name': catalog_name, 'provider': provider.name},
                         'vm_name': vm_name,
                         'provision_type': provision_type},
             'environment': {'host_name': {'name': host},
@@ -64,21 +65,28 @@ def create_catalog_item(appliance, provider, provisioning, vm_name, dialog, cata
     return catalog_item
 
 
-@pytest.fixture
+@pytest.yield_fixture
 def order_service(appliance, provider, provisioning, vm_name, dialog, catalog, request):
     """ Orders service once the catalog item is created"""
 
     if hasattr(request, 'param'):
         param = request.param
-        catalog_item = create_catalog_item(provider, provisioning, vm_name, dialog, catalog,
+        catalog_item = create_catalog_item(appliance, provider, provisioning,
+                                           vm_name, dialog, catalog,
                                            console_test=True if 'console_test' in param else None)
     else:
-        catalog_item = create_catalog_item(provider, provisioning, vm_name, dialog, catalog)
+        catalog_item = create_catalog_item(appliance, provider, provisioning,
+                                           vm_name, dialog, catalog)
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     provision_request = appliance.collections.requests.instantiate(catalog_item.name,
-        partial_check=True)
+                                                                   partial_check=True)
     provision_request.wait_for_request(method='ui')
     assert provision_request.is_succeeded()
-    return catalog_item, provision_request
-# TODO - remove request finally
+    if provision_request.exists():
+        provision_request.wait_for_request()
+        provision_request.remove_request()
+    yield catalog_item
+    service = MyService(appliance, catalog_item.name)
+    if service.exists:
+        service.delete()

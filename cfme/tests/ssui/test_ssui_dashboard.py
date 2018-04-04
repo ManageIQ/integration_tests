@@ -10,7 +10,6 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.services.dashboard import Dashboard
 from cfme import test_requirements
 from cfme.utils.appliance import ViaSSUI
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
@@ -88,8 +87,8 @@ def assign_chargeback_rate(new_compute_rate):
 
 @pytest.fixture(scope="function")
 def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
-                                  provision_request):
-    catalog_item, provision_request = provision_request
+                                  order_service):
+    catalog_item = order_service
     vmname = '{}0001'.format(catalog_item.provisioning_data['catalog']["vm_name"])
 
     def verify_records_rollups_table(appliance, provider):
@@ -126,9 +125,8 @@ def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
     assert result.success, "Failed to run Service Chargeback report".format(result.output)
 
 
-@pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_total_services(appliance, setup_provider, context, provision_request):
+def test_total_services(appliance, setup_provider, context, order_service):
     """Tests total services count displayed on dashboard."""
 
     with appliance.context.use(context):
@@ -136,7 +134,6 @@ def test_total_services(appliance, setup_provider, context, provision_request):
         assert dashboard.total_services() == dashboard.results()
 
 
-@pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_current_service(appliance, context):
     """Tests current services count displayed on dashboard."""
@@ -146,7 +143,6 @@ def test_current_service(appliance, context):
         assert dashboard.current_services() == dashboard.results()
 
 
-@pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_retiring_soon(appliance, context):
     """Tests retiring soon(int displayed) service count on dashboard."""
@@ -156,7 +152,6 @@ def test_retiring_soon(appliance, context):
         assert dashboard.retiring_soon() == dashboard.results()
 
 
-@pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_retired_service(appliance, context):
     """Tests count of retired services(int) displayed on dashboard."""
@@ -168,7 +163,7 @@ def test_retired_service(appliance, context):
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_monthly_charges(appliance, setup_provider, context, provision_request,
+def test_monthly_charges(appliance, setup_provider, context, order_service,
         run_service_chargeback_report):
     """Tests chargeback data"""
     with appliance.context.use(context):
@@ -178,7 +173,6 @@ def test_monthly_charges(appliance, setup_provider, context, provision_request,
         assert monthly_charges != '$0'
 
 
-@pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_total_requests(appliance, context):
     """Tests total requests displayed."""
