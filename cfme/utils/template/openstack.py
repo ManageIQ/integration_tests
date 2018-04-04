@@ -2,7 +2,6 @@ import re
 
 from glanceclient import Client
 
-from cfme.utils.log import logger
 from cfme.utils.template.base import BaseTemplateUpload
 
 
@@ -20,9 +19,5 @@ class OpenstackTemplateUpload(BaseTemplateUpload):
                                             is_public=True,
                                             copy_from=self.image_url)
 
-        if not glance_image:
-            logger.exception("%s:%s Error while uploading template: %s",
-                             self.log_name, self.provider, self.template_name)
-            return False
-
-        return True
+        if glance_image:
+            return True

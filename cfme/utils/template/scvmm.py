@@ -1,7 +1,6 @@
 import re
 
-from cfme.utils.log import logger
-from cfme.utils.template.base import BaseTemplateUpload
+from cfme.utils.template.base import BaseTemplateUpload, log_wrap
 
 
 class SCVMMTemplateUpload(BaseTemplateUpload):
@@ -17,6 +16,7 @@ class SCVMMTemplateUpload(BaseTemplateUpload):
     def vhd_name(self):
         return "{}.vhd".format(self.template_name)
 
+    @log_wrap("upload VHD image to Library VHD folder")
     def upload_vhd(self):
         script = """
             (New-Object System.Net.WebClient).DownloadFile("{}", "{}{}")
@@ -25,6 +25,7 @@ class SCVMMTemplateUpload(BaseTemplateUpload):
         self.mgmt.run_script(script)
         self.mgmt.update_scvmm_library()
 
+    @log_wrap("add HW Resource File and Template to Library")
     def make_template(self):
         script = """
             $JobGroupId01 = [Guid]::NewGuid().ToString()
@@ -61,17 +62,7 @@ class SCVMMTemplateUpload(BaseTemplateUpload):
         template_upload_scvmm = self.from_template_upload('template_upload_scvmm')
 
         if template_upload_scvmm.get('disk'):
-            logger.info("{}:{} Uploading VHD image to Library VHD folder.".format(
-                self.log_name, self.provider))
             self.upload_vhd()
-        else:
-            logger.info("{}:{} Skipped uploading VHD image.".format(
-                self.log_name, self.provider))
 
         if template_upload_scvmm.get('template'):
-            logger.info("{}:{} Adding HW Resource File and Template to Library".format(
-                self.log_name, self.provider))
             self.make_template()
-        else:
-            logger.info("{}:{} Skipped adding HW Resource File and Template.".format(
-                self.log_name, self.provider))

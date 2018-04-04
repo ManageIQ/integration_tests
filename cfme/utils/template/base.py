@@ -16,13 +16,32 @@ NUM_OF_TRIES = 3
 lock = Lock()
 
 
+def log_wrap(process_message):
+    def decorate(func):
+        def call(*args, **kwargs):
+            log_name = args[0].log_name
+            provider = args[0].provider
+            logger.info("(template-upload) [%s:%s] BEGIN %s",
+                        log_name, provider, process_message)
+            result = func(*args, **kwargs)
+            if result:
+                logger.info("(template-upload) [%s:%s] END %s",
+                            log_name, provider, process_message)
+            else:
+                logger.error("(template-upload) [%s:%s] FAIL %s",
+                             log_name, provider, process_message)
+            return result
+        return call
+    return decorate
+
+
 class BaseTemplateUpload(object):
     """ Base class for template management.
 
-    Variables:
-        provider_type: type of initiated provider -- to be removed
-        log_name: string to be displayed in logs.
-        image_patters: regex to be matched when stream URL is used
+    Class variables:
+        :var provider_type: type of initiated provider -- to be removed
+        :var log_name: string to be displayed in logs.
+        :var image_patters: regex to be matched when stream URL is used
     """
     provider_type = None
     log_name = None
@@ -31,15 +50,20 @@ class BaseTemplateUpload(object):
     def __init__(self, stream=None, provider=None, template_name=None,
                  cmd_line_args=None, **kwargs):
         """
-        Required params:
+        Required parameters:
             :param stream: name of stream
             :param provider: name of provider
             :param template_name: name of template to use
 
-        Non-required params:
-            :param stream_url: URL to image directory of a stream
-            :param image_url: URL to exact image file
+        Optional parameters:
+            :param stream_url: custom URL to image directory of a stream
+            :param image_url: custom URL to exact image file
             :param provider_data: custom AttrDict with provider data
+
+        Default values for custom parameters:
+            :param stream_url: cfme_data.basic_info.cfme_images_url[stream]
+            :param image_url: parsed with regex from stream_url web page
+            :param provider_data: cfme_data.management_systems[provider]
         """
         self._stream_url = kwargs.get('stream_url')
         self._image_url = kwargs.get('image_url')
@@ -165,25 +189,23 @@ class BaseTemplateUpload(object):
     def run(self):
         raise NotImplementedError("run is not implemented")
 
+    @log_wrap("run upload template")
+    def decorated_run(self):
+        self.run()
+
     def teardown(self):
         pass
 
+    @log_wrap("template upload script")
     def main(self):
         try:
-            self.setup()
 
             if self.mgmt.does_template_exist(self.template_name):
                 logger.info("%s:%s Template %s already exists.",
                             self.log_name, self.provider, self.template_name)
             else:
-                logger.info("%s:%s Start uploading template: %s",
-                            self.log_name, self.provider, self.template_name)
-
                 # Actual template upload
-                wait_for(self.run, fail_condition=False, delay=5, logger=None)
-
-                logger.info("%s:%s Successfully uploaded template: %s",
-                            self.log_name, self.provider, self.template_name)
+                wait_for(self.decorated_run, fail_condition=False, delay=5, logger=None)
 
                 if not self._provider_data:
                     logger.info("%s:%s Adding template %s to trackerbot",
@@ -205,8 +227,9 @@ class BaseTemplateUpload(object):
 
                 self.mgmt.deploy_template(**deploy_args)
 
+            return True
+
         except TemplateUploadException:
-            logger.error('%s:%s Failed to upload template %s',
-                         self.log_name, self.provider, self.template_name)
+            return False
         finally:
             self.teardown()
