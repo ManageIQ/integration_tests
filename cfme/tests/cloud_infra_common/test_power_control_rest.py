@@ -6,7 +6,6 @@ from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
 from cfme.utils.generators import random_vm_name
 from cfme.utils.wait import wait_for
-from cfme.utils.log import logger
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -35,6 +34,7 @@ def vm_obj(request, provider, setup_provider, small_template, vm_name):
     vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip="default")
     yield vm_obj
     vm_obj.cleanup_on_provider()
+
 
 def wait_for_vm_state_change(vm_obj, state):
     vm = vm_obj.get_vm_via_rest()
@@ -168,7 +168,7 @@ def test_suspend_vm_rest(appliance, vm_obj, ensure_vm_running, soft_assert, from
 
 @pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider, AzureProvider),
                          reason='Not supported for RHV or Azure provider')
-def test_reset_vm_rest(vm_obj, verify_vm_running, from_detail, appliance):
+def test_reset_vm_rest(vm_obj, ensure_vm_running, from_detail, appliance):
     """
     Test reset vm
 
