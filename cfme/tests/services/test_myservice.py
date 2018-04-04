@@ -46,7 +46,7 @@ def myservice(appliance, provider, catalog_item, request):
     Metadata:
         test_flag: provision
     """
-    vm_name = catalog_item.provisioning_data["catalog"]["vm_name"] + '0001'
+    vm_name = catalog_item.prov_data["catalog"]["vm_name"] + '0001'
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)

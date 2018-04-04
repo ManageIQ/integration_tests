@@ -48,7 +48,7 @@ def copy_domain(request, appliance):
 
 @pytest.yield_fixture(scope='function')
 def myservice(appliance, provider, catalog_item, request):
-    vm_name = catalog_item.provisioning_data["catalog"]["vm_name"]
+    vm_name = catalog_item.prov_data["catalog"]["vm_name"]
     request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()

@@ -37,7 +37,7 @@ def test_order_catalog_item(appliance, provider, catalog_item, request,
     Metadata:
         test_flag: provision
     """
-    vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
+    vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())
 
     register_event(target_type='Service', target_name=catalog_item.name,
@@ -62,7 +62,7 @@ def test_order_catalog_item_via_rest(
     Metadata:
         test_flag: provision, rest
     """
-    vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
+    vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(lambda: VM.factory(vm_name, provider).cleanup_on_provider())
     request.addfinalizer(catalog_item.delete)
     catalog = appliance.rest_api.collections.service_catalogs.find_by(name=catalog.name)
@@ -90,7 +90,7 @@ def test_order_catalog_bundle(appliance, provider, catalog_item, request):
         test_flag: provision
     """
 
-    vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
+    vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())
     bundle_name = fauxfactory.gen_alphanumeric()
     catalog_bundle = appliance.collections.catalog_bundles.create(
