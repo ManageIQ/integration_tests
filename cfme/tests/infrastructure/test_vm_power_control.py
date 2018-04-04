@@ -313,7 +313,7 @@ class TestVmDetailsPowerControlPerProvider(object):
 
     @pytest.mark.rhv1
     def test_start_from_suspend(
-            self, appliance, testing_vm, verify_vm_suspended, soft_assert):
+            self, appliance, testing_vm, ensure_vm_suspended, soft_assert):
         """Tests start from suspend
 
         Metadata:
