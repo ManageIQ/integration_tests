@@ -19,6 +19,10 @@ class KubeVirtProvider(InfraProvider):
         # so Override the standard behaviour to actually create the parent container provider first
         return self.parent_provider.create()
 
+    def create_rest(self, **kwargs):
+        # override this method to create the parent provider
+        return self.parent_provider.create(**kwargs)
+
     @classmethod
     def from_config(cls, prov_config, prov_key):
 
