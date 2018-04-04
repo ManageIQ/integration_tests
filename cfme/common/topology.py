@@ -58,7 +58,8 @@ class BaseTopologyView(BaseLoggedInPage):
 
         @property
         def is_enabled(self):
-            return 'active' in self.browser.get_attribute('class', self.el)
+            el = self.browser.element('./ancestor::kubernetes-topology-icon[1]', self.el)
+            return 'active' in self.browser.get_attribute('class', el)
 
         def enable(self):
             if not self.is_enabled:

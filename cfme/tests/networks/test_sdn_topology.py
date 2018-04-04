@@ -1,11 +1,15 @@
 import pytest
 import random
 
+from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.gce import GCEProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.wait import wait_for
+from cfme.utils.log import logger
 
-
-pytestmark = [pytest.mark.provider([EC2Provider], scope='module')]
+pytestmark = [pytest.mark.provider([EC2Provider, AzureProvider, GCEProvider, OpenStackProvider],
+                                   scope='module')]
 
 
 @pytest.yield_fixture(scope='module')
@@ -20,11 +24,13 @@ def elements_collection(setup_provider_modscope, appliance, provider):
 def test_topology_search(request, elements_collection):
     """Testing search functionality in Topology view."""
     elements = elements_collection.all()
+    logger.info(str(elements))
     element_to_search = random.choice(elements)
     search_term = element_to_search.name[:len(element_to_search.name) / 2]
     elements_collection.search(search_term)
     request.addfinalizer(elements_collection.clear_search)
     for element in elements:
+        logger.info(str(element))
         if search_term in element.name:
             assert not element.is_opaqued, (
                 'Element should be not opaqued. Search: "{}", found: "{}"'.format(
@@ -43,9 +49,9 @@ def test_topology_toggle_display(elements_collection):
     for state in (True, False):
         for legend in elements_collection.legends:
             if state:
-                elements_collection.enable_legend(legend)
-            else:
                 elements_collection.disable_legend(legend)
+            else:
+                elements_collection.enable_legend(legend)
             for element in elements_collection.all():
                 assert (
                     element.type != ''.join(legend.split()).rstrip('s') or
