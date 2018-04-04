@@ -98,8 +98,8 @@ def test_resources_link(stack):
 
 @pytest.mark.tier(3)
 @test_requirements.tag
-def test_edit_tags_stack(stack):
-    stack.add_tag("Cost Center *", "Cost Center 001")
+def test_edit_tags(stack, existing_tag):
+    stack.add_tag(existing_tag)
 
 
 @pytest.mark.tier(3)

@@ -355,12 +355,13 @@ def test_embedded_ansible_custom_button_specific_hosts(full_template_vm_modscope
     assert view.provisioning.results.get_text_of("Status") == "successful"
 
 
-def test_alert_run_ansible_playbook(full_template_vm_modscope, alert_profile, request, appliance):
+def test_alert_run_ansible_playbook(full_template_vm_modscope, alert_profile, request, appliance,
+        existing_tag):
     """Tests execution of an ansible playbook method by triggering a management event from an
     alert.
     """
-    full_template_vm_modscope.add_tag("Service Level", "Gold")
-    full_template_vm_modscope.remove_tag("Service Level", "Gold")
+    full_template_vm_modscope.add_tag(existing_tag)
+    full_template_vm_modscope.remove_tag(existing_tag)
     request.addfinalizer(lambda: appliance.ssh_client.run_command(
         '[[ -f "/var/tmp/modified-release" ]] && rm -f "/var/tmp/modified-release"'))
     try:

@@ -100,7 +100,7 @@ def test_storage_volume_crud(appliance, provider):
     assert not volume.exists
 
 
-def test_storage_volume_edit_tag(volume):
+def test_storage_volume_edit_tag(volume, existing_tag):
     """ Test add and remove tag to storage volume
 
     prerequisites:
@@ -112,12 +112,12 @@ def test_storage_volume_edit_tag(volume):
     """
 
     # add tag with category Department and tag communication
-    volume.add_tag('Department', 'Communication')
+    volume.add_tag(existing_tag)
     tag_available = volume.get_tags()
-    assert tag_available[0].display_name == 'Communication'
-    assert tag_available[0].category.display_name == 'Department'
+    assert tag_available[0].display_name == existing_tag.display_name
+    assert tag_available[0].category.display_name == existing_tag.category.display_name
 
     # remove assigned tag
-    volume.remove_tag('Department', 'Communication')
+    volume.remove_tag(existing_tag)
     tag_available = volume.get_tags()
     assert not tag_available

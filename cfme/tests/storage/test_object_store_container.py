@@ -20,16 +20,16 @@ def containers(appliance, provider):
     yield containers if containers else pytest.skip("No Containers Available")
 
 
-def test_add_remove_tag(containers):
+def test_add_remove_tag(containers, existing_tag):
     container = random.choice(containers)
 
     # add tag with category Department and tag communication
-    container.add_tag('Department', 'Communication')
+    container.add_tag(existing_tag)
     tag_available = container.get_tags()
-    assert tag_available[0].display_name == 'Communication'
-    assert tag_available[0].category.display_name == 'Department'
+    assert tag_available[0].display_name == existing_tag.display_name
+    assert tag_available[0].category.display_name == existing_tag.category.display_name
 
     # remove assigned tag
-    container.remove_tag('Department', 'Communication')
+    container.remove_tag(existing_tag)
     tag_available = container.get_tags()
     assert not tag_available

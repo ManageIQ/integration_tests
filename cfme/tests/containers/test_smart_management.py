@@ -58,9 +58,10 @@ def set_random_tag(instance):
     random_tag = random.choice([op for op in view.form.tag_name.all_options
                                 if "select" not in op.text.lower()]).text
     logger.debug("Selected value {tag}".format(tag=random_tag))
-    instance.add_tag(random_cat, random_tag, details=False)
+    tag = Tag(display_name=random_tag, category=random_cat)
+    instance.add_tag(tag, details=False)
     logger.debug("Tag configuration was saved")
-    return Tag(display_name=random_tag, category=random_cat)
+    return tag
 
 
 def wait_for_tag(obj_inst):

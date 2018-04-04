@@ -779,26 +779,28 @@ def test_action_tag(request, vm, vm_off, policy_for_testing, action_collection):
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
 )
-def test_action_untag(request, vm, vm_off, policy_for_testing, action_collection):
+def test_action_untag(request, vm, vm_off, policy_for_testing, action_collection, existing_tag):
     """ Tests action untag
 
     Metadata:
         test_flag: actions, provision
     """
-    if not any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
-           for tag in vm.crud.get_tags()):
-        vm.crud.add_tag("Service Level", "Gold")
+    if not any(tag.category.display_name == existing_tag.category.display_name and
+                   tag.display_name == existing_tag.display_name
+               for tag in vm.crud.get_tags()):
+        vm.crud.add_tag(existing_tag)
 
     @request.addfinalizer
     def _remove_tag():
-        if any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
-               for tag in vm.crud.get_tags()):
-            vm.crud.remove_tag("Service Level", "Gold")
+        if any(tag.category.display_name == existing_tag.category.display_name and
+                    tag.display_name == existing_tag.display_name
+                for tag in vm.crud.get_tags()):
+            vm.crud.remove_tag(existing_tag)
 
     tag_unassign_action = action_collection.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Remove Tags",
-        action_values={"remove_tag": ["Service Level"]}
+        action_values={"remove_tag": [existing_tag.category.display_name]}
     )
     policy_for_testing.assign_actions_to_event("VM Power On", [tag_unassign_action])
 
@@ -864,26 +866,28 @@ def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, poli
     scope="module"
 )
 def test_action_check_compliance(request, provider, vm, vm_name, policy_for_testing,
-        compliance_policy, compliance_condition):
+        compliance_policy, compliance_condition, existing_tag):
     """Tests action "Check Host or VM Compliance". Policy profile should have control and compliance
     policies. Control policy initiates compliance check and compliance policy determines is the vm
     compliant or not. After reloading vm details screen the compliance status should be changed.
     """
     compliance_policy.assign_conditions(compliance_condition)
-    if any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
+    if any(tag.category.display_name == existing_tag.category.display_name and
+                           tag.display_name == existing_tag.display_name
            for tag in vm.crud.get_tags()):
-        vm.crud.remove_tag("Service Level", "Gold")
+        vm.crud.remove_tag(existing_tag)
 
     @request.addfinalizer
     def _remove_tag():
         compliance_policy.assign_conditions()
-        if any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
+        if any(tag.category.display_name == existing_tag.category.display_name and
+                               tag.display_name == existing_tag.display_name
                for tag in vm.crud.get_tags()):
-            vm.crud.remove_tag("Service Level", "Gold")
+            vm.crud.remove_tag(existing_tag)
 
     policy_for_testing.assign_actions_to_event("Tag Complete", ["Check Host or VM Compliance"])
     request.addfinalizer(policy_for_testing.assign_events)
-    vm.crud.add_tag("Service Level", "Gold")
+    vm.crud.add_tag(existing_tag)
     view = navigate_to(vm.crud, "Details")
     view.toolbar.reload.click()
     assert vm.crud.compliant
