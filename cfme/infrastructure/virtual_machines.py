@@ -17,8 +17,9 @@ from widgetastic_patternfly import (
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, Template as BaseTemplate
 from cfme.common.vm_views import (
-    ManagementEngineView, CloneVmView, MigrateVmView, ProvisionView, EditView, RetirementView,
-    RetirementViewWithOffset, VMDetailsEntities, VMToolbar, VMEntities, SetOwnershipView)
+    ManagementEngineView, CloneVmView, MigrateVmView, ProvisionView, EditView, PublishVmView,
+    RetirementView, RetirementViewWithOffset, VMDetailsEntities, VMToolbar, VMEntities,
+    SetOwnershipView)
 from cfme.exceptions import (
     VmNotFound, OptionNotAvailable, DestinationNotFound, ItemNotFound,
     VmOrInstanceNotFound)
@@ -749,8 +750,7 @@ class Vm(VM):
         view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
 
     def publish_to_template(self, template_name, email=None, first_name=None, last_name=None):
-        view = navigate_to(self, 'Details', use_resetter=False)
-        view.toolbar.lifecycle.item_select("Publish this VM to a Template")
+        view = navigate_to(self, 'Publish')
         first_name = first_name or fauxfactory.gen_alphanumeric()
         last_name = last_name or fauxfactory.gen_alphanumeric()
         email = email or "{}@{}.test".format(first_name, last_name)
@@ -948,6 +948,7 @@ class Vm(VM):
 
 class Template(BaseTemplate):
     REMOVE_MULTI = "Remove Templates from the VMDB"
+    VM_TYPE = "Template"
 
     @property
     def genealogy(self):
@@ -1358,6 +1359,15 @@ class VmMigrate(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.lifecycle.item_select("Migrate this VM")
+
+
+@navigator.register(Vm, 'Publish')
+class VmPublish(CFMENavigateStep):
+    VIEW = PublishVmView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.lifecycle.item_select("Publish this VM to a Template")
 
 
 @navigator.register(Vm, 'Clone')

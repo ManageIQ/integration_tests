@@ -6,6 +6,7 @@ from cfme.base.credential import Credential
 from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm import VM
 from cfme.exceptions import VmOrInstanceNotFound
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -183,6 +184,21 @@ def test_group_ownership_on_user_or_group_role(
     vm_crud.unset_ownership()
     with user3:
         assert not check_vm_exists(vm_crud), "vm exists! but shouldn't exist"
+
+
+@pytest.mark.provider([VMwareProvider], override=True, scope="module")
+def test_template_set_ownership(request, provider, setup_provider, vm_crud):
+    """ Sets ownership to an infra template.
+
+    First publishes a template from a VM, then tries to unset an ownership of that template,
+    then sets it back and in the end removes the template.
+    VM is removed via fixture.
+    Tests BZ 1446801 in RHCF3-14353
+    """
+    template = vm_crud.publish_to_template(template_name=random_vm_name(context='ownrs'))
+    template.set_ownership('<No Owner>')
+    template.set_ownership('Administrator')
+    template.delete()
 
 
 # @pytest.mark.meta(blockers=[1202947])

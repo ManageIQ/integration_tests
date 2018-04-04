@@ -439,6 +439,19 @@ class MigrateVmView(BaseLoggedInPage):
         return False
 
 
+class PublishVmView(BaseLoggedInPage):
+    title = Text('#explorer_title_text')
+
+    @View.nested
+    class form(BasicProvisionFormView):  # noqa
+        submit_button = Button('Submit')
+        cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
 class RetirementView(BaseLoggedInPage):
     """
     Set Retirement date view for vms/instances
