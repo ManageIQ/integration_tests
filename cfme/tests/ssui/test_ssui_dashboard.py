@@ -6,15 +6,14 @@ import pytest
 
 import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
+from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.services.dashboard import Dashboard
-from cfme import test_requirements
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
-
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -128,7 +127,7 @@ def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
 
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_total_services(appliance, setup_provider, context, provision_request):
+def test_total_services(appliance, setup_provider, context, order_service):
     """Tests total services count displayed on dashboard."""
 
     with appliance.context.use(context):
@@ -168,7 +167,7 @@ def test_retired_service(appliance, context):
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_monthly_charges(appliance, setup_provider, context, provision_request,
+def test_monthly_charges(appliance, setup_provider, context, order_service,
         run_service_chargeback_report):
     """Tests chargeback data"""
     with appliance.context.use(context):

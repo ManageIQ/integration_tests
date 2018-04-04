@@ -7,6 +7,7 @@ from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import providers
 from cfme.services.myservice import MyService
 from cfme.services.myservice.ssui import DetailsMyServiceView
 from cfme.utils import ssh
@@ -16,7 +17,6 @@ from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
-from cfme.markers.env_markers.provider import providers
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -30,9 +30,9 @@ pytestmark = [
 
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_myservice_crud(appliance, setup_provider, context, provision_request):
+def test_myservice_crud(appliance, setup_provider, context, order_service):
     """Test Myservice crud in SSUI."""
-    catalog_item, provision_request = provision_request
+    catalog_item, provision_request = order_service
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
         my_service.set_ownership("Administrator", "EvmGroup-approver")
@@ -45,9 +45,9 @@ def test_myservice_crud(appliance, setup_provider, context, provision_request):
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_retire_service(appliance, setup_provider,
-                        context, provision_request, request):
+                        context, order_service, request):
     """Test retire service."""
-    catalog_item, provision_request = provision_request
+    catalog_item, provision_request = order_service
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
         my_service.retire()
@@ -59,9 +59,9 @@ def test_retire_service(appliance, setup_provider,
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_service_start(appliance, setup_provider, context,
-                       provision_request, provider, request):
+                       order_service, provider, request):
     """Test service stop"""
-    catalog_item, provision_request = provision_request
+    catalog_item, provision_request = order_service
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
         if provider.one_of(InfraProvider):
