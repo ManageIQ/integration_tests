@@ -3,8 +3,9 @@
 
 import os
 import pytest
-from fixtures.pytest_store import store
+
 from cfme.utils import conf
+from fixtures.pytest_store import store
 
 pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
 
@@ -30,14 +31,14 @@ def test_rpms_present(appliance, package):
     assert result.success
 
 
-@pytest.mark.uncollectif(store.current_appliance.is_pod)
+@pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
 def test_selinux_enabled(appliance):
     """Verifies selinux is enabled"""
     result = appliance.ssh_client.run_command('getenforce').output
     assert 'Enforcing' in result
 
 
-@pytest.mark.uncollectif(store.current_appliance.is_pod)
+@pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
 def test_firewalld_running(appliance):
     """Verifies iptables service is running on the appliance"""
     result = appliance.ssh_client.run_command('systemctl status firewalld').output
@@ -71,7 +72,7 @@ def test_service_enabled(appliance, service):
 
 
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.uncollectif(store.current_appliance.is_pod)
+@pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
 @pytest.mark.parametrize('proto,port', [
     ('tcp', 22),
     ('tcp', 80),
