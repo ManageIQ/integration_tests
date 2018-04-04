@@ -437,7 +437,9 @@ class CatalogItemsCollection(BaseCollection):
     ANSIBLE_TOWER = AnsibleTowerCatalogItem
     AZURE = AzureCatalogItem
     GENERIC = GenericCatalogItem
+    GOOGLE = GoogleCatalogItem
     OPENSHIFT = OpenShiftCatalogItem
+    OPENSTACK = OpenStackCatalogItem
     ORCHESTRATION = OrchestrationCatalogItem
     RHV = RHVCatalogItem
     SCVMM = SCVMMCatalogItem
