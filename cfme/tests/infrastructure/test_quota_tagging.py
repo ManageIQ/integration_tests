@@ -87,7 +87,7 @@ def entities(appliance, request, max_quota_test_instance):
 @pytest.fixture(scope='function')
 def set_entity_quota_tag(request, entities, appliance):
     tag, value = request.param
-    entities.edit_tags(tag, value)
+    entities.add_tag(tag, value)
     yield
     # will refresh page as navigation to configuration is blocked if alert are on requests page
     appliance.server.browser.refresh()
