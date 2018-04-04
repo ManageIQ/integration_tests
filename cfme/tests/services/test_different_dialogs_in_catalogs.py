@@ -78,8 +78,10 @@ def catalog_item(appliance, provider, provisioning, vm_name, tagcontrol_dialog, 
     catalog_item = appliance.collections.catalog_items.create(
         provider.catalog_item_type,
         name=item_name,
-        description="my catalog", display_in=True, catalog=catalog,
-        dialog=tagcontrol_dialog, catalog_name=template,
+        description="my catalog",
+        display_in=True,
+        catalog=catalog,
+        dialog=tagcontrol_dialog,
         prov_data=provisioning_data)
     return catalog_item
 
@@ -93,7 +95,7 @@ def test_tagdialog_catalog_item(appliance, provider, catalog_item, request):
     Metadata:
         test_flag: provision
     """
-    vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
+    vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())
     dialog_values = {'service_level': "Gold"}
     service_catalogs = ServiceCatalogs(appliance, catalog=catalog_item.catalog,
