@@ -74,6 +74,7 @@ class InfraGenericDetailsToolbar(View):
     reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
                                        '5.9': 'Refresh this page',
                                        '6.0': 'Reload current display'}))
+    history = Dropdown('History')
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     monitoring = Dropdown("Monitoring")
@@ -302,7 +303,7 @@ class InfraVmReconfigureView(BaseLoggedInPage):
 
 class InfraVmSnapshotToolbar(View):
     """The toolbar on the snapshots page"""
-    history = Dropdown('history')
+    history = Dropdown('History')
     reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
                                        '5.9': 'Refresh this page'}))
     create = Button(title='Create a new snapshot for this VM')
@@ -323,7 +324,8 @@ class InfraVmSnapshotView(InfraVmView):
     @property
     def is_displayed(self):
         """Is this view being displayed"""
-        return False
+        expected_title = '"Snapshots" for Virtual Machine "{}"'.format(self.context['object'].name)
+        return self.in_infra_vms and self.title.text == expected_title
 
 
 class InfraVmSnapshotAddView(InfraVmView):
@@ -343,7 +345,7 @@ class InfraVmSnapshotAddView(InfraVmView):
 
 class InfraVmGenealogyToolbar(View):
     """The toolbar on the genalogy page"""
-    history = Dropdown(title='history')
+    history = Dropdown(title='History')
     reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
                                        '5.9': 'Refresh this page'}))
     edit_tags = Button(title='Edit Tags for this VM')

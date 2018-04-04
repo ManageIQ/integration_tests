@@ -8,7 +8,7 @@ from cfme.automate.simulation import simulate
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.virtual_machines import InfraVmSnapshotAddView, Vm
+from cfme.infrastructure.virtual_machines import InfraVmSnapshotAddView, InfraVmSnapshotView, Vm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
@@ -359,6 +359,16 @@ def test_operations_powered_off_vm(small_test_vm):
     # The delete method will make sure the snapshots are indeed deleted
     snapshot1.delete()
     snapshot2.delete()
+
+
+def test_snapshot_history_btn(small_test_vm, provider):
+    snapshot = new_snapshot(small_test_vm, has_name=(not provider.one_of(RHEVMProvider)))
+    snapshot.create()
+    vm_details_view = navigate_to(small_test_vm, 'Details')
+    item = '"Snapshots" for Virtual Machine "{}"'.format(small_test_vm.name)
+    vm_details_view.toolbar.history.item_select(item)
+    snapshot_view = small_test_vm.create_view(InfraVmSnapshotView)
+    assert snapshot_view.is_displayed
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider),
