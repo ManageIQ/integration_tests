@@ -93,6 +93,7 @@ def vm_snapshot(request, appliance, collection, vm):
 class TestRESTSnapshots(object):
     """Tests actions with VM/instance snapshots using REST API."""
 
+    @pytest.mark.rhv2
     def test_create_snapshot(self, vm_snapshot):
         """Creates VM/instance snapshot using REST API.
 
@@ -102,6 +103,7 @@ class TestRESTSnapshots(object):
         vm, snapshot = vm_snapshot
         vm.snapshots.get(description=snapshot.description)
 
+    @pytest.mark.rhv3
     @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
     def test_delete_snapshot_from_detail(self, vm_snapshot, method):
         """Deletes VM/instance snapshot from detail using REST API.
@@ -114,6 +116,7 @@ class TestRESTSnapshots(object):
         __, snapshot = vm_snapshot
         delete_resources_from_detail([snapshot], method=method, num_sec=300, delay=5)
 
+    @pytest.mark.rhv3
     def test_delete_snapshot_from_collection(self, vm_snapshot):
         """Deletes VM/instance snapshot from collection using REST API.
 
@@ -155,6 +158,7 @@ class TestRESTSnapshots(object):
             if 'Please wait for the operation to finish' not in str(err):
                 raise
 
+    @pytest.mark.rhv2
     @pytest.mark.uncollectif(lambda provider: not provider.one_of(InfraProvider))
     def test_revert_snapshot(self, appliance, provider, vm_snapshot):
         """Reverts VM/instance snapshot using REST API.
