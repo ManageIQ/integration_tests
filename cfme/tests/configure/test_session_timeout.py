@@ -3,6 +3,7 @@ import time
 
 import pytest
 
+from cfme.utils.blockers import BZ
 from cfme.utils.browser import ensure_browser_open, quit
 from cfme.utils.wait import wait_for
 
@@ -35,3 +36,24 @@ def test_session_timeout(request, appliance):
             "//a[normalize-space(text())='Cloud Intelligence']"
         )
     )
+
+
+@pytest.mark.tier(0)
+@pytest.mark.ignore_stream('5.8')  # Modifying settings via rest in 5.9+
+@pytest.mark.meta(blockers=[BZ(1553394)])
+def test_bind_timeout_rest(appliance, request):
+    """Sets the session timeout via REST
+
+    Notes:
+        Written for BZ 1553394
+    """
+    old_bind = appliance.get_yaml_config().get('authentication', {}).get('bind_timeout')
+    if not old_bind:
+        pytest.skip('Unable to locate authentication:bind_timeout in advanced settings REST')
+    request.addfinalizer(lambda: appliance.set_yaml_config(
+        {'authentication': {'bind_timeout': int(old_bind)}})
+    )
+
+    offset = int(old_bind) + 10
+    appliance.set_yaml_config({'authentication': {'bind_timeout': int(offset)}})
+    assert int(appliance.get_yaml_config()['authentication']['bind_timeout']) == offset
