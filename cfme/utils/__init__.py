@@ -179,21 +179,27 @@ class deferred_verpick(object):
     Useful for verpicked constants in classes
     """
 
-    def __init__(self, version_pick):
-        self.version_pick = version_pick
+    def __init__(self, version_dict):
+        self.version_dict = version_dict
 
     def __get__(self, obj, cls):
         # TODO: remove the need to trigger for classes
         #       so we can use the class level for documentation of version picks
-        from cfme.utils.version import Version, pick as _version_pick
+        from cfme.utils.version import Version
         if on_rtd:
-            if self.version_pick:
-                latest = max(self.version_pick, key=Version)
-                return self.version_pick[latest]
+            if self.version_dict:
+                latest = max(self.version_dict, key=Version)
+                return self.version_dict[latest]
             else:
                 raise LookupError("Nothing to pick from")
+        elif obj is None:
+            return self
         else:
-            return _version_pick(self.version_pick)
+            return self.pick(obj.appliance.version)
+
+    def pick(self, appliance_version):
+        from cfme.utils.version import pick
+        return pick(self.version_dict, appliance_version)
 
 
 def safe_string(o):
