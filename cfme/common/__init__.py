@@ -343,7 +343,7 @@ class Taggable(object):
         random_cat = random_cat[:-1] if random_cat[-1] == '*' else random_cat
         view.form.tag_category.fill(random_cat)  # In order to get the right tags list
         random_tag = random.choice([tag_option for tag_option in view.form.tag_name.all_options
-                                    if "select" not in op.text.lower()]).text
+                                    if "select" not in tag_option.text.lower()]).text
         tag = Tag(display_name=random_tag, category=Category(display_name=random_cat))
         return tag
 

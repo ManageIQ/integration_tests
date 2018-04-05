@@ -144,10 +144,6 @@ def service(appliance, ansible_catalog_item):
         service_.delete()
 
 
-@pytest.fixture(scope="module")
-def service_level_tag
-
-
 @pytest.mark.tier(3)
 def test_action_run_ansible_playbook_localhost(request, ansible_catalog_item, ansible_action,
         policy_for_testing, full_template_vm_modscope, ansible_credential, service_request,

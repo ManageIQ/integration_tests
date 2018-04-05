@@ -119,12 +119,11 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
     soft_assert(
         not drift_analysis_view.drift_analysis.check_section_attribute_availability(
             '{}'.format(added_tag.display_name)),
-            "{} row should be hidden, but not".format(added_tag.display_name))
-
+        "{} row should be hidden, but not".format(added_tag.display_name))
 
     # Accounting tag should be displayed now
     drift_analysis_view.toolbar.different_values_attributes.click()
     soft_assert(
         drift_analysis_view.drift_analysis.check_section_attribute_availability(
             '{} (1)'.format(added_tag.display_name)),
-            "{} (1) row should be visible, but not".format(added_tag.display_name))
+        "{} (1) row should be visible, but not".format(added_tag.display_name))

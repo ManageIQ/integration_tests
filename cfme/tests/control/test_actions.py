@@ -786,15 +786,15 @@ def test_action_untag(request, vm, vm_off, policy_for_testing, action_collection
         test_flag: actions, provision
     """
     if not any(vm_tag.category.display_name == tag.category.display_name and
-                   vm_tag.display_name == tag.display_name
+               vm_tag.display_name == tag.display_name
                for vm_tag in vm.crud.get_tags()):
         vm.crud.add_tag(tag)
 
     @request.addfinalizer
     def _remove_tag():
         if any(vm_tag.category.display_name == tag.category.display_name and
-                    vm_tag.display_name == tag.display_name
-                for vm_tag in vm.crud.get_tags()):
+               vm_tag.display_name == tag.display_name
+               for vm_tag in vm.crud.get_tags()):
             vm.crud.remove_tag(tag)
 
     tag_unassign_action = action_collection.create(
@@ -874,7 +874,7 @@ def test_action_check_compliance(request, provider, vm, vm_name, policy_for_test
     """
     compliance_policy.assign_conditions(compliance_condition)
     if any(vm_tag.category.display_name == tag.category.display_name and
-                           vm_tag.display_name == tag.display_name
+           vm_tag.display_name == tag.display_name
            for vm_tag in vm.crud.get_tags()):
         vm.crud.remove_tag(tag)
 
@@ -882,7 +882,7 @@ def test_action_check_compliance(request, provider, vm, vm_name, policy_for_test
     def _remove_tag():
         compliance_policy.assign_conditions()
         if any(vm_tag.category.display_name == tag.category.display_name and
-                               vm_tag.display_name == tag.display_name
+               vm_tag.display_name == tag.display_name
                for vm_tag in vm.crud.get_tags()):
             vm.crud.remove_tag(tag)
 
