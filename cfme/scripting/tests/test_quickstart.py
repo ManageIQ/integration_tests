@@ -3,7 +3,6 @@
 import subprocess
 from cfme.utils import path
 import pytest
-from cfme.scripting import quickstart
 
 IMAGE_SPEC = [
     ('fedora:24', 'python3'),
@@ -62,6 +61,8 @@ def test_quickstart_run(image, python, root_volume, yamls_volume, check_docker):
     ({'a': 1}, {'a': 1}, []),
 ])
 def test_quickstart_version_changed(old, new, expected_changes):
-
+    # if we put this import at the top of the module unsupported system won't be able to run the
+    # tests
+    from cfme.scripting import quickstart
     changes = list(quickstart.version_changes(old, new))
     assert changes == expected_changes
