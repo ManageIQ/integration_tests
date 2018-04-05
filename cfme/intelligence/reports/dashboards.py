@@ -149,6 +149,7 @@ class Dashboard(BaseEntity, Updateable, Pretty):
     pretty_attrs = ["name", "group", "title", "widgets"]
     name = attr.ib()
     _group = attr.ib()
+    title = attr.ib(default=None)
     locked = attr.ib(default=None)
     widgets = attr.ib(default=None)
 
@@ -208,11 +209,11 @@ class Dashboard(BaseEntity, Updateable, Pretty):
 class DashboardsCollection(BaseCollection):
     ENTITY = Dashboard
 
-    def create(self, name, group, title, locked=None, widgets=None):
+    def create(self, name, group, title=None, locked=None, widgets=None):
         """Create this Dashboard in the UI."""
         self._group = group
         view = navigate_to(self, "Add")
-        dashboard = self.instantiate(name, group, title, locked, widgets)
+        dashboard = self.instantiate(name, group, title=title, locked=locked, widgets=widgets)
         view.fill({
             "name": dashboard.name,
             "tab_title": dashboard.title,
@@ -220,13 +221,14 @@ class DashboardsCollection(BaseCollection):
             "widget_picker": dashboard.widgets
         })
         view.add_button.click()
-        view = self.create_view(DashboardAllGroupsView)
+        view = dashboard.create_view(DashboardAllGroupsView)
         assert view.is_displayed
         if self.appliance.version < "5.9":
             msg_part = dashboard.name
         else:
             msg_part = dashboard.title
         view.flash.assert_success_message('Dashboard "{}" was saved'.format(msg_part))
+        return dashboard
 
 
 class DefaultDashboard(Updateable, Pretty, Navigatable):
