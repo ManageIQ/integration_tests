@@ -324,12 +324,13 @@ class SSHClient(paramiko.SSHClient):
                     break
 
                 # While the program is running loop through collecting line by line so that we don't
-                # fill the buffers up without a newline.   Also, note that for long running programs if
-                # we try to read output when there is none (and in the case of stderr may never be any)
-                # we run the risk of blocking so long that the write buffer on the remote side will fill
-                # and the remote program will block on a write.   The blocking on our side occurs in
-                # paramiko's buffered_pipe.py's read() call, which will block if its internal buffer is
-                # is empty.
+                # fill the buffers up without a newline.
+                # Also, note that for long running programs if we try to read output when there
+                # is none (and in the case of stderr may never be any)
+                # we risk blocking so long that the write buffer on the remote side will fill
+                # and the remote program will block on a write.
+                # The blocking on our side occurs in paramiko's buffered_pipe.py's read() call,
+                # which will block if its internal buffer is empty.
                 if session.recv_ready():
                     try:
                         line = stdout.next()
@@ -569,7 +570,7 @@ class SSHClient(paramiko.SSHClient):
         return self.run_command("stat /var/www/miq/vmdb/BUILD").success
 
     def uptime(self):
-        out = self.run_command('cat /proc/uptime')[1]
+        out = self.run_command('cat /proc/uptime').output
         match = re.findall('\d+\.\d+', out)
 
         if match:

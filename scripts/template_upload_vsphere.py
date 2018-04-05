@@ -83,16 +83,16 @@ def upload_ova(hostname, username, password, name, datastore,
     command = ' '.join(cmd_args)
     with make_ssh_client(ovf_tool_client, default_user, default_pass) as ssh_client:
         try:
-            result = ssh_client.run_command(command)[1]
+            result = ssh_client.run_command(command)
         except Exception:
             logger.exception("VSPHERE:%r Exception during upload", provider)
             return False
 
-    if "successfully" in result:
+    if "successfully" in result.output:
         logger.info(" VSPHERE:%r Upload completed", provider)
         return True
     else:
-        logger.error("VSPHERE:%r Upload failed: %r", provider, result)
+        logger.error("VSPHERE:%r Upload failed: %r", provider, result.output)
         return False
 
 
