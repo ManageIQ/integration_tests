@@ -79,6 +79,7 @@ results[data_title] = {
     'coverage' => { },
     'timestamp' => 0,
 }
+cfme_version = `rpm -q --qf '%{VERSION}' cfme`
 
 # Setup simple logging
 $log = Logger.new(STDOUT)
@@ -207,24 +208,49 @@ File.open(merged_result_set, "w") do |f|
   f.puts JSON.pretty_generate(results)
 end
 
+####################
+# Build our report #
+####################
 # Set up simplecov to use the merged results, then fire off the formatters
-SimpleCov.project_name 'CFME'
+SimpleCov.project_name "CFME #{cfme_version}"
 SimpleCov.root '/'
 SimpleCov.coverage_dir merged_dir
 SimpleCov.instance_variable_set("@result", SimpleCov::Result.from_hash(results))
 SimpleCov.formatters = SimpleCov::Formatter::HTMLFormatter
 SimpleCov.use_merging true
 SimpleCov.merge_timeout 2 << 28
+
 # Remove the original filters
 SimpleCov.filters.clear
 SimpleCov.add_filter do |src|
   include_file = src.filename =~ /^#{rails_root}/
   unless include_file
-    include_file = src.filename =~ /manageiq-/
+    include_file = src.filename =~ /gems\/manageiq-/
   end
+  unless include_file
+    include_file = src.filename =~ /gems\/cfme-/
+  end 
   ! include_file
 end
+
+# Set up groups:
 SimpleCov.add_group "REST API", "app/controllers/api"
 SimpleCov.add_group "Models", "app/models"
 SimpleCov.add_group "Automate Engine", "lib/miq_automation_engine"
+
+# Add all the providers into separate groups.  We will discover the
+# current set, so that new providers will automatically be detected,
+# ones removed go away.
+gem_dir = '/opt/rh/cfme-gemset/bundler/gems'
+provider_modules = Dir.glob(
+  File.join(gem_dir, 'manageiq-providers-*')
+)
+provider_modules.each do |provider_module|
+  provider = /manageiq-providers-([^-]+)/.match(provider_module)[1]
+  SimpleCov.add_group "Provider #{provider}" do |src|
+    src.filename =~ %r{(manageiq|cfme)-providers-#{provider}}
+  end
+end
+
+# Generate HTML report
 SimpleCov.result.format!

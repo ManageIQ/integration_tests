@@ -20,8 +20,11 @@ SimpleCov.start 'rails' do
   add_filter do |src|
     include_file = src.filename =~ /^#{rails_root}/
     unless include_file
-      include_file = src.filename =~ /manageiq-/
+      include_file = src.filename =~ /gems\/manageiq-/
     end
+    unless include_file
+      include_file = src.filename =~ /gems\/cfme-/
+    end 
     ! include_file
   end
   # Set the coverage dir for this process to "RAILS_ROOT/coverage/[ipaddress]/[pid]/"
