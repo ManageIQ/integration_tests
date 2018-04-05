@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 """Page model for Cloud Intel / Reports / Dashboards"""
+import attr
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Checkbox, Text
 from widgetastic_manageiq import SummaryFormItem, DashboardWidgetsPicker
 from widgetastic_patternfly import Button, Input
 
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
@@ -141,38 +144,17 @@ class DefaultDashboardDetailsView(DashboardDetailsView):
         )
 
 
-class Dashboard(Updateable, Pretty, Navigatable):
+@attr.s
+class Dashboard(BaseEntity, Updateable, Pretty):
     pretty_attrs = ["name", "group", "title", "widgets"]
-
-    def __init__(self, name, group, title=None, locked=None, widgets=None, appliance=None):
-        Navigatable.__init__(self, appliance)
-        self.name = name
-        self.title = title
-        self.locked = locked
-        self.widgets = widgets
-        self._group = group
+    name = attr.ib()
+    _group = attr.ib()
+    locked = attr.ib(default=None)
+    widgets = attr.ib(default=None)
 
     @property
     def group(self):
         return self._group
-
-    def create(self, cancel=False):
-        """Create this Dashboard in the UI."""
-        view = navigate_to(self, "Add")
-        view.fill({
-            "name": self.name,
-            "tab_title": self.title,
-            "locked": self.locked,
-            "widget_picker": self.widgets
-        })
-        view.add_button.click()
-        view = self.create_view(DashboardAllGroupsView)
-        assert view.is_displayed
-        if self.appliance.version < "5.9":
-            msg_part = self.name
-        else:
-            msg_part = self.title
-        view.flash.assert_success_message('Dashboard "{}" was saved'.format(msg_part))
 
     def update(self, updates):
         """Update this Dashboard in the UI.
@@ -188,9 +170,7 @@ class Dashboard(Updateable, Pretty, Navigatable):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        for attr, value in updates.items():
-            setattr(self, attr, value)
-        view = self.create_view(DashboardDetailsView)
+        view = self.create_view(DashboardDetailsView, override=updates)
         assert view.is_displayed
         view.flash.assert_no_error()
         if self.appliance.version < "5.9":
@@ -222,6 +202,31 @@ class Dashboard(Updateable, Pretty, Navigatable):
             view = self.create_view(DashboardAllGroupsView)
             assert view.is_displayed
             view.flash.assert_no_error()
+
+
+@attr.s
+class DashboardsCollection(BaseCollection):
+    ENTITY = Dashboard
+
+    def create(self, name, group, title, locked=None, widgets=None):
+        """Create this Dashboard in the UI."""
+        self._group = group
+        view = navigate_to(self, "Add")
+        dashboard = self.instantiate(name, group, title, locked, widgets)
+        view.fill({
+            "name": dashboard.name,
+            "tab_title": dashboard.title,
+            "locked": dashboard.locked,
+            "widget_picker": dashboard.widgets
+        })
+        view.add_button.click()
+        view = self.create_view(DashboardAllGroupsView)
+        assert view.is_displayed
+        if self.appliance.version < "5.9":
+            msg_part = dashboard.name
+        else:
+            msg_part = dashboard.title
+        view.flash.assert_success_message('Dashboard "{}" was saved'.format(msg_part))
 
 
 class DefaultDashboard(Updateable, Pretty, Navigatable):
@@ -263,7 +268,7 @@ class DefaultDashboard(Updateable, Pretty, Navigatable):
         view.flash.assert_no_error()
 
 
-@navigator.register(Dashboard, "Add")
+@navigator.register(DashboardsCollection, "Add")
 class DashboardNew(CFMENavigateStep):
     VIEW = NewDashboardView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
@@ -272,7 +277,7 @@ class DashboardNew(CFMENavigateStep):
         self.prerequisite_view.dashboards.tree.click_path(
             "All Dashboards",
             "All Groups",
-            self.obj.group
+            self.obj._group
         )
         self.prerequisite_view.configuration.item_select("Add a new Dashboard")
 

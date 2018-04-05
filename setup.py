@@ -164,7 +164,8 @@ setup(
             ('orchestration_templates = '
                 'cfme.services.catalogs.orchestration_template:OrchestrationTemplatesCollection'),
             ('dashboard_report_widgets = '
-                'cfme.intelligence.reports.widgets:DashboardReportWidgetsCollection')
+                'cfme.intelligence.reports.widgets:DashboardReportWidgetsCollection'),
+            'report_dashboards = cfme.intelligence.reports.dashboards:DashboardsCollection'
         ],
         'pytest11':
         [
