@@ -98,8 +98,9 @@ def test_resources_link(stack):
 
 @pytest.mark.tier(3)
 @test_requirements.tag
-def test_edit_tags(stack, existing_tag):
-    stack.add_tag(existing_tag)
+def test_edit_tags(request, stack):
+    added_tag = stack.add_tag()
+    request.addfinalizer(lambda: stack.remove_tag(added_tag))
 
 
 @pytest.mark.tier(3)

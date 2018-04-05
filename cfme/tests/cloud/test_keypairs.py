@@ -74,7 +74,7 @@ def test_keypair_create_cancel(openstack_provider, appliance):
     assert not keypair.exists
 
 
-def test_keypair_add_and_remove_tag(openstack_provider, appliance, existing_tag):
+def test_keypair_add_and_remove_tag(openstack_provider, appliance):
     """ This will test whether it will add and remove tag for newly created Keypair or not
     and then deletes it.
 
@@ -99,15 +99,15 @@ def test_keypair_add_and_remove_tag(openstack_provider, appliance, existing_tag)
             pytest.fail('Timed out creating keypair')
     assert keypair.exists
 
-    keypair.add_tag(existing_tag)
+    added_tag = keypair.add_tag()
     tagged_value = keypair.get_tags()
     assert (
-        tag.category.display_name == existing_tag.category.display_name and
-        tag.display_name == existing_tag.display_name
+        tag.category.display_name == added_tag.category.display_name and
+        tag.display_name == added_tag.display_name
         for tag in keypair.get_tags()), (
         'Assigned tag was not found on the details page')
 
-    keypair.remove_tag(existing_tag)
+    keypair.remove_tag(added_tag)
     tagged_value1 = keypair.get_tags()
     assert tagged_value1 != tagged_value, "Remove tag failed."
     # Above small conversion in assert statement convert 'tagged_value' in tuple("a","b") and then

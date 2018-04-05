@@ -57,8 +57,7 @@ def set_host_credentials(provider, a_host, setup_provider_modscope):
 
 
 @pytest.mark.rhv3
-def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_credentials,
-        existing_tag):
+def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_credentials):
     """Tests host drift analysis
 
     Metadata:
@@ -90,8 +89,8 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
     )
 
     # add a tag and a finalizer to remove it
-    a_host.add_tag(existing_tag)
-    request.addfinalizer(lambda: a_host.remove_tag(existing_tag))
+    added_tag = a_host.add_tag()
+    request.addfinalizer(lambda: a_host.remove_tag(added_tag))
 
     # initiate 2nd analysis
     a_host.run_smartstate_analysis(wait_for_task_result=True)
@@ -109,7 +108,7 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
 
     # check drift difference
     soft_assert(a_host.equal_drift_results(
-        '{} (1)', 'My Company Tags'.format(existing_tag.name), 0, 1),
+        '{} (1)', 'My Company Tags'.format(added_tag.display_name), 0, 1),
         "Drift analysis results are equal when they shouldn't be")
 
     # Test UI features that modify the drift grid
@@ -119,12 +118,13 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
     drift_analysis_view.toolbar.same_values_attributes.click()
     soft_assert(
         not drift_analysis_view.drift_analysis.check_section_attribute_availability(
-            '{}'.format(existing_tag.name)),
-            "{} row should be hidden, but not".format(existing_tag.name))
+            '{}'.format(added_tag.display_name)),
+            "{} row should be hidden, but not".format(added_tag.display_name))
+
 
     # Accounting tag should be displayed now
     drift_analysis_view.toolbar.different_values_attributes.click()
     soft_assert(
         drift_analysis_view.drift_analysis.check_section_attribute_availability(
-            '{} (1)'.format(existing_tag.name)),
-            "{} (1) row should be visible, but not".format(existing_tag.name))
+            '{} (1)'.format(added_tag.display_name)),
+            "{} (1) row should be visible, but not".format(added_tag.display_name))

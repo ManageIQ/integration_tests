@@ -41,18 +41,6 @@ def tag(category):
     tag.delete(False)
 
 
-@pytest.yield_fixture()
-def tag_object():
-    def tag_object(category_name, tag_name):
-        tag = Tag(name=tag_name, category=Category(name=category))
-        return tag
-    return tag_object
-
-
-@pytest.yield_fixture()
-def existing_tag():
-    return Tag(display_name='Gold', category=Category(display_name='Service Level'))
-
 @pytest.yield_fixture(scope="module")
 def role(appliance):
     """

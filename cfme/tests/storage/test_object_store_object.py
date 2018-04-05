@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_object_add_remove_tag(appliance, provider, existing_tag):
+def test_object_add_remove_tag(appliance, provider):
     collection = appliance.collections.object_store_objects.filter({'provider': provider})
     all_objects = collection.all()
     if all_objects is None:
@@ -21,12 +21,12 @@ def test_object_add_remove_tag(appliance, provider, existing_tag):
     obj = random.choice(all_objects)
 
     # add tag with category Department and tag communication
-    obj.add_tag(existing_tag)
+    added_tag = obj.add_tag()
     tag_available = obj.get_tags()
-    assert tag_available[0].display_name == existing_tag.display_name
-    assert tag_available[0].category.display_name == existing_tag.category.display_name
+    assert tag_available[0].display_name == added_tag.display_name
+    assert tag_available[0].category.display_name == added_tag.category.display_name
 
     # remove assigned tag
-    obj.remove_tag(existing_tag)
+    obj.remove_tag(added_tag)
     tag_available = obj.get_tags()
     assert not tag_available

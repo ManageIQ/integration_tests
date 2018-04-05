@@ -100,9 +100,9 @@ def test_add_button(catalog_item, appliance):
     view.flash.assert_success_message(message)
 
 
-def test_edit_tags(catalog_item, existing_tag):
-    catalog_item.add_tag(existing_tag)
-    catalog_item.remove_tag(existing_tag)
+def test_edit_tags(catalog_item):
+    tag = catalog_item.add_tag()
+    catalog_item.remove_tag(tag)
 
 
 @pytest.mark.skip('Catalog items are converted to collections. Refactoring is required')

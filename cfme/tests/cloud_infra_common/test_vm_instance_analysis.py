@@ -657,7 +657,7 @@ def test_ssa_files(appliance, ssa_vm, soft_assert):
 
 @pytest.mark.tier(2)
 @pytest.mark.long_running
-def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profile, existing_tag):
+def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profile):
     """ Tests drift analysis is correct
 
     Metadata:
@@ -683,8 +683,8 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profile, ex
     drift_new = int(view.entities.summary("Relationships").get_text_of("Drift History"))
 
     # add a tag and a finalizer to remove it
-    ssa_vm.add_tag(existing_tag)
-    request.addfinalizer(lambda: ssa_vm.remove_tag(existing_tag))
+    added_tag = ssa_vm.add_tag()
+    request.addfinalizer(lambda: ssa_vm.remove_tag(added_tag))
     ssa_vm.smartstate_scan(wait_for_task_result=True)
     view = navigate_to(ssa_vm, "Details")
     wait_for(
@@ -697,7 +697,7 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profile, ex
     )
     # check drift difference
     soft_assert(ssa_vm.equal_drift_results(
-        '{} (1)', 'My Company Tags'.format(existing_tag.display_name), 0, 1),
+        '{} (1)', 'My Company Tags'.format(added_tag.display_name), 0, 1),
         "Drift analysis results are equal when they shouldn't be")
 
     # Test UI features that modify the drift grid
@@ -707,12 +707,12 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profile, ex
     drift_analysis_view.toolbar.same_values_attributes.click()
     soft_assert(
         not drift_analysis_view.drift_analysis.check_section_attribute_availability(
-            '{}'.format(existing_tag.display_name)),
-            "{} row should be hidden, but not".format(existing_tag.display_name))
+            '{}'.format(added_tag.display_name)),
+            "{} row should be hidden, but not".format(added_tag.display_name))
 
     # Accounting tag should be displayed now
     drift_analysis_view.toolbar.different_values_attributes.click()
     soft_assert(
         drift_analysis_view.drift_analysis.check_section_attribute_availability(
-            '{} (1)'.format(existing_tag.display_name)),
-            "{} (1) row should be visible, but not".format(existing_tag.display_name))
+            '{} (1)'.format(added_tag.display_name)),
+            "{} (1) row should be visible, but not".format(added_tag.display_name))

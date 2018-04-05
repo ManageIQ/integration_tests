@@ -194,7 +194,7 @@ def test_service_ansible_playbook_crud(appliance, ansible_repository):
 
 
 @pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
-def test_service_ansible_playbook_tagging(ansible_catalog_item, existing_tag):
+def test_service_ansible_playbook_tagging(ansible_catalog_item):
     """ Tests ansible_playbook tag addition, check added tag and removal
 
     Steps:
@@ -203,12 +203,12 @@ def test_service_ansible_playbook_tagging(ansible_catalog_item, existing_tag):
         3. Check added tag
         4. Remove the given tag
     """
-    ansible_catalog_item.add_tag(existing_tag)
-    assert any(tag.category.display_name == existing_tag.category.display_name and
-               tag.display_name == existing_tag.display_name
+    added_tag = ansible_catalog_item.add_tag()
+    assert any(tag.category.display_name == added_tag.category.display_name and
+               tag.display_name == added_tag.display_name
                for tag in ansible_catalog_item.get_tags()), (
         'Assigned tag was not found on the details page')
-    ansible_catalog_item.remove_tag(existing_tag)
+    ansible_catalog_item.remove_tag(added_tag)
     assert ansible_catalog_item.get_tags() == []
 
 

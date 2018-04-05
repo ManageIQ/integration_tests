@@ -48,7 +48,7 @@ def test_manager_navigation(collection_manager):
     manager.refresh()
 
 
-def test_storage_manager_edit_tag(collection_manager, existing_tag):
+def test_storage_manager_edit_tag(collection_manager):
     """ Test add and remove tag to storage manager
 
     prerequisites:
@@ -61,13 +61,13 @@ def test_storage_manager_edit_tag(collection_manager, existing_tag):
 
     manager = collection_manager[1]
     # add tag with category Department and tag communication
-    manager.add_tag(existing_tag)
+    added_tag = manager.add_tag()
     tag_available = manager.get_tags()
-    assert tag_available[0].display_name == existing_tag.display_name
-    assert tag_available[0].category.display_name == existing_tag.category.display_name
+    assert tag_available[0].display_name == added_tag.display_name
+    assert tag_available[0].category.display_name == added_tag.category.display_name
 
     # remove assigned tag
-    manager.remove_tag(existing_tag)
+    manager.remove_tag(added_tag)
     tag_available = manager.get_tags()
     assert not tag_available
 

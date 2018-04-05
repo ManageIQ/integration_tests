@@ -151,13 +151,13 @@ def service_level_tag
 @pytest.mark.tier(3)
 def test_action_run_ansible_playbook_localhost(request, ansible_catalog_item, ansible_action,
         policy_for_testing, full_template_vm_modscope, ansible_credential, service_request,
-        service, existing_tag):
+        service):
     """Tests a policy with ansible playbook action against localhost.
     """
     with update(ansible_action):
         ansible_action.run_ansible_playbook = {"inventory": {"localhost": True}}
-    full_template_vm_modscope.add_tag(existing_tag)
-    request.addfinalizer(lambda: full_template_vm_modscope.remove_tag(existing_tag))
+    added_tag = full_template_vm_modscope.add_tag()
+    request.addfinalizer(lambda: full_template_vm_modscope.remove_tag(added_tag))
     wait_for(service_request.exists, num_sec=600)
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
@@ -168,7 +168,7 @@ def test_action_run_ansible_playbook_localhost(request, ansible_catalog_item, an
 @pytest.mark.tier(3)
 def test_action_run_ansible_playbook_manual_address(request, ansible_catalog_item, ansible_action,
         policy_for_testing, full_template_vm_modscope, ansible_credential, service_request,
-        service, existing_tag):
+        service):
     """Tests a policy with ansible playbook action against manual address."""
     vm = full_template_vm_modscope
     with update(ansible_catalog_item):
@@ -180,8 +180,8 @@ def test_action_run_ansible_playbook_manual_address(request, ansible_catalog_ite
                 "hosts": vm.ip_address
             }
         }
-    vm.add_tag(existing_tag)
-    request.addfinalizer(lambda: vm.remove_tag(existing_tag))
+    added_tag = vm.add_tag()
+    request.addfinalizer(lambda: vm.remove_tag(added_tag))
     wait_for(service_request.exists, num_sec=600)
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
@@ -192,13 +192,13 @@ def test_action_run_ansible_playbook_manual_address(request, ansible_catalog_ite
 @pytest.mark.tier(3)
 def test_action_run_ansible_playbook_target_machine(request, ansible_catalog_item, ansible_action,
         policy_for_testing, full_template_vm_modscope, ansible_credential, service_request,
-        service, existing_tag):
+        service):
     """Tests a policy with ansible playbook action against target machine."""
     vm = full_template_vm_modscope
     with update(ansible_action):
         ansible_action.run_ansible_playbook = {"inventory": {"target_machine": True}}
-    vm.add_tag(existing_tag)
-    request.addfinalizer(lambda: vm.remove_tag(existing_tag))
+    added_tag = vm.add_tag()
+    request.addfinalizer(lambda: vm.remove_tag(added_tag))
     wait_for(service_request.exists, num_sec=600)
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
@@ -209,7 +209,7 @@ def test_action_run_ansible_playbook_target_machine(request, ansible_catalog_ite
 @pytest.mark.tier(3)
 def test_action_run_ansible_playbook_unavailable_address(request, ansible_catalog_item,
         full_template_vm_modscope, ansible_action, policy_for_testing, ansible_credential,
-        service_request, service, existing_tag):
+        service_request, service):
     """Tests a policy with ansible playbook action against unavailable address."""
     vm = full_template_vm_modscope
     with update(ansible_catalog_item):
@@ -221,8 +221,8 @@ def test_action_run_ansible_playbook_unavailable_address(request, ansible_catalo
                 "hosts": "unavailable_address"
             }
         }
-    vm.add_tag(existing_tag)
-    request.addfinalizer(lambda: vm.remove_tag(existing_tag))
+    added_tag = vm.add_tag()
+    request.addfinalizer(lambda: vm.remove_tag(added_tag))
     wait_for(service_request.exists, num_sec=600)
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
@@ -232,9 +232,9 @@ def test_action_run_ansible_playbook_unavailable_address(request, ansible_catalo
 
 @pytest.mark.tier(3)
 def test_control_action_run_ansible_playbook_in_requests(request,
-        full_template_vm_modscope, policy_for_testing, service_request, existing_tag):
+        full_template_vm_modscope, policy_for_testing, service_request):
     """Checks if execution of the Action result in a Task/Request being created."""
     vm = full_template_vm_modscope
-    vm.add_tag(existing_tag)
-    request.addfinalizer(lambda: vm.remove_tag(existing_tag))
+    added_tag = vm.add_tag()
+    request.addfinalizer(lambda: vm.remove_tag(added_tag))
     assert service_request.exists

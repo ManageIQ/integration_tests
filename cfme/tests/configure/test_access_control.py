@@ -275,17 +275,17 @@ def test_user_edit_tag(appliance, group_collection, tag):
 
 
 @pytest.mark.tier(3)
-def test_user_remove_tag(appliance, group_collection, existing_tag):
+def test_user_remove_tag(appliance, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
     user = new_user(appliance, [group])
-    user.add_tag(existing_tag)
-    user.remove_tag(existing_tag)
+    added_tag = user.add_tag()
+    user.remove_tag(added_tag)
     navigate_to(user, 'Details')
     assert not any([
-        tag.category.display_name == existing_tag.category.display_name and
-        tag.display_name == existing_tag.display_name
+        tag.category.display_name == added_tag.category.display_name and
+        tag.display_name == added_tag.display_name
         for tag in user.get_tags()
     ]), 'Remove User tag failed'
     user.delete()
@@ -399,32 +399,32 @@ def test_group_duplicate_name(group_collection):
 
 
 @pytest.mark.tier(2)
-def test_group_edit_tag(group_collection, existing_tag):
+def test_group_edit_tag(group_collection):
     role = 'EvmRole-approver'
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role)
 
-    group.add_tag(existing_tag)
+    added_tag = group.add_tag()
     assert any([
-        tag.category.display_name == existing_tag.category.display_name and
-        tag.display_name == existing_tag.display_name
+        tag.category.display_name == added_tag.category.display_name and
+        tag.display_name == added_tag.display_name
         for tag in group.get_tags()
     ]), 'Group edit tag failed'
     group.delete()
 
 
 @pytest.mark.tier(2)
-def test_group_remove_tag(group_collection, existing_tag):
+def test_group_remove_tag(group_collection):
     role = 'EvmRole-approver'
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role)
 
     navigate_to(group, 'Edit')
-    group.add_tag(existing_tag)
-    group.remove_tag(existing_tag)
+    added_tag = group.add_tag()
+    group.remove_tag(added_tag)
     assert not any([
-        tag.category.display_name == existing_tag.category.display_name and
-        tag.display_name == existing_tag.display_name
+        tag.category.display_name == added_tag.category.display_name and
+        tag.display_name == added_tag.display_name
         for tag in group.get_tags()
     ]), 'Remove Group User tag failed'
     group.delete()
