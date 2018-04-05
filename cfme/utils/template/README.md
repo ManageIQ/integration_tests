@@ -1,9 +1,16 @@
 Available providers:
 
+    ec2
     gce
     openstack
     scvmm
     virtualcenter
+
+
+TESTED ON SUCH ENVIRONMENTS:
+
+    rhos11
+    rhos8
 
 
 Required arguments:

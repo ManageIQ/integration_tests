@@ -3,22 +3,20 @@ import sys
 from threading import Thread
 
 import cfme.utils.conf
-
-
 from cfme.utils import path, trackerbot
 from cfme.utils.conf import cfme_data
-from cfme.utils.providers import list_provider_keys
-from cfme.utils.template.exc import TemplateUploadException
-from cfme.utils.template.openstack import OpenstackTemplateUpload
-from cfme.utils.template.virtualcenter import VirtualCenterTemplateUpload
-from cfme.utils.template.scvmm import SCVMMTemplateUpload
-from cfme.utils.template.gce import GoogleCloudTemplateUpload
-from cfme.utils.template.ec2 import EC2TemplateUpload
-
 from cfme.utils.log import logger, add_stdout_handler
+from cfme.utils.providers import list_provider_keys
+from cfme.utils.template.base import TemplateUploadException
+from cfme.utils.template.ec2 import EC2TemplateUpload
+from cfme.utils.template.gce import GoogleCloudTemplateUpload
+from cfme.utils.template.openstack import OpenstackTemplateUpload
+from cfme.utils.template.scvmm import SCVMMTemplateUpload
+from cfme.utils.template.virtualcenter import VMWareTemplateUpload
+from cfme.utils.template.openshift import OpenshiftTemplateUpload
 
 add_stdout_handler(logger)
-PROVIDER_TYPES = ['openstack', 'virtualcenter', 'scvmm', 'gce', 'ec2']
+PROVIDER_TYPES = ['openstack', 'virtualcenter', 'scvmm', 'gce', 'ec2', 'openshift']
 ALL_STREAMS = cfme_data['basic_info']['cfme_images_url']
 
 
@@ -28,7 +26,7 @@ class TemplateUpload(object):
             return OpenstackTemplateUpload(*args, **kwargs)
 
         if type_ == 'virtualcenter':
-            return VirtualCenterTemplateUpload(*args, **kwargs)
+            return VMWareTemplateUpload(*args, **kwargs)
 
         if type_ == 'scvmm':
             return SCVMMTemplateUpload(*args, **kwargs)
@@ -38,6 +36,9 @@ class TemplateUpload(object):
 
         if type_ == 'ec2':
             return EC2TemplateUpload(*args, **kwargs)
+
+        if type_ == 'openshift':
+            return OpenshiftTemplateUpload(*args, **kwargs)
 
 
 def parse_cmd_line():
@@ -89,7 +90,6 @@ def get_image_url(stream, upload_url):
 def prepare_provider_data(custom_data):
     """ Saves custom provider_data"""
     if custom_data is not None:
-
         with open(custom_data, 'r') as f:
             local_datafile = f.read()
 

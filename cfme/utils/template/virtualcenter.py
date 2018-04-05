@@ -1,11 +1,11 @@
 import re
-from cfme.utils.template.base import BaseTemplateUpload, log_wrap
 
+from cfme.utils.template.base import ProviderTemplateUpload, log_wrap
 
 NUM_OF_TRIES = 5
 
 
-class VirtualCenterTemplateUpload(BaseTemplateUpload):
+class VMWareTemplateUpload(ProviderTemplateUpload):
     provider_type = 'virtualcenter'
     log_name = 'VSPHERE'
     image_pattern = re.compile(r'<a href="?\'?([^"\']*vsphere[^"\'>]*)')

@@ -1,4 +1,6 @@
-""" Doesn't work..."""
+"""
+NOT TESTED YET
+"""
 
 import re
 
@@ -9,11 +11,10 @@ from ovirtsdk.xml import params
 
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger
-from cfme.utils.template.base import BaseTemplateUpload
-from cfme.utils.template.exc import TemplateUploadException
+from cfme.utils.template.base import ProviderTemplateUpload, log_wrap
 
 
-class RHEVMTemplateUpload(BaseTemplateUpload):
+class RHEVMTemplateUpload(ProviderTemplateUpload):
     provider_type = 'rhevm'
     log_name = 'RHEVM'
     image_pattern = re.compile(r'<a href="?\'?([^"\']*(?:\.qcow2)[^"\'>]*)')
@@ -27,12 +28,13 @@ class RHEVMTemplateUpload(BaseTemplateUpload):
     def temp_vm_name(self):
         return 'auto-vm-{}-{}'.format(gen_alphanumeric(8), self.template_name)
 
+    @log_wrap("download template")
     def download_template(self):
         command = 'curl -O {}'.format(self.image_url)
-        result = self.execute_ssh_command(command, timeout=1800)
-        if result.failed:
-            logger.error("There was an error while downloading ova file: \n %r", str(result))
+        if self.execute_ssh_command(command, timeout=1800).success:
+            return True
 
+    @log_wrap("upload template to glance")
     def upload_to_glance(self):
         api_version = '2'
         glance_data = cfme_data['template_upload'][self.glance_server]
@@ -48,8 +50,9 @@ class RHEVMTemplateUpload(BaseTemplateUpload):
 
         for img in glance.images.list():
             if img.name == self.template_name:
-                print("image_upload_glance: Image already exists on Glance server")
-                return
+                logger.info("(template-upload) [%s:%s:%s] Template already exists on Glance.",
+                            self.log_name, self.provider, self.template_name)
+                return True
 
         glance_image = glance.images.create(name=self.template_name,
                                             container_format='bare',
@@ -59,12 +62,9 @@ class RHEVMTemplateUpload(BaseTemplateUpload):
         if glance_image:
             logger.info("{}:{} Successfully uploaded template: {}".format(
                 self.log_name, self.provider, self.template_name))
+            return True
 
-        else:
-            logger.error("{}:{} ERROR while uploading template: {}".format(
-                self.log_name, self.provider, self.template_name))
-            raise TemplateUploadException("Upload failed.")
-
+    @log_wrap("import template from Glance server")
     def import_template_from_glance(self):
         try:
             if self.mgmt.api.templates.get(self.temp_template_name):
@@ -82,12 +82,11 @@ class RHEVMTemplateUpload(BaseTemplateUpload):
                                           storage_domain=actual_storage_domain)
             actual_template.import_image(action=import_action)
 
-            if not self.mgmt.api.templates.get(self.temp_template_name):
-                logger.info("RHEVM:%r The template failed to import on data domain", self.provider)
-                raise TemplateUploadException('Blah')
+            if self.mgmt.api.templates.get(self.temp_template_name):
+                return True
 
-        except Exception as e:
-            raise e
+        except:
+            return False
 
     def run(self):
         self.upload_to_glance()

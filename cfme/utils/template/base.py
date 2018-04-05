@@ -1,5 +1,5 @@
-from threading import Lock
 from contextlib import closing
+from threading import Lock
 from urllib2 import urlopen, URLError
 
 from fauxfactory import gen_alphanumeric
@@ -9,11 +9,15 @@ from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import get_mgmt
 from cfme.utils.ssh import SSHClient
-from cfme.utils.template.exc import TemplateUploadException
 from cfme.utils.wait import wait_for
 
 NUM_OF_TRIES = 3
 lock = Lock()
+
+
+class TemplateUploadException(Exception):
+    """ Raised on template upload errors"""
+    pass
 
 
 def log_wrap(process_message):
@@ -32,11 +36,13 @@ def log_wrap(process_message):
                 logger.error("(template-upload) [%s:%s:%s] FAIL %s",
                              log_name, provider, template_name, process_message)
             return result
+
         return call
+
     return decorate
 
 
-class BaseTemplateUpload(object):
+class ProviderTemplateUpload(object):
     """ Base class for template management.
 
     Class variables:
@@ -165,6 +171,8 @@ class BaseTemplateUpload(object):
 
     def get_creds(self, creds_type=None, **kwargs):
         """ Returns credentials mapping."""
+
+        # TODO it in a different way
         if creds_type == 'ssh' and "ssh_creds" in self.provider_data.keys():
             creds = self.provider_data['ssh_creds']
         else:
@@ -178,9 +186,10 @@ class BaseTemplateUpload(object):
 
         return ssh_creds
 
-    def execute_ssh_command(self, command, **kwargs):
+    def execute_ssh_command(self, command, creds=None, **kwargs):
         """ Wraps SSHClient to get credentials and execute given command."""
-        creds = self.get_creds(creds_type='ssh', **kwargs)
+        if not creds:
+            creds = self.get_creds(creds_type='ssh', **kwargs)
         with SSHClient(**creds) as ssh_client:
             return ssh_client.run_command(command, **kwargs)
 
@@ -218,7 +227,8 @@ class BaseTemplateUpload(object):
     def main(self):
         try:
 
-            if self.mgmt.does_template_exist(self.template_name):
+            if self.provider_type != 'openshift' and \
+                    self.mgmt.does_template_exist(self.template_name):
                 logger.info("(template-upload) [%s:%s:%s] Template already exists",
                             self.log_name, self.provider, self.template_name)
             else:

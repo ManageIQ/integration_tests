@@ -3,11 +3,11 @@ import re
 import urllib2
 
 from cfme.utils.log import logger
-from cfme.utils.template.base import BaseTemplateUpload, log_wrap
+from cfme.utils.template.base import ProviderTemplateUpload, log_wrap
 from cfme.utils.wait import wait_for
 
 
-class EC2TemplateUpload(BaseTemplateUpload):
+class EC2TemplateUpload(ProviderTemplateUpload):
     log_name = 'EC2'
     provider_type = 'ec2'
     image_pattern = re.compile(r'<a href="?\'?([^"\']*ec2[^"\'>]*)')
@@ -31,32 +31,37 @@ class EC2TemplateUpload(BaseTemplateUpload):
 
     @log_wrap("download image")
     def download_image(self):
-        u = urllib2.urlopen(self.image_url)
-        meta = u.info()
-        file_size = int(meta.getheaders("Content-Length")[0])
+        try:
+            u = urllib2.urlopen(self.image_url)
+            meta = u.info()
+            file_size = int(meta.getheaders("Content-Length")[0])
 
-        if os.path.isfile(self.image_name):
+            if os.path.isfile(self.image_name):
 
-            if file_size == os.path.getsize(self.image_name):
-                logger.info("(template-upload) [%s:%s:%s] Image %s already exists.",
-                            self.log_name, self.provider, self.template_name, self.image_name)
-                return True
-            os.remove(self.image_name)
+                if file_size == os.path.getsize(self.image_name):
+                    logger.info("(template-upload) [%s:%s:%s] Image %s already exists.",
+                                self.log_name, self.provider, self.template_name, self.image_name)
+                    return True
+                os.remove(self.image_name)
 
-        logger.info("(template-upload) [%s:%s:%s] Downloading %s to local directory. Bytes: %d",
-                    self.log_name, self.provider, self.template_name, self.image_name, file_size)
+            logger.info("(template-upload) [%s:%s:%s] Downloading %s to local directory. Bytes: %d",
+                        self.log_name, self.provider, self.template_name, self.image_name,
+                        file_size)
 
-        with open(self.image_name, 'wb') as image_file:
-            file_size_dl = 0
-            block_sz = 8192
-            while True:
-                buffer_f = u.read(block_sz)
-                if not buffer_f:
-                    break
+            with open(self.image_name, 'wb') as image_file:
+                file_size_dl = 0
+                block_sz = 8192
+                while True:
+                    buffer_f = u.read(block_sz)
+                    if not buffer_f:
+                        break
 
-                file_size_dl += len(buffer_f)
-                image_file.write(buffer_f)
-        return True
+                    file_size_dl += len(buffer_f)
+                    image_file.write(buffer_f)
+            return True
+
+        except:
+            return False
 
     @log_wrap("create bucket")
     def create_bucket(self):
@@ -65,33 +70,48 @@ class EC2TemplateUpload(BaseTemplateUpload):
                 logger.info("(template-upload) [%s:%s:%s] Bucket %s already exists.",
                             self.log_name, self.provider, self.template_name, self.bucket_name)
                 return True
-        self.mgmt.create_s3_bucket(self.bucket_name)
-        return True
+
+        try:
+            self.mgmt.create_s3_bucket(self.bucket_name)
+            return True
+
+        except:
+            return False
 
     @log_wrap("upload image to bucket")
     def upload_image(self):
-        self.mgmt.upload_file_to_s3_bucket(self.bucket_name,
-                                           file_path=self.file_path,
-                                           file_name=self.template_name)
-        return True
+        try:
+            self.mgmt.upload_file_to_s3_bucket(self.bucket_name,
+                                               file_path=self.file_path,
+                                               file_name=self.template_name)
+            return True
+
+        except:
+            return False
 
     @log_wrap("import image from bucket")
     def import_image(self):
-        import_task_id = self.mgmt.import_image(s3bucket=self.bucket_name,
-                                                s3key=self.template_name,
-                                                description=self.template_name)
-        wait_for(self.mgmt.get_image_id_if_import_completed,
-                 func_args=[import_task_id],
-                 fail_condition=False,
-                 delay=5,
-                 timeout='90m',
-                 message='Importing image to EC2')
-        ami_id = self.mgmt.get_image_id_if_import_completed(import_task_id)
-        self.mgmt.copy_image(source_region=self.mgmt.api.region.name,
-                             source_image=ami_id,
-                             image_id=self.template_name)
-        self.mgmt.deregister_image(image_id=ami_id)
-        return True
+        try:
+            import_task_id = self.mgmt.import_image(s3bucket=self.bucket_name,
+                                                    s3key=self.template_name,
+                                                    description=self.template_name)
+
+            wait_for(self.mgmt.get_image_id_if_import_completed,
+                     func_args=[import_task_id],
+                     fail_condition=False,
+                     delay=5,
+                     timeout='90m',
+                     message='Importing image to EC2')
+
+            ami_id = self.mgmt.get_image_id_if_import_completed(import_task_id)
+            self.mgmt.copy_image(source_region=self.mgmt.api.region.name,
+                                 source_image=ami_id,
+                                 image_id=self.template_name)
+            self.mgmt.deregister_image(image_id=ami_id)
+            return True
+
+        except:
+            return False
 
     def run(self):
         if not self.download_image():

@@ -1,9 +1,9 @@
 import re
 
-from cfme.utils.template.base import BaseTemplateUpload, log_wrap
+from cfme.utils.template.base import ProviderTemplateUpload, log_wrap
 
 
-class SCVMMTemplateUpload(BaseTemplateUpload):
+class SCVMMTemplateUpload(ProviderTemplateUpload):
     provider_type = 'scvmm'
     log_name = 'SCVMM'
     image_pattern = re.compile(r'<a href="?\'?([^"\']*hyperv[^"\'>]*)')
