@@ -138,95 +138,128 @@ def make_kwargs_scvmm(cfme_data, provider, image_url, template_name):
     return final_kwargs
 
 
-def run(**kwargs):
+def create_template(provider, **kwargs):
+    mgmt_sys = cfme_data['management_systems'][provider]
+    host_fqdn = mgmt_sys['hostname_fqdn']
+    creds = credentials[mgmt_sys['credentials']]
 
-    for provider in list_provider_keys("scvmm"):
+    kwargs = make_kwargs_scvmm(
+        cfme_data, provider, kwargs.get('image_url'), kwargs.get('template_name'))
+    check_kwargs(**kwargs)
+
+    # For powershell to work, we need to extract the User Name from the Domain
+    user = creds['username'].split('\\')
+    if len(user) == 2:
+        username_powershell = user[1]
+    else:
+        username_powershell = user[0]
+
+    username_scvmm = creds['domain'] + "\\" + creds['username']
+
+    scvmm_args = {
+        "hostname": mgmt_sys['ipaddress'],
+        "username": username_powershell,
+        "password": creds['password'],
+        "domain": creds['domain'],
+        "provisioning": mgmt_sys['provisioning']
+    }
+    client = SCVMMSystem(**scvmm_args)
+
+    url = kwargs.get('image_url')
+
+    # Template name equals either user input of we extract the name from the url
+    new_template_name = kwargs.get('template_name')
+    if new_template_name is None:
+        new_template_name = os.path.basename(url)[:-4]
+
+    logger.info("SCVMM:%s Make Template out of the VHD %s", provider, new_template_name)
+
+    # use_library is either user input or we use the cfme_data value
+    library = kwargs.get('library', mgmt_sys['template_upload'].get('vhds', None))
+
+    logger.info("SCVMM:%s Template Library: %s", provider, library)
+
+    #  The VHD name changed, match the template_name.
+    new_vhd_name = new_template_name + '.vhd'
+
+    network = mgmt_sys['template_upload'].get('network', None)
+    os_type = mgmt_sys['template_upload'].get('os_type', None)
+    cores = mgmt_sys['template_upload'].get('cores', None)
+    ram = mgmt_sys['template_upload'].get('ram', None)
+
+    # Uses PowerShell Get-SCVMTemplate to return a list of  templates and aborts if exists.
+    if client.does_template_exist(new_template_name):
+        logger.info("SCVMM: A Template with that name already exists in the SCVMMLibrary")
+    else:
+        if kwargs.get('upload'):
+            logger.info("SCVMM:%s Uploading VHD image to Library VHD folder.", provider)
+            upload_vhd(client, url, library, new_vhd_name)
+        if kwargs.get('template'):
+            logger.info("SCVMM:%s Make Template out of the VHD %s", provider, new_template_name)
+
+            make_template(
+                client,
+                host_fqdn,
+                new_template_name,
+                library,
+                network,
+                os_type,
+                username_scvmm,
+                cores,
+                ram
+            )
+
+        wait_for(
+            client.does_template_exist(new_template_name),
+            fail_condition=False, delay=5, num_sec=600
+        )
+    # end else
+
+    template_name = kwargs.get('template_name')
+    if template_name:
+        logger.info("SCVMM:{} Add template {} to trackerbot".format(provider, template_name))
+        trackerbot.trackerbot_add_provider_template(kwargs.get('stream'), provider, template_name)
+
+def run(**kwargs):
+    providers = list_provider_keys("scvmm")
+    # Store result of each provider upload
+    results = {provider: None for provider in providers}
+
+    for provider in providers:
         mgmt_sys = cfme_data['management_systems'][provider]
-        host_fqdn = mgmt_sys['hostname_fqdn']
-        creds = credentials[mgmt_sys['credentials']]
 
         # skip provider if block_upload is set
         if (mgmt_sys.get('template_upload') and
                 mgmt_sys['template_upload'].get('block_upload')):
-            logger.info('Skipping upload on {} due to block_upload'.format(provider))
+            logger.info('SCVMM:{} skipping due to block_upload'.format(provider))
             continue
 
-        kwargs = make_kwargs_scvmm(cfme_data, provider,
-                                   kwargs.get('image_url'), kwargs.get('template_name'))
-        check_kwargs(**kwargs)
-
-        # For powershell to work, we need to extract the User Name from the Domain
-        user = creds['username'].split('\\')
-        if len(user) == 2:
-            username_powershell = user[1]
-        else:
-            username_powershell = user[0]
-
-        username_scvmm = creds['domain'] + "\\" + creds['username']
-
-        scvmm_args = {
-            "hostname": mgmt_sys['ipaddress'],
-            "username": username_powershell,
-            "password": creds['password'],
-            "domain": creds['domain'],
-            "provisioning": mgmt_sys['provisioning']
-        }
-        client = SCVMMSystem(**scvmm_args)
-
-        url = kwargs.get('image_url')
-
-        # Template name equals either user input of we extract the name from the url
-        new_template_name = kwargs.get('template_name')
-        if new_template_name is None:
-            new_template_name = os.path.basename(url)[:-4]
-
-        logger.info("SCVMM:%s Make Template out of the VHD %s", provider, new_template_name)
-
-        # use_library is either user input or we use the cfme_data value
-        library = kwargs.get('library', mgmt_sys['template_upload'].get('vhds', None))
-
-        logger.info("SCVMM:%s Template Library: %s", provider, library)
-
-        #  The VHD name changed, match the template_name.
-        new_vhd_name = new_template_name + '.vhd'
-
-        network = mgmt_sys['template_upload'].get('network', None)
-        os_type = mgmt_sys['template_upload'].get('os_type', None)
-        cores = mgmt_sys['template_upload'].get('cores', None)
-        ram = mgmt_sys['template_upload'].get('ram', None)
-
-        # Uses PowerShell Get-SCVMTemplate to return a list of  templates and aborts if exists.
-        if not client.does_template_exist(new_template_name):
-            if kwargs.get('upload'):
-                logger.info("SCVMM:%s Uploading VHD image to Library VHD folder.", provider)
-                upload_vhd(client, url, library, new_vhd_name)
-            if kwargs.get('template'):
-                logger.info("SCVMM:%s Make Template out of the VHD %s", provider, new_template_name)
-
-                make_template(
-                    client,
-                    host_fqdn,
-                    new_template_name,
-                    library,
-                    network,
-                    os_type,
-                    username_scvmm,
-                    cores,
-                    ram
-                )
+        attempts = 2
+        for i in range(0, attempts):
             try:
-                wait_for(lambda: client.does_template_exist(new_template_name),
-                         fail_condition=False, delay=5)
-                logger.info("SCVMM:%s template %s uploaded success", provider, new_template_name)
-                logger.info("SCVMM:%s Add template %s to trackerbot", provider, new_template_name)
-                trackerbot.trackerbot_add_provider_template(kwargs.get('stream'),
-                                                            provider,
-                                                            kwargs.get('template_name'))
+                results[provider] = False  # assume it has failed... till it has passed
+                logger.info(
+                    "SCVMM:{} create template attempt {}/{}".format(provider, i + 1, attempts))
+                create_template(provider, **kwargs)
+                logger.info("SCVMM:{} template creation done".format(provider))
+                results[provider] = True
+                break
             except Exception:
-                logger.exception("SCVMM:%s Exception verifying the template %s",
-                                 provider, new_template_name)
-        else:
-            logger.info("SCVMM: A Template with that name already exists in the SCVMMLibrary")
+                logger.exception("Hit exception creating template on {}".format(provider))
+                continue
+
+    failed_providers = [provider for provider, result in results.items() if result is False]
+    skipped_providers = [provider for provider, result in results.items() if result is None]
+    passed_providers = [provider for provider, result in results.items() if result]
+
+    logger.info("providers skipped: {}".format(skipped_providers))
+    logger.info("providers passed: {}".format(passed_providers))
+    logger.info("providers failed: {}".format(failed_providers))
+
+    if not passed_providers:
+        raise Exception("Template upload failed for all providers")
+    else:
+        logger.info("Upload passed for at least 1 provider... success!")
 
 
 if __name__ == "__main__":
