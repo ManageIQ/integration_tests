@@ -21,15 +21,16 @@ def log_wrap(process_message):
         def call(*args, **kwargs):
             log_name = args[0].log_name
             provider = args[0].provider
-            logger.info("(template-upload) [%s:%s] BEGIN %s",
-                        log_name, provider, process_message)
+            template_name = args[0].template_name
+            logger.info("(template-upload) [%s:%s:%s] BEGIN %s",
+                        log_name, provider, template_name, process_message)
             result = func(*args, **kwargs)
             if result:
-                logger.info("(template-upload) [%s:%s] END %s",
-                            log_name, provider, process_message)
+                logger.info("(template-upload) [%s:%s:%s] END %s",
+                            log_name, provider, template_name, process_message)
             else:
-                logger.error("(template-upload) [%s:%s] FAIL %s",
-                             log_name, provider, process_message)
+                logger.error("(template-upload) [%s:%s:%s] FAIL %s",
+                             log_name, provider, template_name, process_message)
             return result
         return call
     return decorate
@@ -191,45 +192,48 @@ class BaseTemplateUpload(object):
 
     @log_wrap("run upload template")
     def decorated_run(self):
-        self.run()
+        return self.run()
 
     def teardown(self):
         pass
+
+    @log_wrap("add template to trackerbot")
+    def track_template(self):
+        trackerbot.trackerbot_add_provider_template(self.stream, self.provider, self.template_name)
+        return True
+
+    @log_wrap("deploy template")
+    def deploy_template(self):
+        deploy_args = {
+            'provider': self.provider,
+            'vm_name': 'test_{}_{}'.format(self.template_name, gen_alphanumeric(8)),
+            'template': self.template_name,
+            'deploy': True,
+            'network_name': self.provider_data['network']}
+
+        self.mgmt.deploy_template(**deploy_args)
+        return True
 
     @log_wrap("template upload script")
     def main(self):
         try:
 
             if self.mgmt.does_template_exist(self.template_name):
-                logger.info("%s:%s Template %s already exists.",
+                logger.info("(template-upload) [%s:%s:%s] Template already exists",
                             self.log_name, self.provider, self.template_name)
             else:
-                # Actual template upload
                 wait_for(self.decorated_run, fail_condition=False, delay=5, logger=None)
 
                 if not self._provider_data:
-                    logger.info("%s:%s Adding template %s to trackerbot",
-                                self.log_name, self.provider, self.template_name)
-
-                    trackerbot.trackerbot_add_provider_template(self.stream, self.provider,
-                                                                self.template_name)
+                    self.track_template()
 
             if self._provider_data and self.mgmt.does_template_exist(self.template_name):
-                logger.info("%s:%s Deploying template %s",
-                            self.log_name, self.provider, self.template_name)
-
-                deploy_args = {
-                    'provider': self.provider,
-                    'vm_name': 'test_{}_{}'.format(self.template_name, gen_alphanumeric(8)),
-                    'template': self.template_name,
-                    'deploy': True,
-                    'network_name': self.provider_data['network']}
-
-                self.mgmt.deploy_template(**deploy_args)
+                self.deploy_template()
 
             return True
 
         except TemplateUploadException:
             return False
+
         finally:
             self.teardown()

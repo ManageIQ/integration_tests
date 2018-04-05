@@ -3,7 +3,7 @@ import re
 import urllib2
 
 from cfme.utils.log import logger
-from cfme.utils.template.base import BaseTemplateUpload
+from cfme.utils.template.base import BaseTemplateUpload, log_wrap
 from cfme.utils.wait import wait_for
 
 
@@ -29,16 +29,23 @@ class EC2TemplateUpload(BaseTemplateUpload):
     def file_path(self):
         return os.path.abspath(self.image_name)
 
+    @log_wrap("download image")
     def download_image(self):
         u = urllib2.urlopen(self.image_url)
         meta = u.info()
         file_size = int(meta.getheaders("Content-Length")[0])
+
         if os.path.isfile(self.image_name):
+
             if file_size == os.path.getsize(self.image_name):
-                return
+                logger.info("(template-upload) [%s:%s:%s] Image %s already exists.",
+                            self.log_name, self.provider, self.template_name, self.image_name)
+                return True
             os.remove(self.image_name)
-        logger.info("%s:%s Downloading %s to local directory. Bytes: %d",
-                    self.log_name, self.provider, self.image_name, file_size)
+
+        logger.info("(template-upload) [%s:%s:%s] Downloading %s to local directory. Bytes: %d",
+                    self.log_name, self.provider, self.template_name, self.image_name, file_size)
+
         with open(self.image_name, 'wb') as image_file:
             file_size_dl = 0
             block_sz = 8192
@@ -51,26 +58,25 @@ class EC2TemplateUpload(BaseTemplateUpload):
                 image_file.write(buffer_f)
         return True
 
+    @log_wrap("create bucket")
     def create_bucket(self):
         for bucket in self.mgmt.s3_connection.buckets.all():
             if bucket.name == self.bucket_name:
-                return
-        logger.info("%s:%s Creating bucket %s.",
-                    self.log_name, self.provider, self.bucket_name)
+                logger.info("(template-upload) [%s:%s:%s] Bucket %s already exists.",
+                            self.log_name, self.provider, self.template_name, self.bucket_name)
+                return True
         self.mgmt.create_s3_bucket(self.bucket_name)
         return True
 
+    @log_wrap("upload image to bucket")
     def upload_image(self):
-        logger.info("%s:%s Uploading image %s to bucket %s.",
-                    self.log_name, self.provider, self.template_name, self.bucket_name)
-
         self.mgmt.upload_file_to_s3_bucket(self.bucket_name,
                                            file_path=self.file_path,
                                            file_name=self.template_name)
+        return True
 
-    def create_image(self):
-        logger.info("%s:%s Creating image from template %s.",
-                    self.log_name, self.provider, self.template_name)
+    @log_wrap("import image from bucket")
+    def import_image(self):
         import_task_id = self.mgmt.import_image(s3bucket=self.bucket_name,
                                                 s3key=self.template_name,
                                                 description=self.template_name)
@@ -85,32 +91,28 @@ class EC2TemplateUpload(BaseTemplateUpload):
                              source_image=ami_id,
                              image_id=self.template_name)
         self.mgmt.deregister_image(image_id=ami_id)
+        return True
 
     def run(self):
-        if self.download_image():
-            logger.info("%s:%s Image %s downloaded.",
-                        self.log_name, self.provider, self.image_name)
-        else:
-            logger.info("%s:%s Image %s already exists. Skipping.",
-                        self.log_name, self.provider, self.image_name)
+        if not self.download_image():
+            return False
 
-        if self.create_bucket():
-            logger.info("%s:%s Bucket %s created.",
-                        self.log_name, self.provider, self.bucket_name)
-        else:
-            logger.info("%s:%s Bucket %s already exists. Skipping.",
-                        self.log_name, self.provider, self.bucket_name)
+        if not self.create_bucket():
+            return False
 
-        self.upload_image()
-        logger.info("%s:%s Image %s uploaded to bucket %s.",
-                    self.log_name, self.provider, self.template_name, self.bucket_name)
+        if not self.upload_image():
+            return False
 
-        self.create_image()
-        logger.info("%s:%s Image from template %s created.",
-                    self.log_name, self.provider, self.template_name)
+        if not self.import_image():
+            return False
 
+        return True
+
+    @log_wrap("cleanup")
     def teardown(self):
         self.mgmt.delete_objects_from_s3_bucket(bucket_name=self.bucket_name,
                                                 object_keys=[self.template_name])
         if os.path.exists(self.file_path):
             os.remove(self.file_path)
+
+        return True

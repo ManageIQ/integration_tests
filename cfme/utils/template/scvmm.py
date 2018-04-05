@@ -19,11 +19,16 @@ class SCVMMTemplateUpload(BaseTemplateUpload):
     @log_wrap("upload VHD image to Library VHD folder")
     def upload_vhd(self):
         script = """
-            (New-Object System.Net.WebClient).DownloadFile("{}", "{}{}")
-        """.format(self.image_url, self.library, self.vhd_name)
+                    (New-Object System.Net.WebClient).DownloadFile("{}", "{}{}")
+                """.format(self.image_url, self.library, self.vhd_name)
 
-        self.mgmt.run_script(script)
-        self.mgmt.update_scvmm_library()
+        try:
+            self.mgmt.run_script(script)
+            self.mgmt.update_scvmm_library()
+            return True
+
+        except Exception:
+            return False
 
     @log_wrap("add HW Resource File and Template to Library")
     def make_template(self):
@@ -46,23 +51,31 @@ class SCVMMTemplateUpload(BaseTemplateUpload):
                 -HardwareProfile $HWProfile -JobGroup $JobGroupID02 -RunAsynchronously `
                 -Generation 1 -NoCustomization
             Remove-HardwareProfile -HardwareProfile \"{name}\"
-        """.format(
-            name=self.template_name,
-            network=self.template_upload_data.get('network'),
-            username_scvmm="{}\\{}".format(self.mgmt.domain, self.mgmt.user),
-            ram=self.template_upload_data.get('ram'),
-            cores=self.template_upload_data.get('cores'),
-            src_path="{}{}".format(self.library, self.vhd_name),
-            host_fqdn=self.provider_data['hostname_fqdn'],
-            os_type=self.template_upload_data.get('os_type')
-        )
-        self.mgmt.run_script(script)
+        """.format(name=self.template_name,
+                   network=self.template_upload_data.get('network'),
+                   username_scvmm="{}\\{}".format(self.mgmt.domain, self.mgmt.user),
+                   ram=self.template_upload_data.get('ram'),
+                   cores=self.template_upload_data.get('cores'),
+                   src_path="{}{}".format(self.library, self.vhd_name),
+                   host_fqdn=self.provider_data['hostname_fqdn'],
+                   os_type=self.template_upload_data.get('os_type'))
+
+        try:
+            self.mgmt.run_script(script)
+            return True
+
+        except Exception:
+            return False
 
     def run(self):
         template_upload_scvmm = self.from_template_upload('template_upload_scvmm')
 
         if template_upload_scvmm.get('disk'):
-            self.upload_vhd()
+            if not self.upload_vhd():
+                return False
 
         if template_upload_scvmm.get('template'):
-            self.make_template()
+            if not self.make_template():
+                return False
+
+        return True

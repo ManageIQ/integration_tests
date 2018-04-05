@@ -1,12 +1,8 @@
 import re
-from cfme.utils.log import logger
-from cfme.utils.template.base import BaseTemplateUpload
-from cfme.utils.template.exc import TemplateUploadException
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.template.base import BaseTemplateUpload, log_wrap
 
 
 NUM_OF_TRIES = 5
-TEMPLATE_UPLOAD_VSPHERE = cfme_data.template_upload.template_upload_vsphere
 
 
 class VirtualCenterTemplateUpload(BaseTemplateUpload):
@@ -15,13 +11,18 @@ class VirtualCenterTemplateUpload(BaseTemplateUpload):
     image_pattern = re.compile(r'<a href="?\'?([^"\']*vsphere[^"\'>]*)')
 
     def get_creds(self, creds_type=None, **kwargs):
+        host_default = self.from_credentials('host_default')
+        hostname = self.from_template_upload('template_upload_vsphere').get('ovf_tool_client')
+
         creds = {
-            'hostname': TEMPLATE_UPLOAD_VSPHERE['ovf_tool_client'],
-            'username': credentials.host_default['username'],
-            'password': credentials.host_default['password']
+            'hostname': hostname,
+            'username': host_default['username'],
+            'password': host_default['password']
         }
+
         return creds
 
+    @log_wrap("upload template")
     def upload_template(self):
         cmd_args = [
             "ovftool --noSSLVerify",
@@ -45,12 +46,9 @@ class VirtualCenterTemplateUpload(BaseTemplateUpload):
         for i in range(0, NUM_OF_TRIES):
             upload_result = self.execute_ssh_command(command)
             if upload_result.success:
-                logger.info("%s:%s Successfully uploaded template: %s",
-                            self.log_name, self.provider, self.template_name)
                 return True
 
-        raise TemplateUploadException("Exception during uploading template.")
-
+    @log_wrap("add disk to VM")
     def add_disk_to_vm(self):
         # adding disk #1 (base disk is 0)
         result, msg = self.mgmt.add_disk_to_vm(vm_name=self.template_name,
@@ -58,36 +56,29 @@ class VirtualCenterTemplateUpload(BaseTemplateUpload):
                                                provision_type='thin')
 
         if result[0]:
-            logger.info("%s:%s Added disk to VM %s",
-                        self.log_name, self.provider, self.template_name)
-        else:
-            logger.error("%s:%s Failed to add disk to VM".format(
-                self.log_name, self.provider))
-            raise TemplateUploadException("Exception during upload_template.")
+            return True
 
+    @log_wrap("templatize VM")
     def templatize_vm(self):
         try:
             self.mgmt.mark_as_template(self.template_name)
-            logger.info("%s:%s Successfully templatized %s",
-                        self.log_name, self.provider, self.template_name)
+            return True
         except Exception:
-            logger.error("%s:%s Failed to templatize %s",
-                         self.log_name, self.provider, self.template_name)
-            raise TemplateUploadException("Templatizing failed.")
+            return False
 
     def run(self):
-        results = []
+        template_upload_vsphere = self.from_template_upload('template_upload_vsphere')
 
-        if TEMPLATE_UPLOAD_VSPHERE['upload']:
-            upload = self.upload_template()
-            results.append(upload)
+        if template_upload_vsphere.get('upload'):
+            if not self.upload_template():
+                return False
 
-        if TEMPLATE_UPLOAD_VSPHERE['disk']:
-            disk = self.add_disk_to_vm()
-            results.append(disk)
+        if template_upload_vsphere.get('disk'):
+            if not self.add_disk_to_vm():
+                return False
 
-        if TEMPLATE_UPLOAD_VSPHERE['template']:
-            template = self.templatize_vm()
-            results.append(template)
+        if template_upload_vsphere.get('template'):
+            if not self.templatize_vm():
+                return False
 
-        return all(results)
+        return True
