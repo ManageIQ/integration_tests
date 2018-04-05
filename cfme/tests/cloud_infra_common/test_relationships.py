@@ -141,6 +141,7 @@ def wait_for_relationship_refresh(provider):
         fail_func=view.browser.refresh)
 
 
+@pytest.mark.rhv3
 @pytest.mark.parametrize("relationship,view", HOST_RELATIONSHIPS,
     ids=[rel[0] for rel in HOST_RELATIONSHIPS])
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE)
@@ -155,6 +156,7 @@ def test_host_relationships(appliance, provider, setup_provider, host, relations
     assert relationship_view.is_displayed
 
 
+@pytest.mark.rhv3
 @pytest.mark.parametrize("relationship,view", INFRA_PROVIDER_RELATIONSHIPS,
     ids=[rel[0] for rel in INFRA_PROVIDER_RELATIONSHIPS])
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE)
@@ -256,6 +258,7 @@ def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, r
     prov_child_visibility(relationship, item_cls, visibility=False)
 
 
+@pytest.mark.rhv1
 @pytest.mark.provider([CloudInfraProvider])
 def test_provider_refresh_relationship(provider, setup_provider):
     provider.refresh_provider_relationships(method='ui')
