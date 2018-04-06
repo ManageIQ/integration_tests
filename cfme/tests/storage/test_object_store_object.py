@@ -15,6 +15,9 @@ pytestmark = [
 def test_object_add_remove_tag(appliance, provider):
     collection = appliance.collections.object_store_objects.filter({'provider': provider})
     all_objects = collection.all()
+    if all_objects is None:
+        pytest.skip('No object store object in collection {} for provider {}'
+                    .format(collection, provider))
     obj = random.choice(all_objects)
 
     # add tag with category Department and tag communication
