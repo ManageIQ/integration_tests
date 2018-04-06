@@ -10,11 +10,12 @@ from widgetastic_patternfly import Button, Input
 
 from actions import Action
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils import ParamClassName
+from cfme.utils import deferred_verpick, ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.version import LOWEST
 from widgetastic_manageiq import BootstrapSwitchSelect, MultiBoxSelect, SummaryFormItem, Dropdown
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 from . import ControlExplorerView
@@ -554,81 +555,99 @@ class HostCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
     TREE_NODE = "Host"
-    PRETTY = "Host / Node"
+    PRETTY = deferred_verpick({LOWEST: "Host / Node"})
 
 
 class VMCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
     TREE_NODE = "Vm"
-    PRETTY = "VM and Instance"
+    PRETTY = deferred_verpick({LOWEST: "VM and Instance"})
 
 
 class ReplicatorCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
     TREE_NODE = "Replicator"
-    PRETTY = "Replicator"
+    PRETTY = deferred_verpick({
+        LOWEST: "Replicator",
+        "5.9.2": "Container Replicator"
+    })
 
 
 class PodCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
     TREE_NODE = "Pod"
-    PRETTY = "Pod"
+    PRETTY = deferred_verpick({
+        LOWEST: "Pod",
+        "5.9.2": "Container Pod"
+    })
 
 
 class ContainerNodeCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
     TREE_NODE = "Container Node"
-    PRETTY = "Node"
+    PRETTY = deferred_verpick({
+        LOWEST: "Node",
+        "5.9.2": "Container Node"
+    })
 
 
 class ContainerImageCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
     TREE_NODE = "Container Image"
-    PRETTY = "Container Image"
+    PRETTY = deferred_verpick({LOWEST: "Container Image"})
 
 
 class HostControlPolicy(BasePolicy):
 
     TYPE = "Control"
     TREE_NODE = "Host"
-    PRETTY = "Host / Node"
+    PRETTY = deferred_verpick({LOWEST: "Host / Node"})
 
 
 class VMControlPolicy(BasePolicy):
 
     TYPE = "Control"
     TREE_NODE = "Vm"
-    PRETTY = "VM and Instance"
+    PRETTY = deferred_verpick({LOWEST: "VM and Instance"})
 
 
 class ReplicatorControlPolicy(BasePolicy):
 
     TYPE = "Control"
     TREE_NODE = "Replicator"
-    PRETTY = "Replicator"
+    PRETTY = deferred_verpick({
+        LOWEST: "Replicator",
+        "5.9.2": "Container Replicator"
+    })
 
 
 class PodControlPolicy(BasePolicy):
 
     TYPE = "Control"
     TREE_NODE = "Pod"
-    PRETTY = "Pod"
+    PRETTY = deferred_verpick({
+        LOWEST: "Pod",
+        "5.9.2": "Container Pod"
+    })
 
 
 class ContainerNodeControlPolicy(BasePolicy):
 
     TYPE = "Control"
     TREE_NODE = "Container Node"
-    PRETTY = "Node"
+    PRETTY = deferred_verpick({
+        LOWEST: "Node",
+        "5.9.2": "Container Node"
+    })
 
 
 class ContainerImageControlPolicy(BasePolicy):
 
     TYPE = "Control"
     TREE_NODE = "Container Image"
-    PRETTY = "Container Image"
+    PRETTY = deferred_verpick({LOWEST: "Container Image"})
