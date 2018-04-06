@@ -268,9 +268,6 @@ def resource_cost(appliance, metric_description, usage, description, rate_type,
     cb_rates = appliance.db.client['chargeback_rates']
     list_of_rates = []
 
-    def add_rate(tiered_rate):
-        list_of_rates.append(tiered_rate)
-
     with appliance.db.client.transaction:
         result = (
             appliance.db.client.session.query(tiers)
@@ -283,14 +280,14 @@ def resource_cost(appliance, metric_description, usage, description, rate_type,
     for row in result:
         tiered_rate = {var: getattr(row, var) for var in ['variable_rate', 'fixed_rate', 'start',
             'finish']}
-        add_rate(tiered_rate)
+        list_of_rates.append(tiered_rate)
 
     # Check what tier the usage belongs to and then compute the usage cost based on Fixed and
     # Variable Chargeback rates.
-    for d in list_of_rates:
-        if usage >= d['start'] and usage < d['finish']:
-            cost = ((d['variable_rate'] * usage) +
-                (d['fixed_rate'] * consumed_hours)) / divisor[interval]
+    for rate in list_of_rates:
+        if usage >= rate['start'] and usage < rate['finish']:
+            cost = ((rate['variable_rate'] * usage) +
+                (rate['fixed_rate'] * consumed_hours)) / divisor[interval]
             return cost
 
 
@@ -353,7 +350,10 @@ def chargeback_report_custom(vm_ownership, assign_custom_rate, interval):
     logger.info('Queuing chargeback report for {} rate'.format(interval))
     report.queue(wait_for_finish=True)
 
-    yield list(report.get_saved_reports()[0].data.rows)
+    if not list(report.get_saved_reports()[0].data.rows):
+        pytest.skip('Empty report')
+    else:
+        yield list(report.get_saved_reports()[0].data.rows)
 
     if report.exists:
         report.delete()
@@ -391,7 +391,9 @@ def test_validate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_cust
     cost estimated in the chargeback_costs_custom fixture.
     """
     for groups in chargeback_report_custom:
-        if groups["CPU Used Cost"]:
+        if not groups["CPU Used Cost"]:
+            pytest.skip('missing column in report')
+        else:
             estimated_cpu_usage_cost = chargeback_costs_custom['cpu_used_cost']
             cost_from_report = groups["CPU Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
@@ -407,7 +409,9 @@ def test_validate_memory_usage_cost(chargeback_costs_custom, chargeback_report_c
     cost estimated in the chargeback_costs_custom fixture.
     """
     for groups in chargeback_report_custom:
-        if groups["Memory Used Cost"]:
+        if not groups["Memory Used Cost"]:
+            pytest.skip('missing column in report')
+        else:
             estimated_memory_usage_cost = chargeback_costs_custom['memory_used_cost']
             cost_from_report = groups["Memory Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
@@ -423,7 +427,9 @@ def test_validate_network_usage_cost(chargeback_costs_custom, chargeback_report_
     cost estimated in the chargeback_costs_custom fixture.
     """
     for groups in chargeback_report_custom:
-        if groups["Network I/O Used Cost"]:
+        if not groups["Network I/O Used Cost"]:
+            pytest.skip('missing column in report')
+        else:
             estimated_network_usage_cost = chargeback_costs_custom['network_used_cost']
             cost_from_report = groups["Network I/O Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
@@ -439,7 +445,9 @@ def test_validate_disk_usage_cost(chargeback_costs_custom, chargeback_report_cus
     cost estimated in the chargeback_costs_custom fixture.
     """
     for groups in chargeback_report_custom:
-        if groups["Disk I/O Used Cost"]:
+        if not groups["Disk I/O Used Cost"]:
+            pytest.skip('missing column in report')
+        else:
             estimated_disk_usage_cost = chargeback_costs_custom['disk_used_cost']
             cost_from_report = groups["Disk I/O Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
@@ -455,7 +463,9 @@ def test_validate_storage_usage_cost(chargeback_costs_custom, chargeback_report_
     cost estimated in the chargeback_costs_custom fixture.
     """
     for groups in chargeback_report_custom:
-        if groups["Storage Used Cost"]:
+        if not groups["Storage Used Cost"]:
+            pytest.skip('missing column in report')
+        else:
             estimated_storage_usage_cost = chargeback_costs_custom['storage_used_cost']
             cost_from_report = groups["Storage Used Cost"]
             cost = re.sub(r'[$,]', r'', cost_from_report)
