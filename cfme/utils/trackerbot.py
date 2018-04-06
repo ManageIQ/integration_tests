@@ -134,7 +134,14 @@ def parse_template(template_name):
             year = int(groups.get('year', today.year))
             month, day = int(groups['month']), int(groups['day'])
             # validate the template date by turning into a date obj
-            template_date = futurecheck(date(year, month, day))
+            try:
+                # year, month, day might have been parsed incorrectly with loose regex
+                template_date = futurecheck(date(year, month, day))
+            except ValueError:
+                logger.exception('Failed to parse year: %s, month: %s, day: %s correctly '
+                                 'from template %s with regex %s',
+                                 year, month, day, template_name, regex)
+                continue
             return TemplateInfo(group_name, template_date, True)
     for group_name, regex in generic_matchers:
         matches = re.match(regex, template_name)
