@@ -33,11 +33,6 @@ All of the individual process' results are then manually merged (coverage_merger
 big json result, and handed back to simplecov which generates the compiled html
 (for humans) and rcov (for jenkins) reports.
 
-thing_toucher makes a best-effort pass at requiring all of the ruby files in
-the rails root, as well as any external MIQ libs/utils outside of the rails
-root (../lib and ../lib/util). This makes sure files that are never
-required still show up in the coverage report.
-
 Workflow Overview
 -----------------
 
@@ -49,15 +44,12 @@ Pre-testing (``pytest_configure`` hook):
    require line to the end of ``config/boot.rb``)
 3. Restart EVM (Rudely) to start running coverage on the appliance processes:
    ``killall -9 ruby; sysemctl start evmserverd``
-4. TOUCH ALL THE THINGS (run ``thing_toucher.rb`` with the rails runner).
-   Fork this process off and come back to it later
 
 Post-testing (``pytest_unconfigure`` hook):
 
-1. Poll ``thing_toucher`` to make sure it completed; block if needed.
-2. Stop EVM, but nicely this time so the coverage atexit hooks run:
+1. Stop EVM, but nicely this time so the coverage atexit hooks run:
    ``systemctl stop evmserverd``
-3. Pull the coverage dir back for parsing and archiving
+2. Pull the coverage dir back for parsing and archiving
 
 Post-testing (e.g. ci environment): *** This is changing ***
 
@@ -93,7 +85,6 @@ bundler_d = rails_root.join('bundler.d')
 coverage_hook_file_name = 'coverage_hook.rb'
 coverage_hook = coverage_data.join(coverage_hook_file_name)
 coverage_merger = coverage_data.join('coverage_merger.rb')
-thing_toucher = coverage_data.join('thing_toucher.rb')
 coverage_output_dir = log_path.join('coverage')
 coverage_results_archive = coverage_output_dir.join('coverage-results.tgz')
 coverage_appliance_conf = conf_path.join('.ui-coverage')
@@ -101,12 +92,6 @@ coverage_appliance_conf = conf_path.join('.ui-coverage')
 # This is set in sessionfinish, and should be reliably readable
 # in post-yield sessionfinish hook wrappers and all hooks thereafter
 ui_coverage_percent = None
-
-
-def _thing_toucher_async(ssh_client):
-    # for use in a subprocess to kick off the thing toucher
-    result = ssh_client.run_rails_command('thing_toucher.rb', timeout=0)
-    return result.rc == 0
 
 
 def clean_coverage_dir():
@@ -157,12 +142,10 @@ class CoverageManager(object):
         self._install_simplecov()
         self._install_coverage_hook()
         self.ipapp.restart_evm_service(rude=True)
-        self._touch_all_the_things()
         self.ipapp.wait_for_web_ui()
 
     def collect(self):
         self.print_message('collecting reports')
-        self._stop_touching_all_the_things()
         self._collect_reports()
         self.ipapp.restart_evm_service(rude=False)
 
@@ -223,32 +206,6 @@ class CoverageManager(object):
         )
         result = self.ipapp.ssh_client.run_command(command_template.format(**replacements))
         return result.success
-
-    def _touch_all_the_things(self):
-        self.log.info('Establishing baseline coverage by requiring ALL THE THINGS')
-        # send over the thing toucher
-        self.ipapp.ssh_client.put_file(
-            thing_toucher.strpath, rails_root.join(
-                thing_toucher.basename).strpath
-        )
-        # start it in an async thread so we can go on testing while this takes place
-        t = Thread(target=_thing_toucher_async, args=[self.ipapp.ssh_client])
-        t.daemon = True
-        t.start()
-
-    def _still_touching_all_the_things(self):
-        return self.ipapp.ssh_client.run_command('pgrep -f thing_toucher.rb', timeout=10).success
-
-    def _stop_touching_all_the_things(self):
-        self.log.info('Waiting for baseline coverage generator to finish')
-        # let the thing toucher finish touching all the things, it generally doesn't take more
-        # than 10 minutes
-        try:
-            wait_for(self._still_touching_all_the_things, fail_condition=True, num_sec=600,
-                message='check thing_toucher.rb on appliance')
-        except TimedOutError:
-            self.print_message("thing_toucher.rb timed out after 10mins; killing the process")
-            self.ipapp.ssh_client.run_command("pkill -f thing_toucher")
 
     def _collect_reports(self):
         # restart evm to stop the proccesses and let the simplecov exit hook run
