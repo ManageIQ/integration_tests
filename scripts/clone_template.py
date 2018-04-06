@@ -85,6 +85,83 @@ def destroy_vm(provider_mgmt, vm_name):
         logger.error('%s destroying VM %s (%s)', type(e).__name__, vm_name, str(e))
 
 
+def cloud_init_done(appliance):
+    """
+    Make sure cloud-init scripts have completed
+    """
+    logger.info("Checking if ssh login works and cloud-init is done...")
+    appliance.wait_for_ssh()
+    success = appliance.ssh_client.run_command('cat /var/lib/cloud/instance/boot-finished').success
+    if success:
+        logger.info("cloud-init done!")
+    return success
+
+
+def attach_gce_disk(provider, vm_name):
+    """
+    Attach a 5gb persistent disk for DB storage on GCE instance
+
+    Disk is marked for auto-delete
+
+    NOTE: In future we'll implement the methods to do this in wrapanapi
+    but will wait until after the wrapanapi refactoring (this is
+    the only place we need this functionality right now anyway)
+    """
+    logger.info("Attaching a DB disk to GCE instance")
+
+    # Stop VM
+    provider.stop_vm(vm_name)
+
+    # Pull attrs from provider mgmt
+    compute = provider._compute
+    disks = compute.disks()
+    instances = compute.instances()
+    zone = provider._zone
+    project = provider._project
+    wait_func = provider._nested_operation_wait
+
+    # Create disk
+    disk_name = "{}-db-disk".format(vm_name)
+    disk_data = {
+        'sizeGb': "5",
+        'type': "zones/{}/diskTypes/pd-standard".format(zone),
+        'name': disk_name
+    }
+    req = disks.insert(project=project, zone=zone, body=disk_data)
+    operation = req.execute()
+    wait_for(lambda: wait_func(operation['name']), delay=0.5,
+        num_sec=120, message=" Create {}".format(disk_name))
+
+    # Attach disk
+    disk_source = "/compute/v1/projects/{}/zones/{}/disks/{}".format(project, zone, disk_name)
+    attach_data = {'source': disk_source}
+    req = instances.attachDisk(project=project, zone=zone, instance=vm_name, body=attach_data)
+    operation = req.execute()
+    wait_for(lambda: wait_func(operation['name']), delay=0.5,
+        num_sec=120, message=" Attach {}".format(disk_name))
+
+    # Get device name of this new disk
+    instance = provider._find_instance_by_name(vm_name)
+    device_name = None
+    for disk in instance['disks']:
+        if disk['source'].endswith(disk_source):
+            device_name = disk['deviceName']
+
+    if not device_name:
+        logger.info("Instance disks: {}".format(instance['disks']))
+        raise Exception("Unable to find deviceName for attached disk.")
+
+    # Mark disk for auto-delete
+    req = instances.setDiskAutoDelete(
+        project=project, zone=zone, instance=vm_name, deviceName=device_name, autoDelete=True)
+    operation = req.execute()
+    wait_for(lambda: wait_func(operation['name']), delay=0.5,
+        num_sec=120, message=" Set auto-delete {}".format(disk_name))
+
+    # Start VM
+    provider.start_vm(vm_name)
+
+
 def main(**kwargs):
     # get_mgmt validates, since it will explode without an existing key or type
     if kwargs.get('deploy'):
@@ -221,6 +298,14 @@ def main(**kwargs):
         logger.error("VM is not running")
         return 10
 
+    if provider_type == 'gce':
+        try:
+            attach_gce_disk(provider, deploy_args['vm_name'])
+        except Exception:
+            logger.exception("Failed to attach db disk")
+            destroy_vm(provider, deploy_args['vm_name'])
+            return 10
+
     if provider_type == 'openshift':
         ip = output['url']
     else:
@@ -259,9 +344,12 @@ def main(**kwargs):
                         }
                     }
                 app = Appliance.from_provider(*app_args, **app_kwargs)
+
+            if provider_type == 'ec2':
+                wait_for(
+                    cloud_init_done, func_args=[app], num_sec=120, handle_exception=True, delay=5)
             if provider_type == 'gce':
-                with app as ipapp:
-                    ipapp.configure_gce()
+                app.configure_gce()
             elif provider_type == 'openshift':
                 # openshift appliances don't need any additional configuration
                 pass
@@ -279,6 +367,7 @@ def main(**kwargs):
                 ssh_client.get_file('/root/anaconda-post.log',
                                     log_path.join('anaconda-post.log').strpath)
             ssh_client.close()
+        destroy_vm(app.provider, deploy_args['vm_name'])
         return 10
 
     if kwargs.get('outfile') or kwargs.get('deploy'):
