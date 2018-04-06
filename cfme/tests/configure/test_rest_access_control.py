@@ -14,6 +14,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.rest import (
     assert_response,
     delete_resources_from_collection,
+    delete_resources_from_detail,
     query_resource_attributes,
 )
 from cfme.utils.wait import wait_for
@@ -90,31 +91,22 @@ class TestTenantsViaREST(object):
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
-    def test_delete_tenants_from_detail(self, appliance, tenants, method):
+    def test_delete_tenants_from_detail(self, tenants, method):
         """Tests deleting tenants from detail.
 
         Metadata:
             test_flag: rest
         """
-        for tenant in tenants:
-            del_action = getattr(tenant.action.delete, method.upper())
-            del_action()
-            assert_response(appliance)
-
-            tenant.wait_not_exists(num_sec=10, delay=2)
-            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-                del_action()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(tenants, method=method)
 
     @pytest.mark.tier(3)
-    def test_delete_tenants_from_collection(self, appliance, tenants):
+    def test_delete_tenants_from_collection(self, tenants):
         """Tests deleting tenants from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.tenants
-        delete_resources_from_collection(collection, tenants)
+        delete_resources_from_collection(tenants)
 
 
 class TestRolesViaREST(object):
@@ -184,31 +176,22 @@ class TestRolesViaREST(object):
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
-    def test_delete_roles_from_detail(self, appliance, roles, method):
+    def test_delete_roles_from_detail(self, roles, method):
         """Tests deleting roles from detail.
 
         Metadata:
             test_flag: rest
         """
-        for role in roles:
-            del_action = getattr(role.action.delete, method.upper())
-            del_action()
-            assert_response(appliance)
-
-            role.wait_not_exists(num_sec=10, delay=2)
-            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-                del_action()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(roles, method=method)
 
     @pytest.mark.tier(3)
-    def test_delete_roles_from_collection(self, appliance, roles):
+    def test_delete_roles_from_collection(self, roles):
         """Tests deleting roles from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.roles
-        delete_resources_from_collection(collection, roles)
+        delete_resources_from_collection(roles)
 
     @pytest.mark.tier(3)
     def test_add_delete_role(self, appliance):
@@ -330,31 +313,22 @@ class TestGroupsViaREST(object):
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
-    def test_delete_groups_from_detail(self, appliance, groups, method):
+    def test_delete_groups_from_detail(self, groups, method):
         """Tests deleting groups from detail.
 
         Metadata:
             test_flag: rest
         """
-        for group in groups:
-            del_action = getattr(group.action.delete, method.upper())
-            del_action()
-            assert_response(appliance)
-
-            group.wait_not_exists(num_sec=10, delay=2)
-            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-                del_action()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(groups, method=method)
 
     @pytest.mark.tier(3)
-    def test_delete_groups_from_collection(self, appliance, groups):
+    def test_delete_groups_from_collection(self, groups):
         """Tests deleting groups from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.groups
-        delete_resources_from_collection(collection, groups, not_found=True)
+        delete_resources_from_collection(groups, not_found=True)
 
 
 class TestUsersViaREST(object):
@@ -697,28 +671,19 @@ class TestUsersViaREST(object):
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
-    def test_delete_users_from_detail(self, appliance, users, method):
+    def test_delete_users_from_detail(self, users, method):
         """Tests deleting users from detail.
 
         Metadata:
             test_flag: rest
         """
-        for user in users:
-            del_action = getattr(user.action.delete, method.upper())
-            del_action()
-            assert_response(appliance)
-
-            user.wait_not_exists(num_sec=10, delay=2)
-            with pytest.raises(Exception, match="ActiveRecord::RecordNotFound"):
-                del_action()
-            assert_response(appliance, http_status=404)
+        delete_resources_from_detail(users, method=method)
 
     @pytest.mark.tier(3)
-    def test_delete_users_from_collection(self, appliance, users):
+    def test_delete_users_from_collection(self, users):
         """Tests deleting users from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.users
-        delete_resources_from_collection(collection, users)
+        delete_resources_from_collection(users)

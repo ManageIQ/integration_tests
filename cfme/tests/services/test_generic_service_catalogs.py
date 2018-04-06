@@ -138,14 +138,13 @@ class TestServiceCatalogViaREST(object):
         """
         delete_resources_from_detail(service_catalogs, method=method)
 
-    def test_delete_service_catalogs(self, appliance, service_catalogs):
+    def test_delete_service_catalogs(self, service_catalogs):
         """Tests delete service catalogs via rest.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.service_catalogs
-        delete_resources_from_collection(collection, service_catalogs)
+        delete_resources_from_collection(service_catalogs)
 
     def test_edit_service_catalog(self, appliance, service_catalogs):
         """Tests editing a service catalog via rest.

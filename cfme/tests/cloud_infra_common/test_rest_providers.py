@@ -158,7 +158,7 @@ def test_provider_delete_from_detail(provider_rest, method):
 
 
 @pytest.mark.rhv3
-def test_provider_delete_from_collection(provider_rest, appliance):
+def test_provider_delete_from_collection(provider_rest):
     """Tests deletion of the provider from collection using REST API.
 
     Testing BZs 1525498, 1501941
@@ -166,5 +166,4 @@ def test_provider_delete_from_collection(provider_rest, appliance):
     Metadata:
         test_flag: rest
     """
-    collection = appliance.rest_api.collections.providers
-    delete_resources_from_collection(collection, [provider_rest], num_sec=50)
+    delete_resources_from_collection([provider_rest], num_sec=50)

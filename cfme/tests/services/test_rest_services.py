@@ -300,14 +300,13 @@ class TestServiceRESTAPI(object):
         """
         delete_resources_from_detail(services, method='DELETE')
 
-    def test_delete_services(self, appliance, services):
+    def test_delete_services(self, services):
         """Tests deleting services from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.services
-        delete_resources_from_collection(collection, services)
+        delete_resources_from_collection(services)
 
     @pytest.mark.parametrize(
         "from_detail", [True, False],
@@ -698,14 +697,13 @@ class TestServiceDialogsRESTAPI(object):
         """
         delete_resources_from_detail(service_dialogs, method=method)
 
-    def test_delete_service_dialogs(self, appliance, service_dialogs):
+    def test_delete_service_dialogs(self, service_dialogs):
         """Tests deleting service dialogs from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.service_dialogs
-        delete_resources_from_collection(collection, service_dialogs)
+        delete_resources_from_collection(service_dialogs)
 
 
 class TestServiceTemplateRESTAPI(object):
@@ -746,14 +744,13 @@ class TestServiceTemplateRESTAPI(object):
             service_template.reload()
             assert service_template.name == new_name
 
-    def test_delete_service_templates(self, appliance, service_templates):
+    def test_delete_service_templates(self, service_templates):
         """Tests deleting service templates from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.service_templates
-        delete_resources_from_collection(collection, service_templates)
+        delete_resources_from_collection(service_templates)
 
     # POST method is not available on < 5.8, as described in BZ 1427338
     def test_delete_service_template_post(self, service_templates):
@@ -1034,14 +1031,13 @@ class TestServiceCatalogsRESTAPI(object):
         """
         delete_resources_from_detail(service_catalogs, method=method, num_sec=100, delay=5)
 
-    def test_delete_catalog_from_collection(self, appliance, service_catalogs):
+    def test_delete_catalog_from_collection(self, service_catalogs):
         """Tests delete service catalogs from detail using REST API.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.service_catalogs
-        delete_resources_from_collection(collection, service_catalogs, num_sec=300, delay=5)
+        delete_resources_from_collection(service_catalogs, num_sec=300, delay=5)
 
 
 class TestPendingRequestsRESTAPI(object):
@@ -1147,14 +1143,13 @@ class TestPendingRequestsRESTAPI(object):
         """
         delete_resources_from_detail([pending_request], method=method)
 
-    def test_delete_pending_request_from_collection(self, appliance, pending_request):
+    def test_delete_pending_request_from_collection(self, pending_request):
         """Tests deleting pending service request from detail using the REST API.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.service_requests
-        delete_resources_from_collection(collection, [pending_request])
+        delete_resources_from_collection([pending_request])
 
     def test_order_manual_approval(self, request, appliance, pending_request):
         """Tests ordering single catalog item with manual approval using the REST API.
@@ -1323,14 +1318,13 @@ class TestBlueprintsRESTAPI(object):
         delete_resources_from_detail(blueprints, method=method)
 
     @pytest.mark.tier(3)
-    def test_delete_blueprints_from_collection(self, appliance, blueprints):
+    def test_delete_blueprints_from_collection(self, blueprints):
         """Tests deleting blueprints from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.blueprints
-        delete_resources_from_collection(collection, blueprints)
+        delete_resources_from_collection(blueprints)
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
@@ -1396,15 +1390,13 @@ class TestOrchestrationTemplatesRESTAPI(object):
             assert record.type == template.type
 
     @pytest.mark.tier(3)
-    def test_delete_orchestration_templates_from_collection(
-            self, appliance, orchestration_templates):
+    def test_delete_orchestration_templates_from_collection(self, orchestration_templates):
         """Tests deleting orchestration templates from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.orchestration_templates
-        delete_resources_from_collection(collection, orchestration_templates, not_found=True)
+        delete_resources_from_collection(orchestration_templates, not_found=True)
 
     @pytest.mark.tier(3)
     @pytest.mark.meta(blockers=[BZ(1414881, forced_streams=['5.7', '5.8', 'upstream'])])
@@ -1748,11 +1740,10 @@ class TestServiceOrderCart(object):
         delete_resources_from_detail([cart], method=method)
 
     @pytest.mark.tier(3)
-    def test_delete_cart_from_collection(self, appliance, cart):
+    def test_delete_cart_from_collection(self, cart):
         """Tests deleting cart from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.service_orders
-        delete_resources_from_collection(collection, [cart])
+        delete_resources_from_collection([cart])

@@ -851,14 +851,13 @@ class TestArbitrationSettingsRESTAPI(object):
         """
         delete_resources_from_detail(arbitration_settings, method=method)
 
-    def test_delete_arbitration_settings_from_collection(self, appliance, arbitration_settings):
+    def test_delete_arbitration_settings_from_collection(self, arbitration_settings):
         """Tests delete arbitration settings from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.arbitration_settings
-        delete_resources_from_collection(collection, arbitration_settings)
+        delete_resources_from_collection(arbitration_settings)
 
     @pytest.mark.parametrize(
         "from_detail", [True, False],
@@ -927,14 +926,13 @@ class TestArbitrationRulesRESTAPI(object):
         """
         delete_resources_from_detail(arbitration_rules, method='POST')
 
-    def test_delete_arbitration_rules_from_collection(self, arbitration_rules, appliance):
+    def test_delete_arbitration_rules_from_collection(self, arbitration_rules):
         """Tests delete arbitration rules from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.arbitration_rules
-        delete_resources_from_collection(collection, arbitration_rules)
+        delete_resources_from_collection(arbitration_rules)
 
     @pytest.mark.parametrize(
         'from_detail', [True, False],
@@ -1028,9 +1026,8 @@ class TestNotificationsRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.notifications
-        notifications = collection.all[-3:]
-        delete_resources_from_collection(collection, notifications)
+        notifications = appliance.rest_api.collections.notifications.all[-3:]
+        delete_resources_from_collection(notifications)
 
 
 class TestEventStreamsRESTAPI(object):

@@ -92,11 +92,10 @@ class TestCategoriesViaREST(object):
         delete_resources_from_detail(categories, method=method)
 
     @pytest.mark.tier(3)
-    def test_delete_categories_from_collection(self, appliance, categories):
+    def test_delete_categories_from_collection(self, categories):
         """Tests deleting categories from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.categories
-        delete_resources_from_collection(collection, categories, not_found=True)
+        delete_resources_from_collection(categories, not_found=True)
