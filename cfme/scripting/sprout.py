@@ -41,14 +41,23 @@ def main():
 @click.option('--populate-yaml', is_flag=True, default=False,
               help="Populate the yaml with the appliance")
 @click.option('--provider', default=None, help="Which provider to use")
+@click.option('--provider-type', 'provider_type', default=None,
+              help='A provider type to select from')
+@click.option('--template-type', 'template_type', default=None, help='A template type')
+@click.option('--preconfigured/--notconfigured', default=True,
+              help='Whether the appliance is configured')
 def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
-             override_ram, override_cpu, populate_yaml, provider):
+             override_ram, override_cpu, populate_yaml, provider, provider_type, template_type,
+             preconfigured):
     """checks out a sprout provisioning request, and returns it on exit"""
     override_cpu = override_cpu or None
     override_ram = override_ram or None
     sr = SproutProvisioningRequest(group=group, count=appliances, version=version, date=date,
                                    lease_time=timeout, provision_timeout=provision_timeout,
-                                   desc=desc, cpu=override_cpu, ram=override_ram, provider=provider)
+                                   desc=desc, cpu=override_cpu, ram=override_ram, provider=provider,
+                                   provider_type=provider_type, template_type=template_type,
+                                   preconfigured=preconfigured)
+    print(sr)
     sm = SproutManager()
 
     def exit_gracefully(signum, frame):
@@ -99,13 +108,14 @@ def populate_config_from_appliances(appliance_data):
 
     y_data['appliances'] = []
     for app in appliance_data:
-        y_data['appliances'].append({'base_url': 'https://{}/'.format(app['ip_address'])})
+        app_config = dict(
+            hostname=app['ip_address'],
+            ui_protocol="https",
+        )
+        y_data['appliances'].append(app_config)
     with open(file_name, 'w') as f:
-        try:
-            del y_data['base_url']
-        except KeyError:
-            pass
-        yaml.dump(y_data, f, default_flow_style=False)
+        # Use safe dump to avoid !!python/unicode tags
+        yaml.safe_dump(y_data, f, default_flow_style=False)
 
 
 if __name__ == "__main__":

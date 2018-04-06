@@ -1,13 +1,48 @@
 from __future__ import print_function
 
+import errno
+import os
+
 import click
 from pathlib2 import Path
 
 
+def _is_yaml_file(path):
+    return path.suffix in ('.yaml', '.eyaml')
+
+
+def _warn_on_unknown_encryption(path):
+    if path.suffix == '.eyaml' and not Path('.yaml_key').is_file():
+            print(
+                "WARNING:", path, "is encrypted, "
+                "please remember follow the documentation on yaml keys")
+
+
+def _check_missmatching_symlink(src, target):
+    check_passed = True
+    if target.resolve() != src.resolve():
+        print(
+            "WARNING: Different symlink already exists for", target.name, "in your dest. "
+            "Skipped this file. Use --force to override.")
+        check_passed = False
+    return check_passed
+
+
+def _check_existing_file(target):
+    check_passed = True
+    if target.is_file():
+        print(
+            "ERROR: File", target.name, "already exists in your dest. Skipped this file. "
+            "Use --force to override.")
+        check_passed = False
+    return check_passed
+
+
 @click.command()
-@click.argument('src', type=click.Path(exists=True, file_okay=False))
+@click.argument('src', type=click.Path(file_okay=False))
 @click.argument('dest', type=click.Path(exists=True, file_okay=False))
-def main(src, dest):
+@click.option('--force', is_flag=True)
+def main(src, dest, force):
     """links configfiles from one folder to another
 
     if links exists it verifies content
@@ -16,33 +51,41 @@ def main(src, dest):
     Args:
         src: source folder
         dest: target folder
+        force: override existing symlinks
     """
     src = Path(src)
+    if not src.exists():
+        print("WARNING:", src, "does not exist, skipping linking")
+        return
+
     dest = Path(dest)
 
-    bad_elements = False
+    for element in filter(_is_yaml_file, src.iterdir()):
+        _warn_on_unknown_encryption(element)
+        target = dest.joinpath(element.name)
 
-    for element in src.iterdir():
-
-        if element.suffix in ('.yaml', '.eyaml'):
-            if element.suffix == '.eyaml' and not Path('.yaml_key').is_file():
-                print(
-                    "WARNING:", element, "is encrypted, "
-                    "please remember follow the documentation on yaml keys")
-            target = dest.joinpath(element.name)
-            # the following is fragile
-            if target.is_symlink():
-                if target.resolve() != element.resolve():
-                    print("WARNING:", target, "does not point to", element)
-                    print("         please verify this is intended")
-            elif target.is_file():
-                print('ERROR: You have', target.name, 'copied into your conf/ folder. Remove it.')
-                bad_elements = True
-            else:
+        if force:
+            try:
                 target.symlink_to(element.resolve())
+            except OSError as e:
+                if e.errno == errno.EEXIST:
+                    backup_target = Path(dest.joinpath(element.name + "_bak"))
+                    print("Replacing", target.name, "and saving backup as", backup_target.name)
+                    # Would use 'backup_target.replace()' here but that's only supported in py3
+                    if backup_target.exists():
+                        os.remove(str(backup_target))
+                    target.rename(backup_target)
 
-    if bad_elements:
-        exit(1)
+                    target.symlink_to(element.resolve())
+                else:
+                    raise
+        else:
+            if target.is_symlink():
+                # If symlink already exists and points to same src, do nothing.
+                _check_missmatching_symlink(src=element, target=target)
+            elif _check_existing_file(target):
+                target.symlink_to(element.resolve())
+                print("Symlink created for", target.name)
 
 
 if __name__ == '__main__':

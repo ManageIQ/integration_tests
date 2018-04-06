@@ -1,69 +1,182 @@
 from __future__ import print_function
 
 import os
+import re
 import sys
 import argparse
 import subprocess
+import time
 import json
 import hashlib
 from pipes import quote
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--mk-virtualenv", default="../cfme_venv")
-parser.add_argument("--system-site-packages", action="store_true")
-parser.add_argument("--config-path", default="../cfme-qe-yamls/complete/")
+LEGACY_BASENAMES = ('cfme_tests', 'integration_tests')
 
 IS_SCRIPT = sys.argv[0] == __file__
 CWD = os.getcwd()  # we expect to be in the workdir
+
+USE_LEGACY_VENV_PATH = os.path.basename(CWD) in LEGACY_BASENAMES
+
 IS_ROOT = os.getuid() == 0
 REDHAT_RELEASE_FILE = '/etc/redhat-release'
 CREATED = object()
 REQUIREMENT_FILE = 'requirements/frozen.txt'
 HAS_DNF = os.path.exists('/usr/bin/dnf')
+HAS_YUM = os.path.exists('/usr/bin/yum')
+HAS_APT = os.path.exists('/usr/bin/apt')
 IN_VIRTUALENV = getattr(sys, 'real_prefix', None) is not None
+
+
+def mk_parser(default_venv_path):
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--mk-virtualenv",
+        default=default_venv_path)
+    parser.add_argument("--system-site-packages", action="store_true")
+    parser.add_argument("--config-path", default="../cfme-qe-yamls/complete/")
+    return parser
+
+
+def args_for_current_venv():
+    parser = mk_parser(sys.prefix)
+    return parser.parse_args([])
+
 
 PRISTINE_ENV = dict(os.environ)
 
-REDHAT_PACKAGES_OLD = (
-    " python-virtualenv gcc postgresql-devel libxml2-devel"
-    " libxslt-devel zeromq3-devel libcurl-devel"
-    " redhat-rpm-config gcc-c++ openssl-devel"
-    " libffi-devel python-devel tesseract"
-    " freetype-devel")
+OS_RELEASE_FILE = '/etc/os-release'
+OS_NAME_REGEX = r'NAME="([\w\W]+)"'
+OS_VERSION_REGEX = r'VERSION="([\w\W]+)"'
+OS_NAME = None
+OS_VERSION = None
 
+REQUIRED_PACKAGES = None
+INSTALL_COMMAND = None
 
-REDHAT_PACKAGES_F25 = (
-    " python2-virtualenv gcc postgresql-devel libxml2-devel"
-    " libxslt-devel zeromq3-devel libcurl-devel"
-    " redhat-rpm-config gcc-c++ openssl-devel"
-    " libffi-devel python2-devel tesseract"
-    " freetype-devel")
+if HAS_DNF:
+    INSTALL_COMMAND = 'dnf install -y'
+elif HAS_YUM:
+    INSTALL_COMMAND = 'yum install -y'
+elif HAS_APT:
+    INSTALL_COMMAND = 'apt install -y'
 
-REDHAT_PACKAGES_F26 = (
-    " python2-virtualenv gcc postgresql-devel libxml2-devel"
-    " libxslt-devel zeromq-devel libcurl-devel"
-    " redhat-rpm-config gcc-c++ openssl-devel"
-    " libffi-devel python2-devel tesseract"
-    " freetype-devel")
+if not IS_ROOT:
+    INSTALL_COMMAND = 'sudo ' + INSTALL_COMMAND
 
+OS_NAME = "unknown"
+OS_VERSION = "unknown"
+
+if os.path.exists(OS_RELEASE_FILE):
+    with open(OS_RELEASE_FILE) as os_release:
+        for var in os_release.readlines():
+            name = re.match(OS_NAME_REGEX, var)
+            if name:
+                OS_NAME = name.group(1)
+            version = re.match(OS_VERSION_REGEX, var)
+            if version:
+                OS_VERSION = version.group(1)
+
+REDHAT_PACKAGES_SPECS = [
+    ("Fedora release 23", "nss",
+     " python-virtualenv gcc postgresql-devel libxml2-devel"
+     " libxslt-devel zeromq3-devel libcurl-devel"
+     " redhat-rpm-config gcc-c++ openssl-devel"
+     " libffi-devel python-devel tesseract"
+     " freetype-devel"),
+    ("Fedora release 24", "nss",
+     " python-virtualenv gcc postgresql-devel libxml2-devel"
+     " libxslt-devel zeromq3-devel libcurl-devel"
+     " redhat-rpm-config gcc-c++ openssl-devel"
+     " libffi-devel python-devel tesseract"
+     " freetype-devel"),
+    ("Fedora release 25", "nss",
+     " python2-virtualenv gcc postgresql-devel libxml2-devel"
+     " libxslt-devel zeromq3-devel libcurl-devel"
+     " redhat-rpm-config gcc-c++ openssl-devel"
+     " libffi-devel python2-devel tesseract"
+     " freetype-devel"),
+    ("Fedora release 26", "nss",
+     " python2-virtualenv gcc postgresql-devel libxml2-devel"
+     " libxslt-devel zeromq-devel libcurl-devel"
+     " redhat-rpm-config gcc-c++ openssl-devel"
+     " libffi-devel python2-devel tesseract"
+     " freetype-devel"),
+    ("Fedora release 27", "openssl",
+     " python2-virtualenv gcc postgresql-devel libxml2-devel"
+     " libxslt-devel zeromq-devel libcurl-devel"
+     " redhat-rpm-config gcc-c++ openssl-devel"
+     " libffi-devel python2-devel tesseract"
+     " freetype-devel"),
+    ("CentOS Linux release 7", "nss",
+     " python-virtualenv gcc postgresql-devel libxml2-devel"
+     " libxslt-devel zeromq3-devel libcurl-devel"
+     " redhat-rpm-config gcc-c++ openssl-devel"
+     " libffi-devel python-devel tesseract"
+     " libpng-devel"
+     " freetype-devel"),
+    ("Red Hat Enterprise Linux Server release 7", "nss",
+     " python-virtualenv gcc postgresql-devel libxml2-devel"
+     " libxslt-devel zeromq3-devel libcurl-devel"
+     " redhat-rpm-config gcc-c++ openssl-devel"
+     " libffi-devel python-devel tesseract"
+     " libpng-devel"
+     " freetype-devel"),
+    ("Red Hat Enterprise Linux Workstation release 7", "nss",
+     " python-virtualenv gcc postgresql-devel libxml2-devel"
+     " libxslt-devel zeromq3-devel libcurl-devel"
+     " redhat-rpm-config gcc-c++ openssl-devel"
+     " libffi-devel python-devel tesseract"
+     " libpng-devel"
+     " freetype-devel")
+]
+
+OS_PACKAGES_SPECS = [
+    # Extend this
+    ("Ubuntu", "16.04.3 LTS (Xenial Xerus)", "openssl",
+     " python-virtualenv gcc postgresql libxml2-dev"
+     " libxslt1-dev libzmq3-dev libcurl4-openssl-dev"
+     " g++ openssl libffi-dev python-dev libtesseract3"
+     " libpng-dev libfreetype6-dev libssl-dev"),
+
+    ("Ubuntu", "16.04.4 LTS (Xenial Xerus)", "openssl",
+     " python-virtualenv gcc postgresql libxml2-dev"
+     " libxslt1-dev libzmq3-dev libcurl4-openssl-dev"
+     " g++ openssl libffi-dev python-dev libtesseract3"
+     " libpng-dev libfreetype6-dev libssl-dev")
+]
 
 if os.path.exists(REDHAT_RELEASE_FILE):
-    os.environ['PYCURL_SSL_LIBRARY'] = 'nss'
+
     with open(REDHAT_RELEASE_FILE) as fp:
         release_string = fp.read()
-    if "Fedora release 25" in release_string:
-        REDHAT_PACKAGES = REDHAT_PACKAGES_F25
-    elif "Fedora release 26" in release_string:
-        REDHAT_PACKAGES = REDHAT_PACKAGES_F26
-    else:
-        REDHAT_PACKAGES = REDHAT_PACKAGES_OLD
+    for release, curl_ssl, packages in REDHAT_PACKAGES_SPECS:
+        if release_string.startswith(release):
+            REQUIRED_PACKAGES = packages
+            os.environ['PYCURL_SSL_LIBRARY'] = curl_ssl
+            break
 
-    if HAS_DNF:
-        INSTALL_COMMAND = 'dnf install -y'
-    else:
-        INSTALL_COMMAND = 'yum install -y'
-    if not IS_ROOT:
-        INSTALL_COMMAND = 'sudo ' + INSTALL_COMMAND
+    if not REQUIRED_PACKAGES:
+        print(
+            '{} not known. '
+            'Please ensure you have the required packages installed.'.format(release_string)
+        )
+        print('$ [dnf/yum] install -y {}'.format(REDHAT_PACKAGES_SPECS[-1][-1]))
+
+elif os.path.exists(OS_RELEASE_FILE):
+
+    for os_name, os_version, curl_ssl, packages in OS_PACKAGES_SPECS:
+        if os_name == OS_NAME and os_version == OS_VERSION:
+            REQUIRED_PACKAGES = packages
+            os.environ['PYCURL_SSL_LIBRARY'] = curl_ssl
+            break
+
+    if not REQUIRED_PACKAGES:
+        print(
+            '{} {} not known. '
+            'Please ensure you have the required packages installed.'.format(OS_NAME, OS_VERSION)
+        )
+        print('$ apt install -y {}'.format(OS_PACKAGES_SPECS[-1][-1]))
+
 else:
     INSTALL_COMMAND = None
 
@@ -75,17 +188,30 @@ def command_text(command, shell):
         return ' '.join(map(quote, command))
 
 
-def call_or_exit(command, shell=False, **kw):
+def run_cmd_or_exit(command, shell=False, long_running=False, **kw):
+    res = None
     try:
-        print('QS $', command_text(command, shell))
-        res = subprocess.call(command, shell=shell, **kw)
+        if long_running:
+            print(
+                'QS $', command_text(command, shell),
+                '# this may take some time to finish ...')
+        else:
+            print('QS $', command_text(command, shell))
+        res = subprocess.check_output(command, shell=shell, **kw)
+    except subprocess.CalledProcessError as e:
+        print(e.output)
+        c = " ".join(command) if type(command) == list else command
+        if c.startswith(INSTALL_COMMAND):
+            print("Hit error during yum/dnf install, re-trying...")
+            time.sleep(5)
+            res = subprocess.check_output(command, shell=shell, **kw)
+        else:
+            raise
     except Exception as e:
+        print("Running command failed!")
         print(repr(e))
         sys.exit(1)
-    else:
-        if res:
-            print("call failed with", res)
-            sys.exit(res)
+    return res
 
 
 def pip_json_list(venv):
@@ -98,13 +224,15 @@ def pip_json_list(venv):
 
 
 def install_system_packages():
-    if INSTALL_COMMAND:
-        call_or_exit(INSTALL_COMMAND + REDHAT_PACKAGES, shell=True)
+    if INSTALL_COMMAND and REQUIRED_PACKAGES:
+        run_cmd_or_exit(INSTALL_COMMAND + REQUIRED_PACKAGES, shell=True)
     else:
         print("WARNING: unknown distribution,",
               "please ensure you have the required packages installed")
-        print("INFO: on redhat based systems this is the equivalend of:")
-        print("$ dnf install -y", REDHAT_PACKAGES_OLD)
+        print("INFO: on redhat based systems this is the equivalent of:")
+        print("$ dnf install -y", REDHAT_PACKAGES_SPECS[-1][-1])
+        print("INFO: on non-redhat based systems this is the equivalent of:")
+        print("$ apt install -y", OS_PACKAGES_SPECS[-1][-1])
 
 
 def setup_virtualenv(target, use_site):
@@ -113,18 +241,23 @@ def setup_virtualenv(target, use_site):
         return CREATED
     add = ['--system-site-packages'] if use_site else []
 
-    call_or_exit(['virtualenv', target] + add)
+    run_cmd_or_exit(['virtualenv', target] + add)
+
     venv_call(target,
               'pip', 'install', '-U',
+              # pip wheel and setuptools are updated just in case
+              # since enterprise distros ship versions that are too stable
+              # for our purposes
+              'pip', 'wheel', 'setuptools',
               # setuptools_scm and docutils installation prevents
               # missbehaved packages from failing
-              'pip', 'wheel', 'setuptools_scm', 'docutils')
+              'setuptools_scm', 'docutils')
 
 
 def venv_call(venv_path, command, *args, **kwargs):
     # pop PYTHONHOME to avoid nested environments
     os.environ.pop('PYTHONHOME', None)
-    call_or_exit([
+    run_cmd_or_exit([
         os.path.join(venv_path, 'bin', command),
     ] + list(args), **kwargs)
 
@@ -161,7 +294,7 @@ def install_requirements(venv_path, quiet=False):
         'pip', 'install',
         '-r', REQUIREMENT_FILE,
         '--no-binary', 'pycurl',
-        *(['-q'] if quiet else []))
+        *(['-q'] if quiet else []), long_running=quiet)
 
     with open(remember_file, 'w') as fp:
         fp.write(current_hash)
@@ -188,7 +321,7 @@ def print_packages_diff(old, new):
 
 
 def version_changes(old, new):
-    names = sorted(set(old) & set(new))
+    names = sorted(set(old) | set(new))
     for name in names:
         initial = old.get(name, 'missing')
         afterwards = new.get(name, 'removed')
@@ -221,6 +354,9 @@ def ensure_pycurl_works(venv_path):
 
 
 def main(args):
+    if __package__ is None:
+        print("ERROR: quickstart must be invoked as module")
+        sys.exit(1)
     if not IN_VIRTUALENV:
         # invoked from outside, its ok to be slow
         install_system_packages()
@@ -239,4 +375,5 @@ def main(args):
 
 
 if IS_SCRIPT:
+    parser = mk_parser("../cfme_venv" if USE_LEGACY_VENV_PATH else '.cfme_venv')
     main(parser.parse_args())
