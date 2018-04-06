@@ -627,7 +627,9 @@ def _test_vm_removal():
          ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions']]])
 def test_permission_edit(appliance, request, product_features):
     """
-    Ensures that changes in permissions are enforced on next login
+    Ensures that changes in permissions are enforced on next login by attempting to navigate to
+    a page with and without permissions to access that page
+
     Args:
         appliance: cfme appliance fixture
         request: pytest request fixture
@@ -643,8 +645,9 @@ def test_permission_edit(appliance, request, product_features):
     group = group_collection(appliance).create(description=group_description, role=role.name)
     user = new_user(appliance, [group])
     with user:
-        with pytest.raises(Exception, message='Incorrect permissions set'):
+            # Navigation should succeed with valid permissions
             navigate_to(vms.Vm, 'VMsOnly')
+
     appliance.server.login_admin()
     role.update({'product_features': [(['Everything'], True)] +
                                      [(k, False) for k in product_features]
