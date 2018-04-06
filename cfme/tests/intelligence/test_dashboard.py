@@ -7,7 +7,6 @@ import requests
 from random import sample
 
 from cfme import test_requirements
-from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
@@ -60,25 +59,20 @@ def test_widgets_operation(dashboards, widgets, soft_assert, infra_provider):
 
 
 @pytest.mark.parametrize("number_dashboards", range(1, 4))
-def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards):
+def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards, appliance):
     """Create some custom dashboards and check their presence. Then check their contents."""
     # Very useful construct. List is mutable, so we can prepare the generic delete finalizer.
     # Then we add everything that succeeded with creation. Simple as that :)
     dashboards_to_delete = []
     request.addfinalizer(lambda: map(lambda item: item.delete(), dashboards_to_delete))
-
-    def _create_dashboard(widgets):
-        return Dashboard(
+    for _ in range(number_dashboards):
+        d = appliance.collections.report_dashboards.create(
             fauxfactory.gen_alphanumeric(),
             "EvmGroup-super_administrator",
             fauxfactory.gen_alphanumeric(),
             locked=False,
-            widgets=widgets
+            widgets=sample(AVAILABLE_WIDGETS, 3)
         )
-
-    for i in range(number_dashboards):
-        d = _create_dashboard(sample(AVAILABLE_WIDGETS, 3))
-        d.create()
         dashboards_to_delete.append(d)
     dash_dict = {d.title: d for d in dashboards_to_delete}
     try:
