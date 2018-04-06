@@ -14,7 +14,6 @@ from cached_property import cached_property
 from jsmin import jsmin
 from lxml.html import document_fromstring
 from selenium.common.exceptions import WebDriverException
-from selenium.webdriver.common.keys import Keys
 from wait_for import TimedOutError, wait_for
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.log import logged
@@ -3887,3 +3886,162 @@ class FakeWidget(Widget):
     @property
     def is_displayed(self):
         return self.visible
+
+
+class LineChart(Widget, ClickableMixin):
+    """This is C3 charts widget.
+
+    It can fetch data from C3 charts :
+        - Line chart
+        - Stacked Area chart
+        - Simple XY line chart
+
+      Args:
+        locator: class id for chart
+
+    .. _code:: python
+
+       chart_name = LineChart(locator='miq_chart_parent_candu_0')
+    """
+
+    ROOT = ParametrizedLocator(".//div[@id='candu_charts_div']//div[@id='{@locator}']")
+    ZOOM_IN = ".//a/i[contains(@class, 'fa-search-plus')]"
+    ZOOM_OUT = ".//a/i[contains(@class, 'fa-search-minus')]"
+    BS_TITLE_LOCATOR = ".//h2"
+    RECT = ".//*[contains(@class, 'c3-event-rects c3-event-rects-single')]//*"
+    X_AXIS = ".//*[contains(@class, 'c3-axis c3-axis-x')]/*[contains(@class, 'tick')]"
+    tooltip = Table(locator='.//div[contains(@class,"c3-tooltip-container")]/table')
+    LEGENDS = ".//*[contains(@class, 'c3-legend-item c3-legend-item-')]"
+
+    def __init__(self, parent, locator, logger=None):
+        """Create the widget"""
+        Widget.__init__(self, parent, logger=logger)
+        self.locator = locator
+
+    def zoom_in(self):
+        """For zoom in to chart"""
+        self.browser.element(self.ZOOM_IN).click()
+        self.parent_browser.wait_for_element(self.ZOOM_OUT, timeout=10)
+
+    def zoom_out(self):
+        """For zoom out to chart"""
+        self.parent_browser.element(self.ZOOM_OUT).click()
+        self.browser.wait_for_element(self.ZOOM_IN, timeout=10)
+
+    def title(self):
+        """A function returning title of chart"""
+        return self.browser.element(self.BS_TITLE_LOCATOR).text
+
+    @property
+    def _elements(self):
+        br = self.browser
+        return {x.get_attribute('textContent'): el for (x, el) in zip(br.elements(self.X_AXIS),
+                                                                      br.elements(self.RECT))}
+
+    @property
+    def _element_ids(self):
+        return [el.id for el in self.browser.elements(self.RECT)]
+
+    @property
+    def _legends(self):
+        return {str(leg.text): leg for leg in self.browser.elements(self.LEGENDS)}
+
+    @property
+    def _legends_ids(self):
+        return [leg.id for leg in self.browser.elements(self.LEGENDS)]
+
+    def legend_is_displayed(self, leg):
+        if type(leg) is str:
+            leg = self._legends.get(leg)
+        return not('c3-legend-item-hidden' in self.browser.classes(leg))
+
+    @property
+    def _get_data(self):
+        data = {}
+        for el in self._elements.values():
+            self.tooltip.clear_cache()
+            self.browser.move_to_element(el)
+            tooltip_data = {self.tooltip.headers[0]: {row[0].text: row[1].text
+                                                      for row in self.tooltip.rows()}}
+            data.update(tooltip_data)
+        return data
+
+    def all_legends(self):
+        """ To get all available legends
+
+        Returns:
+            :py:class:`list` all available legends
+        """
+        return self._legends.keys()
+
+    def hide_all_legends(self):
+        """To hide all legends on chart"""
+
+        for legend in self._legends.values():
+            if self.legend_is_displayed(legend):
+                legend.click()
+
+    def display_all_legends(self):
+        """To display all legends on chart"""
+        for legend in self._legends.values():
+            if not self.legend_is_displayed(legend):
+                legend.click()
+
+    def display_legends(self, *legends):
+        """Display one or more legends on chart
+
+        Args:
+            legends: One or Multiple legends name
+        """
+        for legend in legends:
+            _leg = self._legends.get(legend)
+            if not self.legend_is_displayed(_leg):
+                _leg.click()
+
+    def hide_legends(self, *legends):
+        """Hide one or more legends on chart
+
+        Args:
+            legends: One or Multiple legends name
+        """
+        for legend in legends:
+            _leg = self._legends.get(legend)
+            if self.legend_is_displayed(_leg):
+                _leg.click()
+
+    def get_all_data(self):
+        """data for all legends and timestamp on chart
+
+        Returns:
+            :py:class:`set` complete data on chart
+        """
+        self.display_all_legends()
+        return self._get_data
+
+    def get_data_for_legends(self, *legends):
+        """data for specific legends on chart
+
+        Args:
+            legends: one or more legends
+        Returns:
+            :py:class:`set` data for selected legends
+        """
+        self.hide_all_legends()
+        self.display_legends(*legends)
+        return self._get_data
+
+    def get_data_for_timestamp(self, timestamp):
+        """data for specific timestamp on chart
+
+        Args:
+            timestamp: one or more legends
+        Returns:
+            :py:class:`set` data for selected timestamp
+        """
+        el = self._elements.get(timestamp)
+        self.browser.move_to_element(el)
+        tooltip_data = {}
+        self.tooltip.clear_cache()
+        for row in self.tooltip.rows():
+            tooltip_data.update({row[0].text: row[1].text})
+        return tooltip_data
