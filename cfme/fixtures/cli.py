@@ -1,15 +1,15 @@
+import pytest
+
 from collections import namedtuple
 from contextlib import contextmanager
-
-import pytest
-from wait_for import wait_for
 from six import iteritems
 
 import cfme.utils.auth as authutil
 from cfme.test_framework.sprout.client import SproutClient, SproutException
-from cfme.utils.version import get_stream
 from cfme.utils.conf import cfme_data, credentials, auth_data
 from cfme.utils.log import logger
+from cfme.utils.version import get_stream
+from cfme.utils.wait import wait_for
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 

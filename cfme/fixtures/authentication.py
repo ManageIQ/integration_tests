@@ -28,7 +28,7 @@ def setup_aws_auth_provider(appliance, amazon_auth_provider):
 
 @pytest.fixture(scope='function')
 def auth_provider(prov_key):
-        return authutil.get_auth_crud(prov_key)
+    return authutil.get_auth_crud(prov_key)
 
 
 @pytest.fixture(scope='function')

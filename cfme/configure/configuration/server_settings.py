@@ -614,6 +614,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
     def set_session_timeout(self, hours=None, minutes=None):
         """
             Sets the session timeout of the appliance.
+
             Args:
                 hours(str): timeout hours value
                 minutes(str): timeout minutes value
@@ -638,6 +639,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
     @property
     def auth_settings(self):
         """ Authentication view fields values
+
         Includes auth_mode
         """
         view = navigate_to(self.appliance.server, 'Authentication')
@@ -647,6 +649,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
     @auth_settings.setter
     def auth_settings(self, values):
         """Authentication view field setting, just form fill, no auth_provider handling
+
         Includes auth_mode
         Args:
             values: dict with auth_mode and auth_settings keys
