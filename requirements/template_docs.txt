@@ -10,6 +10,7 @@ boto
 bottle
 bottle-sqlite
 cached-property
+deepdiff
 diaper
 docker-py
 dump2polarion
@@ -30,13 +31,12 @@ layered-yaml-attrdict-config
 mock
 multimethods.py
 navmazing
-numpy>=1.13.1
+numpy>=1.14.0
 matplotlib>=1.5.1
 paramiko
 parsedatetime
 pdfminer
 progress
-psphere
 py
 pycrypto
 pygal
@@ -45,7 +45,7 @@ pygal
 python-novaclient<7.0.0
 
 PyGithub
-pytest==3.2.0
+pytest==3.4.1
 python-bugzilla>=1.2.0
 python-dateutil
 python-jenkins
@@ -64,8 +64,8 @@ tabulate==0.7.7
 tornado
 tzlocal
 wait_for
-widgetastic.core>=0.3.2
-widgetastic.patternfly>=0.0.15
+widgetastic.core>=0.20.0
+widgetastic.patternfly>=0.0.29
 yaycl
 yaycl-crypt
 
