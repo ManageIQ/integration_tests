@@ -65,6 +65,7 @@
 #       }
 #   } 
 #
+# Additionally it will add any files that did not get covered at all to the resultset file.
 require 'fileutils'
 require 'json'
 require 'logger'
@@ -136,15 +137,82 @@ EOM
   end
 end
 
+def add_non_covered_files(resultset, show_added_files)
+  # Scan the appliance sources and find files that are not
+  # in the resultset, and add them to the resultset.
+  $log.info('Adding non-covered files...')
+
+  # Note that we are not including manageiq- gems, and that is because
+  # though we pick up some files in the resultset from them mostly we 
+  # end up using cfme-* gems mostly.   Because of this just picking up
+  # all the manageiq- gems' puts the coverage statistics way out of kilter. 
+  include_globs = [
+    '/var/www/miq/vmdb/lib/**/*.rb',
+    '/var/www/miq/vmdb/app/**/*.rb',
+    '/opt/rh/cfme-gemset/bundler/gems/cfme-*/app/**/*.rb',
+  ]
+
+  # The things we are excluding where inherited from the thing_toucher.rb.
+  # I'm not really sure why they are excluded.
+  exclude_globs = [
+    '/var/www/miq/vmdb/lib/coverage_hook*',
+    '/var/www/miq/vmdb/lib/extensions/**/*.rb',
+    '/var/www/miq/vmdb/lib/tasks/**',
+    '/var/www/miq/vmdb/lib/workers/**',
+    '/var/www/miq/vmdb/app/models/**/*.rb',
+    '/opt/rh/cfme-gemset/bundler/gems/manageiq-*/app/models/**/*.rb',
+    '/opt/rh/cfme-gemset/bundler/gems/cfme-*/app/models/**/*.rb',
+  ]
+
+  # Go through the source files and if they are not in the 
+  # resultset and not in the excluded files list, add them
+  # to the resultset.   
+  includes = Dir.glob(include_globs)
+  excludes = Dir.glob(exclude_globs)
+  added_files = 0
+  includes.each do |filename|
+    $log.debug("Processing #{filename}")
+    if resultset['merged_data']['coverage'].has_key?(filename)
+      $log.debug('    Excluded(has coverage)')
+      next
+    end
+    if excludes.include?(filename)
+      $log.debug('    Excluded.')
+      next 
+    end
+
+    # We don't have coverage data for this file and it hasn't been 
+    # excluded so let's create it.   Note we use SimpleCov's LineClassifier
+    # to generate the coverage data.  This way we will be in complete
+    # agreement with what SimpleCov thinks is a runnable line or not.
+    $log.debug('    Generating coverage data.')
+    $log.info("Added #{filename}") if show_added_files
+    added_files += 1
+    lines = IO.readlines(filename)
+    classifier = SimpleCov::LinesClassifier.new()
+    coverage = classifier.classify(lines)
+    resultset['merged_data']['coverage'][filename] = coverage
+  end
+  $log.info("Added #{added_files} files.")
+end
+
 # Parse command line arguments:
 options = {}
 options[:coverage_root] = './coverage'
+options[:ignore_non_covered] = 0
+options[:show_added_files] = 0
 OptionParser.new do |parser|
-  parser.on("-c", "--coverageRoot DIR", "Path to the coverage directory.") do |v|
+  parser.on("-c", "--coverage-root DIR", "Path to the coverage directory.") do |v|
     options[:coverage_root] = v
   end
   parser.on("-v", "--verbose", "Turn on verbose output.") do 
     $log.level = Logger::DEBUG
+  end
+  parser.on("--ignore-non-covered", "Ignore non-covered files.") do
+    options[:ignore_non_covered] = 1
+  end
+  parser.on("--show-added-files", "Show added files due to 0% coverage.") do
+    options[:show_added_files] = 1
   end
 end.parse!
 
@@ -202,6 +270,11 @@ else
   puts "All results merged, compiling report: #{merged_result_set}"
 end
 
+# Add non covered source files to results:
+if options[:ignore_non_covered] == 0
+  add_non_covered_files(results, options[:show_added_files])
+end
+
 # Write the merged data out:
 FileUtils.mkdir_p(merged_dir)
 File.open(merged_result_set, "w") do |f|
@@ -212,15 +285,19 @@ end
 # Build our report #
 ####################
 # Set up simplecov to use the merged results, then fire off the formatters
+# Note we need to setup the filters before we instantiate SimpleCov's 
+# result from our results hash, as in new versions (e.g. 0.16.1)
+# the filtering is applied at the time you instantiate from a hash.
+$log.info('Generating HTML report.')
 SimpleCov.project_name "CFME #{cfme_version}"
 SimpleCov.root '/'
 SimpleCov.coverage_dir merged_dir
-SimpleCov.instance_variable_set("@result", SimpleCov::Result.from_hash(results))
 SimpleCov.formatters = SimpleCov::Formatter::HTMLFormatter
-SimpleCov.use_merging true
-SimpleCov.merge_timeout 2 << 28
+# At this time we don't need the merging facility because how the 
+# merge above worked (i.e. it's already merged)
+SimpleCov.use_merging false
 
-# Remove the original filters
+# Clear the original filters and add our own.
 SimpleCov.filters.clear
 SimpleCov.add_filter do |src|
   include_file = src.filename =~ /^#{rails_root}/
@@ -232,6 +309,9 @@ SimpleCov.add_filter do |src|
   end 
   ! include_file
 end
+
+# Load our result data up:
+SimpleCov.instance_variable_set("@result", SimpleCov::Result.from_hash(results))
 
 # Set up groups:
 SimpleCov.add_group "REST API", "app/controllers/api"
