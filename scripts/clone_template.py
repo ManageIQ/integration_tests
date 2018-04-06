@@ -158,12 +158,15 @@ def main(**kwargs):
     elif provider_type == 'openstack':
         # filter openstack flavors based on what's available
         available_flavors = provider.list_flavor()
+        logger.info("Available flavors on provider: {}".format(available_flavors))
         flavors = filter(lambda f: f in available_flavors, flavors)
         try:
             flavor = kwargs.get('flavor') or flavors[0]
         except IndexError:
             raise Exception('--flavor is required for RHOS instances and '
                             'default is not set or unavailable on provider')
+        logger.info("Selected flavor: {}".format(flavor))
+
         # flavour? Thanks, psav...
         deploy_args['flavour_name'] = flavor
 
