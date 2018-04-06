@@ -149,8 +149,8 @@ def main(**kwargs):
                 'expire': False,
                 'list': '{}:{}\n'.format(cred['ssh']['username'], cred['ssh']['password'])
             },
-            'disable_root': 0,
-            'ssh_pwauth': 1
+            'disable_root': False,
+            'ssh_pwauth': True
         }
         cloud_init = "#cloud-config\n{}".format(yaml.safe_dump(cloud_init_dict,
                                                                default_flow_style=False))
