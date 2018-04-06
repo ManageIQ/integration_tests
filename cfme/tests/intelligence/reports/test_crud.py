@@ -4,7 +4,6 @@ import pytest
 import yaml
 
 from cfme import test_requirements
-from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.intelligence.reports.reports import CustomReport
 from cfme.intelligence.reports.schedules import ScheduleCollection
 from cfme.intelligence.reports.widgets import AllDashboardWidgetsView
@@ -182,15 +181,14 @@ def test_rssfeedwidget_crud(appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-def test_dashboard_crud():
-    d = Dashboard(
+def test_dashboard_crud(appliance):
+    d = appliance.collections.report_dashboards.create(
         fauxfactory.gen_alphanumeric(),
         "EvmGroup-administrator",
         title=fauxfactory.gen_alphanumeric(),
         locked=False,
         widgets=["Top CPU Consumers (weekly)", "Vendor and Guest OS Chart"]
     )
-    d.create()
     with update(d):
         d.locked = True
     with update(d):
