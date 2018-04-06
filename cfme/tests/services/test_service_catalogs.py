@@ -133,7 +133,7 @@ def test_edit_catalog_after_deleting_provider(provider, catalog_item):
         test_flag: provision
     """
     provider.delete(cancel=False)
-    changes = {'description': 'my edited description'}
+    changes = {'basic_info.description': 'my edited description'}
     if provider.appliance.version > '5.9.0.20' and provider.one_of(RHEVMProvider):
         with pytest.raises(AssertionError):
             catalog_item.update(changes)
