@@ -178,13 +178,16 @@ class ApplianceConsoleCli(object):
             " --dbname {dbname} --verbose --dbdisk {dbdisk} --key --standalone".format(
                 username=username, password=password, dbname=dbname, dbdisk=dbdisk))
 
-    def configure_ipa(self, ipaserver, username, password, domain=None, realm=None):
-        assert self._run("--ipaserver {ipaserver} --ipaprincipal {username} "
-                         "--ipapassword {password} {domain} {realm}"
-                         .format(ipaserver=ipaserver, username=username, password=password,
-                                 domain='--ipadomain {}'.format(domain) if domain else '',
-                                 realm='--iparealm {}'.format(realm) if realm else ''))
-        assert self.appliance.sssd.running
+    def configure_ipa(self, ipaserver, ipaprincipal, ipapassword, ipadomain=None, iparealm=None):
+        cmd_result = self._run(
+            '--ipaserver {s} --ipaprincipal {u} --ipapassword {p} {d} {r}'
+            .format(s=ipaserver, u=ipaprincipal, p=ipapassword,
+                    d='--ipadomain {}'.format(ipadomain) if ipadomain else '',
+                    r='--iparealm {}'.format(iparealm) if iparealm else ''))
+        logger.debug('IPA configuration output: %s', str(cmd_result))
+        assert cmd_result.success
+        assert 'ipa-client-install exit code: 1' not in cmd_result.output
+        self.appliance.sssd.wait_for_running()
         assert self.appliance.ssh_client.run_command("cat /etc/ipa/default.conf "
                                                      "| grep 'enable_ra = True'")
 
@@ -2262,70 +2265,107 @@ class IPAppliance(object):
             raise KeyError("No such Domain: {}".format(domain))
 
     @logger_wrap('Configuring openldap external auth provider')
-    def configure_openldap(self, ipaddress, hostname, ldap_conf, sssd_conf,
-                           cert_filepath=None, cert_filename=None, **kwargs):
+    def configure_openldap(self, auth_provider, log_callback=None):
         """This method changes the /etc/sssd/sssd.conf and /etc/openldap/ldap.conf files to set
             up the appliance for an external authentication with OpenLdap.
             Apache file configurations are updated, for webui to take effect.
             Args:
-                ipaddress: ip of the openldap server
-                hostname: hostname of the openldap server
-                cert_filepath: optional path for placing TLS/SSL cert on appliance
-                cert_filename: optional name of the cert file in conf_path
-                kwargs: additional args for UI auth configuration (3 booleans)
+                auth_provider: auth provider object derived from cfme.utils.auth.MIQAuthProvider
         """
-        # TODO refactor using passed auth provider object instead of passed fields
         # write /etc/hosts entry for ldap hostname  TODO DNS
+        for key in ['ipaddress', 'cert_filename', 'cert_filepath', 'ldap_conf', 'sssd_conf']:
+            if not auth_provider.get(key):  # either not set, or None
+                raise ValueError('Auth Provider object {} needs attribute {} for external openldap'
+                                 .format(auth_provider, key))
+
         self.ssh_client.run_command('echo "{}  {}" >> /etc/hosts'
-                                    .format(ipaddress, hostname))
+                                    .format(auth_provider.ipaddress, auth_provider.host1))
         # place cert from local conf directory on ldap server
-        self.ssh_client.put_file(local_file=conf_path.join(cert_filename).strpath,
-                                 remote_file=cert_filepath)
+        self.ssh_client.put_file(local_file=conf_path.join(auth_provider.cert_filename).strpath,
+                                 remote_file=auth_provider.cert_filepath)
         # configure ldap and sssd with conf file content from yaml
-        assert self.ssh_client.run_command(
-            'echo "{s}" > {c}'.format(s=ldap_conf, c=self.CONF_FILES['openldap'])
-        )
-        assert self.ssh_client.run_command(
-            'echo "{s}" > {c}'.format(s=sssd_conf, c=self.CONF_FILES['sssd'])
-        )
+        assert self.ssh_client.run_command('echo "{s}" > {c}'
+                                           .format(s=auth_provider.ldap_conf,
+                                                   c=self.CONF_FILES['openldap']))
+        assert self.ssh_client.run_command('echo "{s}" > {c}'
+                                           .format(s=auth_provider.sssd_conf,
+                                                   c=self.CONF_FILES['sssd']))
         assert self.ssh_client.run_command('chown -R root:root {}').format(self.CONF_FILES['sssd'])
         assert self.ssh_client.run_command('chmod 600 {}').format(self.CONF_FILES['sssd'])
         # copy miq/cfme template files for httpd ext auth config
-        template_dir = self.CONF_FILES.get(
-            'downstream_templates' if self.is_downstream else 'upstream_templates'
-        )
+        template_dir = self.CONF_FILES.get('downstream_templates'
+                                           if self.is_downstream
+                                           else 'upstream_templates')
         # pam httpd-auth and httpd remote-user.conf
-        for file in [self.CONF_FILES['pam_httpd_auth'], self.CONF_FILES['httpd_remote_user']]:
-            assert self.ssh_client.run_command('cp {t}{c} {c}'.format(t=template_dir, c=file))
+        for conf_file in [self.CONF_FILES['pam_httpd_auth'], self.CONF_FILES['httpd_remote_user']]:
+            assert self.ssh_client.run_command('cp {t}{c} {c}'.format(t=template_dir, c=conf_file))
 
         # https external-auth conf, template has extra '.erb' suffix
-        assert self.ssh_client.run_command(
-            'cp {t}{c}.erb {c}'
-            .format(t=template_dir, c=self.CONF_FILES['httpd_ext_auth'])
-        )
+        assert self.ssh_client.run_command('cp {t}{c}.erb {c}'
+                                           .format(t=template_dir,
+                                                   c=self.CONF_FILES['httpd_ext_auth']))
         assert self.ssh_client.run_command('setenforce 0')
         self.sssd.restart()
         self.httpd.restart()
         self.wait_for_web_ui()
 
         # UI configuration of auth provider type
-        self.server.authentication.configure_auth(auth_mode='external', **kwargs)
+        self.server.authentication.configure(auth_mode='external', auth_provider=auth_provider)
 
     @logger_wrap('Disabling openldap external auth provider')
-    def disable_openldap(self):
+    def disable_openldap(self, log_callback=None):
         self.server.authentication.configure_auth()
         files_to_remove = [
-            '/etc/sssd/sssd.conf',
-            '/etc/pam.d/httpd-auth',
-            self.HTTPD_CONF_MODULES['manageiq_ext_auth'],
-            self.HTTPD_CONF_MODULES['manageiq_remoteuser']
+            self.CONF_FILES['sssd'],
+            self.CONF_FILES['pam_httpd_auth'],
+            self.CONF_FILES['httpd_ext_auth'],
+            self.CONF_FILES['httpd_remote_user']
         ]
-        for file in files_to_remove:
-            assert self.ssh_client.run_command('rm -rf {}'.format(file))
+        for conf_file in files_to_remove:
+            assert self.ssh_client.run_command('rm -f $(ls {})'.format(conf_file))
         self.evmserverd.restart()
         self.httpd.restart()
         self.wait_for_web_ui()
         self.server.authentication.configure_auth(auth_mode='database')
+
+    @logger_wrap('Configuring freeipa external auth provider')
+    def configure_freeipa(self, auth_provider, log_callback=None):
+        """Configure appliance UI and backend for freeIPA
+
+        Args:
+            auth_provider: An auth provider class derived from cfme.utils.auth.BaseAuthProvider
+        Notes:
+            Completes backend config via appliance_console_cli
+            Completes UI configuration for external auth mode
+        """
+        if self.is_pod:
+            # appliance_console_cli fails when calls hostnamectl --host. it seems docker issue
+            # raise BZ ?
+            assert str(self.ssh_client.run_command('hostname')).rstrip() == self.fqdn
+
+        # First, clear any existing ipa config, runs clean if not configured
+        self.appliance_console_cli.uninstall_ipa_client()
+        self.wait_for_web_ui()  # httpd restart in uninstall-ipa
+
+        # ext auth ipa requires NTP sync
+        if auth_provider.host1 not in self.server.settings.ntp_servers_values:
+            self.server.settings.update_ntp_servers({'ntp_server_1': auth_provider.host1})
+
+        # backend appliance configuration of ext auth provider
+        self.appliance_console_cli.configure_ipa(**auth_provider.as_external_value())
+
+        # UI configuration of auth provider type
+        self.server.authentication.configure(auth_mode='external', auth_provider=auth_provider)
+
+        # restart httpd
+        self.httpd.restart()
+
+    @logger_wrap('Disabling freeipa external auth provider')
+    def disable_freeipa(self, log_callback=None):
+        """Switch UI back to database authentication, and run --uninstall-ipa on appliance"""
+        self.appliance_console_cli.uninstall_ipa_client()
+        self.server.authentication.configure(auth_mode='database')
+        self.wait_for_web_ui()  # httpd restart in uninstall-ipa
 
     @logger_wrap("Configuring VM Console: {}")
     def configure_vm_console_cert(self, log_callback=None):

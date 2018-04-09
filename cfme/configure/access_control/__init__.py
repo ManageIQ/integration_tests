@@ -21,6 +21,20 @@ from widgetastic_manageiq import (
     UpDownSelect, PaginationPane, SummaryFormItem, Table, BaseListEntity, SummaryForm)
 
 
+EVM_DEFAULT_GROUPS = [
+    'evmgroup-super_administrator',
+    'evmgroup-administrator',
+    'evmgroup-approver',
+    'evmgroup-auditor',
+    'evmgroup-desktop',
+    'evmgroup-operator',
+    'evmgroup-security',
+    'evmgroup-support',
+    'evmgroup-user',
+    'evmgroup-vm_user'
+]
+
+
 class AccessControlToolbar(View):
     """ Toolbar on the Access Control page """
     configuration = Dropdown('Configuration')
@@ -287,12 +301,13 @@ class UserCollection(BaseCollection):
 
     ENTITY = User
 
-    def simple_user(self, userid, password):
+    def simple_user(self, userid, password, fullname=None):
+        """If a fullname is not supplied, userid is used for credential principal and user name"""
         creds = Credential(principal=userid, secret=password)
-        return self.instantiate(name=userid, credential=creds)
+        return self.instantiate(name=fullname or userid, credential=creds)
 
     def create(self, name=None, credential=None, email=None, groups=None, cost_center=None,
-               value_assign=None, cancel=False):
+               value_assign=None, fullname=None, cancel=False):
         """ User creation method
 
         Args:
@@ -302,6 +317,7 @@ class UserCollection(BaseCollection):
             groups: Add User to multiple groups in Versions >= 5.9.
             cost_center: User's cost center
             value_assign: user's value to assign
+            fullname: users full name
             cancel: True - if you want to cancel user creation,
                     by defaul user will be created
 
@@ -842,6 +858,9 @@ class GroupAll(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Groups')
+
+    def resetter(self, *args, **kwargs):
+        self.obj.appliance.browser.widgetastic.browser.refresh()
 
 
 @navigator.register(GroupCollection, 'Add')

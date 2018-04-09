@@ -41,7 +41,7 @@ def auth_groups():
        ['evmgroup-user', 'evmgroup-approver', 'evmgroup-auditor', 'evmgroup-operator',
         'evmgroup-support', 'evmgroup-security'])
 ])
-def test_group_roles(appliance, configure_aws_iam_auth_mode, group_name, context, soft_assert):
+def test_group_roles(appliance, setup_aws_auth_provider, group_name, context, soft_assert):
     """Basic default AWS_IAM group role auth + RBAC test
 
     Validates expected menu and submenu names are present for default
@@ -59,14 +59,17 @@ def test_group_roles(appliance, configure_aws_iam_auth_mode, group_name, context
         iam_group_name = group_name + '_aws_iam'
         username = credentials[iam_group_name]['username']
         password = credentials[iam_group_name]['password']
+        fullname = credentials[iam_group_name]['fullname']
     except KeyError:
         pytest.fail('No match in credentials file for group "{}"'.format(iam_group_name))
 
     with appliance.context.use(context):
-        user = appliance.collections.users.simple_user(username, password)
+        # fullname overrides user.name attribute, but doesn't impact login with username credential
+        user = appliance.collections.users.simple_user(username, password, fullname=fullname)
         view = appliance.server.login(user)
         assert appliance.server.current_full_name() == user.name
-        nav_visbility = view.navigation.nav_item_tree()
+        assert group_name.lower() in [name.lower() for name in appliance.server.group_names()]
+        nav_visible = view.navigation.nav_item_tree()
 
         # RFE BZ 1526495 shows up as an extra requests link in nav
         bz = BZ(1526495,
@@ -74,15 +77,14 @@ def test_group_roles(appliance, configure_aws_iam_auth_mode, group_name, context
                 unblock=lambda group_name: group_name not in
                 ['evmgroup-user', 'evmgroup-approver', 'evmgroup-desktop', 'evmgroup-vm_user',
                  'evmgroup-administrator', 'evmgroup-super_administrator'])
-        rfe_blocks = bz.blocks
         for area in group_access.keys():
             # using .get() on nav_visibility because it may not have `area` key
-            diff = DeepDiff(group_access[area], nav_visbility.get(area, {}),
+            diff = DeepDiff(group_access[area], nav_visible.get(area, {}),
                             verbose_level=0,  # If any higher, will flag string vs unicode
                             ignore_order=True)
             nav_extra = diff.get('iterable_item_added')
 
-            if nav_extra and 'Requests' in nav_extra.values() and rfe_blocks:
+            if nav_extra and 'Requests' in nav_extra.values() and bz.blocks:
                 logger.warning('Skipping RBAC verification for group "%s" due to %r',
                                group_name, bz)
                 continue

@@ -241,6 +241,13 @@ def current_group_name(self):
     return view.current_groupname if view.logged_in else None
 
 
+@MiqImplementationContext.external_for(Server.group_names, ViaUI)
+def group_names(self):
+    """Returns group names selectable for current user from settings dropdown if logged in"""
+    view = self.appliance.browser.create_view(BaseLoggedInPage)
+    return view.group_names if view.logged_in else None
+
+
 def automate_menu_name(appliance):
     if appliance.version < '5.8':
         return ['Automate']

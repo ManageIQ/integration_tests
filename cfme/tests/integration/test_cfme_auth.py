@@ -1,90 +1,164 @@
 # -*- coding: utf-8 -*-
 import pytest
-from widgetastic_patternfly import CandidateNotFound
+from six import iteritems
 
 from cfme.base.credential import Credential
+from cfme.base.login import BaseLoggedInPage
+from cfme.utils.auth import (
+    OpenLDAPAuthProvider, OpenLDAPSAuthProvider, ActiveDirectoryAuthProvider, FreeIPAAuthProvider,
+    AmazonAuthProvider
+)
 from cfme.utils.blockers import GH
 from cfme.utils.conf import auth_data
 from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
-pytestmark = pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+pytestmark = [
+    pytest.mark.uncollectif(lambda appliance: appliance.is_pod),
+    pytest.mark.meta(blockers=[
+        GH('ManageIQ/integration_tests:6465',
+           # need SSL openldap server
+           unblock=lambda auth_mode, prov_key: not (
+               auth_mode in ['external', 'ldaps'] and
+               auth_data.auth_providers[prov_key].type == 'openldaps')
+           )
+    ])
+]
 
-RETRIEVE_GROUP = 'retrieve_group'
-CREATE_GROUP = 'create_group'
+# map auth provider types, auth_modes, and user_types for test matrix
+# first key level is auth mode
+# second key level is provider type  (auth_provider key in parametrization)
+# finally, user_types valid for testing on the above combination of provider+mode
+test_param_maps = {
+    'amazon': {
+        AmazonAuthProvider.auth_type: {
+            'user_types': ['username']}
+    },
+    'ldap': {
+        ActiveDirectoryAuthProvider.auth_type: {
+            # add cn_domain, samacct
+            'user_types': ['cn', 'email', 'uid', 'upn']
+        },
+        FreeIPAAuthProvider.auth_type: {
+            'user_types': ['cn', 'uid']  # add cn_domain
+        },
+        OpenLDAPAuthProvider.auth_type: {
+            'user_types': ['cn', 'uid']  # add cn_domain
+        }
+    },
+    'external': {
+        FreeIPAAuthProvider.auth_type: {
+            'user_types': ['uid']
+        },
+        OpenLDAPSAuthProvider.auth_type: {
+            'user_types': ['uid']
+        }
+        # TODO add ActiveDirectory SAMAcct usertype for external
+    }}
 
 
 def pytest_generate_tests(metafunc):
-    auth_modes = auth_data.get('auth_providers')
-    if not auth_modes:
-        return
-    argvalues = [[authmode] for authmode in auth_modes]
-    if 'configure_auth' in metafunc.fixturenames:
-        metafunc.parametrize(['auth_mode'], argvalues)
+    """ zipper auth_modes and auth_prov together and drop the nonsensical combos """
+    # TODO use supportability and provider type+version parametrization
+    argnames = ['auth_mode', 'prov_key', 'user_type']
+    argvalues = []
+    for mode in test_param_maps.keys():
+        for auth_type in test_param_maps.get(mode, {}):
+            eligible_providers = {key: prov_dict
+                                  for key, prov_dict in iteritems(auth_data.auth_providers)
+                                  if prov_dict.type == auth_type}
+            for user_type in test_param_maps[mode][auth_type]['user_types']:
+                argvalues.extend([[mode, key, user_type]
+                                 for key, prov_dict in iteritems(eligible_providers)
+                                 if user_type in prov_dict.get('user_types', [])])
+    metafunc.parametrize(argnames, argvalues)
 
 
-@pytest.fixture()
-def data(request, auth_mode, add_group):
-    yaml_data = auth_data['auth_test'].get(auth_mode, {})
-    if add_group == 'evm_default_group':
-        yaml_data['get_groups'] = False
-    return yaml_data
-
-
-@pytest.fixture()
-def group(request, data, auth_mode, add_group, appliance):
-    if not data:
-        pytest.skip("No data spcified for user group")
-    credentials = Credential(
-        principal=data["username"],
-        secret=data["password"],
-    )
+@pytest.yield_fixture(scope='function')
+def create_group(appliance, **kwargs):
+    """Helper method to check for existance of a group and delete if need be"""
     group_collection = appliance.collections.groups
-    user_group = None
-    if add_group == RETRIEVE_GROUP:
-        user_group = group_collection.instantiate(
-            description=data['group_name'], role="EvmRole-user",
-            user_to_lookup=data["username"], ldap_credentials=credentials)
-        if 'ext' in auth_mode:
-            user_group.add_group_from_ext_auth_lookup()
-        elif 'miq' in auth_mode:
-            user_group.add_group_from_ldap_lookup()
-        request.addfinalizer(user_group.delete)
-    elif add_group == CREATE_GROUP:
-        user_group = group_collection.create(
-            description=data['group_name'], role="EvmRole-user",
-            user_to_lookup=data["username"], ldap_credentials=credentials)
-        request.addfinalizer(user_group.delete)
+    group_args = {
+        'description': kwargs.get('group_name'),
+        'role': kwargs.get('role')}
+    group = group_collection.create(**group_args)  # gets re-instantiated in create
+    assert group.exists
+    yield group
 
-
-@pytest.fixture()
-def user(request, data, add_group, appliance):
-    if not data:
-        pytest.skip("No data specified for user")
-    username, password = data["username"], data["password"]
-    if 'evm_default_group' in add_group:
-        username, password = data['default_username'], data['default_password']
-        data['fullname'] = data['default_userfullname']
-    credentials = Credential(
-        principal=username,
-        secret=password,
-        verify_secret=password,
-    )
-    user_obj = appliance.collections.users.instantiate(
-        name=data['fullname'], credential=credentials
-    )
     try:
-        request.addfinalizer(user_obj.delete)
-    except CandidateNotFound:
-        logger.warning('User was not found during deletion')
-    return user_obj
+        group.delete()
+    except Exception:
+        logger.warning('Exception during group fixture cleanup')
 
 
 @pytest.mark.tier(1)
-@pytest.mark.parametrize(
-    "add_group", ['create_group', 'retrieve_group', 'evm_default_group'])
-@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6465',
-                               unblock=lambda auth_mode: auth_mode != 'ext_openldap')])
-def test_auth_configure(appliance, request, configure_auth, group, user, data):
+@pytest.mark.uncollectif(lambda auth_mode: auth_mode == 'amazon')  # default groups tested elsewhere
+def test_login_evm_group(appliance, auth_mode, prov_key, user_type, auth_provider, configure_auth,
+                         auth_user_data):
+    """This test checks whether a user can login while assigned a default EVM group
+        Prerequisities:
+            * ``auth_data.yaml`` file
+            * auth provider configured with user as a member of a group matching default EVM group
+        Test will configure auth and login
+    """
+    user_col = appliance.collections.users
+    # get a list of (user_obj, groupname) tuples, creating the user object inline
+    # Replace spaces with dashes in UPN type usernames for login compatibility
+    # filtering on those that have evmgroup in groupname
+    user_tuples = [
+        (user_col.simple_user(
+            user.username.replace(' ', '-') if user_type == 'upn' else user.username,
+            user.password, fullname=user.fullname),
+         user.groupname)
+        for user in auth_user_data
+        if 'evmgroup' in user.groupname.lower()]
+
+    for user, groupname in user_tuples:
+        with user:
+            # use appliance.server methods for UI context instead of view directly
+            appliance.server.login(user, method='click_on_login')
+            view = appliance.browser.create_view(BaseLoggedInPage)
+            assert view.is_displayed
+            assert appliance.server.current_full_name() == user.name
+            assert groupname.lower() in [name.lower() for name in appliance.server.group_names()]
+            appliance.server.logout()
+
+    # split loop to reduce number of logins
+    appliance.server.login_admin()
+    for user, groupname in user_tuples:
+        assert user.exists
+
+
+def retrieve_group(appliance, auth_mode, user_data):
+    """Retrieve group from ext/ldap auth provider through UI
+
+    Args:
+        appliance: appliance object
+        auth_mode: key from cfme.configure.configuration.server_settings.AUTH_MODES, parametrization
+        user_data: user_data AttrDict from yaml, with username, groupname, password fields
+
+    """
+    credentials = Credential(principal=user_data["username"],
+                             secret=user_data["password"])
+    group = appliance.collections.groups.instantiate(description=user_data['groupname'],
+                                                     role="EvmRole-user",
+                                                     user_to_lookup=user_data["username"],
+                                                     ldap_credentials=credentials)
+    add_method = ('add_group_from_ext_auth_lookup'
+                  if auth_mode == 'external' else
+                  'add_group_from_ldap_lookup')
+    if not group.exists:
+        getattr(group, add_method)()  # call method to add
+        wait_for(lambda: group.exists)
+    else:
+        logger.info('User Group exists, skipping create: %r', group)
+    return group
+
+
+@pytest.mark.tier(1)
+@pytest.mark.uncollectif(lambda auth_mode: auth_mode == 'amazon')
+def test_login_retrieve_group(appliance, request, prov_key, auth_mode, auth_provider,
+                              configure_auth, auth_user_data, user_type):
     """This test checks whether different cfme auth modes are working correctly.
        authmodes tested as part of this test: ext_ipa, ext_openldap, miq_openldap
        e.g. test_auth[ext-ipa_create-group]
@@ -94,11 +168,36 @@ def test_auth_configure(appliance, request, configure_auth, group, user, data):
             * Make sure corresponding auth_modes data is updated to ``auth_data.yaml``
             * this test fetches the auth_modes from yaml and generates tests per auth_mode.
     """
+    # get a list of (user_obj, groupname) tuples, creating the user object inline
+    # Replace spaces with dashes in UPN type usernames for login compatibility
+    # filtering on those that do NOT evmgroup in groupname
+    user_group_tuples = [(
+        appliance.collections.users.simple_user(
+            user.username.replace(' ', '-') if user_type == 'upn' else user.username,
+            user.password,
+            fullname=user.fullname),
+        retrieve_group(appliance, auth_mode, user))
+        for user in auth_user_data
+        if 'evmgroup' not in user.groupname.lower()]  # exclude built-in evm groups
 
-    request.addfinalizer(appliance.server.login_admin)
-    with user:
-        appliance.server.login(user)
-        assert appliance.server.current_full_name() == data['fullname']
-        appliance.server.logout()
+    def _group_cleanup(group):
+        try:
+            group.delete
+        except Exception:
+            logger.warning('Exception deleting group for cleanup, continuing.')
+            pass
+
+    for user, group in user_group_tuples:
+        with user:
+            request.addfinalizer(lambda: _group_cleanup(group))
+            appliance.server.login(user, method='click_on_login')
+            view = appliance.browser.create_view(BaseLoggedInPage)
+            assert view.is_displayed
+            assert appliance.server.current_full_name() == user.name
+            assert group.description.lower() in [name.lower() for
+                                                 name in appliance.server.group_names()]
+            appliance.server.logout()
+
     appliance.server.login_admin()
-    assert user.exists is True
+    for user, _ in user_group_tuples:
+        assert user.exists

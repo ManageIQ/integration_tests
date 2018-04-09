@@ -25,6 +25,13 @@ tzs = [
     TZ('Pacific/Apia', ('10', '1')),
     TZ('UTC', ('11',))
 ]
+RETURN = ''
+
+ext_auth_options = [
+    LoginOption('sso', 'sso_enabled', '1'),
+    LoginOption('saml', 'saml_enabled', '2'),
+    LoginOption('local_login', 'local_login_disabled', '3')
+]
 
 
 @pytest.mark.smoke
@@ -40,7 +47,7 @@ def test_appliance_console(appliance):
                                             .format(appliance.product_name))
 
 
-def test_appliance_console_set_hostname(appliance):
+def test_appliance_console_set_hostname(appliance, restore_hostname):
     """'ap' launch appliance_console, '' clear info screen, '1' loads network settings, '5' gives
     access to set hostname, 'hostname' sets new hostname."""
 
@@ -52,9 +59,9 @@ def test_appliance_console_set_hostname(appliance):
         assert appliance.ssh_client.run_command("hostname -f | grep {hostname}"
             .format(hostname=hostname))
     wait_for(is_hostname_set, func_args=[appliance])
-    return_code, output = appliance.ssh_client.run_command("hostname -f")
-    assert output.strip() == hostname
-    assert return_code == 0
+    result = appliance.ssh_client.run_command("hostname -f")
+    assert result.success
+    assert result.output.strip() == hostname
 
 
 @pytest.mark.parametrize('timezone', tzs, ids=[tz.name for tz in tzs])
@@ -269,81 +276,88 @@ def test_appliance_console_extend_storage(unconfigured_appliance):
     wait_for(is_storage_extended)
 
 
-@pytest.mark.uncollect('No IPA servers currently available')
-def test_appliance_console_ipa(ipa_creds, configured_appliance):
-    """'ap' launches appliance_console, '' clears info screen, '11' setup IPA, 'y' confirm setup
+def test_appliance_console_ipa(ipa_crud, configured_appliance):
+    """'ap' launches appliance_console, '' clears info screen, '11' setup IPA,
     + wait 40 secs and '' finish."""
 
-    command_set = ('ap', '', '11', ipa_creds['hostname'], ipa_creds['domain'], '',
-        ipa_creds['username'], ipa_creds['password'], TimedCommand('y', 40), '')
+    setup_ipa = '11'
+    command_set = ('ap', RETURN, setup_ipa,
+                   ipa_crud.host1,
+                   ipa_crud.ipadomain or RETURN,
+                   ipa_crud.iparealm or RETURN,
+                   ipa_crud.ipaprincipal or RETURN,
+                   ipa_crud.bind_password,
+                   TimedCommand('y', 40), RETURN)
     configured_appliance.appliance_console.run_commands(command_set)
+    configured_appliance.sssd.wait_for_running()
+    assert configured_appliance.ssh_client.run_command("cat /etc/ipa/default.conf |"
+                                                       "grep 'enable_ra = True'")
 
-    def is_sssd_running(configured_appliance):
-        assert configured_appliance.ssh_client.run_command("systemctl status sssd | grep running")
-    wait_for(is_sssd_running, func_args=[configured_appliance])
-    return_code, output = configured_appliance.ssh_client.run_command(
-        "cat /etc/ipa/default.conf | grep 'enable_ra = True'")
-    assert return_code == 0
+    # Unconfigure to cleanup
+    # When setup_ipa option selected, will prompt to unconfigure, then to proceed with new config
+    command_set = ('ap', RETURN, setup_ipa, TimedCommand('y', 40), TimedCommand('n', 5))
+    configured_appliance.appliance_console.run_commands(command_set)
+    wait_for(lambda: not configured_appliance.sssd.running)
 
 
-@pytest.mark.uncollect('No IPA servers currently available')
-@pytest.mark.parametrize('auth_type', [
-    LoginOption('sso', 'sso_enabled', '1'),
-    LoginOption('saml', 'saml_enabled', '2'),
-    LoginOption('local_login', 'local_login_disabled', '3')
-], ids=['sso', 'saml', 'local_login'])
-def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud):
-    """'ap' launches appliance_console, '' clears info screen, '12' change ext auth options,
+@pytest.mark.parametrize('auth_type', ext_auth_options, ids=[opt.name for opt in ext_auth_options])
+def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configured_appliance):
+    """'ap' launches appliance_console, '' clears info screen, '12/15' change ext auth options,
     'auth_type' auth type to change, '4' apply changes."""
+    # TODO this depends on the auth_type options being disabled when the test is run
+    # TODO it assumes that first switch is to true, then false.
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*{} to true.*'.format(auth_type.option)],
-                            hostname=ipa_crud.hostname,
+                            hostname=configured_appliance.hostname,
                             username=app_creds['sshlogin'],
-                            password=app_creds['password'])
+                            password=app_creds['sshpass'])
     evm_tail.fix_before_start()
-    command_set = ('ap', '', '12', auth_type.index, '4')
-    ipa_crud.appliance_console.run_commands(command_set)
+    ext_auth = '12'
+    command_set = ('ap', '', ext_auth, auth_type.index, '4')
+    configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*{} to false.*'.format(auth_type.option)],
-                            hostname=ipa_crud.hostname,
+                            hostname=configured_appliance.hostname,
                             username=app_creds['sshlogin'],
-                            password=app_creds['password'])
+                            password=app_creds['sshpass'])
 
     evm_tail.fix_before_start()
     command_set = ('ap', '', '12', auth_type.index, '4')
-    ipa_crud.appliance_console.run_commands(command_set)
+    configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
 
-@pytest.mark.uncollect('No IPA servers currently available')
-def test_appliance_console_external_auth_all(app_creds, ipa_crud):
-    """'ap' launches appliance_console, '' clears info screen, '12' change ext auth options,
+def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_appliance):
+    """'ap' launches appliance_console, '' clears info screen, '12/15' change ext auth options,
     'auth_type' auth type to change, '4' apply changes."""
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
-                            matched_patterns=['.*sso_enabled to true.*', '.*saml_enabled to true.*',
-                                '.*local_login_disabled to true.*'],
-                            hostname=ipa_crud.hostname,
+                            matched_patterns=['.*sso_enabled to true.*',
+                                              '.*saml_enabled to true.*',
+                                              '.*local_login_disabled to true.*'],
+                            hostname=configured_appliance.hostname,
                             username=app_creds['sshlogin'],
                             password=app_creds['password'])
     evm_tail.fix_before_start()
-    command_set = ('ap', '', '12', '1', '2', '3', '4')
-    ipa_crud.appliance_console.run_commands(command_set)
+    ext_auth = '12'
+    command_set = ('ap', '', ext_auth, '1', '2', '3', '4')
+    configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*sso_enabled to false.*',
-                                '.*saml_enabled to false.*', '.*local_login_disabled to false.*'],
-                            hostname=ipa_crud.hostname,
+                                              '.*saml_enabled to false.*',
+                                              '.*local_login_disabled to false.*'],
+                            hostname=configured_appliance.hostname,
                             username=app_creds['sshlogin'],
                             password=app_creds['password'])
 
     evm_tail.fix_before_start()
-    command_set = ('ap', '', '12', '1', '2', '3', '4')
-    ipa_crud.appliance_console.run_commands(command_set)
+    command_set = ('ap', '', ext_auth, '1', '2', '3', '4')
+    configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
 
