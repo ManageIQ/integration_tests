@@ -294,25 +294,31 @@ def run(**kwargs):
         if cli_provider and cli_provider != provider:
             continue
 
+        print("\n--------Start of {}--------".format(provider))
+
         provider_mgmt = get_mgmt(provider)
 
-        if not net.is_pingable(provider_mgmt.kwargs.get('ipaddress')):
-            continue
-        elif not is_ovirt_engine_running(provider_mgmt):
-            print('ovirt-engine service not running..')
-            continue
-
         try:
+            # Raise exceptions here to log the end of provider section
+            if not net.is_pingable(provider_mgmt.kwargs.get('ipaddress')):
+                raise ValueError('Failed to ping provider.')
+            elif not is_ovirt_engine_running(provider_mgmt):
+                print('ovirt-engine service not running..')
+                raise ValueError('ovirt-engine not running on provider')
+
             print('connecting to provider, to establish api handler')
             edomain = kwargs.get('edomain')
             if not edomain:
                 edomain = provider_mgmt.kwargs['template_upload']['edomain']
+            # Test API connection to provider, raises RequestError
+            provider_mgmt.api  # noqa
         except Exception as e:
+            print('Failed connecting to provider: {}'.format(e))
             logger.exception(e)
+            print("--------FAILURE End of {}--------\n".format(provider))
             continue
 
         try:
-            print("\n--------Start of {}--------".format(provider))
             cleanup_templates(provider_mgmt.api,
                               edomain,
                               kwargs.get('days_old'),
