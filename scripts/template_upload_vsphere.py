@@ -76,8 +76,10 @@ def upload_ova(hostname, username, password, name, datastore,
     if proxy:
         cmd_args.append("--proxy={}".format(proxy))
     cmd_args.append(url)
-    cmd_args.append("'vi://{}:{}@{}/{}/host/{}'".format(username, password, hostname,
-                                                      datacenter, cluster))
+    cmd_args.append(
+        "'vi://{}:{}@{}/{}/host/{}'"
+        .format(username, password, hostname, datacenter, cluster)
+    )
     logger.info("VSPHERE:%r Running OVFTool", provider)
 
     command = ' '.join(cmd_args)
@@ -181,7 +183,8 @@ def make_kwargs_vsphere(cfmeqe_data, provider):
 
 
 def upload_template(client, hostname, username, password,
-                    provider, url, name, provider_data, stream):
+                    provider, url, name, provider_data, stream,
+                    results):
 
     try:
         if provider_data:
@@ -196,7 +199,9 @@ def upload_template(client, hostname, username, password,
 
         logger.info("VSPHERE:%r Start uploading Template: %r", provider, name)
         if not check_kwargs(**kwargs):
-            return False
+            results[provider] = False
+            return
+
         if name in client.list_template():
             logger.info("VSPHERE:%r template %r already exists", provider, name)
         else:
@@ -221,19 +226,24 @@ def upload_template(client, hostname, username, password,
                         break
                 else:
                     logger.error("VSPHERE:%r Ovftool failed upload after multiple tries", provider)
+                    results[provider] = False
                     return
 
             if kwargs.get('disk'):
                 if not add_disk(client, name, provider):
                     logger.error('"VSPHERE:%r FAILED adding disk to VM, exiting', provider)
-                    return False
+                    results[provider] = False
+                    return
+
             if kwargs.get('template'):
                 try:
                     client.mark_as_template(vm_name=name)
                     logger.info("VSPHERE:%r Successfully templatized machine", provider)
                 except Exception:
                     logger.exception("VSPHERE:%r FAILED to templatize machine", provider)
-                    return False
+                    results[provider] = False
+                    return
+
             if not provider_data:
                 logger.info("VSPHERE:%r Adding template %r to trackerbot", provider, name)
                 trackerbot.trackerbot_add_provider_template(stream, provider, name)
@@ -244,58 +254,73 @@ def upload_template(client, hostname, username, password,
             deploy_args = {'provider': provider, 'vm_name': vm_name,
                            'template': name, 'deploy': True}
             getattr(__import__('clone_template'), "main")(**deploy_args)
+
+        # If we get here without hitting an exception, we passed...
+        results[provider] = True
     except Exception:
         logger.exception('VSPHERE:%r Exception during upload_template', provider)
-        return False
+        results[provider] = False
+        return
     finally:
         logger.info("VSPHERE:%r End uploading Template: %r", provider, name)
 
 
 def run(**kwargs):
+    thread_queue = []
+    providers = list_provider_keys("virtualcenter")
+    if kwargs['provider_data']:
+        mgmt_sys = providers = kwargs['provider_data']['management_systems']
+    else:
+        mgmt_sys = cfme_data.management_systems
 
-    try:
-        thread_queue = []
-        providers = list_provider_keys("virtualcenter")
+    # Store thread results, no need to use a lock
+    # because threads will not be adding new keys
+    results = {provider: None for provider in providers}
+
+    for provider in providers:
+        # skip provider if block_upload is set
+        if (mgmt_sys[provider].get('template_upload') and
+                mgmt_sys[provider]['template_upload'].get('block_upload')):
+            logger.info('Skipping upload on %s due to block_upload', provider)
+            continue
         if kwargs['provider_data']:
-            mgmt_sys = providers = kwargs['provider_data']['management_systems']
+            if mgmt_sys[provider]['type'] != 'virtualcenter':
+                continue
+            username = mgmt_sys[provider]['username']
+            password = mgmt_sys[provider]['password']
         else:
-            mgmt_sys = cfme_data.management_systems
+            creds = credentials[mgmt_sys[provider]['credentials']]
+            username = creds['username']
+            password = creds['password']
+        host_ip = mgmt_sys[provider]['ipaddress']
+        hostname = mgmt_sys[provider]['hostname']
+        client = VMWareSystem(hostname, username, password)
 
-        for provider in providers:
-            # skip provider if block_upload is set
-            if (mgmt_sys[provider].get('template_upload') and
-                    mgmt_sys[provider]['template_upload'].get('block_upload')):
-                logger.info('Skipping upload on {} due to block_upload'.format(provider))
-                continue
-            if kwargs['provider_data']:
-                if mgmt_sys[provider]['type'] != 'virtualcenter':
-                    continue
-                username = mgmt_sys[provider]['username']
-                password = mgmt_sys[provider]['password']
-            else:
-                creds = credentials[mgmt_sys[provider]['credentials']]
-                username = creds['username']
-                password = creds['password']
-            host_ip = mgmt_sys[provider]['ipaddress']
-            hostname = mgmt_sys[provider]['hostname']
-            client = VMWareSystem(hostname, username, password)
+        if not net.is_pingable(host_ip):
+            continue
+        thread = Thread(target=upload_template,
+                        args=(client, hostname, username, password, provider,
+                              kwargs.get('image_url'), kwargs.get('template_name'),
+                              kwargs['provider_data'], kwargs['stream'], results))
+        thread.daemon = True
+        thread_queue.append(thread)
+        thread.start()
 
-            if not net.is_pingable(host_ip):
-                continue
-            thread = Thread(target=upload_template,
-                            args=(client, hostname, username, password, provider,
-                                  kwargs.get('image_url'), kwargs.get('template_name'),
-                                  kwargs['provider_data'], kwargs['stream']))
-            thread.daemon = True
-            thread_queue.append(thread)
-            thread.start()
+    for thread in thread_queue:
+        thread.join()
 
-        for thread in thread_queue:
-            thread.join()
-    except Exception:
-        logger.exception('Exception during run method')
-        return False
+    failed_providers = [provider for provider, result in results.items() if result is False]
+    skipped_providers = [provider for provider, result in results.items() if result is None]
+    passed_providers = [provider for provider, result in results.items() if result]
 
+    logger.info("providers skipped: %s", skipped_providers)
+    logger.info("providers passed: %s", passed_providers)
+    logger.info("providers failed: %s", failed_providers)
+
+    if not passed_providers:
+        raise Exception("Template upload failed for all providers")
+    else:
+        logger.info("Upload passed for at least 1 provider... success!")
 
 if __name__ == "__main__":
     args = parse_cmd_line()

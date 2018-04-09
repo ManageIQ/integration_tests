@@ -472,7 +472,7 @@ class IPAppliance(object):
             key_address: Fetch encryption key from this address if set, generate a new key if
                          ``None`` (default ``None``)
             on_openstack: If appliance is running on Openstack provider (default ``False``)
-
+            on_gce: If appliance is running on GCE provider (default ``False``)
         """
 
         log_callback("Configuring appliance {}".format(self.hostname))
@@ -482,6 +482,7 @@ class IPAppliance(object):
         key_address = kwargs.pop('key_address', None)
         db_address = kwargs.pop('db_address', None)
         on_openstack = kwargs.pop('on_openstack', False)
+        on_gce = kwargs.pop('on_gce', False)
         with self as ipapp:
             ipapp.wait_for_ssh()
 
@@ -495,6 +496,8 @@ class IPAppliance(object):
             self.ssh_client.run_command("systemctl daemon-reload", ensure_host=True)
             self.ssh_client.run_command("service auditd restart", ensure_host=True)
 
+            ipapp.wait_for_ssh()
+
             self.deploy_merkyl(start=True, log_callback=log_callback)
             if fix_ntp_clock and not self.is_pod:
                 self.fix_ntp_clock(log_callback=log_callback)
@@ -505,6 +508,10 @@ class IPAppliance(object):
 
             self.db.setup(region=region, key_address=key_address,
                           db_address=db_address, is_pod=self.is_pod)
+
+            if on_gce:
+                # evm serverd does not auto start on GCE instance..
+                self.start_evm_service(log_callback=log_callback)
             self.wait_for_evm_service(timeout=1200, log_callback=log_callback)
 
             # Some conditionally ran items require the evm service be
@@ -598,20 +605,9 @@ class IPAppliance(object):
             logging.info("Running command: {}".format(command))
             client.run_command(command)
 
-    # TODO: this method eventually needs to be moved to provider class..
-    @logger_wrap("Configure GCE IPAppliance: {}")
     def configure_gce(self, log_callback=None):
-        self.wait_for_ssh(timeout=1200)
-        self.deploy_merkyl(start=True, log_callback=log_callback)
-        # TODO: Fix NTP on GCE instances.
-        # self.fix_ntp_clock(log_callback=log_callback)
-        self.db.enable_internal()
-        # evm serverd does not auto start on GCE instance..
-        self.start_evm_service(log_callback=log_callback)
-        self.wait_for_evm_service(timeout=1200, log_callback=log_callback)
-        self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-        self.db.loosen_pgssl()
-        self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+        # Force use of IPAppliance's configure method
+        return IPAppliance.configure(self, on_gce=True)
 
     def seal_for_templatizing(self):
         """Prepares the VM to be "generalized" for saving as a template."""
@@ -2064,7 +2060,7 @@ class IPAppliance(object):
                 raise Exception('Error obtaining config')
             try:
                 return yaml.load(base_data.output)
-            except:
+            except Exception:
                 logger.debug(base_data.output)
                 raise
 
@@ -2390,30 +2386,31 @@ class IPAppliance(object):
         self.ssh_client.put_file(cert_generator, remote_cert_generator)
 
         # Generate cert
-        command = '''
-            {cert_generator} \\
-                --C="{country}" \\
-                --ST="{state}" \\
-                --L="{city}" \\
-                --O="{organization}" \\
-                --OU="{organizational_unit}" \\
-                --keyFile="{key}" \\
-                --certFile="{cert}"
-        '''.format(
-            cert_generator=remote_cert_generator,
-            country=cert.country,
-            state=cert.state,
-            city=cert.city,
-            organization=cert.organization,
-            organizational_unit=cert.organizational_unit,
-            key=key_file,
-            cert=cert_file,
+        command = (
+            '{cert_generator}'
+            ' --C "{country}"'
+            ' --ST "{state}"'
+            ' --L "{city}"'
+            ' --O "{organization}"'
+            ' --OU "{organizational_unit}"'
+            ' --keyFile "{key}"'
+            ' --certFile "{cert}"'
+            .format(
+                cert_generator=remote_cert_generator,
+                country=cert.country,
+                state=cert.state,
+                city=cert.city,
+                organization=cert.organization,
+                organizational_unit=cert.organizational_unit,
+                key=key_file,
+                cert=cert_file,
+            )
         )
         result = self.ssh_client.run_command(command)
         if not result == 0:
             raise Exception(
                 'Failed to generate self-signed SSL cert on appliance: {}'.format(
-                    result[1]
+                    result.output
                 )
             )
 
