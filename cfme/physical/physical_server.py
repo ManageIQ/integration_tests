@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """A model of an Infrastructure PhysicalServer in CFME."""
 import attr
+import requests
 from navmazing import NavigateToSibling, NavigateToAttribute
 from cached_property import cached_property
 from wrapanapi.lenovo import LenovoSystem
@@ -78,11 +79,13 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Ta
         target = kwargs.get("target", None)
         provider = kwargs.get("provider", None)
         desired_state = kwargs.get("desired_state", None)
+        timeout = kwargs.get("timeout", 300)
+        delay = kwargs.get("delay", 10)
 
         view = self._execute_button(button, option, handle_alert=handle_alert)
 
         if desired_state:
-            self._wait_for_state_change(desired_state, target, provider, view)
+            self.wait_for_state_change(desired_state, target, provider, view, timeout, delay)
         elif handle_alert:
             wait_for(
                 lambda: view.flash.is_displayed,
@@ -97,14 +100,23 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Ta
     def power_off(self, **kwargs):
         self._execute_action_button("Power", "Power Off", **kwargs)
 
-    def power_off_immediately(self, **kwargs):
+    def power_off_now(self, **kwargs):
         self._execute_action_button("Power", "Power Off Immediately", **kwargs)
 
     def restart(self, **kwargs):
         self._execute_action_button("Power", "Restart", **kwargs)
 
-    def restart_immediately(self, **kwargs):
+    def restart_now(self, **kwargs):
         self._execute_action_button("Power", "Restart Immediately", **kwargs)
+
+    def restart_to_sys_setup(self, **kwargs):
+        self._execute_action_button("Power", "Restart to System Setup", **kwargs)
+
+    def restart_management_controller(self, wait_restart_bmc=False, **kwargs):
+        self._execute_action_button("Power", "Restart Management Controller",
+                                    **kwargs)
+        if wait_restart_bmc:
+            self._wait_restart_bmc()
 
     def refresh(self, provider, handle_alert=False):
         last_refresh = provider.last_refresh_date()
@@ -114,22 +126,27 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Ta
             lambda: last_refresh != provider.last_refresh_date(),
             message="Wait for the server to be refreshed...",
             num_sec=300,
-            delay=5
+            delay=30
         )
 
-    def turn_on_led(self, **kwargs):
+    def turn_on_loc_led(self, **kwargs):
         self._execute_action_button('Identify', 'Turn On LED', **kwargs)
 
-    def turn_off_led(self, **kwargs):
+    def turn_off_loc_led(self, **kwargs):
         self._execute_action_button('Identify', 'Turn Off LED', **kwargs)
 
-    def turn_blink_led(self, **kwargs):
+    def blink_loc_led(self, **kwargs):
         self._execute_action_button('Identify', 'Blink LED', **kwargs)
 
     @variable(alias='ui')
     def power_state(self):
         view = navigate_to(self, "Details")
         return view.entities.power_management.get_text_of("Power State")
+
+    @variable(alias='ui')
+    def location_led_state(self):
+        view = navigate_to(self, "Details")
+        return view.entities.properties.get_text_of("Identify LED State")
 
     @variable(alias='ui')
     def cores_capacity(self):
@@ -141,7 +158,7 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Ta
         view = navigate_to(self, "Details")
         return view.entities.properties.get_text_of("Total memory (mb)")
 
-    def _wait_for_state_change(self, desired_state, target, provider, view, timeout=300, delay=10):
+    def wait_for_state_change(self, desired_state, target, provider, view, timeout=300, delay=10):
         """Wait for PhysicalServer to come to desired state. This function waits just the needed amount of
            time thanks to wait_for.
 
@@ -156,9 +173,10 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Ta
 
         def _is_state_changed():
             self.refresh(provider, handle_alert=True)
+            view.browser.refresh()
             return desired_state == getattr(self, target)()
 
-        wait_for(_is_state_changed, fail_func=view.browser.refresh, num_sec=timeout, delay=delay)
+        wait_for(_is_state_changed, num_sec=timeout, delay=delay)
 
     @property
     def exists(self):
@@ -202,6 +220,29 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Ta
             message="Wait for the server to disappear",
             num_sec=500,
             fail_func=view.browser.refresh
+        )
+
+    def _wait_restart_bmc(self, delay=5, num_sec=300, verify_ssl=False):
+        url = "https://{}".format(self.ip_address)
+
+        def _send_request():
+            try:
+                return requests.get(url, verify=verify_ssl).ok
+            except requests.exceptions.ConnectionError:
+                return False
+
+        wait_for(
+            lambda: not _send_request(),
+            message="Wait for the BMC to stop...",
+            num_sec=num_sec,
+            delay=delay
+        )
+
+        wait_for(
+            _send_request,
+            message="Wait for the BMC to start...",
+            num_sec=num_sec,
+            delay=delay
         )
 
     def validate_stats(self, ui=False):
@@ -286,18 +327,26 @@ class PhysicalServerCollection(BaseCollection):
         """returning all physical_servers objects"""
         physical_server_table = self.appliance.db.client['physical_servers']
         ems_table = self.appliance.db.client['ext_management_systems']
+        network_table = self.appliance.db.client['networks']
+        hardware_table = self.appliance.db.client['hardwares']
+        computer_sys_table = self.appliance.db.client['computer_systems']
         physical_server_query = (
             self.appliance.db.client.session
-                .query(physical_server_table.name, ems_table.name)
-                .join(ems_table, physical_server_table.ems_id == ems_table.id))
+                .query(physical_server_table.name, ems_table.name,
+                       network_table.ipaddress)
+                .join(ems_table, physical_server_table.ems_id == ems_table.id)
+                .join(computer_sys_table,
+                      physical_server_table.id == computer_sys_table.managed_entity_id)
+                .join(hardware_table, computer_sys_table.id == hardware_table.computer_system_id)
+                .join(network_table, hardware_table.id == network_table.id))
         provider = None
 
         if self.filters.get('provider'):
             provider = self.filters.get('provider')
             physical_server_query = physical_server_query.filter(ems_table.name == provider.name)
         physical_servers = []
-        for name, ems_name in physical_server_query.all():
-            physical_servers.append(self.instantiate(name=name,
+        for name, ems_name, ip_address in physical_server_query.all():
+            physical_servers.append(self.instantiate(name=name, ip_address=ip_address,
                                     provider=provider or get_crud_by_name(ems_name)))
         return physical_servers
 
@@ -305,19 +354,29 @@ class PhysicalServerCollection(BaseCollection):
         """returning all physical_servers objects"""
         physical_server_table = self.appliance.db.client['physical_servers']
         ems_table = self.appliance.db.client['ext_management_systems']
+        network_table = self.appliance.db.client['networks']
+        hardware_table = self.appliance.db.client['hardwares']
+        computer_sys_table = self.appliance.db.client['computer_systems']
         physical_server_query = (
             self.appliance.db.client.session
-                .query(physical_server_table.name, ems_table.name)
-                .join(ems_table, physical_server_table.ems_id == ems_table.id))
+                .query(physical_server_table.name, ems_table.name,
+                       network_table.ipaddress)
+                .join(ems_table, physical_server_table.ems_id == ems_table.id)
+                .join(computer_sys_table,
+                      physical_server_table.id == computer_sys_table.managed_entity_id)
+                .join(hardware_table, computer_sys_table.id == hardware_table.computer_system_id)
+                .join(network_table, hardware_table.id == network_table.id))
         provider = None
 
         if self.filters.get('provider'):
             provider = self.filters.get('provider')
             physical_server_query = physical_server_query.filter(ems_table.name == provider.name)
 
-        for name, ems_name in physical_server_query.all():
+        for name, ems_name, ip_address in physical_server_query.all():
             if ph_name == name:
-                return self.instantiate(name=name, provider=provider or get_crud_by_name(ems_name))
+                return self.instantiate(name=name,
+                                        ip_address=ip_address,
+                                        provider=provider or get_crud_by_name(ems_name))
 
     def power_on(self, *physical_servers):
         view = self.select_entity_rows(physical_servers)
