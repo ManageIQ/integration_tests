@@ -97,10 +97,9 @@ def get_resource(get_provider, get_vm, get_service):
     return db
 
 
-def add_custom_attributes(request, resource):
+def add_custom_attributes(request, resource, num=2):
     body = []
-    attrs_num = 2
-    for __ in range(attrs_num):
+    for __ in range(num):
         uid = fauxfactory.gen_alphanumeric(5)
         body.append({
             'name': 'ca_name_{}'.format(uid),
@@ -117,7 +116,7 @@ def add_custom_attributes(request, resource):
             resource.custom_attributes.action.delete(*delete_attrs)
 
     assert_response(resource.collection._api)
-    assert len(attrs) == attrs_num
+    assert len(attrs) == num
     return attrs
 
 
@@ -311,3 +310,26 @@ class TestCustomAttributesRESTAPI(object):
         with pytest.raises(Exception, match='Api::BadRequestError'):
             resource.custom_attributes.action.add(body)
         assert_response(appliance, http_status=400)
+
+    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
+        # BZ 1544800 was not fixed for versions < 5.9
+        appliance.version < '5.9' or
+        _uncollectif(appliance, provider, collection_name)
+    )
+    @pytest.mark.parametrize('collection_name', COLLECTIONS)
+    def test_add_duplicate(self, request, collection_name, get_resource):
+        """Tests that adding duplicate custom attribute updates the existing one.
+
+        Testing BZ 1544800
+
+        Metadata:
+            test_flag: rest
+        """
+        resource = get_resource[collection_name]()
+        orig_attribute, = add_custom_attributes(request, resource, num=1)
+
+        new_attribute = resource.custom_attributes.action.add(
+            {'name': orig_attribute.name, 'value': 'updated_value'})[0]
+        assert orig_attribute.name == new_attribute.name
+        assert orig_attribute.id == new_attribute.id
+        assert new_attribute.value == 'updated_value'
