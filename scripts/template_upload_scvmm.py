@@ -154,7 +154,7 @@ def create_template(provider, **kwargs):
     else:
         username_powershell = user[0]
 
-    username_scvmm = creds['domain'] + "\\" + creds['username']
+    username_scvmm = '{}\\{}'.format(creds['domain'], creds['username'])
 
     scvmm_args = {
         "hostname": mgmt_sys['ipaddress'],
@@ -175,17 +175,17 @@ def create_template(provider, **kwargs):
     logger.info("SCVMM:%s Make Template out of the VHD %s", provider, new_template_name)
 
     # use_library is either user input or we use the cfme_data value
-    library = kwargs.get('library', mgmt_sys['template_upload'].get('vhds', None))
+    library = kwargs.get('library', mgmt_sys['template_upload'].get('vhds'))
 
     logger.info("SCVMM:%s Template Library: %s", provider, library)
 
     #  The VHD name changed, match the template_name.
-    new_vhd_name = new_template_name + '.vhd'
+    new_vhd_name = '{}.vhd'.format(new_template_name)
 
-    network = mgmt_sys['template_upload'].get('network', None)
-    os_type = mgmt_sys['template_upload'].get('os_type', None)
-    cores = mgmt_sys['template_upload'].get('cores', None)
-    ram = mgmt_sys['template_upload'].get('ram', None)
+    network = mgmt_sys['template_upload'].get('network')
+    os_type = mgmt_sys['template_upload'].get('os_type')
+    cores = mgmt_sys['template_upload'].get('cores')
+    ram = mgmt_sys['template_upload'].get('ram')
 
     # Uses PowerShell Get-SCVMTemplate to return a list of  templates and aborts if exists.
     if client.does_template_exist(new_template_name):
@@ -209,15 +209,12 @@ def create_template(provider, **kwargs):
                 ram
             )
 
-        wait_for(
-            client.does_template_exist(new_template_name),
-            fail_condition=False, delay=5, num_sec=600
-        )
+        wait_for(client.does_template_exist(new_template_name), delay=5, num_sec=600)
     # end else
 
     template_name = kwargs.get('template_name')
     if template_name:
-        logger.info("SCVMM:{} Add template {} to trackerbot".format(provider, template_name))
+        logger.info("SCVMM:%s Add template %s to trackerbot", provider, template_name)
         trackerbot.trackerbot_add_provider_template(kwargs.get('stream'), provider, template_name)
 
 def run(**kwargs):
@@ -231,7 +228,7 @@ def run(**kwargs):
         # skip provider if block_upload is set
         if (mgmt_sys.get('template_upload') and
                 mgmt_sys['template_upload'].get('block_upload')):
-            logger.info('SCVMM:{} skipping due to block_upload'.format(provider))
+            logger.info('SCVMM:%s skipping due to block_upload', provider)
             continue
 
         attempts = 2
@@ -239,22 +236,22 @@ def run(**kwargs):
             try:
                 results[provider] = False  # assume it has failed... till it has passed
                 logger.info(
-                    "SCVMM:{} create template attempt {}/{}".format(provider, i + 1, attempts))
+                    'SCVMM:%s create template attempt %d/%d', provider, i + 1, attempts)
                 create_template(provider, **kwargs)
-                logger.info("SCVMM:{} template creation done".format(provider))
+                logger.info('SCVMM:%s template creation done', provider)
                 results[provider] = True
                 break
             except Exception:
-                logger.exception("Hit exception creating template on {}".format(provider))
+                logger.exception('Hit exception creating template on %s', provider)
                 continue
 
     failed_providers = [provider for provider, result in results.items() if result is False]
     skipped_providers = [provider for provider, result in results.items() if result is None]
     passed_providers = [provider for provider, result in results.items() if result]
 
-    logger.info("providers skipped: {}".format(skipped_providers))
-    logger.info("providers passed: {}".format(passed_providers))
-    logger.info("providers failed: {}".format(failed_providers))
+    logger.info("providers skipped: %s", skipped_providers)
+    logger.info("providers passed: %s", passed_providers)
+    logger.info("providers failed: %s", failed_providers)
 
     if not passed_providers:
         raise Exception("Template upload failed for all providers")

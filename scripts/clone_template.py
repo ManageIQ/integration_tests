@@ -148,7 +148,7 @@ def attach_gce_disk(provider, vm_name):
             device_name = disk['deviceName']
 
     if not device_name:
-        logger.info("Instance disks: {}".format(instance['disks']))
+        logger.info('"Instance disks: %s', instance['disks'])
         raise Exception("Unable to find deviceName for attached disk.")
 
     # Mark disk for auto-delete
@@ -192,7 +192,7 @@ def main(**kwargs):
             'template': kwargs['template'],
         }
 
-    logger.info('Connecting to {}'.format(kwargs['provider']))
+    logger.info('Connecting to %s', kwargs['provider'])
 
     if kwargs.get('destroy'):
         # TODO: destroy should be its own script
@@ -235,14 +235,14 @@ def main(**kwargs):
     elif provider_type == 'openstack':
         # filter openstack flavors based on what's available
         available_flavors = provider.list_flavor()
-        logger.info("Available flavors on provider: {}".format(available_flavors))
+        logger.info("Available flavors on provider: %s", available_flavors)
         flavors = filter(lambda f: f in available_flavors, flavors)
         try:
             flavor = kwargs.get('flavor') or flavors[0]
         except IndexError:
             raise Exception('--flavor is required for RHOS instances and '
                             'default is not set or unavailable on provider')
-        logger.info("Selected flavor: {}".format(flavor))
+        logger.info('Selected flavor: %s', flavor)
 
         # flavour? Thanks, psav...
         deploy_args['flavour_name'] = flavor
@@ -277,14 +277,16 @@ def main(**kwargs):
         deploy_args["tags"] = yaml.safe_load(raw_tags.replace("u'", '"').replace("'", '"'))['TAGS']
     # Do it!
     try:
-        logger.info('Cloning {} to {} on {}'.format(deploy_args['template'], deploy_args['vm_name'],
-                                                    kwargs['provider']))
+        logger.info(
+            'Cloning %s to %s on %s',
+            deploy_args['template'], deploy_args['vm_name'], kwargs['provider']
+        )
         output = provider.deploy_template(**deploy_args)
     except Exception as e:
         logger.exception(e)
         logger.error('provider.deploy_template failed')
         if kwargs.get('cleanup'):
-            logger.info('attempting to destroy {}'.format(deploy_args['vm_name']))
+            logger.info('attempting to destroy %s', deploy_args['vm_name'])
             destroy_vm(provider, deploy_args['vm_name'])
         return 12
 
@@ -293,9 +295,9 @@ def main(**kwargs):
         return 12
 
     if provider.is_vm_running(deploy_args['vm_name']):
-        logger.info("VM {} is running".format(deploy_args['vm_name']))
+        logger.info('VM %s is running', deploy_args['vm_name'])
     else:
-        logger.error("VM is not running")
+        logger.error('VM %s is not running', deploy_args['vm_name'])
         return 10
 
     if provider_type == 'gce':
@@ -312,7 +314,7 @@ def main(**kwargs):
         try:
             ip, _ = wait_for(provider.get_ip_address, [deploy_args['vm_name']], num_sec=1200,
                              fail_condition=None)
-            logger.info('IP Address returned is {}'.format(ip))
+            logger.info('IP Address returned is %s', ip)
         except Exception as e:
             logger.exception(e)
             logger.error('IP address not returned')

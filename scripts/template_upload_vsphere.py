@@ -76,8 +76,10 @@ def upload_ova(hostname, username, password, name, datastore,
     if proxy:
         cmd_args.append("--proxy={}".format(proxy))
     cmd_args.append(url)
-    cmd_args.append("'vi://{}:{}@{}/{}/host/{}'".format(username, password, hostname,
-                                                      datacenter, cluster))
+    cmd_args.append(
+        "'vi://{}:{}@{}/{}/host/{}'"
+        .format(username, password, hostname, datacenter, cluster)
+    )
     logger.info("VSPHERE:%r Running OVFTool", provider)
 
     command = ' '.join(cmd_args)
@@ -279,7 +281,7 @@ def run(**kwargs):
         # skip provider if block_upload is set
         if (mgmt_sys[provider].get('template_upload') and
                 mgmt_sys[provider]['template_upload'].get('block_upload')):
-            logger.info('Skipping upload on {} due to block_upload'.format(provider))
+            logger.info('Skipping upload on %s due to block_upload', provider)
             continue
         if kwargs['provider_data']:
             if mgmt_sys[provider]['type'] != 'virtualcenter':
@@ -311,9 +313,9 @@ def run(**kwargs):
     skipped_providers = [provider for provider, result in results.items() if result is None]
     passed_providers = [provider for provider, result in results.items() if result]
 
-    logger.info("providers skipped: {}".format(skipped_providers))
-    logger.info("providers passed: {}".format(passed_providers))
-    logger.info("providers failed: {}".format(failed_providers))
+    logger.info("providers skipped: %s", skipped_providers)
+    logger.info("providers passed: %s", passed_providers)
+    logger.info("providers failed: %s", failed_providers)
 
     if not passed_providers:
         raise Exception("Template upload failed for all providers")
