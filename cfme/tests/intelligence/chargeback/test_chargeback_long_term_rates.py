@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-#
-# Tests to validate chargeback costs for daily, weekly, monthly rates.
-#
-# All infra and cloud providers support chargeback reports.
-# But, in order to validate costs for different rates, running the tests on just one provider
-# should suffice.
+
+""" Tests to validate chargeback costs for daily, weekly, monthly rates.
+
+All infra and cloud providers support chargeback reports.
+But, in order to validate costs for different rates, running the tests on just one provider
+should suffice.
+"""
 import math
 import fauxfactory
 import pytest
