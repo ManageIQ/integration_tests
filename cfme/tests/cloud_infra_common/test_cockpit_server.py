@@ -25,6 +25,7 @@ def new_vm(provider, request):
     return vm
 
 
+@pytest.mark.rhv3
 @pytest.mark.uncollectif(
     lambda appliance, provider: appliance.version < "5.9" or provider.one_of(GCEProvider))
 @pytest.mark.provider([CloudInfraProvider])
