@@ -83,7 +83,6 @@ class CredentialFormView(CredentialsBaseView):
             locator='.//input[@title="Privilege escalation username"]')
         privilage_escalation_password = Input(
             locator='.//input[@title="Password for privilege escalation method"][2]')
-        vault_password = Input(locator='.//input[@title="Vault password"][2]')
 
     @credential_form.register("Scm")
     class CredentialFormScmView(View):
@@ -94,6 +93,10 @@ class CredentialFormView(CredentialsBaseView):
         )
         private_key_phrase = Input(
             locator='.//input[@title="Passphrase to unlock SSH private key if encrypted"][2]')
+
+    @credential_form.register("Vault")
+    class CredentialFormVaultView(View):
+        vault_password = Input(locator='.//input[@title="Vault password"][2]')
 
     @credential_form.register("Amazon")
     class CredentialFormAmazonView(View):
@@ -121,6 +124,12 @@ class CredentialFormView(CredentialsBaseView):
             'is usually the same as the username"]')
         domain = Input(locator='.//input[@title="OpenStack domains define administrative '
             'boundaries. It is only needed for Keystone v3 authentication URLs"]')
+
+    @credential_form.register("Red Hat Virtualization")
+    class CredentialFormRHVView(View):
+        username = Input(locator='.//input[@title="Username for this credential"]')
+        password = Input(locator='.//input[@title="Password for this credential"][2]')
+        host = Input(locator='.//input[@title="The host to authenticate with"]')
 
     @credential_form.register("Google Compute Engine")
     class CredentialFormGCEView(View):
@@ -213,13 +222,15 @@ class Credential(BaseEntity):
             "privilage_escalation": updates.get("privilage_escalation"),
             "privilage_escalation_username": updates.get("privilage_escalation_username"),
             "privilage_escalation_password": updates.get("privilage_escalation_password"),
-            "vault_password": updates.get("vault_password")
         }
         scm_credential_fill_dict = {
             "username": updates.get("username"),
             "password": updates.get("password"),
             "private_key": updates.get("private_key"),
             "private_key_phrase": updates.get("private_key_phrase")
+        }
+        vault_credential_fill_dict = {
+            "vault_password": updates.get("vault_password")
         }
         amazon_credential_fill_dict = {
             "access_key": updates.get("access_key"),
@@ -243,12 +254,19 @@ class Credential(BaseEntity):
             "priv_key": updates.get("priv_key"),
             "project": updates.get("project")
         }
+        rhv_credential_fill_dict = {
+            "username": updates.get("username"),
+            "password": updates.get("password"),
+            "host": updates.get("host")
+        }
         credential_type_map = {
             "Machine": machine_credential_fill_dict,
             "Scm": scm_credential_fill_dict,
+            "Vault": vault_credential_fill_dict,
             "Amazon": amazon_credential_fill_dict,
             "VMware": vmware_credential_fill_dict,
             "OpenStack": openstack_credential_fill_dict,
+            "Red Hat Virtualization": rhv_credential_fill_dict,
             "Google Compute Engine": gce_credential_fill_dict
         }
         edit_page = navigate_to(self, "Edit")
@@ -313,14 +331,16 @@ class CredentialsCollection(BaseCollection):
             "private_key_phrase": credentials.get("private_key_phrase"),
             "privilage_escalation": credentials.get("privilage_escalation"),
             "privilage_escalation_username": credentials.get("privilage_escalation_username"),
-            "privilage_escalation_password": credentials.get("privilage_escalation_password"),
-            "vault_password": credentials.get("vault_password")
+            "privilage_escalation_password": credentials.get("privilage_escalation_password")
         }
         scm_credential_fill_dict = {
             "username": credentials.get("username"),
             "password": credentials.get("password"),
             "private_key": credentials.get("private_key"),
             "private_key_phrase": credentials.get("private_key_phrase")
+        }
+        vault_credential_fill_dict = {
+            "vault_password": credentials.get("vault_password")
         }
         amazon_credential_fill_dict = {
             "access_key": credentials.get("access_key"),
@@ -339,6 +359,11 @@ class CredentialsCollection(BaseCollection):
             "project": credentials.get("project"),
             "domain": credentials.get("domain")
         }
+        rhv_credential_fill_dict = {
+            "username": credentials.get("username"),
+            "password": credentials.get("password"),
+            "host": credentials.get("host")
+        }
         gce_credential_fill_dict = {
             "service_account": credentials.get("service_account"),
             "priv_key": credentials.get("priv_key"),
@@ -347,9 +372,11 @@ class CredentialsCollection(BaseCollection):
         credential_type_map = {
             "Machine": machine_credential_fill_dict,
             "Scm": scm_credential_fill_dict,
+            "Vault": vault_credential_fill_dict,
             "Amazon": amazon_credential_fill_dict,
             "VMware": vmware_credential_fill_dict,
             "OpenStack": openstack_credential_fill_dict,
+            "Red Hat Virtualization": rhv_credential_fill_dict,
             "Google Compute Engine": gce_credential_fill_dict
         }
 

@@ -55,8 +55,7 @@ CREDENTIALS = [
             "password": fauxfactory.gen_alpha(),
             "privilage_escalation": "sudo",
             "privilage_escalation_username": fauxfactory.gen_alpha(),
-            "privilage_escalation_password": fauxfactory.gen_alpha(),
-            "vault_password": fauxfactory.gen_alpha()
+            "privilage_escalation_password": fauxfactory.gen_alpha()
         }
     ),
     (
@@ -90,6 +89,14 @@ CREDENTIALS = [
             "authentication_url": fauxfactory.gen_alpha(),
             "project": fauxfactory.gen_alpha(),
             "domain": fauxfactory.gen_alpha()
+        }
+    ),
+    (
+        "Red Hat Virtualization",
+        {
+            "username": fauxfactory.gen_alpha(),
+            "password": fauxfactory.gen_alpha(),
+            "host": fauxfactory.gen_alpha()
         }
     ),
     (
@@ -179,6 +186,8 @@ def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
 @pytest.mark.tier(1)
 @pytest.mark.parametrize(("credential_type", "credentials"), CREDENTIALS,
     ids=[cred[0] for cred in CREDENTIALS])
+@pytest.mark.uncollectif(lambda appliance, credential_type: appliance.version < "5.9.2.1" and
+                         credential_type == "Red Hat Virtualization")
 def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansible, credential_type,
         credentials, appliance):
     credential = credentials_collection.create(
