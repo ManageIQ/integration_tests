@@ -141,6 +141,7 @@ class BaseProvider(Taggable, Updateable, Navigatable):
             if not cancel or (cancel and any(self.view_value_mapping.values())):
                 # Workaround for BZ#1526050
                 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+                from cfme.infrastructure.provider.rhevm import RHEVMProvider
                 if self.appliance.version == '5.8.3.0' and self.one_of(VMwareProvider):
                     add_view.fill({'prov_type': 'Red Hat Virtualization'})
                 elif '5.8.3.0' < self.appliance.version < '5.9':
@@ -162,8 +163,14 @@ class BaseProvider(Taggable, Updateable, Navigatable):
                         # tabs are absent in UI when there is only single (default) endpoint
                         endp_view = self.endpoints_form(parent=add_view)
 
-                    endp_view.fill(endpoint.view_value_mapping)
-
+                    # CFME < 5.8.0.8 does not support TLS certificate for RHV provider
+                    if self.one_of(RHEVMProvider) and self.appliance.version < '5.8.0.8':
+                        edited_value_mapping = endpoint.view_value_mapping
+                        edited_value_mapping.pop('verify_tls', None)
+                        edited_value_mapping.pop('ca_certs', None)
+                        endp_view.fill(edited_value_mapping)
+                    else:
+                        endp_view.fill(endpoint.view_value_mapping)
                     # filling credentials
                     if hasattr(endpoint, 'credentials'):
                         endp_view.fill(endpoint.credentials.view_value_mapping)
