@@ -141,35 +141,26 @@ def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pro
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here
 # indirect is the list where we define which fixtures are to be passed values indirectly.
+@pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
 @pytest.mark.parametrize(
-    ['set_roottenant_quota', 'custom_prov_data', 'extra_msg', 'context'],
+    ['set_roottenant_quota', 'custom_prov_data', 'extra_msg'],
     [
-        [('cpu', '2'), {'hardware': {'num_sockets': '8'}}, '', ViaUI],
-        [('cpu', '2'), {'hardware': {'num_sockets': '8'}}, '', ViaSSUI],
-        [('storage', '0.01'), {}, '', ViaUI],
-        [('storage', '0.01'), {}, '', ViaSSUI],
-        [('memory', '2'), {'hardware': {'memory': '4096'}}, '', ViaUI],
-        [('memory', '2'), {'hardware': {'memory': '4096'}}, '', ViaSSUI],
-        [('vm', '1'), {'catalog': {'num_vms': '4'}}, '###', ViaUI],
-        [('vm', '1'), {'catalog': {'num_vms': '4'}}, '###', ViaSSUI]
+        [('cpu', '2'), {'hardware': {'num_sockets': '8'}}, ''],
+        [('storage', '0.01'), {}, ''],
+        [('memory', '2'), {'hardware': {'memory': '4096'}}, ''],
+        [('vm', '1'), {'catalog': {'num_vms': '4'}}, '###'],
     ],
     indirect=['set_roottenant_quota', 'custom_prov_data'],
-    ids=['max_cpu-ViaUI', 'max_cpu-ViaSSUI', 'max_storage-ViaUI', 'max_storage-ViaSSUI',
-         'max_memory-ViaUI', 'max_memory-ViaSSUI', 'max_vms-ViaUI', 'max_vms-ViaSSUI']
+    ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
 )
 def test_tenant_quota_enforce_via_service_infra(request, appliance, provider, setup_provider,
-                                                set_roottenant_quota, extra_msg, context,
+                                                context, set_roottenant_quota, extra_msg,
                                                 custom_prov_data, catalog_item):
-    """Test Tenant Quota in UI and SSUI"""
-    if context is ViaUI:
-        service_catalog = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
-        service_catalog.order()
-    else:
-        with appliance.context.use(context):
-            service = ServiceCatalogs(appliance, name=catalog_item.name)
-            service.add_to_shopping_cart()
-            service.order()
-
+    with appliance.context.use(context):
+        service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+        if context is ViaSSUI:
+            service_catalogs.add_to_shopping_cart()
+        service_catalogs.order()
     # nav to requests page to check quota validation
     request_description = 'Provisioning Service [{0}] from [{0}]'.format(catalog_item.name)
     provision_request = appliance.collections.requests.instantiate(request_description)

@@ -62,7 +62,7 @@ def set_roottenant_quota(request, roottenant, appliance):
 @pytest.fixture
 def catalog_item(appliance, provider, provisioning, template_name, dialog, catalog, prov_data):
     collection = appliance.collections.catalog_items
-    yield collection.create(appliance.collections.catalog_items.OPENSTACK,
+    yield collection.create(provider.catalog_item_type,
                             name='test_{}'.format(fauxfactory.gen_alphanumeric()),
                             description='test catalog',
                             display_in=True,
@@ -112,35 +112,27 @@ def test_tenant_quota_enforce_via_lifecycle_cloud(request, appliance, provider, 
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here
 # indirect is the list where we define which fixtures are to be passed values indirectly.
+@pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
 @pytest.mark.parametrize(
-    ['set_roottenant_quota', 'custom_prov_data', 'extra_msg', 'context'],
+    ['set_roottenant_quota', 'custom_prov_data', 'extra_msg'],
     [
-        [('cpu', 2), {}, '', ViaUI],
-        [('cpu', 2), {}, '', ViaSSUI],
-        [('storage', 0.001), {}, '', ViaUI],
-        [('storage', 0.001), {}, '', ViaSSUI],
-        [('memory', 2), {}, '', ViaUI],
-        [('memory', 2), {}, '', ViaSSUI],
-        [('vm', '1'), {'catalog': {'num_vms': '4'}}, '###', ViaUI],
-        [('vm', '1'), {'catalog': {'num_vms': '4'}}, '###', ViaSSUI]
+        [('cpu', 2), {}, ''],
+        [('storage', 0.001), {}, ''],
+        [('memory', 2), {}, ''],
+        [('vm', '1'), {'catalog': {'num_vms': '4'}}, '###']
     ],
     indirect=['set_roottenant_quota', 'custom_prov_data'],
-    ids=['max_cpu-ViaUI', 'max_cpu-ViaSSUI', 'max_storage-ViaUI', 'max_storage-ViaSSUI',
-         'max_memory-ViaUI', 'max_memory-ViaSSUI', 'max_vms-ViaUI', 'max_vms-ViaSSUI']
+    ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
 )
 def test_tenant_quota_enforce_via_service_cloud(request, appliance, provider, setup_provider,
-                                                set_roottenant_quota, extra_msg, context,
-                                                custom_prov_data, template_name, catalog_item):
+                                                context, set_roottenant_quota, custom_prov_data,
+                                                extra_msg, template_name, catalog_item):
     """Test Tenant Quota in UI and SSUI"""
-    if context is ViaUI:
-        service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
-                                           catalog_item.name)
+    with appliance.context.use(context):
+        service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+        if context is ViaSSUI:
+            service_catalogs.add_to_shopping_cart()
         service_catalogs.order()
-    else:
-        with appliance.context.use(context):
-            service = ServiceCatalogs(appliance, name=catalog_item.name)
-            service.add_to_shopping_cart()
-            service.order()
     # nav to requests page to check quota validation
     request_description = 'Provisioning Service [{0}] from [{0}]'.format(catalog_item.name)
     provision_request = appliance.collections.requests.instantiate(request_description)
