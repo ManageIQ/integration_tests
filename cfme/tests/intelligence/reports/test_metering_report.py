@@ -20,7 +20,6 @@ from cfme.common.provider import CloudInfraProvider
 from cfme.cloud.provider import CloudProvider
 from cfme.common.vm import VM
 from cfme.common.provider import BaseProvider
-from cfme.intelligence.reports.reports import CustomReport
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for

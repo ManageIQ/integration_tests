@@ -4,7 +4,6 @@ import pytest
 from random import sample
 
 import cfme.utils
-from cfme.intelligence.reports.reports import CustomReport
 from cfme.utils.blockers import BZ
 from cfme.utils.providers import get_crud_by_name
 from cfme import test_requirements

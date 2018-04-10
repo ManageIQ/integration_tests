@@ -7,7 +7,7 @@ from widgetastic_patternfly import CandidateNotFound
 from wrapanapi.utils import eval_strings
 
 from cfme.containers.provider import ContainersProvider
-from cfme.intelligence.reports.reports import CannedSavedReport, CustomReport
+from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.utils.blockers import BZ
 from cfme.utils.appliance.implementations.ui import navigate_to
 

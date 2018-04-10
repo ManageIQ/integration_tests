@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.intelligence.reports.reports import CustomReport
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 

@@ -18,7 +18,6 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm import VM
-from cfme.intelligence.reports.reports import CustomReport
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for

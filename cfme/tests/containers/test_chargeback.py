@@ -10,7 +10,6 @@ import pytest
 
 from cfme.containers.provider import ContainersProvider
 from cfme.intelligence.chargeback import assignments, rates
-from cfme.intelligence.reports.reports import CustomReport
 
 from cfme.utils.log import logger
 from cfme.utils.units import CHARGEBACK_HEADER_NAMES, parse_number
