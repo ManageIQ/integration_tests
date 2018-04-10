@@ -5,7 +5,6 @@ from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI
 
-
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     test_requirements.ssui,
@@ -15,7 +14,7 @@ pytestmark = [
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_service_catalog_crud(appliance, context, order_ansible_service_in_ops_ui, request):
+def test_service_catalog_crud_ui(appliance, context, order_ansible_service_in_ops_ui, request):
     """Tests Ansible Service Catalog in SSUI."""
 
     service_name = order_ansible_service_in_ops_ui

@@ -412,14 +412,14 @@ def test_orphaned_vm_status(testing_vm, orphaned_vm):
 
 @pytest.mark.rhv1
 @pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider))
-def test_power_options_from_on(provider, soft_assert, testing_vm, ensure_vm_running):
+def test_vm_power_options_from_on(provider, soft_assert, testing_vm, ensure_vm_running):
     testing_vm.wait_for_vm_state_change(
         desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
     check_power_options(provider, soft_assert, testing_vm, testing_vm.STATE_ON)
 
 
 @pytest.mark.rhv3
-def test_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_stopped):
+def test_vm_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_stopped):
     testing_vm.wait_for_vm_state_change(
         desired_state=testing_vm.STATE_OFF, timeout=720, from_details=True)
     check_power_options(provider, soft_assert, testing_vm, testing_vm.STATE_OFF)

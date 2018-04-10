@@ -115,7 +115,7 @@ class TestTagsViaREST(object):
         return _vm(request, a_provider, appliance.rest_api)
 
     @pytest.mark.tier(2)
-    def test_edit_tags(self, appliance, tags):
+    def test_edit_tags_rest(self, appliance, tags):
         """Tests tags editing from collection.
 
         Metadata:

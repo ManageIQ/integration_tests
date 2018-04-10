@@ -3,10 +3,9 @@ import fauxfactory
 import pytest
 import re
 
-from cfme.utils.update import update
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
-
+from cfme.utils.update import update
 
 pytestmark = [
     test_requirements.stack,
@@ -102,7 +101,7 @@ def test_copy_template(created_template):
     template_copy.delete()
 
 
-def test_name_required_error_validation(appliance, template_type):
+def test_name_required_error_validation_orch_template(appliance, template_type):
     """Tests error validation if Name wasn't specified during template creation"""
     flash_msg = \
         "Error during 'Orchestration Template creation': Validation failed: Name can't be blank"

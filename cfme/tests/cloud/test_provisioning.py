@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 # These tests don't work at the moment, due to the security_groups multi select not working
 # in selenium (the group is selected then immediately reset)
+from textwrap import dedent
+
 import fauxfactory
 import pytest
-
 from riggerlib import recursive_update
-from textwrap import dedent
 from widgetastic.utils import partial_match
 from widgetastic_patternfly import CheckableBootstrapTreeview as Check_tree
 
@@ -14,18 +14,17 @@ from cfme.automate.explorer.domain import DomainCollection
 from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
-from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm import VM
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
-from cfme.utils.rest import assert_response
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
+from cfme.utils.rest import assert_response
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for, RefreshTimer
-
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -154,7 +153,7 @@ def provisioned_instance(provider, testing_instance, appliance):
 
 
 @pytest.mark.parametrize('testing_instance', [True, False], ids=["Auto", "Manual"], indirect=True)
-def test_provision_from_template(provider, provisioned_instance):
+def test_cloud_provision_from_template(provider, provisioned_instance):
     """ Tests instance provision from template
 
     Metadata:
@@ -183,7 +182,7 @@ def test_gce_preemptible_provision(provider, testing_instance, soft_assert):
     soft_assert(instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
 
 
-def test_provision_from_template_using_rest(
+def test_cloud_provision_from_template_using_rest(
         appliance, request, setup_provider, provider, vm_name, provisioning):
     """ Tests provisioning from a template using the REST API.
 
@@ -487,9 +486,10 @@ def copy_domains(original_request_class, domain):
 # Not collected for EC2 in generate_tests above
 @pytest.mark.parametrize("disks", [1, 2])
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_provision_from_template_with_attached_disks(request, testing_instance, provider, disks,
-                                                     soft_assert, domain, modified_request_class,
-                                                     copy_domains, provisioning):
+def test_cloud_provision_from_template_with_attached_disks(
+        request, testing_instance, provider, disks,
+        soft_assert, domain, modified_request_class,
+        copy_domains, provisioning):
     """ Tests provisioning from a template and attaching disks
 
     Metadata:

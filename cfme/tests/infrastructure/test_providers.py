@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 import uuid
-import fauxfactory
-
-import pytest
-
 from copy import copy, deepcopy
+
+import fauxfactory
+import pytest
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
@@ -17,7 +16,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider, VirtualCe
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
-
 
 pytestmark = [
     test_requirements.discovery,
@@ -168,7 +166,7 @@ def test_providers_discovery(request, provider):
 
 @pytest.mark.rhv1
 @pytest.mark.usefixtures('has_no_infra_providers')
-def test_provider_add_with_bad_credentials(provider):
+def test_infra_provider_add_with_bad_credentials(provider):
     """Tests provider add with bad credentials
 
     Metadata:
@@ -189,7 +187,7 @@ def test_provider_add_with_bad_credentials(provider):
 @pytest.mark.tier(1)
 @pytest.mark.smoke
 @pytest.mark.meta(blockers=[BZ(1450527, unblock=lambda provider: provider.type != 'scvmm')])
-def test_provider_crud(provider):
+def test_infra_provider_crud(provider):
     """Tests provider add with good credentials
 
     Metadata:

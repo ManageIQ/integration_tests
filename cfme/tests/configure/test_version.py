@@ -6,7 +6,7 @@ from cfme.configure import about
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
-def test_version(appliance):
+def test_appliance_version(appliance):
     """Check version presented in UI against version retrieved directly from the machine.
 
     Version retrieved from appliance is in this format: 1.2.3.4

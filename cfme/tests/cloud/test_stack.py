@@ -2,9 +2,9 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.stack import StackOutputsDetails
 from cfme.exceptions import CandidateNotFound
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.cloud.stack import StackOutputsDetails
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
@@ -98,12 +98,12 @@ def test_resources_link(stack):
 
 @pytest.mark.tier(3)
 @test_requirements.tag
-def test_edit_tags(stack):
+def test_edit_tags_stack(stack):
     stack.add_tag("Cost Center *", "Cost Center 001")
 
 
 @pytest.mark.tier(3)
-def test_delete(stack, provider, request):
+def test_delete_stack(stack, provider, request):
     stack.delete()
     assert not stack.exists
     request.addfinalizer(provider.refresh_provider_relationships)

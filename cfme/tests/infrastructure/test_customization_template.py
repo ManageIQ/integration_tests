@@ -40,7 +40,7 @@ def test_customization_template_crud(collection, script_type, image_type):
     collection.delete(False, template_crud)
 
 
-def test_name_required_error_validation(collection):
+def test_name_required_error_validation_cust_template(collection):
     """Test to validate name in customization templates."""
 
     with pytest.raises(Exception, match='Name is required'):
@@ -77,7 +77,7 @@ def test_pxe_image_type_required_error_validation(collection):
 
 
 @pytest.mark.meta(blockers=[BZ(1449116, forced_streams=['5.7', '5.8'])])
-def test_duplicate_name_error_validation(collection):
+def test_cust_template_duplicate_name_error_validation(collection):
     """Test to validate duplication in customization templates."""
 
     name = fauxfactory.gen_alphanumeric(8)

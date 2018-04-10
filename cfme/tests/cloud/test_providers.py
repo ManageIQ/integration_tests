@@ -12,13 +12,13 @@ from cfme.base.credential import Credential
 from cfme.cloud.instance import Instance
 from cfme.cloud.provider import discover, wait_for_a_provider, CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
-from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider, RHOSEndpoint
 from cfme.common.provider_views import (
     CloudProviderAddView, CloudProvidersView, CloudProvidersDiscoverView)
-from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
+from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.rest import (
     assert_response,
@@ -139,7 +139,7 @@ def test_providers_discovery(request, provider):
 @pytest.mark.tier(3)
 @pytest.mark.usefixtures('has_no_cloud_providers')
 @test_requirements.discovery
-def test_provider_add_with_bad_credentials(provider, enable_regions):
+def test_cloud_provider_add_with_bad_credentials(provider, enable_regions):
     """ Tests provider add with bad credentials
 
     Metadata:
@@ -175,7 +175,7 @@ def test_provider_add_with_bad_credentials(provider, enable_regions):
 @pytest.mark.smoke
 @pytest.mark.usefixtures('has_no_cloud_providers')
 @test_requirements.discovery
-def test_provider_crud(provider, enable_regions):
+def test_cloud_provider_crud(provider, enable_regions):
     """ Tests provider add with good credentials
 
     Metadata:
