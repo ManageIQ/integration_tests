@@ -9,7 +9,6 @@ should suffice.
 import math
 import fauxfactory
 import pytest
-import re
 from datetime import date
 
 import cfme.intelligence.chargeback.assignments as cb
@@ -30,7 +29,7 @@ pytestmark = [
     pytest.mark.provider([VMwareProvider], selector=ONE,
                        scope='module',
                        required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
-    pytest.mark.usefixtures('has_no_providers_modscope', 'setup_provider_modscope'),
+    pytest.mark.usefixtures('has_no_providers', 'setup_provider'),
     test_requirements.chargeback,
 ]
 
@@ -63,7 +62,7 @@ def vm_ownership(enable_candu, provider, appliance):
     vm = VM.factory(vm_name, provider)
     user = appliance.collections.users.create(
         name='{}_{}'.format(provider.name, fauxfactory.gen_alphanumeric()),
-        credential=Credential(principal='uid' + '{}'.format(fauxfactory.gen_alphanumeric()),
+        credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()),
             secret='secret'),
         email='abc@example.com',
         groups=cb_group,
@@ -71,7 +70,6 @@ def vm_ownership(enable_candu, provider, appliance):
         value_assign='Database')
     vm.set_ownership(user=user.name)
     logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
-
     yield user.name
 
     vm.unset_ownership()
@@ -91,7 +89,6 @@ def enable_candu(appliance):
         'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
     server_info.disable_server_roles('automate', 'smartstate')
     candu.enable_all()
-
     yield
 
     server_info.update_server_roles_db(original_roles)
@@ -110,7 +107,6 @@ def assign_custom_rate(new_compute_rate):
     enterprise.computeassign()
     enterprise.storageassign()
     logger.info('Assigning CUSTOM Compute rate')
-
     yield
 
     # Resetting the Chargeback rate assignment
@@ -250,7 +246,8 @@ def resource_usage(vm_ownership, appliance, provider):
             average_network_io = average_network_io + record.net_usage_rate_average
             average_disk_io = average_disk_io + record.disk_usage_rate_average
 
-    # Convert storage used in Bytes to GB
+    # By default,chargeback rates for storage are defined in this form: 0.01 USD/GB
+    # Hence,convert storage used in Bytes to GB
     average_storage_used = average_storage_used * math.pow(2, -30)
 
     return {"average_cpu_used_in_mhz": average_cpu_used_in_mhz,
@@ -378,7 +375,6 @@ def new_compute_rate(interval):
                 fields={'Used Disk Storage':
                         {'per_time': interval, 'variable_rate': '720'}})
     storage.create()
-
     yield desc
 
     compute.delete()
@@ -397,7 +393,8 @@ def test_validate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_cust
         else:
             estimated_cpu_usage_cost = chargeback_costs_custom['cpu_used_cost']
             cost_from_report = groups["CPU Used Cost"]
-            cost = re.sub(r'[$,]', r'', cost_from_report)
+            # Eliminate '$' and ',' from string
+            cost = cost_from_report.replace('$', '').replace(',', '')
             soft_assert(estimated_cpu_usage_cost - DEVIATION <=
                 float(cost) <= estimated_cpu_usage_cost + DEVIATION,
                 'Estimated cost and report cost do not match')
@@ -415,7 +412,7 @@ def test_validate_memory_usage_cost(chargeback_costs_custom, chargeback_report_c
         else:
             estimated_memory_usage_cost = chargeback_costs_custom['memory_used_cost']
             cost_from_report = groups["Memory Used Cost"]
-            cost = re.sub(r'[$,]', r'', cost_from_report)
+            cost = cost_from_report.replace('$', '').replace(',', '')
             soft_assert(estimated_memory_usage_cost - DEVIATION <=
                 float(cost) <= estimated_memory_usage_cost + DEVIATION,
                 'Estimated cost and report cost do not match')
@@ -433,7 +430,7 @@ def test_validate_network_usage_cost(chargeback_costs_custom, chargeback_report_
         else:
             estimated_network_usage_cost = chargeback_costs_custom['network_used_cost']
             cost_from_report = groups["Network I/O Used Cost"]
-            cost = re.sub(r'[$,]', r'', cost_from_report)
+            cost = cost_from_report.replace('$', '').replace(',', '')
             soft_assert(estimated_network_usage_cost - DEVIATION <=
                 float(cost) <= estimated_network_usage_cost + DEVIATION,
                 'Estimated cost and report cost do not match')
@@ -451,7 +448,7 @@ def test_validate_disk_usage_cost(chargeback_costs_custom, chargeback_report_cus
         else:
             estimated_disk_usage_cost = chargeback_costs_custom['disk_used_cost']
             cost_from_report = groups["Disk I/O Used Cost"]
-            cost = re.sub(r'[$,]', r'', cost_from_report)
+            cost = cost_from_report.replace('$', '').replace(',', '')
             soft_assert(estimated_disk_usage_cost - DEVIATION <=
                 float(cost) <= estimated_disk_usage_cost + DEVIATION,
                 'Estimated cost and report cost do not match')
@@ -469,7 +466,7 @@ def test_validate_storage_usage_cost(chargeback_costs_custom, chargeback_report_
         else:
             estimated_storage_usage_cost = chargeback_costs_custom['storage_used_cost']
             cost_from_report = groups["Storage Used Cost"]
-            cost = re.sub(r'[$,]', r'', cost_from_report)
+            cost = cost_from_report.replace('$', '').replace(',', '')
             soft_assert(estimated_storage_usage_cost - DEVIATION <=
                 float(cost) <= estimated_storage_usage_cost + DEVIATION,
                 'Estimated cost and report cost do not match')
