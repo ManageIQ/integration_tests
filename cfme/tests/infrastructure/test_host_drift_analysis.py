@@ -117,7 +117,7 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
     drift_analysis_view.toolbar.same_values_attributes.click()
     soft_assert(
         not drift_analysis_view.drift_analysis.check_section_attribute_availability(
-            'Department (1)'), "Department (1) row should be hidden, but not")
+            'Department'), "Department row should not have any attributes available.")
 
     # Accounting tag should be displayed now
     drift_analysis_view.toolbar.different_values_attributes.click()
