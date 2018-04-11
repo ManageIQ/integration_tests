@@ -119,7 +119,7 @@ def test_certificates_present(appliance, soft_assert):
     """Test whether the required product certificates are present."""
 
     known_certs = ["/etc/rhsm/ca/redhat-uep.pem",
-    "/etc/rhsm/ca/candlepin-stage.pem", "/etc/pki/product-default/69.pem",
+    "/etc/pki/product-default/69.pem",
     "/etc/pki/product/167.pem", "/etc/pki/product/201.pem"]
 
     for cert in known_certs:
