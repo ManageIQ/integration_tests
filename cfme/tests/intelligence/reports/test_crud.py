@@ -57,8 +57,8 @@ def test_custom_report_crud(custom_report_values, appliance):
     with update(custom_report):
         custom_report.title += fauxfactory.gen_alphanumeric()
     custom_report.queue(wait_for_finish=True)
-    for report in custom_report.get_saved_reports():
-        assert hasattr(report, 'data')
+    for saved_report in custom_report.saved_reports.all():
+        assert saved_report.exists
     custom_report.delete()
 
 

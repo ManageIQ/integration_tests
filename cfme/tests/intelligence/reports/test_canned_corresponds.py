@@ -2,7 +2,6 @@
 import pytest
 
 from cfme.infrastructure.provider import InfraProvider
-from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.net import ip_address, resolve_hostname
@@ -28,11 +27,14 @@ def compare(db_item, report_item):
 
 
 @pytest.mark.rhv3
-def test_providers_summary(soft_assert):
+def test_providers_summary(appliance, soft_assert):
     """Checks some informations about the provider. Does not check memory/frequency as there is
     presence of units and rounding."""
-    path = ["Configuration Management", "Providers", "Providers Summary"]
-    report = CannedSavedReport.new(path)
+    report = appliance.collections.reports.instantiate(
+        type="Configuration Management",
+        subtype="Providers",
+        menu_name="Providers Summary"
+    ).queue(wait_for_finish=True)
     # Skip cloud and network providers as they don't share some attributes with infra providers
     skipped_providers = {"ec2", "openstack", "redhat_network"}
     for provider in report.data.rows:
@@ -55,9 +57,12 @@ def test_providers_summary(soft_assert):
 
 
 @pytest.mark.rhv3
-def test_cluster_relationships(soft_assert):
-    path = ["Relationships", "Virtual Machines, Folders, Clusters", "Cluster Relationships"]
-    report = CannedSavedReport.new(path)
+def test_cluster_relationships(appliance, soft_assert):
+    report = appliance.collections.reports.instantiate(
+        type="Relationships",
+        subtype="Virtual Machines, Folders, Clusters",
+        menu_name="Cluster Relationships"
+    ).queue(wait_for_finish=True)
     for relation in report.data.rows:
         name = relation["Name"]
         provider_name = relation["Provider Name"]
@@ -104,8 +109,11 @@ def test_operations_vm_on(soft_assert, appliance, request):
     hosts = adb['hosts']
     storages = adb['storages']
 
-    path = ["Operations", "Virtual Machines", "Online VMs (Powered On)"]
-    report = CannedSavedReport.new(path)
+    report = appliance.collections.reports.instantiate(
+        type="Operations",
+        subtype="Virtual Machines",
+        menu_name="Online VMs (Powered On)"
+    ).queue(wait_for_finish=True)
 
     vms_in_db = adb.session.query(
         vms.name.label('vm_name'),
@@ -148,8 +156,11 @@ def test_datastores_summary(soft_assert, appliance, request):
     vms = adb['vms']
     host_storages = adb['host_storages']
 
-    path = ["Configuration Management", "Storage", "Datastores Summary"]
-    report = CannedSavedReport.new(path)
+    report = appliance.collections.reports.instantiate(
+        type="Configuration Management",
+        subtype="Storage",
+        menu_name="Datastores Summary"
+    ).queue(wait_for_finish=True)
 
     storages_in_db = adb.session.query(storages.store_type, storages.free_space,
                                        storages.total_space, storages.name, storages.id).all()

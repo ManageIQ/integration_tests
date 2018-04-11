@@ -9,7 +9,6 @@ import pytest
 # from selenium.common.exceptions import NoSuchElementException
 
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme import test_requirements
 # from utils.log import logger
 
@@ -38,13 +37,20 @@ report_path = [
 
 
 @pytest.mark.parametrize('path', report_path, scope="module", ids=lambda param: '/'.join(param[:2]))
-def test_reports_generate_report(request, path):
+def test_reports_generate_report(request, path, appliance):
     """ This Tests run one default report for each category
 
     Steps:
         *Run one default report
         *Delete this Saved Report from the Database
     """
-
-    report = CannedSavedReport.new(path)
-    request.addfinalizer(report.delete_if_exists)
+    report = appliance.collections.reports.instantiate(
+        type=path[0],
+        subtype=path[1],
+        menu_name=path[2]
+    ).queue(wait_for_finish=True)
+    
+    @request.addfinalizer
+    def _finalize():
+        if report.exists:
+            report.delete()

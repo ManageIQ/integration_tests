@@ -332,6 +332,14 @@ class Report(BaseEntity, Updateable, Pretty):
                 fail_func=view.reload_button.click,
                 num_sec=300,
             )
+        # CFME-Issue: To make sure the Tree updates
+        view.browser.refresh()
+        first_row = view.saved_reports.table[0]
+        return self.saved_reports.instantiate(
+            first_row.run_at.text,
+            first_row.queued_at.text,
+            self.is_candu
+        )
 
     @property
     def exists(self):
