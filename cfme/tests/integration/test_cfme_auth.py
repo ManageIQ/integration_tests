@@ -94,7 +94,7 @@ def create_group(appliance, **kwargs):
 @pytest.mark.tier(1)
 @pytest.mark.uncollectif(lambda auth_mode: auth_mode == 'amazon')  # default groups tested elsewhere
 def test_login_evm_group(appliance, auth_mode, prov_key, user_type, auth_provider, configure_auth,
-                         auth_user_data):
+                         auth_user_data, request):
     """This test checks whether a user can login while assigned a default EVM group
         Prerequisities:
             * ``auth_data.yaml`` file
@@ -113,6 +113,7 @@ def test_login_evm_group(appliance, auth_mode, prov_key, user_type, auth_provide
         for user in auth_user_data
         if 'evmgroup' in user.groupname.lower()]
 
+    request.addfinalizer(appliance.server.login_admin)
     for user, groupname in user_tuples:
         with user:
             # use appliance.server methods for UI context instead of view directly
@@ -182,7 +183,8 @@ def test_login_retrieve_group(appliance, request, prov_key, auth_mode, auth_prov
 
     def _group_cleanup(group):
         try:
-            group.delete
+            appliance.server.login_admin()
+            group.delete()
         except Exception:
             logger.warning('Exception deleting group for cleanup, continuing.')
             pass
