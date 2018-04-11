@@ -122,10 +122,17 @@ def test_certificates_present(appliance, soft_assert):
     "/etc/pki/product-default/69.pem",
     "/etc/pki/product/167.pem", "/etc/pki/product/201.pem"]
 
+    # Ensure subscription.rhn.redhat.com's cert is trusted...
+    assert appliance.ssh_client.run_command(
+        'curl --connect-timeout 5 --max-time 10 --retry 10 --retry-delay 0'
+        ' --retry-max-time 60 --cacert /etc/rhsm/ca/redhat-uep.pem'
+        ' https://subscription.rhn.redhat.com/'
+    ).success
+
     for cert in known_certs:
         assert appliance.ssh_client.run_command("test -f '{}'".format(cert)).success
         assert appliance.ssh_client.run_command(
-                "openssl verify -CAfile /etc/rhsm/ca/redhat-uep.pem '{}'".format(cert))
+            "openssl verify -CAfile /etc/rhsm/ca/redhat-uep.pem '{}'".format(cert))
 
 
 @pytest.mark.ignore_stream("upstream")
