@@ -10,7 +10,7 @@ class OptionForm(View):
     show_mints_back = BootstrapSelect(id='perf_minutes')
     range = Text("//div[label[contains(.,'Range')]]//p")
     time_profile = Text("//div[label[contains(.,'Time Profile')]]//p")
-    calender = TextInput(locator=".//input[@id='miq_date_1']")
+    calendar = TextInput(locator=".//input[@id='miq_date_1']")
 
 
 class VMUtilizationView(View):

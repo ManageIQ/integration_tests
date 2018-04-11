@@ -3928,6 +3928,7 @@ class LineChart(Widget, ClickableMixin):
         self.parent_browser.element(self.ZOOM_OUT).click()
         self.browser.wait_for_element(self.ZOOM_IN, timeout=10)
 
+    @property
     def title(self):
         """A function returning title of chart"""
         return self.browser.element(self.BS_TITLE_LOCATOR).text
@@ -3966,6 +3967,7 @@ class LineChart(Widget, ClickableMixin):
             data.update(tooltip_data)
         return data
 
+    @property
     def all_legends(self):
         """ To get all available legends
 
@@ -4009,7 +4011,8 @@ class LineChart(Widget, ClickableMixin):
             if self.legend_is_displayed(_leg):
                 _leg.click()
 
-    def get_all_data(self):
+    @property
+    def all_data(self):
         """data for all legends and timestamp on chart
 
         Returns:
@@ -4018,7 +4021,7 @@ class LineChart(Widget, ClickableMixin):
         self.display_all_legends()
         return self._get_data
 
-    def get_data_for_legends(self, *legends):
+    def data_for_legends(self, *legends):
         """data for specific legends on chart
 
         Args:
@@ -4030,7 +4033,7 @@ class LineChart(Widget, ClickableMixin):
         self.display_legends(*legends)
         return self._get_data
 
-    def get_data_for_timestamp(self, timestamp):
+    def data_for_timestamp(self, timestamp):
         """data for specific timestamp on chart
 
         Args:

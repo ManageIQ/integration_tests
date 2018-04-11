@@ -32,6 +32,8 @@ def test_vm_most_recent_hour_graph_screen(graph_type, provider, enable_candu):
     """
 
     vm = VM.factory('cu-24x7', provider)
+    vm.wait_candu_data_available(timeout=900)
+
     view = navigate_to(vm, 'candu')
     view.options.interval.fill('Most Recent Hour')
 
@@ -46,13 +48,13 @@ def test_vm_most_recent_hour_graph_screen(graph_type, provider, enable_candu):
 
     assert graph.is_displayed
 
-    for leg in graph.all_legends():
+    for leg in graph.all_legends:
         graph.hide_legends(leg)
         assert not graph.legend_is_displayed(leg)
         graph.display_legends(leg)
         assert graph.legend_is_displayed(leg)
 
         leg_data = 0
-        for data in graph.get_data_for_legends(leg).values():
+        for data in graph.data_for_legends(leg).values():
             leg_data += float(data[leg].replace(',', '').replace('%', '').split()[0])
         assert leg_data > 0
