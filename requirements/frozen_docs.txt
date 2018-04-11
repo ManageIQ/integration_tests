@@ -56,7 +56,7 @@ keystoneauth1==2.20.0
 kwargify==2.2.0
 layered-yaml-attrdict-config==16.1.0
 lxml==3.8.0
-manageiq-client==0.4.0
+manageiq-client==0.4.1
 MarkupSafe==1.0
 mccabe==0.6.1
 miq_version==0.0.5
