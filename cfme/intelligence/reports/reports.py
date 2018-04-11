@@ -11,7 +11,6 @@ from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab, Candidat
 
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
-from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
@@ -157,6 +156,50 @@ class CustomReportDetailsView(CloudIntelReportsView):
         )
 
 
+class SavedReportDetailsView(CloudIntelReportsView):
+    title = Text("#explorer_title_text")
+    table = VanillaTable(".//div[@id='report_html_div']/table")
+    # PaginationPane() is not working on Report Details page
+    paginator = View.nested(NonJSPaginationPane)
+    view_selector = View.nested(ReportToolBarViewSelector)
+
+    @ParametrizedView.nested
+    class download(ParametrizedView):  # noqa
+        PARAMETERS = ("format", )
+        ALL_LINKS = ".//a[starts-with(@name, 'download_choice__render_report_')]"
+        download_button = Button(title="Download")
+        link = Text(ParametrizedLocator(".//a[normalize-space()={format|quote}]"))
+
+        def __init__(self, *args, **kwargs):
+            ParametrizedView.__init__(self, *args, **kwargs)
+            self.download_button.click()
+            self.link.click()
+
+        @classmethod
+        def all(cls, browser):
+            return [(browser.text(e), ) for e in browser.elements(cls.ALL_LINKS)]
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports and
+            self.reports.is_opened and
+            self.reports.tree.currently_selected == [
+                "All Reports",
+                getattr(self.context["object"].report, "type",
+                        self.context["object"].report.company_name),
+                getattr(self.context["object"].report, "subtype", "Custom"),
+                self.context["object"].report.menu_name,
+                self.context["object"].datetime_in_tree
+            ] and
+            self.title.text == 'Saved Report "{} - {}"'.format(
+                self.context["object"].report.title,
+                self.context["object"].queued_datetime_in_title
+            )
+        )
+
+
+
 class AllReportsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
     reports_table = VanillaTable(".//div[@id='report_list_div']/table")
@@ -190,7 +233,8 @@ class AllCustomReportsView(CloudIntelReportsView):
 
 
 @attr.s
-class Report(BaseEntity, Updateable):
+class Report(BaseEntity, Updateable, Pretty):
+    pretty_attrs = ["menu_name", "title", "company_name", "type", "subtype"]
     _param_name = ParamClassName('title')
     menu_name = attr.ib()
     title = attr.ib()
@@ -224,6 +268,9 @@ class Report(BaseEntity, Updateable):
     charts = attr.ib(default=None)
     timeline = attr.ib(default=None)
     is_candu = attr.ib(default=False)
+
+    def __attrs_post_init__(self):
+        self._collections = {'saved_reports': SavedReportsCollection}
 
     def update(self, updates):
         view = navigate_to(self, "Edit")
@@ -262,19 +309,9 @@ class Report(BaseEntity, Updateable):
                 view.flash.assert_message(
                     'Report "{}": Delete successful'.format(self.menu_name))
 
-    def get_saved_reports(self):
-        view = navigate_to(self, "Details")
-        results = []
-        try:
-            for _ in view.saved_reports.paginator.pages():
-                for row in view.saved_reports.table.rows():
-                    results.append(
-                        CustomSavedReport(self, row.run_at.text.encode("utf-8"),
-                            row.queued_at.text.encode("utf-8"), self.is_candu)
-                    )
-        except NoSuchElementException:
-            pass
-        return results
+    @cached_property
+    def saved_reports(self):
+        return self.collections.saved_reports
 
     def queue(self, wait_for_finish=False):
         view = navigate_to(self, "Details")
@@ -322,69 +359,35 @@ class ReportsCollection(BaseCollection):
         return self.instantiate(menu_name, title, company_name=company_name, **values)
 
 
-class CustomSavedReportDetailsView(CloudIntelReportsView):
-    title = Text("#explorer_title_text")
-    table = VanillaTable(".//div[@id='report_html_div']/table")
-    # PaginationPane() is not working on Report Details page
-    paginator = View.nested(NonJSPaginationPane)
-    view_selector = View.nested(ReportToolBarViewSelector)
-
-    @ParametrizedView.nested
-    class download(ParametrizedView):  # noqa
-        PARAMETERS = ("format", )
-        ALL_LINKS = ".//a[starts-with(@name, 'download_choice__render_report_')]"
-        download_button = Button(title="Download")
-        link = Text(ParametrizedLocator(".//a[normalize-space()={format|quote}]"))
-
-        def __init__(self, *args, **kwargs):
-            ParametrizedView.__init__(self, *args, **kwargs)
-            self.download_button.click()
-            self.link.click()
-
-        @classmethod
-        def all(cls, browser):
-            return [(browser.text(e), ) for e in browser.elements(cls.ALL_LINKS)]
-
-    @property
-    def is_displayed(self):
-        return (
-            self.in_intel_reports and
-            self.reports.is_opened and
-            self.reports.tree.currently_selected == [
-                "All Reports",
-                self.mycompany_title,
-                "Custom",
-                self.context["object"].report.menu_name,
-                self.context["object"].datetime_in_tree
-            ] and
-            self.title.text == 'Saved Report "{} - {}"'.format(
-                self.context["object"].report.title,
-                self.context["object"].queued_datetime_in_title
-            )
-        )
-
-
-class CustomSavedReport(Updateable, Pretty, Navigatable):
+@attr.s
+class SavedReport(Updateable, BaseEntity):
     """Custom Saved Report. Enables us to retrieve data from the table.
 
     Args:
-        report: Report that we have data from.
         run_datetime: Datetime of "Run At" of the report. That's what :py:func:`queue` returns.
         queued_datetime: Datetime of "Queued At" of the report.
         candu: If it is a C&U report, in that case it uses a different table.
     """
 
-    pretty_attrs = ["report", "run_datetime", "queued_datetime"]
+    run_datetime = attr.ib()
+    queued_datetime = attr.ib()
+    candu = attr.ib(default=False)
 
-    def __init__(self, report, run_datetime, queued_datetime, candu=False, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.report = report
-        self.run_datetime = run_datetime
-        self.queued_datetime_in_title = parsetime.from_american_with_utc(
-            queued_datetime).to_saved_report_title_format()
-        self.datetime_in_tree = parsetime.from_american_with_utc(
-            self.run_datetime).to_iso_with_utc()
-        self.candu = candu
+    @property
+    def parent_obj(self):
+        return self.parent.parent
+
+    @property
+    def report(self):
+        return self.parent_obj
+
+    @cached_property
+    def queued_datetime_in_title(self):
+        return parsetime.from_american_with_utc(self.queued_datetime).to_saved_report_title_format()
+
+    @cached_property
+    def datetime_in_tree(self):
+        return parsetime.from_american_with_utc(self.run_datetime).to_iso_with_utc()
 
     @cached_property
     def data(self):
@@ -417,12 +420,54 @@ class CustomSavedReport(Updateable, Pretty, Navigatable):
             return SavedReportData(headers, body)
 
     def download(self, extension):
-        view = navigate_to(self, "Details")
         extensions_mapping = {"txt": "Text", "csv": "CSV", "pdf": "PDF"}
+        view = navigate_to(self, "Details")
+        view.download("Download as {}".format(extensions_mapping[extension]))
+
+    def delete(self, cancel=False):
+        view = navigate_to(self, "Details")
+        cell = view.saved_reports.table.row(run_at=self.datetime)[0]
+        cell.check()
+        view.configuration.item_select(
+            "Delete this Saved Report from the Database",
+            handle_alert=not cancel
+        )
+        if cancel:
+            assert view.is_displayed
+            view.flash.assert_no_error()
+        else:
+            view.flash.assert_no_error()
+            # TODO Doesn't work due to this BZ https://bugzilla.redhat.com/show_bug.cgi?id=1489387
+            # view.flash.assert_message("Successfully deleted Saved Report from the CFME Database")
+
+    @property
+    def exists(self):
         try:
-            view.download("Download as {}".format(extensions_mapping[extension]))
+            return bool(navigate_to(self, "Details"))
+        except CandidateNotFound:
+            return False
+
+
+@attr.s
+class SavedReportsCollection(BaseCollection):
+    ENTITY = SavedReport
+
+    def all(self):
+        view = navigate_to(self.parent, "Details")
+        results = []
+        try:
+            for _ in view.saved_reports.paginator.pages():
+                for row in view.saved_reports.table.rows():
+                    results.append(
+                        self.instantiate(
+                            row.run_at.text.encode("utf-8"),
+                            row.queued_at.text.encode("utf-8"),
+                            self.parent.is_candu
+                        )
+                    )
         except NoSuchElementException:
-            raise ValueError("Unknown extention. check the extentions_mapping")
+            pass
+        return results
 
 
 class SavedReportData(Pretty):
@@ -457,148 +502,17 @@ class SavedReportData(Pretty):
             return None
 
 
-class CannedReportView(CustomReportDetailsView):
+@navigator.register(ReportsCollection, "All")
+class ReportsAll(CFMENavigateStep):
+    VIEW = AllReportsView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
-    @property
-    def is_displayed(self):
-        return (
-            self.in_intel_reports and
-            self.reports.is_opened and
-            self.report_info.is_active() and
-            self.reports.tree.currently_selected == (["All Reports"] +
-                self.context["object"].path) and
-            self.title.text == 'Report "{}"'.format(self.context["object"].path[-1])
-        )
-
-
-class CannedSavedReportView(CustomSavedReportDetailsView):
-
-    @property
-    def is_displayed(self):
-        return (
-            self.in_intel_reports and
-            self.reports.is_opened and
-            self.reports.tree.currently_selected == (
-                ["All Reports"] + self.context["object"].path
-            ) and
-            self.title.text == 'Saved Report "{} - {}"'.format(
-                self.context["object"].path[-1],
-                self.context["object"].queued_datetime_in_title
-            )
-        )
-
-
-class CannedSavedReport(CustomSavedReport, Navigatable):
-    """As we cannot create or edit canned reports, we don't know their titles and so, so we
-    need to change the navigation a little bit for it to work correctly.
-
-    Args:
-        path_to_report: Iterable with path to report.
-        datetime: Datetime of "Run At" of the report. That's what :py:func:`queue_canned_report`
-            returns.
-    """
-
-    def __init__(self, path_to_report, run_datetime, queued_datetime, candu=False, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.path = path_to_report
-        self.datetime = run_datetime
-        self.candu = candu
-        self.queued_datetime_in_title = parsetime.from_american_with_utc(
-            queued_datetime).to_saved_report_title_format()
-        self.datetime_in_tree = parsetime.from_american_with_utc(self.datetime).to_iso_with_utc()
-
-    @classmethod
-    def new(cls, path):
-        return cls(path, *cls.queue_canned_report(path))
-
-    @classmethod
-    def queue_canned_report(cls, path):
-        """Queue report from selection of pre-prepared reports.
-
-        Args:
-            *path: Path in tree after All Reports
-        Returns: Value of Run At in the table so the run can be then checked.
-        """
-        cls.path = path
-        view = navigate_to(cls, "Info")
-        view.browser.refresh()  # CFME-Issue on 5.8
-        assert view.is_displayed
-        view.report_info.queue_button.click()
-        view.flash.assert_no_error()
-        view.flash.assert_message("Report has been successfully queued to run")
-        queued_at = view.saved_reports.table[0]["Queued At"].text
-
-        def _get_state():
-            row = view.saved_reports.table.row(queued_at=queued_at)
-            status = row.status.text.strip().lower()
-            assert status != "error"
-            return status == "complete"
-
-        wait_for(
-            _get_state,
-            delay=1,
-            message="wait for report generation finished",
-            fail_func=view.reload_button.click,
-            num_sec=300,
-        )
-        view.browser.refresh()  # CFME-Issue: To make sure the Tree updates
-        first_row = view.saved_reports.table[0]
-        return first_row.run_at.text, first_row.queued_at.text
-
-    def get_saved_canned_reports(self, *path):
-        view = navigate_to(self, "Info")
-        results = []
-        try:
-            for _ in view.saved_reports.paginator.pages():
-                for row in view.saved_reports.table.rows():
-                    if not all([c[1].is_displayed for c in row]):
-                        # This is a temporary workaround for cases we have row span
-                        # greater that 1 column (e.g. in case of "Totals: ddd" column).
-                        # TODO: Support this functionality in widgetastic. Issue:
-                        # https://github.com/RedHatQE/widgetastic.core/issues/26
-                        continue
-                    results.append(
-                        CannedSavedReport(
-                            path,
-                            row.run_at.text.encode("utf-8"),
-                            row.queued_at.text.encode("utf-8")
-                        )
-                    )
-        except NoSuchElementException:
-            pass
-        return results
-
-    def delete(self, cancel=False):
-        view = navigate_to(self, "Info")
-        cell = view.saved_reports.table.row(run_at=self.datetime)[0]
-        cell.check()
-        view.configuration.item_select(
-            "Delete this Saved Report from the Database",
-            handle_alert=not cancel
-        )
-        if cancel:
-            assert view.is_displayed
-            view.flash.assert_no_error()
-        else:
-            view.flash.assert_no_error()
-            # TODO Doesn't work due to this BZ https://bugzilla.redhat.com/show_bug.cgi?id=1489387
-            # view.flash.assert_message("Successfully deleted Saved Report from the CFME Database")
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Info')
-            return True
-        except CandidateNotFound:
-            return False
-
-    def delete_if_exists(self):
-        if self.exists:
-            self.delete()
+    def step(self):
+        self.prerequisite_view.reports.tree.click_path("All Reports")
 
 
 @navigator.register(ReportsCollection, "Add")
-class CustomReportNew(CFMENavigateStep):
+class ReportsNew(CFMENavigateStep):
     VIEW = NewCustomReportView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
@@ -608,7 +522,7 @@ class CustomReportNew(CFMENavigateStep):
 
 
 @navigator.register(Report, "Edit")
-class CustomReportEdit(CFMENavigateStep):
+class ReportEdit(CFMENavigateStep):
     VIEW = EditCustomReportView
     prerequisite = NavigateToSibling("Details")
 
@@ -631,44 +545,16 @@ class ReportDetails(CFMENavigateStep):
         self.view.report_info.select()
 
 
-@navigator.register(CustomSavedReport, "Details")
-class CustomSavedReportDetails(CFMENavigateStep):
-    VIEW = CustomSavedReportDetailsView
+@navigator.register(SavedReport, "Details")
+class SavedReportDetails(CFMENavigateStep):
+    VIEW = SavedReportDetailsView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
     def step(self):
         self.prerequisite_view.reports.tree.click_path(
             "All Reports",
-            self.view.mycompany_title,
-            "Custom",
+            getattr(self.obj.report, "type", self.obj.report.company_name),
+            getattr(self.obj.report, "subtype", "Custom"),
             self.obj.report.menu_name,
             self.obj.datetime_in_tree
         )
-
-
-@navigator.register(CannedSavedReport, "Details")
-class CannedSavedReportDetails(CFMENavigateStep):
-    VIEW = CannedSavedReportView
-    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
-
-    def step(self):
-        path = self.obj.path + [self.obj.datetime_in_tree]
-        self.prerequisite_view.reports.tree.click_path("All Reports", *path)
-
-
-@navigator.register(CannedSavedReport, "Info")
-class CannedReportInfo(CFMENavigateStep):
-    VIEW = CannedReportView
-    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
-
-    def step(self):
-        self.prerequisite_view.reports.tree.click_path("All Reports", *self.obj.path)
-
-
-@navigator.register(ReportsCollection, "All")
-class CustomReportAll(CFMENavigateStep):
-    VIEW = AllReportsView
-    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
-
-    def step(self):
-        self.prerequisite_view.reports.tree.click_path("All Reports")
