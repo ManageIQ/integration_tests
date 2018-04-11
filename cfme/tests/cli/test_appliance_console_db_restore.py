@@ -415,8 +415,8 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
         'Restored DB is missing some providers'
     )
     # Cause failover to occur
-    rc, out = appl1.ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
-    assert rc == 0, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(out)
+    result = appl1.ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
+    assert result.success == 0, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
 
     def is_failover_started(appliance):
         return bool(appliance.ssh_client.run_command(
