@@ -209,7 +209,7 @@ def create_template(provider, **kwargs):
                 ram
             )
 
-        wait_for(client.does_template_exist(new_template_name), delay=5, num_sec=600)
+        wait_for(lambda: client.does_template_exist(new_template_name), delay=5, num_sec=600)
     # end else
 
     template_name = kwargs.get('template_name')
