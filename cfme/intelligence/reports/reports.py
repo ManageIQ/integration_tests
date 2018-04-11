@@ -88,7 +88,7 @@ class CustomReportFormCommon(CloudIntelReportsView):
     cancel_button = Button("Cancel")
 
 
-class NewCustomReportView(CustomReportFormCommon):
+class ReportAddView(CustomReportFormCommon):
     add_button = Button("Add")
 
     @property
@@ -101,7 +101,7 @@ class NewCustomReportView(CustomReportFormCommon):
         )
 
 
-class EditCustomReportView(CustomReportFormCommon):
+class ReportEditView(CustomReportFormCommon):
     save_button = Button("Save")
 
     @property
@@ -119,7 +119,7 @@ class EditCustomReportView(CustomReportFormCommon):
         )
 
 
-class CustomReportDetailsView(CloudIntelReportsView):
+class ReportDetailsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
     reload_button = Button(
         title=VersionPick({
@@ -148,8 +148,8 @@ class CustomReportDetailsView(CloudIntelReportsView):
             self.report_info.is_active() and
             self.reports.tree.currently_selected == [
                 "All Reports",
-                self.context["object"].company_name,
-                "Custom",
+                self.context["object"].type or self.context["object"].company_name,
+                self.context["object"].subtype or "Custom",
                 self.context["object"].menu_name
             ] and
             self.title.text == 'Report "{}"'.format(self.context["object"].menu_name)
@@ -186,9 +186,8 @@ class SavedReportDetailsView(CloudIntelReportsView):
             self.reports.is_opened and
             self.reports.tree.currently_selected == [
                 "All Reports",
-                getattr(self.context["object"].report, "type",
-                        self.context["object"].report.company_name),
-                getattr(self.context["object"].report, "subtype", "Custom"),
+                self.context["object"].report.type or self.context["object"].report.company_name,
+                self.context["object"].report.subtype or "Custom",
                 self.context["object"].report.menu_name,
                 self.context["object"].datetime_in_tree
             ] and
@@ -197,7 +196,6 @@ class SavedReportDetailsView(CloudIntelReportsView):
                 self.context["object"].queued_datetime_in_title
             )
         )
-
 
 
 class AllReportsView(CloudIntelReportsView):
@@ -279,7 +277,7 @@ class Report(BaseEntity, Updateable, Pretty):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(CustomReportDetailsView)
+        view = self.create_view(ReportDetailsView)
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
@@ -348,15 +346,15 @@ class Report(BaseEntity, Updateable, Pretty):
 class ReportsCollection(BaseCollection):
     ENTITY = Report
 
-    def create(self, menu_name, title, company_name="My Company (All Groups)", **values):
+    def create(self, company_name="My Company (All Groups)", **values):
         view = navigate_to(self, "Add")
         view.fill(values)
         view.add_button.click()
         view = self.create_view(AllReportsView)
         assert view.is_displayed
         view.flash.assert_no_error()
-        view.flash.assert_message('Report "{}" was added'.format(self.menu_name))
-        return self.instantiate(menu_name, title, company_name=company_name, **values)
+        view.flash.assert_message('Report "{}" was added'.format(values["menu_name"]))
+        return self.instantiate(company_name=company_name, **values)
 
 
 @attr.s
@@ -513,7 +511,7 @@ class ReportsAll(CFMENavigateStep):
 
 @navigator.register(ReportsCollection, "Add")
 class ReportsNew(CFMENavigateStep):
-    VIEW = NewCustomReportView
+    VIEW = ReportAddView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
     def step(self):
@@ -523,7 +521,7 @@ class ReportsNew(CFMENavigateStep):
 
 @navigator.register(Report, "Edit")
 class ReportEdit(CFMENavigateStep):
-    VIEW = EditCustomReportView
+    VIEW = ReportEditView
     prerequisite = NavigateToSibling("Details")
 
     def step(self):
@@ -532,14 +530,14 @@ class ReportEdit(CFMENavigateStep):
 
 @navigator.register(Report, "Details")
 class ReportDetails(CFMENavigateStep):
-    VIEW = CustomReportDetailsView
+    VIEW = ReportDetailsView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
     def step(self):
         self.prerequisite_view.reports.tree.click_path(
             "All Reports",
-            getattr(self.obj, "type", self.obj.company_name),
-            getattr(self.obj, "subtype", "Custom"),
+            self.obj.type or self.obj.company_name,
+            self.obj.subtype or "Custom",
             self.obj.menu_name
         )
         self.view.report_info.select()
@@ -553,8 +551,8 @@ class SavedReportDetails(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.reports.tree.click_path(
             "All Reports",
-            getattr(self.obj.report, "type", self.obj.report.company_name),
-            getattr(self.obj.report, "subtype", "Custom"),
+            self.obj.report.type or self.obj.report.company_name,
+            self.obj.report.subtype or "Custom",
             self.obj.report.menu_name,
             self.obj.datetime_in_tree
         )
