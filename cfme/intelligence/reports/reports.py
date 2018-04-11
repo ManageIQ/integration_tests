@@ -231,12 +231,11 @@ class AllCustomReportsView(CloudIntelReportsView):
 
 
 @attr.s
-class Report(BaseEntity, Updateable, Pretty):
-    pretty_attrs = ["menu_name", "title", "company_name", "type", "subtype"]
+class Report(BaseEntity, Updateable):
     _param_name = ParamClassName('title')
-    menu_name = attr.ib()
-    title = attr.ib()
-    company_name = attr.ib(default=None)
+    menu_name = attr.ib(default=None)
+    title = attr.ib(default=None)
+    company_name = attr.ib(default="My Company (All Groups)")
     type = attr.ib(default=None)
     subtype = attr.ib(default=None)
     base_report_on = attr.ib(default=None)
@@ -332,8 +331,6 @@ class Report(BaseEntity, Updateable, Pretty):
                 fail_func=view.reload_button.click,
                 num_sec=300,
             )
-        # CFME-Issue: To make sure the Tree updates
-        view.browser.refresh()
         first_row = view.saved_reports.table[0]
         return self.saved_reports.instantiate(
             first_row.run_at.text,
@@ -354,7 +351,7 @@ class Report(BaseEntity, Updateable, Pretty):
 class ReportsCollection(BaseCollection):
     ENTITY = Report
 
-    def create(self, company_name="My Company (All Groups)", **values):
+    def create(self, **values):
         view = navigate_to(self, "Add")
         view.fill(values)
         view.add_button.click()
@@ -362,7 +359,7 @@ class ReportsCollection(BaseCollection):
         assert view.is_displayed
         view.flash.assert_no_error()
         view.flash.assert_message('Report "{}" was added'.format(values["menu_name"]))
-        return self.instantiate(company_name=company_name, **values)
+        return self.instantiate(**values)
 
 
 @attr.s
@@ -432,8 +429,6 @@ class SavedReport(Updateable, BaseEntity):
 
     def delete(self, cancel=False):
         view = navigate_to(self, "Details")
-        cell = view.saved_reports.table.row(run_at=self.datetime)[0]
-        cell.check()
         view.configuration.item_select(
             "Delete this Saved Report from the Database",
             handle_alert=not cancel
