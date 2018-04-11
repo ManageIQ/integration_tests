@@ -262,7 +262,7 @@ class Taggable(object):
     standardized widgetastic views
     """
 
-    def add_tag(self, tag=None, cancel=False, reset=False, details=True):
+    def add_tag(self, tag=None, cancel=False, reset=False, details=True, entities=None):
         """ Add tag to tested item
 
         Args:
@@ -271,11 +271,12 @@ class Taggable(object):
             reset: set True to reset already set up tag
             details (bool): set False if tag should be added for list selection,
                             default is details page
+            entities(list): list of entities or entities.names to tag
         """
-        if details:
+        if details and not entities:
             view = navigate_to(self, 'EditTagsFromDetails')
-        else:
-            view = navigate_to(self, 'EditTags')
+        elif entities or not details:
+            view = navigate_to(self, 'EditTags', *entities)
         if not tag:
             tag = self._set_random_tag(view)
         category_name = tag.category.display_name
@@ -306,7 +307,7 @@ class Taggable(object):
         for tag in tags:
             self.add_tag(tag=tag)
 
-    def remove_tag(self, tag, cancel=False, reset=False, details=True):
+    def remove_tag(self, tag, cancel=False, reset=False, details=True, entities=None):
         """ Remove tag of tested item
 
         Args:
@@ -315,11 +316,12 @@ class Taggable(object):
             reset: set True to reset tag changes
             details (bool): set False if tag should be added for list selection,
                             default is details page
+            entities(list): list of entities or entities.names to tag
         """
-        if details:
+        if details and not entities:
             view = navigate_to(self, 'EditTagsFromDetails')
-        else:
-            view = navigate_to(self, 'EditTags')
+        elif entities or not details:
+            view = navigate_to(self, 'EditTags', *entities)
         category = tag.category.display_name
         tag = tag.display_name
         try:
@@ -340,11 +342,11 @@ class Taggable(object):
 
     def _set_random_tag(self, view):
         random_cat = random.choice(view.form.tag_category.all_options).text
-        random_cat = random_cat[:-1] if random_cat[-1] == '*' else random_cat
+        random_cat_cut = random_cat[:-1].strip() if random_cat[-1] == '*' else random_cat
         view.form.tag_category.fill(random_cat)  # In order to get the right tags list
         random_tag = random.choice([tag_option for tag_option in view.form.tag_name.all_options
                                     if "select" not in tag_option.text.lower()]).text
-        tag = Tag(display_name=random_tag, category=Category(display_name=random_cat))
+        tag = Tag(display_name=random_tag, category=Category(display_name=random_cat_cut))
         return tag
 
     def get_tags(self, tenant="My Company Tags"):
@@ -419,13 +421,13 @@ class EditTagsFromListCollection(CFMENavigateStep):
         else:
             return navigate_to(self.obj.parent, 'All')
 
-    def step(self, **kwargs):
+    def step(self, *args):
         """
-            kwargs: pass an entities objects or entities names
+            args: pass an entities objects or entities names
             Return: navigation step
         """
-        if kwargs:
-            for _, entity in kwargs.items():
+        if args:
+            for entity in args:
                 name = entity.name if isinstance(entity, BaseEntity) else entity
                 self.prerequisite_view.entities.get_entity(
                     surf_pages=True, name=name).check()

@@ -715,4 +715,4 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profile):
     soft_assert(
         drift_analysis_view.drift_analysis.check_section_attribute_availability(
             '{} (1)'.format(added_tag.display_name)),
-        "{} (1) row should be visible, but not".format(added_tag.display_name))
+        "{} row should be visible, but not".format(added_tag.display_name))
