@@ -163,6 +163,7 @@ def test_request_with_orphaned_template(appliance, provider, catalog_item):
     assert provision_request.row.status.text == 'Error'
 
 
+@pytest.mark.rhv3
 @pytest.mark.tier(3)
 def test_advanced_search_registry_element(request, appliance):
     """
