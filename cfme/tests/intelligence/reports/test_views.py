@@ -26,8 +26,7 @@ def report(appliance):
         type="Configuration Management",
         subtype="Hosts",
         menu_name="Virtual Infrastructure Platforms"
-    ).queue(wait_for_finish=true)
-    report_time = report.datetime
+    ).queue(wait_for_finish=True)
     yield report
     if report.exists:
         report.delete()

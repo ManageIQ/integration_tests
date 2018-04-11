@@ -277,7 +277,7 @@ class Report(BaseEntity, Updateable, Pretty):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(ReportDetailsView)
+        view = self.create_view(ReportDetailsView, override=updates)
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
@@ -464,6 +464,12 @@ class SavedReportsCollection(BaseCollection):
         try:
             for _ in view.saved_reports.paginator.pages():
                 for row in view.saved_reports.table.rows():
+                    if not all([c[1].is_displayed for c in row]):
+                        # This is a temporary workaround for cases we have row span
+                        # greater that 1 column (e.g. in case of "Totals: ddd" column).
+                        # TODO: Support this functionality in widgetastic. Issue:
+                        # https://github.com/RedHatQE/widgetastic.core/issues/26
+                        continue
                     results.append(
                         self.instantiate(
                             row.run_at.text.encode("utf-8"),

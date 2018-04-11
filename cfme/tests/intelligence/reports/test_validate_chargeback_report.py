@@ -380,7 +380,7 @@ def chargeback_costs_custom(resource_usage, new_compute_rate, appliance, provide
 
 
 @pytest.yield_fixture(scope="module")
-def chargeback_report_default(vm_ownership, assign_default_rate, provider):
+def chargeback_report_default(appliance, vm_ownership, assign_default_rate, provider):
     # Create a Chargeback report based on the default rate; Queue the report.
     owner = vm_ownership
     data = {
@@ -398,18 +398,17 @@ def chargeback_report_default(vm_ownership, assign_default_rate, provider):
             'interval_end': 'Today (partial)'
         }
     }
-    report = CustomReport(is_candu=True, **data)
-    report.create()
+    report = appliance.collections.reports.create(is_candu=True, **data)
 
     logger.info('Queuing chargeback report with default rate for {} provider'.format(provider.name))
     report.queue(wait_for_finish=True)
 
-    yield list(report.get_saved_reports()[0].data.rows)
+    yield list(report.saved_reports.all()[0].data.rows)
     report.delete()
 
 
 @pytest.yield_fixture(scope="module")
-def chargeback_report_custom(vm_ownership, assign_custom_rate, provider):
+def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, provider):
     # Create a Chargeback report based on a custom rate; Queue the report
     owner = vm_ownership
     data = {
@@ -427,13 +426,12 @@ def chargeback_report_custom(vm_ownership, assign_custom_rate, provider):
             'interval_end': 'Today (partial)'
         }
     }
-    report = CustomReport(is_candu=True, **data)
-    report.create()
+    report = appliance.collections.reports.create(is_candu=True, **data)
 
     logger.info('Queuing chargeback report with custom rate for {} provider'.format(provider.name))
     report.queue(wait_for_finish=True)
 
-    yield list(report.get_saved_reports()[0].data.rows)
+    yield list(report.saved_reports.all()[0].data.rows)
     report.delete()
 
 

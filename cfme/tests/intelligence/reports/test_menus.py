@@ -2,7 +2,7 @@
 import pytest
 import random
 
-from cfme.intelligence.reports import menus, reports
+from cfme.intelligence.reports import menus
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
@@ -31,14 +31,14 @@ def report_menus(group):
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1541324, forced_streams=["5.9"])])
 @pytest.mark.parametrize("group", GROUPS)
-def test_shuffle_top_level(group, report_menus):
+def test_shuffle_top_level(appliance, group, report_menus):
     # Shuffle the order
     with report_menus.manage_folder(group) as folder:
         order = shuffle(folder.fields)
         for item in reversed(order):
             folder.move_first(item)
     # Now go and read the tree
-    view = navigate_to(reports.CustomReport, "All")
+    view = navigate_to(appliance.collections.reports, "All")
     table = [row["Name"].text for row in view.reports_table]
     if view.mycompany_title in table:
         del table[-1]
@@ -48,9 +48,9 @@ def test_shuffle_top_level(group, report_menus):
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1541324, forced_streams=["5.9"])])
 @pytest.mark.parametrize("group", GROUPS)
-def test_shuffle_first_level(group, report_menus):
+def test_shuffle_first_level(appliance, group, report_menus):
     # Find a folder
-    view = navigate_to(reports.CustomReport, "All")
+    view = navigate_to(appliance.collections.reports, "All")
     tree = view.reports.tree.read_contents()[1]
     # Select some folder that has at least 3 children
     folders = map(lambda item: item[0],
@@ -62,7 +62,7 @@ def test_shuffle_first_level(group, report_menus):
         for item in reversed(order):
             folder.move_first(item)
     # Now go and read the tree
-    view = navigate_to(reports.CustomReport, "All")
+    view = navigate_to(appliance.collections.reports, "All")
     view.reports.tree.click_path("All Reports", selected_folder)
     table = [row["Name"].text for row in view.reports_table]
     assert table == order, "The order differs!"

@@ -23,12 +23,12 @@ def _cleanup_report(report):
 
 
 # These tests are meant to catch issues such as BZ 1203022
-def test_charge_report_filter_owner(infra_provider, request):
+def test_charge_report_filter_owner(appliance, infra_provider, request):
     """Tests creation of chargeback report that is filtered by owner
 
     """
 
-    report = CustomReport(
+    report = appliance.collections.reports.create(
         menu_name=fauxfactory.gen_alphanumeric(),
         title=fauxfactory.gen_alphanumeric(),
         base_report_on="Chargeback for Vms",
@@ -47,7 +47,6 @@ def test_charge_report_filter_owner(infra_provider, request):
             filter_owner="Administrator"
         )
     )
-    report.create()
 
     def cleanup_report(report):
         return lambda: _cleanup_report(report)
@@ -56,12 +55,12 @@ def test_charge_report_filter_owner(infra_provider, request):
     report.queue(wait_for_finish=True)
 
 
-def test_charge_report_filter_tag(infra_provider, request):
+def test_charge_report_filter_tag(appliance, infra_provider, request):
     """Tests creation of chargeback report that is filtered by tag
 
     """
 
-    report = CustomReport(
+    report = appliance.collections.reports.create(
         menu_name=fauxfactory.gen_alphanumeric(),
         title=fauxfactory.gen_alphanumeric(),
         base_report_on="Chargeback for Vms",
@@ -80,7 +79,6 @@ def test_charge_report_filter_tag(infra_provider, request):
             filter_tag_value="Chicago"
         )
     )
-    report.create()
 
     def cleanup_report(report):
         return lambda: _cleanup_report(report)
