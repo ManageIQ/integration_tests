@@ -111,6 +111,5 @@ def test_delete_vm_from_detail(vm, method):
 
 
 @pytest.mark.tier(3)
-def test_delete_vm_from_collection(vm, appliance):
-    collection = appliance.rest_api.collections.vms
-    delete_resources_from_collection(collection, [vm], not_found=True, num_sec=300, delay=10)
+def test_delete_vm_from_collection(vm):
+    delete_resources_from_collection([vm], not_found=True, num_sec=300, delay=10)

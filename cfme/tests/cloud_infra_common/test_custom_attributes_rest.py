@@ -187,7 +187,7 @@ class TestCustomAttributesRESTAPI(object):
         resource = get_resource[collection_name]()
         attributes = add_custom_attributes(request, resource)
         collection = resource.custom_attributes
-        delete_resources_from_collection(collection, attributes, not_found=True)
+        delete_resources_from_collection(attributes, collection=collection, not_found=True)
 
     @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
         _uncollectif(appliance, provider, collection_name)
@@ -203,7 +203,7 @@ class TestCustomAttributesRESTAPI(object):
         attributes = add_custom_attributes(request, resource)
         attribute = attributes[0]
         collection = resource.custom_attributes
-        delete_resources_from_collection(collection, [attribute], not_found=True)
+        delete_resources_from_collection([attribute], collection=collection, not_found=True)
 
     @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
         _uncollectif(appliance, provider, collection_name)

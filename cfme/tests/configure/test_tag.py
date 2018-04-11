@@ -172,14 +172,13 @@ class TestTagsViaREST(object):
         delete_resources_from_detail(tags, method=method)
 
     @pytest.mark.tier(3)
-    def test_delete_tags_from_collection(self, appliance, tags):
+    def test_delete_tags_from_collection(self, tags):
         """Tests deleting tags from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.tags
-        delete_resources_from_collection(collection, tags, not_found=True)
+        delete_resources_from_collection(tags, not_found=True)
 
     @pytest.mark.tier(3)
     def test_create_tag_with_wrong_arguments(self, appliance):

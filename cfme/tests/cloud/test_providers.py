@@ -495,14 +495,13 @@ class TestProvidersRESTAPI(object):
     @pytest.mark.tier(3)
     # arbitration_profiles were removed in versions >= 5.9'
     @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9')
-    def test_delete_arbitration_profiles_from_collection(self, appliance, arbitration_profiles):
+    def test_delete_arbitration_profiles_from_collection(self, arbitration_profiles):
         """Tests delete arbitration profiles from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.arbitration_profiles
-        delete_resources_from_collection(collection, arbitration_profiles)
+        delete_resources_from_collection(arbitration_profiles)
 
     @pytest.mark.tier(3)
     # arbitration_profiles were removed in versions >= 5.9'

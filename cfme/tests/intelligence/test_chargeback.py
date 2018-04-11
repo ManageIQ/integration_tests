@@ -253,11 +253,10 @@ class TestRatesViaREST(object):
         delete_resources_from_detail(rates, method=method)
 
     @pytest.mark.tier(3)
-    def test_delete_rates_from_collection(self, appliance, rates):
+    def test_delete_rates_from_collection(self, rates):
         """Tests deleting rates from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.rates
-        delete_resources_from_collection(collection, rates)
+        delete_resources_from_collection(rates)

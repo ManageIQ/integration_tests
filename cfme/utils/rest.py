@@ -154,8 +154,10 @@ def create_resource(rest_api, col_name, col_data, col_action='create', substr_se
 
 
 def delete_resources_from_collection(
-        collection, resources, not_found=None, num_sec=10, delay=2, check_response=True):
+        resources, collection=None, not_found=None, num_sec=10, delay=2, check_response=True):
     """Checks that delete from collection works as expected."""
+    collection = collection or resources[0].collection
+
     def _assert_response(*args, **kwargs):
         if check_response:
             assert_response(collection._api, *args, **kwargs)

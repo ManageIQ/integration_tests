@@ -113,11 +113,10 @@ def test_delete_template_from_detail_delete(template):
 
 
 @pytest.mark.tier(2)
-def test_delete_template_from_collection(appliance, template):
+def test_delete_template_from_collection(template):
     """Tests deletion of template from collection.
 
     Metadata:
         test_flag: rest
     """
-    collection = appliance.rest_api.collections.templates
-    delete_resources_from_collection(collection, [template])
+    delete_resources_from_collection([template])

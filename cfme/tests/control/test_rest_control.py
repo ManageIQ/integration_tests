@@ -56,14 +56,13 @@ class TestConditionsRESTAPI(object):
         """
         delete_resources_from_detail(conditions, method=method, num_sec=100, delay=5)
 
-    def test_delete_conditions_from_collection(self, conditions, appliance):
+    def test_delete_conditions_from_collection(self, conditions):
         """Tests delete conditions from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.conditions
-        delete_resources_from_collection(collection, conditions, num_sec=100, delay=5)
+        delete_resources_from_collection(conditions, num_sec=100, delay=5)
 
     @pytest.mark.parametrize(
         'from_detail', [True, False],
@@ -146,14 +145,13 @@ class TestPoliciesRESTAPI(object):
         """
         delete_resources_from_detail(policies, method='DELETE', num_sec=100, delay=5)
 
-    def test_delete_policies_from_collection(self, policies, appliance):
+    def test_delete_policies_from_collection(self, policies):
         """Tests delete policies from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.policies
-        delete_resources_from_collection(collection, policies, num_sec=100, delay=5)
+        delete_resources_from_collection(policies, num_sec=100, delay=5)
 
     @pytest.mark.parametrize(
         'from_detail', [True, False],
