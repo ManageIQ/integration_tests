@@ -3897,14 +3897,14 @@ class LineChart(Widget, ClickableMixin):
         - Simple XY line chart
 
       Args:
-        locator: class id for chart
+        id: class id for chart
 
     .. _code:: python
 
-       chart_name = LineChart(locator='miq_chart_parent_candu_0')
+       chart_name = LineChart(id='miq_chart_parent_candu_0')
     """
 
-    ROOT = ParametrizedLocator(".//div[@id='candu_charts_div']//div[@id='{@locator}']")
+    ROOT = ParametrizedLocator(".//div[@id='candu_charts_div']//div[@id='{@id}']")
     ZOOM_IN = ".//a/i[contains(@class, 'fa-search-plus')]"
     ZOOM_OUT = ".//a/i[contains(@class, 'fa-search-minus')]"
     BS_TITLE_LOCATOR = ".//h2"
@@ -3913,10 +3913,10 @@ class LineChart(Widget, ClickableMixin):
     tooltip = Table(locator='.//div[contains(@class,"c3-tooltip-container")]/table')
     LEGENDS = ".//*[contains(@class, 'c3-legend-item c3-legend-item-')]"
 
-    def __init__(self, parent, locator, logger=None):
+    def __init__(self, parent, id, logger=None):
         """Create the widget"""
         Widget.__init__(self, parent, logger=logger)
-        self.locator = locator
+        self.id = id
 
     def zoom_in(self):
         """For zoom in to chart"""
@@ -4034,7 +4034,7 @@ class LineChart(Widget, ClickableMixin):
         """data for specific timestamp on chart
 
         Args:
-            timestamp: one or more legends
+            timestamp: timestamp as per chart
         Returns:
             :py:class:`set` data for selected timestamp
         """

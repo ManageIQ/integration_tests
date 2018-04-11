@@ -1,8 +1,8 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.common.vm import VM
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
