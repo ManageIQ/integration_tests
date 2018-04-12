@@ -1,6 +1,5 @@
 from collections import Mapping
 from contextlib import contextmanager
-from itertools import izip
 
 from cached_property import cached_property
 from sqlalchemy import MetaData, create_engine, event, inspect
@@ -9,9 +8,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import Pool
 
-from fixtures.pytest_store import store
 from cfme.utils import conf
 from cfme.utils.log import logger
+import attr
 
 
 @event.listens_for(Pool, "checkout")
@@ -26,11 +25,12 @@ def ping_connection(dbapi_connection, connection_record, connection_proxy):
     cursor = dbapi_connection.cursor()
     try:
         cursor.execute("SELECT 1")
-    except StandardError:
+    except Exception:
         raise DisconnectionError
     cursor.close()
 
 
+@attr.ib
 class Db(Mapping):
     """Helper class for interacting with a CFME database using SQLAlchemy
 
@@ -69,12 +69,11 @@ class Db(Mapping):
         tables, like the mapping interface or :py:meth:`values`.
 
     """
-    def __init__(self, hostname=None, credentials=None, port=None):
-        self._table_cache = {}
-        self.hostname = hostname or store.current_appliance.db.address
-        self.port = port or store.current_appliance.db_port
-
-        self.credentials = credentials or conf.credentials['database']
+    hostname = attr.ib()
+    port = attr.ib()
+    credentials = attr.ib(
+        cmp=False, repr=False, default=attr.Factory(lambda: conf.credentials['database']))
+    _table_cache = attr.ib(default=attr.Factory(dict), init=False, repr=False)
 
     def __getitem__(self, table_name):
         """Access tables as items contained in this db
@@ -110,7 +109,7 @@ class Db(Mapping):
 
     def items(self):
         """Iterator of ``(table_name, table)`` pairs"""
-        return izip(self.keys(), self.values())
+        return zip(self.keys(), self.values())
 
     def values(self):
         """Iterator of tables in this db"""
@@ -134,17 +133,6 @@ class Db(Mapping):
     def copy(self):
         """Copy this database instance, keeping the same credentials and hostname"""
         return type(self)(self.hostname, self.credentials)
-
-    def __eq__(self, other):
-        """Check if this db is equal to another db"""
-        try:
-            return self.hostname == other.hostname
-        except:
-            return False
-
-    def __ne__(self, other):
-        """Check if this db is not equal to another db"""
-        return not self == other
 
     @cached_property
     def engine(self):

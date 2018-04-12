@@ -28,7 +28,7 @@ class ApplianceDB(AppliancePlugin):
     @cached_property
     def client(self):
         # slightly crappy: anything that changes self.address should also del(self.client)
-        return db.Db(self.address)
+        return db.Db(hostname=self.address, port=self.appliance.db_port)
 
     @cached_property
     def address(self):
