@@ -25,7 +25,7 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.tier(2),
-    pytest.mark.meta(blockers=[BZ(1511099, forced_streams=["5.9"],
+    pytest.mark.meta(blockers=[BZ(1511099, forced_streams=['5.9', '5.8'],
                                   unblock=lambda provider: not provider.one_of(GCEProvider)),
                                ]),
     pytest.mark.provider([CloudInfraProvider], scope='module',
