@@ -13,6 +13,7 @@ from cfme.common.vm_views import DriftAnalysis
 from cfme.configure import configuration
 from cfme.configure.tasks import is_vm_analysis_finished, TasksView
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
+from cfme.configure.configuration.region_settings import Tag, Category
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -683,7 +684,8 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profile):
     drift_new = int(view.entities.summary("Relationships").get_text_of("Drift History"))
 
     # add a tag and a finalizer to remove it
-    added_tag = ssa_vm.add_tag()
+    added_tag = Tag(display_name='Accounting', category=Category(display_name='Department'))
+    ssa_vm.add_tag(added_tag)
     request.addfinalizer(lambda: ssa_vm.remove_tag(added_tag))
     ssa_vm.smartstate_scan(wait_for_task_result=True)
     view = navigate_to(ssa_vm, "Details")
@@ -697,7 +699,7 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profile):
     )
     # check drift difference
     soft_assert(ssa_vm.equal_drift_results(
-        '{} (1)', 'My Company Tags'.format(added_tag.display_name), 0, 1),
+        '{} (1)'.format(added_tag.category.display_name), 'My Company Tags', 0, 1),
         "Drift analysis results are equal when they shouldn't be")
 
     # Test UI features that modify the drift grid
@@ -707,12 +709,12 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profile):
     drift_analysis_view.toolbar.same_values_attributes.click()
     soft_assert(
         not drift_analysis_view.drift_analysis.check_section_attribute_availability(
-            '{}'.format(added_tag.display_name)),
-            "{} row should be hidden, but not".format(added_tag.display_name))
+            '{}'.format(added_tag.category.display_name)),
+        "{} row should be hidden, but not".format(added_tag.display_name))
 
     # Accounting tag should be displayed now
     drift_analysis_view.toolbar.different_values_attributes.click()
     soft_assert(
         drift_analysis_view.drift_analysis.check_section_attribute_availability(
-            '{} (1)'.format(added_tag.display_name)),
+            '{} (1)'.format(added_tag.category.display_name)),
         "{} row should be visible, but not".format(added_tag.display_name))
