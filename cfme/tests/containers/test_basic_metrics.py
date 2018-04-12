@@ -8,6 +8,14 @@ pytestmark = [
     pytest.mark.tier(1),
     pytest.mark.provider([ContainersProvider], scope='function')]
 
+
+@pytest.fixture(scope="module")
+def reduce_metrics_collection_threshold(appliance):
+    appliance.ssh_client.put_file("scripts/openshift/change_metrics_collection_threshold.rb",
+                                  "/var/www/miq/vmdb")
+    appliance.ssh_client.exec_command(
+        "cd /var/www/miq/vmdb; rails change_metrics_collection_threshold.rb 5.minutes")
+
 # TODO This test needs to be reevaluated. This is not testing anyting in CFME.
 
 
