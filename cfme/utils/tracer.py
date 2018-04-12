@@ -10,7 +10,7 @@ from utils.tracer import trace::
 """
 import sys
 from cfme.utils.log import logger
-from functools32 import wraps
+from functools import wraps
 
 
 class FileStore(object):
