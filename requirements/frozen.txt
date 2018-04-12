@@ -8,9 +8,6 @@ backports-abc==0.5
 backports.shutil-get-terminal-size==1.0.0
 backports.ssl-match-hostname==3.5.0.1
 bleach==2.0.0
-boto==2.47.0
-boto3==1.4.4
-botocore==1.5.62
 bottle==0.12.13
 bottle-sqlite==0.1.3
 cached-property==1.3.0
@@ -21,7 +18,7 @@ click==6.7
 cliff==2.7.0
 cmd2==0.7.2
 configparser==3.5.0
-cryptography==1.9
+cryptography==2.2.1
 dateparser==0.6.0
 debtcollector==1.14.0
 decorator==4.0.11
