@@ -3899,7 +3899,7 @@ class LineChart(Widget, ClickableMixin):
       Args:
         id: class id for chart
 
-    .. _code:: python
+    .. code-block:: python
 
        chart_name = LineChart(id='miq_chart_parent_candu_0')
     """
@@ -3945,16 +3945,16 @@ class LineChart(Widget, ClickableMixin):
 
     @property
     def _legends(self):
-        return {str(leg.text): leg for leg in self.browser.elements(self.LEGENDS)}
+        return {self.browser.text(leg): leg for leg in self.browser.elements(self.LEGENDS)}
 
     @property
     def _legends_ids(self):
         return [leg.id for leg in self.browser.elements(self.LEGENDS)]
 
     def legend_is_displayed(self, leg):
-        if type(leg) is str:
+        if isinstance(leg, six.string_types):
             leg = self._legends.get(leg)
-        return not('c3-legend-item-hidden' in self.browser.classes(leg))
+        return 'c3-legend-item-hidden' not in self.browser.classes(leg)
 
     @property
     def _get_data(self):
@@ -3978,7 +3978,6 @@ class LineChart(Widget, ClickableMixin):
 
     def hide_all_legends(self):
         """To hide all legends on chart"""
-
         for legend in self._legends.values():
             if self.legend_is_displayed(legend):
                 legend.click()
@@ -4016,7 +4015,7 @@ class LineChart(Widget, ClickableMixin):
         """data for all legends and timestamp on chart
 
         Returns:
-            :py:class:`set` complete data on chart
+            :py:class:`dict` complete data on chart
         """
         self.display_all_legends()
         return self._get_data
@@ -4027,7 +4026,7 @@ class LineChart(Widget, ClickableMixin):
         Args:
             legends: one or more legends
         Returns:
-            :py:class:`set` data for selected legends
+            :py:class:`dict` data for selected legends
         """
         self.hide_all_legends()
         self.display_legends(*legends)
@@ -4039,7 +4038,7 @@ class LineChart(Widget, ClickableMixin):
         Args:
             timestamp: timestamp as per chart
         Returns:
-            :py:class:`set` data for selected timestamp
+            :py:class:`dict` data for selected timestamp
         """
         el = self._elements.get(timestamp)
         self.browser.move_to_element(el)
