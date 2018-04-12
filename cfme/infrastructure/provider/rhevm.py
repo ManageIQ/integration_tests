@@ -13,16 +13,16 @@ from . import InfraProvider
 class RHEVMEndpoint(DefaultEndpoint):
     @property
     def view_value_mapping(self):
+        tls_since_version = '5.8.0.8'
         return {'hostname': self.hostname,
                 'api_port': getattr(self, 'api_port', None),
-                'verify_tls': getattr(self, 'verify_tls', None),
-                'ca_certs': getattr(self, 'ca_certs', None)}
-
-    def delete_tls_info(self):
-        if getattr(self, 'ca_certs', None):
-            delattr(self, 'ca_certs')
-        if getattr(self, 'verify_tls', None):
-            delattr(self, 'verify_tls')
+                'verify_tls': version.pick({
+                    version.LOWEST: None,
+                    tls_since_version: getattr(self, 'verify_tls', None)}),
+                'ca_certs': version.pick({
+                    version.LOWEST: None,
+                    tls_since_version: getattr(self, 'ca_certs', None)})
+                }
 
 
 class RHEVMEndpointForm(View):
@@ -61,7 +61,6 @@ class RHEVMProvider(InfraProvider):
     _ctrl_alt_del_xpath = '//*[@id="ctrlaltdel"]'
     _fullscreen_xpath = '//*[@id="fullscreen"]'
     bad_credentials_error_msg = "Credential validation was not successful"
-    tls_since_version = '5.8.0.8'
 
     ems_events = [
         ('vm_create', {'event_type': 'USER_ADD_VM_FINISHED_SUCCESS', 'vm_or_template_id': None}),
@@ -80,8 +79,6 @@ class RHEVMProvider(InfraProvider):
         self.end_ip = end_ip
         if ip_address:
             self.ip_address = ip_address
-        if self.appliance.version < self.tls_since_version:
-            self.endpoints['default'].delete_tls_info()
 
     @property
     def view_value_mapping(self):
