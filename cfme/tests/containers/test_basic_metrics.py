@@ -11,11 +11,14 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def reduce_metrics_collection_threshold(appliance):
-    appliance.ssh_client.put_file("scripts/openshift/change_metrics_collection_threshold.rb", "/var/www/miq/vmdb")
+    appliance.ssh_client.put_file("scripts/openshift/change_metrics_collection_threshold.rb",
+                                  "/var/www/miq/vmdb")
     appliance.ssh_client.run_rails_command("change_metrics_collection_threshold.rb 5.minutes")
 
-def enable_cNu(appliance):
-    appliance.server.settings.enable_server_roles('ems_metrics_coordinator', 'ems_metrics_collector',
+
+def enable_capacity_and_utilization(appliance):
+    appliance.server.settings.enable_server_roles('ems_metrics_coordinator',
+                                                  'ems_metrics_collector',
                                                   'ems_metrics_processor')
 
 
@@ -42,6 +45,6 @@ def test_basic_metrics(provider):
     assert response.ok, "{metrics} failed to start!".format(metrics=router["metadata"]["name"])
 
 
-def test_validate_metrics_exsitence(appliance, provider, enable_cNu, reduce_metrics_collection_threshold):
-    enable_cNu
-    reduce_metrics_collection_threshold(appliance)
+def test_validate_metrics_exsitence(appliance, provider, enable_capacity_and_utilization,
+                                    reduce_metrics_collection_threshold):
+    passs
