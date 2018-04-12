@@ -1,61 +1,98 @@
 FROM registry.fedoraproject.org/fedora:26
 
-ENV PYCURL_SSL_LIBRARY=nss
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV CFME_ENV=/
+RUN echo "tsflags=nodocs" >> /etc/yum.conf
 
-RUN dnf install -y --setopt=tsflags=nodocs \
+COPY docker-assets/google-chrome.repo /etc/yum.repos.d/
+
+RUN dnf install -y http://linuxdownload.adobe.com/linux/x86_64/adobe-release-x86_64-1.0-1.noarch.rpm && \
+    rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-adobe-linux && \
+    dnf install -y \
     # Base packages
-    git \
-    # For selenium xstartup script
+    bzip2 \
+    dejavu* \
+    findutils \
+    flash-plugin \
     fluxbox \
-    # Preloaded from cfme.scripting.quickstart
-    openssh-server \
-    python \
-    tigervnc-server \
     freetype-devel \
     gcc \
     gcc-c++ \
+    git \
+    java-1.8.0-openjdk.x86_64 \
     libcurl-devel \
     libffi-devel \
+    libpng-devel \
     libxml2-devel \
     libxslt-devel \
     openssl-devel \
+    passwd \
     postgresql-devel \
-    python2-devel \
+    python-devel \
+    python-netaddr \
+    python-pip \
+    python-setuptools \
     python2-virtualenv \
     redhat-rpm-config \
-    tesseract \
-    zeromq-devel \
-    && dnf clean all
+    sshpass \
+    sudo \
+    tigervnc-server \
+    unzip \
+    which \
+    xorg-x11-fonts-* \
+    xterm \
+    zeromq-devel && \
+    dnf install -y https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && \
+    dnf clean all
 
-# Build and setup selenium
-RUN mkdir /selenium; curl -L http://goo.gl/yLJLZg > /selenium/selenium_latest.jar
-ADD dockerfiles/cfme_tests_img/xstartup /root/.vnc/xstartup
+ENV CHROME_PATH /opt/google/chrome
+ENV CHROMEDRIVER_VERSION 2.35
+ENV CHROMEDRIVER_PATH /opt/chromedriver/
+ENV SELENIUM_VERSION 3.10
+ENV SELENIUM_PATH /opt/selenium
+ENV FIREFOX_VERSION 46.0.1
+ENV FIREFOX_PATH /opt/firefox
+
+# Chrome driver
+RUN mkdir -p ${CHROMEDRIVER_PATH} && \
+    cd ${CHROMEDRIVER_PATH} && \
+    curl -O http://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip && \
+    unzip chromedriver_linux64.zip && \
+    chmod a+x chromedriver && \
+    rm -f chromedriver_linux64.zip
+
+# Selenium
+RUN mkdir -p ${SELENIUM_PATH} && \
+    cd ${SELENIUM_PATH} && \
+    curl http://selenium-release.storage.googleapis.com/${SELENIUM_VERSION}/selenium-server-standalone-${SELENIUM_VERSION}.0.jar -o selenium_latest.jar && \
+    chmod ugo+r selenium_latest.jar
 EXPOSE 5999
+
+# Firefox
+RUN mkdir -p ${FIREFOX_PATH} && \
+    cd ${FIREFOX_PATH} && \
+    curl https://download-installer.cdn.mozilla.net/pub/firefox/releases/${FIREFOX_VERSION}/linux-x86_64/en-US/firefox-${FIREFOX_VERSION}.tar.bz2 -o firefox.tar.bz2 && \
+    tar -C . -xjvf firefox.tar.bz2 --strip-components 1 && \
+    rm -f firefox.tar.bz2
+
+ENV PATH="${FIREFOX_PATH}:${CHROME_PATH}:${CHROMEDRIVER_PATH}:${SELENIUM_PATH}:${PATH}"
+
+ENV PYCURL_SSL_LIBRARY=nss
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV CFME_ENV=/
 
 RUN virtualenv /cfme_venv
 RUN echo "source /cfme_venv/bin/activate" >> /root/.bashrc
 
 # Preinstall any python dependencies to keep it in an early layer
 RUN curl https://raw.githubusercontent.com/ManageIQ/integration_tests/master/requirements/frozen.txt > frozen.txt
-RUN ../cfme_venv/bin/pip install -U pip wheel setuptools_scm docutils
-RUN ../cfme_venv/bin/pip install -r frozen.txt --no-binary pycurl --no-binary numpy --no-binary matplotlib
-RUN ../cfme_venv/bin/python -c 'import curl'
+RUN /cfme_venv/bin/pip install --no-cache-dir -U pip wheel setuptools_scm docutils && \
+    /cfme_venv/bin/pip install --no-cache-dir -r frozen.txt --no-binary pycurl --no-binary numpy --no-binary matplotlib && \
+    rm -rf ~/.cache/pip && \
+    find . -name *.pyc -delete && find . -name __pycache__ -delete
 
-# RUN git clone https://github.com/ManageIQ/integration_tests.git
-RUN git clone https://github.com/psav/cfme_tests.git --branch dev_trial integration_tests
-# RUN git clone https://github.com/ManageIQ/integration_tests.git
-WORKDIR integration_tests
+VOLUME /projects/cfme_env/cfme_vol
+WORKDIR /projects/cfme_env/cfme_vol
 
-RUN touch .yaml_key
-RUN mkdir -p ../cfme-qe-yamls/complete/
-
-RUN python -m cfme.scripting.quickstart
-
-# RUN cd conf && for file in $(ls); do cp $file ${file%.template}; done
-ADD conf/*.yaml  /integration_tests/conf/
-
-ADD docker-assets/entrypoint /entrypoint
+COPY docker-assets/xstartup /xstartup
+COPY docker-assets/entrypoint /entrypoint
 
 ENTRYPOINT /entrypoint

@@ -1,7 +1,11 @@
 #!/bin/bash
 
-# Start the selenium server
-vncserver :99 -SecurityTypes None
+touch .yaml_key
+mkdir -p /cfme-qe-yamls/complete
+cp conf/* /cfme-qe-yamls/complete
+
+vncserver :99 -xstartup /xstartup -SecurityTypes None
 
 source /cfme_venv/bin/activate
-miq-runtest --disablemetaplugins blockers -m sauce
+# python -m cfme.scripting.quickstart
+py.test cfme/tests/test_login.py -k test_login -v
