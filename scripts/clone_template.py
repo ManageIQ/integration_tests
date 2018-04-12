@@ -334,6 +334,7 @@ def main(**kwargs):
                     app_kwargs = {
                         'project': output['project'],
                         'db_host': output['external_ip'],
+                        'container': 'cloudforms-0',
                         'hostname': ip,
                         'openshift_creds': {
                             'hostname': provider_dict['hostname'],
@@ -383,6 +384,7 @@ def main(**kwargs):
                                 'project': output['project'],
                                 'db_host': output['external_ip'],
                                 'hostname': ip,
+                                'container': 'cloudforms-0',
                                 'openshift_creds': {
                                     'hostname': provider_dict['hostname'],
                                     'username': ocp_creds['username'],
