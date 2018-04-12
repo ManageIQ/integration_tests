@@ -118,14 +118,26 @@ def test_cpu_total(appliance):
 def test_certificates_present(appliance, soft_assert):
     """Test whether the required product certificates are present."""
 
-    known_certs = ["/etc/rhsm/ca/redhat-uep.pem",
-    "/etc/rhsm/ca/candlepin-stage.pem", "/etc/pki/product-default/69.pem",
-    "/etc/pki/product/167.pem", "/etc/pki/product/201.pem"]
+    rhsm_ca_cert = '/etc/rhsm/ca/redhat-uep.pem'
+    rhsm_url = 'https://subscription.rhn.redhat.com/'
+    known_certs = [
+        rhsm_ca_cert, '/etc/pki/product-default/69.pem',
+        '/etc/pki/product/167.pem', '/etc/pki/product/201.pem'
+    ]
+
+    # Ensure subscription URL's cert is trusted...
+    assert appliance.ssh_client.run_command(
+        'curl --connect-timeout 5 --max-time 10 --retry 10 --retry-delay 0'
+        ' --retry-max-time 60 --cacert {ca_cert} {url}'
+        .format(ca_cert=rhsm_ca_cert, url=rhsm_url)
+    ).success
 
     for cert in known_certs:
         assert appliance.ssh_client.run_command("test -f '{}'".format(cert)).success
         assert appliance.ssh_client.run_command(
-                "openssl verify -CAfile /etc/rhsm/ca/redhat-uep.pem '{}'".format(cert))
+            "openssl verify -CAfile {ca_cert} '{cert_file}'"
+            .format(ca_cert=rhsm_ca_cert, cert_file=cert)
+        )
 
 
 @pytest.mark.ignore_stream("upstream")
