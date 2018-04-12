@@ -33,9 +33,20 @@ def pytest_collection_modifyitems(session, config, items):
         source = 'jenkins'
 
     store.terminalreporter.write(
-        'Attempting Uncollect for build: {} and source: {}'.format(build, source), bold=True)
+        'Attempting Uncollect for build: {} and source: {}\n'.format(build, source), bold=True)
 
-    pl = composite_uncollect(build, source)
+    # The following code assumes slaves collect AFTER master is done, this prevents a parallel
+    # speed up, but in the future we may move uncollection to a later stage and only do it on
+    # master anyway.
+    if store.parallelizer_role == 'master':
+        # Master always stores the composite uncollection
+        store.terminalreporter.write('Storing composite uncollect in cache...\n')
+        pl = composite_uncollect(build, source)
+        config.cache.set('miq-composite-uncollect', pl)
+    else:
+        # Slaves always retrieve from cache
+        logger.info('Slave retrieving composite uncollect from cache')
+        pl = config.cache.get('miq-composite-uncollect', None)
 
     if pl:
         for test in pl['tests']:
