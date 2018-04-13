@@ -9,7 +9,7 @@ from humanfriendly import parse_size, tokenize
 import pytest
 
 from cfme.containers.provider import ContainersProvider
-from cfme.intelligence.chargeback import assignments, rates
+from cfme.intelligence.chargeback import assignments
 
 from cfme.utils.log import logger
 from cfme.utils.units import CHARGEBACK_HEADER_NAMES, parse_number
@@ -176,10 +176,11 @@ def compute_rate(appliance, rate_type, interval):
                              'fixed_rate': 1,
                              'variable_rate': variable_rate}
     }
-    ccb = rates.ComputeRate(description, fields=data, appliance=appliance)
-    ccb.create()
+    ccb = appliance.collections.compute_rates.create(description, fields=data)
     yield ccb
-    ccb.delete()
+
+    if ccb.exists:
+        ccb.delete()
 
 
 @pytest.fixture(scope='module')

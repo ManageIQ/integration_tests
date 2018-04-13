@@ -14,7 +14,6 @@ import pytest
 from wrapanapi import VmState
 
 import cfme.intelligence.chargeback.assignments as cb
-import cfme.intelligence.chargeback.rates as rates
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -358,10 +357,10 @@ def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, interv
 
 
 @pytest.fixture(scope="module")
-def new_compute_rate(interval):
+def new_compute_rate(appliance, interval):
     """Create a new Compute Chargeback rate"""
-    desc = 'custom_{}'.format(interval)
-    compute = rates.ComputeRate(description=desc,
+    desc = 'custom_{}_{}'.format(interval, fauxfactory.gen_alphanumeric())
+    compute = appliance.collections.compute_rates.create(description=desc,
                 fields={'Used CPU':
                        {'per_time': interval, 'variable_rate': '720'},
                        'Used Disk I/O':
@@ -370,15 +369,16 @@ def new_compute_rate(interval):
                        {'per_time': interval, 'variable_rate': '720'},
                        'Used Memory':
                        {'per_time': interval, 'variable_rate': '720'}})
-    compute.create()
-    storage = rates.StorageRate(description=desc,
+    storage = appliance.collections.storage_rates.create(description=desc,
                 fields={'Used Disk Storage':
                         {'per_time': interval, 'variable_rate': '720'}})
-    storage.create()
     yield desc
 
-    compute.delete()
-    storage.delete()
+    if compute.exists:
+        compute.delete()
+
+    if storage.exists:
+        storage.delete()
 
 
 def test_validate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_custom,

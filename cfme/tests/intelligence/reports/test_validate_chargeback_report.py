@@ -28,7 +28,6 @@ import pytest
 import re
 
 import cfme.intelligence.chargeback.assignments as cb
-import cfme.intelligence.chargeback.rates as rates
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.provider import CloudProvider
@@ -430,7 +429,9 @@ def chargeback_report_default(appliance, vm_ownership, assign_default_rate, prov
     report.queue(wait_for_finish=True)
 
     yield list(report.saved_reports.all()[0].data.rows)
-    report.delete()
+
+    if report.exists:
+        report.delete()
 
 
 @pytest.fixture(scope="module")
@@ -458,31 +459,35 @@ def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, provid
     report.queue(wait_for_finish=True)
 
     yield list(report.saved_reports.all()[0].data.rows)
-    report.delete()
+
+    if report.exists:
+        report.delete()
 
 
 @pytest.fixture(scope="module")
-def new_compute_rate():
+def new_compute_rate(appliance):
     # Create a new Compute Chargeback rate
     try:
         desc = 'custom_' + fauxfactory.gen_alphanumeric()
-        compute = rates.ComputeRate(description=desc,
+        compute = appliance.collections.compute_rates.create(description=desc,
                     fields={'Used CPU':
                             {'per_time': 'Hourly', 'variable_rate': '3'},
                             'Used Disk I/O':
                             {'per_time': 'Hourly', 'variable_rate': '2'},
                             'Used Memory':
                             {'per_time': 'Hourly', 'variable_rate': '2'}})
-        compute.create()
+
         if not BZ(1532368, forced_streams=['5.9']).blocks:
-            storage = rates.StorageRate(description=desc,
+            storage = appliance.collections.storage_rates.create(description=desc,
                     fields={'Used Disk Storage':
                             {'per_time': 'Hourly', 'variable_rate': '3'}})
-            storage.create()
         yield desc
+
     finally:
-        compute.delete()
-        if not BZ(1532368, forced_streams=['5.9']).blocks:
+        if compute.exists:
+            compute.delete()
+
+        if storage.exists and not BZ(1532368, forced_streams=['5.9']).blocks:
             storage.delete()
 
 
