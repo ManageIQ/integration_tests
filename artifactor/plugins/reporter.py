@@ -27,7 +27,7 @@ from py.path import local
 
 from artifactor import ArtifactorBasePlugin
 from cfme.utils import process_pytest_path
-from cfme.utils.conf import cfme_data  # Only for the provider specific reports
+from cfme.utils.conf import provider_data  # Only for the provider specific reports
 from cfme.utils.path import template_path
 
 _tests_tpl = {
@@ -75,7 +75,7 @@ class ReporterBase(object):
         self.render_report(template_data, 'report', artifact_dir, 'test_report.html')
 
     def _run_provider_report(self, old_artifacts, artifact_dir, version=None, fw_version=None):
-        for mgmt in cfme_data['management_systems'].keys():
+        for mgmt in provider_data['management_systems'].keys():
             template_data = self.process_data(old_artifacts, artifact_dir, version, fw_version,
                 name_filter=mgmt)
 

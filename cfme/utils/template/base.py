@@ -5,7 +5,7 @@ from urllib2 import urlopen, URLError
 from fauxfactory import gen_alphanumeric
 
 from cfme.utils import trackerbot
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.conf import cfme_data, credentials, provider_data
 from cfme.utils.log import logger
 from cfme.utils.providers import get_mgmt
 from cfme.utils.ssh import SSHClient
@@ -70,7 +70,7 @@ class ProviderTemplateUpload(object):
         Default values for custom parameters:
             :param stream_url: cfme_data.basic_info.cfme_images_url[stream]
             :param image_url: parsed with regex from stream_url web page
-            :param provider_data: cfme_data.management_systems[provider]
+            :param provider_data: conf.provider_data.management_systems[provider]
         """
         self._stream_url = kwargs.get('stream_url')
         self._image_url = kwargs.get('image_url')
@@ -152,9 +152,9 @@ class ProviderTemplateUpload(object):
 
     @property
     def provider_data(self):
-        """ Returns AttrDict from cfme_data[management_systems][provider]."""
+        """ Returns AttrDict from conf.provider_data[management_systems][provider]."""
         if not self._provider_data:
-            return cfme_data.management_systems[self.provider]
+            return provider_data.management_systems[self.provider]
         return self._provider_data
 
     @property

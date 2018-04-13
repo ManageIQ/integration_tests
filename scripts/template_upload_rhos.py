@@ -15,7 +15,7 @@ import sys
 from threading import Lock, Thread
 
 from cfme.utils import net, ports, trackerbot
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.conf import cfme_data, credentials, provider_data as provider_yaml
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.providers import list_provider_keys
 from cfme.utils.ssh import SSHClient
@@ -239,7 +239,7 @@ def run(**kwargs):
         provider_data = kwargs['provider_data']
         mgmt_sys = providers = provider_data['management_systems']
     else:
-        mgmt_sys = cfme_data.management_systems
+        mgmt_sys = provider_yaml.management_systems
     for provider in providers:
         # skip provider if block_upload is set
         if (mgmt_sys[provider].get('template_upload') and

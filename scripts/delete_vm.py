@@ -15,7 +15,7 @@ from wrapanapi.virtualcenter import VMWareSystem
 from novaclient.v1_1 import client as novaclient
 
 # utils
-from cfme.utils.conf import cfme_data
+from cfme.utils.conf import provider_data
 from cfme.utils.conf import credentials
 from cfme.utils.wait import wait_for
 
@@ -451,6 +451,6 @@ def main(args, providers):
 if __name__ == "__main__":
     args = parse_cmd_line()
 
-    providers = cfme_data['management_systems']
+    providers = provider_data['management_systems']
 
     sys.exit(main(args, providers))

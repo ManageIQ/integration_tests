@@ -1,13 +1,13 @@
 #! /usr/bin/env python2
 from collections import defaultdict
 from cfme.utils.providers import get_mgmt
-from cfme.utils.conf import cfme_data, jenkins
+from cfme.utils.conf import provider_data, jenkins
 from cfme.utils import appliance
 from jinja2 import Environment, FileSystemLoader
 from cfme.utils.path import template_path
 import json
 
-li = cfme_data['management_systems']
+li = provider_data['management_systems']
 users = jenkins['nicks']
 
 data = defaultdict(dict)

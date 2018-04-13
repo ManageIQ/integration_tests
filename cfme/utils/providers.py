@@ -19,7 +19,7 @@ from cfme.exceptions import UnknownProviderType
 from cfme.utils import conf, version
 from cfme.utils.log import logger
 
-providers_data = conf.cfme_data.get("management_systems", {})
+providers_data = conf.provider_data.get("management_systems", {})
 # Dict of active provider filters {name: ProviderFilter}
 global_filters = {}
 
@@ -283,14 +283,14 @@ def list_provider_keys(provider_type=None):
     Returns: List of provider keys (strings).
     """
     try:
-        all_keys = conf.cfme_data.management_systems.keys()
+        all_keys = conf.provider_data.management_systems.keys()
     except:
         all_keys = []
 
     if provider_type:
         filtered_keys = []
         for key in all_keys:
-            if conf.cfme_data.management_systems[key].type == provider_type:
+            if conf.provider_data.management_systems[key].type == provider_type:
                 filtered_keys.append(key)
         return filtered_keys
     else:

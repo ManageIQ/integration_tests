@@ -146,8 +146,8 @@ class ParallelSession(object):
         self.test_groups = self._test_item_generator()
 
         self._pool = []
-        from cfme.utils.conf import cfme_data
-        self.provs = sorted(set(cfme_data['management_systems'].keys()),
+        from cfme.utils.conf import provider_data
+        self.provs = sorted(set(provider_data['management_systems'].keys()),
                             key=len, reverse=True)
         self.used_prov = set()
 

@@ -15,8 +15,7 @@ import sys
 from os.path import join
 from threading import Lock, Thread
 
-from cfme.utils import trackerbot
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils import conf, trackerbot
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.ssh import SSHClient
 from cfme.utils.providers import list_provider_keys
@@ -53,7 +52,7 @@ def make_kwargs(args, **kwargs):
 
     template_name = kwargs.get('template_name')
     if template_name is None:
-        template_name = cfme_data['basic_info']['appliance_template']
+        template_name = conf.cfme_data['basic_info']['appliance_template']
         kwargs.update({'template_name': template_name})
 
     for kkey, kval in kwargs.iteritems():
@@ -122,7 +121,7 @@ def check_template_name(name):
     pattern = re.compile("(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)")
     match = pattern.match(name)
     if isinstance(match.group(), str) and match.group() != name:
-        name = cfme_data['basic_info']['appliance_template']
+        name = conf.cfme_data['basic_info']['appliance_template']
     return name
 
 
@@ -133,7 +132,7 @@ def upload_template(provider,
                     file_path,
                     ssh_client,
                     bucket_name=None):
-    bucket = bucket_name or cfme_data['template_upload']['template_upload_gce']['bucket_name']
+    bucket = bucket_name or conf.cfme_data['template_upload']['template_upload_gce']['bucket_name']
     try:
         # IMAGE CHECK
         logger.info('GCE: %r: Checking if template %r present', provider, template_name)
@@ -195,10 +194,10 @@ def upload_template(provider,
 
 def run(**kwargs):
     # Setup defaults for the cli tool machine
-    host = kwargs.get('ssh_host') or \
-        cfme_data['template_upload']['template_upload_ec2']['aws_cli_tool_client']
-    user = kwargs.get('ssh_user') or credentials['host_default']['username']
-    passwd = kwargs.get('ssh_pass') or credentials['host_default']['password']
+    host = (kwargs.get('ssh_host') or
+        conf.cfme_data['template_upload']['template_upload_ec2']['aws_cli_tool_client'])
+    user = kwargs.get('ssh_user') or conf.credentials['host_default']['username']
+    passwd = kwargs.get('ssh_pass') or conf.credentials['host_default']['password']
     # Download file once and thread uploading to different gce regions
     with make_ssh_client(host, user, passwd) as ssh_client:
         file_name, file_path = download_image_file(kwargs.get('image_url'), ssh_client)
@@ -206,7 +205,7 @@ def run(**kwargs):
     thread_queue = []
     for provider in list_provider_keys("gce"):
         # skip provider if block_upload is set
-        provider_yaml = cfme_data.management_systems.get(provider)
+        provider_yaml = conf.provider_data.management_systems.get(provider)
         if (provider_yaml.get('template_upload') and
                 provider_yaml.template_upload.get('block_upload')):
             logger.info('Skipping upload on {} due to block_upload'.format(provider))
@@ -233,7 +232,7 @@ def run(**kwargs):
 
 if __name__ == '__main__':
     args = parse_cmd_line()
-    kwargs = cfme_data['template_upload']['template_upload_gce']
+    kwargs = conf.cfme_data['template_upload']['template_upload_gce']
     final_kwargs = make_kwargs(args, **kwargs)
 
     run(**final_kwargs)

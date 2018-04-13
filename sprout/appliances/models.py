@@ -26,9 +26,9 @@ from json_field import JSONField
 from sprout import critical_section, redis
 from sprout.log import create_logger
 
+from cfme.utils import conf
 from cfme.utils.appliance import Appliance as CFMEAppliance, IPAppliance
 from cfme.utils.bz import Bugzilla
-from cfme.utils.conf import cfme_data
 from cfme.utils.providers import get_mgmt
 from cfme.utils.timeutil import nice_seconds
 from cfme.utils.version import Version
@@ -271,7 +271,7 @@ class Provider(MetadataMixin):
 
     @classmethod
     def get_available_provider_keys(cls):
-        return cfme_data.get("management_systems", {}).keys()
+        return conf.provider_data.get("management_systems", {}).keys()
 
     @classmethod
     def get_available_provider_types(cls, user=None):
@@ -297,7 +297,7 @@ class Provider(MetadataMixin):
         if data:
             return data
         else:
-            return cfme_data.get("management_systems", {}).get(self.id, {})
+            return conf.provider_data.get("management_systems", {}).get(self.id, {})
 
     @property
     def ip_address(self):
@@ -1493,8 +1493,8 @@ class AppliancePool(MetadataMixin):
     @property
     def num_shepherd_appliances(self):
         return len(
-            Appliance.objects.filter(appliance_pool=None, **self.appliance_filter_params
-            ).distinct())
+            Appliance.objects.filter(appliance_pool=None, **self.appliance_filter_params).distinct()
+        )
 
     def __repr__(self):
         return "<AppliancePool id: {}, group: {}, total_count: {}>".format(

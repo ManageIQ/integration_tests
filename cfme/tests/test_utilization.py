@@ -7,11 +7,10 @@ from cfme import test_requirements
 from fixtures.pytest_store import store
 
 from cfme.common.provider import BaseProvider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.containers.provider import ContainersProvider
 from fixtures.provider import setup_or_skip
-from cfme.utils import conf
 from cfme.utils.log import logger
-from cfme.utils.version import current_version
 
 
 # Tests for vmware,rhev, openstack, ec2, azure, gce providers have been moved to
@@ -52,9 +51,9 @@ def clean_setup_provider(request, provider):
     BaseProvider.clear_providers()
 
 
-@pytest.mark.uncollectif(
-    lambda provider: current_version() < "5.7" and provider.type == 'gce')
-def test_metrics_collection(clean_setup_provider, provider, enable_candu):
+@pytest.mark.uncollectif(lambda appliance, provider: appliance.version < "5.7" and
+                         provider.one_of(GCEProvider))
+def test_metrics_collection(clean_setup_provider, provider, enable_candu, appliance):
     """Check the db is gathering collection data for the given provider
 
     Metadata:
@@ -65,8 +64,7 @@ def test_metrics_collection(clean_setup_provider, provider, enable_candu):
 
     logger.info("Fetching provider ID for %s", provider.key)
     mgmt_system_id = store.current_appliance.db.client.session.query(mgmt_systems_tbl).filter(
-        mgmt_systems_tbl.name == conf.cfme_data.get('management_systems', {})[provider.key]['name']
-    ).first().id
+        mgmt_systems_tbl.name == provider.provider_data.name).first().id
 
     logger.info("ID fetched; testing metrics collection now")
     start_time = time.time()

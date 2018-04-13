@@ -10,15 +10,14 @@ normally be placed in main function, are located in function run(**kwargs).
 """
 
 import argparse
-import fauxfactory
 import re
 import sys
 from threading import Lock, Thread
 
+import fauxfactory
 from ovirtsdk.xml import params
 
-from cfme.utils import net, trackerbot
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils import conf, net, trackerbot
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.providers import get_mgmt, list_provider_keys
 from cfme.utils.ssh import SSHClient
@@ -52,14 +51,14 @@ def parse_cmd_line():
     parser.add_argument("--disk_interface", dest="disk_interface",
                         help="Interface of second (database) disk", default=None)
     parser.add_argument("--provider", dest="provider",
-                        help="Rhevm provider (to look for in cfme_data)", default=None)
+                        help="Rhevm provider (to look for in provider_data)", default=None)
     args = parser.parse_args()
     return args
 
 
 def add_glance(api, provider):
     glance_provider = 'glance11-server'
-    provider_dict = cfme_data['management_systems'][glance_provider]
+    provider_dict = conf.cfme_data['template_upload'][glance_provider]
     creds_key = provider_dict['credentials']
 
     def is_glance_added(api, name):
@@ -86,9 +85,9 @@ def add_glance(api, provider):
                     url=provider_dict['url'],
                     requires_authentication=True,
                     authentication_url=provider_dict['auth_url'],
-                    username=credentials[creds_key]['username'],
-                    password=credentials[creds_key]['password'],
-                    tenant_name=credentials[creds_key]['tenant']
+                    username=conf.credentials[creds_key]['username'],
+                    password=conf.credentials[creds_key]['password'],
+                    tenant_name=conf.credentials[creds_key]['tenant']
                 )
             )
 
@@ -581,7 +580,7 @@ def update_params_api(api, **kwargs):
     return kwargs
 
 
-def make_kwargs(args, cfme_data, **kwargs):
+def make_kwargs(*args, **kwargs):
     """Assembles all the parameters in case of running as a standalone script.
        Makes sure, that the parameters given by command-line arguments have higher priority.
        Makes sure, that all the needed parameters have proper values.
@@ -598,7 +597,7 @@ def make_kwargs(args, cfme_data, **kwargs):
 
     template_name = kwargs.get('template_name')
     if template_name is None:
-        template_name = cfme_data['basic_info']['appliance_template']
+        template_name = conf.cfme_data['basic_info']['appliance_template']
         kwargs.update({'template_name': template_name})
 
     for kkey, kval in kwargs.iteritems():
@@ -615,9 +614,9 @@ def make_kwargs(args, cfme_data, **kwargs):
     return kwargs
 
 
-def make_kwargs_rhevm(cfmeqe_data, provider):
-    data = cfmeqe_data['management_systems'][provider]
-    temp_up = cfme_data['template_upload']['template_upload_rhevm']
+def make_kwargs_rhevm(provider_key):
+    data = conf.provider_data['management_systems'][provider_key]
+    temp_up = conf.cfme_data['template_upload']['template_upload_rhevm']
 
     edomain = data['template_upload'].get('edomain')
     sdomain = data['template_upload'].get('sdomain')
@@ -627,7 +626,7 @@ def make_kwargs_rhevm(cfmeqe_data, provider):
     disk_format = temp_up.get('disk_format')
     disk_interface = temp_up.get('disk_interface')
 
-    kwargs = {'provider': provider}
+    kwargs = {'provider': provider_key}
     if edomain:
         kwargs['edomain'] = edomain
     if sdomain:
@@ -647,16 +646,11 @@ def make_kwargs_rhevm(cfmeqe_data, provider):
 
 
 def upload_template(rhevip, sshname, sshpass, username, password,
-                    provider, image_url, template_name, provider_data, stream):
+                    provider_key, image_url, template_name, stream):
     try:
-        logger.info("RHEVM:%r Template %r upload started", provider, template_name)
-        if provider_data:
-            kwargs = make_kwargs_rhevm(provider_data, provider)
-            providers = provider_data['management_systems']
-            api = get_mgmt(kwargs.get('provider'), providers=providers).api
-        else:
-            kwargs = make_kwargs_rhevm(cfme_data, provider)
-            api = get_mgmt(kwargs.get('provider')).api
+        logger.info("RHEVM:%r Template %r upload started", provider_key, template_name)
+        kwargs = make_kwargs_rhevm(provider_key)
+        api = get_mgmt(kwargs.get('provider')).api
         kwargs['image_url'] = image_url
         kwargs['template_name'] = template_name
         ovaname = get_ova_name(image_url)
@@ -665,7 +659,7 @@ def upload_template(rhevip, sshname, sshpass, username, password,
         temp_vm_name = ('auto-vm-{}-'.format(
             fauxfactory.gen_alphanumeric(8))) + template_name
         if template_name is None:
-            template_name = cfme_data['basic_info']['appliance_template']
+            template_name = conf.cfme_data['basic_info']['appliance_template']
 
         path, edomain_ip = get_edomain_path(api, kwargs.get('edomain'))
 
@@ -673,54 +667,48 @@ def upload_template(rhevip, sshname, sshpass, username, password,
         check_kwargs(**kwargs)
 
         if api.templates.get(template_name) is not None:
-            logger.info("RHEVM:%r Found finished template with name %r.", provider, template_name)
-            logger.info("RHEVM:%r The script will now end.", provider)
+            logger.info("RHEVM:%r Found finished template with name %r.",
+                        provider_key, template_name)
+            logger.info("RHEVM:%r The script will now end.", provider_key)
             return True
-        logger.info("RHEVM:%r Downloading .ova file...", provider)
+        logger.info("RHEVM:%r Downloading .ova file...", provider_key)
         with make_ssh_client(rhevip, sshname, sshpass) as ssh_client:
             download_ova(ssh_client, kwargs.get('image_url'))
             try:
-                logger.info("RHEVM:%r Templatizing .ova file", provider)
+                logger.info("RHEVM:%r Templatizing .ova file", provider_key)
                 template_from_ova(api, username, password, rhevip, kwargs.get('edomain'),
-                                  ovaname, ssh_client, temp_template_name, provider)
+                                  ovaname, ssh_client, temp_template_name, provider_key)
 
-                logger.info("RHEVM:%r Importing new template to data domain", provider)
+                logger.info("RHEVM:%r Importing new template to data domain", provider_key)
                 import_template(api, kwargs.get('edomain'), kwargs.get('sdomain'),
-                                kwargs.get('cluster'), temp_template_name, provider)
+                                kwargs.get('cluster'), temp_template_name, provider_key)
 
-                logger.info("RHEVM:%r Making a temporary VM from new template", provider)
+                logger.info("RHEVM:%r Making a temporary VM from new template", provider_key)
                 make_vm_from_template(api, kwargs.get('cluster'), temp_template_name, temp_vm_name,
-                                      provider, mgmt_network=kwargs.get('mgmt_network'))
+                                      provider_key, mgmt_network=kwargs.get('mgmt_network'))
 
-                logger.info("RHEVM:%r Adding disk to created VM", provider)
+                logger.info("RHEVM:%r Adding disk to created VM", provider_key)
                 add_disk_to_vm(api, kwargs.get('sdomain'), kwargs.get('disk_size'),
                                kwargs.get('disk_format'), kwargs.get('disk_interface'),
-                               temp_vm_name, provider)
+                               temp_vm_name, provider_key)
 
-                logger.info("RHEVM:%r Templatizing VM", provider)
-                templatize_vm(api, template_name, kwargs.get('cluster'), temp_vm_name, provider)
+                logger.info("RHEVM:%r Templatizing VM", provider_key)
+                templatize_vm(api, template_name, kwargs.get('cluster'), temp_vm_name, provider_key)
 
-                if not provider_data:
-                    logger.info("RHEVM:%r Add template %r to trackerbot", provider, template_name)
-                    trackerbot.trackerbot_add_provider_template(stream, provider, template_name)
+                logger.info("RHEVM:%r Add template %r to trackerbot", provider_key, template_name)
+                trackerbot.trackerbot_add_provider_template(stream, provider_key, template_name)
             finally:
-                cleanup(api, kwargs.get('edomain'), ssh_client, ovaname, provider,
+                cleanup(api, kwargs.get('edomain'), ssh_client, ovaname, provider_key,
                         temp_template_name, temp_vm_name)
-                change_edomain_state(api, 'maintenance', kwargs.get('edomain'), provider)
+                change_edomain_state(api, 'maintenance', kwargs.get('edomain'), provider_key)
                 cleanup_empty_dir_on_edomain(path, edomain_ip,
-                                             sshname, sshpass, rhevip, provider)
-                change_edomain_state(api, 'active', kwargs.get('edomain'), provider)
+                                             sshname, sshpass, rhevip, provider_key)
+                change_edomain_state(api, 'active', kwargs.get('edomain'), provider_key)
                 api.disconnect()
-                logger.info("RHEVM:%r Template %r upload Ended", provider, template_name)
-        if provider_data and api.templates.get(template_name):
-            logger.info("RHEVM:%r Deploying Template %r", provider, template_name)
-            vm_name = 'test_{}_{}'.format(template_name, fauxfactory.gen_alphanumeric(8))
-            deploy_args = {'provider': provider, 'vm_name': vm_name,
-                           'template': template_name, 'deploy': True}
-            getattr(__import__('clone_template'), "main")(**deploy_args)
-        logger.info("RHEVM:%r Template %r upload Ended", provider, template_name)
+                logger.info("RHEVM:%r Template %r upload Ended", provider_key, template_name)
+        logger.info("RHEVM:%r Template %r upload Ended", provider_key, template_name)
     except Exception:
-        logger.exception("RHEVM:%r Template %r upload exception", provider, template_name)
+        logger.exception("RHEVM:%r Template %r upload exception", provider_key, template_name)
         return False
 
 
@@ -735,54 +723,40 @@ def run(**kwargs):
     valid_providers = []
 
     providers = list_provider_keys("rhevm")
-    if kwargs['provider_data']:
-        mgmt_sys = providers = kwargs['provider_data']['management_systems']
-    for provider in providers:
-        if kwargs['provider_data']:
-            if mgmt_sys[provider]['type'] != 'rhevm':
-                continue
-            sshname = mgmt_sys[provider]['sshname']
-            sshpass = mgmt_sys[provider]['sshpass']
-            rhevip = mgmt_sys[provider]['ipaddress']
-        else:
-            mgmt_sys = cfme_data['management_systems']
-            ssh_rhevm_creds = mgmt_sys[provider]['ssh_creds']
-            sshname = credentials[ssh_rhevm_creds]['username']
-            sshpass = credentials[ssh_rhevm_creds]['password']
-            rhevip = mgmt_sys[provider]['ipaddress']
+    for provider_key in providers:
+        mgmt_sys = conf.provider_data['management_systems']
+        ssh_rhevm_creds = mgmt_sys[provider_key]['ssh_creds']
+        sshname = conf.credentials[ssh_rhevm_creds]['username']
+        sshpass = conf.credentials[ssh_rhevm_creds]['password']
+        rhevip = mgmt_sys[provider_key]['ipaddress']
 
-        if (mgmt_sys[provider].get('template_upload') and
-                mgmt_sys[provider]['template_upload'].get('block_upload')):
+        if (mgmt_sys[provider_key].get('template_upload') and
+                mgmt_sys[provider_key]['template_upload'].get('block_upload')):
             # Providers template_upload section indicates upload should not happen on this provider
             continue
 
-        logger.info("RHEVM:%r verifying provider's state before template upload", provider)
+        logger.info("RHEVM:%r verifying provider's state before template upload", provider_key)
         if not net.is_pingable(rhevip):
             continue
         elif not is_ovirt_engine_running(rhevip, sshname, sshpass):
-            logger.info('RHEVM:%r ovirt-engine service not running..', provider)
+            logger.info('RHEVM:%r ovirt-engine service not running..', provider_key)
             continue
-        valid_providers.append(provider)
+        valid_providers.append(provider_key)
 
-    for provider in valid_providers:
-        if kwargs['provider_data']:
-            sshname = mgmt_sys[provider]['sshname']
-            sshpass = mgmt_sys[provider]['sshpass']
-            username = mgmt_sys[provider]['username']
-            password = mgmt_sys[provider]['password']
-        else:
-            ssh_rhevm_creds = mgmt_sys[provider]['ssh_creds']
-            sshname = credentials[ssh_rhevm_creds]['username']
-            sshpass = credentials[ssh_rhevm_creds]['password']
-            rhevm_credentials = mgmt_sys[provider]['credentials']
-            username = credentials[rhevm_credentials]['username']
-            password = credentials[rhevm_credentials]['password']
+    for provider_key in valid_providers:
+        ssh_rhevm_creds = mgmt_sys[provider_key]['ssh_creds']
+        sshname = conf.credentials[ssh_rhevm_creds]['username']
+        sshpass = conf.credentials[ssh_rhevm_creds]['password']
+        rhevm_credentials = mgmt_sys[provider_key]['credentials']
+        username = conf.credentials[rhevm_credentials]['username']
+        password = conf.credentials[rhevm_credentials]['password']
 
-        rhevip = mgmt_sys[provider]['ipaddress']
+        rhevip = mgmt_sys[provider_key]['ipaddress']
         thread = Thread(target=upload_template,
-                        args=(rhevip, sshname, sshpass, username, password, provider,
-                              kwargs.get('image_url'), kwargs.get('template_name'),
-                              kwargs['provider_data'], kwargs['stream']))
+                        args=(rhevip, sshname, sshpass, username, password, provider_key,
+                              kwargs.get('image_url'),
+                              kwargs.get('template_name'),
+                              kwargs['stream']))
         thread.daemon = True
         thread_queue.append(thread)
         thread.start()
@@ -794,8 +768,8 @@ def run(**kwargs):
 if __name__ == "__main__":
     args = parse_cmd_line()
 
-    kwargs = cfme_data['template_upload']['template_upload_rhevm']
+    kwargs = conf.cfme_data['template_upload']['template_upload_rhevm']
 
-    final_kwargs = make_kwargs(args, cfme_data, **kwargs)
+    final_kwargs = make_kwargs(args, **kwargs)
 
     run(**final_kwargs)

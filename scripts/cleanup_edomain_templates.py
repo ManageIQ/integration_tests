@@ -11,8 +11,7 @@ import datetime
 import pytz
 from threading import Lock, Thread
 
-from cfme.utils import net
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils import conf, net
 from cfme.utils.log import logger
 from cfme.utils.providers import get_mgmt
 from cfme.utils.ssh import SSHClient
@@ -22,7 +21,7 @@ lock = Lock()
 
 
 def make_ssh_client(provider_mgmt):
-    creds = credentials[provider_mgmt.kwargs.get('ssh_creds')]
+    creds = conf.credentials[provider_mgmt.kwargs.get('ssh_creds')]
 
     connect_kwargs = {
         'username': creds['username'],
@@ -244,7 +243,7 @@ def get_edomain(api):
     return api_params_resolution(edomain_names, 'export domain', 'edomain')
 
 
-def make_kwargs(args, cfme_data, **kwargs):
+def make_kwargs(*args, **kwargs):
     """Assembles all the parameters in case of running as a standalone script.
        Makes sure, that the parameters given by command-line arguments
        have higher priority.Makes sure, that all the needed parameters
@@ -252,9 +251,7 @@ def make_kwargs(args, cfme_data, **kwargs):
 
     Args:
         args: Arguments given from command-line.
-        cfme_data: Data in cfme_data.yaml
-        kwargs: Kwargs generated from
-        cfme_data['template_upload']['template_upload_rhevm']
+        kwargs: Kwargs generated from cfme_data['template_upload']['template_upload_rhevm']
     """
     args_kwargs = dict(args._get_kwargs())
 
@@ -263,7 +260,7 @@ def make_kwargs(args, cfme_data, **kwargs):
 
     template_name = kwargs.get('template_name')
     if template_name is None:
-        template_name = cfme_data['basic_info']['appliance_template']
+        template_name = conf.cfme_data['basic_info']['appliance_template']
         kwargs.update(template_name=template_name)
 
     for kkey, kval in kwargs.items():
@@ -286,7 +283,7 @@ def run(**kwargs):
     Args:
         **kwargs: Kwargs generated from cfme_data['template_upload']['template_upload_rhevm'].
     """
-    providers = cfme_data['management_systems']
+    providers = conf.provider_data['management_systems']
     for provider in [prov for prov in providers if providers[prov]['type'] == 'rhevm']:
 
         # If a provider was passed, only cleanup on it, otherwise all rhevm providers
@@ -340,7 +337,7 @@ def run(**kwargs):
 if __name__ == "__main__":
     args = parse_cmd_line()
 
-    kwargs = cfme_data['template_upload']['template_upload_rhevm']
+    kwargs = conf.cfme_data['template_upload']['template_upload_rhevm']
 
-    final_kwargs = make_kwargs(args, cfme_data, **kwargs)
+    final_kwargs = make_kwargs(*args, **kwargs)
     run(**final_kwargs)
