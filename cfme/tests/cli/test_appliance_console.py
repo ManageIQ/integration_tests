@@ -34,6 +34,7 @@ ext_auth_options = [
 ]
 
 
+@pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
 @pytest.mark.smoke
 def test_appliance_console(appliance):
     """'ap | tee /tmp/opt.txt)' saves stdout to file, 'ap' launch appliance_console."""
