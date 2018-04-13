@@ -89,7 +89,7 @@ def assign_chargeback_rate(new_compute_rate):
 def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
                                   order_service):
     catalog_item = order_service
-    vmname = '{}0001'.format(catalog_item.provisioning_data['catalog']["vm_name"])
+    vmname = '{}0001'.format(catalog_item.prov_data['catalog']["vm_name"])
 
     def verify_records_rollups_table(appliance, provider):
         # Verify that hourly rollups are present in the metric_rollups table
