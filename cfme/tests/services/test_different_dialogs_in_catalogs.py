@@ -89,7 +89,7 @@ def catalog_item(appliance, provider, provisioning, vm_name, tagcontrol_dialog, 
 @pytest.mark.rhv2
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.meta(blockers=[BZ(1434990, forced_streams=["5.7", "upstream"])])
+@pytest.mark.meta(blockers=[BZ(1567108, forced_streams=["5.8", "5.9"])])
 def test_tagdialog_catalog_item(appliance, provider, catalog_item, request):
     """Tests tag dialog catalog item
     Metadata:
