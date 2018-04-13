@@ -1,11 +1,12 @@
-import pytest
 import time
+
+import pytest
 
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils import conf, version
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.conf import cfme_data
 from cfme.utils.blockers import BZ
+from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.testgen import parametrize
 from cfme.utils.wait import wait_for
@@ -175,19 +176,25 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
     request.addfinalizer(appliance.unregister)
 
 
-def test_rhsm_registration_check_repo_names(temp_appliance_preconfig_funcscope, soft_assert):
+def test_rhsm_registration_check_repo_names(
+        temp_appliance_preconfig_funcscope, soft_assert, appliance):
     """ Checks default rpm repos on a fresh appliance """
     ver = temp_appliance_preconfig_funcscope.version.series()
-    # TODO We need the context manager here is that RedHatUpdates doesn't yet support Collections.
+    if appliance.version < '5.9.2':
+        extras = cfme_data['redhat_updates']['repos']['pre_592']
+    else:
+        extras = cfme_data['redhat_updates']['repos']['post_592']
+
+    # TODO We need the context manager here as RedHatUpdates doesn't yet support Collections.
     with temp_appliance_preconfig_funcscope:
         view = navigate_to(RedHatUpdates, 'Edit')
         soft_assert(
-            view.repo_name.value == 'cf-me-{}-for-rhel-7-rpms rhel-server-rhscl-7-rpms'.format(ver))
+            view.repo_name.value == 'cf-me-{}-for-rhel-7-rpms {}'.format(ver, extras))
         """checks current repo names"""
         view.repo_default_name.click()
         """resets repos with default button and checks they are also correct"""
         soft_assert(
-            view.repo_name.value == 'cf-me-{}-for-rhel-7-rpms rhel-server-rhscl-7-rpms'.format(ver))
+            view.repo_name.value == 'cf-me-{}-for-rhel-7-rpms {}'.format(ver, extras))
 
 
 @pytest.mark.meta(blockers=[BZ(1500878, forced_streams=['5.9', 'upstream'])])
