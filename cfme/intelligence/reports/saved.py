@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+import attr
+
+from navmazing import NavigateToAttribute
 from widgetastic.widget import Text
 from widgetastic_manageiq import Table, PaginationPane
-from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from navmazing import NavigateToSibling, NavigateToAttribute
 
+from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from . import CloudIntelReportsView
 from .reports import CustomSavedReportDetailsView
 
@@ -55,13 +57,11 @@ class SavedReportView(AllSavedReportsView):
         )
 
 
-class SavedReport(Navigatable):
-
-    def __init__(self, name, run_at_datetime, queued_datetime_in_title, appliance=None):
-        Navigatable.__init__(self, appliance)
-        self.name = name
-        self.run_at_datetime = run_at_datetime
-        self.queued_datetime_in_title = queued_datetime_in_title
+@attr.s
+class SavedReport(BaseEntity):
+    name = attr.ib()
+    run_at_datetime = attr.ib()
+    queued_datetime_in_title = attr.ib()
 
     def delete(self, cancel=False):
         view = navigate_to(self, "Details")
@@ -77,7 +77,12 @@ class SavedReport(Navigatable):
             view.flash.assert_message("Successfully deleted Saved Report from the CFME Database")
 
 
-@navigator.register(SavedReport, "All")
+@attr.s
+class SavedReportsCollection(BaseCollection):
+    ENTITY = SavedReport
+
+
+@navigator.register(SavedReportsCollection, "All")
 class CustomReportAll(CFMENavigateStep):
     VIEW = AllSavedReportsView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
@@ -89,7 +94,7 @@ class CustomReportAll(CFMENavigateStep):
 @navigator.register(SavedReport, "Details")
 class ScheduleDetails(CFMENavigateStep):
     VIEW = SavedReportDetailsView
-    prerequisite = NavigateToSibling("All")
+    prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self):
         self.view.saved_reports.tree.click_path(
