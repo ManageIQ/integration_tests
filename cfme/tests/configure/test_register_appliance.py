@@ -179,10 +179,10 @@ def test_rhsm_registration_check_repo_names(
         temp_appliance_preconfig_funcscope, soft_assert, appliance):
     """ Checks default rpm repos on a fresh appliance """
     ver = temp_appliance_preconfig_funcscope.version.series()
-    extras = 'rhel-server-rhscl-7-rpms' if appliance.version < '5.9.2' else \
-        'rhel-7-server-extras-rpms rhel-7-server-optional-rpms rhel-7-server-rpms' \
-        ' rhel-server-rhscl-7-rpms'
-    # TODO We need the context manager here is that RedHatUpdates doesn't yet support Collections.
+    extras = cfme_data['redhat_updates']['repos']['pre_592'] if appliance.version < '5.9.2' else\
+        cfme_data['redhat_updates']['repos']['post_592']
+
+    # TODO We need the context manager here as RedHatUpdates doesn't yet support Collections.
     with temp_appliance_preconfig_funcscope:
         view = navigate_to(RedHatUpdates, 'Edit')
         soft_assert(
