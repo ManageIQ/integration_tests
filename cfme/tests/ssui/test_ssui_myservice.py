@@ -87,7 +87,7 @@ def test_service_start(appliance, setup_provider, context,
 @pytest.mark.parametrize('order_service', [['console_test']], indirect=True)
 @pytest.mark.uncollectif(lambda provider:
     provider.one_of(VMwareProvider) and provider.version >= 6.5 or
-    'html5_console' in provider.data.excluded_test_flags,
+    'html5_console' in provider.data.get('excluded_test_flags', []),
     'VNC consoles are unsupported on VMware ESXi 6.5 and later')
 def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
         configure_console_vnc, order_service, take_screenshot,
