@@ -236,6 +236,7 @@ def test_appliance_console_restore_db_local(request, get_appliances_with_provide
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
     appl2.db.drop()
+    appl2.db.create()
     command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
     appl2.start_evm_service()
@@ -265,10 +266,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     appl1.ssh_client.run_command(
         'curl -kL https://localhost/ansibleapi | grep "Ansible Tower REST API"')
     repositories = appl1.collections.ansible_repositories
-    repository = repositories.create(
-        'example',
-        REPOSITORIES[0],
-        description='example')
+    repository = repositories.create('example', REPOSITORIES[0], description='example')
     view = navigate_to(repository, "Details")
     refresh = view.toolbar.refresh.click
     wait_for(
@@ -323,9 +321,11 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
     appl1, appl2 = get_ext_appliances_with_providers
     # Restore DB on the second appliance
     providers_before_restore = set(appl1.managed_provider_names)
-    appl1.evmserverd.stop()
     appl2.evmserverd.stop()
+    appl1.evmserverd.stop()
+    appl1.db.restart_db_service()
     appl1.db.drop()
+    appl1.db.create()
     command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
     appl1.start_evm_service()
@@ -356,8 +356,6 @@ def test_appliance_console_restore_db_replicated(
     providers_before_restore = set(appl1.managed_provider_names)
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
-    appl2.db.drop()
-    appl2.db.create()
     command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
     # Restore db on first appliance
@@ -365,7 +363,7 @@ def test_appliance_console_restore_db_replicated(
     appl1.evmserverd.stop()
     appl1.db.drop()
     appl1.db.create()
-    appl2.appliance_console.run_commands(command_set)
+    appl1.appliance_console.run_commands(command_set)
     appl1.start_evm_service()
     appl2.start_evm_service()
     appl1.wait_for_web_ui()
@@ -404,6 +402,7 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
     appl2.ssh_client.run_command("systemctl stop rh-postgresql95-repmgr")
     appl1.db.drop()
     appl1.db.create()
+    fetch_v2key(appl3, appl1)
     command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
     appl1.ssh_client.run_command("systemctl start rh-postgresql95-repmgr")
@@ -416,7 +415,7 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
     )
     # Cause failover to occur
     result = appl1.ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
-    assert result.success == 0, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
+    assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
 
     def is_failover_started(appliance):
         return bool(appliance.ssh_client.run_command(
