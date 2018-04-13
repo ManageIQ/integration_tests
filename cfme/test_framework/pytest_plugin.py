@@ -101,6 +101,7 @@ pytest_plugins = (
     'cfme.fixtures.has_persistent_volume',
     'cfme.fixtures.tccheck',
     'cfme.fixtures.pxe',
+    'cfme.fixtures.candu',
 
     'cfme.metaplugins',
 )

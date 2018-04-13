@@ -15,6 +15,7 @@ from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, CheckableBootstrapTreeview)
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common.candu_views import VMUtilizationAllView
 from cfme.common.vm import VM, Template as BaseTemplate
 from cfme.common.vm_views import (
     ManagementEngineView, CloneVmView, MigrateVmView, ProvisionView, EditView, PublishVmView,
@@ -1468,3 +1469,12 @@ class SetOwnership(CFMENavigateStep):
     # No am_i_here because the page only indicates name and not provider
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Set Ownership')
+
+
+@navigator.register(Vm, 'candu')
+class VmUtilization(CFMENavigateStep):
+    VIEW = VMUtilizationAllView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.monitoring.item_select('Utilization')
