@@ -8,13 +8,12 @@ from cfme.services.myservice import MyService
 from cfme.utils.appliance import ViaREST, ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
-from cfme.fixtures.pytest_store import store
 
 pytestmark = [test_requirements.generic_objects]
 
 
 @pytest.mark.sauce
-@pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.9')
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 @pytest.mark.parametrize('context', [ViaREST])
 def test_generic_objects_crud(appliance, context, request):
     with appliance.context.use(context):
@@ -37,10 +36,8 @@ def test_generic_objects_crud(appliance, context, request):
                 display=True
             )
             rest_service = rest_service[0]
-            #request.addfinalizer(rest_service.action.delete)
+            request.addfinalizer(rest_service.action.delete)
             myservices.append(MyService(appliance, name=service_name))
-        import pdb
-        pdb.set_trace()
         instance = appliance.collections.generic_objects.create(
             name='rest_generic_instance{}'.format(fauxfactory.gen_alphanumeric()),
             definition=definition,
@@ -62,8 +59,9 @@ def test_generic_objects_crud(appliance, context, request):
         assert not instance.exists
 
 
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 @pytest.mark.parametrize('context', [ViaUI])
-def test_generic_objects_crud(appliance, context, request):
+def test_generic_objects_crud_ui(appliance, context, request):
     with appliance.context.use(context):
         definition = appliance.collections.generic_object_definitions.create(
             name="rest_generic_class{}".format(fauxfactory.gen_alphanumeric()),
@@ -84,13 +82,11 @@ def test_generic_objects_crud(appliance, context, request):
             myservices.append(MyService(appliance, name=service_name))
 
         with appliance.context.use(ViaREST):
-            instance = appliance.rest_api.collections.generic_objects.create(
+            instance = appliance.collections.generic_objects.create(
                 name='rest_generic_instance{}'.format(fauxfactory.gen_alphanumeric()),
                 definition=definition,
                 attributes={'addr01': 'Test Address'},
                 associations={'services': [myservices[0]]}
             )
-        import pdb
-        pdb.set_trace()
         view = navigate_to(instance, 'Details')
         assert view.is_displayed

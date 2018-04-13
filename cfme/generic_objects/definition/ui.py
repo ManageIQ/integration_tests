@@ -1,18 +1,16 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import Parameter, VersionPick, Version
-from widgetastic.widget import ParametrizedView, Table, Text, View, ParametrizedString, ParametrizedLocator, Widget
-from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Tab
+from widgetastic.utils import VersionPick, Version
+from widgetastic.widget import Text, View, ParametrizedString, ParametrizedLocator
+from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import TagPageView
-from cfme.services.myservice import MyService
-from cfme.utils.appliance import current_appliance, MiqImplementationContext
+
+from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
-from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (Accordion, ManageIQTree, Calendar, SummaryTable,
-                                  BaseNonInteractiveEntitiesView, ItemsToolBarViewSelector,
-                                  BaseEntitiesView, DynamicTable, FileInput, ParametrizedSummaryTable, BootstrapSwitch, FonticonPicker)
+from widgetastic_manageiq import (ItemsToolBarViewSelector, BaseEntitiesView, DynamicTable,
+    FileInput, ParametrizedSummaryTable, BootstrapSwitch, FonticonPicker)
 from . import GenericObjectDefinition, GenericObjectDefinitionCollection
+from ..instance.ui import GenericObjectInstanceAllView
 
 
 class GenericObjectDefinitionToolbar(View):
@@ -264,7 +262,7 @@ def add_button(self, name, description, image, request, button_type='Default', d
         'display': display,
         'image': image,
         'dialog': dialog,
-        'open_url':open_url,
+        'open_url': open_url,
         'display_for': display_for,
         'request': request,
         'submit_version': submit_version,
@@ -353,4 +351,11 @@ class GenericObjectDefinitionEdit(CFMENavigateStep):
         self.prerequisite_view.configuration.item_select('Edit this Generic Object Class')
 
 
+@navigator.register(GenericObjectDefinition, 'Instances')
+class Instances(CFMENavigateStep):
+    VIEW = GenericObjectInstanceAllView
 
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.summary('Relationships').click_at('Instances')

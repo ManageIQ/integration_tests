@@ -21,6 +21,7 @@ class GenericObjectInstanceToolbar(View):
 
 
 class GenericObjectInstanceAllView(BaseLoggedInPage):
+    title = Text('//div[@id="main-content"]//h1')
     toolbar = View.nested(GenericObjectInstanceToolbar)
     including_entities = View.include(BaseEntitiesView, use_parent=True)
 
@@ -33,7 +34,7 @@ class GenericObjectInstanceAllView(BaseLoggedInPage):
 
 
 class GenericObjectInstanceDetailsView(BaseLoggedInPage):
-    title = Text('#explorer_title_text')
+    title = Text('//div[@id="main-content"]//h1')
     policy = Dropdown(text='Policy')
     summary = ParametrizedSummaryTable()
 
@@ -66,9 +67,9 @@ class All(CFMENavigateStep):
 @navigator.register(GenericObjectInstance, 'Details')
 class Details(CFMENavigateStep):
     VIEW = GenericObjectInstanceDetailsView
-    prerequisite = NavigateToAttribute('parent', 'All')
+
+    def prerequisite(self):
+        return navigate_to(self.obj.definition, 'Instances')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
-
-

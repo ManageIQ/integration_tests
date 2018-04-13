@@ -7,14 +7,13 @@ from cfme import test_requirements
 from cfme.base.login import BaseLoggedInPage
 from cfme.utils.appliance import ViaREST, ViaUI
 from cfme.utils.update import update
-from cfme.fixtures.pytest_store import store
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [test_requirements.generic_objects]
 
 
 @pytest.mark.sauce
-@pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.9')
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 @pytest.mark.parametrize('context', [ViaREST])
 def test_generic_object_definition_crud(appliance, context):
     with appliance.context.use(context):
@@ -37,8 +36,9 @@ def test_generic_object_definition_crud(appliance, context):
         assert not definition.exists
 
 
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 @pytest.mark.parametrize('context', [ViaUI])
-def test_generic_object_definition_crud(appliance, context):
+def test_generic_object_definition_crud_ui(appliance, context):
     with appliance.context.use(context):
         definition = appliance.collections.generic_object_definitions.create(
             name="generic_class{}".format(fauxfactory.gen_alphanumeric()),
