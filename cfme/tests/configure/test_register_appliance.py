@@ -1,11 +1,12 @@
-import pytest
 import time
+
+import pytest
 
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils import conf, version
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.conf import cfme_data
 from cfme.utils.blockers import BZ
+from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.testgen import parametrize
 from cfme.utils.wait import wait_for
@@ -179,8 +180,10 @@ def test_rhsm_registration_check_repo_names(
         temp_appliance_preconfig_funcscope, soft_assert, appliance):
     """ Checks default rpm repos on a fresh appliance """
     ver = temp_appliance_preconfig_funcscope.version.series()
-    extras = cfme_data['redhat_updates']['repos']['pre_592'] if appliance.version < '5.9.2' else\
-        cfme_data['redhat_updates']['repos']['post_592']
+    if appliance.version < '5.9.2':
+        extras = cfme_data['redhat_updates']['repos']['pre_592']
+    else:
+        extras = cfme_data['redhat_updates']['repos']['post_592']
 
     # TODO We need the context manager here as RedHatUpdates doesn't yet support Collections.
     with temp_appliance_preconfig_funcscope:
