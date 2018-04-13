@@ -99,14 +99,15 @@ def set_rails_loglevel(level, validate_against_worker='MiqUiWorker'):
     ui_worker_pid = '#{}'.format(get_worker_pid(validate_against_worker))
 
     logger.info('Setting log level_rails on appliance to {}'.format(level))
-    yaml = store.current_appliance.get_yaml_config()
+    yaml = store.current_appliance.advanced_settings
     if not str(yaml['log']['level_rails']).lower() == level.lower():
         logger.info('Opening /var/www/miq/vmdb/log/evm.log for tail')
         evm_tail = SSHTail('/var/www/miq/vmdb/log/evm.log')
         evm_tail.set_initial_file_end()
 
-        yaml_data = {'log': {'level_rails': level}}
-        store.current_appliance.set_yaml_config(yaml_data)
+        log_yaml = yaml.get('log', {})
+        log_yaml['level_rails'] = level
+        store.current_appliance.update_advanced_settings({'log': log_yaml})
 
         attempts = 0
         detected = False

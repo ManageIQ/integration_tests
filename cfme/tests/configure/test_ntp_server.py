@@ -102,8 +102,8 @@ def test_ntp_server_check(request, appliance, ntp_servers_keys, empty_ntp_dict):
     orig_date = appliance_date(appliance)
     past_date = orig_date - timedelta(days=10)
     logger.info("dates: orig_date - %s, past_date - %s", orig_date, past_date)
-    status, result = appliance.ssh_client.run_command(
-        "date +%Y%m%d -s \"{}\"".format(past_date.strftime('%Y%m%d')))
+    appliance.ssh_client.run_command("date +%Y%m%d -s \"{}\""
+                                     .format(past_date.strftime('%Y%m%d')))
     new_date = appliance_date(appliance)
     if new_date != orig_date:
         logger.info("Successfully modified the date in the appliance")
@@ -111,13 +111,10 @@ def test_ntp_server_check(request, appliance, ntp_servers_keys, empty_ntp_dict):
         # checking if ntp property is available, adding if it is not available
         appliance.server.settings.update_ntp_servers(dict(zip(
             ntp_servers_keys, [ntp_server for ntp_server in cfme_data['clock_servers']])))
-        yaml_config = appliance.get_yaml_config()
-        ntp_updates = yaml_config.get("ntp")
-        if not ntp_updates:
-            ntp_updates = {"ntp": {}}
         # adding the ntp interval to 1 minute and updating the configuration
-        ntp_updates["ntp"]["interval"] = '1.minutes'
-        appliance.set_yaml_config(ntp_updates)
+        ntp_settings = appliance.advanced_settings.get('ntp', {})  # should have the servers in it
+        ntp_settings['interval'] = '1.minutes'  # just modify interval
+        appliance.update_advanced_settings({'ntp': ntp_settings})
         # restarting the evmserverd for NTP to work
         appliance.restart_evm_service(rude=True)
         appliance.wait_for_web_ui(timeout=1200)
