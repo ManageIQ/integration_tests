@@ -4,7 +4,6 @@ import random
 import fauxfactory
 import pytest
 
-import cfme.intelligence.chargeback.rates as cb
 from cfme import test_requirements
 from cfme.rest.gen_data import rates as _rates
 from cfme.utils.appliance.implementations.ui import navigator
@@ -27,35 +26,39 @@ def with_random_per_time(**kw):
 
 
 @pytest.fixture()
-def chargeback_rate(rate_resource, rate_type, rate_action, request):
+def chargeback_rate(appliance, rate_resource, rate_type, rate_action, request):
     if 'fixed' in rate_type:
-        rate = [{'fixed_rate': '6000'}, {'fixed_rate': '.1'}]
+        rate_values = [{'fixed_rate': '6000'}, {'fixed_rate': '.1'}]
     elif 'variable' in rate_type:
-        rate = [{'variable_rate': '2000'}, {'variable_rate': '.6'}]
+        rate_values = [{'variable_rate': '2000'}, {'variable_rate': '.6'}]
     else:
         raise ValueError('Compute rate type argument must be "fixed" or "variable"')
 
+    rate_description = ('cb_{rand}_{type}_{resource}_{action}'
+                        .format(rand=fauxfactory.gen_alphanumeric(),
+                                type=rate_type,
+                                resource=rate_resource,
+                                action=rate_action))
+
     if rate_resource == 'compute':
-        rate = cb.ComputeRate(
-            description='cb_{}_{}_{}_{}'.format(fauxfactory.gen_alphanumeric(), rate_type,
-                rate_resource, rate_action),
+        rate = appliance.collections.compute_rates.create(
+            description=rate_description,
             fields={
                 'Allocated CPU Count': with_random_per_time(fixed_rate='1000'),
                 'Used Disk I/O': with_random_per_time(fixed_rate='10'),
                 'Fixed Compute Cost 1': with_random_per_time(fixed_rate='100'),
-                'Used Memory': with_random_per_time(**rate[0]),
-                'Used CPU Cores': with_random_per_time(**rate[1]),
+                'Used Memory': with_random_per_time(**rate_values[0]),
+                'Used CPU Cores': with_random_per_time(**rate_values[1]),
             })
 
     elif rate_resource == 'storage':
-        rate = cb.StorageRate(
-            description='cb_{}_{}_{}_{}'.format(fauxfactory.gen_alphanumeric(), rate_type,
-                rate_resource, rate_action),
+        rate = appliance.collections.storage_rates.create(
+            description=rate_description,
             fields={
                 'Fixed Storage Cost 1': with_random_per_time(fixed_rate='100'),
                 'Fixed Storage Cost 2': with_random_per_time(fixed_rate='300'),
-                'Allocated Disk Storage': with_random_per_time(**rate[0]),
-                'Used Disk Storage': with_random_per_time(**rate[1]),
+                'Allocated Disk Storage': with_random_per_time(**rate_values[0]),
+                'Used Disk Storage': with_random_per_time(**rate_values[1]),
             })
 
     @request.addfinalizer
@@ -93,18 +96,17 @@ def test_compute_chargeback_duplicate_disallowed(request):
 @pytest.mark.parametrize('rate_resource', ['compute', 'storage'])
 @pytest.mark.parametrize('rate_type', ['fixed', 'variable'])
 @pytest.mark.parametrize('rate_action', ['add', 'delete', 'edit'])
-def test_chargeback_rate(rate_resource, rate_type, rate_action, request):
+def test_chargeback_rate(rate_resource, rate_type, rate_action, request, chargeback_rate):
     """
     Polarion:
         assignee: nachandr
         casecomponent: CandU
         initialEstimate: 1/4h
     """
-    cb_rate = chargeback_rate(rate_resource, rate_type, rate_action, request)
-    cb_rate.create()
+    cb_rate = chargeback_rate  # for brevity
 
     view = cb_rate.create_view(
-        navigator.get_class(cb_rate, 'All').VIEW)
+        navigator.get_class(cb_rate.parent, 'All').VIEW)
     view.flash.assert_success_message(
         'Chargeback Rate "{}" was added'.format(cb_rate.description))
     assert cb_rate.exists

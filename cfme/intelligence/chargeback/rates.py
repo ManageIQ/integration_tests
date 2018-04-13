@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Page model for Intel->Chargeback->Rates.
+import attr
 from cached_property import cached_property
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
@@ -16,8 +17,9 @@ from widgetastic_patternfly import Input
 from . import ChargebackView
 from cfme.exceptions import ChargebackRateNotFound
 from cfme.exceptions import displayed_not_implemented
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
 from cfme.utils import ParamClassName
-from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
@@ -42,18 +44,12 @@ class RatesView(ChargebackView):
 
     @property
     def is_displayed(self):
-        # BZ 1532701 for singular title on redirection to this page, but not direct navigation
-        if BZ(1532701, forced_streams='5.9').blocks:
-            title_test = ("{} Chargeback Rate".format(self.context['object'].RATE_TYPE)
-                          in self.title.text)
-        else:
-            title_test = ("{} Chargeback Rates".format(self.context['object'].RATE_TYPE) ==
-                          self.title.text)
+        expected_title = "{} Chargeback Rates".format(self.context['object'].RATE_TYPE)
         return (
             self.in_rates and
-            self.rates.tree.currently_selected == ['Rates',
-                                                   self.context['object'].RATE_TYPE] and
-            title_test)
+            self.rates.tree.currently_selected == ['Rates', self.context['object'].RATE_TYPE] and
+            self.title.text == expected_title
+        )
 
     @View.nested
     class toolbar(View):  # noqa
@@ -87,19 +83,19 @@ class AddComputeChargebackView(RatesView):
 
         @cached_property
         def row_id(self):
-            attr = self.browser.get_attribute(
+            dom_attr = self.browser.get_attribute(
                 'id',
                 './td/select[starts-with(@id, "per_time_")]',
                 parent=self)
-            return int(attr.rsplit('_', 1)[-1])
+            return int(dom_attr.rsplit('_', 1)[-1])
 
         @cached_property
         def sub_row_id(self):
-            attr = self.browser.get_attribute(
+            dom_attr = self.browser.get_attribute(
                 'id',
                 './td/input[starts-with(@id, "fixed_rate_")]',
                 parent=self)
-            return int(attr.rsplit('_', 1)[-1])
+            return int(dom_attr.rsplit('_', 1)[-1])
 
         per_time = Select(id=ParametrizedString('per_time_{@row_id}'))
         per_unit = Select(id=ParametrizedString('per_unit_{@row_id}'))
@@ -144,8 +140,8 @@ class EditStorageChargebackView(EditComputeChargebackView):
         )
 
 
-# TODO Inherit BaseEntity and create a parent collection class
-class ComputeRate(Updateable, Pretty, Navigatable):
+@attr.s
+class ComputeRate(Updateable, Pretty, BaseEntity):
     """This class represents a Compute Chargeback rate.
 
     Example:
@@ -172,15 +168,9 @@ class ComputeRate(Updateable, Pretty, Navigatable):
     _param_name = ParamClassName('description')
     RATE_TYPE = 'Compute'
 
-    def __init__(self, description=None,
-                 currency=None,
-                 fields=None,
-                 appliance=None,
-                 ):
-        Navigatable.__init__(self, appliance=appliance)
-        self.description = description
-        self.currency = currency
-        self.fields = fields
+    description = attr.ib()
+    currency = attr.ib(default=None)
+    fields = attr.ib(default=None)
 
     def __getitem__(self, name):
         return self.fields.get(name)
@@ -194,21 +184,8 @@ class ComputeRate(Updateable, Pretty, Navigatable):
         else:
             return True
 
-    def create(self):
-        # Create a rate in UI
-        view = navigate_to(self, 'Add')
-        view.fill_with({'description': self.description,
-                        'currency': self.currency,
-                        'fields': self.fields},
-                       on_change=view.add_button,
-                       no_change=view.cancel_button)
-
-        view = self.create_view(navigator.get_class(self, 'All').VIEW)
-        assert view.is_displayed
-        view.flash.assert_no_error()
-
     def copy(self, *args, **kwargs):
-        new_rate = ComputeRate(*args, **kwargs)
+        new_rate = self.parent.instantiate(*args, **kwargs)
         add_view = navigate_to(self, 'Copy')
         add_view.fill_with({'description': new_rate.description,
                             'currency': new_rate.currency,
@@ -235,11 +212,45 @@ class ComputeRate(Updateable, Pretty, Navigatable):
         """
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Remove from the VMDB', handle_alert=(not cancel))
-        view = self.create_view(navigator.get_class(self, 'All').VIEW)
+        view = self.create_view(navigator.get_class(self.parent, 'All').VIEW)
         assert view.is_displayed
         view.flash.assert_no_error()
 
 
+@attr.s
+class ComputeRateCollection(BaseCollection):
+    ENTITY = ComputeRate
+    RATE_TYPE = ENTITY.RATE_TYPE
+
+    def create(self, description, currency=None, fields=None):
+        """ Create a rate in the UI
+
+            Args:
+                description - name of the compute rate to create
+                currency - type of currency for the rate
+                fields -  nested dictionary listing the Rate Details
+                    Key => Rate Details Description
+                    Value => dict
+                        Key => Rate Details table column names
+                        Value => Value to input in the table
+        """
+        rate = self.instantiate(description, currency, fields)
+
+        view = navigate_to(self, 'Add')
+        view.fill_with({'description': rate.description,
+                        'currency': rate.currency,
+                        'fields': rate.fields},
+                       on_change=view.add_button,
+                       no_change=view.cancel_button)
+
+        view = self.create_view(navigator.get_class(self, 'All').VIEW)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+
+        return rate
+
+
+@attr.s
 class StorageRate(ComputeRate):
     # Methods and form for this are similar to that of ComputeRate, but navigation is different
     # from that of ComputeRate.
@@ -247,7 +258,29 @@ class StorageRate(ComputeRate):
     RATE_TYPE = 'Storage'
 
 
-@navigator.register(ComputeRate, 'All')
+class StorageRateCollection(BaseCollection):
+    ENTITY = StorageRate
+    RATE_TYPE = ENTITY.RATE_TYPE
+
+    def create(self, description=None, currency=None, fields=None):
+        # Create a rate in UI
+        storage_rate = self.instantiate(description, currency, fields)
+
+        view = navigate_to(self, 'Add')
+        view.fill_with({'description': storage_rate.description,
+                        'currency': storage_rate.currency,
+                        'fields': storage_rate.fields},
+                       on_change=view.add_button,
+                       no_change=view.cancel_button)
+
+        view = self.create_view(navigator.get_class(self, 'All').VIEW)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+
+        return storage_rate
+
+
+@navigator.register(ComputeRateCollection, 'All')
 class ComputeRateAll(CFMENavigateStep):
     VIEW = RatesView
     prerequisite = NavigateToAttribute('appliance.server', 'IntelChargeback')
@@ -259,7 +292,7 @@ class ComputeRateAll(CFMENavigateStep):
         )
 
 
-@navigator.register(ComputeRate, 'Add')
+@navigator.register(ComputeRateCollection, 'Add')
 class ComputeRateNew(CFMENavigateStep):
     VIEW = AddComputeChargebackView
     prerequisite = NavigateToSibling('All')
@@ -271,7 +304,7 @@ class ComputeRateNew(CFMENavigateStep):
 @navigator.register(ComputeRate, 'Details')
 class ComputeRateDetails(CFMENavigateStep):
     VIEW = RatesDetailView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
         try:
@@ -303,7 +336,7 @@ class ComputeRateEdit(CFMENavigateStep):
         self.view.toolbar.configuration.item_select("Edit this Chargeback Rate")
 
 
-@navigator.register(StorageRate, 'All')
+@navigator.register(StorageRateCollection, 'All')
 class StorageRateAll(CFMENavigateStep):
     VIEW = RatesView
     prerequisite = NavigateToAttribute('appliance.server', 'IntelChargeback')
@@ -315,7 +348,7 @@ class StorageRateAll(CFMENavigateStep):
         )
 
 
-@navigator.register(StorageRate, 'Add')
+@navigator.register(StorageRateCollection, 'Add')
 class StorageRateNew(CFMENavigateStep):
     VIEW = AddStorageChargebackView
     prerequisite = NavigateToSibling('All')
@@ -327,7 +360,7 @@ class StorageRateNew(CFMENavigateStep):
 @navigator.register(StorageRate, 'Details')
 class StorageRateDetails(CFMENavigateStep):
     VIEW = RatesDetailView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
         try:
