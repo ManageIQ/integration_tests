@@ -3,29 +3,21 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.automate.provisioning_dialogs import ProvisioningDialog
+from cfme.automate.provisioning_dialogs import ProvisioningDialogsCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
-
-
-@pytest.yield_fixture(scope="function")
-def dialog():
-    dlg = ProvisioningDialog(
-        name='test-{}'.format(fauxfactory.gen_alphanumeric(length=5)),
-        description='test-{}'.format(fauxfactory.gen_alphanumeric(length=5)),
-        diag_type=ProvisioningDialog.VM_PROVISION)
-    yield dlg
-
-    if dlg.exists:
-        dlg.delete()
 
 
 @pytest.mark.sauce
 @test_requirements.automate
 @pytest.mark.tier(3)
-def test_provisioning_dialog_crud(dialog):
+def test_provisioning_dialog_crud(appliance):
     # CREATE
-    dialog.create()
+    collection = appliance.collections.provisioning_dialogs
+    dialog = collection.create(
+        name='test-{}'.format(fauxfactory.gen_alphanumeric(length=5)),
+        description='test-{}'.format(fauxfactory.gen_alphanumeric(length=5)),
+        diag_type=collection.VM_PROVISION)
     assert dialog.exists
 
     # UPDATE
@@ -35,7 +27,7 @@ def test_provisioning_dialog_crud(dialog):
     assert dialog.exists
 
     with update(dialog):
-        dialog.diag_type = ProvisioningDialog.HOST_PROVISION
+        dialog.diag_type = collection.HOST_PROVISION
     assert dialog.exists
     # Update with cancel
     dialog.update(updates={'description': 'not saved'}, cancel=True)
@@ -50,7 +42,7 @@ def test_provisioning_dialog_crud(dialog):
 
 
 sort_by_params = []
-for name in ProvisioningDialog.ALLOWED_TYPES:
+for name in ProvisioningDialogsCollection.ALLOWED_TYPES:
     sort_by_params.append((name, "Name", "ascending"))
     sort_by_params.append((name, "Name", "descending"))
     sort_by_params.append((name, "Description", "ascending"))
@@ -60,8 +52,8 @@ for name in ProvisioningDialog.ALLOWED_TYPES:
 @test_requirements.general_ui
 @pytest.mark.tier(3)
 @pytest.mark.parametrize(("name", "by", "order"), sort_by_params)
-def test_provisioning_dialogs_sorting(name, by, order):
-    view = navigate_to(ProvisioningDialog, 'All')
+def test_provisioning_dialogs_sorting(appliance, name, by, order):
+    view = navigate_to(appliance.collections.provisioning_dialogs, 'All')
     view.sidebar.provisioning_dialogs.tree.click_path("All Dialogs", name)
     view.entities.table.sort_by(by, order)
     # When we can get the same comparing function as the PGSQL DB has, we can check

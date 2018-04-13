@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import attr
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View, Text, TextInput
 from widgetastic_patternfly import Dropdown, BootstrapSelect, CandidateNotFound
@@ -6,7 +8,7 @@ from widgetastic_manageiq import Button, Table, PaginationPane, SummaryForm, Scr
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import automate_menu_name
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -102,13 +104,12 @@ class ProvDiagAddView(ProvDiagView):
 class ProvDiagEditView(ProvDiagView):
     @property
     def is_displayed(self):
-        # FIXME https://github.com/ManageIQ/manageiq-ui-classic/issues/1983
-        # 'Editing' should only be in the title once
-        expected_title = 'Editing Editing Dialog "{}"'.format(self.context['object'].description)
+        expected_title = 'Editing Dialog "{}"'.format(self.context['object'].description)
         return (
             self.in_customization and
             self.title.text == expected_title and
-            self.form.is_displayed)
+            self.form.is_displayed and
+            self.form.save.is_displayed)
 
     title = Text('#explorer_title_text')
 
@@ -118,25 +119,20 @@ class ProvDiagEditView(ProvDiagView):
         reset = Button('Reset')
 
 
-class ProvisioningDialog(Updateable, Pretty, Navigatable):
-    HOST_PROVISION = 'Host Provision'
-    VM_MIGRATE = 'VM Migrate'
-    VM_PROVISION = 'VM Provision'
-    SYSTEM_PROVISION = 'Configured System Provision'
-    ALLOWED_TYPES = {HOST_PROVISION, VM_MIGRATE, VM_PROVISION, SYSTEM_PROVISION}
-
+@attr.s
+class ProvisioningDialog(Updateable, Pretty, BaseEntity):
     pretty_attrs = ['name', 'description', 'diag_type', 'content']
 
-    def __init__(self, diag_type, name=None, description=None, content=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.description = description
-        self.content = content
-        if diag_type in self.ALLOWED_TYPES:
-            self.diag_type = diag_type
-        else:
+    diag_type = attr.ib(default=None)
+    name = attr.ib(default=None)
+    description = attr.ib(default=None)
+    content = attr.ib(default=None)
+
+    @diag_type.validator
+    def _validate(self, attribute, value):
+        if value not in self.parent.ALLOWED_TYPES:
             raise TypeError('Type must be one of ProvisioningDialog constants: {}'
-                            .format(self.ALLOWED_TYPES))
+                            .format(self.parent.ALLOWED_TYPES))
 
     def __str__(self):
         return self.name
@@ -149,42 +145,24 @@ class ProvisioningDialog(Updateable, Pretty, Navigatable):
             return False
         return True
 
-    def create(self, cancel=False):
-        view = navigate_to(self, 'Add')
-        # might not want to use pretty_attrs here, overloading its intended use
-        fill_args = {key: self.__dict__[key] for key in self.pretty_attrs}
-        view.form.fill(fill_args)
-        if cancel:
-            flash_msg = 'Add of new Dialog was cancelled by the user'
-            btn = view.form.cancel
-        else:
-            flash_msg = 'Dialog "{}" was added'.format(self.description)
-            btn = view.form.add
-
-        btn.click()
-        view = self.create_view(ProvDiagAllView if cancel else ProvDiagDetailsView)
-        assert view.is_displayed
-        view.flash.assert_success_message(flash_msg)
-
     def update(self, updates, cancel=False, reset=False):
         view = navigate_to(self, 'Edit')
         view.form.fill(updates)
         if reset:
-            cancel = True
-            view.form.reset.click()
-            view.flash.assert_message('All changes have been reset')
+            flash_msg = 'All changes have been reset'
+            btn = view.form.reset
+            view = self.create_view(ProvDiagDetailsView)
         if cancel:
             flash_msg = 'Edit of Dialog "{}" was cancelled by the user'.format(self.description)
             btn = view.form.cancel
+            view = self.create_view(ProvDiagDetailsView)
         else:
             flash_msg = ('Dialog "{}" was saved'.format(updates.get('description') or
                                                         self.description))
             btn = view.form.save
-
+            view = self.create_view(ProvDiagDetailsView, override=updates)
         btn.click()
-        view = self.create_view(ProvDiagDetailsView)
-        # TODO use override in create_view in order to assert view.is_displayed
-        # Saw inconsistent UI behavior when trying to use it, where UI was jumping to 'All' view
+        assert view.is_displayed
         view.flash.assert_success_message(flash_msg)
 
     def delete(self, cancel=False):
@@ -199,7 +177,39 @@ class ProvisioningDialog(Updateable, Pretty, Navigatable):
             assert view.sidebar.provisioning_dialogs.tree.selected_item.text == self.diag_type
 
 
-@navigator.register(ProvisioningDialog, 'All')
+@attr.s
+class ProvisioningDialogsCollection(BaseCollection):
+    ENTITY = ProvisioningDialog
+    HOST_PROVISION = 'Host Provision'
+    VM_MIGRATE = 'VM Migrate'
+    VM_PROVISION = 'VM Provision'
+    SYSTEM_PROVISION = 'Configured System Provision'
+    ALLOWED_TYPES = {HOST_PROVISION, VM_MIGRATE, VM_PROVISION, SYSTEM_PROVISION}
+
+    def create(self, diag_type=None, name=None, description=None, content=None, cancel=False):
+        view = navigate_to(self, 'Add')
+        dialog = self.instantiate(diag_type=diag_type, name=name, description=description,
+                                  content=content)
+        view.form.fill({
+            'name': dialog.name,
+            'description': dialog.description,
+            'diag_type': dialog.diag_type,
+            'content': dialog.content
+        })
+        if cancel:
+            flash_msg = 'Add of new Dialog was cancelled by the user'
+            btn = view.form.cancel
+        else:
+            flash_msg = 'Dialog "{}" was added'.format(dialog.description)
+            btn = view.form.add
+        btn.click()
+        view = dialog.create_view(ProvDiagAllView if cancel else ProvDiagDetailsView)
+        assert view.is_displayed
+        view.flash.assert_success_message(flash_msg)
+        return dialog
+
+
+@navigator.register(ProvisioningDialogsCollection, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
     VIEW = ProvDiagAllView
@@ -208,7 +218,7 @@ class All(CFMENavigateStep):
         self.prerequisite_view.provisioning_dialogs.tree.click_path('All Dialogs')
 
 
-@navigator.register(ProvisioningDialog, 'Add')
+@navigator.register(ProvisioningDialogsCollection, 'Add')
 class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
     VIEW = ProvDiagAddView
@@ -219,7 +229,7 @@ class Add(CFMENavigateStep):
 
 @navigator.register(ProvisioningDialog, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = ProvDiagDetailsView
 
     def step(self):
