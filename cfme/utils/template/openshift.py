@@ -22,6 +22,10 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
     def destination_directory(self):
         return os.path.join(self.upload_folder, self.template_name)
 
+    @property
+    def main_template(self):
+        return os.path.join(self.destination_directory, 'cfme-template.yaml')
+
     def creds(self, creds_type='ssh_creds'):
         if self._provider_data:
             creds = self._provider_data
@@ -41,7 +45,7 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
     def does_template_exist(self):
         check_dir_exists = 'ls -A {}'.format(self.destination_directory)
 
-        result = self.execute_ssh_command(check_dir_exists, creds=self.creds('ssh_creds'))
+        result = self.execute_ssh_command(check_dir_exists, creds=self.creds())
 
         if result.success and result.output:
             return True
@@ -50,7 +54,7 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
     def create_destination_directory(self):
         create_dir_cmd = 'mkdir -p {}'.format(self.destination_directory)
 
-        if self.execute_ssh_command(create_dir_cmd, creds=self.creds('ssh_creds')).success:
+        if self.execute_ssh_command(create_dir_cmd, creds=self.creds()).success:
             return True
 
     @log_wrap('download template')
@@ -59,7 +63,7 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
                         '--directory-prefix={} -r {}').format(self.destination_directory,
                                                               self.image_url)
 
-        if self.execute_ssh_command(download_cmd, creds=self.creds('ssh_creds')).success:
+        if self.execute_ssh_command(download_cmd, creds=self.creds()).success:
             return True
 
     @log_wrap('login to openshift')
@@ -75,12 +79,38 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
         get_urls_cmd = ('find {} -type f -name "cfme-openshift-*" '
                         '-exec tail -1 {{}} \;').format(self.destination_directory)
 
-        result = self.execute_ssh_command(get_urls_cmd, creds=self.creds('ssh_creds'))
-
+        result = self.execute_ssh_command(get_urls_cmd, creds=self.creds())
         if result.failed:
             return False
 
-        return result
+        urls = result.output.split()
+        for url in urls:
+            update_img_cmd = 'docker pull {}'.format(url)
+
+            res_url = self.execute_ssh_command(update_img_cmd, creds=self.creds())
+            if res_url.failed:
+                return False
+
+        for template in ('cloudforms', self.template_name):
+            get_template_cmd = 'oc get template {} --namespace=openshift'.format(template)
+            delete_template_cmd = 'oc delete template {} --namespace=openshift'.format(template)
+
+            if self.execute_ssh_command(get_template_cmd, creds=self.creds()).success:
+                self.execute_ssh_command(delete_template_cmd, creds=self.creds())
+
+        change_name_cmd = """python -c 'import yaml
+data = yaml.safe_load(open("{file}"))
+data["metadata"]["name"] = "{new_name}"
+yaml.safe_dump(data, stream=open("{file}", "w"))'""".format(new_name=self.template_name,
+                                                            file=self.main_template)
+        if self.execute_ssh_command(change_name_cmd, creds=self.creds()).failed:
+            return False
+
+        create_template_cmd = 'oc create -f {} --namespace=openshift'.format(self.main_template)
+        if self.execute_ssh_command(create_template_cmd, creds=self.creds()).failed:
+            return False
+
+        return True
 
     def run(self):
         if 'podtesting' not in self.provider_data.get('tags'):
@@ -98,4 +128,7 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
             return False
 
         if not self.login_to_oc():
+            return False
+
+        if not self.get_urls():
             return False
