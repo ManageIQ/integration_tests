@@ -196,7 +196,8 @@ log "use_sprout: $USE_SPROUT"
 # Now fill out the env yaml with ALL THE THINGS
 rm -f $CFME_REPO_DIR/conf.env.local.yaml
 
-if [ "$USE_SPROUT" == "no" ];
+if [ "$USE_SPROUT" == "no" ]
+then
     HOSTNAME="$IP_ADDRESS"
 else
     HOSTNAME="SPROUT_SHOULD_OVERRIDE_THIS"
@@ -256,8 +257,7 @@ then
 
     run_n_log "miq sprout checkout --populate-yaml" &
     sleep 5
-    do_or_die "(date && [ `grep -c SPROUT_SHOULD_OVERRIDE_THIS $CFME_REPO_DIR/conf/env.local.yaml` == 0 ])" \
-         >> $ARTIFACTOR_DIR/setup.txt" 5 60 "Sprout failed to provision appliance"
+    do_or_die "python /check_provisioned.py >> $ARTIFACTOR_DIR/setup.txt" 5 60 "Sprout failed to provision appliance"
 else
     log "no sprout used"
     log "invoking complete collectonly with given appliance instance before test"
