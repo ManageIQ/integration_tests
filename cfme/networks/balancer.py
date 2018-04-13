@@ -78,6 +78,11 @@ class All(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.navigation.select('Networks', 'Load Balancers')
 
+    def resetter(self):
+        """Reset the view"""
+
+        self.view.browser.refresh()
+
 
 @navigator.register(Balancer, 'Details')
 class Details(CFMENavigateStep):

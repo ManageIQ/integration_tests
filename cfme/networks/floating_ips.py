@@ -60,6 +60,10 @@ class All(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.navigation.select('Networks', 'Floating IPs')
 
+    def resetter(self):
+        """Reset the view"""
+        self.view.browser.refresh()
+
 
 @navigator.register(FloatingIp, 'Details')
 class Details(CFMENavigateStep):

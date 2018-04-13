@@ -152,6 +152,10 @@ class All(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.navigation.select('Networks', 'Networks')
 
+    def resetter(self):
+        """Reset the view"""
+        self.view.browser.refresh()
+
 
 @navigator.register(CloudNetwork, 'Details')
 class Details(CFMENavigateStep):
