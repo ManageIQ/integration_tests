@@ -22,8 +22,7 @@ pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
     'rhn-check',
     'rhnlib',
 ])
-@pytest.mark.uncollectif(
-    lambda package: "rhn" in package and store.current_appliance.is_pod)
+@pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
 def test_rpms_present(appliance, package):
     """Verifies nfs-util rpms are in place needed for pxe & nfs operations"""
     result = appliance.ssh_client.run_command('rpm -q {}'.format(package))
@@ -45,6 +44,7 @@ def test_firewalld_running(appliance):
     assert 'active (running)' in result
 
 
+@pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
 def test_evm_running(appliance):
     """Verifies overall evm service is running on the appliance"""
     result = appliance.ssh_client.run_command('systemctl status evmserverd').output
@@ -58,7 +58,7 @@ def test_evm_running(appliance):
     'postgresql',
 ])
 @pytest.mark.uncollectif(
-    lambda service: service in ['sshd', 'postgresql'] and store.current_appliance.is_pod)
+    lambda appliance: appliance.is_pod)
 def test_service_enabled(appliance, service):
     """Verifies if key services are configured to start on boot up"""
     if service == 'postgresql':
