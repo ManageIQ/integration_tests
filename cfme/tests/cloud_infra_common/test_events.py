@@ -3,6 +3,7 @@
 import fauxfactory
 import pytest
 
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
 from cfme.control.explorer.policies import VMControlPolicy
@@ -23,11 +24,13 @@ pytestmark = [
 @pytest.yield_fixture(scope="function")
 def vm_crud(provider, setup_provider_modscope, small_template_modscope):
     template = small_template_modscope
-    vm = VM.factory(
-        'test_events_{}'.format(fauxfactory.gen_alpha(length=8).lower()),
-        provider,
-        template_name=template.name)
+
+    base_name = 'test-events-' if provider.one_of(GCEProvider) else 'test_events_'
+    vm_name = base_name + fauxfactory.gen_alpha(length=8).lower()
+
+    vm = VM.factory(vm_name, provider, template_name=template.name)
     yield vm
+
     if vm.does_vm_exist_on_provider():
         vm.cleanup_on_provider()
 
