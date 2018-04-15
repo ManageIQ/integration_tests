@@ -10,6 +10,7 @@ from cfme.utils import ssh
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.ocp_cli import OcpCli
 from cfme.utils.varmeth import variable
+from cfme.utils.wait import wait_for, TimedOutError
 from . import ContainersProvider, ContainersProviderDefaultEndpoint, ContainersProviderEndpointsForm
 
 
@@ -357,3 +358,28 @@ class OpenshiftProvider(ContainersProvider):
             self.appliance.restart_evm_service()
             self.appliance.wait_for_evm_service()
             self.appliance.wait_for_web_ui()
+
+    def is_metrics_collected(self, timeout):
+        """Check the db if gathering collection data for the given provider.
+
+        Metadata:
+            test_flag: metrics_collection
+        """
+
+        def is_collected():
+            self.appliance.db.client.session.query(metrics_tbl).filter(
+                metrics_tbl.parent_ems_id == mgmt_system_id).count() > 0
+
+        metrics_tbl = self.appliance.db.client['metrics']
+        mgmt_systems_tbl = self.appliance.db.client['ext_management_systems']
+
+        mgmt_system_id = self.appliance.db.client.session.query(mgmt_systems_tbl).filter(
+            mgmt_systems_tbl.name == self.name).first().id
+
+        result = True
+        try:
+            wait_for(is_collected, num_sec=timeout, delay=30)
+        except TimedOutError:
+            return False
+        finally:
+            return result

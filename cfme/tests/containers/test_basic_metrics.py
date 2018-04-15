@@ -9,13 +9,19 @@ pytestmark = [
     pytest.mark.provider([ContainersProvider], scope='function')]
 
 
+METRICS_CAPTURE_THRESHOLD_IN_MINUTES = 5
+
+
 @pytest.fixture(scope="module")
 def reduce_metrics_collection_threshold(appliance):
     appliance.ssh_client.put_file("scripts/openshift/change_metrics_collection_threshold.rb",
                                   "/var/www/miq/vmdb")
-    appliance.ssh_client.run_rails_command("change_metrics_collection_threshold.rb 5.minutes")
+    appliance.ssh_client.run_rails_command(
+        "change_metrics_collection_threshold.rb {threshold}.minutes".format(
+            threshold=METRICS_CAPTURE_THRESHOLD_IN_MINUTES))
 
 
+@pytest.fixture(scope="module")
 def enable_capacity_and_utilization(appliance):
     appliance.server.settings.enable_server_roles('ems_metrics_coordinator',
                                                   'ems_metrics_collector',
@@ -45,6 +51,7 @@ def test_basic_metrics(provider):
     assert response.ok, "{metrics} failed to start!".format(metrics=router["metadata"]["name"])
 
 
-def test_validate_metrics_exsitence(appliance, provider, enable_capacity_and_utilization,
+def test_validate_metrics_exsitence(provider,
+                                    enable_capacity_and_utilization,
                                     reduce_metrics_collection_threshold):
-    pass
+    assert provider.is_metrics_collected(timeout=METRICS_CAPTURE_THRESHOLD_IN_MINUTES * 60)
