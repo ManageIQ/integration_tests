@@ -74,10 +74,11 @@ def metrics_collection(appliance, clean_setup_provider, provider, enable_candu):
     vm_count = 0
     timeout = 1200.0  # 20 min
     while time.time() < start_time + timeout:
+        remaining = (start_time + timeout) - time.time()
         # ToDo: Refactor code with wait_for
 
-        logger.info("name: %s, id: %s, vms: %s, hosts: %s",
-            provider.key, mgmt_system_id, vm_count, host_count)
+        logger.info("name: %s, id: %s, vms: %s, hosts: %s, %d seconds remain until timeout",
+            provider.key, mgmt_system_id, vm_count, host_count, remaining)
         # Count host and vm metrics for the provider we're testing
         host_count = appliance.db.client.session.query(metrics_tbl).filter(
             metrics_tbl.parent_ems_id == mgmt_system_id).filter(
