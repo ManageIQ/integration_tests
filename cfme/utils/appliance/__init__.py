@@ -2863,6 +2863,11 @@ def _version_for_version_or_stream(version_or_stream, sprout_client=None):
     raise LookupError(version_or_stream)
 
 
+def collections_for_appliance(appliance):
+    from cfme.modeling.base import EntityCollections
+    return EntityCollections.for_appliance(appliance)
+
+
 @attr.s
 class DummyAppliance(object):
     """a dummy with minimal attribute set"""
@@ -2874,6 +2879,7 @@ class DummyAppliance(object):
     is_dev = False
     build = 'missing :)'
     managed_known_providers = []
+    collections = attr.ib(default=attr.Factory(collections_for_appliance, takes_self=True))
 
     @classmethod
     def from_config(cls, pytest_config):
