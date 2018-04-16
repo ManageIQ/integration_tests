@@ -11,7 +11,8 @@ from cfme.common.physical_server_views import (
     PhysicalServerManagePoliciesView,
     PhysicalServersView,
     PhysicalServerProvisionView,
-    PhysicalServerTimelinesView
+    PhysicalServerTimelinesView,
+    PhysicalServerEditTagsView
 )
 from cfme.exceptions import (
     ItemNotFound,
@@ -327,6 +328,10 @@ class PhysicalServerCollection(BaseCollection):
         view = self.select_entity_rows(physical_servers)
         view.toolbar.power.item_select("Power Off", handle_alert=True)
 
+    def custom_button_action(self, button, option, physical_servers, handle_alert=True):
+        view = self.select_entity_rows(physical_servers)
+        view.toolbar.custom_button(button).item_select(option, handle_alert=handle_alert)
+
 
 @navigator.register(PhysicalServerCollection)
 class All(CFMENavigateStep):
@@ -335,6 +340,33 @@ class All(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.navigation.select("Compute", "Physical Infrastructure", "Servers")
+
+
+@navigator.register(PhysicalServerCollection)
+class ManagePoliciesCollection(CFMENavigateStep):
+    VIEW = PhysicalServerManagePoliciesView
+    prerequisite = NavigateToSibling("All")
+
+    def step(self):
+        self.prerequisite_view.toolbar.policy.item_select("Manage Policies")
+
+
+@navigator.register(PhysicalServerCollection)
+class EditTagsCollection(CFMENavigateStep):
+    VIEW = PhysicalServerEditTagsView
+    prerequisite = NavigateToSibling("All")
+
+    def step(self):
+        self.prerequisite_view.toolbar.policy.item_select("Edit Tags")
+
+
+@navigator.register(PhysicalServerCollection)
+class ProvisionCollection(CFMENavigateStep):
+    VIEW = PhysicalServerProvisionView
+    prerequisite = NavigateToSibling("All")
+
+    def step(self):
+        self.prerequisite_view.toolbar.lifecycle.item_select("Provision Physical Server")
 
 
 @navigator.register(PhysicalServer)

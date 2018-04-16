@@ -23,26 +23,58 @@ def test_physical_servers_view_dropdowns(physical_server_collection):
     """Navigate to the physical servers page and verify that the dropdown menus are present"""
     physical_servers_view = navigate_to(physical_server_collection, 'All')
 
-    configuration_items = physical_servers_view.toolbar.configuration.items
-    assert "Refresh Relationships and Power States" in configuration_items
+    toolbar = physical_servers_view.toolbar
 
-    power_items = physical_servers_view.toolbar.power.items
-    assert "Power On" in power_items
-    assert "Power Off" in power_items
-    assert "Power Off Immediately" in power_items
-    assert "Restart" in power_items
-    assert "Restart Immediately" in power_items
-    assert "Restart to System Setup" in power_items
-    assert "Restart Management Controller" in power_items
+    assert toolbar.configuration.is_enabled
+    assert toolbar.power.is_enabled
+    assert toolbar.identify.is_enabled
+    assert toolbar.policy.is_enabled
+    assert toolbar.lifecycle.is_enabled
 
-    identify_items = physical_servers_view.toolbar.identify.items
-    assert "Blink LED" in identify_items
-    assert "Turn On LED" in identify_items
-    assert "Turn Off LED" in identify_items
+    configuration_items = toolbar.configuration.items
+    configuration_options = [
+        "Refresh Relationships and Power States",
+    ]
+    for option in configuration_options:
+        assert option in configuration_items
+        assert not toolbar.configuration.item_enabled(option)
 
-    policy_items = physical_servers_view.toolbar.policy.items
-    assert "Manage Policies" in policy_items
-    assert "Edit Tags" in policy_items
+    power_items = toolbar.power.items
+    power_options = [
+        "Power On",
+        "Power Off",
+        "Power Off Immediately",
+        "Restart",
+        "Restart Immediately"
 
-    lifecycle_items = physical_servers_view.toolbar.lifecycle.items
-    assert "Provision Physical Server" in lifecycle_items
+    ]
+    for option in power_options:
+        assert option in power_items
+        assert not toolbar.power.item_enabled(option)
+
+    identify_items = toolbar.identify.items
+    identify_options = [
+        "Blink LED",
+        "Turn On LED",
+        "Turn Off LED",
+    ]
+    for option in identify_options:
+        assert option in identify_items
+        assert not toolbar.identify.item_enabled(option)
+
+    policy_items = toolbar.policy.items
+    policy_options = [
+        "Manage Policies",
+        "Edit Tags"
+    ]
+    for option in policy_options:
+        assert option in policy_items
+        assert not toolbar.policy.item_enabled(option)
+
+    lifecycle_items = toolbar.lifecycle.items
+    lifecycle_options = [
+        "Provision Physical Server",
+    ]
+    for option in lifecycle_options:
+        assert option in lifecycle_items
+        assert not toolbar.lifecycle.item_enabled(option)
