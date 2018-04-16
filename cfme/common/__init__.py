@@ -342,8 +342,11 @@ class Taggable(object):
 
     def _set_random_tag(self, view):
         random_cat = random.choice(view.form.tag_category.all_options).text
+        # '*' is added in UI almost to all categoly while tag selection,
+        #  but doesn't need for Category object creation
         random_cat_cut = random_cat[:-1].strip() if random_cat[-1] == '*' else random_cat
-        view.form.tag_category.fill(random_cat)  # In order to get the right tags list
+        view.form.tag_category.fill(random_cat)
+        # In order to get the right tags list we need to select category first to get loaded tags
         random_tag = random.choice([tag_option for tag_option in view.form.tag_name.all_options
                                     if "select" not in tag_option.text.lower()]).text
         tag = Tag(display_name=random_tag, category=Category(display_name=random_cat_cut))
