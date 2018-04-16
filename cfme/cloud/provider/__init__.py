@@ -1,10 +1,15 @@
 """ A model of a Cloud Provider in CFME
 """
+import fauxfactory
+
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic_manageiq import TimelinesView, BreadCrumb, ItemsToolBarViewSelector
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown
+from widgetastic.utils import partial_match
 
+from cfme.exceptions import FlavorNotFound
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView
 from cfme.common.provider import CloudInfraProvider
@@ -17,7 +22,6 @@ from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFME
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import TimelinesView, BreadCrumb, ItemsToolBarViewSelector
 
 
 class CloudProviderTimelinesView(TimelinesView, BaseLoggedInPage):
@@ -121,6 +125,95 @@ class CloudProvider(Pretty, CloudInfraProvider):
     def discover_dict(credential):
         """Returns the discovery credentials dictionary, needs overiding"""
         raise NotImplementedError("This provider doesn't support discovery")
+
+    @property
+    def vm_default_args(self):
+        """
+        Represents dictionary used for Vm/Instance provision with minimum required default args
+        """
+        provisioning = self.data['provisioning']
+        inst_args = {
+            'request': {'email': 'vm_provision@cfmeqe.com'},
+            'catalog': {
+                'vm_name': 'test-'.format(fauxfactory.gen_alphanumeric(5))},
+            'environment': {
+                'availability_zone': provisioning.get('availability_zone'),
+                'cloud_network': provisioning.get('cloud_network'),
+                'cloud_subnet': provisioning.get('cloud_subnet'),
+                'resource_groups': provisioning.get('resource_group')
+            },
+            'properties': {
+                'instance_type': partial_match(provisioning.get('instance_type')),
+                'guest_keypair': provisioning.get('guest_keypair')}
+        }
+
+        return inst_args
+
+    @property
+    def vm_default_args_rest(self):
+        """
+        Represents dictionary used for REST API Vm/Instance provision with minimum required default
+        args
+        """
+        from cfme.cloud.provider.azure import AzureProvider
+        from cfme.cloud.provider.ec2 import EC2Provider
+        from cfme.cloud.provider.gce import GCEProvider
+
+        if not self.is_refreshed():
+            self.refresh_provider_relationships()
+            wait_for(self.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        provisioning = self.data['provisioning']
+        image_guid = self.appliance.rest_api.collections.templates.find_by(
+            name=provisioning['image']['name'])[0].guid
+        if ':' in provisioning['instance_type'] and self.one_of(EC2Provider, GCEProvider):
+            instance_type = provisioning['instance_type'].split(':')[0].strip()
+        elif self.one_of(AzureProvider):
+            instance_type = provisioning['instance_type'].lower()
+        else:
+            instance_type = provisioning['instance_type']
+
+        flavors = self.appliance.rest_api.collections.flavors.find_by(name=instance_type)
+        assert flavors, "Flavor {} wasn't found"
+        for flavor in flavors:
+            try:
+                ems_id = flavor.ems_id
+            except AttributeError:
+                    continue
+            if ems_id == self.id and flavor.ems.name == self.name:
+                flavor_id = flavor.id
+                break
+        else:
+            raise FlavorNotFound("Cannot find flavour {} for provider {}".
+                                 format(instance_type, self.name))
+
+        inst_args = {
+            "version": "1.1",
+            "template_fields": {
+                "guid": image_guid,
+            },
+            "vm_fields": {
+                "vm_name": 'test-'.format(fauxfactory.gen_alphanumeric(5)),
+                "instance_type": flavor_id,
+                "request_type": "template",
+            },
+            "requester": {
+                "user_name": "admin",
+                "owner_email": "admin@cfmeqe.com",
+                "auto_approve": True,
+            },
+            "tags": {
+            },
+            "additional_values": {
+                # 'placement_auto' defaults to True if not specified
+                # "placemnet_auto": True
+            },
+            "ems_custom_attributes": {
+            },
+            "miq_custom_attributes": {
+            }
+        }
+
+        return inst_args
 
 
 @navigator.register(CloudProvider, 'All')

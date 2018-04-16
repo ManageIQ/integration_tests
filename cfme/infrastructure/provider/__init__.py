@@ -1,8 +1,10 @@
 """ A model of an Infrastructure Provider in CFME
 """
+import fauxfactory
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
-from widgetastic.utils import Fillable
+from widgetastic.utils import Fillable, partial_match
 
 from cfme.base.ui import Server
 from cfme.common import TagPageView
@@ -194,6 +196,65 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     @property
     def view_value_mapping(self):
         return {'name': self.name}
+
+    @property
+    def vm_default_args(self):
+        """Represents dictionary used for Vm/Instance provision with mandatory default args"""
+        provisioning = self.data['provisioning']
+        inst_args = {
+            'request': {
+                'email': 'vm_provision@cfmeqe.com'},
+            'catalog': {
+                'vm_name': 'test-'.format(fauxfactory.gen_alphanumeric(5))},
+            'environment': {
+                'host_name': {'name': provisioning['host']},
+                'datastore_name': {'name': provisioning['datastore']}},
+            'network': {
+                'vlan': partial_match(provisioning['vlan'])}
+        }
+
+        return inst_args
+
+    @property
+    def vm_default_args_rest(self):
+        """
+        Represents dictionary used for REST API Vm/Instance provision with minimum required default
+        args
+        """
+        if not self.is_refreshed():
+            self.refresh_provider_relationships()
+            wait_for(self.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        provisioning = self.data['provisioning']
+        image_guid = self.appliance.rest_api.collections.templates.find_by(
+            name=provisioning['template'])[0].guid
+
+        inst_args = {
+            "version": "1.1",
+            "template_fields": {
+                "guid": image_guid,
+            },
+            "vm_fields": {
+                "vm_name": 'test-'.format(fauxfactory.gen_alphanumeric(5)),
+                "request_type": "template",
+            },
+            "requester": {
+                "user_name": "admin",
+                "owner_email": "admin@cfmeqe.com",
+                "auto_approve": True,
+            },
+            "tags": {
+            },
+            "additional_values": {
+                # 'placement_auto' defaults to True if not specified
+                # "placemnet_auto": True
+            },
+            "ems_custom_attributes": {
+            },
+            "miq_custom_attributes": {
+            }
+        }
+
+        return inst_args
 
 
 @navigator.register(Server, 'InfraProviders')
