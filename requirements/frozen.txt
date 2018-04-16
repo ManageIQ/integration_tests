@@ -3,7 +3,7 @@ ansible==2.1.0.0
 appdirs==1.4.3
 asn1crypto==0.22.0
 attrs==17.2.0
-Babel==2.4.0
+Babel==2.5.3
 backports-abc==0.5
 backports.shutil-get-terminal-size==1.0.0
 backports.ssl-match-hostname==3.5.0.1
@@ -45,7 +45,7 @@ google-api-python-client==1.6.2
 gunicorn==19.7.1
 html5lib==0.999999999
 httplib2==0.10.3
-humanfriendly==4.4
+humanfriendly==4.8
 idna==2.5
 importscan==0.1
 ipaddress==1.0.18
@@ -116,8 +116,8 @@ prompt-toolkit==1.0.14
 psycopg2==2.7.3.2
 ptyprocess==0.5.1
 py==1.5.3
-pyasn1==0.2.3
-pyasn1-modules==0.0.9
+pyasn1==0.4.1
+pyasn1-modules==0.2.1
 pycodestyle==2.3.1
 pycparser==2.17
 pycrypto==2.6.1
@@ -138,7 +138,7 @@ python-heatclient==1.9.0
 python-ironicclient==1.13.0
 python-jenkins==0.4.14
 python-keystoneclient==3.10.0
-python-novaclient==6.0.1
+python-novaclient==7.1.2
 python-openstackclient==3.11.0
 python-swiftclient==3.3.0
 pytz==2017.2
@@ -149,7 +149,7 @@ qtconsole==4.3.0
 reg==0.11
 regex==2017.5.26
 repoze.lru==0.6
-requests==2.17.3
+requests==2.18.4
 requests-ntlm==1.0.0
 requestsexceptions==1.2.0
 rfc3986==1.0.0
@@ -157,7 +157,7 @@ riggerlib==3.1.2
 rsa==3.4.2
 ruamel.ordereddict==0.4.9
 ruamel.yaml==0.15.3
-s3transfer==0.1.10
+s3transfer==0.1.13
 scandir==1.5
 scp==0.10.2
 selenium==2.53.6
