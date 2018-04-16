@@ -11,6 +11,16 @@ class CFMEException(Exception):
     pass
 
 
+class ApplianceVersionException(CFMEException):
+    """Raised when functionality is not supported on this version of the appliance"""
+    def __init__(self, msg, version):
+        self.msg = msg
+        self.version = version
+
+    def __str__(self):
+        return "Version {} not supported.  {}".format(self.version, self.msg)
+
+
 class BugException(CFMEException):
     """Raised by methods inside the framework that are broken due to a bug"""
     def __init__(self, bug_no, operation):

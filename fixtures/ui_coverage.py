@@ -31,7 +31,7 @@ Note the .resultset.json format is documented in the ruby Coverage libraries doc
 
 All of the individual process' results are then manually merged (coverage_merger) into one
 big json result, and handed back to simplecov which generates the compiled html
-(for humans) and rcov (for jenkins) reports.
+(for humans) report.
 
 Workflow Overview
 -----------------
@@ -40,10 +40,10 @@ Pre-testing (``pytest_configure`` hook):
 
 1. Add ``Gemfile.dev.rb`` to the rails root, then run bundler to install simplecov
    and its dependencies.
-2. Install and require the coverage hook (copy ``coverage_hook`` to config/, add
-   require line to the end of ``config/boot.rb``)
-3. Restart EVM (Rudely) to start running coverage on the appliance processes:
-   ``killall -9 ruby; sysemctl start evmserverd``
+2. Patch application with manageiq-17302 patch so that coverage_hook will be loaded
+   by the application.  Eventually this will be in CFME and we won't have to do this.
+3. Install coverage hook (copy ``coverage_hook`` to config/).
+4. Restart EVM to start running coverage on the appliance processes.
 
 Post-testing (``pytest_unconfigure`` hook):
 
@@ -57,18 +57,18 @@ Post-testing (e.g. ci environment): *** This is changing ***
 2. Zip up and archive the entire coverage dir for review
 """
 import subprocess
-from threading import Thread
 
 import pytest
 from py.error import ENOENT
 from py.path import local
 
 from fixtures.pytest_store import store
+from cfme.exceptions import ApplianceVersionException
 from cfme.utils import conf, version
+from cfme.utils.conf import cfme_data
 from cfme.utils.log import create_sublogger
 from cfme.utils.path import conf_path, log_path, scripts_data_path
 from cfme.utils.quote import quote
-from cfme.utils.wait import wait_for, TimedOutError
 
 # paths to all of the coverage-related files
 
@@ -116,6 +116,14 @@ class CoverageManager(object):
         else:
             sublogger_name = 'coverage'
         self.log = create_sublogger(sublogger_name)
+        # We don't know exactly when the forking architecture change
+        # occurred in CFME, but this code does not accurately gather
+        # coverage statistics from anything below CFME 5.8.   So if the
+        # version is below 5.8, we set our functions to noops.
+        if self.ipapp.version < '5.8':
+            raise ApplianceVersionException(
+                msg='Coverage statistics collection is only supported in appliances >= 5.8',
+                version=self.ipapp.version)
 
     @property
     def collection_appliance(self):
@@ -141,13 +149,13 @@ class CoverageManager(object):
         self.print_message('installing')
         self._install_simplecov()
         self._install_coverage_hook()
-        self.ipapp.restart_evm_service(rude=True)
+        self.ipapp.restart_evm_service()
         self.ipapp.wait_for_web_ui()
 
     def collect(self):
         self.print_message('collecting reports')
         self._collect_reports()
-        self.ipapp.restart_evm_service(rude=False)
+        self.ipapp.restart_evm_service()
 
     def merge(self):
         self.print_message('merging reports')
@@ -187,24 +195,59 @@ class CoverageManager(object):
 
     def _install_coverage_hook(self):
         # Clean appliance coverage dir
-        self.ipapp.ssh_client.run_command('rm -rf {}'.format(
-            appliance_coverage_root.strpath))
-        # Decide which coverage hook file to use based on version
-        # Put the coverage hook in the miq lib path
-        self.ipapp.ssh_client.put_file(coverage_hook.strpath, rails_root.join(
-            'lib', coverage_hook_file_name).strpath)
-        replacements = {
-            'require': r"require_relative '../lib/coverage_hook'",
-            'config': rails_root.join('config').strpath
-        }
-        # grep/echo to try to add the require line only once
-        # This goes in preinitializer after the miq lib path is set up,
-        # which makes it so ruby can actually require the hook
-        command_template = (
-            'cd {config};'
-            'grep -q "{require}" preinitializer.rb || echo -e "\\n{require}" >> preinitializer.rb'
-        )
-        result = self.ipapp.ssh_client.run_command(command_template.format(**replacements))
+        self.ipapp.ssh_client.run_command('rm -rf {}'.format(appliance_coverage_root.strpath))
+        # Put the coverage hook in the miq config path
+        self.ipapp.ssh_client.put_file(
+            coverage_hook.strpath,
+            rails_root.join('config', coverage_hook_file_name).strpath)
+        # XXX: Once the manageiq PR 17302 makes it into the 5.9 and 5.8 stream we
+        #      can remove all the code in this function after this.   This is only
+        #      a temporary fix so we can start acquiring code coverage statistics.
+        #
+        # See if we need to install the patch.   If not just return.
+        # The patch will create the file lib/code_coverage.rb under the rails root.
+        # so if that is there we assume the patch is already installed.
+        result = self.ipapp.ssh_client.run_command('cd {}; [ -e lib/code_coverage.rb ]'.format(
+            rails_root))
+        if result.success:
+            return True
+        # place patch on the system
+        self.log.info('Patching system with manageiq patch #17302')
+        coverage_hook_patch_name = 'manageiq-17302.patch'
+        local_coverage_hook_patch = coverage_data.join(coverage_hook_patch_name)
+        remote_coverage_hook_patch = rails_root.join(coverage_hook_patch_name)
+        self.ipapp.ssh_client.put_file(
+            local_coverage_hook_patch.strpath,
+            remote_coverage_hook_patch.strpath)
+        # See if we need to install the patch command:
+        result = self.ipapp.ssh_client.run_command('rpm -q patch')
+        if not result.success:
+            # Setup yum repositories and install patch
+            local_yum_repo = log_path.join('yum.local.repo')
+            remote_yum_repo = '/etc/yum.repos.d/local.repo'
+            repo_data = cfme_data['basic_info']['local_yum_repo']
+            yum_repo_data = '''
+[{name}]
+name={name}
+baseurl={baseurl}
+enabled={enabled}
+gpgcheck={gpgcheck}
+'''.format(
+                name=repo_data['name'],
+                baseurl=repo_data['baseurl'],
+                enabled=repo_data['enabled'],
+                gpgcheck=repo_data['gpgcheck'])
+            with open(local_yum_repo.strpath, 'w') as f:
+                f.write(yum_repo_data)
+            self.ipapp.ssh_client.put_file(local_yum_repo.strpath, remote_yum_repo)
+            self.ipapp.ssh_client.run_command('yum install -y patch')
+            # Remove the yum repo just in case a test of registering the system might
+            # happen and this repo cause problems with the test.
+            self.ipapp.ssh_client.run_command('rm {}'.format(remote_yum_repo))
+        # patch system.
+        result = self.ipapp.ssh_client.run_command('cd {}; patch -p1 < {}'.format(
+            rails_root.strpath,
+            remote_coverage_hook_patch.strpath))
         return result.success
 
     def _collect_reports(self):
