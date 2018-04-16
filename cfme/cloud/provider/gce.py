@@ -62,7 +62,7 @@ class GCEProvider(CloudProvider):
         return endpoints
 
     @classmethod
-    def from_config(cls, prov_config, prov_key, appliance=None):
+    def from_config(cls, prov_config, prov_key):
         endpoint = GCEEndpoint(**prov_config['endpoints']['default'])
         return cls(name=prov_config['name'],
                    project=prov_config['project'],
@@ -70,8 +70,7 @@ class GCEProvider(CloudProvider):
                    region=prov_config['region'],
                    region_name=prov_config['region_name'],
                    endpoints={endpoint.name: endpoint},
-                   key=prov_key,
-                   appliance=appliance)
+                   key=prov_key)
 
     @classmethod
     def get_credentials(cls, credential_dict, cred_type=None):

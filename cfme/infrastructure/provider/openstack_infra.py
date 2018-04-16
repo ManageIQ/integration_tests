@@ -1,3 +1,5 @@
+import attr
+
 from navmazing import NavigateToSibling
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Tab, Input, BootstrapSelect, Button
@@ -51,6 +53,7 @@ class OpenStackInfraEndpointForm(View):
         change_key = Text(locator='.//a[normalize-space(.)="Change stored private key"]')
 
 
+@attr.s(hash=False)
 class OpenstackInfraProvider(InfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_host']
     type_name = "openstack_infra"
@@ -62,17 +65,6 @@ class OpenstackInfraProvider(InfraProvider):
         'Credential validation was not successful: ',
         'Login failed due to a bad username or password.'
     )
-
-    def __init__(self, name=None, endpoints=None, key=None, hostname=None, ip_address=None,
-                 start_ip=None, end_ip=None, provider_data=None, appliance=None):
-        super(OpenstackInfraProvider, self).__init__(name=name, endpoints=endpoints, key=key,
-                                                     provider_data=provider_data,
-                                                     appliance=appliance)
-        self.hostname = hostname
-        self.start_ip = start_ip
-        self.end_ip = end_ip
-        if ip_address:
-            self.ip_address = ip_address
 
     @property
     def view_value_mapping(self):
@@ -90,7 +82,7 @@ class OpenstackInfraProvider(InfraProvider):
             return int(details_view.entities.relationships.get_text_of('Hosts / Nodes')) > 0
 
     @classmethod
-    def from_config(cls, prov_config, prov_key, appliance=None):
+    def from_config(cls, prov_config, prov_key):
         endpoints = {}
         for endp in prov_config['endpoints']:
             for expected_endpoint in (RHOSEndpoint, EventsEndpoint, SSHEndpoint):
@@ -102,13 +94,13 @@ class OpenstackInfraProvider(InfraProvider):
             end_ip = prov_config['discovery_range']['end']
         else:
             start_ip = end_ip = prov_config.get('ipaddress')
-        return cls(
+        return cls.appliance.collections.infra_providers.instantiate(
+            prov_class=OpenstackInfraProvider,
             name=prov_config['name'],
             endpoints=endpoints,
             key=prov_key,
             start_ip=start_ip,
-            end_ip=end_ip,
-            appliance=appliance)
+            end_ip=end_ip)
 
     def register(self, file_path):
         """Register new nodes (Openstack)

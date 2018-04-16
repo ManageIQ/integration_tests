@@ -1,12 +1,14 @@
 """ A model of an Infrastructure Provider in CFME
 """
+import attr
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from widgetastic.utils import Fillable
 
 from cfme.base.ui import Server
 from cfme.common import TagPageView
-from cfme.common.provider import CloudInfraProvider
+from cfme.common.provider import CloudInfraProvider, provider_types
 from cfme.common.provider_views import (InfraProviderAddView,
                                         InfraProviderEditView,
                                         InfraProviderDetailsView,
@@ -19,8 +21,8 @@ from cfme.common.provider_views import (InfraProviderAddView,
 from cfme.exceptions import DestinationNotFound
 from cfme.infrastructure.cluster import ClusterView, ClusterToolbar
 from cfme.infrastructure.host import Host
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import conf
-from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
@@ -43,7 +45,8 @@ class ProviderClustersView(ClusterView):
     including_entities = View.include(BaseEntitiesView, use_parent=True)
 
 
-class InfraProvider(Pretty, CloudInfraProvider, Fillable):
+@attr.s(hash=False)
+class InfraProvider(Pretty, CloudInfraProvider, Fillable, BaseEntity):
     """
     Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.
 
@@ -69,20 +72,24 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
     string_name = "Infrastructure"
     templates_destination_name = "Templates"
+    template_name = "Templates"
     db_types = ["InfraManager"]
     hosts_menu_item = "Hosts"
     vm_name = "Virtual Machines"
 
-    def __init__(
-            self, name=None, endpoints=None, key=None, zone=None, provider_data=None,
-            appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.endpoints = self._prepare_endpoints(endpoints)
-        self.key = key
-        self.provider_data = provider_data
-        self.zone = zone
-        self.template_name = "Templates"
+    name = attr.ib(default=None)
+    endpoints = attr.ib(default=None)
+    key = attr.ib(default=None)
+    zone = attr.ib(default=None)
+    hostname = attr.ib(default=None)
+    ip_address = attr.ib(default=None)
+    start_ip = attr.ib(default=None)
+    end_ip = attr.ib(default=None)
+    provider_data = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self.endpoints = self._prepare_endpoints(self.endpoints)
+        self.parent = self.appliance.collections.infra_providers
 
     @variable(alias='db')
     def num_datastore(self):
@@ -154,15 +161,6 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         view = navigate_to(self, "Details")
         return int(view.entities.summary("Relationships").get_text_of("Clusters"))
 
-    def discover(self):  # todo: move this to provider collections
-        """
-        Begins provider discovery from a provider instance
-
-        Usage:
-            discover_from_config(utils.providers.get_crud('rhevm'))
-        """
-        discover(self, cancel=False, start_ip=self.start_ip, end_ip=self.end_ip)
-
     @property
     def hosts(self):
         """Returns list of :py:class:`cfme.infrastructure.host.Host` that should belong to this
@@ -196,6 +194,74 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         return {'name': self.name}
 
 
+# todo: update all docstrings
+@attr.s
+class InfraProviderCollection(BaseCollection):
+    """Collection object for InfraProvider object
+    """
+
+    ENTITY = InfraProvider
+
+    def all(self):
+        view = navigate_to(self, 'All')
+        provs = view.entities.get_all(surf_pages=True)
+
+        # trying to figure out provider type and class
+        # todo: move to all providers collection later
+        def _get_class(pid):
+            prov_type = self.appliance.rest_api.collections.providers.get(id=pid)['type']
+            for prov_class in provider_types('infra').values():
+                if prov_class.db_types[0] in prov_type:
+                    return prov_class
+
+        return [self.instantiate(prov_class=_get_class(p.data['id']), name=p.name) for p in provs]
+
+    def instantiate(self, prov_class, *args, **kwargs):
+        return prov_class.from_collection(self, *args, **kwargs)
+
+    def create(self, prov_class, *args, **kwargs):
+        obj = self.instantiate(prov_class, *args, **kwargs)
+        obj.create()
+
+    def discover(self, discover_cls, cancel=False, start_ip=None, end_ip=None):
+        """
+        Discover infrastructure providers. Note: only starts discovery, doesn't
+        wait for it to finish.
+
+        Args:
+            discover_cls: Instance of provider class
+            cancel:  Whether to cancel out of the discover UI.
+            start_ip: String start of the IP range for discovery
+            end_ip: String end of the IP range for discovery
+        """
+        form_data = {}
+        if discover_cls:
+            form_data.update(discover_cls.discover_dict)
+
+        if start_ip:
+            for idx, octet in enumerate(start_ip.split('.'), start=1):
+                key = 'from_ip{idx}'.format(idx=idx)
+                form_data.update({key: octet})
+        if end_ip:
+            end_octet = end_ip.split('.')[-1]
+            form_data.update({'to_ip4': end_octet})
+
+        view = navigate_to(self, 'Discover')
+        view.fill(form_data)
+        if cancel:
+            view.cancel.click()
+        else:
+            view.start.click()
+
+    def wait_for_a_provider(self):
+        view = navigate_to(self, 'All')
+        logger.info('Waiting for a provider to appear...')
+        wait_for(lambda: int(view.entities.paginator.items_amount), fail_condition=0,
+                 message="Wait for any provider to appear", num_sec=1000,
+                 fail_func=view.browser.refresh)
+
+
+@navigator.register(InfraProviderCollection, 'All')
 @navigator.register(Server, 'InfraProviders')
 @navigator.register(InfraProvider, 'All')
 class All(CFMENavigateStep):
@@ -214,6 +280,7 @@ class All(CFMENavigateStep):
         self.view.entities.paginator.reset_selection()
 
 
+@navigator.register(InfraProviderCollection, 'Add')
 @navigator.register(InfraProvider, 'Add')
 class Add(CFMENavigateStep):
     VIEW = InfraProviderAddView
@@ -229,7 +296,7 @@ class Add(CFMENavigateStep):
                                                                      'Infrastructure Provider')
 
 
-@navigator.register(InfraProvider, 'Discover')
+@navigator.register(InfraProviderCollection, 'Discover')
 class Discover(CFMENavigateStep):
     VIEW = InfraProvidersDiscoverView
     prerequisite = NavigateToSibling('All')
@@ -344,48 +411,3 @@ class ProviderVms(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.summary('Relationships').click_at('Virtual Machines')
-
-
-def get_all_providers():
-    """Returns list of all providers"""
-    view = navigate_to(InfraProvider, 'All')
-    return [item.name for item in view.entities.get_all(surf_pages=True)]
-
-
-def discover(discover_cls, cancel=False, start_ip=None, end_ip=None):
-    """
-    Discover infrastructure providers. Note: only starts discovery, doesn't
-    wait for it to finish.
-
-    Args:
-        discover_cls: Instance of provider class
-        cancel:  Whether to cancel out of the discover UI.
-        start_ip: String start of the IP range for discovery
-        end_ip: String end of the IP range for discovery
-    """
-    form_data = {}
-    if discover_cls:
-        form_data.update(discover_cls.discover_dict)
-
-    if start_ip:
-        for idx, octet in enumerate(start_ip.split('.'), start=1):
-            key = 'from_ip{idx}'.format(idx=idx)
-            form_data.update({key: octet})
-    if end_ip:
-        end_octet = end_ip.split('.')[-1]
-        form_data.update({'to_ip4': end_octet})
-
-    view = navigate_to(InfraProvider, 'Discover')
-    view.fill(form_data)
-    if cancel:
-        view.cancel.click()
-    else:
-        view.start.click()
-
-
-def wait_for_a_provider():
-    view = navigate_to(InfraProvider, 'All')
-    logger.info('Waiting for a provider to appear...')
-    wait_for(lambda: int(view.entities.paginator.items_amount), fail_condition=0,
-             message="Wait for any provider to appear", num_sec=1000,
-             fail_func=view.browser.refresh)

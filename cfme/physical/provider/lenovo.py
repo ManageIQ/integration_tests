@@ -35,12 +35,11 @@ class LenovoProvider(PhysicalProvider):
         )
 
     @classmethod
-    def from_config(cls, prov_config, prov_key, appliance=None):
+    def from_config(cls, prov_config, prov_key):
         endpoint = LenovoEndpoint(**prov_config['endpoints']['default'])
         return cls(name=prov_config['name'],
                    endpoints={endpoint.name: endpoint},
-                   key=prov_key,
-                   appliance=appliance)
+                   key=prov_key)
 
     @property
     def view_value_mapping(self):

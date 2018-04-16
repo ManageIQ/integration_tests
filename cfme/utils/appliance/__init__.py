@@ -683,7 +683,7 @@ class IPAppliance(object):
             Recognized by name only.
         """
         from cfme.utils.providers import list_providers
-        prov_cruds = list_providers(use_global_filters=False, appliance=self)
+        prov_cruds = list_providers(use_global_filters=False)
 
         found_cruds = set()
         unrecognized_ems_names = set()

@@ -60,7 +60,7 @@ class AzureProvider(CloudProvider):
         return self.data['provisioning']
 
     @classmethod
-    def from_config(cls, prov_config, prov_key, appliance=None):
+    def from_config(cls, prov_config, prov_key):
         endpoint = AzureEndpoint(**prov_config['endpoints']['default'])
         # HACK: stray domain entry in credentials, so ensure it is not there
         endpoint.credentials.domain = None
@@ -70,8 +70,7 @@ class AzureProvider(CloudProvider):
             tenant_id=prov_config['tenant_id'],
             subscription_id=prov_config['subscription_id'],
             endpoints={endpoint.name: endpoint},
-            key=prov_key,
-            appliance=appliance)
+            key=prov_key)
 
     @staticmethod
     def discover_dict(credential):
