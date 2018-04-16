@@ -75,7 +75,8 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
         if self.execute_ssh_command(login_cmd).success:
             return True
 
-    def get_urls(self):
+    @log_wrap('pull template from docker')
+    def pull_template(self):
         get_urls_cmd = ('find {} -type f -name "cfme-openshift-*" '
                         '-exec tail -1 {{}} \;').format(self.destination_directory)
 
@@ -91,6 +92,10 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
             if res_url.failed:
                 return False
 
+        return True
+
+    @log_wrap('delete template with same name')
+    def delete_existing_template(self):
         for template in ('cloudforms', self.template_name):
             get_template_cmd = 'oc get template {} --namespace=openshift'.format(template)
             delete_template_cmd = 'oc delete template {} --namespace=openshift'.format(template)
@@ -98,6 +103,10 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
             if self.execute_ssh_command(get_template_cmd, creds=self.creds()).success:
                 self.execute_ssh_command(delete_template_cmd, creds=self.creds())
 
+        return True
+
+    @log_wrap('create template')
+    def create_template(self):
         change_name_cmd = """python -c 'import yaml
 data = yaml.safe_load(open("{file}"))
 data["metadata"]["name"] = "{new_name}"
@@ -130,5 +139,13 @@ yaml.safe_dump(data, stream=open("{file}", "w"))'""".format(new_name=self.templa
         if not self.login_to_oc():
             return False
 
-        if not self.get_urls():
+        if not self.pull_template():
             return False
+
+        if not self.delete_existing_template():
+            return False
+
+        if not self.create_template():
+            return False
+
+        return True
