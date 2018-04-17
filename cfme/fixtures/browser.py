@@ -10,7 +10,7 @@ from cfme.utils.datafile import template_env
 from cfme.utils.log import logger
 from cfme.utils.path import log_path, project_path
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
-
+from cfme.utils.appliance import find_appliance
 browser_fixtures = {'browser'}
 
 failed_test_tracking = {
@@ -22,10 +22,10 @@ failed_test_tracking = {
 
 def pytest_runtest_setup(item):
     from cfme.utils.appliance import (
-        get_or_create_current_appliance,
         DummyAppliance,
     )
-    appliance = get_or_create_current_appliance()
+
+    appliance = find_appliance(item, require=False)
     if isinstance(appliance, DummyAppliance):
         return
 

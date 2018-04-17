@@ -1,21 +1,21 @@
+import attr
 import pytest
 
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
 
-from cfme.utils.appliance import get_or_create_current_appliance
 
-
+@attr.s
 class MerkylInspector(object):
-    def __init__(self, request):
-        """ A simple adapter to aid in Merkyl Log Inspection during a test.
+    """ A simple adapter to aid in Merkyl Log Inspection during a test.
 
-        This class is really only useful during a test and is designed to abstract
-        away accessing the request object. The hooks which are fired can be done
-        so during the test without this class/fixture, this is merely a convenience
-        and does nothing special.
-        """
-        self.node = request.node
-        self.ip = get_or_create_current_appliance().hostname
+    This class is really only useful during a test and is designed to abstract
+    away accessing the request object. The hooks which are fired can be done
+    so during the test without this class/fixture, this is merely a convenience
+    and does nothing special.
+    """
+
+    node = attr.ib()
+    ip = attr.ib()
 
     def get_log(self, log_name):
         """ A simple getter for log files.
@@ -70,7 +70,7 @@ class MerkylInspector(object):
 
 
 @pytest.fixture(scope='function')
-def merkyl_inspector(request):
+def merkyl_inspector(request, appliance):
     """ Provides a MerkylInspector instance.
 
     This fixture is used to gain access to a relevant MerkylInspector instance.
@@ -85,4 +85,4 @@ def merkyl_inspector(request):
             if merkyl_inspector.search_log('needle', '/path/to/log/file'):
                 print(merkyl_inspector.get_log('/path/to/log/file'))
     """
-    return MerkylInspector(request)
+    return MerkylInspector(node=request.node, ip=appliance.hostname)

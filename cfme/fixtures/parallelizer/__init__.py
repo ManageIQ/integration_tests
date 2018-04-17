@@ -53,6 +53,7 @@ from cfme.fixtures.pytest_store import store
 from cfme.utils import at_exit, conf
 from cfme.utils.log import create_sublogger
 from cfme.utils.path import conf_path
+from cfme.test_framework.appliance import PLUGIN_KEY as APPLIANCE_PLUGIN
 
 # Initialize slaveid to None, indicating this as the master process
 # slaves will set this to a unique string when they're initialized
@@ -72,7 +73,7 @@ def pytest_addhooks(pluginmanager):
 def pytest_configure(config):
     """Configures the parallel session, then fires pytest_parallel_configured."""
     reporter = terminalreporter.reporter()
-    holder = config.pluginmanager.get_plugin("appliance-holder")
+    holder = config.pluginmanager.get_plugin(APPLIANCE_PLUGIN)
 
     appliances = holder.appliances
 
