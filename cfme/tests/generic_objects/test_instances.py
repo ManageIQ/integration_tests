@@ -24,8 +24,6 @@ def test_generic_objects_crud(appliance, context, request):
             associations={'services': 'Service'}
         )
         assert definition.exists
-        import pdb
-        pdb.set_trace()
         request.addfinalizer(definition.delete)
 
         myservices = []
@@ -61,7 +59,7 @@ def test_generic_objects_crud(appliance, context, request):
 
 @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 @pytest.mark.parametrize('context', [ViaUI])
-def test_generic_objects_crud_ui(appliance, context, request):
+def test_generic_objects_crud_ui(appliance, context):
     with appliance.context.use(context):
         definition = appliance.collections.generic_object_definitions.create(
             name="rest_generic_class{}".format(fauxfactory.gen_alphanumeric()),
@@ -70,23 +68,25 @@ def test_generic_objects_crud_ui(appliance, context, request):
             associations={"services": "Service"},
             methods=["hello_world"])
 
-        myservices = []
-        for _ in range(2):
-            service_name = 'rest_service_{}'.format(fauxfactory.gen_alphanumeric())
-            rest_service = appliance.rest_api.collections.services.action.create(
-                name=service_name,
-                display=True
-            )
-            rest_service = rest_service[0]
-            request.addfinalizer(rest_service.action.delete)
-            myservices.append(MyService(appliance, name=service_name))
-
         with appliance.context.use(ViaREST):
             instance = appliance.collections.generic_objects.create(
                 name='rest_generic_instance{}'.format(fauxfactory.gen_alphanumeric()),
                 definition=definition,
-                attributes={'addr01': 'Test Address'},
-                associations={'services': [myservices[0]]}
+                attributes={'addr01': 'Test Address'}
             )
         view = navigate_to(instance, 'Details')
         assert view.is_displayed
+
+
+def test_generic_objects_with_button_group(appliance, context, generic_object_definition,
+                                           generic_services):
+    group = generic_object_definition.add_button_group()
+    generic_object_definition.add_button()
+
+
+def test_generic_objects_with_button():
+    pass
+
+
+def test_generic_objects_tagging():
+    pass
