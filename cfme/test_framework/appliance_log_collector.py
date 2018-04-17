@@ -52,8 +52,8 @@ def pytest_unconfigure(config):
 
         # Handle local dir existing
         local_dir.ensure(dir=True)
-
-        holder = config.pluginmanager.get_plugin('appliance-holder')
+        from cfme.test_framework.appliance import PLUGIN_KEY
+        holder = config.pluginmanager.get_plugin(PLUGIN_KEY)
         if holder is None:
             # No appliances to fetch logs from
             logger.warning('No logs collected, appliance holder is empty')
