@@ -3,7 +3,7 @@ import pytest
 from six import iteritems
 
 from cfme.base.credential import Credential
-from cfme.base.login import BaseLoggedInPage
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.auth import (
     OpenLDAPAuthProvider, OpenLDAPSAuthProvider, ActiveDirectoryAuthProvider, FreeIPAAuthProvider,
     AmazonAuthProvider
@@ -117,12 +117,9 @@ def test_login_evm_group(appliance, auth_mode, prov_key, user_type, auth_provide
     for user, groupname in user_tuples:
         with user:
             # use appliance.server methods for UI context instead of view directly
-            appliance.server.login(user, method='click_on_login')
-            view = appliance.browser.create_view(BaseLoggedInPage)
-            assert view.is_displayed
+            navigate_to(appliance.server, 'LoggedIn', wait_for_view=True)
             assert appliance.server.current_full_name() == user.name
             assert groupname.lower() in [name.lower() for name in appliance.server.group_names()]
-            appliance.server.logout()
 
     # split loop to reduce number of logins
     appliance.server.login_admin()
@@ -192,13 +189,10 @@ def test_login_retrieve_group(appliance, request, prov_key, auth_mode, auth_prov
     for user, group in user_group_tuples:
         with user:
             request.addfinalizer(lambda: _group_cleanup(group))
-            appliance.server.login(user, method='click_on_login')
-            view = appliance.browser.create_view(BaseLoggedInPage)
-            assert view.is_displayed
+            navigate_to(appliance.server, 'LoggedIn', wait_for_view=True)
             assert appliance.server.current_full_name() == user.name
             assert group.description.lower() in [name.lower() for
                                                  name in appliance.server.group_names()]
-            appliance.server.logout()
 
     appliance.server.login_admin()
     for user, _ in user_group_tuples:
