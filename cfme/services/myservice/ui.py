@@ -1,6 +1,6 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import Parameter, VersionPick, Version
-from widgetastic.widget import ParametrizedView, Table, Text, View
+from widgetastic.widget import ParametrizedView, Table, Text, View, ParametrizedString
 from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Tab
 
 from cfme.base.login import BaseLoggedInPage
@@ -12,7 +12,8 @@ from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (Accordion, ManageIQTree, Calendar, SummaryTable,
-                                  BaseNonInteractiveEntitiesView, ItemsToolBarViewSelector)
+                                  BaseNonInteractiveEntitiesView, ItemsToolBarViewSelector,
+                                  BaseEntitiesView, ParametrizedSummaryTable)
 
 
 class MyServiceToolbar(View):
@@ -94,6 +95,7 @@ class MyServiceDetailView(MyServicesView):
         relationships = SummaryTable(title='Relationships')
         vm = SummaryTable(title='Totals for Service VMs ')
         smart_mgmt = SummaryTable(title='Smart Management')
+        generic_objects = SummaryTable(title='Generic Objects')
 
     @View.nested
     class provisioning(Tab):  # noqa
@@ -185,6 +187,47 @@ class ServiceVMDetailsView(VMDetailsEntities):
             self.in_myservices and self.myservice.is_opened and
             self.title.text == 'VM and Instance "{}"'.format(self.context['object'].name)
         )
+
+
+class AllGerericObjectInstanceView(BaseLoggedInPage):
+
+    @View.nested
+    class toolbar(View):
+        reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                                           '5.9': 'Refresh this page'}))
+        policy = Dropdown(text='Policy')
+        download = Dropdown(text='Download')
+        view_selector = View.nested(ItemsToolBarViewSelector)
+
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class GerericObjectInstanceView(BaseLoggedInPage):
+    @View.nested
+    class toolbar(View):
+        reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                                           '5.9': 'Refresh this page'}))
+
+        @ParametrizedView.nested
+        class group(ParametrizedView):
+            PARAMETERS = ("group_name",)
+            custom_button = Dropdown(text=ParametrizedString('{group_name}'))
+
+
+        @ParametrizedView.nested
+        class instance_button(ParametrizedView):
+            PARAMETERS = ("button_name",)
+            custom_button = Button(title=ParametrizedString('{button_name}'))
+
+    summary = ParametrizedSummaryTable()
+
+    @property
+    def is_displayed(self):
+        return False
 
 
 @MiqImplementationContext.external_for(MyService.retire, ViaUI)
@@ -385,3 +428,25 @@ class MyServiceVMDetails(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.vm_name).click()
+
+
+@navigator.register(MyService, 'AllGerericObjectInstance')
+class AllGerericObjectInstance(CFMENavigateStep):
+    VIEW = AllGerericObjectInstanceView
+
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.details.generic_objects.click_at('Instances')
+
+
+@navigator.register(MyService, 'GerericObjectInstance')
+class GerericObjectInstance(CFMENavigateStep):
+    VIEW = GerericObjectInstanceView
+
+    prerequisite = NavigateToSibling('AllGerericObjectInstance')
+
+    def step(self, **kwargs):
+        if kwargs:
+            self.prerequisite_view.entities.get_entity(
+                name=kwargs.get('instance_name'), surf_pages=True).click()

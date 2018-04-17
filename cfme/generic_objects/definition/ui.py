@@ -1,14 +1,14 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import VersionPick, Version
-from widgetastic.widget import Text, View, ParametrizedString, ParametrizedLocator
-from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound
+from widgetastic.widget import Text, View, ParametrizedString, ParametrizedLocator, Table
+from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Accordion
 
 from cfme.base.login import BaseLoggedInPage
 
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
 from widgetastic_manageiq import (ItemsToolBarViewSelector, BaseEntitiesView, DynamicTable,
-    FileInput, ParametrizedSummaryTable, BootstrapSwitch, FonticonPicker)
+    FileInput, ParametrizedSummaryTable, BootstrapSwitch, FonticonPicker, ManageIQTree, SummaryForm)
 from . import GenericObjectDefinition, GenericObjectDefinitionCollection
 from ..instance.ui import GenericObjectInstanceAllView
 
@@ -31,9 +31,18 @@ class GenericObjectDefinitionView(BaseLoggedInPage):
             self.navigation.currently_selected == ['Automation', 'Automate'])
 
 
+class AccordionForm(View):
+
+    @View.nested
+    class classes(Accordion):
+        ACCORDION_NAME = "Generic Object Classes"
+        tree = ManageIQTree()
+
+
 class GenericObjectDefinitionAllView(GenericObjectDefinitionView):
     toolbar = View.nested(GenericObjectDefinitionToolbar)
     including_entities = View.include(BaseEntitiesView, use_parent=True)
+    accordion = View.nested(AccordionForm)
 
     @property
     def is_displayed(self):
@@ -138,6 +147,7 @@ class GenericObjectDefinitionDetailsView(GenericObjectDefinitionView):
     title = Text('#explorer_title_text')
     configuration = Dropdown(text='Configuration')
     summary = ParametrizedSummaryTable()
+    accordion = View.nested(AccordionForm)
 
     @property
     def is_displayed(self):
@@ -145,11 +155,6 @@ class GenericObjectDefinitionDetailsView(GenericObjectDefinitionView):
             self.in_generic_object_definition and
             self.title.text == 'Generic Object Class {}'.format(self.context['object'].name)
         )
-
-
-class GenericObjectDetailsView(BaseLoggedInPage):
-    configuration = Dropdown(text='Configuration')
-    summary = ParametrizedSummaryTable()
 
 
 class GenericObjectButtonView(GenericObjectDefinitionView):
@@ -175,7 +180,12 @@ class GenericObjectButtonView(GenericObjectDefinitionView):
         column_widgets={'Name': Input, 'Value': Input})
     role = BootstrapSelect(name='visibility')
 
+    add = Button('Add')
     cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
 
 
 class GenericObjectButtonGroupView(GenericObjectDefinitionView):
@@ -186,7 +196,29 @@ class GenericObjectButtonGroupView(GenericObjectDefinitionView):
         Version.lowest(): BootstrapSelect('button_image'),
         '5.9': FonticonPicker('button_icon')})
 
+    add = Button('Add')
     cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
+
+    def after_fill(self, was_change):
+        # we need to click somewhere out side the form to get add button active
+        if was_change:
+            self.browser.element('//body').click()
+
+
+class GenericObjectButtonGroupDetailsView(GenericObjectDefinitionView):
+    title = Text('#explorer_title_text')
+    configuration = Dropdown(text='Configuration')
+    basic_infornation = SummaryForm('Smart Management')
+    accordion = View.nested(AccordionForm)
+    table = Table('//h3[contains(text(), "Buttons")]/following-sibling::table')
+
+    @property
+    def is_displayed(self):
+        return False
 
 
 @MiqImplementationContext.external_for(GenericObjectDefinitionCollection.create, ViaUI)
@@ -251,10 +283,10 @@ def delete(self):
 
 
 @MiqImplementationContext.external_for(GenericObjectDefinition.add_button, ViaUI)
-def add_button(self, name, description, image, request, button_type='Default', display=None,
+def add_button(self, name, description, image, request, button_type='Default', display=True,
                dialog=None, open_url=None, display_for=None, submit_version=None,
                system_message=None, attributes=None, role=None, button_group=None, cancel=False):
-    view = navigate_to(self, 'Add Button', button_group=button_group)
+    view = navigate_to(self, 'AddButton', button_group=button_group)
     view.fill({
         'button_type': button_type,
         'name': name,
@@ -282,18 +314,19 @@ def add_button(self, name, description, image, request, button_type='Default', d
 
 
 @MiqImplementationContext.external_for(GenericObjectDefinition.add_button_group, ViaUI)
-def add_button_group(self, name, description, image, display, cancel=False):
-    view = navigate_to(self, 'Add Button Group')
+def add_button_group(self, name, description, image, display=True, cancel=False):
+    view = navigate_to(self, 'AddButtonGroup')
     view.fill({
-        'name': name,
-        'display': display,
-        'description': description,
         'image': image,
+        'name': name,
+        'description': description,
+        'display': display,
     })
     if cancel:
         view.cancel.click()
     else:
         view.add.click()
+    view = self.create_view(GenericObjectDefinitionDetailsView)
     view.flash.assert_no_error()
 
 
@@ -311,8 +344,8 @@ def generic_objects(self):
     return self.collections.generic_objects
 
 
-@navigator.register(GenericObjectDefinitionCollection, 'All')
-class GenericObjectDefinitionAll(CFMENavigateStep):
+@navigator.register(GenericObjectDefinitionCollection)
+class All(CFMENavigateStep):
     VIEW = GenericObjectDefinitionAllView
 
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -321,8 +354,8 @@ class GenericObjectDefinitionAll(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Automation', 'Automate', 'Generic Objects')
 
 
-@navigator.register(GenericObjectDefinitionCollection, 'Add')
-class GenericObjectDefinitionAdd(CFMENavigateStep):
+@navigator.register(GenericObjectDefinitionCollection)
+class Add(CFMENavigateStep):
     VIEW = GenericObjectDefinitionAddView
 
     prerequisite = NavigateToSibling('All')
@@ -331,8 +364,8 @@ class GenericObjectDefinitionAdd(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Generic Object Class')
 
 
-@navigator.register(GenericObjectDefinition, 'Details')
-class GenericObjectDefinitionDetails(CFMENavigateStep):
+@navigator.register(GenericObjectDefinition)
+class Details(CFMENavigateStep):
     VIEW = GenericObjectDefinitionDetailsView
 
     prerequisite = NavigateToAttribute('parent', 'All')
@@ -341,8 +374,8 @@ class GenericObjectDefinitionDetails(CFMENavigateStep):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
-@navigator.register(GenericObjectDefinition, 'Edit')
-class GenericObjectDefinitionEdit(CFMENavigateStep):
+@navigator.register(GenericObjectDefinition)
+class Edit(CFMENavigateStep):
     VIEW = GenericObjectDefinitionEditView
 
     prerequisite = NavigateToSibling('Details')
@@ -351,7 +384,7 @@ class GenericObjectDefinitionEdit(CFMENavigateStep):
         self.prerequisite_view.configuration.item_select('Edit this Generic Object Class')
 
 
-@navigator.register(GenericObjectDefinition, 'Instances')
+@navigator.register(GenericObjectDefinition)
 class Instances(CFMENavigateStep):
     VIEW = GenericObjectInstanceAllView
 
@@ -359,3 +392,40 @@ class Instances(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.summary('Relationships').click_at('Instances')
+
+
+@navigator.register(GenericObjectDefinition)
+class AddButtonGroup(CFMENavigateStep):
+    VIEW = GenericObjectButtonGroupView
+
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.configuration.item_select('Add a new Button Group')
+
+
+@navigator.register(GenericObjectDefinition)
+class ButtonGroupDetails(CFMENavigateStep):
+    VIEW = GenericObjectButtonGroupDetailsView
+
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, **kwargs):
+        if kwargs:
+            self.prerequisite_view.accordion.classes.tree.click_path(
+                'All Generic Object Classes', self.obj.name, 'Actions',
+                '{} (Group)'.format(kwargs.get('button_group')))
+
+
+@navigator.register(GenericObjectDefinition)
+class AddButton(CFMENavigateStep):
+    VIEW = GenericObjectButtonView
+
+    def prerequisite(self, **kwargs):
+        if kwargs:
+            return navigate_to(self.obj, 'ButtonGroupDetails', **kwargs)
+        else:
+            return navigate_to(self.obj, 'Details')
+
+    def step(self, **kwargs):
+        self.prerequisite(**kwargs).configuration.item_select('Add a new Button')
