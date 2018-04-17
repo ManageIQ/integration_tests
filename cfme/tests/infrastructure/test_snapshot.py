@@ -411,6 +411,7 @@ def test_create_snapshot_via_ae(appliance, request, domain, small_test_vm):
     snap_name = fauxfactory.gen_alpha()
     snapshot = Vm.Snapshot(name=snap_name, parent_vm=small_test_vm)
     simulate(
+        appliance=appliance,
         instance="Request",
         request="snapshot",
         target_type='VM and Instance',

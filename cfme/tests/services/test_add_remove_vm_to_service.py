@@ -68,7 +68,7 @@ def myservice(appliance, provider, catalog_item, request):
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_add_vm_to_service(myservice, request, copy_domain, new_vm):
+def test_add_vm_to_service(myservice, request, copy_domain, new_vm, appliance):
     """Tests adding vm to service
 
     Metadata:
@@ -100,6 +100,7 @@ def test_add_vm_to_service(myservice, request, copy_domain, new_vm):
 
     request.addfinalizer(method.delete_if_exists)
     simulate(
+        appliance=appliance,
         instance="Request",
         message="create",
         request=method.name,
