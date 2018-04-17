@@ -262,7 +262,7 @@ class Taggable(object):
     standardized widgetastic views
     """
 
-    def add_tag(self, tag=None, cancel=False, reset=False, details=True, entities=None):
+    def add_tag(self, tag=None, cancel=False, reset=False, details=True):
         """ Add tag to tested item
 
         Args:
@@ -271,12 +271,11 @@ class Taggable(object):
             reset: set True to reset already set up tag
             details (bool): set False if tag should be added for list selection,
                             default is details page
-            entities(list): list of entities or entities.names to tag
         """
-        if details and not entities:
+        if details:
             view = navigate_to(self, 'EditTagsFromDetails')
-        elif entities or not details:
-            view = navigate_to(self, 'EditTags', *entities)
+        else:
+            view = navigate_to(self, 'EditTags')
         if not tag:
             tag = self._set_random_tag(view)
         category_name = tag.category.display_name
@@ -307,7 +306,7 @@ class Taggable(object):
         for tag in tags:
             self.add_tag(tag=tag)
 
-    def remove_tag(self, tag, cancel=False, reset=False, details=True, entities=None):
+    def remove_tag(self, tag, cancel=False, reset=False, details=True):
         """ Remove tag of tested item
 
         Args:
@@ -316,12 +315,11 @@ class Taggable(object):
             reset: set True to reset tag changes
             details (bool): set False if tag should be added for list selection,
                             default is details page
-            entities(list): list of entities or entities.names to tag
         """
-        if details and not entities:
+        if details:
             view = navigate_to(self, 'EditTagsFromDetails')
-        elif entities or not details:
-            view = navigate_to(self, 'EditTags', *entities)
+        else:
+            view = navigate_to(self, 'EditTags')
         category = tag.category.display_name
         tag = tag.display_name
         try:
