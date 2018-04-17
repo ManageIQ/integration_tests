@@ -51,7 +51,7 @@ def test_basic_metrics(provider):
     assert response.ok, "{metrics} failed to start!".format(metrics=router["metadata"]["name"])
 
 
-def test_validate_metrics_exsitence(provider,
+def test_validate_metrics_collection(provider,
                                     enable_capacity_and_utilization,
                                     reduce_metrics_collection_threshold):
     assert provider.is_metrics_collected(timeout=METRICS_CAPTURE_THRESHOLD_IN_MINUTES * 60)

@@ -7,6 +7,7 @@ from wrapanapi.containers.providers.rhopenshift import Openshift
 from cfme.common.provider import DefaultEndpoint
 from cfme.control.explorer.alert_profiles import ProviderAlertProfile, NodeAlertProfile
 from cfme.utils import ssh
+from cfme.utils.log import logger
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.ocp_cli import OcpCli
 from cfme.utils.varmeth import variable
@@ -359,27 +360,61 @@ class OpenshiftProvider(ContainersProvider):
             self.appliance.wait_for_evm_service()
             self.appliance.wait_for_web_ui()
 
-    def is_metrics_collected(self, timeout):
-        """Check the db if gathering collection data for the given provider.
+    def get_system_id(self):
+        mgmt_systems_tbl = self.appliance.db.client['ext_management_systems']
+        return self.appliance.db.client.session.query(mgmt_systems_tbl).filter(
+            mgmt_systems_tbl.name == self.name).first().id
 
-        Metadata:
-            test_flag: metrics_collection
+    def get_metrics(self, **kwargs):
+        """"Returns all the collected metrics for this provider
+
+        Args:
+            filters: list of dicts with column name and values
+                        e.g [{"resource_type": "Container"}, {"parent_ems_id": "1L"}]
+            metrics_table: Metrics table name, there are few metrics table
+                        e.g metrics, metric_rollups, etc
+        Returns:
+            Query object with the relevant records
+        """
+
+        filters = kwargs.get("filters", {})
+        metrics_type = kwargs.get("metrics_type", "ContainerNode")
+        metrics_table = kwargs.get("metrics_table", "metric_rollups")
+
+        metrics_tbl = self.appliance.db.client[metrics_table]
+
+        mgmt_system_id = self.get_system_id()
+
+        logger.info("Getting {metrics_type} metrics for {name} (parent_ems_id == {id})".format(
+            metrics_type=metrics_type, name=self.name, id=mgmt_system_id))
+
+        if filters:
+            logger.info("Filtering by: {f}".format(f=filters))
+
+        filters["parent_ems_id"] = mgmt_system_id
+        return self.appliance.db.client.session.query(metrics_tbl).filter_by(**filters)
+
+    def is_metrics_collected(self, timeout):
+        """Check the db if gathering collection data
+
+        Args:
+            timeout: timeout in minutes
+        Return:
+            Bool: is collected metrics count is greater than 0
         """
 
         def is_collected():
-            self.appliance.db.client.session.query(metrics_tbl).filter(
-                metrics_tbl.parent_ems_id == mgmt_system_id).count() > 0
+            metrics_count = self.get_metrics(table="metrics").count()
+            return metrics_count > 0
 
-        metrics_tbl = self.appliance.db.client['metrics']
-        mgmt_systems_tbl = self.appliance.db.client['ext_management_systems']
-
-        mgmt_system_id = self.appliance.db.client.session.query(mgmt_systems_tbl).filter(
-            mgmt_systems_tbl.name == self.name).first().id
+        logger.info("Monitoring DB for metrics collection")
 
         result = True
         try:
             wait_for(is_collected, num_sec=timeout, delay=30)
         except TimedOutError:
-            return False
+            logger.error("Timeout exceeded, No metrics found in MIQ DB for provider {name}".format(
+                name=self.name))
+            result = False
         finally:
             return result
