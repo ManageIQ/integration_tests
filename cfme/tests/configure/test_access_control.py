@@ -602,16 +602,16 @@ def test_assign_user_to_new_group(appliance, group_collection):
 
 def _test_vm_provision(appliance):
     logger.info("Checking for provision access")
-    view = navigate_to(vms.Vm, 'VMsOnly')
+    view = navigate_to(vms.InfraVm, 'VMsOnly')
     view.toolbar.lifecycle.item_enabled('Provision VMs')
 
 # this fixture is used in disabled tests. it should be updated along with tests
 # def _test_vm_power_on():
 #     """Ensures power button is shown for a VM"""
 #     logger.info("Checking for power button")
-#     vm_name = vms.Vm.get_first_vm()
+#     vm_name = vms.InfraVm.get_first_vm()
 #     logger.debug("VM " + vm_name + " selected")
-#     if not vms.is_pwr_option_visible(vm_name, option=vms.Vm.POWER_ON):
+#     if not vms.is_pwr_option_visible(vm_name, option=vms.InfraVm.POWER_ON):
 #         raise OptionNotAvailable("Power button does not exist")
 
 
@@ -648,7 +648,7 @@ def test_permission_edit(appliance, request, product_features):
     user = new_user(appliance, [group])
     with user:
             # Navigation should succeed with valid permissions
-            navigate_to(vms.Vm, 'VMsOnly')
+            navigate_to(vms.InfraVm, 'VMsOnly')
 
     appliance.server.login_admin()
     role.update({'product_features': [(['Everything'], True)] +
@@ -656,7 +656,7 @@ def test_permission_edit(appliance, request, product_features):
                  })
     with user:
         with pytest.raises(Exception, message='Permissions have not been updated'):
-            navigate_to(vms.Vm, 'VMsOnly')
+            navigate_to(vms.InfraVm, 'VMsOnly')
 
     @request.addfinalizer
     def _delete_user_group_role():

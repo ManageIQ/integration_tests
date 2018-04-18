@@ -41,7 +41,7 @@ def test_infrastructurevms_defaultfilters(appliance):
     filters = [['Infrastructure', 'Virtual Machines', 'VMs', 'Platform / VMware']]
     tree_path = ['All VMs', 'Global Filters', 'Platform / VMware']
     appliance.user.my_settings.default_filters.update({'filters': [(k, True) for k in filters]})
-    view = navigate_to(vms.Vm, 'VMsOnly')
+    view = navigate_to(vms.InfraVm, 'VMsOnly')
     assert view.sidebar.vms.tree.has_path(*tree_path), 'Default Filter settings Failed!'
 
 

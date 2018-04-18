@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from cfme.infrastructure.virtual_machines import Vm
+from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -8,7 +8,7 @@ from cfme.utils.wait import wait_for
 def do_vm_provisioning(appliance, template_name, provider, vm_name, provisioning_data, request,
                        smtp_test, num_sec=1500, wait=True):
     # generate_tests makes sure these have values
-    vm = Vm(name=vm_name, provider=provider, template_name=template_name)
+    vm = InfraVm(name=vm_name, provider=provider, template_name=template_name)
     note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
     provisioning_data.update({
         'request': {

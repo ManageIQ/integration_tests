@@ -15,7 +15,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.virtual_machines import Vm
+from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -71,7 +71,7 @@ def prov_data(provisioning, provider):
 def provisioner(appliance, request, setup_provider, provider, vm_name):
 
     def _provisioner(template, provisioning_data, delayed=None):
-        vm = Vm(name=vm_name, provider=provider, template_name=template)
+        vm = InfraVm(name=vm_name, provider=provider, template_name=template)
         view = navigate_to(vm, 'Provision')
         view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
         base_view = vm.appliance.browser.create_view(BaseLoggedInPage)

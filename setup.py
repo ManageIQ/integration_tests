@@ -58,7 +58,7 @@ setup(
         ],
         'manageiq.vm_categories':
         [
-            'infra = cfme.infrastructure.virtual_machines:Vm',
+            'infra = cfme.infrastructure.virtual_machines:InfraVm',
             'cloud = cfme.cloud.instance:Instance'
         ],
         'manageiq.vm_types.cloud':

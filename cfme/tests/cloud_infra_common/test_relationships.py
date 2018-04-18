@@ -21,7 +21,7 @@ from cfme.infrastructure.datastore import HostAllDatastoresView, ProviderAllData
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import (HostTemplatesOnlyAllView,
-                                                  ProviderTemplatesOnlyAllView, Vm, Template)
+                                                  ProviderTemplatesOnlyAllView, InfraVm, Template)
 from cfme.markers.env_markers.provider import ONE, ONE_PER_TYPE
 from cfme.networks.views import NetworkProviderDetailsView, ProviderSecurityGroupAllView
 from cfme.storage.manager import ProviderStorageManagerAllView
@@ -77,7 +77,7 @@ infra_test_items = [
     ("clusters", None),
     ("hosts", None),
     ("datastores", None),
-    ("vms", Vm),
+    ("vms", InfraVm),
     ("templates", Template)
 ]
 

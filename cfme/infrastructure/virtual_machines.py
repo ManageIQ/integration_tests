@@ -544,12 +544,13 @@ class VMConfiguration(Pretty):
         return changes
 
 
-class Vm(VM):
-    """Represents a VM in CFME
+class InfraVm(VM):
+    """Represents an infrastructure provider's virtual machine in CFME
 
+    Note the args are defined at common.BaseVM|VM class
     Args:
-        name: Name of the VM
-        provider_crud: :py:class:`cfme.cloud.provider.Provider` object
+        name: Name of the virtual machine resource
+        provider: :py:class:`cfme.infrastructure.provider.InfraProvider` object
         template_name: Name of the template to use for provisioning
     """
 
@@ -557,7 +558,7 @@ class Vm(VM):
         snapshot_tree = ManageIQTree('snapshot_treebox')
 
         def __init__(self, name=None, description=None, memory=None, parent_vm=None):
-            super(Vm.Snapshot, self).__init__()
+            super(InfraVm.Snapshot, self).__init__()
             self.name = name
             self.description = description
             self.memory = memory
@@ -695,11 +696,11 @@ class Vm(VM):
         Raises:
             OptionNotAvailable: option parm must have proper value
         """
-        if option == Vm.POWER_ON:
+        if option == InfraVm.POWER_ON:
             self.provider.mgmt.start_vm(self.name)
-        elif option == Vm.POWER_OFF:
+        elif option == InfraVm.POWER_OFF:
             self.provider.mgmt.stop_vm(self.name)
-        elif option == Vm.SUSPEND:
+        elif option == InfraVm.SUSPEND:
             self.provider.mgmt.suspend_vm(self.name)
         # elif reset:
         # elif shutdown:
@@ -963,7 +964,7 @@ class Genealogy(object):
     and comparison.
 
     Args:
-        o: The :py:class:`Vm` or :py:class:`Template` object.
+        o: The :py:class:`InfraVm` or :py:class:`Template` object.
     """
     mode_mapping = {
         'exists': 'Exists Mode',
@@ -986,7 +987,7 @@ class Genealogy(object):
         """Compares two or more objects in the genealogy.
 
         Args:
-            *objects: :py:class:`Vm` or :py:class:`Template` or :py:class:`str` with name.
+            *objects: :py:class:`InfraVm` or :py:class:`Template` or :py:class:`str` with name.
 
         Keywords:
             sections: Which sections to compare.
@@ -996,7 +997,7 @@ class Genealogy(object):
         attributes = kwargs.get('attributes', 'all').lower()
         mode = kwargs.get('mode', 'exists').lower()
         assert len(objects) >= 2, 'You must specify at least two objects'
-        objects = map(lambda o: o.name if isinstance(o, (Vm, Template)) else o, objects)
+        objects = map(lambda o: o.name if isinstance(o, (InfraVm, Template)) else o, objects)
         view = self.navigate()
         for obj in objects:
             if not isinstance(obj, list):
@@ -1049,9 +1050,9 @@ def _method_setup(vm_names, provider_crud=None):
         provider_crud.load_all_provider_vms()
         from cfme.utils.appliance import get_or_create_current_appliance
         app = get_or_create_current_appliance()
-        view = app.browser.create_view(navigator.get_class(Vm, 'VMsOnly').VIEW)
+        view = app.browser.create_view(navigator.get_class(InfraVm, 'VMsOnly').VIEW)
     else:
-        view = navigate_to(Vm, 'VMsOnly')
+        view = navigate_to(InfraVm, 'VMsOnly')
 
     if view.entities.paginator.exists:
         view.entities.paginator.set_items_per_page(1000)
@@ -1068,7 +1069,7 @@ def find_quadicon(vm_name):
     Returns: entity of appropriate class
     """
     # todo: VMs have such method, so, this function is good candidate for removal
-    view = navigate_to(Vm, 'VMsOnly')
+    view = navigate_to(InfraVm, 'VMsOnly')
     try:
         return view.entites.get_entity(name=vm_name, surf_pages=True)
     except ItemNotFound:
@@ -1103,7 +1104,7 @@ def wait_for_vm_state_change(vm_name, desired_state, timeout=300, provider_crud=
         view.toolbar.reload()
         return 'currentstate-' + desired_state in entity.data['state']
 
-    view = navigate_to(Vm, 'VMsOnly')
+    view = navigate_to(InfraVm, 'VMsOnly')
     entity = view.entites.get_entity(name=vm_name, surf_pages=True)
     return wait_for(_looking_for_state_change, func_args=[view, entity], num_sec=timeout)
 
@@ -1177,9 +1178,9 @@ def get_all_vms(do_not_navigate=False):
     if do_not_navigate:
         from cfme.utils.appliance import get_or_create_current_appliance
         app = get_or_create_current_appliance()
-        view = app.browser.create_view(navigator.get_class(Vm, 'VMsOnly').VIEW)
+        view = app.browser.create_view(navigator.get_class(InfraVm, 'VMsOnly').VIEW)
     else:
-        view = navigate_to(Vm, 'VMsOnly')
+        view = navigate_to(InfraVm, 'VMsOnly')
 
     return [entity.name for entity in view.entities.get_all()]
 
@@ -1191,11 +1192,11 @@ def get_number_of_vms(do_not_navigate=False):
     """
     logger.info('Getting number of vms')
     if not do_not_navigate:
-        view = navigate_to(Vm, 'VMsOnly')
+        view = navigate_to(InfraVm, 'VMsOnly')
     else:
         from cfme.utils.appliance import get_or_create_current_appliance
         app = get_or_create_current_appliance()
-        view = app.browser.create_view(navigator.get_class(Vm, 'VMsOnly').VIEW)
+        view = app.browser.create_view(navigator.get_class(InfraVm, 'VMsOnly').VIEW)
     if not view.entities.paginator.page_controls_exist():
         logger.debug('No page controls')
         return 0
@@ -1205,7 +1206,7 @@ def get_number_of_vms(do_not_navigate=False):
 
 
 @navigator.register(Template, 'All')
-@navigator.register(Vm, 'All')
+@navigator.register(InfraVm, 'All')
 class VmAllWithTemplates(CFMENavigateStep):
     VIEW = VmsTemplatesAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -1221,7 +1222,7 @@ class VmAllWithTemplates(CFMENavigateStep):
 
 
 @navigator.register(Template, 'AllForProvider')
-@navigator.register(Vm, 'AllForProvider')
+@navigator.register(InfraVm, 'AllForProvider')
 class VmAllWithTemplatesForProvider(CFMENavigateStep):
     VIEW = VmTemplatesAllForProviderView
     prerequisite = NavigateToSibling('All')
@@ -1240,7 +1241,7 @@ class VmAllWithTemplatesForProvider(CFMENavigateStep):
 
 
 @navigator.register(Template, 'Details')
-@navigator.register(Vm, 'Details')
+@navigator.register(InfraVm, 'Details')
 class VmAllWithTemplatesDetails(CFMENavigateStep):
     VIEW = InfraVmDetailsView
     prerequisite = NavigateToSibling('AllForProvider')
@@ -1259,7 +1260,7 @@ class VmAllWithTemplatesDetails(CFMENavigateStep):
 
 
 @navigator.register(Template, 'ArchiveDetails')
-@navigator.register(Vm, 'ArchiveDetails')
+@navigator.register(InfraVm, 'ArchiveDetails')
 class ArchiveDetails(CFMENavigateStep):
     VIEW = InfraVmDetailsView
     prerequisite = NavigateToSibling('All')
@@ -1278,7 +1279,7 @@ class ArchiveDetails(CFMENavigateStep):
 
 
 @navigator.register(Template, 'AnyProviderDetails')
-@navigator.register(Vm, 'AnyProviderDetails')
+@navigator.register(InfraVm, 'AnyProviderDetails')
 class VmAllWithTemplatesDetailsAnyProvider(VmAllWithTemplatesDetails):
     """
     Page with details for VM or template.
@@ -1289,7 +1290,7 @@ class VmAllWithTemplatesDetailsAnyProvider(VmAllWithTemplatesDetails):
     prerequisite = NavigateToSibling('All')
 
 
-@navigator.register(Vm, 'VMsOnly')
+@navigator.register(InfraVm, 'VMsOnly')
 class VmAll(CFMENavigateStep):
     VIEW = VmsOnlyAllView
     prerequisite = NavigateToSibling('All')
@@ -1307,7 +1308,7 @@ class VmAll(CFMENavigateStep):
         self.view.reset_page()
 
 
-@navigator.register(Vm, 'VMsOnlyDetails')
+@navigator.register(InfraVm, 'VMsOnlyDetails')
 class VmDetails(CFMENavigateStep):
     VIEW = InfraVmDetailsView
     prerequisite = NavigateToSibling('VMsOnly')
@@ -1325,7 +1326,7 @@ class VmDetails(CFMENavigateStep):
         self.view.toolbar.reload.click()
 
 
-@navigator.register(Vm, 'SnapshotsAll')
+@navigator.register(InfraVm, 'SnapshotsAll')
 class VmSnapshotsAll(CFMENavigateStep):
     VIEW = InfraVmSnapshotView
     prerequisite = NavigateToSibling('Details')
@@ -1334,7 +1335,7 @@ class VmSnapshotsAll(CFMENavigateStep):
         self.prerequisite_view.entities.summary('Properties').click_at('Snapshots')
 
 
-@navigator.register(Vm, 'SnapshotsAdd')
+@navigator.register(InfraVm, 'SnapshotsAdd')
 class VmSnapshotsAdd(CFMENavigateStep):
     VIEW = InfraVmSnapshotAddView
     prerequisite = NavigateToSibling('SnapshotsAll')
@@ -1346,7 +1347,7 @@ class VmSnapshotsAdd(CFMENavigateStep):
 
 
 @navigator.register(Template, 'GenealogyAll')
-@navigator.register(Vm, 'GenealogyAll')
+@navigator.register(InfraVm, 'GenealogyAll')
 class VmGenealogyAll(CFMENavigateStep):
     VIEW = InfraVmGenealogyView
     prerequisite = NavigateToSibling('Details')
@@ -1355,7 +1356,7 @@ class VmGenealogyAll(CFMENavigateStep):
         self.prerequisite_view.entities.summary('Relationships').click_at('Genealogy')
 
 
-@navigator.register(Vm, 'Migrate')
+@navigator.register(InfraVm, 'Migrate')
 class VmMigrate(CFMENavigateStep):
     VIEW = MigrateVmView
     prerequisite = NavigateToSibling('Details')
@@ -1364,7 +1365,7 @@ class VmMigrate(CFMENavigateStep):
         self.prerequisite_view.toolbar.lifecycle.item_select("Migrate this VM")
 
 
-@navigator.register(Vm, 'Publish')
+@navigator.register(InfraVm, 'Publish')
 class VmPublish(CFMENavigateStep):
     VIEW = PublishVmView
     prerequisite = NavigateToSibling('Details')
@@ -1373,7 +1374,7 @@ class VmPublish(CFMENavigateStep):
         self.prerequisite_view.toolbar.lifecycle.item_select("Publish this VM to a Template")
 
 
-@navigator.register(Vm, 'Clone')
+@navigator.register(InfraVm, 'Clone')
 class VmClone(CFMENavigateStep):
     VIEW = CloneVmView
     prerequisite = NavigateToSibling('Details')
@@ -1382,7 +1383,7 @@ class VmClone(CFMENavigateStep):
         self.prerequisite_view.toolbar.lifecycle.item_select("Clone this VM")
 
 
-@navigator.register(Vm, 'SetRetirement')
+@navigator.register(InfraVm, 'SetRetirement')
 class SetRetirement(CFMENavigateStep):
     def view_classes(self):
         return VersionPick({
@@ -1414,7 +1415,7 @@ class TemplatesAll(CFMENavigateStep):
             raise DestinationNotFound("the destination isn't found")
 
 
-@navigator.register(Vm, 'Provision')
+@navigator.register(InfraVm, 'Provision')
 class ProvisionVM(CFMENavigateStep):
     VIEW = ProvisionView
     prerequisite = NavigateToSibling('All')
@@ -1423,7 +1424,7 @@ class ProvisionVM(CFMENavigateStep):
         self.prerequisite_view.toolbar.lifecycle.item_select('Provision VMs')
 
 
-@navigator.register(Vm, 'Timelines')
+@navigator.register(InfraVm, 'Timelines')
 class Timelines(CFMENavigateStep):
     VIEW = InfraVmTimelinesView
     prerequisite = NavigateToSibling('Details')
@@ -1432,7 +1433,7 @@ class Timelines(CFMENavigateStep):
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 
 
-@navigator.register(Vm, 'Reconfigure')
+@navigator.register(InfraVm, 'Reconfigure')
 class VmReconfigure(CFMENavigateStep):
     VIEW = InfraVmReconfigureView
     prerequisite = NavigateToSibling('Details')
@@ -1441,7 +1442,7 @@ class VmReconfigure(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select('Reconfigure this VM')
 
 
-@navigator.register(Vm, 'Edit')
+@navigator.register(InfraVm, 'Edit')
 class VmEdit(CFMENavigateStep):
     VIEW = EditView
     prerequisite = NavigateToSibling('Details')
@@ -1450,7 +1451,7 @@ class VmEdit(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this VM')
 
 
-@navigator.register(Vm, 'EditManagementEngineRelationship')
+@navigator.register(InfraVm, 'EditManagementEngineRelationship')
 class VmEngineRelationship(CFMENavigateStep):
     VIEW = ManagementEngineView
     prerequisite = NavigateToSibling('Details')
@@ -1461,7 +1462,7 @@ class VmEngineRelationship(CFMENavigateStep):
 
 
 @navigator.register(Template, 'SetOwnership')
-@navigator.register(Vm, 'SetOwnership')
+@navigator.register(InfraVm, 'SetOwnership')
 class SetOwnership(CFMENavigateStep):
     VIEW = SetOwnershipView
     prerequisite = NavigateToSibling('Details')
@@ -1471,7 +1472,7 @@ class SetOwnership(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select('Set Ownership')
 
 
-@navigator.register(Vm, 'candu')
+@navigator.register(InfraVm, 'candu')
 class VmUtilization(CFMENavigateStep):
     VIEW = VMUtilizationAllView
     prerequisite = NavigateToSibling('Details')

@@ -8,7 +8,8 @@ from cfme.automate.simulation import simulate
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.virtual_machines import InfraVmSnapshotAddView, InfraVmSnapshotView, Vm
+from cfme.infrastructure.virtual_machines import (
+    InfraVmSnapshotAddView, InfraVmSnapshotView, InfraVm)
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
@@ -60,7 +61,7 @@ def full_test_vm(setup_provider_modscope, provider, full_template_modscope, requ
 
 def new_snapshot(test_vm, has_name=True, memory=False, create_description=True):
     name = fauxfactory.gen_alphanumeric(8)
-    return Vm.Snapshot(
+    return InfraVm.Snapshot(
         name="snpshot_{}".format(name) if has_name else None,
         description="snapshot_{}".format(name) if create_description else None,
         memory=memory,
@@ -409,7 +410,7 @@ def test_create_snapshot_via_ae(appliance, request, domain, small_test_vm):
 
     # SIMULATE
     snap_name = fauxfactory.gen_alpha()
-    snapshot = Vm.Snapshot(name=snap_name, parent_vm=small_test_vm)
+    snapshot = InfraVm.Snapshot(name=snap_name, parent_vm=small_test_vm)
     simulate(
         instance="Request",
         request="snapshot",

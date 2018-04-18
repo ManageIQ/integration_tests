@@ -649,7 +649,7 @@ class VM(BaseVM):
         except Exception as e:
             logger.warn("Couldn't find VM or Instance in CMFE")
             if delete_on_failure:
-                logger.info("Removing Vm from mgmt system")
+                logger.info("Removing VM or Instance from mgmt system")
                 self.provider.mgmt.delete_vm(self.name)
             raise e
 

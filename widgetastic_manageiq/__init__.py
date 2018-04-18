@@ -3107,8 +3107,8 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         :return: list of entities
 
         Ex:
-            from cfme.infrastructure.virtual_machines import Vm
-            view = navigate_to(Vm, 'All')
+            from cfme.infrastructure.virtual_machines import InfraVm
+            view = navigate_to(InfraVm, 'All')
             entities = view.entities.apply(func=lambda e: e.check(),
                                            conditions=[{'name': 'cu-24x7'},
                                                        {'name': 'env-win81-ie11'},
