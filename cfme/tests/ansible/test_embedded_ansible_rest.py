@@ -12,9 +12,12 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=['+embedded_ansible']),
-    pytest.mark.uncollectif(lambda: current_version() < '5.8'),
+    pytest.mark.uncollectif(lambda appliance: appliance.version < '5.8',
+                            reason="Ansible was added only in 5.8"),
     pytest.mark.ignore_stream('upstream'),
-    test_requirements.ansible
+    test_requirements.ansible,
+    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9" and appliance.is_pod,
+                            reason="5.8 pod appliance doesn't support embedded ansible")
 ]
 
 

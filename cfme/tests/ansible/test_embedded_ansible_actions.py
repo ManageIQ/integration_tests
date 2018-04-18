@@ -16,7 +16,9 @@ pytestmark = [
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.long_running,
     pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, scope="module"),
-    test_requirements.ansible
+    test_requirements.ansible,
+    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9" and appliance.is_pod,
+                            reason="5.8 pod appliance doesn't support embedded ansible")
 ]
 
 

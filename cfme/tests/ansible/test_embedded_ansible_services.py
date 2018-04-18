@@ -17,7 +17,9 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.ignore_stream("upstream", '5.7'),
-    test_requirements.ansible
+    test_requirements.ansible,
+    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9" and appliance.is_pod,
+                            reason="5.8 pod appliance doesn't support embedded ansible")
 ]
 
 

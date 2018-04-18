@@ -1,7 +1,14 @@
 import pytest
 
-from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
+
+pytestmark = [
+    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9" and appliance.is_pod,
+                            reason="5.8 pod appliance doesn't support embedded ansible"),
+    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.8",
+                            reason="Ansible was added only in 5.8"),
+    pytest.mark.ignore_stream("upstream")
+]
 
 
 @pytest.yield_fixture(scope='module')
@@ -13,8 +20,6 @@ def enabled_embedded_appliance(appliance):
     appliance.disable_embedded_ansible_role()
 
 
-@pytest.mark.ignore_stream("upstream")
-@pytest.mark.uncollectif(lambda: current_version() < "5.8")
 def test_embedded_ansible_enable(enabled_embedded_appliance):
     """Tests whether the embedded ansible role and all workers have started correctly"""
     assert wait_for(func=lambda: enabled_embedded_appliance.is_embedded_ansible_running, num_sec=30)
@@ -26,8 +31,6 @@ def test_embedded_ansible_enable(enabled_embedded_appliance):
         container=enabled_embedded_appliance._ansible_pod_name)
 
 
-@pytest.mark.ignore_stream("upstream")
-@pytest.mark.uncollectif(lambda: current_version() < "5.8")
 def test_embedded_ansible_disable(enabled_embedded_appliance):
     """Tests whether the embedded ansible role and all workers have stopped correctly"""
     assert wait_for(func=lambda: enabled_embedded_appliance.is_rabbitmq_running, num_sec=30)
