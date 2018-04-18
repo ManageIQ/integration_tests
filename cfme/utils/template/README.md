@@ -20,6 +20,7 @@ Required arguments:
     --provider-type PROVIDER_TYPE
         IGNORED WHEN --provider is used
 
+
 Optional arguments:
 
     --stream CUSTOM_STREAM_NAME

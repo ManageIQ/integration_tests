@@ -232,8 +232,8 @@ class ProviderTemplateUpload(object):
                 wait_for(self.decorated_run, fail_condition=False, delay=5, logger=None)
                 self.track_template()
 
-            if self.provider_type in ['openstack', 'virtualcenter', 'rhevm']:
-                self.deploy_template()
+            # if self.provider_type in ['openstack', 'virtualcenter', 'rhevm']:
+            #     self.deploy_template()
 
             return True
 
