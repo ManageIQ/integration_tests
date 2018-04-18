@@ -74,7 +74,6 @@ class ProviderTemplateUpload(object):
         """
         self._stream_url = kwargs.get('stream_url')
         self._image_url = kwargs.get('image_url')
-        self._provider_data = kwargs.get('provider_data')
 
         self._cmd_line_args = cmd_line_args
 
@@ -153,9 +152,7 @@ class ProviderTemplateUpload(object):
     @property
     def provider_data(self):
         """ Returns AttrDict from cfme_data[management_systems][provider]."""
-        if not self._provider_data:
-            return cfme_data.management_systems[self.provider]
-        return self._provider_data
+        return cfme_data.management_systems[self.provider]
 
     @property
     def template_upload_data(self):
@@ -218,7 +215,7 @@ class ProviderTemplateUpload(object):
             'vm_name': 'test_{}_{}'.format(self.template_name, gen_alphanumeric(8)),
             'template': self.template_name,
             'deploy': True,
-            'network_name': self.provider_data['network']}
+            'network_name': self.provider_data.get('network', 'default')}
 
         self.mgmt.deploy_template(**deploy_args)
         return True
@@ -233,11 +230,9 @@ class ProviderTemplateUpload(object):
                             self.log_name, self.provider, self.template_name)
             else:
                 wait_for(self.decorated_run, fail_condition=False, delay=5, logger=None)
+                self.track_template()
 
-                if not self._provider_data:
-                    self.track_template()
-
-            if self._provider_data and self.mgmt.does_template_exist(self.template_name):
+            if self.provider_type in ['openstack', 'virtualcenter', 'rhevm']:
                 self.deploy_template()
 
             return True

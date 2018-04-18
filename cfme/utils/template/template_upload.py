@@ -2,8 +2,7 @@ import argparse
 import sys
 from threading import Thread
 
-import cfme.utils.conf
-from cfme.utils import path, trackerbot
+from cfme.utils import trackerbot
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.providers import list_provider_keys
@@ -63,10 +62,6 @@ def parse_cmd_line():
         '--image-url', dest='image_url',
         help='URL for the image file to be uploaded. Please use with --stream.')
     parser.add_argument(
-        '--provider-data', dest='provider_data',
-        help='Local yaml file path, to use instead of conf/cfme_data. '
-             'Useful for template upload/deploy by non-CFMEQE.')
-    parser.add_argument(
         '--template-name', dest='template_name',
         help='Set the name of the template')
     parser.add_argument(
@@ -87,18 +82,6 @@ def get_image_url(stream, upload_url):
     return image_url
 
 
-def prepare_provider_data(custom_data):
-    """ Saves custom provider_data"""
-    if custom_data is not None:
-        with open(custom_data, 'r') as f:
-            local_datafile = f.read()
-
-        with open(path.conf_path.strpath + '/provider_data.yaml', 'w') as cf:
-            cf.write(local_datafile)
-
-        return cfme.utils.conf.provider_data
-
-
 def check_args(cmd_args):
     if cmd_args.stream_url and not cmd_args.stream:
         logger.warning("Please provide stream name with --stream")
@@ -117,14 +100,8 @@ if __name__ == '__main__':
 
     template_upload = TemplateUpload()
 
-    provider_data = prepare_provider_data(cmd_args.provider_data)
-
-    if provider_data:
-        stream = [provider_data['stream'], ]
-        provider_type = provider_data['type']
-    else:
-        stream = cmd_args.stream
-        provider_type = cmd_args.provider_type
+    stream = cmd_args.stream
+    provider_type = cmd_args.provider_type
 
     if not provider_type or cmd_args.provider:
         provider_types = PROVIDER_TYPES
@@ -170,7 +147,6 @@ if __name__ == '__main__':
                     'stream_url': stream_url,
                     'image_url': cmd_args.image_url,
                     'template_name': template_name,
-                    'provider_data': provider_data,
                     'provider': provider,
                     'cmd_line_args': specific_args
                 }

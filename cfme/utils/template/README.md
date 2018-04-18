@@ -33,12 +33,9 @@ Optional arguments:
     --template-name CUSTOM_TEMPLATE_NAME
         if template name is used -> template will be formatted as {template}-{stream}
     
-    --provider-data  # PATH TO LOCAL YAML FILE WITH LOCAL PROVIDER DATA
-        REQUIRES --provider name
-    
     --print-name-only
         Prints template names and exits.
-        
+
 Usage example:
 
     $ python template_upload.py --provider rhos11 --template-name test-upload --stream downstream-59z
