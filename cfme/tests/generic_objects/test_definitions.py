@@ -9,11 +9,14 @@ from cfme.utils.appliance import ViaREST, ViaUI
 from cfme.utils.update import update
 from cfme.utils.appliance.implementations.ui import navigate_to
 
-pytestmark = [test_requirements.generic_objects]
+pytestmark = [
+    test_requirements.generic_objects,
+    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9",
+                            reason="5.8 appliance doesn't support generic objects")
+]
 
 
 @pytest.mark.sauce
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 @pytest.mark.parametrize('context', [ViaREST])
 def test_generic_object_definition_crud(appliance, context):
     with appliance.context.use(context):
@@ -36,7 +39,6 @@ def test_generic_object_definition_crud(appliance, context):
         assert not definition.exists
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 @pytest.mark.parametrize('context', [ViaUI])
 def test_generic_object_definition_crud_ui(appliance, context):
     with appliance.context.use(context):
@@ -62,12 +64,3 @@ def test_generic_object_definition_crud_ui(appliance, context):
         definition.delete()
         view.flash.assert_success_message(
             'Generic Object Class:"{}" was successfully deleted'.format(definition.name))
-
-# @pytest.mark.parametrize('context', [ViaUI])
-# def test_generic_object_definition_button(appliance, context):
-#     with appliance.context.use(context):
-#         definition = appliance.collections.generic_object_definitions.create(
-#             name="generic_class{}".format(fauxfactory.gen_alphanumeric()),
-#             description="Generic Object Definition"
-#         })
-#         definition.add_button()

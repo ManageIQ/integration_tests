@@ -3,7 +3,7 @@ from widgetastic.widget import Text, View
 from widgetastic_patternfly import Dropdown, CandidateNotFound
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import Taggable
+from cfme.common import Taggable, TagPageView
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
@@ -34,7 +34,7 @@ class GenericObjectInstanceAllView(BaseLoggedInPage):
 
 class GenericObjectInstanceDetailsView(BaseLoggedInPage):
     @View.nested
-    class toolbar(View):
+    class toolbar(View):   # noqa
         policy = Dropdown(text='Policy')
         view_selector = View.nested(ItemsToolBarViewSelector)
 
@@ -95,3 +95,15 @@ class Details(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
+
+
+@navigator.register(GenericObjectInstance, 'EditTags')
+class Details(CFMENavigateStep):
+    VIEW = TagPageView
+
+    def prerequisite(self):
+        return navigate_to(self.obj.definition, 'Instances')
+
+    def step(self):
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

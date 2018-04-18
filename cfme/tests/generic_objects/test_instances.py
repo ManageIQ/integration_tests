@@ -14,7 +14,11 @@ from cfme.utils.rest import assert_response
 from cfme.utils.update import update
 
 
-pytestmark = [test_requirements.generic_objects]
+pytestmark = [
+    test_requirements.generic_objects,
+    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9",
+                            reason="5.8 appliance doesn't support generic objects")
+]
 
 
 @pytest.yield_fixture()
@@ -71,7 +75,6 @@ def tags(request, appliance, categories):
 
 
 @pytest.mark.sauce
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 @pytest.mark.parametrize('context', [ViaREST])
 def test_generic_objects_crud(appliance, context, request):
     with appliance.context.use(context):
@@ -115,7 +118,6 @@ def test_generic_objects_crud(appliance, context, request):
         assert not instance.exists
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 @pytest.mark.parametrize('context', [ViaUI])
 def test_generic_objects_crud_ui(appliance, context, request):
     """
