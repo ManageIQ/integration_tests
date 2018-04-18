@@ -22,23 +22,31 @@ pytestmark = [
 @pytest.fixture(scope='function')
 def new_instance(provider):
     prov_data = provider.data['provisioning']
-    instance = OpenStackInstance(fauxfactory.gen_alpha(), provider,
-                                 template_name=prov_data['image']['name'])
-    prov_form_data = {
-        'request': {'email': fauxfactory.gen_email(),
-                    'first_name': fauxfactory.gen_alpha(),
-                    'last_name': fauxfactory.gen_alpha()},
-        'catalog': {'num_vms': '1',
-                    'vm_name': instance.name},
-        'environment': {'cloud_network': prov_data['cloud_network']},
-        'properties': {'instance_type': prov_data['instance_type']},
+    try:
+        instance = provider.appliance.collections.cloud_instances.instantiate(
+            fauxfactory.gen_alpha(),
+            provider,
+            template_name=prov_data['image']['name']
+        )
+        prov_form_data = {
+            'request': {'email': fauxfactory.gen_email(),
+                        'first_name': fauxfactory.gen_alpha(),
+                        'last_name': fauxfactory.gen_alpha()},
+            'catalog': {'num_vms': '1',
+                        'vm_name': instance.name},
+            'environment': {'cloud_network': prov_data['cloud_network']},
+            'properties': {'instance_type': prov_data['instance_type']},
+        }
+    except KeyError:
+        # some yaml value wasn't found
+        pytest.skip('Unable to find an image map in provider "{}" provisioning data: {}'
+                    .format(provider, prov_data))
 
-    }
-    instance.create(False, **prov_form_data)
+    instance.create(**prov_form_data)
     instance.wait_to_appear()
     yield instance
     try:
-        instance.power_control_from_provider(OpenStackInstance.TERMINATE)
+        instance.power_control_from_provider(instance.TERMINATE)
     except:
         pass
 
@@ -161,7 +169,7 @@ def test_delete_instance(new_instance):
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_UNKNOWN)
 
     assert new_instance.name not in new_instance.provider.mgmt.list_vm()
-    view = navigate_to(new_instance, 'AllForProvider')
+    view = navigate_to(new_instance.parent, 'AllForProvider')
     try:
         view.entities.get_entity(name=new_instance.name, surf_pages=True)
         assert False, "entity still exists"

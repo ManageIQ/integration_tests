@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.services.catalogs.catalog_items import EditCatalogItemView
@@ -17,8 +16,7 @@ from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('setup_provider', 'vm_name',
-                            'catalog_item', 'uses_infra_providers'),
+    pytest.mark.usefixtures('setup_provider', 'catalog_item', 'uses_infra_providers'),
     test_requirements.service,
     pytest.mark.long_running,
     pytest.mark.provider([InfraProvider],
@@ -38,7 +36,10 @@ def test_order_catalog_item(appliance, provider, catalog_item, request,
         test_flag: provision
     """
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
-    request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())
+    request.addfinalizer(
+        lambda: appliance.collections.infra_vms.instantiate(
+            "{}0001".format(vm_name), provider).delete_from_provider()
+    )
 
     register_event(target_type='Service', target_name=catalog_item.name,
                    event_type='service_provisioned')
@@ -63,7 +64,10 @@ def test_order_catalog_item_via_rest(
         test_flag: provision, rest
     """
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
-    request.addfinalizer(lambda: VM.factory(vm_name, provider).cleanup_on_provider())
+    request.addfinalizer(
+        lambda: appliance.collections.infra_vms.instantiate(vm_name,
+                                                            provider).delete_from_provider()
+    )
     request.addfinalizer(catalog_item.delete)
     catalog = appliance.rest_api.collections.service_catalogs.find_by(name=catalog.name)
     assert len(catalog) == 1
@@ -91,7 +95,10 @@ def test_order_catalog_bundle(appliance, provider, catalog_item, request):
     """
 
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
-    request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())
+    request.addfinalizer(
+        lambda: appliance.collections.infra_vms.instantiate(
+            "{}0001".format(vm_name), provider).delete_from_provider()
+    )
     bundle_name = fauxfactory.gen_alphanumeric()
     catalog_bundle = appliance.collections.catalog_bundles.create(
         bundle_name, description="catalog_bundle",
@@ -113,14 +120,16 @@ def test_order_catalog_bundle(appliance, provider, catalog_item, request):
 # Note here this needs to be reduced, doesn't need to test against all providers
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(3)
-def test_no_template_catalog_item(provider, provisioning, vm_name, dialog, catalog):
+def test_no_template_catalog_item(provider, provisioning, dialog, catalog, appliance):
     """Tests no template catalog item
     Metadata:
         test_flag: provision
     """
     item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type=provider.catalog_name, name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog, dialog=dialog)
+    catalog_item = appliance.collections.catalogs.instantiate(
+        # TODO pass catalog class for instantiation
+        item_type=provider.catalog_name, name=item_name,
+        description="my catalog", display_in=True, catalog=catalog, dialog=dialog)
     with pytest.raises(Exception, match="'Catalog/Name' is required"):
         catalog_item.create()
 

@@ -3,11 +3,9 @@ import fauxfactory
 import pytest
 
 from widgetastic_patternfly import DropdownItemNotFound
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.log import logger
-
 
 pytestmark = [
     pytest.mark.meta(roles="+automate"),
@@ -31,18 +29,15 @@ def clone_vm_name():
 def create_vm(appliance, provider, request):
     """Fixture to provision vm to the provider being tested"""
     vm_name = 'test_clone_{}'.format(fauxfactory.gen_alphanumeric())
-    vm = VM.factory(vm_name, provider)
+    vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
     logger.info("provider_key: %s", provider.key)
-
-    @request.addfinalizer
-    def _cleanup():
-        vm.cleanup_on_provider()
 
     if not provider.mgmt.does_vm_exist(vm.name):
         logger.info("deploying %s on provider %s", vm.name, provider.key)
         vm.create_on_provider(allow_skip="default", find_in_cfme=True)
     yield vm
-    vm.cleanup_on_provider()
+
+    vm.delete_from_provider()
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))

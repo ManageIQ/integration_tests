@@ -76,7 +76,6 @@ def new_role(appliance, name=None):
 @pytest.fixture(scope='function')
 def check_item_visibility(tag):
     def _check_item_visibility(item, user_restricted):
-        category_name = ' '.join((tag.category.display_name, '*'))
         item.add_tag(tag)
         with user_restricted:
             assert item.exists
@@ -606,7 +605,7 @@ def test_assign_user_to_new_group(appliance, group_collection):
 
 def _test_vm_provision(appliance):
     logger.info("Checking for provision access")
-    view = navigate_to(vms.InfraVm, 'VMsOnly')
+    view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
     view.toolbar.lifecycle.item_enabled('Provision VMs')
 
 # this fixture is used in disabled tests. it should be updated along with tests
@@ -652,7 +651,7 @@ def test_permission_edit(appliance, request, product_features):
     user = new_user(appliance, [group])
     with user:
             # Navigation should succeed with valid permissions
-            navigate_to(vms.InfraVm, 'VMsOnly')
+            navigate_to(appliance.collections.infra_vms, 'VMsOnly')
 
     appliance.server.login_admin()
     role.update({'product_features': [(['Everything'], True)] +
@@ -660,7 +659,7 @@ def test_permission_edit(appliance, request, product_features):
                  })
     with user:
         with pytest.raises(Exception, message='Permissions have not been updated'):
-            navigate_to(vms.InfraVm, 'VMsOnly')
+            navigate_to(appliance.collections.infra_vms, 'VMsOnly')
 
     @request.addfinalizer
     def _delete_user_group_role():
@@ -790,7 +789,6 @@ def single_task_permission_test(appliance, product_features, actions):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1262764])
 def test_permissions_role_crud(appliance):
     single_task_permission_test(appliance,
                                 [['Everything', 'Settings', 'Configuration'],

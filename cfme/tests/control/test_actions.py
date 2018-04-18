@@ -15,7 +15,6 @@ import fauxfactory
 import pytest
 from functools import partial
 
-from cfme.common.vm import VM
 from cfme.control.explorer import conditions, policies
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -54,7 +53,12 @@ class VMWrapper(Pretty):
         self._prov = provider
         self._vm = vm_name
         self.api = api
-        self.crud = VM.factory(vm_name, self._prov)
+
+    @property
+    def crud(self):
+        """Instantiate BaseVM derived class for correct provider type"""
+        collection = self._prov.appliance.provider_based_collection(self._prov)
+        return collection.instantiate(self.name, self._prov)
 
     @property
     def name(self):
@@ -132,6 +136,9 @@ def _get_vm(request, provider, template_name, vm_name):
     else:
         kwargs = {}
 
+    collection = provider.appliance.provider_based_collection(provider)
+    vm = collection.instantiate(vm_name, provider, template_name)
+
     try:
         deploy_template(
             provider.key,
@@ -144,7 +151,7 @@ def _get_vm(request, provider, template_name, vm_name):
     except TimedOutError as e:
         logger.exception(e)
         try:
-            VM.factory(vm_name, provider).cleanup_on_provider()
+            vm.delete_from_provider()
         except TimedOutError:
             logger.warning("Could not delete VM %s!", vm_name)
         finally:
@@ -152,7 +159,7 @@ def _get_vm(request, provider, template_name, vm_name):
             pytest.skip("{} is quite likely overloaded! Check its status!\n{}: {}".format(
                 provider.key, type(e).__name__, str(e)))
 
-    request.addfinalizer(lambda: VM.factory(vm_name, provider).cleanup_on_provider())
+    request.addfinalizer(lambda: vm.delete_from_provider())
 
     # Make it appear in the provider
     provider.refresh_provider_relationships()
@@ -161,7 +168,7 @@ def _get_vm(request, provider, template_name, vm_name):
     api = wait_for(
         get_vm_object,
         func_args=[provider.appliance, vm_name],
-        message="VM object {} appears in CFME".format(vm_name),
+        message="VM object {} appears in CFME".format(vm),
         fail_condition=None,
         num_sec=600,
         delay=15,
@@ -851,7 +858,8 @@ def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, poli
         with update(compliance_policy):
             compliance_policy.scope = (
                 "fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name))
-        VM.factory(clone_vm_name, provider).cleanup_on_provider()
+        collection = provider.appliance.provider_based_collection(provider)
+        collection.instantiate(clone_vm_name, provider).delete_from_provider()
 
     vm_big.crud.clone_vm(fauxfactory.gen_email(), "first", "last", clone_vm_name, "VMware")
     request_description = clone_vm_name

@@ -46,13 +46,12 @@ def test_custom_vm_report(soft_assert, report_vms):
         if row["Name"].startswith("test_"):
             continue  # Might disappear meanwhile
         provider_name = row["Provider Name"]
-        provider = get_crud_by_name(provider_name).mgmt
-        provider_hosts_and_ips = cfme.utils.net.resolve_ips(provider.list_host())
-        provider_datastores = provider.list_datastore()
-        provider_clusters = provider.list_cluster()
-        soft_assert(provider.does_vm_exist(row["Name"]), "VM {} does not exist in {}!".format(
-            row["Name"], provider_name
-        ))
+        provider_mgmt = get_crud_by_name(provider_name).mgmt
+        provider_hosts_and_ips = cfme.utils.net.resolve_ips(provider_mgmt.list_host())
+        provider_datastores = provider_mgmt.list_datastore()
+        provider_clusters = provider_mgmt.list_cluster()
+        soft_assert(provider_mgmt.does_vm_exist(row["Name"]),
+                    "VM {} does not exist in {}!".format(row["Name"], provider_name))
         if row[cluster]:
             soft_assert(
                 row[cluster] in provider_clusters,

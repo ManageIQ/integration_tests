@@ -1,7 +1,6 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.common.vm import VM
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -43,8 +42,8 @@ def test_vm_most_recent_hour_graph_screen(graph_type, provider, enable_candu):
         * Check legends hide and display properly or not
         * Check data for legends collected or not
     """
-
-    vm = VM.factory('cu-24x7', provider)
+    collection = provider.appliance.provider_based_collection(provider)
+    vm = collection.instantiate('cu-24x7', provider)
     vm.wait_candu_data_available(timeout=1200)
 
     view = navigate_to(vm, 'candu')

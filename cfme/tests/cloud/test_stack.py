@@ -15,7 +15,7 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def stack(setup_provider_modscope, provider, appliance):
-    collection = appliance.collections.stacks
+    collection = appliance.collections.cloud_stacks
     for stack_name in provider.data.provisioning.stacks:
         stack = collection.instantiate(stack_name, provider=provider)
         try:
@@ -112,7 +112,7 @@ def test_delete_stack(stack, provider, request):
 
 @pytest.mark.tier(3)
 def test_collection_delete(provider, setup_provider_modscope, appliance):
-    collection = appliance.collections.stacks
+    collection = appliance.collections.cloud_stacks
 
     stack1 = collection.instantiate(provider.data['provisioning']['stacks'][0], provider=provider)
     stack2 = collection.instantiate(provider.data['provisioning']['stacks'][1], provider=provider)

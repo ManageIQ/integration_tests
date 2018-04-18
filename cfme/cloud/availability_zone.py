@@ -1,5 +1,6 @@
 """ A page functions for Availability Zone
 """
+import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown, Button
@@ -7,7 +8,7 @@ from widgetastic_patternfly import Dropdown, Button
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.exceptions import AvailabilityZoneNotFound, ItemNotFound
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseEntity, BaseCollection
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
     BaseEntitiesView, TimelinesView, ItemsToolBarViewSelector, Text, Table, BreadCrumb,
@@ -116,16 +117,20 @@ class CloudAvailabilityZoneTimelinesView(TimelinesView, AvailabilityZoneView):
             self.is_timelines)
 
 
-class AvailabilityZone(Taggable, Navigatable):
+@attr.s
+class AvailabilityZone(BaseEntity, Taggable):
     _param_name = "AvailabilityZone"
 
-    def __init__(self, name, provider, appliance=None):
-        self.name = name
-        self.provider = provider
-        Navigatable.__init__(self, appliance=appliance)
+    name = attr.ib()
+    provider = attr.ib()
 
 
-@navigator.register(AvailabilityZone, 'All')
+@attr.s
+class AvailabilityZoneCollection(BaseCollection):
+    ENTITY = AvailabilityZone
+
+
+@navigator.register(AvailabilityZoneCollection, 'All')
 class AvailabilityZoneAll(CFMENavigateStep):
     VIEW = AvailabilityZoneAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -137,7 +142,7 @@ class AvailabilityZoneAll(CFMENavigateStep):
 @navigator.register(AvailabilityZone, 'Details')
 class AvailabilityZoneDetails(CFMENavigateStep):
     VIEW = AvailabilityZoneDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')

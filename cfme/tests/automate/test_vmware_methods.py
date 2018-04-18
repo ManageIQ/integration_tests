@@ -10,9 +10,9 @@ from widgetastic.widget import View
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.blockers import BZ
+from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -64,17 +64,23 @@ def testing_group(appliance, request):
 
 
 @pytest.fixture(scope="function")
-def testing_vm(request, setup_provider, provider):
-    vm = VM.factory(
-        "test_ae_hd_{}".format(fauxfactory.gen_alphanumeric()),
+def testing_vm(setup_provider, provider):
+    collection = provider.appliance.provider_based_collection(provider)
+    try:
+        template_name = provider.data['full_template']['name']
+    except KeyError:
+        pytest.skip('Unable to identify full_template for provider: {}'.format(provider))
+
+    vm = collection.instantiate(
+        random_vm_name("ae-hd"),
         provider,
-        template_name=provider.data['full_template']['name']
+        template_name=template_name
     )
     try:
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
         yield vm
     finally:
-        vm.cleanup_on_provider()
+        vm.delete_from_provider()
 
 
 @pytest.mark.meta(blockers=[1211627, BZ(1311221, forced_streams=['5.5'])])

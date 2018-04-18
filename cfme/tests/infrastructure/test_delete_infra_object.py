@@ -2,7 +2,6 @@
 
 import pytest
 from cfme import test_requirements
-from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.wait import wait_for
 
@@ -51,7 +50,7 @@ def test_delete_vm_appear_after_refresh(provider):
         test_flag: delete_object
     """
     vm = provider.data['remove_test']['vm']
-    test_vm = VM.factory(vm, provider)
+    test_vm = provider.appliance.collections.infra_vms.instantiate(vm, provider)
     test_vm.delete()
     test_vm.wait_for_delete()
     provider.refresh_provider_relationships()
@@ -65,7 +64,7 @@ def test_delete_template_appear_after_refresh(provider):
         test_flag: delete_object
     """
     template = provider.data['remove_test']['template']
-    test_template = VM.factory(template, provider, template=True)
+    test_template = provider.appliance.collections.infra_templates.instantiate(template, provider)
     test_template.delete()
     test_template.wait_for_delete()
     provider.refresh_provider_relationships()

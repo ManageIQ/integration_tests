@@ -9,7 +9,6 @@ from widgetastic.exceptions import NoSuchElementException
 
 from cfme.infrastructure import virtual_machines
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.providers import ProviderFilter
 from cfme.fixtures.provider import setup_one_or_skip
@@ -26,7 +25,7 @@ def a_provider(request):
 @pytest.fixture(scope="module")
 def vms(appliance, a_provider):
     """Ensure the infra providers are set up and get list of vms"""
-    view = navigate_to(InfraVm, 'VMsOnly')
+    view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
     view.entities.search.remove_search_filters()
     return virtual_machines.get_all_vms(appliance)
 
@@ -46,8 +45,8 @@ def expression_for_vms_subset(subset_of_vms):
 
 
 @pytest.fixture(scope="function")
-def vm_advanced_search():
-    view = navigate_to(InfraVm, 'VMsOnly')
+def vm_advanced_search(appliance):
+    view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
     assert view.entities.search.is_advanced_search_possible, (
         "Cannot do advanced view.entities.search here!")
     yield view
@@ -175,7 +174,7 @@ def test_vm_filter_save_and_load_cancel(request, vms, subset_of_vms, vm_advanced
 
 
 def test_quick_search_without_vm_filter(appliance, request, vms, subset_of_vms):
-    view = navigate_to(InfraVm, 'VMsOnly')
+    view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
     view.flash.assert_no_error()
     vm = sample(subset_of_vms, 1)[0]
     # Make sure that we empty the regular view.entities.search field after the test

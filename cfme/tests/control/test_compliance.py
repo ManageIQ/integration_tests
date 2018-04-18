@@ -4,7 +4,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.common.vm import VM
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policies import HostCompliancePolicy, VMCompliancePolicy
@@ -96,14 +95,15 @@ def configure_fleecing(appliance, provider, setup_provider_modscope, vddk_url):
 @pytest.fixture(scope="module")
 def compliance_vm(configure_fleecing, provider, full_template_modscope):
     name = "{}-{}".format("test-compliance", fauxfactory.gen_alpha(4))
-    vm = VM.factory(name, provider, template_name=full_template_modscope.name)
+    collection = provider.appliance.provider_based_collection(provider)
+    vm = collection.instantiate(name, provider, full_template_modscope.name)
     vm.create_on_provider(allow_skip="default")
     provider.mgmt.start_vm(vm.name)
     provider.mgmt.wait_vm_running(vm.name)
     if not vm.exists:
         vm.wait_to_appear(timeout=900)
     yield vm
-    vm.cleanup_on_provider()
+    vm.delete_from_provider()
     provider.refresh_provider_relationships()
 
 

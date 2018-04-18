@@ -6,7 +6,6 @@ import pytest
 from dateutil.relativedelta import relativedelta
 from six.moves.urllib.parse import urlparse
 
-from cfme.common.vm import VM
 from cfme.utils import conf, testgen
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud
@@ -106,7 +105,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="module")
-def db_depot_machine_ip(request):
+def db_depot_machine_ip(request, appliance):
     """ Deploy vm for depot test
 
     This fixture uses for deploy vm on provider from yaml and then receive it's ip
@@ -122,7 +121,9 @@ def db_depot_machine_ip(request):
                     template_name=depot_template_name)
 
     yield prov_crud.mgmt.get_ip_address(depot_machine_name)
-    VM.factory(depot_machine_name, prov_crud).cleanup_on_provider()
+    collection = appliance.provider_based_collection(prov_crud)
+    collection.instantiate(depot_machine_name, prov_crud).delete_from_provider()
+
 
 def get_schedulable_datetime():
     """ Returns datetime for closest schedulable time (every 5 minutes)

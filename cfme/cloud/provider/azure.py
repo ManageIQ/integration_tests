@@ -2,6 +2,7 @@ import attr
 
 from wrapanapi.msazure import AzureSystem
 
+from cfme.cloud.instance.azure import AzureInstance
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from cfme.infrastructure.provider.rhevm import RHEVMVMUtilizationView
 from cfme.services.catalogs.catalog_items import AzureCatalogItem
@@ -40,6 +41,7 @@ class AzureProvider(CloudProvider):
     vm_utilization_view = AzureInstanceUtilizationView
     type_name = "azure"
     mgmt_class = AzureSystem
+    vm_class = AzureInstance
     db_types = ["Azure::CloudManager"]
     endpoints_form = AzureEndpointForm
     discover_name = "Azure"

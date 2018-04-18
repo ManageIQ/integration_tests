@@ -3,7 +3,6 @@
 import pytest
 import yaml
 
-from cfme.common.vm import VM
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.utils.generators import random_vm_name
 
@@ -64,14 +63,15 @@ def test_vm_capture(request, provider, setup_provider, register_event):
     """
 
     mgmt = provider.mgmt
-    vm = VM.factory(random_vm_name(context='capture'), provider)
+    vm = provider.appliance.collections.cloud_instances.instantiate(
+        random_vm_name(context='capture'), provider)
 
     if not mgmt.does_vm_exist(vm.name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
         vm.refresh_relationships()
 
     # # deferred delete vm
-    request.addfinalizer(vm.cleanup_on_provider)
+    request.addfinalizer(vm.delete_from_provider)
 
     def cmp_function(_, y):
         # In 5.9 version `y` is a dict, not a yaml stream.

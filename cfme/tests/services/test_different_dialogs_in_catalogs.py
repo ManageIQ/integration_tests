@@ -5,16 +5,15 @@ from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
-from cfme.common.vm import VM
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.blockers import BZ
+from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.ignore_stream("upstream"),
-    pytest.mark.usefixtures('setup_provider', 'vm_name',
-                            'catalog_item', 'uses_infra_providers'),
+    pytest.mark.usefixtures('setup_provider', 'catalog_item', 'uses_infra_providers'),
     test_requirements.service,
     pytest.mark.long_running,
     pytest.mark.provider([InfraProvider],
@@ -58,13 +57,13 @@ def catalog(appliance):
 
 
 @pytest.fixture(scope="function")
-def catalog_item(appliance, provider, provisioning, vm_name, tagcontrol_dialog, catalog):
+def catalog_item(appliance, provider, provisioning, tagcontrol_dialog, catalog):
     template, host, datastore, iso_file, vlan = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'vlan'))
 
     provisioning_data = {
         'catalog': {'catalog_name': {'name': template, 'provider': provider.name},
-                    'vm_name': vm_name},
+                    'vm_name': random_vm_name('service')},
         'environment': {'host_name': {'name': host},
                         'datastore_name': {'name': datastore}},
         'network': {'vlan': partial_match(vlan)},
@@ -96,7 +95,10 @@ def test_tagdialog_catalog_item(appliance, provider, catalog_item, request):
         test_flag: provision
     """
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
-    request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())
+    request.addfinalizer(
+        lambda: appliance.collections.infra_vms.instantiate(
+            "{}_0001".format(vm_name), provider).delete_from_provider()
+    )
     dialog_values = {'service_level': "Gold"}
     service_catalogs = ServiceCatalogs(appliance, catalog=catalog_item.catalog,
                                        name=catalog_item.name,

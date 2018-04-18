@@ -4,9 +4,8 @@ import imghdr
 import pytest
 import socket
 
-from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
-from cfme.utils import version, ssh
+from cfme.utils import ssh
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
@@ -24,17 +23,20 @@ pytestmark = [
 
 
 @pytest.fixture(scope="function")
-def vm_obj(request, provider, setup_provider, console_template, vm_name):
+def vm_obj(appliance, provider, setup_provider, console_template, vm_name):
     """VM creation/deletion fixture.
 
     Create a VM on the provider with the given template, and return the vm_obj.
 
     Clean up VM when test is done.
     """
-    vm_obj = VM.factory(vm_name, provider, template_name=console_template.name)
+    vm_obj = appliance.collections.infra_vms.instantiate(vm_name,
+                                                         provider,
+                                                         console_template.name)
     vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip="default")
     yield vm_obj
-    vm_obj.cleanup_on_provider()
+
+    vm_obj.delete_from_provider()
 
 
 @pytest.fixture

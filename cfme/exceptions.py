@@ -376,3 +376,17 @@ class StatsDoNotMatch(CFMEException):
     Raised if the stats retrieved from CFME do not match those retrieved by wrapanapi
     """
     pass
+
+
+class CollectionFilteringError(CFMEException):
+    """Raised when an action on an un-filtered collection is attempted that requires a filter
+    Common example would be navigation to an 'AllForProvider' destination against a collection
+    that does not have a provider filter
+    """
+    def __init__(self, collection, filter_key):
+        self.collection = collection
+        self.filter_key = filter_key
+
+    def __str__(self):
+        return 'Action on Collection ({}) requires a filter: ({})'\
+               .format(self.collection, self.filter_key)

@@ -5,7 +5,6 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.simulation import simulate
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import (
@@ -38,7 +37,9 @@ def domain(request, appliance):
 
 def provision_vm(provider, template):
     vm_name = random_vm_name(context="snpst")
-    vm = VM.factory(vm_name, provider, template_name=template.name)
+    vm = provider.appliance.collections.infra_vms.instantiate(vm_name,
+                                                              provider,
+                                                              template.name)
 
     if not provider.mgmt.does_vm_exist(vm_name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
@@ -49,14 +50,14 @@ def provision_vm(provider, template):
 def small_test_vm(setup_provider_modscope, provider, small_template_modscope, request):
     vm = provision_vm(provider, small_template_modscope)
     yield vm
-    vm.cleanup_on_provider()
+    vm.delete_from_provider()
 
 
 @pytest.fixture(scope="module")
 def full_test_vm(setup_provider_modscope, provider, full_template_modscope, request):
     vm = provision_vm(provider, full_template_modscope)
     yield vm
-    vm.cleanup_on_provider()
+    vm.delete_from_provider()
 
 
 def new_snapshot(test_vm, has_name=True, memory=False, create_description=True):
@@ -126,7 +127,7 @@ def test_create_without_description(small_test_vm):
     snapshot = new_snapshot(small_test_vm, has_name=False, create_description=False)
     with pytest.raises(AssertionError):
         snapshot.create()
-    view = snapshot.vm.create_view(InfraVmSnapshotAddView)
+    view = snapshot.parent_vm.create_view(InfraVmSnapshotAddView)
     view.flash.assert_message('Description is required')
 
 
@@ -160,7 +161,7 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     full_template = getattr(provider.data.templates, 'full_template')
     # Define parameters of the ssh connection
     ssh_kwargs = {
-        'hostname': snapshot1.vm.provider.mgmt.get_ip_address(snapshot1.vm.name),
+        'hostname': snapshot1.parent_vm.provider.mgmt.get_ip_address(snapshot1.parent_vm.name),
         'username': credentials[full_template.creds]['username'],
         'password': credentials[full_template.creds]['password']
     }
@@ -205,15 +206,15 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     soft_assert(full_test_vm.provider.mgmt.is_vm_running(full_test_vm.name), "vm not running")
     # Wait for successful ssh connection
     wait_for(lambda: ssh_client.run_command('test -e snapshot1.txt').success,
-             num_sec=400, delay=20, handle_exception=True, fail_func=ssh_client.close(),
+             num_sec=400, delay=10, handle_exception=True, fail_func=ssh_client.close(),
              message="Waiting for successful SSH connection after revert")
     try:
         result = ssh_client.run_command('test -e snapshot1.txt')
-        assert not result.rc
+        assert result.success  # file found, RC=0
         result = ssh_client.run_command('test -e snapshot2.txt')
-        assert result.rc
+        assert result.failed  # file not found, RC=1
         logger.info('Revert to snapshot %s successful', snapshot1.name)
-    except:
+    except Exception:
         logger.exception('Revert to snapshot %s Failed', snapshot1.name)
     ssh_client.close()
 

@@ -5,17 +5,20 @@ quadicon lists, and VM details page.
 from collections import namedtuple
 from copy import copy
 
+import attr
 import fauxfactory
 import re
-from navmazing import NavigateToSibling, NavigateToAttribute
+
+from navmazing import NavigateToSibling, NavigationDestinationNotFound, NavigateToAttribute
 from widgetastic.utils import partial_match, Parameter, VersionPick, Version
 from widgetastic.widget import (
     Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
 from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, CheckableBootstrapTreeview, Dropdown, Input as
     WInput)
+
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.vm import VM, Template as BaseTemplate
+from cfme.common.vm import VM, Template, VMCollection, TemplateCollection
 from cfme.common.vm_views import (
     ManagementEngineView, CloneVmView, MigrateVmView, ProvisionView, EditView, PublishVmView,
     RetirementView, RetirementViewWithOffset, VMDetailsEntities, VMToolbar, VMEntities,
@@ -23,7 +26,6 @@ from cfme.common.vm_views import (
 from cfme.exceptions import (
     VmNotFound, OptionNotAvailable, DestinationNotFound, ItemNotFound,
     VmOrInstanceNotFound)
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.services.requests import RequestsView
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -155,10 +157,25 @@ class VmTemplatesAllForProviderView(InfraVmView):
 
     @property
     def is_displayed(self):
-        return (
-            self.in_infra_vms and
-            str(self.entities.title.text) ==
-            'VM or Templates under Provider \"{}\"'.format(self.context['object'].provider.name))
+        expected_provider = None
+        # Could be collection or entity
+        # If entity it will have provider attribute
+        if getattr(self.context['object'], 'provider', False):
+            expected_provider = self.context['object'].provider.name
+        # if collection will have provider filter
+        elif 'provider' in getattr(self.context['object'], 'filters', {}):
+            expected_provider = self.context['object'].filters.get('provider').name
+
+        if expected_provider is None:
+            self.logger.warning('No provider available on context for is_displayed: %s',
+                                self.context['object'])
+            return False
+        else:
+            return (
+                self.in_infra_vms and
+                str(self.entities.title.text) ==
+                'VM or Templates under Provider "{}"'.format(expected_provider)
+            )
 
     def reset_page(self):
         self.entities.search.remove_search_filters()
@@ -380,8 +397,8 @@ class VMDisk(
         if self.filename and other.filename:
             return self.filename == other.filename
         # If one of filenames is None (before disk is created), compare the rest
-        for attr in self.EQUAL_ATTRS:
-            if getattr(self, attr) != getattr(other, attr):
+        for eq_attr in self.EQUAL_ATTRS:
+            if getattr(self, eq_attr) != getattr(other, eq_attr):
                 return False
         return True
 
@@ -402,8 +419,8 @@ class VMHardware(object):
         self.mem_size_unit = mem_size_unit
 
     def __eq__(self, other):
-        for attr in self.EQUAL_ATTRS:
-            if getattr(self, attr) != getattr(other, attr):
+        for eq_attr in self.EQUAL_ATTRS:
+            if getattr(self, eq_attr) != getattr(other, eq_attr):
                 return False
         return True
 
@@ -543,6 +560,7 @@ class VMConfiguration(Pretty):
         return changes
 
 
+@attr.s
 class InfraVm(VM):
     """Represents an infrastructure provider's virtual machine in CFME
 
@@ -553,22 +571,22 @@ class InfraVm(VM):
         template_name: Name of the template to use for provisioning
     """
 
+    @attr.s
+    # TODO snapshot collections
     class Snapshot(object):
         snapshot_tree = ManageIQTree('snapshot_treebox')
 
-        def __init__(self, name=None, description=None, memory=None, parent_vm=None):
-            super(InfraVm.Snapshot, self).__init__()
-            self.name = name
-            self.description = description
-            self.memory = memory
-            self.vm = parent_vm
+        name = attr.ib(default=None)
+        description = attr.ib(default=None)
+        memory = attr.ib(default=None)
+        parent_vm = attr.ib(default=None)
 
         @property
         def exists(self):
-            title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
-            view = navigate_to(self.vm, 'SnapshotsAll')
+            title = getattr(self, self.parent_vm.provider.SNAPSHOT_TITLE)
+            view = navigate_to(self.parent_vm, 'SnapshotsAll')
             if view.tree.is_displayed:
-                root_item = view.tree.expand_path(self.vm.name)
+                root_item = view.tree.expand_path(self.parent_vm.name)
                 return has_child(view.tree, title, root_item)
             else:
                 return False
@@ -580,33 +598,34 @@ class InfraVm(VM):
             Returns:
                 bool: True if snapshot is active, False otherwise.
             """
-            title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
-            view = navigate_to(self.vm, 'SnapshotsAll')
-            root_item = view.tree.expand_path(self.vm.name)
+            title = getattr(self, self.parent_vm.provider.SNAPSHOT_TITLE)
+            view = navigate_to(self.parent_vm, 'SnapshotsAll')
+            root_item = view.tree.expand_path(self.parent_vm.name)
             return has_child(view.tree, '{} (Active)'.format(title), root_item)
 
         def create(self, force_check_memory=False):
             """Create a snapshot"""
-            view = navigate_to(self.vm, 'SnapshotsAdd')
+            view = navigate_to(self.parent_vm, 'SnapshotsAdd')
             snapshot_dict = {'description': self.description}
             if self.name is not None:
                 snapshot_dict['name'] = self.name
-            if force_check_memory or self.vm.provider.mgmt.is_vm_running(self.vm.name):
+            if (force_check_memory or
+                    self.parent_vm.provider.mgmt.is_vm_running(self.parent_vm.name)):
                 snapshot_dict["snapshot_vm_memory"] = self.memory
             if force_check_memory and not view.snapshot_vm_memory.is_displayed:
                 raise NoSuchElementException('Snapshot VM memory checkbox not present')
             view.fill(snapshot_dict)
             view.create.click()
             view.flash.assert_no_error()
-            list_view = self.vm.create_view(InfraVmSnapshotView)
+            list_view = self.parent_vm.create_view(InfraVmSnapshotView)
             wait_for(lambda: self.exists, num_sec=300, delay=20,
                      fail_func=list_view.toolbar.reload.click, handle_exception=True,
                      message="Waiting for snapshot create")
 
         def delete(self, cancel=False):
-            title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
-            view = navigate_to(self.vm, 'SnapshotsAll')
-            root_item = view.tree.expand_path(self.vm.name)
+            title = getattr(self, self.parent_vm.provider.SNAPSHOT_TITLE)
+            view = navigate_to(self.parent_vm, 'SnapshotsAll')
+            root_item = view.tree.expand_path(self.parent_vm.name)
             snapshot_path = find_path(view.tree, title, root_item)
             if not snapshot_path:
                 raise Exception('Could not find snapshot with name "{}"'.format(title))
@@ -628,7 +647,7 @@ class InfraVm(VM):
                      message="Waiting for snapshot delete")
 
         def delete_all(self, cancel=False):
-            view = navigate_to(self.vm, 'SnapshotsAll')
+            view = navigate_to(self.parent_vm, 'SnapshotsAll')
             view.toolbar.delete.item_select('Delete All Existing Snapshots',
                                             handle_alert=not cancel)
             if not cancel:
@@ -643,9 +662,9 @@ class InfraVm(VM):
                 view.flash.assert_message(flash_message)
 
         def revert_to(self, cancel=False):
-            title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
-            view = navigate_to(self.vm, 'SnapshotsAll')
-            root_item = view.tree.expand_path(self.vm.name)
+            title = getattr(self, self.parent_vm.provider.SNAPSHOT_TITLE)
+            view = navigate_to(self.parent_vm, 'SnapshotsAll')
+            root_item = view.tree.expand_path(self.parent_vm.name)
             snapshot_path = find_path(view.tree, title, root_item)
             if not snapshot_path:
                 raise Exception('Could not find snapshot with name "{}"'.format(title))
@@ -664,7 +683,7 @@ class InfraVm(VM):
                 view.flash.assert_message(flash_message)
 
         def refresh(self):
-            view = navigate_to(self.vm, 'SnapshotsAll')
+            view = navigate_to(self.parent_vm, 'SnapshotsAll')
             view.toolbar.reload.click()
 
     # POWER CONTROL OPTIONS
@@ -728,6 +747,7 @@ class InfraVm(VM):
                 'host_name': {'name': host_name}
             },
         }
+        from cfme.infrastructure.provider.rhevm import RHEVMProvider
         if not self.provider.one_of(RHEVMProvider):
             request_data['environment'].update({'datastore_name': {'name': datastore_name}})
         view.form.fill_with(request_data, on_change=view.form.submit)
@@ -779,7 +799,7 @@ class InfraVm(VM):
         cells = {'Description': 'Publish from [{}] to [{}]'.format(self.name, template_name)}
         provision_request = self.appliance.collections.requests.instantiate(cells=cells)
         provision_request.wait_for_request()
-        return Template(template_name, self.provider)
+        return self.appliance.collections.infra_templates.instantiate(template_name, self.provider)
 
     @property
     def total_snapshots(self):
@@ -824,10 +844,9 @@ class InfraVm(VM):
         vm = self.get_vm_via_rest()
         return int(vm.ems_cluster_id)
 
+    @attr.s
     class CfmeRelationship(object):
-
-        def __init__(self, vm):
-            self.vm = vm
+        vm = attr.ib()
 
         def navigate(self):
             return navigate_to(self.vm, 'EditManagementEngineRelationship')
@@ -903,6 +922,7 @@ class InfraVm(VM):
                 row = vm_recfg.disks_table.click_add_disk()
                 row.type.fill(disk.type)
                 # Unit first, then size (otherwise JS would try to recalculate the size...)
+                from cfme.infrastructure.provider.rhevm import RHEVMProvider
                 if self.provider.one_of(RHEVMProvider):
                     # TODO: Workaround necessary until BZ 1524960 is resolved
                     # -- block start --
@@ -953,7 +973,13 @@ class InfraVm(VM):
         return host
 
 
-class Template(BaseTemplate):
+@attr.s
+class InfraVmCollection(VMCollection):
+    ENTITY = InfraVm
+
+
+@attr.s
+class InfraTemplate(Template):
     REMOVE_MULTI = "Remove Templates from the VMDB"
     VM_TYPE = "Template"
 
@@ -962,6 +988,12 @@ class Template(BaseTemplate):
         return Genealogy(self)
 
 
+@attr.s
+class InfraTemplateCollection(TemplateCollection):
+    ENTITY = InfraTemplate
+
+
+@attr.s
 class Genealogy(object):
     """Class, representing genealogy of an infra object with possibility of data retrieval
     and comparison.
@@ -980,8 +1012,7 @@ class Genealogy(object):
         'same': 'Attributes with same values',
     }
 
-    def __init__(self, obj):
-        self.obj = obj
+    obj = attr.ib()
 
     def navigate(self):
         return navigate_to(self.obj, 'GenealogyAll')
@@ -1000,7 +1031,7 @@ class Genealogy(object):
         attributes = kwargs.get('attributes', 'all').lower()
         mode = kwargs.get('mode', 'exists').lower()
         assert len(objects) >= 2, 'You must specify at least two objects'
-        objects = map(lambda o: o.name if isinstance(o, (InfraVm, Template)) else o, objects)
+        objects = map(lambda o: o.name if isinstance(o, (InfraVm, InfraTemplate)) else o, objects)
         view = self.navigate()
         for obj in objects:
             if not isinstance(obj, list):
@@ -1046,16 +1077,15 @@ class Genealogy(object):
 # todo: there will be an entity's method to apply some operation to a bunch of entities
 def _method_setup(vm_names, provider_crud=None):
     """ Reduces some redundant code shared between methods """
-    if isinstance(vm_names, six.string_types):                                 # noqa
+    if isinstance(vm_names, six.string_types):
         vm_names = [vm_names]
 
     if provider_crud:
         provider_crud.load_all_provider_vms()
-        view = provider_crud.appliance.browser.create_view(navigator.get_class(
-            InfraVm, 'VMsOnly'
-        ).VIEW)
+        view = provider_crud.appliance.browser.create_view(
+            navigator.get_class(InfraVmCollection, 'VMsOnly').VIEW)
     else:
-        view = navigate_to(InfraVm, 'VMsOnly')
+        view = navigate_to(InfraVmCollection, 'VMsOnly')
 
     if view.entities.paginator.exists:
         view.entities.paginator.set_items_per_page(1000)
@@ -1072,7 +1102,7 @@ def find_quadicon(vm_name):
     Returns: entity of appropriate class
     """
     # todo: VMs have such method, so, this function is good candidate for removal
-    view = navigate_to(InfraVm, 'VMsOnly')
+    view = navigate_to(InfraVmCollection, 'VMsOnly')
     try:
         return view.entites.get_entity(name=vm_name, surf_pages=True)
     except ItemNotFound:
@@ -1107,7 +1137,7 @@ def wait_for_vm_state_change(vm_name, desired_state, timeout=300, provider_crud=
         view.toolbar.reload()
         return 'currentstate-' + desired_state in entity.data['state']
 
-    view = navigate_to(InfraVm, 'VMsOnly')
+    view = navigate_to(InfraVmCollection, 'VMsOnly')
     entity = view.entites.get_entity(name=vm_name, surf_pages=True)
     return wait_for(_looking_for_state_change, func_args=[view, entity], num_sec=timeout)
 
@@ -1179,15 +1209,17 @@ def perform_smartstate_analysis(vm_names, provider_crud=None, cancel=True):
 def get_all_vms(appliance, do_not_navigate=False):
     """Returns list of all vms on current page"""
     if do_not_navigate:
-        view = appliance.browser.create_view(navigator.get_class(InfraVm, 'VMsOnly').VIEW)
+        view = appliance.browser.create_view(navigator.get_class(InfraVmCollection, 'VMsOnly').VIEW)
     else:
-        view = navigate_to(InfraVm, 'VMsOnly')
+        view = navigate_to(InfraVmCollection, 'VMsOnly')
 
     return [entity.name for entity in view.entities.get_all()]
 
 
 @navigator.register(Template, 'All')
 @navigator.register(InfraVm, 'All')
+@navigator.register(InfraTemplateCollection, 'All')
+@navigator.register(InfraVmCollection, 'All')
 class VmAllWithTemplates(CFMENavigateStep):
     VIEW = VmsTemplatesAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -1202,26 +1234,44 @@ class VmAllWithTemplates(CFMENavigateStep):
         self.view.reset_page()
 
 
-@navigator.register(Template, 'AllForProvider')
+@navigator.register(InfraTemplateCollection, 'AllForProvider')
+@navigator.register(InfraTemplate, 'AllForProvider')
+@navigator.register(InfraVmCollection, 'AllForProvider')
 @navigator.register(InfraVm, 'AllForProvider')
 class VmAllWithTemplatesForProvider(CFMENavigateStep):
     VIEW = VmTemplatesAllForProviderView
-    prerequisite = NavigateToSibling('All')
+
+    def prerequisite(self):
+        view = None
+        try:
+            view = navigate_to(self.obj, 'All')
+        except NavigationDestinationNotFound:
+            view = navigate_to(self.obj.parent, 'All')
+        finally:
+            if view is None:
+                raise NavigationDestinationNotFound('No view set during prerequisite: '
+                                                    'nav: {}, obj: {}'
+                                                    .format(self, self.obj))
 
     def step(self, *args, **kwargs):
+        # provider has been passed, TODO remove this usage
         if 'provider' in kwargs:
-            provider = kwargs['provider'].name
-        elif self.obj.provider:
-            provider = self.obj.provider.name
+            provider_name = kwargs['provider'].name
+        # the collection is navigation target, use its filter value
+        elif (isinstance(self.obj, (InfraTemplateCollection, InfraVmCollection)) and
+                self.obj.filters.get('provider')):
+            provider_name = self.obj.filters['provider'].name
+        elif isinstance(self.obj, (InfraTemplate, InfraVm)):
+            provider_name = self.obj.provider.name
         else:
-            raise DestinationNotFound("the destination isn't found")
-        self.view.sidebar.vmstemplates.tree.click_path('All VMs & Templates', provider)
+            raise DestinationNotFound("Unable to identify a provider for AllForProvider navigation")
+        self.view.sidebar.vmstemplates.tree.click_path('All VMs & Templates', provider_name)
 
     def resetter(self, *args, **kwargs):
         self.view.reset_page()
 
 
-@navigator.register(Template, 'Details')
+@navigator.register(InfraTemplate, 'Details')
 @navigator.register(InfraVm, 'Details')
 class VmAllWithTemplatesDetails(CFMENavigateStep):
     VIEW = InfraVmDetailsView
@@ -1240,7 +1290,7 @@ class VmAllWithTemplatesDetails(CFMENavigateStep):
         self.view.toolbar.reload.click()
 
 
-@navigator.register(Template, 'ArchiveDetails')
+@navigator.register(InfraTemplate, 'ArchiveDetails')
 @navigator.register(InfraVm, 'ArchiveDetails')
 class ArchiveDetails(CFMENavigateStep):
     VIEW = InfraVmDetailsView
@@ -1259,7 +1309,7 @@ class ArchiveDetails(CFMENavigateStep):
         self.view.toolbar.reload.click()
 
 
-@navigator.register(Template, 'AnyProviderDetails')
+@navigator.register(InfraTemplate, 'AnyProviderDetails')
 @navigator.register(InfraVm, 'AnyProviderDetails')
 class VmAllWithTemplatesDetailsAnyProvider(VmAllWithTemplatesDetails):
     """
@@ -1271,7 +1321,7 @@ class VmAllWithTemplatesDetailsAnyProvider(VmAllWithTemplatesDetails):
     prerequisite = NavigateToSibling('All')
 
 
-@navigator.register(InfraVm, 'VMsOnly')
+@navigator.register(InfraVmCollection, 'VMsOnly')
 class VmAll(CFMENavigateStep):
     VIEW = VmsOnlyAllView
     prerequisite = NavigateToSibling('All')
@@ -1327,7 +1377,7 @@ class VmSnapshotsAdd(CFMENavigateStep):
         self.prerequisite_view.toolbar.create.click()
 
 
-@navigator.register(Template, 'GenealogyAll')
+@navigator.register(InfraTemplate, 'GenealogyAll')
 @navigator.register(InfraVm, 'GenealogyAll')
 class VmGenealogyAll(CFMENavigateStep):
     VIEW = InfraVmGenealogyView
@@ -1381,7 +1431,7 @@ class SetRetirement(CFMENavigateStep):
         self.prerequisite_view.toolbar.lifecycle.item_select('Set Retirement Date')
 
 
-@navigator.register(Template, 'TemplatesOnly')
+@navigator.register(InfraTemplateCollection, 'TemplatesOnly')
 class TemplatesAll(CFMENavigateStep):
     VIEW = TemplatesOnlyAllView
     prerequisite = NavigateToSibling('All')
@@ -1442,7 +1492,7 @@ class VmEngineRelationship(CFMENavigateStep):
             'Edit Management Engine Relationship')
 
 
-@navigator.register(Template, 'SetOwnership')
+@navigator.register(InfraTemplate, 'SetOwnership')
 @navigator.register(InfraVm, 'SetOwnership')
 class SetOwnership(CFMENavigateStep):
     VIEW = SetOwnershipView

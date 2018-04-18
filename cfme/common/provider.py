@@ -78,6 +78,8 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
     db_types = ["Providers"]
     ems_events = []
     settings_key = None
+    vm_class = None  # Set on type specific provider classes for VM/instance class
+    template_class = None  # Set on type specific provider classes for VM template class
 
     endpoints = attr.ib(default=attr.Factory(factory=dict))
 

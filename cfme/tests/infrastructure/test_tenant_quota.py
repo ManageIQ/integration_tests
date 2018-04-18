@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -95,11 +94,13 @@ def catalog_item(appliance, provider, dialog, catalog, prov_data):
 
 @pytest.fixture(scope='module')
 def small_vm(provider, small_template_modscope):
-    vm = VM.factory(random_vm_name(context='reconfig'), provider, small_template_modscope.name)
+    vm = provider.appliance.collections.infra_vms.instantiate(random_vm_name(context='reconfig'),
+                                                              provider,
+                                                              small_template_modscope.name)
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     vm.refresh_relationships()
     yield vm
-    vm.cleanup_on_provider()
+    vm.delete_from_provider()
 
 
 @pytest.mark.rhv2
@@ -222,4 +223,3 @@ def test_setting_child_quota_more_than_parent(tenants_setup, parent_quota, child
     view.flash.assert_message('Error when saving tenant quota: Validation failed: {} allocated '
                               'quota is over allocated, parent tenant does not have enough quota'.
                               format(flash_text))
-

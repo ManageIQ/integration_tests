@@ -12,7 +12,6 @@ import pytest
 import re
 
 from cfme import test_requirements
-from cfme.common.vm import VM
 from cfme.utils import conf, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -98,7 +97,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="module")
-def depot_machine_ip():
+def depot_machine_ip(appliance):
     """ Deploy vm for depot test
 
     This fixture uses for deploy vm on provider from yaml and then receive it's ip
@@ -113,7 +112,9 @@ def depot_machine_ip():
                     depot_machine_name,
                     template_name=depot_template_name)
     yield prov_crud.mgmt.get_ip_address(depot_machine_name)
-    VM.factory(depot_machine_name, prov_crud).cleanup_on_provider()
+
+    collection = appliance.provider_based_collection(prov_crud)
+    collection.instantiate(depot_machine_name, prov_crud).delete_from_provider()
 
 
 @pytest.fixture(scope="module")

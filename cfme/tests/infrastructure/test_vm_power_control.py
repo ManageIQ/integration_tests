@@ -6,7 +6,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -33,21 +32,17 @@ def vm_name():
 
 
 @pytest.fixture(scope="function")
-def testing_vm(request, provider, vm_name):
+def testing_vm(appliance, request, provider, vm_name):
     """Fixture to provision vm to the provider being tested"""
-    vm = VM.factory(vm_name, provider)
-    logger.info("provider_key: %s", provider.key)
-
-    @request.addfinalizer
-    def _cleanup():
-        if provider.mgmt.does_vm_exist(vm.name):
-            vm.cleanup_on_provider()
-        if_scvmm_refresh_provider(provider)
+    vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
 
     if not provider.mgmt.does_vm_exist(vm.name):
         logger.info("deploying %s on provider %s", vm.name, provider.key)
         vm.create_on_provider(allow_skip="default", find_in_cfme=True)
-    return vm
+    yield vm
+
+    vm.delete_from_provider()
+    if_scvmm_refresh_provider(provider)
 
 
 @pytest.fixture(scope="function")
@@ -67,20 +62,17 @@ def orphaned_vm(provider, testing_vm):
 
 
 @pytest.fixture(scope="function")
-def testing_vm_tools(request, provider, vm_name, full_template):
+def testing_vm_tools(appliance, request, provider, vm_name, full_template):
     """Fixture to provision vm with preinstalled tools to the provider being tested"""
-    vm = VM.factory(vm_name, provider, template_name=full_template.name)
-    logger.info("provider_key: %s", provider.key)
-
-    @request.addfinalizer
-    def _cleanup():
-        vm.cleanup_on_provider()
-        if_scvmm_refresh_provider(provider)
+    vm = appliance.collections.infra_vms.instantiate(vm_name, provider, full_template.name)
 
     if not provider.mgmt.does_vm_exist(vm.name):
         logger.info("deploying %s on provider %s", vm.name, provider.key)
         vm.create_on_provider(allow_skip="default", find_in_cfme=True)
-    return vm
+    yield vm
+
+    vm.delete_from_provider()
+    if_scvmm_refresh_provider(provider)
 
 
 def if_scvmm_refresh_provider(provider):
@@ -376,10 +368,11 @@ def test_no_template_power_control(provider, soft_assert):
     # Ensure selecting a template doesn't cause power menu to appear
     templates = list(get_all_vms(provider.appliance, True))
     template_name = random.choice(templates)
-    selected_template = VM.factory(template_name, provider, template=True)
+    selected_template = provider.appliance.collections.infra_templates.instantiate(template_name,
+                                                                                   provider)
 
     # Check the power button with checking the quadicon
-    view = navigate_to(selected_template, 'AllForProvider', use_resetter=False)
+    view = navigate_to(selected_template.parent, 'AllForProvider', use_resetter=False)
     entity = view.entities.get_entity(name=selected_template.name, surf_pages=True)
     entity.check()
     soft_assert(not view.toolbar.power.is_enabled,

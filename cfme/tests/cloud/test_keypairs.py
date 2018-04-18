@@ -20,9 +20,9 @@ def test_keypair_crud(appliance, provider):
         * Select Cloud Provider.
         * Also delete it.
     """
-    keypairs = appliance.collections.keypairs
     try:
-        keypair = keypairs.create(name=fauxfactory.gen_alphanumeric(), provider=provider)
+        keypair = appliance.collections.cloud_keypairs.create(name=fauxfactory.gen_alphanumeric(),
+                                                              provider=provider)
     except TimedOutError:
         if BZ(1444520, forced_streams=['5.6', '5.7', 'upstream']).blocks:
             pytest.skip('Timed out creating keypair, BZ1444520')
@@ -43,11 +43,12 @@ def test_keypair_crud_with_key(openstack_provider, appliance):
         * Select Cloud Provider.
         * Also delete it.
     """
-    keypairs = appliance.collections.keypairs
     key = RSA.generate(1024)
     public_key = key.publickey().exportKey('OpenSSH')
     try:
-        keypair = keypairs.create(fauxfactory.gen_alphanumeric(), openstack_provider, public_key)
+        keypair = appliance.collections.cloud_keypairs.create(fauxfactory.gen_alphanumeric(),
+                                                              openstack_provider,
+                                                              public_key)
     except TimedOutError:
         if BZ(1444520, forced_streams=['5.6', '5.7', 'upstream']).blocks:
             pytest.skip('Timed out creating keypair, BZ1444520')
@@ -68,8 +69,9 @@ def test_keypair_create_cancel(openstack_provider, appliance):
         * Select Cloud Provider.
         * Also delete it.
     """
-    keypairs = appliance.collections.keypairs
-    keypair = keypairs.create(name="", provider=openstack_provider, cancel=True)
+    keypair = appliance.collections.cloud_keypairs.create(name="",
+                                                          provider=openstack_provider,
+                                                          cancel=True)
 
     assert not keypair.exists
 
@@ -85,13 +87,9 @@ def test_keypair_add_and_remove_tag(openstack_provider, appliance):
         * Remove tag from Keypair
         * Also delete it.
     """
-
-    kp_collection = appliance.collections.keypairs
-
     try:
-        keypair = kp_collection.create(
-            name=fauxfactory.gen_alphanumeric(), provider=openstack_provider
-        )
+        keypair = appliance.collections.cloud_keypairs.create(name=fauxfactory.gen_alphanumeric(),
+                                                              provider=openstack_provider)
     except TimedOutError:
         if BZ(1444520, forced_streams=['5.6', '5.7', 'upstream']).blocks:
             pytest.skip('Timed out creating keypair, BZ1444520')

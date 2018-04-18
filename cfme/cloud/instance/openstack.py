@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import attr
 from navmazing import NavigateToSibling
 from widgetastic.widget import View, NoSuchElementException
 from widgetastic_patternfly import Button, BootstrapSelect
@@ -7,16 +8,17 @@ from widgetastic_manageiq import CheckboxSelect, Select, Input
 from cfme.exceptions import OptionNotAvailable, DestinationNotFound
 from cfme.common.vm_views import RightSizeView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
-from . import Instance, CloudInstanceView
+from . import Instance, InstanceCollection, CloudInstanceView
 
 
+@attr.s
 class OpenStackInstance(Instance):
     # CFME & provider power control options
     START = "Start"  # START also covers RESUME and UNPAUSE (same as in CFME 5.4+ web UI)
     POWER_ON = START  # For compatibility with the infra objects.
     SUSPEND = "Suspend"
     DELETE = "Delete"
-    TERMINATE = "Delete"
+    TERMINATE = 'Delete'
     # CFME-only power control options
     SOFT_REBOOT = "Soft Reboot"
     HARD_REBOOT = "Hard Reboot"
@@ -52,19 +54,6 @@ class OpenStackInstance(Instance):
             'on': [self.START],
             'off': [self.SUSPEND, self.SOFT_REBOOT, self.HARD_REBOOT]}
 
-    def create(self, cancel=False, **prov_fill_kwargs):
-        """Provisions an OpenStack instance with the given properties through CFME
-
-        Args:
-            cancel: Clicks the cancel button if `True`, otherwise clicks the submit button
-                    (Defaults to `False`)
-            prov_fill_kwargs: dictionary of provisioning field/value pairs
-        Note:
-            For more optional keyword arguments, see
-            :py:data:`cfme.cloud.provisioning.ProvisioningForm`
-        """
-        super(OpenStackInstance, self).create(form_values=prov_fill_kwargs, cancel=cancel)
-
     def power_control_from_provider(self, option):
         """Power control the instance from the provider
 
@@ -94,6 +83,11 @@ class OpenStackInstance(Instance):
             self.provider.mgmt.delete_vm(self.name)
         else:
             raise OptionNotAvailable(option + " is not a supported action")
+
+
+@attr.s
+class OpenstackInstanceCollection(InstanceCollection):
+    ENTITY = OpenStackInstance
 
 
 class AddFloatingIPView(CloudInstanceView):
@@ -204,7 +198,7 @@ class AddFloatingIP(CFMENavigateStep):
             raise DestinationNotFound('Add Floating IP option not available for instance')
 
 
-@navigator.register(Instance, 'RemoveFloatingIP')
+@navigator.register(OpenStackInstance, 'RemoveFloatingIP')
 class RemoveFloatingIP(CFMENavigateStep):
     VIEW = RemoveFloatingIPView
     prerequisite = NavigateToSibling('Details')
@@ -269,7 +263,7 @@ class Migrate(CFMENavigateStep):
             raise DestinationNotFound('Migrate option not available for instance')
 
 
-@navigator.register(Instance, 'Reconfigure')
+@navigator.register(OpenStackInstance, 'Reconfigure')
 class Reconfigure(CFMENavigateStep):
     VIEW = ReconfigureView
     prerequisite = NavigateToSibling('Details')

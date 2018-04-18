@@ -2,14 +2,9 @@
 """This module tests tagging of objects in different locations."""
 import pytest
 
-from cfme.cloud.availability_zone import AvailabilityZone
-from cfme.cloud.flavor import Flavor
-from cfme.cloud.instance import Instance
-from cfme.cloud.instance.image import Image
 from cfme.cloud.keypairs import KeyPair
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.virtual_machines import InfraVm, Template
 from cfme.fixtures.provider import setup_one_or_skip
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -19,10 +14,14 @@ pytestmark = [
 ]
 
 
+# tuples of (collection_name, param_class, destination)
+# get_collection_entity below processes these to navigate and find an entity
+# so use (collection_name, None, None) if the thing being tested uses BaseEntity/BaseCollection
+# Once everything is converted these should be flattened to just collection names list
 infra_test_items = [
     ('infra_provider', InfraProvider, None),
-    ('vms', InfraVm, 'ProviderVms'),
-    ('templates', Template, 'ProviderTemplates'),
+    ('infra_vms', None, None),
+    ('infra_templates', None, None),
     ('hosts', None, None),
     ('clusters', None, None),
     ('datastores', None, None)
@@ -30,12 +29,12 @@ infra_test_items = [
 
 cloud_test_items = [
     ('cloud_provider', CloudProvider, None),
-    ('instances', Instance, 'Instances'),
-    ('flavors', Flavor, None),
-    ('availability_zones', AvailabilityZone, None),
+    ('cloud_instances', None, None),
+    ('cloud_flavors', None, None),
+    ('cloud_av_zones', None, None),
     ('cloud_tenants', None, None),
-    ('keypairs', None, None),
-    ('templates', Image, 'Images')
+    ('cloud_keypairs', None, None),
+    ('cloud_images', None, None)
 ]
 
 

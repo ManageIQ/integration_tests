@@ -155,7 +155,7 @@ class Cluster(Pretty, BaseEntity, Taggable):
             int(cl.id)
             for cl in col.clusters
             if cl.name in (self.short_name, self.name) and cl.ems_id == self.provider.id
-        ][-1]
+        ][-1]  # FIXME this is raising an IndexError for being out of range, list must be empty
 
     @property
     def short_name(self):

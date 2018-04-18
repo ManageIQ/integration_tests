@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 
 
@@ -18,6 +17,8 @@ def test_no_dvd_ruins_refresh(provider, small_template):
             vm_name="test_no_dvd_{}".format(fauxfactory.gen_alpha()),
             host_group=host_group) as vm_name:
         provider.mgmt.disconnect_dvd_drives(vm_name)
-        vm = VM.factory(vm_name, provider)
+        vm = provider.appliance.collections.infra_vms.instantiate(vm_name,
+                                                                  provider,
+                                                                  small_template.name)
         provider.refresh_provider_relationships()
         vm.wait_to_appear()

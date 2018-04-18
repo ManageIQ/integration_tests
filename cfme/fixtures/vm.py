@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.common.vm import VM
 from cfme.exceptions import CFMEException
 from cfme.utils import ports
 from cfme.utils.generators import random_vm_name
@@ -10,7 +9,8 @@ from cfme.utils.wait import wait_for
 
 
 def _create_vm(request, template, provider, vm_name):
-    vm_obj = VM.factory(vm_name, provider, template_name=template.name)
+    collection = provider.appliance.provider_based_collection(provider)
+    vm_obj = collection.instantiate(vm_name, provider, template_name=template.name)
     vm_obj.create_on_provider(allow_skip="default")
     provider.mgmt.start_vm(vm_obj.name)
     provider.mgmt.wait_vm_running(vm_obj.name)
@@ -27,7 +27,7 @@ def _create_vm(request, template, provider, vm_name):
 
     @request.addfinalizer
     def _cleanup():
-        vm_obj.cleanup_on_provider()
+        vm_obj.delete_from_provider()
         provider.refresh_provider_relationships()
 
     return vm_obj

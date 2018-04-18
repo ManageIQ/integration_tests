@@ -6,7 +6,6 @@ from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import browser
 from cfme.utils.wait import wait_for
@@ -57,7 +56,9 @@ def generated_request(appliance,
     notes = fauxfactory.gen_alphanumeric()
     e_mail = "{}@{}.test".format(first_name, last_name)
     host, datastore = map(provisioning.get, ('host', 'datastore'))
-    vm = InfraVm(name=vm_name, provider=a_provider, template_name=template_name)
+    vm = appliance.collections.infra_vms.instantiate(name=vm_name,
+                                                     provider=a_provider,
+                                                     template_name=template_name)
     view = navigate_to(vm, 'Provision')
 
     provisioning_data = {
@@ -120,7 +121,7 @@ def test_services_request_direct_url(appliance, generated_request):
 @pytest.mark.tier(3)
 def test_copy_request(request, generated_request, vm_name, template_name):
     """Check if request gets properly copied."""
-    modifications = {'catalog': {'vm_name': fauxfactory.gen_alphanumeric(length=16)}}
+    modifications = {'catalog': {'vm_name': vm_name}}
     new_request = generated_request.copy_request(values=modifications)
     request.addfinalizer(new_request.remove_request)
     assert navigate_to(new_request, 'Details')

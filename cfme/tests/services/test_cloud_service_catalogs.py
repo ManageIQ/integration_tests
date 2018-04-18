@@ -8,7 +8,6 @@ from widgetastic.utils import partial_match
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.azure import AzureProvider
-from cfme.common.vm import VM
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme import test_requirements
 from cfme.utils.generators import random_vm_name
@@ -39,8 +38,8 @@ def test_cloud_catalog_item(appliance, vm_name, setup_provider, provider, dialog
         test_flag: provision
     """
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
-    vm = VM.factory("{}0001".format(vm_name), provider)
-    request.addfinalizer(lambda: vm.cleanup_on_provider())
+    vm = appliance.collections.cloud_instances.instantiate("{}0001".format(vm_name), provider)
+    request.addfinalizer(lambda: vm.delete_from_provider())
     image = provisioning['image']['name']
     item_name = "{}-service-{}".format(provider.name, fauxfactory.gen_alphanumeric())
 

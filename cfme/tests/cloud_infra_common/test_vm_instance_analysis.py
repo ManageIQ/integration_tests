@@ -8,7 +8,6 @@ from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider, CloudInfraProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.common.vm import VM, Template
 from cfme.common.vm_views import DriftAnalysis
 from cfme.configure.tasks import is_vm_analysis_finished, TasksView
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
@@ -193,8 +192,11 @@ def ssa_vm(request, local_setup_provider, provider, vm_analysis_provisioning_dat
     """ Fixture to provision instance on the provider """
     template_name = vm_analysis_provisioning_data['image']
     vm_name = 'test-ssa-{}-{}'.format(fauxfactory.gen_alphanumeric(), analysis_type)
-    vm = VM.factory(vm_name, provider, template_name=vm_analysis_provisioning_data.image)
-    request.addfinalizer(lambda: vm.cleanup_on_provider())
+    collection = provider.appliance.provider_based_collection(provider)
+    vm = collection.instantiate(vm_name,
+                                provider,
+                                template_name=vm_analysis_provisioning_data.image)
+    request.addfinalizer(lambda: vm.delete_from_provider())
 
     provision_data = vm_analysis_provisioning_data.copy()
     del provision_data['image']
@@ -366,7 +368,9 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
         test_flag: vm_analysis
     """
     template_name = vm_analysis_provisioning_data['image']
-    template = Template.factory(template_name, provider, template=True)
+    template_collection = appliance.provider_based_collection(provider=provider,
+                                                              coll_type='templates')
+    template = template_collection.instantiate(template_name, provider)
 
     template.smartstate_scan(wait_for_task_result=True)
 

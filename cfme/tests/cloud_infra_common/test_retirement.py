@@ -7,7 +7,6 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.common.provider import CloudInfraProvider
-from cfme.common.vm import VM
 from cfme.configure.configuration.region_settings import Tag, Category
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigator
@@ -46,10 +45,13 @@ def retire_vm(small_template, provider):
         small_template: small template fixture, template on provider
         provider: provider crud object from fixture
     """
-    vm = VM.factory(random_vm_name('retire'), provider, template_name=small_template.name)
+    collection = provider.appliance.provider_based_collection(provider)
+    vm = collection.instantiate(random_vm_name('retire'),
+                                provider,
+                                template_name=small_template.name)
     vm.create_on_provider(find_in_cfme=True, allow_skip="default", timeout=1200)
     yield vm
-    vm.cleanup_on_provider()
+    vm.delete_from_provider()
 
 
 @pytest.fixture(scope="function")
@@ -59,11 +61,13 @@ def retire_ec2_s3_vm(provider):
     Args:
         provider: provider crud object from fixture
     """
-    vm = VM.factory(random_vm_name('retire'), provider,
-                    template_name='amzn-ami-pv-2015.03.rc-1.x86_64-s3')
+    collection = provider.appliance.provider_based_collection(provider)
+    vm = collection.instantiate(random_vm_name('retire'),
+                                provider,
+                                template_name='amzn-ami-pv-2015.03.rc-1.x86_64-s3')
     vm.create_on_provider(find_in_cfme=True, allow_skip="default", timeout=1200)
     yield vm
-    vm.cleanup_on_provider()
+    vm.delete_from_provider()
 
 
 def verify_retirement_state(retire_vm):
@@ -95,9 +99,9 @@ def verify_retirement_date(retire_vm, expected_date='Never'):
     """
     if isinstance(expected_date, dict):
         # convert to a parsetime object for comparsion, function depends on version
-        if 'UTC' in VM.RETIRE_DATE_FMT.pick(retire_vm.appliance.version):
+        if 'UTC' in retire_vm.RETIRE_DATE_FMT:
             convert_func = parsetime.from_american_minutes_with_utc
-        elif VM.RETIRE_DATE_FMT.pick(retire_vm.appliance.version).endswith('+0000'):
+        elif retire_vm.RETIRE_DATE_FMT.endswith('+0000'):
             convert_func = parsetime.from_saved_report_title_format
         else:
             convert_func = parsetime.from_american_date_only
@@ -110,8 +114,7 @@ def verify_retirement_date(retire_vm, expected_date='Never'):
         assert expected_date['start'] <= expected_date['retire'] <= expected_date['end']
 
     elif isinstance(expected_date, (parsetime, datetime, date)):
-        assert retire_vm.retirement_date == expected_date.strftime(
-            VM.RETIRE_DATE_FMT.pick(retire_vm.appliance.version))
+        assert retire_vm.retirement_date == expected_date.strftime(retire_vm.RETIRE_DATE_FMT)
     else:
         assert retire_vm.retirement_date == expected_date
 

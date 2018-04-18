@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from time import sleep
-
 import os
+
 from lxml.html import document_fromstring
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import (
@@ -11,26 +11,13 @@ from widgetastic_patternfly import (
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import TemplateNotFound
-from widgetastic_manageiq import (Calendar,
-                                  Checkbox,
-                                  Button,
-                                  ItemsToolBarViewSelector,
-                                  Table,
-                                  MultiBoxSelect,
-                                  RadioGroup,
-                                  VersionPick,
-                                  Version,
-                                  BaseEntitiesView,
-                                  NonJSBaseEntity,
-                                  BaseListEntity,
-                                  BaseQuadIconEntity,
-                                  BaseTileIconEntity,
-                                  JSBaseEntity,
-                                  BaseNonInteractiveEntitiesView,
-                                  BreadCrumb,
-                                  PaginationPane,
-                                  DriftComparison,
-                                  ParametrizedSummaryTable)
+from cfme.utils.log import logger
+from widgetastic_manageiq import (
+    Calendar, Checkbox, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect, RadioGroup,
+    VersionPick, Version, BaseEntitiesView, NonJSBaseEntity, BaseListEntity, BaseQuadIconEntity,
+    BaseTileIconEntity, JSBaseEntity, BaseNonInteractiveEntitiesView, BreadCrumb, PaginationPane,
+    DriftComparison, ParametrizedSummaryTable
+)
 
 
 class InstanceQuadIconEntity(BaseQuadIconEntity):
@@ -119,7 +106,7 @@ class JSInstanceEntity(JSBaseEntity):
 
             try:
                 policy = quad_data.xpath(self.QUADRANT.format(pos="g"))[0].get('src')
-            except:
+            except Exception:
                 policy = None
 
             data_dict['policy'] = policy
@@ -392,9 +379,12 @@ class ProvisionView(BaseLoggedInPage):
         def before_fill(self, values):
             # Provision from image is a two part form,
             # this completes the image selection before the tabular parent form is filled
-            template_name = values.get('template_name',
-                                       self.parent_view.context['object'].template_name)
-            provider_name = self.parent_view.context['object'].provider.name
+            template_name = values.get('template_name')
+            provider_name = values.get('provider_name')
+            if template_name is None or provider_name is None:
+                logger.error('template_name "{}", or provider_name "{}" not passed to '
+                             'provisioning form', template_name, provider_name)
+            # try to find the template anyway, even if values weren't passed
             try:
                 row = self.parent.image_table.row(name=template_name, provider=provider_name)
             except IndexError:

@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 
-from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.automate.explorer.domain import DomainCollection
@@ -13,8 +12,7 @@ from cfme.utils.update import update
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('setup_provider', 'vm_name',
-                            'catalog_item', 'uses_infra_providers'),
+    pytest.mark.usefixtures('setup_provider', 'catalog_item', 'uses_infra_providers'),
     test_requirements.service,
     pytest.mark.long_running,
     pytest.mark.provider([InfraProvider],
@@ -32,12 +30,12 @@ def create_domain(request, appliance):
     dc = DomainCollection(appliance)
     new_domain = dc.create(name=fauxfactory.gen_alphanumeric(), enabled=True)
     request.addfinalizer(new_domain.delete_if_exists)
-    instance = dc.instantiate(name='ManageIQ')\
-        .namespaces.instantiate(name='Service')\
-        .namespaces.instantiate(name='Provisioning')\
-        .namespaces.instantiate(name='StateMachines')\
-        .classes.instantiate(name='ServiceProvisionRequestApproval')\
-        .instances.instantiate(name='Default')
+    instance = (dc.instantiate(name='ManageIQ')
+        .namespaces.instantiate(name='Service')
+        .namespaces.instantiate(name='Provisioning')
+        .namespaces.instantiate(name='StateMachines')
+        .classes.instantiate(name='ServiceProvisionRequestApproval')
+        .instances.instantiate(name='Default'))
     instance.copy_to(new_domain)
     return new_domain
 
@@ -46,11 +44,11 @@ def create_domain(request, appliance):
 def modify_instance(create_domain):
     """Modify the instance in new domain to change it to manual approval instead of auto"""
 
-    instance = create_domain.namespaces.instantiate(name='Service')\
-        .namespaces.instantiate(name='Provisioning')\
-        .namespaces.instantiate(name='StateMachines')\
-        .classes.instantiate(name='ServiceProvisionRequestApproval')\
-        .instances.instantiate(name='Default')
+    instance = (create_domain.namespaces.instantiate(name='Service')
+        .namespaces.instantiate(name='Provisioning')
+        .namespaces.instantiate(name='StateMachines')
+        .classes.instantiate(name='ServiceProvisionRequestApproval')
+        .instances.instantiate(name='Default'))
     with update(instance):
         instance.fields = {"approval_type": {"value": "manual"}}
 
@@ -65,7 +63,10 @@ def test_service_manual_approval(appliance, provider, modify_instance,
         test_flag: provision
     """
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
-    request.addfinalizer(lambda: VM.factory(vm_name, provider).cleanup_on_provider())
+    request.addfinalizer(
+        lambda: appliance.collections.infra_vms.instantiate(vm_name,
+                                                            provider).delete_from_provider()
+    )
 
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()

@@ -16,6 +16,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
+from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BaseNonInteractiveEntitiesView, BreadCrumb
 
@@ -287,6 +288,7 @@ class Taggable(object):
                 "tag_name": tag_name
             })
         except (NoSuchElementException, SelectItemNotFound):
+            logger.exception('Tag category or tag name not found for fill, retrying')
             updated = view.form.fill({
                 "tag_category": category_name,
                 "tag_name": tag_name

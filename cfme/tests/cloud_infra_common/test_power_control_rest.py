@@ -3,7 +3,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.common.provider import BaseProvider
-from cfme.common.vm import VM
 from cfme.utils.generators import random_vm_name
 from cfme.utils.wait import wait_for
 from cfme.cloud.provider.azure import AzureProvider
@@ -28,12 +27,13 @@ def vm_name():
 
 
 @pytest.fixture(scope="function")
-def vm_obj(request, provider, setup_provider, small_template, vm_name):
-    vm_obj = VM.factory(vm_name, provider, template_name=small_template.name)
+def vm_obj(provider, setup_provider, small_template, vm_name):
+    collection = provider.appliance.provider_based_collection(provider)
+    vm_obj = collection.instantiate(vm_name, provider, template_name=small_template.name)
 
     vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip="default")
     yield vm_obj
-    vm_obj.cleanup_on_provider()
+    vm_obj.delete_from_provider()
 
 
 def wait_for_vm_state_change(vm_obj, state):

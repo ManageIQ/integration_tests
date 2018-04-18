@@ -2,7 +2,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.virtual_machines import InfraVm, Template
 from cfme.fixtures.provider import setup_one_or_skip
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -14,8 +13,8 @@ pytestmark = [test_requirements.tag, pytest.mark.tier(2)]
 
 test_items = [
     ('clusters', None, None),
-    ('vms', InfraVm, 'ProviderVms'),
-    ('templates', Template, 'ProviderTemplates')
+    ('infra_vms', None, 'ProviderVms'),
+    ('infra_templates', None, 'ProviderTemplates')
 ]
 
 

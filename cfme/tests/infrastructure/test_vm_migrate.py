@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme import test_requirements
 
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 
 
@@ -19,16 +17,23 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope="module")
-def new_vm(setup_provider_modscope, provider, request):
+@pytest.fixture()
+def new_vm(setup_provider, provider):
     """Fixture to provision appliance to the provider being tested if necessary"""
     vm_name = random_vm_name(context='migrate')
-    vm = VM.factory(vm_name, provider, template_name=provider.data['small_template'])
+    try:
+        template_name = provider.data.templates.small_template.name
+    except AttributeError:
+        pytest.skip('Could not find templates.small_template.name in provider yaml: {}'
+                    .format(provider.data))
+
+    vm = provider.appliance.collections.infra_vms.instantiate(vm_name, provider, template_name)
 
     if not provider.mgmt.does_vm_exist(vm_name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
-        request.addfinalizer(vm.cleanup_on_provider)
-    return vm
+    yield vm
+
+    vm.delete_from_provider()
 
 
 @pytest.mark.rhv1

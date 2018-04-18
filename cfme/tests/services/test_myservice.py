@@ -4,7 +4,6 @@ from datetime import datetime
 import pytest
 
 from cfme import test_requirements
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
 from cfme.services.myservice.ui import MyServiceDetailView
@@ -18,7 +17,7 @@ from cfme.utils.update import update
 from cfme.utils.version import appliance_is_downstream
 
 pytestmark = [
-    pytest.mark.usefixtures('setup_provider', 'vm_name', 'catalog_item'),
+    pytest.mark.usefixtures('setup_provider', 'catalog_item'),
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.long_running,
     test_requirements.service,
@@ -58,7 +57,7 @@ def myservice(appliance, provider, catalog_item, request):
 
     yield catalog_item.name, vm_name
 
-    VM.factory(vm_name, provider).cleanup_on_provider()
+    appliance.collections.infra_vms.instantiate(vm_name, provider).delete_from_provider()
 
 
 @pytest.mark.parametrize('context', [ViaUI])

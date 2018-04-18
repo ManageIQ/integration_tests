@@ -1,4 +1,5 @@
-from navmazing import NavigateToSibling, NavigateToAttribute
+import attr
+from navmazing import NavigateToSibling, NavigateToAttribute, NavigationDestinationNotFound
 from riggerlib import recursive_update
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import CheckableBootstrapTreeview, Dropdown, Button
@@ -6,14 +7,13 @@ from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.vm import VM
+from cfme.common.vm import VM, VMCollection
 from cfme.common.vm_views import (
     ProvisionView, VMToolbar, VMEntities, VMDetailsEntities, EditView,
     SetOwnershipView, ManagementEngineView, PolicySimulationView,
     RetirementView, RetirementViewWithOffset)
-from cfme.exceptions import InstanceNotFound, ItemNotFound
+from cfme.exceptions import (InstanceNotFound, ItemNotFound, DestinationNotFound)
 from cfme.services.requests import RequestsView
-from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -161,7 +161,8 @@ class InstanceCompareView(CloudInstanceView):
     sidebar = View.nested(InstanceCompareAccordion)
 
 
-class Instance(VM, Navigatable):
+@attr.s
+class Instance(VM):
     """Represents a generic instance in CFME. This class is used if none of the inherited classes
     will match.
 
@@ -183,47 +184,6 @@ class Instance(VM, Navigatable):
     REMOVE_SINGLE = 'Remove Instance'
     TO_OPEN_EDIT = "Edit this Instance"
     DETAILS_VIEW_CLASS = InstanceDetailsView
-
-    def __init__(self, name, provider, template_name=None, appliance=None):
-        super(Instance, self).__init__(name=name, provider=provider, template_name=template_name)
-        Navigatable.__init__(self, appliance=appliance)
-
-    def create(self, form_values, cancel=False):
-        """Provisions an instance with the given properties through CFME
-
-        Args:
-            form_values: dictionary of form values for provisioning, structured into tabs
-
-        Note:
-            Calling create on a sub-class of instance will generate the properly formatted
-            dictionary when the correct fields are supplied.
-        """
-        view = navigate_to(self, 'Provision')
-
-        # Only support 1 security group for now
-        # TODO: handle multiple
-        if 'environment' in form_values and 'security_groups' in form_values['environment'] and \
-                isinstance(form_values['environment']['security_groups'], (list, tuple)):
-
-            first_group = form_values['environment']['security_groups'][0]
-            recursive_update(form_values, {'environment': {'security_groups': first_group}})
-
-        view.form.fill(form_values)
-
-        if cancel:
-            view.form.cancel_button.click()
-            # Redirects to Instance All
-            view = self.browser.create_view(InstanceAllView)
-            wait_for(lambda: view.is_displayed, timeout=10, delay=2, message='wait for redirect')
-            view.flash.assert_success_message(self.PROVISION_CANCEL)
-            view.flash.assert_no_error()
-        else:
-            view.form.submit_button.click()
-
-            view = self.appliance.browser.create_view(RequestsView)
-            wait_for(lambda: view.flash.messages, fail_condition=[], timeout=10, delay=2,
-                     message='wait for Flash Success')
-            view.flash.assert_success_message(self.PROVISION_START)
 
     def update(self, values, cancel=False, reset=False):
         """Update cloud instance
@@ -303,7 +263,7 @@ class Instance(VM, Navigatable):
         Args:
         Returns: entity of appropriate type
         """
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.parent, 'All')
         view.toolbar.view_selector.select('Grid View')
 
         try:
@@ -346,7 +306,56 @@ class Instance(VM, Navigatable):
                                        handle_alert=not kwargs.get('cancel', False))
 
 
-@navigator.register(Instance, 'All')
+@attr.s
+class InstanceCollection(VMCollection):
+    ENTITY = Instance
+
+    def create(self, vm_name, provider, form_values, cancel=False):
+        """Provisions an instance with the given properties through CFME
+
+        Args:
+            vm_name: the instance's name
+            form_values: dictionary of form values for provisioning, structured into tabs
+            cancel: boolean, whether or not to cancel form filling
+
+        Note:
+            Calling create on a sub-class of instance will generate the properly formatted
+            dictionary when the correct fields are supplied.
+        """
+        instance = self.instantiate(vm_name, provider)
+        form_values.update({'provider_name': provider.name})
+        view = navigate_to(self, 'Provision')
+
+        # Only support 1 security group for now
+        # TODO: handle multiple
+        if ('environment' in form_values and
+                'security_groups' in form_values['environment'] and
+                isinstance(form_values['environment']['security_groups'], (list, tuple))):
+
+            first_group = form_values['environment']['security_groups'][0]
+            recursive_update(form_values, {'environment': {'security_groups': first_group}})
+
+        view.form.fill(form_values)
+
+        if cancel:
+            view.form.cancel_button.click()
+            # Redirects to Instance All
+            view = self.browser.create_view(InstanceAllView)
+            wait_for(lambda: view.is_displayed, timeout=10, delay=2, message='wait for redirect')
+            view.flash.assert_success_message(self.ENTITY.PROVISION_CANCEL)
+            view.flash.assert_no_error()
+        else:
+            view.form.submit_button.click()
+
+            view = self.appliance.browser.create_view(RequestsView)
+            wait_for(lambda: view.flash.messages, fail_condition=[], timeout=10, delay=2,
+                     message='wait for Flash Success')
+            view.flash.assert_no_error()
+
+        return instance
+
+
+@navigator.register(InstanceCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = InstanceAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -361,15 +370,30 @@ class All(CFMENavigateStep):
         self.view.toolbar.reload.click()
 
 
+@navigator.register(InstanceCollection, 'AllForProvider')
 @navigator.register(Instance, 'AllForProvider')
 class AllForProvider(CFMENavigateStep):
     VIEW = InstanceProviderAllView
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def prerequisite(self):
+        try:
+            view = navigate_to(self.obj, 'All')
+        except NavigationDestinationNotFound:
+            view = navigate_to(self.obj.parent, 'All')
+        finally:
+            return view
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Instances')
+        if isinstance(self.obj, InstanceCollection) and self.obj.filters.get('provider'):
+            # the collection is navigation target, use its filter value
+            provider_name = self.obj.filters['provider'].name
+        elif isinstance(self.obj, Instance):
+            provider_name = self.obj.provider.name
+        else:
+            raise DestinationNotFound("Unable to identify a provider for AllForProvider navigation")
+
         self.view.sidebar.instances_by_provider.tree.click_path('Instances by Provider',
-                                                                self.obj.provider.name)
+                                                                provider_name)
 
     def resetter(self, *args, **kwargs):
         # If a filter was applied, it will persist through navigation and needs to be cleared
@@ -382,7 +406,11 @@ class AllForProvider(CFMENavigateStep):
 @navigator.register(Instance, 'Details')
 class Details(CFMENavigateStep):
     VIEW = InstanceDetailsView
-    prerequisite = NavigateToSibling('AllForProvider')
+
+    def prerequisite(self, *args, **kwargs):
+        return navigate_to(self.obj.parent,
+                           'AllForProvider' if self.obj.parent.filters.get('provider')
+                           else 'All')
 
     def step(self):
         try:
@@ -399,7 +427,7 @@ class Details(CFMENavigateStep):
 @navigator.register(Instance, 'ArchiveDetails')
 class ArchiveDetails(CFMENavigateStep):
     VIEW = InstanceDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         try:
@@ -432,7 +460,7 @@ class EditManagementEngineRelationship(CFMENavigateStep):
         configuration.item_select('Edit Management Engine Relationship')
 
 
-@navigator.register(Instance, 'Provision')
+@navigator.register(InstanceCollection, 'Provision')
 class Provision(CFMENavigateStep):
     VIEW = ProvisionView
     prerequisite = NavigateToSibling('All')

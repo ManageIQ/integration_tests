@@ -18,7 +18,7 @@ pytestmark = [pytest.mark.tier(3),
 # navigation to navmazing. all items have to be put back once navigation change is fully done
 
 
-@pytest.fixture(scope='module', params=['datastores', 'hosts', InfraProvider, vms.InfraVm])
+@pytest.fixture(scope='module', params=['datastores', 'hosts', 'infra_providers', 'infra_vms'])
 def page(request):
     return request.param
 
@@ -121,7 +121,6 @@ def set_template_quad(appliance):
     appliance.user.my_settings.visual.template_quad = True
 
 
-@pytest.mark.meta(blockers=[1267148])
 def test_infra_grid_page_per_item(appliance, request, page, value, set_grid):
     """ Tests grid items per page
 
@@ -267,12 +266,12 @@ def test_datastore_noquads(request, set_datastore_quad, appliance):
     assert not view.entities.get_first_entity().data
 
 
-def test_vm_noquads(request, set_vm_quad):
+def test_vm_noquads(appliance, request, set_vm_quad):
     """
         This test checks that VM Quadrant when switched off from Mysetting page under
         Visual Tab under "Show VM Quadrants" option works properly.
     """
-    view = navigate_to(vms.InfraVm, 'VMsOnly')
+    view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
     view.toolbar.view_selector.select('Grid View')
     # Here data property will return an empty dict when the Quadrants option is deactivated.
     assert not view.entities.get_first_entity().data
@@ -284,7 +283,7 @@ def test_template_noquads(request, set_template_quad):
         This test checks that Template Quadrant when switched off from Mysetting page under
         Visual Tab under "Show Template Quadrants" option works properly.
     """
-    view = navigate_to(vms.Template, 'TemplatesOnly')
+    view = navigate_to(vms.InfraTemplate, 'TemplatesOnly')
     view.toolbar.view_selector.select('Grid View')
     # Here data property will return an empty dict when the Quadrants option is deactivated.
     assert not view.entities.get_first_entity().data
