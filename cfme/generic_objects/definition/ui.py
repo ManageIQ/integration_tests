@@ -1,22 +1,22 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Text, View, ParametrizedString, ParametrizedLocator, Table
-from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Accordion
+from widgetastic_patternfly import (
+    Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Accordion
+)
 
 from cfme.base.login import BaseLoggedInPage
-
+from cfme.generic_objects.instance.ui import GenericObjectInstanceAllView
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
-from widgetastic_manageiq import (ItemsToolBarViewSelector, BaseEntitiesView, DynamicTable,
-    FileInput, ParametrizedSummaryTable, BootstrapSwitch, FonticonPicker, ManageIQTree, SummaryForm)
+from widgetastic_manageiq import (
+    ItemsToolBarViewSelector, BaseEntitiesView, FileInput, ParametrizedSummaryTable,
+    BootstrapSwitch, FonticonPicker, ManageIQTree, SummaryForm
+)
 from . import GenericObjectDefinition, GenericObjectDefinitionCollection
-from ..instance.ui import GenericObjectInstanceAllView
 
 
 class GenericObjectDefinitionToolbar(View):
-    """
-    Represents provider toolbar and its controls
-    """
     configuration = Dropdown(text='Configuration')
     download = Dropdown(text='Download')
 
@@ -28,13 +28,14 @@ class GenericObjectDefinitionView(BaseLoggedInPage):
     def in_generic_object_definition(self):
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Automation', 'Automate'])
+            self.navigation.currently_selected == ['Automation', 'Automate']
+        )
 
 
 class AccordionForm(View):
 
     @View.nested
-    class classes(Accordion):
+    class classes(Accordion):   # noqa
         ACCORDION_NAME = "Generic Object Classes"
         tree = ManageIQTree()
 
@@ -102,6 +103,11 @@ class ParametersForm(View):
                     '//div[@title = "Delete Row"]'.format(element_name)).click()
 
 
+class ButtonParameterForm(ParametersForm):
+    type_class = Input(locator='.//input[contains(@class, "ng-empty") and contains(@id, "Value")]')
+    add = Button('Add Attribute/Value Pair')
+
+
 class GenericObjectDefinitionAddEditView(GenericObjectDefinitionView):
     title = Text('#explorer_title_text')
     name = Input(id='generic_object_definition_name')
@@ -157,10 +163,10 @@ class GenericObjectDefinitionDetailsView(GenericObjectDefinitionView):
         )
 
 
-class GenericObjectButtonView(GenericObjectDefinitionView):
+class GenericObjectAddButtonView(GenericObjectDefinitionView):
+    title = Text('#explorer_title_text')
 
     button_type = BootstrapSelect(name='button_type')
-
     name = Input(name='name')
     description = Input(name='description')
     display = BootstrapSwitch(name='display')
@@ -175,20 +181,19 @@ class GenericObjectButtonView(GenericObjectDefinitionView):
     system_message = Input(name='ae_message')
     request = Input(name='request')
     add_attribute_value_key = Button('Add Attribute/Value Pair')
-    attribute_value_table = DynamicTable(
-        '//generic-object-table-component[@add-row-text="Add Attribute/Value Pair"]//table',
-        column_widgets={'Name': Input, 'Value': Input})
-    role = BootstrapSelect(name='visibility')
+    attributes = ButtonParameterForm(param_type="Attribute")
 
     add = Button('Add')
     cancel = Button('Cancel')
 
     @property
     def is_displayed(self):
-        return False
+        return self.title.text == 'Add a new Custom Button'
 
 
-class GenericObjectButtonGroupView(GenericObjectDefinitionView):
+class GenericObjectButtonGroupAddView(GenericObjectDefinitionView):
+    title = Text('#explorer_title_text')
+
     name = Input(name='name')
     display = BootstrapSwitch(name='display')
     description = Input(name='description')
@@ -201,10 +206,11 @@ class GenericObjectButtonGroupView(GenericObjectDefinitionView):
 
     @property
     def is_displayed(self):
-        return False
+        return self.title.text == 'GenericObjectButtonGroupAddView'
 
     def after_fill(self, was_change):
-        # we need to click somewhere out side the form to get add button active
+        # we need to click somewhere out side the form to get add button active,
+        #  after icon is filled
         if was_change:
             self.browser.element('//body').click()
 
@@ -212,18 +218,33 @@ class GenericObjectButtonGroupView(GenericObjectDefinitionView):
 class GenericObjectButtonGroupDetailsView(GenericObjectDefinitionView):
     title = Text('#explorer_title_text')
     configuration = Dropdown(text='Configuration')
-    basic_infornation = SummaryForm('Smart Management')
+    basic_infornation = SummaryForm('Basic Information')
     accordion = View.nested(AccordionForm)
     table = Table('//h3[contains(text(), "Buttons")]/following-sibling::table')
 
     @property
     def is_displayed(self):
-        return False
+        return self.basic_infornation.is_displayed
 
 
 @MiqImplementationContext.external_for(GenericObjectDefinitionCollection.create, ViaUI)
 def create(self, name, description, attributes=None, associations=None, methods=None,
            custom_image_file_path=None, cancel=False):
+    """
+    Create new generic object definition
+    Args:
+        name: generic object definition name
+        description: generic object definition description
+        attributes:  generic object definition attributes ex. {'address': 'string'}
+        associations:  generic object definition associations ex. {'services': 'Service'}
+        methods: generic object definition methods ex. ['method1', 'method2']
+        custom_image_file_path: generic object definition custom image file path
+        cancel: by default will not be canceled, pass True to make successful cancel
+
+    Returns:
+        GenericObjectDefinition entity
+
+    """
     view = navigate_to(self, 'Add')
     view.fill({
         'name': name,
@@ -250,6 +271,11 @@ def create(self, name, description, attributes=None, associations=None, methods=
 
 @MiqImplementationContext.external_for(GenericObjectDefinition.update, ViaUI)
 def update(self, updates, reset=False, cancel=False):
+    """Update generic object definition
+
+    Args:
+        updates: dict, with fields to update
+    """
     view = navigate_to(self, 'Edit')
     view.fill({
         'name': updates.get('name'),
@@ -273,6 +299,8 @@ def update(self, updates, reset=False, cancel=False):
 
 @MiqImplementationContext.external_for(GenericObjectDefinition.delete, ViaUI)
 def delete(self):
+    """Delete generic object definition
+    """
     view = navigate_to(self, 'Details')
 
     view.configuration.item_select(
@@ -286,7 +314,12 @@ def delete(self):
 def add_button(self, name, description, image, request, button_type='Default', display=True,
                dialog=None, open_url=None, display_for=None, submit_version=None,
                system_message=None, attributes=None, role=None, button_group=None, cancel=False):
-    view = navigate_to(self, 'AddButton', button_group=button_group)
+    """Add button to generic object definition
+    """
+    if button_group:
+        view = navigate_to(self, 'AddButton', button_group=button_group)
+    else:
+        view = navigate_to(self, 'AddButton')
     view.fill({
         'button_type': button_type,
         'name': name,
@@ -315,6 +348,8 @@ def add_button(self, name, description, image, request, button_type='Default', d
 
 @MiqImplementationContext.external_for(GenericObjectDefinition.add_button_group, ViaUI)
 def add_button_group(self, name, description, image, display=True, cancel=False):
+    """Add button group for generic object definition
+    """
     view = navigate_to(self, 'AddButtonGroup')
     view.fill({
         'image': image,
@@ -396,7 +431,7 @@ class Instances(CFMENavigateStep):
 
 @navigator.register(GenericObjectDefinition)
 class AddButtonGroup(CFMENavigateStep):
-    VIEW = GenericObjectButtonGroupView
+    VIEW = GenericObjectButtonGroupAddView
 
     prerequisite = NavigateToSibling('Details')
 
@@ -419,7 +454,7 @@ class ButtonGroupDetails(CFMENavigateStep):
 
 @navigator.register(GenericObjectDefinition)
 class AddButton(CFMENavigateStep):
-    VIEW = GenericObjectButtonView
+    VIEW = GenericObjectAddButtonView
 
     def prerequisite(self, **kwargs):
         if kwargs:

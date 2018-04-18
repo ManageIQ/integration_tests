@@ -4,18 +4,22 @@ import attr
 import importscan
 import sentaku
 
+from cfme.common import Taggable
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.update import Updateable
 
 
 @attr.s
-class GenericObjectInstance(BaseEntity, Updateable, sentaku.modeling.ElementMixin):
+class GenericObjectInstance(BaseEntity, Updateable, sentaku.modeling.ElementMixin, Taggable):
     """Generic Objects class to context switch between REST and Automate.
 
     Read/Update/Delete functionality.
     """
     update = sentaku.ContextualMethod()
     delete = sentaku.ContextualMethod()
+    add_tag = sentaku.ContextualMethod()
+    remove_tag = sentaku.ContextualMethod()
+    get_tags = sentaku.ContextualMethod()
     exists = sentaku.ContextualProperty()
 
     name = attr.ib()

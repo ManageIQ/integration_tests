@@ -3,6 +3,8 @@ from widgetastic.widget import Text, View
 from widgetastic_patternfly import Dropdown, CandidateNotFound
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import Taggable
+from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
 from widgetastic_manageiq import (ItemsToolBarViewSelector, BaseEntitiesView,
@@ -11,9 +13,6 @@ from . import GenericObjectInstance, GenericObjectInstanceCollection
 
 
 class GenericObjectInstanceToolbar(View):
-    """
-    Represents provider toolbar and its controls
-    """
     policy = Dropdown(text='Policy')
     download = Dropdown(text='Download')
 
@@ -34,8 +33,12 @@ class GenericObjectInstanceAllView(BaseLoggedInPage):
 
 
 class GenericObjectInstanceDetailsView(BaseLoggedInPage):
+    @View.nested
+    class toolbar(View):
+        policy = Dropdown(text='Policy')
+        view_selector = View.nested(ItemsToolBarViewSelector)
+
     title = Text('//div[@id="main-content"]//h1')
-    policy = Dropdown(text='Policy')
     summary = ParametrizedSummaryTable()
 
     @property
@@ -52,6 +55,25 @@ def exists(self):
         return True
     except CandidateNotFound:
         return False
+
+
+@MiqImplementationContext.external_for(GenericObjectInstance.add_tag, ViaUI)
+def add_tag(self, tag=None, cancel=False, reset=False, details=True):
+    # ToDo remove when taggable use random object
+    if not tag:
+        tag = Tag(display_name='Cost Center 001', category=Category(display_name='Cost Center'))
+    Taggable.add_tag(self, tag=tag, cancel=cancel, reset=reset, details=details)
+    return tag
+
+
+@MiqImplementationContext.external_for(GenericObjectInstance.remove_tag, ViaUI)
+def remove_tag(self, tag, cancel=False, reset=False, details=True):
+    Taggable.remove_tag(self, tag=tag, cancel=cancel, reset=reset, details=details)
+
+
+@MiqImplementationContext.external_for(GenericObjectInstance.get_tags, ViaUI)
+def get_tags(self, tenant="My Company Tags"):
+    return Taggable.get_tags(self, tenant=tenant)
 
 
 @navigator.register(GenericObjectInstanceCollection, 'All')

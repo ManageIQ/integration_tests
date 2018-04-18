@@ -93,3 +93,48 @@ def delete(self):
 def exists(self):
     return bool(
         self.appliance.rest_api.collections.generic_objects.find_by(name=self.name))
+
+
+@MiqImplementationContext.external_for(GenericObjectInstance.add_tag, ViaREST)
+def add_tag(self, tag):
+    instance = self.appliance.rest_api.collections.generic_objects.find_by(
+        name=self.name)
+    if not instance:
+        self.rest_response = None
+        return
+
+    instance = instance[0]
+
+    instance.tags.action.assign(tag)
+    assert_response(self.appliance)
+    self.rest_response = self.appliance.rest_api.response
+
+
+@MiqImplementationContext.external_for(GenericObjectInstance.remove_tag, ViaREST)
+def remove_tag(self, tag):
+    instance = self.appliance.rest_api.collections.generic_objects.find_by(
+        name=self.name)
+    if not instance:
+        self.rest_response = None
+        return
+
+    instance = instance[0]
+
+    instance.tags.action.unassign(tag)
+    assert_response(self.appliance)
+    self.rest_response = self.appliance.rest_api.response
+
+
+@MiqImplementationContext.external_for(GenericObjectInstance.get_tags, ViaREST)
+def get_tags(self):
+    instance = self.appliance.rest_api.collections.generic_objects.find_by(
+        name=self.name)
+    if not instance:
+        self.rest_response = None
+        return
+
+    instance = instance[0]
+    assigned_tags = instance.tags.all
+    assert_response(self.appliance)
+    self.rest_response = self.appliance.rest_api.response
+    return assigned_tags

@@ -1,6 +1,8 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import Parameter, VersionPick, Version
-from widgetastic.widget import ParametrizedView, Table, Text, View, ParametrizedString
+from widgetastic.widget import (
+    ParametrizedView, Table, Text, View, ParametrizedString, ParametrizedLocator
+)
 from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Tab
 
 from cfme.base.login import BaseLoggedInPage
@@ -190,43 +192,43 @@ class ServiceVMDetailsView(VMDetailsEntities):
 
 
 class AllGerericObjectInstanceView(BaseLoggedInPage):
-
     @View.nested
-    class toolbar(View):
+    class toolbar(View):  # noqa
         reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
                                            '5.9': 'Refresh this page'}))
         policy = Dropdown(text='Policy')
         download = Dropdown(text='Download')
         view_selector = View.nested(ItemsToolBarViewSelector)
-
+    title = Text('.//div[@id="main-content"]//h1')
     including_entities = View.include(BaseEntitiesView, use_parent=True)
 
     @property
     def is_displayed(self):
-        return False
+        return '(All Generic Objects)' in self.title.text
 
 
 class GerericObjectInstanceView(BaseLoggedInPage):
     @View.nested
-    class toolbar(View):
+    class toolbar(View):    # noqa
         reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
                                            '5.9': 'Refresh this page'}))
 
         @ParametrizedView.nested
-        class group(ParametrizedView):
+        class group(ParametrizedView):   # noqa
             PARAMETERS = ("group_name",)
             custom_button = Dropdown(text=ParametrizedString('{group_name}'))
 
-
         @ParametrizedView.nested
-        class instance_button(ParametrizedView):
+        class button(ParametrizedView):    # noqa
             PARAMETERS = ("button_name",)
-            custom_button = Button(title=ParametrizedString('{button_name}'))
+            custom_button = Text(ParametrizedLocator('//button[contains(@id, "custom__custom") and'
+                                                     ' normalize-space()={button_name|quote}]'))
 
     summary = ParametrizedSummaryTable()
 
     @property
     def is_displayed(self):
+        # no specific checks for this page
         return False
 
 
