@@ -95,10 +95,7 @@ class DetailsUserView(ConfigurationView):
     def is_displayed(self):
         return (
             self.title.text == 'EVM User "{}"'.format(self.context['object'].name) and
-            self.accordions.accesscontrol.is_opened and
-            # tree.currently_selected returns a list of strings with each item being the text of
-            # each level of the accordion. Last element should be the User's name
-            self.accordions.accesscontrol.tree.currently_selected[-1] == self.context['object'].name
+            self.accordions.accesscontrol.is_opened
         )
 
 
@@ -496,11 +493,7 @@ class DetailsGroupView(ConfigurationView):
     def is_displayed(self):
         return (
             self.accordions.accesscontrol.is_opened and
-            self.title.text == 'EVM Group "{}"'.format(self.context['object'].description) and
-            # tree.currently_selected returns a list of strings with each item being the text of
-            # each level of the accordion. Last element should be the Group's name
-            (self.accordions.accesscontrol.tree.currently_selected[-1] ==
-             self.context['object'].description)
+            self.title.text == 'EVM Group "{}"'.format(self.context['object'].description)
         )
 
 
@@ -951,10 +944,7 @@ class DetailsRoleView(RoleForm):
     def is_displayed(self):
         return (
             self.accordions.accesscontrol.is_opened and
-            self.title.text == 'Role "{}"'.format(self.context['object'].name) and
-            # tree.currently_selected returns a list of strings with each item being the text of
-            # each level of the accordion. Last element should be the Role's name
-            self.accordions.accesscontrol.tree.currently_selected[-1] == self.context['object'].name
+            self.title.text == 'Role "{}"'.format(self.context['object'].name)
         )
 
 

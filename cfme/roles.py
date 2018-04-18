@@ -508,6 +508,7 @@ role_access_ui_58z = {
     },
     'evmgroup-operator': {
         'Automation': {
+            'Ansible': ['Credentials', 'Repositories', 'Playbooks'],
             'Ansible Tower': ['Explorer']},
         'Cloud Intel': ['Timelines', 'RSS', 'Dashboard', 'Reports', 'Chargeback'],
         'Compute': {
@@ -545,6 +546,7 @@ role_access_ui_58z = {
     },
     'evmgroup-vm_user': {
         'Automation': {
+            'Ansible': ['Credentials', 'Repositories', 'Playbooks'],
             'Ansible Tower': ['Explorer']},
         'Compute': {
             'Clouds': ['Instances'],

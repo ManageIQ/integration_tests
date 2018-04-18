@@ -122,10 +122,12 @@ def test_user_assign_multiple_groups(appliance, request, group_collection):
     request.addfinalizer(user.delete)
     request.addfinalizer(user.appliance.server.login_admin)
 
-    view = appliance.server.login(user)
-
-    assert set(view.group_names) == set(group_names), (
-        "User's assigned groups are different from expected groups")
+    with user:
+        view = navigate_to(appliance.server, 'LoggedIn')
+        assigned_groups = view.group_names
+        assert set(assigned_groups) == set(group_names), (
+            "User {} assigned groups {} are different from expected groups {}"
+            .format(user, view.group_names, group_names))
 
 
 # @pytest.mark.meta(blockers=[1035399]) # work around instead of skip
@@ -137,7 +139,7 @@ def test_user_login(appliance, group_collection):
     user = new_user(appliance, [group])
     try:
         with user:
-            navigate_to(appliance.server, 'Dashboard')
+            navigate_to(appliance.server, 'LoggedIn')
     finally:
         user.appliance.server.login_admin()
 
@@ -747,7 +749,7 @@ def test_permissions(appliance, product_features, allowed_actions, disallowed_ac
     fails = {}
     try:
         with user:
-            appliance.server.login(user)
+            navigate_to(appliance.server, 'LoggedIn')
             # TODO: split this test into 2 parameterized tests
             for name, action_thunk in sorted(allowed_actions.items()):
                 try:
@@ -852,7 +854,7 @@ def test_user_change_password(appliance, request):
     request.addfinalizer(appliance.server.login_admin)
     with user:
         appliance.server.logout()
-        appliance.server.login(user)
+        navigate_to(appliance.server, 'LoggedIn')
         assert appliance.server.current_full_name() == user.name
     appliance.server.login_admin()
     with update(user):
@@ -863,7 +865,7 @@ def test_user_change_password(appliance, request):
         )
     with user:
         appliance.server.logout()
-        appliance.server.login(user)
+        navigate_to(appliance.server, 'LoggedIn')
         assert appliance.server.current_full_name() == user.name
 
 

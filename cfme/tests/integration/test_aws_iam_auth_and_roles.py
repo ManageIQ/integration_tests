@@ -3,6 +3,7 @@ from deepdiff import DeepDiff
 
 from cfme.roles import role_access_ui_58z, role_access_ui_59z, role_access_ssui
 from cfme.utils.appliance import ViaUI, current_appliance
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
@@ -28,10 +29,6 @@ def auth_groups():
 @pytest.mark.parametrize('group_name, context', auth_groups())
 @pytest.mark.uncollectif(lambda appliance: appliance.is_dev, reason="Is a rails server")
 @pytest.mark.meta(blockers=[
-    BZ(1531499,
-       forced_streams=['5.8'],
-       unblock=lambda group_name: group_name not in [
-           'evmgroup-administrator', 'evmgroup-vm_user', 'evmgroup-desktop', 'evmgroup-operator']),
     BZ(1525598,
        forced_streams=['5.8'],
        unblock=lambda group_name: group_name not in
@@ -66,28 +63,29 @@ def test_group_roles(appliance, setup_aws_auth_provider, group_name, context, so
     with appliance.context.use(context):
         # fullname overrides user.name attribute, but doesn't impact login with username credential
         user = appliance.collections.users.simple_user(username, password, fullname=fullname)
-        view = appliance.server.login(user)
-        assert appliance.server.current_full_name() == user.name
-        assert group_name.lower() in [name.lower() for name in appliance.server.group_names()]
-        nav_visible = view.navigation.nav_item_tree()
+        with user:
+            view = navigate_to(appliance.server, 'LoggedIn', wait_for_view=True)
+            assert appliance.server.current_full_name() == user.name
+            assert group_name.lower() in [name.lower() for name in appliance.server.group_names()]
+            nav_visible = view.navigation.nav_item_tree()
 
-        # RFE BZ 1526495 shows up as an extra requests link in nav
-        bz = BZ(1526495,
-                forced_streams=['5.8', '5.9'],
-                unblock=lambda group_name: group_name not in
-                ['evmgroup-user', 'evmgroup-approver', 'evmgroup-desktop', 'evmgroup-vm_user',
-                 'evmgroup-administrator', 'evmgroup-super_administrator'])
-        for area in group_access.keys():
-            # using .get() on nav_visibility because it may not have `area` key
-            diff = DeepDiff(group_access[area], nav_visible.get(area, {}),
-                            verbose_level=0,  # If any higher, will flag string vs unicode
-                            ignore_order=True)
-            nav_extra = diff.get('iterable_item_added')
+            # RFE BZ 1526495 shows up as an extra requests link in nav
+            bz = BZ(1526495,
+                    forced_streams=['5.8', '5.9'],
+                    unblock=lambda group_name: group_name not in
+                    ['evmgroup-user', 'evmgroup-approver', 'evmgroup-desktop', 'evmgroup-vm_user',
+                     'evmgroup-administrator', 'evmgroup-super_administrator'])
+            for area in group_access.keys():
+                # using .get() on nav_visibility because it may not have `area` key
+                diff = DeepDiff(group_access[area], nav_visible.get(area, {}),
+                                verbose_level=0,  # If any higher, will flag string vs unicode
+                                ignore_order=True)
+                nav_extra = diff.get('iterable_item_added')
 
-            if nav_extra and 'Requests' in nav_extra.values() and bz.blocks:
-                logger.warning('Skipping RBAC verification for group "%s" due to %r',
-                               group_name, bz)
-                continue
-            else:
-                soft_assert(diff == {}, '{g} RBAC mismatch for {a}: {d}'
-                                        .format(g=group_name, a=area, d=diff))
+                if nav_extra and 'Requests' in nav_extra.values() and bz.blocks:
+                    logger.warning('Skipping RBAC verification for group "%s" due to %r',
+                                   group_name, bz)
+                    continue
+                else:
+                    soft_assert(diff == {}, '{g} RBAC mismatch for {a}: {d}'
+                                            .format(g=group_name, a=area, d=diff))

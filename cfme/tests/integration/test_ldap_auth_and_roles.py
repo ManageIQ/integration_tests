@@ -1,5 +1,6 @@
 import pytest
 
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.testgen import auth_groups, generate
 
@@ -35,5 +36,6 @@ def test_group_roles(
         pytest.fail('No match in credentials file for group "{}"'.format(group_name))
 
     user = appliance.collections.users.simple_user(username, password)
-    appliance.server.login(user)
+    with user:
+        navigate_to(appliance.server, 'LoggedIn')
     # assert set(menu.nav.visible_pages()) == set(group_data)
