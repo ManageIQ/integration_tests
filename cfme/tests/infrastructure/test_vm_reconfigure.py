@@ -122,6 +122,49 @@ def test_vm_reconfig_add_remove_disk_cold(
     assert small_vm.configuration.num_disks == orig_config.num_disks, msg
 
 
+@pytest.mark.parametrize('disk_type', ['thin', 'thick'])
+@pytest.mark.parametrize(
+    'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
+@pytest.mark.provider([VMwareProvider], required_fields=[['reconfig_test', 'vm']])
+def test_vm_reconfig_add_remove_disk_hot(provider, disk_type, disk_mode):
+
+    vm_name = provider.data['reconfig_test']['vm']
+
+    if not provider.mgmt.does_vm_exist(vm_name):
+        pytest.skip("Skipping test, {} VM does not exist".format(vm_name))
+    provider.mgmt.start_vm(vm_name)
+    provider.mgmt.wait_vm_running(vm_name)
+
+    vm = VM.factory(vm_name=vm_name, provider=provider)
+    orig_config = vm.configuration.copy()
+    new_config = orig_config.copy()
+    new_config.add_disk(
+        size=500, size_unit='MB', type=disk_type, mode=disk_mode)
+
+    add_disk_request = vm.reconfigure(new_config)
+    # Add disk request verification
+    wait_for(add_disk_request.is_succeeded, timeout=360, delay=45,
+             message="confirm that disk was added")
+    # Add disk UI verification
+    wait_for(
+        lambda: vm.configuration.num_disks == new_config.num_disks, timeout=360, delay=45,
+        fail_func=vm.refresh_relationships,
+        message="confirm that disk was added")
+    msg = "Disk wasn't added to VM config"
+    assert vm.configuration.num_disks == new_config.num_disks, msg
+    remove_disk_request = vm.reconfigure(orig_config)
+    # Remove disk request verification
+    wait_for(remove_disk_request.is_succeeded, timeout=360, delay=45,
+             message="confirm that previously-added disk was removed")
+    # Remove disk UI verification
+    wait_for(
+        lambda: vm.configuration.num_disks == orig_config.num_disks, timeout=360, delay=45,
+        fail_func=vm.refresh_relationships,
+        message="confirm that previously-added disk was removed")
+    msg = "Disk wasn't removed from VM config"
+    assert vm.configuration.num_disks == orig_config.num_disks, msg
+    
+
 def test_reconfig_vm_negative_cancel(provider, small_vm, ensure_vm_stopped):
     """ Cancel reconfiguration changes """
     config_vm = small_vm.configuration.copy()
