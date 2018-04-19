@@ -3,8 +3,6 @@ import pytest
 
 from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
-from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.provider import CloudInfraProvider
 from cfme.infrastructure.virtual_machines import Vm
@@ -42,14 +40,7 @@ def test_cockpit_server_role(appliance, provider, setup_provider, new_vm, enable
 
     view = navigate_to(new_vm, 'Details')
     if enable:
-        if provider.one_of(AzureProvider, EC2Provider):
-            # For Azure and EC2 the Web Console button directly shows in the toolbar
-            assert not view.toolbar.web_console.disabled
-        else:
-            assert view.toolbar.access.item_enabled('Web Console')
+        assert view.toolbar.access.item_enabled('Web Console')
         appliance.server.settings.disable_server_roles('cockpit_ws')
     else:
-        if provider.one_of(AzureProvider, EC2Provider):
-            assert view.toolbar.web_console.disabled
-        else:
-            assert not view.toolbar.access.item_enabled('Web Console')
+        assert not view.toolbar.access.item_enabled('Web Console')

@@ -32,7 +32,6 @@ class InstanceDetailsToolbar(View):
     monitoring = Dropdown('Monitoring')
     power = Dropdown('Instance Power Functions')  # title
     download = Button(title='Download summary in PDF format')
-    web_console = Button('Web Console')
     access = Dropdown("Access")
 
 
