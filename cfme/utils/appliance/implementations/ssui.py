@@ -189,6 +189,7 @@ navigate_to = navigator.navigate
 class ViaSSUI(Implementation):
 
     name = "SSUI"
+    navigator = navigator
 
     def __str__(self):
         return 'SSUI'

@@ -4,6 +4,9 @@ from cfme.utils.log import logger
 
 class Implementation(object):
     """UI implementation using the normal ux"""
+
+    navigator = None
+
     def __init__(self, owner):
         self.owner = owner
 
