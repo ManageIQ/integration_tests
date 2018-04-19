@@ -140,9 +140,11 @@ class Repository(BaseEntity, Fillable):
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
-            view.flash.assert_message(
-                'Edit of Repository "{}" was successfully initialized.'.format(
-                    updates.get("name", self.name)))
+            if self.appliance.version < "5.9":
+                msg = 'Edit of Repository "{}" was successfully initialized.'
+            else:
+                msg = 'Edit of Repository "{}" was successfully initiated.'
+            view.flash.assert_message(msg.format(updates.get("name", self.name)))
 
             def _wait_until_changes_applied():
                 changed_updated_at = self.db_object.updated_at
