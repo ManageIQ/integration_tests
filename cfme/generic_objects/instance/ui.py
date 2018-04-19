@@ -98,7 +98,7 @@ class Details(CFMENavigateStep):
 
 
 @navigator.register(GenericObjectInstance, 'EditTags')
-class Details(CFMENavigateStep):
+class EditTags(CFMENavigateStep):
     VIEW = TagPageView
 
     def prerequisite(self):

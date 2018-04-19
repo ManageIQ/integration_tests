@@ -5,8 +5,8 @@ import importscan
 import sentaku
 
 from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.generic_objects.instance import GenericObjectInstanceCollection
 from cfme.utils.update import Updateable
-from ..instance import GenericObjectInstanceCollection
 
 
 @attr.s
