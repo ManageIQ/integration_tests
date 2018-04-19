@@ -6,7 +6,9 @@ import sentaku
 
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
+from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
+from cfme.utils.version import LATEST
 
 
 @attr.s
@@ -121,7 +123,14 @@ class ServerCollection(BaseCollection, sentaku.modeling.ElementMixin):
             server = server_collection.all[0]
         else:
             server = server_collection.find_by(is_master=True)[0]
-        return self.instantiate(name=server.name, sid=server.id)
+
+        try:
+            name = server.name
+        except AttributeError:
+            logger.error('The EVM has no name, setting it to EVM')
+            name = 'EVM' if self.appliance.version == LATEST else server.name
+
+        return self.instantiate(name=name, sid=server.id)
 
 
 @attr.s
