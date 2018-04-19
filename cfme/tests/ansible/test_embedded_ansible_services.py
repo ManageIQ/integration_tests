@@ -161,7 +161,7 @@ def custom_service_button(appliance, ansible_catalog_item):
 @pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
 def test_service_ansible_playbook_available(appliance):
     view = navigate_to(appliance.collections.catalog_items, "Choose Type")
-    assert "Ansible Playbook" in [option.text for option in view.catalog_item_type.all_options]
+    assert "Ansible Playbook" in [option.text for option in view.select_item_type.all_options]
 
 
 @pytest.mark.tier(1)
