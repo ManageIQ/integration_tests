@@ -17,6 +17,8 @@ def pytest_configure(config):
     # disable pytest warnings plugin in order to keep our own warning logging
     # we might want to remove this one
     config.pluginmanager.set_blocked('warnings')
+    # also disable the pytest logging system since its triggering issues with our own
+    config.pluginmanager.set_blocked('logging-plugin')
 
 
 def pytest_collection_finish(session):
