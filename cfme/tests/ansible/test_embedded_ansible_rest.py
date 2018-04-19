@@ -6,7 +6,6 @@ import pytest
 from cfme import test_requirements
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response, delete_resources_from_collection
-from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -123,9 +122,7 @@ class TestReposRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.configuration_script_sources
-        delete_resources_from_collection(
-            collection, [repository], not_found=False, num_sec=300, delay=5)
+        delete_resources_from_collection([repository], not_found=False, num_sec=300, delay=5)
 
 
 class TestPayloadsRESTAPI(object):
