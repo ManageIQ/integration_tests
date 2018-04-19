@@ -10,6 +10,11 @@ RUNS = [
 
 
 def main():
+    """
+    this one simply runs the freezing for all templates
+
+    this is the one you should always use
+    """
     with freeze.maybe_transient_venv_dir(None, False) as venv:
         for template, out in RUNS:
             args = argparse.Namespace(
