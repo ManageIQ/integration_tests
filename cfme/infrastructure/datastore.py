@@ -11,7 +11,6 @@ from widgetastic_patternfly import Dropdown, Accordion
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.common.host_views import HostsView
-from cfme.configure.tasks import is_datastore_analysis_finished, TasksView
 from cfme.exceptions import ItemNotFound, MenuItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
@@ -326,10 +325,10 @@ class Datastore(Pretty, BaseEntity, Taggable):
         view.flash.assert_success_message(('"{}": scan successfully '
                                            'initiated'.format(self.name)))
         if wait_for_task_result:
-            view = self.appliance.browser.create_view(TasksView)
-            wait_for(lambda: is_datastore_analysis_finished(self.name),
-                     delay=15, timeout="15m",
-                     fail_func=view.reload.click)
+            task = self.appliance.collections.tasks.switch_tab('MyOtherTasks').instantiate(
+                name="SmartState Analysis for [{}]".format(self.name))
+            task.wait_for_finished()
+            return task
 
 
 @attr.s

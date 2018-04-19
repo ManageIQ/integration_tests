@@ -2,7 +2,6 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.configure.tasks import delete_all_tasks
 from cfme.exceptions import MenuItemNotFound
 from cfme.infrastructure.host import Host, get_credentials_from_config
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -82,7 +81,7 @@ def datastores_hosts_setup(provider, datastore, request, appliance):
 def clear_all_tasks(appliance):
     destination = 'AllTasks' if appliance.version >= '5.9' else 'AllOtherTasks'
     # clear table
-    delete_all_tasks(destination)
+    appliance.collections.tasks.switch_tab(destination).delete_all()
 
 
 @pytest.mark.tier(2)

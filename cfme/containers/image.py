@@ -14,7 +14,6 @@ from cfme.containers.provider import (Labelable,
                                       GetRandomInstancesMixin)
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
-from cfme.configure import tasks
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.wait import wait_for, TimedOutError
 from widgetastic_manageiq import SummaryTable, BaseEntitiesView
@@ -71,11 +70,9 @@ class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssi
         assert filter(lambda m: 'Analysis successfully initiated' in m.text, view.flash.messages)
         if wait_for_finish:
             try:
-                wait_for(tasks.is_analysis_finished,
-                         func_kwargs={'name': '(?i)(Container Image.*)',
-                                      'task_type': 'container'},
-                         timeout=timeout,
-                         fail_func=self.appliance.server.browser.refresh)
+                task = self.appliance.collections.tasks.switch_tab('AllTasks').instantiate(
+                    name=self.name)
+                task.wait_for_finished()
             except TimedOutError:
                 raise TimedOutError('Timeout exceeded, Waited too much time for SSA to finish ({}).'
                                     .format(timeout))
@@ -210,29 +207,26 @@ class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssi
 
         # task_name change from str to regular expression
         # the str compile on tasks module
-        task_name = '(?i)(Container Image.*)'
-        task_type = 'container'
-        num_of_tasks = len(image_entities)
+        image_enities_names = []
         images_view = navigate_to(self, 'All')
         self.check_image_entities(image_entities)
 
         images_view.toolbar.configuration.item_select(
             'Perform SmartState Analysis', handle_alert=True)
         for image_entity in image_entities:
+            image_enities_names.append(image_entity.name)
             images_view.flash.assert_success_message(
                 '"{}": Analysis successfully initiated'.format(image_entity.name), partial=True
             )
 
         if wait_for_finish:
             try:
-                # check all tasks state finished
-                tasks.wait_analysis_finished_multiple_tasks(task_name, task_type,
-                                                            num_of_tasks, timeout=timeout)
+                self.appliance.collections.tasks.switch_tab('AllTasks').wait_for_finished(
+                    image_enities_names, timeout=timeout)
 
                 # check all task passed successfully with no error
-                if tasks.check_tasks_have_no_errors(task_name, task_type, num_of_tasks,
-                                                    silent_failure=True,
-                                                    clear_tasks_after_success=False):
+                if self.appliance.collections.tasks.switch_tab('AllTasks').is_successfully_finished(
+                        image_enities_names, silent_failure=True):
                     return True
                 else:
                     logger.error('Some Images SSA tasks finished with error message,'

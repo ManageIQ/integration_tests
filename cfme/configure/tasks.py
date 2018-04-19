@@ -2,196 +2,20 @@
 
 """ Module dealing with Configure/Tasks section.
 """
-import re
+import attr
+
 from navmazing import NavigateToAttribute
+from widgetastic.exceptions import RowNotFound
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
+from widgetastic_manageiq import BootstrapSelect, Button, CheckboxSelect, Table
 from widgetastic_patternfly import Dropdown, Tab
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.exceptions import TaskFailedException
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError
-from widgetastic_manageiq import BootstrapSelect, Button, CheckboxSelect, Table
-
-
-table_loc = '//div[@id="gtl_div"]//table'
-
-TABS_DATA_PER_PROVIDER = {
-    'container': {
-        'tab': 'AllTasks',
-        'task': '{}',
-        'state': 'finished'
-    },
-    'vm': {
-        'tab': 'AllTasks',
-        'task': 'Scan from Vm {}',
-        'state': 'finished'
-    },
-    'host': {
-        'tab': 'MyOtherTasks',
-        'task': "SmartState Analysis for '{}'",
-        'state': 'Finished'
-    },
-    'datastore': {
-        'tab': 'MyOtherTasks',
-        'task': 'SmartState Analysis for \[{}\]',
-        'state': "Finished"
-    },
-    'cluster': {
-        'tab': 'MyOtherTasks',
-        'task': 'SmartState Analysis for \[{}\]',
-        'state': "Finished"}
-}
-
-
-def is_vm_analysis_finished(name, **kwargs):
-    return is_analysis_finished(name=name, task_type='vm', **kwargs)
-
-
-def is_host_analysis_finished(name, **kwargs):
-    return is_analysis_finished(name=name, task_type='host', **kwargs)
-
-
-def is_datastore_analysis_finished(name, **kwargs):
-    return is_analysis_finished(name=name, task_type='datastore', **kwargs)
-
-
-def is_cluster_analysis_finished(name, **kwargs):
-    return is_analysis_finished(name=name, task_type='cluster', **kwargs)
-
-
-def delete_all_tasks(destination):
-    view = navigate_to(Tasks, destination)
-    view.delete.item_select('Delete All', handle_alert=True)
-
-
-def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
-    """ Check if analysis is finished - if not, reload page"""
-
-    return check_tasks_have_no_errors(name, task_type, expected_num_of_tasks=1,
-                                      silent_failure=False,
-                                      clear_tasks_after_success=clear_tasks_after_success)
-
-
-def are_all_tasks_match_status(name, expected_num_of_tasks, task_type):
-    """ Check if all tasks states are finished - if not, reload page"""
-
-    tabs_data = TABS_DATA_PER_PROVIDER[task_type]
-    return all_tasks_match_status(
-        destination=tabs_data['tab'],
-        task_name=tabs_data['task'].format(name),
-        expected_status=tabs_data['state'],
-        expected_num_of_tasks=expected_num_of_tasks
-    )
-
-
-def all_tasks_match_status(destination, task_name, expected_status, expected_num_of_tasks):
-    """ Check if all tasks with same task name states are finished - if not, reload page"""
-    view = navigate_to(Tasks, destination)
-    tab_view = getattr(view.tabs, destination.lower())
-
-    # task_name change from str to support also regular expression pattern
-    task_name = re.compile(task_name)
-    # expected_status change from str to support also regular expression pattern
-    expected_status = re.compile(expected_status, re.IGNORECASE)
-
-    try:
-        rows = list(tab_view.table.rows(task_name=task_name, state=expected_status))
-    except IndexError:
-        logger.warn('IndexError exception suppressed when searching for task row, no match found.')
-        return False
-
-    # check state = finished for all tasks
-    return expected_num_of_tasks == len(rows), len(rows)
-
-
-def check_tasks_have_no_errors(task_name, task_type, expected_num_of_tasks, silent_failure=False,
-                               clear_tasks_after_success=False):
-    """ Check if all tasks analysis match state with no errors"""
-
-    tabs_data = TABS_DATA_PER_PROVIDER[task_type]
-    destination = tabs_data['tab']
-    task_name = tabs_data['task'].format(task_name)
-    expected_status = tabs_data['state']
-
-    view = navigate_to(Tasks, destination)
-    tab_view = getattr(view.tabs, destination.lower())
-
-    # task_name change from str to support also regular expression pattern
-    task_name = re.compile(task_name)
-    # expected_status change from str to support also regular expression pattern
-    expected_status = re.compile(expected_status, re.IGNORECASE)
-
-    wait_for(
-        lambda: tab_view.table.is_displayed,
-        timeout=10,
-        delay=2,
-        fail_func=view.reload.click
-    )
-    try:
-        rows = list(tab_view.table.rows(task_name=task_name, state=expected_status))
-    except IndexError:
-        logger.warn('IndexError exception suppressed when searching for task row, no match found.')
-        return False
-
-    # check state for all tasks
-    if expected_num_of_tasks != len(rows):
-        logger.warn('There is no match between expected number of tasks "{}",'
-                    ' and number of tasks on state "{}'.format(expected_num_of_tasks,
-                                                               expected_status))
-        return False
-
-    # throw exception if error in message
-    for row in rows:
-        message = row.message.text.lower()
-        for term in ('error', 'timed out', 'failed', 'unable to run openscap'):
-            if term in message:
-                if silent_failure:
-                    logger.warning("Task {} error: {}".format(row.task_name.text, message))
-                    return False
-                elif term == 'timed out':
-                    raise TimedOutError("Task {} timed out: {}".format(row.task_name.text, message))
-                else:
-                    raise TaskFailedException(task_name=row.task_name.text, message=message)
-
-    if clear_tasks_after_success:
-        # Remove all finished tasks so they wouldn't poison other tests
-        delete_all_tasks(destination)
-
-    return True
-
-
-def wait_analysis_finished_multiple_tasks(
-        task_name, task_type, expected_num_of_tasks, delay=5, timeout='5M'):
-    """ Wait until analysis is finished (or timeout exceeded)"""
-    row_completed = []
-    # get view for reload button
-    view = navigate_to(Tasks, 'AllTasks')
-
-    def tasks_finished(output_rows, task_name, task_type, expected_num_of_tasks):
-
-        is_succeed, num_of_succeed_tasks = are_all_tasks_match_status(
-            task_name, expected_num_of_tasks, task_type)
-        output_rows.append(num_of_succeed_tasks)
-        return is_succeed
-
-    try:
-        wait_for(tasks_finished,
-                 func_kwargs={'output_rows': row_completed,
-                              'task_name': task_name,
-                              'task_type': task_type,
-                              'expected_num_of_tasks': expected_num_of_tasks},
-                 delay=delay,
-                 timeout=timeout,
-                 fail_func=view.reload.click)
-        return row_completed[-1]
-    except TimedOutError as e:
-        logger.error("Only {}  Tasks out of {}, Finished".format(row_completed[-1],
-                                                                 expected_num_of_tasks))
-        raise TimedOutError('exception {}'.format(e))
 
 
 class TasksView(BaseLoggedInPage):
@@ -221,29 +45,26 @@ class TasksView(BaseLoggedInPage):
         # It's the lowest level div with an id that captures the status checkboxes
         status = CheckboxSelect(search_root='tasks_options_div')
         state = BootstrapSelect(id='state_choice')
+        table = Table('//div[@id="gtl_div"]//table')
 
         @View.nested
         class mytasks(Tab):  # noqa
             TAB_NAME = VersionPick({Version.lowest(): 'My VM and Container Analysis Tasks',
                                     '5.9': 'My Tasks'})
-            table = Table(table_loc)
 
         @View.nested
         class myothertasks(Tab):  # noqa
             TAB_NAME = VersionPick({'5.9': 'My Tasks',
                                     Version.lowest(): 'My Other UI Tasks'})
-            table = Table(table_loc)
 
         @View.nested
         class alltasks(Tab):  # noqa
             TAB_NAME = VersionPick({'5.9': 'All Tasks',
                                     Version.lowest(): "All VM and Container Analysis Tasks"})
-            table = Table(table_loc)
 
         @View.nested
         class allothertasks(Tab):  # noqa
             TAB_NAME = "All Other Tasks"
-            table = Table(table_loc)
 
     @property
     def is_displayed(self):
@@ -254,11 +75,203 @@ class TasksView(BaseLoggedInPage):
             self.tabs.allothertasks.is_displayed)
 
 
-class Tasks(Navigatable):
-    pass
+@attr.s
+class Task(BaseEntity):
+    """Model of an tasks in cfme.
+
+    Args:
+        name: Name of the task.
+        user: User who initiated the task.
+        server: Cfme server.
+        tab: Tab where current task located.
+
+    """
+    name = attr.ib()
+    user = attr.ib(default='admin')
+    server = attr.ib(default='EVM')    # >= 5.9 only
+    tab = attr.ib(default='MyTasks')
+
+    def _is_row_present(self, row_name):
+        view = navigate_to(self.parent, self.tab)
+        for row in view.tabs.table.rows():
+            if row_name in row.task_name.text:
+                return True
+        return False
+
+    @property
+    def _row(self):
+        view = navigate_to(self.parent, self.tab)
+        wait_for(
+            lambda: self._is_row_present(self.name), delay=5, timeout='2m',
+            fail_func=view.reload.click)
+        row = view.tabs.table.row(task_name=self.name)
+        return row
+
+    @property
+    def status(self):
+        # status column doen't have text id
+        if hasattr(self, '_status'):
+            return self._status
+        col = self._row[1]
+        if col.browser.is_displayed('i[@class="pficon pficon-ok"]', parent=col):
+            return 'ok'
+        elif col.browser.is_displayed('i[@class="pficon pficon-error-circle-o"]', parent=col):
+            return 'error'
+        else:
+            return 'in_progress'
+
+    @property
+    def state(self):
+        if hasattr(self, '_state'):
+            return self._state
+        return self._row.state.text
+
+    @property
+    def updated(self):
+        if hasattr(self, '_updated'):
+            return self._updated
+        return self._row.updated.text
+
+    @property
+    def started(self):
+        if hasattr(self, '_started'):
+            return self._started
+        return self._row.started.text
+
+    @property
+    def queued(self):
+        if hasattr(self, '_queued'):
+            return self._queued
+        return self._row.queued.text if self.appliance.version >= '5.9' else None
+
+    @property
+    def message(self):
+        if hasattr(self, '_message'):
+            return self._message
+        return self._row.message.text
+
+    @property
+    def exists(self):
+        try:
+            self._row
+            return True
+        except RowNotFound:
+            return False
+
+    @property
+    def is_successfully_finished(self):
+        message = self.message.lower()
+        if self.status == 'error':
+            if 'timed out' in message:
+                raise TimedOutError("Task {} timed out: {}".format(self.name, message))
+            else:
+                raise Exception("Task {} error: {}".format(self.name, message))
+
+        if self.state.lower() == 'finished' and self.status == 'ok':
+            self._status = self.status
+            self._state = self.state
+            self._updated = self.updated
+            self._started = self.started
+            if self.appliance.version >= '5.9':
+                self._queued = self.queued
+            self._message = self.message
+            return True
+        return False
+
+    def wait_for_finished(self, delay=5, timeout='10m'):
+        view = navigate_to(self.parent, self.tab)
+        wait_for(
+            lambda: self.is_successfully_finished, delay=delay, timeout=timeout,
+            fail_func=view.reload.click)
 
 
-@navigator.register(Tasks, 'MyTasks')
+@attr.s
+class TaskCollection(BaseCollection):
+    """Collection object for :py:class:`cfme.configure.tasks.Task`."""
+    ENTITY = Task
+    tab = attr.ib(default='MyTasks')
+
+    def __init__(self, tab):
+        """
+        Args:
+            tab: One of ['MyTasks', 'MyOtherTasks', 'AllTasks', 'AllOtherTasks'];
+                 Set to 'MyTasks' by default to display all tasks.
+        """
+
+    def switch_tab(self, tab):
+        self.tab = tab
+        return self
+
+    def instantiate(self, *args, **kwargs):
+        return self.ENTITY.from_collection(self, tab=self.tab, *args, **kwargs)
+
+    def set_filter(self, values, cancel=False):
+        view = navigate_to(self, self.tab)
+        view.fill(values)
+        if cancel:
+            view.reset.click()
+        view.apply.click()
+
+    def set_default_filter(self):
+        view = navigate_to(self, self.tab)
+        view.default.click()
+
+    def find(self, name):
+        tasks = self.all()
+        for task in tasks:
+            return task if task.name == name else None
+
+    def all(self):
+        view = navigate_to(self, self.tab)
+        tasks = [self.instantiate(name=row.name.text, tab=self.tab) for row in
+                 view.tabs.table.rows()]
+        return tasks
+
+    def delete(self, tasks):
+        view = navigate_to(self, self.tab)
+        for row in view.tabs.table.rows():
+            if row.name in tasks:
+                row.check()
+        view.delete.item_select('Delete', handle_alert=True)
+
+    def delete_all(self):
+        """Deletes all currently visible on page"""
+        view = navigate_to(self, self.tab)
+        view.delete.item_select('Delete All', handle_alert=True)
+
+    def is_finished(self, tasks):
+        view = navigate_to(self, self.tab)
+        for row in view.tabs.table.rows:
+            if row.name in tasks and row.state.lower() != "finished":
+                return False
+        return True
+
+    def is_successfully_finished(self, tasks, silent_failure=False):
+        view = navigate_to(self, self.tab)
+        rows = []
+        for task in tasks:
+            rows.append(view.tabs.table.rows(task_name=task, state='finished'))
+        for row in rows:
+            message = row.message.text.lower()
+            if row[1].browser.is_displayed('i[@class="pficon pficon-error-circle-o"]',
+                                           parent=row[1]):
+                if silent_failure:
+                    logger.warning("Task {} error: {}".format(row.task_name.text, message))
+                    return False
+                elif 'timed out' in message:
+                    raise TimedOutError("Task {} timed out: {}".format(row.task_name.text, message))
+                else:
+                    Exception("Task {} error: {}".format(row.task_name.text, message))
+        return True
+
+    def wait_for_finished(self, tasks, delay=5, timeout='5m'):
+        view = navigate_to(self.parent, self.tab)
+        wait_for(
+            lambda: self.is_finished(tasks), delay=delay, timeout=timeout,
+            fail_func=view.reload.click)
+
+
+@navigator.register(TaskCollection, 'MyTasks')
 class MyTasks(CFMENavigateStep):
     VIEW = TasksView
     prerequisite = NavigateToAttribute('appliance.server', 'Tasks')
@@ -271,7 +284,7 @@ class MyTasks(CFMENavigateStep):
         return tasks.is_displayed and tasks.is_active()
 
 
-@navigator.register(Tasks, 'MyOtherTasks')
+@navigator.register(TaskCollection, 'MyOtherTasks')
 class MyOtherTasks(CFMENavigateStep):
     VIEW = TasksView
     prerequisite = NavigateToAttribute('appliance.server', 'Tasks')
@@ -284,7 +297,7 @@ class MyOtherTasks(CFMENavigateStep):
         return tasks.is_displayed and tasks.is_active()
 
 
-@navigator.register(Tasks, 'AllTasks')
+@navigator.register(TaskCollection, 'AllTasks')
 class AllTasks(CFMENavigateStep):
     VIEW = TasksView
     prerequisite = NavigateToAttribute('appliance.server', 'Tasks')
@@ -297,7 +310,7 @@ class AllTasks(CFMENavigateStep):
         return tasks.is_displayed and tasks.is_active()
 
 
-@navigator.register(Tasks, 'AllOtherTasks')
+@navigator.register(TaskCollection, 'AllOtherTasks')
 class AllOtherTasks(CFMENavigateStep):
     VIEW = TasksView
     prerequisite = NavigateToAttribute('appliance.server', 'Tasks')

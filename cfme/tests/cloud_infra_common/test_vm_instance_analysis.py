@@ -9,7 +9,6 @@ from cfme.cloud.provider import CloudProvider, CloudInfraProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm_views import DriftAnalysis
-from cfme.configure.tasks import is_vm_analysis_finished, TasksView
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.configure.configuration.region_settings import Tag, Category
 from cfme.control.explorer.policies import VMControlPolicy
@@ -354,13 +353,9 @@ def schedule_ssa(appliance, ssa_vm, ssa_profiled_vm, wait_for_task_result=True):
     ss = appliance.collections.system_schedules.create(**schedule_args)
     ss.enable()
     if wait_for_task_result:
-        view = appliance.browser.create_view(TasksView)
-        wait_for(
-            is_vm_analysis_finished,
-            func_args=[ssa_vm.name],
-            delay=5, timeout="15m",
-            fail_func=view.reload.click
-        )
+        task = appliance.collections.tasks.switch_tab('AllTasks').instantiate(
+            name='Scan from Vm {}'.format(ssa_vm.name))
+        task.wait_for_finished()
     return ss
 
 

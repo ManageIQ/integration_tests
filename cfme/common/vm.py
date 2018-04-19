@@ -8,7 +8,6 @@ from wrapanapi import exceptions
 from cfme.common import Taggable
 from cfme.common.vm_console import ConsoleMixin
 from cfme.common.vm_views import DriftAnalysis, DriftHistory, VMPropertyDetailView
-from cfme.configure.tasks import is_vm_analysis_finished, TasksView
 from cfme.exceptions import VmOrInstanceNotFound, ItemNotFound, OptionNotAvailable
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
@@ -333,9 +332,10 @@ class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, 
         view.toolbar.configuration.item_select('Perform SmartState Analysis',
                                                handle_alert=not cancel)
         if wait_for_task_result:
-            view = self.appliance.browser.create_view(TasksView)
-            wait_for(lambda: is_vm_analysis_finished(self.name),
-                     delay=15, timeout="10m", fail_func=view.reload.click)
+            task = self.appliance.collections.tasks.switch_tab('AllTasks').instantiate(
+                name='Scan from Vm {}'.format(self.name))
+            task.wait_for_finished()
+            return task
 
     def wait_to_disappear(self, timeout=600):
         """Wait for a VM to disappear within CFME

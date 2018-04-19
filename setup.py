@@ -178,7 +178,8 @@ setup(
             'volume_backups = cfme.storage.volume_backup:VolumeBackupCollection',
             'volume_snapshots = cfme.storage.volume_snapshot:VolumeSnapshotCollection',
             'volumes = cfme.storage.volume:VolumeCollection',
-            'zones = cfme.base:ZoneCollection'
+            'zones = cfme.base:ZoneCollection',
+            'tasks = cfme.configure.tasks:TaskCollection',
         ],
         'pytest11':
         [

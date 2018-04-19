@@ -2,7 +2,6 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.configure.tasks import delete_all_tasks
 from cfme.configure.configuration.region_settings import Tag, Category
 from cfme.common.host_views import HostDriftAnalysis
 from cfme.infrastructure.host import Host
@@ -73,7 +72,7 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
     drift_num_orig = int(view.entities.summary('Relationships').get_text_of('Drift History'))
 
     # clear table
-    delete_all_tasks(destination)
+    appliance.collections.tasks.switch_tab(destination).delete_all()
 
     # initiate 1st analysis
     a_host.run_smartstate_analysis(wait_for_task_result=True)

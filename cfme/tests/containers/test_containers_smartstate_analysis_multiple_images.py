@@ -3,7 +3,6 @@ import pytest
 import random
 
 from collections import namedtuple
-from cfme.configure.tasks import delete_all_tasks
 from cfme.containers.image import Image
 from cfme.containers.provider import (ContainersProvider, ContainersTestItem,
                                       refresh_and_navigate)
@@ -49,8 +48,8 @@ NUM_SELECTED_IMAGES = 4
 
 
 @pytest.fixture(scope='function')
-def delete_all_container_tasks():
-    delete_all_tasks('AllTasks')
+def delete_all_container_tasks(appliance):
+    appliance.collections.tasks.switch_tab('AllTasks').delete_all()
 
 
 @pytest.fixture(scope='function')
