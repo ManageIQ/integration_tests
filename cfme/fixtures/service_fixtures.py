@@ -78,9 +78,7 @@ def order_service(appliance, provider, provisioning, vm_name, dialog, catalog, r
         catalog_item = create_catalog_item(appliance, provider, provisioning,
                                            vm_name, dialog, catalog)
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
-    service_catalogs.order()
-    provision_request = appliance.collections.requests.instantiate(catalog_item.name,
-                                                                   partial_check=True)
+    provision_request = service_catalogs.order()
     provision_request.wait_for_request(method='ui')
     assert provision_request.is_succeeded()
     if provision_request.exists():
