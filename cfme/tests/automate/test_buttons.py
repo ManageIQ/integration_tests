@@ -141,7 +141,9 @@ def test_button_avp_displayed(appliance, dialog, request):
         hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
         type=appliance.collections.button_groups.VM_INSTANCE)
     request.addfinalizer(buttongroup.delete_if_exists)
-    view = navigate_to(appliance.collections.buttons, 'Add')
+    buttons_collection = appliance.collections.buttons
+    buttons_collection.group = buttongroup
+    view = navigate_to(buttons_collection, 'Add')
     for n in range(1, 6):
         assert view.advanced.attribute(n).key.is_displayed
         assert view.advanced.attribute(n).value.is_displayed
