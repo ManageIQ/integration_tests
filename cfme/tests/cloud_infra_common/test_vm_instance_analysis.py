@@ -263,6 +263,11 @@ def ssa_vms(request, local_setup_provider, provider, vm_analysis_provisioning_da
 
 
 @pytest.fixture(scope="module")
+def ssa_vm(ssa_profiled_vms):
+    return ssa_profiled_vms[0]
+
+
+@pytest.fixture(scope="module")
 def ssa_analysis_profile():
     collected_files = []
     for file in ssa_expect_files:
@@ -329,8 +334,7 @@ def detect_system_type(vm):
 
 
 @pytest.fixture(scope="module")
-def schedule_ssa(appliance, ssa_profiled_vms, wait_for_task_result=True):
-    ssa_vm = ssa_profiled_vms[0]
+def schedule_ssa(appliance, ssa_vm, wait_for_task_result=True):
     dt = datetime.utcnow()
     delta_min = 5 - (dt.minute % 5)
     if delta_min < 3:  # If the schedule would be set to run in less than 2mins
@@ -496,7 +500,7 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, appliance):
     Metadata:
         test_flag: vm_analysis
     """
-    ssa_vm = ssa_vm[0]
+
     e_users = None
     e_groups = None
     e_packages = None
@@ -574,7 +578,7 @@ def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profiled_vm):
     Metadata:
         test_flag: vm_analysis
     """
-    ssa_vm = ssa_vm[0]
+
     e_users = None
     e_groups = None
     e_packages = None
@@ -648,7 +652,7 @@ def test_ssa_users(ssa_vm, appliance, ssa_profiled_vm):
     Metadata:
         test_flag: vm_analysis
     """
-    ssa_vm = ssa_vm[0]
+
     username = fauxfactory.gen_alphanumeric()
     expected_users = None
 
@@ -687,7 +691,7 @@ def test_ssa_groups(ssa_vm, appliance, ssa_profiled_vm):
     Metadata:
         test_flag: vm_analysis
     """
-    ssa_vm = ssa_vm[0]
+
     group = fauxfactory.gen_alphanumeric()
     expected_group = None
 
@@ -725,7 +729,7 @@ def test_ssa_packages(ssa_vm, soft_assert, appliance, ssa_profiled_vm):
     Metadata:
         test_flag: vm_analysis
     """
-    ssa_vm = ssa_vm[0]
+
     if ssa_vm.system_type == WINDOWS:
         pytest.skip("Windows has no packages")
 
@@ -768,7 +772,6 @@ def test_ssa_packages(ssa_vm, soft_assert, appliance, ssa_profiled_vm):
 def test_ssa_files(appliance, ssa_vm, soft_assert):
     """Tests that instances can be scanned for specific file."""
 
-    ssa_vm = ssa_vm[0]
     if ssa_vm.system_type == WINDOWS:
         pytest.skip("We cannot verify Windows files yet")
 
@@ -797,7 +800,7 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profiled_vm
     Metadata:
         test_flag: vm_analysis
     """
-    ssa_vm = ssa_vm[0]
+
     ssa_vm.load_details()
     drift_num_orig = 0
     view = navigate_to(ssa_vm, "Details")
@@ -853,40 +856,47 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profiled_vm
         "{} row should be visible, but not".format(added_tag.display_name))
 
 
-
 @pytest.mark.tier(2)
 @pytest.mark.long_running
 @pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
                                unblock=lambda provider: not provider.one_of(RHEVMProvider))])
-def test_ssa_multiple_vms(ssa_vm, soft_assert, appliance, ssa_profile):
+def test_ssa_multiple_vms(ssa_vms, soft_assert, appliance, ssa_profile):
     """ Tests SSA can be performed and returns sane results
 
     Metadata:
         test_flag: vm_analysis
     """
-    e_users = None
-    e_groups = None
-    e_packages = None
-    e_services = None
-    e_os_type = ssa_vm.system_type['os_type']
 
-    if ssa_vm.system_type != WINDOWS:
-        e_users = ssa_vm.ssh.run_command("cat /etc/passwd | wc -l").output.strip('\n')
-        e_groups = ssa_vm.ssh.run_command("cat /etc/group | wc -l").output.strip('\n')
-        e_packages = ssa_vm.ssh.run_command(
-            ssa_vm.system_type['package-number']).output.strip('\n')
-        e_services = ssa_vm.ssh.run_command(
-            ssa_vm.system_type['services-number']).output.strip('\n')
+    view = navigate_to(ssa_vms[0], 'AllForProvider')
+    vm_details = []
+    for ssa_vm in ssa_vms:
+        ssa_vm.find_quadicon().check()
 
-    logger.info("Expecting to have {} users, {} groups, {} packages and {} services".format(
-        e_users, e_groups, e_packages, e_services))
+        e_users = None
+        e_groups = None
+        e_packages = None
+        e_services = None
 
-    view = navigate_to(ssa_vm[0], 'AllForProvider')
-    for vm in ssa_vm:
-        vm.find_quadicon().check()
+        if ssa_vm.system_type != WINDOWS:
+            e_users = ssa_vm.ssh.run_command("cat /etc/passwd | wc -l").output.strip('\n')
+            e_groups = ssa_vm.ssh.run_command("cat /etc/group | wc -l").output.strip('\n')
+            e_packages = ssa_vm.ssh.run_command(
+                ssa_vm.system_type['package-number']).output.strip('\n')
+            e_services = ssa_vm.ssh.run_command(
+                ssa_vm.system_type['services-number']).output.strip('\n')
+
+        logger.info("Expecting to have {} users, {} groups, {} packages and {} services".format(
+            e_users, e_groups, e_packages, e_services))
+        info = {
+            'e_users': e_users,
+            'e_groups': e_groups,
+            'e_packages': e_packages,
+            'e_services': e_services
+        }
+        vm_details.append((ssa_vm, info))
     view.toolbar.configuration.item_select('Perform SmartState Analysis',
                                            handle_alert=True)
-    for vm in ssa_vm:
+    for vm, vm_info in vm_details:
         view = appliance.browser.create_view(TasksView)
         wait_for(lambda: is_vm_analysis_finished(vm.name),
                  delay=15, timeout="10m", fail_func=view.reload.click)
@@ -906,12 +916,14 @@ def test_ssa_multiple_vms(ssa_vm, soft_assert, appliance, ssa_profile):
         soft_assert(c_lastanalyzed != 'Never', "Last Analyzed is set to Never")
 
         if ssa_vm.system_type != WINDOWS:
-            soft_assert(c_users == e_users, "users: '{}' != '{}'".format(c_users, e_users))
-            soft_assert(c_groups == e_groups, "groups: '{}' != '{}'".format(c_groups, e_groups))
-            soft_assert(c_packages == e_packages, "packages: '{}' != '{}'".format(c_packages,
-                                                                                  e_packages))
-            soft_assert(c_services == e_services,
-                        "services: '{}' != '{}'".format(c_services, e_services))
+            soft_assert(c_users == vm_info['e_users'],
+                        "users: '{}' != '{}'".format(c_users, vm_info['e_users']))
+            soft_assert(c_groups == vm_info['e_groups'],
+                        "groups: '{}' != '{}'".format(c_groups, vm_info['e_groups']))
+            soft_assert(c_packages == vm_info['e_packages'],
+                        "packages: '{}' != '{}'".format(c_packages, vm_info['e_packages']))
+            soft_assert(c_services == vm_info['e_services'],
+                        "services: '{}' != '{}'".format(c_services, vm_info['e_services']))
         else:
             # Make sure windows-specific data is not empty
             c_patches = view.entities.summary('Security').get_text_of('Patches')
