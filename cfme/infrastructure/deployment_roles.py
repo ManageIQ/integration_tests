@@ -231,7 +231,11 @@ class DeploymentRoles(BaseEntity, PolicyProfileAssignable):
 
     def delete(self, cancel=False):
         view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Remove item',
+        if self.appliance.version < '5.9':
+            remove_item = 'Remove item'
+        else:
+            remove_item = 'Remove item from Inventory'
+        view.toolbar.configuration.item_select(remove_item,
                                                handle_alert=not cancel)
 
         if not cancel:
@@ -315,9 +319,10 @@ class AllForProvider(CFMENavigateStep):
 
     def step(self):
         try:
-            self.prerequisite_view.entities.relationships.click_at('Deployment Roles')
+            self.prerequisite_view.entities.summary('Relationships').click_at('Deployment Roles')
         except NameError:
-            self.prerequisite_view.entities.relationships.click_at('Clusters / Deployment Roles')
+            (self.prerequisite_view.entities.summary('Relationships').click_at
+                ('Clusters / Deployment Roles'))
 
 
 @navigator.register(DeploymentRoles, 'DetailsFromProvider')
