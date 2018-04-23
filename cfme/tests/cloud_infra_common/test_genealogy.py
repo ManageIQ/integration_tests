@@ -62,7 +62,6 @@ def test_vm_genealogy_detected(
     vm_crud.create_on_provider(find_in_cfme=True, allow_skip="default")
 
     request.addfinalizer(lambda: vm_crud.cleanup_on_provider())
-
     vm_crud.mgmt.wait_for_steady_state()
 
     if from_edit:

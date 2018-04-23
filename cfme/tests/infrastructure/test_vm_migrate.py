@@ -32,7 +32,6 @@ def new_vm(setup_provider, provider):
     if not provider.mgmt.does_vm_exist(vm_name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     yield vm
-
     vm.cleanup_on_provider()
 
 

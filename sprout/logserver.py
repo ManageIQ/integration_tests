@@ -102,7 +102,7 @@ class LogRecordStreamHandler(six.moves.socketserver.StreamRequestHandler):
                     if not field.endswith(".log"):
                         with global_fs_lock:
                             if not filename.exists():
-                                filename.mkdir()
+                                filename.ensure()
             filename = filename.strpath
             with logger_cache_lock:
                 if filename in logger_cache:

@@ -36,7 +36,6 @@ def create_vm(appliance, provider, request):
         logger.info("deploying %s on provider %s", vm.name, provider.key)
         vm.create_on_provider(allow_skip="default", find_in_cfme=True)
     yield vm
-
     vm.cleanup_on_provider()
 
 

@@ -25,6 +25,7 @@ from cfme.networks.views import (
     OneProviderSubnetView,
     NetworkProviderEditView
 )
+from cfme.utils.providers import get_crud_by_name
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
@@ -300,9 +301,6 @@ class NetworkProviderCollection(BaseCollection):
                                         provider=provider))
 
         return network_providers
-
-    def instantiate(self, prov_class, *args, **kwargs):
-        return prov_class.from_collection(self, *args, **kwargs)
 
     def create(self, prov_class, *args, **kwargs):
         # ugly workaround until I move everything to main class

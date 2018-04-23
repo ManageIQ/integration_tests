@@ -24,6 +24,7 @@ from cfme.utils.wait import wait_for
 
 from wrapanapi.exceptions import NotFoundError
 
+
 lock = Lock()
 
 add_stdout_handler(logger)

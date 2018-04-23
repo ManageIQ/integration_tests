@@ -39,6 +39,7 @@ def test_cloud_catalog_item(appliance, vm_name, setup_provider, provider, dialog
     """
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
     vm = appliance.collections.cloud_instances.instantiate("{}0001".format(vm_name), provider)
+
     request.addfinalizer(lambda: vm.cleanup_on_provider())
     image = provisioning['image']['name']
     item_name = "{}-service-{}".format(provider.name, fauxfactory.gen_alphanumeric())

@@ -11,8 +11,6 @@ from cfme.utils.conf import env
 from cfme.utils.providers import providers_data
 
 session = requests.Session()
-
-
 conf = env.get('trackerbot', {})
 _active_streams = None
 
@@ -220,8 +218,7 @@ def post_task_result(tid, result, output=None, coverage=0.0):
     api().task(tid).patch({'result': result, 'output': output, 'coverage': coverage})
 
 
-def post_jenkins_result(job_name, number, stream, date, template,
-        build_status, artifact_report):
+def post_jenkins_result(job_name, number, stream, date, template, build_status, artifact_report):
     try:
         api().build.post({
             'job_name': job_name,

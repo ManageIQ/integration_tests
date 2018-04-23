@@ -1,5 +1,9 @@
 import re
+from subprocess import check_call
 
+from cached_property import cached_property
+
+from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.template.base import ProviderTemplateUpload, log_wrap
 
@@ -13,37 +17,29 @@ class GoogleCloudTemplateUpload(ProviderTemplateUpload):
     def bucket_name(self):
         return self.from_template_upload('template_upload_gce').get('bucket_name')
 
-    def get_creds(self, creds_type=None, **kwargs):
-        host_default = self.from_credentials('host_default')
+    @cached_property
+    def awstool_client_args(self):
+        ec2_template_upload = self.from_template_upload('template_upload_ec2')
         creds = {
-            'hostname': self.from_template_upload('template_upload_ec2').get('aws_cli_tool_client'),
-            'username': host_default['username'],
-            'password': host_default['password']
+            'hostname': ec2_template_upload.get('aws_cli_tool_client'),
+            'username': credentials[ec2_template_upload['ovf_tool_creds']].username,
+            'password': credentials[ec2_template_upload['ovf_tool_creds']].password
         }
         return creds
 
-    @log_wrap("download image to cli_tool_client")
+    @log_wrap("download image locally")
     def download_image(self):
         # Check if file exists already:
-        if self.execute_ssh_command('ls -1 /var/tmp/templates/{}'.format(self.image_name)).success:
+        if check_call('ls', self.local_file_path) == 0:
+            logger.info('Local image found, skipping download: %s', self.local_file_path)
             return True
 
-        # Target directory setup
-        if not self.execute_ssh_command('mkdir -p /var/tmp/templates/').success:
-            return False
-
-        # Clean downloads directory
-        if not self.execute_ssh_command('rm -f /var/tmp/templates/*.gz').success:
-            return False
-
         # Download file to cli-tool-client
-        if not self.execute_ssh_command('cd /var/tmp/templates/; '
-                                        'curl -O {}'.format(self.image_url)).success:
-            return False
+        return check_call('curl',
+                          '--output {}'.format(self.local_file_path),
+                          self.raw_image_url) == 0
 
-        return True
-
-    @log_wrap("create bucket on cli_tool_client")
+    @log_wrap("create bucket on GCE")
     def create_bucket(self):
         if not self.mgmt.bucket_exists(self.bucket_name):
             self.mgmt.create_bucket(self.bucket_name)
@@ -58,9 +54,8 @@ class GoogleCloudTemplateUpload(ProviderTemplateUpload):
             logger.info('(template-upload) [%s:%s:%s] File %s already exists on bucket.',
                         self.log_name, self.provider, self.template_name, self.image_name)
 
-        elif not self.execute_ssh_command('gsutil cp /var/tmp/templates/{} gs://{}'.format(
-                self.image_name, self.bucket_name)).success:
-            return False
+        else:
+            self.mgmt.upload_file_to_bucket(self.bucket_name, self.local_file_path)
 
         return True
 

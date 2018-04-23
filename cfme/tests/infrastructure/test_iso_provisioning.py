@@ -94,10 +94,9 @@ def test_iso_provision_from_template(appliance, provider, vm_name, smtp_test, da
             ('pxe_template', 'host', 'datastore', 'iso_file', 'iso_kickstart',
              'iso_root_password', 'iso_image_type', 'vlan'))
 
-    request.addfinalizer(
-        lambda: appliance.collections.infra_vms.instantiate(vm_name,
-                                                            provider).cleanup_on_provider()
-    )
+    request.addfinalizer(lambda:
+                         appliance.collections.infra_vms.instantiate(vm_name, provider)
+                         .cleanup_on_provider())
 
     provisioning_data = {
         'catalog': {

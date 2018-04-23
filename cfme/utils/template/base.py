@@ -1,20 +1,34 @@
 from contextlib import closing
+from subprocess import check_call, CalledProcessError
 from threading import Lock
 
+from cached_property import cached_property
+from fauxfactory import gen_alphanumeric
+from glanceclient import Client
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.error import URLError
 
-from fauxfactory import gen_alphanumeric
-
+from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.cloud.provider.gce import GCEProvider
+from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.containers.provider.openshift import OpenshiftProvider
+from cfme.utils.path import project_path
 from cfme.utils import trackerbot
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import get_mgmt
 from cfme.utils.ssh import SSHClient
-from cfme.utils.wait import wait_for
 
 NUM_OF_TRIES = 3
 lock = Lock()
+
+PROVIDER_TYPES = [p.type_name
+                  for p in [EC2Provider, GCEProvider, OpenshiftProvider, OpenStackProvider,
+                            RHEVMProvider, SCVMMProvider, VMwareProvider]]
+ALL_STREAMS = cfme_data['basic_info']['cfme_images_url']
 
 
 class TemplateUploadException(Exception):
@@ -26,17 +40,17 @@ def log_wrap(process_message):
     def decorate(func):
         def call(*args, **kwargs):
             log_name = args[0].log_name
-            provider = args[0].provider
+            provider_key = args[0].provider_key
             template_name = args[0].template_name
             logger.info("(template-upload) [%s:%s:%s] BEGIN %s",
-                        log_name, provider, template_name, process_message)
+                        log_name, provider_key, template_name, process_message)
             result = func(*args, **kwargs)
             if result:
                 logger.info("(template-upload) [%s:%s:%s] END %s",
-                            log_name, provider, template_name, process_message)
+                            log_name, provider_key, template_name, process_message)
             else:
                 logger.error("(template-upload) [%s:%s:%s] FAIL %s",
-                             log_name, provider, template_name, process_message)
+                             log_name, provider_key, template_name, process_message)
             return result
 
         return call
@@ -50,41 +64,28 @@ class ProviderTemplateUpload(object):
     Class variables:
         :var provider_type: type of initiated provider -- to be removed
         :var log_name: string to be displayed in logs.
-        :var image_patters: regex to be matched when stream URL is used
+        :var image_pattern: regex to be matched when stream URL is used
     """
     provider_type = None
     log_name = None
     image_pattern = None
 
-    def __init__(self, stream=None, provider=None, template_name=None,
-                 cmd_line_args=None, **kwargs):
+    def __init__(self, provider_key, stream, template_name, image_url=None, **kwargs):
         """
         Required parameters:
             :param stream: name of stream
-            :param provider: name of provider
+            :param provider_key: key of provider in yaml
             :param template_name: name of template to use
-
-        Optional parameters:
-            :param stream_url: custom URL to image directory of a stream
-            :param image_url: custom URL to exact image file
-            :param provider_data: custom AttrDict with provider data
+            :param image_url: custom URL to image directory of a stream, defaults to stream/stable
 
         Default values for custom parameters:
-            :param stream_url: cfme_data.basic_info.cfme_images_url[stream]
-            :param image_url: parsed with regex from stream_url web page
-            :param provider_data: cfme_data.management_systems[provider]
+            :param image_url: cfme_data.basic_info.cfme_images_url[stream]
         """
-        self._stream_url = kwargs.get('stream_url')
-        self._image_url = kwargs.get('image_url')
-        self._provider_data = kwargs.get('provider_data')
-
-        self._cmd_line_args = cmd_line_args
-
         self.stream = stream
-        self.provider = provider
+        self.provider_key = provider_key
         self.template_name = template_name
-
-        self.kwargs = kwargs
+        self.glance_key = kwargs.get('glance_key')  # available for multiple provider type
+        self.image_url = image_url  # TODO default
 
     @property
     def stream_url(self):
@@ -98,17 +99,27 @@ class ProviderTemplateUpload(object):
         """
         urls = cfme_data.basic_info.cfme_images_url
 
-        if self._stream_url:
-            return self._stream_url
-        elif self.stream in urls:
+        if self.stream in urls:
             return urls[self.stream]
         else:
             logger.error("Stream %s is not listed in cfme_data. "
-                         "Please specify stream URL with --stream_url", self.stream)
+                         "Please specify stream with --stream", self.stream)
             raise TemplateUploadException("Cannot get stream URL.")
 
     @property
-    def image_url(self):
+    def stream_short(self):
+        """Short name for the stream, like '59z' or 'gaprindashvili'"""
+        if 'downstream-' in self.stream:
+            # makes downstream-nightly into the 'nightly' short stream (folder names)
+            return self.stream.replace('downstream-', '')
+        elif 'upstream_' in self.stream:
+            return self.stream.replace('upstream_', '')
+        else:
+            # plain upstream, catchall
+            return self.stream
+
+    @property
+    def raw_image_url(self):
         """ Returns URL to exact image file.
 
         Example output:
@@ -117,83 +128,83 @@ class ProviderTemplateUpload(object):
         Default value:
             browses stream_url for images and matches them to image_pattern regex
         """
-        if not self._image_url:
-            try:
-                with closing(urlopen(self.stream_url)) as stream_dir:
-                    string_from_url = stream_dir.read()
-            except URLError as e:
-                logger.error("Cannot get image URL from %s: %s", self.stream_url, e.reason.strerror)
-                raise TemplateUploadException("Cannot get image URL.")
-            else:
-                image_name = self.image_pattern.findall(string_from_url)
-                if len(image_name):
-                    return "{}{}".format(self.stream_url, image_name[0])
-        return self._image_url
+    # TODO rework to pull default image for stream URL
+        try:
+            with closing(urlopen(self.image_url)) as image_dir:
+                string_from_url = image_dir.read()
+        except URLError as e:
+            logger.error("Cannot get image URL from %s: %s", self.image_url, e.reason.strerror)
+            raise TemplateUploadException("Cannot get image URL.")
+        else:
+            image_name = self.image_pattern.findall(string_from_url)
+            if len(image_name):
+                # return 0th element of image_name, likely multiple formats for same provider type
+                return "{}{}".format(self.image_url, image_name[0])  # TODO support multiple formats
 
     @property
     def image_name(self):
         """ Returns filename of an image.
 
-        Example output: cfme-type-version.x86_64.vhd
+        Example output: cfme-type-version-x86_64-vhd
         """
-        return self.image_url.split("/")[-1]
+        return self.raw_image_url.split("/")[-1]
+
+    @property
+    def local_file_path(self):
+        return project_path.join(self.image_name).strpath
 
     @property
     def mgmt(self):
         """ Returns wrapanapi management system class.
 
-        provider_data has higher priority than provider name.
         """
-        if self.provider_data:
-            return get_mgmt(self.provider_data)
-        elif self.provider:
-            return get_mgmt(self.provider)
-        else:
-            logger.error("Please specify provider or provider_data to retrieve it's mgmt.")
-            raise TemplateUploadException("Cannot get_mgmt due to empty data.")
+        return get_mgmt(self.provider_key)
 
     @property
     def provider_data(self):
         """ Returns AttrDict from cfme_data[management_systems][provider]."""
-        if not self._provider_data:
-            return cfme_data.management_systems[self.provider]
-        return self._provider_data
+        return cfme_data.management_systems[self.provider_key]
 
     @property
     def template_upload_data(self):
-        """ Returns provider_data[provider][template_upload] if exists."""
+        """ Returns yaml provider's [template_upload] if exists."""
         return self.provider_data.get('template_upload', {})
+
+    @cached_property
+    def temp_template_name(self):
+        return 'raw-{}'.format(self.image_name)[:40]  # rhevm template name length for <4.2
+
+    @cached_property
+    def temp_vm_name(self):
+        return 'raw-vm-{}'.format(self.template_name)
+
+    @cached_property
+    def creds(self):
+        return credentials[self.provider_data['credentials']]
+
+    @cached_property
+    def ssh_client_args(self):
+        """ Returns credentials + hostname for ssh client auth."""
+        cred_key = self.provider_data.get('ssh_creds') or self.provider_data['credentials']
+        return {'hostname': self.provider_data['hostname'],
+                'username': credentials[cred_key]['username'],
+                'password': credentials[cred_key]['password']}
+
+    @cached_property
+    def tool_client_args(self):
+        tool_data = self.from_template_upload('tool_client')
+        return {'hostname': tool_data.hostname,
+            'username': credentials[tool_data['credentials']].username,
+            'password': credentials[tool_data['credentials']].password}
 
     @staticmethod
     def from_template_upload(key):
         return cfme_data.template_upload.get(key, {})
 
-    def from_credentials(self, key):
-        return credentials[self.provider_data[key]]
-
-    def get_creds(self, creds_type=None, **kwargs):
-        """ Returns credentials mapping."""
-
-        # TODO it in a different way
-        if creds_type == 'ssh' and "ssh_creds" in self.provider_data.keys():
-            creds = self.provider_data['ssh_creds']
-        else:
-            creds = self.provider_data['credentials']
-
-        ssh_creds = {
-            'hostname': kwargs.get('hostname') or self.provider_data['hostname'],
-            'username': kwargs.get('username') or credentials[creds]['username'],
-            'password': kwargs.get('password') or credentials[creds]['password']
-        }
-
-        return ssh_creds
-
-    def execute_ssh_command(self, command, creds=None, **kwargs):
+    def execute_ssh_command(self, command, client_args=None):
         """ Wraps SSHClient to get credentials and execute given command."""
-        if not creds:
-            creds = self.get_creds(creds_type='ssh', **kwargs)
-        with SSHClient(**creds) as ssh_client:
-            return ssh_client.run_command(command, **kwargs)
+        with SSHClient(**(client_args or self.ssh_client_args)) as ssh_client:
+            return ssh_client.run_command(command)
 
     def setup(self):
         pass
@@ -209,14 +220,16 @@ class ProviderTemplateUpload(object):
         pass
 
     @log_wrap("add template to trackerbot")
-    def track_template(self):
-        trackerbot.trackerbot_add_provider_template(self.stream, self.provider, self.template_name)
+    def track_template(self, **kwargs):
+        trackerbot.trackerbot_add_provider_template(self.stream,
+                                                    self.provider_key,
+                                                    self.template_name,
+                                                    **kwargs)
         return True
 
     @log_wrap("deploy template")
     def deploy_template(self):
         deploy_args = {
-            'provider': self.provider,
             'vm_name': 'test_{}_{}'.format(self.template_name, gen_alphanumeric(8)),
             'template': self.template_name,
             'deploy': True,
@@ -230,26 +243,75 @@ class ProviderTemplateUpload(object):
             template.deploy(**deploy_args)
         return True
 
+    @log_wrap("download image locally")
+    def download_image(self):
+        # Check if file exists already:
+        try:
+            check_call(['ls', self.local_file_path])
+        except CalledProcessError:
+            pass
+        else:
+            logger.info('Local image found, skipping download: %s', self.local_file_path)
+            return True
+
+        # Download file to cli-tool-client
+        return check_call(['curl',
+                           '--output',
+                           self.local_file_path,
+                           self.raw_image_url])
+
+    @log_wrap('add template to glance')
+    def glance_upload(self):
+        """Push template to glance server
+        if session is true, use keystone auth session from self.mgmt
+
+        if session is false, use endpoint directly:
+        1. download template to NFS mounted share on glance server via ssh+wget
+        2. create image record in glance's db
+        3. update image record with the infra-truenas webdav URL
+        """
+        if self.provider_type == 'openstack':
+            # This means its a full openstack provider, and we should use its mgmt session
+            client_kwargs = dict(session=self.mgmt.session)
+        else:
+            # standalone glance server indirectly hosting image to be templatized
+            client_kwargs = dict(endpoint=self.from_template_upload(self.glance_key).get('url'))
+        client = Client(version='2', **client_kwargs)
+        if self.image_name in [i.name for i in client.images.list()]:
+            logger.info('Image "%s" already exists on %s, skipping glance_upload')
+            return True
+
+        glance_image = client.images.create(
+            name=self.template_name if self.provider_type == 'openstack' else self.image_name,
+            container_format='bare',
+            disk_format='qcow2',
+            visibility='public')
+        if self.template_upload_data.get('remote_location'):
+            # add location for image on standalone glance
+            client.images.add_location(glance_image.id, self.raw_image_url, {})
+        else:
+            client.images.upload(glance_image.id, self.raw_image_url)
+        return True
+
     @log_wrap("template upload script")
     def main(self):
         try:
-
-            if self.provider_type != 'openshift' and \
-                    self.mgmt.does_template_exist(self.template_name):
+            if self.provider_type != 'openshift' and self.mgmt.does_template_exist(
+                    self.template_name):
                 logger.info("(template-upload) [%s:%s:%s] Template already exists",
-                            self.log_name, self.provider, self.template_name)
+                            self.log_name, self.provider_key, self.template_name)
             else:
-                wait_for(self.decorated_run, fail_condition=False, delay=5, logger=None)
-
-                if not self._provider_data:
-                    self.track_template()
-
-            if self._provider_data and self.mgmt.does_template_exist(self.template_name):
-                self.deploy_template()
-
+                if self.decorated_run():
+                    # openshift run will call track_template since it needs custom_data kwarg
+                    if self.provider_type != 'openshift':
+                        self.track_template()
             return True
 
         except TemplateUploadException:
+            logger.exception('TemplateUploadException, failed upload')
+            return False
+        except Exception:
+            logger.exception('non-TemplateUploadException, failed interaction with provider')
             return False
 
         finally:

@@ -157,7 +157,7 @@ def _get_vm(request, provider, template_name, vm_name):
     except TimedOutError as e:
         logger.exception(e)
         try:
-            vm_mgmt.cleanup()
+            vm.cleanup_on_provider()
         except TimedOutError:
             logger.warning("Could not delete VM %s!", vm_name)
         finally:
@@ -165,7 +165,7 @@ def _get_vm(request, provider, template_name, vm_name):
             pytest.skip("{} is quite likely overloaded! Check its status!\n{}: {}".format(
                 provider.key, type(e).__name__, str(e)))
 
-    request.addfinalizer(lambda: vm_mgmt.cleanup())
+    request.addfinalizer(lambda: vm.cleanup_on_provider())
 
     # Make it appear in the provider
     provider.refresh_provider_relationships()

@@ -20,7 +20,7 @@ class SCVMMTemplateUpload(ProviderTemplateUpload):
     def upload_vhd(self):
         script = """
                     (New-Object System.Net.WebClient).DownloadFile("{}", "{}{}")
-                """.format(self.image_url, self.library, self.vhd_name)
+                """.format(self.raw_image_url, self.library, self.vhd_name)
 
         try:
             self.mgmt.run_script(script)
