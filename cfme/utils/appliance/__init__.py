@@ -1738,9 +1738,13 @@ class IPAppliance(object):
     @property
     def _ansible_pod_name(self):
         if self.is_pod:
-            get_ansible_name = ("basename $(oc get pods -lname=ansible "
-                                "-o name --namespace={n})".format(n=self.project))
-            return str(self.ssh_client.run_command(get_ansible_name, ensure_host=True)).strip()
+            if self.version >= '5.9':
+                get_ansible_name = ("basename $(oc get pods -lname=ansible "
+                                    "-o name --namespace={n})".format(n=self.project))
+                return str(self.ssh_client.run_command(get_ansible_name, ensure_host=True)).strip()
+            else:
+                # ansible stuff lives in the same container with main app in 5.8
+                return self.container
         else:
             return None
 

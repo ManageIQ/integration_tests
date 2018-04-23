@@ -6,15 +6,17 @@ import pytest
 from cfme import test_requirements
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response, delete_resources_from_collection
-from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=['+embedded_ansible']),
-    pytest.mark.uncollectif(lambda: current_version() < '5.8'),
+    pytest.mark.uncollectif(lambda appliance: appliance.version < '5.8',
+                            reason="Ansible was added only in 5.8"),
     pytest.mark.ignore_stream('upstream'),
-    test_requirements.ansible
+    test_requirements.ansible,
+    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9" and appliance.is_pod,
+                            reason="5.8 pod appliance doesn't support embedded ansible")
 ]
 
 
@@ -120,9 +122,7 @@ class TestReposRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        collection = appliance.rest_api.collections.configuration_script_sources
-        delete_resources_from_collection(
-            collection, [repository], not_found=False, num_sec=300, delay=5)
+        delete_resources_from_collection([repository], not_found=False, num_sec=300, delay=5)
 
 
 class TestPayloadsRESTAPI(object):
