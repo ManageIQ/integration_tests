@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 """Module containing classes with common behaviour for both VMs and Instances of all types."""
-from datetime import datetime, date, timedelta
-from wrapanapi import exceptions
+import pytest
 
-from cfme.infrastructure.provider import InfraProvider
+from datetime import datetime, date, timedelta
+from fixtures.pytest_store import store
+from riggerlib import recursive_update
+from novaclient.exceptions import OverLimit as OSOverLimit
+from ovirtsdk.infrastructure.errors import RequestError as RHEVRequestError
+from ssl import SSLError
+
 from cfme.common import Taggable
 from cfme.common.vm_console import VMConsole
 from cfme.common.vm_views import DriftAnalysis, DriftHistory, VMPropertyDetailView
@@ -14,7 +19,9 @@ from cfme.utils import ParamClassName
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator
 from cfme.utils.log import logger
+from cfme.utils.mgmt_system import exceptions
 from cfme.utils.pretty import Pretty
+from cfme.utils.rest import assert_response
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
 from cfme.utils.virtual_machines import deploy_template
@@ -185,6 +192,137 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, Navigatable)
                 # FIXME: Add code to verify the tab has the correct widget
                 #      for a console tab.
                 return handle
+
+    def create_ui(self, template_name=None, provisioning_data=None, num_sec=1500,
+                  check_existing=False, find_in_cfme=False, cancel=False):
+        """
+        Provisions a VM/Instance with the default self.vm_default_args.
+        self.vm_default_args may be overridden by provisioning_data
+        For more details check cfme.common.vm_views.BasicProvisionFormView
+
+        Args:
+            template_name: template which will be used
+            provisioning_data: overrides default provision arguments or extends it. For more details
+            please check cfme.common.vm_views.BasicProvisionFormView
+            num_sec: number of seconds before provision request timeouts
+            check_existing: cancel creation if VM exists
+            find_in_cfme: open VM details or not
+            cancel: submit VM creation or cancel
+
+
+        Return: True if it was created, False if it already existed
+        """
+        # from cfme.infrastructure.virtual_machines import Vm
+        # from cfme.cloud.instance import Instance
+        from cfme.cloud.provider import CloudProvider
+        if check_existing and self.exists:
+            created = False
+        else:
+            if not self.provider.is_refreshed():
+                self.provider.refresh_provider_relationships()
+                wait_for(self.provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
+            if template_name is None:
+                if self.provider.one_of(CloudProvider):
+                    template_name = self.provider.data['provisioning']['image']['name']
+                    self.template_name = template_name
+                # else:
+                #     template_name = self.provider.data['provisioning']['template']
+            # if self.provider.one_of(CloudProvider):
+            #     vm = Instance(name=vm_name, provider=self.provider, template_name=template_name)
+            # else:
+            #     vm = Vm(name=vm_name, provider=self.provider, template_name=template_name)
+            vm_args = self.vm_default_args
+            if provisioning_data:
+                recursive_update(vm_args, provisioning_data)
+                if provisioning_data.get('environment', {}).get('automatic_placement'):
+                    vm_args['environment'] = {'automatic_placement': True}
+            recursive_update(vm_args, {'catalog': {'vm_name': self.name}})
+            provision_view = navigate_to(self, 'Provision')
+            provision_view.form.fill(vm_args)
+            all_view = self.create_view(navigator.get_class(self, 'All').VIEW)
+            if cancel:
+                created = False
+                provision_view.form.cancel_button.click()
+                all_view.flash.assert_no_error()
+            else:
+                provision_view.form.submit_button.click()
+                all_view.flash.assert_no_error()
+                logger.info('Waiting for cfme provision request for vm %s', self.name)
+                request_description = 'Provision from [{}] to [{}]'.format(self.template_name,
+                                                                           self.name)
+                provision_request = self.appliance.collections.requests.instantiate(
+                    request_description)
+                provision_request.wait_for_request(method='ui', num_sec=num_sec)
+                assert provision_request.is_succeeded(method='ui'), \
+                    "Provisioning failed with the message {}".format(
+                        provision_request.row.last_message.text)
+
+                logger.info('Waiting for vm %s to appear on provider %s', self.name,
+                            self.provider.key)
+                wait_for(self.provider.mgmt.does_vm_exist, [self.name], handle_exception=True,
+                         num_sec=600)
+                created = True
+
+        if find_in_cfme:
+            self.wait_to_appear(timeout=800)
+        return created
+
+    def create_rest(self, provisioning_data=None, num_sec=1500, check_existing=False):
+        """
+        Provisions a VM/Instance with the default self.vm_default_args_rest.
+        self.vm_default_args_rest may be overridden by provisioning_data.
+        For more details about rest attributes please check:
+        https://access.redhat.com/documentation/en-us/red_hat_cloudforms/4.6/html-single/
+        red_hat_cloudforms_rest_api/index#provision-request-supported-attributes
+
+        NOTE: placement_auto defaults to True for requests made from the API or CloudForms Automate.
+
+            additional_values": {
+                    # 'placement_auto' defaults to True if not specified
+                    "placemnet_auto": True
+                }
+
+        Args:
+            provisioning_data: overrides default provision arguments or extends it.
+            num_sec: number of seconds before provision request timeouts
+            check_existing: cancel creation if VM exists
+
+        Return: True if it was created, False if it already existed
+        """
+        if check_existing and self.exists:
+            created = False
+        else:
+            if not self.provider.is_refreshed():
+                self.provider.refresh_provider_relationships()
+                wait_for(self.provider.is_refreshed, func_kwargs=dict(refresh_delta=10),
+                         timeout=600)
+
+            vm_args = self.vm_default_args_rest
+            recursive_update(vm_args, {"vm_fields": {"vm_name": self.name}})
+            # if template_name:
+            #     image_guid = self.appliance.rest_api.collections.templates.find_by(
+            #         name=template_name)[0].guid
+            #     recursive_update(vm_args, {"template_fields": {"guid": image_guid}})
+            if provisioning_data:
+                recursive_update(vm_args, provisioning_data)
+            response = self.appliance.rest_api.collections.provision_requests.action.create(
+                **vm_args)[0]
+            assert_response(self.appliance)
+
+            provision_request = self.appliance.collections.requests.instantiate(
+                description=response.description)
+
+            provision_request.wait_for_request(num_sec=num_sec)
+            assert provision_request.is_succeeded(), ("Provisioning failed with the message {}".
+                                                      format(provision_request.rest.message))
+
+            wait_for(
+                lambda: self.mgmt.does_vm_exist(self.name),
+                num_sec=1000, delay=5, message="VM {} becomes visible".format(self.name))
+            created = True
+
+            # vm_rest = self.appliance.rest_api.collections.vms.find_by(name=self.name)[0]
+        return created
 
     @property
     def vm_console(self):

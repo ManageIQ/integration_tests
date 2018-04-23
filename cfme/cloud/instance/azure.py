@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from riggerlib import recursive_update
+
 from cfme.exceptions import OptionNotAvailable
 from cfme.utils import version, deferred_verpick
 from cfme.utils.log import logger
@@ -92,3 +94,30 @@ class AzureInstance(Instance):
             self.provider.mgmt.remove_pips_by_search(self.name, self.provider.mgmt.resource_group)
         except Exception:
             logger.exception("cleanup: failed to cleanup NICs/PIPs for VM '{}'".format(self.name))
+
+    @property
+    def vm_default_args(self):
+        inst_args = super(AzureInstance, self).vm_default_args
+        provisioning = self.provider.data['provisioning']
+        vm_user = provisioning.get('customize_username')
+        vm_password = provisioning.get('customize_password')
+        recursive_update(inst_args, {
+            'environment': {
+                'public_ip_address': '<None>',
+            },
+            'customize': {
+                'admin_username': vm_user,
+                'root_password': vm_password}})
+        return inst_args
+
+    @property
+    def vm_default_args_rest(self):
+        inst_args = super(AzureInstance, self).vm_default_args_rest
+        provisioning = self.provider.data['provisioning']
+        vm_user = provisioning.get('customize_username')
+        vm_password = provisioning.get('customize_password')
+        recursive_update(inst_args, {
+            'vm_fields': {
+                'root_username': vm_user,
+                'root_password': vm_password}})
+        return inst_args
