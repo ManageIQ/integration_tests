@@ -2,7 +2,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from riggerlib import recursive_update
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import CheckableBootstrapTreeview, Dropdown, Button
-from widgetastic.utils import VersionPick, Version
+from widgetastic.utils import VersionPick, Version, partial_match
 from widgetastic.widget import View
 
 from cfme.base.login import BaseLoggedInPage
@@ -11,7 +11,7 @@ from cfme.common.vm_views import (
     ProvisionView, VMToolbar, VMEntities, VMDetailsEntities, EditView,
     SetOwnershipView, ManagementEngineView, PolicySimulationView,
     RetirementView, RetirementViewWithOffset)
-from cfme.exceptions import InstanceNotFound, ItemNotFound
+from cfme.exceptions import InstanceNotFound, ItemNotFound, FlavorNotFound
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
@@ -345,6 +345,95 @@ class Instance(VM, Navigatable):
         # cancel is the kwarg, when true we want item_select to dismiss the alert, flip the bool
         view.toolbar.power.item_select(kwargs.get('option'),
                                        handle_alert=not kwargs.get('cancel', False))
+
+    @property
+    def vm_default_args(self):
+        """
+        Represents dictionary used for Vm/Instance provision with minimum required default args
+        """
+        provisioning = self.provider.data['provisioning']
+        inst_args = {
+            'request': {'email': 'vm_provision@cfmeqe.com'},
+            'catalog': {
+                'vm_name': self.name},
+            'environment': {
+                'availability_zone': provisioning.get('availability_zone'),
+                'cloud_network': provisioning.get('cloud_network'),
+                'cloud_subnet': provisioning.get('cloud_subnet'),
+                'resource_groups': provisioning.get('resource_group')
+            },
+            'properties': {
+                'instance_type': partial_match(provisioning.get('instance_type')),
+                'guest_keypair': provisioning.get('guest_keypair')}
+        }
+
+        return inst_args
+
+    @property
+    def vm_default_args_rest(self):
+        """
+        Represents dictionary used for REST API Vm/Instance provision with minimum required default
+        args
+        """
+        from cfme.cloud.provider.azure import AzureProvider
+        from cfme.cloud.provider.ec2 import EC2Provider
+        from cfme.cloud.provider.gce import GCEProvider
+
+        if not self.provider.is_refreshed():
+            self.provider.refresh_provider_relationships()
+            wait_for(self.provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        provisioning = self.provider.data['provisioning']
+        image_guid = self.appliance.rest_api.collections.templates.find_by(
+            name=provisioning['image']['name'])[0].guid
+        if ':' in provisioning['instance_type'] and self.one_of(EC2Provider, GCEProvider):
+            instance_type = provisioning['instance_type'].split(':')[0].strip()
+        elif self.one_of(AzureProvider):
+            instance_type = provisioning['instance_type'].lower()
+        else:
+            instance_type = provisioning['instance_type']
+
+        flavors = self.appliance.rest_api.collections.flavors.find_by(name=instance_type)
+        assert flavors, "Flavor {} wasn't found"
+        for flavor in flavors:
+            try:
+                ems_id = flavor.ems_id
+            except AttributeError:
+                    continue
+            if ems_id == self.id and flavor.ems.name == self.name:
+                flavor_id = flavor.id
+                break
+        else:
+            raise FlavorNotFound("Cannot find flavour {} for provider {}".
+                                 format(instance_type, self.provider.name))
+
+        inst_args = {
+            "version": "1.1",
+            "template_fields": {
+                "guid": image_guid,
+            },
+            "vm_fields": {
+                "vm_name": self.name,
+                "instance_type": flavor_id,
+                "request_type": "template",
+            },
+            "requester": {
+                "user_name": "admin",
+                "owner_email": "admin@cfmeqe.com",
+                "auto_approve": True,
+            },
+            "tags": {
+            },
+            "additional_values": {
+                # 'placement_auto' defaults to True if not specified
+                # "placemnet_auto": True
+            },
+            "ems_custom_attributes": {
+            },
+            "miq_custom_attributes": {
+            }
+        }
+
+        return inst_args
 
 
 @navigator.register(Instance, 'All')

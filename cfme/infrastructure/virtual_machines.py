@@ -948,6 +948,70 @@ class Vm(VM):
                                                             provider=self.provider)
         return host
 
+    @property
+    def vm_default_args(self):
+        """Represents dictionary used for Vm/Instance provision with mandatory default args"""
+        provisioning = self.provider.data['provisioning']
+        inst_args = {
+            'request': {
+                'email': 'vm_provision@cfmeqe.com'},
+            'catalog': {
+                'vm_name': self.name},
+            'environment': {
+                'host_name': {'name': provisioning['host']},
+                'datastore_name': {'name': provisioning['datastore']}},
+            'network': {
+                'vlan': partial_match(provisioning['vlan'])}
+        }
+
+        return inst_args
+
+    @property
+    def vm_default_args_rest(self):
+        """
+        Represents dictionary used for REST API Vm/Instance provision with minimum required default
+        args
+        """
+        if not self.provider.is_refreshed():
+            self.provider.refresh_provider_relationships()
+            wait_for(self.provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        provisioning = self.provider.data['provisioning']
+        image_guid = self.appliance.rest_api.collections.templates.find_by(
+            name=provisioning['template'])[0].guid
+
+        inst_args = {
+            "version": "1.1",
+            "template_fields": {
+                "guid": image_guid,
+            },
+            "vm_fields": {
+                "vm_name": self.name,
+                "request_type": "template",
+            },
+            "requester": {
+                "user_name": "admin",
+                "owner_email": "admin@cfmeqe.com",
+                "auto_approve": True,
+            },
+            "tags": {
+            },
+            "additional_values": {
+                # 'placement_auto' defaults to True if not specified
+                # "placemnet_auto": True
+            },
+            "ems_custom_attributes": {
+            },
+            "miq_custom_attributes": {
+            }
+        }
+
+        if self.provider.one_of(RHEVMProvider):
+            inst_args['vm_fields']['provision_type'] = 'native_clone'
+            if self.appliance.version > '5.9.0.16':
+                inst_args['vm_fields']['vlan'] = '<Template>'
+
+        return inst_args
+
 
 class Template(BaseTemplate):
     REMOVE_MULTI = "Remove Templates from the VMDB"
