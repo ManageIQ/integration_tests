@@ -20,6 +20,8 @@ from cfme.markers.env_markers.provider import ONE
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
+from wrapanapi import VmState
+
 pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.parametrize('interval', ['Daily', 'Weekly', 'Monthly'],
@@ -46,21 +48,19 @@ def vm_ownership(enable_candu, provider, appliance):
     """In these tests, chargeback reports are filtered on VM owner.So,VMs have to be
     assigned ownership.
     """
+    collection = appliance.provider_based_collection(provider)
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
-    if not provider.mgmt.does_vm_exist(vm_name):
+    vm = collection.instantiate(vm_name, provider)
+    if not vm.exists_on_provider:
         pytest.skip("Skipping test, cu-24x7 VM does not exist")
-    if not provider.mgmt.is_vm_running(vm_name):
-        provider.mgmt.start_vm(vm_name)
-        provider.mgmt.wait_vm_running(vm_name)
+    vm.mgmt.ensure_state(VmState.RUNNING)
 
     group_collection = appliance.collections.groups
     cb_group = group_collection.instantiate(description='EvmGroup-user')
 
     # don't assume collection is infra, in case test collected against other provider types
     # No vm creation or cleanup
-    collection = appliance.provider_based_collection(provider)
-    vm = collection.instantiate(vm_name, provider)
     user = appliance.collections.users.create(
         name='{}_{}'.format(provider.name, fauxfactory.gen_alphanumeric()),
         credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()),

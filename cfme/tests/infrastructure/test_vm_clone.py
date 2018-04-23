@@ -37,7 +37,7 @@ def create_vm(appliance, provider, request):
         vm.create_on_provider(allow_skip="default", find_in_cfme=True)
     yield vm
 
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))

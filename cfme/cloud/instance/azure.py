@@ -43,43 +43,6 @@ class AzureInstance(Instance):
             'on': [self.START],
             'off': [self.STOP, self.SUSPEND, self.SOFT_REBOOT]}
 
-    def power_control_from_provider(self, option):
-        """Power control the instance from the provider
-
-        Args:
-            option: power control action to take against instance
-
-        Raises:
-            OptionNotAvailable: option param must have proper value
-        """
-        if option == AzureInstance.START:
-            self.provider.mgmt.start_vm(self.name)
-        elif option == AzureInstance.STOP:
-            self.provider.mgmt.stop_vm(self.name)
-        elif option == AzureInstance.RESTART:
-            self.provider.mgmt.restart_vm(self.name)
-        elif option == AzureInstance.SUSPEND:
-            self.provider.mgmt.suspend_vm(self.name)
-        elif option == AzureInstance.TERMINATE:
-            self.provider.mgmt.delete_vm(self.name)
-        else:
-            raise OptionNotAvailable(option + " is not a supported action")
-
-    def delete_from_provider(self):
-        """
-        Clean up a VM on an azure provider.
-
-        Runs VM.delete_from_provider() to delete the VM, then also deletes NICs/PIPs associated
-        with the VM. Exceptions raised are logged only.
-        """
-        super(AzureInstance, self).delete_from_provider()
-        logger.info("cleanup: removing NICs/PIPs for VM '{}'".format(self.name))
-        try:
-            self.provider.mgmt.remove_nics_by_search(self.name, self.provider.mgmt.resource_group)
-            self.provider.mgmt.remove_pips_by_search(self.name, self.provider.mgmt.resource_group)
-        except Exception:
-            logger.exception("cleanup: failed to cleanup NICs/PIPs for VM '{}'".format(self.name))
-
     @property
     def vm_default_args(self):
         inst_args = super(AzureInstance, self).vm_default_args

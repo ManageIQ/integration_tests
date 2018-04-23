@@ -1037,9 +1037,10 @@ class TestEventStreamsRESTAPI(object):
         # generating events for some vm
         # create vm and start vm events are produced by vm fixture
         # stop vm event
-        a_provider.mgmt.stop_vm(vm_name)
+        vm = a_provider.mgmt.get_vm(vm_name)
+        vm.stop()
         # remove vm event
-        a_provider.mgmt.delete_vm(vm_name)
+        vm.delete()
 
     @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
     def test_query_event_attributes(self, appliance, gen_events, soft_assert):

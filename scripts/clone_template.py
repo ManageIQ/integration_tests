@@ -2,9 +2,13 @@
 """Clone a template on a given provider to a VM instance
 
 Where possible, defaults will come from cfme_data"""
+from __future__ import print_function
+
 import argparse
 import sys
 import yaml
+
+from wrapanapi import VmState, Openshift
 
 from cfme.utils.appliance import Appliance, IPAppliance
 from cfme.utils.conf import cfme_data, credentials as cred, provider_data
@@ -13,7 +17,6 @@ from cfme.utils.path import log_path
 from cfme.utils.providers import get_mgmt
 from cfme.utils.trackerbot import api
 from cfme.utils.wait import wait_for
-
 
 # log to stdout
 add_stdout_handler(logger)
@@ -75,7 +78,14 @@ def destroy_vm(provider_mgmt, vm_name):
     try:
         if provider_mgmt.does_vm_exist(vm_name):
             logger.info('Destroying VM %s', vm_name)
-            vm_deleted = provider_mgmt.delete_vm(vm_name)
+
+            # TODO: change after openshift wrapanapi refactor
+            if isinstance(provider_mgmt, Openshift):
+                vm_deleted = provider_mgmt.delete_vm(vm_name)
+            else:
+                vm = provider_mgmt.get_vm(vm_name)
+                vm_deleted = vm.cleanup()
+
             if vm_deleted:
                 logger.info('VM %s destroyed', vm_name)
             else:
@@ -97,69 +107,18 @@ def cloud_init_done(appliance):
     return success
 
 
-def attach_gce_disk(provider, vm_name):
+def attach_gce_disk(vm):
     """
     Attach a 5gb persistent disk for DB storage on GCE instance
 
-    Disk is marked for auto-delete
-
-    NOTE: In future we'll implement the methods to do this in wrapanapi
-    but will wait until after the wrapanapi refactoring (this is
-    the only place we need this functionality right now anyway)
+    Disk is marked for auto-delete by wrapanapi
     """
     logger.info("Attaching a DB disk to GCE instance")
-
-    # Stop VM
-    provider.stop_vm(vm_name)
-
-    # Pull attrs from provider mgmt
-    compute = provider._compute
-    disks = compute.disks()
-    instances = compute.instances()
-    zone = provider._zone
-    project = provider._project
-    wait_func = provider._nested_operation_wait
-
-    # Create disk
-    disk_name = "{}-db-disk".format(vm_name)
-    disk_data = {
-        'sizeGb': "5",
-        'type': "zones/{}/diskTypes/pd-standard".format(zone),
-        'name': disk_name
-    }
-    req = disks.insert(project=project, zone=zone, body=disk_data)
-    operation = req.execute()
-    wait_for(lambda: wait_func(operation['name']), delay=0.5,
-        num_sec=120, message=" Create {}".format(disk_name))
-
-    # Attach disk
-    disk_source = "/compute/v1/projects/{}/zones/{}/disks/{}".format(project, zone, disk_name)
-    attach_data = {'source': disk_source}
-    req = instances.attachDisk(project=project, zone=zone, instance=vm_name, body=attach_data)
-    operation = req.execute()
-    wait_for(lambda: wait_func(operation['name']), delay=0.5,
-        num_sec=120, message=" Attach {}".format(disk_name))
-
-    # Get device name of this new disk
-    instance = provider._find_instance_by_name(vm_name)
-    device_name = None
-    for disk in instance['disks']:
-        if disk['source'].endswith(disk_source):
-            device_name = disk['deviceName']
-
-    if not device_name:
-        logger.info('"Instance disks: %s', instance['disks'])
-        raise Exception("Unable to find deviceName for attached disk.")
-
-    # Mark disk for auto-delete
-    req = instances.setDiskAutoDelete(
-        project=project, zone=zone, instance=vm_name, deviceName=device_name, autoDelete=True)
-    operation = req.execute()
-    wait_for(lambda: wait_func(operation['name']), delay=0.5,
-        num_sec=120, message=" Set auto-delete {}".format(disk_name))
-
-    # Start VM
-    provider.start_vm(vm_name)
+    vm.stop()
+    disk_name = "{}-db-disk".format(vm.name)
+    vm.system.create_disk(disk_name, size_gb=5)
+    vm.attach_disk(disk_name)
+    vm.start()
 
 
 def main(**kwargs):
@@ -281,10 +240,18 @@ def main(**kwargs):
             'Cloning %s to %s on %s',
             deploy_args['template'], deploy_args['vm_name'], kwargs['provider']
         )
-        output = provider.deploy_template(**deploy_args)
+
+        # TODO: change after openshift wrapanapi refactor
+        output = None  # 'output' is only used for openshift providers
+        if isinstance(provider, Openshift):
+            output = provider.deploy_template(**deploy_args)
+        else:
+            template = provider.get_template(deploy_args['template'])
+            template.deploy(**deploy_args)
+
     except Exception as e:
         logger.exception(e)
-        logger.error('provider.deploy_template failed')
+        logger.error('template deploy failed')
         if kwargs.get('cleanup'):
             logger.info('attempting to destroy %s', deploy_args['vm_name'])
             destroy_vm(provider, deploy_args['vm_name'])
@@ -294,26 +261,29 @@ def main(**kwargs):
         logger.error('provider.deploy_template failed without exception')
         return 12
 
-    if provider.is_vm_running(deploy_args['vm_name']):
-        logger.info('VM %s is running', deploy_args['vm_name'])
-    else:
-        logger.error('VM %s is not running', deploy_args['vm_name'])
-        return 10
-
-    if provider_type == 'gce':
-        try:
-            attach_gce_disk(provider, deploy_args['vm_name'])
-        except Exception:
-            logger.exception("Failed to attach db disk")
-            destroy_vm(provider, deploy_args['vm_name'])
+    # TODO: change after openshift wrapanapi refactor
+    if isinstance(provider, Openshift):
+        if provider.is_vm_running(deploy_args['vm_name']):
+            logger.info('VM %s is running', deploy_args['vm_name'])
+        else:
+            logger.error('VM %s is not running', deploy_args['vm_name'])
             return 10
+    else:
+        vm = provider.get_vm(deploy_args['vm_name'])
+        vm.ensure_state(VmState.RUNNING, timeout='5m')
+        if provider_type == 'gce':
+            try:
+                attach_gce_disk(vm)
+            except Exception:
+                logger.exception("Failed to attach db disk")
+                destroy_vm(provider, deploy_args['vm_name'])
+                return 10
 
     if provider_type == 'openshift':
         ip = output['url']
     else:
         try:
-            ip, _ = wait_for(provider.get_ip_address, [deploy_args['vm_name']], num_sec=1200,
-                             fail_condition=None)
+            ip, _ = wait_for(lambda: vm.ip, num_sec=1200, fail_condition=None)
             logger.info('IP Address returned is %s', ip)
         except Exception as e:
             logger.exception(e)

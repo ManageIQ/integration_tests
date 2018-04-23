@@ -3,6 +3,7 @@ import pytest
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from widgetastic_patternfly import NoSuchElementException
+from wrapanapi import VmState
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider, CloudInfraProvider
@@ -215,26 +216,23 @@ def ssa_single_vm(request, local_setup_provider, provider, vm_analysis_provision
             deploy_template(vm.provider.key, vm_name, template_name, timeout=2500)
             vm.wait_to_appear(timeout=900, load_details=False)
 
-        request.addfinalizer(lambda: vm.delete_from_provider())
+        request.addfinalizer(lambda: vm.cleanup_on_provider())
 
         if provider.one_of(OpenStackProvider):
             public_net = provider.data['public_network']
-            vm.provider.mgmt.assign_floating_ip(vm.name, public_net)
+            vm.mgmt.assign_floating_ip(public_net)
 
         logger.info("VM %s provisioned, waiting for IP address to be assigned", vm_name)
 
-        @wait_for_decorator(timeout="20m", delay=5)
-        def get_ip_address():
-            logger.info("Power state for {} vm: {}, is_vm_stopped: {}".format(
-                vm_name, provider.mgmt.vm_status(vm_name), provider.mgmt.is_vm_stopped(vm_name)))
-            if provider.mgmt.is_vm_stopped(vm_name):
-                provider.mgmt.start_vm(vm_name)
+        vm.mgmt.ensure_state(VmState.RUNNING)
 
-            ip = provider.mgmt.current_ip_address(vm_name)
+        @wait_for_decorator(timeout="10m", delay=5)
+        def get_ip_address():
+            ip = vm.mgmt.ip
             logger.info("Fetched IP for %s: %s", vm_name, ip)
             return ip is not None
 
-        connect_ip = provider.mgmt.get_ip_address(vm_name)
+        connect_ip = vm.mgmt.ip
         assert connect_ip is not None
 
         # Check that we can at least get the uptime via ssh this should only be possible

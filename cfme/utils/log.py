@@ -492,7 +492,7 @@ def _configure_warnings():
     wlog.propagate = False
 
 
-def setup_for_worker(workername, loggers=('cfme', 'py.warnings')):
+def setup_for_worker(workername, loggers=('cfme', 'py.warnings', 'wrapanapi')):
     # this function is a bad hack, at some point we want a more ballanced setup
     for logger in loggers:
         log = logging.getLogger(logger)

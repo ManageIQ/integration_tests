@@ -1,7 +1,6 @@
 import argparse
 import logging
 import sys
-import traceback as tb
 from datetime import datetime
 
 from cfme.utils.path import log_path

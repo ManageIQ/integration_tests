@@ -246,7 +246,7 @@ if __name__ == "__main__":
             query_thread.join(2)
     except KeyboardInterrupt:
         pass
-    except:
+    except Exception:
         write("Exception raised!")
         raise
     finally:

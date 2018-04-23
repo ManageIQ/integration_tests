@@ -115,14 +115,12 @@ def db_depot_machine_ip(request, appliance):
     data = conf.cfme_data.get("log_db_operations", {})
     depot_provider_key = data["log_db_depot_template"]["provider"]
     depot_template_name = data["log_db_depot_template"]["template_name"]
-    prov_crud = get_crud(depot_provider_key)
-    deploy_template(depot_provider_key,
-                    depot_machine_name,
-                    template_name=depot_template_name)
+    vm = deploy_template(depot_provider_key,
+                         depot_machine_name,
+                         template_name=depot_template_name)
 
-    yield prov_crud.mgmt.get_ip_address(depot_machine_name)
-    collection = appliance.provider_based_collection(prov_crud)
-    collection.instantiate(depot_machine_name, prov_crud).delete_from_provider()
+    yield vm.ip
+    vm.cleanup()
 
 
 def get_schedulable_datetime():

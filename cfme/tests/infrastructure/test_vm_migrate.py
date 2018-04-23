@@ -33,7 +33,7 @@ def new_vm(setup_provider, provider):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     yield vm
 
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
 
 
 @pytest.mark.rhv1

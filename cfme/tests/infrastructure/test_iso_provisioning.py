@@ -96,7 +96,7 @@ def test_iso_provision_from_template(appliance, provider, vm_name, smtp_test, da
 
     request.addfinalizer(
         lambda: appliance.collections.infra_vms.instantiate(vm_name,
-                                                            provider).delete_from_provider()
+                                                            provider).cleanup_on_provider()
     )
 
     provisioning_data = {

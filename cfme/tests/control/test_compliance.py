@@ -13,6 +13,8 @@ from cfme.utils.hosts import setup_providers_hosts_credentials
 from cfme.utils.update import update
 from . import do_scan
 
+from wrapanapi import VmState
+
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.meta(server_roles=["+automate", "+smartstate", "+smartproxy"]),
@@ -97,12 +99,11 @@ def compliance_vm(configure_fleecing, provider, full_template_modscope):
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate(name, provider, full_template_modscope.name)
     vm.create_on_provider(allow_skip="default")
-    provider.mgmt.start_vm(vm.name)
-    provider.mgmt.wait_vm_running(vm.name)
+    vm.mgmt.ensure_state(VmState.RUNNING)
     if not vm.exists:
         vm.wait_to_appear(timeout=900)
     yield vm
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
     provider.refresh_provider_relationships()
 
 

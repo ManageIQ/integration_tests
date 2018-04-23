@@ -3,13 +3,7 @@
 
 import pytest
 
-
-def _get_vm_obj_if_exists_on_provider(provider, vm_name):
-    if not provider.mgmt.does_vm_exist(vm_name):
-        raise ValueError("Unable to ensure VM state: VM '{}' does not exist on provider '{}'"
-                         .format(vm_name, provider.key))
-    collection = provider.appliance.provider_based_collection(provider)
-    return collection.instantiate(vm_name, provider)
+from wrapanapi import VmState
 
 
 @pytest.fixture(scope="function")
@@ -22,8 +16,7 @@ def ensure_vm_running(provider, vm_name):
         provider: Provider class object
         vm_name: Name of the VM/instance
     """
-    vm = _get_vm_obj_if_exists_on_provider(provider, vm_name)
-    return vm.ensure_state_on_provider(vm.STATE_ON)
+    return provider.mgmt.get_vm(vm_name).ensure_state(VmState.RUNNING)
 
 
 @pytest.fixture(scope="function")
@@ -36,8 +29,7 @@ def ensure_vm_stopped(provider, vm_name):
         provider: Provider class object
         vm_name: Name of the VM/instance
     """
-    vm = _get_vm_obj_if_exists_on_provider(provider, vm_name)
-    return vm.ensure_state_on_provider(vm.STATE_OFF)
+    return provider.mgmt.get_vm(vm_name).ensure_state(VmState.STOPPED)
 
 
 @pytest.fixture(scope="function")
@@ -50,8 +42,7 @@ def ensure_vm_suspended(provider, vm_name):
         provider.mgmt: Provider class object
         vm_name: Name of the VM/instance
     """
-    vm = _get_vm_obj_if_exists_on_provider(provider, vm_name)
-    return vm.ensure_state_on_provider(vm.STATE_SUSPENDED)
+    return provider.mgmt.get_vm(vm_name).ensure_state(VmState.SUSPENDED)
 
 
 @pytest.fixture(scope="function")
@@ -64,5 +55,4 @@ def ensure_vm_paused(provider, vm_name):
         provider.mgmt: Provider class object
         vm_name: Name of the VM/instance
     """
-    vm = _get_vm_obj_if_exists_on_provider(provider, vm_name)
-    return vm.ensure_state_on_provider(vm.STATE_PAUSED)
+    return provider.mgmt.get_vm(vm_name).ensure_state(VmState.PAUSED)

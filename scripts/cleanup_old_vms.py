@@ -20,8 +20,8 @@ PASS = 'PASS'
 FAIL = 'FAIL'
 NULL = '--'
 
-VmProvider = namedtuple('VmProvider', 'provider_key, name')
-VmData = namedtuple('VmData', 'provider_key, name, age')
+VmProvider = namedtuple('VmProvider', 'provider_key, vm')
+VmData = namedtuple('VmData', 'provider_key, vm, age')
 VmReport = namedtuple('VmReport', 'provider_key, name, age, status, result')
 
 # log to stdout too
@@ -125,27 +125,28 @@ def scan_provider(provider_key, matchers, match_queue, scan_failure_queue):
     """
     logger.info('%r: Start scan for vm text matches', provider_key)
     try:
-        vm_list = get_mgmt(provider_key).list_vm()
+        vm_list = get_mgmt(provider_key).list_vms()
     except Exception:  # noqa
         scan_failure_queue.put(VmReport(provider_key, FAIL, NULL, NULL, NULL))
         logger.exception('%r: Exception listing vms', provider_key)
         return
 
-    text_matched_vms = [name for name in vm_list if match(matchers, name)]
-    for name in text_matched_vms:
-        match_queue.put(VmProvider(provider_key, name))
+    text_matched_vms = [vm for vm in vm_list if match(matchers, vm.name)]
+    for vm in text_matched_vms:
+        match_queue.put(VmProvider(provider_key, vm))
 
     non_text_matching = set(vm_list) - set(text_matched_vms)
-    logger.info('%r: NOT matching text filters: %r', provider_key, non_text_matching)
-    logger.info('%r: MATCHED text filters: %r', provider_key, text_matched_vms)
+    logger.info(
+        '%r: NOT matching text filters: %r', provider_key, [vm.name for vm in non_text_matching])
+    logger.info(
+        '%r: MATCHED text filters: %r', provider_key, [vm.name for vm in text_matched_vms])
 
 
-def scan_vm(provider_key, vm_name, delta, match_queue, scan_failure_queue):
+def scan_vm(provider_key, vm, delta, match_queue, scan_failure_queue):
     """Scan an individual VM for age
 
     Args:
-        provider_key (string): the provider key from yaml
-        vm_name (string): name of the VM to scan
+        vm (wrapanapi.entities.Vm object)
         delta (datetime.timedelta) The timedelta to compare age against for matches
         match_queue (Queue.Queue): MP queue to hold VMs matching age requirement
         scan_failure_queue (Queue.Queue): MP queue to hold vms that we could not compare age
@@ -153,42 +154,41 @@ def scan_vm(provider_key, vm_name, delta, match_queue, scan_failure_queue):
     Returns:
         None: Uses the Queues to 'return' data
     """
-    provider_mgmt = get_mgmt(provider_key)
     now = datetime.datetime.now(tz=pytz.UTC)
     # Nested exceptions to try and be safe about the scanned values and to get complete results
     failure = False
     status = NULL
-    logger.info('%r: Scan VM %r...', provider_key, vm_name)
+    logger.info('%r: Scan VM %r...', provider_key, vm.name)
     try:
         # Localize to UTC
-        vm_creation_time = provider_mgmt.vm_creation_time(vm_name)
+        vm_creation_time = vm.creation_time
     except Exception:  # noqa
         failure = True
-        logger.exception('%r: Exception getting creation time for %r', provider_key, vm_name)
+        logger.exception('%r: Exception getting creation time for %r', provider_key, vm.name)
         # This VM must have some problem, include in report even though we can't delete
         try:
-            status = provider_mgmt.vm_status(vm_name)
+            status = vm.state
         except Exception:  # noqa
             failure = True
-            logger.exception('%r: Exception getting status for %r', provider_key, vm_name)
+            logger.exception('%r: Exception getting status for %r', provider_key, vm.name)
             status = NULL
     finally:
         if failure:
-            scan_failure_queue.put(VmReport(provider_key, vm_name, FAIL, status, NULL))
+            scan_failure_queue.put(VmReport(vm.name, FAIL, status, NULL))
             return
 
     vm_delta = now - vm_creation_time
-    logger.info('%r: VM %r age: %r', provider_key, vm_name, vm_delta)
-    data = VmData(provider_key, vm_name, str(vm_delta))
+    logger.info('%r: VM %r age: %r', provider_key, vm.name, vm_delta)
+    data = VmData(provider_key, vm, str(vm_delta))
 
     # test age to determine which queue it goes in
     if delta < vm_delta:
         match_queue.put(data)
     else:
-        logger.info('%r: VM %r did not match age requirement', provider_key, vm_name)
+        logger.info('%r: VM %r did not match age requirement', provider_key, vm.name)
 
 
-def delete_vm(provider_key, vm_name, age, result_queue):
+def delete_vm(provider_key, vm, age, result_queue):
     """ Delete the given vm_name from the provider via REST interface
 
     Args:
@@ -200,33 +200,32 @@ def delete_vm(provider_key, vm_name, age, result_queue):
         None: Uses the Queues to 'return' data
     """
     # diaper exceptions here to handle anything and continue.
-    provider_mgmt = get_mgmt(provider_key)
     try:
-        status = provider_mgmt.vm_status(vm_name)
+        status = vm.state
     except Exception:  # noqa
         status = FAIL
-        logger.exception('%r: Exception getting status for %r', provider_key, vm_name)
+        logger.exception('%r: Exception getting status for %r', provider_key, vm.name)
 
-    logger.info("%r: Deleting %r, age: %r, status: %r", provider_key, vm_name, age, status)
+    logger.info("%r: Deleting %r, age: %r, status: %r", provider_key, vm.name, age, status)
     try:
-        # delete_vm returns boolean based on success
-        if provider_mgmt.delete_vm(vm_name):
+        # delete vm returns boolean based on success
+        if vm.cleanup():
             result = PASS
-            logger.info('%r: Delete success: %r', provider_key, vm_name)
+            logger.info('%r: Delete success: %r', provider_key, vm.name)
         else:
             result = FAIL
-            logger.error('%r: Delete failed: %r', provider_key, vm_name)
+            logger.error('%r: Delete failed: %r', provider_key, vm.name)
     except Exception:  # noqa
         # TODO vsphere delete failures, workaround for wrapanapi issue #154
-        if vm_name not in provider_mgmt.list_vm():
+        if not vm.exists:
             # The VM actually has been deleted
             result = PASS
         else:
             result = FAIL  # set this here to cover anywhere the exception could happen
         logger.exception('%r: Exception during delete: %r, double check result: %r',
-                         provider_key, vm_name, result)
+                         provider_key, vm.name, result)
     finally:
-        result_queue.put(VmReport(provider_key, vm_name, age, status, result))
+        result_queue.put(VmReport(provider_key, vm.name, age, status, result))
 
 
 def cleanup_vms(texts, max_hours=24, providers=None, tags=None, prompt=True):
@@ -282,8 +281,8 @@ def cleanup_vms(texts, max_hours=24, providers=None, tags=None, prompt=True):
     # scan vms for age matches
     age_match_queue = manager.Queue()
     vm_scan_args = [
-        (provider_key, vm_name, timedelta(hours=int(max_hours)), age_match_queue, scan_fail_queue)
-        for provider_key, vm_name in text_matched]
+        (provider_key, vm, timedelta(hours=int(max_hours)), age_match_queue, scan_fail_queue)
+        for provider_key, vm in text_matched]
     pool_manager(scan_vm, vm_scan_args)
 
     vms_to_delete = []
@@ -305,8 +304,8 @@ def cleanup_vms(texts, max_hours=24, providers=None, tags=None, prompt=True):
     deleted_vms = []
     if vms_to_delete:
         delete_queue = manager.Queue()
-        delete_vm_args = [(provider_key, vm_name, age, delete_queue)
-                          for provider_key, vm_name, age in vms_to_delete]
+        delete_vm_args = [(provider_key, vm, age, delete_queue)
+                          for provider_key, vm, age in vms_to_delete]
         pool_manager(delete_vm, delete_vm_args)
 
         while not delete_queue.empty():

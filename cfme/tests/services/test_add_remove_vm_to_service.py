@@ -30,7 +30,7 @@ def new_vm(appliance, provider, setup_provider, small_template_modscope):
     vm = collection.instantiate(vm_name, provider, small_template_modscope.name)
     vm.create_on_provider(find_in_cfme=True, timeout=700, allow_skip="default")
     yield vm
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
     provider.refresh_provider_relationships()
 
 
@@ -51,7 +51,7 @@ def myservice(appliance, provider, catalog_item, request):
     vm_name = catalog_item.prov_data["catalog"]["vm_name"]
     collection = provider.appliance.provider_based_collection(provider)
     request.addfinalizer(
-        lambda: collection.instantiate('{}_0001'.format(vm_name), provider).delete_from_provider())
+        lambda: collection.instantiate('{}_0001'.format(vm_name), provider).cleanup_on_provider())
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)

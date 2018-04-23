@@ -1,5 +1,6 @@
 import attr
-from wrapanapi.openstack import OpenstackSystem
+
+from wrapanapi.systems import OpenstackSystem
 
 from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.common.provider import EventsEndpoint

@@ -153,7 +153,7 @@ def create_image(ec2, ami_name, bucket_name):
     ec2.copy_image(source_region=ec2.api.region.name, source_image=ami_id, image_id=ami_name)
 
     logger.info("EC2:%r: Removing original un-named imported image %r...", ec2.api.region, ami_id)
-    ec2.deregister_image(image_id=ami_id)
+    ec2.get_image(ami_id).cleanup()
 
 
 def upload_to_s3(ec2, bucket_name, ami_name, file_path):

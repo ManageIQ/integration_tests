@@ -4,7 +4,6 @@ import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import VersionPick, Version
 
-
 from cfme.common import Taggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,

@@ -80,7 +80,7 @@ def testing_vm(setup_provider, provider):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
         yield vm
     finally:
-        vm.delete_from_provider()
+        vm.cleanup_on_provider()
 
 
 @pytest.mark.meta(blockers=[1211627, BZ(1311221, forced_streams=['5.5'])])

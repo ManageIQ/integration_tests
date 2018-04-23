@@ -3,7 +3,7 @@
 
 # add what breaks on RTD
 
-wrapanapi~=2.9.10
+wrapanapi>=3.0.10
 --no-binary pycurl
 pycurl
 

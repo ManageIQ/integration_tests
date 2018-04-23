@@ -161,8 +161,8 @@ def make_vm_from_template(mgmt, stream, cfme_data, cluster, temp_template_name,
             logger.info("RHEVM:%r Skipping this step, attempting to continue...", provider)
             return
 
-        mgmt.deploy_template(
-            temp_template_name,
+        template = mgmt.get_template(temp_template_name)
+        vm = template.deploy(
             vm_name=temp_vm_name,
             cluster=cluster,
             cpu=cores,
@@ -171,9 +171,9 @@ def make_vm_from_template(mgmt, stream, cfme_data, cluster, temp_template_name,
         )
 
         if mgmt_network:
-            mgmt.update_vm_nic(temp_vm_name, mgmt_network)
+            vm.update_nic(mgmt_network)
         # check, if the vm is really there
-        if not mgmt.does_vm_exist(temp_vm_name):
+        if not vm.exists:
             logger.error("RHEVM:%r temp VM could not be provisioned", provider)
             sys.exit(127)
         logger.info("RHEVM:%r successfully provisioned temp vm", provider)
@@ -193,20 +193,20 @@ def add_disk_to_vm(mgmt, sdomain, disk_size, disk_format, disk_interface, temp_v
         disk_interface: Interface of the new disk.
     """
     try:
-        if mgmt.get_vm_disks_count(temp_vm_name) > 1:
+        vm = mgmt.get_vm(temp_vm_name)
+        if vm.get_disks_count() > 1:
             logger.info("RHEVM:%r Warning: found more than one disk in existing VM (%r).",
                     provider, temp_vm_name)
             logger.info("RHEVM:%r Skipping this step, attempting to continue...", provider)
             return
-        mgmt.add_disk_to_vm(
-            temp_vm_name,
+        vm.add_disk(
             storage_domain=sdomain,
             size=disk_size,
             interface=disk_interface,
             format=disk_format
         )
         # check, if there are two disks
-        if mgmt.get_vm_disks_count(temp_vm_name) < 2:
+        if vm.get_disks_count() < 2:
             logger.error("RHEVM:%r Disk failed to add", provider)
             sys.exit(127)
         logger.info("RHEVM:%r Successfully added disk", provider)
@@ -228,8 +228,8 @@ def templatize_vm(mgmt, template_name, cluster, temp_vm_name, provider):
                     provider, template_name)
             logger.info("RHEVM:%r Skipping this step, attempting to continue", provider)
             return
-        mgmt.mark_as_template(
-            temp_vm_name,
+        vm = mgmt.get_vm(temp_vm_name)
+        vm.mark_as_template(
             temporary_name=template_name,
             cluster=cluster,
             delete=False
@@ -257,10 +257,12 @@ def cleanup(mgmt, qcowname, provider, temp_template_name, temp_vm_name):
             print('Failure deleting qcow2 file')
 
         logger.info("RHEVM:%r Deleting the temp_vm on sdomain...", provider)
-        mgmt.delete_vm(temp_vm_name)
+        for vm in mgmt.find_vms(temp_vm_name):
+            vm.cleanup()
 
         logger.info("RHEVM:%r Deleting the temp_template on sdomain...", provider)
-        mgmt.delete_template(temp_template_name)
+        for template in mgmt.find_templates(temp_template_name):
+            vm.cleanup()
 
     except Exception:
         logger.exception("RHEVM:%r Exception occurred in cleanup method:", provider)

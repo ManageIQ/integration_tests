@@ -21,6 +21,7 @@ from cached_property import cached_property
 from debtcollector import removals
 from manageiq_client.api import APIException, ManageIQClient as VanillaMiqApi
 from six.moves.urllib.parse import urlparse
+from wrapanapi import VmState
 from werkzeug.local import LocalStack, LocalProxy
 
 from cfme.fixtures import ui_coverage
@@ -2508,7 +2509,12 @@ class Appliance(IPAppliance):
         if 'hostname' not in app_kwargs:
             def is_ip_available():
                 try:
-                    ip = provider.mgmt.get_ip_address(vm_name)
+                    # TODO: change after openshift wrapanapi refactor
+                    if provider.one_of(OpenshiftProvider):
+                        ip = provider.mgmt.get_ip_address(vm_name)
+                    else:
+                        vm = provider.mgmt.get_vm(vm_name)
+                        ip = vm.ip
                     return ip or False  # get_ip_address might return None
                 except AttributeError:
                     return False
@@ -2646,6 +2652,10 @@ class Appliance(IPAppliance):
                 cfme_rel = InfraVm.CfmeRelationship(vm)
                 cfme_rel.set_relationship(str(self.server.name), self.server.sid)
 
+    @cached_property
+    def mgmt(self):
+        return self.provider.mgmt.get_vm(self.vm_name)
+
     def does_vm_exist(self):
         return self.provider.mgmt.does_vm_exist(self.vm_name)
 
@@ -2669,19 +2679,18 @@ class Appliance(IPAppliance):
         if self.is_on_rhev:
             # if rhev, try to remove direct_lun just in case it is detach
             self.remove_rhev_direct_lun_disk()
-        self.provider.delete_vm(self.vm_name)
+        if self.does_vm_exist():
+            self.mgmt.cleanup()
 
     def stop(self):
         """Stops the VM this appliance is running as
         """
-        self.provider.stop_vm(self.vm_name)
-        self.provider.wait_vm_stopped(self.vm_name)
+        self.mgmt.ensure_state(VmState.STOPPED)
 
     def start(self):
         """Starts the VM this appliance is running as
         """
-        self.provider.start_vm(self.vm_name)
-        self.provider.wait_vm_running(self.vm_name)
+        self.mgmt.ensure_state(VmState.RUNNING)
 
     def templatize(self, seal=True):
         """Marks the appliance as a template. Destroys the original VM in the process.
@@ -2699,11 +2708,11 @@ class Appliance(IPAppliance):
         else:
             if self.is_running:
                 self.stop()
-        self.provider.mark_as_template(self.vm_name)
+        self.mgmt.mark_as_template()
 
     @property
     def is_running(self):
-        return self.provider.is_vm_running(self.vm_name)
+        return self.mgmt.is_running
 
     @property
     def is_on_rhev(self):
@@ -2715,6 +2724,10 @@ class Appliance(IPAppliance):
         from cfme.infrastructure.provider.virtualcenter import VMwareProvider
         return isinstance(self.provider, VMwareProvider.mgmt_class)
 
+    @property
+    def _lun_name(self):
+        return "{}LUNDISK".format(self.vm_name)
+
     def add_rhev_direct_lun_disk(self, log_callback=None):
         if log_callback is None:
             log_callback = logger.info
@@ -2724,7 +2737,7 @@ class Appliance(IPAppliance):
         log_callback('Adding RHEV direct_lun hook...')
         self.wait_for_ssh()
         try:
-            self.provider.connect_direct_lun_to_appliance(self.vm_name, False)
+            self.mgmt.connect_direct_lun(lun_name=self._lun_name)
         except Exception as e:
             log_callback("Appliance {} failed to connect RHEV direct LUN.".format(self.vm_name))
             log_callback(str(e))
@@ -2739,7 +2752,7 @@ class Appliance(IPAppliance):
         log_callback('Removing RHEV direct_lun hook...')
         self.wait_for_ssh()
         try:
-            self.provider.connect_direct_lun_to_appliance(self.vm_name, True)
+            self.mgmt.disconnect_disk(self._lun_name)
         except Exception as e:
             log_callback("Appliance {} failed to connect RHEV direct LUN.".format(self.vm_name))
             log_callback(str(e))
@@ -2829,7 +2842,8 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
         if "allowed_datastores" in prov_data:
             deploy_args["allowed_datastores"] = prov_data["allowed_datastores"]
 
-    provider.deploy_template(template_name, **deploy_args)
+    template = provider.get_template(template_name)
+    template.deploy(**deploy_args)
 
     return Appliance(provider_name, vm_name)
 

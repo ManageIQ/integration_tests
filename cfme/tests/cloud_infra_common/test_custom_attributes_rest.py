@@ -37,7 +37,7 @@ def vm_obj(provider, setup_provider_modscope, small_template_modscope):
 
     yield new_vm
 
-    new_vm.delete_from_provider()
+    new_vm.cleanup_on_provider()
 
 
 @pytest.fixture(scope='module')

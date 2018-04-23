@@ -6,8 +6,9 @@ import six
 from cfme.utils.providers import get_crud
 from cfme.fixtures.pytest_store import store
 from novaclient.exceptions import OverLimit as OSOverLimit
-from wrapanapi.rhevm import Error as RHEVRequestError
+from wrapanapi.systems.rhevm import Error as RHEVRequestError
 from wrapanapi.exceptions import VMInstanceNotCloned
+from wrapanapi import AzureSystem
 from ssl import SSLError
 from cfme.utils.log import logger
 
@@ -22,6 +23,9 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
         vm_name: Name of the VM to be deployed
         template_name: Name of the template that the VM is deployed from
         timeout: the timeout for template deploy
+
+    Returns:
+        wrapanapi.entities.Vm or wrapanapi.entities.Instance object
     """
     allow_skip = deploy_args.pop("allow_skip", ())
     if isinstance(allow_skip, dict):
@@ -39,30 +43,37 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
 
     if template_name is None:
         try:
-            deploy_args.update(template=provider_crud.data['templates']['small_template']['name'])
+            template_name = provider_crud.data['templates']['small_template']['name']
         except KeyError:
             raise KeyError('small_template not defined for Provider {} in cfme_data.yaml'
                            .format(provider_key))
-    else:
-        deploy_args.update(template=template_name)
+
+    deploy_args.update(template=template_name)
 
     deploy_args.update(provider_crud.deployment_helper(deploy_args))
 
     logger.info("Getting ready to deploy VM/instance %s from template %s on provider %s",
-        vm_name, deploy_args['template'], provider_crud.data['name'])
+                vm_name, deploy_args['template'], provider_crud.data['name'])
     try:
         try:
             logger.debug("Deploy args: %s", deploy_args)
-            vm_name = provider_crud.mgmt.deploy_template(timeout=timeout, **deploy_args)
-            logger.info("Provisioned VM/instance %s", vm_name)  # instance ID in case of EC2
+            if isinstance(provider_crud.mgmt, AzureSystem):
+                template = provider_crud.mgmt.get_template(
+                    template_name, container=deploy_args['template_container'])
+            else:
+                template = provider_crud.mgmt.get_template(template_name)
+            vm = template.deploy(timeout=timeout, **deploy_args)
+            logger.info("Provisioned VM/instance %r", vm)
         except Exception as e:
-            logger.exception('Could not provisioning VM/instance %s (%s: %s)',
-                vm_name, type(e).__name__, str(e))
-            if vm_name in provider_crud.mgmt.list_vm():
+            logger.exception(
+                'Could not provisioning VM/instance %s (%s: %s)',
+                vm_name, type(e).__name__, str(e)
+            )
+            for vm_to_cleanup in provider_crud.mgmt.find_vms(vm_name):
                 try:
-                    provider_crud.mgmt.delete_vm(vm_name)
-                except Exception:
-                    logger.exception("Unable to clean up vm:", vm_name)
+                    vm_to_cleanup.cleanup()
+                except Exception as e:
+                    logger.exception("Unable to clean up vm: %r", vm_to_cleanup.name)
             raise
     except skip_exceptions as e:
         e_c = type(e)
@@ -73,4 +84,4 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
             "Skipping due to a provider error: {}: {}\n".format(e_c.__name__, str(e)), purple=True)
         logger.exception(e)
         pytest.skip("{}: {}".format(e_c.__name__, str(e)))
-    return vm_name
+    return vm
