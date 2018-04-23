@@ -17,7 +17,6 @@ from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.intelligence.reports.reports import CustomReport
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -324,7 +323,7 @@ def chargeback_costs_custom(resource_usage, new_compute_rate, appliance, interva
 
 
 @pytest.yield_fixture(scope="module")
-def chargeback_report_custom(vm_ownership, assign_custom_rate, interval):
+def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, interval):
     """Create a Chargeback report based on a custom rate; Queue the report"""
     owner = vm_ownership
     data = {
@@ -342,8 +341,7 @@ def chargeback_report_custom(vm_ownership, assign_custom_rate, interval):
             'interval_end': 'Today (partial)'
         }
     }
-    report = CustomReport(is_candu=True, **data)
-    report.create()
+    report = appliance.collections.reports.create(is_candu=True, **data)
 
     logger.info('Queuing chargeback report for {} rate'.format(interval))
     report.queue(wait_for_finish=True)
