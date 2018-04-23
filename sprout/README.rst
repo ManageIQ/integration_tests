@@ -7,7 +7,10 @@ First, these packages need to be installed:
 
 .. code-block:: bash
 
-    sudo yum install python-virtualenv git gcc postgresql-devel postgresql-server libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel libffi-devel python-devel python-psycopg2 redis memcached libselinux-python libsemanage-python freetype-devel libpng-devel
+    sudo yum install python-virtualenv git gcc postgresql-devel postgresql-server \
+        libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config \
+        gcc-c++ openssl-devel libffi-devel python-devel python-psycopg2 redis \
+        memcached libselinux-python libsemanage-python freetype-devel libpng-devel
 
 If you want to deploy Sprout for real, install ``nginx`` as well. For your messing around it is not necessary. Same with ``postgres``, for local fiddling SQlite works well.
 
@@ -19,11 +22,17 @@ If you use postgres, set the ``pg_hba.conf`` (probably in ``/var/lib/pgsql/data/
     host all all 127.0.0.1/32 trust
     host all all ::1/128 trust
 
-Check out this repository somewhere, get hold of the CFME QE yamls **and the yaml key** and `set your repo according to this document <http://cfme-tests.readthedocs.io/getting_started.html#obtaining-what-you-need-project-setup>`_. You don't have to set up Selenium.
+Check out this repository somewhere, get hold of the CFME QE yamls **and the yaml key** and `set your repo according to this document <http://cfme-tests.readthedocs.io/en/latest/getting_started.html#obtaining-what-you-need-project-setup>`_. You don't have to set up Selenium.
 
 Additionally to the steps taken in the guide, link the ``$YAML_DIR/sprout/cfme_data.local.yaml`` as ``$THISREPO/conf/cfme_data.local.yaml``. It contains the providers used exclusively for Sprout.
 
-Make sure the dependencies of the project are installed, usually facilitated with the quickstart script. **ENSURE** you use a virtualenv for all operations with Sprout now!. There are additional requirements in this exact folder ``sprout/``. Install them as well. If you update project requirements, you need then to install Sprout requirements as well.
+Make sure the dependencies of the project are installed, usually facilitated with the quickstart script. **ENSURE** you use a virtualenv for all operations with Sprout now!. There are additional requirements in this exact folder ``sprout/``. Install them as well:
+
+.. code-block:: bash
+
+    pip install -r sprout/requirements.txt
+ 
+If you update project requirements, you need then to install Sprout requirements as well.
 
 Create a ``local_settings.py`` file in ``sprout/sprout/``. You should set up the database connection if not using SQlite, refer to Django documentation regarding that. You may override the settings from ``settings.py``. **MAKE SURE** the ``memcached`` and ``redis`` ports are set correctly, otherwise you may see errors or glitches. Make sure that you set up ``STATIC_ROOT`` for real deployment to a folder which can be served by nginx (more on that later).
 
