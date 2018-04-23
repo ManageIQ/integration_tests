@@ -92,8 +92,8 @@ def test_contents(appliance, soft_assert):
             expected.append('manageiq')
         else:
             expected.append('cloudforms')
-            maj_min = '{}.{}'.format(cur_ver.version[0], cur_ver.version[1])
-            expected.append(version.get_product_version(maj_min))
+            assert cur_ver.product_version() is not None
+            expected.append(cur_ver.product_version())
 
         for exp_str in expected:
             soft_assert(exp_str in pdf_titlepage_text_low, "{} not in {}"

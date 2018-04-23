@@ -5,7 +5,7 @@ from os import path as os_path
 from wait_for import wait_for
 
 from cfme.base.ui import navigate_to
-from cfme.utils import version, os
+from cfme.utils import os
 from cfme.utils.appliance import ApplianceException
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data, credentials
@@ -130,8 +130,8 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
 
 
 @pytest.mark.uncollectif(
-    lambda dbversion: dbversion == 'scvmm_58' and version.current_version() < "5.9" or
-    dbversion == 'ec2_5540' and version.current_version() < "5.9")
+    lambda appliance, dbversion:
+        dbversion in ('scvmm_58', 'ec2_5540') and appliance.version < "5.9")
 @pytest.mark.parametrize('dbversion', ['ec2_5540', 'azure_5620', 'rhev_57', 'scvmm_58'],
         ids=['55', '56', '57', '58'])
 def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance_global_region):
@@ -190,7 +190,6 @@ def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance
 
 def test_upgrade_single_inplace(appliance_preupdate, appliance):
     """Tests appliance upgrade between streams"""
-    ver = '95' if appliance.version >= '5.8' else '94'
     appliance_preupdate.evmserverd.stop()
     result = appliance_preupdate.ssh_client.run_command('yum update -y', timeout=3600)
     assert result.success, "update failed {}".format(result.output)

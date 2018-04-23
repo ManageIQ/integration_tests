@@ -16,7 +16,7 @@ from copy import copy
 from cfme.common.provider import all_types
 
 from cfme.exceptions import UnknownProviderType
-from cfme.utils import conf, version
+from cfme.utils import conf
 from cfme.utils.log import logger
 
 providers_data = conf.cfme_data.get("management_systems", {})
@@ -169,7 +169,7 @@ class ProviderFilter(object):
                     if not ver:  # This means that the operator was not found
                         continue
                     try:
-                        curr_ver = version.current_version()
+                        curr_ver = provider.appliance.version
                     except:
                         return True
                     if not comparator(curr_ver, ver):

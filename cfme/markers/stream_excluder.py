@@ -11,10 +11,9 @@ It also provides a facility to check the appliance's version/stream for smoke te
 import pytest
 
 
-def get_streams_id():
-    from cfme.utils.version import appliance_is_downstream, current_version
-    if appliance_is_downstream():
-        return {current_version().series(2), "downstream"}
+def get_streams_id(appliance):
+    if appliance.is_downstream:
+        return {appliance.version.series(2), "downstream"}
     else:
         return {"upstream"}
 
@@ -34,7 +33,8 @@ def pytest_configure(config):
 
 
 def pytest_itemcollected(item):
-    streams_id = get_streams_id()
+    holder = item.config.pluginmanager.getplugin('appliance-holder')
+    streams_id = get_streams_id(holder.held_appliance)
     marker = item.get_marker("ignore_stream")
     if marker is None:
         return
@@ -67,17 +67,20 @@ def pytest_itemcollected(item):
                 item.add_marker(pytest.mark.uncollect)
 
 
-def pytest_collection_modifyitems(session, config, items):
+def pytest_sessionstart(session):
+    config = session.config
     # Just to print out the appliance's streams
     from fixtures.terminalreporter import reporter
+    holder = config.pluginmanager.getplugin('appliance-holder')
 
-    from cfme.utils.version import current_stream
     reporter(config).write(
-        "\nAppliance's streams: [{}]\n".format(", ".join(get_streams_id())))
+        "\nAppliance's streams: [{}]\n".format(
+            ", ".join(get_streams_id(holder.held_appliance))))
     # Bail out if the appliance stream or version do not match
     check_stream = config.getvalue("check_stream").lower().strip()
     if check_stream:
-        curr = current_stream()
+        holder = config.pluginmanager.get_plugin("appliance-holder")
+        curr = holder.held_appliance.version.stream()
         if check_stream != curr:
             raise Exception(
                 "Stream mismatch - wanted {} but appliance is {}".format(

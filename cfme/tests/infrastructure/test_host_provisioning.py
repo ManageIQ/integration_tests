@@ -2,7 +2,7 @@ import pytest
 
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
-from cfme.utils import testgen, version
+from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
@@ -45,8 +45,9 @@ def pytest_generate_tests(metafunc):
             # No host provisioning data available
             continue
 
+        holder = metafunc.config.pluginmanager.get_plugin('appliance-holder')
         stream = prov_data.get('runs_on_stream', '')
-        if not version.current_version().is_in_series(str(stream)):
+        if not holder.held_appliance.version.is_in_series(str(stream)):
             continue
 
         pxe_server_name = prov_data.get('pxe_server', '')

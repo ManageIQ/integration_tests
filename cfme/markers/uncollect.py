@@ -29,7 +29,7 @@ if a certain condition is evaluated to ``True``. The following is an example:
 
     .. code-block:: python
 
-        @pytest.mark.uncollectif(lambda: version.current_version() < '5.3')
+        @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.3')
 
 In this case, when pytest runs the modify items hook, it will evaluate the lambda function
 and if it results in ``True``, then the test will be uncollected. Fixtures that are

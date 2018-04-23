@@ -327,7 +327,7 @@ def service_templates_rest(request, appliance, service_dialog=None, service_cata
 
 def service_templates(request, appliance, service_dialog=None, service_catalog=None, num=4):
     # TODO: remove, because it copies service_templates_rest for supported versions.
-    # tmplt = service_templates_ui if version.current_version() < '5.8' else service_templates_rest
+    # tmplt = service_templates_ui if appliance.version < '5.8' else service_templates_rest
     return service_templates_rest(
         request, appliance, service_dialog=service_dialog, service_catalog=service_catalog, num=num)
 
