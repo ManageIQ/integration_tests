@@ -144,12 +144,3 @@ class RHEVMProvider(InfraProvider):
                 self._fullscreen_xpath)
         except:
             raise ItemNotFound("Element not found on screen, is current focus on console window?")
-
-    @property
-    def vm_default_args_rest(self):
-        inst_args = super(RHEVMProvider, self).vm_default_args_rest
-        inst_args['vm_fields']['provision_type'] = 'native_clone'
-        if self.appliance.version > '5.9.0.16':
-            inst_args['vm_fields']['vlan'] = '<Template>'
-
-        return inst_args

@@ -1,15 +1,9 @@
 import datetime
-import pytest
-
 from collections import Iterable
-from riggerlib import recursive_update
-from fixtures.pytest_store import store
+
 from manageiq_client.api import APIException
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Button, Input
-from novaclient.exceptions import OverLimit as OSOverLimit
-from ovirtsdk.infrastructure.errors import RequestError as RHEVRequestError
-from ssl import SSLError
 
 from cfme.base.credential import (
     Credential, EventsCredential, TokenCredential, SSHCredential, CANDUCredential)
@@ -20,9 +14,7 @@ from cfme.utils import ParamClassName, version, conf
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator
 from cfme.utils.log import logger
-from cfme.utils.mgmt_system import exceptions
 from cfme.utils.net import resolve_hostname
-from cfme.utils.rest import assert_response
 from cfme.utils.stats import tol_check
 from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
@@ -1087,178 +1079,6 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, Taggable):
         else:
             view.entities.summary("Relationships").click_at(self.template_name)
             return True
-
-    def provision_vm(self, vm_name, template_name=None, provisioning_data=None, num_sec=1500):
-        """
-        Provisions a VM/Instance with the default self.vm_default_args.
-        self.vm_default_args may be overridden by provisioning_data
-        For more details check cfme.common.vm_views.BasicProvisionFormView
-
-        Args:
-            vm_name: name
-            template_name: which will be used
-            provisioning_data: overrides default provision arguments or extends it. For more details
-            please check cfme.common.vm_views.BasicProvisionFormView
-            num_sec: number of seconds before provision request timeouts
-
-        Return: Vm/Instance object
-        """
-        from cfme.infrastructure.virtual_machines import Vm
-        from cfme.cloud.instance import Instance
-        from cfme.cloud.provider import CloudProvider
-        if self.mgmt.does_vm_exist(vm_name):
-            raise Exception("Vm already exists on the provider")
-        if not self.is_refreshed:
-            self.refresh_provider_relationships()
-            wait_for(self.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
-        if template_name is None:
-            if self.one_of(CloudProvider):
-                template_name = self.data['provisioning']['image']['name']
-            else:
-                template_name = self.data['provisioning']['template']
-        if self.one_of(CloudProvider):
-            vm = Instance(name=vm_name, provider=self, template_name=template_name)
-        else:
-            vm = Vm(name=vm_name, provider=self, template_name=template_name)
-        vm_args = self.vm_default_args
-        if provisioning_data:
-            recursive_update(vm_args, provisioning_data)
-            if provisioning_data.get('environment', {}).get('automatic_placement'):
-                vm_args['environment'] = {'automatic_placement': True}
-        recursive_update(vm_args, {'catalog': {'vm_name': vm_name}})
-        provision_view = navigate_to(vm, 'Provision')
-        provision_view.form.fill(vm_args)
-        provision_view.form.submit_button.click()
-        provision_view.flash.assert_no_error()
-
-        logger.info('Waiting for cfme provision request for vm %s', vm_name)
-        request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
-        provision_request = self.appliance.collections.requests.instantiate(request_description)
-        provision_request.wait_for_request(method='ui', num_sec=num_sec)
-        assert provision_request.is_succeeded(method='ui'), \
-            "Provisioning failed with the message {}".format(
-                provision_request.row.last_message.text)
-
-        logger.info('Waiting for vm %s to appear on provider %s', vm_name, self.key)
-        wait_for(self.mgmt.does_vm_exist, [vm_name], handle_exception=True, num_sec=600)
-        vm.wait_to_appear(timeout=800)
-        return vm
-
-    def provision_vm_rest(self, vm_name, template_name=None, provisioning_data=None, num_sec=1500):
-        """
-        Provisions a VM/Instance with the default self.vm_default_args_rest.
-        self.vm_default_args_rest may be overridden by provisioning_data.
-        For more details about rest attributes please check:
-        https://access.redhat.com/documentation/en-us/red_hat_cloudforms/4.6/html-single/
-        red_hat_cloudforms_rest_api/index#provision-request-supported-attributes
-
-        NOTE: placement_auto defaults to True for requests made from the API or CloudForms Automate.
-
-            additional_values": {
-                    # 'placement_auto' defaults to True if not specified
-                    "placemnet_auto": True
-                }
-
-        Args:
-            vm_name: name
-            template_name: which will be used
-            provisioning_data: overrides default provision arguments or extends it.
-            num_sec: number of seconds before provision request timeouts
-
-        Return: REST presentation of Vm/Instance object
-        """
-        if self.mgmt.does_vm_exist(vm_name):
-            raise Exception("Vm already exists on the provider")
-        if not self.is_refreshed():
-            self.refresh_provider_relationships()
-            wait_for(self.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
-
-        vm_args = self.vm_default_args_rest
-        recursive_update(vm_args, {"vm_fields": {"vm_name": vm_name}})
-        if template_name:
-            image_guid = self.appliance.rest_api.collections.templates.find_by(
-                name=template_name)[0].guid
-            recursive_update(vm_args, {"template_fields": {"guid": image_guid}})
-        if provisioning_data:
-            recursive_update(vm_args, provisioning_data)
-        response = self.appliance.rest_api.collections.provision_requests.action.create(
-            **vm_args)[0]
-        assert_response(self.appliance)
-
-        provision_request = self.appliance.collections.requests.instantiate(
-            description=response.description)
-
-        provision_request.wait_for_request(num_sec=num_sec)
-        assert provision_request.is_succeeded(), ("Provisioning failed with the message {}".format(
-            provision_request.rest.message))
-
-        wait_for(
-            lambda: self.mgmt.does_vm_exist(vm_name),
-            num_sec=1000, delay=5, message="VM {} becomes visible".format(vm_name))
-
-        vm_rest = self.appliance.rest_api.collections.vms.find_by(name=vm_name)[0]
-        return vm_rest
-
-    def provision_vm_mgmt(self, vm_name, template_name=None, timeout=900, **deploy_args):
-        """
-        Args:
-            provider_key: Provider key on which the VM is to be created
-            vm_name: Name of the VM to be deployed
-            template_name: Name of the template that the VM is deployed from
-            timeout: the timeout for template deploy
-        """
-        allow_skip = deploy_args.pop("allow_skip", ())
-        if isinstance(allow_skip, dict):
-            skip_exceptions = allow_skip.keys()
-            callable_mapping = allow_skip
-        elif isinstance(allow_skip, basestring) and allow_skip.lower() == "default":
-            skip_exceptions = (OSOverLimit, RHEVRequestError, exceptions.VMInstanceNotCloned,
-                               SSLError)
-            callable_mapping = {}
-        else:
-            skip_exceptions = allow_skip
-            callable_mapping = {}
-
-        deploy_args.update(vm_name=vm_name)
-
-        if template_name is None:
-            try:
-                deploy_args.update(
-                    template=self.data['templates']['small_template']['name'])
-            except KeyError:
-                raise KeyError('small_template not defined for Provider {} in cfme_data.yaml'
-                               .format(self.name))
-        else:
-            deploy_args.update(template=template_name)
-
-        deploy_args.update(self.deployment_helper(deploy_args))
-
-        logger.info("Getting ready to deploy VM/instance %s from template %s on provider %s",
-                    vm_name, deploy_args['template'], self.data['name'])
-        try:
-            try:
-                logger.debug("Deploy args: %s", deploy_args)
-                vm_name = self.mgmt.deploy_template(timeout=timeout, **deploy_args)
-                logger.info("Provisioned VM/instance %s", vm_name)  # instance ID in case of EC2
-            except Exception as e:
-                logger.exception('Could not provisioning VM/instance %s (%s: %s)',
-                                 vm_name, type(e).__name__, str(e))
-                try:
-                    self.mgmt.delete_vm(vm_name)
-                except Exception:
-                    logger.exception("Unable to clean up vm:", vm_name)
-                raise
-        except skip_exceptions as e:
-            e_c = type(e)
-            if e_c in callable_mapping and not callable_mapping[e_c](e):
-                raise
-            # Make it visible also in the log.
-            store.write_line(
-                "Skipping due to a provider error: {}: {}\n".format(e_c.__name__, str(e)),
-                purple=True)
-            logger.exception(e)
-            pytest.skip("{}: {}".format(e_c.__name__, str(e)))
-        return vm_name
 
 
 class DefaultEndpoint(object):

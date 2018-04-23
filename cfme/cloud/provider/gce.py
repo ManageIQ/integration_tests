@@ -1,4 +1,3 @@
-from riggerlib import recursive_update
 from widgetastic.widget import View
 from widgetastic_patternfly import Button, Input
 from wrapanapi.google import GoogleCloudSystem
@@ -86,23 +85,3 @@ class GCEProvider(CloudProvider):
             A :py:class:`cfme.base.credential.ServiceAccountCredential` instance.
         """
         return ServiceAccountCredential.from_config(credential_dict)
-
-    @property
-    def vm_default_args(self):
-        """Represents dictionary used for Vm/Instance provision with GCE mandatory default args"""
-        inst_args = super(GCEProvider, self).vm_default_args
-        provisioning = self.data['provisioning']
-        recursive_update(inst_args, {
-            'properties': {
-                'boot_disk_size': provisioning.get('boot_disk_size')}
-        })
-        return inst_args
-
-    @property
-    def vm_default_args_rest(self):
-        inst_args = super(GCEProvider, self).vm_default_args_rest
-        provisioning = self.data['provisioning']
-        recursive_update(inst_args, {
-            'vm_fields': {
-                'boot_disk_size': provisioning['boot_disk_size'].replace(' ', '.')}})
-        return inst_args

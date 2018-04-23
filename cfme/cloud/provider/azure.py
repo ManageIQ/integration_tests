@@ -1,4 +1,3 @@
-from riggerlib import recursive_update
 from wrapanapi.msazure import AzureSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
@@ -83,30 +82,3 @@ class AzureProvider(CloudProvider):
             'tenant_id': getattr(credential, 'tenant_id', None),
             'subscription': getattr(credential, 'subscription_id', None)
         }
-
-    @property
-    def vm_default_args(self):
-        inst_args = super(AzureProvider, self).vm_default_args
-        provisioning = self.data['provisioning']
-        vm_user = provisioning.get('customize_username')
-        vm_password = provisioning.get('customize_password')
-        recursive_update(inst_args, {
-            'environment': {
-                'public_ip_address': 'None',
-            },
-            'customize': {
-                'admin_username': vm_user,
-                'root_password': vm_password}})
-        return inst_args
-
-    @property
-    def vm_default_args_rest(self):
-        inst_args = super(AzureProvider, self).vm_default_args_rest
-        provisioning = self.data['provisioning']
-        vm_user = provisioning.get('customize_username')
-        vm_password = provisioning.get('customize_password')
-        recursive_update(inst_args, {
-            'vm_fields': {
-                'root_username': vm_user,
-                'root_password': vm_password}})
-        return inst_args
