@@ -2890,6 +2890,18 @@ class DummyAppliance(object):
         pass
 
 
+def find_appliance(obj, require=True):
+    if isinstance(obj, NavigatableMixin):
+        return obj.appliance
+    # duck type - either is the config of pytest, or holds it
+    config = getattr(obj, 'config', obj)
+    from cfme.test_framework.appliance import PLUGIN_KEY
+    holder = config.pluginmanager.get_plugin(PLUGIN_KEY)
+    if holder or require:
+        assert holder
+        return holder.held_appliance
+
+
 def load_appliances_from_config(config):
     """
     Instantiate IPAppliance objects based on data in ``appliances`` section of config.

@@ -5,6 +5,7 @@ If active, then when each test ends, the browser gets killed. That ensures that 
 browser session could be tainted after a test, the next test should not be affected.
 """
 import pytest
+from cfme.utils.appliance import find_appliance
 
 
 def pytest_addoption(parser):
@@ -22,8 +23,7 @@ def pytest_addoption(parser):
 def pytest_runtest_teardown(item, nextitem):
     yield
     if item.config.getoption("browser_isolation"):
-        holder = item.config.pluginmanager.getplugin('appliance-holder')
-        if holder:
-            appliance = holder.held_appliance
+        appliance = find_appliance(item, require=False)
+        if appliance is not None:
             for implementation in [appliance.browser, appliance.ssui]:
                 implementation.quit_browser()

@@ -6,11 +6,11 @@ import warnings
 from cfme.utils import conf
 from cfme.utils.appliance import (
     load_appliances_from_config, stack,
-    DummyAppliance, IPAppliance,
+    DummyAppliance,
     ApplianceSummoningWarning)
 from cfme.utils.path import log_path
 from fixtures import terminalreporter
-
+PLUGIN_KEY = "appliance-holder"
 warnings.simplefilter('error', ApplianceSummoningWarning)
 
 
@@ -70,7 +70,7 @@ def pytest_configure(config):
         appliance.set_session_timeout(86400)
     stack.push(appliance)
     plugin = ApplianceHolderPlugin(appliance, appliances)
-    config.pluginmanager.register(plugin, "appliance-holder")
+    config.pluginmanager.register(plugin, PLUGIN_KEY)
 
 
 @pytest.hookimpl(trylast=True)
