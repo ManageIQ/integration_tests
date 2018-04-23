@@ -9,7 +9,7 @@ from cfme.utils.net import net_check
 from cfme.utils.wait import TimedOutError
 from cfme.utils.conf import rdb
 
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 
 from cfme.fixtures.rdb import Rdb
 

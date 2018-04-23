@@ -62,7 +62,7 @@ import pytest
 from py.error import ENOENT
 from py.path import local
 
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 from cfme.exceptions import ApplianceVersionException
 from cfme.utils import conf, version
 from cfme.utils.conf import cfme_data

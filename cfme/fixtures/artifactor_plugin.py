@@ -34,7 +34,7 @@ from cfme.utils.conf import env, credentials
 from cfme.utils.log import logger
 from cfme.utils.net import random_port, net_check
 from cfme.utils.wait import wait_for
-from fixtures.pytest_store import write_line, store
+from cfme.fixtures.pytest_store import write_line, store
 from cfme.markers.polarion import extract_polarion_ids
 
 UNDER_TEST = False  # set to true for artifactor using tests

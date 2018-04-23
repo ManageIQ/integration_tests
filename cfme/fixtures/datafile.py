@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from fixtures.terminalreporter import reporter
+from cfme.fixtures.terminalreporter import reporter
 from cfme.utils.datafile import data_path_for_filename, load_data_file
 from cfme.utils.path import data_path, log_path
 

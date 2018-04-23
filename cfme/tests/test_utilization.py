@@ -4,11 +4,11 @@ import pytest
 import time
 
 from cfme import test_requirements
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 
 from cfme.common.provider import BaseProvider
 from cfme.containers.provider import ContainersProvider
-from fixtures.provider import setup_or_skip
+from cfme.fixtures.provider import setup_or_skip
 from cfme.utils import conf
 from cfme.utils.log import logger
 from cfme.utils.version import current_version

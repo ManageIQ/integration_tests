@@ -4,7 +4,7 @@ import pytest
 
 import six
 from cfme.utils.providers import get_crud
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 from novaclient.exceptions import OverLimit as OSOverLimit
 from ssl import SSLError
 from cfme.utils.log import logger

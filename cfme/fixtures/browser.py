@@ -9,7 +9,7 @@ from cfme.utils.browser import take_screenshot
 from cfme.utils.datafile import template_env
 from cfme.utils.log import logger
 from cfme.utils.path import log_path, project_path
-from fixtures.artifactor_plugin import fire_art_test_hook
+from cfme.fixtures.artifactor_plugin import fire_art_test_hook
 
 browser_fixtures = {'browser'}
 
@@ -34,7 +34,7 @@ def pytest_runtest_setup(item):
 
 
 def pytest_exception_interact(node, call, report):
-    from fixtures.pytest_store import store
+    from cfme.fixtures.pytest_store import store
     from six.moves.http_client import BadStatusLine
     from socket import error
 

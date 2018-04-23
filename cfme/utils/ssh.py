@@ -20,7 +20,7 @@ from cfme.utils.path import project_path
 from cfme.utils.quote import quote
 from cfme.utils.timeutil import parsetime
 from cfme.utils.version import Version
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 
 # Default blocking time before giving up on an ssh command execution,
 # in seconds (float)

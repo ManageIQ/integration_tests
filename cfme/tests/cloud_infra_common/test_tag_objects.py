@@ -10,7 +10,7 @@ from cfme.cloud.keypairs import KeyPair
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import InfraVm, Template
-from fixtures.provider import setup_one_or_skip
+from cfme.fixtures.provider import setup_one_or_skip
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.appliance.implementations.ui import navigate_to
 

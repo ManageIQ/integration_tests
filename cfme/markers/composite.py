@@ -14,8 +14,8 @@ def pytest_collection_modifyitems(session, config, items):
     if not config.getvalue('composite_uncollect'):
         return
 
-    from fixtures.artifactor_plugin import get_test_idents
-    from fixtures.pytest_store import store
+    from cfme.fixtures.artifactor_plugin import get_test_idents
+    from cfme.fixtures.pytest_store import store
 
     from cfme.utils.log import logger
     from cfme.utils.trackerbot import composite_uncollect

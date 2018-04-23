@@ -1,6 +1,6 @@
 # FlexibleTerminalReporter is imported for backward compatibility;
 # it should be imported from pytest_store
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 from cfme.utils import diaper
 from cfme.utils.log import logger
 

@@ -21,7 +21,7 @@ from cfme.utils.browser import manager
 from cfme.utils.log import logger, create_sublogger
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 from . import Implementation
 
 VersionPick.VERSION_CLASS = Version

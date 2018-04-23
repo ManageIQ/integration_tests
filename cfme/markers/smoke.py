@@ -19,7 +19,7 @@ import pytest
 
 
 def reporter(config):
-    from fixtures.terminalreporter import reporter as lazy_imported_reporter
+    from cfme.fixtures.terminalreporter import reporter as lazy_imported_reporter
     return lazy_imported_reporter(config)
 
 

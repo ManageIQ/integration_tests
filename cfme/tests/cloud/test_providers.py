@@ -26,8 +26,8 @@ from cfme.utils.rest import (
     delete_resources_from_detail,
 )
 from cfme.utils.update import update
-from fixtures.provider import enable_provider_regions
-from fixtures.pytest_store import store
+from cfme.fixtures.provider import enable_provider_regions
+from cfme.fixtures.pytest_store import store
 
 pytestmark = [pytest.mark.provider([CloudProvider], scope="function")]
 

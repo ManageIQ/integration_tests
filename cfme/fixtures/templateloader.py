@@ -6,7 +6,7 @@ import pytest
 from cfme.utils import trackerbot
 from cfme.utils.conf import env
 from cfme.utils.providers import list_provider_keys
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 
 TEMPLATES = {}
 

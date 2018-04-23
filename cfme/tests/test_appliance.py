@@ -5,7 +5,6 @@ import os
 import pytest
 
 from cfme.utils import conf
-from fixtures.pytest_store import store
 
 pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
 

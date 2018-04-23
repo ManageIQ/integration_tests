@@ -1,7 +1,7 @@
 import pytest
 
 import diaper
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 from cfme.utils.log import logger
 from cfme.utils import ssh
 

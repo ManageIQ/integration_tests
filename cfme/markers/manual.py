@@ -1,6 +1,6 @@
 """manual: Marker for marking tests asmanual tests."""
 
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 
 
 def pytest_configure(config):

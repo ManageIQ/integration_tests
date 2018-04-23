@@ -1,6 +1,6 @@
 import pytest
-from fixtures import artifactor_plugin
-from fixtures.soft_assert import SoftAssertionError, _soft_assert_cm
+from cfme.fixtures import artifactor_plugin
+from cfme.fixtures.soft_assert import SoftAssertionError, _soft_assert_cm
 
 
 pytest_plugins = 'pytester'

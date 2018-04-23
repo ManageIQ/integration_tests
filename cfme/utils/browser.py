@@ -24,7 +24,7 @@ from werkzeug.local import LocalProxy
 from cfme.utils import conf, tries, clear_property_cache
 from cfme.utils.log import logger as log  # TODO remove after artifactor handler
 from cfme.utils.path import data_path
-from fixtures.pytest_store import store, write_line
+from cfme.fixtures.pytest_store import store, write_line
 
 # import logging
 # log = logging.getLogger('cfme.browser')

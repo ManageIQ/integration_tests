@@ -7,7 +7,7 @@ from cfme import test_requirements
 from cfme.services.myservice import MyService
 from cfme.utils.appliance import ViaREST
 from cfme.utils.update import update
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 
 pytestmark = [test_requirements.generic_objects]
 

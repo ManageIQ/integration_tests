@@ -16,8 +16,8 @@ import pytest
 
 from cfme.utils.browser import take_screenshot as take_browser_screenshot
 from cfme.utils.log import logger
-from fixtures.artifactor_plugin import fire_art_test_hook
-from fixtures.pytest_store import store
+from cfme.fixtures.artifactor_plugin import fire_art_test_hook
+from cfme.fixtures.pytest_store import store
 
 
 @pytest.fixture(scope="function")

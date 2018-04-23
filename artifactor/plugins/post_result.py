@@ -57,7 +57,7 @@ class PostResult(ArtifactorBasePlugin):
         report['test_counts'] = test_counts
         report['test_counts']['total'] = sum(test_counts.values())
 
-        from fixtures.ui_coverage import ui_coverage_percent
+        from cfme.fixtures.ui_coverage import ui_coverage_percent
         if ui_coverage_percent:
             report['ui_coverage_percent'] = ui_coverage_percent
 

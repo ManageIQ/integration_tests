@@ -22,7 +22,7 @@ from cfme.utils.rest import (
     query_resource_attributes,
 )
 from cfme.utils.wait import wait_for, TimedOutError
-from fixtures.provider import setup_one_or_skip
+from cfme.fixtures.provider import setup_one_or_skip
 
 
 pytestmark = [test_requirements.rest]

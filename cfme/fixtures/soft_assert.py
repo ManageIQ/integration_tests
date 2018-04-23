@@ -27,7 +27,7 @@ from functools import partial
 import fauxfactory
 import pytest
 
-from fixtures.artifactor_plugin import fire_art_test_hook
+from cfme.fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.utils.log import nth_frame_info
 from cfme.utils.path import get_rel_path
 import sys
@@ -125,7 +125,7 @@ def handle_assert_artifacts(request, fail_message=None):
 
     # A simple id to match the artifacts together
     sa_id = "softassert-{}".format(fauxfactory.gen_alpha(length=3).upper())
-    from fixtures.pytest_store import store
+    from cfme.fixtures.pytest_store import store
     node = request.node
 
     fire_art_test_hook(

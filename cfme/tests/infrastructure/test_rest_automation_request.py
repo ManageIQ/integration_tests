@@ -10,7 +10,7 @@ from cfme.rest.gen_data import automation_requests_data as _automation_requests_
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.rest import assert_response, query_resource_attributes
 from cfme.utils.wait import wait_for
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 
 
 pytestmark = [test_requirements.rest]

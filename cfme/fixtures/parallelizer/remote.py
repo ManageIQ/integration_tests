@@ -7,7 +7,7 @@ from py.path import local
 import cfme.utils
 from cfme.utils import log
 from cfme.utils.appliance import get_or_create_current_appliance
-from fixtures.log import _test_status, _format_nodeid
+from cfme.fixtures.log import _test_status, _format_nodeid
 
 SLAVEID = None
 
@@ -194,7 +194,7 @@ def _init_config(slave_options, slave_args):
     config.option['resultlog'] = None
     # Unset appliances to prevent the slaves from starting distributes tests :)
     config.option.appliances = []
-    config.pluginmanager.set_blocked('fixtures.parallelizer')
+    config.pluginmanager.set_blocked('cfme.fixtures.parallelizer')
     for pluginarg in config.option.plugins:
         config.pluginmanager.consider_pluginarg(pluginarg)
     return config
@@ -227,8 +227,8 @@ if __name__ == '__main__':
     appliance = IPAppliance(**appliance_config)
     stack.push(appliance)
 
-    from fixtures import terminalreporter
-    from fixtures.pytest_store import store
+    from cfme.fixtures import terminalreporter
+    from cfme.fixtures.pytest_store import store
     from cfme.utils import conf
 
     conf.runtime['env']['slaveid'] = args.slaveid
