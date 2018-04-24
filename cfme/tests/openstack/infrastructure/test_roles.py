@@ -40,9 +40,10 @@ def test_host_role_association(appliance, provider, soft_assert):
         role_name = 'Compute' if role_name == 'NovaCompute' else role_name
 
         try:
-            role_assoc = view.entities.relationships.get_text_of('Deployment Role')
+            role_assoc = view.entities.summary('Relationships').get_text_of('Deployment Role')
         except NameError:
-            role_assoc = view.entities.relationships.get_text_of('Cluster / Deployment Role')
+            role_assoc = (view.entities.summary('Relationships').get_text_of
+                ('Cluster / Deployment Role'))
         soft_assert(role_name in role_assoc, 'Deployment roles misconfigured')
 
 
