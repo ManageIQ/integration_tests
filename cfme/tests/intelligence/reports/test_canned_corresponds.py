@@ -97,7 +97,8 @@ def test_cluster_relationships(soft_assert):
 
 
 @pytest.mark.rhv2
-@pytest.mark.meta(blockers=[BZ(1504010, forced_streams=['5.7', '5.8', 'upstream'])])
+@pytest.mark.meta(blockers=[BZ(1504010, forced_streams=['5.7', '5.8', 'upstream']),
+                            BZ(1571254, forced_streams=['5.8', '5.9'])])
 def test_operations_vm_on(soft_assert, appliance, request):
     adb = appliance.db.client
     vms = adb['vms']
