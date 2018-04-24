@@ -188,7 +188,8 @@ def command_text(command, shell):
         return ' '.join(map(quote, command))
 
 
-def run_cmd_or_exit(command, shell=False, long_running=False, **kw):
+def run_cmd_or_exit(command, shell=False, long_running=False,
+                    call=subprocess.check_output, **kw):
     res = None
     try:
         if long_running:
@@ -197,14 +198,14 @@ def run_cmd_or_exit(command, shell=False, long_running=False, **kw):
                 '# this may take some time to finish ...')
         else:
             print('QS $', command_text(command, shell))
-        res = subprocess.check_output(command, shell=shell, **kw)
+        res = call(command, shell=shell, **kw)
     except subprocess.CalledProcessError as e:
         print(e.output)
         c = " ".join(command) if type(command) == list else command
         if c.startswith(INSTALL_COMMAND):
             print("Hit error during yum/dnf install, re-trying...")
             time.sleep(5)
-            res = subprocess.check_output(command, shell=shell, **kw)
+            res = call(command, shell=shell, **kw)
         else:
             raise
     except Exception as e:
@@ -236,7 +237,8 @@ def install_system_packages():
 
 
 def setup_virtualenv(target, use_site):
-    if os.path.isdir(target):
+    # check for bin in case "venv" is a precreated empty folder
+    if os.path.isdir(os.path.join(target, 'bin')):
         print("INFO: Virtualenv", target, "already exists, skipping creation")
         return CREATED
     add = ['--system-site-packages'] if use_site else []
@@ -251,7 +253,7 @@ def setup_virtualenv(target, use_site):
               'pip', 'wheel', 'setuptools',
               # setuptools_scm and docutils installation prevents
               # missbehaved packages from failing
-              'setuptools_scm', 'docutils')
+              'setuptools_scm', 'docutils', 'pbr')
 
 
 def venv_call(venv_path, command, *args, **kwargs):
