@@ -235,7 +235,7 @@ class Report(BaseEntity, Updateable):
     _param_name = ParamClassName('title')
     menu_name = attr.ib(default=None)
     title = attr.ib(default=None)
-    company_name = attr.ib(default="My Company (All Groups)")
+    company_name = attr.ib()
     type = attr.ib(default=None)
     subtype = attr.ib(default=None)
     base_report_on = attr.ib(default=None)
@@ -268,6 +268,13 @@ class Report(BaseEntity, Updateable):
 
     def __attrs_post_init__(self):
         self._collections = {'saved_reports': SavedReportsCollection}
+
+    @company_name.default
+    def company_name_default(self):
+        if self.appliance.version < "5.9":
+            return "My Company (All EVM Groups)"
+        else:
+            return "My Company (All Groups)"
 
     def update(self, updates):
         view = navigate_to(self, "Edit")
