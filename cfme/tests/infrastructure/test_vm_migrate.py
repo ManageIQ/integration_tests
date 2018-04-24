@@ -48,7 +48,7 @@ def test_vm_migrate(appliance, new_vm, provider):
         migrate_to = hosts[0]
     else:
         pytest.skip("There is only one host in the provider")
-    new_vm.migrate_vm("email@xyz.com", "first", "last", host_name=migrate_to)
+    new_vm.migrate_vm("email@xyz.com", "first", "last", host=migrate_to)
     request_description = new_vm.name
     cells = {'Description': request_description, 'Request Type': 'Migrate'}
     migrate_request = appliance.collections.requests.instantiate(request_description, cells=cells,
