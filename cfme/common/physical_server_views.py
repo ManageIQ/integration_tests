@@ -158,10 +158,24 @@ class PhysicalServerManagePoliciesView(BaseLoggedInPage):
     save = Button("Save")
     reset = Button("Reset")
     cancel = Button("Cancel")
+    breadcrumb = BreadCrumb(locator='.//ol[@class="breadcrumb"]')
 
     @property
     def is_displayed(self):
-        return False
+        title = "'Physical Server' Policy Assignment"
+        return self.breadcrumb.active_location == title
+
+
+class PhysicalServerEditTagsView(BaseLoggedInPage):
+    """PhysicalServer's EditTags view."""
+    policies = BootstrapTreeview("protectbox")
+    entities = View.nested(BaseNonInteractiveEntitiesView)
+    breadcrumb = BreadCrumb(locator='.//ol[@class="breadcrumb"]')
+
+    @property
+    def is_displayed(self):
+        title = "Tag Assignment"
+        return self.breadcrumb.active_location == title
 
 
 class PhysicalServersToolbar(View):
@@ -173,6 +187,14 @@ class PhysicalServersToolbar(View):
     power = Dropdown(text="Power")
     identify = Dropdown(text="Identify")
     view_selector = View.nested(ItemsToolBarViewSelector)
+
+    @ParametrizedView.nested
+    class custom_button(ParametrizedView):  # noqa
+        PARAMETERS = ("button_group",)
+        _dropdown = Dropdown(text=Parameter("button_group"))
+
+        def item_select(self, button, handle_alert=False):
+            self._dropdown.item_select(button, handle_alert=handle_alert)
 
 
 class PhysicalServerSideBar(View):
