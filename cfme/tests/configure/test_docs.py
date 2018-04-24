@@ -1,22 +1,17 @@
 # -*- coding: utf-8 -*-
+from io import BytesIO, StringIO
+
 import pytest
 import requests
-try:
-    # Faster, C-ext
-    from cStringIO import StringIO
-except ImportError:
-    # Slower, pure python
-    from StringIO import StringIO
-
 from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
-from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfinterp import PDFPageInterpreter, PDFResourceManager
+from pdfminer.pdfpage import PDFPage
 
+from cfme.fixtures.pytest_store import store
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
-from cfme.fixtures.pytest_store import store
 
 # This is list of tested links expected to be on the documentation page
 # Keys here correspond to nested view names from configure.documentation.LinksView
@@ -85,7 +80,7 @@ def test_contents(appliance, soft_assert):
         href = view.browser.get_attribute(attr='href',
                                           locator=doc_widget.link.locator)
         data = requests.get(href, verify=False)
-        pdf_titlepage_text_low = pdf_get_text(StringIO(data.content), [0]).lower()
+        pdf_titlepage_text_low = pdf_get_text(BytesIO(data.content), [0]).lower()
         # don't include the word 'guide'
         expected = [title]
         if cur_ver == version.LATEST:

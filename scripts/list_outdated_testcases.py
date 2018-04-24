@@ -19,19 +19,17 @@ not just uncollected because of provider type, appliance version, etc.
 from __future__ import unicode_literals, absolute_import
 
 import argparse
-import codecs
 import csv
 import logging
 import operator
+import sys
+from contextlib import contextmanager
+from io import StringIO
+
+import codecs
 import os
 import re
-import sys
-
-from cStringIO import StringIO
-from contextlib import contextmanager
-
 from dump2polarion.csvtools import get_imported_data
-
 
 # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)

@@ -3,15 +3,13 @@
 
 @author: Milan Falešník <mfalesni@redhat.com>
 """
-import fauxfactory
 import ftplib
-import re
 from datetime import datetime
+from io import StringIO
 from time import strptime, mktime
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
+
+import fauxfactory
+import re
 
 
 class FTPException(Exception):
