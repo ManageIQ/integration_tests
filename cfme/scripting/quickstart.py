@@ -23,13 +23,18 @@ REDHAT_RELEASE_FILE = '/etc/redhat-release'
 CREATED = object()
 
 if PY3:
-    REQUIREMENT_FILE = 'requirements/template.txt'
+    REQUIREMENT_FILE = 'requirements/frozen.py3.txt'
 else:
-    REQUIREMENT_FILE = 'requirements/frozen.txt'
+    REQUIREMENT_FILE = 'requirements/frozen.py2.txt'
+
 HAS_DNF = os.path.exists('/usr/bin/dnf')
 HAS_YUM = os.path.exists('/usr/bin/yum')
 HAS_APT = os.path.exists('/usr/bin/apt')
-IN_VIRTUALENV = getattr(sys, 'real_prefix', None) is not None
+
+IN_VENV = os.path.exists(os.path.join(sys.prefix, 'pyvenv.cfg'))
+IN_LEGACY_VIRTUALENV = getattr(sys, 'real_prefix', None) is not None
+
+IN_VIRTUAL_ENV = IN_VENV or IN_LEGACY_VIRTUALENV
 
 
 def mk_parser(default_venv_path):
@@ -307,22 +312,20 @@ def install_requirements(venv_path, quiet=False):
         sys.exit("ERROR: {} is required to be a file".format(remember_file))
     else:
         last_hash = None
-    if last_hash == current_hash and not PY3:
+    if last_hash == current_hash:
         print("INFO: skipping requirement installation as frozen ones didn't change")
         print("      to enforce please invoke pip manually")
         return
-
     elif last_hash is not None:
         current_packages = pip_json_list(venv_path)
         print("INFO:", REQUIREMENT_FILE, 'changed, updating virtualenv')
-    elif PY3:
-        print("INFO: this is py3k - running install anyway")
+
     venv_call(
         venv_path,
         'pip', 'install',
         '-r', REQUIREMENT_FILE,
         '--no-binary', 'pycurl',
-        *(['-q'] if (quiet and not PY3) else []), long_running=quiet)
+        *(['-q'] if quiet else []), long_running=quiet)
 
     with open(remember_file, 'w') as fp:
         fp.write(current_hash)
@@ -385,7 +388,7 @@ def main(args):
     if __package__ is None:
         print("ERROR: quickstart must be invoked as module")
         sys.exit(1)
-    if not IN_VIRTUALENV:
+    if not IN_VIRTUAL_ENV:
         # invoked from outside, its ok to be slow
         install_system_packages()
     else:
@@ -397,11 +400,14 @@ def main(args):
     self_install(args.mk_virtualenv)
     link_config_files(args.mk_virtualenv, args.config_path, 'conf')
     ensure_pycurl_works(args.mk_virtualenv)
-    if not IN_VIRTUALENV:
+    if not IN_VIRTUAL_ENV:
         print("INFO: please remember to activate the virtualenv via")
         print("      .", os.path.join(args.mk_virtualenv, 'bin/activate'))
 
 
 if IS_SCRIPT:
-    parser = mk_parser("../cfme_venv" if USE_LEGACY_VENV_PATH else '.cfme_venv')
+    if IN_VIRTUAL_ENV:
+        parser = mk_parser(sys.prefix)
+    else:
+        parser = mk_parser("../cfme_venv" if USE_LEGACY_VENV_PATH else '.cfme_venv')
     main(parser.parse_args())

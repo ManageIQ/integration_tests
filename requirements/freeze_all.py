@@ -1,8 +1,15 @@
 #!/usr/bin/env python
-import freeze
 import argparse
-import pathlib2
-HERE = pathlib2.Path(__file__).resolve().parent
+import sys
+
+import freeze
+
+try:
+    from pathlib import Path
+except ImportError:
+    from pathlib2 import Path
+HERE = Path(__file__).resolve().parent
+
 RUNS = [
     ('template_docs.txt', 'frozen_docs.txt'),
     ('template.txt', 'frozen.txt'),
@@ -17,6 +24,7 @@ def main():
     """
     with freeze.maybe_transient_venv_dir(None, False) as venv:
         for template, out in RUNS:
+            out = out.replace('.txt', '.py{major}.txt'.format(major=sys.version_info[0]))
             args = argparse.Namespace(
                 venv=venv,
                 keep=True,
