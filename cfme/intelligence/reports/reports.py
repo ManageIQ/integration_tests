@@ -270,7 +270,7 @@ class CustomReport(Updateable, Navigatable):
                 view = self.create_view(AllCustomReportsView)
                 assert view.is_displayed
             view.flash.assert_no_error()
-            if not BZ(1561779, forced_streams=['5.9']).blocks:
+            if not BZ(1561779, forced_streams=['5.9', '5.8']).blocks:
                 view.flash.assert_message(
                     'Report "{}": Delete successful'.format(self.menu_name))
 
