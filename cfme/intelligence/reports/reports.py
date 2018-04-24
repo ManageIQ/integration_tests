@@ -338,12 +338,14 @@ class Report(BaseEntity, Updateable):
                 fail_func=view.reload_button.click,
                 num_sec=300,
             )
+            view.reload_button.click()
         first_row = view.saved_reports.table[0]
-        return self.saved_reports.instantiate(
+        saved_report = self.saved_reports.instantiate(
             first_row.run_at.text,
             first_row.queued_at.text,
             self.is_candu
         )
+        return saved_report
 
     @property
     def exists(self):
