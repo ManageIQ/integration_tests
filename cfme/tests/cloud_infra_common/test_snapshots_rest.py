@@ -125,7 +125,7 @@ class TestRESTSnapshots(object):
         """
         vm, snapshot = vm_snapshot
         delete_resources_from_collection(
-            vm.snapshots, [snapshot], not_found=True, num_sec=300, delay=5)
+            [snapshot], vm.snapshots, not_found=True, num_sec=300, delay=5)
 
     @pytest.mark.meta(
         blockers=[BZ(1550551, forced_streams=['5.8', '5.9', 'upstream'],
