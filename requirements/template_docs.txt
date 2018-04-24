@@ -16,7 +16,7 @@ docker-py
 dump2polarion
 fauxfactory>=2.0.7
 flake8
-functools32
+functools32; python_version < "3.0"
 futures==3.0.5
 GitPython>=2.1.5
 ipython
@@ -35,7 +35,7 @@ numpy>=1.14.0
 matplotlib>=1.5.1
 paramiko
 parsedatetime
-pdfminer
+pdfminer.six
 progress
 py
 pycrypto
@@ -59,7 +59,6 @@ selenium<3.0.0
 shyaml
 slumber
 sqlalchemy
-suds
 tabulate==0.7.7
 tornado
 tzlocal
@@ -71,7 +70,7 @@ yaycl-crypt
 
 sentaku
 attrs
-
+click
 # docs requirements
 Sphinx==1.3.5
 sphinx-rtd-theme

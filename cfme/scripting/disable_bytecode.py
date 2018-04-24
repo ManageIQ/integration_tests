@@ -21,6 +21,11 @@ def ensure_file_contains(target, content):
 
 
 if __name__ == '__main__':
-    site_packages = distutils.sysconfig_get_python_lib()
+    try:
+        site_packages = distutils.sysconfig_get_python_lib()
+    except AttributeError:
+        import site
+        site_packages = site.getsitepackages()[0]
+    print(site_packages)
     target = path.join(site_packages, 'sitecustomize.py')
     ensure_file_contains(target, content=DISABLE_BYTECODE)

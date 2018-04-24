@@ -12,15 +12,20 @@ from pipes import quote
 
 LEGACY_BASENAMES = ('cfme_tests', 'integration_tests')
 
+PY3 = sys.version_info[0] == 3
 IS_SCRIPT = sys.argv[0] == __file__
 CWD = os.getcwd()  # we expect to be in the workdir
 
-USE_LEGACY_VENV_PATH = os.path.basename(CWD) in LEGACY_BASENAMES
+USE_LEGACY_VENV_PATH = not PY3 and os.path.basename(CWD) in LEGACY_BASENAMES
 
 IS_ROOT = os.getuid() == 0
 REDHAT_RELEASE_FILE = '/etc/redhat-release'
 CREATED = object()
-REQUIREMENT_FILE = 'requirements/frozen.txt'
+
+if PY3:
+    REQUIREMENT_FILE = 'requirements/template.txt'
+else:
+    REQUIREMENT_FILE = 'requirements/frozen.txt'
 HAS_DNF = os.path.exists('/usr/bin/dnf')
 HAS_YUM = os.path.exists('/usr/bin/yum')
 HAS_APT = os.path.exists('/usr/bin/apt')
@@ -240,9 +245,10 @@ def setup_virtualenv(target, use_site):
         print("INFO: Virtualenv", target, "already exists, skipping creation")
         return CREATED
     add = ['--system-site-packages'] if use_site else []
-
-    run_cmd_or_exit(['virtualenv', target] + add)
-
+    if PY3:
+        run_cmd_or_exit([sys.executable, '-m', 'venv', target] + add)
+    else:
+        run_cmd_or_exit(['virtualenv', target] + add)
     venv_call(target,
               'pip', 'install', '-U',
               # pip wheel and setuptools are updated just in case
@@ -280,7 +286,7 @@ def install_requirements(venv_path, quiet=False):
         sys.exit("ERROR: {} is required to be a file".format(remember_file))
     else:
         last_hash = None
-    if last_hash == current_hash:
+    if last_hash == current_hash and not PY3:
         print("INFO: skipping requirement installation as frozen ones didn't change")
         print("      to enforce please invoke pip manually")
         return
@@ -288,13 +294,14 @@ def install_requirements(venv_path, quiet=False):
     elif last_hash is not None:
         current_packages = pip_json_list(venv_path)
         print("INFO:", REQUIREMENT_FILE, 'changed, updating virtualenv')
-
+    elif PY3:
+        print("INFO: this is py3k - running install anyway")
     venv_call(
         venv_path,
         'pip', 'install',
         '-r', REQUIREMENT_FILE,
         '--no-binary', 'pycurl',
-        *(['-q'] if quiet else []), long_running=quiet)
+        *(['-q'] if (quiet and not PY3) else []), long_running=quiet)
 
     with open(remember_file, 'w') as fp:
         fp.write(current_hash)

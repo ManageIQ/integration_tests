@@ -4,7 +4,10 @@ import errno
 import os
 
 import click
-from pathlib2 import Path
+try:
+    from pathlib import Path
+except ImportError:
+    from pathlib2 import Path
 
 
 def _is_yaml_file(path):
