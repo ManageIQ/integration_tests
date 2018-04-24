@@ -2,11 +2,12 @@ import pytest
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.gce import GCEProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.exceptions import ManyEntitiesFound
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.version import LATEST
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -14,7 +15,7 @@ pytestmark = [
     pytest.mark.provider([AzureProvider, EC2Provider, GCEProvider, OpenStackProvider],
                          scope="module")
 ]
-FILETYPES = ["txt", "csv", "pdf"]
+
 extensions_mapping = {'txt': 'Text', 'csv': 'CSV', 'pdf': 'PDF'}
 OBJECTCOLLECTIONS = [
     'network_providers',
@@ -38,14 +39,20 @@ def download_summary(spec_object):
     view.toolbar.download.click()
 
 
-@pytest.mark.parametrize("filetype", FILETYPES)
+@pytest.mark.parametrize("filetype", extensions_mapping.keys())
 @pytest.mark.parametrize("collection_type", OBJECTCOLLECTIONS)
+@pytest.mark.uncollectif(
+    lambda appliance, filetype: appliance.version == LATEST and filetype == 'pdf'
+)
 def test_download_lists_base(filetype, collection_type, appliance):
     """ Download the items from base lists. """
     collection = getattr(appliance.collections, collection_type)
     download(collection, filetype)
 
 
+@pytest.mark.uncollectif(
+    lambda appliance: appliance.version == LATEST
+)
 @pytest.mark.parametrize("collection_type", OBJECTCOLLECTIONS)
 def test_download_pdf_summary(appliance, collection_type, provider):
     """ Download the summary details of specific object """
