@@ -1,6 +1,8 @@
 import pytest
 from py.error import ENOENT
 
+from six.moves.urllib_error import URLError
+
 import cfme.utils.browser
 from cfme.utils import browser as browser_module, safe_string
 from cfme.utils.browser import take_screenshot
@@ -37,7 +39,6 @@ def pytest_exception_interact(node, call, report):
     from socket import error
 
     val = safe_string(call.excinfo.value.message).decode('utf-8', 'ignore')
-    from six.moves.urllib_error import URLError
     if isinstance(call.excinfo.value, (URLError, BadStatusLine, error)):
         logger.error("internal Exception:\n %s", str(call.excinfo))
         from cfme.utils.browser import manager
