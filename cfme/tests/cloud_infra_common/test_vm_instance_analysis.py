@@ -17,7 +17,7 @@ from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.virtual_machines import Vm
+from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.utils import ssh, safe_string, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -213,7 +213,7 @@ def ssa_vm(request, local_setup_provider, provider, vm_analysis_provisioning_dat
     # TODO:  if rhev and iscsi, it need direct_lun
     if provider.type == 'rhevm':
         logger.info("Setting a relationship between VM and appliance")
-        cfme_rel = Vm.CfmeRelationship(vm)
+        cfme_rel = InfraVm.CfmeRelationship(vm)
         cfme_rel.set_relationship(appliance.server.name, appliance.server_id())
 
     yield vm

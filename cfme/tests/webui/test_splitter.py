@@ -6,7 +6,7 @@ import pytest
 # from cfme.infrastructure.config_management import ConfigManager
 # from cfme.infrastructure.datastore import DatastoreCollection
 # from cfme.infrastructure.pxe import ISODatastore
-# from cfme.infrastructure.virtual_machines import Vm
+# from cfme.infrastructure.virtual_machines import InfraVm
 # from cfme.intelligence.chargeback.rates import ComputeRate
 # from cfme.intelligence.reports.reports import CustomReport
 from cfme.base.ui import Server
@@ -23,7 +23,7 @@ from widgetastic_manageiq import Splitter
 # LOCATIONS = [
 #     (Server, 'ControlExplorer'), (Server, 'AutomateExplorer'), (Server, 'AutomateCustomization'),
 #     (MyService, 'All'), (Server, 'ServiceCatalogsDefault'), (Server, 'WorkloadsDefault'),
-#     (CustomReport, 'All'), (ComputeRate, 'All'), (Instance, 'All'), (Vm, 'VMsOnly'),
+#     (CustomReport, 'All'), (ComputeRate, 'All'), (Instance, 'All'), (InfraVm, 'VMsOnly'),
 #     (ISODatastore, 'All'), (Server, 'Configuration'), (DatastoreCollection, 'All'),
 #     (ConfigManager, 'All'), (Utilization, 'All'), (InfraNetworking, 'All'), (Bottlenecks, 'All')
 # ]

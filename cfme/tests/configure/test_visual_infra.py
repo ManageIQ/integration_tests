@@ -19,7 +19,7 @@ pytestmark = [pytest.mark.tier(3),
 # navigation to navmazing. all items have to be put back once navigation change is fully done
 
 
-@pytest.fixture(scope='module', params=['datastores', 'hosts', InfraProvider, vms.Vm])
+@pytest.fixture(scope='module', params=['datastores', 'hosts', InfraProvider, vms.InfraVm])
 def page(request):
     return request.param
 
@@ -270,7 +270,7 @@ def test_vm_noquads(request, set_vm_quad):
         This test checks that VM Quadrant when switched off from Mysetting page under
         Visual Tab under "Show VM Quadrants" option works properly.
     """
-    view = navigate_to(vms.Vm, 'VMsOnly')
+    view = navigate_to(vms.InfraVm, 'VMsOnly')
     view.toolbar.view_selector.select('Grid View')
     # Here data property will return an empty dict when the Quadrants option is deactivated.
     assert not view.entities.get_first_entity().data

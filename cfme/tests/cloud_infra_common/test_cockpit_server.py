@@ -7,7 +7,7 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.provider import CloudInfraProvider
-from cfme.infrastructure.virtual_machines import Vm
+from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.wait import wait_for
@@ -18,7 +18,7 @@ def new_vm(provider, request):
     if provider.one_of(CloudProvider):
         vm = Instance.factory(random_vm_name(context='cockpit'), provider)
     else:
-        vm = Vm.factory(random_vm_name(context='cockpit'), provider)
+        vm = InfraVm.factory(random_vm_name(context='cockpit'), provider)
     if not provider.mgmt.does_vm_exist(vm.name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
         request.addfinalizer(vm.cleanup_on_provider)

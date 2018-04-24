@@ -9,7 +9,7 @@ from cfme.cloud.instance.image import Image
 from cfme.cloud.keypairs import KeyPair
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.virtual_machines import Vm, Template
+from cfme.infrastructure.virtual_machines import InfraVm, Template
 from fixtures.provider import setup_one_or_skip
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -21,7 +21,7 @@ pytestmark = [
 
 infra_test_items = [
     ('infra_provider', InfraProvider, None),
-    ('vms', Vm, 'ProviderVms'),
+    ('vms', InfraVm, 'ProviderVms'),
     ('templates', Template, 'ProviderTemplates'),
     ('hosts', None, None),
     ('clusters', None, None),

@@ -2591,12 +2591,12 @@ class Appliance(IPAppliance):
 
             # if rhev, set relationship
             if self.is_on_rhev:
-                from cfme.infrastructure.virtual_machines import Vm  # For Vm.CfmeRelationship
+                from cfme.infrastructure.virtual_machines import InfraVm
                 log_callback('Setting up CFME VM relationship...')
                 from cfme.common.vm import VM
                 from cfme.utils.providers import get_crud
                 vm = VM.factory(self.vm_name, get_crud(self.provider_key))
-                cfme_rel = Vm.CfmeRelationship(vm)
+                cfme_rel = InfraVm.CfmeRelationship(vm)
                 cfme_rel.set_relationship(str(self.server.name), self.server.sid)
 
     def does_vm_exist(self):
