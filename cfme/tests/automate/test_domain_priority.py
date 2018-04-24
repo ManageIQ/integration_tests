@@ -126,6 +126,7 @@ def test_priority(
     # FIRST SIMULATION
     #
     simulate(
+        appliance=appliance,
         instance="Request",
         message="create",
         request=original_instance.name,
@@ -156,6 +157,7 @@ def test_priority(
     # SECOND SIMULATION
     #
     simulate(
+        appliance=appliance,
         instance="Request",
         message="create",
         request=original_instance.name,
@@ -176,6 +178,7 @@ def test_priority(
     # LAST SIMULATION
     #
     simulate(
+        appliance=appliance,
         instance="Request",
         message="create",
         request=original_instance.name,
