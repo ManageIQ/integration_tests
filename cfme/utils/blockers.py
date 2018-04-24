@@ -3,6 +3,7 @@ import re
 import six
 import six.moves.xmlrpc_client
 from github import Github
+from six import string_types
 from six.moves.urllib.parse import urlparse
 
 from cfme.fixtures.pytest_store import store
@@ -100,7 +101,7 @@ class GH(Blocker):
             if self.DEFAULT_REPOSITORY is None:
                 raise ValueError("You must specify github/default_repo in env.yaml!")
             self.issue = description
-        elif isinstance(description, basestring):
+        elif isinstance(description, string_types):
             try:
                 owner, repo, issue_num = re.match(r"^([^/]+)/([^/:]+):([0-9]+)$",
                                                   str(description).strip()).groups()

@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 import atexit
+import inspect
 import logging
 import logging.handlers
+import sys
 from threading import Lock
 
-import inspect
-import sys
 from django.db.models import Model
+from six import string_types
 from types import ModuleType
 
 logger_cache = {}
@@ -59,7 +60,7 @@ def create_logger(o, additional_id=None):
         Instance of logger.
     """
     wrap = None
-    if isinstance(o, basestring):
+    if isinstance(o, string_types):
         if o in sys.modules:
             # str -> module
             return create_logger(sys.modules[o], additional_id)

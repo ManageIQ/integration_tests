@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import math
-import re
 from collections import namedtuple
+
+import re
+from six import string_types
 
 # TODO: Split the 1000 and 1024 factor out. Now it is not an issue as it is used FOR COMPARISON ONLY
 FACTOR = 1024
@@ -72,7 +74,7 @@ class Unit(object):
         return type(self)(int_or_float, PREFIXES[0], self.unit_type)
 
     def __cmp__(self, other):
-        if isinstance(other, basestring):
+        if isinstance(other, string_types):
             other = self.parse(other)
         elif isinstance(other, (int, float)):
             other = self._as_same_unit(other)

@@ -1,11 +1,11 @@
-from string import digits, ascii_letters
-from random import choice
-from os import path
 from copy import deepcopy
-import re
-import pytest
+from random import choice
+from string import digits, ascii_letters
 
+import pytest
+import re
 from manageiq_client.api import APIException
+from os import path
 
 from cfme.containers.provider import ContainersProvider, refresh_and_navigate
 from cfme.containers.provider.openshift import CustomAttribute
@@ -21,7 +21,7 @@ pytestmark = [
 
 def get_random_string(length):
     valid_chars = digits + ascii_letters + ' !@#$%^&*()'
-    out = ''.join([choice(valid_chars) for _ in xrange(length)])
+    out = ''.join([choice(valid_chars) for _ in range(length)])
     return re.sub('\s+', ' ', out)
 
 

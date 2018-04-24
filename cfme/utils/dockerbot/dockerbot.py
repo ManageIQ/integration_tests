@@ -1,17 +1,19 @@
 #!/usr/bin/env python2
-from cfme.utils.conf import docker as docker_conf
-from cfme.utils.net import random_port, my_ip_address
 import argparse
-import fauxfactory
-import requests
-import os
-import os.path
-import docker
-import re
 import subprocess
 import sys
+
+import docker
+import fauxfactory
+import os
+import os.path
+import re
+import requests
 import yaml
 from six.moves.urllib.parse import urlsplit
+
+from cfme.utils.conf import docker as docker_conf
+from cfme.utils.net import random_port, my_ip_address
 
 
 def _dgci(d, key):
@@ -503,7 +505,7 @@ class DockerBot(object):
 
     def handle_watch(self):
         if self.args['watch'] and not self.args['dry_run']:
-            print
+            print(" ")
             print("  Waiting for container for 10 seconds...")
             import time
             time.sleep(10)
@@ -511,14 +513,14 @@ class DockerBot(object):
             ipport = "vnc://127.0.0.1:" + str(self.sel_vnc_port)
             cmd = ['xdg-open', ipport]
             subprocess.Popen(cmd)
-        print
+        print(" ")
         print("  Press Ctrl+C to kill tests + containers")
 
     def handle_output(self):
         if self.args['output']:
-            print
-            print("======================== \/ OUTPUT \/ ============================")
-            print
+            print(" ")
+            print("========================    OUTPUT    ============================")
+            print(" ")
             f = open(os.path.join(self.log_path, 'setup.txt'))
             print(f.read())
 

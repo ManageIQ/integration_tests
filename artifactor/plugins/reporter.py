@@ -24,6 +24,7 @@ import os
 import re
 from jinja2 import Environment, FileSystemLoader
 from py.path import local
+from six import string_types
 
 from artifactor import ArtifactorBasePlugin
 from cfme.utils import process_pytest_path
@@ -256,7 +257,7 @@ class ReporterBase(object):
         and the duration.
         """
 
-        if isinstance(path, basestring):
+        if isinstance(path, string_types):
             segs = process_pytest_path(path)
         else:
             segs = path

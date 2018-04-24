@@ -1,14 +1,17 @@
 """Helper functions related to the creation and destruction of virtual machines and instances
 """
-import pytest
 
-import six
-from cfme.utils.providers import get_crud
+from ssl import SSLError
+
+import pytest
 from cfme.fixtures.pytest_store import store
 from novaclient.exceptions import OverLimit as OSOverLimit
-from ssl import SSLError
+from six import string_types
+
 from cfme.utils.log import logger
 from cfme.utils.mgmt_system import exceptions
+from cfme.utils.providers import get_crud
+from fixtures.pytest_store import store
 
 try:
     from ovirtsdk.infrastructure.errors import RequestError as RHEVRequestError
@@ -29,7 +32,7 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
     if isinstance(allow_skip, dict):
         skip_exceptions = allow_skip.keys()
         callable_mapping = allow_skip
-    elif isinstance(allow_skip, six.string_types) and allow_skip.lower() == "default":
+    elif isinstance(allow_skip, string_types) and allow_skip.lower() == "default":
         skip_exceptions = DEFAULT_SKIP
         callable_mapping = {}
     else:

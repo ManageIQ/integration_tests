@@ -11,11 +11,13 @@ artifactor:
             plugin: filedump
 """
 
-from artifactor import ArtifactorBasePlugin
 import base64
+
 import os
 import re
+from six import string_types
 
+from artifactor import ArtifactorBasePlugin
 from cfme.utils import normalize_text, safe_string
 
 
@@ -100,7 +102,7 @@ class Filedump(ArtifactorBasePlugin):
                 with open(filename) as f:
                     data = f.read()
                 for word in words:
-                    if not isinstance(word, basestring):
+                    if not isinstance(word, string_types):
                         word = str(word)
                     data = data.replace(word, "*" * len(word))
                 with open(filename, "w") as f:

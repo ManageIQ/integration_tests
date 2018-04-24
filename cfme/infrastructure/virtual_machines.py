@@ -8,6 +8,7 @@ from copy import copy
 import fauxfactory
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
+from six import string_types
 from widgetastic.utils import partial_match, Parameter, VersionPick, Version
 from widgetastic.widget import (
     Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
@@ -1047,7 +1048,7 @@ class Genealogy(object):
 # todo: there will be an entity's method to apply some operation to a bunch of entities
 def _method_setup(vm_names, provider_crud=None):
     """ Reduces some redundant code shared between methods """
-    if isinstance(vm_names, basestring):                                 # noqa
+    if isinstance(vm_names, string_types):                                 # noqa
         vm_names = [vm_names]
 
     if provider_crud:
