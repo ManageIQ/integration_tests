@@ -24,11 +24,11 @@ def a_provider(request):
 
 
 @pytest.fixture(scope="module")
-def vms(a_provider):
+def vms(appliance, a_provider):
     """Ensure the infra providers are set up and get list of vms"""
     view = navigate_to(InfraVm, 'VMsOnly')
     view.entities.search.remove_search_filters()
-    return virtual_machines.get_all_vms()
+    return virtual_machines.get_all_vms(appliance)
 
 
 @pytest.fixture(scope="module")
@@ -58,12 +58,12 @@ def test_can_open_vm_advanced_search(vm_advanced_search):
     vm_advanced_search.entities.search.open_advanced_search()
 
 
-def test_vm_filter_without_user_input(vm_advanced_search, vms, subset_of_vms,
-                                   expression_for_vms_subset):
+def test_vm_filter_without_user_input(appliance, vm_advanced_search, vms, subset_of_vms,
+                                      expression_for_vms_subset):
     # Set up the filter
     vm_advanced_search.entities.search.advanced_search(expression_for_vms_subset)
     vm_advanced_search.flash.assert_no_error()
-    vms_present = virtual_machines.get_all_vms(do_not_navigate=True)
+    vms_present = virtual_machines.get_all_vms(appliance, do_not_navigate=True)
     for vm in subset_of_vms:
         if vm not in vms_present:
             pytest.fail("Could not find VM {} after filtering!".format(vm))
@@ -71,21 +71,21 @@ def test_vm_filter_without_user_input(vm_advanced_search, vms, subset_of_vms,
 
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_vm_filter_with_user_input(
-        vm_advanced_search, vms, subset_of_vms, expression_for_vms_subset):
+        appliance, vm_advanced_search, vms, subset_of_vms, expression_for_vms_subset):
     vm = sample(subset_of_vms, 1)[0]
     # Set up the filter
     vm_advanced_search.entities.search.advanced_search(
         "fill_field(Virtual Machine : Name, =)", {"Virtual Machine": vm}
     )
     vm_advanced_search.flash.assert_no_error()
-    vms_present = virtual_machines.get_all_vms(do_not_navigate=True)
+    vms_present = virtual_machines.get_all_vms(appliance, do_not_navigate=True)
     if vm not in vms_present:
         pytest.fail("Could not find VM {} after filtering!".format(vm))
 
 
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_vm_filter_with_user_input_and_cancellation(vm_advanced_search, vms, subset_of_vms,
-                                                 expression_for_vms_subset):
+                                                    expression_for_vms_subset):
     vm = sample(subset_of_vms, 1)[0]
     # Set up the filter
     vm_advanced_search.entities.search.advanced_search(
@@ -109,8 +109,8 @@ def test_vm_filter_save_cancel(vm_advanced_search, vms, subset_of_vms, expressio
         vm_advanced_search.entities.search.load_filter(filter_name)  # does not exist
 
 
-def test_vm_filter_save_and_load(request, vm_advanced_search, vms, subset_of_vms,
-                              expression_for_vms_subset):
+def test_vm_filter_save_and_load(appliance, request, vm_advanced_search, vms, subset_of_vms,
+                                 expression_for_vms_subset):
     filter_name = fauxfactory.gen_alphanumeric()
     vm = sample(subset_of_vms, 1)[0]
     # Set up the filter
@@ -129,7 +129,7 @@ def test_vm_filter_save_and_load(request, vm_advanced_search, vms, subset_of_vms
 
     vm_advanced_search.flash.assert_no_error()
 
-    assert vm in virtual_machines.get_all_vms(do_not_navigate=True)
+    assert vm in virtual_machines.get_all_vms(appliance, do_not_navigate=True)
 
 
 def test_vm_filter_save_and_cancel_load(request, vm_advanced_search):
@@ -174,7 +174,7 @@ def test_vm_filter_save_and_load_cancel(request, vms, subset_of_vms, vm_advanced
     vm_advanced_search.flash.assert_no_error()
 
 
-def test_quick_search_without_vm_filter(request, vms, subset_of_vms):
+def test_quick_search_without_vm_filter(appliance, request, vms, subset_of_vms):
     view = navigate_to(InfraVm, 'VMsOnly')
     view.flash.assert_no_error()
     vm = sample(subset_of_vms, 1)[0]
@@ -184,12 +184,12 @@ def test_quick_search_without_vm_filter(request, vms, subset_of_vms):
     view.entities.search.simple_search(vm)
     view.flash.assert_no_error()
     # Check it is there
-    all_vms_visible = virtual_machines.get_all_vms(do_not_navigate=True)
+    all_vms_visible = virtual_machines.get_all_vms(appliance, do_not_navigate=True)
     assert len(all_vms_visible) == 1 and vm in all_vms_visible
 
 
-def test_quick_search_with_vm_filter(vm_advanced_search, vms, subset_of_vms,
-                                  expression_for_vms_subset):
+def test_quick_search_with_vm_filter(
+        vm_advanced_search, vms, subset_of_vms, appliance, expression_for_vms_subset):
     vm_advanced_search.entities.search.advanced_search(expression_for_vms_subset)
     vm_advanced_search.flash.assert_no_error()
     # Filter this host only
@@ -197,7 +197,7 @@ def test_quick_search_with_vm_filter(vm_advanced_search, vms, subset_of_vms,
     vm_advanced_search.entities.search.simple_search(chosen_vm)
     vm_advanced_search.flash.assert_no_error()
     # Check it is there
-    all_vms_visible = virtual_machines.get_all_vms(do_not_navigate=True)
+    all_vms_visible = virtual_machines.get_all_vms(appliance, do_not_navigate=True)
     assert len(all_vms_visible) == 1 and chosen_vm in all_vms_visible
 
 

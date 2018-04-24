@@ -364,7 +364,7 @@ def test_no_template_power_control(provider, soft_assert):
     soft_assert(not view.toolbar.power.is_enabled, "Power displayed in template grid view!")
 
     # Ensure selecting a template doesn't cause power menu to appear
-    templates = list(get_all_vms(True))
+    templates = list(get_all_vms(provider.appliance, True))
     template_name = random.choice(templates)
     selected_template = VM.factory(template_name, provider, template=True)
 

@@ -13,7 +13,6 @@ from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policies import VMCompliancePolicy, VMControlPolicy
 from cfme.exceptions import CFMEExceptionOccured
 from cfme.infrastructure.virtual_machines import InfraVm
-from cfme.utils.appliance import get_or_create_current_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -207,7 +206,7 @@ def test_invoke_custom_automation(request, action_collection):
 
 @pytest.mark.meta(blockers=[1375093], automates=[1375093])
 def test_check_compliance_history(request, virtualcenter_provider, vmware_vm, policy_collection,
-        policy_profile_collection):
+        policy_profile_collection, appliance):
     """This test checks if compliance history link in a VM details screen work.
 
     Steps:
@@ -235,7 +234,6 @@ def test_check_compliance_history(request, virtualcenter_provider, vmware_vm, po
         policy_profile.description))
     vmware_vm.check_compliance()
     vmware_vm.open_details(["Compliance", "History"])
-    appliance = get_or_create_current_appliance()
     history_screen_title = Text(appliance.browser.widgetastic,
         "//span[@id='explorer_title_text']").text
     assert history_screen_title == '"Compliance History" for Virtual Machine "{}"'.format(
