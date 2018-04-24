@@ -103,7 +103,7 @@ def main(args):
     log_callback('Calling {}({}, {}) on {}'.format(
         args.action_name,
         ", ".join(map(repr, action_args)),
-        ", ".join("{}={}".format(k, repr(v)) for k, v in action_kwargs.iteritems()),
+        ", ".join("{}={}".format(k, repr(v)) for k, v in action_kwargs.items()),
         ", ".join(args.appliances)))
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:

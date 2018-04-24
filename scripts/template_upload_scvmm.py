@@ -106,15 +106,15 @@ def make_kwargs(args, **kwargs):
     if len(kwargs) is 0:
         return args_kwargs
 
-    for kkey, kval in kwargs.iteritems():
-        for akey, aval in args_kwargs.iteritems():
+    for kkey, kval in kwargs.items():
+        for akey, aval in args_kwargs.items():
             if aval is not None:
                 if kkey == akey:
                     if kval != aval:
                         kwargs[akey] = aval
 
-    for akey, aval in args_kwargs.iteritems():
-        if akey not in kwargs.iterkeys():
+    for akey, aval in args_kwargs.items():
+        if akey not in kwargs:
             kwargs[akey] = aval
 
     return kwargs
@@ -128,7 +128,7 @@ def make_kwargs_scvmm(cfme_data, provider, image_url, template_name):
     scvmm_kwargs = cfme_data['template_upload']['template_upload_scvmm']
 
     final_kwargs = {'provider': provider}
-    for kkey, kvalue in scvmm_kwargs.iteritems():
+    for kkey, kvalue in scvmm_kwargs.items():
         final_kwargs[kkey] = kvalue
     final_kwargs['image_url'] = image_url
     final_kwargs['template_name'] = template_name

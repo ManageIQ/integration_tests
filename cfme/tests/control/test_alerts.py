@@ -56,7 +56,7 @@ def wait_for_alert(smtp, alert, delay=None, additional_checks=None):
                 if not additional_checks:
                     return True
                 else:
-                    for key, value in additional_checks.iteritems():
+                    for key, value in additional_checks.items():
                         if value in mail.get(key, ""):
                             return True
         return False

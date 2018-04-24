@@ -82,7 +82,7 @@ def test_db_restore(request, soft_assert, get_appliances):
     vm = provision_vm(request, virtual_crud)
     soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
     # Assert server roles on the second appliance
-    for role, is_enabled in server_info.server_roles_ui.iteritems():
+    for role, is_enabled in server_info.server_roles_ui.items():
         if is_enabled:
             assert roles[role], "Role '{}' is selected but should not be".format(role)
         else:

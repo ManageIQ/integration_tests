@@ -186,7 +186,7 @@ def pytest_pyfunc_call(pyfuncitem):
         loc = "{}/{}".format(pyfuncitem.location[0], pyfuncitem.location[2])
         # loc = loc[:min([loc.rfind('['), len(loc)])]
         logger.error(loc)
-        # errors = [v for k, v in tests.iteritems() if loc.startswith(k)]
+        # errors = [v for k, v in tests.items() if loc.startswith(k)]
         errors = pyfuncitem.function.meta.kwargs['from_docs']['rbac']['roles']
         if errors:
             # errors = errors[0]

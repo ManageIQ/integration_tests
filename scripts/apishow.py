@@ -185,7 +185,7 @@ def get_collections_info(api, store):
 def print_info(store):
     """Print info about collections together with coverage info when available."""
 
-    for name, collection in sorted(store.iteritems()):
+    for name, collection in sorted(store.items()):
         print('=' * (2 + len(name)))
         print('* {}'.format(name))
 
@@ -193,7 +193,7 @@ def print_info(store):
             if 'actions_avail' in res_dict and res_dict['actions_avail']:
                 print('  {} actions:'.format(res_title))
                 covered = True if 'actions' in res_dict else False
-                for action, methods in res_dict['actions_avail'].iteritems():
+                for action, methods in res_dict['actions_avail'].items():
                     methods_num = len(methods)
                     only_post = True if methods_num == 1 and methods[0] == 'POST' else False
                     if (covered and only_post and
@@ -212,7 +212,7 @@ def print_info(store):
             if 'entity' in res_dict:
                 _print_resource('{} entity'.format(res_title), res_dict['entity'])
 
-            for key, subcollection in sorted(res_dict.iteritems()):
+            for key, subcollection in sorted(res_dict.items()):
                 if key in ('actions', 'actions_avail', 'entity'):
                     continue
                 _print_resource('Subcollection "{}"'.format(key), subcollection)

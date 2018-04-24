@@ -39,7 +39,7 @@ signal.signal(signal.SIGTERM, translate_sigterm_to_sigint)
 def close_logs():
     global logger_cache
     with logger_cache_lock:
-        for filename, (logger, lock) in logger_cache.iteritems():
+        for filename, (logger, lock) in logger_cache.items():
             with lock:
                 for handler in logger.handlers:
                     if hasattr(handler, "close"):

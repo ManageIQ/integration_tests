@@ -56,7 +56,7 @@ def pytest_itemcollected(item):
                 add_mark = True
             else:
                 add_mark = True
-                for condition_key, condition_value in conditions.iteritems():
+                for condition_key, condition_value in conditions.items():
                     if condition_key not in params:
                         continue
                     if params[condition_key] == condition_value:

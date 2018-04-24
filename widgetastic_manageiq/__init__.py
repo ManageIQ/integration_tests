@@ -3345,7 +3345,7 @@ class MenuShortcutsPicker(View):
                 dict_values_to_add = dict_values
             else:
                 dict_values_to_add = {value: value for value in values}
-            for shortcut, alias in dict_values_to_add.iteritems():
+            for shortcut, alias in dict_values_to_add.items():
                 self.add_shortcut(shortcut, alias)
             return True
 
