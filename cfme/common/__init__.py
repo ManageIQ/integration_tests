@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import six
+import random
 from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException, RowNotFound
 from widgetastic_patternfly import (
@@ -261,12 +262,11 @@ class Taggable(object):
     standardized widgetastic views
     """
 
-    def add_tag(self, category=None, tag=None, cancel=False, reset=False, details=True):
+    def add_tag(self, tag=None, cancel=False, reset=False, details=True):
         """ Add tag to tested item
 
         Args:
-            category: category(str)
-            tag: tag(str) or Tag object
+            tag: Tag object
             cancel: set True to cancel tag assigment
             reset: set True to reset already set up tag
             details (bool): set False if tag should be added for list selection,
@@ -276,45 +276,41 @@ class Taggable(object):
             view = navigate_to(self, 'EditTagsFromDetails')
         else:
             view = navigate_to(self, 'EditTags')
-        if isinstance(tag, Tag):
-            category = tag.category.display_name
-            tag = tag.display_name
+        if not tag:
+            tag = self._set_random_tag(view)
+        category_name = tag.category.display_name
+        tag_name = tag.display_name
         # Handle nested view.form and where the view contains form widgets
         try:
             updated = view.form.fill({
-                "tag_category": '{} *'.format(category),
-                "tag_name": tag
+                "tag_category": '{} *'.format(category_name),
+                "tag_name": tag_name
             })
         except (NoSuchElementException, SelectItemNotFound):
             updated = view.form.fill({
-                "tag_category": category,
-                "tag_name": tag
+                "tag_category": category_name,
+                "tag_name": tag_name
             })
         # In case if field is not updated cancel the edition
         if not updated:
             cancel = True
         self._tags_action(view, cancel, reset)
+        return tag
 
     def add_tags(self, tags):
         """Add multiple tags
 
         Args:
-            tags: pass dict with category name as key, and tag as value,
-                 or pass list with tag objects
+            tags: list of tag objects
         """
-        if isinstance(tags, dict):
-            for category, tag in tags.items():
-                self.add_tag(category=category, tag=tag)
-        elif isinstance(tags, (list, tuple)):
-            for tag in tags:
-                self.add_tag(tag=tag)
+        for tag in tags:
+            self.add_tag(tag=tag)
 
-    def remove_tag(self, category=None, tag=None, cancel=False, reset=False, details=True):
+    def remove_tag(self, tag, cancel=False, reset=False, details=True):
         """ Remove tag of tested item
 
         Args:
-            category: category(str)
-            tag: tag(str) or Tag object
+            tag: Tag object
             cancel: set True to cancel tag deletion
             reset: set True to reset tag changes
             details (bool): set False if tag should be added for list selection,
@@ -324,9 +320,8 @@ class Taggable(object):
             view = navigate_to(self, 'EditTagsFromDetails')
         else:
             view = navigate_to(self, 'EditTags')
-        if isinstance(tag, Tag):
-            category = tag.category.display_name
-            tag = tag.display_name
+        category = tag.category.display_name
+        tag = tag.display_name
         try:
             row = view.form.tags.row(category="{} *".format(category), assigned_value=tag)
         except RowNotFound:
@@ -338,15 +333,22 @@ class Taggable(object):
         """Remove multiple of tags
 
         Args:
-            tags: pass dict with category name as key, and tag as value,
-                 or pass list with tag objects
+            tags: list of tag objects
         """
-        if isinstance(tags, dict):
-            for category, tag in tags.items():
-                self.remove_tag(category=category, tag=tag)
-        elif isinstance(tags, (list, tuple)):
-            for tag in tags:
-                self.remove_tag(tag=tag)
+        for tag in tags:
+            self.remove_tag(tag=tag)
+
+    def _set_random_tag(self, view):
+        random_cat = random.choice(view.form.tag_category.all_options).text
+        # '*' is added in UI almost to all categoly while tag selection,
+        #  but doesn't need for Category object creation
+        random_cat_cut = random_cat[:-1].strip() if random_cat[-1] == '*' else random_cat
+        view.form.tag_category.fill(random_cat)
+        # In order to get the right tags list we need to select category first to get loaded tags
+        random_tag = random.choice([tag_option for tag_option in view.form.tag_name.all_options
+                                    if "select" not in tag_option.text.lower()]).text
+        tag = Tag(display_name=random_tag, category=Category(display_name=random_cat_cut))
+        return tag
 
     def get_tags(self, tenant="My Company Tags"):
         """ Get list of tags assigned to item.
@@ -420,13 +422,13 @@ class EditTagsFromListCollection(CFMENavigateStep):
         else:
             return navigate_to(self.obj.parent, 'All')
 
-    def step(self, **kwargs):
+    def step(self, *args):
         """
-            kwargs: pass an entities objects or entities names
+            args: pass an entities objects or entities names
             Return: navigation step
         """
-        if kwargs:
-            for _, entity in kwargs.items():
+        if args:
+            for entity in args:
                 name = entity.name if isinstance(entity, BaseEntity) else entity
                 self.prerequisite_view.entities.get_entity(
                     surf_pages=True, name=name).check()

@@ -61,10 +61,10 @@ def check_catalog_visibility(request, user_restricted, tag):
                 test_item_object: object for visibility check
         """
         category_name = ' '.join((tag.category.display_name, '*'))
-        test_item_object.add_tag(category_name, tag.display_name)
+        test_item_object.add_tag(tag)
         with user_restricted:
             assert test_item_object.exists
-        test_item_object.remove_tag(category_name, tag.display_name)
+        test_item_object.remove_tag(tag)
         with user_restricted:
             assert not test_item_object.exists
     return _check_catalog_visibility
@@ -100,9 +100,9 @@ def test_add_button(catalog_item, appliance):
     view.flash.assert_success_message(message)
 
 
-def test_edit_tags_catalog_item(catalog_item):
-    catalog_item.add_tag("Cost Center *", "Cost Center 001")
-    catalog_item.remove_tag("Cost Center *", "Cost Center 001")
+def test_edit_tags(catalog_item):
+    tag = catalog_item.add_tag()
+    catalog_item.remove_tag(tag)
 
 
 @pytest.mark.skip('Catalog items are converted to collections. Refactoring is required')

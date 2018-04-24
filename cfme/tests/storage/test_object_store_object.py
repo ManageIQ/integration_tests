@@ -21,12 +21,12 @@ def test_object_add_remove_tag(appliance, provider):
     obj = random.choice(all_objects)
 
     # add tag with category Department and tag communication
-    obj.add_tag('Department', 'Communication')
+    added_tag = obj.add_tag()
     tag_available = obj.get_tags()
-    assert tag_available[0].display_name == 'Communication'
-    assert tag_available[0].category.display_name == 'Department'
+    assert tag_available[0].display_name == added_tag.display_name
+    assert tag_available[0].category.display_name == added_tag.category.display_name
 
     # remove assigned tag
-    obj.remove_tag('Department', 'Communication')
+    obj.remove_tag(added_tag)
     tag_available = obj.get_tags()
     assert not tag_available

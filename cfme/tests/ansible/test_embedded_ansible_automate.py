@@ -361,8 +361,8 @@ def test_alert_run_ansible_playbook(full_template_vm_modscope, alert_profile, re
     """Tests execution of an ansible playbook method by triggering a management event from an
     alert.
     """
-    full_template_vm_modscope.add_tag("Service Level", "Gold")
-    full_template_vm_modscope.remove_tag("Service Level", "Gold")
+    added_tag = full_template_vm_modscope.add_tag()
+    full_template_vm_modscope.remove_tag(added_tag)
     request.addfinalizer(lambda: appliance.ssh_client.run_command(
         '[[ -f "/var/tmp/modified-release" ]] && rm -f "/var/tmp/modified-release"'))
     try:

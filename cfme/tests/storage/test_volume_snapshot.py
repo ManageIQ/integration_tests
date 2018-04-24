@@ -149,7 +149,7 @@ def test_storage_volume_snapshot_crud(volume):
 
 
 @pytest.mark.tier(3)
-def test_storage_volume_snapshot_edit_tag_from_detail(snapshot):
+def test_storage_volume_snapshot_edit_tag_from_detail(snapshot, tag):
     """ Test tags for snapshot
 
     prerequisites:
@@ -162,12 +162,12 @@ def test_storage_volume_snapshot_edit_tag_from_detail(snapshot):
     """
 
     # add tag with category Department and tag communication
-    snapshot.add_tag('Department', 'Communication')
+    snapshot.add_tag(tag)
     tag_available = snapshot.get_tags()
-    assert tag_available[0].display_name == 'Communication'
-    assert tag_available[0].category.display_name == 'Department'
+    assert tag_available[0].display_name == tag.display_name
+    assert tag_available[0].category.display_name == tag.category.display_name
 
     # remove assigned tag
-    snapshot.remove_tag('Department', 'Communication')
+    snapshot.remove_tag(tag)
     tag_available = snapshot.get_tags()
     assert not tag_available

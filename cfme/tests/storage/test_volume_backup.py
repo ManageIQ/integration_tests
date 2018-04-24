@@ -53,13 +53,13 @@ def test_storage_volume_backup_create(backup):
 @pytest.mark.tier(3)
 def test_storage_volume_backup_edit_tag_from_detail(backup):
     # add tag with category Department and tag communication
-    backup.add_tag('Department', 'Communication')
+    added_tag = backup.add_tag()
     tag_available = backup.get_tags()
-    assert tag_available[0].display_name == 'Communication'
-    assert tag_available[0].category.display_name == 'Department'
+    assert tag_available[0].display_name == added_tag.display_name
+    assert tag_available[0].category.display_name == added_tag.category.display_name
 
     # remove assigned tag
-    backup.remove_tag('Department', 'Communication')
+    backup.remove_tag(added_tag)
     tag_available = backup.get_tags()
     assert not tag_available
 

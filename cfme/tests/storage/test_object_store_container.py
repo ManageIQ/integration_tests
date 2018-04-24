@@ -24,12 +24,12 @@ def test_add_remove_tag(containers):
     container = random.choice(containers)
 
     # add tag with category Department and tag communication
-    container.add_tag('Department', 'Communication')
+    added_tag = container.add_tag()
     tag_available = container.get_tags()
-    assert tag_available[0].display_name == 'Communication'
-    assert tag_available[0].category.display_name == 'Department'
+    assert tag_available[0].display_name == added_tag.display_name
+    assert tag_available[0].category.display_name == added_tag.category.display_name
 
     # remove assigned tag
-    container.remove_tag('Department', 'Communication')
+    container.remove_tag(added_tag)
     tag_available = container.get_tags()
     assert not tag_available

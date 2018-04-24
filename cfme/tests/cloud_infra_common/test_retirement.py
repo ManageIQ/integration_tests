@@ -8,6 +8,7 @@ from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm import VM
+from cfme.configure.configuration.region_settings import Tag, Category
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.generators import random_vm_name
@@ -157,7 +158,9 @@ def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged):
     """
     # Tag the VM with lifecycle for full retirement based on parameter
     if tagged:
-        retire_ec2_s3_vm.add_tag('LifeCycle', 'Fully retire VM and remove from Provider')
+        retire_ec2_s3_vm.add_tag(
+            Tag(display_name='LifeCycle', category=Category(
+                display_name='Fully retire VM and remove from Provider')))
         expected_power_state = ['terminated']
     else:
         # no tagging

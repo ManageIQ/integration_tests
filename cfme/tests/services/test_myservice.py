@@ -100,7 +100,7 @@ def test_crud_set_ownership_and_edit_tags(appliance, context, myservice):
     with appliance.context.use(context):
         myservice = MyService(appliance, name=service_name, vm_name=vm_name)
         myservice.set_ownership("Administrator", "EvmGroup-administrator")
-        myservice.add_tag("Cost Center", "Cost Center 001")
+        myservice.add_tag()
         with update(myservice):
             myservice.description = "my edited description"
         myservice.delete()

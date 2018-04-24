@@ -154,8 +154,8 @@ def test_action_run_ansible_playbook_localhost(request, ansible_catalog_item, an
     """
     with update(ansible_action):
         ansible_action.run_ansible_playbook = {"inventory": {"localhost": True}}
-    full_template_vm_modscope.add_tag("Service Level", "Gold")
-    request.addfinalizer(lambda: full_template_vm_modscope.remove_tag("Service Level", "Gold"))
+    added_tag = full_template_vm_modscope.add_tag()
+    request.addfinalizer(lambda: full_template_vm_modscope.remove_tag(added_tag))
     wait_for(service_request.exists, num_sec=600)
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
@@ -178,8 +178,8 @@ def test_action_run_ansible_playbook_manual_address(request, ansible_catalog_ite
                 "hosts": vm.ip_address
             }
         }
-    vm.add_tag("Service Level", "Gold")
-    request.addfinalizer(lambda: vm.remove_tag("Service Level", "Gold"))
+    added_tag = vm.add_tag()
+    request.addfinalizer(lambda: vm.remove_tag(added_tag))
     wait_for(service_request.exists, num_sec=600)
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
@@ -195,8 +195,8 @@ def test_action_run_ansible_playbook_target_machine(request, ansible_catalog_ite
     vm = full_template_vm_modscope
     with update(ansible_action):
         ansible_action.run_ansible_playbook = {"inventory": {"target_machine": True}}
-    vm.add_tag("Service Level", "Gold")
-    request.addfinalizer(lambda: vm.remove_tag("Service Level", "Gold"))
+    added_tag = vm.add_tag()
+    request.addfinalizer(lambda: vm.remove_tag(added_tag))
     wait_for(service_request.exists, num_sec=600)
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
@@ -219,8 +219,8 @@ def test_action_run_ansible_playbook_unavailable_address(request, ansible_catalo
                 "hosts": "unavailable_address"
             }
         }
-    vm.add_tag("Service Level", "Gold")
-    request.addfinalizer(lambda: vm.remove_tag("Service Level", "Gold"))
+    added_tag = vm.add_tag()
+    request.addfinalizer(lambda: vm.remove_tag(added_tag))
     wait_for(service_request.exists, num_sec=600)
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
@@ -233,6 +233,6 @@ def test_control_action_run_ansible_playbook_in_requests(request,
         full_template_vm_modscope, policy_for_testing, service_request):
     """Checks if execution of the Action result in a Task/Request being created."""
     vm = full_template_vm_modscope
-    vm.add_tag("Service Level", "Gold")
-    request.addfinalizer(lambda: vm.remove_tag("Service Level", "Gold"))
+    added_tag = vm.add_tag()
+    request.addfinalizer(lambda: vm.remove_tag(added_tag))
     assert service_request.exists
