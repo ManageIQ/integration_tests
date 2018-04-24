@@ -10,8 +10,8 @@ pytest_plugins = 'pytester'
 
 test_file = """
 pytest_plugins = [
-    'fixtures.artifactor_plugin',
-    'fixtures.soft_assert',
+    'cfme.fixtures.artifactor_plugin',
+    'cfme.fixtures.soft_assert',
 ]
 
 
