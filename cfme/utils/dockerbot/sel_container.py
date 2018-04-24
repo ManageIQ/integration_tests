@@ -6,7 +6,7 @@ import sys
 
 from wait_for import wait_for, TimedOutError
 
-from dockerbot import SeleniumDocker
+from .dockerbot import SeleniumDocker
 from cfme.utils.net import random_port
 from cfme.utils.conf import docker as docker_conf
 

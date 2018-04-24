@@ -1,6 +1,5 @@
 from collections import Mapping
 from contextlib import contextmanager
-from itertools import izip
 
 from cached_property import cached_property
 from sqlalchemy import MetaData, create_engine, event, inspect
@@ -110,7 +109,7 @@ class Db(Mapping):
 
     def items(self):
         """Iterator of ``(table_name, table)`` pairs"""
-        return izip(self.keys(), self.values())
+        return zip(self.keys(), self.values())
 
     def values(self):
         """Iterator of tables in this db"""

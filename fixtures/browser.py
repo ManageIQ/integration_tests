@@ -35,11 +35,10 @@ def pytest_exception_interact(node, call, report):
     from fixtures.pytest_store import store
     from six.moves.http_client import BadStatusLine
     from socket import error
-    import urllib2
 
     val = safe_string(call.excinfo.value.message).decode('utf-8', 'ignore')
-
-    if isinstance(call.excinfo.value, (urllib2.URLError, BadStatusLine, error)):
+    from six.moves.urllib_error import URLError
+    if isinstance(call.excinfo.value, (URLError, BadStatusLine, error)):
         logger.error("internal Exception:\n %s", str(call.excinfo))
         from cfme.utils.browser import manager
         manager.start()  # start will quit first and cycle wharf as well
