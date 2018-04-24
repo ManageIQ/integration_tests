@@ -3,11 +3,11 @@ import atexit
 import json
 import threading
 import time
-import urllib2
 from collections import namedtuple
 from shutil import rmtree
 from string import Template
 from tempfile import mkdtemp
+from six.moves.urllib_error import URLError
 
 import os
 import requests
@@ -155,7 +155,7 @@ class BrowserFactory(object):
             browser = tries(
                 3, WebDriverException,
                 self.webdriver_class, **self.processed_browser_args())
-        except urllib2.URLError as e:
+        except URLError as e:
             if e.reason.errno == 111:
                 # Known issue
                 raise RuntimeError('Could not connect to Selenium server. Is it up and running?')
@@ -209,14 +209,14 @@ class WharfFactory(BrowserFactory):
             try:
                 self.wharf.checkout()
                 return super(WharfFactory, self).create(url_key)
-            except urllib2.URLError as ex:
+            except URLError as ex:
                 # connection to selenum was refused for unknown reasons
                 log.error('URLError connecting to selenium; recycling container. URLError:')
                 write_line('URLError caused container recycle, see log for details', red=True)
                 log.exception(ex)
                 self.wharf.checkin()
                 raise
-        return tries(10, urllib2.URLError, inner)
+        return tries(10, URLError, inner)
 
     def close(self, browser):
         try:

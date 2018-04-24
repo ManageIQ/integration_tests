@@ -188,7 +188,7 @@ def wait_analysis_finished_multiple_tasks(
                  timeout=timeout,
                  fail_func=view.reload.click)
         return row_completed[-1]
-    except TimedOutError, e:
+    except TimedOutError as e:
         logger.error("Only {}  Tasks out of {}, Finished".format(row_completed[-1],
                                                                  expected_num_of_tasks))
         raise TimedOutError('exception {}'.format(e))

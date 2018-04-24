@@ -7,7 +7,7 @@ Usage:
    scripts/encrypt_conf.py confname1 confname2 ... confnameN
    scripts/encrypt_conf.py credentials
 """
-import StringIO
+import io
 
 import click
 import yaycl_crypt
@@ -58,7 +58,7 @@ def show_credential(cred_or_provider_key, only_credentials):
 @click.argument('provider-key')
 def show_provider(provider_key):
     """Function to show provider data"""
-    output = StringIO.StringIO()
+    output = io.BytesIO()
     data = conf.cfme_data
     if provider_key in data.get('management_systems', {}):
         data['management_systems'][provider_key].dump(output)

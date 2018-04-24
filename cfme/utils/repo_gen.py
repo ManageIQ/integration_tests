@@ -41,7 +41,7 @@ def main(output, url, filename):
         urls = process_url(url)
         output_data = build_file(urls)
     elif filename:
-        print "Can't do this right now"
+        print("Can't do this right now")
     with open(output, 'w') as f:
         f.write(output_data)
 

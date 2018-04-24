@@ -868,7 +868,7 @@ class SSUIlist(Widget, ClickableMixin):
 
         return self.list(item_name).list_click()
 
-    def is_displayed(self, (item_name)):
+    def is_displayed(self, item_name):
         return self.list(item_name).is_displayed()
 
 
@@ -2000,7 +2000,7 @@ class AdvancedFilterUserInput(View):
 
 class AdvancedSearchView(View):
     """ Advanced Search View """
-    import expression_editor as exp_editor
+    from . import expression_editor as exp_editor
     search_exp_editor = exp_editor.ExpressionEditor()
 
     load_filter_button = Button('Load')
