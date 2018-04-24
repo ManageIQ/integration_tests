@@ -1,6 +1,4 @@
-#!/usr/bin/env python2
-
-from functools32 import lru_cache
+#!/usr/bin/env python
 import requests
 from collections import defaultdict
 from jinja2 import Environment, FileSystemLoader
@@ -8,7 +6,6 @@ from cfme.utils.path import template_path, log_path
 from cfme.utils.conf import jenkins
 
 
-@lru_cache()
 def get_json(run):
     r = requests.get(jenkins['url'].format(run))
     json = r.json()
@@ -23,14 +20,15 @@ tests = defaultdict(dict)
 
 runs = [(run['name'], run['ver']) for run in jenkins['runs']]
 
-for run in runs:
+for run, ver in sorted(runs):
 
     json = get_json(run[0])
 
     for case in json['suites'][0]['cases']:
         test_name = "{}/{}".format(case['className'], case['name'])
-        tests[test_name][run[1]] = {'status': case['status'],
-                                    'age': case['age']}
+        tests[test_name][ver] = {
+            'status': case['status'],
+            'age': case['age']}
 
 test_index = sorted(tests)
 

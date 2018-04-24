@@ -40,7 +40,7 @@ def provider_types(category):
 # TODO: Move to collection when it happens
 def all_types():
     all_types = base_types()
-    for category in all_types.keys():
+    for category in list(all_types.keys()):
         all_types.update(provider_types(category))
     return all_types
 
