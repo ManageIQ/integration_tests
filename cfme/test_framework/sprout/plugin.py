@@ -91,6 +91,7 @@ def mangle_in_sprout_appliances(config):
                 'db_host': appliance['db_host'],
                 'project': appliance['project'],
                 'openshift_creds': {
+                    'provider': appliance['provider'],
                     'hostname': provider_data['hostname'],
                     'username': ocp_creds['username'],
                     'password': ocp_creds['password'],

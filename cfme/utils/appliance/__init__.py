@@ -1224,6 +1224,15 @@ class IPAppliance(object):
 
         return result.rc, result.output
 
+    @cached_property
+    def _pod_mgmt(self):
+        """Provides interface to openshift server in order to control pod appliance lifecycle"""
+        if self.is_pod:
+            from cfme.utils.providers import get_crud
+            return get_crud(self.openshift_creds['provider'])
+        else:
+            return None
+
     @logger_wrap("Deploying Merkyl: {}")
     def deploy_merkyl(self, start=False, log_callback=None):
         """Deploys the Merkyl log relay service to the appliance"""

@@ -337,6 +337,7 @@ def main(**kwargs):
                         'container': 'cloudforms-0',
                         'hostname': ip,
                         'openshift_creds': {
+                            'provider': kwargs['provider'],
                             'hostname': provider_dict['hostname'],
                             'username': ocp_creds['username'],
                             'password': ocp_creds['password'],
@@ -386,6 +387,7 @@ def main(**kwargs):
                                 'hostname': ip,
                                 'container': 'cloudforms-0',
                                 'openshift_creds': {
+                                    'provider': kwargs['provider'],
                                     'hostname': provider_dict['hostname'],
                                     'username': ocp_creds['username'],
                                     'password': ocp_creds['password'],
