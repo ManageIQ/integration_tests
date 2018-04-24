@@ -18,9 +18,35 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope='module')
-def small_vm(provider, small_template_modscope):
-    vm = VM.factory(random_vm_name(context='reconfig'), provider, small_template_modscope.name)
+def prepare_new_config(orig_config, change_type):
+    """Prepare configuration object for test case based on change_type."""
+    new_config = orig_config.copy()
+    if change_type == 'cores_per_socket':
+        new_config.hw.cores_per_socket = new_config.hw.cores_per_socket + 1
+    elif change_type == 'sockets':
+        new_config.hw.sockets = new_config.hw.sockets + 1
+    elif change_type == 'memory':
+        new_config.hw.mem_size = new_config.hw.mem_size_mb + 512
+        new_config.hw.mem_size_unit = 'MB'
+
+    return new_config
+
+
+def reconfigure_vm(vm, config):
+    """Reconfigure VM to have the supplies config."""
+    reconfigure_request = vm.reconfigure(config)
+    wait_for(reconfigure_request.is_succeeded, timeout=360, delay=45,
+        message="confirm that vm was reconfigured")
+    wait_for(
+        lambda: vm.configuration == config, timeout=360, delay=45,
+        fail_func=vm.refresh_relationships,
+        message="confirm that config was applied. Hardware: {}, disks: {}"
+                .format(vars(config.hw), config.disks))
+
+
+@pytest.yield_fixture(scope='function')
+def small_vm(provider, small_template):
+    vm = VM.factory(random_vm_name(context='reconfig'), provider, small_template.name)
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     vm.refresh_relationships()
 
@@ -49,37 +75,15 @@ def ensure_vm_running(small_vm):
 
 @pytest.mark.rhv1
 @pytest.mark.parametrize('change_type', ['cores_per_socket', 'sockets', 'memory'])
-def test_vm_reconfig_add_remove_hw_cold(
-        provider, small_vm, ensure_vm_stopped, change_type):
-
+def test_vm_reconfig_add_remove_hw_cold(provider, small_vm, ensure_vm_stopped, change_type):
     orig_config = small_vm.configuration.copy()
-    new_config = orig_config.copy()
-    if change_type == 'cores_per_socket':
-        new_config.hw.cores_per_socket = new_config.hw.cores_per_socket + 1
-    elif change_type == 'sockets':
-        new_config.hw.sockets = new_config.hw.sockets + 1
-    elif change_type == 'memory':
-        new_config.hw.mem_size = new_config.hw.mem_size_mb + 512
-        new_config.hw.mem_size_unit = 'MB'
+    new_config = prepare_new_config(orig_config, change_type)
 
-    reconfigure_request = small_vm.reconfigure(new_config)
-    # VM reconfiguration verification
-    wait_for(reconfigure_request.is_succeeded, timeout=360, delay=45,
-             message="confirm that vm was reconfigured")
-    wait_for(
-        lambda: small_vm.configuration == new_config, timeout=360, delay=45,
-        fail_func=small_vm.refresh_relationships,
-        message="confirm that {} was added".format(change_type))
+    # Apply new config
+    reconfigure_vm(small_vm, new_config)
 
-    # Reverting changes back
-    reconfigure_request = small_vm.reconfigure(orig_config)
-    # VM reconfiguration verification
-    wait_for(reconfigure_request.is_succeeded, timeout=360, delay=45,
-             message="confirm that vm was reconfigured")
-    wait_for(
-        lambda: small_vm.configuration == orig_config, timeout=360, delay=45,
-        fail_func=small_vm.refresh_relationships,
-        message="confirm that previously-added {} was removed".format(change_type))
+    # Revert back to original config
+    reconfigure_vm(small_vm, orig_config)
 
 
 @pytest.mark.rhv1
@@ -135,3 +139,19 @@ def test_reconfig_vm_negative_cancel(provider, small_vm, ensure_vm_stopped):
         size=5, size_unit='GB', type='thin', mode='persistent')
 
     small_vm.reconfigure(config_vm, cancel=True)
+
+
+@pytest.mark.rhv1
+@pytest.mark.uncollectif(lambda provider: provider.one_of(VMwareProvider))
+@pytest.mark.parametrize('change_type', ['sockets', 'memory'])
+def test_vm_reconfig_add_remove_hw_hot(provider, small_vm, ensure_vm_running, change_type):
+    """Change number of CPU sockets and amount of memory while VM is runnng.
+        Chaning number of cores per socket on running VM is not supported by RHV."""
+    orig_config = small_vm.configuration.copy()
+    new_config = prepare_new_config(orig_config, change_type)
+
+    # Apply new config
+    reconfigure_vm(small_vm, new_config)
+
+    # Revert back to original config
+    reconfigure_vm(small_vm, orig_config)
