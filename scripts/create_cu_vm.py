@@ -13,7 +13,7 @@ import argparse
 import sys
 
 from cfme.exceptions import CUCommandException
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.conf import cfme_data, credentials, provider_data
 from cfme.utils.log import logger
 from cfme.utils.providers import get_mgmt
 from cfme.utils.ssh import SSHClient
@@ -79,7 +79,7 @@ def cu_vm(provider, vm_name, template):
     """
     Deploys CU VM
     """
-    provider_dict = cfme_data['management_systems'][provider]
+    provider_dict = provider_data['management_systems'][provider]
     # TODO this key isn't in cfme qe yamls
     datastore = provider_dict['cap_and_util']['allowed_datastores']
     resource_pool = provider_dict['cap_and_util']['resource_pool']
@@ -112,7 +112,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('--provider', help='provider key in cfme_data')
+    parser.add_argument('--provider', help='provider key in provider_data')
     parser.add_argument('--template', help='the name of the template to clone')
     parser.add_argument('--vm_name', help='the name of the VM to create', default=None)
 

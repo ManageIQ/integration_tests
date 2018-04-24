@@ -184,7 +184,7 @@ def main(**kwargs):
         }
     else:
         provider = get_mgmt(kwargs['provider'])
-        provider_dict = cfme_data['management_systems'][kwargs['provider']]
+        provider_dict = provider_data['management_systems'][kwargs['provider']]
         provider_type = provider_dict['type']
         flavors = cfme_data['appliance_provisioning']['default_flavors'].get(provider_type, [])
         deploy_args = {

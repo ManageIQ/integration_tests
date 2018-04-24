@@ -14,7 +14,7 @@ import fauxfactory
 from threading import Lock, Thread
 
 from cfme.utils import net, trackerbot
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.conf import cfme_data, credentials, provider_data as provider_yaml
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.providers import list_provider_keys
 from cfme.utils.ssh import SSHClient
@@ -271,7 +271,7 @@ def run(**kwargs):
     if kwargs['provider_data']:
         mgmt_sys = providers = kwargs['provider_data']['management_systems']
     else:
-        mgmt_sys = cfme_data.management_systems
+        mgmt_sys = provider_yaml.management_systems
 
     # Store thread results, no need to use a lock
     # because threads will not be adding new keys
@@ -321,6 +321,7 @@ def run(**kwargs):
         raise Exception("Template upload failed for all providers")
     else:
         logger.info("Upload passed for at least 1 provider... success!")
+
 
 if __name__ == "__main__":
     args = parse_cmd_line()

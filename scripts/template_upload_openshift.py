@@ -15,7 +15,7 @@ import os
 from threading import Lock, Thread
 
 from cfme.utils import net, trackerbot
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils import conf
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.providers import list_provider_keys
 from cfme.utils.ssh import SSHClient
@@ -51,7 +51,7 @@ def make_kwargs(args, **kwargs):
 
     template_name = kwargs.get('template_name')
     if template_name is None:
-        template_name = cfme_data['basic_info']['appliance_template']
+        template_name = conf.cfme_data['basic_info']['appliance_template']
         kwargs.update({'template_name': template_name})
 
     for kkey, kval in kwargs.items():
@@ -84,7 +84,7 @@ def upload_template(hostname, username, password, provider, url, name, provider_
         kwargs = {}
 
         if name is None:
-            name = cfme_data['basic_info']['appliance_template']
+            name = conf.cfme_data['basic_info']['appliance_template']
 
         logger.info("OPENSHIFT:%r Start uploading Template: %r", provider, name)
         if not check_kwargs(**kwargs):
@@ -206,7 +206,7 @@ def run(**kwargs):
         if kwargs['provider_data']:
             mgmt_sys = providers = kwargs['provider_data']['management_systems']
         else:
-            mgmt_sys = cfme_data['management_systems']
+            mgmt_sys = conf.provider_data.management_systems
         for provider in providers:
             # skip provider if block_upload is set
             if (mgmt_sys[provider].get('template_upload') and
@@ -219,16 +219,16 @@ def run(**kwargs):
                 username = mgmt_sys[provider]['username']
                 password = mgmt_sys[provider]['password']
             else:
-                ssh_creds = credentials[mgmt_sys[provider]['ssh_creds']]
+                ssh_creds = conf.credentials[mgmt_sys[provider].ssh_creds]
                 username = ssh_creds['username']
                 password = ssh_creds['password']
-                oc_creds = credentials[mgmt_sys[provider]['credentials']]
+                oc_creds = conf.credentials[mgmt_sys[provider].credentials]
                 oc_username = oc_creds['username']
                 oc_password = oc_creds['password']
             host_ip = mgmt_sys[provider]['ipaddress']
             hostname = mgmt_sys[provider]['hostname']
 
-            upload_parameters = cfme_data['template_upload']['template_upload_openshift']
+            upload_parameters = conf.cfme_data.template_upload['template_upload_openshift']
             upload_folder = kwargs.get('upload_folder', upload_parameters['upload_folder'])
 
             if not net.is_pingable(host_ip):
@@ -252,7 +252,7 @@ def run(**kwargs):
 if __name__ == "__main__":
     args = parse_cmd_line()
 
-    kwargs = cfme_data['template_upload']['template_upload_openshift']
+    kwargs = conf.cfme_data['template_upload']['template_upload_openshift']
 
     final_kwargs = make_kwargs(args, **kwargs)
 

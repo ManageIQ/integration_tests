@@ -5,14 +5,13 @@ utils.hosts
 """
 import socket
 
-from cfme.utils import conf
 from cfme.utils.log import logger
 from cfme.utils.update import update
 from cfme.infrastructure import host
 
 
-def get_host_data_by_name(provider_key, host_name):
-    for host_obj in conf.cfme_data.get('management_systems', {})[provider_key].get('hosts', []):
+def get_host_data_by_name(provider, host_name):
+    for host_obj in provider.provider_data.get('hosts', []):
         if host_name == host_obj['name']:
             return host_obj
     return None
@@ -21,7 +20,7 @@ def get_host_data_by_name(provider_key, host_name):
 def setup_host_creds(provider, host_name, remove_creds=False, ignore_errors=False):
     try:
         appliance = provider.appliance
-        host_data = get_host_data_by_name(provider.key, host_name)
+        host_data = get_host_data_by_name(provider, host_name)
         if host_data is None:
             raise ValueError(
                 'There is no {} host entry for provider {}!'.format(host_name, provider.key))

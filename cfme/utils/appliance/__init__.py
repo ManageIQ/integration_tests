@@ -2766,7 +2766,7 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
     else:
         raise ApplianceException('Either version or template name must be specified')
 
-    prov_data = conf.cfme_data.get('management_systems', {})[provider_name]
+    prov_data = conf.provider_data.get('management_systems', {})[provider_name]
     from cfme.utils.providers import get_mgmt
     provider = get_mgmt(provider_name)
     if not vm_name:

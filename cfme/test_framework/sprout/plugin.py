@@ -82,7 +82,7 @@ def mangle_in_sprout_appliances(config):
     for appliance in requested_appliances:
 
         appliance_args = {'hostname': appliance['url']}
-        provider_data = conf.cfme_data['management_systems'].get(appliance['provider'])
+        provider_data = conf.provider_data['management_systems'].get(appliance['provider'])
         if provider_data and provider_data['type'] == 'openshift':
             ocp_creds = conf.credentials[provider_data['credentials']]
             ssh_creds = conf.credentials[provider_data['ssh_creds']]

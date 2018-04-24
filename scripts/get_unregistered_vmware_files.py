@@ -6,7 +6,7 @@ import sys
 from collections import defaultdict
 
 from cfme.utils.log import logger
-from cfme.utils.conf import cfme_data
+from cfme.utils.conf import provider_data
 from cfme.utils.conf import credentials
 from cfme.utils.ssh import SSHClient
 from cfme.utils.providers import list_provider_keys, get_mgmt
@@ -23,7 +23,7 @@ def parse_cmd_line():
 def list_orphaned_files_per_host(host_name, host_datastore_urls, provider_key, vm_registered_files,
                                  unregistered_files):
     try:
-        providers_data = cfme_data.get("management_systems", {})
+        providers_data = provider_data.get("management_systems", {})
         hosts = providers_data[provider_key]['hosts']
         hostname = [host['name'] for host in hosts if host_name in host['name']]
         # check if hostname returned is ipaddress

@@ -37,7 +37,7 @@ def test(conf_name):
 @click.option('--only-credentials', is_flag=True, help='Only search credentials, (not providers)')
 def show_credential(cred_or_provider_key, only_credentials):
     """Function to show the given credentials, takes either a provider key or a credential key"""
-    data = conf.cfme_data
+    data = conf.provider_data
     if cred_or_provider_key in data.get('management_systems', {}) and not only_credentials:
         endpoints_data = data['management_systems'][cred_or_provider_key].get('endpoints', {})
         for endpoint in endpoints_data:
@@ -59,7 +59,7 @@ def show_credential(cred_or_provider_key, only_credentials):
 def show_provider(provider_key):
     """Function to show provider data"""
     output = StringIO.StringIO()
-    data = conf.cfme_data
+    data = conf.provider_data
     if provider_key in data.get('management_systems', {}):
         data['management_systems'][provider_key].dump(output)
         print(output.getvalue())

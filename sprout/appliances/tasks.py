@@ -236,7 +236,7 @@ def poke_trackerbot(self):
             if per_group[key]:
                 objects.append(per_group[key].pop(0))
     for template in objects:
-        if template["provider"]["key"] not in conf.cfme_data.management_systems.keys():
+        if template["provider"]["key"] not in conf.provider_data.management_systems.keys():
             # If we don't use that provider in yamls, set the template as not usable
             # 1) It will prevent adding this template if not added
             # 2) It'll mark the template as unusable if it already exists

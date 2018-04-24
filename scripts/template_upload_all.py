@@ -21,13 +21,12 @@ import argparse
 import re
 import datetime
 import sys
-import cfme.utils
+
 from six.moves.urllib.parse import urljoin
 from contextlib import closing
 from urllib2 import urlopen, HTTPError
 
-from cfme.utils import path, trackerbot
-from cfme.utils.conf import cfme_data
+from cfme.utils import conf, trackerbot
 from cfme.utils.log import logger, add_stdout_handler
 
 CFME_BREW_ID = "cfme"
@@ -53,10 +52,6 @@ def parse_cmd_line():
                         default=None)
     parser.add_argument('--provider-version', dest='provider_version',
                         help='Version of chosen provider',
-                        default=None)
-    parser.add_argument('--provider-data', dest='provider_data',
-                        help='local yaml file path, to use local provider_data & not conf/cfme_data'
-                             'to be useful for template upload/deploy by non cfmeqe',
                         default=None)
     parser.add_argument('--print-name-only', dest='print_name_only', action="store_true",
                         default=False, help='only print the template name that will be generated')
@@ -166,92 +161,6 @@ def get_last_modified(image_url):
     return datetime.datetime.strptime(headers.getheader("Last-Modified"), format)
 
 
-def make_kwargs_rhevm(cfme_data, provider):
-    data = cfme_data['management_systems'][provider]
-    temp_up = cfme_data['template_upload']['template_upload_rhevm']
-
-    edomain = data['template_upload'].get('edomain')
-    sdomain = data['template_upload'].get('sdomain')
-    cluster = data['template_upload'].get('cluster')
-    disk_size = temp_up.get('disk_size')
-    disk_format = temp_up.get('disk_format')
-    disk_interface = temp_up.get('disk_interface')
-
-    kwargs = {'provider': provider}
-    if edomain:
-        kwargs['edomain'] = edomain
-    if sdomain:
-        kwargs['sdomain'] = sdomain
-    if cluster:
-        kwargs['cluster'] = cluster
-    if disk_size:
-        kwargs['disk_size'] = disk_size
-    if disk_format:
-        kwargs['disk_format'] = disk_format
-    if disk_interface:
-        kwargs['disk_interface'] = disk_interface
-
-    return kwargs
-
-
-def make_kwargs_rhos(cfme_data, provider):
-    data = cfme_data['management_systems'][provider]
-
-    tenant_id = data['template_upload'].get('tenant_id')
-
-    kwargs = {'provider': provider}
-    if tenant_id:
-        kwargs['tenant_id'] = tenant_id
-
-    return kwargs
-
-
-def make_kwargs_scvmm(cfme_data, provider):
-    data = cfme_data['management_systems'][provider]
-
-    tenant_id = data['template_upload'].get('tenant_id')
-
-    kwargs = {'provider': provider}
-    if tenant_id:
-        kwargs['tenant_id'] = tenant_id
-
-    return kwargs
-
-
-def make_kwargs_vsphere(cfme_data, provider):
-    data = cfme_data['management_systems'][provider]
-    temp_up = cfme_data['template_upload']['template_upload_vsphere']
-
-    datastore = data['provisioning'].get('datastore')
-    cluster = data['template_upload'].get('cluster')
-    datacenter = data['template_upload'].get('datacenter')
-    host = data['template_upload'].get('host')
-    template = temp_up.get('template')
-    upload = temp_up.get('upload')
-    disk = temp_up.get('disk')
-    proxy = data['template_upload'].get('proxy')
-
-    kwargs = {'provider': provider}
-    if datastore:
-        kwargs['datastore'] = datastore
-    if cluster:
-        kwargs['cluster'] = cluster
-    if datacenter:
-        kwargs['datacenter'] = datacenter
-    if host:
-        kwargs['host'] = host
-    if template:
-        kwargs['template'] = template
-    if upload:
-        kwargs['upload'] = upload
-    if disk:
-        kwargs['disk'] = disk
-    if proxy:
-        kwargs['proxy'] = proxy
-
-    return kwargs
-
-
 def browse_directory(dir_url):
     name_dict = {}
     try:
@@ -313,28 +222,20 @@ def browse_directory(dir_url):
 
 def main():
 
-    urls = cfme_data['basic_info']['cfme_images_url']
-    stream = args.stream or cfme_data['template_upload']['stream']
+    urls = conf.cfme_data['basic_info']['cfme_images_url']
+    stream = args.stream or conf.cfme_data['template_upload']['stream']
     upload_url = args.image_url
-    provider_type = args.provider_type or cfme_data['template_upload']['provider_type']
-
-    if args.provider_data is not None:
-        local_datafile = open(args.provider_data, 'r').read()
-        create_datafile = open(path.conf_path.strpath + '/provider_data.yaml', 'w')
-        create_datafile.write(local_datafile)
-        create_datafile.close()
-        provider_data = cfme.utils.conf.provider_data
-        stream = provider_data['stream']
+    provider_type = args.provider_type or conf.cfme_data['template_upload']['provider_type']
 
     if stream:
         urls = {}
-        image_url = cfme_data['basic_info']['cfme_images_url']
+        image_url = conf.cfme_data['basic_info']['cfme_images_url']
         urls[stream] = image_url.get(stream)
         if not urls[stream]:
-            image_url = cfme_data['basic_info']['cfme_old_images_url']
+            image_url = conf.cfme_data['basic_info']['cfme_old_images_url']
             urls[stream] = image_url.get(stream)
         if not urls[stream]:
-            base_url = cfme_data['basic_info']['cfme_old_images_url']['base_url']
+            base_url = conf.cfme_data['basic_info']['cfme_old_images_url']['base_url']
             version = ''.join(re.findall(r'(\d+)', stream))
             urls[stream] = \
                 base_url + '.'.join(version[:2]) + '/' + '.'.join(version) + '/'
@@ -396,12 +297,8 @@ def main():
             return 1
         kwargs['stream'] = stream
         kwargs['image_url'] = dir_files[module]
-        if args.provider_data is not None:
-            kwargs['provider_data'] = provider_data
-        else:
-            kwargs['provider_data'] = None
 
-        if cfme_data['template_upload']['automatic_name_strategy']:
+        if conf.cfme_data['template_upload']['automatic_name_strategy']:
             kwargs['template_name'] = template_name(
                 dir_files[module],
                 dir_files[module + "_date"],

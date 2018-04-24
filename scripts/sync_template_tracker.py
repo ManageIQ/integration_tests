@@ -8,7 +8,7 @@ from threading import Lock, Thread
 from slumber.exceptions import SlumberHttpBaseException
 
 from cfme.utils import trackerbot, net
-from cfme.utils.conf import cfme_data
+from cfme.utils.conf import provider_data
 from cfme.utils.providers import list_provider_keys, get_mgmt
 
 
@@ -22,7 +22,7 @@ def main(trackerbot_url, mark_usable=None):
     unresponsive_providers = set()
     # Queue up list_template calls
     for provider_key in all_providers:
-        ipaddress = cfme_data['management_systems'][provider_key].get('ipaddress')
+        ipaddress = provider_data['management_systems'][provider_key].get('ipaddress')
         if ipaddress and not net.is_pingable(ipaddress):
             continue
         thread = Thread(target=get_provider_templates,
@@ -116,12 +116,12 @@ def get_provider_templates(provider_key, template_providers, unresponsive_provid
     try:
         with thread_lock:
             provider_mgmt = get_mgmt(provider_key)
-        if cfme_data['management_systems'][provider_key]['type'] == 'ec2':
+        if provider_data['management_systems'][provider_key]['type'] == 'ec2':
             # dirty hack to filter out ec2 public images, because there are literally hundreds.
             templates = provider_mgmt.api.get_all_images(owners=['self'],
                 filters={'image-type': 'machine'})
             templates = map(lambda i: i.name or i.id, templates)
-        if cfme_data['management_systems'][provider_key]['type'] == 'gce':
+        if provider_data['management_systems'][provider_key]['type'] == 'gce':
             # get_private_images returns a dictionary with items list that has tuple with list of
             #  template dictionaries in the 1st spot, hence `.items()[0][1]`
             templates = [t.get('name') for t in provider_mgmt.get_private_images().items()[0][1]]

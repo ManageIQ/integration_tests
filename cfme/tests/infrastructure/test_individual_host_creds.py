@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
 import random
-from cfme.utils import conf
 
 from cfme.infrastructure import host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -22,8 +21,8 @@ msgs = {
 }
 
 
-def get_host_data_by_name(provider_key, host_name):
-    for host_obj in conf.cfme_data.get('management_systems', {})[provider_key].get('hosts', []):
+def get_host_data_by_name(provider, host_name):
+    for host_obj in provider.provider_data.get('hosts', []):
         if host_name == host_obj['name']:
             return host_obj
     return None
@@ -39,7 +38,7 @@ def test_host_good_creds(appliance, request, setup_provider, provider):
     Tests host credentialing  with good credentials
     """
     test_host = random.choice(provider.data["hosts"])
-    host_data = get_host_data_by_name(provider.key, test_host.name)
+    host_data = get_host_data_by_name(provider, test_host.name)
     host_collection = appliance.collections.hosts
     host_obj = host_collection.instantiate(name=test_host.name, provider=provider)
 

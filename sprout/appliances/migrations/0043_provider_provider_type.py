@@ -7,13 +7,13 @@ from django.db import migrations, models
 
 
 def add_type_to_provider(apps, schema_editor):
-    from cfme.utils.conf import cfme_data
+    from cfme.utils.conf import provider_data as provider_yaml
     Provider = apps.get_model("appliances", "Provider")  # noqa
     for provider in Provider.objects.using(schema_editor.connection.alias).all():
         # Need to replicate the functionality from the model here
         provider_data = yaml.load(provider.object_meta_data).get('provider_data')
         if not provider_data:
-            provider_data = cfme_data.get("management_systems", {}).get(provider.id, {})
+            provider_data = provider_yaml.get("management_systems", {}).get(provider.id, {})
         provider_type = provider_data.get('type', None)
         if provider_type is not None:
             provider.provider_type = provider_type

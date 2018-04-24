@@ -28,7 +28,6 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.services.requests import RequestsView
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
@@ -713,9 +712,9 @@ class Vm(VM):
         last_name = last_name or fauxfactory.gen_alphanumeric()
         email = email or "{}@{}.test".format(first_name, last_name)
         try:
-            prov_data = cfme_data["management_systems"][self.provider.key]["provisioning"]
+            prov_data = self.provider.provider_data.provisioning
         except (KeyError, IndexError):
-            raise ValueError("You have to specify the correct options in cfme_data.yaml")
+            raise ValueError("You have to specify the correct options in provider_data.yaml")
         provisioning_data = {
             'request': {
                 'email': email,
@@ -735,9 +734,9 @@ class Vm(VM):
         last_name = last_name or fauxfactory.gen_alphanumeric()
         email = email or "{}@{}.test".format(first_name, last_name)
         try:
-            prov_data = cfme_data["management_systems"][self.provider.key]["provisioning"]
+            prov_data = self.provider.provider_data.provisioning
         except (KeyError, IndexError):
-            raise ValueError("You have to specify the correct options in cfme_data.yaml")
+            raise ValueError("You have to specify the correct options in provider_data.yaml")
 
         provisioning_data = {
             'catalog': {'vm_name': vm_name,
@@ -758,9 +757,9 @@ class Vm(VM):
         last_name = last_name or fauxfactory.gen_alphanumeric()
         email = email or "{}@{}.test".format(first_name, last_name)
         try:
-            prov_data = cfme_data["management_systems"][self.provider.key]["provisioning"]
+            prov_data = self.provider.provider_data.provisioning
         except (KeyError, IndexError):
-            raise ValueError("You have to specify the correct options in cfme_data.yaml")
+            raise ValueError("You have to specify the correct options in provider_data.yaml")
 
         provisioning_data = {
             'catalog': {'vm_name': template_name},

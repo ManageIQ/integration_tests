@@ -82,7 +82,7 @@ def get_values_for_users_test():
 def get_values_for_custom_attributes_test(provider):
     return {
         'entity_type': 'provider',
-        'entity_name': conf.cfme_data.get('management_systems', {})
+        'entity_name': conf.provider_data.get('management_systems', {})
         [provider.key].get('name', []),
         'miq_url': config_formatter(),
         'miq_username': conf.credentials['default'].username,

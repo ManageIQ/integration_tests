@@ -16,8 +16,7 @@ from threading import Lock
 
 from wrapanapi.exceptions import ImageNotFoundError, MultipleImagesError
 
-from cfme.utils import trackerbot
-from cfme.utils.conf import cfme_data
+from cfme.utils import conf, trackerbot
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.providers import get_mgmt, list_provider_keys
 from cfme.utils.ssh import SSHClient
@@ -51,7 +50,7 @@ def make_kwargs(args, **kwargs):
 
     template_name = kwargs.get('template_name')
     if template_name is None:
-        template_name = cfme_data['basic_info']['appliance_template']
+        template_name = conf.cfme_data['basic_info']['appliance_template']
         kwargs.update({'template_name': template_name})
 
     for kkey, kval in kwargs.items():
@@ -199,7 +198,7 @@ def run(template_name, image_url, stream, **kwargs):
     :param kwargs: other kwargs
     :return: none
     """
-    mgmt_sys = cfme_data['management_systems']
+    mgmt_sys = conf.provider_data['management_systems']
     ami_name = template_name
     prov_to_upload = []
     valid_providers = [
@@ -266,7 +265,7 @@ def run(template_name, image_url, stream, **kwargs):
 
 if __name__ == '__main__':
     args = parse_cmd_line()
-    kwargs = cfme_data['template_upload']['template_upload_ec2']
+    kwargs = conf.cfme_data['template_upload']['template_upload_ec2']
     final_kwargs = make_kwargs(args, **kwargs)
 
     run(**final_kwargs)

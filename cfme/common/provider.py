@@ -71,7 +71,7 @@ class BaseProvider(Taggable, Updateable, Navigatable):
         if hasattr(self, 'provider_data') and self.provider_data is not None:
             return self.provider_data
         elif self.key is not None:
-            return conf.cfme_data['management_systems'][self.key]
+            return conf.provider_data['management_systems'][self.key]
         else:
             raise ProviderHasNoKey(
                 'Provider {} has no key, so cannot get yaml data'.format(self.name))
