@@ -50,7 +50,7 @@ URL = re.compile(r"https?://[^/\s]+(?:/[^/\s?]+)*/?(?:\?(?:[^&\s=]+(?:=[^&\s]+)?
 
 def overall_test_status(statuses):
     # Handle some logic for when to count certain tests as which state
-    for when, status in statuses.iteritems():
+    for when, status in statuses.items():
         if when == "call" and status[1] and status[0] == "skipped":
             return "xfailed"
         elif when == "call" and status[1] and status[0] == "failed":
@@ -125,7 +125,7 @@ class ReporterBase(object):
             'xfailed': 'success',
             'skipped': 'info'}
         # Iterate through the tests and process the counts and durations
-        for test_name, test in artifacts.iteritems():
+        for test_name, test in artifacts.items():
             if not test.get('statuses'):
                 continue
             overall_status = overall_test_status(test['statuses'])
@@ -179,7 +179,7 @@ class ReporterBase(object):
             # Current structure:
             # {groupid: (group_order, [{filedict1}, {filedict2}])}
             # Sorting by group_order
-            processed_groups = sorted(processed_groups.iteritems(), key=lambda kv: kv[1][0])
+            processed_groups = sorted(processed_groups.items(), key=lambda kv: kv[1][0])
             # And now make it [(groupid, [{filedict1}, {filedict2}, ...])]
             processed_groups = [(group_name, files) for group_name, (_, files) in processed_groups]
             for group_name, file_dicts in processed_groups:
@@ -289,7 +289,7 @@ class ReporterBase(object):
                    'xpassed': 'danger',
                    'xfailed': 'success'}
         list_string = '<ul>\n'
-        for k, v in lev['_sub'].iteritems():
+        for k, v in lev['_sub'].items():
 
             # If 'name' is an attribute then we are looking at a test (leaf).
             if 'name' in v:
@@ -309,7 +309,7 @@ class ReporterBase(object):
             elif '_sub' in v:
                 percenstring = ""
                 bmax = 0
-                for _, val in v['_stats'].iteritems():
+                for _, val in v['_stats'].items():
                     bmax += val
                 # If there were any NON skipped tests, we now calculate the percentage which
                 # passed.

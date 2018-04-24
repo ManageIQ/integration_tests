@@ -402,7 +402,7 @@ def run_commands(command_list, clear_expression=True, context=None):
             # Single command, no params
             step_list.append(get_func(command, context))
         elif isinstance(command, dict):
-            for key, value in command.iteritems():
+            for key, value in command.items():
                 func = get_func(key, context)
                 args = []
                 kwargs = {}

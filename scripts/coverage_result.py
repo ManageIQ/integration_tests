@@ -45,7 +45,7 @@ def compute_coverage(branch):
 
     line_count = 0
     completed_lines = 0
-    for file_changed, lines in file_data.iteritems():
+    for file_changed, lines in file_data.items():
         for line in lines:
             line_count += 1
             used_lines = coverage_data.lines(file_changed)

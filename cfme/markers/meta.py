@@ -148,7 +148,7 @@ def run_plugins(item, when):
         disabled_plugins = []
     else:
         disabled_plugins = [name.strip() for name in disabled_plugins.split(",")]
-    for plugin_name, plugin_objects in by_names.iteritems():
+    for plugin_name, plugin_objects in by_names.items():
         if plugin_name in disabled_plugins:
             logger.info("Ignoring plugin {} due to commandline option".format(plugin_name))
             continue

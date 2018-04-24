@@ -198,7 +198,7 @@ def pytest_runtest_protocol(item):
 
     try:
         params = item.callspec.params
-        param_dict = {p: get_name(v) for p, v in params.iteritems()}
+        param_dict = {p: get_name(v) for p, v in params.items()}
     except:
         param_dict = {}
     ip = appliance.hostname

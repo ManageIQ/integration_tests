@@ -475,7 +475,7 @@ class Group(MetadataMixin):
 
     def pick_versions_to_delete(self):
         to_delete = {}
-        for zstream, versions in self.zstreams_versions.iteritems():
+        for zstream, versions in self.zstreams_versions.items():
             versions = sorted(versions, key=Version, reverse=True)
             versions_to_delete = versions[1:]
             if versions_to_delete:
@@ -1310,7 +1310,7 @@ class AppliancePool(MetadataMixin):
     def appliance_filter_params(self):
         params = self.filter_params
         result = {}
-        for key, value in params.iteritems():
+        for key, value in params.items():
             result["template__{}".format(key)] = value
         return result
 

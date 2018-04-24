@@ -73,7 +73,7 @@ def setup(path):
 
 def get_data():
     data = []
-    for name, logger in Loggers.iteritems():
+    for name, logger in Loggers.items():
         data.append({'name': name,
                 'tmp_name': logger.f.name,
                 'size': logger.size(),

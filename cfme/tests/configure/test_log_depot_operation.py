@@ -83,7 +83,7 @@ def pytest_generate_tests(metafunc):
     if not data:
         pytest.skip('No log_db_operations information!')
     creds = conf.credentials[data['credentials']]
-    for protocol, proto_data in data['protocols'].iteritems():
+    for protocol, proto_data in data['protocols'].items():
         if proto_data['use_for_log_collection']:
             depots.append([LogDepotType(
                 protocol, creds,

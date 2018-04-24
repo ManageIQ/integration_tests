@@ -31,7 +31,7 @@ def logging_routes(provider):
                           for router in routers])
 
     all_pods = {pod: status["Ready"]
-                for pod, status in provider.pods_per_ready_status().iteritems() if "logging" in pod}
+                for pod, status in provider.pods_per_ready_status().items() if "logging" in pod}
 
     assert all_pods, "no logging pods found"
     assert all(all_pods.values()), "some pods not ready"

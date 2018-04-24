@@ -102,7 +102,7 @@ def testcase_record(
     test_steps.append(test_step)
     testcase.append(test_steps)
     custom_fields_el = etree.Element('custom-fields')
-    for tc_id, content in custom_fields.iteritems():
+    for tc_id, content in custom_fields.items():
         custom_field = etree.Element('custom-field', id=tc_id, content=content)
         custom_fields_el.append(custom_field)
     testcase.append(custom_fields_el)
@@ -189,7 +189,7 @@ def testresult_record(test_name, parameters=None, result=None):
     properties = etree.Element('properties')
     testcase_id = etree.Element('property', name="polarion-testcase-id", value=test_name)
     properties.append(testcase_id)
-    for param, value in parameters.iteritems():
+    for param, value in parameters.items():
         param_el = etree.Element(
             'property', name="polarion-parameter-{}".format(param), value=value)
         properties.append(param_el)
@@ -207,7 +207,7 @@ def get_testresult_data(name, tests, processed_test, item, legacy=False):
     else:
         try:
             params = item.callspec.params
-            param_dict = {p: _get_name(v) for p, v in params.iteritems()}
+            param_dict = {p: _get_name(v) for p, v in params.items()}
         except Exception:
             param_dict = {}
     tests.append({'name': name, 'params': param_dict, 'result': None})
@@ -232,7 +232,7 @@ def testrun_gen(tests, filename, config, collectonly=True):
         'property', name='polarion-response-{}'.format(
             xunit['response']['id']), value=xunit['response']['value'])
     properties.append(property_resp)
-    for prop_name, prop_value in prop_dict.iteritems():
+    for prop_name, prop_value in prop_dict.items():
         if prop_value is None:
             continue
         prop_el = etree.Element(

@@ -225,14 +225,14 @@ def poke_trackerbot(self):
 
         per_group[obj["template"]["group"]["name"]].append(obj)
     # Sort them using the build date
-    for group in per_group.iterkeys():
+    for group in per_group.keys():
         per_group[group] = sorted(
             per_group[group],
             reverse=True, key=lambda o: o["template"]["datestamp"])
     objects = []
     # And interleave the the groups
     while any(per_group.values()):
-        for key in per_group.iterkeys():
+        for key in per_group.keys():
             if per_group[key]:
                 objects.append(per_group[key].pop(0))
     for template in objects:
@@ -1630,7 +1630,7 @@ def pick_templates_for_deletion(self):
     """Applies some heuristics to guess templates that might be candidates to deletion."""
     to_mail = {}
     for group in Group.objects.all():
-        for zstream, versions in group.pick_versions_to_delete().iteritems():
+        for zstream, versions in group.pick_versions_to_delete().items():
             for version in versions:
                 for template in Template.objects.filter(
                         template_group=group, version=version, exists=True, suggested_delete=False):
@@ -1753,7 +1753,7 @@ def notify_owners(self, results):
         per_user[user].append(message)
 
     # Send out the e-mails
-    for user, messages in per_user.iteritems():
+    for user, messages in per_user.items():
         appliance_list = '\n'.join('* {}'.format(message) for message in messages)
         email_body = """\
 Hello,

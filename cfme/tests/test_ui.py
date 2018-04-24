@@ -9,7 +9,7 @@ def traverse(dic, paths, path=None):
             np.append(item)
             paths.append(np)
     elif isinstance(dic, dict):
-        for k, v in dic.iteritems():
+        for k, v in dic.items():
             np = path[:]
             np.append(k)
             traverse(v, paths, np)

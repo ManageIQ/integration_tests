@@ -404,7 +404,7 @@ def get_cluster(api):
 
 
 def check_kwargs(**kwargs):
-    for key, val in kwargs.iteritems():
+    for key, val in kwargs.items():
         if val is None:
             logger.error("RHEVM: please supply required parameter '%r'.", key)
             sys.exit(127)
@@ -445,15 +445,15 @@ def make_kwargs(args, cfme_data, **kwargs):
         template_name = cfme_data['basic_info']['appliance_template']
         kwargs.update({'template_name': template_name})
 
-    for kkey, kval in kwargs.iteritems():
-        for akey, aval in args_kwargs.iteritems():
+    for kkey, kval in kwargs.items():
+        for akey, aval in args_kwargs.items():
             if aval is not None:
                 if kkey == akey:
                     if kval != aval:
                         kwargs[akey] = aval
 
-    for akey, aval in args_kwargs.iteritems():
-        if akey not in kwargs.iterkeys():
+    for akey, aval in args_kwargs.items():
+        if akey not in kwargs:
             kwargs[akey] = aval
 
     return kwargs

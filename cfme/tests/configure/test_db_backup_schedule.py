@@ -61,7 +61,7 @@ class DbBackupData(Pretty):
         assert creds_key, \
             "No 'credentials' key found for machine {machine_id}".format(**self.__dict__)
 
-        assert creds_key in conf.credentials.iterkeys() and conf.credentials[creds_key],\
+        assert creds_key in conf.credentials and conf.credentials[creds_key],\
             "No credentials for key '{}' found in credentials yaml".format(creds_key)
         credentials = conf.credentials[creds_key]
 
@@ -72,7 +72,7 @@ class DbBackupData(Pretty):
         """
         data = {}
         for key in self.required_keys[protocol_type]:
-            assert key in protocol_data.iterkeys() and protocol_data[key],\
+            assert key in protocol_data and protocol_data[key],\
                 "'{}' key must be set for scheduled {} backup to work".format(key, protocol_type)
             data[key] = protocol_data[key]
         return data
