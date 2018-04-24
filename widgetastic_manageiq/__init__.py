@@ -623,6 +623,10 @@ class ParametrizedSummaryTable(ParametrizedView):
         return self._table.click_at(field_name)
 
 
+class ContainerSummaryTable(SummaryTable):
+    BASELOC = './/div[@head-title={}]//table'
+
+
 class StatusBox(Widget, ClickableMixin):
     card = Text(ParametrizedLocator('.//div[@pf-aggregate-status-card and (normalize-space'
                                     '(.//h2/a/span[contains(@class, '
