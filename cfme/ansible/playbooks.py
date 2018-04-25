@@ -7,6 +7,7 @@ from widgetastic_patternfly import Button, Dropdown
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
@@ -98,7 +99,7 @@ class PlaybooksView(PlaybookBaseView):
 
 
 @attr.s
-class Playbook(BaseEntity):
+class Playbook(BaseEntity, Taggable):
     """A class representing one Embedded Ansible playbook in the UI."""
 
     name = attr.ib()

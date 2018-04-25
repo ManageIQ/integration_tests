@@ -8,6 +8,7 @@ from widgetastic_manageiq import PaginationPane, ParametrizedSummaryTable, Table
 from widgetastic_patternfly import Button, Dropdown, Input
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
@@ -94,7 +95,7 @@ class RepositoryEditView(RepositoryFormView):
 
 
 @attr.s
-class Repository(BaseEntity, Fillable):
+class Repository(BaseEntity, Fillable, Taggable):
     """A class representing one Embedded Ansible repository in the UI."""
 
     name = attr.ib()

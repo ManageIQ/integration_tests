@@ -9,6 +9,7 @@ from widgetastic_patternfly import BootstrapSelect, Button, Dropdown, Input
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
@@ -197,7 +198,7 @@ class CredentialEditView(CredentialFormView):
                 continue
 
 
-class Credential(BaseEntity):
+class Credential(BaseEntity, Taggable):
     """A class representing one Embedded Ansible credential in the UI."""
 
     # TODO - This is one of the only classes that hasn't been converted to attrs
