@@ -195,7 +195,7 @@ def ssa_vms(request, local_setup_provider, provider, vm_analysis_provisioning_da
            appliance, analysis_type):
     """ Fixture to provision instance on the provider """
     vms = []
-    for vm_num in range(6):
+    for vm_num in range(3):
         template_name = vm_analysis_provisioning_data['image']
         vm_name = 'test-ssa-{}-{}-{}'.format(fauxfactory.gen_alphanumeric(), analysis_type, vm_num)
         vm = VM.factory(vm_name, provider, template_name=vm_analysis_provisioning_data.image)
@@ -252,7 +252,7 @@ def ssa_vms(request, local_setup_provider, provider, vm_analysis_provisioning_da
         # TODO:  if rhev and iscsi, it need direct_lun
         if provider.type == 'rhevm':
             logger.info("Setting a relationship between VM and appliance")
-            cfme_rel = Vm.CfmeRelationship(vm)
+            cfme_rel = InfraVm.CfmeRelationship(vm)
             cfme_rel.set_relationship(appliance.server.name, appliance.server_id())
         vms.append(vm)
     yield vms
@@ -868,9 +868,11 @@ def test_ssa_multiple_vms(ssa_vms, soft_assert, appliance, ssa_profile):
     """
 
     view = navigate_to(ssa_vms[0], 'AllForProvider')
+    view.toolbar.view_selector.select('List View')
+    view.paginator.set_items_per_page(1000)
     vm_details = []
     for ssa_vm in ssa_vms:
-        ssa_vm.find_quadicon().check()
+        view.entities.get_entity(name=ssa_vm.name, surf_pages=True).check()
 
         e_users = None
         e_groups = None
@@ -896,11 +898,13 @@ def test_ssa_multiple_vms(ssa_vms, soft_assert, appliance, ssa_profile):
         vm_details.append((ssa_vm, info))
     view.toolbar.configuration.item_select('Perform SmartState Analysis',
                                            handle_alert=True)
-    for vm, vm_info in vm_details:
+    view.flash.assert_message('Analysis initiated for 3 VMs and Instances from the CFME Database')
+    for ssa_vm, vm_info in vm_details:
         view = appliance.browser.create_view(TasksView)
-        wait_for(lambda: is_vm_analysis_finished(vm.name),
-                 delay=15, timeout="10m", fail_func=view.reload.click)
-
+        wait_for(lambda: is_vm_analysis_finished(ssa_vm.name),
+                 delay=15, timeout="10m", fail_func=view.reload.click,
+                 message='SSA for {} vm was not successful'.format(ssa_vm.name))
+        view = navigate_to(ssa_vm, 'Details')
         c_lastanalyzed = ssa_vm.last_analysed
         c_users = view.entities.summary('Security').get_text_of('Users')
         c_groups = view.entities.summary('Security').get_text_of('Groups')
