@@ -980,13 +980,27 @@ class InfraVm(VM):
             self.provider.refresh_provider_relationships()
             wait_for(self.provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
         provisioning = self.provider.data['provisioning']
-        image_guid = self.appliance.rest_api.collections.templates.find_by(
-            name=provisioning['template'])[0].guid
+        template_name = provisioning['template']
+        templates = self.appliance.rest_api.collections.templates.find_by(name=template_name)
+        for template in templates:
+            try:
+                ems_id = template.ems_id
+            except AttributeError:
+                continue
+            if ems_id == self.provider.id:
+                template_guid = template.guid
+                break
+        else:
+            raise Exception('No such template {} on provider!'.format(template_name))
+
+        host_id = self.appliance.rest_api.collections.hosts.get(name=provisioning['host']).id
+        ds_id = self.appliance.rest_api.collections.data_stores.get(name=provisioning[
+            'datastore']).id
 
         inst_args = {
             "version": "1.1",
             "template_fields": {
-                "guid": image_guid,
+                "guid": template_guid,
             },
             "vm_fields": {
                 "vm_name": self.name,
@@ -1000,8 +1014,9 @@ class InfraVm(VM):
             "tags": {
             },
             "additional_values": {
-                # 'placement_auto' defaults to True if not specified
-                # "placemnet_auto": True
+                "placemnet_auto": False,
+                "placement_ds_name": ds_id,
+                "placement_host_name": host_id
             },
             "ems_custom_attributes": {
             },

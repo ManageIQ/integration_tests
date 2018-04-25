@@ -377,18 +377,17 @@ class Instance(VM, Navigatable):
         """
         from cfme.cloud.provider.azure import AzureProvider
         from cfme.cloud.provider.ec2 import EC2Provider
-        from cfme.cloud.provider.gce import GCEProvider
 
         if not self.provider.is_refreshed():
             self.provider.refresh_provider_relationships()
             wait_for(self.provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
         provisioning = self.provider.data['provisioning']
-        image_guid = self.appliance.rest_api.collections.templates.find_by(
-            name=provisioning['image']['name'])[0].guid
-        if ':' in provisioning['instance_type'] and self.one_of(EC2Provider, GCEProvider):
+
+        image_guid = self.appliance.rest_api.collections.templates.get(
+            name=provisioning['image']['name']).guid
+        provider_rest = self.appliance.rest_api.collections.providers.get(name=self.provider.name)
+        if ':' in provisioning['instance_type'] and self.provider.one_of(EC2Provider):
             instance_type = provisioning['instance_type'].split(':')[0].strip()
-        elif self.one_of(AzureProvider):
-            instance_type = provisioning['instance_type'].lower()
         else:
             instance_type = provisioning['instance_type']
 
@@ -399,39 +398,109 @@ class Instance(VM, Navigatable):
                 ems_id = flavor.ems_id
             except AttributeError:
                     continue
-            if ems_id == self.id and flavor.ems.name == self.name:
+            if ems_id == provider_rest.id and flavor.ems.name == self.provider.name:
                 flavor_id = flavor.id
                 break
         else:
             raise FlavorNotFound("Cannot find flavour {} for provider {}".
                                  format(instance_type, self.provider.name))
 
+        provider_data = self.appliance.rest_api.get(
+            '{}?attributes=cloud_networks,cloud_subnets,cloud_tenants'.format(provider_rest._href))
+
+        # find out cloud network
+        assert provider_data['cloud_networks']
+        cloud_network_name = provisioning.get('cloud_network').strip()
+        if self.provider.one_of(EC2Provider, AzureProvider):
+            cloud_network_name = cloud_network_name.split()[0]
+        cloud_network = None
+        for cloud_network in provider_data['cloud_networks']:
+            # If name of cloud network is available, find match.
+            # Otherwise just "enabled" is enough.
+            if cloud_network_name and cloud_network_name != cloud_network['name']:
+                continue
+            if cloud_network['enabled']:
+                break
+        else:
+            raise ItemNotFound("Cloudnetwork '{}' ID wasn't found".format(cloud_network))
+
+        # find out cloud subnet
+        assert provider_data['cloud_subnets']
+        cloud_subnet = None
+        for cloud_subnet in provider_data['cloud_subnets']:
+            if cloud_subnet.get('cloud_network_id') == cloud_network['id']:
+                if not self.provider.one_of(AzureProvider):
+                    if cloud_subnet['status'] in ('available', 'active'):
+                        break
+                else:
+                    break
+        else:
+            raise ItemNotFound("Cloud_subnet '{}' ID wasn't found".format(cloud_subnet))
+
+        def _find_availability_zone_id():
+            subnet_data = self.appliance.rest_api.get(provider_rest._href +
+                                                   '?attributes=cloud_subnets')
+            for subnet in subnet_data['cloud_subnets']:
+                if subnet['id'] == cloud_subnet['id'] and 'availability_zone_id' in subnet:
+                    return subnet['availability_zone_id']
+            return False
+
+        # find out availability zone
+        availability_zone_id = None
+        if provisioning.get('availability_zone'):
+            availability_zone_entities = \
+                self.appliance.rest_api.collections.availability_zones.find_by(
+                    name=provisioning['availability_zone'])
+            if availability_zone_entities and availability_zone_entities[0].ems_id == flavor.ems_id:
+                availability_zone_id = availability_zone_entities[0].id
+        if not availability_zone_id and 'availability_zone_id' in cloud_subnet:
+            availability_zone_id = cloud_subnet['availability_zone_id']
+        if not availability_zone_id:
+            availability_zone_id, _ = wait_for(
+                _find_availability_zone_id, num_sec=100, delay=5,
+                message="availability_zone present")
+
+        # find out cloud tenant
+        cloud_tenant_id = None
+        tenant_name = provisioning.get('cloud_tenant')
+        if tenant_name:
+            for tenant in provider_data.get('cloud_tenants', []):
+                if (tenant['name'] == tenant_name and
+                        tenant['enabled'] and
+                        tenant['ems_id'] == flavor.ems_id):
+                    cloud_tenant_id = tenant['id']
+
         inst_args = {
             "version": "1.1",
             "template_fields": {
-                "guid": image_guid,
+                "guid": image_guid
             },
             "vm_fields": {
                 "vm_name": self.name,
                 "instance_type": flavor_id,
                 "request_type": "template",
+                "cloud_network": cloud_network['id'],
+                "cloud_subnet": cloud_subnet['id'],
+                "placement_availability_zone": availability_zone_id,
+                "monitoring": "basic"
             },
             "requester": {
                 "user_name": "admin",
-                "owner_email": "admin@cfmeqe.com",
+                "owner_email": "admin@example.com",
                 "auto_approve": True,
             },
             "tags": {
             },
             "additional_values": {
-                # 'placement_auto' defaults to True if not specified
-                # "placemnet_auto": True
+                "placement_auto": False,
             },
             "ems_custom_attributes": {
             },
             "miq_custom_attributes": {
             }
         }
+        if cloud_tenant_id:
+            inst_args['vm_fields']['cloud_tenant'] = cloud_tenant_id
 
         return inst_args
 
