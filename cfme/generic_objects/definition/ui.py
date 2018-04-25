@@ -1,6 +1,10 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Text, View, ParametrizedString, ParametrizedLocator, Table
+from widgetastic_manageiq import (
+    ItemsToolBarViewSelector, BaseEntitiesView, FileInput, ParametrizedSummaryTable,
+    BootstrapSwitch, FonticonPicker, ManageIQTree, SummaryForm
+)
 from widgetastic_patternfly import (
     Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Accordion
 )
@@ -9,10 +13,6 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.generic_objects.instance.ui import GenericObjectInstanceAllView
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
-from widgetastic_manageiq import (
-    ItemsToolBarViewSelector, BaseEntitiesView, FileInput, ParametrizedSummaryTable,
-    BootstrapSwitch, FonticonPicker, ManageIQTree, SummaryForm
-)
 from . import GenericObjectDefinition, GenericObjectDefinitionCollection
 
 
@@ -25,6 +25,7 @@ class GenericObjectDefinitionToolbar(View):
 
 class GenericObjectDefinitionView(BaseLoggedInPage):
 
+    @property
     def in_generic_object_definition(self):
         return (
             self.logged_in_as_current_user and
@@ -48,7 +49,7 @@ class GenericObjectDefinitionAllView(GenericObjectDefinitionView):
     @property
     def is_displayed(self):
         return (
-            self.in_generic_object_definition() and
+            self.in_generic_object_definition and
             self.toolbar.configuration.is_displayed and
             self.entities.title.text == 'All Generic Object Classes'
         )
@@ -56,7 +57,7 @@ class GenericObjectDefinitionAllView(GenericObjectDefinitionView):
 
 class ParametersForm(View):
     ROOT = ParametrizedLocator('//generic-object-table-component[@key-type="{@param_type}"]')
-    ALL_PAREMETERS = './/input[contains(@class, "ng-not-empty")]'
+    ALL_PARAMETERS = './/input[contains(@class, "ng-not-empty")]'
     add = Button(ParametrizedString('Add {@param_type}'))
     name = Input(locator='.//input[contains(@class, "ng-empty")]')
     type_class = BootstrapSelect(
@@ -68,14 +69,11 @@ class ParametersForm(View):
 
     def all(self):
         return [(element.get_attribute('value'), element.get_attribute('name'))
-                for element in self.browser.elements(self.ALL_PAREMETERS)]
+                for element in self.browser.elements(self.ALL_PARAMETERS)]
 
     @property
     def empty_field_is_present(self):
-        try:
-            return self.browser.element(self.name)
-        except Exception:
-            return False
+        return self.browser.element(self.name).is_displayed()
 
     def add_parameter_row(self):
         if not self.empty_field_is_present:
@@ -122,6 +120,10 @@ class GenericObjectDefinitionAddEditView(GenericObjectDefinitionView):
     class custom_image_file(View):    # noqa
         file = FileInput(name='generic_object_definition_image_file')
         upload_chosen_file = Button('Upload chosen File')
+
+        def after_fill(self, was_change):
+            if was_change:
+                self.custom_image_file.upload_chosen_file.click()
 
 
 class GenericObjectDefinitionAddView(GenericObjectDefinitionAddEditView):
@@ -188,7 +190,7 @@ class GenericObjectAddButtonView(GenericObjectDefinitionView):
 
     @property
     def is_displayed(self):
-        return self.title.text == 'Add a new Custom Button'
+        return self.title.text == 'Add a new Custom Button' and self.in_generic_object_definition
 
 
 class GenericObjectButtonGroupAddView(GenericObjectDefinitionView):
@@ -206,11 +208,14 @@ class GenericObjectButtonGroupAddView(GenericObjectDefinitionView):
 
     @property
     def is_displayed(self):
-        return self.title.text == 'GenericObjectButtonGroupAddView'
+        return (
+            self.title.text == 'GenericObjectButtonGroupAddView' and
+            self.in_generic_object_definition
+        )
 
-    def after_fill(self, was_change):
+    def after_fillafter_fill(self, was_change):
         # we need to click somewhere out side the form to get add button active,
-        #  after icon is filled
+        # after icon is filled
         if was_change:
             self.browser.element('//body').click()
 
@@ -218,13 +223,17 @@ class GenericObjectButtonGroupAddView(GenericObjectDefinitionView):
 class GenericObjectButtonGroupDetailsView(GenericObjectDefinitionView):
     title = Text('#explorer_title_text')
     configuration = Dropdown(text='Configuration')
-    basic_infornation = SummaryForm('Basic Information')
+    basic_information = SummaryForm('Basic Information')
     accordion = View.nested(AccordionForm)
     table = Table('//h3[contains(text(), "Buttons")]/following-sibling::table')
 
     @property
     def is_displayed(self):
-        return self.basic_infornation.is_displayed
+        return (
+            self.basic_information.is_displayed and
+            self.in_generic_object_definition and
+            'Custom Button Set' in self.title.text
+        )
 
 
 @MiqImplementationContext.external_for(GenericObjectDefinitionCollection.create, ViaUI)
@@ -248,14 +257,12 @@ def create(self, name, description, attributes=None, associations=None, methods=
     view = navigate_to(self, 'Add')
     view.fill({
         'name': name,
-        'description': description
+        'description': description,
+        'associations': associations,
+        'attributes': attributes,
+        'methods': methods,
+        'custom_image_file': {'file': custom_image_file_path}
     })
-    view.associations.fill(associations)
-    view.attributes.fill(attributes)
-    view.methods.fill(methods)
-    if custom_image_file_path:
-        view.custom_image_file.file.fill(custom_image_file_path)
-        view.custom_image_file.upload_chosen_file.click()
     if cancel:
         view.cancel.click()
     else:
@@ -279,14 +286,12 @@ def update(self, updates, reset=False, cancel=False):
     view = navigate_to(self, 'Edit')
     view.fill({
         'name': updates.get('name'),
-        'description': updates.get('description')
+        'description': updates.get('description'),
+        'associations': updates.get('associations'),
+        'attributes': updates.get('attributes'),
+        'methods': updates.get('methods'),
+        'custom_image_file': {'file': updates.get('custom_image_file_path')}
     })
-    view.associations.fill(updates.get('associations'))
-    view.attributes.fill(updates.get('attributes'))
-    view.methods.fill(updates.get('methods'))
-    if updates.get('custom_image_file_path'):
-        view.custom_image_file.file.fill('custom_image_file_path')
-        view.custom_image_file.upload_chosen_file.click()
     if reset:
         view.reset.click()
     if cancel:
@@ -306,8 +311,8 @@ def delete(self):
     view.configuration.item_select(
         'Remove this Generic Object Classes from Inventory', handle_alert=True)
     view = self.create_view(GenericObjectDefinitionAllView)
-    view.flash.assert_no_error()
     assert view.is_displayed
+    view.flash.assert_no_error()
 
 
 @MiqImplementationContext.external_for(GenericObjectDefinition.add_button, ViaUI)
@@ -343,7 +348,7 @@ def add_button(self, name, description, image, request, button_type='Default', d
         view.cancel.click()
     else:
         view.add.click()
-    view.flash.assert_no_error
+    view.flash.assert_no_error()
 
 
 @MiqImplementationContext.external_for(GenericObjectDefinition.add_button_group, ViaUI)
@@ -362,6 +367,7 @@ def add_button_group(self, name, description, image, display=True, cancel=False)
     else:
         view.add.click()
     view = self.create_view(GenericObjectDefinitionDetailsView)
+    assert view.is_displayed
     view.flash.assert_no_error()
 
 

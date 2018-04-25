@@ -90,8 +90,7 @@ class All(CFMENavigateStep):
 class Details(CFMENavigateStep):
     VIEW = GenericObjectInstanceDetailsView
 
-    def prerequisite(self):
-        return navigate_to(self.obj.definition, 'Instances')
+    prerequisite = NavigateToAttribute('definition', 'Instances')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
@@ -101,8 +100,7 @@ class Details(CFMENavigateStep):
 class EditTags(CFMENavigateStep):
     VIEW = TagPageView
 
-    def prerequisite(self):
-        return navigate_to(self.obj.definition, 'Instances')
+    prerequisite = NavigateToAttribute('definition', 'Instances')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()

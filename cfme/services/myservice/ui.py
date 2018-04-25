@@ -191,7 +191,7 @@ class ServiceVMDetailsView(VMDetailsEntities):
         )
 
 
-class AllGerericObjectInstanceView(BaseLoggedInPage):
+class AllGenericObjectInstanceView(BaseLoggedInPage):
     @View.nested
     class toolbar(View):  # noqa
         reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
@@ -207,7 +207,7 @@ class AllGerericObjectInstanceView(BaseLoggedInPage):
         return '(All Generic Objects)' in self.title.text
 
 
-class GerericObjectInstanceView(BaseLoggedInPage):
+class GenericObjectInstanceView(BaseLoggedInPage):
     @View.nested
     class toolbar(View):    # noqa
         reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
@@ -432,9 +432,9 @@ class MyServiceVMDetails(CFMENavigateStep):
         self.prerequisite_view.entities.get_entity(name=self.obj.vm_name).click()
 
 
-@navigator.register(MyService, 'AllGerericObjectInstance')
-class AllGerericObjectInstance(CFMENavigateStep):
-    VIEW = AllGerericObjectInstanceView
+@navigator.register(MyService, 'AllGenericObjectInstance')
+class AllGenericObjectInstance(CFMENavigateStep):
+    VIEW = AllGenericObjectInstanceView
 
     prerequisite = NavigateToSibling('Details')
 
@@ -442,11 +442,11 @@ class AllGerericObjectInstance(CFMENavigateStep):
         self.prerequisite_view.details.generic_objects.click_at('Instances')
 
 
-@navigator.register(MyService, 'GerericObjectInstance')
-class GerericObjectInstance(CFMENavigateStep):
-    VIEW = GerericObjectInstanceView
+@navigator.register(MyService, 'GenericObjectInstance')
+class GenericObjectInstance(CFMENavigateStep):
+    VIEW = GenericObjectInstanceView
 
-    prerequisite = NavigateToSibling('AllGerericObjectInstance')
+    prerequisite = NavigateToSibling('AllGenericObjectInstance')
 
     def step(self, **kwargs):
         if kwargs:

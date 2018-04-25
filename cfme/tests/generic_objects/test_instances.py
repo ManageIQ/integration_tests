@@ -21,7 +21,7 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture()
+@pytest.yield_fixture
 def definition(appliance):
     with appliance.context.use(ViaREST):
         definition = appliance.collections.generic_object_definitions.create(
@@ -31,12 +31,12 @@ def definition(appliance):
             associations={'services': 'Service'},
             methods=['add_vm', 'remove_vm']
         )
-        assert definition.exists
         yield definition
-        definition.delete()
+        if definition.exists:
+            definition.delete()
 
 
-@pytest.fixture()
+@pytest.yield_fixture
 def service(appliance):
     service_name = 'rest_service_{}'.format(fauxfactory.gen_alphanumeric())
     rest_service = appliance.rest_api.collections.services.action.create(
@@ -48,7 +48,7 @@ def service(appliance):
     rest_service.action.delete()
 
 
-@pytest.yield_fixture()
+@pytest.yield_fixture
 def g_object(definition, service, appliance):
     myservice = MyService(appliance, name=service.name)
     with appliance.context.use(ViaREST):
@@ -58,7 +58,6 @@ def g_object(definition, service, appliance):
             attributes={'addr01': 'Test Address'},
             associations={'services': [myservice]}
         )
-        assert instance.exists
         yield instance
         if instance.exists:
             instance.delete()

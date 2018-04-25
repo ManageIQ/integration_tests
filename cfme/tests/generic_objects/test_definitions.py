@@ -40,7 +40,7 @@ def test_generic_object_definition_crud(appliance, context):
 
 
 @pytest.mark.parametrize('context', [ViaUI])
-def test_generic_object_definition_crud_ui(appliance, context):
+def test_generic_object_definition_crud_ui(appliance, context, soft_assert):
     with appliance.context.use(context):
         definition = appliance.collections.generic_object_definitions.create(
             name="generic_class{}".format(fauxfactory.gen_alphanumeric()),
@@ -58,9 +58,9 @@ def test_generic_object_definition_crud_ui(appliance, context):
         view.flash.assert_success_message(
             'Generic Object Class "{}" has been successfully saved.'.format(definition.name))
         view = navigate_to(definition, 'Details')
-        assert view.summary('Attributes (2)').get_text_of('new_address')
-        assert view.summary('Attributes (2)').get_text_of('addr01')
-        assert view.summary('Associations (1)').get_text_of('services')
+        soft_assert(view.summary('Attributes (2)').get_text_of('new_address'))
+        soft_assert(view.summary('Attributes (2)').get_text_of('addr01'))
+        soft_assert(view.summary('Associations (1)').get_text_of('services'))
         definition.delete()
         view.flash.assert_success_message(
             'Generic Object Class:"{}" was successfully deleted'.format(definition.name))
