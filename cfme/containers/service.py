@@ -15,11 +15,13 @@ from cfme.utils.providers import get_crud_by_name
 
 
 class ServiceAllView(ContainerObjectAllBaseView):
+    """Container Services All view"""
     SUMMARY_TEXT = "Container Services"
 
 
 class ServiceDetailsView(ContainerObjectDetailsBaseView):
-    pass
+    """Container Services Details view"""
+    SUMMARY_TEXT = "Container Services"
 
 
 @attr.s

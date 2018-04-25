@@ -39,10 +39,15 @@ def test_containers_summary_objects(provider, soft_assert):
                          for obj in tested_objects}
     # Comparing to the values in the relationships tables:
     view = navigate_to(provider, 'Details')
+    ui_val_fields = view.entities.summary('Relationships').fields
     for obj in tested_objects:
         sb_val = status_box_values[obj]
-        ui_val = int(view.entities.summary('Relationships').get_text_of(obj.PLURAL))
-        soft_assert(sb_val == ui_val,
-            '{}: Mismatch between status box ({}) value in Containers overview'
-            'and provider\'s relationships table ({}):'
-            .format(obj.PLURAL, sb_val, ui_val))
+        for ui_val_field in ui_val_fields:
+            if obj.PLURAL in ui_val_field:
+                ui_val = int(view.entities.summary('Relationships').get_text_of(ui_val_field))
+                soft_assert(sb_val == ui_val,
+                            '{}: Mismatch between status box ({}) value in Containers overview'
+                            'and provider\'s relationships table ({}):'
+                            .format(obj.PLURAL, sb_val, ui_val))
+            else:
+                continue

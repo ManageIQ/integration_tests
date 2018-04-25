@@ -3,6 +3,7 @@ import attr
 from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic.utils import VersionPick, Version
 from wrapanapi.containers.replicator import Replicator as ApiReplicator
 
 from cfme.common import Taggable, TagPageView
@@ -14,11 +15,19 @@ from cfme.utils.providers import get_crud_by_name
 
 
 class ReplicatorAllView(ContainerObjectAllBaseView):
-    SUMMARY_TEXT = "Replicators"
+    """Container Replicators All view"""
+    SUMMARY_TEXT = VersionPick({
+        Version.lowest(): 'Replicators',
+        '5.9': 'Container Replicators'
+    })
 
 
 class ReplicatorDetailsView(ContainerObjectDetailsBaseView):
-    pass
+    """Container Replicators Details view"""
+    SUMMARY_TEXT = VersionPick({
+        Version.lowest(): 'Replicators',
+        '5.9': 'Container Replicators'
+    })
 
 
 @attr.s

@@ -3,7 +3,9 @@ import attr
 from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic.utils import VersionPick, Version
 from wrapanapi.containers.project import Project as ApiProject
+
 
 from cfme.common import Taggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
@@ -15,11 +17,19 @@ from cfme.utils.providers import get_crud_by_name
 
 
 class ProjectAllView(ContainerObjectAllBaseView):
-    SUMMARY_TEXT = "Projects"
+    """Container Projects All view"""
+    SUMMARY_TEXT = VersionPick({
+        Version.lowest(): 'Projects',
+        '5.9': 'Container Projects'
+    })
 
 
 class ProjectDetailsView(ContainerObjectDetailsBaseView):
-    pass
+    """Container Projects Detail view"""
+    SUMMARY_TEXT = VersionPick({
+        Version.lowest(): 'Projects',
+        '5.9': 'Container Projects'
+    })
 
 
 class ProjectDashboardView(ContainerObjectDetailsBaseView):

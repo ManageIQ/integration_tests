@@ -5,6 +5,7 @@ from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
 from wrapanapi.containers.pod import Pod as ApiPod
 from widgetastic_manageiq import NestedSummaryTable, SummaryTable
+from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View
 
 from cfme.common import Taggable, TagPageView
@@ -18,10 +19,20 @@ from cfme.utils.providers import get_crud_by_name
 
 
 class PodAllView(ContainerObjectAllBaseView):
-    SUMMARY_TEXT = "Pods"
+    """Container Pods All view"""
+    SUMMARY_TEXT = VersionPick({
+        Version.lowest(): 'Pods',
+        '5.9': 'Container Pods'
+    })
 
 
 class PodDetailsView(ContainerObjectDetailsBaseView):
+    """Container Pods Detail view"""
+    SUMMARY_TEXT = VersionPick({
+        Version.lowest(): 'Pods',
+        '5.9': 'Container Pods'
+    })
+
     @View.nested
     class entities(ContainerObjectDetailsEntities):  # noqa
         volumes = NestedSummaryTable(title='Volumes')

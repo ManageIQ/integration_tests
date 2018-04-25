@@ -7,10 +7,12 @@ from wrapanapi.containers.node import Node as ApiNode
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
+from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View
 from widgetastic_manageiq import Button, Text, TimelinesView, BreadCrumb
 
 from cfme.common import Taggable, TagPageView, PolicyProfileAssignable
+from cfme.common.vm_console import ConsoleMixin
 from cfme.containers.provider import (Labelable,
     ContainerObjectAllBaseView, LoggingableView, ContainerObjectDetailsBaseView,
     GetRandomInstancesMixin)
@@ -26,7 +28,7 @@ class NodeDetailsToolBar(ProviderDetailsToolBar):
 
 
 class NodeView(ContainerObjectAllBaseView, LoggingableView):
-    SUMMARY_TEXT = "Nodes"
+    """Container Nodes view"""
 
     @property
     def nodes(self):
@@ -42,17 +44,29 @@ class NodeView(ContainerObjectAllBaseView, LoggingableView):
 
 
 class NodeAllView(NodeView):
+    """Container Nodes All view"""
+
+    SUMMARY_TEXT = VersionPick({
+        Version.lowest(): 'Nodes',
+        '5.9': 'Container Nodes'
+    })
+
     @property
     def is_displayed(self):
         return self.in_node and super(NodeAllView, self).is_displayed
 
 
 class NodeDetailsView(ContainerObjectDetailsBaseView):
+    """Container Nodes Detail view"""
+    SUMMARY_TEXT = VersionPick({
+        Version.lowest(): 'Nodes',
+        '5.9': 'Container Nodes'
+    })
     toolbar = View.nested(NodeDetailsToolBar)
 
 
 @attr.s
-class Node(BaseEntity, Taggable, Labelable, PolicyProfileAssignable):
+class Node(BaseEntity, Taggable, Labelable, PolicyProfileAssignable, ConsoleMixin):
     """Node Class"""
     PLURAL = 'Nodes'
     all_view = NodeAllView

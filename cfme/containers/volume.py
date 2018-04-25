@@ -15,10 +15,12 @@ from cfme.utils.providers import get_crud_by_name
 
 
 class VolumeAllView(ContainerObjectAllBaseView):
+    """Container Volumes All view"""
     SUMMARY_TEXT = "Persistent Volumes"
 
 
 class VolumeDetailsView(ContainerObjectDetailsBaseView):
+    """Container Volumes Details view"""
     SUMMARY_TEXT = "Persistent Volumes"
 
 
