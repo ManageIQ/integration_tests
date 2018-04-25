@@ -3,7 +3,6 @@ import os
 import time
 from cfme.utils.path import results_path
 from cfme.utils.ssh import SSHClient
-from cfme.utils.smem_memory_monitor import test_ts
 import glob
 import pytest
 
@@ -151,6 +150,8 @@ def generate_version_files():
     starttime = time.time()
     ssh_client = SSHClient()
     relative_path = os.path.relpath(str(results_path), str(os.getcwd()))
+    # avoid importing outside perf testing
+    from cfme.utils.smem_memory_monitor import test_ts
     relative_string = relative_path + '/{}*'.format(test_ts)
     directory_list = glob.glob(relative_string)
 

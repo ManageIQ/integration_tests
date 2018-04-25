@@ -1,0 +1,4 @@
+# include what we need for performance testing
+-r frozen.txt
+
+matplotlib==1.5.1
