@@ -1,4 +1,5 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Text, View, ParametrizedString, ParametrizedLocator, Table
 from widgetastic_manageiq import (
@@ -73,7 +74,10 @@ class ParametersForm(View):
 
     @property
     def empty_field_is_present(self):
-        return self.browser.element(self.name).is_displayed()
+        try:
+            return self.browser.element(self.name)
+        except NoSuchElementException:
+            return False
 
     def add_parameter_row(self):
         if not self.empty_field_is_present:
@@ -213,7 +217,7 @@ class GenericObjectButtonGroupAddView(GenericObjectDefinitionView):
             self.in_generic_object_definition
         )
 
-    def after_fillafter_fill(self, was_change):
+    def after_fill(self, was_change):
         # we need to click somewhere out side the form to get add button active,
         # after icon is filled
         if was_change:

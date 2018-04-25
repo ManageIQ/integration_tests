@@ -195,7 +195,7 @@ def test_generic_objects_with_buttons_ui(appliance, definition, service, request
         assert_response(appliance)
 
     with appliance.context.use(context):
-        view = navigate_to(myservice, 'GerericObjectInstance', instance_name=instance.name)
+        view = navigate_to(myservice, 'GenericObjectInstance', instance_name=instance.name)
         if button_group:
             assert view.toolbar.group(group_name).custom_button.has_item(button_name)
         else:
