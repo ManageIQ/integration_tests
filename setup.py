@@ -169,7 +169,8 @@ setup(
             'report_dashboards = cfme.intelligence.reports.dashboards:DashboardsCollection',
             'saved_reports = cfme.intelligence.reports.saved:SavedReportsCollection',
             ('provisioning_dialogs = '
-                'cfme.automate.provisioning_dialogs:ProvisioningDialogsCollection')
+                'cfme.automate.provisioning_dialogs:ProvisioningDialogsCollection'),
+            'reports = cfme.intelligence.reports.reports:ReportsCollection',
         ],
         'pytest11':
         [

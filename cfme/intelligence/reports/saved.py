@@ -8,7 +8,7 @@ from widgetastic_manageiq import Table, PaginationPane
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from . import CloudIntelReportsView
-from .reports import CustomSavedReportDetailsView
+from .reports import SavedReportDetailsView as BaseSavedReportDetailsView
 
 
 class AllSavedReportsView(CloudIntelReportsView):
@@ -26,7 +26,7 @@ class AllSavedReportsView(CloudIntelReportsView):
         )
 
 
-class SavedReportDetailsView(CustomSavedReportDetailsView):
+class SavedReportDetailsView(BaseSavedReportDetailsView):
 
     @property
     def is_displayed(self):

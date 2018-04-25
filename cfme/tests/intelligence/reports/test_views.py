@@ -6,10 +6,8 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.utils.blockers import BZ
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.log import logger
 
 
 pytestmark = [
@@ -22,18 +20,16 @@ pytestmark = [
 
 
 @pytest.yield_fixture(scope='module')
-def report():
+def report(appliance):
     # TODO parameterize on path, for now test infrastructure reports
-    path = ["Configuration Management", "Hosts", "Virtual Infrastructure Platforms"]
-    report = CannedSavedReport.new(path)
-    report_time = report.datetime
-    logger.debug('Created report for path {} and time {}'.format(path, report_time))
+    report = appliance.collections.reports.instantiate(
+        type="Configuration Management",
+        subtype="Hosts",
+        menu_name="Virtual Infrastructure Platforms"
+    ).queue(wait_for_finish=True)
     yield report
-
-    try:
+    if report.exists:
         report.delete()
-    except Exception:
-        logger.warning('Failed to delete report for path {} and time {}'.format(path, report_time))
 
 
 @pytest.mark.rhv3

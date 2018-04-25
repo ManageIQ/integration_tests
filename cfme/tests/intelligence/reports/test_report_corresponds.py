@@ -4,15 +4,14 @@ import pytest
 from random import sample
 
 import cfme.utils
-from cfme.intelligence.reports.reports import CustomReport
 from cfme.utils.blockers import BZ
 from cfme.utils.providers import get_crud_by_name
 from cfme import test_requirements
 
 
 @pytest.yield_fixture(scope="function")
-def report_vms(infra_provider):
-    report = CustomReport(
+def report_vms(appliance, infra_provider):
+    report = appliance.collections.reports.create(
         menu_name=fauxfactory.gen_alphanumeric(),
         title=fauxfactory.gen_alphanumeric(),
         base_report_on="Virtual Machines",
@@ -26,12 +25,11 @@ def report_vms(infra_provider):
             "Name",
         ]
     )
-    report.create()
     report.queue(wait_for_finish=True)
     yield sample(
         filter(
             lambda i: len(i["Provider Name"].strip()) > 0,
-            list(report.get_saved_reports()[0].data.rows)), 2)
+            list(report.saved_reports.all()[0].data.rows)), 2)
     report.delete()
 
 

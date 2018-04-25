@@ -20,7 +20,6 @@ from cfme.common.provider import CloudInfraProvider
 from cfme.cloud.provider import CloudProvider
 from cfme.common.vm import VM
 from cfme.common.provider import BaseProvider
-from cfme.intelligence.reports.reports import CustomReport
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -242,7 +241,7 @@ def resource_usage(vm_ownership, appliance, provider):
 
 
 @pytest.yield_fixture(scope="module")
-def metering_report(vm_ownership, provider):
+def metering_report(appliance, vm_ownership, provider):
     # Create a Metering report based on VM owner; Queue the report.
     owner = vm_ownership
     data = {
@@ -259,13 +258,12 @@ def metering_report(vm_ownership, provider):
             'interval_end': 'Today (partial)'
         }
     }
-    report = CustomReport(is_candu=True, **data)
-    report.create()
+    report = appliance.collections.reports.create(is_candu=True, **data)
 
     logger.info('Queuing Metering report for {} provider'.format(provider.name))
     report.queue(wait_for_finish=True)
 
-    yield list(report.get_saved_reports()[0].data.rows)
+    yield list(report.saved_reports.all()[0].data.rows)
     report.delete()
 
 

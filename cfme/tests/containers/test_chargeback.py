@@ -10,7 +10,6 @@ import pytest
 
 from cfme.containers.provider import ContainersProvider
 from cfme.intelligence.chargeback import assignments, rates
-from cfme.intelligence.reports.reports import CustomReport
 
 from cfme.utils.log import logger
 from cfme.utils.units import CHARGEBACK_HEADER_NAMES, parse_number
@@ -57,7 +56,7 @@ def dump_args(**kwargs):
     return kwargs
 
 
-def gen_report_base(obj_type, provider, rate_desc, rate_interval):
+def gen_report_base(appliance, obj_type, provider, rate_desc, rate_interval):
     """Base function for report generation
     Args:
         :py:type:`str` obj_type: Object being tested; only 'Project' and 'Image' are supported
@@ -118,8 +117,7 @@ def gen_report_base(obj_type, provider, rate_desc, rate_interval):
     else:
         raise Exception('Unsupported rate interval: "{}"; available options: '
                         '(Hourly/Daily/Weekly/Monthly)')
-    report = CustomReport(is_candu=True, **data)
-    report.create()
+    report = appliance.collections.reports.create(is_candu=True, **data)
 
     logger.info('QUEUING CUSTOM CHARGEBACK REPORT FOR CONTAINER {}'.format(obj_type.upper()))
     report.queue(wait_for_finish=True)
@@ -192,9 +190,10 @@ def assign_compute_rate(obj_type, compute_rate, provider):
 
 
 @pytest.yield_fixture(scope='module')
-def chargeback_report_data(obj_type, interval, assign_compute_rate, provider):
-    report = gen_report_base(obj_type, provider, assign_compute_rate.description, interval)
-    yield report.get_saved_reports()[0].data
+def chargeback_report_data(appliance, obj_type, interval, assign_compute_rate, provider):
+    report = gen_report_base(appliance, obj_type, provider, assign_compute_rate.description,
+        interval)
+    yield report.saved_reports.all()[0].data
     report.delete()
 
 
@@ -207,7 +206,7 @@ def abstract_test_chargeback_cost(
         :py:type:`str` rate_key: The rate key as it appear in the CHARGEBACK_HEADER_NAMES keys.
         :py:type:`str` obj_type: Object being tested; only 'Project' and 'Image' are supported
         :py:type:`str` interval:  The rate interval, (Hourly/Daily/Weekly/Monthly)
-        :py:class:`CustomReport` chargeback_report_data: The chargeback report data.
+        :py:class:`Report` chargeback_report_data: The chargeback report data.
         :py:class:`ComputeRate` compute_rate: The compute rate object.
         :var soft_assert: soft_assert fixture.
     """

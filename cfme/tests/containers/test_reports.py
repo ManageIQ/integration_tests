@@ -3,13 +3,12 @@ import re
 from traceback import format_exc
 
 import pytest
-from widgetastic_patternfly import CandidateNotFound
 from wrapanapi.utils import eval_strings
 
 from cfme.containers.provider import ContainersProvider
-from cfme.intelligence.reports.reports import CannedSavedReport, CustomReport
 from cfme.utils.blockers import BZ
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.wait import TimedOutError
 
 
 pytestmark = [
@@ -45,22 +44,26 @@ def get_vpor_data_by_name(vporizer_, name):
     return [vals for vals in vporizer_ if vals.resource_name == name]
 
 
-def get_report(menu_name, candu=False):
+def get_report(appliance, menu_name, candu=False):
     """Queue a report by menu name , wait for finish and return it"""
-    path_to_report = ['Configuration Management', 'Containers', menu_name]
     try:
-        run_at, queued_at = CannedSavedReport.queue_canned_report(path_to_report)
-    except CandidateNotFound:
+        saved_report = appliance.collections.reports.instantiate(
+            type='Configuration Management',
+            subtype='Containers',
+            menu_name=menu_name,
+            is_candu=candu
+        ).queue(wait_for_finish=True)
+    except TimedOutError:
         pytest.skip('Could not find report "{}" in containers.\nTraceback:\n{}'
-                    .format(path_to_report, format_exc()))
-    return CannedSavedReport(path_to_report, run_at, queued_at, candu=candu)
+                    .format(menu_name, format_exc()))
+    return saved_report
 
 
 @pytest.mark.polarion('CMP-10617')
 def test_container_reports_base_on_options(soft_assert, appliance):
     """This test verifies that all containers options are available in the report 'based on'
     Dropdown in the report creation"""
-    view = navigate_to(CustomReport, 'Add')
+    view = navigate_to(appliance.collections.reports, 'Add')
     if appliance.version < '5.9':
         chargeback_for_images = 'Chargeback Container Images'
     else:
@@ -82,10 +85,10 @@ def test_container_reports_base_on_options(soft_assert, appliance):
 
 
 @pytest.mark.polarion('CMP-9533')
-def test_report_pods_per_ready_status(soft_assert, provider):
+def test_report_pods_per_ready_status(appliance, soft_assert, provider):
     """Testing 'Pods per Ready Status' report, see polarion case for more info"""
     pods_per_ready_status = provider.pods_per_ready_status()
-    report = get_report('Pods per Ready Status')
+    report = get_report(appliance, 'Pods per Ready Status')
     for row in report.data.rows:
         name = row['# Pods per Ready Status']
         readiness_ui = bool(eval_strings([row['Ready Condition Status']]).pop())
@@ -101,7 +104,7 @@ def test_report_pods_per_ready_status(soft_assert, provider):
 @pytest.mark.polarion('CMP-9536')
 def test_report_nodes_by_capacity(appliance, soft_assert, node_hardwares_db_data):
     """Testing 'Nodes By Capacity' report, see polarion case for more info"""
-    report = get_report('Nodes By Capacity')
+    report = get_report(appliance, 'Nodes By Capacity')
     for row in report.data.rows:
 
         hw = node_hardwares_db_data[row['Name']]
@@ -130,7 +133,7 @@ def test_report_nodes_by_capacity(appliance, soft_assert, node_hardwares_db_data
 @pytest.mark.polarion('CMP-10033')
 def test_report_nodes_by_cpu_usage(appliance, soft_assert, vporizer):
     """Testing 'Nodes By CPU Usage' report, see polarion case for more info"""
-    report = get_report('Nodes By CPU Usage')
+    report = get_report(appliance, 'Nodes By CPU Usage')
     for row in report.data.rows:
 
         vpor_values = get_vpor_data_by_name(vporizer, row["Name"])[0]
@@ -145,7 +148,7 @@ def test_report_nodes_by_cpu_usage(appliance, soft_assert, vporizer):
 @pytest.mark.polarion('CMP-10034')
 def test_report_nodes_by_memory_usage(appliance, soft_assert, vporizer):
     """Testing 'Nodes By Memory Usage' report, see polarion case for more info"""
-    report = get_report('Nodes By Memory Usage')
+    report = get_report(appliance, 'Nodes By Memory Usage')
     for row in report.data.rows:
 
         vpor_values = get_vpor_data_by_name(vporizer, row["Name"])[0]
@@ -158,9 +161,9 @@ def test_report_nodes_by_memory_usage(appliance, soft_assert, vporizer):
 
 
 @pytest.mark.polarion('CMP-10669')
-def test_report_number_of_nodes_per_cpu_cores(soft_assert, node_hardwares_db_data):
+def test_report_number_of_nodes_per_cpu_cores(appliance, soft_assert, node_hardwares_db_data):
     """Testing 'Number of Nodes per CPU Cores' report, see polarion case for more info"""
-    report = get_report('Nodes by Number of CPU Cores')
+    report = get_report(appliance, 'Nodes by Number of CPU Cores')
     for row in report.data.rows:
 
         hw = node_hardwares_db_data[row['Name']]
@@ -178,7 +181,7 @@ def test_report_projects_by_number_of_pods(appliance, soft_assert):
     container_projects = appliance.db.client['container_projects']
     container_pods = appliance.db.client['container_groups']
 
-    report = get_report('Projects by Number of Pods')
+    report = get_report(appliance, 'Projects by Number of Pods')
     for row in report.data.rows:
         pods_count = len(container_pods.__table__.select().where(
             container_pods.container_project_id ==
@@ -193,9 +196,9 @@ def test_report_projects_by_number_of_pods(appliance, soft_assert):
 
 @pytest.mark.meta(blockers=[BZ(1539378, forced_streams=["5.9"])])
 @pytest.mark.polarion('CMP-10009')
-def test_report_projects_by_cpu_usage(soft_assert, vporizer):
+def test_report_projects_by_cpu_usage(appliance, soft_assert, vporizer):
     """Testing 'Projects By CPU Usage' report, see polarion case for more info"""
-    report = get_report('Projects By CPU Usage')
+    report = get_report(appliance, 'Projects By CPU Usage')
     for row in report.data.rows:
 
         vpor_values = get_vpor_data_by_name(vporizer, row["Name"])[0]
@@ -209,9 +212,9 @@ def test_report_projects_by_cpu_usage(soft_assert, vporizer):
 
 @pytest.mark.meta(blockers=[BZ(1539378, forced_streams=["5.9"])])
 @pytest.mark.polarion('CMP-10010')
-def test_report_projects_by_memory_usage(soft_assert, vporizer):
+def test_report_projects_by_memory_usage(appliance, soft_assert, vporizer):
     """Testing 'Projects By Memory Usage' report, see polarion case for more info"""
-    report = get_report('Projects By Memory Usage')
+    report = get_report(appliance, 'Projects By Memory Usage')
     for row in report.data.rows:
 
         vpor_values = get_vpor_data_by_name(vporizer, row["Name"])[0]
@@ -225,10 +228,10 @@ def test_report_projects_by_memory_usage(soft_assert, vporizer):
 
 @pytest.mark.long_running_env
 @pytest.mark.polarion('CMP-10272')
-def test_report_pod_counts_for_container_images_by_project(provider, soft_assert):
+def test_report_pod_counts_for_container_images_by_project(appliance, provider, soft_assert):
     """Testing 'Pod counts For Container Images by Project' report,\
     see polarion case for more info"""
-    report = get_report('Pod counts For Container Images by Project', candu=True)
+    report = get_report(appliance, 'Pod counts For Container Images by Project', candu=True)
 
     pods_api = provider.mgmt.api.get('pod')[1]['items']
     pods_per_project = {}
@@ -256,9 +259,9 @@ def test_report_pod_counts_for_container_images_by_project(provider, soft_assert
 @pytest.mark.long_running_env
 @pytest.mark.meta(blockers=[1529963], forced_stream=['5.8', '5.9'])
 @pytest.mark.polarion('CMP-9532')
-def test_report_recently_discovered_pods(provider, soft_assert):
+def test_report_recently_discovered_pods(appliance, provider, soft_assert):
     """Testing 'Recently Discovered Pods' report, see polarion case for more info"""
-    report = get_report('Recently Discovered Pods')
+    report = get_report(appliance, 'Recently Discovered Pods')
     pods_in_report = [row['Name'] for row in report.data.rows]
     pods_per_ready_status = provider.pods_per_ready_status()
     for pod in pods_per_ready_status.keys():
@@ -269,10 +272,10 @@ def test_report_recently_discovered_pods(provider, soft_assert):
 
 @pytest.mark.long_running_env
 @pytest.mark.polarion('CMP-10273')
-def test_report_number_of_images_per_node(provider, soft_assert):
+def test_report_number_of_images_per_node(appliance, provider, soft_assert):
     """Testing 'Number of Images per Node' report, see polarion case for more info"""
     pods_api = provider.mgmt.api.get('pod')[-1]['items']
-    report = get_report('Number of Images per Node', candu=True)
+    report = get_report(appliance, 'Number of Images per Node', candu=True)
     report_data = list(report.data.rows)
     for pod in pods_api:
         expected_image = pod['spec']['containers'][0]['image']
@@ -290,9 +293,9 @@ def test_report_number_of_images_per_node(provider, soft_assert):
 
 @pytest.mark.long_running_env
 @pytest.mark.polarion('CMP-10670')
-def test_report_projects_by_number_of_containers(provider, soft_assert):
+def test_report_projects_by_number_of_containers(appliance, provider, soft_assert):
     """Testing 'Projects by Number of Containers' report, see polarion case for more info"""
-    report = get_report('Projects by Number of Containers')
+    report = get_report(appliance, 'Projects by Number of Containers')
     pods_api = provider.mgmt.api.get('pod')[-1]['items']
 
     # Since there is no provider column, in case of more than 1 provider we get some projects

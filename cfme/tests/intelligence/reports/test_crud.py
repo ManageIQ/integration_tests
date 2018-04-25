@@ -4,7 +4,6 @@ import pytest
 import yaml
 
 from cfme import test_requirements
-from cfme.intelligence.reports.reports import CustomReport
 from cfme.intelligence.reports.schedules import ScheduleCollection
 from cfme.intelligence.reports.widgets import AllDashboardWidgetsView
 from cfme.utils.blockers import BZ
@@ -38,9 +37,9 @@ def crud_files_schedules():
 
 
 @pytest.fixture(params=crud_files_reports())
-def custom_report(request):
+def custom_report_values(request):
     with report_crud_dir.join(request.param).open(mode="r") as rep_yaml:
-        return CustomReport(**yaml.load(rep_yaml))
+        return yaml.load(rep_yaml)
 
 
 @pytest.fixture(params=crud_files_schedules())
@@ -53,13 +52,13 @@ def schedule_data(request):
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1531600, forced_streams=["5.9"])])
 @test_requirements.report
-def test_custom_report_crud(custom_report):
-    custom_report.create()
+def test_custom_report_crud(custom_report_values, appliance):
+    custom_report = appliance.collections.reports.create(**custom_report_values)
     with update(custom_report):
         custom_report.title += fauxfactory.gen_alphanumeric()
     custom_report.queue(wait_for_finish=True)
-    for report in custom_report.get_saved_reports():
-        assert hasattr(report, 'data')
+    for saved_report in custom_report.saved_reports.all():
+        assert saved_report.exists
     custom_report.delete()
 
 

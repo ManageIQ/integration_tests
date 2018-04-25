@@ -5,7 +5,6 @@ import six
 from copy import copy
 
 from cfme import test_requirements
-from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.infrastructure import virtual_machines as vms  # NOQA
 from cfme.infrastructure.datastore import DatastoreCollection
 from cfme.infrastructure.provider import InfraProvider
@@ -196,9 +195,12 @@ def test_infra_report_page_per_item(appliance, value, set_report):
         test_flag: visuals
     """
     appliance.user.my_settings.visual.report_view_limit = value
-    path = ['Configuration Management', 'Virtual Machines', 'VMs Snapshot Summary']
     limit = appliance.user.my_settings.visual.report_view_limit
-    report = CannedSavedReport.new(path)
+    report = appliance.collections.reports.instantiate(
+        type='Configuration Management',
+        subtype='Virtual Machines',
+        menu_name='VMs Snapshot Summary'
+    )
     view = navigate_to(report, 'Details')
     max_item = view.paginator.max_item
     item_amt = view.paginator.items_amount
