@@ -57,16 +57,22 @@ OS_VERSION = None
 
 REQUIRED_PACKAGES = None
 INSTALL_COMMAND = None
+# FIXME define install commands separately in config/ini file
+DEBUG_INSTALL_COMMAND = None
 
 if HAS_DNF:
     INSTALL_COMMAND = 'dnf install -y'
+    DEBUG_INSTALL_COMMAND = 'dnf debuginfo-install -y'
 elif HAS_YUM:
     INSTALL_COMMAND = 'yum install -y'
+    DEBUG_INSTALL_COMMAND = 'yum debuginfo-install -y'
 elif HAS_APT:
     INSTALL_COMMAND = 'apt install -y'
+    # No separate debuginfo for apt
 
 if not IS_ROOT:
     INSTALL_COMMAND = 'sudo ' + INSTALL_COMMAND
+    DEBUG_INSTALL_COMMAND = 'sudo ' + DEBUG_INSTALL_COMMAND
 
 OS_NAME = "unknown"
 OS_VERSION = "unknown"
@@ -81,58 +87,56 @@ if os.path.exists(OS_RELEASE_FILE):
             if version:
                 OS_VERSION = version.group(1)
 
+# These package specs include debuginfo packages, which have to be processed out
 REDHAT_PACKAGES_SPECS = [
     ("Fedora release 23", "nss",
      " python-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq3-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python-devel tesseract"
-     " freetype-devel"),
+     " freetype-devel python-debuginfo"),
     ("Fedora release 24", "nss",
      " python-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq3-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python-devel tesseract"
-     " freetype-devel"),
+     " freetype-devel python-debuginfo"),
     ("Fedora release 25", "nss",
      " python2-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq3-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python2-devel tesseract"
-     " freetype-devel"),
+     " freetype-devel python-debuginfo"),
     ("Fedora release 26", "nss",
      " python2-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python2-devel tesseract"
-     " freetype-devel"),
+     " freetype-devel python-debuginfo"),
     ("Fedora release 27", "openssl",
      " python2-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python2-devel tesseract"
-     " freetype-devel"),
+     " freetype-devel python-debuginfo"),
     ("CentOS Linux release 7", "nss",
      " python-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq3-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python-devel tesseract"
-     " libpng-devel"
-     " freetype-devel"),
+     " libpng-devel freetype-devel"),
     ("Red Hat Enterprise Linux Server release 7", "nss",
      " python-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq3-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python-devel tesseract"
-     " libpng-devel"
-     " freetype-devel"),
+     " libpng-devel freetype-devel python-debuginfo"),
     ("Red Hat Enterprise Linux Workstation release 7", "nss",
      " python-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq3-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python-devel tesseract"
-     " libpng-devel"
-     " freetype-devel")
+     " libpng-devel freetype-devel python-debuginfo")
 ]
 
 OS_PACKAGES_SPECS = [
@@ -141,14 +145,17 @@ OS_PACKAGES_SPECS = [
      " python-virtualenv gcc postgresql libxml2-dev"
      " libxslt1-dev libzmq3-dev libcurl4-openssl-dev"
      " g++ openssl libffi-dev python-dev libtesseract3"
-     " libpng-dev libfreetype6-dev libssl-dev"),
+     " libpng-dev libfreetype6-dev libssl-dev python-dbg"),
 
     ("Ubuntu", "16.04.4 LTS (Xenial Xerus)", "openssl",
      " python-virtualenv gcc postgresql libxml2-dev"
      " libxslt1-dev libzmq3-dev libcurl4-openssl-dev"
      " g++ openssl libffi-dev python-dev libtesseract3"
-     " libpng-dev libfreetype6-dev libssl-dev")
+     " libpng-dev libfreetype6-dev libssl-dev python-dbg")
 ]
+
+# Holder for processed -debuginfo packages
+DEBUG_PACKAGES = []
 
 if os.path.exists(REDHAT_RELEASE_FILE):
 
@@ -156,6 +163,11 @@ if os.path.exists(REDHAT_RELEASE_FILE):
         release_string = fp.read()
     for release, curl_ssl, packages in REDHAT_PACKAGES_SPECS:
         if release_string.startswith(release):
+            # Look for *-debuginfo package names, separate them
+            for p in packages.lstrip().split(' '):
+                if '-debuginfo' in p:
+                    DEBUG_PACKAGES.append(p.replace('-debuginfo', ''))
+                    packages = packages.replace(p, '')  # remove *-debuginfo package from main list
             REQUIRED_PACKAGES = packages
             os.environ['PYCURL_SSL_LIBRARY'] = curl_ssl
             break
@@ -207,8 +219,8 @@ def run_cmd_or_exit(command, shell=False, long_running=False,
     except subprocess.CalledProcessError as e:
         print(e.output)
         c = " ".join(command) if type(command) == list else command
-        if c.startswith(INSTALL_COMMAND):
-            print("Hit error during yum/dnf install, re-trying...")
+        if c.startswith((INSTALL_COMMAND, DEBUG_INSTALL_COMMAND)):
+            print("Hit error during yum/dnf install or debuginfo-install, re-trying...")
             time.sleep(5)
             res = call(command, shell=shell, **kw)
         else:
@@ -232,6 +244,9 @@ def pip_json_list(venv):
 def install_system_packages():
     if INSTALL_COMMAND and REQUIRED_PACKAGES:
         run_cmd_or_exit(INSTALL_COMMAND + REQUIRED_PACKAGES, shell=True)
+    if DEBUG_INSTALL_COMMAND and DEBUG_PACKAGES:
+        run_cmd_or_exit('{} {}'.format(DEBUG_INSTALL_COMMAND, ' '.join(DEBUG_PACKAGES)),
+                        shell=True)
     else:
         print("WARNING: unknown distribution,",
               "please ensure you have the required packages installed")
