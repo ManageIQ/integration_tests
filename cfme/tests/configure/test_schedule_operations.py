@@ -12,8 +12,8 @@ from cfme.utils.hosts import setup_host_creds
 from cfme.utils.update import update
 
 pytestmark = [
-    pytest.mark.provider([VMwareProvider], required_fields=['hosts'], scope="module", selector=ONE),
-    pytest.mark.usefixtures("setup_provider_modscope")
+    pytest.mark.provider([VMwareProvider], required_fields=['hosts'], selector=ONE, scope='module'),
+    pytest.mark.usefixtures("setup_provider")
 ]
 
 run_types = (
@@ -62,7 +62,7 @@ def test_schedule_crud(appliance, current_server_time):
 
     view = appliance.browser.create_view(BaseLoggedInPage)
     view.flash.assert_message('Schedule "{}" was saved'.format(schedule.name))
-    # test for bz
+    # test for bz 1569127
     start_date_updated = start_date - relativedelta.relativedelta(days=1)
     updates = {
         'name': fauxfactory.gen_alphanumeric(),
@@ -144,7 +144,7 @@ def test_schedule_timer(appliance, run_types, host_with_credentials, request, cu
     start_date = current_time + relativedelta.relativedelta(minutes=5)
     view = navigate_to(appliance.collections.system_schedules, 'Add')
     available_list = view.time_zone.all_options
-    # bz is here
+    # bz is here 1559904
     for tz in available_list:
         if '{}:00'.format(tz_num[0:3]) in tz.text and 'Atlantic Time (Canada)' not in tz.text:
             tz_select = tz.text
