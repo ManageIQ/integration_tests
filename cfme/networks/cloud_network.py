@@ -79,7 +79,7 @@ class CloudNetwork(Taggable, BaseEntity):
         """Delete this cloud network"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Delete this Cloud Network', handle_alert=True)
-        view.flash.assert_success_message('The selected Cloud Network was deleted')
+        view.flash.assert_message('Delete initiated for 1 Cloud Network.')
 
     @property
     def network_provider(self):
