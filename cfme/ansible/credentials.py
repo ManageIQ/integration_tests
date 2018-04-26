@@ -9,7 +9,7 @@ from widgetastic_patternfly import BootstrapSelect, Button, Dropdown, Input
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import Taggable
+from cfme.common import Taggable, TagPageView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
@@ -442,3 +442,14 @@ class Edit(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select("Edit this Credential")
+
+
+@navigator.register(Credential, 'EditTags')
+class EditTagsFromListCollection(CFMENavigateStep):
+    VIEW = TagPageView
+
+    prerequisite = NavigateToAttribute("appliance.server", "AnsibleCredentials")
+
+    def step(self):
+        self.prerequisite_view.entities.get_entity(surf_pages=True, name=self.obj.name).check()
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

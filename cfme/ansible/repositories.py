@@ -345,12 +345,3 @@ class Add(CFMENavigateStep):
             fail_func=self.prerequisite_view.browser.refresh
         )
         dropdown.item_select("Add New Repository")
-
-
-@navigator.register(Repository, 'Edit')
-class Edit(CFMENavigateStep):
-    VIEW = RepositoryEditView
-    prerequisite = NavigateToSibling("Details")
-
-    def step(self):
-        self.prerequisite_view.toolbar.configuration.item_select("Edit this Repository")

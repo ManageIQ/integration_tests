@@ -43,7 +43,7 @@ def credential(appliance, enabled_embedded_ansible):
     credentials_collection = appliance.collections.ansible_credentials
     view = navigate_to(appliance.server, 'AnsibleCredentials')
     try:
-        credential = credentials_collection.instansiate(
+        credential = credentials_collection.instantiate(
             view.credentials[0]['Name'].text, view.credentials[0]['Type'].text)
     except NoSuchElementException:
         credential = credentials_collection.create(
