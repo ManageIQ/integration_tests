@@ -100,8 +100,9 @@ def check_power_options(provider, soft_assert, vm, power_state):
     }
     # VMware and RHEVM have extended power options
     if not provider.one_of(SCVMMProvider):
-        mustnt_be_available['on'].extend([vm.GUEST_RESTART, vm.GUEST_SHUTDOWN])
         mustnt_be_available['off'].extend([vm.GUEST_RESTART, vm.GUEST_SHUTDOWN])
+    if not provider.one_of((SCVMMProvider, RHEVMProvider)):
+        mustnt_be_available['on'].extend([vm.GUEST_RESTART, vm.GUEST_SHUTDOWN])
     if provider.one_of(RHEVMProvider):
         must_be_available['on'].remove(vm.RESET)
 
@@ -411,7 +412,6 @@ def test_orphaned_vm_status(testing_vm, orphaned_vm):
 
 
 @pytest.mark.rhv1
-@pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider))
 def test_vm_power_options_from_on(provider, soft_assert, testing_vm, ensure_vm_running):
     testing_vm.wait_for_vm_state_change(
         desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
