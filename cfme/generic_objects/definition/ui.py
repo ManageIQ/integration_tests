@@ -4,7 +4,7 @@ from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Text, View, ParametrizedString, ParametrizedLocator, Table
 from widgetastic_manageiq import (
     ItemsToolBarViewSelector, BaseEntitiesView, FileInput, ParametrizedSummaryTable,
-    BootstrapSwitch, FonticonPicker, ManageIQTree, SummaryForm
+    BootstrapSwitch, FonticonPicker, ManageIQTree, SummaryForm, ItemNotFound
 )
 from widgetastic_patternfly import (
     Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Accordion
@@ -303,6 +303,7 @@ def update(self, updates, reset=False, cancel=False):
     elif not reset and not cancel:
         view.save.click()
         view = self.create_view(GenericObjectDefinitionDetailsView, override=updates)
+        assert view.is_displayed
         view.flash.assert_no_error()
 
 
@@ -380,7 +381,7 @@ def exists(self):
     try:
         navigate_to(self, 'Details')
         return True
-    except CandidateNotFound:
+    except (CandidateNotFound, ItemNotFound):
         return False
 
 

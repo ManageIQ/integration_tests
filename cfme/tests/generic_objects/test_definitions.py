@@ -64,3 +64,4 @@ def test_generic_object_definition_crud_ui(appliance, context, soft_assert):
         definition.delete()
         view.flash.assert_success_message(
             'Generic Object Class:"{}" was successfully deleted'.format(definition.name))
+        assert not definition.exists
