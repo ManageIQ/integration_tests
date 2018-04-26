@@ -18,16 +18,6 @@ class VMUtilizationView(View):
     title = Text(".//div[@id='main-content']//h1")
     options = View.nested(OptionForm)
 
-    vm_cpu = LineChart(id='miq_chart_parent_candu_0')
-    vm_cpu_state = LineChart(id='miq_chart_parent_candu_1')
-    vm_memory = LineChart(id='miq_chart_parent_candu_2')
-    vm_disk = LineChart(id='miq_chart_parent_candu_3')
-    vm_network = LineChart(id='miq_chart_parent_candu_4')
-
-
-class VMUtilizationAllView(VMUtilizationView):
-    """A All view without select compare to option"""
-
     @property
     def is_displayed(self):
         if self.options.compare_to.is_displayed:
