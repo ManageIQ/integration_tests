@@ -124,12 +124,15 @@ class ServerCollection(BaseCollection, sentaku.modeling.ElementMixin):
         else:
             server = server_collection.find_by(is_master=True)[0]
 
+        # TODO This entire hack needs to be removed once we are able to edit the server name again
         try:
             name = server.name
         except AttributeError:
             logger.error('The EVM has no name, setting it to EVM')
             name = 'EVM' if self.appliance.version == LATEST else server.name
-            self.appliance.update_advanced_settings({'server': {'name': "EVM"}})
+            server = self.instantiate(name=name, sid=server.id)
+            server.update_advanced_settings({'server': {'name': "EVM"}})
+            return server
         return self.instantiate(name=name, sid=server.id)
 
 
