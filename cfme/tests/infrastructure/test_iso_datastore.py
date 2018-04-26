@@ -7,7 +7,7 @@ from cfme.infrastructure.provider import InfraProvider
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers'),
     pytest.mark.tier(2),
-    pytest.mark.provider([InfraProvider], required_fields=['iso_datastore']),
+    pytest.mark.provider([InfraProvider], required_fields=[('iso_datastore', True)]),
 ]
 
 
@@ -19,7 +19,6 @@ def no_iso_dss(provider):
 
 
 @pytest.mark.rhv1
-@pytest.mark.meta(blockers=[1200783])
 def test_iso_datastore_crud(setup_provider, no_iso_dss, provider):
     """
     Basic CRUD test for ISO datastores.
