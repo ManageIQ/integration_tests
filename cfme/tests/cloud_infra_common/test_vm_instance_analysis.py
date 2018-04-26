@@ -321,6 +321,7 @@ def schedule_ssa(appliance, ssa_vm, ssa_profile, wait_for_task_result=True):
     return ss
 
 
+@pytest.mark.rhv2
 @pytest.mark.tier(1)
 @pytest.mark.long_running
 def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_provisioning_data,
@@ -369,6 +370,7 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
         soft_assert(c_fs_drivers != '0', "fs drivers: '{}' != '0'".format(c_fs_drivers))
 
 
+@pytest.mark.rhv3
 @pytest.mark.tier(2)
 @pytest.mark.long_running
 def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, appliance):
@@ -438,6 +440,7 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, appliance):
         soft_assert(c_fs_drivers != '0', "fs drivers: '{}' != '0'".format(c_fs_drivers))
 
 
+@pytest.mark.rhv1
 @pytest.mark.tier(2)
 @pytest.mark.long_running
 @pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
@@ -513,6 +516,7 @@ def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profile):
         soft_assert(c_fs_drivers != '0', "fs drivers: '{}' != '0'".format(c_fs_drivers))
 
 
+@pytest.mark.rhv3
 @pytest.mark.long_running
 def test_ssa_users(ssa_vm, appliance, ssa_profile):
     """ Tests SSA fetches correct results for users list
@@ -550,6 +554,7 @@ def test_ssa_users(ssa_vm, appliance, ssa_profile):
             pytest.fail('User {} was not found in details table after SSA run'.format(username))
 
 
+@pytest.mark.rhv3
 @pytest.mark.long_running
 def test_ssa_groups(ssa_vm, appliance, ssa_profile):
     """ Tests SSA fetches correct results for groups
@@ -656,6 +661,7 @@ def test_ssa_files(appliance, ssa_vm, soft_assert):
             ssa_expect_files[0]))
 
 
+@pytest.mark.rhv2
 @pytest.mark.tier(2)
 @pytest.mark.long_running
 def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profile):

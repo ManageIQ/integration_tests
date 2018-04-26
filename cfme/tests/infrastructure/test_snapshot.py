@@ -244,6 +244,7 @@ def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_ev
                            active_snapshot=True)
 
 
+@pytest.mark.rhv3
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(RHEVMProvider))
 @pytest.mark.meta(automates=[BZ(1375544)])
 def test_revert_on_running_vm(small_test_vm):
@@ -362,6 +363,7 @@ def test_operations_powered_off_vm(small_test_vm):
     snapshot2.delete()
 
 
+@pytest.mark.rhv3
 def test_snapshot_history_btn(small_test_vm, provider):
     snapshot = new_snapshot(small_test_vm, has_name=(not provider.one_of(RHEVMProvider)))
     snapshot.create()

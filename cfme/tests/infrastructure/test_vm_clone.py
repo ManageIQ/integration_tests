@@ -57,6 +57,7 @@ def test_vm_clone(appliance, provider, clone_vm_name, create_vm):
     assert request_row.is_succeeded(method='ui'), msg
 
 
+@pytest.mark.rhv3
 @pytest.mark.uncollectif(lambda provider: provider.one_of(VMwareProvider))
 def test_vm_clone_neg(provider, clone_vm_name, create_vm):
     """Tests that we can't clone non-VMware VM"""
