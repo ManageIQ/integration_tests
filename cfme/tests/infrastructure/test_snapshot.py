@@ -113,8 +113,8 @@ def test_snapshot_crud(small_test_vm, provider):
     snapshot.delete()
 
 
+@pytest.mark.rhv3
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(RHEVMProvider))
-@pytest.mark.meta(automates=[BZ(1384517)])
 def test_create_without_description(small_test_vm):
     """
     Test that we get an error message when we try to create a snapshot with

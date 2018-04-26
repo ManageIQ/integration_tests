@@ -122,6 +122,8 @@ def test_vm_reconfig_add_remove_disk_cold(
     assert small_vm.configuration.num_disks == orig_config.num_disks, msg
 
 
+@pytest.mark.rhv3
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6996')])
 def test_reconfig_vm_negative_cancel(provider, small_vm, ensure_vm_stopped):
     """ Cancel reconfiguration changes """
     config_vm = small_vm.configuration.copy()

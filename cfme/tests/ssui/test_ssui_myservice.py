@@ -28,6 +28,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.rhv1
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_myservice_crud(appliance, setup_provider, context, order_service):

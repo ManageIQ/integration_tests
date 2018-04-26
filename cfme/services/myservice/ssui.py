@@ -166,6 +166,7 @@ def set_ownership(self, owner, group):
     else:
         assert view.notification.assert_message("{} ownership was saved."
                                                 .format(self.name))
+    view.browser.refresh()  # WA until ManageIQ/integration_tests:7157 is solved
 
 
 @MiqImplementationContext.external_for(MyService.edit_tags, ViaSSUI)
