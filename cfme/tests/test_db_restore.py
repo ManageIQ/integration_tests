@@ -8,6 +8,11 @@ from fixtures.pytest_store import store
 from cfme.utils.log import logger
 from cfme.utils.providers import list_providers_by_class
 
+pytestmark = [
+    pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
+                            reason="this test should be redesigned to work with pod appliance")
+]
+
 
 def provider_app_crud(provider_class, appliance):
     try:

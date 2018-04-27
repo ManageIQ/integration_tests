@@ -3,6 +3,10 @@ import pytest
 from cfme.utils.log_validator import LogValidator
 from wait_for import wait_for
 
+pytestmark = [
+    pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
+                            reason="cli isn't supported in pod appliance")
+]
 
 tzs = [
     ['Africa/Abidjan'],

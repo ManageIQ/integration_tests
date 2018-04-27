@@ -1,10 +1,9 @@
 import fauxfactory
 import pytest
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 from cfme.utils.log import logger
-from cfme.utils.version import current_version
-
 
 pytestmark = [pytest.mark.provider([OpenStackProvider], scope='module')]
 
@@ -28,7 +27,7 @@ def tenant(provider, setup_provider, appliance):
             provider.mgmt.remove_tenant(tenant.name)
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
+@pytest.mark.meta(blockers=[BZ(1462137, forced_streams=["5.9", "5.8"])])
 def test_tenant_crud(tenant):
     """ Tests tenant create and delete
 

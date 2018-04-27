@@ -9,6 +9,11 @@ import tempfile
 import lxml.etree
 import yaml
 
+pytestmark = [
+    pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
+                            reason="cli isn't supported in pod appliance")
+]
+
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 LoginOption = namedtuple('LoginOption', ['name', 'option', 'index'])
 TZ = namedtuple('TimeZone', ['name', 'option'])
