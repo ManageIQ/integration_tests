@@ -378,15 +378,14 @@ class OpenshiftProvider(ContainersProvider):
         """
 
         filters = kwargs.get("filters", {})
-        metrics_type = kwargs.get("metrics_type", "ContainerNode")
         metrics_table = kwargs.get("metrics_table", "metric_rollups")
 
         metrics_tbl = self.appliance.db.client[metrics_table]
 
         mgmt_system_id = self.get_system_id()
 
-        logger.info("Getting {metrics_type} metrics for {name} (parent_ems_id == {id})".format(
-            metrics_type=metrics_type, name=self.name, id=mgmt_system_id))
+        logger.info("Getting metrics for {name} (parent_ems_id == {id})".format(
+            name=self.name, id=mgmt_system_id))
 
         if filters:
             logger.info("Filtering by: {f}".format(f=filters))
@@ -394,7 +393,7 @@ class OpenshiftProvider(ContainersProvider):
         filters["parent_ems_id"] = mgmt_system_id
         return self.appliance.db.client.session.query(metrics_tbl).filter_by(**filters)
 
-    def is_metrics_collected(self, timeout):
+    def wait_for_collected_metrics(self, timeout="50m", table_name="metrics"):
         """Check the db if gathering collection data
 
         Args:
@@ -404,17 +403,19 @@ class OpenshiftProvider(ContainersProvider):
         """
 
         def is_collected():
-            metrics_count = self.get_metrics(table="metrics").count()
+            metrics_count = self.get_metrics(table=table_name).count()
+            logger.info("Current metrics found count is {count}".format(count=metrics_count))
             return metrics_count > 0
 
         logger.info("Monitoring DB for metrics collection")
 
         result = True
         try:
-            wait_for(is_collected, num_sec=timeout, delay=30)
+            wait_for(is_collected, timeout=timeout, delay=30)
         except TimedOutError:
-            logger.error("Timeout exceeded, No metrics found in MIQ DB for provider {name}".format(
-                name=self.name))
+            logger.error(
+                "Timeout exceeded, No metrics found in MIQ DB for thr provider \"{name}\"".format(
+                    name=self.name))
             result = False
         finally:
             return result

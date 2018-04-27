@@ -18,6 +18,7 @@ from cfme import exceptions
 from cfme.base.credential import TokenCredential
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView, PolicyProfileAssignable
+from cfme.common.candu_views import OptionForm
 from cfme.common.provider import BaseProvider, DefaultEndpoint, DefaultEndpointForm, provider_types
 from cfme.common.provider_views import (
     BeforeFillMixin, ContainerProviderAddView, ContainerProvidersView,
@@ -33,7 +34,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
-    SummaryTable, BreadCrumb, Accordion, ManageIQTree
+    SummaryTable, BreadCrumb, Accordion, ManageIQTree, LineChart
 )
 
 
@@ -531,6 +532,28 @@ class AdHocMain(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.monitoring.item_select('Ad hoc Metrics')
+
+
+class ContainerProvidersUtilizationView(View):
+    title = Text(".//div[@id='main-content']//h1")
+    options = View.nested(OptionForm)
+
+    cpu = LineChart(id='miq_chart_parent_candu_0')
+    memory = LineChart(id='miq_chart_parent_candu_1')
+    network = LineChart(id='miq_chart_parent_candu_2')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+@navigator.register(ContainersProvider, 'Utilization')
+class Utilization(CFMENavigateStep):
+    VIEW = ContainerProvidersUtilizationView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.monitoring.item_select("Utilization")
 
 
 class ContainerObjectAllBaseView(ProvidersView):
