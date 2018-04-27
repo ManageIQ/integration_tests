@@ -1,12 +1,18 @@
 import fauxfactory
 import pytest
 
-from widgetastic.exceptions import NoSuchElementException
+from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
 
+pytestmark = [
+    test_requirements.ansible,
+    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9",
+                            reason="5.8 is not support tagging via UI")
+]
 
-@pytest.yield_fixture(scope='module')
+
+@pytest.fixture(scope='module')
 def enabled_embedded_ansible(appliance):
     """Enables embedded ansible role"""
     appliance.server.settings.enable_server_roles("embedded_ansible")
@@ -15,8 +21,8 @@ def enabled_embedded_ansible(appliance):
     appliance.server.settings.disable_server_roles("embedded_ansible")
 
 
-@pytest.yield_fixture(scope='module')
-def repository(appliance, enabled_embedded_ansible):
+@pytest.fixture(scope='module')
+def repository(enabled_embedded_ansible, appliance):
     repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
         name=fauxfactory.gen_alpha(),
@@ -38,27 +44,26 @@ def repository(appliance, enabled_embedded_ansible):
         repository.delete()
 
 
-@pytest.yield_fixture(scope='module')
-def credential(appliance, enabled_embedded_ansible):
+@pytest.fixture(scope='module')
+def credential(enabled_embedded_ansible, appliance):
     credentials_collection = appliance.collections.ansible_credentials
-    view = navigate_to(appliance.server, 'AnsibleCredentials')
-    try:
-        credential = credentials_collection.instantiate(
-            view.credentials[0]['Name'].text, view.credentials[0]['Type'].text)
-    except NoSuchElementException:
-        credential = credentials_collection.create(
-            "{}_credential_{}".format('Machine', fauxfactory.gen_alpha()),
-            'Machine',
-            {
-                "username": fauxfactory.gen_alpha(),
-                "password": fauxfactory.gen_alpha(),
-                "privilage_escalation": "sudo",
-                "privilage_escalation_username": fauxfactory.gen_alpha(),
-                "privilage_escalation_password": fauxfactory.gen_alpha()
-            }
-        )
+    credential = credentials_collection.create(
+        "{}_credential_{}".format('Machine', fauxfactory.gen_alpha()),
+        'Machine',
+        username=fauxfactory.gen_alpha(),
+        password=fauxfactory.gen_alpha()
+    )
+    wait_for(
+        func=lambda: credential.exists,
+        message='credential appears on UI',
+        fail_func=appliance.browser.widgetastic.refresh,
+        delay=20,
+        num_sec=240
+    )
+
     yield credential
-    credential.delete()
+    if credential.exists:
+        credential.delete()
 
 
 @pytest.fixture(scope='module')

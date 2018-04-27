@@ -4,13 +4,6 @@ import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, View
 from widgetastic_patternfly import Button, Dropdown
-
-from cfme.base import Server
-from cfme.base.login import BaseLoggedInPage
-from cfme.common import Taggable, TagPageView
-from cfme.exceptions import ItemNotFound
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from widgetastic_manageiq import (
     BaseEntitiesView,
     BreadCrumb,
@@ -18,6 +11,13 @@ from widgetastic_manageiq import (
     PaginationPane,
     SummaryTable,
 )
+
+from cfme.base import Server
+from cfme.base.login import BaseLoggedInPage
+from cfme.common import Taggable, TagPageView
+from cfme.exceptions import ItemNotFound
+from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 
 
 class PlaybookBaseView(BaseLoggedInPage):
@@ -44,7 +44,13 @@ class PlaybookDetailsEntities(View):
 
 
 class PlaybookDetailsView(PlaybookBaseView):
-    download_button = Button(title="Download summary in PDF format")
+
+    @View.nested
+    class toolbar(View):   # noqa
+        configuration = Dropdown("Configuration")
+        policy = Dropdown(text='Policy')
+        download_button = Button(title="Download summary in PDF format")
+
     breadcrumb = BreadCrumb(locator='.//ol[@class="breadcrumb"]')
     entities = View.nested(PlaybookDetailsEntities)
 
@@ -129,4 +135,3 @@ class EditTagsFromListCollection(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.entities.get_entity(surf_pages=True, name=self.obj.name).check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
-
