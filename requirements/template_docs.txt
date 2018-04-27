@@ -16,7 +16,6 @@ docker-py
 dump2polarion
 fauxfactory>=2.0.7
 flake8
-functools32; python_version < "3.0"
 futures==3.0.5
 GitPython>=2.1.5
 ipython
