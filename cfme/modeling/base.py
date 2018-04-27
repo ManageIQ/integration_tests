@@ -52,7 +52,10 @@ class EntityCollections(object):
 
     def __getattr__(self, name):
         if name not in self._availiable_collections:
-            raise AttributeError('Collection [{}] not known to object'.format(name))
+            sorted_collection_keys = self._availiable_collections.keys()
+            sorted_collection_keys.sort()
+            raise AttributeError('Collection [{}] not known to object, available collections: {}'
+                                 .format(name, sorted_collection_keys))
         if name not in self._collection_cache:
             item_filters = self._filters.copy()
             cls_and_or_filter = self._availiable_collections[name]
