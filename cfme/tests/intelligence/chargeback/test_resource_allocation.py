@@ -51,23 +51,21 @@ def vm_ownership(enable_candu, provider, appliance):
 
     vm = VM.factory(vm_name, provider)
     user = None
-    try:
-        user = appliance.collections.users.create(
-            name=provider.name + fauxfactory.gen_alphanumeric(),
-            credential=Credential(principal='uid' + '{}'.format(fauxfactory.gen_alphanumeric()),
-                secret='secret'),
-            email='abc@example.com',
-            groups=cb_group,
-            cost_center='Workload',
-            value_assign='Database')
-        vm.set_ownership(user=user.name)
-        logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
+    user = appliance.collections.users.create(
+        name=provider.name + fauxfactory.gen_alphanumeric(),
+        credential=Credential(principal='uid' + '{}'.format(fauxfactory.gen_alphanumeric()),
+            secret='secret'),
+        email='abc@example.com',
+        groups=cb_group,
+        cost_center='Workload',
+        value_assign='Database')
+    vm.set_ownership(user=user.name)
+    logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
+    yield user.name
 
-        yield user.name
-    finally:
-        vm.unset_ownership()
-        if user:
-            user.delete()
+    vm.unset_ownership()
+    if user:
+        user.delete()
 
 
 @pytest.yield_fixture(scope="module")
@@ -82,7 +80,6 @@ def enable_candu(provider, appliance):
         'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
     server_info.disable_server_roles('automate', 'smartstate')
     candu.enable_all()
-
     yield
 
     server_info.update_server_roles_db(original_roles)
@@ -101,7 +98,6 @@ def assign_custom_rate(new_chargeback_rate, provider):
     enterprise.computeassign()
     enterprise.storageassign()
     logger.info('Assigning CUSTOM Compute rate')
-
     yield
 
     # Resetting the Chargeback rate assignment
@@ -224,24 +220,23 @@ def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, provid
 @pytest.yield_fixture(scope="module")
 def new_chargeback_rate():
     """Create a new chargeback rate"""
-    try:
-        desc = 'custom_' + fauxfactory.gen_alphanumeric()
-        compute = rates.ComputeRate(description=desc,
-                    fields={'Allocated CPU Count':
-                            {'per_time': 'Hourly', 'variable_rate': '2'},
-                            'Allocated Memory':
-                            {'per_time': 'Hourly', 'variable_rate': '2'}})
-        compute.create()
-        if not BZ(1532368, forced_streams=['5.9']).blocks:
-            storage = rates.StorageRate(description=desc,
-                    fields={'Allocated Disk Storage':
-                            {'per_time': 'Hourly', 'variable_rate': '3'}})
-            storage.create()
-        yield desc
-    finally:
-        compute.delete()
-        if not BZ(1532368, forced_streams=['5.9']).blocks:
-            storage.delete()
+    desc = 'custom_' + fauxfactory.gen_alphanumeric()
+    compute = rates.ComputeRate(description=desc,
+                fields={'Allocated CPU Count':
+                        {'per_time': 'Hourly', 'variable_rate': '2'},
+                        'Allocated Memory':
+                        {'per_time': 'Hourly', 'variable_rate': '2'}})
+    compute.create()
+    if not BZ(1532368, forced_streams=['5.9']).blocks:
+        storage = rates.StorageRate(description=desc,
+                fields={'Allocated Disk Storage':
+                        {'per_time': 'Hourly', 'variable_rate': '3'}})
+    storage.create()
+    yield desc
+
+    compute.delete()
+    if not BZ(1532368, forced_streams=['5.9']).blocks:
+        storage.delete()
 
 
 def generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_custom, column,
