@@ -249,6 +249,7 @@ class InfraProviderCollection(BaseCollection):
             form_data.update(discover_cls.discover_dict)
 
         if start_ip:
+            # TODO: add support of IPv6
             for idx, octet in enumerate(start_ip.split('.'), start=1):
                 key = 'from_ip{idx}'.format(idx=idx)
                 form_data.update({key: octet})

@@ -69,6 +69,10 @@ def prepare_endpoints(endpoints):
 @attr.s(hash=False)
 class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
     # List of constants that every non-abstract subclass must have defined
+
+    # TODO: Navigatable is used to ensure function until the reduced get_crud is
+    # replaced by methods on collections. This will be fixed in next conversion PR
+
     _param_name = ParamClassName('name')
     STATS_TO_MATCH = []
     db_types = ["Providers"]

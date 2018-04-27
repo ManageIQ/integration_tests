@@ -41,9 +41,7 @@ class OpenStackProvider(CloudProvider):
         if self.infra_provider:
             self.infra_provider.create(validate_credentials=True, validate_inventory=True,
                                        check_existing=True)
-        if 'validate_credentials' not in kwargs:
-            # 5.6 requires validation, so unless we specify, we want to validate
-            kwargs['validate_credentials'] = True
+        kwargs['validate_credentials'] = kwargs.get('validate_credentials', True)
         return super(OpenStackProvider, self).create(*args, **kwargs)
 
     @property
