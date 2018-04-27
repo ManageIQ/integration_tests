@@ -726,10 +726,11 @@ class InfraVm(VM):
                 'last_name': last_name,
             },
             'environment': {
-                'host_name': {'name': host_name},
-                'datastore_name': {'name': datastore_name}
+                'host_name': {'name': host_name}
             },
         }
+        if not self.provider.one_of(RHEVMProvider):
+            request_data['environment'].update({'datastore_name': {'name': datastore_name}})
         view.form.fill_with(request_data, on_change=view.form.submit)
 
     def clone_vm(self, email=None, first_name=None, last_name=None,
