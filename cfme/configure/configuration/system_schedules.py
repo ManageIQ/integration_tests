@@ -5,6 +5,7 @@ from widgetastic_manageiq import (SummaryFormItem, Table, Dropdown, PaginationPa
                                   Calendar)
 from widgetastic_patternfly import Input, BootstrapSelect, Button
 from widgetastic.widget import View
+from widgetastic.exceptions import NoSuchElementException
 
 from cfme.base.ui import ConfigurationView
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -54,11 +55,11 @@ class ScheduleAddEditEntities(View):
     items_analysis = View.nested(ItemsAnalysisEntities)
     database_backup = View.nested(DatabaseBackupEntities)
     # Timer
-    run_timer = BootstrapSelect("timer_typ")
+    run_type = BootstrapSelect("timer_typ")
     time_zone = BootstrapSelect("time_zone")
-    starting_date = Calendar("start_date")
+    start_date = Calendar("start_date")
     start_hour = BootstrapSelect("start_hour")
-    start_min = BootstrapSelect("start_min")
+    start_minute = BootstrapSelect("start_min")
     # Buttons
     cancel_button = Button("Cancel")
 
@@ -176,7 +177,7 @@ class SystemSchedule(BaseEntity, Updateable, Pretty):
     time_zone = attr.ib(default=None)
     start_date = attr.ib(default=None)
     start_hour = attr.ib(default=None)
-    start_min = attr.ib(default=None)
+    start_minute = attr.ib(default=None)
     # Analysis
     filter_level1 = attr.ib(default=None)
     filter_level2 = attr.ib(default=None)
@@ -197,20 +198,42 @@ class SystemSchedule(BaseEntity, Updateable, Pretty):
             cancel: Whether to click on the cancel button to interrupt the editation.
 
         """
+        form_mapping = {
+            'name': updates.get('name'),
+            'description': updates.get('description'),
+            'active': updates.get('active'),
+            'action_type': updates.get('action_type'),
+            'run_type': updates.get('run_type'),
+            'run_every': updates.get('run_every'),
+            'time_zone': updates.get('time_zone'),
+            'start_date': updates.get('start_date'),
+            'start_hour': updates.get('start_hour'),
+            'start_minute': updates.get('start_minute'),
+            'database_backup': {
+                'depot_name': updates.get('depot_name'),
+                'backup_type': updates.get('backup_type'),
+                'uri': updates.get('uri'),
+            },
+            'samba_protocol': {
+                'samba_username': updates.get('samba_username'),
+                'samba_password': updates.get('samba_password'),
+                'samba_password_verify': updates.get('samba_password'),
+            },
+            'items_analysis': {
+                'filter_level1': updates.get('filter_level1'),
+                'filter_level2': updates.get('filter_level2'),
+            }
+        }
         view = navigate_to(self, 'Edit')
-        updated = view.fill(updates)
+        updated = view.fill(form_mapping)
         if reset:
             view.reset_button.click()
-            flash_message = 'All changes have been reset'
         if cancel:
             view.cancel_button.click()
-            flash_message = 'Edit of Schedule "{}" was cancelled by the user'.format(self.name)
-        elif updated:
+        elif updated and not cancel and not reset:
             view.save_button.click()
             view = self.create_view(ScheduleDetailsView, override=updates)
-            name = updates.get('name') if updates.get('name') else self.name
-            flash_message = 'Schedule "{}" was saved'.format(name)
-        view.flash.assert_message(flash_message)
+            view.flash.assert_no_error()
 
     def delete(self, cancel=False):
         """ Delete the schedule represented by this object.
@@ -224,7 +247,7 @@ class SystemSchedule(BaseEntity, Updateable, Pretty):
         view.toolbar.configuration.item_select('Delete this Schedule from the Database',
                                                handle_alert=(not cancel))
         view = self.create_view(ScheduleAllView)
-        view.flash.assert_message('Schedule "{}": Delete successful'.format(self.description))
+        view.flash.assert_no_error()
 
     def enable(self):
         """ Enable the schedule via table checkbox and Configuration menu. """
@@ -239,7 +262,7 @@ class SystemSchedule(BaseEntity, Updateable, Pretty):
     def select(self):
         """ Select the checkbox for current schedule """
         view = navigate_to(self.parent, 'All')
-        row = view.table.row(name=self.name)
+        row = view.paginator.find_row_on_pages(view.table, name=self.name)
         row[0].check()
         return view
 
@@ -249,6 +272,21 @@ class SystemSchedule(BaseEntity, Updateable, Pretty):
         row = view.table.row(name=self.name)
         return row['Last Run Time'].read()
 
+    @property
+    def next_run_date(self):
+        view = navigate_to(self.parent, 'All')
+        row = view.table.row(name=self.name)
+        return row['Next Run Time'].read()
+
+    @property
+    def exists(self):
+        view = navigate_to(self.parent, 'All')
+        try:
+            view.paginator.find_row_on_pages(view.table, name=self.name)
+            return True
+        except NoSuchElementException:
+            return False
+
 
 @attr.s
 class SystemSchedulesCollection(BaseCollection):
@@ -256,7 +294,7 @@ class SystemSchedulesCollection(BaseCollection):
     ENTITY = SystemSchedule
 
     def create(self, name, description, active=True, action_type=None, run_type=None,
-               run_every=None, time_zone=None, start_date=None, start_hour=None, start_min=None,
+               run_every=None, time_zone=None, start_date=None, start_hour=None, start_minute=None,
                filter_level1=None, filter_level2=None, backup_type=None, depot_name=None, uri=None,
                samba_username=None, samba_password=None, cancel=False):
         """ Create a new schedule from the informations stored in the object.
@@ -274,7 +312,7 @@ class SystemSchedulesCollection(BaseCollection):
             'time_zone': time_zone,
             'start_date': start_date,
             'start_hour': start_hour,
-            'start_min': start_min
+            'start_minute': start_minute
         }
         if action_type == 'Database Backup':
             details.update({
@@ -307,14 +345,14 @@ class SystemSchedulesCollection(BaseCollection):
             view.add_button.click()
         view = self.create_view(ScheduleAllView)
         view.flash.assert_message('Schedule "{}" was saved'.format(name))
-        shedule = self.instantiate(name, description, active=active, action_type=action_type,
+        schedule = self.instantiate(name, description, active=active, action_type=action_type,
                                    run_type=run_type, run_every=run_type, time_zone=time_zone,
                                    start_date=start_date, start_hour=start_hour,
-                                   start_min=start_min, filter_level1=filter_level1,
+                                    start_minute=start_minute, filter_level1=filter_level1,
                                    filter_level2=filter_level2, backup_type=backup_type,
                                    depot_name=depot_name, uri=uri, samba_username=samba_username,
                                    samba_password=samba_password)
-        return shedule
+        return schedule
 
 
 @navigator.register(SystemSchedulesCollection, 'All')
