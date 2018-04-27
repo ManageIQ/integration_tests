@@ -9,8 +9,13 @@ from cfme.utils import conf
 from cfme.utils.log import logger
 from cfme.utils.ssh import SSHClient
 
+# todo: remove this when merging the ovirt upgrade
 # Overrides
-from ovirtsdk.xml import params
+try:
+    from ovirtsdk.xml import params
+except ImportError:
+    # there is a hack in place to survive this missing in wrapanapi itself
+    pass
 
 
 class RHEVMSystem(RHEVMSystemBase):
