@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+
+from cfme.configure.configuration.region_settings import Tag, Category
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.provisioning import do_vm_provisioning
@@ -87,20 +89,21 @@ def entities(appliance, request, max_quota_test_instance):
 @pytest.fixture(scope='function')
 def set_entity_quota_tag(request, entities, appliance):
     tag, value = request.param
-    entities.add_tag(tag, value)
+    tag = Tag(display_name=value, category=Category(display_name=tag))
+    entities.add_tag(tag)
     yield
     # will refresh page as navigation to configuration is blocked if alert are on requests page
     appliance.server.browser.refresh()
-    entities.remove_tag(tag, value)
+    entities.remove_tag(tag)
 
 
 @pytest.mark.rhv2
 @pytest.mark.parametrize(
     ['set_entity_quota_tag', 'custom_prov_data'],
     [
-        [('Quota - Max Memory *', '1GB'), {'hardware': {'memory': '4096'}}],
-        [('Quota - Max Storage *', '10GB'), {}],
-        [('Quota - Max CPUs *', '1'), {'hardware': {'num_sockets': '8'}}]
+        [('Quota - Max Memory', '1GB'), {'hardware': {'memory': '4096'}}],
+        [('Quota - Max Storage', '10GB'), {}],
+        [('Quota - Max CPUs', '1'), {'hardware': {'num_sockets': '8'}}]
     ],
     indirect=['set_entity_quota_tag'],
     ids=['max_memory', 'max_storage', 'max_cpu']
