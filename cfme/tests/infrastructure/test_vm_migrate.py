@@ -15,8 +15,6 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     test_requirements.vm_migrate,
     pytest.mark.tier(2),
-    pytest.mark.meta(blockers=[BZ(1478518, forced_streams=['5.7', '5.8', '5.9', 'upstream'],
-                                  unblock=lambda provider: not provider.one_of(RHEVMProvider))]),
     pytest.mark.provider([VMwareProvider, RHEVMProvider], scope='module')
 ]
 
