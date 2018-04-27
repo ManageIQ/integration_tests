@@ -189,42 +189,42 @@ class Instance(VM, Navigatable):
         super(Instance, self).__init__(name=name, provider=provider, template_name=template_name)
         Navigatable.__init__(self, appliance=appliance)
 
-    def create(self, form_values, cancel=False):
-        """Provisions an instance with the given properties through CFME
-
-        Args:
-            form_values: dictionary of form values for provisioning, structured into tabs
-
-        Note:
-            Calling create on a sub-class of instance will generate the properly formatted
-            dictionary when the correct fields are supplied.
-        """
-        view = navigate_to(self, 'Provision')
-
-        # Only support 1 security group for now
-        # TODO: handle multiple
-        if 'environment' in form_values and 'security_groups' in form_values['environment'] and \
-                isinstance(form_values['environment']['security_groups'], (list, tuple)):
-
-            first_group = form_values['environment']['security_groups'][0]
-            recursive_update(form_values, {'environment': {'security_groups': first_group}})
-
-        view.form.fill(form_values)
-
-        if cancel:
-            view.form.cancel_button.click()
-            # Redirects to Instance All
-            view = self.browser.create_view(InstanceAllView)
-            wait_for(lambda: view.is_displayed, timeout=10, delay=2, message='wait for redirect')
-            view.flash.assert_success_message(self.PROVISION_CANCEL)
-            view.flash.assert_no_error()
-        else:
-            view.form.submit_button.click()
-
-            view = self.appliance.browser.create_view(RequestsView)
-            wait_for(lambda: view.flash.messages, fail_condition=[], timeout=10, delay=2,
-                     message='wait for Flash Success')
-            view.flash.assert_success_message(self.PROVISION_START)
+    # def create(self, form_values, cancel=False):
+    #     """Provisions an instance with the given properties through CFME
+    #
+    #     Args:
+    #         form_values: dictionary of form values for provisioning, structured into tabs
+    #
+    #     Note:
+    #         Calling create on a sub-class of instance will generate the properly formatted
+    #         dictionary when the correct fields are supplied.
+    #     """
+    #     view = navigate_to(self, 'Provision')
+    #
+    #     # Only support 1 security group for now
+    #     # TODO: handle multiple
+    #     if 'environment' in form_values and 'security_groups' in form_values['environment'] and \
+    #             isinstance(form_values['environment']['security_groups'], (list, tuple)):
+    #
+    #         first_group = form_values['environment']['security_groups'][0]
+    #         recursive_update(form_values, {'environment': {'security_groups': first_group}})
+    #
+    #     view.form.fill(form_values)
+    #
+    #     if cancel:
+    #         view.form.cancel_button.click()
+    #         # Redirects to Instance All
+    #         view = self.browser.create_view(InstanceAllView)
+    #         wait_for(lambda: view.is_displayed, timeout=10, delay=2, message='wait for redirect')
+    #         view.flash.assert_success_message(self.PROVISION_CANCEL)
+    #         view.flash.assert_no_error()
+    #     else:
+    #         view.form.submit_button.click()
+    #
+    #         view = self.appliance.browser.create_view(RequestsView)
+    #         wait_for(lambda: view.flash.messages, fail_condition=[], timeout=10, delay=2,
+    #                  message='wait for Flash Success')
+    #         view.flash.assert_success_message(self.PROVISION_START)
 
     def update(self, values, cancel=False, reset=False):
         """Update cloud instance

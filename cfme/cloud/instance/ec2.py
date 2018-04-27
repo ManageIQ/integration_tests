@@ -35,19 +35,6 @@ class EC2Instance(Instance):
             'on': [self.START],
             'off': [self.STOP, self.SOFT_REBOOT]}
 
-    def create(self, cancel=False, **prov_fill_kwargs):
-        """Provisions an EC2 instance with the given properties through CFME
-
-        Args:
-            cancel: Clicks the cancel button if `True`, otherwise clicks the submit button
-                    (Defaults to `False`)
-            prov_fill_kwargs: dictionary of provisioning field/value pairs
-        Note:
-            For more optional keyword arguments, see
-            :py:data:`cfme.cloud.provisioning.ProvisioningForm`
-        """
-        super(EC2Instance, self).create(form_values=prov_fill_kwargs, cancel=cancel)
-
     def power_control_from_provider(self, option):
         """Power control the instance from the provider
 

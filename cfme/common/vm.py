@@ -654,8 +654,8 @@ class VM(BaseVM):
                 self.provider.mgmt.delete_vm(self.name)
             raise e
 
-    def create_ui(self, template_name=None, provisioning_data=None, num_sec=1500,
-                  check_existing=False, find_in_cfme=False, cancel=False):
+    def create(self, template_name=None, provisioning_data=None, num_sec=1500,
+               check_existing=False, find_in_cfme=False, cancel=False, wait=True):
         """
         Provisions a VM/Instance with the default self.vm_default_args.
         self.vm_default_args may be overridden by provisioning_data
@@ -669,6 +669,7 @@ class VM(BaseVM):
             check_existing: cancel creation if VM exists
             find_in_cfme: open VM details or not
             cancel: submit VM creation or cancel
+            wait: wait for provision_request to finish. Return provision request if wait=False
 
         Return: True if it was created, False if it already existed or provision request failed
         """
@@ -679,7 +680,7 @@ class VM(BaseVM):
             if not self.provider.is_refreshed():
                 self.provider.refresh_provider_relationships()
                 wait_for(self.provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
-            if template_name is None or not self.template_name:
+            if template_name is None and not self.template_name:
                 if self.provider.one_of(CloudProvider):
                     template_name = self.provider.data['provisioning']['image']['name']
                     self.template_name = template_name
@@ -703,23 +704,25 @@ class VM(BaseVM):
             else:
                 provision_view.form.submit_button.click()
                 all_view.flash.assert_no_error()
-                logger.info('Waiting for cfme provision request for vm %s', self.name)
                 request_description = 'Provision from [{}] to [{}]'.format(self.template_name,
                                                                            self.name)
                 provision_request = self.appliance.collections.requests.instantiate(
                     request_description)
-                provision_request.wait_for_request(method='ui', num_sec=num_sec)
-                if provision_request.is_succeeded(method='ui'):
-                    logger.info('Waiting for vm %s to appear on provider %s', self.name,
-                                self.provider.key)
-                    wait_for(self.provider.mgmt.does_vm_exist, [self.name],
-                             handle_exception=True, num_sec=600)
-                    created = True
+                if wait:
+                    logger.info('Waiting for cfme provision request for vm %s', self.name)
+                    provision_request.wait_for_request(method='ui', num_sec=num_sec)
+                    if provision_request.is_succeeded(method='ui'):
+                        logger.info('Waiting for vm %s to appear on provider %s', self.name,
+                                    self.provider.key)
+                        wait_for(self.provider.mgmt.does_vm_exist, [self.name],
+                                 handle_exception=True, num_sec=600)
+                        created = True
+                    else:
+                        logger.warn("Provisioning failed with the message {}".format(
+                            provision_request.row.last_message.text))
+                        created = False
                 else:
-                    logger.warn("Provisioning failed with the message {}".format(
-                        provision_request.row.last_message.text))
-                    created = False
-
+                    return provision_request
         if find_in_cfme:
             self.wait_to_appear(timeout=800)
         return created

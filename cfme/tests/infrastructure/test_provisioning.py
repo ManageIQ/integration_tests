@@ -58,7 +58,7 @@ def test_infra_provision_from_template(appliance, setup_provider, provider, vm_n
 
     if auto:
         inst_args['environment'] = {'automatic_placement': auto}
-    assert vm.create_ui(check_existing=True, provisioning_data=inst_args, find_in_cfme=True), \
+    assert vm.create(check_existing=True, provisioning_data=inst_args, find_in_cfme=True), \
         "VM {} wasn't created".format(vm.name)
 
 

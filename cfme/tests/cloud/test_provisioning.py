@@ -73,7 +73,7 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name, t
 def provisioned_instance(provider, testing_instance, appliance):
     """ Checks provisioning status for instance """
     instance, inst_args, _ = testing_instance
-    instance.create_ui(check_existing=True, provisioning_data=inst_args, find_in_cfme=True)
+    instance.create(check_existing=True, provisioning_data=inst_args, find_in_cfme=True)
     return instance
 
 
@@ -91,7 +91,7 @@ def test_cloud_provision_from_template(provider, provisioned_instance, setup_pro
 def test_gce_preemptible_provision(provider, testing_instance):
     instance, inst_args, image = testing_instance
     recursive_update(inst_args, {'properties': {'is_preemptible': True}})
-    instance.create_ui(check_existing=True, provisioning_data=inst_args, find_in_cfme=True)
+    instance.create(check_existing=True, provisioning_data=inst_args, find_in_cfme=True)
     view = navigate_to(instance, "Details")
     preemptible = view.entities.summary("Properties").get_text_of("Preemptible")
     assert 'Yes' in preemptible, "GCE Instance isn't Preemptible"
@@ -201,7 +201,7 @@ def test_cloud_provision_from_template_with_attached_disks(
                 method.script = """prov = $evm.root["miq_provision"]"""
         request.addfinalizer(_finish_method)
 
-        instance.create(**inst_args)
+        instance.create(provisioning_data=inst_args)
 
         for volume_id in volumes:
             soft_assert(vm_name in provider.mgmt.volume_attachments(volume_id))
@@ -247,7 +247,7 @@ def test_provision_with_boot_volume(request, testing_instance, provider, soft_as
             with update(method):
                 method.script = """prov = $evm.root["miq_provision"]"""
 
-        instance.create(**inst_args)
+        instance.create(provisioning_data=inst_args)
 
         request_description = 'Provision from [{}] to [{}]'.format(image,
                                                                    instance.name)
@@ -308,7 +308,7 @@ def test_provision_with_additional_volume(request, testing_instance, provider, s
             method.script = """prov = $evm.root["miq_provision"]"""
     request.addfinalizer(_finish_method)
 
-    instance.create(**inst_args)
+    instance.create(provisioning_data=inst_args)
 
     request_description = 'Provision from [{}] to [{}]'.format(small_template.name, instance.name)
     provision_request = appliance.collections.requests.instantiate(request_description)
