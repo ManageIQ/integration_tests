@@ -414,7 +414,7 @@ class OpenshiftProvider(ContainersProvider):
             wait_for(is_collected, timeout=timeout, delay=30)
         except TimedOutError:
             logger.error(
-                "Timeout exceeded, No metrics found in MIQ DB for thr provider \"{name}\"".format(
+                "Timeout exceeded, No metrics found in MIQ DB for the provider \"{name}\"".format(
                     name=self.name))
             result = False
         finally:

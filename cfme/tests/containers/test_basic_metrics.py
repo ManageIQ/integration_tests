@@ -28,9 +28,9 @@ def reduce_metrics_collection_threshold(appliance):
 def enable_capacity_and_utilization(appliance):
     args = ['ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor']
 
-
     logger.info("Enabling metrics collection roles")
     appliance.server.settings.enable_server_roles(*args)
+
     yield
 
     logger.info("Disabling metrics collection roles")
@@ -38,10 +38,10 @@ def enable_capacity_and_utilization(appliance):
 
 
 @pytest.fixture(scope="function")
-def waif_for_metrics_rollup(provider):
+def wait_for_metrics_rollup(provider):
     if not provider.wait_for_collected_metrics(timeout=ROLLUP_METRICS_CALC_THRESHOLD_IN_MINUTES,
                                                table_name="metric_rollups"):
-        raise RuntimeError("No metrics exsist in rollup table for {timeout} minutes".format(
+        raise RuntimeError("No metrics exist in rollup table for {timeout} minutes".format(
             timeout=ROLLUP_METRICS_CALC_THRESHOLD_IN_MINUTES))
 
 # TODO This test needs to be reevaluated. This is not testing anyting in CFME.
@@ -77,7 +77,7 @@ def test_validate_metrics_collection_db(provider,
 def test_validate_metrics_collection_provider_gui(provider,
                                                   enable_capacity_and_utilization,
                                                   reduce_metrics_collection_threshold,
-                                                  waif_for_metrics_rollup, soft_assert):
+                                                  wait_for_metrics_rollup, soft_assert):
 
     utilization = navigate_to(provider, "Utilization")
     soft_assert(utilization.cpu.all_data,
