@@ -6,6 +6,8 @@ pytestmark = [test_requirements.distributed]
 
 
 @pytest.mark.tier(1)
+@pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
+                         reason="it isn't applicable to pod appliance")
 def test_v2_key_permissions(appliance):
     """Verifies that the v2_key has proper permissions"""
     stdout = appliance.ssh_client.run_command(
