@@ -1,3 +1,5 @@
+import attr
+
 from wrapanapi.openstack import OpenstackSystem
 
 from cfme.common.provider import EventsEndpoint
@@ -7,6 +9,7 @@ from cfme.services.catalogs.catalog_items import OpenStackCatalogItem
 from . import CloudProvider
 
 
+@attr.s(hash=False)
 class OpenStackProvider(CloudProvider):
     """
      BaseProvider->CloudProvider->OpenStackProvider class.
@@ -24,30 +27,21 @@ class OpenStackProvider(CloudProvider):
     _canvas_element = '//*[@id="noVNC_canvas"]'
     _ctrl_alt_del_xpath = '//*[@id="sendCtrlAltDelButton"]'
 
-    def __init__(self, name=None, endpoints=None, zone=None, key=None, hostname=None,
-                 ip_address=None, api_port=None, api_version=None, sec_protocol=None,
-                 amqp_sec_protocol=None, keystone_v3_domain_id=None, tenant_mapping=None,
-                 infra_provider=None, appliance=None):
-        super(OpenStackProvider, self).__init__(name=name, endpoints=endpoints,
-                                                zone=zone, key=key, appliance=appliance)
-        self.hostname = hostname
-        self.ip_address = ip_address
-        self.api_port = api_port
-        self.api_version = api_version
-        self.keystone_v3_domain_id = keystone_v3_domain_id
-        self.infra_provider = infra_provider
-        self.sec_protocol = sec_protocol
-        self.tenant_mapping = tenant_mapping
-        self.amqp_sec_protocol = amqp_sec_protocol
+    api_port = attr.ib(default=None)
+    api_version = attr.ib(default=None)
+    sec_protocol = attr.ib(default=None)
+    amqp_sec_protocol = attr.ib(default=None)
+    keystone_v3_domain_id = attr.ib(default=None)
+    tenant_mapping = attr.ib(default=None)
+    infra_provider = attr.ib(default=None)
 
+    # todo: move it to collections later
     def create(self, *args, **kwargs):
         # Override the standard behaviour to actually create the underlying infra first.
         if self.infra_provider:
             self.infra_provider.create(validate_credentials=True, validate_inventory=True,
                                        check_existing=True)
-        if self.appliance.version >= "5.6" and 'validate_credentials' not in kwargs:
-            # 5.6 requires validation, so unless we specify, we want to validate
-            kwargs['validate_credentials'] = True
+        kwargs['validate_credentials'] = kwargs.get('validate_credentials', True)
         return super(OpenStackProvider, self).create(*args, **kwargs)
 
     @property
@@ -77,7 +71,7 @@ class OpenStackProvider(CloudProvider):
         return {}
 
     @classmethod
-    def from_config(cls, prov_config, prov_key, appliance=None):
+    def from_config(cls, prov_config, prov_key):
         endpoints = {}
         endpoints[RHOSEndpoint.name] = RHOSEndpoint(**prov_config['endpoints'][RHOSEndpoint.name])
 
@@ -87,25 +81,23 @@ class OpenStackProvider(CloudProvider):
 
         from cfme.utils.providers import get_crud
         infra_prov_key = prov_config.get('infra_provider_key')
-        infra_provider = get_crud(infra_prov_key, appliance=appliance) if infra_prov_key else None
+        infra_provider = get_crud(infra_prov_key) if infra_prov_key else None
         api_version = prov_config.get('api_version', None)
 
         if not api_version:
             api_version = 'Keystone v2'
-
-        return cls(name=prov_config['name'],
-                   hostname=prov_config['hostname'],
-                   ip_address=prov_config['ipaddress'],
-                   api_port=prov_config['port'],
-                   api_version=api_version,
-                   endpoints=endpoints,
-                   zone=prov_config['server_zone'],
-                   key=prov_key,
-                   keystone_v3_domain_id=prov_config.get('domain_id', None),
-                   sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),
-                   tenant_mapping=prov_config.get('tenant_mapping', False),
-                   infra_provider=infra_provider,
-                   appliance=appliance)
+        return cls.appliance.collections.cloud_providers.instantiate(
+            prov_class=cls,
+            name=prov_config['name'],
+            api_port=prov_config['port'],
+            api_version=api_version,
+            endpoints=endpoints,
+            zone=prov_config['server_zone'],
+            key=prov_key,
+            keystone_v3_domain_id=prov_config.get('domain_id', None),
+            sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),
+            tenant_mapping=prov_config.get('tenant_mapping', False),
+            infra_provider=infra_provider)
 
     # Following methods will only work if the remote console window is open
     # and if selenium focused on it. These will not work if the selenium is

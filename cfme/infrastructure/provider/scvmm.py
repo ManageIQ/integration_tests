@@ -1,3 +1,5 @@
+import attr
+
 from widgetastic_patternfly import BootstrapSelect, Input
 from wrapanapi.scvmm import SCVMMSystem
 
@@ -20,6 +22,7 @@ class SCVMMEndpointForm(DefaultEndpointForm):
     realm = Input('realm')  # appears when Kerberos is chosen in security_protocol
 
 
+@attr.s(hash=False)
 class SCVMMProvider(InfraProvider):
     catalog_item_type = SCVMMCatalogItem
     STATS_TO_MATCH = ['num_template', 'num_vm']
@@ -33,17 +36,7 @@ class SCVMMProvider(InfraProvider):
         'Unable to connect: WinRM::WinRMAuthorizationError'
     )
     settings_key = 'ems_scvmm'
-
-    def __init__(self, name=None, endpoints=None, key=None, zone=None, hostname=None,
-                 ip_address=None, start_ip=None, end_ip=None, provider_data=None, appliance=None):
-        super(SCVMMProvider, self).__init__(
-            name=name, endpoints=endpoints, zone=zone, key=key, provider_data=provider_data,
-            appliance=appliance)
-        self.hostname = hostname
-        self.start_ip = start_ip
-        self.end_ip = end_ip
-        if ip_address:
-            self.ip_address = ip_address
+    ui_prov_type = 'Microsoft System Center VMM'
 
     @property
     def view_value_mapping(self):
@@ -64,7 +57,7 @@ class SCVMMProvider(InfraProvider):
         return values
 
     @classmethod
-    def from_config(cls, prov_config, prov_key, appliance=None):
+    def from_config(cls, prov_config, prov_key):
         endpoint = SCVMMEndpoint(**prov_config['endpoints']['default'])
 
         if prov_config.get('discovery_range'):
@@ -72,10 +65,10 @@ class SCVMMProvider(InfraProvider):
             end_ip = prov_config['discovery_range']['end']
         else:
             start_ip = end_ip = prov_config.get('ipaddress')
-        return cls(
+        return cls.appliance.collections.infra_providers.instantiate(
+            prov_class=cls,
             name=prov_config['name'],
             endpoints={endpoint.name: endpoint},
             key=prov_key,
             start_ip=start_ip,
-            end_ip=end_ip,
-            appliance=appliance)
+            end_ip=end_ip)

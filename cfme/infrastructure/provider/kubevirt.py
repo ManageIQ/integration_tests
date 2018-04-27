@@ -1,23 +1,17 @@
+import attr
+
 from cfme.utils.providers import get_crud
 from cfme.containers.provider.openshift import VirtualizationEndpoint
 from . import InfraProvider
 
 
+@attr.s(hash=False)
 class KubeVirtProvider(InfraProvider):
     type_name = "kubevirt"
     settings_key = 'ems_kubevirt'
     mgmt_class = None
 
-    def __init__(self, parent_provider, **kwargs):
-
-        self.parent_provider = parent_provider
-
-        super(KubeVirtProvider, self).__init__(
-            name=kwargs.get('name'),
-            endpoints=kwargs.get('endpoints'),
-            key=kwargs.get('key'),
-            provider_data=kwargs.get('provider_data'),
-            appliance=kwargs.get('appliance'))
+    parent_provider = attr.ib(default=None)
 
     def create(self, *args, **kwargs):
         # KubeVirt infra provider is automatically added in appliance when adding
@@ -26,7 +20,7 @@ class KubeVirtProvider(InfraProvider):
         return self.parent_provider.create()
 
     @classmethod
-    def from_config(cls, prov_config, prov_key, appliance=None):
+    def from_config(cls, prov_config, prov_key):
 
         endpoints = {}
         token_creds = cls.process_credential_yaml_key(prov_config['credentials'], cred_type='token')
@@ -41,11 +35,10 @@ class KubeVirtProvider(InfraProvider):
         # passing virtualization of KubeVirt provider explicitly to ocp provider
         parent_provider.virt_type = prov_config['virt_type']
 
-        return cls(
+        return cls.appliance.collections.infra_providers.instantiate(
+            prov_class=cls,
             name=prov_config.get('name'),
             key=prov_key,
             endpoints=endpoints,
             provider_data=prov_config,
-            parent_provider=parent_provider,
-            appliance=appliance,
-        )
+            parent_provider=parent_provider)

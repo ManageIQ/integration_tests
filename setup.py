@@ -47,7 +47,6 @@ setup(
             'vcloud = cfme.cloud.provider.vcloud:VmwareCloudProvider',
         ],
         'manageiq.provider_types.containers': [
-            'kubernetes = cfme.containers.provider.kubernetes:KubernetesProvider',
             'openshift = cfme.containers.provider.openshift:OpenshiftProvider',
         ],
         'manageiq.provider_types.physical': [
@@ -134,6 +133,10 @@ setup(
             'network_subnets = cfme.networks.subnet:SubnetCollection',
             'network_topology_elements = cfme.networks.topology:NetworkTopologyElementsCollection',
             'network_floating_ips = cfme.networks.floating_ips:FloatingIpCollection',
+            'infra_providers = cfme.infrastructure.provider:InfraProviderCollection',
+            'cloud_providers = cfme.cloud.provider:CloudProviderCollection',
+            'containers_providers = cfme.containers.provider:ContainersProviderCollection',
+            'physical_providers = cfme.physical.provider:PhysicalProviderCollection',
             'requests = cfme.services.requests:RequestCollection',
             'resource_pools = cfme.infrastructure.resource_pool:ResourcePoolCollection',
             'volumes = cfme.storage.volume:VolumeCollection',

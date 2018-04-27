@@ -10,7 +10,7 @@ from cfme.base.credential import Credential
 from cfme.common.provider_views import (InfraProviderAddView,
                                         InfraProvidersView,
                                         InfraProvidersDiscoverView)
-from cfme.infrastructure.provider import discover, wait_for_a_provider, InfraProvider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider, RHEVMEndpoint
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider, VirtualCenterEndpoint
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -45,7 +45,8 @@ discovery_ips = [
 @pytest.mark.sauce
 def test_empty_discovery_form_validation_infra(appliance):
     """ Tests that the flash message is correct when discovery form is empty."""
-    discover(None)
+    collection = appliance.collections.infra_providers
+    collection.discover(None)
     view = appliance.browser.create_view(InfraProvidersDiscoverView)
     view.flash.assert_message('At least 1 item must be selected for discovery')
 
@@ -53,7 +54,8 @@ def test_empty_discovery_form_validation_infra(appliance):
 @pytest.mark.sauce
 def test_discovery_cancelled_validation_infra(appliance):
     """ Tests that the flash message is correct when discovery is cancelled."""
-    discover(None, cancel=True)
+    collection = appliance.collections.infra_providers
+    collection.discover(None, cancel=True)
     view = appliance.browser.create_view(InfraProvidersView)
     view.flash.assert_success_message('Infrastructure Providers '
                                       'Discovery was cancelled by the user')
@@ -62,51 +64,46 @@ def test_discovery_cancelled_validation_infra(appliance):
 @pytest.mark.sauce
 def test_add_cancelled_validation_infra(appliance):
     """Tests that the flash message is correct when add is cancelled."""
-    prov = VMwareProvider()
-    prov.create(cancel=True)
+    appliance.collections.infra_providers.create(prov_class=VMwareProvider, cancel=True)
     view = appliance.browser.create_view(InfraProvidersView)
     view.flash.assert_success_message('Add of Infrastructure Provider was cancelled by the user')
 
 
 @pytest.mark.sauce
-def test_type_required_validation_infra():
+def test_type_required_validation_infra(appliance):
     """Test to validate type while adding a provider"""
-    prov = InfraProvider()
     with pytest.raises(AssertionError):
-        prov.create()
-
-    view = prov.create_view(InfraProviderAddView)
+        appliance.collections.infra_providers.create(prov_class=VMwareProvider)
+    view = appliance.browser.create_view(InfraProviderAddView)
     assert not view.add.active
 
 
-def test_name_required_validation_infra():
+def test_name_required_validation_infra(appliance):
     """Tests to validate the name while adding a provider"""
+    collections = appliance.collections.infra_providers
     endpoint = VirtualCenterEndpoint(hostname=fauxfactory.gen_alphanumeric(5))
-    prov = VMwareProvider(
-        name=None,
-        endpoints=endpoint)
 
     with pytest.raises(AssertionError):
-        prov.create()
+        collections.create(prov_class=VMwareProvider, name=None, endpoints=endpoint)
 
-    view = prov.create_view(InfraProviderAddView)
+    view = appliance.browser.create_view(InfraProviderAddView)
     assert view.name.help_block == "Required"
     assert not view.add.active
 
 
-def test_host_name_required_validation_infra():
+def test_host_name_required_validation_infra(appliance):
     """Test to validate the hostname while adding a provider"""
     endpoint = VirtualCenterEndpoint(hostname=None)
-    prov = VMwareProvider(
-        name=fauxfactory.gen_alphanumeric(5),
-        endpoints=endpoint)
+    collections = appliance.collections.infra_providers
+    prov = collections.instantiate(prov_class=VMwareProvider, name=fauxfactory.gen_alphanumeric(5),
+                                   endpoints=endpoint)
 
     with pytest.raises(AssertionError):
         prov.create()
 
-    view = prov.create_view(prov.endpoints_form)
+    view = appliance.browser.create_view(prov.endpoints_form)
     assert view.hostname.help_block == "Required"
-    view = prov.create_view(InfraProviderAddView)
+    view = appliance.browser.create_view(InfraProviderAddView)
     assert not view.add.active
 
 
@@ -119,28 +116,34 @@ def test_name_max_character_validation_infra(request, infra_provider):
     assert infra_provider.exists
 
 
-def test_host_name_max_character_validation_infra():
+def test_host_name_max_character_validation_infra(appliance):
     """Test to validate max character for host name field"""
     endpoint = VirtualCenterEndpoint(hostname=fauxfactory.gen_alphanumeric(256))
-    prov = VMwareProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
+    collections = appliance.collections.infra_providers
+    prov = collections.instantiate(prov_class=VMwareProvider,
+                                   name=fauxfactory.gen_alphanumeric(5),
+                                   endpoints=endpoint)
     try:
         prov.create()
     except AssertionError:
-        view = prov.create_view(prov.endpoints_form)
+        view = appliance.browser.create_view(prov.endpoints_form)
         assert view.hostname.value == prov.hostname[0:255]
 
 
-def test_api_port_max_character_validation_infra():
+def test_api_port_max_character_validation_infra(appliance):
     """Test to validate max character for api port field"""
+    collections = appliance.collections.infra_providers
     endpoint = RHEVMEndpoint(hostname=fauxfactory.gen_alphanumeric(5),
                              api_port=fauxfactory.gen_alphanumeric(16),
                              verify_tls=None,
                              ca_certs=None)
-    prov = RHEVMProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
+    prov = collections.instantiate(prov_class=RHEVMProvider,
+                                   name=fauxfactory.gen_alphanumeric(5),
+                                   endpoints=endpoint)
     try:
         prov.create()
     except AssertionError:
-        view = prov.create_view(prov.endpoints_form)
+        view = appliance.browser.create_view(prov.endpoints_form)
         text = view.default.api_port.value
         assert text == prov.default_endpoint.api_port[0:15]
 
@@ -150,18 +153,20 @@ def test_api_port_max_character_validation_infra():
 @pytest.mark.meta(blockers=[BZ(1559796, forced_streams=['5.8', '5.9'],
     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.tier(1)
-def test_providers_discovery(request, provider):
+def test_providers_discovery(request, appliance, provider):
     """Tests provider discovery
 
     Metadata:
         test_flag: crud
     """
-    provider.discover()
-    view = provider.create_view(InfraProvidersView)
+    appliance.collections.infra_providers.discover(provider, cancel=False,
+                                                   start_ip=provider.start_ip,
+                                                   end_ip=provider.end_ip)
+    view = provider.browser.create_view(InfraProvidersView)
     view.flash.assert_success_message('Infrastructure Providers: Discovery successfully initiated')
 
     request.addfinalizer(InfraProvider.clear_providers)
-    wait_for_a_provider()
+    appliance.collections.infra_providers.wait_for_a_provider()
 
 
 @pytest.mark.rhv1
@@ -239,23 +244,26 @@ def test_provider_rhv_create_delete_tls(request, provider, verify_tls):
     prov.wait_for_delete()
 
 
-def test_infrastructure_add_provider_trailing_whitespaces():
+def test_infrastructure_add_provider_trailing_whitespaces(appliance):
     """Test to validate the hostname and username should be without whitespaces"""
+    collections = appliance.collections.infra_providers
     credentials = Credential(principal="test test", secret=fauxfactory.gen_alphanumeric(5))
     endpoint = VirtualCenterEndpoint(hostname="test test", credentials=credentials)
-    prov = VMwareProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
+    prov = collections.instantiate(prov_class=VMwareProvider,
+                                   name=fauxfactory.gen_alphanumeric(5),
+                                   endpoints=endpoint)
     with pytest.raises(AssertionError):
         prov.create()
-
-    view = prov.create_view(prov.endpoints_form)
+    view = appliance.browser.create_view(prov.endpoints_form)
     assert view.hostname.help_block == "Spaces are prohibited"
     assert view.username.help_block == "Spaces are prohibited"
-    view = prov.create_view(InfraProviderAddView)
+    view = appliance.browser.create_view(InfraProviderAddView)
     assert not view.add.active
 
 
 def test_infra_discovery_screen(appliance):
-    view = navigate_to(InfraProvider, 'Discover')
+    collections = appliance.collections.infra_providers
+    view = navigate_to(collections, 'Discover')
     assert view.is_displayed
     assert view.vmware.is_displayed
     assert view.scvmm.is_displayed

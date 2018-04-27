@@ -1,3 +1,5 @@
+import attr
+
 from widgetastic.widget import View
 from widgetastic_patternfly import Button, Input
 from wrapanapi.google import GoogleCloudSystem
@@ -27,6 +29,7 @@ class GCEEndpointForm(View):
     validate = Button('Validate')
 
 
+@attr.s(hash=False)
 class GCEProvider(CloudProvider):
     """
      BaseProvider->CloudProvider->GCEProvider class.
@@ -39,13 +42,9 @@ class GCEProvider(CloudProvider):
     endpoints_form = GCEEndpointForm
     settings_key = 'ems_google'
 
-    def __init__(self, name=None, project=None, zone=None, region=None, region_name=None,
-                 endpoints=None, key=None, appliance=None):
-        super(GCEProvider, self).__init__(name=name, zone=zone, key=key, endpoints=endpoints,
-                                          appliance=appliance)
-        self.region = region
-        self.region_name = region_name
-        self.project = project
+    project = attr.ib(default=None)
+    region = attr.ib(default=None)
+    region_name = attr.ib(default=None)
 
     @property
     def view_value_mapping(self):
@@ -62,16 +61,17 @@ class GCEProvider(CloudProvider):
         return endpoints
 
     @classmethod
-    def from_config(cls, prov_config, prov_key, appliance=None):
+    def from_config(cls, prov_config, prov_key):
         endpoint = GCEEndpoint(**prov_config['endpoints']['default'])
-        return cls(name=prov_config['name'],
-                   project=prov_config['project'],
-                   zone=prov_config['zone'],
-                   region=prov_config['region'],
-                   region_name=prov_config['region_name'],
-                   endpoints={endpoint.name: endpoint},
-                   key=prov_key,
-                   appliance=appliance)
+        return cls.appliance.collections.cloud_providers.instantiate(
+            prov_class=cls,
+            name=prov_config['name'],
+            project=prov_config['project'],
+            zone=prov_config['zone'],
+            region=prov_config['region'],
+            region_name=prov_config['region_name'],
+            endpoints={endpoint.name: endpoint},
+            key=prov_key)
 
     @classmethod
     def get_credentials(cls, credential_dict, cred_type=None):

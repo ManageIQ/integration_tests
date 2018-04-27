@@ -1,12 +1,11 @@
 import attr
 from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic.exceptions import MoveTargetOutOfBoundsException
 
 from cfme.exceptions import DestinationNotFound
 from cfme.common import Taggable
-from cfme.common.provider import BaseProvider
-from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.common.provider import BaseProvider, prepare_endpoints
+from cfme.modeling.base import BaseCollection
 from cfme.networks.balancer import BalancerCollection
 from cfme.networks.cloud_network import CloudNetworkCollection
 from cfme.networks.network_port import NetworkPortCollection
@@ -31,7 +30,7 @@ from cfme.utils.log import logger
 
 
 @attr.s(hash=False)
-class NetworkProvider(BaseProvider, Taggable, BaseEntity):
+class NetworkProvider(BaseProvider, Taggable):
     """ Class representing network provider in sdn
 
     Note: Network provider can be added to cfme database
@@ -58,8 +57,11 @@ class NetworkProvider(BaseProvider, Taggable, BaseEntity):
         'security_groups': SecurityGroupCollection,
     }
 
-    name = attr.ib()
+    name = attr.ib(default=None)
     provider = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self.parent = self.appliance.collections.network_providers
 
     @property
     def valid_credentials_state(self):
@@ -165,7 +167,7 @@ class NetworkProvider(BaseProvider, Taggable, BaseEntity):
 
         # filling endpoints
         if endpoints:
-            endpoints = self._prepare_endpoints(endpoints)
+            endpoints = prepare_endpoints(endpoints)
 
             for endpoint in endpoints.values():
                 # every endpoint class has name like 'default', 'events', etc.
@@ -283,12 +285,23 @@ class NetworkProviderCollection(BaseCollection):
         return [self.instantiate(prov_class=self.ENTITY, name=p.name) for p in list_networks]
 
     # A rare collection override of instantiate
-    def instantiate(self, prov_class=ENTITY, *args, **kwargs):
+    def instantiate(self, prov_class, *args, **kwargs):
         return prov_class.from_collection(self, *args, **kwargs)
 
-    def create(self, prov_class=ENTITY, *args, **kwargs):
-        obj = self.instantiate(prov_class, *args, **kwargs)
-        obj.create()
+    def create(self, prov_class, *args, **kwargs):
+        # ugly workaround until I move everything to main class
+        class_attrs = [at.name for at in attr.fields(prov_class)]
+        init_kwargs = {}
+        create_kwargs = {}
+        for name, value in kwargs.items():
+            if name not in class_attrs:
+                create_kwargs[name] = value
+            else:
+                init_kwargs[name] = value
+
+        obj = self.instantiate(prov_class, *args, **init_kwargs)
+        obj.create(**create_kwargs)
+        return obj
 
 
 @navigator.register(NetworkProvider, 'All')  # To be removed once all CEMv3

@@ -5,11 +5,11 @@ not be difficult to extend the parametrizer.
 """
 import pytest
 
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.common.provider import DefaultEndpoint
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider, VirtualCenterEndpoint
 from cfme.utils import testgen
 from cfme.utils.net import resolve_hostname
 from cfme.utils.version import Version
+from cfme.utils.appliance import find_appliance
 
 
 def pytest_generate_tests(metafunc):
@@ -39,7 +39,8 @@ def pytest_generate_tests(metafunc):
 
         host = hosts[0]
         ip_address = resolve_hostname(host["name"])
-        endpoint = DefaultEndpoint(credentials=host["credentials"], hostname=host["name"])
+        endpoint = VirtualCenterEndpoint(credentials=host["credentials"], hostname=host["name"],
+                                         ip_address=ip_address)
         # Mock provider data
         provider_data = {}
         provider_data.update(args['provider'].data)
@@ -51,9 +52,10 @@ def pytest_generate_tests(metafunc):
         provider_data["discovery_range"] = {}
         provider_data["discovery_range"]["start"] = ip_address
         provider_data["discovery_range"]["end"] = ip_address
-        host_provider = VMwareProvider(
+        appliance = find_appliance(metafunc, require=False)
+        host_provider = appliance.collections.infra_providers.instantiate(
+            prov_class=VMwareProvider,
             name=host["name"],
-            ip_address=ip_address,
             endpoints=endpoint,
             provider_data=provider_data)
         argvalues[i].append(host_provider)

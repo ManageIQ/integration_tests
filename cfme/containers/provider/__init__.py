@@ -1,3 +1,5 @@
+import attr
+
 import random
 from random import sample
 from traceback import format_exc
@@ -16,14 +18,14 @@ from cfme import exceptions
 from cfme.base.credential import TokenCredential
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView, PolicyProfileAssignable
-from cfme.common.provider import BaseProvider, DefaultEndpoint, DefaultEndpointForm
+from cfme.common.provider import BaseProvider, DefaultEndpoint, DefaultEndpointForm, provider_types
 from cfme.common.provider_views import (
     BeforeFillMixin, ContainerProviderAddView, ContainerProvidersView,
     ContainerProviderEditView, ContainerProviderEditViewUpdated, ProvidersView,
     ContainerProviderAddViewUpdated, ProviderSideBar,
     ProviderDetailsToolBar, ProviderDetailsView, ProviderToolBar)
+from cfme.modeling.base import BaseCollection
 from cfme.utils import version
-from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.browser import browser
 from cfme.utils.log import logger
@@ -162,6 +164,7 @@ class ContainerProviderDetailsView(ProviderDetailsView, LoggingableView):
                 self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'])
 
 
+@attr.s(hash=False)
 class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     PLURAL = 'Providers'
     provider_types = {}
@@ -192,24 +195,16 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     details_view = ContainerProviderDetailsView
     refresh_text = 'Refresh items and relationships'
 
-    def __init__(
-            self,
-            name=None,
-            key=None,
-            zone=None,
-            metrics_type=None,
-            alerts_type=None,
-            endpoints=None,
-            provider_data=None,
-            appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.key = key
-        self.zone = zone
-        self.endpoints = endpoints
-        self.provider_data = provider_data
-        self.metrics_type = metrics_type
-        self.alerts_type = alerts_type
+    name = attr.ib(default=None)
+    key = attr.ib(default=None)
+    zone = attr.ib(default=None)
+    metrics_type = attr.ib(default=None)
+    alerts_type = attr.ib(default=None)
+    provider_data = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        super(ContainersProvider, self).__attrs_post_init__()
+        self.parent = self.appliance.collections.containers_providers
 
     @property
     def view_value_mapping(self):
@@ -340,6 +335,47 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
         return out
 
 
+@attr.s
+class ContainersProviderCollection(BaseCollection):
+    """Collection object for ContainersProvider objects
+    """
+
+    ENTITY = ContainersProvider
+
+    def all(self):
+        view = navigate_to(self, 'All')
+        provs = view.entities.get_all(surf_pages=True)
+
+        # trying to figure out provider type and class
+        # todo: move to all providers collection later
+        def _get_class(pid):
+            prov_type = self.appliance.rest_api.collections.providers.get(id=pid)['type']
+            for prov_class in provider_types('infra').values():
+                if prov_class.db_types[0] in prov_type:
+                    return prov_class
+
+        return [self.instantiate(prov_class=_get_class(p.data['id']), name=p.name) for p in provs]
+
+    def instantiate(self, prov_class, *args, **kwargs):
+        return prov_class.from_collection(self, *args, **kwargs)
+
+    def create(self, prov_class, *args, **kwargs):
+        # ugly workaround until I move everything to main class
+        class_attrs = [at.name for at in attr.fields(prov_class)]
+        init_kwargs = {}
+        create_kwargs = {}
+        for name, value in kwargs.items():
+            if name not in class_attrs:
+                create_kwargs[name] = value
+            else:
+                init_kwargs[name] = value
+
+        obj = self.instantiate(prov_class, *args, **init_kwargs)
+        obj.create(**create_kwargs)
+        return obj
+
+
+@navigator.register(ContainersProviderCollection, 'All')
 @navigator.register(ContainersProvider, 'All')
 class All(CFMENavigateStep):
     VIEW = ContainerProvidersView
@@ -354,6 +390,7 @@ class All(CFMENavigateStep):
         self.view.paginator.reset_selection()
 
 
+@navigator.register(ContainersProviderCollection, 'Add')
 @navigator.register(ContainersProvider, 'Add')
 class Add(CFMENavigateStep):
 

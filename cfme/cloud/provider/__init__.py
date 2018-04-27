@@ -1,5 +1,6 @@
 """ A model of a Cloud Provider in CFME
 """
+import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from widgetastic.widget import View
@@ -7,12 +8,12 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView
-from cfme.common.provider import CloudInfraProvider
+from cfme.common.provider import CloudInfraProvider, provider_types
 from cfme.common.provider_views import (
     CloudProviderAddView, CloudProviderEditView, CloudProviderDetailsView, CloudProvidersView,
     CloudProvidersDiscoverView)
 from cfme.common.vm_views import VMToolbar, VMEntities
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
@@ -73,23 +74,22 @@ class CloudProviderImagesView(BaseLoggedInPage):
     including_entities = View.include(VMEntities, use_parent=True)
 
 
+@attr.s(hash=False)
 class CloudProvider(Pretty, CloudInfraProvider):
     """
     Abstract model of a cloud provider in cfme. See EC2Provider or OpenStackProvider.
-
     Args:
         name: Name of the provider.
         endpoints: one or several provider endpoints like DefaultEndpoint. it should be either dict
         in format dict{endpoint.name, endpoint, endpoint_n.name, endpoint_n}, list of endpoints or
         mere one endpoint
-        key: The CFME key of the provider in the yaml.
-
+        # TODO: update all provider doc strings when provider conversion is done
     Usage:
 
         credentials = Credential(principal='bad', secret='reallybad')
         endpoint = DefaultEndpoint(hostname='some_host', region='us-west', credentials=credentials)
-        myprov = VMwareProvider(name='foo',
-                             endpoints=endpoint)
+        myprov = collections.instantiate(prov_class=OpenStackProvider, name='foo',
+                                         endpoints=endpoint)
         myprov.create()
     """
     provider_types = {}
@@ -102,12 +102,13 @@ class CloudProvider(Pretty, CloudInfraProvider):
     template_name = "Images"
     db_types = ["CloudManager"]
 
-    def __init__(self, name=None, endpoints=None, zone=None, key=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.zone = zone
-        self.key = key
-        self.endpoints = self._prepare_endpoints(endpoints)
+    name = attr.ib(default=None)
+    key = attr.ib(default=None)
+    zone = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        super(CloudProvider, self).__attrs_post_init__()
+        self.parent = self.appliance.collections.cloud_providers
 
     def as_fill_value(self):
         return self.name
@@ -123,7 +124,77 @@ class CloudProvider(Pretty, CloudInfraProvider):
         raise NotImplementedError("This provider doesn't support discovery")
 
 
+@attr.s
+class CloudProviderCollection(BaseCollection):
+    """Collection object for CloudProvider object
+    """
+
+    ENTITY = CloudProvider
+
+    def all(self):
+        view = navigate_to(self, 'All')
+        provs = view.entities.get_all(surf_pages=True)
+
+        # trying to figure out provider type and class
+        # todo: move to all providers collection later
+        def _get_class(pid):
+            prov_type = self.appliance.rest_api.collections.providers.get(id=pid)['type']
+            for prov_class in provider_types('cloud').values():
+                if prov_class.db_types[0] in prov_type:
+                    return prov_class
+
+        return [self.instantiate(prov_class=_get_class(p.data['id']), name=p.name) for p in provs]
+
+    def instantiate(self, prov_class, *args, **kwargs):
+        return prov_class.from_collection(self, *args, **kwargs)
+
+    def create(self, prov_class, *args, **kwargs):
+        # ugly workaround until I move everything to main class
+        class_attrs = [at.name for at in attr.fields(prov_class)]
+        init_kwargs = {}
+        create_kwargs = {}
+        for name, value in kwargs.items():
+            if name not in class_attrs:
+                create_kwargs[name] = value
+            else:
+                init_kwargs[name] = value
+
+        obj = self.instantiate(prov_class, *args, **init_kwargs)
+        obj.create(**create_kwargs)
+        return obj
+
+    def discover(self, credential, discover_cls, cancel=False):
+        """
+        Discover cloud providers. Note: only starts discovery, doesn't
+        wait for it to finish.
+
+        Args:
+          credential (cfme.base.credential.Credential):  Discovery credentials.
+          cancel (boolean):  Whether to cancel out of the discover UI.
+          discover_cls: class of the discovery item
+        """
+        view = navigate_to(self, 'Discover')
+        if discover_cls:
+            view.fill({'discover_type': discover_cls.discover_name})
+            view.fields.fill(discover_cls.discover_dict(credential))
+
+        if cancel:
+            view.cancel.click()
+        else:
+            view.start.click()
+
+    # todo: combine with discover ?
+    def wait_for_new_provider(self):
+        view = navigate_to(self, 'All')
+        logger.info('Waiting for a provider to appear...')
+        wait_for(lambda: int(view.entities.paginator.items_amount), fail_condition=0,
+                 message="Wait for any provider to appear", num_sec=1000,
+                 fail_func=view.browser.refresh)
+
+
+# todo: to remove those register statements when all providers are turned into collections
 @navigator.register(CloudProvider, 'All')
+@navigator.register(CloudProviderCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = CloudProvidersView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -140,6 +211,7 @@ class All(CFMENavigateStep):
 
 
 @navigator.register(CloudProvider, 'Add')
+@navigator.register(CloudProviderCollection, 'Add')
 class New(CFMENavigateStep):
     VIEW = CloudProviderAddView
     prerequisite = NavigateToSibling('All')
@@ -149,6 +221,7 @@ class New(CFMENavigateStep):
 
 
 @navigator.register(CloudProvider, 'Discover')
+@navigator.register(CloudProviderCollection, 'Discover')
 class Discover(CFMENavigateStep):
     VIEW = CloudProvidersDiscoverView
     prerequisite = NavigateToSibling('All')
@@ -233,38 +306,3 @@ class Images(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.entities.summary("Relationships").click_at('Images')
-
-
-def get_all_providers():
-    """Returns list of all providers"""
-    view = navigate_to(CloudProvider, 'All')
-    return [item.name for item in view.entities.get_all(surf_pages=True)]
-
-
-def discover(credential, discover_cls, cancel=False):
-    """
-    Discover cloud providers. Note: only starts discovery, doesn't
-    wait for it to finish.
-
-    Args:
-      credential (cfme.base.credential.Credential):  Discovery credentials.
-      cancel (boolean):  Whether to cancel out of the discover UI.
-      discover_cls: class of the discovery item
-    """
-    view = navigate_to(CloudProvider, 'Discover')
-    if discover_cls:
-        view.fill({'discover_type': discover_cls.discover_name})
-        view.fields.fill(discover_cls.discover_dict(credential))
-
-    if cancel:
-        view.cancel.click()
-    else:
-        view.start.click()
-
-
-def wait_for_a_provider():
-    view = navigate_to(CloudProvider, 'All')
-    logger.info('Waiting for a provider to appear...')
-    wait_for(lambda: int(view.entities.paginator.items_amount), fail_condition=0,
-             message="Wait for any provider to appear", num_sec=1000,
-             fail_func=view.browser.refresh)

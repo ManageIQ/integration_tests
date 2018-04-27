@@ -1,3 +1,4 @@
+import attr
 import datetime
 from collections import Iterable
 
@@ -10,6 +11,7 @@ from cfme.base.credential import (
 from cfme.common import Taggable
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, AddProviderError)
+from cfme.modeling.base import BaseEntity
 from cfme.utils import ParamClassName, version, conf
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator
@@ -50,13 +52,38 @@ def provider_db_mapping():
     return {v.db_types[0]: v for k, v in all_types().items()}
 
 
-class BaseProvider(Taggable, Updateable, Navigatable):
+# todo: move to collections ?
+def prepare_endpoints(endpoints):
+    if endpoints is None:
+        return {}
+    elif isinstance(endpoints, dict):
+        return endpoints
+    elif isinstance(endpoints, Iterable):
+        return {(e.name, e) for e in endpoints}
+    elif isinstance(endpoints, DefaultEndpoint):
+        return {endpoints.name: endpoints}
+    else:
+        raise ValueError("Endpoints should be either dict or endpoint class")
+
+
+@attr.s(hash=False)
+class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
     # List of constants that every non-abstract subclass must have defined
+
+    # TODO: Navigatable is used to ensure function until the reduced get_crud is
+    # replaced by methods on collections. This will be fixed in next conversion PR
+
     _param_name = ParamClassName('name')
     STATS_TO_MATCH = []
     db_types = ["Providers"]
     ems_events = []
     settings_key = None
+
+    endpoints = attr.ib(default=attr.Factory(factory=dict))
+
+    def __attrs_post_init__(self):
+        # attr.ib(convert=prepare_endpoints) doesn't work correctly. this is workaround
+        self.endpoints = prepare_endpoints(self.endpoints)
 
     def __hash__(self):
         return hash(self.key) ^ hash(type(self))
@@ -380,7 +407,7 @@ class BaseProvider(Taggable, Updateable, Navigatable):
 
         # filling endpoints
         if endpoints:
-            endpoints = self._prepare_endpoints(endpoints)
+            endpoints = prepare_endpoints(endpoints)
 
             for endpoint in endpoints.values():
                 # every endpoint class has name like 'default', 'events', etc.
@@ -783,19 +810,6 @@ class BaseProvider(Taggable, Updateable, Navigatable):
     def one_of(self, *classes):
         """ Returns true if provider is an instance of any of the classes or sublasses there of"""
         return isinstance(self, classes)
-
-    @staticmethod
-    def _prepare_endpoints(endpoints):
-        if not endpoints:
-            return {}
-        elif isinstance(endpoints, dict):
-            return endpoints
-        elif isinstance(endpoints, Iterable):
-            return {(e.name, e) for e in endpoints}
-        elif isinstance(endpoints, DefaultEndpoint):
-            return {endpoints.name: endpoints}
-        else:
-            raise ValueError("Endpoints should be either dict or endpoint class")
 
     # These methods need to be overridden in the provider specific classes
     def get_console_connection_status(self):

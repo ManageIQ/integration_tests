@@ -17,15 +17,17 @@ pytestmark = [
 ]
 
 
-def test_add_cancelled_validation(request):
+def test_add_cancelled_validation(request, appliance):
     """Tests that the flash message is correct when add is cancelled."""
-    prov = NuageProvider(parent=None, name=None)
-    request.addfinalizer(prov.delete_if_exists)
+    collection = appliance.collections.network_providers
     try:
-        prov.create(cancel=True, validate_credentials=False)
+        prov = collection.create(prov_class=NuageProvider, name=None, cancel=True,
+                                 validate_credentials=False)
+        request.addfinalizer(prov.delete_if_exists)
     except MoveTargetOutOfBoundsException:
         # TODO: Remove once fixed 1475303
-        prov.create(cancel=True, validate_credentials=False)
+        prov = collection.create(prov_class=NuageProvider, name=None, cancel=True,
+                                 validate_credentials=False)
     view = prov.browser.create_view(NetworkProvidersView)
     view.flash.assert_success_message('Add of Network Manager was cancelled by the user')
 

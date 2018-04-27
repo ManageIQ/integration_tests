@@ -72,7 +72,7 @@ An example of a new provider type is below, we will take a moment to walk throug
         def __init__(
                 self, appliance=None, name=None, key=None, endpoints=None):
             Navigatable.__init__(self, appliance=appliance)
-            self.endpoints = self._prepare_endpoints(endpoints)
+            self.endpoints = prepare_endpoints(endpoints)
             self.name = name
             self.key = key
 
@@ -217,7 +217,6 @@ see the examples of how the provider is added for the previous types.
             'hawkular = cfme.middleware.provider.hawkular:HawkularProvider',
         ],
         'manageiq.provider_types.containers': [
-            'kubernetes = cfme.containers.provider.kubernetes:KubernetesProvider',
             'openshift = cfme.containers.provider.openshift:OpenshiftProvider',
         ],
         'manageiq.provider_types.physical': [
