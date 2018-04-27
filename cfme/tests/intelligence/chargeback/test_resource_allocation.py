@@ -115,6 +115,9 @@ def assign_custom_rate(new_chargeback_rate, provider):
 
 
 def verify_vm_uptime(appliance, provider):
+    """Verify VM uptime is 1 at least hour.That is the shortest duration for
+    which VMs can be charged
+    """
     vm_name = provider.data['cap_and_util']['chargeback_vm']
     vm_creation_time = appliance.rest_api.collections.vms.get(name=vm_name).created_on
     if appliance.utc_time() - vm_creation_time > timedelta(hours=1):
@@ -125,7 +128,6 @@ def verify_vm_uptime(appliance, provider):
 @pytest.fixture(scope="module")
 def resource_alloc(vm_ownership, appliance, provider):
     """Retrieve resource allocation values"""
-
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
     if provider.type == 'scvmm':
