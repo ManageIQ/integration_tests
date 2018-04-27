@@ -444,7 +444,9 @@ def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_ass
         testing_vm_tools.provider.mgmt.is_vm_running(testing_vm_tools.name), "vm not running")
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+@pytest.mark.meta(blockers=[BZ(1571895, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+@pytest.mark.uncollectif(lambda provider: not provider.one_of((VMwareProvider, RHEVMProvider)))
 def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
