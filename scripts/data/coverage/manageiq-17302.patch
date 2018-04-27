@@ -1,0 +1,55 @@
+From a2a49bb5633c66b280bc2cb86c0f94f2cb4483f0 Mon Sep 17 00:00:00 2001
+From: Joe Rafaniello <jrafanie@redhat.com>
+Date: Thu, 12 Apr 2018 11:01:19 -0400
+Subject: [PATCH] Load config/coverage_hook.rb at process creation
+
+If this file exists, we'll load it before the server starts and after we
+fork new workers.
+---
+ app/models/miq_worker.rb |  1 +
+ config/preinitializer.rb |  3 +++
+ lib/code_coverage.rb     | 12 ++++++++++++
+ 3 files changed, 16 insertions(+)
+ create mode 100644 lib/code_coverage.rb
+
+diff --git a/app/models/miq_worker.rb b/app/models/miq_worker.rb
+index 65d7371d77..d52d81784f 100644
+--- a/app/models/miq_worker.rb
++++ b/app/models/miq_worker.rb
+@@ -321,6 +321,7 @@ def self.after_fork
+     DRb.stop_service
+     close_drb_pool_connections
+     renice(Process.pid)
++    CodeCoverage.run_hook
+   end
+ 
+   # When we fork, the children inherits the parent's file descriptors
+diff --git a/config/preinitializer.rb b/config/preinitializer.rb
+index b965e59e1a..1b5fb0914b 100644
+--- a/config/preinitializer.rb
++++ b/config/preinitializer.rb
+@@ -3,3 +3,6 @@
+   $req_log_path = File.join(File.dirname(__FILE__), %w(.. log))
+   require 'require_with_logging'
+ end
++
++require File.join(__dir__, "..", "lib", "code_coverage")
++CodeCoverage.run_hook
+diff --git a/lib/code_coverage.rb b/lib/code_coverage.rb
+new file mode 100644
+index 0000000000..8c7a14d091
+--- /dev/null
++++ b/lib/code_coverage.rb
+@@ -0,0 +1,12 @@
++require 'pathname'
++module CodeCoverage
++  # The HOOK_FILE is responsible for starting or restarting code coverage.
++  # Child worker forks inherit the code coverage environment when the server
++  # invoked the 'run_hook' so they must reset the environment for the new process.
++  HOOK_FILE = Pathname.new(__dir__).join("..", "config", "coverage_hook.rb").freeze
++  def self.run_hook
++    # Note: We use 'load' here because require would only load the hook once,
++    # in the server but not when the child fork starts.  Shared memory is hard.
++    load HOOK_FILE if File.exist?(HOOK_FILE)
++  end
++end
