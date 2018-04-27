@@ -13,6 +13,11 @@ from cfme.utils.wait import wait_for
 from fixtures.pytest_store import store
 from cfme.utils.repo_gen import process_url, build_file
 
+pytestmark = [
+    pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
+                            reason="pod appliance should be updated thru openshift mechanism")
+]
+
 
 def pytest_generate_tests(metafunc):
     """The following lines generate appliance versions based from the current build.
