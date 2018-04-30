@@ -17,6 +17,7 @@ RUN dnf install -y http://linuxdownload.adobe.com/linux/x86_64/adobe-release-x86
     gcc \
     gcc-c++ \
     git \
+    gtk2 \
     java-1.8.0-openjdk.x86_64 \
     libcurl-devel \
     libffi-devel \
@@ -46,9 +47,9 @@ RUN dnf install -y http://linuxdownload.adobe.com/linux/x86_64/adobe-release-x86
 ENV CHROME_PATH /opt/google/chrome
 ENV CHROMEDRIVER_VERSION 2.35
 ENV CHROMEDRIVER_PATH /opt/chromedriver/
-ENV SELENIUM_VERSION 3.10
+ENV SELENIUM_VERSION 2.53
 ENV SELENIUM_PATH /opt/selenium
-ENV FIREFOX_VERSION 46.0.1
+ENV FIREFOX_VERSION 45.5.0esr
 ENV FIREFOX_PATH /opt/firefox
 
 # Chrome driver

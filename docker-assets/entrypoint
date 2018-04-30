@@ -4,8 +4,9 @@ touch .yaml_key
 mkdir -p /cfme-qe-yamls/complete
 cp conf/* /cfme-qe-yamls/complete
 
-vncserver :99 -xstartup /xstartup -SecurityTypes None
+vncserver :99 -xstartup /xstartup -SecurityTypes None -geometry 1280x1024
 
 source /cfme_venv/bin/activate
 # python -m cfme.scripting.quickstart
+pip install -e .
 py.test cfme/tests/test_login.py -k test_login -v
