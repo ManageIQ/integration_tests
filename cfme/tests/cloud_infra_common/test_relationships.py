@@ -7,9 +7,9 @@ from cfme.cloud.availability_zone import ProviderAvailabilityZoneAllView, Availa
 from cfme.cloud.flavor import ProviderFlavorAllView, Flavor
 from cfme.cloud.instance import Instance
 from cfme.cloud.instance.image import Image
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider import CloudProviderImagesView, CloudProviderInstancesView
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.cloud.provider import CloudProvider
 from cfme.cloud.stack import ProviderStackAllView
 from cfme.cloud.tenant import ProviderTenantAllView
 from cfme.common.host_views import ProviderAllHostsView
@@ -23,6 +23,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import (HostTemplatesOnlyAllView,
                                                   ProviderTemplatesOnlyAllView, InfraVm, Template)
 from cfme.markers.env_markers.provider import ONE, ONE_PER_TYPE
+from cfme.networks.provider import NetworkProvider
 from cfme.networks.views import NetworkProviderDetailsView, ProviderSecurityGroupAllView
 from cfme.storage.manager import ProviderStorageManagerAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -117,7 +118,7 @@ def get_obj(relationship, appliance, **kwargs):
         provider = kwargs.get("provider")
         view = navigate_to(provider, "Details")
         network_prov_name = view.entities.summary("Relationships").get_text_of("Network Manager")
-        obj = network_providers_col.instantiate(name=network_prov_name)
+        obj = network_providers_col.instantiate(prov_class=NetworkProvider, name=network_prov_name)
     return obj
 
 
