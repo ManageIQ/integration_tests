@@ -346,10 +346,10 @@ def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, interv
     logger.info('Queuing chargeback report for {} rate'.format(interval))
     report.queue(wait_for_finish=True)
 
-    if not list(report.get_saved_reports()[0].data.rows):
+    if not list(report.saved_reports.all()[0].data.rows):
         pytest.skip('Empty report')
     else:
-        yield list(report.get_saved_reports()[0].data.rows)
+        yield list(report.saved_reports.all()[0].data.rows)
 
     if report.exists:
         report.delete()
