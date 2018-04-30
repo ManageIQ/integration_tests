@@ -125,21 +125,30 @@ class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssi
         # TODO Update to use REST API instead of DB queries
         image_table = self.appliance.db.client['container_images']
         ems_table = self.appliance.db.client['ext_management_systems']
+        image_registry_table = self.appliance.db.client['container_image_registries']
         image_query = (
             self.appliance.db.client.session
-                .query(image_table.name, image_table.image_ref, ems_table.name)
-                .join(ems_table, image_table.ems_id == ems_table.id))
+                .query(image_table.name, image_table.image_ref, ems_table.name,
+                       image_registry_table.name)
+                .join(ems_table, image_table.ems_id == ems_table.id)
+                .join(image_registry_table,
+                      image_table.container_image_registry_id == image_registry_table.id))
         if self.filters.get('archived'):
             image_query = image_query.filter(image_table.deleted_on.isnot(None))
         if self.filters.get('active'):
             image_query = image_query.filter(image_table.deleted_on.is_(None))
+        # filter for containers images from openShift local redhat registry
+        if self.filters.get('redhat_registry'):
+            image_query = image_query.filter(
+                image_registry_table.name.contains("registry.access.redhat.com")
+            )
         provider = None
         # filtered
         if self.filters.get('provider'):
             provider = self.filters.get('provider')
             image_query = image_query.filter(ems_table.name == provider.name)
         images = []
-        for name, image_ref, ems_name in image_query.all():
+        for name, image_ref, ems_name, _ in image_query.all():
             images.append(self.instantiate(name=name, id=image_ref,
                                            provider=provider or get_crud_by_name(ems_name)))
         return images
