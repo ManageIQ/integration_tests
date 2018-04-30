@@ -1456,17 +1456,14 @@ class SetOwnership(CFMENavigateStep):
 @navigator.register(InfraVm, 'candu')
 class VmUtilization(CFMENavigateStep):
     @property
-    def get_view(self):
+    def VIEW(self):     # noqa
         """Property returning VM Utilization Views as per provider type"""
         if self.obj.provider.type is 'virtualcenter':
             view = VirtualcenterVMUtilizationView
         elif self.obj.provider.type is 'rhevm':
             view = RhevmVMUtilizationView
-        else:
-            view = None
         return view
 
-    VIEW = get_view
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
