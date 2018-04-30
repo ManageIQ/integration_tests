@@ -1,13 +1,13 @@
-import attr
-from cached_property import cached_property
-import fauxfactory
 from textwrap import dedent
+
+import attr
+import fauxfactory
+from cached_property import cached_property
 
 from cfme.utils import db, conf, clear_property_cache, datafile
 from cfme.utils.conf import credentials
 from cfme.utils.path import scripts_path
 from cfme.utils.wait import wait_for
-
 from .plugin import AppliancePlugin, AppliancePluginException
 
 
@@ -81,9 +81,11 @@ class ApplianceDB(AppliancePlugin):
 
             Note: EVM service has to be stopped for this to work.
         """
+
+        self.appliance.db.restart_db_service()
+        self.appliance.ssh_client.run_command('dropdb vmdb_production', timeout=15)
+
         def _db_dropped():
-            self.appliance.db.restart_db_service
-            self.appliance.ssh_client.run_command('dropdb vmdb_production', timeout=15)
             result = self.appliance.ssh_client.run_command(
                 "psql -l | grep vmdb_production | wc -l", timeout=15)
             return result.success
