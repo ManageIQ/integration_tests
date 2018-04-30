@@ -29,10 +29,6 @@ def auth_groups():
 @pytest.mark.parametrize('group_name, context', auth_groups())
 @pytest.mark.uncollectif(lambda appliance: appliance.is_dev, reason="Is a rails server")
 @pytest.mark.meta(blockers=[
-    BZ(1525598,
-       forced_streams=['5.8'],
-       unblock=lambda group_name: group_name not in
-       ['evmgroup-security', 'evmgroup-approver', 'evmgroup-auditor', 'evmgroup-support']),
     BZ(1530683,
        unblock=lambda group_name: group_name not in
        ['evmgroup-user', 'evmgroup-approver', 'evmgroup-auditor', 'evmgroup-operator',
