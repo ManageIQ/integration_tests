@@ -72,13 +72,19 @@ def test_host_most_recent_hour_graph_screen(graph_type, provider, host, enable_c
     wait_for(lambda: len(graph.all_legends) > 0,
              delay=5, timeout=600, fail_func=refresh)
 
+    # Check for legend hide property and graph data
     graph_data = 0
     for leg in graph.all_legends:
+        # check legend hide or not
         graph.hide_legends(leg)
         assert not graph.legend_is_displayed(leg)
+
+        # check legend display or not
         graph.display_legends(leg)
         assert graph.legend_is_displayed(leg)
 
+        # check graph display data or not
+        # Note: legend like %Ready have less value some time zero. so sum data for all legend
         for data in graph.data_for_legends(leg).values():
             graph_data += float(data[leg].replace(',', '').replace('%', '').split()[0])
     assert graph_data > 0
