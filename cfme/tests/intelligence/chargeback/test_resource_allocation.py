@@ -111,8 +111,8 @@ def assign_custom_rate(new_chargeback_rate, provider):
 
 
 def verify_vm_uptime(appliance, provider):
-    """Verify VM uptime is 1 at least hour.That is the shortest duration for
-    which VMs can be charged
+    """Verify VM uptime is at least one hour.That is the shortest duration for
+    which VMs can be charged.
     """
     vm_name = provider.data['cap_and_util']['chargeback_vm']
     vm_creation_time = appliance.rest_api.collections.vms.get(name=vm_name).created_on
@@ -251,28 +251,30 @@ def test_validate_cost(chargeback_costs_custom, chargeback_report_custom, soft_a
         groups['vCPUs Allocated Cost']):
             pytest.skip('missing column in report')
         else:
-            if groups['Memory Allocated Cost']:
+            if resource_cost == 'memory':
                 estimated_resource_alloc_cost = chargeback_costs_custom['memory_alloc_cost']
             cost_from_report = groups['Memory Allocated Cost']
 
-            if groups['vCPUs Allocated Cost']:
+            if resource_cost == 'vcpu':
                 estimated_resource_alloc_cost = chargeback_costs_custom['vcpu_alloc_cost']
             cost_from_report = groups['vCPUs Allocated over Time Period']
 
-            if groups['Storage Allocated Cost']:
+            if resource_cost == 'storage':
                 estimated_resource_alloc_cost = chargeback_costs_custom['storage_alloc_cost']
             cost_from_report = groups['Storage Allocated Cost']
 
             cost = cost_from_report.replace('$', '').replace(',', '')
+            pytest.set_trace()
             soft_assert(estimated_resource_alloc_cost - DEVIATION <=
                 float(cost) <= estimated_resource_alloc_cost + DEVIATION,
                 'Estimated cost and report cost do not match')
 
 
 @pytest.mark.parametrize('resource',
-                         ['memory', 'vcpu', 'storage'],
+                         ['memory_alloc', 'vcpu_alloc', 'storage_alloc'],
                          ids=['memory_alloc', 'vcpu_alloc', 'storage_alloc'])
-def test_verify_allocation(resource_alloc, resource, soft_assert):
+def test_verify_allocation(resource_alloc, chargeback_report_custom, resource, soft_assert):
+    pytest.set_trace()
     for groups in chargeback_report_custom:
         if not (groups['Memory Allocated over Time Period'] or groups['Storage Allocated'] or
         groups['vCPUs Allocated over Time Period']):
@@ -280,14 +282,14 @@ def test_verify_allocation(resource_alloc, resource, soft_assert):
         else:
             allocated_resource = resource_alloc[resource]
 
-            if groups['Memory Allocated over Time Period']:
+            if resource == 'memory_alloc':
                 resource_from_report = groups['Memory Allocated over Time Period'].\
                     replace('MB', '').replace('GB', '')
 
-            if groups['vCPUs Allocated over Time Period']:
+            if resource == 'vcpu_alloc':
                 resource_from_report = groups['vCPUs Allocated over Time Period']
 
-            if groups['Storage Allocated']:
+            if resource == 'storage_alloc':
                 resource_from_report = groups['Storage Allocated']
 
             soft_assert(allocated_resource == resource_from_report,
