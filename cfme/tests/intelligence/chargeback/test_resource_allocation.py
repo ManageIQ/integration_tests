@@ -12,8 +12,8 @@ import cfme.intelligence.chargeback.rates as rates
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.provider.gce import GCEProvider
-from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.common.vm import VM
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -222,15 +222,17 @@ def new_chargeback_rate():
     """Create a new chargeback rate"""
     desc = 'custom_{}'.format(fauxfactory.gen_alphanumeric())
     compute = rates.ComputeRate(description=desc,
-                fields={'Allocated CPU Count':
-                        {'per_time': 'Hourly', 'variable_rate': '2'},
-                        'Allocated Memory':
-                        {'per_time': 'Hourly', 'variable_rate': '2'}})
+        fields={'Allocated CPU Count':
+                {'per_time': 'Hourly', 'variable_rate': '2'},
+                'Allocated Memory':
+                {'per_time': 'Hourly', 'variable_rate': '2'}}
+    )
     compute.create()
     if not BZ(1532368, forced_streams=['5.9']).blocks:
         storage = rates.StorageRate(description=desc,
-                fields={'Allocated Disk Storage':
-                        {'per_time': 'Hourly', 'variable_rate': '3'}})
+            fields={'Allocated Disk Storage':
+                    {'per_time': 'Hourly', 'variable_rate': '3'}}
+        )
     storage.create()
     yield desc
 
@@ -245,7 +247,10 @@ def new_chargeback_rate():
                          ids=['memory_alloc', 'vcpu_alloc', 'storage_alloc'])
 def test_validate_cost(chargeback_costs_custom, chargeback_report_custom, soft_assert,
         resource_cost):
-
+    """Test to validate resource allocation cost reported in chargeback reports.
+    The cost reported in the Chargeback report should be approximately equal to the
+    cost estimated in the resource_cost fixture.
+    """
     for groups in chargeback_report_custom:
         if not (groups['Memory Allocated Cost'] or groups['Storage Allocated Cost'] or
         groups['vCPUs Allocated Cost']):
@@ -264,7 +269,6 @@ def test_validate_cost(chargeback_costs_custom, chargeback_report_custom, soft_a
             cost_from_report = groups['Storage Allocated Cost']
 
             cost = cost_from_report.replace('$', '').replace(',', '')
-            pytest.set_trace()
             soft_assert(estimated_resource_alloc_cost - DEVIATION <=
                 float(cost) <= estimated_resource_alloc_cost + DEVIATION,
                 'Estimated cost and report cost do not match')
@@ -274,7 +278,8 @@ def test_validate_cost(chargeback_costs_custom, chargeback_report_custom, soft_a
                          ['memory_alloc', 'vcpu_alloc', 'storage_alloc'],
                          ids=['memory_alloc', 'vcpu_alloc', 'storage_alloc'])
 def test_verify_allocation(resource_alloc, chargeback_report_custom, resource, soft_assert):
-    pytest.set_trace()
+    """Test to verify VM resource allocation reported in chargeback reports.
+    """
     for groups in chargeback_report_custom:
         if not (groups['Memory Allocated over Time Period'] or groups['Storage Allocated'] or
         groups['vCPUs Allocated over Time Period']):
