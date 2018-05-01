@@ -21,6 +21,8 @@ pytestmark = [
 VM_GRAPHS = ['vm_cpu', 'vm_cpu_state', 'vm_memory', 'vm_disk', 'vm_network']
 
 
+# ToDo: Add support for GCE provider once BZ-1511099 fixed
+
 # ToDo: Currently disk activity for EC2 not collecting due to infra issue.
 # collect test as infra issue resolves.
 @pytest.mark.uncollectif(lambda provider, graph_type:
