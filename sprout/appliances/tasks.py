@@ -71,6 +71,27 @@ def retrieve_cfme_appliance_version(template_name):
             return match.groups()[0]
 
 
+def gen_appliance_name(template_id, username=None):
+    template = Template.objects.get(id=template_id)
+    if template.template_type != Template.OPENSHIFT_POD:
+        appliance_format = settings.APPLIANCE_FORMAT
+    else:
+        appliance_format = settings.OPENSHIFT_APPLIANCE_FORMAT
+
+    new_appliance_name = appliance_format.format(
+        group=template.template_group.id,
+        date=template.date.strftime("%y%m%d"),
+        rnd=fauxfactory.gen_alphanumeric(8).lower())
+
+    # Apply also username
+    if username:
+        new_appliance_name = "{}_{}".format(username, new_appliance_name)
+        if template.template_type == Template.OPENSHIFT_POD:
+            # openshift doesn't allow underscores to be used in project names
+            new_appliance_name = new_appliance_name.replace('_', '-')
+    return new_appliance_name
+
+
 def trackerbot():
     return api(trackerbot_url=settings.HUBBER_URL.rstrip('/') + '/api/')
 
@@ -325,17 +346,31 @@ def poke_trackerbot(self):
                     original_template = tpl
                     self.logger.info("Created a new template #{}".format(tpl.id))
         # If the provider is set to not preconfigure templates, do not bother even doing it.
-        if provider.num_simultaneous_configuring > 0 and provider.provider_type != 'openshift':
+        if provider.num_simultaneous_configuring > 0:
             # Preconfigured one
             try:
-                preconfigured_template = Template.objects.get(
-                    provider=provider, template_group=group, original_name=template_name,
-                    preconfigured=True)
+                # openshift providers don't have preconfigured templates.
+                # so regular template should be used
+                if provider.provider_type != 'openshift':
+                    preconfigured_template = Template.objects.get(
+                        provider=provider, template_group=group, original_name=template_name,
+                        preconfigured=True)
+                else:
+                    preconfigured_template = Template.objects.get(
+                        provider=provider, template_group=group, name=template_name,
+                        preconfigured=True)
+                    preconfigured_template.custom_data = processed_custom_data
+                    preconfigured_template.container = 'cloudforms-0'
+                    preconfigured_template.template_type = Template.OPENSHIFT_POD
+                    preconfigured_template.save(update_fields=['container',
+                                                               'template_type',
+                                                               'custom_data'])
                 if preconfigured_template.ga_released != ga_released:
                     preconfigured_template.ga_released = ga_released
                     preconfigured_template.save(update_fields=['ga_released'])
+
             except ObjectDoesNotExist:
-                if template_name in provider.templates:
+                if template_name in provider.templates and provider.provider_type != 'openshift':
                     original_id = original_template.id if original_template is not None else None
                     create_appliance_template.delay(
                         provider.id, group.id, template_name, source_template_id=original_id)
@@ -349,7 +384,7 @@ def poke_trackerbot(self):
             for template in Template.objects.filter(provider=provider, original_name=template_name):
                 template.usable = usability
                 template.save(update_fields=['usable'])
-                # Kill all shepherd appliances if they were acidentally spun up
+                # Kill all shepherd appliances if they were accidentally spun up
                 if not usability:
                     for appliance in Appliance.objects.filter(
                             template=template, marked_for_deletion=False,
@@ -726,25 +761,12 @@ def replace_clone_to_pool(
 
 def clone_template_to_pool(template_id, appliance_pool_id, time_minutes):
     template = Template.objects.get(id=template_id)
-    if template.template_type != Template.OPENSHIFT_POD:
-        appliance_format = settings.APPLIANCE_FORMAT
-    else:
-        appliance_format = settings.OPENSHIFT_APPLIANCE_FORMAT
-
-    new_appliance_name = appliance_format.format(
-        group=template.template_group.id,
-        date=template.date.strftime("%y%m%d"),
-        rnd=fauxfactory.gen_alphanumeric(8).lower())
     with transaction.atomic():
         pool = AppliancePool.objects.get(id=appliance_pool_id)
         if pool.not_needed_anymore:
             return
-        # Apply also username
-        new_appliance_name = "{}_{}".format(pool.owner.username, new_appliance_name)
-        if template.template_type == Template.OPENSHIFT_POD:
-            # openshift doesn't allow underscores to be used in project names
-            new_appliance_name = new_appliance_name.replace('_', '-')
 
+        new_appliance_name = gen_appliance_name(template_id, username=pool.owner.username)
         appliance = Appliance(template=template, name=new_appliance_name, appliance_pool=pool)
         appliance.save()
         # Set pool to these params to keep the appliances with same versions/dates
@@ -769,10 +791,7 @@ def apply_lease_times(self, appliance_id, time_minutes):
 def clone_template(self, template_id):
     self.logger.info("Cloning template {}".format(template_id))
     template = Template.objects.get(id=template_id)
-    new_appliance_name = settings.APPLIANCE_FORMAT.format(
-        group=template.template_group.id,
-        date=template.date.strftime("%y%m%d"),
-        rnd=fauxfactory.gen_alphanumeric(8))
+    new_appliance_name = gen_appliance_name(template_id)
     appliance = Appliance(template=template, name=new_appliance_name)
     appliance.save()
     clone_template_to_appliance.delay(appliance.id)
@@ -1243,23 +1262,22 @@ def generic_shepherd(self, preconfigured):
         prov_filter = {'provider__user_groups': gs.user_group}
         group_versions = Template.get_versions(
             template_group=gs.template_group, ready=True, usable=True, preconfigured=preconfigured,
-            container=None, **prov_filter)
+            **prov_filter)
         group_dates = Template.get_dates(
             template_group=gs.template_group, ready=True, usable=True, preconfigured=preconfigured,
-            container=None, **prov_filter)
+            **prov_filter)
         if group_versions:
             # Downstream - by version (downstream releases)
             version = group_versions[0]
             # Find the latest date (one version can have new build)
             dates = Template.get_dates(
                 template_group=gs.template_group, ready=True, usable=True,
-                version=group_versions[0], preconfigured=preconfigured, container=None,
-                **prov_filter)
+                version=group_versions[0], preconfigured=preconfigured, **prov_filter)
             if not dates:
                 # No template yet?
                 continue
             date = dates[0]
-            filter_keep = {"version": version, "date": date, 'container': None}
+            filter_keep = {"version": version, "date": date}
             filters_kill = []
             for kill_date in dates[1:]:
                 filters_kill.append({"version": version, "date": kill_date})
@@ -1267,7 +1285,7 @@ def generic_shepherd(self, preconfigured):
                 filters_kill.append({"version": kill_version})
         elif group_dates:
             # Upstream - by date (upstream nightlies)
-            filter_keep = {"date": group_dates[0], 'container': None}
+            filter_keep = {"date": group_dates[0]}
             filters_kill = [{"date": v} for v in group_dates[1:]]
         else:
             continue  # Ignore this group, no templates detected yet
@@ -1297,10 +1315,7 @@ def generic_shepherd(self, preconfigured):
             # There must be some templates in order to run the provisioning
             # Provision ONE appliance at time for each group, that way it is possible to maintain
             # reasonable balancing
-            new_appliance_name = settings.APPLIANCE_FORMAT.format(
-                group=template.template_group.id,
-                date=template.date.strftime("%y%m%d"),
-                rnd=fauxfactory.gen_alphanumeric(8))
+            new_appliance_name = gen_appliance_name(template.id)
             with transaction.atomic():
                 # Now look for templates that are on non-busy providers
                 tpl_free = filter(
@@ -1329,7 +1344,7 @@ def generic_shepherd(self, preconfigured):
         for filter_kill in filters_kill:
             for template in Template.objects.filter(
                     ready=True, usable=True, template_group=gs.template_group,
-                    preconfigured=preconfigured, container=None, **filter_kill):
+                    preconfigured=preconfigured, **filter_kill):
 
                 for a in Appliance.objects.filter(
                         template=template, appliance_pool=None, marked_for_deletion=False):

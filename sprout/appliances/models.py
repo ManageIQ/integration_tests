@@ -917,13 +917,36 @@ class Appliance(MetadataMixin):
         return self.template.preconfigured
 
     @property
+    def is_openshift(self):
+        return self.provider.provider_type == 'openshift'
+
+    @property
+    def app_args(self):
+        kwargs = {
+            'container': self.template.container,
+            'hostname': self.ip_address,
+        }
+
+        if self.is_openshift:
+            ocp_kwargs = {
+                'db_host': self.openshift_ext_ip,
+                'project': self.openshift_project,
+            }
+            kwargs.update(ocp_kwargs)
+        return kwargs
+
+    @property
     def cfme(self):
-        return CFMEAppliance.from_provider(
-            self.provider_name, self.name, container=self.template.container)
+        kwargs = self.app_args
+        kwargs.update({
+            'provider_key': self.provider_name,
+            'vm_name': self.name
+        })
+        return CFMEAppliance.from_provider(**kwargs)
 
     @property
     def ipapp(self):
-        return IPAppliance(hostname=self.ip_address, container=self.template.container)
+        return IPAppliance(**self.app_args)
 
     def user_can_use(self, user):
         return self.provider.user_can_use(user)
@@ -941,10 +964,6 @@ class Appliance(MetadataMixin):
     @property
     def containerized(self):
         return self.template.container is not None
-
-    @property
-    def is_openshift(self):
-        return self.provider.provider_type == 'openshift'
 
     def set_status(self, status):
         with transaction.atomic():
@@ -1494,8 +1513,8 @@ class AppliancePool(MetadataMixin):
     @property
     def num_shepherd_appliances(self):
         return len(
-            Appliance.objects.filter(appliance_pool=None, **self.appliance_filter_params
-            ).distinct())
+            Appliance.objects.filter(appliance_pool=None,
+                                     **self.appliance_filter_params).distinct())
 
     def __repr__(self):
         return "<AppliancePool id: {}, group: {}, total_count: {}>".format(

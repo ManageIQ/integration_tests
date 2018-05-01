@@ -2434,30 +2434,48 @@ class Appliance(IPAppliance):
             vm_name: Name of the VM this appliance is running as
             browser_steal: Setting of the browser_steal attribute.
         """
-        from cfme.utils.providers import get_mgmt
-        provider = get_mgmt(provider_key)
+        from cfme.utils.providers import get_crud
+        from cfme.containers.provider.openshift import OpenshiftProvider
+        from cfme.utils import conf
 
-        def is_ip_available():
-            try:
-                ip = provider.get_ip_address(vm_name)
-                if ip is None:
+        provider = get_crud(provider_key)
+        app_kwargs = kwargs.copy()
+
+        if 'hostname' not in app_kwargs:
+            def is_ip_available():
+                try:
+                    ip = provider.mgmt.get_ip_address(vm_name)
+                    if ip is None:
+                        return False
+                    else:
+                        return ip
+                except AttributeError:
                     return False
-                else:
-                    return ip
-            except AttributeError:
-                return False
-
-        if 'hostname' in kwargs:
-            hostname = kwargs.pop('hostname')
-        else:
             ec, tc = wait_for(is_ip_available,
                               delay=5,
                               num_sec=600)
-            hostname = str(ec)
+            app_kwargs['hostname'] = str(ec)
 
-        appliance = cls(hostname=hostname, **kwargs)
+        if isinstance(provider, OpenshiftProvider):
+            # there should also be present appliance hostname, container, db_host
+            provider_creds = conf.credentials[provider.provider_data['credentials']]
+            ssh_creds = conf.credentials[provider.provider_data['ssh_creds']]
+
+            if not app_kwargs.get('project'):
+                app_kwargs['project'] = vm_name
+            app_kwargs['openshift_creds'] = {
+                'hostname': provider.provider_data['hostname'],
+                'username': provider_creds['username'],
+                'password': provider_creds['password'],
+                'ssh': {
+                    'username': ssh_creds['username'],
+                    'password': ssh_creds['password'],
+                }
+            }
+
+        appliance = cls(**app_kwargs)
         appliance.vm_name = vm_name
-        appliance.provider = provider
+        appliance.provider = provider.mgmt
         appliance.provider_key = provider_key
         appliance.name = name or cls._default_name
         return appliance
