@@ -28,7 +28,6 @@ from py.path import local
 
 from artifactor import ArtifactorBasePlugin
 from cfme.utils import process_pytest_path
-from cfme.utils.conf import cfme_data  # Only for the provider specific reports
 from cfme.utils.path import template_path
 
 _tests_tpl = {
@@ -68,16 +67,6 @@ class ReporterBase(object):
             ]
 
         self.render_report(template_data, "report", artifact_dir, "test_report.html")
-
-    def _run_provider_report(self, old_artifacts, artifact_dir, version=None, fw_version=None):
-        for mgmt in cfme_data["management_systems"].keys():
-            template_data = self.process_data(
-                old_artifacts, artifact_dir, version, fw_version, name_filter=mgmt
-            )
-
-            self.render_report(
-                template_data, "report_{}".format(mgmt), artifact_dir, "test_report_provider.html"
-            )
 
     def render_report(self, report, filename, log_dir, template):
         template_env = Environment(loader=FileSystemLoader(template_path.strpath))
@@ -345,16 +334,15 @@ class ReporterBase(object):
 
 class Reporter(ArtifactorBasePlugin, ReporterBase):
     def plugin_initialize(self):
-        self.register_plugin_hook("report_test", self.report_test)
-        self.register_plugin_hook("finish_session", self.run_report)
-        self.register_plugin_hook("finish_session", self.run_provider_report)
-        self.register_plugin_hook("build_report", self.run_report)
-        self.register_plugin_hook("start_test", self.start_test)
-        self.register_plugin_hook("skip_test", self.skip_test)
-        self.register_plugin_hook("finish_test", self.finish_test)
-        self.register_plugin_hook("session_info", self.session_info)
-        self.register_plugin_hook("composite_pump", self.composite_pump)
-        self.register_plugin_hook("tb_info", self.tb_info)
+        self.register_plugin_hook('report_test', self.report_test)
+        self.register_plugin_hook('finish_session', self.run_report)
+        self.register_plugin_hook('build_report', self.run_report)
+        self.register_plugin_hook('start_test', self.start_test)
+        self.register_plugin_hook('skip_test', self.skip_test)
+        self.register_plugin_hook('finish_test', self.finish_test)
+        self.register_plugin_hook('session_info', self.session_info)
+        self.register_plugin_hook('composite_pump', self.composite_pump)
+        self.register_plugin_hook('tb_info', self.tb_info)
 
     def configure(self):
         self.only_failed = self.data.get("only_failed", False)
@@ -466,9 +454,5 @@ class Reporter(ArtifactorBasePlugin, ReporterBase):
         )
 
     @ArtifactorBasePlugin.check_configured
-    def run_report(self, old_artifacts, artifact_dir, version=None, fw_version=None):
-        self._run_report(old_artifacts, artifact_dir, version, fw_version)
-
-    @ArtifactorBasePlugin.check_configured
-    def run_provider_report(self, old_artifacts, artifact_dir, version=None, fw_version=None):
-        self._run_provider_report(old_artifacts, artifact_dir, version, fw_version)
+    def run_report(self, old_artifacts, report_path, version=None, fw_version=None):
+        self._run_report(old_artifacts, report_path, version, fw_version)
