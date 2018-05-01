@@ -149,6 +149,7 @@ setup(
             'policies = cfme.control.explorer.policies:PolicyCollection',
             'policy_profiles = cfme.control.explorer.policy_profiles:PolicyProfileCollection',
             'projects = cfme.configure.access_control:ProjectCollection',
+            'providers = cfme.common.provider:ProviderCollection',
             ('provisioning_dialogs = '
                 'cfme.automate.provisioning_dialogs:ProvisioningDialogsCollection'),
             'regions = cfme.base:RegionCollection',

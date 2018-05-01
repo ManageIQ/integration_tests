@@ -816,7 +816,7 @@ class BaseProvider(Taggable, Updateable, BaseEntity):
 
 
 @attr.s
-class ProvidersCollection(BaseCollection):
+class ProviderCollection(BaseCollection):
 
     ENTITY = BaseProvider
 
