@@ -248,8 +248,13 @@ def new_chargeback_rate():
 def test_validate_cost(chargeback_costs_custom, chargeback_report_custom, soft_assert,
         resource_cost):
     """Test to validate resource allocation cost reported in chargeback reports.
-    The cost reported in the Chargeback report should be approximately equal to the
-    cost estimated in the resource_cost fixture.
+
+    Steps:
+        1.Create chargeback report for VMs.Include fields for resource allocation
+          and resource allocation costs in the report.
+        2.Fetch chargeback rates from DB and calculate cost estimates for allocated resources
+        3.Validate the costs reported in the chargeback report.The costs in the report should
+          be approximately equal to the cost estimated in the resource_cost fixture.
     """
     for groups in chargeback_report_custom:
         if not (groups['Memory Allocated Cost'] or groups['Storage Allocated Cost'] or
@@ -279,6 +284,13 @@ def test_validate_cost(chargeback_costs_custom, chargeback_report_custom, soft_a
                          ids=['memory_alloc', 'vcpu_alloc', 'storage_alloc'])
 def test_verify_allocation(resource_alloc, chargeback_report_custom, resource, soft_assert):
     """Test to verify VM resource allocation reported in chargeback reports.
+
+    Steps:
+        1.Create chargeback report for VMs.Include fields for resource allocation
+          and resource allocation costs in the report.
+        2.Fetch resource allocation values using REST API.
+        3.Verify that the resource allocation values reported in the chargeback report
+          match the values fetched through REST API.
     """
     for groups in chargeback_report_custom:
         if not (groups['Memory Allocated over Time Period'] or groups['Storage Allocated'] or
