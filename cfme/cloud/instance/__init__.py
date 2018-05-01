@@ -1,5 +1,4 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
-from riggerlib import recursive_update
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import CheckableBootstrapTreeview, Dropdown, Button
 from widgetastic.utils import VersionPick, Version, partial_match
@@ -12,12 +11,13 @@ from cfme.common.vm_views import (
     SetOwnershipView, ManagementEngineView, PolicySimulationView,
     RetirementView, RetirementViewWithOffset)
 from cfme.exceptions import InstanceNotFound, ItemNotFound, FlavorNotFound
-from cfme.services.requests import RequestsView
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import ManageIQTree, TimelinesView, Accordion, CompareToolBarActionsView
+
+from manageiq_client.filters import Q
 
 
 class InstanceDetailsToolbar(View):
@@ -189,43 +189,6 @@ class Instance(VM, Navigatable):
         super(Instance, self).__init__(name=name, provider=provider, template_name=template_name)
         Navigatable.__init__(self, appliance=appliance)
 
-    # def create(self, form_values, cancel=False):
-    #     """Provisions an instance with the given properties through CFME
-    #
-    #     Args:
-    #         form_values: dictionary of form values for provisioning, structured into tabs
-    #
-    #     Note:
-    #         Calling create on a sub-class of instance will generate the properly formatted
-    #         dictionary when the correct fields are supplied.
-    #     """
-    #     view = navigate_to(self, 'Provision')
-    #
-    #     # Only support 1 security group for now
-    #     # TODO: handle multiple
-    #     if 'environment' in form_values and 'security_groups' in form_values['environment'] and \
-    #             isinstance(form_values['environment']['security_groups'], (list, tuple)):
-    #
-    #         first_group = form_values['environment']['security_groups'][0]
-    #         recursive_update(form_values, {'environment': {'security_groups': first_group}})
-    #
-    #     view.form.fill(form_values)
-    #
-    #     if cancel:
-    #         view.form.cancel_button.click()
-    #         # Redirects to Instance All
-    #         view = self.browser.create_view(InstanceAllView)
-    #         wait_for(lambda: view.is_displayed, timeout=10, delay=2, message='wait for redirect')
-    #         view.flash.assert_success_message(self.PROVISION_CANCEL)
-    #         view.flash.assert_no_error()
-    #     else:
-    #         view.form.submit_button.click()
-    #
-    #         view = self.appliance.browser.create_view(RequestsView)
-    #         wait_for(lambda: view.flash.messages, fail_condition=[], timeout=10, delay=2,
-    #                  message='wait for Flash Success')
-    #         view.flash.assert_success_message(self.PROVISION_START)
-
     def update(self, values, cancel=False, reset=False):
         """Update cloud instance
 
@@ -383,14 +346,27 @@ class Instance(VM, Navigatable):
             wait_for(self.provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
         provisioning = self.provider.data['provisioning']
 
-        image_guid = self.appliance.rest_api.collections.templates.get(
-            name=provisioning['image']['name']).guid
         provider_rest = self.appliance.rest_api.collections.providers.get(name=self.provider.name)
+
+        # find out image guid
+        image_name = provisioning['image']['name']
+        images = self.appliance.rest_api.collections.templates.filter(Q('name', '=', image_name))
+        for image in images:
+            # Filtering deprecated templates which don't have ems_id
+            try:
+                ems_id = image.ems_id
+            except AttributeError:
+                continue
+            if ems_id == provider_rest.id:
+                image_guid = image.guid
+                break
+
         if ':' in provisioning['instance_type'] and self.provider.one_of(EC2Provider):
             instance_type = provisioning['instance_type'].split(':')[0].strip()
         else:
             instance_type = provisioning['instance_type']
 
+        # find out flavor
         flavors = self.appliance.rest_api.collections.flavors.find_by(name=instance_type)
         assert flavors, "Flavor {} wasn't found"
         for flavor in flavors:
@@ -470,6 +446,18 @@ class Instance(VM, Navigatable):
                         tenant['ems_id'] == flavor.ems_id):
                     cloud_tenant_id = tenant['id']
 
+        resource_group_id = None
+        if self.provider.one_of(AzureProvider):
+            resource_groups = self.appliance.rest_api.get(
+                '{}?attributes=resource_groups'.format(provider_rest._href))['resource_groups']
+            resource_group_id = None
+            resource_group_name = provisioning.get('resource_group')
+            for res_group in resource_groups:
+                if (res_group['name'] == resource_group_name and
+                        res_group['ems_id'] == provider_rest.id):
+                    resource_group_id = res_group['id']
+                    break
+
         inst_args = {
             "version": "1.1",
             "template_fields": {
@@ -482,7 +470,8 @@ class Instance(VM, Navigatable):
                 "cloud_network": cloud_network['id'],
                 "cloud_subnet": cloud_subnet['id'],
                 "placement_availability_zone": availability_zone_id,
-                "monitoring": "basic"
+                "monitoring": "basic",
+
             },
             "requester": {
                 "user_name": "admin",
@@ -501,6 +490,9 @@ class Instance(VM, Navigatable):
         }
         if cloud_tenant_id:
             inst_args['vm_fields']['cloud_tenant'] = cloud_tenant_id
+
+        if resource_group_id:
+            inst_args['vm_fields']['resoupse_group'] = resource_group_id
 
         return inst_args
 

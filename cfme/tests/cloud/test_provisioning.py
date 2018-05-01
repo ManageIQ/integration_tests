@@ -114,7 +114,7 @@ def test_cloud_provision_from_template_using_rest(
         # Making sure that we don't pass mandatory fields. Add new if needed
         for key in ['cloud_network', 'cloud_subnet', 'placement_availability_zone']:
             del inst_args['vm_fields'][key]
-        recursive_update(inst_args, {"additional_values": {"placemnet_auto": True}})
+        recursive_update(inst_args, {"additional_values": {"placement_auto": True}})
     assert vm.create_rest(provisioning_data=inst_args), "VM {} wasn't created".format(vm.name)
 
 

@@ -32,6 +32,7 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
+from manageiq_client.filters import Q
 from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
     SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
@@ -981,7 +982,8 @@ class InfraVm(VM):
             wait_for(self.provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
         provisioning = self.provider.data['provisioning']
         template_name = provisioning['template']
-        templates = self.appliance.rest_api.collections.templates.find_by(name=template_name)
+        templates = self.appliance.rest_api.collections.templates.filter(
+            Q('name', '=', template_name))
         for template in templates:
             try:
                 ems_id = template.ems_id
