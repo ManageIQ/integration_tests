@@ -1,7 +1,6 @@
 import attr
 from widgetastic.widget import View
 from widgetastic_patternfly import Tab, BootstrapSelect, Input, Button
-from widgetastic_manageiq import RadioGroup
 from wrapanapi.nuage import NuageSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm, EventsEndpoint
@@ -10,6 +9,7 @@ from cfme.networks.security_group import SecurityGroupCollection
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.varmeth import variable
+from widgetastic_manageiq import RadioGroup
 from . import NetworkProvider
 
 
@@ -99,7 +99,7 @@ class NuageProvider(NetworkProvider):
 
         return cls.appliance.collections.network_providers.instantiate(
             prov_class=cls,
-            ame=prov_config['name'],
+            name=prov_config['name'],
             endpoints=endpoints,
             api_version=prov_config['api_version'],
             api_version_name=prov_config['api_version_name'],

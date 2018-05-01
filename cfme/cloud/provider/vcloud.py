@@ -1,5 +1,4 @@
 import attr
-
 from widgetastic.widget import View
 from widgetastic_patternfly import Tab, Input
 from wrapanapi.vcloud import VmwareCloudSystem
@@ -79,7 +78,7 @@ class VmwareCloudProvider(CloudProvider):
         endpoint = VmwareCloudEndpoint(**prov_config['endpoints']['default'])
         return cls.appliance.collections.cloud_providers.instantiate(
             prov_class=cls,
-            ame=prov_config['name'],
+            name=prov_config['name'],
             endpoints={endpoint.name: endpoint},
             api_version=prov_config['api_version'],
             api_version_name=prov_config['api_version_name'],
