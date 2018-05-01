@@ -5,7 +5,6 @@ import traceback
 from copy import copy
 from datetime import datetime
 from tempfile import NamedTemporaryFile
-from textwrap import dedent
 from time import sleep, time
 
 import attr
@@ -140,7 +139,7 @@ class ApplianceConsoleCli(object):
             "appliance_console_cli {}".format(appliance_console_cli_command))
 
     def set_hostname(self, hostname):
-        self._run("--host {host}".format(host=hostname))
+        return self._run("--host {host}".format(host=hostname))
 
     def configure_appliance_external_join(self, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):
@@ -507,6 +506,8 @@ class IPAppliance(object):
             # 'self.unpartitioned_disks' should exist and therefore this won't run.
             if self.is_downstream and not self.unpartitioned_disks:
                 self.db.create_db_lvm()
+            if on_openstack:
+                self.set_resolvable_hostname(log_callback=log_callback)
 
             self.db.setup(region=region, key_address=key_address,
                           db_address=db_address, is_pod=self.is_pod)
@@ -2361,6 +2362,51 @@ class IPAppliance(object):
                 )
             )
 
+    @logger_wrap('Configuring resolvable hostname')
+    def set_resolvable_hostname(self, log_callback=None):
+        """Try to lookup the hostname based on self.hostname, which is generally an IP
+
+        Intended use is for appliances hosted on openstack, which will likely not have a FQDN
+        hostname after deploying the image. Can be called against any appliance type.
+
+        If a hostname is resolved for the IP, its used to set the hostname via appliance_cli
+        If an IP is resolved for self.hostname, no action is taken
+        If nothing is resolved, no action is taken
+
+        Returns:
+            Boolean, True if hostname was set
+        """
+        # Example lookups with self.hostname as IP and self.hostname as resolvable name
+        # [root@host-192-168-55-85 ~]# host 1.2.3.137
+        # 137.3.2.1.in-addr.arpa domain name pointer 137.test.miq.com.
+        # [root@host-192-168-55-85 ~]# host 137.test.miq.com
+        # 137.test.miq.com has address 1.2.3.137
+        host_check = self.ssh_client.run_command('host {}'.format(self.hostname))
+        log_callback('Parsing for resolvable hostname from "{}"'.format(host_check.output))
+        fqdn = None  # just in case the logic gets weird
+        if host_check.failed:
+            # not resolvable, don't set
+            logger.warning('Bad RC from host command, skipping setting resolvable hostname')
+            return False
+        if host_check.success and 'domain name pointer' in host_check.output:
+            # resolvable and reverse lookup
+            # parse out the resolved hostname
+            fqdn = host_check.output.split(' ')[-1].rstrip('\n').rstrip('.')
+            log_callback('Found FQDN by appliance IP: "{}"'.format(fqdn))
+        elif host_check.success and 'has address' in host_check.output:
+            # resolvable and address returned
+            fqdn = self.hostname
+            log_callback('appliance hostname attr is FQDN: "{}"'.format(fqdn))
+        else:
+            # unexpected output on success, don't set
+            logger.warning('Success from host command with unexpected output, '
+                           'skipping setting resolvable hostname')
+            return False
+        if fqdn is not None:
+            log_callback('Setting FQDN "{}" via appliance_console_cli'.format(fqdn))
+            result = self.appliance_console_cli.set_hostname(str(fqdn))
+            return result.success
+
 
 class Appliance(IPAppliance):
     """Appliance represents an already provisioned cfme appliance vm
@@ -2454,26 +2500,9 @@ class Appliance(IPAppliance):
             self.restart_evm_service(log_callback=log_callback)
             self.wait_for_web_ui(log_callback=log_callback)
 
-        # Set fqdn for openstack appliance
-        # If hostname is IP or resolvable, try hostname lookup and set it
-        # Example lookups with self.hostname as IP and self.hostname as resolvable name
-        # [root@host-192-168-55-85 ~]# host 1.2.3.137
-        # 137.3.2.1.in-addr.arpa domain name pointer 137.test.miq.com.
-        # [root@host-192-168-55-85 ~]# host 137.test.miq.com
-        # 137.test.miq.com has address 1.2.3.137
+        # Try to set a resolvable FQDN on openstack
         if on_openstack:
-            host_out = self.ssh_client.run_command('host {}'.format(self.hostname))
-            if host_out.success and 'domain name pointer' in host_out.output:
-                # resolvable and reverse lookup
-                fqdn = host_out.output.split(' ')[-1].rstrip('.')
-            elif host_out.success and 'has address' in host_out.output:
-                # resolvable and address returned
-                fqdn = self.hostname
-            else:
-                # not resolvable, don't set
-                fqdn = None
-            if fqdn:
-                self.appliance_console_cli.set_hostname(fqdn)
+            self.set_resolvable_hostname(log_callback=log_callback)
 
     @logger_wrap("Configure Appliance: {}")
     def configure(self, setup_fleece=False, log_callback=None, **kwargs):
