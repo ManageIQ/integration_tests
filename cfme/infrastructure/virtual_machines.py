@@ -1005,6 +1005,7 @@ class InfraVm(VM):
             "vm_fields": {
                 "vm_name": self.name,
                 "request_type": "template",
+                "vlan": provisioning["vlan"]
             },
             "requester": {
                 "user_name": "admin",
@@ -1026,6 +1027,8 @@ class InfraVm(VM):
 
         if self.provider.one_of(RHEVMProvider):
             inst_args['vm_fields']['provision_type'] = 'native_clone'
+            # TODO Workaround for BZ 1541036/1449157. <Template> uses template vnic_profile
+            # shouldn't be default
             if self.appliance.version > '5.9.0.16':
                 inst_args['vm_fields']['vlan'] = '<Template>'
 

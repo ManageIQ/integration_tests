@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Module containing classes with common behaviour for both VMs and Instances of all types."""
 from datetime import datetime, date, timedelta
-from riggerlib import recursive_update
 
 from cfme.common import Taggable
 from cfme.common.vm_console import VMConsole
@@ -687,12 +686,12 @@ class VM(BaseVM):
                 else:
                     template_name = self.provider.data['provisioning']['template']
                     self.template_name = template_name
-            vm_args = self.vm_default_args
             if provisioning_data:
-                recursive_update(vm_args, provisioning_data)
+                vm_args = provisioning_data
                 if provisioning_data.get('environment', {}).get('automatic_placement'):
                     vm_args['environment'] = {'automatic_placement': True}
-            recursive_update(vm_args, {'catalog': {'vm_name': self.name}})
+            else:
+                vm_args = self.vm_default_args
             provision_view = navigate_to(self, 'Provision')
             provision_view.form.fill(vm_args)
             all_view = self.create_view(navigator.get_class(self, 'All').VIEW)
@@ -752,10 +751,10 @@ class VM(BaseVM):
                 self.provider.refresh_provider_relationships()
                 wait_for(self.provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
 
-            vm_args = self.vm_default_args_rest
-            recursive_update(vm_args, {"vm_fields": {"vm_name": self.name}})
             if provisioning_data:
-                recursive_update(vm_args, provisioning_data)
+                vm_args = provisioning_data
+            else:
+                vm_args = self.vm_default_args_rest
             response = self.appliance.rest_api.collections.provision_requests.action.create(
                 **vm_args)[0]
             assert_response(self.appliance)
