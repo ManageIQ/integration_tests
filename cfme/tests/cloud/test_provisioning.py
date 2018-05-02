@@ -3,8 +3,8 @@
 # in selenium (the group is selected then immediately reset)
 from textwrap import dedent
 
-import fauxfactory
 import pytest
+import fauxfactory
 from riggerlib import recursive_update
 from widgetastic_patternfly import CheckableBootstrapTreeview as Check_tree
 
@@ -35,7 +35,7 @@ def vm_name():
     return random_vm_name(context='prov')
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture()
 def testing_instance(request, setup_provider, provider, provisioning, vm_name, tag):
     """ Fixture to prepare instance parameters for provisioning
     """

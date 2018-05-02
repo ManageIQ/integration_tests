@@ -4,9 +4,10 @@ quadicon lists, and VM details page.
 """
 from collections import namedtuple
 from copy import copy
+import re
 
 import fauxfactory
-import re
+from manageiq_client.filters import Q
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.utils import partial_match, Parameter, VersionPick, Version
 from widgetastic.widget import (
@@ -14,6 +15,11 @@ from widgetastic.widget import (
 from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, CheckableBootstrapTreeview, Dropdown, Input as
     WInput)
+from widgetastic_manageiq import (
+    Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
+    SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
+from widgetastic_manageiq.vm_reconfigure import DisksTable
+
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.candu_views import VMUtilizationAllView
 from cfme.common.vm import VM, Template as BaseTemplate
@@ -32,11 +38,6 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
-from manageiq_client.filters import Q
-from widgetastic_manageiq import (
-    Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
-    SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
-from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 
 def has_child(tree, text, parent_item=None):

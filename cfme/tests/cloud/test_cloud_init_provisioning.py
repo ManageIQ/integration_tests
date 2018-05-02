@@ -2,12 +2,13 @@
 # These tests don't work at the moment, due to the security_groups multi select not working
 # in selenium (the group is selected then immediately reset)
 import pytest
+from riggerlib import recursive_update
 
-from cfme.common.vm import VM
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.common.vm import VM
 from cfme.infrastructure.pxe import get_template_from_config
 from cfme.utils import ssh
 from cfme.utils.generators import random_vm_name
@@ -54,7 +55,8 @@ def test_provision_cloud_init(request, setup_provider, provider, provisioning,
     instance = VM.factory(vm_name, provider, image)
     inst_args = instance.vm_default_args
     request.addfinalizer(instance.cleanup_on_provider)
-    inst_args['customize'] = {'custom_template': {'name': provisioning['ci-template']}}
+    recursive_update(inst_args, {'customize':
+                                 {'custom_template': {'name': provisioning['ci-template']}}})
     if provider.one_of(AzureProvider):
         inst_args['environment']['public_ip_address'] = "New"
     if provider.one_of(OpenStackProvider):

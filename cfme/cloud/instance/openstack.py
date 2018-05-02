@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 from navmazing import NavigateToSibling
 from widgetastic.widget import View, NoSuchElementException
-from widgetastic_patternfly import Button, BootstrapSelect
 from widgetastic_manageiq import CheckboxSelect, Select, Input
+from widgetastic_patternfly import Button, BootstrapSelect
 
-from cfme.exceptions import OptionNotAvailable, DestinationNotFound
 from cfme.common.vm_views import RightSizeView
+from cfme.exceptions import OptionNotAvailable, DestinationNotFound
 from cfme.utils import version, deferred_verpick
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from . import Instance, CloudInstanceView

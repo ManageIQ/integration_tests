@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import pytest
-
 from riggerlib import recursive_update
 
 from cfme import test_requirements
@@ -58,8 +57,8 @@ def test_infra_provision_from_template(appliance, setup_provider, provider, vm_n
 
     if auto:
         inst_args['environment'] = {'automatic_placement': auto}
-    assert vm.create(check_existing=True, provisioning_data=inst_args, find_in_cfme=True), \
-        "VM {} wasn't created".format(vm.name)
+    assert vm.create(check_existing=True, provisioning_data=inst_args, find_in_cfme=True), (
+        "VM {} wasn't created".format(vm.name))
 
 
 @pytest.mark.rhv2

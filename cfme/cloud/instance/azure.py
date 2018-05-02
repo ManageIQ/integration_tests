@@ -4,7 +4,6 @@ from riggerlib import recursive_update
 from cfme.exceptions import OptionNotAvailable
 from cfme.utils import version, deferred_verpick
 from cfme.utils.log import logger
-
 from . import Instance
 
 

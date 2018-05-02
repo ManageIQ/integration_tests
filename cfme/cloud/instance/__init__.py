@@ -1,8 +1,10 @@
+from manageiq_client.filters import Q
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic_patternfly import CheckableBootstrapTreeview, Dropdown, Button
 from widgetastic.utils import VersionPick, Version, partial_match
 from widgetastic.widget import View
+from widgetastic_manageiq import ManageIQTree, TimelinesView, Accordion, CompareToolBarActionsView
+from widgetastic_patternfly import CheckableBootstrapTreeview, Dropdown, Button
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM
@@ -15,9 +17,6 @@ from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import ManageIQTree, TimelinesView, Accordion, CompareToolBarActionsView
-
-from manageiq_client.filters import Q
 
 
 class InstanceDetailsToolbar(View):
@@ -414,8 +413,8 @@ class Instance(VM, Navigatable):
             raise ItemNotFound("Cloud_subnet '{}' ID wasn't found".format(cloud_subnet))
 
         def _find_availability_zone_id():
-            subnet_data = self.appliance.rest_api.get(provider_rest._href +
-                                                   '?attributes=cloud_subnets')
+            subnet_data = self.appliance.rest_api.get('{}?attributes=cloud_subnets'.
+                                                      format(provider_rest._href))
             for subnet in subnet_data['cloud_subnets']:
                 if subnet['id'] == cloud_subnet['id'] and 'availability_zone_id' in subnet:
                     return subnet['availability_zone_id']

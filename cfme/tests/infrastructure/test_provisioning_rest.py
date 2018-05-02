@@ -1,6 +1,6 @@
 import fauxfactory
-import pytest
 
+import pytest
 from riggerlib import recursive_update
 
 from cfme import test_requirements
@@ -94,7 +94,7 @@ def clean_vm(appliance, vm_name):
 @pytest.mark.rhv2
 @pytest.mark.parametrize('auto', [True, False], ids=["Auto", "Manual"])
 def test_infra_provision_from_template_using_rest(request, appliance, vm_name, provider,
-                                              setup_provider, auto):
+                                                  setup_provider, auto):
     """Tests provision via REST API.
     Prerequisities:
         * Have a provider set up with templates suitable for provisioning.
