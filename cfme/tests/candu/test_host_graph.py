@@ -53,14 +53,7 @@ def test_host_most_recent_hour_graph_screen(graph_type, provider, host, enable_c
     view = navigate_to(host, 'candu')
     view.options.interval.fill('Most Recent Hour')
 
-    if graph_type == 'host_cpu':
-        graph = view.interval_type.host_cpu
-    elif graph_type == 'host_memory':
-        graph = view.interval_type.host_memory
-    elif graph_type == 'host_disk':
-        graph = view.interval_type.host_disk
-    else:
-        graph = view.interval_type.host_network
+    graph = getattr(view.interval_type, graph_type)
 
     assert graph.is_displayed
 
