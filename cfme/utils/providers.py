@@ -172,6 +172,7 @@ class ProviderFilter(object):
                         curr_ver = provider.appliance.version
                     except:
                         return True
+                    ver = type(curr_ver)(ver)
                     if not comparator(curr_ver, ver):
                         return False
                     break
@@ -246,7 +247,7 @@ def list_providers(filters=None, use_global_filters=True):
             'You need to change it appropriately.')
     filters = filters or []
     if use_global_filters:
-        filters = filters + global_filters.values()
+        filters = filters + list(global_filters.values())
     providers = [get_crud(prov_key) for prov_key in providers_data]
     for prov_filter in filters:
         providers = filter(prov_filter, providers)
