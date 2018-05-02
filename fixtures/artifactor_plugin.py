@@ -73,6 +73,7 @@ class DummyClient(object):
         # DummyClient is always False,
         # so it's easy to see if we have an artiactor client
         return False
+    __bool__ = __nonzero__
 
 
 def get_client(art_config, pytest_config):
