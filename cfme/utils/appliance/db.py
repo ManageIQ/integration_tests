@@ -282,7 +282,7 @@ class ApplianceDB(AppliancePlugin):
         """
         client = self.ssh_client
 
-        logging.info("Creating new LVM for db using remaining space on /dev/vda...")
+        self.logger.info("Creating new LVM for db using remaining space on /dev/vda...")
 
         fstab_line = '/dev/mapper/dbvg-dblv $APPLIANCE_PG_MOUNT_POINT xfs defaults 0 0'
         commands_to_run = [
@@ -296,8 +296,10 @@ class ApplianceDB(AppliancePlugin):
         ]
 
         for command in commands_to_run:
-            logging.info("Running command: {}".format(command))
-            client.run_command(command)
+            result = client.run_command(command)
+            if not result.success:
+                self.logger.warn("Command failed!")
+            self.logger.info("Output:\n%s", result)
 
     def enable_internal(self, region=0, key_address=None, db_password=None, ssh_password=None,
                         db_disk=None):
@@ -326,6 +328,7 @@ class ApplianceDB(AppliancePlugin):
             # See if there's any unpartitioned disks on the appliance
             try:
                 db_disk = self.appliance.unpartitioned_disks[0]
+                self.logger.info("Using unpartitioned disk for DB at %s", db_disk)
             except IndexError:
                 db_disk = None
 
@@ -335,6 +338,7 @@ class ApplianceDB(AppliancePlugin):
             # been created & mounted (such as by us in self.create_db_lvm)
             result = client.run_command("mount | grep $APPLIANCE_PG_MOUNT_POINT | cut -f1 -d' '")
             if result:
+                self.logger.info("Using pre-mounted DB disk at %s", result)
                 db_mounted = True
 
         if not db_mounted and not db_disk:
