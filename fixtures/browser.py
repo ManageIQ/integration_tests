@@ -38,7 +38,7 @@ def pytest_exception_interact(node, call, report):
     from six.moves.http_client import BadStatusLine
     from socket import error
 
-    val = safe_string(call.excinfo.value.message).decode('utf-8', 'ignore')
+    val = safe_string(call.excinfo.value).decode('utf-8', 'ignore')
     if isinstance(call.excinfo.value, (URLError, BadStatusLine, error)):
         logger.error("internal Exception:\n %s", str(call.excinfo))
         from cfme.utils.browser import manager
