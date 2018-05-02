@@ -350,7 +350,7 @@ def main(**kwargs):
 
             if provider_type == 'ec2':
                 wait_for(
-                    cloud_init_done, func_args=[app], num_sec=120, handle_exception=True, delay=5)
+                    cloud_init_done, func_args=[app], num_sec=600, handle_exception=True, delay=5)
             if provider_type == 'gce':
                 app.configure_gce()
             elif provider_type == 'openshift':

@@ -502,9 +502,11 @@ class IPAppliance(object):
             if fix_ntp_clock and not self.is_pod:
                 self.fix_ntp_clock(log_callback=log_callback)
                 # TODO: Handle external DB setup
-            # This is workaround for Openstack appliances to use only one disk for the VMDB
-            if on_openstack and self.is_downstream and not self.unpartitioned_disks:
-                self.configure_rhos_db_disk()
+            # This is workaround for appliances to use only one disk for the VMDB
+            # If they have been provisioned with a second disk in the infra,
+            # 'self.unpartitioned_disks' should exist and therefore this won't run.
+            if self.is_downstream and not self.unpartitioned_disks:
+                self.configure_db_disk_partition()
 
             self.db.setup(region=region, key_address=key_address,
                           db_address=db_address, is_pod=self.is_pod)
@@ -527,7 +529,18 @@ class IPAppliance(object):
                 self.restart_evm_service(log_callback=log_callback)
             self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
-    def configure_rhos_db_disk(self):
+    def configure_db_disk_partition(self):
+        """
+        Set up a partition for the CFME DB to run on.
+
+        As a work-around for having to provide a separate disk to a CFME appliance
+        for the database, we instead partition the single disk we have and run
+        the DB on the new partition.
+
+        Note that this is not the 'ideal' way of doing things and should
+        be a stop-gap measure until we are capabale of attaching disks to an
+        appliance via automation on all infra types.
+        """
         loopback_script_path = "/usr/local/sbin/loopbacks"
         loopback_script_content = dedent("""
         EOF
@@ -2498,8 +2511,11 @@ class Appliance(IPAppliance):
         if self.is_downstream:
             # Upstream already has one.
             if kwargs.get('db_address') is None:
-                if on_openstack and not self.unpartitioned_disks:
-                    self.configure_rhos_db_disk()
+                # This is workaround for appliances to use only one disk for the VMDB
+                # If they have been provisioned with a second disk in the infra,
+                # 'self.unpartitioned_disks' should exist and therefore this won't run.
+                if not self.unpartitioned_disks:
+                    self.configure_db_disk_partition()
                 self.db.enable_internal(
                     region, key_address, db_password, ssh_password)
             else:
