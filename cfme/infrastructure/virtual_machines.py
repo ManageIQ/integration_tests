@@ -15,7 +15,6 @@ from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, CheckableBootstrapTreeview, Dropdown, Input as
     WInput)
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.candu_views import RhevmVMUtilizationView, VirtualcenterVMUtilizationView
 from cfme.common.vm import VM, Template as BaseTemplate
 from cfme.common.vm_views import (
     ManagementEngineView, CloneVmView, MigrateVmView, ProvisionView, EditView, PublishVmView,
@@ -1457,12 +1456,7 @@ class SetOwnership(CFMENavigateStep):
 class VmUtilization(CFMENavigateStep):
     @property
     def VIEW(self):     # noqa
-        """Property returning VM Utilization Views as per provider type"""
-        if self.obj.provider.type is 'virtualcenter':
-            view = VirtualcenterVMUtilizationView
-        elif self.obj.provider.type is 'rhevm':
-            view = RhevmVMUtilizationView
-        return view
+        return self.obj.provider.vm_utilization_view
 
     prerequisite = NavigateToSibling('Details')
 

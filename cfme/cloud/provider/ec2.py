@@ -4,9 +4,11 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Tab, Input, Button
 from wrapanapi.ec2 import EC2System
 
+from cfme.common.candu_views import VMUtilizationView
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.services.catalogs.catalog_items import AmazonCatalogItem
+from widgetastic_manageiq import LineChart
 from . import CloudProvider
 
 
@@ -37,6 +39,13 @@ class EC2EndpointForm(View):
         validate = Button('Validate')
 
 
+class EC2InstanceUtilizationView(VMUtilizationView):
+    """A VM Utilization view for AWS providers"""
+    vm_cpu = LineChart(id='miq_chart_parent_candu_0')
+    vm_disk = LineChart(id='miq_chart_parent_candu_1')
+    vm_network = LineChart(id='miq_chart_parent_candu_2')
+
+
 @attr.s(hash=False)
 class EC2Provider(CloudProvider):
     """
@@ -44,6 +53,7 @@ class EC2Provider(CloudProvider):
      represents CFME provider and operations available in UI
     """
     catalog_item_type = AmazonCatalogItem
+    vm_utilization_view = EC2InstanceUtilizationView
     type_name = "ec2"
     mgmt_class = EC2System
     db_types = ["Amazon::CloudManager"]

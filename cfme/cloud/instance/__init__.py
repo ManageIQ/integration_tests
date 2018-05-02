@@ -6,7 +6,6 @@ from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.candu_views import AzureInstanceUtilizationView, Ec2InstanceUtilizationView
 from cfme.common.vm import VM
 from cfme.common.vm_views import (
     ProvisionView, VMToolbar, VMEntities, VMDetailsEntities, EditView,
@@ -490,17 +489,9 @@ class Timelines(CFMENavigateStep):
 @navigator.register(Instance, 'candu')
 class InstanceUtilization(CFMENavigateStep):
     @property
-    def get_view(self):
-        """Property returning VM Utilization Views as per provider type"""
-        if self.obj.provider.type is 'azure':
-            view = AzureInstanceUtilizationView
-        elif self.obj.provider.type is 'ec2':
-            view = Ec2InstanceUtilizationView
-        else:
-            view = None
-        return view
+    def VIEW(self):     # noqa
+        return self.obj.provider.vm_utilization_view
 
-    VIEW = get_view
     prerequisite = NavigateToSibling('Details')
 
     def step(self):

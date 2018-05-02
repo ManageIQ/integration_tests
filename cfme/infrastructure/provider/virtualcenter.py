@@ -2,9 +2,11 @@ import attr
 
 from wrapanapi.virtualcenter import VMWareSystem
 
+from cfme.common.candu_views import VMUtilizationView
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from cfme.exceptions import ItemNotFound
 from cfme.services.catalogs.catalog_items import VMwareCatalogItem
+from widgetastic_manageiq import LineChart
 from . import InfraProvider
 
 
@@ -16,9 +18,19 @@ class VirtualCenterEndpointForm(DefaultEndpointForm):
     pass
 
 
+class VirtualCenterVMUtilizationView(VMUtilizationView):
+    """A VM Utilization view for virtual center providers"""
+    vm_cpu = LineChart(id='miq_chart_parent_candu_0')
+    vm_cpu_state = LineChart(id='miq_chart_parent_candu_1')
+    vm_memory = LineChart(id='miq_chart_parent_candu_2')
+    vm_disk = LineChart(id='miq_chart_parent_candu_3')
+    vm_network = LineChart(id='miq_chart_parent_candu_4')
+
+
 @attr.s(hash=False)
 class VMwareProvider(InfraProvider):
     catalog_item_type = VMwareCatalogItem
+    vm_utilization_view = VirtualCenterVMUtilizationView
     type_name = "virtualcenter"
     mgmt_class = VMWareSystem
     db_types = ["Vmware::InfraManager"]

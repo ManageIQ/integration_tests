@@ -4,11 +4,13 @@ from widgetastic.widget import View, Text
 from widgetastic_patternfly import Tab, Input, BootstrapSwitch, Button
 from wrapanapi.rhevm import RHEVMSystem
 
+from cfme.common.candu_views import VMUtilizationView
 from cfme.common.provider import CANDUEndpoint, DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.exceptions import ItemNotFound
 from cfme.services.catalogs.catalog_items import RHVCatalogItem
 from cfme.utils import version
+from widgetastic_manageiq import LineChart
 from . import InfraProvider
 
 
@@ -49,9 +51,18 @@ class RHEVMEndpointForm(View):
         validate = Button('Validate')
 
 
+class RHEVMVMUtilizationView(VMUtilizationView):
+    """A VM Utilization view for rhevm providers"""
+    vm_cpu = LineChart(id='miq_chart_parent_candu_0')
+    vm_memory = LineChart(id='miq_chart_parent_candu_1')
+    vm_disk = LineChart(id='miq_chart_parent_candu_2')
+    vm_network = LineChart(id='miq_chart_parent_candu_3')
+
+
 @attr.s(hash=False)
 class RHEVMProvider(InfraProvider):
     catalog_item_type = RHVCatalogItem
+    vm_utilization_view = RHEVMVMUtilizationView
     type_name = "rhevm"
     mgmt_class = RHEVMSystem
     db_types = ["Redhat::InfraManager"]

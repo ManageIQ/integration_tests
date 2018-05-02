@@ -50,16 +50,7 @@ def test_vm_most_recent_hour_graph_screen(graph_type, provider, enable_candu):
     view = navigate_to(vm, 'candu')
     view.options.interval.fill('Most Recent Hour')
 
-    if graph_type == 'vm_cpu':
-        graph = view.vm_cpu
-    elif graph_type == 'vm_cpu_state':
-        graph = view.vm_cpu_state
-    elif graph_type == 'vm_memory':
-        graph = view.vm_memory
-    elif graph_type == 'vm_disk':
-        graph = view.vm_disk
-    else:
-        graph = view.vm_network
+    graph = getattr(view, graph_type)
 
     assert graph.is_displayed
 

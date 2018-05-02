@@ -1,5 +1,6 @@
-from widgetastic_manageiq import LineChart
 from widgetastic.widget import ConditionalSwitchableView, Text, TextInput, View
+
+from widgetastic_manageiq import LineChart
 from widgetastic_patternfly import BootstrapSelect
 
 
