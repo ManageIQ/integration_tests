@@ -34,11 +34,12 @@ numpy>=1.14.0
 paramiko
 parsedatetime
 pdfminer.six
+pillow
 progress
 py
 pycrypto
 pygal
-
+pytesseract
 # required for an import that we get from wrapanapi
 python-novaclient<7.0.0
 
