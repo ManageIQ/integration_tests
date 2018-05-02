@@ -6,6 +6,7 @@ import pytest
 from cfme.common.vm import VM
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.pxe import get_template_from_config
 from cfme.utils import ssh
@@ -38,6 +39,9 @@ def vm_name():
 
 
 @pytest.mark.tier(3)
+@pytest.mark.uncollectif(lambda provider, appliance: provider.one_of(GCEProvider) and
+                         appliance.version < "5.9",
+                         reason="GCE supports cloud_init in 5.9+ BZ 1395757")
 def test_provision_cloud_init(request, setup_provider, provider, provisioning,
                               setup_ci_template, vm_name):
     """ Tests provisioning from a template with cloud_init
