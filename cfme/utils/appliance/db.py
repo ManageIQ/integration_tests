@@ -263,6 +263,42 @@ class ApplianceDB(AppliancePlugin):
         result = client.run_command("systemctl restart {scl}-postgresql".format(scl=scl))
         return result.rc
 
+    def create_db_lvm(self):
+        """
+        Set up a partition for the CFME DB to run on.
+
+        As a work-around for having to provide a separate disk to a CFME appliance
+        for the database, we instead partition the single disk we have and run
+        the DB on the new partition.
+
+        This requires that the appliance's disk has more space than CFME requires.
+        For example, on RHOS, downstream CFME uses 43GB on a disk but the flavor used
+        to deploy the template has a 75GB disk. Therefore, we have extra space which
+        we can partition.
+
+        Note that this is not the 'ideal' way of doing things and should
+        be a stop-gap measure until we are capabale of attaching additional disks to
+        an appliance via automation on all infra types.
+        """
+        client = self.ssh_client
+
+        logging.info("Creating new LVM for db using remaining space on /dev/vda...")
+
+        fstab_line = '/dev/mapper/dbvg-dblv $APPLIANCE_PG_MOUNT_POINT xfs defaults 0 0'
+        commands_to_run = [
+            'parted /dev/vda --script mkpart primary 43GB 48.5GB',
+            'pvcreate /dev/vda3',
+            'vgcreate dbvg /dev/vda3',
+            'lvcreate --yes -n dblv --size 5G dbvg',
+            'mkfs.xfs /dev/dbvg/dblv',
+            'echo -e "{}" >> /etc/fstab'.format(fstab_line),
+            'mount -a'
+        ]
+
+        for command in commands_to_run:
+            logging.info("Running command: {}".format(command))
+            client.run_command(command)
+
     def enable_internal(self, region=0, key_address=None, db_password=None, ssh_password=None,
                         db_disk=None):
         """Enables internal database
@@ -285,18 +321,26 @@ class ApplianceDB(AppliancePlugin):
         # Defaults
         db_password = db_password or conf.credentials['database']['password']
         ssh_password = ssh_password or conf.credentials['ssh']['password']
+
         if not db_disk:
+            # See if there's any unpartitioned disks on the appliance
             try:
                 db_disk = self.appliance.unpartitioned_disks[0]
             except IndexError:
                 db_disk = None
-                self.logger.warning(
-                    'Failed to set --dbdisk from the appliance. On 5.9.0.3+ it will fail.')
 
-        # make sure the dbdisk is unmounted, RHOS ephemeral disks come up mounted
-        result = client.run_command('umount {}'.format(db_disk))
-        if not result.success:
-            self.logger.warning('umount non-zero return, output was: '.format(result))
+        db_mounted = False
+        if not db_disk:
+            # If we still don't have a db disk to use, see if a db disk/partition has already
+            # been created & mounted (such as by us in self.create_db_lvm)
+            result = client.run_command("mount | grep $APPLIANCE_PG_MOUNT_POINT | cut -f1 -d' '")
+            if result:
+                db_mounted = True
+
+        if not db_mounted and not db_disk:
+            self.logger.warning(
+                'Failed to find a mounted DB disk, or a free unpartitioned disk. '
+                'On 5.9.0.3+ db setup will fail')
 
         if self.appliance.has_cli:
             base_command = 'appliance_console_cli --region {}'.format(region)
@@ -310,6 +354,10 @@ class ApplianceDB(AppliancePlugin):
                 command_options = '--internal --force-key -p {db_pass}'.format(db_pass=db_password)
 
             if db_disk:
+                # make sure the dbdisk is unmounted, RHOS ephemeral disks come up mounted
+                result = client.run_command('umount {}'.format(db_disk))
+                if not result.success:
+                    self.logger.warning('umount non-zero return, output was: '.format(result))
                 command_options = ' '.join([command_options, '--dbdisk {}'.format(db_disk)])
 
             result = client.run_command(' '.join([base_command, command_options]))
@@ -320,7 +368,8 @@ class ApplianceDB(AppliancePlugin):
             rbt_repl = {
                 'miq_lib': '/var/www/miq/lib',
                 'region': region,
-                'postgres_version': self.postgres_version
+                'postgres_version': self.postgres_version,
+                'db_mounted': str(db_mounted),
             }
 
             # Find and load our rb template with replacements

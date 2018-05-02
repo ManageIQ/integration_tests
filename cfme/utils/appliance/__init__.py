@@ -506,7 +506,7 @@ class IPAppliance(object):
             # If they have been provisioned with a second disk in the infra,
             # 'self.unpartitioned_disks' should exist and therefore this won't run.
             if self.is_downstream and not self.unpartitioned_disks:
-                self.configure_db_disk_partition()
+                self.db.create_db_lvm()
 
             self.db.setup(region=region, key_address=key_address,
                           db_address=db_address, is_pod=self.is_pod)
@@ -528,95 +528,6 @@ class IPAppliance(object):
             if restart_evm:
                 self.restart_evm_service(log_callback=log_callback)
             self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-
-    def configure_db_disk_partition(self):
-        """
-        Set up a partition for the CFME DB to run on.
-
-        As a work-around for having to provide a separate disk to a CFME appliance
-        for the database, we instead partition the single disk we have and run
-        the DB on the new partition.
-
-        Note that this is not the 'ideal' way of doing things and should
-        be a stop-gap measure until we are capabale of attaching disks to an
-        appliance via automation on all infra types.
-        """
-        loopback_script_path = "/usr/local/sbin/loopbacks"
-        loopback_script_content = dedent("""
-        EOF
-        #!/bin/bash
-        DB_PATH="/var/opt/rh/rh-postgresql95/db"
-        DB="vmdb_db.img"
-        DB_IMG="\\${DB_PATH}/\\${DB}"
-        DB_SIZE="5GB"
-
-        if [ ! -f \\${DB_IMG} ]; then
-            fallocate -l \\${DB_SIZE} \\${DB_IMG}
-        fi
-
-        if  ! losetup -l | grep \\${DB} 1> /dev/null ; then
-            losetup -f \\${DB_IMG}
-            partprobe /dev/vdb
-            partprobe /dev/vdc
-            systemctl restart lvm2-lvmetad.service
-            vgchange -a y vg_pg
-        fi
-        EOF
-        """).strip()
-
-        loopback_unit_path = "/etc/systemd/system/multi-user.target.wants/loopback.service"
-        loopback_unit_content = dedent("""
-        EOF
-        [Unit]
-        Description=Setup loop devices
-        DefaultDependencies=false
-        ConditionFileIsExecutable=/usr/local/sbin/loopbacks
-        After=var.mount
-        Requires=systemd-remount-fs.service
-
-        [Service]
-        Type=oneshot
-        ExecStart=/usr/local/sbin/loopbacks
-        TimeoutSec=60
-        RemainAfterExit=yes
-
-        [Install]
-        WantedBy=local-fs.target
-        Also=systemd-udev-settle.service
-        EOF
-        """).strip()
-
-        udev_rule_path = "/etc/udev/rules.d/75-persistent-disk.rules"
-        udev_rule_content = dedent("""
-        EOF
-        KERNEL=="loop0", SYMLINK+="vdb"
-        KERNEL=="loop0p1", SYMLINK+="vdb1"
-        EOF
-        """).strip()
-
-        content = [
-            (loopback_script_path, loopback_script_content),
-            (loopback_unit_path, loopback_unit_content),
-            (udev_rule_path, udev_rule_content)
-        ]
-
-        client = self.ssh_client
-
-        commands_to_run = [
-            "chmod ug+x /usr/local/sbin/loopbacks",
-            "chown root:root /usr/local/sbin/loopbacks",
-            "systemctl daemon-reload",
-            "udevadm control --reload-rules && udevadm trigger",
-            "/usr/local/sbin/loopbacks"
-        ]
-
-        logging.info("Creating loopback script, unit file and udev rule")
-        for path, content in content:
-            client.run_command("cat > {path} << {content}".format(path=path, content=content))
-
-        for command in commands_to_run:
-            logging.info("Running command: {}".format(command))
-            client.run_command(command)
 
     def configure_gce(self, log_callback=None):
         # Force use of IPAppliance's configure method
@@ -2515,7 +2426,7 @@ class Appliance(IPAppliance):
                 # If they have been provisioned with a second disk in the infra,
                 # 'self.unpartitioned_disks' should exist and therefore this won't run.
                 if not self.unpartitioned_disks:
-                    self.configure_db_disk_partition()
+                    self.db.create_db_lvm()
                 self.db.enable_internal(
                     region, key_address, db_password, ssh_password)
             else:
