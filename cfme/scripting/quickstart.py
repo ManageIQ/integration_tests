@@ -60,12 +60,14 @@ INSTALL_COMMAND = None
 # FIXME define install commands separately in config/ini file
 DEBUG_INSTALL_COMMAND = None
 
+# Concerning debuginfo-install, on dnf has it as plugin,
+# whereas yum has completely separate command that calls yum.
 if HAS_DNF:
     INSTALL_COMMAND = 'dnf install -y'
     DEBUG_INSTALL_COMMAND = 'dnf debuginfo-install -y'
 elif HAS_YUM:
     INSTALL_COMMAND = 'yum install -y'
-    DEBUG_INSTALL_COMMAND = 'yum debuginfo-install -y'
+    DEBUG_INSTALL_COMMAND = 'debuginfo-install -y'
 elif HAS_APT:
     INSTALL_COMMAND = 'apt install -y'
     # No separate debuginfo for apt
@@ -124,19 +126,21 @@ REDHAT_PACKAGES_SPECS = [
      " libxslt-devel zeromq3-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python-devel tesseract"
-     " libpng-devel freetype-devel"),
+     " libpng-devel freetype-devel yum-utils"),
     ("Red Hat Enterprise Linux Server release 7", "nss",
      " python-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq3-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python-devel tesseract"
-     " libpng-devel freetype-devel python-debuginfo"),
+     " libpng-devel freetype-devel python-debuginfo"
+     " yum-utils"),
     ("Red Hat Enterprise Linux Workstation release 7", "nss",
      " python-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq3-devel libcurl-devel"
      " redhat-rpm-config gcc-c++ openssl-devel"
      " libffi-devel python-devel tesseract"
-     " libpng-devel freetype-devel python-debuginfo")
+     " libpng-devel freetype-devel python-debuginfo"
+     " yum-utils")
 ]
 
 OS_PACKAGES_SPECS = [
