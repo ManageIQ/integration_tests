@@ -381,6 +381,10 @@ class ApplianceDB(AppliancePlugin):
         diff = [d for d in new_disks_and_parts if d not in old_disks_and_parts]
         if not diff or len(diff) > 1:
             self.logger.error("Unable to determine the name of the new partition!")
+            self.logger.error(
+                "Disks before partitioning: %s, disks after partitioning: %s, diff: %s",
+                old_disks_and_parts, new_disks_and_parts, diff
+            )
             return
         return diff[0]
 
