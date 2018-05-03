@@ -901,7 +901,7 @@ def test_ssa_multiple_vms(ssa_vms, soft_assert, appliance, ssa_profile):
     view.flash.assert_message('Analysis initiated for 3 VMs and Instances from the CFME Database')
     for ssa_vm, vm_info in vm_details:
         view = appliance.browser.create_view(TasksView)
-        wait_for(lambda: is_vm_analysis_finished(ssa_vm.name),
+        wait_for(lambda: is_vm_analysis_finished(ssa_vm.name, clear_tasks_after_success=False),
                  delay=15, timeout="10m", fail_func=view.reload.click,
                  message='SSA for {} vm was not successful'.format(ssa_vm.name))
         view = navigate_to(ssa_vm, 'Details')
