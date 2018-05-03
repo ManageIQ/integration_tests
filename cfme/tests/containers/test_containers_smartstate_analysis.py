@@ -54,7 +54,9 @@ def delete_all_container_tasks():
 @pytest.fixture(scope='function')
 def random_image_instance(appliance):
     collection = appliance.collections.container_images
-    return random.sample(collection.all(), NUM_SELECTED_IMAGES).pop()
+    # add filter for select only active(not archived) images from redHat registry
+    filter_image_collection = collection.filter({'active': True, 'redhat_registry': True})
+    return random.sample(filter_image_collection.all(), NUM_SELECTED_IMAGES).pop()
 
 
 @pytest.mark.polarion('10030')
