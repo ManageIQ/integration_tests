@@ -74,6 +74,7 @@ def uncollectif(item):
     Tests markers against a supplied lambda from the markers object to determine
     if the item should be uncollected or not.
     """
+    from cfme.utils.appliance import find_appliance
 
     from cfme.utils.pytest_shortcuts import extract_fixtures_values
     markers = item.get_marker('uncollectif')
@@ -90,9 +91,9 @@ def uncollectif(item):
             logger.debug(log_msg)
             return not bool(mark.args[0]), mark.kwargs.get('reason', 'No reason given')
 
-        holder = item.config.pluginmanager.getplugin('appliance-holder')
-        if holder:
-            global_vars = {'appliance': holder.held_appliance}
+        app = find_appliance(item, require=False)
+        if app:
+            global_vars = {'appliance': app}
         else:
             logger.info("while uncollecting %s - appliance not known", item)
             global_vars = {}
