@@ -336,12 +336,11 @@ class ApplianceDB(AppliancePlugin):
                         "Unable to get free space start/end/size on disk %s, skipping...", disk)
                     continue
                 start, end, size = gb_data[0], gb_data[1], gb_data[2]
-                if size < needed_size:
-                    continue
-                disk_name = disk
-                found_enough_space = True
-                self.logger.info("Found %dGB free space available on disk %s", size, disk)
-                break
+                if size >= needed_size:
+                    disk_name = disk
+                    found_enough_space = True
+                    self.logger.info("Found %dGB free space available on disk %s", size, disk)
+                    break
 
             if found_enough_space:
                 # Stop iterating through the disks, we've found enough space.
