@@ -3,9 +3,10 @@
 """ Chargeback reports are supported for all infra and cloud providers.
 
 Chargeback reports report costs based on 1)resource usage, 2)resource allocation
-Costs are reported for the usage of the following resources by VMs: memory, cpu, network io,
-disk io, storage.
-Costs are reported for the allocation of the following resources to VMs: memory, cpu, storage
+Costs are reported for the usage of the following resources by VMs:
+memory, cpu, network io, disk io, storage.
+Costs are reported for the allocation of the following resources to VMs:
+memory, cpu, storage
 
 So, for a provider such as VMware that supports C&U, a chargeback report would show costs for both
 resource usage and resource allocation.
@@ -13,7 +14,7 @@ resource usage and resource allocation.
 But, for a provider such as SCVMM that doesn't support C&U,chargeback reports show costs for
 resource allocation only.
 
-The tests in this module validate on costs for resource usage.
+The tests in this module validate costs for resource usage.
 
 The tests for resource allocation are in :
 cfme/tests/intelligence/chargeback/test_resource_allocation.py
