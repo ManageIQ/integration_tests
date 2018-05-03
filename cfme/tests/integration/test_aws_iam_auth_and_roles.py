@@ -2,31 +2,32 @@ import pytest
 from deepdiff import DeepDiff
 
 from cfme.roles import role_access_ui_58z, role_access_ui_59z, role_access_ssui
-from cfme.utils.appliance import ViaUI, current_appliance
+from cfme.utils.appliance import ViaUI, find_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 
 
-def auth_groups():
-    """Build a list of tuples containing (group_name, context)
+def pytest_generate_tests(metafunc):
+    """
+    Build a list of tuples containing (group_name, context)
     Returns:
         tuple containing (group_name, context)
         where group_name is a string and context is ViaUI/SSUI
     """
+    appliance = find_appliance(metafunc)
     parameter_list = []
     # TODO: Include SSUI role_access dict and VIASSUI context
     roles_and_context = [(
-        role_access_ui_59z if current_appliance.version >= '5.9' else role_access_ui_58z, ViaUI)
+        role_access_ui_59z if appliance.version >= '5.9' else role_access_ui_58z, ViaUI)
     ]
     for group_dict, context in roles_and_context:
         parameter_list.extend([(group, context) for group in group_dict.keys()])
-    return parameter_list
+    metafunc.parametrize('group_name, context', parameter_list)
 
 
 @pytest.mark.tier(2)
-@pytest.mark.parametrize('group_name, context', auth_groups())
 @pytest.mark.uncollectif(lambda appliance: appliance.is_dev, reason="Is a rails server")
 @pytest.mark.meta(blockers=[
     BZ(1530683,
