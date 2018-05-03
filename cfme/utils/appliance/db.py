@@ -310,8 +310,8 @@ class ApplianceDB(AppliancePlugin):
         Disk /dev/vda: 75.2GB
         Sector size (logical/physical): 512B/512B
         Partition Table: msdos
-        Disk Flags: 
-        
+        Disk Flags:
+
         Number  Start   End     Size    Type     File system  Flags
                 0.00GB  0.00GB  0.00GB           Free Space
         1      0.00GB  1.07GB  1.07GB  primary  xfs          boot
@@ -355,7 +355,7 @@ class ApplianceDB(AppliancePlugin):
         """
         Create a partition on the disk with free space
 
-        Return the new partition name
+        Return the new partition name, or None if this fails
         """
         needed_size = needed_size + 0.5  # make partition a little larger than LVM
         disk, start, end, size = self._find_disk_with_free_space(needed_size)
