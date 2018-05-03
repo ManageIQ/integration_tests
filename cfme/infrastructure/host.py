@@ -9,6 +9,7 @@ from widgetastic.utils import VersionPick
 
 from cfme.base.credential import Credential as BaseCredential
 from cfme.common import PolicyProfileAssignable, Taggable
+from cfme.common.candu_views import HostInfraUtilizationView
 from cfme.common.host_views import (
     HostAddView,
     HostDetailsView,
@@ -387,6 +388,19 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
             fail_func=view.browser.refresh
         )
 
+    def wait_candu_data_available(self, timeout=900):
+        """Waits until C&U data are available for this Host
+
+        Args:
+            timeout: Timeout passed to :py:func:`utils.wait.wait_for`
+        """
+        view = navigate_to(self, 'Details')
+        wait_for(
+            lambda: view.toolbar.monitoring.item_enabled("Utilization"),
+            delay=10, handle_exception=True, num_sec=timeout,
+            fail_func=view.browser.refresh
+        )
+
 
 @attr.s
 class HostCollection(BaseCollection):
@@ -630,6 +644,15 @@ class Timelines(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.monitoring.item_select("Timelines")
+
+
+@navigator.register(Host, "candu")
+class Utilization(CFMENavigateStep):
+    VIEW = HostInfraUtilizationView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self):
+        self.prerequisite_view.toolbar.monitoring.item_select('Utilization')
 
 
 def get_credentials_from_config(credential_config_name):
