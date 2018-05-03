@@ -298,7 +298,7 @@ class ApplianceDB(AppliancePlugin):
                 result = client.run_command(command)
                 if result.failed:
                     self.logger.warn("Command failed!")
-                self.logger.info("Output:\n%s", result)
+                self.logger.info("Ret code: %d, Output:\n%s", result.rc, result)
 
     def enable_internal(self, region=0, key_address=None, db_password=None, ssh_password=None,
                         db_disk=None):
