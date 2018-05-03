@@ -6,12 +6,12 @@ from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.test_framework.sprout.client import SproutClient, SproutException
 from cfme.utils import conf
 from cfme.utils import os
-from cfme.utils.appliance import get_or_create_current_appliance
 from cfme.utils.log import logger
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
 from fixtures.pytest_store import store
 from cfme.utils.repo_gen import process_url, build_file
+from cfme.utils.appliance import find_appliance
 
 pytestmark = [
     pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
@@ -24,7 +24,7 @@ def pytest_generate_tests(metafunc):
     Appliance version is split and minor_build is picked out for generating each version
     and appending it to the empty versions list"""
     versions = []
-    version = get_or_create_current_appliance().version
+    version = find_appliance(metafunc).version
 
     split_ver = str(version).split(".")
     try:
