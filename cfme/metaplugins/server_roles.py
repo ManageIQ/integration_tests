@@ -53,11 +53,11 @@ available_roles = set(ServerInformation.SERVER_ROLES)
 
 @plugin("server_roles", keys=["server_roles"])  # Could be omitted but I want to keep it clear
 @plugin("server_roles", keys=["server_roles", "server_roles_mode"])
-def add_server_roles(server_roles, server_roles_mode="add"):
+def add_server_roles(item, server_roles, server_roles_mode="add"):
     # Disable all server roles
     # and then figure out which ones should be enabled
-    from cfme.utils.appliance import get_or_create_current_appliance
-    current_appliance = get_or_create_current_appliance()
+    from cfme.utils.appliance import find_appliance
+    current_appliance = find_appliance(item)
     server_settings = current_appliance.server.settings
     roles_with_vals = {k: False for k in available_roles}
     if server_roles is None:
