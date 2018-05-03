@@ -29,7 +29,6 @@ from cfme.services.requests import RequestsView
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.conf import cfme_data
-from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
@@ -1052,9 +1051,9 @@ def _method_setup(vm_names, provider_crud=None):
 
     if provider_crud:
         provider_crud.load_all_provider_vms()
-        from cfme.utils.appliance import get_or_create_current_appliance
-        app = get_or_create_current_appliance()
-        view = app.browser.create_view(navigator.get_class(InfraVm, 'VMsOnly').VIEW)
+        view = provider_crud.appliance.browser.create_view(navigator.get_class(
+            InfraVm, 'VMsOnly'
+        ).VIEW)
     else:
         view = navigate_to(InfraVm, 'VMsOnly')
 
@@ -1177,36 +1176,14 @@ def perform_smartstate_analysis(vm_names, provider_crud=None, cancel=True):
     view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=not cancel)
 
 
-def get_all_vms(do_not_navigate=False):
+def get_all_vms(appliance, do_not_navigate=False):
     """Returns list of all vms on current page"""
     if do_not_navigate:
-        from cfme.utils.appliance import get_or_create_current_appliance
-        app = get_or_create_current_appliance()
-        view = app.browser.create_view(navigator.get_class(InfraVm, 'VMsOnly').VIEW)
+        view = appliance.browser.create_view(navigator.get_class(InfraVm, 'VMsOnly').VIEW)
     else:
         view = navigate_to(InfraVm, 'VMsOnly')
 
     return [entity.name for entity in view.entities.get_all()]
-
-
-def get_number_of_vms(do_not_navigate=False):
-    """
-    Returns the total number of VMs visible to the user,
-    including those archived or orphaned
-    """
-    logger.info('Getting number of vms')
-    if not do_not_navigate:
-        view = navigate_to(InfraVm, 'VMsOnly')
-    else:
-        from cfme.utils.appliance import get_or_create_current_appliance
-        app = get_or_create_current_appliance()
-        view = app.browser.create_view(navigator.get_class(InfraVm, 'VMsOnly').VIEW)
-    if not view.entities.paginator.page_controls_exist():
-        logger.debug('No page controls')
-        return 0
-    total = view.entities.paginator.rec_total()
-    logger.debug('Number of VMs: %s', total)
-    return int(total)
 
 
 @navigator.register(Template, 'All')
