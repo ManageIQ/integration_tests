@@ -175,8 +175,6 @@ class DockerBot(object):
     def cache_files(self):
         if self.args['pr']:
             self.modified_files = self.find_files_by_pr(self.args['pr'])
-            if self.requirements_update:
-                self.args['update_pip'] = True
 
     def get_base_branch(self, pr):
         token = self.args['gh_token']
@@ -240,8 +238,6 @@ class DockerBot(object):
                             if filen['filename'].startswith('cfme/tests') or \
                                filen['filename'].startswith('utils/tests'):
                                 files.append(filen['filename'])
-                        if filen['filename'].endswith('requirements/frozen.txt'):
-                            self.requirements_update = True
                 except:
                     return None
                 page += 1
@@ -333,7 +329,6 @@ class DockerBot(object):
             print("You must specify a py.test command")
             ec += 1
 
-        self.check_arg('update_pip', False)
         self.check_arg('wheel_host_url', None)
         self.check_arg('auto_gen_test', False)
         self.check_arg('artifactor_dir', '/log_depot')
@@ -454,10 +449,7 @@ class DockerBot(object):
         print("  TRACKERBOT: {}".format(self.env_details['TRACKERBOT']))
         print("  REPO: {}".format(self.args['cfme_repo']))
         print("  BROWSER: {}".format(self.args['browser']))
-        if self.args['update_pip']:
-            print("  PIP: will be updated!")
-            self.env_details['UPDATE_PIP'] = 'True'
-        if self.args['wheel_host_url'] and self.args['update_pip']:
+        if self.args['wheel_host_url']:
             self.env_details['WHEEL_HOST_URL'] = self.args['wheel_host_url']
             self.env_details['WHEEL_HOST'] = urlsplit(self.args['wheel_host_url']).netloc
             print("  TRUSTED HOST: {}".format(self.env_details['WHEEL_HOST']))
@@ -615,9 +607,6 @@ if __name__ == "__main__":
                         default=None)
     pytest.add_argument('--pytest',
                         help='The pytest command',
-                        default=None)
-    pytest.add_argument('--update-pip', action='store_true',
-                        help='If we should update requirements',
                         default=None)
     pytest.add_argument('--wheel-host-url',
                         help="Use a particular wheel host for pip updates",
