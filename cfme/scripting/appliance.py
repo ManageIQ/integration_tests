@@ -11,18 +11,19 @@ import click
 import tempfile
 from cached_property import cached_property
 from cfme.utils import os
-from cfme.utils.conf import cfme_data
+from cfme.utils.conf import cfme_data, env
 from functools import partial
 from cfme.utils.repo_gen import process_url, build_file
 
 
 def get_appliance(appliance_ip):
     """Checks an appliance is not None and if so, loads the appropriate things"""
-    from cfme.utils.appliance import IPAppliance, get_or_create_current_appliance
+    from cfme.utils.appliance import IPAppliance, load_appliances_from_config, stack
     if not appliance_ip:
-        app = get_or_create_current_appliance()
+        app = load_appliances_from_config(env)[0]
     else:
         app = IPAppliance(hostname=appliance_ip)
+    stack.push(app)  # ensure safety from bad code, phase out later
     return app
 
 
