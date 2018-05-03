@@ -280,8 +280,6 @@ class ApplianceDB(AppliancePlugin):
         be a stop-gap measure until we are capabale of attaching additional disks to
         an appliance via automation on all infra types.
         """
-        client = self.ssh_client
-
         self.logger.info("Creating new LVM for db using remaining space on /dev/vda...")
 
         fstab_line = '/dev/mapper/dbvg-dblv $APPLIANCE_PG_MOUNT_POINT xfs defaults 0 0'
@@ -295,11 +293,12 @@ class ApplianceDB(AppliancePlugin):
             'mount -a'
         ]
 
-        for command in commands_to_run:
-            result = client.run_command(command)
-            if not result.success:
-                self.logger.warn("Command failed!")
-            self.logger.info("Output:\n%s", result)
+        with self.ssh_client as client:
+            for command in commands_to_run:
+                result = client.run_command(command)
+                if result.failed:
+                    self.logger.warn("Command failed!")
+                self.logger.info("Output:\n%s", result)
 
     def enable_internal(self, region=0, key_address=None, db_password=None, ssh_password=None,
                         db_disk=None):
