@@ -8,7 +8,7 @@ from cfme.common import TagPageView
 from cfme.common.vm_views import VMDetailsEntities
 from cfme.services.myservice import MyService
 from cfme.services.requests import RequestsView
-from cfme.utils.appliance import current_appliance, MiqImplementationContext
+from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (Accordion, ManageIQTree, Calendar, SummaryTable,
@@ -195,7 +195,7 @@ def retire(self):
     if self.appliance.version < '5.8':
         view.flash.assert_success_message(
             'Retirement initiated for 1 Service from the {} Database'.format(
-                current_appliance.product_name))
+                self.appliance.product_name))
     # wait for service to retire
     wait_for(
         lambda: view.details.lifecycle.get_text_of('Retirement State') == 'Retired',
