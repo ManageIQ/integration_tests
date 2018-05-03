@@ -272,7 +272,7 @@ class ApplianceDB(AppliancePlugin):
         """
         with self.ssh_client as client:
             result = client.run_command(cmd)
-        
+
         # Indent the output by 1 tab (makes it easier to read...)
         if str(result):
             output = str(result)
@@ -286,41 +286,69 @@ class ApplianceDB(AppliancePlugin):
         """Find a disk that has >=needed_size free space using parted
 
         Returns tuple with (disk_name, start GB, end GB, size GB)
-        Returns None if a disk with free space is not found
+        Returns tuples of Nones if a disk with free space is not found
 
-        Example parted output we are parsing:
-        [root@dhcp-8-198-19 vmdb]# parted /dev/vda unit GiB print free
+        ----Example parted output with no free space---
+
+        $ parted /dev/vda unit GB print free
         Model: Virtio Block Device (virtblk)
-        Disk /dev/vda: 40.0GiB
+        Disk /dev/vda: 42.9GB
+        Sector size (logical/physical): 512B/512B
+        Partition Table: msdos
+        Disk Flags:
+
+        Number  Start   End     Size    Type     File system  Flags
+                0.00GB  0.00GB  0.00GB           Free Space
+        1      0.00GB  1.07GB  1.07GB  primary  xfs          boot
+        2      1.07GB  42.9GB  41.9GB  primary               lvm
+
+
+        ----Example parted output with free space----
+
+        $ parted /dev/vda unit GB print free
+        Model: Virtio Block Device (virtblk)
+        Disk /dev/vda: 75.2GB
         Sector size (logical/physical): 512B/512B
         Partition Table: msdos
         Disk Flags: 
-
-        Number  Start    End      Size     Type     File system  Flags
-                0.00GiB  0.00GiB  0.00GiB           Free Space
-        1      0.00GiB  1.00GiB  1.00GiB  primary  xfs          boot
-        2      1.00GiB  40.0GiB  39.0GiB  primary               lvm
+        
+        Number  Start   End     Size    Type     File system  Flags
+                0.00GB  0.00GB  0.00GB           Free Space
+        1      0.00GB  1.07GB  1.07GB  primary  xfs          boot
+        2      1.07GB  42.9GB  41.9GB  primary               lvm
+                42.9GB  75.2GB  32.2GB           Free Space
         """
         disk_name = start = end = size = None
+
         for disk in self.appliance.disks:
-            result = self._run_cmd_show_output('parted {} unit GiB print free'.format(disk))
+            result = self._run_cmd_show_output('parted {} unit GB print free'.format(disk))
             if result.failed:
                 self.logger.error("Unable to run 'parted' on disk %s, skipping...", disk)
                 continue
             lines = str(result).splitlines()
             free_space_lines = [line for line in lines if 'Free Space' in line]
+
+            found_enough_space = False
             for line in free_space_lines:
-                gib_data = [float(word.strip('GiB')) for word in line.split() if 'GiB' in word]
-                if len(gib_data) < 3:
-                    self.logger.info("Unable to get free space size on disk %s, skipping...", disk)
-                    continue
-                start, end, size = gib_data[0], gib_data[1], gib_data[2]
-                if size < needed_size:
+                gb_data = [float(word.strip('GB')) for word in line.split() if 'GB' in word]
+                if len(gb_data) != 3:
                     self.logger.info(
-                        "Free space is less than %dGB on disk %s, skipping...", needed_size, disk)
+                        "Unable to get free space start/end/size on disk %s, skipping...", disk)
+                    continue
+                start, end, size = gb_data[0], gb_data[1], gb_data[2]
+                if size < needed_size:
                     continue
                 disk_name = disk
+                found_enough_space = True
+                self.logger.info("Found %dGB free space available on disk %s", size, disk)
                 break
+
+            if found_enough_space:
+                # Stop iterating through the disks, we've found enough space.
+                break
+            self.logger.info(
+                "Free space is less than %dGB on disk %s", needed_size, disk)
+
         return (disk_name, start, end, size)
 
     def _create_partition_from_free_space(self, needed_size):
@@ -351,7 +379,7 @@ class ApplianceDB(AppliancePlugin):
             return
 
         new_disks_and_parts = self.appliance.disks_and_partitions
-        diff = [disk for disk in new_disks_and_parts if disk not in old_disks_and_parts]
+        diff = [d for d in new_disks_and_parts if d not in old_disks_and_parts]
         if not diff or len(diff) > 1:
             self.logger.error("Unable to determine the name of the new partition!")
             return
@@ -441,7 +469,7 @@ class ApplianceDB(AppliancePlugin):
             # If we still don't have a db disk to use, see if a db disk/partition has already
             # been created & mounted (such as by us in self.create_db_lvm)
             result = client.run_command("mount | grep $APPLIANCE_PG_MOUNT_POINT | cut -f1 -d' '")
-            if result.strip():  # strip to get rid of whitespace
+            if "".join(str(result).split()):  # strip all whitespace to see if we got a real result
                 self.logger.info("Using pre-mounted DB disk at %s", result)
                 db_mounted = True
 
