@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""" Tests to validate chargeback costs for allocated resources(memory, cpu, storage) to VMs"""
+""" Tests to validate chargeback costs for resources(memory, cpu, storage) allocated to VMs"""
 
 from datetime import timedelta
 
@@ -13,6 +13,7 @@ from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.vm import VM
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
@@ -23,7 +24,7 @@ pytestmark = [
     pytest.mark.meta(blockers=[BZ(1511099, forced_streams=['5.9', '5.8'],
                                   unblock=lambda provider: not provider.one_of(GCEProvider)),
                                ]),
-    pytest.mark.provider([SCVMMProvider], scope='module',
+    pytest.mark.provider([SCVMMProvider, VMwareProvider], scope='module',
                         required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
     pytest.mark.usefixtures('has_no_providers', 'setup_provider'),
     test_requirements.chargeback,
@@ -50,9 +51,8 @@ def vm_ownership(enable_candu, provider, appliance):
     cb_group = group_collection.instantiate(description='EvmGroup-user')
 
     vm = VM.factory(vm_name, provider)
-    user = None
     user = appliance.collections.users.create(
-        name=provider.name + fauxfactory.gen_alphanumeric(),
+        name="{}_{}".format(provider.name + fauxfactory.gen_alphanumeric()),
         credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()),
             secret='secret'),
         email='abc@example.com',
@@ -191,7 +191,7 @@ def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, provid
     """Create a Chargeback report based on a custom rate; Queue the report"""
     owner = vm_ownership
     data = {
-        'menu_name': 'cb_custom_{}'.format(provider.name),
+        'menu_name': '{}_{}'.format(provider.name, fauxfactory.gen_alphanumeric()),
         'title': 'cb_custom_{}'.format(provider.name),
         'base_report_on': 'Chargeback for Vms',
         'report_fields': ['Memory Allocated Cost', 'Memory Allocated over Time Period', 'Owner',
@@ -309,5 +309,7 @@ def test_verify_allocation(resource_alloc, chargeback_report_custom, resource, s
             if resource == 'storage_alloc':
                 resource_from_report = groups['Storage Allocated']
 
+            logger.info('RESOURCE_FROM_REPORT {}, ALLOCATED_RESOURCE {}'.
+                format(resource_from_report, allocated_resource))
             soft_assert(allocated_resource == resource_from_report,
-                'Estimated cost and report cost do not match')
+                'Allocated resource value from REST API and report do not match')
