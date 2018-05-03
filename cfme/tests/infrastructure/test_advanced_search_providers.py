@@ -15,7 +15,7 @@ pytestmark = [
     pytest.mark.usefixtures("infra_provider"), pytest.mark.tier(3)]
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def rails_delete_filter(request):
     """Introspect a function bound filter_name and use ssh_client and rails to delete it"""
     # No pre-test, just cleanup after yield

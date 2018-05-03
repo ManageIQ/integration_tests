@@ -21,7 +21,7 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def vm_crud(provider, setup_provider_modscope, small_template_modscope):
     template = small_template_modscope
 

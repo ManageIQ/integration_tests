@@ -12,7 +12,7 @@ pytestmark = [pytest.mark.provider([EC2Provider, AzureProvider, GCEProvider, Ope
                                    scope='module')]
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def elements_collection(setup_provider_modscope, appliance, provider):
     elements_collection_ = appliance.collections.network_topology_elements
     wait_for(elements_collection_.all, timeout=10)

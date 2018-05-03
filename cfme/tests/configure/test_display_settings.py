@@ -23,7 +23,7 @@ colors = [
 test_timezone = TimeZone(friendly='(GMT-10:00) Hawaii', machine='-1000')
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def set_timezone(appliance):
     old_time_zone = appliance.user.my_settings.visual.timezone
     appliance.user.my_settings.visual.timezone = test_timezone.friendly

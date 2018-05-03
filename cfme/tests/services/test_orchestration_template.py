@@ -63,7 +63,7 @@ def template_type(request):
     return request.param
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def created_template(appliance, template_type):
     method = METHOD_TORSO.replace('CloudFormation', fauxfactory.gen_alphanumeric())
     collection = appliance.collections.orchestration_templates

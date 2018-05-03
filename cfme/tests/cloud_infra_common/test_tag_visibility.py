@@ -11,7 +11,7 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def tagged_vm(tag, has_no_providers_modscope, setup_provider_modscope, provider):
     ownership_vm = provider.data.cap_and_util.capandu_vm
     tag_vm = VM.factory(ownership_vm, provider)

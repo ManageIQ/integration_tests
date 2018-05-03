@@ -81,7 +81,7 @@ def check_paginator_for_page(view):
         return False
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def schedule(appliance):
     schedule = appliance.collections.system_schedules.create(
         name=fauxfactory.gen_alphanumeric(),

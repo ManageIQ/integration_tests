@@ -16,7 +16,7 @@ def wait_for_ansible(appliance):
     appliance.server.settings.disable_server_roles("embedded_ansible")
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def ansible_repository(appliance, wait_for_ansible):
     repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
@@ -39,7 +39,7 @@ def ansible_repository(appliance, wait_for_ansible):
         repository.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def ansible_catalog_item(appliance, ansible_repository):
     collection = appliance.collections.catalog_items
     cat_item = collection.create(
@@ -68,7 +68,7 @@ def ansible_catalog_item(appliance, ansible_repository):
         cat_item.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def ansible_catalog(appliance, ansible_catalog_item):
     catalog_ = appliance.collections.catalogs.create(fauxfactory.gen_alphanumeric(),
                                                      description="my ansible catalog",
@@ -87,7 +87,7 @@ def ansible_service_catalog(appliance, ansible_catalog_item, ansible_catalog):
     return service_catalog_
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def order_ansible_service_in_ops_ui(appliance, ansible_catalog_item,
                                     ansible_service_catalog):
     """Tests if ansible playbook service provisioning is shown in service requests."""

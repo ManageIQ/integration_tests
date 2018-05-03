@@ -27,7 +27,7 @@ vddk_versions = [
 ]
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def ssa_analysis_profile():
     collected_files = []
     for file in ["/etc/hosts", "/etc/passwd"]:

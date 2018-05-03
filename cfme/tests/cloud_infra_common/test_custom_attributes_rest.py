@@ -29,7 +29,7 @@ COLLECTIONS_ADDED_IN_59 = ['instances', 'services']
 COLLECTIONS.extend(COLLECTIONS_ADDED_IN_59)
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def vm_obj(provider, setup_provider_modscope, small_template_modscope):
     """Creates new VM or instance"""
     vm_name = random_vm_name('attrs')
@@ -62,7 +62,7 @@ def get_vm(appliance, provider, vm_obj):
     return _get_vm
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def get_service(appliance):
     uid = fauxfactory.gen_alphanumeric(5)
     name = 'test_rest_service_{}'.format(uid)

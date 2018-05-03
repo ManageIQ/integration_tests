@@ -105,7 +105,7 @@ def pytest_generate_tests(metafunc):
         testgen.parametrize(metafunc, argnames, argvalues, ids=ids)
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def db_depot_machine_ip(request):
     """ Deploy vm for depot test
 

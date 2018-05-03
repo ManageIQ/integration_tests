@@ -4,7 +4,7 @@ import pytest
 from cfme.utils.wait import wait_for_decorator
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def start_evmserverd_after_module(appliance):
     appliance.start_evm_service()
     appliance.wait_for_web_ui()

@@ -38,7 +38,7 @@ def random_image_instance(appliance):
     return random.sample(collection.all(), 1).pop()
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def openscap_assigned_rand_image(provider, random_image_instance):
     """Returns random Container image that have assigned OpenSCAP policy from provider view.
     teardown remove this assignment from provider view.

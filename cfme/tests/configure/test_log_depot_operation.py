@@ -97,7 +97,7 @@ def pytest_generate_tests(metafunc):
     return
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def depot_machine_ip():
     """ Deploy vm for depot test
 
@@ -129,7 +129,7 @@ def configured_external_appliance(temp_appliance_preconfig, app_creds_modscope,
     return temp_appliance_unconfig
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def configured_depot(log_depot, depot_machine_ip, appliance):
     """ Configure selected depot provider
 

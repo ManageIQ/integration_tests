@@ -10,7 +10,7 @@ from cfme.utils.update import update
 pytestmark = [test_requirements.automate]
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def domain(appliance):
     dc = DomainCollection(appliance)
     d = dc.create(

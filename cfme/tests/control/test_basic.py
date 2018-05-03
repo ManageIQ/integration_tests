@@ -265,7 +265,7 @@ def alert_profile_collection(appliance):
     return appliance.collections.alert_profiles
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def two_random_policies(appliance, policy_collection):
     # Physical Infrastucture policies excluded
     if appliance.version < "5.9":
@@ -294,14 +294,14 @@ def alert_profile_class(request):
     return request.param
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def policy(policy_collection, policy_class):
     policy_ = policy_collection.create(policy_class, fauxfactory.gen_alphanumeric())
     yield policy_
     policy_.delete()
 
 
-@pytest.yield_fixture(params=CONDITIONS, ids=lambda condition_class: condition_class.__name__,
+@pytest.fixture(params=CONDITIONS, ids=lambda condition_class: condition_class.__name__,
     scope="module")
 def condition_for_expressions(request, condition_collection, appliance):
     condition_class = request.param
@@ -331,19 +331,19 @@ def condition_prerequisites(request, condition_collection, appliance):
     return condition_class, scope, expression
 
 
-@pytest.yield_fixture(params=CONTROL_POLICIES, ids=lambda policy_class: policy_class.__name__)
+@pytest.fixture(params=CONTROL_POLICIES, ids=lambda policy_class: policy_class.__name__)
 def control_policy_class(request):
     return request.param
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def control_policy(control_policy_class, policy_collection):
     policy = policy_collection.create(control_policy_class, fauxfactory.gen_alphanumeric())
     yield policy
     policy.delete()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def action(action_collection):
     action_ = action_collection.create(
         fauxfactory.gen_alphanumeric(),
@@ -354,7 +354,7 @@ def action(action_collection):
     action_.delete()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def alert(alert_collection):
     alert_ = alert_collection.create(
         fauxfactory.gen_alphanumeric(),
@@ -366,7 +366,7 @@ def alert(alert_collection):
     alert_.delete()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def alert_profile(alert_profile_class, alert_collection, alert_profile_collection):
     alert = alert_collection.create(
         fauxfactory.gen_alphanumeric(),
@@ -384,7 +384,7 @@ def alert_profile(alert_profile_class, alert_collection, alert_profile_collectio
     alert.delete()
 
 
-@pytest.yield_fixture(params=POLICIES_AND_CONDITIONS, ids=lambda item: item.name)
+@pytest.fixture(params=POLICIES_AND_CONDITIONS, ids=lambda item: item.name)
 def policy_and_condition(request, policy_collection, condition_collection, appliance):
     condition_class = request.param.condition
     policy_class = request.param.policy

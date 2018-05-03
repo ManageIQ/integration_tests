@@ -144,7 +144,7 @@ def generate_rpms_file(ssh_client, directory):
     logger.info('Generated rpms file in: {}'.format(timediff))
 
 
-@pytest.yield_fixture(scope='session')
+@pytest.fixture(scope='session')
 def generate_version_files():
     yield
     starttime = time.time()

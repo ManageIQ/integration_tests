@@ -24,7 +24,7 @@ AVAILABLE_WIDGETS = [
 ]
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def widgets(dashboards):
     yield dashboards.default.collections.widgets.all()
     dashboards.close_zoom()

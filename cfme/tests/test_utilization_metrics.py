@@ -29,7 +29,7 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def enable_candu(appliance):
     candu = appliance.collections.candus
     server_settings = appliance.server.settings
@@ -45,7 +45,7 @@ def enable_candu(appliance):
         server_settings.update_server_roles_db(original_roles)
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def clean_setup_provider(request, provider):
     BaseProvider.clear_providers()
     setup_or_skip(request, provider)

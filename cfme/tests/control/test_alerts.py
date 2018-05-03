@@ -112,7 +112,7 @@ def vddk_url(provider):
         pytest.skip("There is no vddk url for this VMware provider version")
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def configure_fleecing(appliance, provider, full_template_vm, vddk_url):
     view = navigate_to(full_template_vm, "Details")
     host = view.entities.summary("Relationships").get_text_of("Host")
@@ -182,7 +182,7 @@ def setup_for_alerts(alert_profile_collection, action_collection, policy_collect
     return _setup_for_alerts
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def set_performance_capture_threshold(appliance):
     yaml_data = {"performance": {"capture_threshold_with_alerts": {"vm": "3.minutes"}}}
     appliance.update_advanced_settings(yaml_data)
@@ -191,7 +191,7 @@ def set_performance_capture_threshold(appliance):
     appliance.update_advanced_settings(yaml_data)
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def setup_candu(appliance):
     candu = appliance.collections.candus
     candu.enable_all()
@@ -208,7 +208,7 @@ def wait_candu(full_template_vm):
     full_template_vm.wait_candu_data_available(timeout=20 * 60)
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def ssh(provider, full_template, full_template_vm):
     vm_name = full_template_vm.name
     with SSHClient(
@@ -218,7 +218,7 @@ def ssh(provider, full_template, full_template_vm):
         yield ssh_client
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def setup_snmp(appliance):
     appliance.ssh_client.run_command("echo 'disableAuthorization yes' >> /etc/snmp/snmptrapd.conf")
     appliance.ssh_client.run_command("systemctl start snmptrapd.service")

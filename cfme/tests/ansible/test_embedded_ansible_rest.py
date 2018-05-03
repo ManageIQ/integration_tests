@@ -32,7 +32,7 @@ def ansible(appliance):
     return provider[0]
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def repository(appliance, ansible):
     collection = appliance.rest_api.collections.configuration_script_sources
     uniq = fauxfactory.gen_alphanumeric(5)

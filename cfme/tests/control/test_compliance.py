@@ -54,7 +54,7 @@ def host(provider, setup_provider):
     return provider.hosts[0]
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def policy_for_testing(policy_name, policy_profile_name, provider, policy_collection,
         policy_profile_collection):
     policy = policy_collection.create(HostCompliancePolicy, policy_name)
@@ -64,7 +64,7 @@ def policy_for_testing(policy_name, policy_profile_name, provider, policy_collec
     policy.delete()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def assign_policy_for_testing(policy_for_testing, host, policy_profile_name):
     host.assign_policy_profiles(policy_profile_name)
     yield policy_for_testing
@@ -85,7 +85,7 @@ def vddk_url(provider):
         pytest.skip("There is no vddk url for this VMware provider version")
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def configure_fleecing(appliance, provider, setup_provider_modscope, vddk_url):
     setup_providers_hosts_credentials(provider)
     appliance.install_vddk(vddk_url=vddk_url)
@@ -93,7 +93,7 @@ def configure_fleecing(appliance, provider, setup_provider_modscope, vddk_url):
     appliance.uninstall_vddk()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def compliance_vm(configure_fleecing, provider, full_template_modscope):
     name = "{}-{}".format("test-compliance", fauxfactory.gen_alpha(4))
     vm = VM.factory(name, provider, template_name=full_template_modscope.name)
@@ -107,7 +107,7 @@ def compliance_vm(configure_fleecing, provider, full_template_modscope):
     provider.refresh_provider_relationships()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def analysis_profile():
     ap = AnalysisProfile(
         name="default",

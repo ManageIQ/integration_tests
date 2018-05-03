@@ -11,7 +11,7 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def enabled_embedded_appliance(appliance):
     """Enables embedded ansible role"""
     appliance.enable_embedded_ansible_role()

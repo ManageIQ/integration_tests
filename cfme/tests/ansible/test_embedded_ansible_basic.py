@@ -132,7 +132,7 @@ def credentials_collection(appliance):
     return appliance.collections.ansible_credentials
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def ansible_repository(appliance):
     repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
@@ -155,7 +155,7 @@ def ansible_repository(appliance):
         repository.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def catalog_item(appliance, ansible_repository):
     cat_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,

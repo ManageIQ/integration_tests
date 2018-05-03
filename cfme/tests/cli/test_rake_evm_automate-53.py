@@ -9,7 +9,7 @@ from cfme.utils.update import update
 cli_path = data_path.join("cli")
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def rake(appliance):
     appliance.ssh_client.run_rake_command("evm:automate:clear")
     appliance.ssh_client.run_rake_command("evm:automate:reset")

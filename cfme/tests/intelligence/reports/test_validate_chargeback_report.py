@@ -37,7 +37,7 @@ pytestmark = [
 DEVIATION = 1
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def vm_ownership(enable_candu, provider, appliance):
     # In these tests, chargeback reports are filtered on VM owner.So,VMs have to be
     # assigned ownership.
@@ -73,7 +73,7 @@ def vm_ownership(enable_candu, provider, appliance):
             user.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def enable_candu(provider, appliance):
     # C&U data collection consumes a lot of memory and CPU.So, we are disabling some server roles
     # that are not needed for Chargeback reporting.
@@ -92,7 +92,7 @@ def enable_candu(provider, appliance):
     candu.disable_all()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def assign_default_rate(provider):
     # Assign default Compute rate to the Enterprise and then queue the Chargeback report.
     enterprise = cb.Assign(
@@ -116,7 +116,7 @@ def assign_default_rate(provider):
     enterprise.storageassign()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def assign_custom_rate(new_compute_rate, provider):
     # Assign custom Compute rate to the Enterprise and then queue the Chargeback report.
     description = new_compute_rate
@@ -379,7 +379,7 @@ def chargeback_costs_custom(resource_usage, new_compute_rate, appliance, provide
             "storage_used_cost": storage_used_cost}
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def chargeback_report_default(appliance, vm_ownership, assign_default_rate, provider):
     # Create a Chargeback report based on the default rate; Queue the report.
     owner = vm_ownership
@@ -407,7 +407,7 @@ def chargeback_report_default(appliance, vm_ownership, assign_default_rate, prov
     report.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, provider):
     # Create a Chargeback report based on a custom rate; Queue the report
     owner = vm_ownership
@@ -435,7 +435,7 @@ def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, provid
     report.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def new_compute_rate():
     # Create a new Compute Chargeback rate
     try:

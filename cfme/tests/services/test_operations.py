@@ -43,7 +43,7 @@ def vm_name():
     return fauxfactory.gen_alphanumeric(length=16)
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def generated_request(appliance,
                       a_provider, provider_data, provisioning, template_name, vm_name):
     """Creates a provision request, that is not automatically approved, and returns the search data.

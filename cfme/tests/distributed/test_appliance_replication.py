@@ -86,7 +86,7 @@ def configure_db_replication(db_address, appliance):
              fail_func=appliance.server.browser.refresh, message="get_replication_backlog")
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def test_vm(virtualcenter_provider):
     """Fixture to provision appliance to the provider being tested if necessary"""
     vm_name = random_vm_name('distpwr')

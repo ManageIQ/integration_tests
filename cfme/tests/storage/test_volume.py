@@ -20,7 +20,7 @@ pytestmark = [
 STORAGE_SIZE = 1
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def volume(appliance, provider):
     # create new volume
     volume_collection = appliance.collections.volumes

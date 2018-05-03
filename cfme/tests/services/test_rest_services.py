@@ -110,7 +110,7 @@ def service_catalogs(request, appliance):
     return response
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def catalog_bundle(request, dialog, service_catalog_obj, appliance, a_provider):
     catalog_items = service_templates_ui(
         request,
@@ -195,7 +195,7 @@ def delete_carts(appliance):
         cart.wait_not_exists()
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def cart(appliance, delete_carts):
     cart = appliance.rest_api.collections.service_orders.action.create(name="cart")
     assert_response(appliance)
@@ -1197,7 +1197,7 @@ class TestPendingRequestsRESTAPI(object):
 
 
 class TestServiceRequests(object):
-    @pytest.yield_fixture(scope='class')
+    @pytest.fixture(scope='class')
     def new_role(self, appliance):
         role = copy_role(appliance.rest_api, 'EvmRole-user_self_service')
         # allow role to access all Services, VMs, and Templates

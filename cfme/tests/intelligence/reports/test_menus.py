@@ -21,7 +21,7 @@ def shuffle(l):
     return [l[-1]] + l[:-1]
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def report_menus(group):
     report_menus = menus.ReportMenu()
     yield report_menus

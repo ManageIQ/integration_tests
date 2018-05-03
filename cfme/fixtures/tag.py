@@ -8,7 +8,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
 
-@pytest.yield_fixture(scope="session")
+@pytest.fixture(scope="session")
 def category():
     """
         Returns random created category object
@@ -27,7 +27,7 @@ def category():
     cg.delete(False)
 
 
-@pytest.yield_fixture(scope="session")
+@pytest.fixture(scope="session")
 def tag(category):
     """
         Returns random created tag object
@@ -41,7 +41,7 @@ def tag(category):
     tag.delete(False)
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def role(appliance):
     """
         Returns role object used in test module
@@ -53,7 +53,7 @@ def role(appliance):
     role.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def group_with_tag(appliance, role, category, tag):
     """
         Returns group object with set up tag filter used in test module
@@ -67,7 +67,7 @@ def group_with_tag(appliance, role, category, tag):
     group.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def user_restricted(appliance, group_with_tag, new_credential):
     """
         Returns restricted user object assigned

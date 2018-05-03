@@ -35,7 +35,7 @@ VALUE_UPDATES = ['2018-07-12', 'ADF231VRWQ1', '1']
 # TODO These should be factored into a single CRUD test
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def add_delete_custom_attributes(provider):
     provider.add_custom_attributes(*ATTRIBUTES_DATASET)
     view = refresh_and_navigate(provider, 'Details')

@@ -18,7 +18,7 @@ pytestmark = [
 STORAGE_SIZE = 1
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def volume(appliance, provider):
     # create new volume
     volume_collection = appliance.collections.volumes
@@ -39,7 +39,7 @@ def volume(appliance, provider):
             msg=str(e)))
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def snapshot(volume):
     # create new snapshot for crated volume
     snapshot_name = fauxfactory.gen_alpha()

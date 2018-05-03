@@ -102,7 +102,7 @@ LANDING_PAGES = [
     'Red Hat Access Insights']
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def my_settings(appliance):
     return appliance.user.my_settings
 

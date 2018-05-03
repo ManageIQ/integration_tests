@@ -74,7 +74,7 @@ def pytest_generate_tests(metafunc):
     metafunc.parametrize(argnames, argvalues)
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def create_group(appliance, **kwargs):
     """Helper method to check for existance of a group and delete if need be"""
     group_collection = appliance.collections.groups

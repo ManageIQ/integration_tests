@@ -66,7 +66,7 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def host_provider(_host_provider, provider):
     if provider.exists:
         # Delete original provider's hosts first

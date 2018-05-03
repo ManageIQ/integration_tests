@@ -19,7 +19,7 @@ def configure_console_webmks(appliance):
     appliance.server.settings.update_vmware_console({'console_type': 'VMware WebMKS'})
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def configure_websocket(appliance):
     """Enable websocket role if it is disabled.
 

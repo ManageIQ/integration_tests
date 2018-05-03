@@ -47,7 +47,7 @@ def gen_vpor_values():
     )
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def vporizer(appliance):
 
     """Grabbing vim_performance_operating_ranges table data for nodes and projects.

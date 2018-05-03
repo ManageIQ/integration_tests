@@ -19,7 +19,7 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def new_instance(provider):
     prov_data = provider.data['provisioning']
     instance = OpenStackInstance(fauxfactory.gen_alpha(), provider,

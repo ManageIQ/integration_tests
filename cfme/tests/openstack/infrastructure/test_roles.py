@@ -17,7 +17,7 @@ ROLES = ['NovaCompute', 'Controller', 'Compute', 'BlockStorage', 'SwiftStorage',
          'CephStorage']
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def roles(appliance, provider):
     collection = appliance.collections.deployment_roles.filter({'provider': provider})
     roles = collection.all()

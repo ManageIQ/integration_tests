@@ -33,7 +33,7 @@ def with_random_per_time(**kw):
     return kw
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def chargeback_compute_rate():
     # TODO add variable rate parametrization
     compute_rate = cb.ComputeRate(

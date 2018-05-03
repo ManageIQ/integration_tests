@@ -53,31 +53,31 @@ def restore_hostname(appliance):
     appliance.appliance_console_cli.set_hostname(orig_host)
 
 
-@pytest.yield_fixture()
+@pytest.fixture()
 def unconfigured_appliance(appliance):
     with fqdn_appliance(appliance, preconfigured=False, count=1) as apps:
         yield apps[0]
 
 
-@pytest.yield_fixture()
+@pytest.fixture()
 def unconfigured_appliance_secondary(appliance):
     with fqdn_appliance(appliance, preconfigured=False, count=1) as apps:
         yield apps[0]
 
 
-@pytest.yield_fixture()
+@pytest.fixture()
 def unconfigured_appliances(appliance):
     with fqdn_appliance(appliance, preconfigured=False, count=3) as apps:
         yield apps
 
 
-@pytest.yield_fixture()
+@pytest.fixture()
 def configured_appliance(appliance):
     with fqdn_appliance(appliance, preconfigured=True, count=1) as apps:
         yield apps[0]
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def dedicated_db_appliance(app_creds, unconfigured_appliance):
     """'ap' launch appliance_console, '' clear info screen, '5' setup db, '1' Creates v2_key,
     '1' selects internal db, '1' use partition, 'y' create dedicated db, 'pwd'

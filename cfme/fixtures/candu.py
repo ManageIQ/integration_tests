@@ -4,7 +4,7 @@ Fixtures for Capacity and Utilization
 import pytest
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def enable_candu(appliance):
     candu = appliance.collections.candus
     server_settings = appliance.server.settings
