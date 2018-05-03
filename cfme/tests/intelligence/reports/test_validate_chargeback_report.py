@@ -1,6 +1,24 @@
 # -*- coding: utf-8 -*-
 #
-# Chargeback reports are supported for all infra and cloud providers.
+""" Chargeback reports are supported for all infra and cloud providers.
+
+Chargeback reports report costs based on 1)resource usage, 2)resource allocation
+Costs are reported for the usage of the following resources by VMs:
+memory, cpu, network io, disk io, storage.
+Costs are reported for the allocation of the following resources to VMs:
+memory, cpu, storage
+
+So, for a provider such as VMware that supports C&U, a chargeback report would show costs for both
+resource usage and resource allocation.
+
+But, for a provider such as SCVMM that doesn't support C&U,chargeback reports show costs for
+resource allocation only.
+
+The tests in this module validate costs for resource usage.
+
+The tests for resource allocation are in :
+cfme/tests/intelligence/chargeback/test_resource_allocation.py
+"""
 
 import math
 from datetime import date
@@ -18,17 +36,23 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm import VM
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.markers.env_markers.provider import providers
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
+from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
+
+pf1 = ProviderFilter(classes=[CloudInfraProvider],
+    required_fields=[(['cap_and_util', 'test_chargeback'], True)])
+pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)  # SCVMM doesn't support C&U
 
 pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.meta(blockers=[BZ(1511099, forced_streams=['5.9', '5.8'],
                                   unblock=lambda provider: not provider.one_of(GCEProvider)),
                                ]),
-    pytest.mark.provider([CloudInfraProvider], scope='module',
-                         required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
+    pytest.mark.provider(gen_func=providers, filters=[pf1, pf2], scope='module'),
     pytest.mark.usefixtures('has_no_providers_modscope', 'setup_provider_modscope'),
     test_requirements.chargeback,
 ]

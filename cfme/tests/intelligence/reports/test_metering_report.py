@@ -20,10 +20,16 @@ from cfme.common.provider import CloudInfraProvider
 from cfme.cloud.provider import CloudProvider
 from cfme.common.vm import VM
 from cfme.common.provider import BaseProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.markers.env_markers.provider import providers
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
+from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
 
+pf1 = ProviderFilter(classes=[CloudInfraProvider],
+    required_fields=[(['cap_and_util', 'test_chargeback'], True)])
+pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)  # SCVMM doesn't support C&U
 
 pytestmark = [
     pytest.mark.tier(2),
@@ -31,8 +37,7 @@ pytestmark = [
     pytest.mark.meta(blockers=[BZ(1511099, forced_streams=["5.9"],
                                   unblock=lambda provider: not provider.one_of(GCEProvider)),
                                ]),
-    pytest.mark.provider([CloudInfraProvider], scope='module',
-                         required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
+    pytest.mark.provider(gen_func=providers, filters=[pf1, pf2], scope='module'),
     test_requirements.chargeback,
 ]
 
