@@ -2,7 +2,7 @@
 """polarion(\*tcid): Marker for marking tests as automation for polarion test cases."""
 import pytest
 import attr
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 
 
 def pytest_configure(config):

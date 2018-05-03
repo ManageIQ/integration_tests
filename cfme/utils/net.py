@@ -2,7 +2,7 @@ from collections import defaultdict
 import socket
 import os
 import re
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 
 from cfme.utils.log import logger
 

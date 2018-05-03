@@ -9,7 +9,7 @@ from cfme.utils import os
 from cfme.utils.log import logger
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 from cfme.utils.repo_gen import process_url, build_file
 from cfme.utils.appliance import find_appliance
 

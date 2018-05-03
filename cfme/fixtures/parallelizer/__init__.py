@@ -47,9 +47,9 @@ import pytest
 import zmq
 from _pytest import runner
 
-from fixtures import terminalreporter
-from fixtures.parallelizer import remote
-from fixtures.pytest_store import store
+from cfme.fixtures import terminalreporter
+from cfme.fixtures.parallelizer import remote
+from cfme.fixtures.pytest_store import store
 from cfme.utils import at_exit, conf
 from cfme.utils.log import create_sublogger
 from cfme.utils.path import conf_path

@@ -5,7 +5,7 @@ import numpy
 
 from cfme.utils.log import logger
 from cfme.utils.ssh import SSHClient, SSHTail
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 
 
 def collect_log(ssh_client, log_prefix, local_file_name, strip_whitespace=False):

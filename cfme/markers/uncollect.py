@@ -126,7 +126,7 @@ def uncollectif(item):
 
 
 def pytest_collection_modifyitems(session, config, items):
-    from fixtures.pytest_store import store
+    from cfme.fixtures.pytest_store import store
     len_collected = len(items)
 
     new_items = []

@@ -5,7 +5,7 @@ import six.moves.xmlrpc_client
 from github import Github
 from six.moves.urllib.parse import urlparse
 
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 from cfme.utils import classproperty, conf, version
 from cfme.utils.bz import Bugzilla
 from cfme.utils.log import logger

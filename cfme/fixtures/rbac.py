@@ -99,8 +99,8 @@ from cfme.utils.appliance import current_appliance
 from cfme.utils.browser import browser, ensure_browser_open
 from cfme.utils.browser import take_screenshot
 from cfme.utils.log import logger
-from fixtures.artifactor_plugin import fire_art_test_hook
-from fixtures.pytest_store import store
+from cfme.fixtures.artifactor_plugin import fire_art_test_hook
+from cfme.fixtures.pytest_store import store
 
 enable_rbac = False
 

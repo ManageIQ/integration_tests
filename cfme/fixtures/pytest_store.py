@@ -5,12 +5,8 @@ so they have been stashed into the 'store' namespace
 
 Usage:
 
-    # as pytest.store
-    import pytest
-    pytest.store.config, pytest.store.pluginmanager, pytest.store.session
-
     # imported directly (store is pytest.store)
-    from fixtures.pytest_store import store
+    from cfme.fixtures.pytest_store import store
     store.config, store.pluginmanager, store.session
 
 The availability of these objects varies during a test run, but
@@ -20,8 +16,6 @@ all should be available in the collection and testing phases of a test run.
 import fauxfactory
 import os
 import sys
-
-import pytest  # NOQA: import to trigger initial pluginmanager
 
 from _pytest.terminal import TerminalReporter
 from cached_property import cached_property

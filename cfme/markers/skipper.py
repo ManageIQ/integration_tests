@@ -28,7 +28,7 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    from fixtures.pytest_store import store
+    from cfme.fixtures.pytest_store import store
 
     marks_to_skip = []
     mark_expr = [mark.strip(''''"()''') for mark in config.option.markexpr.split()]

@@ -34,8 +34,8 @@ from cfme.utils.rest import (
 )
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
-from fixtures.provider import setup_one_or_skip
-from fixtures.pytest_store import store
+from cfme.fixtures.provider import setup_one_or_skip
+from cfme.fixtures.pytest_store import store
 
 pytestmark = [
     pytest.mark.long_running,

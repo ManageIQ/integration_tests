@@ -4,7 +4,7 @@ import pytest
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 from cfme.utils.log import logger
 from cfme.utils.providers import list_providers_by_class
 

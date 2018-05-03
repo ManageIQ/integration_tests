@@ -6,7 +6,7 @@ from miq_version import (  # noqa
     version_stream_product_mapping
 )
 
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 
 
 def get_stream(ver):

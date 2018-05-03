@@ -18,7 +18,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.update import update
-from fixtures.provider import setup_one_or_skip
+from cfme.fixtures.provider import setup_one_or_skip
 
 pytestmark = test_requirements.rbac
 
@@ -44,7 +44,7 @@ def new_credential():
 
 
 def new_user(appliance, groups, name=None, credential=None):
-    from fixtures.blockers import bug
+    from cfme.fixtures.blockers import bug
 
     uppercase_username_bug = bug(1487199)
 

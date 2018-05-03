@@ -10,8 +10,7 @@ from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import browser
 from cfme.utils.wait import wait_for
-from fixtures.provider import setup_one_by_class_or_skip
-from fixtures.pytest_store import store
+from cfme.fixtures.provider import setup_one_by_class_or_skip
 
 pytestmark = [
     pytest.mark.meta(server_roles="-automate"),  # To prevent the provisioning itself.

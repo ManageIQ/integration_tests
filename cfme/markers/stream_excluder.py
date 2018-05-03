@@ -70,7 +70,7 @@ def pytest_itemcollected(item):
 def pytest_sessionstart(session):
     config = session.config
     # Just to print out the appliance's streams
-    from fixtures.terminalreporter import reporter
+    from cfme.fixtures.terminalreporter import reporter
     holder = config.pluginmanager.getplugin('appliance-holder')
 
     reporter(config).write(

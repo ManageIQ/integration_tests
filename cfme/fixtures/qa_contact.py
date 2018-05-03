@@ -3,8 +3,8 @@ import inspect
 import subprocess
 import re
 import operator
-from fixtures.artifactor_plugin import fire_art_test_hook
-from fixtures.pytest_store import store
+from cfme.fixtures.artifactor_plugin import fire_art_test_hook
+from cfme.fixtures.pytest_store import store
 
 
 def dig_code(node):

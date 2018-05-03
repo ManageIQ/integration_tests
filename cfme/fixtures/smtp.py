@@ -13,7 +13,7 @@ import signal
 import subprocess
 import time
 
-from fixtures.artifactor_plugin import fire_art_test_hook
+from cfme.fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.utils.conf import env
 from cfme.utils.log import setup_logger
 from cfme.utils.net import random_port, my_ip_address, net_check_remote

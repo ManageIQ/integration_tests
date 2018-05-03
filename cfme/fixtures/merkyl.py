@@ -1,6 +1,6 @@
 import pytest
 
-from fixtures.artifactor_plugin import fire_art_test_hook
+from cfme.fixtures.artifactor_plugin import fire_art_test_hook
 
 from cfme.utils.appliance import get_or_create_current_appliance
 

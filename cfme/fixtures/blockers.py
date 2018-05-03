@@ -12,7 +12,7 @@ All of them are converted to the :py:class:`utils.blockers.Blocker` instances
 """
 import pytest
 
-from fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import store
 from cfme.utils.blockers import Blocker, BZ, GH
 
 

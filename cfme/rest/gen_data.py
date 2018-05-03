@@ -10,7 +10,7 @@ from cfme.utils.log import logger
 from cfme.utils.rest import create_resource
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
-from fixtures.provider import setup_one_by_class_or_skip
+from cfme.fixtures.provider import setup_one_by_class_or_skip
 
 TEMPLATE_TORSO = """{
   "AWSTemplateFormatVersion" : "2010-09-09",

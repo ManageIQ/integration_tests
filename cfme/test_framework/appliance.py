@@ -9,7 +9,7 @@ from cfme.utils.appliance import (
     DummyAppliance,
     ApplianceSummoningWarning)
 from cfme.utils.path import log_path
-from fixtures import terminalreporter
+from cfme.fixtures import terminalreporter
 PLUGIN_KEY = "appliance-holder"
 warnings.simplefilter('error', ApplianceSummoningWarning)
 

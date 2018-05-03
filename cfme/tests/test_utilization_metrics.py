@@ -18,7 +18,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
-from fixtures.provider import setup_or_skip
+from cfme.fixtures.provider import setup_or_skip
 
 pytestmark = [
     pytest.mark.tier(1),

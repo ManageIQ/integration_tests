@@ -9,7 +9,7 @@ from cfme.rest.gen_data import service_catalog_obj as _catalog
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.log import logger
-from fixtures.provider import console_template
+from cfme.fixtures.provider import console_template
 
 
 @pytest.fixture(scope="function")
