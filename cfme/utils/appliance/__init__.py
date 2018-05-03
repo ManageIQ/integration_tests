@@ -707,24 +707,34 @@ class IPAppliance(object):
         return '{}/{}'.format(self.url.rstrip('/'), path.lstrip('/'))
 
     @property
-    def unpartitioned_disks(self):
+    def disks_and_partitions(self):
         """Returns a list of disk devices that are not mounted."""
         disks_and_partitions = self.ssh_client.run_command(
             "ls -1 /dev/ | egrep '^[sv]d[a-z][0-9]?'").output.strip()
         disks_and_partitions = re.split(r'\s+', disks_and_partitions)
-        partition_regexp = re.compile('^[sv]d[a-z][0-9]$')
-        disks = set()
-        for dp in disks_and_partitions:
-            disks.add(re.sub(r'[0-9]$', '', dp))
+        return sorted('/dev/{}'.format(disk) for disk in disks_and_partitions)
+
+    @property
+    def disks(self):
+        disk_regexp = re.compile('^/dev/[sv]d[a-z]$')
+        return [
+            disk for disk in self.disks_and_partitions
+            if disk_regexp.match(disk)
+        ]
+
+    @property
+    def unpartitioned_disks(self):
+        partition_regexp = re.compile('^/dev/[sv]d[a-z][0-9]$')
         unpartitioned_disks = set()
-        for disk in disks:
+
+        for disk in self.disks:
             add = True
-            for dp in disks_and_partitions:
+            for dp in self.disks_and_partitions:
                 if dp.startswith(disk) and partition_regexp.match(dp) is not None:
                     add = False
             if add:
                 unpartitioned_disks.add(disk)
-        return sorted('/dev/{}'.format(disk) for disk in unpartitioned_disks)
+        return sorted(disk for disk in unpartitioned_disks)
 
     @cached_property
     def product_name(self):
