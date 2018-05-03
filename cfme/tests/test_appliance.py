@@ -5,7 +5,6 @@ import os
 import pytest
 
 from cfme.utils import conf
-from fixtures.pytest_store import store
 
 pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
 
@@ -63,7 +62,7 @@ def test_service_enabled(appliance, service):
     """Verifies if key services are configured to start on boot up"""
     if service == 'postgresql':
         service = '{}-postgresql'.format(appliance.db.postgres_version)
-    if pytest.store.current_appliance.os_version >= '7':
+    if appliance.os_version >= '7':
         cmd = 'systemctl is-enabled {}'.format(service)
     else:
         cmd = 'chkconfig | grep {} | grep -q "5:on"'.format(service)
