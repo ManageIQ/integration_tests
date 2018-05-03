@@ -708,7 +708,7 @@ class IPAppliance(object):
 
     @property
     def disks_and_partitions(self):
-        """Returns a list of disk devices that are not mounted."""
+        """Returns list of all disks and partitions"""
         disks_and_partitions = self.ssh_client.run_command(
             "ls -1 /dev/ | egrep '^[sv]d[a-z][0-9]?'").output.strip()
         disks_and_partitions = re.split(r'\s+', disks_and_partitions)
@@ -716,6 +716,7 @@ class IPAppliance(object):
 
     @property
     def disks(self):
+        """Returns list of disks only, excludes their partitions"""
         disk_regexp = re.compile('^/dev/[sv]d[a-z]$')
         return [
             disk for disk in self.disks_and_partitions
@@ -724,6 +725,7 @@ class IPAppliance(object):
 
     @property
     def unpartitioned_disks(self):
+        """Returns list of any disks that have no partitions"""
         partition_regexp = re.compile('^/dev/[sv]d[a-z][0-9]$')
         unpartitioned_disks = set()
 
