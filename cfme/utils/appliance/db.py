@@ -299,9 +299,10 @@ class ApplianceDB(AppliancePlugin):
         with self.ssh_client as client:
             for command in commands_to_run:
                 result = client.run_command(command)
-                if result.failed:
-                    self.logger.warn("Command failed!")
                 self.logger.info("Ret code: %d, Output:\n%s", result.rc, result)
+                if result.failed:
+                    self.logger.error("Command failed! Aborting LVM setup")
+                    break
 
     def enable_internal(self, region=0, key_address=None, db_password=None, ssh_password=None,
                         db_disk=None):
