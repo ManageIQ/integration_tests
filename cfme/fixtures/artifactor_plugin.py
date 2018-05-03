@@ -36,6 +36,7 @@ from cfme.utils.net import random_port, net_check
 from cfme.utils.wait import wait_for
 from cfme.fixtures.pytest_store import write_line, store
 from cfme.markers.polarion import extract_polarion_ids
+from cfme.utils.appliance import find_appliance
 
 UNDER_TEST = False  # set to true for artifactor using tests
 
@@ -163,11 +164,10 @@ def fire_art_test_hook(node, hook, **hook_args):
 
 @pytest.mark.hookwrapper
 def pytest_runtest_protocol(item):
-    holder = item.config.pluginmanager.getplugin('appliance-holder')
     global session_ver
     global session_build
     global session_stream
-    appliance = holder.held_appliance
+    appliance = find_appliance(item)
     if not session_ver:
         session_ver = str(appliance.version)
         session_build = appliance.build
@@ -229,8 +229,7 @@ def pytest_runtest_protocol(item):
 
 def pytest_runtest_teardown(item, nextitem):
     name, location = get_test_idents(item)
-    holder = item.config.pluginmanager.getplugin('appliance-holder')
-    app = holder.held_appliance
+    app = find_appliance(item)
     ip = app.hostname
     fire_art_test_hook(
         item, 'finish_test',
@@ -296,9 +295,8 @@ lock = RLock()
 
 
 def shutdown(config):
-    holder = config.pluginmanager.getplugin('appliance-holder')
-    if holder:
-        app = holder.held_appliance
+    app = find_appliance(config, require=False)
+    if app is not None:
         with lock:
             proc = config._art_proc
             if proc:

@@ -6,7 +6,7 @@ from py.path import local
 
 import cfme.utils
 from cfme.utils import log
-from cfme.utils.appliance import get_or_create_current_appliance
+from cfme.utils.appliance import find_appliance
 from cfme.fixtures.log import _test_status, _format_nodeid
 
 SLAVEID = None
@@ -82,7 +82,7 @@ class SlaveManager(object):
             path, lineno, domaininfo = report.location
             test_status = _test_status(_format_nodeid(report.nodeid, False))
             if test_status == "failed":
-                appliance = get_or_create_current_appliance()
+                appliance = find_appliance(self)
                 try:
                     self.log.info(
                         "Managed providers: {}".format(

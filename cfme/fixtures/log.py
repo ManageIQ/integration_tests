@@ -1,9 +1,10 @@
 import collections
 
 import pytest
+import attr
 
 from cfme.utils import log
-from cfme.utils.appliance import get_or_create_current_appliance
+from cfme.utils.appliance import find_appliance
 
 #: A dict of tests, and their state at various test phases
 test_tracking = collections.defaultdict(dict)
@@ -13,6 +14,10 @@ test_tracking = collections.defaultdict(dict)
 @pytest.fixture(scope='session')
 def logger():
     return log.logger
+
+
+def pytest_configure(config):
+    config.pluginmanager.register(LogExtraData(config))
 
 
 @pytest.mark.hookwrapper
@@ -30,35 +35,41 @@ def pytest_collection_modifyitems(session, config, items):
     logger().info('Collected {} items{}'.format(len(items), expr_string))
 
 
-@pytest.mark.hookwrapper
-def pytest_runtest_logreport(report):
-    # e.g. test_tracking['test_name']['setup'] = 'passed'
-    #      test_tracking['test_name']['call'] = 'skipped'
-    #      test_tracking['test_name']['teardown'] = 'failed'
-    yield
-    test_tracking[_format_nodeid(report.nodeid, False)][report.when] = report.outcome
-    if report.when == 'teardown' and pytest.store.parallel_session is None:
-        path, lineno, domaininfo = report.location
-        test_status = _test_status(_format_nodeid(report.nodeid, False))
-        if test_status == "failed":
-            appliance = get_or_create_current_appliance()
-            try:
-                logger().info(
-                    "Managed providers: {}".format(
-                        ", ".join([
-                            prov.key for prov in
-                            appliance.managed_known_providers]))
-                )
-            except KeyError as ex:
-                if 'ext_management_systems' in ex.msg:
-                    logger().warning("Unable to query ext_management_systems table; DB issue")
-                else:
-                    raise
-        logger().info(log.format_marker('{} result: {}'.format(_format_nodeid(report.nodeid),
-                test_status)),
-            extra={'source_file': path, 'source_lineno': lineno})
-    if report.outcome == "skipped":
-        logger().info(log.format_marker(report.longreprtext))
+@attr.s(frozen=True)
+class LogExtraData(object):
+    config = attr.ib()
+
+    @property
+    def managed_known_providers(self):
+        appliance = find_appliance(self.config)
+        return [prov.key for prov in appliance.managed_known_providers]
+
+    @pytest.mark.hookwrapper
+    def pytest_runtest_logreport(self, report):
+        # e.g. test_tracking['test_name']['setup'] = 'passed'
+        #      test_tracking['test_name']['call'] = 'skipped'
+        #      test_tracking['test_name']['teardown'] = 'failed'
+        yield
+        test_tracking[_format_nodeid(report.nodeid, False)][report.when] = report.outcome
+        if report.when == 'teardown' and pytest.store.parallel_session is None:
+            path, lineno, domaininfo = report.location
+            test_status = _test_status(_format_nodeid(report.nodeid, False))
+            if test_status == "failed":
+                try:
+                    logger().info(
+                        "Managed providers: {}".format(
+                            ", ".join(self.managed_known_providers))
+                    )
+                except KeyError as ex:
+                    if 'ext_management_systems' in ex.msg:
+                        logger().warning("Unable to query ext_management_systems table; DB issue")
+                    else:
+                        raise
+            logger().info(log.format_marker('{} result: {}'.format(_format_nodeid(report.nodeid),
+                    test_status)),
+                extra={'source_file': path, 'source_lineno': lineno})
+        if report.outcome == "skipped":
+            logger().info(log.format_marker(report.longreprtext))
 
 
 def pytest_exception_interact(node, call, report):
