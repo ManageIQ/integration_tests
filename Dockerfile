@@ -86,9 +86,11 @@ RUN echo "source /cfme_venv/bin/activate" >> /root/.bashrc
 # Preinstall any python dependencies to keep it in an early layer
 RUN curl https://raw.githubusercontent.com/ManageIQ/integration_tests/master/requirements/frozen.txt > frozen.txt
 RUN /cfme_venv/bin/pip install --no-cache-dir -U pip wheel setuptools_scm docutils && \
-    /cfme_venv/bin/pip install --no-cache-dir -r frozen.txt --no-binary pycurl --no-binary numpy --no-binary matplotlib && \
+    /cfme_venv/bin/pip install --no-cache-dir -r frozen.txt --no-binary pycurl --no-binary numpy && \
+    /cfme_venv/bin/pip install --no-cache-dir matplotlib && \
     rm -rf ~/.cache/pip && \
-    find . -name *.pyc -delete && find . -name __pycache__ -delete
+    find . -name *.pyc -delete && \
+    find . -name __pycache__ -delete
 
 VOLUME /projects/cfme_env/cfme_vol
 WORKDIR /projects/cfme_env/cfme_vol
