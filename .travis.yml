@@ -2,13 +2,15 @@ language: python
 cache: pip
 python:
   - '2.7'
+  - '3.6'
+matrix:
+  allow_failures:
+    - python: '3.6'
 env:
   # work around travis being missconfigured
   - BOTO_CONFIG=/dev/null
 install:
-  - pip install -U pip setuptools
-  - pip install -Ur requirements/frozen.txt
-  - pip install -e .
-script: py.test cfme/utils/tests cfme/modeling/tests -v --dummy-appliance
+  - python -m cfme.scripting.quickstart
+script: pytest cfme/utils/tests cfme/modeling/tests -v --dummy-appliance
 after_success:
   - coveralls
