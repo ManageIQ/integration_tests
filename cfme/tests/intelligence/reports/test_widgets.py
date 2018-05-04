@@ -19,7 +19,7 @@ def dashboard(default_widgets):
     return DefaultDashboard(widgets=default_widgets)
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def custom_widgets(appliance):
     collection = appliance.collections.dashboard_report_widgets
     ws = [

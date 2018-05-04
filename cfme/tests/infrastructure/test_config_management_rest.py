@@ -13,7 +13,7 @@ pytest_generate_tests = generate(gen_func=config_managers, scope='module')
 pytestmark = [test_requirements.config_management]
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def config_manager(config_manager_obj):
     """Fixture that provides a random config manager and sets it up."""
     if config_manager_obj.type == 'Ansible Tower':
@@ -24,7 +24,7 @@ def config_manager(config_manager_obj):
     config_manager_obj.delete()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def authentications(appliance, config_manager):
     """Creates and returns authentication resources under /api/authentications."""
     auth_num = 2

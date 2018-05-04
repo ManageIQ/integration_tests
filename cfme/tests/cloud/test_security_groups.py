@@ -10,7 +10,7 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def sec_group(appliance, provider):
     collection = appliance.collections.security_groups
     try:

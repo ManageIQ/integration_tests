@@ -38,7 +38,7 @@ def wait_for_ansible(appliance):
     appliance.server.settings.disable_server_roles("embedded_ansible")
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def ansible_repository(appliance, wait_for_ansible):
     repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
@@ -61,7 +61,7 @@ def ansible_repository(appliance, wait_for_ansible):
         repository.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def ansible_credential(appliance, ansible_repository):
     credential = appliance.collections.ansible_credentials.create(
         fauxfactory.gen_alpha(),
@@ -75,7 +75,7 @@ def ansible_credential(appliance, ansible_repository):
         credential.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def ansible_catalog_item(appliance, ansible_repository):
     cat_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
@@ -103,7 +103,7 @@ def ansible_catalog_item(appliance, ansible_repository):
         cat_item.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def catalog(appliance, ansible_catalog_item):
     catalog_ = appliance.collections.catalogs.create(fauxfactory.gen_alphanumeric(),
                                                      description='my catalog',
@@ -122,7 +122,7 @@ def service_catalog(appliance, ansible_catalog_item, catalog):
     return service_catalog_
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def service_request(appliance, ansible_catalog_item):
     request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
     service_request_ = appliance.collections.requests.instantiate(description=request_descr)
@@ -132,7 +132,7 @@ def service_request(appliance, ansible_catalog_item):
         service_request_.remove_request()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def service(appliance, ansible_catalog_item):
     service_ = MyService(appliance, ansible_catalog_item.name)
     yield service_
@@ -141,7 +141,7 @@ def service(appliance, ansible_catalog_item):
         service_.delete()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def custom_service_button(appliance, ansible_catalog_item):
     buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(),

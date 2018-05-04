@@ -9,7 +9,7 @@ from cfme.utils.providers import get_crud_by_name
 from cfme import test_requirements
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def report_vms(appliance, infra_provider):
     report = appliance.collections.reports.create(
         menu_name=fauxfactory.gen_alphanumeric(),

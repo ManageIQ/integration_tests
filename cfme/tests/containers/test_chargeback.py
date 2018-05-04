@@ -157,7 +157,7 @@ def assign_custom_compute_rate(obj_type, chargeback_rate, provider):
     return chargeback_rate
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def compute_rate(appliance, rate_type, interval):
     variable_rate = 1 if rate_type == 'variable' else 0
     description = 'custom_rate_' + fauxfactory.gen_alphanumeric()
@@ -182,14 +182,14 @@ def compute_rate(appliance, rate_type, interval):
     ccb.delete()
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def assign_compute_rate(obj_type, compute_rate, provider):
     assign_custom_compute_rate(obj_type, compute_rate, provider)
     yield compute_rate
     assignments.Assign(assign_to="<Nothing>").computeassign()
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def chargeback_report_data(appliance, obj_type, interval, assign_compute_rate, provider):
     report = gen_report_base(appliance, obj_type, provider, assign_compute_rate.description,
         interval)

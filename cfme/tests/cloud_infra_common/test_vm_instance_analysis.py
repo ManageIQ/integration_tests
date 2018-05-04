@@ -163,7 +163,7 @@ def local_setup_provider(request, setup_provider_modscope, provider, appliance):
     appliance.server.settings.enable_server_roles('automate', 'smartproxy', 'smartstate')
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def ssa_vm(request, local_setup_provider, provider, vm_analysis_provisioning_data,
            appliance, analysis_type):
     """ Fixture to provision instance on the provider """

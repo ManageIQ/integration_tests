@@ -13,7 +13,7 @@ pytestmark = [pytest.mark.ignore_stream("upstream"),
 STORAGE_SIZE = 1
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def backup(appliance, provider):
     volume_collection = appliance.collections.volumes
     storage_manager = '{} Cinder Manager'.format(provider.name)

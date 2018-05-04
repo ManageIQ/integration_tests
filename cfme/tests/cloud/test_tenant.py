@@ -8,7 +8,7 @@ from cfme.utils.log import logger
 pytestmark = [pytest.mark.provider([OpenStackProvider], scope='module')]
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def tenant(provider, setup_provider, appliance):
     collection = appliance.collections.cloud_tenants
     tenant = collection.create(name=fauxfactory.gen_alphanumeric(8), provider=provider)

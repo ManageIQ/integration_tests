@@ -18,14 +18,14 @@ pytestmark = [
 MANAGER_TYPE = ['Swift Manager', 'Cinder Manager']
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def provider_cleanup(provider):
     yield
     provider.delete_rest()
     provider.wait_for_delete()
 
 
-@pytest.yield_fixture(params=MANAGER_TYPE,
+@pytest.fixture(params=MANAGER_TYPE,
                       ids=['object_manager', 'block_manager'])
 def collection_manager(request, openstack_provider, appliance):
     if request.param == 'Swift Manager':

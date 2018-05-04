@@ -65,7 +65,7 @@ def pytest_generate_tests(metafunc):
         parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def appliance_preupdate(temp_appliance_preconfig_funcscope, appliance):
     """Requests appliance from sprout and configures rpms for crud update"""
     if appliance.version >= '5.9':

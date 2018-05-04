@@ -136,7 +136,7 @@ def vmware_vm(request, virtualcenter_provider):
     return vm
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def hardware_reconfigured_alert(alert_collection):
     alert = alert_collection.create(
         fauxfactory.gen_alpha(),

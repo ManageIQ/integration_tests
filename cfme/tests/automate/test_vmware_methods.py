@@ -33,7 +33,7 @@ def domain_collection(appliance):
     return DomainCollection(appliance)
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def domain(request, domain_collection):
     domain = domain_collection.create(name=fauxfactory.gen_alphanumeric(), enabled=True)
     yield domain
@@ -51,7 +51,7 @@ def cls(request, domain):
     return domain.namespaces.instantiate(name='System').classes.instantiate(name='Request')
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def testing_group(appliance, request):
     group_desc = fauxfactory.gen_alphanumeric()
     group = appliance.collections.button_groups.create(
@@ -63,7 +63,7 @@ def testing_group(appliance, request):
     group.delete_if_exists()
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def testing_vm(request, setup_provider, provider):
     vm = VM.factory(
         "test_ae_hd_{}".format(fauxfactory.gen_alphanumeric()),

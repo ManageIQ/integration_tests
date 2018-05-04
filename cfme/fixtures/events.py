@@ -83,7 +83,7 @@ def pytest_runtest_call(item):
                 logger.info('Seems like all events have arrived!')
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def register_event(request, uses_event_listener, soft_assert, appliance):
     """register_event(list of event attributes)
     Event registration fixture.

@@ -49,28 +49,28 @@ LANDING_PAGES = [
 ]
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def set_grid(appliance):
     gridlimit = appliance.user.my_settings.visual.grid_view_limit
     yield
     appliance.user.my_settings.visual.grid_view_limit = gridlimit
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def set_tile(appliance):
     tilelimit = appliance.user.my_settings.visual.tile_view_limit
     yield
     appliance.user.my_settings.visual.tile_view_limit = tilelimit
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def set_list(appliance):
     listlimit = appliance.user.my_settings.visual.list_view_limit
     yield
     appliance.user.my_settings.visual.list_view_limit = listlimit
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def set_report(appliance):
     reportlimit = appliance.user.my_settings.visual.report_view_limit
     yield
@@ -86,35 +86,35 @@ def go_to_grid(page):
     view.toolbar.view_selector.select('Grid View')
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def set_infra_provider_quad(appliance):
     appliance.user.my_settings.visual.infra_provider_quad = False
     yield
     appliance.user.my_settings.visual.infra_provider_quad = True
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def set_host_quad(appliance):
     appliance.user.my_settings.visual.host_quad = False
     yield
     appliance.user.my_settings.visual.host_quad = True
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def set_datastore_quad(appliance):
     appliance.user.my_settings.visual.datastore_quad = False
     yield
     appliance.user.my_settings.visual.datastore_quad = True
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def set_vm_quad(appliance):
     appliance.user.my_settings.visual.vm_quad = False
     yield
     appliance.user.my_settings.visual.vm_quad = True
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def set_template_quad(appliance):
     appliance.user.my_settings.visual.template_quad = False
     yield

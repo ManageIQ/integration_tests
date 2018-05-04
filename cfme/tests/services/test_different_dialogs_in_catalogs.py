@@ -25,7 +25,7 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def tagcontrol_dialog(appliance):
     service_dialog = appliance.collections.service_dialogs
     dialog = "dialog_" + fauxfactory.gen_alphanumeric()
@@ -50,7 +50,7 @@ def tagcontrol_dialog(appliance):
     yield sd
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def catalog(appliance):
     catalog = "cat_" + fauxfactory.gen_alphanumeric()
     cat = appliance.collections.catalogs.create(name=catalog, description="my catalog")

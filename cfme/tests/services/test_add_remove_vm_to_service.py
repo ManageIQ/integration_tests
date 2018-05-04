@@ -23,7 +23,7 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def new_vm(provider, setup_provider, small_template_modscope):
     """Fixture to provision and delete vm on the provider"""
     vm_name = 'test_service_{}'.format(fauxfactory.gen_alphanumeric())
@@ -46,7 +46,7 @@ def copy_domain(request, appliance):
     return domain
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def myservice(appliance, provider, catalog_item, request):
     vm_name = catalog_item.prov_data["catalog"]["vm_name"]
     request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())

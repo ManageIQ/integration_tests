@@ -4,7 +4,7 @@ from wrapanapi.containers.volume import Volume as VolumeApi
 from cfme.containers.volume import Volume
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def has_persistent_volume(provider, appliance):
     """Verifying that some persistent volume exists"""
     vols = provider.mgmt.list_volume()

@@ -44,7 +44,7 @@ def reconfigure_vm(vm, config):
                 .format(vars(config.hw), config.disks))
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def small_vm(provider, small_template):
     vm = VM.factory(random_vm_name(context='reconfig'), provider, small_template.name)
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")

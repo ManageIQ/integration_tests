@@ -36,7 +36,7 @@ log(:info, "===========================================") if @debug
 """
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def dialog(appliance, copy_instance, create_method):
     service_dialogs = appliance.collections.service_dialogs
     dialog = "dialog_" + fauxfactory.gen_alphanumeric()
@@ -64,7 +64,7 @@ def dialog(appliance, copy_instance, create_method):
     yield sd
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def catalog(appliance):
     cat_name = "cat_" + fauxfactory.gen_alphanumeric()
     catalog = appliance.collections.catalogs.create(name=cat_name, description="my catalog")

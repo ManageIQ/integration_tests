@@ -30,7 +30,7 @@ def wait_for_ansible(appliance):
     appliance.server.settings.disable_server_roles("embedded_ansible")
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def ansible_repository(appliance, wait_for_ansible):
     repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
@@ -53,7 +53,7 @@ def ansible_repository(appliance, wait_for_ansible):
         repository.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def ansible_catalog_item(appliance, ansible_repository):
     cat_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
@@ -74,7 +74,7 @@ def ansible_catalog_item(appliance, ansible_repository):
         cat_item.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def ansible_action(appliance, ansible_catalog_item):
     action_collection = appliance.collections.actions
     action = action_collection.create(
@@ -92,7 +92,7 @@ def ansible_action(appliance, ansible_catalog_item):
         action.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def policy_for_testing(appliance, full_template_vm_modscope, provider, ansible_action):
     vm = full_template_vm_modscope
     policy = appliance.collections.policies.create(
@@ -113,7 +113,7 @@ def policy_for_testing(appliance, full_template_vm_modscope, provider, ansible_a
         policy.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def ansible_credential(wait_for_ansible, appliance, full_template_modscope):
     credential = appliance.collections.ansible_credentials.create(
         fauxfactory.gen_alpha(),
@@ -127,7 +127,7 @@ def ansible_credential(wait_for_ansible, appliance, full_template_modscope):
         credential.delete()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def service_request(appliance, ansible_catalog_item):
     request_desc = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
     service_request_ = appliance.collections.requests.instantiate(request_desc)
@@ -137,7 +137,7 @@ def service_request(appliance, ansible_catalog_item):
         service_request_.remove_request()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def service(appliance, ansible_catalog_item):
     service_ = MyService(appliance, ansible_catalog_item.name)
     yield service_

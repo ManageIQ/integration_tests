@@ -18,7 +18,7 @@ pytestmark = [
 VOLUME_SIZE = 1
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def volume(appliance, provider):
     collection = appliance.collections.volumes
     storage_manager = '{} Cinder Manager'.format(provider.name)

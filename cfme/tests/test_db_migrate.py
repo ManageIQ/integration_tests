@@ -63,7 +63,7 @@ def temp_appliance_global_region(temp_appliance_unconfig_funcscope_rhevm):
     return temp_appliance_unconfig_funcscope_rhevm
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def appliance_preupdate(temp_appliance_preconfig_funcscope_upgrade, appliance):
     """Reconfigure appliance partitions and adds repo file for upgrade"""
     update_url = ('update_url_' + ''.join([i for i in get_stream(appliance.version)

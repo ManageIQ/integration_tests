@@ -42,7 +42,7 @@ divisor = {
 }
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def vm_ownership(enable_candu, provider, appliance):
     """In these tests, chargeback reports are filtered on VM owner.So,VMs have to be
     assigned ownership.
@@ -76,7 +76,7 @@ def vm_ownership(enable_candu, provider, appliance):
         user.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def enable_candu(appliance):
     """C&U data collection consumes a lot of memory and CPU.So, we are disabling some server roles
     that are not needed for Chargeback reporting.
@@ -94,7 +94,7 @@ def enable_candu(appliance):
     candu.disable_all()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def assign_custom_rate(new_compute_rate):
     """Assign custom Compute rate to the Enterprise and then queue the Chargeback report."""
     description = new_compute_rate
@@ -322,7 +322,7 @@ def chargeback_costs_custom(resource_usage, new_compute_rate, appliance, interva
             "storage_used_cost": storage_used_cost}
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, interval):
     """Create a Chargeback report based on a custom rate; Queue the report"""
     owner = vm_ownership
@@ -355,7 +355,7 @@ def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, interv
         report.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def new_compute_rate(interval):
     """Create a new Compute Chargeback rate"""
     desc = 'custom_{}'.format(interval)

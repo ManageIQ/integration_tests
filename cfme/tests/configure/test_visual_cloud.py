@@ -44,7 +44,7 @@ def page(request):
     return request.param
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def set_grid(appliance):
     old_grid_limit = appliance.user.my_settings.visual.grid_view_limit
     appliance.user.my_settings.visual.grid_view_limit = 5
@@ -52,7 +52,7 @@ def set_grid(appliance):
     appliance.user.my_settings.visual.grid_view_limit = old_grid_limit
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def set_tile(appliance):
     tilelimit = appliance.user.my_settings.visual.tile_view_limit
     appliance.user.my_settings.visual.tile_view_limit = 5
@@ -60,7 +60,7 @@ def set_tile(appliance):
     appliance.user.my_settings.visual.tile_view_limit = tilelimit
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def set_list(appliance):
     listlimit = appliance.user.my_settings.visual.list_view_limit
     appliance.user.my_settings.visual.list_view_limit = 5
@@ -77,7 +77,7 @@ def go_to_grid(page):
     view.toolbar.view_selector.select('Grid View')
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def set_cloud_provider_quad(appliance):
     appliance.user.my_settings.visual.cloud_provider_quad = False
     yield

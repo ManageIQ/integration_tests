@@ -28,7 +28,7 @@ custom_attributes_to_edit = {
 }
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def ansible_custom_attributes():
     create_tmp_directory()
     fetch_miq_ansible_module()

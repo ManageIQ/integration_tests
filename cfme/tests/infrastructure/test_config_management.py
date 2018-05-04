@@ -11,7 +11,7 @@ pytestmark = [pytest.mark.uncollectif(lambda config_manager_obj:
               pytest.mark.meta(blockers=[1491704])]
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def config_manager(config_manager_obj):
     """ Fixture that provides a random config manager and sets it up"""
     config_manager_obj.create()
@@ -24,7 +24,7 @@ def config_system(config_manager):
     return fauxfactory.gen_choice(config_manager.systems)
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def category():
     cg = Category(name=fauxfactory.gen_alpha(8).lower(),
                   description=fauxfactory.gen_alphanumeric(length=32),
@@ -34,7 +34,7 @@ def category():
     cg.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def tag(category):
     tag = Tag(name=fauxfactory.gen_alpha(8).lower(),
               display_name=fauxfactory.gen_alphanumeric(length=32),

@@ -37,7 +37,7 @@ def setup_fail():
     raise Exception('I failed to setup!')
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def teardown_fail():
     yield
     raise Exception('I failed to teardown!')

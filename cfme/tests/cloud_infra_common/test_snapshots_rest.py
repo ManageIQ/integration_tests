@@ -35,7 +35,7 @@ def collection(appliance, provider):
     return appliance.rest_api.collections.instances
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def vm(provider, appliance, collection, setup_provider_modscope, small_template_modscope):
     """Creates new VM or instance."""
     vm_name = random_vm_name('snpsht')

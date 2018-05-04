@@ -45,14 +45,14 @@ def provision_vm(provider, template):
     return vm
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def small_test_vm(setup_provider_modscope, provider, small_template_modscope, request):
     vm = provision_vm(provider, small_template_modscope)
     yield vm
     vm.cleanup_on_provider()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def full_test_vm(setup_provider_modscope, provider, full_template_modscope, request):
     vm = provision_vm(provider, full_template_modscope)
     yield vm

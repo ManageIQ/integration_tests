@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def containers(appliance, provider):
     collection = appliance.collections.object_store_containers.filter({'provider': provider})
     containers = collection.all()

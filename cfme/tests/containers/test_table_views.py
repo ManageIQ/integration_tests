@@ -31,7 +31,7 @@ objects_mapping = OrderedDict({  # <object> : <ui name>
 })
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def random_default_views(appliance):
     """This fixture setup random default views for container objects.
     Revert the default views to the original on exit"""

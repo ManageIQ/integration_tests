@@ -40,14 +40,14 @@ pytestmark = [
 DEVIATION = 1
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def clean_setup_provider(request, has_no_providers_modscope, setup_provider_modscope,
         provider):
     yield
     BaseProvider.clear_providers()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
     # In these tests, Metering report is filtered on VM owner.So,VMs have to be
     # assigned ownership.
@@ -82,7 +82,7 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
         user.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def enable_candu(provider, appliance):
     # C&U data collection consumes a lot of memory and CPU.So, we are disabling some server roles
     # that are not needed for Metering reports.
@@ -240,7 +240,7 @@ def resource_usage(vm_ownership, appliance, provider):
             "storage_used": storage_used}
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def metering_report(appliance, vm_ownership, provider):
     # Create a Metering report based on VM owner; Queue the report.
     owner = vm_ownership

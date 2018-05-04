@@ -34,7 +34,7 @@ def create_instance(provider):
     return instance
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def testing_instance(provider):
     """ Fixture to provision instance on the provider
     """
@@ -43,7 +43,7 @@ def testing_instance(provider):
     instance.cleanup_on_provider()
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def testing_instance2(provider):
     """ Fixture to provision instance on the provider
     """

@@ -38,7 +38,7 @@ warnings = [
     RetirementWarning('30_day_warning', '30 Days before retirement')]
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def retire_vm(small_template, provider):
     """Fixture for creating a generic vm/instance
 
@@ -51,7 +51,8 @@ def retire_vm(small_template, provider):
     yield vm
     vm.cleanup_on_provider()
 
-@pytest.yield_fixture(scope="function")
+
+@pytest.fixture(scope="function")
 def retire_ec2_s3_vm(provider):
     """Fixture for creating an S3 backed paravirtual instance, template is a public ec2 AMI
 
@@ -63,6 +64,7 @@ def retire_ec2_s3_vm(provider):
     vm.create_on_provider(find_in_cfme=True, allow_skip="default", timeout=1200)
     yield vm
     vm.cleanup_on_provider()
+
 
 def verify_retirement_state(retire_vm):
     """Verify the vm/instance is in the 'retired' state in the UI and assert its power state

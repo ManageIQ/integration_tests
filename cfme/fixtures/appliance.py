@@ -42,30 +42,30 @@ def temp_appliances(count=1, preconfigured=True, lease_time=180, stream=None, pr
 
 
 # Single appliance, configured
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def temp_appliance_preconfig(temp_appliance_preconfig_modscope):
     yield temp_appliance_preconfig_modscope
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def temp_appliance_preconfig_modscope():
     with temp_appliances(preconfigured=True) as appliances:
         yield appliances[0]
 
 
-@pytest.yield_fixture(scope="class")
+@pytest.fixture(scope="class")
 def temp_appliance_preconfig_clsscope():
     with temp_appliances(preconfigured=True) as appliances:
         yield appliances[0]
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def temp_appliance_preconfig_funcscope():
     with temp_appliances(preconfigured=True) as appliances:
         yield appliances[0]
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def temp_appliance_preconfig_funcscope_upgrade(appliance):
     stream = (int(''.join([i for i in get_stream(appliance.version)
         if i.isdigit()])) - 1)
@@ -75,60 +75,60 @@ def temp_appliance_preconfig_funcscope_upgrade(appliance):
 
 
 # Single appliance, unconfigured
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def temp_appliance_unconfig(temp_appliance_unconfig_modscope):
     yield temp_appliance_unconfig_modscope
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def temp_appliance_unconfig_modscope():
     with temp_appliances(preconfigured=False) as appliances:
         yield appliances[0]
 
 
-@pytest.yield_fixture(scope="class")
+@pytest.fixture(scope="class")
 def temp_appliance_unconfig_clsscope():
     with temp_appliances(preconfigured=False) as appliances:
         yield appliances[0]
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def temp_appliance_unconfig_funcscope():
     with temp_appliances(preconfigured=False) as appliances:
         yield appliances[0]
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def temp_appliance_unconfig_funcscope_rhevm():
     with temp_appliances(preconfigured=False, provider_type='rhevm') as appliances:
         yield appliances[0]
 
 
 # Pair of appliances, unconfigured
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def temp_appliances_unconfig(temp_appliances_unconfig_modscope):
     yield temp_appliances_unconfig_modscope
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def temp_appliances_unconfig_modscope():
     with temp_appliances(count=2, preconfigured=False) as appliances:
         yield appliances
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def temp_appliances_unconfig_modscope_rhevm():
     with temp_appliances(count=2, preconfigured=False, provider_type='rhevm') as appliances:
         yield appliances
 
 
-@pytest.yield_fixture(scope="class")
+@pytest.fixture(scope="class")
 def temp_appliances_unconfig_clsscope():
     with temp_appliances(count=2, preconfigured=False) as appliances:
         yield appliances
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def temp_appliances_unconfig_funcscope():
     with temp_appliances(count=2, preconfigured=False) as appliances:
         yield appliances

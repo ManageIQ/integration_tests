@@ -33,7 +33,7 @@ def events_check(updates=False):
         return events_list if not form_bug.blocks else None
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def vm_profile():
     return AnalysisProfile(name=fauxfactory.gen_alphanumeric(),
                            description=fauxfactory.gen_alphanumeric(),
@@ -42,7 +42,7 @@ def vm_profile():
                            events=events_check())
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def host_profile():
     return AnalysisProfile(name=fauxfactory.gen_alphanumeric(),
                            description=fauxfactory.gen_alphanumeric(),

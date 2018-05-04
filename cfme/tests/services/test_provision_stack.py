@@ -82,7 +82,7 @@ def dialog_name():
     return 'dialog_{}'.format(fauxfactory.gen_alphanumeric())
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def template(appliance, provider, provisioning, dialog_name, stack):
     template_group = provisioning['stack_provisioning']['template_type']
     template_type = provisioning['stack_provisioning']['template_type_dd']
@@ -102,7 +102,7 @@ def template(appliance, provider, provisioning, dialog_name, stack):
         template.delete()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def catalog(appliance):
     cat_name = "cat_{}".format(fauxfactory.gen_alphanumeric())
     catalog = appliance.collections.catalogs.create(name=cat_name, description="my catalog")
@@ -111,7 +111,7 @@ def catalog(appliance):
         catalog.delete()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def catalog_item(appliance, dialog, catalog, template, provider, dialog_name):
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = appliance.collections.catalog_items.create(

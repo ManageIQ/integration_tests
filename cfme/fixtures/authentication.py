@@ -84,7 +84,7 @@ def ensure_resolvable_hostname(appliance):
         appliance.appliance_console_cli.set_hostname(fqdn)
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def configure_auth(appliance, auth_mode, auth_provider, user_type, request):
     """Given auth_mode, auth_provider, user_type parametrization, configure auth for login
     testing.

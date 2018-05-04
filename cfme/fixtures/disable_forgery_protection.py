@@ -4,7 +4,7 @@ from cfme.utils.ssh import SSHClient
 import time
 
 
-@pytest.yield_fixture(scope='session')
+@pytest.fixture(scope='session')
 def disable_forgery_protection():
     starttime = time.time()
     with SSHClient() as ssh_client:

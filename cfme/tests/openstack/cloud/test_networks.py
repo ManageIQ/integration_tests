@@ -61,7 +61,7 @@ def create_router(appliance, provider, ext_gw, ext_network=None, ext_subnet=None
     return router
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def network(provider, appliance):
     """Create cloud network"""
     network = create_network(appliance, provider, is_external=False)
@@ -69,7 +69,7 @@ def network(provider, appliance):
     delete_entity(network)
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def ext_network(provider, appliance):
     """Create external cloud network"""
     network = create_network(appliance, provider, is_external=True)
@@ -77,7 +77,7 @@ def ext_network(provider, appliance):
     delete_entity(network)
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def subnet(provider, appliance, network):
     """Creates subnet for the given network"""
     subnet = create_subnet(appliance, provider, network)
@@ -85,7 +85,7 @@ def subnet(provider, appliance, network):
     delete_entity(subnet)
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def ext_subnet(provider, appliance, ext_network):
     """Creates subnet for the given external network"""
     subnet = create_subnet(appliance, provider, ext_network)
@@ -93,7 +93,7 @@ def ext_subnet(provider, appliance, ext_network):
     delete_entity(subnet)
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def router(provider, appliance):
     """Creates network router"""
     router = create_router(appliance, provider, ext_gw=False)
@@ -101,7 +101,7 @@ def router(provider, appliance):
     delete_entity(router)
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def router_with_gw(provider, appliance, ext_subnet):
     """Creates network router with external network as a gateway"""
     router = create_router(appliance, provider, ext_gw=True, ext_network=ext_subnet.network,

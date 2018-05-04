@@ -17,7 +17,7 @@ def dialog(request, appliance):
     return _dialog(request, appliance)
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def catalog(request, appliance):
     return _catalog(request, appliance)
 
@@ -65,7 +65,7 @@ def create_catalog_item(appliance, provider, provisioning, vm_name, dialog, cata
     return catalog_item
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def order_service(appliance, provider, provisioning, vm_name, dialog, catalog, request):
     """ Orders service once the catalog item is created"""
 

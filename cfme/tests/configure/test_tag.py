@@ -21,7 +21,7 @@ from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def category():
     cg = Category(name=fauxfactory.gen_alphanumeric(8).lower(),
                   description=fauxfactory.gen_alphanumeric(32),

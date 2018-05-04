@@ -19,7 +19,7 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def report(appliance):
     # TODO parameterize on path, for now test infrastructure reports
     report = appliance.collections.reports.instantiate(

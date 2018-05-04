@@ -13,7 +13,7 @@ from cfme.utils.update import update
 pytestmark = [test_requirements.service, pytest.mark.tier(3), pytest.mark.ignore_stream("upstream")]
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def catalog_item(appliance, dialog, catalog):
     cat_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.GENERIC,
@@ -31,7 +31,7 @@ def catalog_item(appliance, dialog, catalog):
                        'not found'.format(cat_item.name))
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def catalog_bundle(appliance, catalog_item):
     """ Create catalog bundle
         Args:

@@ -20,7 +20,7 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def vm_crud(provider):
     vm = VM.factory(random_vm_name(context='ownrs'), provider)
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
@@ -32,7 +32,7 @@ def vm_crud(provider):
         logger.exception('Exception deleting test vm "%s" on %s', vm.name, provider.name)
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def role_only_user_owned(appliance):
     appliance.server.login_admin()
     role = appliance.collections.roles.create(
@@ -44,7 +44,7 @@ def role_only_user_owned(appliance):
     role.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def group_only_user_owned(appliance, role_only_user_owned):
     group_collection = appliance.collections.groups
     group = group_collection.create(
@@ -55,7 +55,7 @@ def group_only_user_owned(appliance, role_only_user_owned):
     group.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def role_user_or_group_owned(appliance):
     appliance.server.login_admin()
     role = appliance.collections.roles.create(
@@ -67,7 +67,7 @@ def role_user_or_group_owned(appliance):
     role.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def group_user_or_group_owned(appliance, role_user_or_group_owned):
     group_collection = appliance.collections.groups
     group = group_collection.create(
@@ -86,7 +86,7 @@ def new_credential():
         return Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret='redhat')
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def user1(appliance, group_only_user_owned):
     user1 = new_user(appliance, group_only_user_owned)
     yield user1
@@ -94,7 +94,7 @@ def user1(appliance, group_only_user_owned):
     user1.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def user2(appliance, group_only_user_owned):
     user2 = new_user(appliance, group_only_user_owned)
     yield user2
@@ -102,7 +102,7 @@ def user2(appliance, group_only_user_owned):
     user2.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def user3(appliance, group_user_or_group_owned):
     user3 = new_user(appliance, group_user_or_group_owned)
     yield user3

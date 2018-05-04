@@ -29,7 +29,7 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def enable_candu(appliance):
     candu = appliance.collections.candus
     server_info = appliance.server.settings
@@ -42,7 +42,7 @@ def enable_candu(appliance):
     candu.disable_all()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def new_compute_rate(enable_candu):
     # Create a new Compute Chargeback rate
     desc = '{}custom_'.format(fauxfactory.gen_alphanumeric())
@@ -62,7 +62,7 @@ def new_compute_rate(enable_candu):
     storage.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def assign_chargeback_rate(new_compute_rate):
     # Assign custom Compute rate to the Enterprise and then queue the Chargeback report.
     # description = new_compute_rate

@@ -24,7 +24,7 @@ def reduce_metrics_collection_threshold(appliance):
             threshold=SET_METRICS_CAPTURE_THRESHOLD_IN_MINUTES))
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def enable_capacity_and_utilization(appliance):
     args = ['ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor']
 

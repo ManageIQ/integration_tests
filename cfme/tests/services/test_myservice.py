@@ -38,7 +38,7 @@ def needs_firefox():
         pytest.skip(msg="This test needs firefox to run")
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def myservice(appliance, provider, catalog_item, request):
     """Tests my service
 

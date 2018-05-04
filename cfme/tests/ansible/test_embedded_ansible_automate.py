@@ -34,7 +34,7 @@ def wait_for_ansible(appliance):
     appliance.server.settings.disable_server_roles("embedded_ansible")
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def ansible_repository(appliance, wait_for_ansible):
     repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
@@ -57,7 +57,7 @@ def ansible_repository(appliance, wait_for_ansible):
         repository.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def ansible_credential(appliance, ansible_repository, full_template_modscope):
     credential = appliance.collections.ansible_credentials.create(
         fauxfactory.gen_alpha(),
@@ -70,7 +70,7 @@ def ansible_credential(appliance, ansible_repository, full_template_modscope):
         credential.delete()
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def domain(appliance):
     dc = appliance.collections.domains
     d = dc.create(
@@ -155,7 +155,7 @@ def management_event_instance(management_event_class, management_event_method):
         fields={"meth1": {"value": management_event_method.name}})
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def ansible_catalog_item(appliance, ansible_repository):
     cat_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
@@ -177,7 +177,7 @@ def ansible_catalog_item(appliance, ansible_repository):
         cat_item.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def custom_vm_button(appliance, ansible_catalog_item):
     buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(),
@@ -193,7 +193,7 @@ def custom_vm_button(appliance, ansible_catalog_item):
     buttongroup.delete_if_exists()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def service_request(appliance, ansible_catalog_item):
     request_desc = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
     service_request_ = appliance.collections.requests.instantiate(request_desc)
@@ -202,7 +202,7 @@ def service_request(appliance, ansible_catalog_item):
         service_request_.remove_request()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def service(appliance, ansible_catalog_item):
     service_ = MyService(appliance, ansible_catalog_item.name)
     yield service_
@@ -211,7 +211,7 @@ def service(appliance, ansible_catalog_item):
         service_.delete()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def alert(appliance, management_event_instance):
     alert = appliance.collections.alerts.create(
         "Trigger by Un-Tag Complete {}".format(fauxfactory.gen_alpha(length=4)),
@@ -227,7 +227,7 @@ def alert(appliance, management_event_instance):
         alert.delete()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def alert_profile(appliance, alert, full_template_vm_modscope):
     alert_profile = appliance.collections.alert_profiles.create(
         alert_profiles.VMInstanceAlertProfile,
