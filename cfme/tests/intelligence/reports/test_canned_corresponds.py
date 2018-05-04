@@ -40,7 +40,9 @@ def test_providers_summary(appliance, soft_assert):
     for provider in report.data.rows:
         if provider["MS Type"] in skipped_providers:
             continue
-        details_view = navigate_to(InfraProvider(name=provider["Name"]), 'Details')
+        provider_object = appliance.collections.infra_providers.instantiate(InfraProvider,
+            name=provider["Name"])
+        details_view = navigate_to(provider_object, 'Details')
         props = details_view.entities.summary("Properties")
 
         hostname = ("Host Name", "Hostname")
