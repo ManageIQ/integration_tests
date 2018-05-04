@@ -1,6 +1,6 @@
 import attr
-from cached_property import cached_property
 import fauxfactory
+from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Checkbox, View
