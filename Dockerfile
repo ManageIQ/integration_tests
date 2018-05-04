@@ -98,4 +98,4 @@ WORKDIR /projects/cfme_env/cfme_vol
 COPY docker-assets/xstartup /xstartup
 COPY docker-assets/entrypoint /entrypoint
 
-ENTRYPOINT /entrypoint
+ENTRYPOINT ["/entrypoint"]
