@@ -36,6 +36,7 @@ def vm_obj(request, provider, setup_provider, console_template, vm_name):
     yield vm_obj
     vm_obj.cleanup_on_provider()
 
+
 @pytest.fixture
 def ssh_client(vm_obj, console_template):
     """Provide vm_ssh_client for ssh operations in the test."""
