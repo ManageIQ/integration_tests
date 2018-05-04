@@ -306,7 +306,7 @@ def schedule_ssa(appliance, ssa_vm, ssa_profile, wait_for_task_result=True):
         'run_every': None,
         'time_zone': "(GMT+00:00) UTC",
         'start_hour': hour,
-        'start_min': minute
+        'start_minute': minute
     }
     ss = appliance.collections.system_schedules.create(**schedule_args)
     ss.enable()
