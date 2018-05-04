@@ -3,8 +3,9 @@ import importscan
 import sentaku
 
 from widgetastic.widget import ParametrizedView, Select, Text, View
-from widgetastic_patternfly import Button, Input, BootstrapSelect
-from widgetastic.utils import deflatten_dict, Parameter, ParametrizedString, VersionPick
+from widgetastic_patternfly import Input, BootstrapSelect
+from widgetastic.utils import (deflatten_dict, Parameter, ParametrizedString,
+                               ParametrizedLocator, VersionPick)
 
 from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
@@ -59,15 +60,13 @@ class BaseOrderForm(View):
         param_input = Input(id=ParametrizedString("param_{key}"))
         dropdown = VersionPick({
             Version.lowest(): BootstrapSelect(Parameter("key")),
-            "5.9": BootstrapSelect(locator=ParametrizedString(
-                ".//div[contains(@class, 'bootstrap-select') and "
-                "select[@id={key|quote}]]"))
+            "5.9": BootstrapSelect(locator=ParametrizedLocator(
+                './/div[contains(@class, "bootstrap-select")]/select[@id={key|quote}]/..'))
         })
         param_dropdown = VersionPick({
             Version.lowest(): BootstrapSelect(ParametrizedString("param_{key}")),
-            "5.9": BootstrapSelect(locator=ParametrizedString(
-                ".//div[contains(@class, 'bootstrap-select') and "
-                "select[@id='param_{key}']]"))
+            "5.9": BootstrapSelect(locator=ParametrizedLocator(
+                ".//div[contains(@class, 'bootstrap-select')]/select[@id='param_{key}']/.."))
         })
 
         @property

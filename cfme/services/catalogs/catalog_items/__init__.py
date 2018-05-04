@@ -1,4 +1,5 @@
 import attr
+from cached_property import cached_property
 import fauxfactory
 
 from navmazing import NavigateToAttribute, NavigateToSibling
@@ -27,8 +28,8 @@ class BasicInfoForm(ServicesCatalogView):
     select_catalog = BootstrapSelect('catalog_id')
     select_dialog = BootstrapSelect('dialog_id')
     select_orch_template = BootstrapSelect('template_id')
-    select_provider = BootstrapSelect('manager_id')
     select_config_template = BootstrapSelect('template_id')
+    select_provider = BootstrapSelect('manager_id')
     subtype = BootstrapSelect('generic_subtype')
     field_entry_point = Input(name='fqname')
     retirement_entry_point = Input(name='retire_fqname')
@@ -333,7 +334,7 @@ class NonCloudInfraCatalogItem(BaseCatalogItem):
     domain = attr.ib(default='ManageIQ (Locked)')
     item_type = None
 
-    @property
+    @cached_property
     def _fill_dict(self):
         return {
             'name': self.name,
@@ -405,11 +406,13 @@ class OpenStackCatalogItem(CloudInfraCatalogItem):
 class OrchestrationCatalogItem(NonCloudInfraCatalogItem):
     orch_template = attr.ib(default=None)
     item_type = 'Orchestration'
+    provider_name = attr.ib(default=None)
 
     @property
     def fill_dict(self):
         self._fill_dict['select_config_template'] = getattr(
             self.orch_template, 'template_name', None)
+        self._fill_dict['select_provider'] = self.provider_name
         return self._fill_dict
 
 

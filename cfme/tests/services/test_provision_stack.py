@@ -97,7 +97,7 @@ def template(appliance, provider, provisioning, dialog_name, stack):
     template.create_service_dialog_from_template(dialog_name)
     yield template
     if stack.exists:
-        stack.retire_stack()
+        stack.retire_stack(wait=False)
     if template.exists:
         template.delete()
 
@@ -121,7 +121,8 @@ def catalog_item(appliance, dialog, catalog, template, provider, dialog_name):
         display_in=True,
         catalog=catalog,
         dialog=dialog_name,
-        orch_template=template
+        orch_template=template,
+        provider_name=provider.name,
     )
     yield catalog_item
     if catalog_item.exists:
