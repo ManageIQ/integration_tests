@@ -72,37 +72,48 @@ def playbook(appliance, repository):
     return playbooks_collection.all()[0]
 
 
-def check_tag_place(item, tag_place):
-    tag = item.add_tag(details=tag_place)
-    tags = item.get_tags()
-    assert any(
-        object_tags.category.display_name == tag.category.display_name and
-        object_tags.display_name == tag.display_name for object_tags in tags), (
-        "{}: {} not in ({})".format(tag.category.display_name, tag.display_name, str(tags)))
+@pytest.fixture(scope='function')
+def check_tag_place(soft_assert):
 
-    item.remove_tag(tag=tag, details=tag_place)
+    def _check_tag_place(item, tag_place):
+        tag = item.add_tag(details=tag_place)
+        tags = item.get_tags()
+        soft_assert(
+            [object_tags if object_tags.category.display_name == tag.category.display_name and
+             object_tags.display_name == tag.display_name else None for object_tags in tags], (
+                "{}: {} not in ({})".format(tag.category.display_name, tag.display_name, str(tags)))
+        )
+
+        item.remove_tag(tag=tag, details=tag_place)
+        tags = item.get_tags()
+        soft_assert(
+            not [object_tags if object_tags.category.display_name == tag.category.display_name and
+                 object_tags.display_name == tag.display_name else None for object_tags in tags], (
+                "{}: {} not in ({})".format(tag.category.display_name, tag.display_name, str(tags)))
+        )
+    return _check_tag_place
 
 
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
-def test_tag_ansible_reposipory(repository, tag_place):
+def test_tag_ansible_repository(repository, tag_place, check_tag_place):
     """ Test for cloud items tagging action from list and details pages """
     check_tag_place(repository, tag_place)
 
 
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
-def test_tag_ansible_credential(credential, tag_place):
+def test_tag_ansible_credential(credential, tag_place, check_tag_place):
     """ Test for cloud items tagging action from list and details pages """
     check_tag_place(credential, tag_place)
 
 
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
-def test_tag_ansible_playbook(playbook, tag_place):
+def test_tag_ansible_playbook(playbook, tag_place, check_tag_place):
     """ Test for cloud items tagging action from list and details pages """
     check_tag_place(playbook, tag_place)
 
 
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
-def test_tagvis_ansible_reposipory(repository, check_item_visibility, visibility):
+def test_tagvis_ansible_repository(repository, check_item_visibility, visibility):
     """ Test for cloud items tagging action from list and details pages """
     check_item_visibility(repository, visibility)
 
