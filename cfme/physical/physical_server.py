@@ -57,7 +57,8 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Ta
     mgmt_class = LenovoSystem
 
     INVENTORY_TO_MATCH = ['power_state']
-    STATS_TO_MATCH = ['cores_capacity', 'memory_capacity']
+    STATS_TO_MATCH = ['cores_capacity', 'memory_capacity',
+                      'num_network_devices', 'num_storage_devices']
 
     def load_details(self, refresh=False):
         """To be compatible with the Taggable and PolicyProfileAssignable mixins.
@@ -141,6 +142,16 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Ta
     def memory_capacity(self):
         view = navigate_to(self, "Details")
         return view.entities.properties.get_text_of("Total memory (mb)")
+
+    @variable(alias='ui')
+    def num_network_devices(self):
+        view = navigate_to(self, "Details")
+        return view.entities.properties.get_text_of("Network Devices")
+
+    @variable(alias='ui')
+    def num_storage_devices(self):
+        view = navigate_to(self, "Details")
+        return view.entities.properties.get_text_of("Storage Devices")
 
     def _wait_for_state_change(self, desired_state, target, provider, view, timeout=300, delay=10):
         """Wait for PhysicalServer to come to desired state. This function waits just the needed amount of
