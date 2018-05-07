@@ -86,13 +86,17 @@ class Task(BaseEntity):
         tab: Tab where current task located.
 
     """
+    OK = 'ok'
+    ERROR = 'error'
+    IN_PROGRESS = 'in_progress'
+
     name = attr.ib()
     user = attr.ib(default='admin')
     server = attr.ib(default='EVM')    # >= 5.9 only
     tab = attr.ib(default='MyTasks')
 
     def _is_row_present(self, row_name):
-        view = navigate_to(self.parent, self.tab)
+        view = navigate_to(self.parent, self.parent.tab)
         for row in view.tabs.table.rows():
             if row_name in row.task_name.text:
                 return True
@@ -100,7 +104,7 @@ class Task(BaseEntity):
 
     @property
     def _row(self):
-        view = navigate_to(self.parent, self.tab)
+        view = navigate_to(self.parent, self.parent.tab)
         wait_for(
             lambda: self._is_row_present(self.name), delay=5, timeout='2m',
             fail_func=view.reload.click)
@@ -114,41 +118,33 @@ class Task(BaseEntity):
             return self._status
         col = self._row[1]
         if col.browser.is_displayed('i[@class="pficon pficon-ok"]', parent=col):
-            return 'ok'
+            return self.OK
         elif col.browser.is_displayed('i[@class="pficon pficon-error-circle-o"]', parent=col):
-            return 'error'
+            return self.ERROR
         else:
-            return 'in_progress'
+            return self.IN_PROGRESS
 
     @property
     def state(self):
-        if hasattr(self, '_state'):
-            return self._state
-        return self._row.state.text
+        return getattr(self, "_state", self._row.state.text)
 
     @property
     def updated(self):
-        if hasattr(self, '_updated'):
-            return self._updated
-        return self._row.updated.text
+        return getattr(self, "_updated", self._row.updated.text)
 
     @property
     def started(self):
-        if hasattr(self, '_started'):
-            return self._started
-        return self._row.started.text
+        return getattr(self, "_started", self._row.started.text)
 
     @property
     def queued(self):
-        if hasattr(self, '_queued'):
-            return self._queued
-        return self._row.queued.text if self.appliance.version >= '5.9' else None
+        if self.appliance.version >= '5.9':
+            return getattr(self, "_queued", self._row.queued.text)
+        return None
 
     @property
     def message(self):
-        if hasattr(self, '_message'):
-            return self._message
-        return self._row.message.text
+        return getattr(self, "_message", self._row.message.text)
 
     @property
     def exists(self):
@@ -161,13 +157,13 @@ class Task(BaseEntity):
     @property
     def is_successfully_finished(self):
         message = self.message.lower()
-        if self.status == 'error':
+        if self.status == self.ERROR:
             if 'timed out' in message:
                 raise TimedOutError("Task {} timed out: {}".format(self.name, message))
             else:
                 raise Exception("Task {} error: {}".format(self.name, message))
 
-        if self.state.lower() == 'finished' and self.status == 'ok':
+        if self.state.lower() == 'finished' and self.status == self.OK:
             self._status = self.status
             self._state = self.state
             self._updated = self.updated
@@ -179,7 +175,7 @@ class Task(BaseEntity):
         return False
 
     def wait_for_finished(self, delay=5, timeout='10m'):
-        view = navigate_to(self.parent, self.tab)
+        view = navigate_to(self.parent, self.parent.tab)
         wait_for(
             lambda: self.is_successfully_finished, delay=delay, timeout=timeout,
             fail_func=view.reload.click)
@@ -191,19 +187,9 @@ class TaskCollection(BaseCollection):
     ENTITY = Task
     tab = attr.ib(default='MyTasks')
 
-    def __init__(self, tab):
-        """
-        Args:
-            tab: One of ['MyTasks', 'MyOtherTasks', 'AllTasks', 'AllOtherTasks'];
-                 Set to 'MyTasks' by default to display all tasks.
-        """
-
     def switch_tab(self, tab):
         self.tab = tab
         return self
-
-    def instantiate(self, *args, **kwargs):
-        return self.ENTITY.from_collection(self, tab=self.tab, *args, **kwargs)
 
     def set_filter(self, values, cancel=False):
         view = navigate_to(self, self.tab)
@@ -227,7 +213,7 @@ class TaskCollection(BaseCollection):
                  view.tabs.table.rows()]
         return tasks
 
-    def delete(self, tasks):
+    def delete(self, *tasks):
         view = navigate_to(self, self.tab)
         for row in view.tabs.table.rows():
             if row.name in tasks:
@@ -239,14 +225,14 @@ class TaskCollection(BaseCollection):
         view = navigate_to(self, self.tab)
         view.delete.item_select('Delete All', handle_alert=True)
 
-    def is_finished(self, tasks):
+    def is_finished(self, *tasks):
         view = navigate_to(self, self.tab)
         for row in view.tabs.table.rows:
             if row.name in tasks and row.state.lower() != "finished":
                 return False
         return True
 
-    def is_successfully_finished(self, tasks, silent_failure=False):
+    def is_successfully_finished(self, silent_failure=False, *tasks):
         view = navigate_to(self, self.tab)
         rows = []
         for task in tasks:
@@ -264,7 +250,7 @@ class TaskCollection(BaseCollection):
                     Exception("Task {} error: {}".format(row.task_name.text, message))
         return True
 
-    def wait_for_finished(self, tasks, delay=5, timeout='5m'):
+    def wait_for_finished(self, delay=5, timeout='5m', *tasks):
         view = navigate_to(self.parent, self.tab)
         wait_for(
             lambda: self.is_finished(tasks), delay=delay, timeout=timeout,

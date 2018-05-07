@@ -172,14 +172,14 @@ setup(
             'system_image_types = cfme.infrastructure.pxe:SystemImageTypeCollection',
             ('system_schedules = '
                 'cfme.configure.configuration.system_schedules:SystemSchedulesCollection'),
+            'tasks = cfme.configure.tasks:TaskCollection',
             'tenants = cfme.configure.access_control:TenantCollection',
             'time_profiles = cfme.configure.settings:TimeProfileCollection',
             'users = cfme.configure.access_control:UserCollection',
             'volume_backups = cfme.storage.volume_backup:VolumeBackupCollection',
             'volume_snapshots = cfme.storage.volume_snapshot:VolumeSnapshotCollection',
             'volumes = cfme.storage.volume:VolumeCollection',
-            'zones = cfme.base:ZoneCollection',
-            'tasks = cfme.configure.tasks:TaskCollection',
+            'zones = cfme.base:ZoneCollection'
         ],
         'pytest11':
         [
