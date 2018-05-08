@@ -9,7 +9,6 @@ from threading import Thread
 import os
 import six
 import yaml
-from cycler import cycler
 from yaycl import AttrDict
 
 from cfme.utils.conf import cfme_performance
@@ -994,6 +993,7 @@ def graph_appliance_measurements(graphs_path, ver, appliance_results, use_slab, 
     mpl.use('Agg')
     import matplotlib.dates as mdates
     import matplotlib.pyplot as plt
+    from cycler import cycler
 
     starttime = time.time()
 
