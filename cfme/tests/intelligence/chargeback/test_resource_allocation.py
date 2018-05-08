@@ -2,6 +2,9 @@
 
 """ Tests to validate chargeback costs for resources(memory, cpu, storage) allocated to VMs.
 
+The tests to validate resource usage are in :
+cfme/tests/intelligence/reports/test_validate_chargeback_report.py
+
 Note: When the tests were parameterized, I noticed that the fixture scope was not  preserved in
 parametrized tests.This is supposed to be a known pytest bug.
 
