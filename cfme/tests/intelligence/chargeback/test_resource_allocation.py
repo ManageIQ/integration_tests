@@ -5,7 +5,7 @@
 The tests to validate resource usage are in :
 cfme/tests/intelligence/reports/test_validate_chargeback_report.py
 
-Note: When the tests were parameterized, I noticed that the fixture scope was not  preserved in
+Note: When the tests were parameterized, it was observed that the fixture scope was not preserved in
 parametrized tests.This is supposed to be a known pytest bug.
 
 This test module has a few module scoped fixtures that actually get invoked for every parameterized
