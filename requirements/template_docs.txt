@@ -9,6 +9,7 @@ miq_version
 boto
 bottle
 bottle-sqlite
+cycler
 cached-property
 deepdiff
 diaper!=1.4.0
