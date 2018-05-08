@@ -30,7 +30,6 @@ layered-yaml-attrdict-config
 mock
 multimethods.py
 navmazing
-numpy>=1.14.0
 paramiko
 parsedatetime
 pdfminer.six

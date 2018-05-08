@@ -1,11 +1,9 @@
 """Functions that performance tests use."""
 import time
 
-import numpy
-
+from cfme.fixtures.pytest_store import store
 from cfme.utils.log import logger
 from cfme.utils.ssh import SSHClient, SSHTail
-from cfme.fixtures.pytest_store import store
 
 
 def collect_log(ssh_client, log_prefix, local_file_name, strip_whitespace=False):
@@ -62,6 +60,10 @@ def generate_statistics(the_list, decimals=2):
               stddev, 90th(percentile),
               99th(percentile)
     """
+
+    # Import here to allow perf to install numpy separately
+    import numpy
+
     if len(the_list) == 0:
         return [0, 0, 0, 0, 0, 0, 0, 0]
     else:
