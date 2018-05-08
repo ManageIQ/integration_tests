@@ -1,11 +1,13 @@
 import attr
 
-from navmazing import NavigateToAttribute
+from navmazing import NavigateToAttribute, NavigateToSibling
 from cfme.base.login import BaseLoggedInPage
+from widgetastic.widget import View
 
-from widgetastic_patternfly import Text
+from widgetastic_patternfly import Text, TextInput, Button
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import (navigator, CFMENavigateStep,
+    can_skip_badness_test)
 
 
 # Views
@@ -20,6 +22,31 @@ class MigrationDashboardView(BaseLoggedInPage):
     def is_displayed(self):
         return self.navigation.currently_selected == ['Compute', 'Migration']
 
+
+class AddInfrastructureMappingView(View):
+    title = Text(locator='.//h4[contains(@class,"modal-title")]')
+    name = TextInput(name='name')
+    description = TextInput(name='description')
+    back_btn = Button('Back')
+    next_btn = Button('Next')
+    cancel_btn = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return (self.title.text == 'Infrastructure Mapping Wizard')
+
+
+class AddMigrationPlanView(View):
+    title = Text(locator='.//h4[contains(@class,"modal-title")]')
+    name = TextInput(name='name')
+    description = TextInput(name='description')
+    back_btn = Button('Back')
+    next_btn = Button('Next')
+    cancel_btn = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return (self.title.text == 'Migration Plan Wizard')
 
 # Collections Entities
 
@@ -50,6 +77,8 @@ class MigrationPlanCollection(BaseCollection):
     ENTITY = MigrationPlan
 
 
+# Navigations
+
 @navigator.register(InfrastructureMappingCollection, 'All')
 @navigator.register(MigrationPlanCollection, 'All')
 class All(CFMENavigateStep):
@@ -61,4 +90,32 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         """Reset the view"""
+        self.view.browser.refresh()
+
+
+@navigator.register(InfrastructureMappingCollection, 'Add')
+class AddInfrastructureMapping(CFMENavigateStep):
+    VIEW = AddInfrastructureMappingView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        self.prerequisite_view.create_infrastructure_mapping.click()
+
+    @can_skip_badness_test  # because it loops over and over as it cannot handle the modal
+    def resetter(self):
+        # Reset the view
+        self.view.browser.refresh()
+
+
+@navigator.register(MigrationPlanCollection, 'Add')
+class AddMigrationPlan(CFMENavigateStep):
+    VIEW = AddMigrationPlanView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        self.prerequisite_view.create_migration_plan.click()
+
+    @can_skip_badness_test  # because it loops over and over as it cannot handle the modal
+    def resetter(self):
+        # Reset the view
         self.view.browser.refresh()
