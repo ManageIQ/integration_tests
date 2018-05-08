@@ -29,6 +29,7 @@ from artifactor import ArtifactorBasePlugin
 from cfme.utils import process_pytest_path
 from cfme.utils.conf import cfme_data  # Only for the provider specific reports
 from cfme.utils.path import template_path
+import six
 
 _tests_tpl = {
     '_sub': {},
@@ -256,7 +257,7 @@ class ReporterBase(object):
         and the duration.
         """
 
-        if isinstance(path, basestring):
+        if isinstance(path, six.string_types):
             segs = process_pytest_path(path)
         else:
             segs = path

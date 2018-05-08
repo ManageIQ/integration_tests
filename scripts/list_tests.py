@@ -4,6 +4,7 @@ import os
 import os.path
 import sys
 import re
+import six
 
 if len(sys.argv) == 1:
     print("""
@@ -27,7 +28,7 @@ def parser(filename, exp=None):
 
     p = re.findall('\s*def\s*[a-zA-Z0-9_]*?(test_.*?{}.*?)\('.format(exp), data)
     for test in p:
-        if isinstance(test, basestring):
+        if isinstance(test, six.string_types):
             print("{} :: {}".format(filename, test))
         else:
             print("{} :: {}".format(filename, test[0]))

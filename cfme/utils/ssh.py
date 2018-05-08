@@ -21,6 +21,7 @@ from cfme.utils.quote import quote
 from cfme.utils.timeutil import parsetime
 from cfme.utils.version import Version
 from cfme.fixtures.pytest_store import store
+import six
 
 # Default blocking time before giving up on an ssh command execution,
 # in seconds (float)
@@ -59,7 +60,7 @@ class SSHResult(object):
 
     def __contains__(self, what):
         # Handling 'something' in x
-        if not isinstance(what, basestring):
+        if not isinstance(what, six.string_types):
             raise ValueError('You can only check strings using the in operator')
         return what in self.output
 
@@ -75,7 +76,7 @@ class SSHResult(object):
         # Handling comparison to strings or numbers
         if isinstance(other, int):
             return cmp(self.rc, other)
-        elif isinstance(other, basestring):
+        elif isinstance(other, six.string_types):
             return cmp(self.output, other)
         else:
             raise ValueError('You can only compare SSHResult with str or int')

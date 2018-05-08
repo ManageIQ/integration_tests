@@ -34,6 +34,7 @@ from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
     SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
+import six
 
 
 def has_child(tree, text, parent_item=None):
@@ -1045,7 +1046,7 @@ class Genealogy(object):
 # todo: there will be an entity's method to apply some operation to a bunch of entities
 def _method_setup(vm_names, provider_crud=None):
     """ Reduces some redundant code shared between methods """
-    if isinstance(vm_names, basestring):                                 # noqa
+    if isinstance(vm_names, six.string_types):                                 # noqa
         vm_names = [vm_names]
 
     if provider_crud:

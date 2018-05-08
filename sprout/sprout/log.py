@@ -8,6 +8,7 @@ import inspect
 import sys
 from django.db.models import Model
 from types import ModuleType
+import six
 
 logger_cache = {}
 logger_cache_lock = Lock()
@@ -59,7 +60,7 @@ def create_logger(o, additional_id=None):
         Instance of logger.
     """
     wrap = None
-    if isinstance(o, basestring):
+    if isinstance(o, six.string_types):
         if o in sys.modules:
             # str -> module
             return create_logger(sys.modules[o], additional_id)
