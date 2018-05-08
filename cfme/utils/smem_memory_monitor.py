@@ -1,25 +1,22 @@
 """Monitor Memory on a CFME/Miq appliance and builds report&graphs displaying usage per process."""
-import matplotlib.dates as mdates
-import matplotlib.pyplot as plt
-import os
+import json
 import time
 import traceback
-import yaml
+from collections import OrderedDict
+from datetime import datetime
+from threading import Thread
+
+import os
 import six
+import yaml
+from cycler import cycler
+from yaycl import AttrDict
 
 from cfme.utils.conf import cfme_performance
 from cfme.utils.log import logger
 from cfme.utils.path import results_path
-from cfme.utils.version import get_version
 from cfme.utils.version import current_version
-from collections import OrderedDict
-from cycler import cycler
-from datetime import datetime
-from threading import Thread
-from yaycl import AttrDict
-import json
-import matplotlib as mpl
-mpl.use('Agg')
+from cfme.utils.version import get_version
 
 miq_workers = [
     'MiqGenericWorker',
@@ -993,6 +990,11 @@ def create_dict(attr_dict):
 
 
 def graph_appliance_measurements(graphs_path, ver, appliance_results, use_slab, provider_names):
+    import matplotlib as mpl
+    mpl.use('Agg')
+    import matplotlib.dates as mdates
+    import matplotlib.pyplot as plt
+
     starttime = time.time()
 
     dates = appliance_results.keys()
@@ -1106,6 +1108,11 @@ def graph_appliance_measurements(graphs_path, ver, appliance_results, use_slab, 
 
 
 def graph_all_miq_workers(graph_file_path, process_results, provider_names):
+    import matplotlib as mpl
+    mpl.use('Agg')
+    import matplotlib.dates as mdates
+    import matplotlib.pyplot as plt
+
     starttime = time.time()
     file_name = graph_file_path.join('all-processes.png')
 
@@ -1140,6 +1147,11 @@ def graph_all_miq_workers(graph_file_path, process_results, provider_names):
 
 
 def graph_individual_process_measurements(graph_file_path, process_results, provider_names):
+    import matplotlib as mpl
+    mpl.use('Agg')
+    import matplotlib.dates as mdates
+    import matplotlib.pyplot as plt
+
     starttime = time.time()
     for process_name in process_results:
         for process_pid in process_results[process_name]:
@@ -1208,6 +1220,11 @@ def graph_individual_process_measurements(graph_file_path, process_results, prov
 
 
 def graph_same_miq_workers(graph_file_path, process_results, provider_names):
+    import matplotlib as mpl
+    mpl.use('Agg')
+    import matplotlib.dates as mdates
+    import matplotlib.pyplot as plt
+
     starttime = time.time()
     for process_name in process_results:
         if len(process_results[process_name]) > 1:

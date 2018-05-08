@@ -181,7 +181,6 @@ netaddr==0.7.19
 netifaces==0.10.7
 notebook==5.4.1
 ntlm-auth==1.1.0
-numpy==1.14.3
 oauth2client==4.1.2
 oauthlib==2.0.7
 openshift==0.3.4

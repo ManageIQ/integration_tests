@@ -2,22 +2,23 @@
 """Functions for performance analysis/charting of the backend messages and top_output from an
 appliance.
 """
+import csv
+import subprocess
+from datetime import datetime
+from datetime import timedelta
+from time import time
+
+import dateutil.parser as du_parser
+import os
+import pygal
+import re
+
 from cfme.utils.log import logger
 from cfme.utils.path import log_path
 from cfme.utils.perf import convert_top_mem_to_mib
 from cfme.utils.perf import generate_statistics
-from datetime import datetime
-import dateutil.parser as du_parser
-from datetime import timedelta
-from time import time
-import csv
-import numpy
-import os
-import pygal
-import subprocess
-import re
 
-# Regular Expressions to capture relevant information from each log line:
+# Regular Expressions to capture relevant information from each lognumpy line:
 
 # [----] I, [2014-03-04T08:11:14.320377 #3450:b15814]  INFO -- : ....
 log_stamp = re.compile(r'\[----\]\s[IWE],\s\[([0-9\-]+)T([0-9\:\.]+)\s#([0-9]+):[0-9a-z]+\]')
@@ -561,6 +562,9 @@ def messages_to_statistics_csv(messages, statistics_file_name):
                 headers.append('{}_{}'.format(measurement, metric))
 
         csvfile.writerow(headers)
+
+        # Import here to allow perf to install numpy separately
+        import numpy
 
         # Contents of CSV
         for msg_statistics in sorted(all_statistics, key=lambda x: x.cmd):
