@@ -3,13 +3,14 @@ import pytest
 import six.moves.urllib.parse
 import warnings
 
+from cfme.fixtures import terminalreporter
 from cfme.utils import conf
 from cfme.utils.appliance import (
     load_appliances_from_config, stack,
     DummyAppliance,
     ApplianceSummoningWarning)
 from cfme.utils.path import log_path
-from cfme.fixtures import terminalreporter
+
 PLUGIN_KEY = "appliance-holder"
 warnings.simplefilter('error', ApplianceSummoningWarning)
 
@@ -88,7 +89,7 @@ class ApplianceHolderPlugin(object):
         return self.held_appliance
 
     def pytest_sessionstart(self):
-        if isinstance(self.held_appliance, DummyAppliance):
+        if isinstance(self.held_appliance, DummyAppliance) or self.held_appliance.is_dev:
             return
         if pytest.store.parallelizer_role != 'slave':
             with log_path.join('appliance_version').open('w') as appliance_version:
