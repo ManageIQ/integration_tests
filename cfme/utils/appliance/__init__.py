@@ -502,9 +502,11 @@ class IPAppliance(object):
             if fix_ntp_clock and not self.is_pod:
                 self.fix_ntp_clock(log_callback=log_callback)
                 # TODO: Handle external DB setup
-            # This is workaround for Openstack appliances to use only one disk for the VMDB
-            if on_openstack and self.is_downstream and not self.unpartitioned_disks:
-                self.configure_rhos_db_disk()
+            # This is workaround for appliances to use only one disk for the VMDB
+            # If they have been provisioned with a second disk in the infra,
+            # 'self.unpartitioned_disks' should exist and therefore this won't run.
+            if self.is_downstream and not self.unpartitioned_disks:
+                self.db.create_db_lvm()
 
             self.db.setup(region=region, key_address=key_address,
                           db_address=db_address, is_pod=self.is_pod)
@@ -526,84 +528,6 @@ class IPAppliance(object):
             if restart_evm:
                 self.restart_evm_service(log_callback=log_callback)
             self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-
-    def configure_rhos_db_disk(self):
-        loopback_script_path = "/usr/local/sbin/loopbacks"
-        loopback_script_content = dedent("""
-        EOF
-        #!/bin/bash
-        DB_PATH="/var/opt/rh/rh-postgresql95/db"
-        DB="vmdb_db.img"
-        DB_IMG="\\${DB_PATH}/\\${DB}"
-        DB_SIZE="5GB"
-
-        if [ ! -f \\${DB_IMG} ]; then
-            fallocate -l \\${DB_SIZE} \\${DB_IMG}
-        fi
-
-        if  ! losetup -l | grep \\${DB} 1> /dev/null ; then
-            losetup -f \\${DB_IMG}
-            partprobe /dev/vdb
-            partprobe /dev/vdc
-            systemctl restart lvm2-lvmetad.service
-            vgchange -a y vg_pg
-        fi
-        EOF
-        """).strip()
-
-        loopback_unit_path = "/etc/systemd/system/multi-user.target.wants/loopback.service"
-        loopback_unit_content = dedent("""
-        EOF
-        [Unit]
-        Description=Setup loop devices
-        DefaultDependencies=false
-        ConditionFileIsExecutable=/usr/local/sbin/loopbacks
-        After=var.mount
-        Requires=systemd-remount-fs.service
-
-        [Service]
-        Type=oneshot
-        ExecStart=/usr/local/sbin/loopbacks
-        TimeoutSec=60
-        RemainAfterExit=yes
-
-        [Install]
-        WantedBy=local-fs.target
-        Also=systemd-udev-settle.service
-        EOF
-        """).strip()
-
-        udev_rule_path = "/etc/udev/rules.d/75-persistent-disk.rules"
-        udev_rule_content = dedent("""
-        EOF
-        KERNEL=="loop0", SYMLINK+="vdb"
-        KERNEL=="loop0p1", SYMLINK+="vdb1"
-        EOF
-        """).strip()
-
-        content = [
-            (loopback_script_path, loopback_script_content),
-            (loopback_unit_path, loopback_unit_content),
-            (udev_rule_path, udev_rule_content)
-        ]
-
-        client = self.ssh_client
-
-        commands_to_run = [
-            "chmod ug+x /usr/local/sbin/loopbacks",
-            "chown root:root /usr/local/sbin/loopbacks",
-            "systemctl daemon-reload",
-            "udevadm control --reload-rules && udevadm trigger",
-            "/usr/local/sbin/loopbacks"
-        ]
-
-        logging.info("Creating loopback script, unit file and udev rule")
-        for path, content in content:
-            client.run_command("cat > {path} << {content}".format(path=path, content=content))
-
-        for command in commands_to_run:
-            logging.info("Running command: {}".format(command))
-            client.run_command(command)
 
     def configure_gce(self, log_callback=None):
         # Force use of IPAppliance's configure method
@@ -783,24 +707,36 @@ class IPAppliance(object):
         return '{}/{}'.format(self.url.rstrip('/'), path.lstrip('/'))
 
     @property
-    def unpartitioned_disks(self):
-        """Returns a list of disk devices that are not mounted."""
+    def disks_and_partitions(self):
+        """Returns list of all disks and partitions"""
         disks_and_partitions = self.ssh_client.run_command(
             "ls -1 /dev/ | egrep '^[sv]d[a-z][0-9]?'").output.strip()
         disks_and_partitions = re.split(r'\s+', disks_and_partitions)
-        partition_regexp = re.compile('^[sv]d[a-z][0-9]$')
-        disks = set()
-        for dp in disks_and_partitions:
-            disks.add(re.sub(r'[0-9]$', '', dp))
+        return sorted('/dev/{}'.format(disk) for disk in disks_and_partitions)
+
+    @property
+    def disks(self):
+        """Returns list of disks only, excludes their partitions"""
+        disk_regexp = re.compile('^/dev/[sv]d[a-z]$')
+        return [
+            disk for disk in self.disks_and_partitions
+            if disk_regexp.match(disk)
+        ]
+
+    @property
+    def unpartitioned_disks(self):
+        """Returns list of any disks that have no partitions"""
+        partition_regexp = re.compile('^/dev/[sv]d[a-z][0-9]$')
         unpartitioned_disks = set()
-        for disk in disks:
+
+        for disk in self.disks:
             add = True
-            for dp in disks_and_partitions:
+            for dp in self.disks_and_partitions:
                 if dp.startswith(disk) and partition_regexp.match(dp) is not None:
                     add = False
             if add:
                 unpartitioned_disks.add(disk)
-        return sorted('/dev/{}'.format(disk) for disk in unpartitioned_disks)
+        return sorted(disk for disk in unpartitioned_disks)
 
     @cached_property
     def product_name(self):
@@ -2498,8 +2434,11 @@ class Appliance(IPAppliance):
         if self.is_downstream:
             # Upstream already has one.
             if kwargs.get('db_address') is None:
-                if on_openstack and not self.unpartitioned_disks:
-                    self.configure_rhos_db_disk()
+                # This is workaround for appliances to use only one disk for the VMDB
+                # If they have been provisioned with a second disk in the infra,
+                # 'self.unpartitioned_disks' should exist and therefore this won't run.
+                if not self.unpartitioned_disks:
+                    self.db.create_db_lvm()
                 self.db.enable_internal(
                     region, key_address, db_password, ssh_password)
             else:

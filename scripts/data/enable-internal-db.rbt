@@ -9,8 +9,10 @@ config = ApplianceConsole::InternalDatabaseConfiguration.new({
   :interactive => false,
 })
 
-# pick the first unpartitioned disk
-config.instance_variable_set(:@disk, LinuxAdmin::Disk.local.select {|d| d.partitions.empty?}.first)
+# if no DB disk is currently mounted, pick the first unpartitioned disk
+if "${db_mounted}" != "True" 
+  config.instance_variable_set(:@disk, LinuxAdmin::Disk.local.select {|d| d.partitions.empty?}.first)
+end
 
 # create partition, pv, vg, lv, ext4, update fstab, mount disk
 # initdb, relabel log directory for selinux, update configs,

@@ -205,6 +205,7 @@ class ApplianceDB(AppliancePlugin):
         db_address = kwargs.pop('db_address', None)
         self.logger.info('Starting DB setup')
         is_pod = kwargs.pop('is_pod', False)
+
         if self.appliance.is_downstream:
             # We only execute this on downstream appliances.
             if is_pod:
@@ -212,10 +213,12 @@ class ApplianceDB(AppliancePlugin):
             else:
                 self.enable_internal(key_address=key_address, **kwargs)
 
-        elif not self.appliance.evmserverd.running:
-            self.appliance.evmserverd.start()
-            self.appliance.evmserverd.enable()  # just to be sure here.
-            self.appliance.wait_for_web_ui()
+        else:
+            self.logger.info("Upstream appliance, no need to enable DB...")
+            if not self.appliance.evmserverd.running:
+                self.appliance.evmserverd.start()
+                self.appliance.evmserverd.enable()  # just to be sure here.
+                self.appliance.wait_for_web_ui()
 
         # Make sure the database is ready
         wait_for(func=lambda: self.is_ready,
@@ -263,6 +266,176 @@ class ApplianceDB(AppliancePlugin):
         result = client.run_command("systemctl restart {scl}-postgresql".format(scl=scl))
         return result.rc
 
+    def _run_cmd_show_output(self, cmd):
+        """
+        A small helper to run an ssh command and print return code/output
+        """
+        with self.ssh_client as client:
+            result = client.run_command(cmd)
+
+        # Indent the output by 1 tab (makes it easier to read...)
+        if str(result):
+            output = str(result)
+            output = '\n'.join(['\t{}'.format(line) for line in output.splitlines()])
+        else:
+            output = ""
+        self.logger.info("Return code: %d, Output:\n%s", result.rc, output)
+        return result
+
+    def _find_disk_with_free_space(self, needed_size):
+        """Find a disk that has >=needed_size free space using parted
+
+        Returns tuple with (disk_name, start GB, end GB, size GB)
+        Returns tuples of Nones if a disk with free space is not found
+
+        ----Example parted output with no free space---
+
+        $ parted /dev/vda unit GB print free
+        Model: Virtio Block Device (virtblk)
+        Disk /dev/vda: 42.9GB
+        Sector size (logical/physical): 512B/512B
+        Partition Table: msdos
+        Disk Flags:
+
+        Number  Start   End     Size    Type     File system  Flags
+                0.00GB  0.00GB  0.00GB           Free Space
+        1      0.00GB  1.07GB  1.07GB  primary  xfs          boot
+        2      1.07GB  42.9GB  41.9GB  primary               lvm
+
+
+        ----Example parted output with free space----
+
+        $ parted /dev/vda unit GB print free
+        Model: Virtio Block Device (virtblk)
+        Disk /dev/vda: 75.2GB
+        Sector size (logical/physical): 512B/512B
+        Partition Table: msdos
+        Disk Flags:
+
+        Number  Start   End     Size    Type     File system  Flags
+                0.00GB  0.00GB  0.00GB           Free Space
+        1      0.00GB  1.07GB  1.07GB  primary  xfs          boot
+        2      1.07GB  42.9GB  41.9GB  primary               lvm
+                42.9GB  75.2GB  32.2GB           Free Space
+        """
+        disk_name = start = end = size = None
+
+        for disk in self.appliance.disks:
+            result = self._run_cmd_show_output('parted {} unit GB print free'.format(disk))
+            if result.failed:
+                self.logger.error("Unable to run 'parted' on disk %s, skipping...", disk)
+                continue
+            lines = str(result).splitlines()
+            free_space_lines = [line for line in lines if 'Free Space' in line]
+
+            found_enough_space = False
+            for line in free_space_lines:
+                gb_data = [float(word.strip('GB')) for word in line.split() if 'GB' in word]
+                if len(gb_data) != 3:
+                    self.logger.info(
+                        "Unable to get free space start/end/size on disk %s, skipping...", disk)
+                    continue
+                start, end, size = gb_data[0], gb_data[1], gb_data[2]
+                if size >= needed_size:
+                    disk_name = disk
+                    found_enough_space = True
+                    self.logger.info("Found %dGB free space available on disk %s", size, disk)
+                    break
+
+            if found_enough_space:
+                # Stop iterating through the disks, we've found enough space.
+                break
+            self.logger.info(
+                "Free space is less than %dGB on disk %s", needed_size, disk)
+
+        return (disk_name, start, end, size)
+
+    def _create_partition_from_free_space(self, needed_size):
+        """
+        Create a partition on the disk with free space
+
+        Return the new partition name, or None if this fails
+        """
+        needed_size = needed_size + 0.5  # make partition a little larger than LVM
+        disk, start, end, size = self._find_disk_with_free_space(needed_size)
+        if not disk:
+            self.logger.error("Unable to find a disk with enough free space!")
+            return
+
+        self.logger.info("Creating new LVM for db using free space on %s...", disk)
+
+        if size > needed_size:
+            # We don't need to take more of the free space than this...
+            end = start + needed_size
+
+        # Save the old partition list so we can figure out what the name of the new one is
+        old_disks_and_parts = self.appliance.disks_and_partitions
+
+        result = self._run_cmd_show_output(
+            'parted {} --script mkpart primary {}GB {}GB'.format(disk, start, end))
+        if result.failed:
+            self.logger.error("Creating partition failed, aborting LVM creation!")
+            return
+
+        new_disks_and_parts = self.appliance.disks_and_partitions
+        diff = [d for d in new_disks_and_parts if d not in old_disks_and_parts]
+        if not diff or len(diff) > 1:
+            self.logger.error("Unable to determine the name of the new partition!")
+            self.logger.error(
+                "Disks before partitioning: %s, disks after partitioning: %s, diff: %s",
+                old_disks_and_parts, new_disks_and_parts, diff
+            )
+            return
+        return diff[0]
+
+    def create_db_lvm(self, size=5):
+        """
+        Set up a partition for the CFME DB to run on.
+
+        Args:
+            size (int) -- size in GB for the LVM
+
+        Returns:
+            True if it worked
+            False if it failed
+
+        As a work-around for having to provide a separate disk to a CFME appliance
+        for the database, we instead partition the single disk we have and run
+        the DB on the new partition.
+
+        This requires that the appliance's disk has more space than CFME requires.
+        For example, on RHOS, downstream CFME uses 43GB on a disk but the flavor used
+        to deploy the template has a 75GB disk. Therefore, we have extra space which
+        we can partition.
+
+        Note that this is not the 'ideal' way of doing things and should
+        be a stop-gap measure until we are capabale of attaching additional disks to
+        an appliance via automation on all infra types.
+        """
+        self.logger.info("Creating LVM for DB")
+
+        partition = self._create_partition_from_free_space(size)
+        if not partition:
+            self.logger.error("Error creating partition, aborting LVM create")
+            return False
+
+        fstab_line = '/dev/mapper/dbvg-dblv $APPLIANCE_PG_MOUNT_POINT xfs defaults 0 0'
+        commands_to_run = [
+            'pvcreate {}'.format(partition),
+            'vgcreate dbvg {}'.format(partition),
+            'lvcreate --yes -n dblv --size {}G dbvg'.format(size),
+            'mkfs.xfs /dev/dbvg/dblv',
+            'echo -e "{}" >> /etc/fstab'.format(fstab_line),
+            'mount -a'
+        ]
+
+        for command in commands_to_run:
+            result = self._run_cmd_show_output(command)
+            if result.failed:
+                self.logger.error("Command failed! Aborting LVM setup")
+                return False
+        return True
+
     def enable_internal(self, region=0, key_address=None, db_password=None, ssh_password=None,
                         db_disk=None):
         """Enables internal database
@@ -285,18 +458,28 @@ class ApplianceDB(AppliancePlugin):
         # Defaults
         db_password = db_password or conf.credentials['database']['password']
         ssh_password = ssh_password or conf.credentials['ssh']['password']
+
         if not db_disk:
+            # See if there's any unpartitioned disks on the appliance
             try:
                 db_disk = self.appliance.unpartitioned_disks[0]
+                self.logger.info("Using unpartitioned disk for DB at %s", db_disk)
             except IndexError:
                 db_disk = None
-                self.logger.warning(
-                    'Failed to set --dbdisk from the appliance. On 5.9.0.3+ it will fail.')
 
-        # make sure the dbdisk is unmounted, RHOS ephemeral disks come up mounted
-        result = client.run_command('umount {}'.format(db_disk))
-        if not result.success:
-            self.logger.warning('umount non-zero return, output was: '.format(result))
+        db_mounted = False
+        if not db_disk:
+            # If we still don't have a db disk to use, see if a db disk/partition has already
+            # been created & mounted (such as by us in self.create_db_lvm)
+            result = client.run_command("mount | grep $APPLIANCE_PG_MOUNT_POINT | cut -f1 -d' '")
+            if "".join(str(result).split()):  # strip all whitespace to see if we got a real result
+                self.logger.info("Using pre-mounted DB disk at %s", result)
+                db_mounted = True
+
+        if not db_mounted and not db_disk:
+            self.logger.warning(
+                'Failed to find a mounted DB disk, or a free unpartitioned disk. '
+                'On 5.9.0.3+ db setup will fail')
 
         if self.appliance.has_cli:
             base_command = 'appliance_console_cli --region {}'.format(region)
@@ -310,6 +493,10 @@ class ApplianceDB(AppliancePlugin):
                 command_options = '--internal --force-key -p {db_pass}'.format(db_pass=db_password)
 
             if db_disk:
+                # make sure the dbdisk is unmounted, RHOS ephemeral disks come up mounted
+                result = client.run_command('umount {}'.format(db_disk))
+                if not result.success:
+                    self.logger.warning('umount non-zero return, output was: '.format(result))
                 command_options = ' '.join([command_options, '--dbdisk {}'.format(db_disk)])
 
             result = client.run_command(' '.join([base_command, command_options]))
@@ -320,7 +507,8 @@ class ApplianceDB(AppliancePlugin):
             rbt_repl = {
                 'miq_lib': '/var/www/miq/lib',
                 'region': region,
-                'postgres_version': self.postgres_version
+                'postgres_version': self.postgres_version,
+                'db_mounted': str(db_mounted),
             }
 
             # Find and load our rb template with replacements
