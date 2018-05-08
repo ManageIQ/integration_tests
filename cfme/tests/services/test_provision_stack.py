@@ -7,6 +7,7 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.datafile import load_data_file
 from cfme.utils.path import orchestration_path
@@ -97,7 +98,7 @@ def template(appliance, provider, provisioning, dialog_name, stack):
     template.create_service_dialog_from_template(dialog_name)
     yield template
     if stack.exists:
-        stack.retire_stack(wait=False)
+        stack.retire_stack()
     if template.exists:
         template.delete()
 
@@ -163,6 +164,8 @@ def test_provision_stack(appliance, stack, service_catalogs, request):
     stack.wait_for_exists()
 
 
+@pytest.mark.uncollectif(lambda: BZ(1575935, forced_streams=['5.8', '5.9']).blocks,
+                         reason='impossible to reconfigure orchestration service due to BZ 1575935')
 def test_reconfigure_service(appliance, service_catalogs, request):
     """Tests service reconfiguring
 

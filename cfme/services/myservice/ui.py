@@ -297,11 +297,12 @@ def download_file(self, extension):
 
 @MiqImplementationContext.external_for(MyService.reconfigure_service, ViaUI)
 def reconfigure_service(self):
+    # TODO refactor this method - it does nothing at the moment. Bug 1575935
     view = navigate_to(self, 'Reconfigure')
     view.submit_button.click()
+    view.flash.assert_no_error()
     view = self.create_view(RequestsView)
     assert view.is_displayed
-    view.flash.assert_no_error()
 
 
 @navigator.register(MyService, 'All')
