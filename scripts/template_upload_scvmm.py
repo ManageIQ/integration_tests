@@ -33,6 +33,8 @@ def parse_cmd_line():
                         help="Specify a SCVMM connection. --provider scvmm", default=None)
     parser.add_argument('--template_name', dest="template_name",
                         help="Override/Provide name of template", default=None)
+    parser.add_argument('--db_disk', dest="db_disk", default=None,
+                        help="Name of vhd to use for the DB disk in the template")
     args = parser.parse_args()
     return args
 
@@ -49,11 +51,12 @@ def upload_vhd(client, url, library, vhd):
     client.update_scvmm_library()
 
 
-def make_template(client, host_fqdn, name, library, network, os_type, username_scvmm, cores, ram):
-
+def make_template(client, host_fqdn, name, library, network, os_type, username_scvmm, cores,
+                  ram, db_disk):
     logger.info("SCVMM: Adding HW Resource File and Template to Library")
 
     src_path = "{}{}.vhd".format(library, name)
+    db_disk_src_path = "{}{}".format(library, db_disk)
     script = """
         $JobGroupId01 = [Guid]::NewGuid().ToString()
         $LogNet = Get-SCLogicalNetwork -Name \"{network}\"
@@ -67,6 +70,8 @@ def make_template(client, host_fqdn, name, library, network, os_type, username_s
         $VHD = Get-SCVirtualHardDisk | where {{ $_.Location -eq \"{src_path}\" }} | `
             where {{ $_.HostName -eq \"{host_fqdn}\" }}
         New-SCVirtualDiskDrive -IDE -Bus 0 -LUN 0 -JobGroup $JobGroupID02 -VirtualHardDisk $VHD
+        $DBVHD = Get-SCVirtualHardDisk | where {{ $_.Location -eq \"{db_disk_src_path}\" }}
+        New-SCVirtualDiskDrive -IDE -Bus 1 -LUN 0 -JobGroup $JobGroupID02 -VirtualHardDisk $DBVHD
         $HWProfile = Get-SCHardwareProfile | where {{ $_.Name -eq \"{name}\" }}
         $OS = Get-SCOperatingSystem | where {{ $_.Name -eq \"{os_type}\" }}
         New-SCVMTemplate -Name \"{name}\" -Owner \"{username_scvmm}\" -HardwareProfile $HWProfile `
@@ -80,7 +85,8 @@ def make_template(client, host_fqdn, name, library, network, os_type, username_s
         cores=cores,
         src_path=src_path,
         host_fqdn=host_fqdn,
-        os_type=os_type)
+        os_type=os_type,
+        db_disk_src_path=db_disk_src_path)
     logger.info(str(script))
     client.run_script(script)
 
@@ -177,6 +183,8 @@ def create_template(provider, **kwargs):
     # use_library is either user input or we use the cfme_data value
     library = kwargs.get('library', mgmt_sys['template_upload'].get('vhds'))
 
+    db_disk = kwargs.get('db_disk', mgmt_sys['template_upload'].get('db_disk'))
+
     logger.info("SCVMM:%s Template Library: %s", provider, library)
 
     #  The VHD name changed, match the template_name.
@@ -206,7 +214,8 @@ def create_template(provider, **kwargs):
                 os_type,
                 username_scvmm,
                 cores,
-                ram
+                ram,
+                db_disk,
             )
 
         wait_for(lambda: client.does_template_exist(new_template_name), delay=5, num_sec=600)
