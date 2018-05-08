@@ -2860,7 +2860,7 @@ def load_appliances(appliance_list, global_kwargs):
                 )
             appliance = IPAppliance(**{mapping[k]: v for k, v in kwargs.items() if k in mapping})
 
-        result.append(appliance)
+            result.append(appliance)
     return result
 
 
