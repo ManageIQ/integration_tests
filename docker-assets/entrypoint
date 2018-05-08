@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Add host.docker.internal if it does not already exist
+ping -c 1 host.docker.internal > /dev/null
+[[ $? -ne 0 ]] && ip -4 route list match 0/0 |awk '{print $3 " host.docker.internal"}' >> /etc/hosts
+
 touch .yaml_key
 mkdir -p /cfme-qe-yamls/complete
 cp conf/* /cfme-qe-yamls/complete
