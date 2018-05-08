@@ -84,10 +84,9 @@ RUN virtualenv /cfme_venv
 RUN echo "source /cfme_venv/bin/activate" >> /root/.bashrc
 
 # Preinstall any python dependencies to keep it in an early layer
-COPY requirements/frozen.txt frozen.txt
+COPY requirements/frozen.py2.txt frozen.py2.txt
 RUN /cfme_venv/bin/pip install --no-cache-dir -U pip wheel setuptools_scm docutils && \
-    /cfme_venv/bin/pip install --no-cache-dir -r frozen.txt --no-binary pycurl --no-binary numpy && \
-    /cfme_venv/bin/pip install --no-cache-dir matplotlib && \
+    /cfme_venv/bin/pip install --no-cache-dir -r frozen.py2.txt --no-binary pycurl && \
     rm -rf ~/.cache/pip && \
     find . -name *.pyc -delete && \
     find . -name __pycache__ -delete
