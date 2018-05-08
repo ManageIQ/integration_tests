@@ -62,6 +62,8 @@ def pytest_generate_tests(metafunc):
     # TODO use supportability and provider type+version parametrization
     argnames = ['auth_mode', 'prov_key', 'user_type']
     argvalues = []
+    if 'auth_providers' not in auth_data:
+        return
     for mode in test_param_maps.keys():
         for auth_type in test_param_maps.get(mode, {}):
             eligible_providers = {key: prov_dict
