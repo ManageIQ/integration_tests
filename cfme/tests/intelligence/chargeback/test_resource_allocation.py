@@ -37,7 +37,7 @@ pytestmark = [
                                ]),
     pytest.mark.provider([SCVMMProvider], scope='module',
                         required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
-    pytest.mark.usefixtures('has_no_providers', 'setup_provider'),
+    pytest.mark.usefixtures('setup_provider'),
     test_requirements.chargeback,
 ]
 
