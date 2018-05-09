@@ -8,11 +8,12 @@ from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.networks.views import SubnetDetailsView, SubnetView, SubnetAddView, SubnetEditView
 from cfme.utils import providers, version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
 
 
 @attr.s
-class Subnet(Taggable, BaseEntity):
+class Subnet(Taggable, BaseEntity, Updateable):
     """Class representing subnets in sdn"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'
@@ -21,7 +22,7 @@ class Subnet(Taggable, BaseEntity):
     db_types = ['NetworkSubnet']
 
     name = attr.ib()
-    provider_obj = attr.ib(default=None)
+    provider_obj = attr.ib()
     network = attr.ib(default=None)
 
     @property
@@ -33,7 +34,7 @@ class Subnet(Taggable, BaseEntity):
         else:
             return True
 
-    def edit(self, new_name, gateway=None):
+    def update(self, updates):
         """Edit cloud subnet
 
         Args:
@@ -41,17 +42,28 @@ class Subnet(Taggable, BaseEntity):
             gateway: (str) IP of new gateway, for example: 11.11.11.1
         """
         view = navigate_to(self, 'Edit')
-        view.fill({'subnet_name': new_name,
-                   'gateway': gateway})
-        view.save.click()
-        view.flash.assert_success_message('Cloud Subnet "{}" updated'.format(new_name))
-        self.name = new_name
+        view.fill_with({
+            'subnet_name': updates.get('new_name'),
+            'gateway': updates.get('gateway')
+        }, on_change=view.save.click)
+        view.flash.assert_no_error()
+        wait_for(self.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        if 'subnet_name' in updates:
+            view = self.create_view(SubnetDetailsView)
+            wait_for(
+                lambda: view.entities.properties.get_text_of('Name') == updates['subnet_name'],
+                timeout='5m',
+                fail_func=view.browser.refresh,
+                delay=10
+            )
 
     def delete(self):
         """Deletes this subnet"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Delete this Cloud Subnet', handle_alert=True)
         view.flash.assert_success_message('The selected Cloud Subnet was deleted')
+        wait_for(self.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        wait_for(lambda: not self.exists, timeout='5m', fail_func=view.browser.refresh)
 
     @property
     def cloud_tenant(self):
@@ -88,7 +100,10 @@ class Subnet(Taggable, BaseEntity):
     def parent_provider(self):
         """ Return object of parent cloud provider """
         view = navigate_to(self, 'Details')
-        field_name = 'Parent Cloud Provider' if self.appliance.version >= '5.9' else 'Parent ems cloud'
+        if self.appliance.version >= '5.9':
+            field_name = 'Parent Cloud Provider'
+        else:
+            field_name = 'Parent ems cloud'
         provider_name = view.entities.relationships.get_text_of(field_name)
         return providers.get_crud_by_name(provider_name)
 
@@ -143,11 +158,11 @@ class SubnetCollection(BaseCollection):
                    'gateway': gateway,
                    'cloud_tenant': tenant})
         view.add.click()
-        view.flash.assert_success_message('Cloud Subnet "{}" created'.format(name))
+        view.flash.assert_no_error()
         subnet = self.instantiate(name, provider, network_name)
         # Refresh provider's relationships to have new subnet displayed
         wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
-        wait_for(lambda: subnet.exists, timeout=100, fail_func=subnet.browser.refresh)
+        wait_for(lambda: subnet.exists, timeout='5m', fail_func=subnet.browser.refresh)
         return subnet
 
     def all(self):

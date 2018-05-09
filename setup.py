@@ -166,7 +166,6 @@ setup(
             'roles = cfme.configure.access_control:RoleCollection',
             'saved_reports = cfme.intelligence.reports.saved:SavedReportsCollection',
             'schedules = cfme.intelligence.reports.schedules:ScheduleCollection',
-            'security_groups = cfme.cloud.security_groups:SecurityGroupCollection',
             'servers = cfme.base:ServerCollection',
             'service_dialogs = cfme.automate.dialog_collection_pick:collection_pick',
             'system_image_types = cfme.infrastructure.pxe:SystemImageTypeCollection',
