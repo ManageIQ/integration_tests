@@ -127,7 +127,7 @@ def verify_vm_uptime(appliance, provider):
     """
     vm_name = provider.data['cap_and_util']['chargeback_vm']
     vm_creation_time = appliance.rest_api.collections.vms.get(name=vm_name).created_on
-    return appliance.utc_time() - vm_creation_time > timedelta(hours=1)
+    return appliance.utc_time() - vm_creation_time > timedelta(hours=1, minutes=10)
 
 
 @pytest.fixture(scope="module")
