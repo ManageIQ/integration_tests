@@ -6,15 +6,16 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import ParametrizedLocator, VersionPick
 from widgetastic.widget import ConditionalSwitchableView, ParametrizedView, Text, TextInput, View
 from widgetastic_patternfly import BootstrapSelect, Button, Dropdown, Input
+from widgetastic_manageiq import ParametrizedSummaryTable, Table, PaginationPane
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import Taggable, TagPageView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import ParametrizedSummaryTable, Table
 
 
 class CredentialsBaseView(BaseLoggedInPage):
@@ -29,13 +30,18 @@ class CredentialsBaseView(BaseLoggedInPage):
 
 
 class CredentialsListView(CredentialsBaseView):
-    configuration = Dropdown("Configuration")
+    @View.nested
+    class toolbar(View):   # noqa
+        configuration = Dropdown("Configuration")
+        policy = Dropdown(text='Policy')
+
     credentials = Table(
         VersionPick({
             Version.lowest(): ".//div[@id='list_grid']/table",
             "5.9": ".//div[@id='miq-gtl-view']//table"
         })
     )
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
@@ -48,6 +54,7 @@ class CredentialDetailsView(CredentialsBaseView):
     class toolbar(View):  # noqa
         configuration = Dropdown("Configuration")
         download = Button(title="Download summary in PDF format")
+        policy = Dropdown(text='Policy')
 
     @View.nested
     class entities(View):  # noqa
@@ -197,7 +204,7 @@ class CredentialEditView(CredentialFormView):
                 continue
 
 
-class Credential(BaseEntity):
+class Credential(BaseEntity, Taggable):
     """A class representing one Embedded Ansible credential in the UI."""
 
     # TODO - This is one of the only classes that hasn't been converted to attrs
@@ -431,7 +438,7 @@ class Add(CFMENavigateStep):
     prerequisite = NavigateToAttribute("appliance.server", "AnsibleCredentials")
 
     def step(self):
-        self.prerequisite_view.configuration.item_select("Add New Credential")
+        self.prerequisite_view.toolbar.configuration.item_select("Add New Credential")
 
 
 @navigator.register(Credential)
@@ -441,3 +448,21 @@ class Edit(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select("Edit this Credential")
+
+
+@navigator.register(Credential, 'EditTags')
+class EditTagsFromListCollection(CFMENavigateStep):
+    VIEW = TagPageView
+
+    prerequisite = NavigateToAttribute("appliance.server", "AnsibleCredentials")
+
+    def step(self):
+        try:
+            row = self.prerequisite_view.paginator.find_row_on_pages(
+                table=self.prerequisite_view.credentials,
+                name=self.obj.name)
+            row[0].click()
+        except NoSuchElementException:
+            raise ItemNotFound('Could not locate ansible credential table row with name {}'
+                               .format(self.obj.name))
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

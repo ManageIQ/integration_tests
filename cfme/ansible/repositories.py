@@ -8,6 +8,7 @@ from widgetastic_manageiq import PaginationPane, ParametrizedSummaryTable, Table
 from widgetastic_patternfly import Button, Dropdown, Input
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import Taggable, TagPageView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
@@ -27,7 +28,11 @@ class RepositoryBaseView(BaseLoggedInPage):
 
 
 class RepositoryAllView(RepositoryBaseView):
-    configuration = Dropdown("Configuration")
+    @View.nested
+    class toolbar(View):   # noqa
+        configuration = Dropdown("Configuration")
+        policy = Dropdown(text='Policy')
+
     entities = Table(".//div[@id='gtl_div']//table")
     paginator = PaginationPane()
 
@@ -43,6 +48,7 @@ class RepositoryDetailsView(RepositoryBaseView):
         refresh = Button(title="Refresh this page")
         configuration = Dropdown("Configuration")
         download = Button(title="Download summary in PDF format")
+        policy = Dropdown(text='Policy')
 
     @View.nested
     class entities(View):  # noqa
@@ -94,7 +100,7 @@ class RepositoryEditView(RepositoryFormView):
 
 
 @attr.s
-class Repository(BaseEntity, Fillable):
+class Repository(BaseEntity, Fillable, Taggable):
     """A class representing one Embedded Ansible repository in the UI."""
 
     name = attr.ib()
@@ -297,7 +303,7 @@ class RepositoryCollection(BaseCollection):
                 break
         if set(repositories) != set(checked_repositories):
             raise ValueError("Some of the repositories were not found in the UI.")
-        view.configuration.item_select("Remove selected Repositories", handle_alert=True)
+        view.toolbar.configuration.item_select("Remove selected Repositories", handle_alert=True)
         view.flash.assert_no_error()
         for repository in checked_repositories:
             view.flash.assert_message(
@@ -336,7 +342,7 @@ class Add(CFMENavigateStep):
 
     def step(self):
         # workaround for disabled Dropdown
-        dropdown = self.prerequisite_view.configuration
+        dropdown = self.prerequisite_view.toolbar.configuration
         wait_for(
             dropdown.item_enabled,
             func_args=["Add New Repository"],
@@ -346,10 +352,19 @@ class Add(CFMENavigateStep):
         dropdown.item_select("Add New Repository")
 
 
-@navigator.register(Repository, 'Edit')
-class Edit(CFMENavigateStep):
-    VIEW = RepositoryEditView
-    prerequisite = NavigateToSibling("Details")
+@navigator.register(Repository, 'EditTags')
+class EditTagsFromListCollection(CFMENavigateStep):
+    VIEW = TagPageView
+
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
-        self.prerequisite_view.toolbar.configuration.item_select("Edit this Repository")
+        try:
+            row = self.prerequisite_view.paginator.find_row_on_pages(
+                table=self.prerequisite_view.entities,
+                name=self.obj.name)
+            row[0].click()
+        except NoSuchElementException:
+            raise ItemNotFound('Could not locate ansible repository table row with name {}'
+                               .format(self.obj.name))
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
