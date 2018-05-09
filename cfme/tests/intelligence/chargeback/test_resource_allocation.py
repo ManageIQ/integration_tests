@@ -324,21 +324,21 @@ def test_verify_alloc_storage(chargeback_report_custom, resource_alloc, soft_ass
 
 
 def test_validate_alloc_memory_cost(chargeback_costs_custom, chargeback_report_custom,
-        soft_assert):
+        resource_alloc, soft_assert):
     """Test to validate cost for memory allocation"""
     generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_custom,
         'Memory Allocated Cost', 'memory_alloc_cost', soft_assert)
 
 
 def test_validate_alloc_vcpu_cost(chargeback_costs_custom, chargeback_report_custom,
-        soft_assert):
+        resource_alloc, soft_assert):
     """Test to validate cost for vCPU allocation"""
     generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_custom,
         'vCPUs Allocated Cost', 'vcpu_alloc_cost', soft_assert)
 
 
 def test_validate_alloc_storage_cost(chargeback_costs_custom, chargeback_report_custom,
-        soft_assert):
+        resource_alloc, soft_assert):
     """Test to validate cost for storage allocation"""
     generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_custom,
         'Storage Allocated Cost', 'storage_alloc_cost', soft_assert)
