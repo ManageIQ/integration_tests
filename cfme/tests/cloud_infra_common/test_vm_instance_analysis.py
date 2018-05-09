@@ -18,6 +18,7 @@ from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVm
+from cfme.provisioning import do_vm_provisioning
 from cfme.utils import ssh, safe_string, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -26,7 +27,7 @@ from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.tier(3),
-    test_requirements.smartstate
+    test_requirements.smartstate,
 ]
 
 WINDOWS = {'id': "Red Hat Enterprise Windows", 'icon': 'windows'}
@@ -189,6 +190,7 @@ def ssa_compliance_profile(appliance, provider, ssa_compliance_policy):
 def ssa_vm(request, local_setup_provider, provider, vm_analysis_provisioning_data,
            appliance, analysis_type):
     """ Fixture to provision instance on the provider """
+    template_name = template_name = vm_analysis_provisioning_data['image']
     vm_name = 'test-ssa-{}-{}'.format(fauxfactory.gen_alphanumeric(), analysis_type)
     vm = VM.factory(vm_name, provider, template_name=vm_analysis_provisioning_data.image)
     request.addfinalizer(lambda: vm.cleanup_on_provider())
@@ -196,7 +198,15 @@ def ssa_vm(request, local_setup_provider, provider, vm_analysis_provisioning_dat
     provision_data = vm_analysis_provisioning_data.copy()
     del provision_data['image']
 
-    vm.create_on_provider(find_in_cfme=True, **provision_data)
+    if "test_ssa_compliance" in request._pyfuncitem.name:
+        provisioning_data = {"catalog": {'vm_name': vm_name},
+                             "environment": {'automatic_placement': True}}
+        do_vm_provisioning(vm_name=vm_name, appliance=appliance, provider=provider,
+                           provisioning_data=provisioning_data, template_name=template_name,
+                           request=request, smtp_test=False
+                           )
+    else:
+        vm.create_on_provider(find_in_cfme=True, **provision_data)
 
     if provider.one_of(OpenStackProvider):
         public_net = provider.data['public_network']
@@ -256,7 +266,8 @@ def ssa_analysis_profile():
     analysis_profile = AnalysisProfile(name=analysis_profile_name,
                                        description=analysis_profile_name,
                                        profile_type=AnalysisProfile.VM_TYPE,
-                                       categories=["System"],
+                                       categories=["System", "Software", "System",
+                                                   "User Accounts", "VM Configuration"],
                                        files=collected_files)
     analysis_profile.create()
     yield analysis_profile
@@ -395,7 +406,7 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
 @pytest.mark.rhv3
 @pytest.mark.tier(2)
 @pytest.mark.long_running
-def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_vm, soft_assert,
+def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_profile, soft_assert,
                         appliance):
     """ Tests SSA can be performed and returns sane results
 
