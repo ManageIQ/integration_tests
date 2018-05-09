@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 import pytest
-from widgetastic.utils import partial_match
+from riggerlib import recursive_update
 
 from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
-from cfme.provisioning import do_vm_provisioning
 from cfme.utils import normalize_text
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
@@ -51,26 +50,15 @@ def test_infra_provision_from_template(appliance, setup_provider, provider, vm_n
     """
 
     template = provisioning['template']
+    vm = VM.factory(vm_name, provider, template)
 
-    request.addfinalizer(lambda: VM.factory(vm_name, provider).cleanup_on_provider())
+    inst_args = vm.vm_default_args
+    request.addfinalizer(lambda: vm.cleanup_on_provider())
 
-    provisioning_data = {
-        'catalog': {
-            'vm_name': vm_name
-        },
-        'environment': {
-            'vm_name': vm_name,
-            'host_name': {'name': provisioning['host']} if not auto else None,
-            'datastore_name': {'name': provisioning['datastore']} if not auto else None,
-            'automatic_placement': True if auto else None
-        },
-        'network': {
-            'vlan': partial_match(provisioning['vlan'])
-        }
-    }
-
-    do_vm_provisioning(appliance, template, provider, vm_name, provisioning_data, request,
-                       smtp_test, num_sec=900)
+    if auto:
+        inst_args['environment'] = {'automatic_placement': auto}
+    assert vm.create(check_existing=True, provisioning_data=inst_args, find_in_cfme=True), (
+        "VM {} wasn't created".format(vm.name))
 
 
 @pytest.mark.rhv2
@@ -107,25 +95,15 @@ def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_t
 
     # It will provision two of them
     vm_names = [vm_name + "001", vm_name + "002"]
+    vm = VM.factory(vm_name, provider, template)
     request.addfinalizer(
         lambda: [VM.factory(name, provider).cleanup_on_provider() for name in vm_names])
-
-    provisioning_data = {
-        'catalog': {
-            'vm_name': vm_name,
-            'num_vms': '2'
-        },
-        'environment': {
-            'host_name': {'name': host},
-            'datastore_name': {'name': datastore}
-        },
-        'network': {
-            'vlan': partial_match(provisioning['vlan'])
-        }
-    }
-
-    do_vm_provisioning(appliance, template, provider, vm_name, provisioning_data, request,
-                       smtp_test, wait=False)
+    vm_args = vm.vm_default_args
+    recursive_update(vm_args, {'catalog': {'num_vms': '2'}})
+    provision_view = navigate_to(vm, 'Provision')
+    provision_view.form.fill(vm_args)
+    provision_view.form.submit_button.click()
+    provision_view.flash.assert_no_error()
     wait_for(
         lambda:
         len(filter(

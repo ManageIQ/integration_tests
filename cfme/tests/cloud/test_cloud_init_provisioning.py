@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 # These tests don't work at the moment, due to the security_groups multi select not working
 # in selenium (the group is selected then immediately reset)
-import fauxfactory
 import pytest
+from riggerlib import recursive_update
 
-from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.common.vm import VM
 from cfme.infrastructure.pxe import get_template_from_config
 from cfme.utils import ssh
+from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -18,7 +21,7 @@ pytestmark = [
         ['provisioning', 'ci-template'],
         ['provisioning', 'ci-username'],
         ['provisioning', 'ci-pass'],
-        ['provisioning', 'image']],
+        ['provisioning', 'ci-image']],
         scope="module")
 ]
 
@@ -32,12 +35,14 @@ def setup_ci_template(provider, appliance):
 
 
 @pytest.fixture(scope="function")
-def vm_name(request):
-    vm_name = 'test_image_prov_{}'.format(fauxfactory.gen_alphanumeric())
-    return vm_name
+def vm_name():
+    return random_vm_name('ci')
 
 
 @pytest.mark.tier(3)
+@pytest.mark.uncollectif(lambda provider, appliance: provider.one_of(GCEProvider) and
+                         appliance.version < "5.9",
+                         reason="GCE supports cloud_init in 5.9+ BZ 1395757")
 def test_provision_cloud_init(request, setup_provider, provider, provisioning,
                               setup_ci_template, vm_name):
     """ Tests provisioning from a template with cloud_init
@@ -45,41 +50,22 @@ def test_provision_cloud_init(request, setup_provider, provider, provisioning,
     Metadata:
         test_flag: cloud_init, provision
     """
-    image = provisioning.get('ci-image') or provisioning['image']['name']
-    note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
-        image, vm_name, provider.key))
-    logger.info(note)
-
+    image = provisioning.get('ci-image')
     mgmt_system = provider.mgmt
-
-    instance = Instance.factory(vm_name, provider, image)
-
+    instance = VM.factory(vm_name, provider, image)
+    inst_args = instance.vm_default_args
     request.addfinalizer(instance.cleanup_on_provider)
-    # TODO: extend inst_args for other providers except EC2 if needed
-    inst_args = {
-        'request': {'email': 'image_provisioner@example.com',
-                    'first_name': 'Image',
-                    'last_name': 'Provisioner',
-                    'notes': note},
-        'catalog': {'vm_name': vm_name},
-        'properties': {'instance_type': provisioning['instance_type'],
-                       'guest_keypair': provisioning['guest_keypair']},
-        'environment': {'availability_zone': provisioning['availability_zone'],
-                        'cloud_network': provisioning['cloud_network'],
-                        'security_groups': [provisioning['security_group']]},
-        'customize': {'custom_template': {'name': provisioning['ci-template']}}
-    }
-
+    recursive_update(inst_args, {'customize':
+                                 {'custom_template': {'name': provisioning['ci-template']}}})
+    if provider.one_of(AzureProvider):
+        inst_args['environment']['public_ip_address'] = "New"
     if provider.one_of(OpenStackProvider):
         floating_ip = mgmt_system.get_first_floating_ip()
         inst_args['environment']['public_ip_address'] = floating_ip
 
     logger.info('Instance args: {}'.format(inst_args))
 
-    instance.create(**inst_args)
-    provision_request = provider.appliance.collections.requests.instantiate(vm_name,
-                                                                   partial_check=True)
-    provision_request.wait_for_request()
+    instance.create(provisioning_data=inst_args)
     connect_ip = mgmt_system.get_ip_address(vm_name)
 
     # Check that we can at least get the uptime via ssh this should only be possible

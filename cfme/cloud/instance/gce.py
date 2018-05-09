@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from riggerlib import recursive_update
+
 from cfme.exceptions import OptionNotAvailable
 from cfme.utils import version, deferred_verpick
 from . import Instance
@@ -39,19 +41,6 @@ class GCEInstance(Instance):
             'on': [self.START],
             'off': [self.STOP, self.SOFT_REBOOT]}
 
-    def create(self, cancel=False, **prov_fill_kwargs):
-        """Provisions an GCE instance with the given properties through CFME
-
-        Args:
-            cancel: Clicks the cancel button if `True`, otherwise clicks the submit button
-                    (Defaults to `False`)
-            prov_fill_kwargs: dictionary of provisioning field/value pairs
-        Note:
-            For more optional keyword arguments, see
-            :py:data:`cfme.cloud.provisioning.ProvisioningForm`
-        """
-        super(GCEInstance, self).create(form_values=prov_fill_kwargs, cancel=cancel)
-
     def power_control_from_provider(self, option):
         """Power control the instance from the provider
 
@@ -70,3 +59,23 @@ class GCEInstance(Instance):
             self.provider.mgmt.delete_vm(self.name)
         else:
             raise OptionNotAvailable(option + " is not a supported action")
+
+    @property
+    def vm_default_args(self):
+        """Represents dictionary used for Vm/Instance provision with GCE mandatory default args"""
+        inst_args = super(GCEInstance, self).vm_default_args
+        provisioning = self.provider.data['provisioning']
+        recursive_update(inst_args, {
+            'properties': {
+                'boot_disk_size': provisioning.get('boot_disk_size')}
+        })
+        return inst_args
+
+    @property
+    def vm_default_args_rest(self):
+        inst_args = super(GCEInstance, self).vm_default_args_rest
+        provisioning = self.provider.data['provisioning']
+        recursive_update(inst_args, {
+            'vm_fields': {
+                'boot_disk_size': provisioning['boot_disk_size'].replace(' ', '.')}})
+        return inst_args

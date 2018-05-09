@@ -1,11 +1,16 @@
 import fauxfactory
+
 import pytest
+from riggerlib import recursive_update
 
 from cfme import test_requirements
+from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.utils.rest import assert_response, query_resource_attributes
 from cfme.utils.wait import wait_for
+from cfme.utils.generators import random_vm_name
 
 
 pytestmark = [
@@ -13,8 +18,13 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.meta(server_roles='+automate'),
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([VMwareProvider, RHEVMProvider], scope='module')
+    pytest.mark.provider([VMwareProvider, RHEVMProvider, SCVMMProvider], scope='module')
 ]
+
+
+@pytest.fixture()
+def vm_name():
+    return random_vm_name(context='prov')
 
 
 def get_provision_data(rest_api, provider, template_name, auto_approve=True):
@@ -82,9 +92,9 @@ def clean_vm(appliance, vm_name):
 
 
 @pytest.mark.rhv2
-# Here also available the ability to create multiple provision request, but used the save
-# href and method, so it doesn't make any sense actually
-def test_provision(request, appliance, provision_data):
+@pytest.mark.parametrize('auto', [True, False], ids=["Auto", "Manual"])
+def test_infra_provision_from_template_using_rest(request, appliance, vm_name, provider,
+                                                  setup_provider, auto):
     """Tests provision via REST API.
     Prerequisities:
         * Have a provider set up with templates suitable for provisioning.
@@ -95,18 +105,14 @@ def test_provision(request, appliance, provision_data):
     Metadata:
         test_flag: rest, provision
     """
-    vm_name = provision_data['vm_fields']['vm_name']
+    vm = VM.factory(vm_name, provider)
     request.addfinalizer(lambda: clean_vm(appliance, vm_name))
-    appliance.rest_api.collections.provision_requests.action.create(**provision_data)
-    assert_response(appliance)
-    provision_request = appliance.collections.requests.instantiate(description=vm_name,
-                                                                   partial_check=True)
-    provision_request.wait_for_request()
-    msg = "Provisioning failed with the message {}".format(
-        provision_request.rest.message)
-    assert provision_request.is_succeeded(), msg
-    found_vms = appliance.rest_api.collections.vms.find_by(name=vm_name)
-    assert found_vms, 'VM `{}` not found'.format(vm_name)
+    vm_args = vm.vm_default_args_rest
+    if auto:
+        recursive_update(vm_args, {"additional_values": {"placemnet_auto": True}})
+        del vm_args['additional_values']['placement_ds_name']
+        del vm_args['additional_values']['placement_host_name']
+    assert vm.create_rest(provisioning_data=vm_args)
 
 
 @pytest.mark.rhv3

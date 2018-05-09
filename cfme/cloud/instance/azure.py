@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
+from riggerlib import recursive_update
+
 from cfme.exceptions import OptionNotAvailable
 from cfme.utils import version, deferred_verpick
 from cfme.utils.log import logger
-
 from . import Instance
 
 
@@ -43,19 +44,6 @@ class AzureInstance(Instance):
             'on': [self.START],
             'off': [self.STOP, self.SUSPEND, self.SOFT_REBOOT]}
 
-    def create(self, cancel=False, **prov_fill_kwargs):
-        """Provisions an Azure instance with the given properties through CFME
-
-        Args:
-            cancel: Clicks the cancel button if `True`, otherwise clicks the submit button
-                    (Defaults to `False`)
-            prov_fill_kwargs: dictionary of provisioning field/value pairs
-        Note:
-            For more optional keyword arguments, see
-            :py:data:`cfme.cloud.provisioning.ProvisioningForm`
-        """
-        super(AzureInstance, self).create(form_values=prov_fill_kwargs, cancel=cancel)
-
     def power_control_from_provider(self, option):
         """Power control the instance from the provider
 
@@ -92,3 +80,30 @@ class AzureInstance(Instance):
             self.provider.mgmt.remove_pips_by_search(self.name, self.provider.mgmt.resource_group)
         except Exception:
             logger.exception("cleanup: failed to cleanup NICs/PIPs for VM '{}'".format(self.name))
+
+    @property
+    def vm_default_args(self):
+        inst_args = super(AzureInstance, self).vm_default_args
+        provisioning = self.provider.data['provisioning']
+        vm_user = provisioning.get('customize_username')
+        vm_password = provisioning.get('customize_password')
+        recursive_update(inst_args, {
+            'environment': {
+                'public_ip_address': '<None>',
+            },
+            'customize': {
+                'admin_username': vm_user,
+                'root_password': vm_password}})
+        return inst_args
+
+    @property
+    def vm_default_args_rest(self):
+        inst_args = super(AzureInstance, self).vm_default_args_rest
+        provisioning = self.provider.data['provisioning']
+        vm_user = provisioning.get('customize_username')
+        vm_password = provisioning.get('customize_password')
+        recursive_update(inst_args, {
+            'vm_fields': {
+                'root_username': vm_user,
+                'root_password': vm_password}})
+        return inst_args

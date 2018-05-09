@@ -4,9 +4,10 @@ quadicon lists, and VM details page.
 """
 from collections import namedtuple
 from copy import copy
+import re
 
 import fauxfactory
-import re
+from manageiq_client.filters import Q
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.utils import partial_match, Parameter, VersionPick, Version
 from widgetastic.widget import (
@@ -14,6 +15,11 @@ from widgetastic.widget import (
 from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, CheckableBootstrapTreeview, Dropdown, Input as
     WInput)
+from widgetastic_manageiq import (
+    Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
+    SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
+from widgetastic_manageiq.vm_reconfigure import DisksTable
+
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.candu_views import VMUtilizationAllView
 from cfme.common.vm import VM, Template as BaseTemplate
@@ -31,10 +37,6 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.conf import cfme_data
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (
-    Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
-    SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
-from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 
 def has_child(tree, text, parent_item=None):
@@ -951,6 +953,89 @@ class InfraVm(VM):
         host = self.appliance.collections.hosts.instantiate(name=vm_api.host_name,
                                                             provider=self.provider)
         return host
+
+    @property
+    def vm_default_args(self):
+        """Represents dictionary used for Vm/Instance provision with mandatory default args"""
+        provisioning = self.provider.data['provisioning']
+        inst_args = {
+            'request': {
+                'email': 'vm_provision@cfmeqe.com'},
+            'catalog': {
+                'vm_name': self.name},
+            'environment': {
+                'host_name': {'name': provisioning['host']},
+                'datastore_name': {'name': provisioning['datastore']}},
+            'network': {
+                'vlan': partial_match(provisioning['vlan'])}
+        }
+
+        return inst_args
+
+    @property
+    def vm_default_args_rest(self):
+        """
+        Represents dictionary used for REST API Vm/Instance provision with minimum required default
+        args
+        """
+        if not self.provider.is_refreshed():
+            self.provider.refresh_provider_relationships()
+            wait_for(self.provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        provisioning = self.provider.data['provisioning']
+        template_name = provisioning['template']
+        templates = self.appliance.rest_api.collections.templates.filter(
+            Q('name', '=', template_name))
+        for template in templates:
+            try:
+                ems_id = template.ems_id
+            except AttributeError:
+                continue
+            if ems_id == self.provider.id:
+                template_guid = template.guid
+                break
+        else:
+            raise Exception('No such template {} on provider!'.format(template_name))
+
+        host_id = self.appliance.rest_api.collections.hosts.get(name=provisioning['host']).id
+        ds_id = self.appliance.rest_api.collections.data_stores.get(name=provisioning[
+            'datastore']).id
+
+        inst_args = {
+            "version": "1.1",
+            "template_fields": {
+                "guid": template_guid,
+            },
+            "vm_fields": {
+                "vm_name": self.name,
+                "request_type": "template",
+                "vlan": provisioning["vlan"]
+            },
+            "requester": {
+                "user_name": "admin",
+                "owner_email": "admin@cfmeqe.com",
+                "auto_approve": True,
+            },
+            "tags": {
+            },
+            "additional_values": {
+                "placemnet_auto": False,
+                "placement_ds_name": ds_id,
+                "placement_host_name": host_id
+            },
+            "ems_custom_attributes": {
+            },
+            "miq_custom_attributes": {
+            }
+        }
+
+        if self.provider.one_of(RHEVMProvider):
+            inst_args['vm_fields']['provision_type'] = 'native_clone'
+            # TODO Workaround for BZ 1541036/1449157. <Template> uses template vnic_profile
+            # shouldn't be default
+            if self.appliance.version > '5.9.0.16':
+                inst_args['vm_fields']['vlan'] = '<Template>'
+
+        return inst_args
 
 
 class Template(BaseTemplate):
