@@ -1,12 +1,10 @@
 import fauxfactory
 import pytest
-
 from widgetastic.exceptions import NoSuchElementException
 
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.configure.configuration.region_settings import Category, Tag, MapTags, RedHatUpdates
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 
 general_list_pages = [
     ('servers', None, 'Details', False),
@@ -94,12 +92,6 @@ def schedule(appliance):
 @pytest.mark.parametrize('place_info', general_list_pages,
                          ids=['{}_{}'.format(set_type[0], set_type[2].lower())
                               for set_type in general_list_pages])
-@pytest.mark.uncollectif(
-    lambda place_info, appliance:
-        (appliance.version < '5.9' and 'HelpMenu' in place_info) or
-        ('regions' in place_info and 'Servers'in place_info and
-            BZ(1558605, forced_streams=['5.8']).blocks)
-)
 def test_paginator(appliance, place_info):
     """
         Check paginator is visible for config pages
