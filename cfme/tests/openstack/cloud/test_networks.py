@@ -131,6 +131,8 @@ def test_delete_network(network):
     network.delete()
     wait_for(network.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
+    network.browser.refresh()
+    navigate_to(network.appliance.collections.cloud_networks, 'All')
     assert not network.exists
 
 
@@ -158,6 +160,7 @@ def test_delete_subnet(subnet):
     wait_for(subnet.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
     subnet.browser.refresh()
+    navigate_to(subnet.appliance.collections.network_subnets, 'All')
     assert not subnet.exists
 
 
