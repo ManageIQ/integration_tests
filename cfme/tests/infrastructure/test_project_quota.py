@@ -29,9 +29,9 @@ def template_name(provisioning):
 
 
 @pytest.fixture
-def prov_data(vm_name, template_name, provisioning):
+def prov_data(vm_name, provisioning):
     return {
-        "catalog": {'vm_name': vm_name, 'catalog_name': {'name': template_name}},
+        "catalog": {'vm_name': vm_name},
         "environment": {'automatic_placement': True},
         "network": {'vlan': partial_match(provisioning['vlan'])}
     }
@@ -104,7 +104,8 @@ def test_project_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pr
     """Test project quota via lifecycle method"""
     with new_user:
         prov_data.update(custom_prov_data)
-        # prov_data['catalog']['vm_name'] = vm_name
+        # After update sometimes catalog's value is over-written, so adding catalog name again.
+        prov_data['catalog']['vm_name'] = vm_name
         do_vm_provisioning(appliance, template_name=template_name, provider=provider,
                            vm_name=vm_name, provisioning_data=prov_data, smtp_test=False,
                            wait=False, request=None)
