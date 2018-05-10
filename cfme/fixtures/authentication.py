@@ -63,29 +63,19 @@ def auth_user_data(auth_provider, user_type):
     return data
 
 
+@pytest.fixture(scope='session')
 def ensure_resolvable_hostname(appliance):
     """
     Intended for use with freeipa configuration, ensures a resolvable hostname on the appliance
 
     Tries to resolve the appliance hostname property and skips the test if it can't
     """
-    host_out = appliance.ssh_client.run_command('host {}'.format(appliance.hostname))
-    fqdn = None
-    if host_out.success and 'domain name pointer' in host_out.output:
-        # resolvable and reverse lookup, hostname property is an IP addr
-        fqdn = host_out.output.split(' ')[-1].rstrip('\n').rstrip('.')
-    elif host_out.success and 'has address' in host_out.output:
-        # resolvable and address returned, hostname property is name
-        fqdn = appliance.hostname
-    else:
-        # not resolvable, don't set
-        pytest.skip('Unable to resolve appliance.hostname, required for test')
-    if fqdn and fqdn not in appliance.ssh_client.run_command('cat /etc/hosts').output:
-        appliance.appliance_console_cli.set_hostname(fqdn)
+    appliance.set_resolvable_hostname()
 
 
 @pytest.fixture(scope='function')
-def configure_auth(appliance, auth_mode, auth_provider, user_type, request):
+def configure_auth(appliance, auth_mode, auth_provider, user_type, ensure_resolvable_hostname,
+                   request):
     """Given auth_mode, auth_provider, user_type parametrization, configure auth for login
     testing.
 
@@ -96,7 +86,6 @@ def configure_auth(appliance, auth_mode, auth_provider, user_type, request):
     """
     original_config = appliance.server.authentication.auth_settings
     logger.debug('Original auth settings before configure_auth fixture: %r', original_config)
-    ensure_resolvable_hostname(appliance)
     if auth_mode.lower() != 'external':
         appliance.server.authentication.configure(auth_mode=auth_mode,
                                                   auth_provider=auth_provider,
