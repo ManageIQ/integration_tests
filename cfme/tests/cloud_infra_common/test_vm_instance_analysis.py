@@ -181,12 +181,12 @@ def ssa_compliance_profile(appliance, provider, ssa_compliance_policy):
         'ssa_policy_profile_{}'.format(fauxfactory.gen_alpha()), policies=[ssa_compliance_policy])
 
     provider.assign_policy_profiles(profile.description)
-    yield ssa_profile
+    yield
     provider.unassign_policy_profiles(profile.description)
     profile.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def ssa_vm(request, local_setup_provider, provider, vm_analysis_provisioning_data,
            appliance, analysis_type):
     """ Fixture to provision instance on the provider """
@@ -297,12 +297,12 @@ def ssa_policy(appliance, ssa_action):
 
 
 @pytest.fixture(scope="module")
-def ssa_profile(appliance, ssa_vm, ssa_policy):
+def ssa_profiled_vm(appliance, ssa_vm, ssa_policy):
     profile = appliance.collections.policy_profiles.create(
         'ssa_policy_profile_{}'.format(fauxfactory.gen_alpha()), policies=[ssa_policy])
 
     ssa_vm.assign_policy_profiles(profile.description)
-    yield ssa_profile
+    yield ssa_vm
     ssa_vm.unassign_policy_profiles(profile.description)
     profile.delete()
 
@@ -320,7 +320,7 @@ def detect_system_type(vm):
 
 
 @pytest.fixture(scope="module")
-def schedule_ssa(appliance, ssa_vm, ssa_profile, wait_for_task_result=True):
+def schedule_ssa(appliance, ssa_vm, ssa_profiled_vm, wait_for_task_result=True):
     dt = datetime.utcnow()
     delta_min = 5 - (dt.minute % 5)
     if delta_min < 3:  # If the schedule would be set to run in less than 2mins
@@ -358,7 +358,7 @@ def schedule_ssa(appliance, ssa_vm, ssa_profile, wait_for_task_result=True):
 @pytest.mark.tier(1)
 @pytest.mark.long_running
 def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_provisioning_data,
-                      appliance, ssa_profile):
+                      appliance, ssa_profiled_vm):
     """ Tests SSA can be performed on a template
 
     Metadata:
@@ -406,8 +406,8 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
 @pytest.mark.rhv3
 @pytest.mark.tier(2)
 @pytest.mark.long_running
-def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_profile, soft_assert,
-                        appliance):
+def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_profiled_vm, ssa_vm,
+                        soft_assert, appliance):
     """ Tests SSA can be performed and returns sane results
 
     Metadata:
@@ -555,7 +555,7 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, appliance):
 @pytest.mark.long_running
 @pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
-def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profile):
+def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profiled_vm):
     """ Tests SSA can be performed and returns sane results
 
     Metadata:
@@ -628,7 +628,7 @@ def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profile):
 
 @pytest.mark.rhv3
 @pytest.mark.long_running
-def test_ssa_users(ssa_vm, appliance, ssa_profile):
+def test_ssa_users(ssa_vm, appliance, ssa_profiled_vm):
     """ Tests SSA fetches correct results for users list
 
     Metadata:
@@ -666,7 +666,7 @@ def test_ssa_users(ssa_vm, appliance, ssa_profile):
 
 @pytest.mark.rhv3
 @pytest.mark.long_running
-def test_ssa_groups(ssa_vm, appliance, ssa_profile):
+def test_ssa_groups(ssa_vm, appliance, ssa_profiled_vm):
     """ Tests SSA fetches correct results for groups
 
     Metadata:
@@ -703,7 +703,7 @@ def test_ssa_groups(ssa_vm, appliance, ssa_profile):
 @pytest.mark.long_running
 @pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
-def test_ssa_packages(ssa_vm, soft_assert, appliance, ssa_profile):
+def test_ssa_packages(ssa_vm, soft_assert, appliance, ssa_profiled_vm):
     """ Tests SSA fetches correct results for packages
 
     Metadata:
@@ -774,7 +774,7 @@ def test_ssa_files(appliance, ssa_vm, soft_assert):
 @pytest.mark.rhv2
 @pytest.mark.tier(2)
 @pytest.mark.long_running
-def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profile):
+def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profiled_vm):
     """ Tests drift analysis is correct
 
     Metadata:
