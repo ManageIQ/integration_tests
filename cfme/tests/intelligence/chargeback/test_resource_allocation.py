@@ -12,11 +12,10 @@ This test module has a few module scoped fixtures that actually get invoked for 
 test, despite the fact that these fixtures are module scoped.So, the tests have not been
 parameterized.
 """
-
+import math
 from datetime import timedelta
 
 import fauxfactory
-import math
 import pytest
 
 import cfme.intelligence.chargeback.assignments as cb
@@ -53,7 +52,7 @@ def vm_ownership(enable_candu, provider, appliance):
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
     if not provider.mgmt.does_vm_exist(vm_name):
-        pytest.skip("Skipping test, cu-24x7 VM does not exist")
+        pytest.skip('Skipping test, {} VM does not exist'.format(vm_name))
     if not provider.mgmt.is_vm_running(vm_name):
         provider.mgmt.start_vm(vm_name)
         provider.mgmt.wait_vm_running(vm_name)
@@ -127,7 +126,7 @@ def verify_vm_uptime(appliance, provider):
     """
     vm_name = provider.data['cap_and_util']['chargeback_vm']
     vm_creation_time = appliance.rest_api.collections.vms.get(name=vm_name).created_on
-    return appliance.utc_time() - vm_creation_time > timedelta(hours=1, minutes=10)
+    return appliance.utc_time() - vm_creation_time > timedelta(hours=1)
 
 
 @pytest.fixture(scope="module")
@@ -136,12 +135,14 @@ def resource_alloc(vm_ownership, appliance, provider):
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
     if provider.one_of(SCVMMProvider):
-        wait_for(verify_vm_uptime, [appliance, provider], timeout=3650,
+        wait_for(verify_vm_uptime, [appliance, provider], timeout=3610,
             message='Waiting for VM to be up for at least one hour')
 
     vm = appliance.rest_api.collections.vms.get(name=vm_name)
     vm.reload(attributes=['allocated_disk_storage', 'cpu_total_cores', 'ram_size'])
-    # Convert allocated storage in bytes to GB since this value is reported in GB
+
+    # By default,chargeback rates for storage are defined in this form: 0.01 USD/GB
+    # Hence,convert storage used in Bytes to GB
     return {"storage_alloc": float(vm.allocated_disk_storage) * math.pow(2, -30),
             "memory_alloc": vm.ram_size,
             "vcpu_alloc": vm.cpu_total_cores}
@@ -272,14 +273,12 @@ def generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_cust
             estimated_resource_alloc_cost = chargeback_costs_custom[resource_alloc_cost]
             cost_from_report = groups[column]
             cost = cost_from_report.replace('$', '').replace(',', '')
-            logger.info('ESTIMATED COST {}. COST FROM REPORT {}'.format(
-                estimated_resource_alloc_cost, cost_from_report))
             soft_assert(estimated_resource_alloc_cost - DEVIATION <=
                 float(cost) <= estimated_resource_alloc_cost + DEVIATION,
                 'Estimated cost and report cost do not match')
 
 
-def generic_test_resource_alloc(chargeback_report_custom, resource_alloc, column,
+def generic_test_resource_alloc(resource_alloc, chargeback_report_custom, column,
         resource, soft_assert):
     """Generic test to verify VM resource allocation reported in chargeback reports.
 
@@ -298,47 +297,45 @@ def generic_test_resource_alloc(chargeback_report_custom, resource_alloc, column
             if 'GB' in groups[column] and column == 'Memory Allocated over Time Period':
                 allocated_resource = float(allocated_resource) * math.pow(2, -10)
             resource_from_report = groups[column].replace('MB', '').replace('GB', '')
-            logger.info('ALLOCATED RESOURCE {}. RESOURCE FROM REPORT {}'.format(allocated_resource,
-                resource_from_report))
             soft_assert(allocated_resource - DEVIATION <=
                 float(resource_from_report) <= allocated_resource + DEVIATION,
                 'Estimated resource allocation and report resource allocation do not match')
 
 
-def test_verify_alloc_memory(chargeback_report_custom, resource_alloc, soft_assert):
+def test_verify_alloc_memory(resource_alloc, chargeback_report_custom, soft_assert):
     """Test to verify memory allocation"""
-    generic_test_resource_alloc(chargeback_report_custom, resource_alloc,
+    generic_test_resource_alloc(resource_alloc, chargeback_report_custom,
         'Memory Allocated over Time Period', 'memory_alloc', soft_assert)
 
 
-def test_verify_alloc_cpu(chargeback_report_custom, resource_alloc, soft_assert):
+def test_verify_alloc_cpu(resource_alloc, chargeback_report_custom, soft_assert):
     """Test to verify cpu allocation"""
-    generic_test_resource_alloc(chargeback_report_custom, resource_alloc,
+    generic_test_resource_alloc(resource_alloc, chargeback_report_custom,
         'vCPUs Allocated over Time Period', 'vcpu_alloc', soft_assert)
 
 
-def test_verify_alloc_storage(chargeback_report_custom, resource_alloc, soft_assert):
+def test_verify_alloc_storage(resource_alloc, chargeback_report_custom, soft_assert):
     """Test to verify storage allocation"""
-    generic_test_resource_alloc(chargeback_report_custom, resource_alloc,
+    generic_test_resource_alloc(resource_alloc, chargeback_report_custom,
         'Storage Allocated', 'storage_alloc', soft_assert)
 
 
 def test_validate_alloc_memory_cost(chargeback_costs_custom, chargeback_report_custom,
-        resource_alloc, soft_assert):
+        soft_assert):
     """Test to validate cost for memory allocation"""
     generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_custom,
         'Memory Allocated Cost', 'memory_alloc_cost', soft_assert)
 
 
 def test_validate_alloc_vcpu_cost(chargeback_costs_custom, chargeback_report_custom,
-        resource_alloc, soft_assert):
+        soft_assert):
     """Test to validate cost for vCPU allocation"""
     generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_custom,
         'vCPUs Allocated Cost', 'vcpu_alloc_cost', soft_assert)
 
 
 def test_validate_alloc_storage_cost(chargeback_costs_custom, chargeback_report_custom,
-        resource_alloc, soft_assert):
+        soft_assert):
     """Test to validate cost for storage allocation"""
     generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_custom,
         'Storage Allocated Cost', 'storage_alloc_cost', soft_assert)
