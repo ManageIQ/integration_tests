@@ -278,8 +278,8 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
         view.toolbar.configuration.item_select("Perform SmartState Analysis", handle_alert=True)
         view.flash.assert_success_message('"{}": Analysis successfully initiated'.format(self.name))
         if wait_for_task_result:
-            task = self.appliance.collections.tasks.switch_tab('MyOtherTasks').instantiate(
-                name="SmartState Analysis for '{}'".format(self.name))
+            task = self.appliance.collections.tasks.instantiate(
+                name="SmartState Analysis for '{}'".format(self.name), tab='MyOtherTasks')
             task.wait_for_finished()
             return task
 

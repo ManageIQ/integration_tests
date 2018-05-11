@@ -332,8 +332,8 @@ class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, 
         view.toolbar.configuration.item_select('Perform SmartState Analysis',
                                                handle_alert=not cancel)
         if wait_for_task_result:
-            task = self.appliance.collections.tasks.switch_tab('AllTasks').instantiate(
-                name='Scan from Vm {}'.format(self.name))
+            task = self.appliance.collections.tasks.instantiate(
+                name='Scan from Vm {}'.format(self.name), tab='AllTasks')
             task.wait_for_finished()
             return task
 

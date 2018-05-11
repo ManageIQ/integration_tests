@@ -353,8 +353,8 @@ def schedule_ssa(appliance, ssa_vm, ssa_profiled_vm, wait_for_task_result=True):
     ss = appliance.collections.system_schedules.create(**schedule_args)
     ss.enable()
     if wait_for_task_result:
-        task = appliance.collections.tasks.switch_tab('AllTasks').instantiate(
-            name='Scan from Vm {}'.format(ssa_vm.name))
+        task = appliance.collections.tasks.instantiate(
+            name='Scan from Vm {}'.format(ssa_vm.name), tab='AllTasks')
         task.wait_for_finished()
     return ss
 

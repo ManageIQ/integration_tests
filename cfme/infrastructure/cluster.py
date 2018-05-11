@@ -249,8 +249,8 @@ class Cluster(Pretty, BaseEntity, Taggable):
             'Cluster / Deployment Role: scan successfully initiated'
         )
         if wait_for_task_result:
-            task = self.appliance.collections.tasks.switch_tab('MyOtherTasks').instantiate(
-                name="SmartState Analysis for [{}]".format(self.name))
+            task = self.appliance.collections.tasks.instantiate(
+                name="SmartState Analysis for [{}]".format(self.name), tab='MyOtherTasks')
             task.wait_for_finished()
             return task
 

@@ -96,7 +96,7 @@ class Task(BaseEntity):
     tab = attr.ib(default='MyTasks')
 
     def _is_row_present(self, row_name):
-        view = navigate_to(self.parent, self.parent.tab)
+        view = navigate_to(self.parent, self.tab)
         for row in view.tabs.table.rows():
             if row_name in row.task_name.text:
                 return True
@@ -104,7 +104,7 @@ class Task(BaseEntity):
 
     @property
     def _row(self):
-        view = navigate_to(self.parent, self.parent.tab)
+        view = navigate_to(self.parent, self.tab)
         wait_for(
             lambda: self._is_row_present(self.name), delay=5, timeout='2m',
             fail_func=view.reload.click)
@@ -175,7 +175,7 @@ class Task(BaseEntity):
         return False
 
     def wait_for_finished(self, delay=5, timeout='10m'):
-        view = navigate_to(self.parent, self.parent.tab)
+        view = navigate_to(self.parent, self.tab)
         wait_for(
             lambda: self.is_successfully_finished, delay=delay, timeout=timeout,
             fail_func=view.reload.click)

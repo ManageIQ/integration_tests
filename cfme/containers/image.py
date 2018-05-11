@@ -70,8 +70,8 @@ class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssi
         assert filter(lambda m: 'Analysis successfully initiated' in m.text, view.flash.messages)
         if wait_for_finish:
             try:
-                task = self.appliance.collections.tasks.switch_tab('AllTasks').instantiate(
-                    name=self.name)
+                task = self.appliance.collections.tasks.instantiate(
+                    name=self.name, tab='AllTasks')
                 task.wait_for_finished()
             except TimedOutError:
                 raise TimedOutError('Timeout exceeded, Waited too much time for SSA to finish ({}).'
@@ -221,12 +221,12 @@ class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssi
 
         if wait_for_finish:
             try:
-                self.appliance.collections.tasks.switch_tab('AllTasks').wait_for_finished(
-                    image_enities_names, timeout=timeout)
+                col = self.appliance.collections.tasks
+                col.tab = 'AllTasks'
+                col.wait_for_finished(image_enities_names, timeout=timeout)
 
                 # check all task passed successfully with no error
-                if self.appliance.collections.tasks.switch_tab('AllTasks').is_successfully_finished(
-                        image_enities_names, silent_failure=True):
+                if col.is_successfully_finished(image_enities_names, silent_failure=True):
                     return True
                 else:
                     logger.error('Some Images SSA tasks finished with error message,'

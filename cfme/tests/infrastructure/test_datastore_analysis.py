@@ -81,7 +81,9 @@ def datastores_hosts_setup(provider, datastore, request, appliance):
 def clear_all_tasks(appliance):
     destination = 'AllTasks' if appliance.version >= '5.9' else 'AllOtherTasks'
     # clear table
-    appliance.collections.tasks.switch_tab(destination).delete_all()
+    col = appliance.collections.tasks
+    col.tab = destination
+    col.delete_all()
 
 
 @pytest.mark.tier(2)

@@ -28,7 +28,9 @@ TESTED_ATTRIBUTES__openscap = (
 
 @pytest.fixture(scope='function')
 def delete_all_container_tasks(appliance):
-    appliance.collections.tasks.switch_tab('AllTasks').delete_all()
+    col = appliance.collections.tasks
+    col.tab = 'AllTasks'
+    col.delete_all()
 
 
 @pytest.fixture(scope='function')

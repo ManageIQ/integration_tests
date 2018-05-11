@@ -20,8 +20,8 @@ def test_host_configuration(host_collection, provider, soft_assert, appliance):
     assert hosts
     for host in hosts:
         host.run_smartstate_analysis()
-        task = appliance.collections.tasks.switch_tab('MyOtherTasks').instantiate(
-            name="SmartState Analysis for '{}'".format(host.name))
+        task = appliance.collections.tasks.instantiate(
+            name="SmartState Analysis for '{}'".format(host.name), tab='MyOtherTasks')
         task.wait_for_finished()
         fields = ['Packages', 'Services', 'Files']
         view = navigate_to(host, 'Details')
