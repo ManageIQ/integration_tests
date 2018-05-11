@@ -182,14 +182,10 @@ class Task(BaseEntity):
 
 
 @attr.s
-class TaskCollection(BaseCollection):
+class TasksCollection(BaseCollection):
     """Collection object for :py:class:`cfme.configure.tasks.Task`."""
     ENTITY = Task
     tab = attr.ib(default='MyTasks')
-
-    def switch_tab(self, tab):
-        self.tab = tab
-        return self
 
     def set_filter(self, values, cancel=False):
         view = navigate_to(self, self.tab)
@@ -257,7 +253,7 @@ class TaskCollection(BaseCollection):
             fail_func=view.reload.click)
 
 
-@navigator.register(TaskCollection, 'MyTasks')
+@navigator.register(TasksCollection, 'MyTasks')
 class MyTasks(CFMENavigateStep):
     VIEW = TasksView
     prerequisite = NavigateToAttribute('appliance.server', 'Tasks')
@@ -270,7 +266,7 @@ class MyTasks(CFMENavigateStep):
         return tasks.is_displayed and tasks.is_active()
 
 
-@navigator.register(TaskCollection, 'MyOtherTasks')
+@navigator.register(TasksCollection, 'MyOtherTasks')
 class MyOtherTasks(CFMENavigateStep):
     VIEW = TasksView
     prerequisite = NavigateToAttribute('appliance.server', 'Tasks')
@@ -283,7 +279,7 @@ class MyOtherTasks(CFMENavigateStep):
         return tasks.is_displayed and tasks.is_active()
 
 
-@navigator.register(TaskCollection, 'AllTasks')
+@navigator.register(TasksCollection, 'AllTasks')
 class AllTasks(CFMENavigateStep):
     VIEW = TasksView
     prerequisite = NavigateToAttribute('appliance.server', 'Tasks')
@@ -296,7 +292,7 @@ class AllTasks(CFMENavigateStep):
         return tasks.is_displayed and tasks.is_active()
 
 
-@navigator.register(TaskCollection, 'AllOtherTasks')
+@navigator.register(TasksCollection, 'AllOtherTasks')
 class AllOtherTasks(CFMENavigateStep):
     VIEW = TasksView
     prerequisite = NavigateToAttribute('appliance.server', 'Tasks')
