@@ -1,5 +1,6 @@
 import fauxfactory
 import pytest
+from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
 from cfme import test_requirements
@@ -115,10 +116,7 @@ def test_child_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, set
                                                         vm_name, template_name):
     """Test child tenant feature via lifecycle method."""
     with new_user:
-        prov_data.update(custom_prov_data)
-
-    # After update sometimes catalog's value is over-written, so adding catalog name again.
-        prov_data['catalog']['vm_name'] = vm_name
+        recursive_update(prov_data, custom_prov_data)
         do_vm_provisioning(appliance, template_name=template_name, provider=provider,
                            vm_name=vm_name, provisioning_data=prov_data, smtp_test=False,
                            wait=False, request=None)
