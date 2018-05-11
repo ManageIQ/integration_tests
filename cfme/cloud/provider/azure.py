@@ -3,6 +3,7 @@ import attr
 from wrapanapi.msazure import AzureSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
+from cfme.infrastructure.provider.rhevm import RHEVMVMUtilizationView
 from cfme.services.catalogs.catalog_items import AzureCatalogItem
 from cfme.utils.version import pick
 from . import CloudProvider
@@ -24,6 +25,11 @@ class AzureEndpointForm(DefaultEndpointForm):
     pass
 
 
+class AzureInstanceUtilizationView(RHEVMVMUtilizationView):
+    """A VM Utilization view for Azure providers"""
+    pass
+
+
 @attr.s(hash=False)
 class AzureProvider(CloudProvider):
     """
@@ -31,6 +37,7 @@ class AzureProvider(CloudProvider):
      represents CFME provider and operations available in UI
     """
     catalog_item_type = AzureCatalogItem
+    vm_utilization_view = AzureInstanceUtilizationView
     type_name = "azure"
     mgmt_class = AzureSystem
     db_types = ["Azure::CloudManager"]

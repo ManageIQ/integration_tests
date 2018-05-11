@@ -15,7 +15,6 @@ from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, CheckableBootstrapTreeview, Dropdown, Input as
     WInput)
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.candu_views import VMUtilizationAllView
 from cfme.common.vm import VM, Template as BaseTemplate
 from cfme.common.vm_views import (
     ManagementEngineView, CloneVmView, MigrateVmView, ProvisionView, EditView, PublishVmView,
@@ -1455,7 +1454,10 @@ class SetOwnership(CFMENavigateStep):
 
 @navigator.register(InfraVm, 'candu')
 class VmUtilization(CFMENavigateStep):
-    VIEW = VMUtilizationAllView
+    @property
+    def VIEW(self):     # noqa
+        return self.obj.provider.vm_utilization_view
+
     prerequisite = NavigateToSibling('Details')
 
     def step(self):

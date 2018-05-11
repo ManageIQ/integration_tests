@@ -484,3 +484,15 @@ class Timelines(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
+
+
+@navigator.register(Instance, 'candu')
+class InstanceUtilization(CFMENavigateStep):
+    @property
+    def VIEW(self):     # noqa
+        return self.obj.provider.vm_utilization_view
+
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.monitoring.item_select('Utilization')
