@@ -131,8 +131,17 @@ def wait_for_last_boot_timestamp_refresh(vm, boot_time, timeout=300):
     try:
         wait_for(_wait_for_timestamp_refresh, num_sec=timeout, delay=30,
                  fail_func=view.toolbar.reload.click)
+        return True
     except TimedOutError:
         return False
+
+
+def ensure_state_changed_on_unchanged(vm, state_changed_on):
+    """Returns True if current value of State Changed On in the Power Management
+    is the same as the supplied (original) value."""
+    view = navigate_to(vm, "Details")
+    new_state_changed_on = view.entities.summary("Power Management").get_text_of("State Changed On")
+    return state_changed_on == new_state_changed_on
 
 
 def wait_for_vm_tools(vm, timeout=300):
@@ -425,23 +434,27 @@ def test_vm_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_
     check_power_options(provider, soft_assert, testing_vm, testing_vm.STATE_OFF)
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+@pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True, scope='function')
+@pytest.mark.meta(blockers=[BZ(1571830, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
-    testing_vm_tools.wait_for_vm_state_change(
-        desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
     wait_for_vm_tools(testing_vm_tools)
     view = navigate_to(testing_vm_tools, "Details")
     last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
+    state_changed_on = view.entities.summary("Power Management").get_text_of("State Changed On")
     testing_vm_tools.power_control_from_cfme(
         option=testing_vm_tools.GUEST_RESTART, cancel=False, from_details=True)
-
     view.flash.assert_success_message(text='Restart Guest initiated', partial=True)
 
-    testing_vm_tools.wait_for_vm_state_change(
-        desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
-    wait_for_last_boot_timestamp_refresh(testing_vm_tools, last_boot_time)
     soft_assert(
-        testing_vm_tools.provider.mgmt.is_vm_running(testing_vm_tools.name), "vm not running")
+        wait_for_last_boot_timestamp_refresh(testing_vm_tools, last_boot_time),
+        "Last Boot Time value has not been refreshed")
+    soft_assert(
+        ensure_state_changed_on_unchanged(testing_vm_tools, state_changed_on),
+        "Value of 'State Changed On' has changed after guest restart")
+    soft_assert(
+        testing_vm_tools.provider.mgmt.is_vm_running(testing_vm_tools.name),
+        "vm not running")
 
 
 @pytest.mark.meta(blockers=[BZ(1571895, forced_streams=['5.8', '5.9'],
