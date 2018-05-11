@@ -19,6 +19,7 @@ REPOSITORIES = ["https://github.com/lcouzens/ansible_playbooks"]
 def provider_app_crud(provider_class, appliance):
     try:
         prov = list_providers_by_class(provider_class)[0]
+        logger.info('using provider {}'.format(prov.name))
         prov.appliance = appliance
         return prov
     except IndexError:
@@ -349,7 +350,7 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream or appliance.version < '5.9')
+@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream)
 def test_appliance_console_restore_db_replicated(
         request, get_replicated_appliances_with_providers):
     appl1, appl2 = get_replicated_appliances_with_providers
