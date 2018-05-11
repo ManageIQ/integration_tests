@@ -211,9 +211,9 @@ def resource_alloc(vm_ownership, appliance, provider):
         vm.reload(attributes=['allocated_disk_storage', 'cpu_total_cores', 'ram_size'])
         # By default,chargeback rates for storage are defined in this form: 0.01 USD/GB
         # Hence,convert storage used in Bytes to GB
-        return {"storage_alloc": float(vm.allocated_disk_storage) * math.pow(2, -30),
-            "memory_alloc": vm.ram_size,
-            "vcpu_alloc": vm.cpu_total_cores}
+        return {"storage_alloc": int(vm.allocated_disk_storage * math.pow(2, -30)),
+            "memory_alloc": int(vm.ram_size),
+            "vcpu_alloc": int(vm.cpu_total_cores)}
 
     metrics = appliance.db.client['metrics']
     rollups = appliance.db.client['metric_rollups']
@@ -259,9 +259,9 @@ def resource_alloc(vm_ownership, appliance, provider):
 
     # By default,chargeback rates for storage are defined in this form: 0.01 USD/GB
     # Hence,convert storage used in Bytes to GB
-    return {"vcpu_alloc": record.derived_vm_numvcpus,
-            "memory_alloc": record.derived_memory_available,
-            "storage_alloc": record.derived_vm_allocated_disk_storage * math.pow(2, -30)}
+    return {"vcpu_alloc": int(record.derived_vm_numvcpus),
+            "memory_alloc": int(record.derived_memory_available),
+            "storage_alloc": int(record.derived_vm_allocated_disk_storage * math.pow(2, -30))}
 
 
 def resource_cost(appliance, provider, metric_description, usage, description, rate_type):
@@ -411,9 +411,10 @@ def generic_test_resource_alloc(resource_alloc, chargeback_report_custom, column
         else:
             allocated_resource = resource_alloc[resource]
             if 'GB' in groups[column] and column == 'Memory Allocated over Time Period':
-                allocated_resource = float(allocated_resource) * math.pow(2, -10)
-            resource_from_report = groups[column].replace('MB', '').replace('GB', '')
-            soft_assert(allocated_resource == resource_from_report,
+                allocated_resource = allocated_resource * math.pow(2, -10)
+            resource_from_report = groups[column].replace('MB', '').replace('GB', ''). \
+                replace(' ', '')
+            soft_assert(allocated_resource == int(resource_from_report),
                 'Estimated resource allocation and report resource allocation do not match')
 
 
