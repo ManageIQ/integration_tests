@@ -11,9 +11,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import os
 import sys
 
+import os
 from mock import Mock
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -51,7 +51,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
-    'fixtures.nelson',
+    'cfme.fixtures.nelson',
     'cfme.utils.apidoc'
 ]
 
