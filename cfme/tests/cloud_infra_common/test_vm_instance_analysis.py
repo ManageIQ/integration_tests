@@ -173,6 +173,7 @@ def ssa_compliance_policy(appliance):
     policy.assign_actions_to_event("VM Provision Complete", ["Initiate SmartState Analysis for VM"])
     yield policy
     policy.assign_events()
+    policy.delete()
 
 
 @pytest.fixture(scope="module")
@@ -190,7 +191,7 @@ def ssa_compliance_profile(appliance, provider, ssa_compliance_policy):
 def ssa_vm(request, local_setup_provider, provider, vm_analysis_provisioning_data,
            appliance, analysis_type):
     """ Fixture to provision instance on the provider """
-    template_name = template_name = vm_analysis_provisioning_data['image']
+    template_name = vm_analysis_provisioning_data['image']
     vm_name = 'test-ssa-{}-{}'.format(fauxfactory.gen_alphanumeric(), analysis_type)
     vm = VM.factory(vm_name, provider, template_name=vm_analysis_provisioning_data.image)
     request.addfinalizer(lambda: vm.cleanup_on_provider())
@@ -406,7 +407,7 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
 @pytest.mark.rhv3
 @pytest.mark.tier(2)
 @pytest.mark.long_running
-def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_profiled_vm, ssa_vm,
+def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_profiled_vm,
                         soft_assert, appliance):
     """ Tests SSA can be performed and returns sane results
 
@@ -417,36 +418,37 @@ def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_profil
     e_groups = None
     e_packages = None
     e_services = None
-    e_os_type = ssa_vm.system_type['os_type']
+    e_os_type = ssa_profiled_vm.system_type['os_type']
 
-    if ssa_vm.system_type != WINDOWS:
-        e_users = ssa_vm.ssh.run_command("cat /etc/passwd | wc -l").output.strip('\n')
-        e_groups = ssa_vm.ssh.run_command("cat /etc/group | wc -l").output.strip('\n')
-        e_packages = ssa_vm.ssh.run_command(
-            ssa_vm.system_type['package-number']).output.strip('\n')
-        e_services = ssa_vm.ssh.run_command(
-            ssa_vm.system_type['services-number']).output.strip('\n')
+    if ssa_profiled_vm.system_type != WINDOWS:
+        e_users = ssa_profiled_vm.ssh.run_command("cat /etc/passwd | wc -l").output.strip('\n')
+        e_groups = ssa_profiled_vm.ssh.run_command("cat /etc/group | wc -l").output.strip('\n')
+        e_packages = ssa_profiled_vm.ssh.run_command(
+            ssa_profiled_vm.system_type['package-number']).output.strip('\n')
+        e_services = ssa_profiled_vm.ssh.run_command(
+            ssa_profiled_vm.system_type['services-number']).output.strip('\n')
 
     logger.info("Expecting to have %s users, %s groups, %s packages and %s services", e_users,
                 e_groups, e_packages, e_services)
     view = appliance.browser.create_view(TasksView)
     wait_for(
         is_vm_analysis_finished,
-        func_args=[ssa_vm.name],
+        message="Waiting for SSA runs for {} vm".format(ssa_profiled_vm.name),
+        func_args=[ssa_profiled_vm.name],
         delay=5, timeout="15m",
         fail_func=view.reload.click
     )
     # Check release and quadicon
-    quadicon_os_icon = ssa_vm.find_quadicon().data['os']
-    view = navigate_to(ssa_vm, 'Details')
+    quadicon_os_icon = ssa_profiled_vm.find_quadicon().data['os']
+    view = navigate_to(ssa_profiled_vm, 'Details')
     details_os_icon = view.entities.summary('Properties').get_text_of('Operating System')
     logger.info("Icons: %s, %s", details_os_icon, quadicon_os_icon)
-    c_lastanalyzed = ssa_vm.last_analysed
+    c_lastanalyzed = ssa_profiled_vm.last_analysed
     c_users = view.entities.summary('Security').get_text_of('Users')
     c_groups = view.entities.summary('Security').get_text_of('Groups')
     c_packages = 0
     c_services = 0
-    if ssa_vm.system_type != WINDOWS:
+    if ssa_profiled_vm.system_type != WINDOWS:
         c_packages = view.entities.summary('Configuration').get_text_of('Packages')
         c_services = view.entities.summary('Configuration').get_text_of('Init Processes')
 
@@ -459,7 +461,7 @@ def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_profil
     soft_assert(e_os_type in quadicon_os_icon.lower(),
                 "quad icon: '{}' not in '{}'".format(e_os_type, quadicon_os_icon))
 
-    if ssa_vm.system_type != WINDOWS:
+    if ssa_profiled_vm.system_type != WINDOWS:
         soft_assert(c_users == e_users, "users: '{}' != '{}'".format(c_users, e_users))
         soft_assert(c_groups == e_groups, "groups: '{}' != '{}'".format(c_groups, e_groups))
         soft_assert(c_packages == e_packages, "packages: '{}' != '{}'".format(c_packages,
