@@ -6,7 +6,6 @@ from widgetastic_manageiq import CheckboxSelect, Select, Input
 
 from cfme.exceptions import OptionNotAvailable, DestinationNotFound
 from cfme.common.vm_views import RightSizeView
-from cfme.utils import version, deferred_verpick
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from . import Instance, CloudInstanceView
 
@@ -17,10 +16,7 @@ class OpenStackInstance(Instance):
     POWER_ON = START  # For compatibility with the infra objects.
     SUSPEND = "Suspend"
     DELETE = "Delete"
-    TERMINATE = deferred_verpick({
-        version.LOWEST: 'Terminate',
-        '5.6.1': 'Delete',
-    })
+    TERMINATE = "Delete"
     # CFME-only power control options
     SOFT_REBOOT = "Soft Reboot"
     HARD_REBOOT = "Hard Reboot"
