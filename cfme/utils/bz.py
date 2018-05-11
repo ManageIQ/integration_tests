@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-import re
-from bugzilla import Bugzilla as _Bugzilla
 from collections import Sequence
 
+import re
+from bugzilla import Bugzilla as _Bugzilla
 from cached_property import cached_property
+from six import string_types
+
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger
 from cfme.utils.version import (
@@ -234,7 +236,7 @@ class BugWrapper(object):
         """
         value = getattr(self._bug, attr)
         if attr in self.loose:
-            if isinstance(value, Sequence) and not isinstance(value, basestring):
+            if isinstance(value, Sequence) and not isinstance(value, string_types):
                 value = value[0]
             value = value.strip()
             if not value:
@@ -246,7 +248,7 @@ class BugWrapper(object):
             if not value:
                 return None
             return Version(value)
-        if isinstance(value, basestring):
+        if isinstance(value, string_types):
             if len(value.strip()) == 0:
                 return None
             else:

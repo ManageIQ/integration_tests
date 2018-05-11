@@ -12,6 +12,7 @@ import re
 from cached_property import cached_property
 from os import path as os_path
 from scp import SCPClient
+from six import string_types
 
 from cfme.utils import conf, ports, version
 from cfme.utils.log import logger
@@ -59,7 +60,7 @@ class SSHResult(object):
 
     def __contains__(self, what):
         # Handling 'something' in x
-        if not isinstance(what, basestring):
+        if not isinstance(what, string_types):
             raise ValueError('You can only check strings using the in operator')
         return what in self.output
 
@@ -75,7 +76,7 @@ class SSHResult(object):
         # Handling comparison to strings or numbers
         if isinstance(other, int):
             return cmp(self.rc, other)
-        elif isinstance(other, basestring):
+        elif isinstance(other, string_types):
             return cmp(self.output, other)
         else:
             raise ValueError('You can only compare SSHResult with str or int')

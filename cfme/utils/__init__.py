@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import atexit
-import re
 import subprocess
-import os
+from functools import partial
+
 # import diaper for backward compatibility
 import diaper
+import os
+import re
 from cached_property import cached_property
-from functools import partial
+from six import string_types
 from werkzeug.local import LocalProxy
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
@@ -18,7 +20,7 @@ class FakeObject(object):
 
 
 def fakeobject_or_object(obj, attr, default=None):
-    if isinstance(obj, basestring):
+    if isinstance(obj, string_types):
         return FakeObject(**{attr: obj})
     elif not obj:
         return FakeObject(**{attr: default})
@@ -211,7 +213,7 @@ def safe_string(o):
     Args:
         o: Anything.
     """
-    if not isinstance(o, basestring):
+    if not isinstance(o, string_types):
         if hasattr(o, "__unicode__"):
             o = unicode(o)
         else:

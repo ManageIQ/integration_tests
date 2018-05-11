@@ -3,13 +3,15 @@
 
 """
 from functools import partial
-from selenium.common.exceptions import NoSuchElementException
-from cfme.utils.wait import wait_for, TimedOutError
-import re
-from cfme.utils.pretty import Pretty
 
-from widgetastic_patternfly import Input, BootstrapSelect, Button
+import re
+from selenium.common.exceptions import NoSuchElementException
+from six import string_types
 from widgetastic.widget import View
+from widgetastic_patternfly import Input, BootstrapSelect, Button
+
+from cfme.utils.pretty import Pretty
+from cfme.utils.wait import wait_for, TimedOutError
 from widgetastic_manageiq import Calendar, Checkbox
 
 
@@ -304,7 +306,7 @@ class ExpressionEditor(View, Pretty):
         if not no_date:
             # Flip the right part of form
             view = self.field_date_form
-            if (isinstance(value, basestring) and
+            if (isinstance(value, string_types) and
                     not re.match(r"^[0-9]{2}/[0-9]{2}/[0-9]{4}$", value)):
                 if not view.dropdown_select.is_displayed:
                     self.click_switch_to_relative()
@@ -316,7 +318,7 @@ class ExpressionEditor(View, Pretty):
                     self.click_switch_to_specific()
                 if (isinstance(value, tuple) or isinstance(value, list)) and len(value) == 2:
                     date, time = value
-                elif isinstance(value, basestring):  # is in correct format mm/dd/yyyy
+                elif isinstance(value, string_types):  # is in correct format mm/dd/yyyy
                     # Date only (for now)
                     date = value[:]
                     time = None
@@ -398,7 +400,7 @@ def run_commands(command_list, clear_expression=True, context=None):
     assert isinstance(command_list, list) or isinstance(command_list, tuple)
     step_list = []
     for command in command_list:
-        if isinstance(command, basestring):
+        if isinstance(command, string_types):
             # Single command, no params
             step_list.append(get_func(command, context))
         elif isinstance(command, dict):

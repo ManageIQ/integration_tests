@@ -21,6 +21,7 @@ import yaml
 from cached_property import cached_property
 from debtcollector import removals
 from manageiq_client.api import APIException, ManageIQClient as VanillaMiqApi
+from six import string_types
 from six.moves.urllib.parse import urlparse
 from werkzeug.local import LocalStack, LocalProxy
 
@@ -111,7 +112,7 @@ class ApplianceConsole(object):
             channel = self.appliance.ssh_client.invoke_shell()
         self.commands = commands
         for command in commands:
-            if isinstance(command, basestring):
+            if isinstance(command, string_types):
                 command_string, timeout = command, timeout
             else:
                 command_string, timeout = command

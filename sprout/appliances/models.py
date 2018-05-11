@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import base64
+
 import re
 import yaml
 
@@ -32,6 +33,8 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.providers import get_mgmt
 from cfme.utils.timeutil import nice_seconds
 from cfme.utils.version import Version
+
+from six import string_types
 
 
 # Monkey patch the User object in order to have nicer checks
@@ -1246,12 +1249,12 @@ class AppliancePool(MetadataMixin):
                                            template_type=template_type, **user_filter)
             if dates:
                 date = dates[0]
-        if isinstance(group, basestring):
+        if isinstance(group, string_types):
             group = Group.objects.get(id=group)
-        if isinstance(provider_type, basestring):
+        if isinstance(provider_type, string_types):
             if provider_type not in Provider.get_available_provider_types(owner):
                 raise Exception('There are no providers for type {!r}'.format(provider_type))
-        if isinstance(provider, basestring):
+        if isinstance(provider, string_types):
             provider = Provider.objects.get(id=provider, working=True, disabled=False)
             if provider_type is not None and provider.provider_type != provider_type:
                 raise Exception(

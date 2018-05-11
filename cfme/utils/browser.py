@@ -7,7 +7,6 @@ from collections import namedtuple
 from shutil import rmtree
 from string import Template
 from tempfile import mkdtemp
-from six.moves.urllib_error import URLError
 
 import os
 import requests
@@ -19,6 +18,7 @@ from selenium.webdriver.common import keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.remote.file_detector import UselessFileDetector
+from six.moves.urllib_error import URLError
 from werkzeug.local import LocalProxy
 
 from cfme.utils import conf, tries, clear_property_cache
@@ -335,14 +335,14 @@ class WithZoom(object):
 
     def __enter__(self, *args, **kwargs):
         ac = ActionChains(browser())
-        for _ in xrange(abs(self._level)):
+        for _ in range(abs(self._level)):
             ac.send_keys(keys.Keys.CONTROL,
                          keys.Keys.SUBTRACT if self._level < 0 else keys.Keys.ADD)
         ac.perform()
 
     def __exit__(self, *args, **kwargs):
         ac = ActionChains(browser())
-        for _ in xrange(abs(self._level)):
+        for _ in range(abs(self._level)):
             ac.send_keys(keys.Keys.CONTROL,
                          keys.Keys.SUBTRACT if -self._level < 0 else keys.Keys.ADD)
         ac.perform()

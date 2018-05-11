@@ -3,11 +3,13 @@
 
 @author: Milan Falešník <mfalesni@redhat.com>
 """
-import fauxfactory
 import ftplib
-import re
 from datetime import datetime
-from time import strptime, mktime
+from time import strptime
+
+import fauxfactory
+import re
+
 try:
     from cStringIO import StringIO
 except ImportError:
