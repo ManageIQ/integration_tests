@@ -21,7 +21,7 @@ pytestmark = [
 ]
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def definition(appliance):
     with appliance.context.use(ViaREST):
         definition = appliance.collections.generic_object_definitions.create(
@@ -36,7 +36,7 @@ def definition(appliance):
             definition.delete()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def service(appliance):
     service_name = 'rest_service_{}'.format(fauxfactory.gen_alphanumeric())
     rest_service = appliance.rest_api.collections.services.action.create(
@@ -48,7 +48,7 @@ def service(appliance):
     rest_service.action.delete()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def g_object(definition, service, appliance):
     myservice = MyService(appliance, name=service.name)
     with appliance.context.use(ViaREST):
@@ -62,6 +62,15 @@ def g_object(definition, service, appliance):
         if instance.exists:
             instance.delete()
 
+
+@pytest.fixture
+def add_generic_object_to_service(appliance, service, g_object):
+    with appliance.context.use(ViaREST):
+        service.action.add_resource(
+            resource=appliance.rest_api.collections.generic_objects.find_by(
+                name=g_object.name)[0]._ref_repr()
+        )
+        assert_response(appliance)
 
 @pytest.fixture(scope="module")
 def categories(request, appliance):
@@ -144,42 +153,56 @@ def test_generic_objects_crud_ui(appliance, context, request):
         assert view.is_displayed
 
 
+@pytest.fixture
+def create_button_group(appliance, definition):
+
+    def _create_button_group():
+        with appliance.context.use(ViaUI):
+            group_name = 'button_group_{}'.format(fauxfactory.gen_alphanumeric())
+            view = appliance.browser.create_view(BaseLoggedInPage)
+            definition.add_button_group(
+                name=group_name,
+                description='Group_button_description',
+                image='fa-user'
+            )
+            view.flash.assert_no_error()
+            return group_name
+    return _create_button_group
+
+
+@pytest.fixture
+def create_button(appliance, create_button_group, definition):
+
+    def _create_button(button_group):
+        with appliance.context.use(ViaUI):
+            group_name = create_button_group() if button_group else None
+            button_name = 'button_{}'.format(fauxfactory.gen_alphanumeric())
+            definition.add_button(
+                name=button_name,
+                description='Button_description',
+                image='fa-home',
+                request=fauxfactory.gen_alphanumeric(),
+                button_group=group_name)
+            view = appliance.browser.create_view(BaseLoggedInPage)
+            view.flash.assert_no_error()
+        return {group_name: button_name}
+    return _create_button
+
+
 @pytest.mark.parametrize('button_group', [True, False],
                          ids=['button_group_with_button', 'single_button'])
 @pytest.mark.parametrize('context', [ViaUI])
-def test_generic_objects_with_buttons_ui(appliance, definition, service, request, button_group,
-                                         context):
+def test_generic_objects_with_buttons_ui(appliance, request, button_group, create_button,
+                                         context, service):
     """
         Tests buttons ui visibility assigned to generic object
 
         Metadata:
             test_flag: ui
     """
-    with appliance.context.use(context):
-        myservice = MyService(appliance, name=service.name)
-        group_name = 'button_group_{}'.format(fauxfactory.gen_alphanumeric())
-        view = appliance.browser.create_view(BaseLoggedInPage)
-        if button_group:
-            definition.add_button_group(
-                name=group_name,
-                description='Group_button_description',
-                image='fa-user'
-            )
-            view.flash.assert_message(
-                'Custom Button Group "{}" has been successfully added.'.format(group_name))
-
-        button_name = 'button_{}'.format(fauxfactory.gen_alphanumeric())
-        definition.add_button(
-            name=button_name,
-            description='Button_description',
-            image='fa-home',
-            request=fauxfactory.gen_alphanumeric(),
-            button_group=group_name if button_group else None)
-        message = (
-            'Custom Button "{}" has been successfully added under the selected button group.'
-            if button_group else 'Custom Button "{}" has been successfully added.'
-        )
-        view.flash.assert_message(message.format(button_name))
+    myservice = MyService(appliance, name=service.name)
+    button = create_button(button_group)
+    group = list(button.keys())[0]
     with appliance.context.use(ViaREST):
         instance = appliance.collections.generic_objects.create(
             name='rest_generic_instance{}'.format(fauxfactory.gen_alphanumeric()),
@@ -193,13 +216,12 @@ def test_generic_objects_with_buttons_ui(appliance, definition, service, request
                 name=instance.name)[0]._ref_repr()
         )
         assert_response(appliance)
-
     with appliance.context.use(context):
         view = navigate_to(myservice, 'GenericObjectInstance', instance_name=instance.name)
         if button_group:
-            assert view.toolbar.group(group_name).custom_button.has_item(button_name)
+            assert view.toolbar.group(group).custom_button.has_item(button[group])
         else:
-            assert view.toolbar.button(button_name).custom_button.is_displayed
+            assert view.toolbar.button(button[group]).custom_button.is_displayed
 
 
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'collection'])
