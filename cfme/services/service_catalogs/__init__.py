@@ -1,5 +1,4 @@
 import importscan
-
 import sentaku
 
 from widgetastic.widget import ParametrizedView, Select, Text, View
@@ -71,15 +70,15 @@ class BaseOrderForm(View):
 
         @property
         def visible_widget(self):
-            if self.input.is_displayed:
+            if self.browser.wait_for_element(self.input.locator, exception=False):
                 return self.input
-            elif self.dropdown.is_displayed:
+            elif self.browser.wait_for_element(self.dropdown.locator, exception=False):
                 return self.dropdown
-            elif self.param_input.is_displayed:
+            elif self.browser.wait_for_element(self.param_input.locator, exception=False):
                 return self.param_input
-            elif self.param_dropdown.is_displayed:
+            elif self.browser.wait_for_element(self.param_dropdown.locator, exception=False):
                 return self.param_dropdown
-            elif self.select.is_displayed:
+            elif self.browser.wait_for_element(self.select.locator, exception=False):
                 return self.select
             else:
                 raise ItemNotFound("Visible widget is not found")
