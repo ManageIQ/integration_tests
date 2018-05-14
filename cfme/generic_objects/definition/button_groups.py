@@ -5,7 +5,7 @@ from cfme.exceptions import OptionNotAvailable
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 
-from .generic_object_views import (
+from .definition_views import (
     GenericObjectAddButtonView, GenericObjectDefinitionDetailsView, GenericObjectActionsDetailsView,
     GenericObjectButtonGroupDetailsView, GenericObjectButtonGroupAddView,
     GenericObjectDefinitionAllView
@@ -211,7 +211,7 @@ class GenericObjectButtonGroupsCollection(BaseCollection):
             view.cancel.click()
         else:
             view.add.click()
-        view = self.create_view(GenericObjectDefinitionDetailsView)
+        view = self.parent.create_view(GenericObjectDefinitionDetailsView)
         assert view.is_displayed
         view.flash.assert_no_error()
         group = self.instantiate(name=name, description=description, image=image, display=display)

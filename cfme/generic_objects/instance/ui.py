@@ -1,6 +1,7 @@
 from navmazing import NavigateToAttribute
-from widgetastic.widget import Text, View
-from widgetastic_patternfly import Dropdown, CandidateNotFound
+from widgetastic.widget import Text, View, ParametrizedView, ParametrizedString, ParametrizedLocator
+from widgetastic.utils import VersionPick, Version
+from widgetastic_patternfly import Dropdown, CandidateNotFound, Button
 from widgetastic_manageiq import (ItemsToolBarViewSelector, BaseEntitiesView,
     ParametrizedSummaryTable)
 
@@ -48,6 +49,33 @@ class GenericObjectInstanceDetailsView(BaseLoggedInPage):
         )
 
 
+class MyServiceGenericObjectInstanceView(BaseLoggedInPage):
+    @View.nested
+    class toolbar(View):    # noqa
+        reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                                           '5.9': 'Refresh this page'}))
+
+        @ParametrizedView.nested
+        class group(ParametrizedView):   # noqa
+            PARAMETERS = ("group_name",)
+            custom_button = Dropdown(text=ParametrizedString('{group_name}'))
+
+        @ParametrizedView.nested
+        class button(ParametrizedView):    # noqa
+            PARAMETERS = ("button_name",)
+            custom_button = Text(ParametrizedLocator('//button[contains(@id, "custom__custom") and'
+                                                     ' normalize-space()={button_name|quote}]'))
+
+    title = Text('//div[@id="main-content"]//h1')
+    summary = ParametrizedSummaryTable()
+
+    @property
+    def is_displayed(self):
+        return (
+            self.title.text == self.context['object'].name
+        )
+
+
 @MiqImplementationContext.external_for(GenericObjectInstance.exists.getter, ViaUI)
 def exists(self):
     try:
@@ -87,7 +115,7 @@ class All(CFMENavigateStep):
 
 
 @navigator.register(GenericObjectInstance, 'Details')
-class Details(CFMENavigateStep):
+class DefinitionDetails(CFMENavigateStep):
     VIEW = GenericObjectInstanceDetailsView
 
     prerequisite = NavigateToAttribute('definition', 'Instances')
@@ -105,3 +133,13 @@ class EditTags(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
+
+
+@navigator.register(GenericObjectInstance, 'MyServiceDetails')
+class MyServiceDetails(CFMENavigateStep):
+    VIEW = MyServiceGenericObjectInstanceView
+
+    prerequisite = NavigateToAttribute('my_service', 'GenericObjectInstance')
+
+    def step(self):
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()

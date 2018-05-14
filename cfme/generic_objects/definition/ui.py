@@ -7,7 +7,7 @@ from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
 
 from . import GenericObjectDefinition, GenericObjectDefinitionCollection
-from .generic_object_views import (
+from .definition_views import (
     GenericObjectDefinitionDetailsView, GenericObjectDefinitionAllView,
     GenericObjectDefinitionEditView, GenericObjectDefinitionAddView
 )
@@ -44,7 +44,7 @@ def create(self, name, description, attributes=None, associations=None, methods=
         view.cancel.click()
     else:
         view.add.click()
-        view.flash.assert_no_error()
+    view.flash.assert_no_error()
 
     entity = self.instantiate(
         name=name, description=description, attributes=attributes, associations=associations,

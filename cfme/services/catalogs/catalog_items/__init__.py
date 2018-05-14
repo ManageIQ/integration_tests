@@ -254,7 +254,7 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
 
     def add_button_group(self):
         button_name = fauxfactory.gen_alpha()
-        view = navigate_to(self, 'Add')
+        view = navigate_to(self, 'AddButtonGroup')
         view.fill({'btn_group_text': 'group_text',
                    'btn_group_hvr_text': button_name,
                    'btn_image': self.button_icon_name})
@@ -546,8 +546,8 @@ class CatalogItemEditStep(CFMENavigateStep):
         self.prerequisite_view.configuration.item_select('Edit this Item')
 
 
-@navigator.register(BaseCatalogItem, 'Add')
-class Add(CFMENavigateStep):
+@navigator.register(BaseCatalogItem, 'AddButtonGroup')
+class AddButtonGroup(CFMENavigateStep):
     VIEW = AddButtonGroupView
     prerequisite = NavigateToSibling('Details')
 
@@ -555,8 +555,8 @@ class Add(CFMENavigateStep):
         self.prerequisite_view.configuration.item_select('Add a new Button Group')
 
 
-@navigator.register(BaseCatalogItem, 'Add')
-class Add(CFMENavigateStep):
+@navigator.register(BaseCatalogItem, 'AddButton')
+class AddButton(CFMENavigateStep):
     VIEW = AddButtonView
     prerequisite = NavigateToSibling('Details')
 

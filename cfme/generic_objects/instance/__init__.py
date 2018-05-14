@@ -27,6 +27,7 @@ class GenericObjectInstance(BaseEntity, Updateable, sentaku.modeling.ElementMixi
     attributes = attr.ib(default=None)  # e.g. {'address': 'Test Address'}
     associations = attr.ib(default=None)  # e.g. {'services': [myservice1, myservice2]}
     rest_response = attr.ib(default=None, init=False)
+    my_service = attr.ib(default=None)   # my_service object with instance assignment
 
 
 @attr.s

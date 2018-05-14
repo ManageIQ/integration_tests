@@ -40,7 +40,6 @@ class GenericObjectDefinition(BaseEntity, Updateable, sentaku.modeling.ElementMi
     rest_response = attr.ib(default=None, init=False)
 
 
-
 @attr.s
 class GenericObjectDefinitionCollection(BaseCollection, sentaku.modeling.ElementMixin):
 

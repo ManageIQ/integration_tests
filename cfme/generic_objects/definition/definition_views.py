@@ -83,7 +83,7 @@ class ParametersForm(View):
             if isinstance(parameters, dict):
                 for name, type_class in parameters.items():
                     self.add_parameter_row()
-                    type_result = self.type_class.fill(type_class)
+                    type_result = self.type_class.fill(type_class.capitalize())
                     result = self.name.fill(name)
                     return result and type_result
             elif isinstance(parameters, list):
@@ -158,7 +158,7 @@ class GenericObjectDefinitionDetailsView(GenericObjectDefinitionView):
         return (
             self.in_generic_object_definition and
             self.title.text == 'Generic Object Class {}'.format(
-                self.context['object'].filters['parent'].name)
+                self.context['object'].name)
         )
 
 
@@ -195,10 +195,14 @@ class GenericObjectAddButtonView(GenericObjectAddEditButtonView):
 
     @property
     def is_displayed(self):
-        return self.title.text == 'Add a new Custom Button' and self.in_generic_object_definition
+        return (
+            self.title.text == 'Add a new Custom Button' and
+            self.in_generic_object_definition and
+            self.button_type.is_displayed
+        )
 
 
-class GenericObjectAddButtonView(GenericObjectDefinitionView):
+class GenericObjectEditButtonView(GenericObjectAddEditButtonView):
 
     save = Button('Save')
     reset = Button('Reset')
@@ -207,7 +211,8 @@ class GenericObjectAddButtonView(GenericObjectDefinitionView):
     def is_displayed(self):
         return (
             self.title.text == "Edit Custom Button '{}'".format(self.context['object'].name) and
-            self.in_generic_object_definition
+            self.in_generic_object_definition and
+            self.button_type.is_displayed
         )
 
 
@@ -241,6 +246,7 @@ class GenericObjectButtonGroupAddView(GenericObjectDefinitionView):
     def is_displayed(self):
         return (
             self.title.text == 'GenericObjectButtonGroupAddView' and
+            self.name.is_displayed and
             self.in_generic_object_definition
         )
 

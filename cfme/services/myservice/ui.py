@@ -1,8 +1,6 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import Parameter, VersionPick, Version
-from widgetastic.widget import (
-    ParametrizedView, Table, Text, View, ParametrizedString, ParametrizedLocator
-)
+from widgetastic.widget import ParametrizedView, Table, Text, View
 from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Tab
 
 from cfme.base.login import BaseLoggedInPage
@@ -15,7 +13,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (Accordion, ManageIQTree, Calendar, SummaryTable,
                                   BaseNonInteractiveEntitiesView, ItemsToolBarViewSelector,
-                                  BaseEntitiesView, ParametrizedSummaryTable)
+                                  BaseEntitiesView)
 
 
 class MyServiceToolbar(View):
@@ -204,32 +202,7 @@ class AllGenericObjectInstanceView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return '(All Generic Objects)' in self.title.text
-
-
-class GenericObjectInstanceView(BaseLoggedInPage):
-    @View.nested
-    class toolbar(View):    # noqa
-        reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                           '5.9': 'Refresh this page'}))
-
-        @ParametrizedView.nested
-        class group(ParametrizedView):   # noqa
-            PARAMETERS = ("group_name",)
-            custom_button = Dropdown(text=ParametrizedString('{group_name}'))
-
-        @ParametrizedView.nested
-        class button(ParametrizedView):    # noqa
-            PARAMETERS = ("button_name",)
-            custom_button = Text(ParametrizedLocator('//button[contains(@id, "custom__custom") and'
-                                                     ' normalize-space()={button_name|quote}]'))
-
-    summary = ParametrizedSummaryTable()
-
-    @property
-    def is_displayed(self):
-        # no specific checks for this page
-        return False
+        return self.title.text == '{} (All Generic Objects)'.format(self.context['object'].name)
 
 
 @MiqImplementationContext.external_for(MyService.retire, ViaUI)
@@ -432,7 +405,7 @@ class MyServiceVMDetails(CFMENavigateStep):
         self.prerequisite_view.entities.get_entity(name=self.obj.vm_name).click()
 
 
-@navigator.register(MyService, 'AllGenericObjectInstance')
+@navigator.register(MyService, 'GenericObjectInstance')
 class AllGenericObjectInstance(CFMENavigateStep):
     VIEW = AllGenericObjectInstanceView
 
@@ -440,15 +413,3 @@ class AllGenericObjectInstance(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.details.generic_objects.click_at('Instances')
-
-
-@navigator.register(MyService, 'GenericObjectInstance')
-class GenericObjectInstance(CFMENavigateStep):
-    VIEW = GenericObjectInstanceView
-
-    prerequisite = NavigateToSibling('AllGenericObjectInstance')
-
-    def step(self, **kwargs):
-        if kwargs:
-            self.prerequisite_view.entities.get_entity(
-                name=kwargs.get('instance_name'), surf_pages=True).click()
