@@ -29,14 +29,15 @@ import os
 import pytest
 
 from artifactor import ArtifactorClient
+from cfme.fixtures.pytest_store import write_line, store
+from cfme.markers.polarion import extract_polarion_ids
+from cfme.utils.appliance import find_appliance
 from cfme.utils.blockers import BZ, Blocker
+from cfme.utils.blockers import DISABLE_BLOCKERS
 from cfme.utils.conf import env, credentials
 from cfme.utils.log import logger
 from cfme.utils.net import random_port, net_check
 from cfme.utils.wait import wait_for
-from cfme.fixtures.pytest_store import write_line, store
-from cfme.markers.polarion import extract_polarion_ids
-from cfme.utils.appliance import find_appliance
 
 UNDER_TEST = False  # set to true for artifactor using tests
 
@@ -207,7 +208,7 @@ def pytest_runtest_protocol(item):
     # object set up before the logger starts logging. As the logger fires a nested hook
     # to the filedumper, and we can't specify order inriggerlib.
     meta = item.get_marker('meta')
-    if meta and 'blockers' in meta.kwargs:
+    if meta and 'blockers' in meta.kwargs and not DISABLE_BLOCKERS:
         blocker_spec = meta.kwargs['blockers']
         blockers = []
         for blocker in blocker_spec:

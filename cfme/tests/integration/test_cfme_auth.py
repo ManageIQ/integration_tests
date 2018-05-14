@@ -63,6 +63,7 @@ def pytest_generate_tests(metafunc):
     argnames = ['auth_mode', 'prov_key', 'user_type']
     argvalues = []
     if 'auth_providers' not in auth_data:
+        pytest.skip()
         return
     for mode in test_param_maps.keys():
         for auth_type in test_param_maps.get(mode, {}):
