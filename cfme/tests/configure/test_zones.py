@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme.utils.appliance import current_appliance
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 
 
@@ -121,3 +122,51 @@ def test_zone_add_blank_description():
             name=fauxfactory.gen_alphanumeric(5),
             description=''
         )
+
+
+@pytest.mark.tier(3)
+@pytest.mark.sauce
+def test_add_zone_windows_domain_credentials(request):
+    """
+    Testing Windows Domain credentials add
+    """
+    zc = current_appliance.collections.zones.all()
+    values = {'username': 'userid',
+              'password': 'password',
+              'verify': 'password'}
+    zc[0].update(values)
+
+    def _cleanup():
+        remove_values = {'username': '',
+                         'password': '',
+                         'verify': ''}
+        zc[0].update(remove_values)
+
+    request.addfinalizer(_cleanup)
+    view = navigate_to(zc[0], 'Edit')
+    zc_username = view.username.read()
+    assert zc_username == values['username'], "Current username is {}".format(zc_username)
+
+
+@pytest.mark.tier(3)
+@pytest.mark.sauce
+def test_remove_zone_windows_domain_credentials():
+    """
+    Testing Windows Domain credentials removal
+    """
+    zc = current_appliance.collections.zones.all()
+    values = {'username': 'userid',
+              'password': 'password',
+              'verify': 'password'}
+    zc[0].update(values)
+    view = navigate_to(zc[0], 'Edit')
+    zc_username = view.username.read()
+    assert zc_username == values['username'], "Username wasn't updated".format(zc_username)
+    remove_values = {'username': '',
+                     'password': '',
+                     'verify': ''}
+    zc[0].update(remove_values)
+    view = navigate_to(zc[0], 'Edit')
+    removed_zc_username = view.username.read()
+    assert removed_zc_username == remove_values['username'], "Username wasn't removed".format(
+        zc_username)
