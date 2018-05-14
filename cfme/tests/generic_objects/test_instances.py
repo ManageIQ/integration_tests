@@ -84,16 +84,22 @@ def tags(request, appliance, categories):
 
 @pytest.fixture
 def generic_object_button_group(appliance, definition):
-    with appliance.context.use(ViaUI):
-        group_name = 'button_group_{}'.format(fauxfactory.gen_alphanumeric())
-        generic_object_button_group = definition.collections.generic_object_groups_buttons.create(
-            name=group_name,
-            description='Group_button_description',
-            image='fa-user'
-        )
-        view = appliance.browser.create_view(BaseLoggedInPage)
-        view.flash.assert_no_error()
-        return generic_object_button_group
+
+    def _generic_object_button_group(create_action=True):
+        if create_action:
+            with appliance.context.use(ViaUI):
+                group_name = 'button_group_{}'.format(fauxfactory.gen_alphanumeric())
+                generic_object_button_group = definition.collections.generic_object_groups_buttons\
+                    .create(
+                        name=group_name,
+                        description='Group_button_description',
+                        image='fa-user'
+                    )
+                view = appliance.browser.create_view(BaseLoggedInPage)
+                view.flash.assert_no_error()
+            return generic_object_button_group
+
+    return _generic_object_button_group
 
 
 @pytest.fixture
@@ -101,7 +107,9 @@ def generic_object_button(appliance, generic_object_button_group, definition):
 
     def _generic_object_button(button_group):
         with appliance.context.use(ViaUI):
-            button_parent = generic_object_button_group if button_group else definition
+            button_parent = (
+                generic_object_button_group(button_group) if button_group else definition
+            )
             button_name = 'button_{}'.format(fauxfactory.gen_alphanumeric())
             generic_object_button = button_parent.collections.generic_object_buttons.create(
                 name=button_name,
@@ -147,6 +155,10 @@ def test_generic_objects_crud(appliance, context, request):
         )
         request.addfinalizer(instance.delete)
     with appliance.context.use(context):
+        if context.name == 'UI':
+            # we need to refresh definition page to update instance count,
+            # as navigation to instance details happens via this page
+            appliance.browser.widgetastic.refresh()
         assert instance.exists
 
     with appliance.context.use(ViaREST):
@@ -165,10 +177,8 @@ def test_generic_objects_crud(appliance, context, request):
 
 @pytest.mark.parametrize('button_group', [True, False],
                          ids=['button_group_with_button', 'single_button'])
-@pytest.mark.parametrize('context', [ViaUI])
-def test_generic_objects_with_buttons_ui(appliance, request, definition, context, service,
-                                         button_group, generic_object_button_group,
-                                         generic_object_button):
+def test_generic_objects_with_buttons_ui(appliance, request, definition, service,
+                                         button_group, generic_object_button):
     """
         Tests buttons ui visibility assigned to generic object
 
@@ -177,6 +187,7 @@ def test_generic_objects_with_buttons_ui(appliance, request, definition, context
     """
     myservice = MyService(appliance, name=service.name)
     generic_button = generic_object_button(button_group)
+    generic_button_group = generic_button.parent.parent
 
     with appliance.context.use(ViaREST):
         instance = appliance.collections.generic_objects.create(
@@ -192,24 +203,23 @@ def test_generic_objects_with_buttons_ui(appliance, request, definition, context
         )
         assert_response(appliance)
         instance.my_service = myservice
-    with appliance.context.use(context):
+    with appliance.context.use(ViaUI):
         view = navigate_to(instance, 'MyServiceDetails')
         if button_group:
-            assert view.toolbar.group(generic_object_button_group.name).custom_button.has_item(
+            assert view.toolbar.group(generic_button_group.name).custom_button.has_item(
                 generic_button.name)
         else:
             assert view.toolbar.button(generic_button.name).custom_button.is_displayed
 
 
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'collection'])
-@pytest.mark.parametrize('context', [ViaUI])
-def test_generic_objects_tag_ui(appliance, context, generic_object, tag_place):
+def test_generic_objects_tag_ui(appliance, generic_object, tag_place):
     """Tests assigning and unassigning tags using UI.
 
         Metadata:
             test_flag: ui
         """
-    with appliance.context.use(context):
+    with appliance.context.use(ViaUI):
         assigned_tag = generic_object.add_tag(details=tag_place)
         # TODO uncomment when tags aria added to details
         # tag_available = instance.get_tags()
@@ -223,15 +233,14 @@ def test_generic_objects_tag_ui(appliance, context, generic_object, tag_place):
         #            for tag in tag_available), 'Assigned tag was not removed from the details page'
 
 
-@pytest.mark.parametrize('context', [ViaREST])
-def test_generic_objects_tag(appliance, context, generic_object, tags):
+def test_generic_objects_tag_rest(appliance, generic_object, tags):
     """Tests assigning and unassigning tags using REST.
 
     Metadata:
         test_flag: rest
     """
     tag = tags[0]
-    with appliance.context.use(context):
+    with appliance.context.use(ViaREST):
         generic_object.add_tag(tag)
         tag_available = generic_object.get_tags()
         assert tag.id in [t.id for t in tag_available], 'Assigned tag was not found'
