@@ -52,6 +52,17 @@ def test_physical_server_details_dropdowns(physical_server):
     assert "Timelines" in monitoring_items
 
 
+def test_network_devices(physical_server):
+    """Navigate to the Network Devices page and verify that the page is displayed"""
+
+    if physical_server.num_network_devices() != "0":
+        network_device_view = navigate_to(physical_server, 'NetworkDevices')
+        assert network_device_view.is_displayed
+    else:
+        network_device_view = navigate_to(physical_server, 'NetworkDevices')
+        assert not network_device_view.is_displayed
+
+
 def test_physical_server_details_stats(physical_server):
     """Navigate to the physical server details page and verify that the stats match"""
     physical_server.validate_stats(ui=True)

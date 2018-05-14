@@ -12,7 +12,8 @@ from cfme.common.physical_server_views import (
     PhysicalServersView,
     PhysicalServerProvisionView,
     PhysicalServerTimelinesView,
-    PhysicalServerEditTagsView
+    PhysicalServerEditTagsView,
+    PhysicalServerNetworkDevicesView
 )
 from cfme.exceptions import (
     ItemNotFound,
@@ -414,3 +415,12 @@ class Timelines(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.monitoring.item_select("Timelines")
+
+
+@navigator.register(PhysicalServer)
+class NetworkDevices(CFMENavigateStep):
+    VIEW = PhysicalServerNetworkDevicesView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self):
+        self.prerequisite_view.entities.properties.click_at("Network Devices")

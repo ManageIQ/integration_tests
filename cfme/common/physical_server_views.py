@@ -221,3 +221,11 @@ class PhysicalServersView(ComputePhysicalInfrastructureServersView):
     def is_displayed(self):
         return (self.in_compute_physical_infrastructure_servers and
                 self.title.text == "Physical Servers")
+
+
+class PhysicalServerNetworkDevicesView(ComputePhysicalInfrastructureServersView):
+    """Represents the Network Devices page"""
+
+    @property
+    def is_displayed(self):
+        return "Network Devices" in self.title.text and self.logged_in_as_current_user
