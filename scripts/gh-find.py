@@ -3,8 +3,9 @@
 import argparse
 import subprocess
 import sys
-import re
 from collections import defaultdict
+
+import re
 
 
 def main():
@@ -15,7 +16,7 @@ def main():
     parser.add_argument('topic', nargs='?', default='downstream-stable',
         help='topic branch')
     args = parser.parse_args()
-    print(args.topic, args.master)
+    print("{}\t{}".format(args.topic, args.master))
     cmd_params = ['git', 'cherry', args.topic, args.master, '-v']
     proc = subprocess.Popen(cmd_params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     proc.wait()
