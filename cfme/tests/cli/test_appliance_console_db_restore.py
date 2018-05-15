@@ -40,7 +40,7 @@ def provision_vm(request, provider):
     return vm
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def get_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm):
     """Returns two database-owning appliances, configures first appliance with providers and
     takes a backup prior to running tests.
@@ -59,7 +59,7 @@ def get_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm):
     return temp_appliances_unconfig_funcscope_rhevm
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def get_replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm):
     """Returns two database-owning appliances, configures first appliance with provider,
     enables embedded ansible, takes a pg_backup and copys it to second appliance
@@ -86,7 +86,7 @@ def get_replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_
     return temp_appliances_unconfig_funcscope_rhevm
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def get_appliance_with_ansible(temp_appliance_preconfig_funcscope):
     """Returns database-owning appliance, enables embedded ansible,
     takes a pg_backup prior to running tests.
@@ -100,7 +100,7 @@ def get_appliance_with_ansible(temp_appliance_preconfig_funcscope):
     return temp_appliance_preconfig_funcscope
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def get_ext_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm, app_creds_modscope):
     """Returns two database-owning appliances, configures first appliance with providers and
     takes a backup prior to running tests.
@@ -122,7 +122,7 @@ def get_ext_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm, 
     return temp_appliances_unconfig_funcscope_rhevm
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
     """Configure HA environment
 
@@ -225,7 +225,8 @@ def setup_nfs_samba_backup(appl1):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream)
+@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
+                         reason='Test only for downstream version of product')
 def test_appliance_console_restore_db_local(request, get_appliances_with_providers):
     """ Test single appliance backup and restore, configures appliance with providers,
     backs up database, restores it to fresh appliance and checks for matching providers.
@@ -253,7 +254,8 @@ def test_appliance_console_restore_db_local(request, get_appliances_with_provide
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream or appliance.version < '5.9')
+@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream or appliance.version < '5.9',
+                         reason='Test not supported below 5.9')
 def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansible):
     appl1 = get_appliance_with_ansible
     # Restore DB on the second appliance
@@ -273,12 +275,14 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     wait_for(
         lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
         timeout=60,
-        fail_func=refresh
+        fail_func=refresh,
+        message="Check if playbook repo added"
     )
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream or appliance.version < '5.9')
+@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream or appliance.version < '5.9',
+                         reason='Test not supported below 5.9')
 def test_appliance_console_restore_pg_basebackup_replicated(
         request, get_replicated_appliances_with_providers):
     appl1, appl2 = get_replicated_appliances_with_providers
@@ -314,7 +318,8 @@ def test_appliance_console_restore_pg_basebackup_replicated(
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream)
+@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
+                         reason='Test only for downstream version of product')
 def test_appliance_console_restore_db_external(request, get_ext_appliances_with_providers):
     """Configure ext environment with providers, run backup/restore on configuration,
     Confirm that providers still exist after restore and provisioning works.
@@ -350,7 +355,8 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream)
+@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
+                         reason='Test only for downstream version of product')
 def test_appliance_console_restore_db_replicated(
         request, get_replicated_appliances_with_providers):
     appl1, appl2 = get_replicated_appliances_with_providers
@@ -390,7 +396,8 @@ def test_appliance_console_restore_db_replicated(
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream)
+@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
+                         reason='Test only for downstream version of product')
 def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_providers):
     """Configure HA environment with providers, run backup/restore on configuration,
     Confirm that ha failover continues to work correctly and providers still exist.
@@ -435,7 +442,8 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream)
+@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
+                         reason='Test only for downstream version of product')
 def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers):
     """ Test single appliance backup and restore through nfs, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
@@ -466,7 +474,8 @@ def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream)
+@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
+                         reason='Test only for downstream version of product')
 def test_appliance_console_restore_db_samba(request, get_appliances_with_providers):
     """ Test single appliance backup and restore through smb, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
