@@ -213,13 +213,13 @@ def safe_string(o):
         o: Anything.
     """
     if not isinstance(o, six.string_types):
-        if hasattr(o, "__unicode__"):
-            o = unicode(o)
+        if hasattr(o, "__unicode__") and six.PY2:
+            o = six.text_type(o)
         else:
             o = str(o)
-    if isinstance(o, str):
+    if isinstance(o, str) and six.PY2:
         o = o.decode('utf-8', "ignore")
-    if isinstance(o, unicode):
+    if not isinstance(o, str):
         o = o.encode("ascii", "xmlcharrefreplace")
     return o
 
