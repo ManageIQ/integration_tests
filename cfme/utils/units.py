@@ -2,7 +2,9 @@
 import math
 import re
 from collections import namedtuple
+import functools
 import six
+
 
 # TODO: Split the 1000 and 1024 factor out. Now it is not an issue as it is used FOR COMPARISON ONLY
 FACTOR = 1024
@@ -25,6 +27,7 @@ REGEXP = re.compile(
     r'^\s*(\d+(?:\.\d+)?)\s*({})?({})\s*$'.format('|'.join(PREFIXES), '|'.join(UNITS)))
 
 
+@functools.total_ordering
 class Unit(object):
     """This class serves for simple comparison of numbers that have units.
 
@@ -72,7 +75,7 @@ class Unit(object):
     def _as_same_unit(self, int_or_float):
         return type(self)(int_or_float, PREFIXES[0], self.unit_type)
 
-    def __cmp__(self, other):
+    def _cast_other_to_same(self, other):
         if isinstance(other, six.string_types):
             other = self.parse(other)
         elif isinstance(other, (int, float)):
@@ -82,8 +85,15 @@ class Unit(object):
         # other is instance of this class too now
         if self.unit_type != other.unit_type:
             raise TypeError('Incomparable units {} and {}'.format(self.unit_type, other.unit_type))
+        return other
 
-        return cmp(self.absolute, other.absolute)
+    def __eq__(self, other):
+        other = self._cast_other_to_same(other)
+        return self.absolute == other.absolute
+
+    def __lt__(self, other):
+        other = self._cast_other_to_same(other)
+        return self.absolute < other.absolute
 
     def __float__(self):
         return self.absolute
@@ -112,4 +122,4 @@ CHARGEBACK_HEADER_NAMES = {
 
 def parse_number(str_):
     """parsing only the numbers in the string"""
-    return float(''.join(re.findall('[\d\.]+', str_)) or 0)
+    return float(''.join(re.findall(r'[\d\.]+', str_)) or 0)
