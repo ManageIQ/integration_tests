@@ -125,7 +125,7 @@ requests==2.18.4
 requests-ntlm==1.1.0
 requests-oauthlib==0.8.0
 requests-toolbelt==0.8.0
-riggerlib==3.1.2
+riggerlib==3.1.5
 scp==0.11.0
 selenium==2.53.6
 selenium-smart-locator==0.2.0
