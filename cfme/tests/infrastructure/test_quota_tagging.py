@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-from widgetastic.utils import partial_match
 from riggerlib import recursive_update
+from widgetastic.utils import partial_match
 
 from cfme.configure.configuration.region_settings import Tag, Category
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
