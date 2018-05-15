@@ -13,7 +13,7 @@ from cfme.utils.mgmt_system import exceptions
 try:
     from ovirtsdk.infrastructure.errors import RequestError as RHEVRequestError
     DEFAULT_SKIP = (OSOverLimit, RHEVRequestError, exceptions.VMInstanceNotCloned, SSLError)
-except ImportError:
+except (ImportError, SyntaxError):
     DEFAULT_SKIP = (OSOverLimit, exceptions.VMInstanceNotCloned, SSLError)
 
 
