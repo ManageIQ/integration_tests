@@ -284,6 +284,7 @@ stevedore==1.28.0
 subprocess32==3.2.7
 suds==0.4
 tabulate==0.7.7
+taretto==0.1.1
 terminado==0.8.1
 testpath==0.3.1
 tornado==5.0.2

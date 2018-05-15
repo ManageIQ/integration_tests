@@ -30,7 +30,6 @@ kwargify
 layered-yaml-attrdict-config
 mock
 multimethods.py
-navmazing
 paramiko
 parsedatetime
 pdfminer.six
@@ -59,15 +58,13 @@ shyaml
 slumber
 sqlalchemy
 tabulate==0.7.7
+taretto
 tornado
 tzlocal
 wait_for
-widgetastic.core>=0.20.0
-widgetastic.patternfly>=0.0.29
 yaycl
 yaycl-crypt
 
-sentaku
 attrs
 click
 # docs requirements

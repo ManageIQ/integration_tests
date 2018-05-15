@@ -275,6 +275,7 @@ SQLAlchemy==1.2.7
 stevedore==1.28.0
 suds-jurko==0.6
 tabulate==0.7.7
+taretto==0.1.1
 terminado==0.8.1
 testpath==0.3.1
 tornado==5.0.2
