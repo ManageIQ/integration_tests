@@ -111,7 +111,7 @@ class ApplianceConsole(object):
             channel = self.appliance.ssh_client.invoke_shell()
         self.commands = commands
         for command in commands:
-            if isinstance(command, basestring):
+            if isinstance(command, six.string_types):
                 command_string, timeout = command, timeout
             else:
                 command_string, timeout = command

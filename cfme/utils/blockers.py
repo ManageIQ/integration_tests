@@ -100,7 +100,7 @@ class GH(Blocker):
             if self.DEFAULT_REPOSITORY is None:
                 raise ValueError("You must specify github/default_repo in env.yaml!")
             self.issue = description
-        elif isinstance(description, basestring):
+        elif isinstance(description, six.string_types):
             try:
                 owner, repo, issue_num = re.match(r"^([^/]+)/([^/:]+):([0-9]+)$",
                                                   str(description).strip()).groups()

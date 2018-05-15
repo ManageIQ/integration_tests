@@ -8,6 +8,7 @@ from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger
 from cfme.utils.version import (
     LATEST, Version, current_version, appliance_build_datetime, appliance_is_downstream)
+import six
 
 NONE_FIELDS = {"---", "undefined", "unspecified"}
 
@@ -234,7 +235,7 @@ class BugWrapper(object):
         """
         value = getattr(self._bug, attr)
         if attr in self.loose:
-            if isinstance(value, Sequence) and not isinstance(value, basestring):
+            if isinstance(value, Sequence) and not isinstance(value, six.string_types):
                 value = value[0]
             value = value.strip()
             if not value:
@@ -246,7 +247,7 @@ class BugWrapper(object):
             if not value:
                 return None
             return Version(value)
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             if len(value.strip()) == 0:
                 return None
             else:

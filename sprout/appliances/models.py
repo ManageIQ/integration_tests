@@ -2,6 +2,7 @@
 import base64
 import re
 import yaml
+import six
 
 try:
     import six.moves.cPickle as pickle
@@ -1246,12 +1247,12 @@ class AppliancePool(MetadataMixin):
                                            template_type=template_type, **user_filter)
             if dates:
                 date = dates[0]
-        if isinstance(group, basestring):
+        if isinstance(group, six.string_types):
             group = Group.objects.get(id=group)
-        if isinstance(provider_type, basestring):
+        if isinstance(provider_type, six.string_types):
             if provider_type not in Provider.get_available_provider_types(owner):
                 raise Exception('There are no providers for type {!r}'.format(provider_type))
-        if isinstance(provider, basestring):
+        if isinstance(provider, six.string_types):
             provider = Provider.objects.get(id=provider, working=True, disabled=False)
             if provider_type is not None and provider.provider_type != provider_type:
                 raise Exception(
