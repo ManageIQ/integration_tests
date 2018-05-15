@@ -10,6 +10,7 @@ from sphinx.ext.napoleon import docstring
 from sphinx.ext.napoleon.docstring import NumpyDocstring
 import sphinx
 import yaml
+import six
 
 from cfme.utils.log import get_rel_path, logger
 
@@ -28,12 +29,14 @@ def pytest_collection_modifyitems(items):
         item_class = item.location[0]
         item_class = item_class[:item_class.rfind('.')].replace('/', '.')
         item_name = item.location[2]
-        item_param = re.findall('\.*(\[.*\])', item_name)
+        item_param = re.findall(r'\.*(\[.*\])', item_name)
         if item_param:
             item_name = item_name.replace(item_param[0], '')
         node_name = '{}.{}'.format(item_class, item_name)
         output[node_name] = {}
-        output[node_name]['docstring'] = base64.b64encode(getattr(item.function, '__doc__') or '')
+        docstring = getattr(item.function, '__doc__') or ''
+        output[node_name]['docstring'] = base64.b64encode(
+            docstring if six.PY2 else docstring.encode('utf-8'))
         output[node_name]['name'] = item_name
 
         # This is necessary to convert AttrDict in metadata, or even metadict(previously)
