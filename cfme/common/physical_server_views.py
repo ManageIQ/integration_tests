@@ -229,3 +229,11 @@ class PhysicalServerNetworkDevicesView(ComputePhysicalInfrastructureServersView)
     @property
     def is_displayed(self):
         return "Network Devices" in self.title.text and self.logged_in_as_current_user
+
+
+class PhysicalServerStorageDevicesView(ComputePhysicalInfrastructureServersView):
+    """Represents the Storage Devices page"""
+
+    @property
+    def is_displayed(self):
+        return "Storage Devices" in self.title.text and self.logged_in_as_current_user

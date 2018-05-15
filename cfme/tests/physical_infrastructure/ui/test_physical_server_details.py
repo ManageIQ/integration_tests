@@ -63,6 +63,17 @@ def test_network_devices(physical_server):
         assert not network_device_view.is_displayed
 
 
+def test_storage_devices(physical_server):
+    """Navigate to the Storage Devices page and verify that the page is displayed"""
+
+    if physical_server.num_storage_devices() != "0":
+        storage_device_view = navigate_to(physical_server, 'StorageDevices')
+        assert storage_device_view.is_displayed
+    else:
+        storage_device_view = navigate_to(physical_server, 'StorageDevices')
+        assert not storage_device_view.is_displayed
+
+
 def test_physical_server_details_stats(physical_server):
     """Navigate to the physical server details page and verify that the stats match"""
     physical_server.validate_stats(ui=True)
