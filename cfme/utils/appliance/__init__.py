@@ -58,7 +58,7 @@ def _current_miqqe_version():
     Returns: Version as int
     """
     with patches_path.join('miq_application.js.diff').open("r") as f:
-        match = re.search("MiqQE_version = (\d+);", f.read(), flags=0)
+        match = re.search(r"MiqQE_version = (\d+);", f.read(), flags=0)
     version = int(match.group(1))
     return version
 

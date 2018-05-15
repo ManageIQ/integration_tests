@@ -105,7 +105,7 @@ class ApplianceDB(AppliancePlugin):
         result = ssh.run_rake_command("db:migrate", timeout=300)
         assert result.success, "Failed to migrate new database: {}".format(result.output)
         result = ssh.run_rake_command(
-            'db:migrate:status 2>/dev/null | grep "^\s*down"', timeout=30)
+            r'db:migrate:status 2>/dev/null | grep "^\s*down"', timeout=30)
         assert result.failed, ("Migration failed; migrations in 'down' state found: {}"
                                .format(result.output))
         # fetch GUID and REGION from the DB and use it to replace data in /var/www/miq/vmdb/GUID
