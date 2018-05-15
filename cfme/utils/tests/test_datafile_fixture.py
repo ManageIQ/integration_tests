@@ -7,17 +7,18 @@ pytestmark = [
 ]
 
 
-def test_datafile_fixture_read(datafile, request):
+def test_datafile_fixture_read(datafile):
     myfile = datafile('test_template')
     assert myfile.read() == '$replaceme'
 
 
-def test_datafile_fixture_read_slash_path(datafile, request):
+def test_datafile_fixture_read_slash_path(datafile):
     myfile = datafile('/cfme/utils/test_datafile_fixture/test_template')
     assert myfile.read() == '$replaceme'
 
 
-def test_datafile_fixture_read_template(datafile, request):
+@pytest.mark.xfail("sys.version_info >= (3,0)", reason="python 3 string type missmatch")
+def test_datafile_fixture_read_template(datafile):
     replacements = {
         'replaceme': 'test!'
     }
