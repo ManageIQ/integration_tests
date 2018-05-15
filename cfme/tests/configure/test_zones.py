@@ -161,12 +161,11 @@ def test_remove_zone_windows_domain_credentials():
     zc[0].update(values)
     view = navigate_to(zc[0], 'Edit')
     zc_username = view.username.read()
-    assert zc_username == values['username'], "Username wasn't updated".format(zc_username)
+    assert zc_username == values['username'], "Username wasn't updated"
     remove_values = {'username': '',
                      'password': '',
                      'verify': ''}
     zc[0].update(remove_values)
     view = navigate_to(zc[0], 'Edit')
     removed_zc_username = view.username.read()
-    assert removed_zc_username == remove_values['username'], "Username wasn't removed".format(
-        zc_username)
+    assert removed_zc_username == remove_values['username'], "Username wasn't removed"
