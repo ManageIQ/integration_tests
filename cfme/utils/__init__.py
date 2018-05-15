@@ -221,6 +221,8 @@ def safe_string(o):
         o = o.decode('utf-8', "ignore")
     if not isinstance(o, str):
         o = o.encode("ascii", "xmlcharrefreplace")
+    elif not six.PY2:
+        o = o.encode("ascii", "xmlcharrefreplace").decode('ascii')
     return o
 
 
