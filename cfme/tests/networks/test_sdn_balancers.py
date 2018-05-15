@@ -45,3 +45,19 @@ def test_sdn_balancers_detail(provider, network_prov_with_load_balancers):
         for balancer in prov.balancers.all():
             check = balancer.network_provider
             assert check is not None
+
+
+@pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
+def test_sdn_balancers_tagvis(check_item_visibility, visibility):
+    """ Tests network provider and its items honors tag visibility
+    Prerequisites:
+        Catalog, tag, role, group and restricted user should be created
+
+    Steps:
+        1. As admin add tag
+        2. Login as restricted user, item is visible for user
+        3. As admin remove tag
+        4. Login as restricted user, iten is not visible for user
+    """
+    balancers_for_provider = network_prov_with_load_balancers[0].balancers.all()
+    check_item_visibility(balancers_for_provider[0], visibility)

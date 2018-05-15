@@ -8,7 +8,18 @@ from cfme.networks.views import (CloudNetworkView, SubnetView, NetworkRouterView
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
-    pytest.mark.usefixtures('setup_provider')
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.provider([OpenStackProvider], selector=ONE_PER_CATEGORY, scope='module')
+]
+
+network_collections = [
+    'network_providers',
+    'cloud_networks',
+    'network_subnets',
+    'network_ports',
+    'network_security_groups',
+    'network_routers',
+    'network_floating_ips'
 ]
 
 network_test_items = [
@@ -42,7 +53,6 @@ def child_visibility(appliance, network_provider, relationship, view):
 
 @pytest.mark.parametrize("relationship,view", network_test_items,
                          ids=[rel[0] for rel in network_test_items])
-@pytest.mark.provider([OpenStackProvider], selector=ONE_PER_CATEGORY)
 def test_tagvis_network_provider_children(provider, appliance, request, relationship, view,
                                           tag, user_restricted):
     prov_view = navigate_to(provider, 'Details')
@@ -59,3 +69,32 @@ def test_tagvis_network_provider_children(provider, appliance, request, relation
     with user_restricted:
         actual_visibility = child_visibility(appliance, network_provider, relationship, view)
         assert not actual_visibility
+
+
+@pytest.fixture(params=network_collections, scope='module')
+def test_entity(request, appliance):
+    collection_name = request.param
+    item_collection = getattr(appliance.collections, collection_name)
+    items = item_collection.all()
+    if items:
+        return items[0]
+    else:
+        pytest.skip("No content found for test")
+
+
+@pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
+def test_network_tagvis(check_item_visibility, test_entity, visibility):
+    """ Tests network provider and its items honors tag visibility
+    Prerequisites:
+        Catalog, tag, role, group and restricted user should be created
+
+    Steps:
+        1. As admin add tag
+        2. Login as restricted user, item is visible for user
+        3. As admin remove tag
+        4. Login as restricted user, iten is not visible for user
+    """
+    check_item_visibility(test_entity, visibility)
+
+
+
