@@ -56,7 +56,8 @@ def new_tenant(appliance):
                                description='tenant_des{}'.format(fauxfactory.gen_alphanumeric()),
                                parent=collection.get_root_tenant())
     yield tenant
-    tenant.delete()
+    if tenant.exists:
+        tenant.delete()
 
 
 @pytest.fixture(scope='module')
@@ -67,7 +68,8 @@ def new_child(appliance, new_tenant):
                                          fauxfactory.gen_alphanumeric()),
                                      parent=new_tenant)
     yield child_tenant
-    child_tenant.delete()
+    if child_tenant.exists:
+        child_tenant.delete()
 
 
 @pytest.fixture(scope='module')
@@ -77,7 +79,8 @@ def new_group(appliance, new_child, new_tenant):
                               role='EvmRole-super_administrator',
                               tenant='My Company/{}/{}'.format(new_tenant.name, new_child.name))
     yield group
-    group.delete()
+    if group.exists:
+        group.delete()
 
 
 @pytest.fixture(scope='module')
@@ -91,7 +94,8 @@ def new_user(appliance, new_group, new_credential):
         cost_center='Workload',
         value_assign='Database')
     yield user
-    user.delete()
+    if user.exists:
+        user.delete()
 
 
 @pytest.mark.rhv2
