@@ -11,6 +11,7 @@ from sphinx.ext.napoleon.docstring import NumpyDocstring
 import sphinx
 import yaml
 import six
+import pytest
 
 from cfme.utils.log import get_rel_path, logger
 
@@ -55,19 +56,13 @@ def pytest_collection_modifyitems(items):
 
 def pytest_pycollect_makeitem(collector, name, obj):
     """pytest hook that adds docstring metadata (if found) to a test's meta mark"""
-    if not isinstance(obj, FunctionType) and not hasattr(obj, 'meta'):
-        # This relies on the meta mark having already been applied to
-        # all test functions before this hook is called
+    if not isinstance(obj, FunctionType):
         return
 
     # __doc__ can be empty or nonexistent, make sure it's an empty string in that case
     metadata = get_meta(obj)
-
-    if not hasattr(obj.meta, 'kwargs'):
-        obj.meta.kwargs = dict()
-    obj.meta.kwargs.update({
-        'from_docs': metadata
-    })
+    # this is just bad - apply the marks better once we go 
+    pytest.mark.meta(from_docs=metadata)(obj)
     if metadata:
         test_path = get_rel_path(collector.fspath)
         logger.debug('Parsed docstring metadata on {} in {}'.format(name, test_path))
