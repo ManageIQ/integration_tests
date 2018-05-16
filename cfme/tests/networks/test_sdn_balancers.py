@@ -47,8 +47,10 @@ def test_sdn_balancers_detail(provider, network_prov_with_load_balancers):
             assert check is not None
 
 
+# only one provider is needed for that test, used Azure as it has balancers
+@pytest.mark.provider([AzureProvider], scope='module', override=True)
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
-def test_sdn_balancers_tagvis(check_item_visibility, visibility):
+def test_sdn_balancers_tagvis(check_item_visibility, visibility, network_prov_with_load_balancers):
     """ Tests network provider and its items honors tag visibility
     Prerequisites:
         Catalog, tag, role, group and restricted user should be created

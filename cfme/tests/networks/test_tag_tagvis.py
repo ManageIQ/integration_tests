@@ -95,6 +95,3 @@ def test_network_tagvis(check_item_visibility, test_entity, visibility):
         4. Login as restricted user, iten is not visible for user
     """
     check_item_visibility(test_entity, visibility)
-
-
-
