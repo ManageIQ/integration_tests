@@ -45,26 +45,29 @@ class TasksView(BaseLoggedInPage):
         # It's the lowest level div with an id that captures the status checkboxes
         status = CheckboxSelect(search_root='tasks_options_div')
         state = BootstrapSelect(id='state_choice')
-        table = Table('//div[@id="gtl_div"]//table')
 
         @View.nested
         class mytasks(Tab):  # noqa
             TAB_NAME = VersionPick({Version.lowest(): 'My VM and Container Analysis Tasks',
                                     '5.9': 'My Tasks'})
+            table = Table('//div[@id="gtl_div"]//table')
 
         @View.nested
         class myothertasks(Tab):  # noqa
             TAB_NAME = VersionPick({'5.9': 'My Tasks',
                                     Version.lowest(): 'My Other UI Tasks'})
+            table = Table('//div[@id="gtl_div"]//table')
 
         @View.nested
         class alltasks(Tab):  # noqa
             TAB_NAME = VersionPick({'5.9': 'All Tasks',
                                     Version.lowest(): "All VM and Container Analysis Tasks"})
+            table = Table('//div[@id="gtl_div"]//table')
 
         @View.nested
         class allothertasks(Tab):  # noqa
             TAB_NAME = "All Other Tasks"
+            table = Table('//div[@id="gtl_div"]//table')
 
     @property
     def is_displayed(self):
@@ -92,12 +95,12 @@ class Task(BaseEntity):
 
     name = attr.ib()
     user = attr.ib(default='admin')
-    server = attr.ib(default='EVM')    # >= 5.9 only
-    tab = attr.ib(default='MyTasks')
+    tab = attr.ib(default='AllTasks')
 
     def _is_row_present(self, row_name):
         view = navigate_to(self.parent, self.tab)
-        for row in view.tabs.table.rows():
+        tab_view = getattr(view.tabs, self.tab.lower())
+        for row in tab_view.table.rows():
             if row_name in row.task_name.text:
                 return True
         return False
@@ -105,17 +108,16 @@ class Task(BaseEntity):
     @property
     def _row(self):
         view = navigate_to(self.parent, self.tab)
+        tab_view = getattr(view.tabs, self.tab.lower())
         wait_for(
-            lambda: self._is_row_present(self.name), delay=5, timeout='2m',
+            lambda: self._is_row_present(self.name), delay=5, timeout='15m',
             fail_func=view.reload.click)
-        row = view.tabs.table.row(task_name=self.name)
+        row = tab_view.table.row(task_name=self.name)
         return row
 
     @property
     def status(self):
         # status column doen't have text id
-        if hasattr(self, '_status'):
-            return self._status
         col = self._row[1]
         if col.browser.is_displayed('i[@class="pficon pficon-ok"]', parent=col):
             return self.OK
@@ -126,25 +128,25 @@ class Task(BaseEntity):
 
     @property
     def state(self):
-        return getattr(self, "_state", self._row.state.text)
+        return self._row.state.text
 
     @property
     def updated(self):
-        return getattr(self, "_updated", self._row.updated.text)
+        return self._row.updated.text
 
     @property
     def started(self):
-        return getattr(self, "_started", self._row.started.text)
+        return self._row.started.text
 
     @property
     def queued(self):
         if self.appliance.version >= '5.9':
-            return getattr(self, "_queued", self._row.queued.text)
+            return self._row.queued.text
         return None
 
     @property
     def message(self):
-        return getattr(self, "_message", self._row.message.text)
+        return self._row.message.text
 
     @property
     def exists(self):
@@ -164,17 +166,10 @@ class Task(BaseEntity):
                 raise Exception("Task {} error: {}".format(self.name, message))
 
         if self.state.lower() == 'finished' and self.status == self.OK:
-            self._status = self.status
-            self._state = self.state
-            self._updated = self.updated
-            self._started = self.started
-            if self.appliance.version >= '5.9':
-                self._queued = self.queued
-            self._message = self.message
             return True
         return False
 
-    def wait_for_finished(self, delay=5, timeout='10m'):
+    def wait_for_finished(self, delay=5, timeout='15m'):
         view = navigate_to(self.parent, self.tab)
         wait_for(
             lambda: self.is_successfully_finished, delay=delay, timeout=timeout,
@@ -185,16 +180,21 @@ class Task(BaseEntity):
 class TasksCollection(BaseCollection):
     """Collection object for :py:class:`cfme.configure.tasks.Task`."""
     ENTITY = Task
-    tab = attr.ib(default='MyTasks')
 
-    def set_filter(self, values, cancel=False):
+    DEFAULT_TAB = 'AllTasks'
+
+    @property
+    def tab(self):
+        return self.filters.get('tab') or self.DEFAULT_TAB
+
+    def set_task_filter(self, values, cancel=False):
         view = navigate_to(self, self.tab)
         view.fill(values)
         if cancel:
             view.reset.click()
         view.apply.click()
 
-    def set_default_filter(self):
+    def set_default_task_filter(self):
         view = navigate_to(self, self.tab)
         view.default.click()
 
@@ -205,13 +205,15 @@ class TasksCollection(BaseCollection):
 
     def all(self):
         view = navigate_to(self, self.tab)
+        tab_view = getattr(view.tabs, self.tab.lower())
         tasks = [self.instantiate(name=row.name.text, tab=self.tab) for row in
-                 view.tabs.table.rows()]
+                 tab_view.table.rows()]
         return tasks
 
     def delete(self, *tasks):
         view = navigate_to(self, self.tab)
-        for row in view.tabs.table.rows():
+        tab_view = getattr(view.tabs, self.tab.lower())
+        for row in tab_view.table.rows():
             if row.name in tasks:
                 row.check()
         view.delete.item_select('Delete', handle_alert=True)
@@ -223,16 +225,18 @@ class TasksCollection(BaseCollection):
 
     def is_finished(self, *tasks):
         view = navigate_to(self, self.tab)
-        for row in view.tabs.table.rows:
+        tab_view = getattr(view.tabs, self.tab.lower())
+        for row in tab_view.table.rows:
             if row.name in tasks and row.state.lower() != "finished":
                 return False
         return True
 
     def is_successfully_finished(self, silent_failure=False, *tasks):
         view = navigate_to(self, self.tab)
+        tab_view = getattr(view.tabs, self.tab.lower())
         rows = []
         for task in tasks:
-            rows.append(view.tabs.table.rows(task_name=task, state='finished'))
+            rows.append(tab_view.table.rows(task_name=task, state='finished'))
         for row in rows:
             message = row.message.text.lower()
             if row[1].browser.is_displayed('i[@class="pficon pficon-error-circle-o"]',

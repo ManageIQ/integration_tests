@@ -81,8 +81,7 @@ def datastores_hosts_setup(provider, datastore, request, appliance):
 def clear_all_tasks(appliance):
     destination = 'AllTasks' if appliance.version >= '5.9' else 'AllOtherTasks'
     # clear table
-    col = appliance.collections.tasks
-    col.tab = destination
+    col = appliance.collections.tasks.filter({'tab': destination})
     col.delete_all()
 
 

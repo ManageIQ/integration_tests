@@ -436,14 +436,10 @@ def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_profil
 
     logger.info("Expecting to have %s users, %s groups, %s packages and %s services", e_users,
                 e_groups, e_packages, e_services)
-    view = appliance.browser.create_view(TasksView)
-    wait_for(
-        is_vm_analysis_finished,
-        message="Waiting for SSA runs for {} vm".format(ssa_profiled_vm.name),
-        func_args=[ssa_profiled_vm.name],
-        delay=5, timeout="15m",
-        fail_func=view.reload.click
-    )
+    ssa_profiled_vm.smartstate_scan(wait_for_task_result=True)
+    task = appliance.collections.tasks.instantiate(
+        name='Scan from Vm {}'.format(ssa_profiled_vm.name), tab='AllTasks')
+    task.wait_for_finished()
     # Check release and quadicon
     quadicon_os_icon = ssa_profiled_vm.find_quadicon().data['os']
     view = navigate_to(ssa_profiled_vm, 'Details')

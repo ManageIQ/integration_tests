@@ -47,8 +47,7 @@ NUM_SELECTED_IMAGES = 1
 
 @pytest.fixture(scope='function')
 def delete_all_container_tasks(appliance):
-    col = appliance.collections.tasks
-    col.tab = 'AllTasks'
+    col = appliance.collections.tasks.filter({'tab': 'AllTasks'})
     col.delete_all()
 
 

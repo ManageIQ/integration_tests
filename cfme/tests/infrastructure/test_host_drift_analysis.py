@@ -72,8 +72,7 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
     drift_num_orig = int(view.entities.summary('Relationships').get_text_of('Drift History'))
 
     # clear table
-    col = appliance.collections.tasks
-    col.tab = destination
+    col = appliance.collections.tasks.filter({'tab': destination})
     col.delete_all()
 
     # initiate 1st analysis

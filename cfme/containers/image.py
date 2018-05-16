@@ -221,8 +221,7 @@ class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssi
 
         if wait_for_finish:
             try:
-                col = self.appliance.collections.tasks
-                col.tab = 'AllTasks'
+                col = self.appliance.collections.tasks.filter({'tab': 'AllTasks'})
                 col.wait_for_finished(image_enities_names, timeout=timeout)
 
                 # check all task passed successfully with no error
