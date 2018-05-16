@@ -1,6 +1,20 @@
 # -*- coding: utf-8 -*-
 
-""" Tests to validate chargeback costs for resources(memory, cpu, storage) allocated to VMs.
+"""Chargeback reports are supported for all infra and cloud providers.
+
+Chargeback reports report costs based on 1)resource usage, 2)resource allocation
+Costs are reported for the usage of the following resources by VMs:
+memory, cpu, network io, disk io, storage.
+Costs are reported for the allocation of the following resources to VMs:
+memory, cpu, storage
+
+So, for a provider such as VMware that supports C&U, a chargeback report would show costs for both
+resource usage and resource allocation.
+
+But, for a provider such as SCVMM that doesn't support C&U,chargeback reports show costs for
+resource allocation only.
+
+The tests in this module validate costs for resources(memory, cpu, storage) allocated to VMs.
 
 The tests to validate resource usage are in :
 cfme/tests/intelligence/reports/test_validate_chargeback_report.py
@@ -24,7 +38,7 @@ from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.vm import VM
-from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider import CloudInfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.blockers import BZ
@@ -36,14 +50,17 @@ pytestmark = [
     pytest.mark.meta(blockers=[BZ(1511099, forced_streams=['5.9', '5.8'],
                                   unblock=lambda provider: not provider.one_of(GCEProvider)),
                                ]),
-    pytest.mark.provider([InfraProvider], scope='module', selector=ONE_PER_TYPE,
+    pytest.mark.provider([CloudInfraProvider], scope='module', selector=ONE_PER_TYPE,
                         required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('has_no_providers_modscope', 'setup_provider'),
     test_requirements.chargeback,
 ]
 
 # Allowed deviation between the reported value in the Chargeback report and the estimated value.
-DEVIATION = 1
+# COST_DEVIATION is the allowed deviation for the chargeback cost for the allocated resource.
+# RESOURCE_ALLOC_DEVIATION is the allowed deviation for the allocated resource itself.
+COST_DEVIATION = 1
+RESOURCE_ALLOC_DEVIATION = 0.25
 
 
 @pytest.yield_fixture(scope="module")
@@ -148,12 +165,11 @@ def verify_records_rollups_table(appliance, provider):
 
     for record in appliance.db.client.session.query(rollups).filter(
             rollups.id.in_(result.subquery())):
-        if (record.cpu_usagemhz_rate_average or
-           record.cpu_usage_rate_average or
-           record.derived_memory_used or
-           record.net_usage_rate_average or
-           record.disk_usage_rate_average):
-            return True
+        return any([record.cpu_usagemhz_rate_average,
+           record.cpu_usage_rate_average,
+           record.derived_memory_used,
+           record.net_usage_rate_average,
+           record.disk_usage_rate_average])
     return False
 
 
@@ -204,16 +220,17 @@ def resource_alloc(vm_ownership, appliance, provider):
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
     if provider.one_of(SCVMMProvider):
-        wait_for(verify_vm_uptime, [appliance, provider], timeout=3610,
-            message='Waiting for VM to be up for at least one hour')
+        # wait_for(verify_vm_uptime, [appliance, provider], timeout=3610,
+        #    message='Waiting for VM to be up for at least one hour')
 
         vm = appliance.rest_api.collections.vms.get(name=vm_name)
+        pytest.set_trace()
         vm.reload(attributes=['allocated_disk_storage', 'cpu_total_cores', 'ram_size'])
         # By default,chargeback rates for storage are defined in this form: 0.01 USD/GB
         # Hence,convert storage used in Bytes to GB
-        return {"storage_alloc": int(vm.allocated_disk_storage * math.pow(2, -30)),
-            "memory_alloc": int(vm.ram_size),
-            "vcpu_alloc": int(vm.cpu_total_cores)}
+        return {"storage_alloc": float(vm.allocated_disk_storage) * math.pow(2, -30),
+                "memory_alloc": float(vm.ram_size),
+                "vcpu_alloc": float(vm.cpu_total_cores)}
 
     metrics = appliance.db.client['metrics']
     rollups = appliance.db.client['metric_rollups']
@@ -248,20 +265,21 @@ def resource_alloc(vm_ownership, appliance, provider):
 
     with appliance.db.client.transaction:
         result = (
-            appliance.db.client.session.query(rollups.id)
-            .join(ems, rollups.parent_ems_id == ems.id)
-            .filter(rollups.capture_interval_name == 'hourly', rollups.resource_name == vm_name,
-            ems.name == provider.name, rollups.timestamp >= date.today())
+            appliance.db.client.session.query(metrics.id)
+            .join(ems, metrics.parent_ems_id == ems.id)
+            .filter(metrics.capture_interval_name == 'realtime', metrics.resource_name == vm_name,
+            ems.name == provider.name, metrics.timestamp >= date.today())
         )
-
-    record = appliance.db.client.session.query(rollups).filter(
-        rollups.id.in_(result.subquery())).first()
+    pytest.set_trace()
+    record = appliance.db.client.session.query(metrics).filter(
+        metrics.id.in_(result.subquery())).first()
 
     # By default,chargeback rates for storage are defined in this form: 0.01 USD/GB
     # Hence,convert storage used in Bytes to GB
-    return {"vcpu_alloc": int(record.derived_vm_numvcpus),
-            "memory_alloc": int(record.derived_memory_available),
-            "storage_alloc": int(record.derived_vm_allocated_disk_storage * math.pow(2, -30))}
+
+    return {"vcpu_alloc": float(record.derived_vm_numvcpus),
+            "memory_alloc": float(record.derived_memory_available),
+            "storage_alloc": float(record.derived_vm_allocated_disk_storage * math.pow(2, -30))}
 
 
 def resource_cost(appliance, provider, metric_description, usage, description, rate_type):
@@ -389,8 +407,9 @@ def generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_cust
             estimated_resource_alloc_cost = chargeback_costs_custom[resource_alloc_cost]
             cost_from_report = groups[column]
             cost = cost_from_report.replace('$', '').replace(',', '')
-            soft_assert(estimated_resource_alloc_cost - DEVIATION <=
-                float(cost) <= estimated_resource_alloc_cost + DEVIATION,
+            logger.info('ESTIMATED COST {}, COST {}'.format(estimated_resource_alloc_cost, cost))
+            soft_assert(estimated_resource_alloc_cost - COST_DEVIATION <=
+                float(cost) <= estimated_resource_alloc_cost + COST_DEVIATION,
                 'Estimated cost and report cost do not match')
 
 
@@ -414,7 +433,10 @@ def generic_test_resource_alloc(resource_alloc, chargeback_report_custom, column
                 allocated_resource = allocated_resource * math.pow(2, -10)
             resource_from_report = groups[column].replace('MB', '').replace('GB', ''). \
                 replace(' ', '')
-            soft_assert(allocated_resource == int(resource_from_report),
+            logger.info('ALLOCATED RESOURCE {}, RESOURCE FROM REPORT {}'.format(allocated_resource,
+                resource_from_report)),
+            soft_assert(allocated_resource - RESOURCE_DEVIATION <=
+                float(resource_from_report) <= allocated_resource + RESOURCE_DEVIATION,
                 'Estimated resource allocation and report resource allocation do not match')
 
 
