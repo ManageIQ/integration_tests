@@ -23,6 +23,10 @@ providers_data = conf.cfme_data.get("management_systems", {})
 # Dict of active provider filters {name: ProviderFilter}
 global_filters = {}
 
+# Store instances of provider mgmt classes that we have instantiated before,
+# so that we don't re-generate mgmt classes for the same exact provider
+PROVIDER_MGMT_CACHE = {}
+
 
 def load_setuptools_entrypoints():
     """ Load modules from querying the specified setuptools entrypoint name."""
@@ -382,7 +386,12 @@ def get_mgmt(provider_key, providers=None, credentials=None):
         provider_kwargs['provider_key'] = provider_key
     provider_kwargs['logger'] = logger
 
-    return get_class_from_type(provider_data['type']).mgmt_class(**provider_kwargs)
+    if provider_key not in PROVIDER_MGMT_CACHE:
+        mgmt_instance = get_class_from_type(provider_data['type']).mgmt_class(**provider_kwargs)
+        PROVIDER_MGMT_CACHE[provider_key] = mgmt_instance
+    else:
+        logger.debug("returning cached mgmt class for '%s'", provider_key)
+    return PROVIDER_MGMT_CACHE[provider_key]
 
 
 class UnknownProvider(Exception):
