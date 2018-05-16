@@ -61,7 +61,9 @@ def pytest_pycollect_makeitem(collector, name, obj):
 
     # __doc__ can be empty or nonexistent, make sure it's an empty string in that case
     metadata = get_meta(obj)
-    # this is just bad - apply the marks better once we go 
+    # this is just bad - apply the marks better once we go pytest 3.6+
+    # ideally we would check a FunctionDefinition, but pytest isnt there yet
+    # sw we have to rely on a working solution
     pytest.mark.meta(from_docs=metadata)(obj)
     if metadata:
         test_path = get_rel_path(collector.fspath)
