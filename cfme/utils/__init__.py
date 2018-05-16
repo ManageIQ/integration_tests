@@ -217,7 +217,7 @@ def safe_string(o):
             o = six.text_type(o)
         else:
             o = str(o)
-    if isinstance(o, str) and six.PY2:
+    if isinstance(o, bytes):
         o = o.decode('utf-8', "ignore")
     if not isinstance(o, str):
         o = o.encode("ascii", "xmlcharrefreplace")
