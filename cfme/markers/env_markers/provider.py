@@ -36,6 +36,7 @@ def _param_check(metafunc, argnames, argvalues):
 
     """
     # If no parametrized args were named, don't parametrize
+    assert isinstance(argvalues, list)
     if not argnames:
         return False
     # If parametrized args were named and values were generated, parametrize
