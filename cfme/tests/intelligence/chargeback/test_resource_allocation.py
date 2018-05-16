@@ -220,11 +220,10 @@ def resource_alloc(vm_ownership, appliance, provider):
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
     if provider.one_of(SCVMMProvider):
-        # wait_for(verify_vm_uptime, [appliance, provider], timeout=3610,
-        #    message='Waiting for VM to be up for at least one hour')
+        wait_for(verify_vm_uptime, [appliance, provider], timeout=3610,
+           message='Waiting for VM to be up for at least one hour')
 
         vm = appliance.rest_api.collections.vms.get(name=vm_name)
-        pytest.set_trace()
         vm.reload(attributes=['allocated_disk_storage', 'cpu_total_cores', 'ram_size'])
         # By default,chargeback rates for storage are defined in this form: 0.01 USD/GB
         # Hence,convert storage used in Bytes to GB
@@ -270,9 +269,11 @@ def resource_alloc(vm_ownership, appliance, provider):
             .filter(metrics.capture_interval_name == 'realtime', metrics.resource_name == vm_name,
             ems.name == provider.name, metrics.timestamp >= date.today())
         )
-    pytest.set_trace()
     record = appliance.db.client.session.query(metrics).filter(
         metrics.id.in_(result.subquery())).first()
+
+    logger.info('cpu {}, memory {}, storage {}'.format(record.derived_vm_numvcpus,
+        record.derived_memory_available, record.derived_vm_allocated_disk_storage))
 
     # By default,chargeback rates for storage are defined in this form: 0.01 USD/GB
     # Hence,convert storage used in Bytes to GB
@@ -407,7 +408,8 @@ def generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_cust
             estimated_resource_alloc_cost = chargeback_costs_custom[resource_alloc_cost]
             cost_from_report = groups[column]
             cost = cost_from_report.replace('$', '').replace(',', '')
-            logger.info('ESTIMATED COST {}, COST {}'.format(estimated_resource_alloc_cost, cost))
+            logger.info('REPORT COST {}, ESTIMATED COST {}'.format(cost,
+                estimated_resource_alloc_cost))
             soft_assert(estimated_resource_alloc_cost - COST_DEVIATION <=
                 float(cost) <= estimated_resource_alloc_cost + COST_DEVIATION,
                 'Estimated cost and report cost do not match')
@@ -433,10 +435,10 @@ def generic_test_resource_alloc(resource_alloc, chargeback_report_custom, column
                 allocated_resource = allocated_resource * math.pow(2, -10)
             resource_from_report = groups[column].replace('MB', '').replace('GB', ''). \
                 replace(' ', '')
-            logger.info('ALLOCATED RESOURCE {}, RESOURCE FROM REPORT {}'.format(allocated_resource,
-                resource_from_report)),
-            soft_assert(allocated_resource - RESOURCE_DEVIATION <=
-                float(resource_from_report) <= allocated_resource + RESOURCE_DEVIATION,
+            logger.info('REPORT RESOURCE {}, ESTIMATED RESOURCE {}'.format(resource_from_report,
+                allocated_resource))
+            soft_assert(allocated_resource - RESOURCE_ALLOC_DEVIATION <=
+                float(resource_from_report) <= allocated_resource + RESOURCE_ALLOC_DEVIATION,
                 'Estimated resource allocation and report resource allocation do not match')
 
 
