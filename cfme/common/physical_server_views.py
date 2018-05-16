@@ -228,7 +228,8 @@ class PhysicalServerNetworkDevicesView(ComputePhysicalInfrastructureServersView)
 
     @property
     def is_displayed(self):
-        return "Network Devices" in self.title.text and self.in_compute_physical_infrastructure_servers
+        return ("Network Devices" in self.title.text and
+                self.in_compute_physical_infrastructure_servers)
 
 
 class PhysicalServerStorageDevicesView(ComputePhysicalInfrastructureServersView):
@@ -236,4 +237,5 @@ class PhysicalServerStorageDevicesView(ComputePhysicalInfrastructureServersView)
 
     @property
     def is_displayed(self):
-        return "Storage Devices" in self.title.text and self.in_compute_physical_infrastructure_servers
+        return ("Storage Devices" in self.title.text and
+                self.in_compute_physical_infrastructure_servers)
