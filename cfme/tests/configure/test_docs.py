@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 import requests
-try:
-    # Faster, C-ext
-    from cStringIO import StringIO
-except ImportError:
-    # Slower, pure python
-    from StringIO import StringIO
+from io import StringIO
 
 from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
