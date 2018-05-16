@@ -2,18 +2,8 @@
 import attr
 
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_manageiq import (
-    Accordion,
-    BaseEntitiesView,
-    BootstrapSelect,
-    BootstrapSwitch,
-    BreadCrumb,
-    ItemsToolBarViewSelector,
-    ManageIQTree,
-    SummaryTable,
-    TextInput,
-)
-from widgetastic_patternfly import Button, Dropdown
+from widgetastic.widget import TextInput
+from widgetastic_patternfly import BreadCrumb, Button, Dropdown
 from widgetastic.widget import View, Text, NoSuchElementException
 
 from cfme.base.ui import BaseLoggedInPage
@@ -25,6 +15,9 @@ from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for, TimedOutError
+from widgetastic_manageiq import (
+    Accordion, BaseEntitiesView, BootstrapSelect, BootstrapSwitch, ItemsToolBarViewSelector,
+    ManageIQTree, SummaryTable)
 
 
 class VolumeToolbar(View):

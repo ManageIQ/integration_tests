@@ -4,7 +4,7 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from widgetastic.widget import View
 from widgetastic.utils import VersionPick, Version
-from widgetastic_patternfly import Dropdown, Button
+from widgetastic_patternfly import BreadCrumb, Button, Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
@@ -13,7 +13,7 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
-    ItemsToolBarViewSelector, Text, TextInput, Accordion, ManageIQTree, BreadCrumb,
+    ItemsToolBarViewSelector, Text, TextInput, Accordion, ManageIQTree,
     SummaryTable, BootstrapSelect, ItemNotFound, BaseEntitiesView, PaginationPane)
 
 

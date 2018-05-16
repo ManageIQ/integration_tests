@@ -4,7 +4,7 @@
 import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
-from widgetastic_patternfly import Button, Dropdown
+from widgetastic_patternfly import BreadCrumb, Button, Dropdown
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
@@ -14,8 +14,9 @@ from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFME
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for, TimedOutError
-from widgetastic_manageiq import (Accordion, BreadCrumb, ItemsToolBarViewSelector, ManageIQTree,
-                                  SummaryTable, Text, TimelinesView, BaseEntitiesView)
+from widgetastic_manageiq import (
+    Accordion, ItemsToolBarViewSelector, ManageIQTree, SummaryTable, Text, TimelinesView,
+    BaseEntitiesView)
 
 
 # TODO: since Cluster always requires provider, it will use only one way to get to Cluster Detail's

@@ -2,8 +2,8 @@
 import attr
 from navmazing import NavigateToAttribute
 
-from widgetastic.widget import View
-from widgetastic_patternfly import Button, Dropdown
+from widgetastic.widget import View, Text
+from widgetastic_patternfly import BreadCrumb, Button, Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
@@ -13,13 +13,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
-    Accordion,
-    BaseEntitiesView,
-    BreadCrumb,
-    ItemsToolBarViewSelector,
-    ManageIQTree,
-    SummaryTable,
-    Text)
+    Accordion, BaseEntitiesView, ItemsToolBarViewSelector, ManageIQTree, SummaryTable)
 
 
 class ResourcePoolToolbar(View):

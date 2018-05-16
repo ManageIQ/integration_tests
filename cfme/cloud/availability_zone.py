@@ -3,7 +3,7 @@
 import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
-from widgetastic_patternfly import Dropdown, Button
+from widgetastic_patternfly import Dropdown, Button, BreadCrumb
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
@@ -11,8 +11,8 @@ from cfme.exceptions import AvailabilityZoneNotFound, ItemNotFound
 from cfme.modeling.base import BaseEntity, BaseCollection
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
-    BaseEntitiesView, TimelinesView, ItemsToolBarViewSelector, Text, Table, BreadCrumb,
-    SummaryTable, Accordion, ManageIQTree)
+    BaseEntitiesView, TimelinesView, ItemsToolBarViewSelector, Text, Table, SummaryTable, Accordion,
+    ManageIQTree)
 
 
 class AvailabilityZoneToolBar(View):

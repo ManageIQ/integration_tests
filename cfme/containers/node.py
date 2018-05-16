@@ -6,7 +6,7 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View
-from widgetastic_manageiq import Button, Text, TimelinesView, BreadCrumb
+from widgetastic_patternfly import BreadCrumb
 
 from cfme.common import Taggable, TagPageView, PolicyProfileAssignable
 from cfme.common.vm_console import ConsoleMixin
@@ -18,6 +18,7 @@ from cfme.utils.appliance.implementations.ui import (CFMENavigateStep, navigator
                                                      navigate_to)
 from cfme.common.provider_views import ProviderDetailsToolBar
 from cfme.utils.providers import get_crud_by_name
+from widgetastic_manageiq import Button, Text, TimelinesView
 
 
 class NodeDetailsToolBar(ProviderDetailsToolBar):

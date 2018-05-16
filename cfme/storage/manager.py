@@ -4,9 +4,7 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View, NoSuchElementException, Text
 from widgetastic_patternfly import (
-    Button,
-    Dropdown
-)
+    BreadCrumb, Button, Dropdown)
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import TagPageView, Taggable, PolicyProfileAssignable
@@ -14,13 +12,7 @@ from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from widgetastic_manageiq import (
-    Accordion,
-    BreadCrumb,
-    ManageIQTree,
-    PaginationPane,
-    SummaryTable,
-    Table
-)
+    Accordion, ManageIQTree, PaginationPane, SummaryTable, Table)
 
 
 class StorageManagerToolbar(View):

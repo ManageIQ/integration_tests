@@ -5,7 +5,7 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
 from widgetastic_patternfly import (
-    BootstrapSwitch, Button, CheckableBootstrapTreeview, Dropdown, Input, Tab)
+    BreadCrumb, BootstrapSwitch, Button, CheckableBootstrapTreeview, Dropdown, Input, Tab)
 
 from cfme.base import BaseEntity, BaseCollection
 from cfme.base.login import BaseLoggedInPage
@@ -14,7 +14,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from widgetastic_manageiq import Table, BootstrapSelect, BreadCrumb, Text, ViewButtonGroup
+from widgetastic_manageiq import Table, BootstrapSelect, Text, ViewButtonGroup
 
 
 class TimeProfileForm(View):

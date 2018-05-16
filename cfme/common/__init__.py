@@ -4,21 +4,16 @@ import random
 from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException, RowNotFound
 from widgetastic_patternfly import (
-    BootstrapSelect,
-    Button,
-    CheckableBootstrapTreeview,
-    DropdownItemNotFound,
-    SelectItemNotFound
-)
+    BreadCrumb, BootstrapSelect, Button, CheckableBootstrapTreeview, DropdownItemNotFound,
+    SelectItemNotFound)
 from widgetastic.widget import Table, Text, View
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
-from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import BaseNonInteractiveEntitiesView, BreadCrumb
+from widgetastic_manageiq import BaseNonInteractiveEntitiesView
 
 
 class ManagePoliciesView(BaseLoggedInPage):

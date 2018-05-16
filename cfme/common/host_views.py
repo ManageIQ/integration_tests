@@ -2,40 +2,16 @@
 from lxml.html import document_fromstring
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import (
-    Parameter,
-    Version,
-    VersionPick
-)
+    Parameter, Version, VersionPick)
 from widgetastic.widget import ParametrizedView, Text, View
 from widgetastic_patternfly import (
-    BootstrapNav,
-    BootstrapSelect,
-    CheckableBootstrapTreeview,
-    Dropdown,
-    Tab,
-)
+    BreadCrumb, BootstrapNav, BootstrapSelect, CheckableBootstrapTreeview, Dropdown, Tab)
 
 from cfme.base.login import BaseLoggedInPage
 from widgetastic_manageiq import (
-    Accordion,
-    BaseEntitiesView,
-    BaseListEntity,
-    BaseQuadIconEntity,
-    BaseTileIconEntity,
-    BreadCrumb,
-    Button,
-    Checkbox,
-    DriftComparison,
-    Input,
-    ItemsToolBarViewSelector,
-    JSBaseEntity,
-    ManageIQTree,
-    NonJSBaseEntity,
-    PaginationPane,
-    ParametrizedSummaryTable,
-    Table,
-    TimelinesView
-)
+    Accordion, BaseEntitiesView, BaseListEntity, BaseQuadIconEntity, BaseTileIconEntity, Button,
+    Checkbox, DriftComparison, Input, ItemsToolBarViewSelector, JSBaseEntity, ManageIQTree,
+    NonJSBaseEntity, PaginationPane, ParametrizedSummaryTable, Table, TimelinesView)
 
 
 class ComputeInfrastructureHostsView(BaseLoggedInPage):

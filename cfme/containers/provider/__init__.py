@@ -12,8 +12,7 @@ from widgetastic_manageiq import StatusBox, ContainerSummaryTable
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Text, View, TextInput
 from widgetastic_patternfly import (
-    SelectorDropdown, Dropdown, BootstrapSelect, Input, Button, Tab
-)
+    BreadCrumb, SelectorDropdown, Dropdown, BootstrapSelect, Input, Button, Tab)
 from wrapanapi.utils import eval_strings
 
 from cfme import exceptions
@@ -36,8 +35,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
-    SummaryTable, BreadCrumb, Accordion, ManageIQTree, LineChart
-)
+    SummaryTable, Accordion, ManageIQTree, LineChart)
 
 
 class ContainersProviderDefaultEndpoint(DefaultEndpoint):

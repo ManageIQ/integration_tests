@@ -2,15 +2,7 @@
 import attr
 
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_manageiq import (
-    Accordion,
-    BaseEntitiesView,
-    BreadCrumb,
-    ItemsToolBarViewSelector,
-    ManageIQTree,
-    SummaryTable,
-)
-from widgetastic_patternfly import Button, Dropdown
+from widgetastic_patternfly import BreadCrumb, Button, Dropdown
 from widgetastic.widget import View, Text, NoSuchElementException
 
 from cfme.base.ui import BaseLoggedInPage
@@ -18,6 +10,8 @@ from cfme.common import TagPageView, Taggable
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.modeling.base import BaseCollection, BaseEntity
+from widgetastic_manageiq import (
+    Accordion, BaseEntitiesView, ItemsToolBarViewSelector, ManageIQTree, SummaryTable)
 
 
 class ObjectStoreContainerToolbar(View):

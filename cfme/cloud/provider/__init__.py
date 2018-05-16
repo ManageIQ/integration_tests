@@ -4,7 +4,7 @@ import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from widgetastic.widget import View
-from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import Dropdown, BreadCrumb
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.cloud.instance.image import Image
@@ -19,7 +19,7 @@ from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFME
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import TimelinesView, BreadCrumb, ItemsToolBarViewSelector
+from widgetastic_manageiq import TimelinesView, ItemsToolBarViewSelector
 
 
 class CloudProviderTimelinesView(TimelinesView, BaseLoggedInPage):
