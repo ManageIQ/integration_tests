@@ -404,7 +404,6 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
         soft_assert(c_fs_drivers != '0', "fs drivers: '{}' != '0'".format(c_fs_drivers))
 
 
-@pytest.mark.rhv3
 @pytest.mark.tier(2)
 @pytest.mark.long_running
 def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_profiled_vm,
@@ -483,8 +482,11 @@ def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_profil
         soft_assert(c_fs_drivers != '0', "fs drivers: '{}' != '0'".format(c_fs_drivers))
 
 
+@pytest.mark.rhv3
 @pytest.mark.tier(2)
 @pytest.mark.long_running
+@pytest.mark.meta(blockers=[BZ(1578792, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider: 'rhel' not in str(provider.data.get('vm_analysis_new').get('vms')))])
 def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, appliance):
     """ Tests SSA can be performed and returns sane results
 
@@ -525,8 +527,10 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, appliance):
                 c_packages, c_services)
 
     soft_assert(c_lastanalyzed != 'Never', "Last Analyzed is set to Never")
-    soft_assert(e_os_type in details_os_icon.lower(),
-                "details icon: '{}' not in '{}'".format(e_os_type, details_os_icon))
+    # RHEL has 'Red Hat' in details_os_icon, but 'redhat' in quadicon_os_icon
+    os_type = e_os_type if e_os_type != 'redhat' else 'red hat'
+    soft_assert(os_type in details_os_icon.lower(),
+                "details icon: '{}' not in '{}'".format(os_type, details_os_icon))
     soft_assert(e_os_type in quadicon_os_icon.lower(),
                 "quad icon: '{}' not in '{}'".format(e_os_type, quadicon_os_icon))
 
@@ -555,8 +559,11 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, appliance):
 @pytest.mark.rhv1
 @pytest.mark.tier(2)
 @pytest.mark.long_running
-@pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+@pytest.mark.meta(blockers=[
+    BZ(1551273, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider: not provider.one_of(RHEVMProvider)),
+    BZ(1578792, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider: 'rhel' not in str(provider.data.get('vm_analysis_new').get('vms')))])
 def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profiled_vm):
     """ Tests SSA can be performed and returns sane results
 
@@ -602,7 +609,7 @@ def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profiled_vm):
     # RHEL has 'Red Hat' in details_os_icon, but 'redhat' in quadicon_os_icon
     os_type = e_os_type if e_os_type != 'redhat' else 'red hat'
     soft_assert(os_type in details_os_icon.lower(),
-                "details icon: '{}' not in '{}'".format(e_os_type, details_os_icon))
+                "details icon: '{}' not in '{}'".format(os_type, details_os_icon))
     soft_assert(e_os_type in quadicon_os_icon.lower(),
                 "quad icon: '{}' not in '{}'".format(e_os_type, quadicon_os_icon))
 
