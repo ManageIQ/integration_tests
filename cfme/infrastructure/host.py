@@ -45,13 +45,16 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
         host_platform: Included but appears unused in CFME at the moment.
         ipmi_address: The IPMI address.
         mac_address: The mac address of the system.
-        credentials (:py:class:`Credential`): see Credential inner class.
+        credentials Combines three types of credentials - 'default', 'remote_login',
+                    'web_services', all three can be passed.
+                    Each contains (:py:class:`Credential`): see Credential inner class.
         ipmi_credentials (:py:class:`Credential`): see Credential inner class.
 
     Usage:
 
         myhost = Host(name='vmware',
-                      credentials=Provider.Credential(principal='admin', secret='foobar'))
+                      credentials={
+                                'default': Provider.Credential(principal='admin', secret='foobar')})
         myhost.create()
 
     """
@@ -65,7 +68,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
     host_platform = attr.ib(default=None)
     ipmi_address = attr.ib(default=None)
     mac_address = attr.ib(default=None)
-    credentials = attr.ib(default=None)
+    credentials = attr.ib(default=attr.Factory(dict))
     ipmi_credentials = attr.ib(default=None)
     interface_type = attr.ib(default='lan')
     db_id = None
@@ -101,14 +104,17 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
         credentials_changed = False
         ipmi_credentials_changed = False
         if credentials is not None:
-            if view.change_stored_password.is_displayed:
-                view.change_stored_password.click()
-            credentials_changed = view.endpoints.default.fill(credentials.view_value_mapping)
-            if validate_credentials:
-                view.endpoints.default.validate_button.click()
+            for creds_type in credentials:
+                cred_endpoint = getattr(view.endpoints, creds_type)
+                if cred_endpoint.change_stored_password.is_displayed:
+                    cred_endpoint.change_stored_password.click()
+                credentials_changed = cred_endpoint.fill_with(credentials[
+                    creds_type].view_value_mapping)
+                if validate_credentials:
+                    cred_endpoint.validate_button.click()
         if ipmi_credentials is not None:
-            if view.change_stored_password.is_displayed:
-                view.change_stored_password.click()
+            if view.endpoints.ipmi.change_stored_password.is_displayed:
+                view.endpoints.ipmi.change_stored_password.click()
             ipmi_credentials_changed = view.endpoints.ipmi.fill(ipmi_credentials.view_value_mapping)
             if validate_credentials:
                 view.endpoints.ipmi.validate_button.click()
@@ -443,9 +449,11 @@ class HostCollection(BaseCollection):
             "mac_address": mac_address
         })
         if credentials is not None:
-            view.endpoints.default.fill(credentials.view_value_mapping)
-            if validate_credentials:
-                view.endpoints.default.validate_button.click()
+            for credentials_type in credentials:
+                cred_endpoint = getattr(view.endpoints, credentials_type)
+                cred_endpoint.fill(credentials.view_value_mapping)
+                if validate_credentials:
+                    cred_endpoint.validate_button.click()
         if ipmi_credentials is not None:
             view.endpoints.ipmi.fill(ipmi_credentials.view_value_mapping)
             if validate_credentials:
@@ -529,7 +537,7 @@ class HostCollection(BaseCollection):
 
     def _get_config(self, host_key):
         host_config = conf.cfme_data.get('management_hosts', {})[host_key]
-        credentials = get_credentials_from_config(host_config['credentials'])
+        credentials = {'default': get_credentials_from_config(host_config['credentials'])}
         ipmi_credentials = get_credentials_from_config(host_config['ipmi_credentials'])
         ipmi_credentials.ipmi = True
         return host_config, credentials, ipmi_credentials
@@ -553,7 +561,7 @@ class HostCollection(BaseCollection):
             ipmi_address=host_config['ipmi_address'],
             mac_address=host_config['mac_address'],
             interface_type=host_config.get('interface_type', 'lan'),
-            credentials=credentials,
+            credentials={'default': credentials},
             ipmi_credentials=ipmi_credentials
         )
 
@@ -576,7 +584,7 @@ class HostCollection(BaseCollection):
             ipmi_address=host_config['ipmi_address'],
             mac_address=host_config['mac_address'],
             interface_type=host_config.get('interface_type', 'lan'),
-            credentials=credentials,
+            credentials={'default': credentials},
             ipmi_credentials=ipmi_credentials
         )
 
@@ -657,4 +665,6 @@ class Utilization(CFMENavigateStep):
 
 def get_credentials_from_config(credential_config_name):
     creds = conf.credentials[credential_config_name]
-    return Host.Credential(principal=creds["username"], secret=creds["password"])
+    username = ("{}\\{}".format(creds.domain, creds.username) if creds.get('domain') else
+                creds.username)
+    return Host.Credential(principal=username, secret=creds["password"])

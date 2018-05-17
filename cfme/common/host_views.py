@@ -262,6 +262,7 @@ class HostFormView(ComputeInfrastructureHostsView):
     class endpoints(View):  # noqa
         @View.nested
         class default(Tab):  # noqa
+            change_stored_password = Text(".//a[contains(@ng-hide, 'bChangeStoredPassword')]")
             username = Input(name="default_userid")
             password = Input(name="default_password")
             confirm_password = Input(name="default_verify")
@@ -270,6 +271,7 @@ class HostFormView(ComputeInfrastructureHostsView):
         @View.nested
         class remote_login(Tab):  # noqa
             TAB_NAME = "Remote Login"
+            change_stored_password = Text(".//a[contains(@ng-hide, 'bChangeStoredPassword')]")
             username = Input(name="remote_userid")
             password = Input(name="remote_password")
             confirm_password = Input(name="remote_verify")
@@ -278,6 +280,7 @@ class HostFormView(ComputeInfrastructureHostsView):
         @View.nested
         class web_services(Tab):  # noqa
             TAB_NAME = "Web Services"
+            change_stored_password = Text(".//a[contains(@ng-hide, 'bChangeStoredPassword')]")
             username = Input(name="ws_userid")
             password = Input(name="ws_password")
             confirm_password = Input(name="ws_verify")
@@ -286,6 +289,7 @@ class HostFormView(ComputeInfrastructureHostsView):
         @View.nested
         class ipmi(Tab):  # noqa
             TAB_NAME = "IPMI"
+            change_stored_password = Text(".//a[contains(@ng-hide, 'bChangeStoredPassword')]")
             username = Input(name="ipmi_userid")
             password = Input(name="ipmi_password")
             confirm_password = Input(name="ipmi_verify")
@@ -308,7 +312,6 @@ class HostEditView(HostFormView):
     """View for editing a single host"""
     save_button = Button("Save")
     reset_button = Button("Reset")
-    change_stored_password = Text(".//a[contains(@ng-hide, 'bChangeStoredPassword')]")
 
     @property
     def is_displayed(self):
