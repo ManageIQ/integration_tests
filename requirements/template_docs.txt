@@ -5,6 +5,10 @@
 manageiq-client
 miq_version
 
+
+# https://github.com/Azure/azure-cosmosdb-python/issues/24
+--no-binary azure-cosmosdb-python
+--no-binary azure-cosmosdb-table
 # External dependencies
 boto
 bottle
@@ -17,7 +21,7 @@ docker-py
 dump2polarion
 fauxfactory>=2.0.7
 flake8
-futures==3.0.5
+futures==3.0.5; python_version == '2.7'
 GitPython>=2.1.5
 ipython
 iso8601

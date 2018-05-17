@@ -1,6 +1,7 @@
 import pytest
 from py.error import ENOENT
-
+import base64
+import six
 from six.moves.urllib_error import URLError
 
 import cfme.utils.browser
@@ -38,7 +39,7 @@ def pytest_exception_interact(node, call, report):
     from six.moves.http_client import BadStatusLine
     from socket import error
 
-    val = safe_string(call.excinfo.value).decode('utf-8', 'ignore')
+    val = safe_string(call.excinfo.value)
     if isinstance(call.excinfo.value, (URLError, BadStatusLine, error)):
         logger.error("internal Exception:\n %s", str(call.excinfo))
         from cfme.utils.browser import manager
@@ -73,7 +74,10 @@ def pytest_exception_interact(node, call, report):
     )
 
     # base64 encoded to go into a data uri, same for screenshots
-    full_tb = report.longreprtext.encode('base64').strip()
+    tb = report.longreprtext
+    if not isinstance(tb, six.binary_type):
+        tb = tb.encode('utf-8')
+    full_tb = base64.b64encode(tb)
     # errors are when exceptions are thrown outside of the test call phase
     report.when = getattr(report, 'when', 'setup')
     is_error = report.when != 'call'

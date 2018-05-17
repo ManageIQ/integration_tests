@@ -48,12 +48,11 @@ class EntityCollections(object):
 
     def __dir__(self):
         internal_dir = dir(super(EntityCollections, self))
-        return internal_dir + self._availiable_collections.keys()
+        return internal_dir + list(self._availiable_collections.keys())
 
     def __getattr__(self, name):
         if name not in self._availiable_collections:
-            sorted_collection_keys = self._availiable_collections.keys()
-            sorted_collection_keys.sort()
+            sorted_collection_keys = sorted(self._availiable_collections)
             raise AttributeError('Collection [{}] not known to object, available collections: {}'
                                  .format(name, sorted_collection_keys))
         if name not in self._collection_cache:

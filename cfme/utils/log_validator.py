@@ -1,7 +1,7 @@
 import re
 import pytest
 
-from ssh import SSHTail
+from .ssh import SSHTail
 from cfme.utils.log import logger
 
 
