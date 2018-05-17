@@ -618,11 +618,15 @@ def _test_vm_provision(appliance):
 #         raise OptionNotAvailable("Power button does not exist")
 
 
-def _test_vm_removal():
+# Test using this method has been commented out
+def _test_vm_removal(appliance, provider):
     logger.info("Testing for VM removal permission")
-    vm_name = vms.get_first_vm()
-    logger.debug("VM {} selected".format(vm_name))
-    vms.remove(vm_name, cancel=True)
+    vm = appliance.collections.infra_vms.instantiate(
+        vms.get_first_vm(provider=provider).name,
+        provider
+    )
+    logger.debug("VM {} selected".format(vm.name))
+    vm.delete(cancel=True)
 
 
 @pytest.mark.tier(3)
