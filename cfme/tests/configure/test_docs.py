@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 import requests
-try:
-    # Faster, C-ext
-    from cStringIO import StringIO
-except ImportError:
-    # Slower, pure python
-    from StringIO import StringIO
+from io import BytesIO
 
 from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
@@ -32,7 +27,7 @@ doc_titles = {
 
 
 def pdf_get_text(file_obj, page_nums):
-    output = StringIO()
+    output = BytesIO()
     manager = PDFResourceManager()
     laparams = LAParams(all_texts=True, detect_vertical=True)
     converter = TextConverter(manager, output, laparams=laparams)
@@ -40,7 +35,7 @@ def pdf_get_text(file_obj, page_nums):
     for page in PDFPage.get_pages(file_obj, page_nums):
         interpreter.process_page(page)
     converter.close()
-    text = output.getvalue().replace('\n', ' ')
+    text = output.getvalue().replace(b'\n', b' ')
     output.close()
     return text
 
@@ -84,7 +79,9 @@ def test_contents(appliance, soft_assert):
         href = view.browser.get_attribute(attr='href',
                                           locator=doc_widget.link.locator)
         data = requests.get(href, verify=False)
-        pdf_titlepage_text_low = pdf_get_text(StringIO(data.content), [0]).lower()
+        pdf_titlepage_text_low = pdf_get_text(BytesIO(data.content), [0]).lower()
+        if not isinstance(pdf_titlepage_text_low, str):
+            pdf_titlepage_text_low = pdf_titlepage_text_low.decode('utf-8', 'replace')
         # don't include the word 'guide'
         expected = [title]
         if cur_ver == version.LATEST:
