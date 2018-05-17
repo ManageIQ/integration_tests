@@ -111,6 +111,32 @@ class MiqBrowserPlugin(DefaultPlugin):
     )
     DEFAULT_WAIT = .8
 
+    @property
+    def page_has_changes(self):
+        """Checks whether current page has any changes which may lead to "Abandon Changes" alert """
+        js_code = """
+                    function PageHasChanges()
+                    {
+                        if(ManageIQ.angular.scope)
+                        {
+                           if(angular.isDefined(ManageIQ.angular.scope.angularForm)
+                           &&ManageIQ.angular.scope.angularForm.$dirty
+                           &&!miqDomElementExists("ignore_form_changes"))
+                              return true
+                        }
+                        else
+                        {
+                           if((miqDomElementExists("buttons_on")&&
+                           $("#buttons_on").is(":visible")||null!==ManageIQ.changes)
+                           &&!miqDomElementExists("ignore_form_changes"))
+                              return true
+                        }
+                        return false
+                    };
+                    return PageHasChanges();
+                  """
+        return self.browser.selenium.execute_script(js_code)
+
     def make_document_focused(self):
         if self.browser.browser_type != 'firefox':
             return
@@ -133,11 +159,14 @@ class MiqBrowserPlugin(DefaultPlugin):
 
     def ensure_page_safe(self, timeout='20s'):
         # THIS ONE SHOULD ALWAYS USE JAVASCRIPT ONLY, NO OTHER SELENIUM INTERACTION
+        if (self.browser.page_dirty and self.browser.alert_present and
+                self.browser.get_alert().text == 'Abandon changes?'):
+            self.browser.handle_alert()
+
         def _check():
             result = self.browser.execute_script(self.ENSURE_PAGE_SAFE, silent=True)
             # TODO: Logging
             return bool(result)
-
         wait_for(_check, timeout=timeout, delay=0.2, silent_failure=True, very_quiet=True)
 
     def after_keyboard_input(self, element, keyboard_input):
@@ -174,6 +203,15 @@ class MiqBrowserPlugin(DefaultPlugin):
         sleep(0.3)
         self.make_document_focused()
 
+    def before_click(self, element):
+        # this is necessary in order to handle unexpected alerts like "Abandon Changes"
+        self.browser.page_dirty = self.page_has_changes
+
+    def after_click(self, element):
+        # page_dirty is set to None because otherwise if it was true, all next ensure_page_safe
+        # calls would check alert presence which is enormously slow in selenium.
+        self.browser.page_dirty = None
+
 
 class MiqBrowser(Browser):
     def __init__(self, selenium, endpoint, extra_objects=None):
@@ -193,6 +231,7 @@ class MiqBrowser(Browser):
             'Opened browser %s %s',
             selenium.capabilities.get('browserName', 'unknown'),
             selenium.capabilities.get('version', 'unknown'))
+        self.page_dirty = None
 
     @property
     def appliance(self):
