@@ -24,8 +24,7 @@ from cfme.common.vm_views import (
     RetirementView, RetirementViewWithOffset, VMDetailsEntities, VMToolbar, VMEntities,
     SetOwnershipView)
 from cfme.exceptions import (
-    VmNotFound, OptionNotAvailable, DestinationNotFound, ItemNotFound,
-    VmOrInstanceNotFound)
+    OptionNotAvailable, DestinationNotFound, ItemNotFound, VmOrInstanceNotFound)
 from cfme.services.requests import RequestsView
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -36,7 +35,6 @@ from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
     SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
-import six
 
 
 def has_child(tree, text, parent_item=None):
@@ -1070,148 +1068,12 @@ class Genealogy(object):
         return processed_path
 
 
-###
-# Multi-object functions
-#
-# todo: to check and probably remove this function. it might be better off refactoring whole file
-# todo: there will be an entity's method to apply some operation to a bunch of entities
-def _method_setup(vm_names, provider_crud=None):
-    """ Reduces some redundant code shared between methods """
-    if isinstance(vm_names, six.string_types):
-        vm_names = [vm_names]
-
-    if provider_crud:
-        provider_crud.load_all_provider_vms()
-        view = provider_crud.appliance.browser.create_view(
-            navigator.get_class(InfraVmCollection, 'VMsOnly').VIEW)
-    else:
-        view = navigate_to(InfraVmCollection, 'VMsOnly')
-
-    if view.entities.paginator.exists:
-        view.entities.paginator.set_items_per_page(1000)
-    for vm_name in vm_names:
-        view.entities.get_entity(name=vm_name).check()
-    return view
-
-
-def find_quadicon(vm_name):
-    """Find and return a quadicon belonging to a specific vm
-
-    Args:
-        vm: vm name as displayed at the quadicon
-    Returns: entity of appropriate class
-    """
-    # todo: VMs have such method, so, this function is good candidate for removal
-    view = navigate_to(InfraVmCollection, 'VMsOnly')
-    try:
-        return view.entites.get_entity(name=vm_name, surf_pages=True)
-    except ItemNotFound:
-        raise VmNotFound("VM '{}' not found in UI!".format(vm_name))
-
-
-def remove(vm_names, cancel=True, provider_crud=None):
-    """Removes multiple VMs from CFME VMDB
-
-    Args:
-        vm_names: List of VMs to interact with
-        cancel: Whether to cancel the deletion, defaults to True
-        provider_crud: provider object where vm resides on (optional)
-    """
-    view = _method_setup(vm_names, provider_crud)
-    view.toolbar.configuration.item_select('Remove selected items from the VMDB',
-                                           handle_alert=not cancel)
-
-
-def wait_for_vm_state_change(vm_name, desired_state, timeout=300, provider_crud=None):
-    """Wait for VM to come to desired state.
-
-    This function waits just the needed amount of time thanks to wait_for.
-
-    Args:
-        vm_name: Displayed name of the VM
-        desired_state: 'on' or 'off'
-        timeout: Specify amount of time (in seconds) to wait until TimedOutError is raised
-        provider_crud: provider object where vm resides on (optional)
-    """
-    def _looking_for_state_change(view, entity):
-        view.toolbar.reload()
-        return 'currentstate-' + desired_state in entity.data['state']
-
-    view = navigate_to(InfraVmCollection, 'VMsOnly')
-    entity = view.entites.get_entity(name=vm_name, surf_pages=True)
-    return wait_for(_looking_for_state_change, func_args=[view, entity], num_sec=timeout)
-
-
-def is_pwr_option_visible(vm_names, option, provider_crud=None):
-    """Returns whether a particular power option is visible.
-
-    Args:
-        vm_names: List of VMs to interact with, if from_details=True is passed, only one VM can
-            be passed in the list.
-        option: Power option param.
-        provider_crud: provider object where vm resides on (optional)
-    """
-    view = _method_setup(vm_names, provider_crud)
-    try:
-        view.toolbar.power.item_element(option)
-        return True
-    except NoSuchElementException:
-        return False
-
-
-def is_pwr_option_enabled(vm_names, option, provider_crud=None):
-    """Returns whether a particular power option is enabled.
-
-    Args:
-        vm_names: List of VMs to interact with
-        provider_crud: provider object where vm resides on (optional)
-        option: Power option param.
-
-    Raises:
-        NoOptionAvailable:
-            When unable to find the power option passed
-    """
-    view = _method_setup(vm_names, provider_crud)
-    try:
-        return view.toolbar.power.item_enabled(option)
-    except NoSuchElementException:
-        raise OptionNotAvailable("No such power option (" + str(option) + ") is available")
-
-
-def do_power_control(vm_names, option, provider_crud=None, cancel=True):
-    """Executes a power option against a list of VMs.
-
-    Args:
-        vm_names: List of VMs to interact with
-        option: Power option param.
-        provider_crud: provider object where vm resides on (optional)
-        cancel: Whether or not to cancel the power control action
-    """
-    view = _method_setup(vm_names, provider_crud)
-
-    if (is_pwr_option_visible(vm_names, provider_crud=provider_crud, option=option) and
-            is_pwr_option_enabled(vm_names, provider_crud=provider_crud, option=option)):
-                view.toolbar.power.item_select(option, handle_alert=not cancel)
-
-
-def perform_smartstate_analysis(vm_names, provider_crud=None, cancel=True):
-    """Executes a refresh relationships action against a list of VMs.
-
-    Args:
-        vm_names: List of VMs to interact with
-        provider_crud: provider object where vm resides on (optional)
-        cancel: Whether or not to cancel the refresh relationships action
-    """
-    view = _method_setup(vm_names, provider_crud)
-    view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=not cancel)
-
-
 def get_all_vms(appliance, do_not_navigate=False):
     """Returns list of all vms on current page"""
     if do_not_navigate:
         view = appliance.browser.create_view(navigator.get_class(InfraVmCollection, 'VMsOnly').VIEW)
     else:
-        view = navigate_to(InfraVmCollection, 'VMsOnly')
+        view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
 
     return [entity.name for entity in view.entities.get_all()]
 
