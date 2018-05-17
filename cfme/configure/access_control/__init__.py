@@ -1,10 +1,13 @@
 import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.utils import VersionPick, Version
-from widgetastic.widget import Checkbox, View, Text
+from widgetastic.widget import Checkbox, View, Text, ConditionalSwitchableView
 from widgetastic_patternfly import (
     BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview as CbTree,
     BootstrapSwitch, CandidateNotFound, Dropdown)
+from widgetastic_manageiq import (
+    UpDownSelect, PaginationPane, SummaryFormItem, Table, BaseListEntity, SummaryForm)
+from widgetastic_manageiq.expression_editor import ExpressionEditor
 
 from cfme.base.credential import Credential
 from cfme.base.ui import ConfigurationView
@@ -17,8 +20,6 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (
-    UpDownSelect, PaginationPane, SummaryFormItem, Table, BaseListEntity, SummaryForm)
 
 
 EVM_DEFAULT_GROUPS = [
@@ -432,6 +433,16 @@ class UserEdit(CFMENavigateStep):
 ####################################################################################################
 # RBAC GROUP METHODS
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+class MyCompatyTagsTreeView(View):
+    tree_locator = 'tags_treebox'
+    tree = CbTree(tree_locator)
+
+
+class MyCompatyTagsExpressionView(View):
+    tag_expression = ExpressionEditor()
+
+
 class GroupForm(ConfigurationView):
     """ Group Form in CFME UI."""
     ldap_groups_for_user = BootstrapSelect(id='ldap_groups_user')
@@ -452,8 +463,11 @@ class GroupForm(ConfigurationView):
     class my_company_tags(Tab):  # noqa
         """ Represents 'My company tags' tab in Group Form """
         TAB_NAME = "My Company Tags"
-        tree_locator = 'tags_treebox'
-        tree = CbTree(tree_locator)
+        tag_mode = BootstrapSelect(id='use_filter_expression')
+        tag_settings = ConditionalSwitchableView(reference='tag_mode')
+
+        tag_settings.register('Specific Tags', default=True, widget=MyCompatyTagsTreeView)
+        tag_settings.register('Tags Based On Expression', widget=MyCompatyTagsExpressionView)
 
     @View.nested
     class hosts_and_clusters(Tab):  # noqa
