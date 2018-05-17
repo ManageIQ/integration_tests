@@ -48,7 +48,7 @@ class EntityCollections(object):
 
     def __dir__(self):
         internal_dir = dir(super(EntityCollections, self))
-        return internal_dir + list(self._availiable_collections)
+        return internal_dir + list(self._availiable_collections.keys())
 
     def __getattr__(self, name):
         if name not in self._availiable_collections:
