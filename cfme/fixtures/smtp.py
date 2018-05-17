@@ -98,7 +98,7 @@ def pytest_runtest_call(item):
     try:
         yield
     finally:
-        if "smtp_test" not in item.funcargs:
+        if "smtp_test" not in (item.funcargs or []):
             return
 
         try:
