@@ -925,7 +925,7 @@ def test_ssa_multiple_vms(ssa_profiled_vms, soft_assert, appliance, compare_linu
         test_flag: vm_analysis
     """
 
-    view = navigate_to(ssa_vms[0], 'AllForProvider')
+    view = navigate_to(ssa_profiled_vms[0], 'AllForProvider')
     view.toolbar.view_selector.select('List View')
     view.paginator.set_items_per_page(1000)
     for ssa_vm in ssa_profiled_vms:
