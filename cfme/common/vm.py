@@ -3,9 +3,8 @@
 from datetime import datetime, date, timedelta
 from wrapanapi import exceptions
 
-from cfme.infrastructure.provider import InfraProvider
 from cfme.common import Taggable
-from cfme.common.vm_console import VMConsole
+from cfme.common.vm_console import ConsoleMixin
 from cfme.common.vm_views import DriftAnalysis, DriftHistory, VMPropertyDetailView
 from cfme.configure.tasks import is_vm_analysis_finished, TasksView
 from cfme.exceptions import (
@@ -51,7 +50,7 @@ class _TemplateMixin(object):
     pass
 
 
-class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, Navigatable):
+class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, Navigatable, ConsoleMixin):
     """Base VM and Template class that holds the largest common functionality between VMs,
     instances, templates and images.
 
@@ -166,45 +165,6 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, Navigatable)
             return True
         else:
             raise ValueError("{} is not a known state for compliance".format(text))
-
-    @property
-    def console_handle(self):
-        '''
-        The basic algorithm for getting the consoles window handle is to get the
-        appliances window handle and then iterate through the window_handles till we find
-        one that is not the appliances window handle.   Once we find this check that it has
-        a canvas widget with a specific ID
-        '''
-        browser = self.appliance.browser.widgetastic
-        appliance_handle = browser.window_handle
-        cur_handles = browser.selenium.window_handles
-        logger.info("Current Window Handles:  {}".format(cur_handles))
-
-        for handle in cur_handles:
-            if handle != appliance_handle:
-                # FIXME: Add code to verify the tab has the correct widget
-                #      for a console tab.
-                return handle
-
-    @property
-    def vm_console(self):
-        """Get the consoles window handle, and then create a VMConsole object, and store
-        the VMConsole object aside.
-        """
-        console_handle = self.console_handle
-
-        if console_handle is None:
-            raise TypeError("Console handle should not be None")
-
-        appliance_handle = self.appliance.browser.widgetastic.window_handle
-        logger.info("Creating VMConsole:")
-        logger.info("   appliance_handle: {}".format(appliance_handle))
-        logger.info("     console_handle: {}".format(console_handle))
-        logger.info("               name: {}".format(self.name))
-
-        return VMConsole(appliance_handle=appliance_handle,
-                console_handle=console_handle,
-                vm=self)
 
     def delete(self, cancel=False, from_details=False):
         """Deletes the VM/Instance from the VMDB.

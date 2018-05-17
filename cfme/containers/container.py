@@ -5,7 +5,6 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 
 from widgetastic_manageiq import Accordion, ManageIQTree, View, Table
 from widgetastic_patternfly import VerticalNavigation
-from widgetastic.widget import Text
 
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
@@ -19,7 +18,7 @@ from widgetastic.utils import VersionPick, Version
 
 class ContainerAllView(ContainerObjectAllBaseView):
     """Containers All view"""
-    summary = Text('//h1[normalize-space(.) = "Containers"]')
+    SUMMARY_TEXT = "Containers"
     containers = Table(locator="//div[@id='list_grid']//table")
 
     @View.nested
@@ -41,7 +40,8 @@ class ContainerAllView(ContainerObjectAllBaseView):
 
 
 class ContainerDetailsView(ContainerObjectDetailsBaseView):
-    pass
+    """Containers Detail view"""
+    SUMMARY_TEXT = "Containers"
 
 
 @attr.s

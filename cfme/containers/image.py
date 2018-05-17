@@ -23,6 +23,7 @@ from cfme.utils.providers import get_crud_by_name
 
 
 class ImageAllView(ContainerObjectAllBaseView):
+    """Container Images All view"""
     SUMMARY_TEXT = "Container Images"
 
     # ProviderEntity has its own fields, image view should rather use BaseEntity instead
@@ -30,6 +31,9 @@ class ImageAllView(ContainerObjectAllBaseView):
 
 
 class ImageDetailsView(ContainerObjectDetailsBaseView):
+    """Container Images Detail view"""
+    SUMMARY_TEXT = "Container Images"
+
     @View.nested
     class entities(ContainerObjectDetailsEntities):  # noqa
         configuration = SummaryTable(title='Configuration')

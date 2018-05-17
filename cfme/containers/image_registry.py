@@ -3,6 +3,7 @@ import attr
 from cached_property import cached_property
 
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.utils import VersionPick, Version
 from wrapanapi.containers.image_registry import ImageRegistry as ApiImageRegistry
 
 from cfme.common import Taggable, TagPageView
@@ -16,11 +17,19 @@ from cfme.utils.providers import get_crud_by_name
 
 
 class ImageRegistryAllView(ContainerObjectAllBaseView):
-    SUMMARY_TEXT = "Image Registries"
+    """Container Images Registries All view"""
+    SUMMARY_TEXT = VersionPick({
+        Version.lowest(): 'Image Registries',
+        '5.9': 'Container Image Registries'
+    })
 
 
 class ImageRegistryDetailsView(ContainerObjectDetailsBaseView):
-    pass
+    """Container Image Registries Detail view"""
+    SUMMARY_TEXT = VersionPick({
+        Version.lowest(): 'Image Registries',
+        '5.9': 'Container Image Registries'
+    })
 
 
 @attr.s

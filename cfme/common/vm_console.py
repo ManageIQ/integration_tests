@@ -17,6 +17,51 @@ from cfme.utils.pretty import Pretty
 from wait_for import wait_for, TimedOutError
 
 
+class ConsoleMixin(object):
+    """
+    A mixin to provide methods to get a vm console object
+    """
+
+    @classmethod
+    def console_handle(cls, browser):
+        """
+        The basic algorithm for getting the consoles window handle is to get the
+        appliances window handle and then iterate through the window_handles till we find
+        one that is not the appliances window handle.   Once we find this check that it has
+        a canvas widget with a specific ID
+        """
+        br_wt = browser.widgetastic
+        appliance_handle = br_wt.window_handle
+        cur_handles = br_wt.selenium.window_handles
+        logger.info("Current Window Handles:  {}".format(cur_handles))
+
+        for handle in cur_handles:
+            if handle != appliance_handle:
+                # FIXME: Add code to verify the tab has the correct widget
+                #      for a console tab.
+                return handle
+
+    @property
+    def vm_console(self):
+        """Get the consoles window handle, and then create a VMConsole object, and store
+        the VMConsole object aside.
+        """
+        console_handle = self.console_handle(self.appliance.browser)
+
+        if console_handle is None:
+            raise TypeError("Console handle should not be None")
+
+        appliance_handle = self.appliance.browser.widgetastic.window_handle
+        logger.info("Creating VMConsole:")
+        logger.info("   appliance_handle: {}".format(appliance_handle))
+        logger.info("     console_handle: {}".format(console_handle))
+        logger.info("               name: {}".format(self.name))
+
+        return VMConsole(appliance_handle=appliance_handle,
+                         console_handle=console_handle,
+                         vm=self)
+
+
 class VMConsole(Pretty):
     """Class to manage the VM Console. Presently, only support HTML5/WebMKS Console."""
 

@@ -14,11 +14,13 @@ from cfme.utils.providers import get_crud_by_name
 
 
 class TemplateAllView(ContainerObjectAllBaseView):
+    """Container Templates All view"""
     SUMMARY_TEXT = "Container Templates"
 
 
 class TemplateDetailsView(ContainerObjectDetailsBaseView):
-    pass
+    """Container Templates Details view"""
+    SUMMARY_TEXT = "Container Templates"
 
 
 @attr.s

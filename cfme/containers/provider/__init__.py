@@ -2,7 +2,9 @@ import attr
 
 import random
 from random import sample
+from six import string_types
 from traceback import format_exc
+
 
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
@@ -159,10 +161,16 @@ class ContainerProviderDetailsView(ProviderDetailsView, LoggingableView):
     """
      Container Details page
     """
+    SUMMARY_TEXT = "Containers Providers"
+
     @property
     def is_displayed(self):
         return (super(ContainerProviderDetailsView, self).is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'])
+
+    @property
+    def summary_text(self):
+        return self.SUMMARY_TEXT
 
 
 @attr.s(hash=False)
@@ -564,6 +572,14 @@ class ContainerObjectAllBaseView(ProvidersView):
     policy = Dropdown('Policy')
     download = Dropdown('Download')
     toolbar = View.nested(ProviderToolBar)
+    SUMMARY_TEXT = None
+
+    @property
+    def summary_text(self):
+        if isinstance(self.SUMMARY_TEXT, (string_types, type(None))):
+            return self.SUMMARY_TEXT
+        else:
+            return self.SUMMARY_TEXT.pick(self.context['object'].appliance.version)
 
     @property
     def table(self):
@@ -594,6 +610,7 @@ class ContainerObjectDetailsBaseView(BaseLoggedInPage, LoggingableView):
     services = StatusBox('Services')
     images = StatusBox('Images')
     pods = ContainerSummaryTable(title='Pods')
+    SUMMARY_TEXT = None
 
     @View.nested
     class sidebar(ProviderSideBar):  # noqa
@@ -615,6 +632,13 @@ class ContainerObjectDetailsBaseView(BaseLoggedInPage, LoggingableView):
             # text will include include (Names with "...")
             '{} (Summary)'.format(self.context['object'].name) in self.breadcrumb.active_location
         )
+
+    @property
+    def summary_text(self):
+        if isinstance(self.SUMMARY_TEXT, (string_types, type(None))):
+            return self.SUMMARY_TEXT
+        else:
+            return self.SUMMARY_TEXT.pick(self.context['object'].appliance.version)
 
 
 # Common methods:

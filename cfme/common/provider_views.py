@@ -371,6 +371,10 @@ class ContainerProvidersView(ProvidersView):
                 self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'] and
                 self.entities.title.text == self.SUMMARY_TEXT)
 
+    @property
+    def summary_text(self):
+        return self.SUMMARY_TEXT
+
 
 class InfraProvidersView(ProvidersView):
     """

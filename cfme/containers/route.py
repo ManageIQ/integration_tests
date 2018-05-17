@@ -3,6 +3,7 @@ import attr
 from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic.utils import VersionPick, Version
 from wrapanapi.containers.route import Route as ApiRoute
 
 from cfme.common import Taggable, TagPageView
@@ -14,11 +15,19 @@ from cfme.utils.providers import get_crud_by_name
 
 
 class RouteAllView(ContainerObjectAllBaseView):
-    SUMMARY_TEXT = "Routes"
+    """Container Routes All view"""
+    SUMMARY_TEXT = VersionPick({
+        Version.lowest(): 'Routes',
+        '5.9': 'Container Routes'
+    })
 
 
 class RouteDetailsView(ContainerObjectDetailsBaseView):
-    pass
+    """Container Routes Detail view"""
+    SUMMARY_TEXT = VersionPick({
+        Version.lowest(): 'Routes',
+        '5.9': 'Container Routes'
+    })
 
 
 @attr.s
