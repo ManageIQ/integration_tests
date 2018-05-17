@@ -3,8 +3,7 @@
 
 # add what breaks on RTD
 
-wrapanapi>=2.0.0
-ovirt-engine-sdk-python<4.0.0
+wrapanapi>=2.9.0
 pycurl
 
 virtualenv
