@@ -39,7 +39,8 @@ RPM_BASED = {
         'package-number': 'rpm -qa | wc -l',
         'services-number': 'echo $((`ls -lL /etc/init.d | egrep -i -v "readme|total" | wc -l` + '
                            '`ls -l /usr/lib/systemd/system | grep service | wc -l` + '
-                           '`ls -l /usr/lib/systemd/user | grep service | wc -l`))'},
+                           '`ls -l /usr/lib/systemd/user | grep service | wc -l` + '
+                           '`ls -l /etc/systemd/system | grep -E "*.service$" | wc -l`))'},
     'centos': {
         'id': "CentOS", 'release-file': '/etc/centos-release', 'os_type': 'centos',
         'package': 'iso-codes', 'install-command': 'yum install -y {}',
@@ -54,8 +55,10 @@ RPM_BASED = {
         'package': 'iso-codes', 'install-command': 'dnf install -y {}',
         'package-number': 'rpm -qa | wc -l',
         'services-number': 'echo $((`ls -lL /etc/init.d | egrep -i -v "readme|total" | wc -l` +'
-                           ' `ls -l /usr/lib/systemd/system | grep service | wc -l` +'
-                           ' `ls -l /usr/lib/systemd/user | grep service | wc -l`))'},
+                           ' `ls -l /usr/lib/systemd/system | grep service | grep -v network1 | '
+                           '  wc -l` +'
+                           ' `ls -l /usr/lib/systemd/user | grep -E "*.service$" | wc -l` + '
+                           ' `ls -l /etc/systemd/system | grep -E "*.service$" | wc -l`))'},
     'suse': {
         'id': 'Suse', 'release-file': '/etc/SuSE-release', 'os_type': 'suse',
         'package': 'iso-codes', 'install-command': 'zypper install -y {}',
@@ -564,12 +567,11 @@ def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profiled_vm):
     Metadata:
         test_flag: vm_analysis
     """
-    pytest.set_trace()
     e_users = None
     e_groups = None
     e_packages = None
     e_services = None
-    e_os_type = ssa_vm.system_type['os_type']
+    e_os_type = ssa_vm.system_type['os_type'] if ssa_vm.system_type != WINDOWS else 'windows'
 
     if ssa_vm.system_type != WINDOWS:
         e_users = ssa_vm.ssh.run_command("cat /etc/passwd | wc -l").output.strip('\n')
@@ -609,7 +611,6 @@ def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profiled_vm):
                 "quad icon: '{}' not in '{}'".format(e_os_type, quadicon_os_icon))
 
     if ssa_vm.system_type != WINDOWS:
-        pytest.set_trace()
         soft_assert(c_users == e_users, "users: '{}' != '{}'".format(c_users, e_users))
         soft_assert(c_groups == e_groups, "groups: '{}' != '{}'".format(c_groups, e_groups))
         soft_assert(c_packages == e_packages, "packages: '{}' != '{}'".format(c_packages,
