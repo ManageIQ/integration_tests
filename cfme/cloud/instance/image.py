@@ -10,6 +10,7 @@ from cfme.common.vm_views import (
     VMDetailsEntities, VMEntities)
 from cfme.exceptions import ImageNotFound, DestinationNotFound
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
+from cfme.utils.providers import get_crud_by_name
 from widgetastic_manageiq import ItemsToolBarViewSelector, SummaryTable, ItemNotFound
 from . import CloudInstanceView, InstanceAccordion
 
@@ -137,6 +138,25 @@ class Image(Template):
 @attr.s
 class ImageCollection(TemplateCollection):
     ENTITY = Image
+
+    def all(self):
+        """Return entities for all items in image collection"""
+        # Pretty much same as instance, but defining at VMCollection would only work for cloud
+        # provider filter means we're viewing images through provider details relationships
+        provider = self.filters.get('provider')  # None if no filter, need for entity instantiation
+        view = navigate_to(self,
+                           'AllForProvider' if provider else 'All')
+        # iterate pages here instead of use surf_pages=True because data is needed
+        entities = []
+        for _ in view.entities.paginator.pages():  # auto-resets to first page
+            page_entities = [entity for entity in view.entities.get_all(surf_pages=False)]
+            entities.extend(
+                # when provider filtered view, there's no provider data value
+                [self.instantiate(e.data['name'], provider or get_crud_by_name(e.data['provider']))
+                 for e in page_entities
+                 if e.data.get('provider') != '']  # safe provider check, archived shows no provider
+            )
+        return entities
 
 
 @navigator.register(ImageCollection, 'All')

@@ -10,7 +10,6 @@ from cfme.common.provider import base_types
 from cfme.configure.access_control import AddUserView
 from cfme.configure.tasks import TasksView
 from cfme.exceptions import RBACOperationBlocked
-from cfme.infrastructure import virtual_machines as vms
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -612,7 +611,7 @@ def _test_vm_provision(appliance):
 # def _test_vm_power_on():
 #     """Ensures power button is shown for a VM"""
 #     logger.info("Checking for power button")
-#     vm_name = vms.InfraVm.get_first_vm()
+#     vm_name = ## use collection.all and pick the first
 #     logger.debug("VM " + vm_name + " selected")
 #     if not vms.is_pwr_option_visible(vm_name, option=vms.InfraVm.POWER_ON):
 #         raise OptionNotAvailable("Power button does not exist")
@@ -621,10 +620,7 @@ def _test_vm_provision(appliance):
 # Test using this method has been commented out
 def _test_vm_removal(appliance, provider):
     logger.info("Testing for VM removal permission")
-    vm = appliance.collections.infra_vms.instantiate(
-        vms.get_first_vm(provider=provider).name,
-        provider
-    )
+    vm = appliance.collections.infra_vms.all()[0]  # pick first vm from collection
     logger.debug("VM {} selected".format(vm.name))
     vm.delete(cancel=True)
 

@@ -239,13 +239,6 @@ class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, 
         view.entities.summary(properties[0]).click_at(properties[1])
         return self.create_view(VMPropertyDetailView)
 
-    @classmethod
-    def get_first_vm(cls, provider):
-        """Get first VM/Instance."""
-        # todo: move this to base provider ?
-        view = navigate_to(BaseVMCollection, 'AllForProvider', provider=provider)
-        return view.entities.get_first_entity()
-
     @property
     def last_analysed(self):
         """Returns the contents of the ``Last Analysed`` field in summary"""
@@ -449,7 +442,7 @@ class BaseVMCollection(BaseCollection):
         # For this reason we don't use self.ENTITY, but instead lookup the entity class
         # through the provider's attributes
 
-        if isinstance(self.ENTITY, Template):
+        if isinstance(self, TemplateCollection):
             # This is a Template derived class, not a VM
             return provider.template_class.from_collection(self, name, provider)
         else:

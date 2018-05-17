@@ -16,6 +16,7 @@ from cfme.exceptions import (InstanceNotFound, ItemNotFound, DestinationNotFound
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from cfme.utils.log import logger
+from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import ManageIQTree, TimelinesView, Accordion, CompareToolBarActionsView
 
@@ -353,6 +354,25 @@ class InstanceCollection(VMCollection):
             view.flash.assert_no_error()
 
         return instance
+
+    def all(self):
+        """Return entities for all items in collection"""
+        # Pretty much same as image, but defining at VMCollection would only work for cloud
+        # provider filter means we're viewing instances through provider details relationships
+        provider = self.filters.get('provider')  # None if no filter, need for entity instantiation
+        view = navigate_to(self,
+                           'AllForProvider' if provider else 'All')
+        # iterate pages here instead of use surf_pages=True because data is needed
+        entities = []
+        for _ in view.entities.paginator.pages():  # auto-resets to first page
+            page_entities = [entity for entity in view.entities.get_all(surf_pages=False)]
+            entities.extend(
+                # when provider filtered view, there's no provider data value
+                [self.instantiate(e.data['name'], provider or get_crud_by_name(e.data['provider']))
+                 for e in page_entities
+                 if e.data.get('provider') != '']  # safe provider check, archived shows no provider
+            )
+        return entities
 
 
 @navigator.register(InstanceCollection, 'All')

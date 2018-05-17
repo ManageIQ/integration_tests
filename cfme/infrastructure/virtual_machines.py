@@ -30,6 +30,7 @@ from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.pretty import Pretty
+from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
@@ -975,6 +976,25 @@ class InfraVm(VM):
 class InfraVmCollection(VMCollection):
     ENTITY = InfraVm
 
+    def all(self):
+        """Return entities for all items in collection"""
+        # provider filter means we're viewing vms through provider details relationships
+        # provider filtered 'All' view includes vms and templates, can't be used
+        provider = self.filters.get('provider')  # None if no filter, need for entity instantiation
+        view = navigate_to(provider or self,
+                           'ProviderVms' if provider else 'VMsOnly')
+        # iterate pages here instead of use surf_pages=True because data is needed
+        entities = []
+        for _ in view.entities.paginator.pages():  # auto-resets to first page
+            page_entities = [entity for entity in view.entities.get_all(surf_pages=False)]
+            entities.extend(
+                # when provider filtered view, there's no provider data value
+                [self.instantiate(e.data['name'], provider or get_crud_by_name(e.data['provider']))
+                 for e in page_entities
+                 if e.data.get('provider') != '']  # safe provider check, orphaned shows no provider
+            )
+        return entities
+
 
 @attr.s
 class InfraTemplate(Template):
@@ -989,6 +1009,25 @@ class InfraTemplate(Template):
 @attr.s
 class InfraTemplateCollection(TemplateCollection):
     ENTITY = InfraTemplate
+
+    def all(self):
+        """Return entities for all items in collection"""
+        # provider filter means we're viewing templates through provider details relationships
+        # provider filtered 'All' view includes vms and templates, can't be used
+        provider = self.filters.get('provider')  # None if no filter, need for entity instantiation
+        view = navigate_to(provider or self,
+                           'ProviderTemplates' if provider else 'TemplatesOnly')
+        # iterate pages here instead of use surf_pages=True because data is needed
+        entities = []
+        for _ in view.entities.paginator.pages():  # auto-resets to first page
+            page_entities = [entity for entity in view.entities.get_all(surf_pages=False)]
+            entities.extend(
+                # when provider filtered view, there's no provider data value
+                [self.instantiate(e.data['name'], provider or get_crud_by_name(e.data['provider']))
+                 for e in page_entities
+                 if e.data.get('provider') != '']  # safe provider check, orphaned shows no provider
+            )
+        return entities
 
 
 @attr.s
@@ -1066,16 +1105,6 @@ class Genealogy(object):
             # We will remove the (parent) and (Selected) suffixes
             processed_path.append(re.sub(r"\s*(?:\(Current\)|\(Parent\))$", "", step))
         return processed_path
-
-
-def get_all_vms(appliance, do_not_navigate=False):
-    """Returns list of all vms on current page"""
-    if do_not_navigate:
-        view = appliance.browser.create_view(navigator.get_class(InfraVmCollection, 'VMsOnly').VIEW)
-    else:
-        view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
-
-    return [entity.name for entity in view.entities.get_all()]
 
 
 @navigator.register(Template, 'All')

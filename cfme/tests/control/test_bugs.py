@@ -11,7 +11,6 @@ from cfme.control.explorer.alerts import AlertDetailsView
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policies import VMCompliancePolicy, VMControlPolicy
 from cfme.exceptions import CFMEExceptionOccured
-from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -168,10 +167,7 @@ def test_scope_windows_registry_stuck(request, appliance, infra_provider, policy
     request.addfinalizer(lambda: profile.delete() if profile.exists else None)
     # Now assign this malformed profile to a VM
     # not assuming tht infra_provider is actually an InfraProvider type
-    vm = infra_provider.appliance.collections.infra_vms.instantiate(
-        InfraVm.get_first_vm(provider=infra_provider).name,
-        infra_provider
-    )
+    vm = infra_provider.appliance.collections.infra_vms.all()[0]
     vm.assign_policy_profiles(profile.description)
     # It should be screwed here, but do additional check
     navigate_to(appliance.server, 'Dashboard')

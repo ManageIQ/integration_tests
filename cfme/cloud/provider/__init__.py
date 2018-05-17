@@ -7,6 +7,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.cloud.instance.image import Image
 from cfme.common import TagPageView
 from cfme.common.provider import CloudInfraProvider, provider_types
 from cfme.common.provider_views import (
@@ -101,6 +102,7 @@ class CloudProvider(Pretty, CloudInfraProvider):
     vm_name = "Instances"
     template_name = "Images"
     db_types = ["CloudManager"]
+    template_class = Image
 
     name = attr.ib(default=None)
     key = attr.ib(default=None)

@@ -10,7 +10,6 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.virtual_machines import get_all_vms
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -366,7 +365,7 @@ def test_no_template_power_control(provider, soft_assert):
     soft_assert(not view.toolbar.power.is_enabled, "Power displayed in template grid view!")
 
     # Ensure selecting a template doesn't cause power menu to appear
-    templates = list(get_all_vms(provider.appliance, True))
+    templates = view.entities.all_entity_names
     template_name = random.choice(templates)
     selected_template = provider.appliance.collections.infra_templates.instantiate(template_name,
                                                                                    provider)
