@@ -27,7 +27,7 @@ def main():
             out = out.replace('.txt', '.py{major}.txt'.format(major=sys.version_info[0]))
             args = argparse.Namespace(
                 venv=venv,
-                keep=True,
+                keep_venv=True,
                 template=str(HERE.joinpath(template)),
                 out=str(HERE.joinpath(out))
             )

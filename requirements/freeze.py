@@ -58,7 +58,7 @@ def maybe_transient_venv_dir(path, keep):
 
 
 def main(args):
-    with maybe_transient_venv_dir(args.venv, args.keep) as venv:
+    with maybe_transient_venv_dir(args.venv, args.keep_venv) as venv:
         quickstart.setup_virtualenv(venv, use_site=False)
         quickstart.venv_call(venv, 'pip', 'install', '-r', args.template)
         if args.out is None:

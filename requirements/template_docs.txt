@@ -40,7 +40,7 @@ pycrypto
 pygal
 pytesseract
 # required for an import that we get from wrapanapi
-python-novaclient<7.0.0
+python-novaclient<=7.1.2
 
 PyGithub
 pytest==3.4.1
@@ -62,6 +62,8 @@ taretto
 tornado
 tzlocal
 wait_for
+# kubernetes requirement
+websocket-client<=0.40.0
 yaycl
 yaycl-crypt
 
