@@ -1170,7 +1170,6 @@ def check_templates_in_provider(self, provider_id):
         self.logger.warning("Provider will be marked as not working because of %s", err)
         provider.working = False
         provider.save(update_fields=['working'])
-        self.retry(args=(provider_id,), countdown=15, max_retries=3)
     else:
         provider.working = True
         provider.save(update_fields=['working'])
