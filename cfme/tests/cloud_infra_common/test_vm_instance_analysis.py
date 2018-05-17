@@ -67,12 +67,13 @@ RPM_BASED = {
 
 DEB_BASED = {
     'ubuntu': {
-        'id': 'Ubuntu 14.04', 'release-file': '/etc/issue.net', 'os_type': 'ubuntu',
+        'id': 'Ubuntu', 'release-file': '/etc/issue.net', 'os_type': 'ubuntu',
         'package': 'iso-codes',
         'install-command': 'env DEBIAN_FRONTEND=noninteractive apt-get -y install {}',
         'package-number': "dpkg --get-selections | wc -l",
         'services-number': 'echo $((`ls -alL /etc/init.d | egrep -iv "readme|total|drwx" | wc -l` +'
-                           ' `ls -alL /etc/systemd/system/ | grep service | wc -l`))'},
+                           ' `ls -alL /etc/systemd/system/ | grep service | wc -l` +'
+                           ' `ls -alL /usr/lib/systemd/user | grep service | wc -l`))'},
     'debian': {
         'id': 'Debian ', 'release-file': '/etc/issue.net', 'os_type': 'debian',
         'package': 'iso-codes',
@@ -263,7 +264,7 @@ def ssa_analysis_profile():
     for file in ssa_expect_files:
         collected_files.append({"Name": file, "Collect Contents?": True})
 
-    analysis_profile_name = 'default'
+    analysis_profile_name = 'default_{}'.format(fauxfactory.gen_alpha())
     analysis_profile = AnalysisProfile(name=analysis_profile_name,
                                        description=analysis_profile_name,
                                        profile_type=AnalysisProfile.VM_TYPE,
@@ -563,6 +564,7 @@ def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profiled_vm):
     Metadata:
         test_flag: vm_analysis
     """
+    pytest.set_trace()
     e_users = None
     e_groups = None
     e_packages = None
@@ -607,6 +609,7 @@ def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profiled_vm):
                 "quad icon: '{}' not in '{}'".format(e_os_type, quadicon_os_icon))
 
     if ssa_vm.system_type != WINDOWS:
+        pytest.set_trace()
         soft_assert(c_users == e_users, "users: '{}' != '{}'".format(c_users, e_users))
         soft_assert(c_groups == e_groups, "groups: '{}' != '{}'".format(c_groups, e_groups))
         soft_assert(c_packages == e_packages, "packages: '{}' != '{}'".format(c_packages,
