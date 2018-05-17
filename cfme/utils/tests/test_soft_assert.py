@@ -21,10 +21,10 @@ def test_soft_assert(soft_assert):
 """
 
 test_output_match_lines = [
-    ">   *   raise SoftAssertionError(_thread_locals.caught_asserts)",
-    "E   *   SoftAssertionError: ",
-    "E   *   soft_assert(None) ({testfile}:*)",
-    "E   *   soft_assert message! ({testfile}:*)",
+    ">*raise SoftAssertionError(_thread_locals.caught_asserts)",
+    "E*SoftAssertionError: ",
+    "E*soft_assert(None) ({testfile}:*)",
+    "E*soft_assert message! ({testfile}:*)",
 ]
 
 

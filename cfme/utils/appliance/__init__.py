@@ -57,7 +57,7 @@ def _current_miqqe_version():
     Returns: Version as int
     """
     with patches_path.join('miq_application.js.diff').open("r") as f:
-        match = re.search("MiqQE_version = (\d+);", f.read(), flags=0)
+        match = re.search(r"MiqQE_version = (\d+);", f.read(), flags=0)
     version = int(match.group(1))
     return version
 
@@ -1774,7 +1774,7 @@ class IPAppliance(object):
         """
         idle_time = 3600
         ssh_output = self.ssh_client.run_command('if [ $((`date "+%s"` - `date -d "$(egrep -v '
-            '"(Processing by Api::ApiController\#index as JSON|Started GET "/api" for '
+            r'"(Processing by Api::ApiController\#index as JSON|Started GET "/api" for '
             '127.0.0.1|Completed 200 OK in)" /var/www/miq/vmdb/log/production.log | tail -1 |cut '
             '-d"[" -f3 | cut -d"]" -f1 | cut -d" " -f1)\" \"+%s\"`)) -lt {} ];'
             'then echo "False";'

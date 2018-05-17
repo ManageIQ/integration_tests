@@ -334,14 +334,14 @@ class SSHClient(paramiko.SSHClient):
                 # which will block if its internal buffer is empty.
                 if session.recv_ready():
                     try:
-                        line = stdout.next()
+                        line = next(stdout)
                         write_output(line, self.f_stdout)
                     except StopIteration:
                         pass
 
                 if session.recv_stderr_ready():
                     try:
-                        line = stderr.next()
+                        line = next(stdout)
                         write_output(line, self.f_stderr)
                     except StopIteration:
                         pass
