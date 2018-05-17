@@ -4051,3 +4051,29 @@ class LineChart(Widget, ClickableMixin):
         for row in self.tooltip.rows():
             tooltip_data.update({row[0].text: row[1].text})
         return tooltip_data
+
+
+class IFrameText(Widget):
+    """ The widget in RH Insights page are under iframe div, directly can't read with the Text
+    Widget.
+
+    Args:
+        locator(str): location of the widget under iframe
+        url(str): iframe url
+    Returns:
+        :py:class:`string` for passed locator
+    """
+    def __init__(self, parent, locator, url, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.url = url
+        self.locator = locator
+
+    def read(self):
+        frame = self.browser.selenium.find_element_by_xpath(
+            '//iframe[contains(@src, {})]'.format(self.url))
+        self.browser.selenium.switch_to_frame(frame)
+        return self.browser.text(self.locator)
+
+    @property
+    def is_displayed(self):
+        return self.browser.is_displayed(self.locator)
