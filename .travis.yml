@@ -11,6 +11,6 @@ env:
   - BOTO_CONFIG=/dev/null
 install:
   - python -m cfme.scripting.quickstart
-script: pytest cfme/utils/tests cfme/modeling/tests -v --dummy-appliance
+script: pytest cfme/utils/tests cfme/modeling/tests requirements -v --dummy-appliance
 after_success:
   - coveralls

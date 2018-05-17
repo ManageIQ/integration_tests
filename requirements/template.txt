@@ -4,6 +4,7 @@
 # add what breaks on RTD
 
 wrapanapi>=2.9.0
+--no-binary pycurl
 pycurl
 
 virtualenv

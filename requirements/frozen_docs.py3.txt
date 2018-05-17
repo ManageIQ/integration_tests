@@ -33,7 +33,6 @@ fauxfactory==3.0.2
 flake8==3.5.0
 funcsigs==1.0.2
 future==0.16.0
-futures==3.0.5
 gitdb2==2.0.3
 GitPython==2.1.9
 html5lib==1.0.1
