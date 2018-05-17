@@ -200,7 +200,8 @@ class TestTagsViaREST(object):
     @pytest.mark.meta(blockers=[BZ(1451025, forced_streams=['5.7'])])
     @pytest.mark.parametrize(
         "collection_name", ["clusters", "hosts", "data_stores", "providers", "resource_pools",
-        "services", "service_templates", "tenants", "vms"])
+        "services", "service_templates", "tenants", "vms", "availability_zones", "cloud_networks",
+        "cloud_networks", "cloud_subnets", "flavors", "network_routers", "security_groups"])
     def test_assign_and_unassign_tag(self, appliance, tags_mod, a_provider, services_mod,
             service_templates, tenants, vm, collection_name):
         """Tests assigning and unassigning tags.
