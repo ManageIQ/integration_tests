@@ -792,6 +792,7 @@ def clone_template_to_appliance(self, appliance_id, lease_time_minutes=None, yum
         tasks.append(appliance_reboot.si(appliance_id, if_needs_restarting=True))
     if appliance.preconfigured:
         tasks.append(wait_appliance_ready.si(appliance_id))
+        tasks.append(appliance_set_hostname.si(appliance_id))
     else:
         tasks.append(mark_appliance_ready.si(appliance_id))
     workflow = chain(*tasks)
@@ -1625,6 +1626,13 @@ def disconnect_direct_lun(self, appliance_id):
 def appliance_yum_update(self, appliance_id):
     appliance = Appliance.objects.get(id=appliance_id)
     appliance.ipapp.update_rhel(reboot=False)
+
+
+@singleton_task()
+def appliance_set_hostname(self, appliance_id):
+    appliance = Appliance.objects.get(id=appliance_id)
+    if appliance.provider.provider_data.get('type', None) == 'openstack':
+        appliance.ipapp.set_resolvable_hostname()
 
 
 @singleton_task()
