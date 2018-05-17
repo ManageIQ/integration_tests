@@ -35,8 +35,8 @@ def _param_check(metafunc, argnames, argvalues):
         * ``None`` if the test will be uncollected
 
     """
+    assert isinstance(argvalues, list), "iterators break pytest expectations"
     # If no parametrized args were named, don't parametrize
-    assert isinstance(argvalues, list)
     if not argnames:
         return False
     # If parametrized args were named and values were generated, parametrize
