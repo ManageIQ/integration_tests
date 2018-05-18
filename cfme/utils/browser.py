@@ -180,7 +180,7 @@ class WharfFactory(BrowserFactory):
         super(WharfFactory, self).__init__(webdriver_class, browser_kwargs)
         self.wharf = wharf
 
-        if browser_kwargs['desired_capabilities']['browserName'] == 'chrome':
+        if browser_kwargs.get('desired_capabilities', {}).get('browserName') == 'chrome':
             # chrome uses containers to sandbox the browser, and we use containers to
             # run chrome in wharf, so disable the sandbox if running chrome in wharf
             co = browser_kwargs['desired_capabilities'].get('chromeOptions', {})
