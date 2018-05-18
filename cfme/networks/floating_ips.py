@@ -72,9 +72,14 @@ class Details(CFMENavigateStep):
 
     def step(self):
         # as for 5.9 floating ip doesn't have name att, will get id for navigation
+        # as for 5.8 floating ip doesn't found in table with name att, only with address
         if self.obj.appliance.version < '5.9':
-            element = self.prerequisite_view.entities.get_entity(
-                name=self.obj.address, surf_pages=True)
+            try:
+                element = self.prerequisite_view.entities.get_entity(
+                    name=self.obj.address, surf_pages=True)
+            except ItemNotFound:
+                element = self.prerequisite_view.entities.get_entity(
+                    address=self.obj.address, surf_pages=True)
         else:
             all_items = self.prerequisite_view.entities.get_all(surf_pages=True)
             for entity in all_items:
