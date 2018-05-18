@@ -15,8 +15,6 @@ import re
 import sys
 from threading import Lock, Thread
 
-from ovirtsdk.xml import params
-
 from cfme.utils import net, trackerbot
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger, add_stdout_handler
@@ -57,50 +55,29 @@ def parse_cmd_line():
     return args
 
 
-def add_glance(api, provider):
-    glance_provider = 'glance11-server'
-    provider_dict = cfme_data['management_systems'][glance_provider]
+def add_glance(mgmt, provider, glance_server):
+    provider_dict = cfme_data['template_upload'][glance_server]
     creds_key = provider_dict['credentials']
-
-    def is_glance_added(api, name):
-        for domain in api.openstackimageproviders.list():
-            if domain.get_name() == glance_provider:
-                return True
-        else:
-            return False
-
-    # Get the list of OpenStack image providers (a.k.a. Glance providers)
-    # that match the name that we want to use:
-    providers = [
-        domain for domain in api.openstackimageproviders.list()
-        if domain.get_name() == glance_provider
-    ]
-
     try:
-        # If there is no such provider, then add it:
-        if len(providers) == 0:
-            glance_sd = api.openstackimageproviders.add(
-                params.OpenStackImageProvider(
-                    name=glance_provider,
-                    description='My Glance',
-                    url=provider_dict['url'],
-                    requires_authentication=True,
-                    authentication_url=provider_dict['auth_url'],
-                    username=credentials[creds_key]['username'],
-                    password=credentials[creds_key]['password'],
-                    tenant_name=credentials[creds_key]['tenant']
-                )
-            )
-
-        wait_for(is_glance_added, [api, glance_provider],
-            fail_condition=False, delay=5, num_sec=240)
-        if not api.openstackimageproviders.get(name=glance_provider):
-            logger.error("RHV:%s Glance provider %s could not be attached", provider,
-                glance_provider)
-            sys.exit(127)
-        logger.info('RHV:%s Attached Glance provider %s', provider, glance_sd.get_name())
+        if mgmt.does_glance_server_exist(glance_server):
+            logger.info("RHEVM:%r Warning: Found a Glance provider with this name (%r).",
+                    provider, glance_server)
+            logger.info("RHEVM:%r Skipping this step, attempting to continue", provider)
+            return
+        mgmt.add_glance_server(
+            name=glance_server,
+            description=glance_server,
+            url=provider_dict['url'],
+            requires_authentication=True,
+            authentication_url=provider_dict['auth_url'],
+            username=credentials[creds_key]['username'],
+            password=credentials[creds_key]['password'],
+            tenant_name=credentials[creds_key]['tenant']
+        )
+        logger.info('RHV:%s Attached Glance provider %s', provider, glance_server)
     except Exception:
         logger.exception("RHV:%r add_glance failed:", provider)
+        sys.exit(127)
 
 
 def make_ssh_client(rhevip, sshname, sshpass):
@@ -240,33 +217,35 @@ def import_template(api, edomain, sdomain, cluster, temp_template_name, provider
         sdomain: Storage domain of selected RHEVM provider.
         cluster: Cluster to save imported template on.
     """
-    try:
-        if api.templates.get(temp_template_name) is not None:
-            logger.info("RHEVM:%r Warning: found another template with this name.", provider)
-            logger.info("RHEVM:%r Skipping this step, attempting to continue...", provider)
-            return
-        actual_template = api.storagedomains.get(edomain).templates.get(temp_template_name)
-        actual_storage_domain = api.storagedomains.get(sdomain)
-        actual_cluster = api.clusters.get(cluster)
-        import_action = params.Action(async=False, cluster=actual_cluster,
-                                      storage_domain=actual_storage_domain)
-        actual_template.import_template(action=import_action)
-        # Check if the template is really there
-        if not api.templates.get(temp_template_name):
-            logger.info("RHEVM:%r The template failed to import on data domain", provider)
-            sys.exit(127)
-        logger.info("RHEVM:%r successfully imported template on data domain", provider)
-    except Exception:
-        logger.exception("RHEVM:%r import_template to data domain failed:", provider)
+    # This code should be ported to wrapanapi
+    # try:
+    #     if api.templates.get(temp_template_name) is not None:
+    #         logger.info("RHEVM:%r Warning: found another template with this name.", provider)
+    #         logger.info("RHEVM:%r Skipping this step, attempting to continue...", provider)
+    #         return
+    #     actual_template = api.storagedomains.get(edomain).templates.get(temp_template_name)
+    #     actual_storage_domain = api.storagedomains.get(sdomain)
+    #     actual_cluster = api.clusters.get(cluster)
+    #     import_action = params.Action(async=False, cluster=actual_cluster,
+    #                                   storage_domain=actual_storage_domain)
+    #     actual_template.import_template(action=import_action)
+    #     # Check if the template is really there
+    #     if not api.templates.get(temp_template_name):
+    #         logger.info("RHEVM:%r The template failed to import on data domain", provider)
+    #         sys.exit(127)
+    #     logger.info("RHEVM:%r successfully imported template on data domain", provider)
+    # except Exception:
+    #     logger.exception("RHEVM:%r import_template to data domain failed:", provider)
+    raise NotImplementedError
 
 
-def make_vm_from_template(api, cluster, temp_template_name, temp_vm_name, provider,
-                          mgmt_network=None):
+def make_vm_from_template(mgmt, stream, cfme_data, cluster, temp_template_name,
+        temp_vm_name, provider, mgmt_network=None):
     """Makes temporary VM from imported template. This template will be later deleted.
        It's used to add a new disk and to convert back to template.
 
     Args:
-        api: API to chosen RHEVM provider.
+        mgmt: A ``RHEVMSystem`` instance from wrapanapi.
         cluster: Cluster to save the temporary VM on.
         mgmt_network: management network on RHEVM box, its 'ovirtmgmt' by default on rhv4.0 and
         'rhevm' on older RHEVM versions.
@@ -274,31 +253,30 @@ def make_vm_from_template(api, cluster, temp_template_name, temp_vm_name, provid
         temp_vm_name: temporary vm name to be created.
         provider: provider_key
     """
+    cores = cfme_data['template_upload']['hardware'][stream]['cores']
+    sockets = cfme_data['template_upload']['hardware'][stream]['sockets']
+    vm_memory = cfme_data['template_upload']['hardware'][stream]['memory'] * 1024 * 1024 * 1024
+
     try:
-        if api.vms.get(temp_vm_name) is not None:
+        if mgmt.does_vm_exist(temp_vm_name):
             logger.info("RHEVM:%r Warning: found another VM with this name (%r).",
                         provider, temp_vm_name)
             logger.info("RHEVM:%r Skipping this step, attempting to continue...", provider)
             return
-        actual_template = api.templates.get(temp_template_name)
-        actual_cluster = api.clusters.get(cluster)
-        params_vm = params.VM(name=temp_vm_name, template=actual_template, cluster=actual_cluster)
-        api.vms.add(params_vm)
 
-        # we must wait for the vm do become available
-        def check_status():
-            return api.vms.get(temp_vm_name).get_status().state == 'down'
+        mgmt.deploy_template(
+            temp_template_name,
+            vm_name=temp_vm_name,
+            cluster=cluster,
+            cpu=cores,
+            sockets=sockets,
+            ram=vm_memory
+        )
 
-        wait_for(check_status, fail_condition=False, delay=5, num_sec=240)
         if mgmt_network:
-            vm = api.vms.get(temp_vm_name)
-            nic = vm.nics.get('eth0')
-            nic.network = params.Network(
-                name=mgmt_network)
-            nic.interface = 'virtio'
-            nic.update()
+            mgmt.update_vm_nic(temp_vm_name, mgmt_network)
         # check, if the vm is really there
-        if not api.vms.get(temp_vm_name):
+        if not mgmt.does_vm_exist(temp_vm_name):
             logger.error("RHEVM:%r temp VM could not be provisioned", provider)
             sys.exit(127)
         logger.info("RHEVM:%r successfully provisioned temp vm", provider)
@@ -307,11 +285,13 @@ def make_vm_from_template(api, cluster, temp_template_name, temp_vm_name, provid
 
 
 def check_disks(api, temp_vm_name):
-    disks = api.vms.get(temp_vm_name).disks.list()
-    for disk in disks:
-        if disk.get_status().state != "ok":
-            return False
-    return True
+    # This code should be ported to wrapanapi
+    # disks = api.vms.get(temp_vm_name).disks.list()
+    # for disk in disks:
+    #     if disk.get_status().state != "ok":
+    #         return False
+    # return True
+    raise NotImplementedError
 
 
 # sometimes, rhevm is just not cooperative. This is function used to wait for template on
@@ -325,13 +305,14 @@ def check_edomain_template(api, edomain, temp_template_name):
     :param edomain: export domain.
     :return: True or False based on the template status.
     '''
-    try:
-        template = api.storagedomains.get(edomain).templates.get(temp_template_name)
-        if template.get_status().state != "ok":
-            return False
-        return True
-    except Exception:
-        return False
+    # try:
+    #     template = api.storagedomains.get(edomain).templates.get(temp_template_name)
+    #     if template.get_status().state != "ok":
+    #         return False
+    #     return True
+    # except Exception:
+    #     return False
+    raise NotImplementedError
 
 
 # verify the template deletion
@@ -339,33 +320,32 @@ def is_edomain_template_deleted(api, name, edomain):
     return not api.storagedomains.get(edomain).templates.get(name)
 
 
-def add_disk_to_vm(api, sdomain, disk_size, disk_format, disk_interface, temp_vm_name,
+def add_disk_to_vm(mgmt, sdomain, disk_size, disk_format, disk_interface, temp_vm_name,
                    provider):
     """Adds second disk to a temporary VM.
 
     Args:
-        api: API to chosen RHEVM provider.
+        mgmt: API to chosen RHEVM provider.
         sdomain: Storage domain to save new disk onto.
         disk_size: Size of the new disk (in B).
         disk_format: Format of the new disk.
         disk_interface: Interface of the new disk.
     """
     try:
-        if len(api.vms.get(temp_vm_name).disks.list()) > 1:
+        if mgmt.get_vm_disks_count(temp_vm_name) > 1:
             logger.info("RHEVM:%r Warning: found more than one disk in existing VM (%r).",
                     provider, temp_vm_name)
             logger.info("RHEVM:%r Skipping this step, attempting to continue...", provider)
             return
-        actual_sdomain = api.storagedomains.get(sdomain)
-        temp_vm = api.vms.get(temp_vm_name)
-        params_disk = params.Disk(storage_domain=actual_sdomain, size=disk_size,
-                                  interface=disk_interface, format=disk_format)
-        temp_vm.disks.add(params_disk)
-
-        wait_for(check_disks, [api, temp_vm_name], fail_condition=False, delay=5, num_sec=900)
-
+        mgmt.add_disk_to_vm(
+            temp_vm_name,
+            storage_domain=sdomain,
+            size=disk_size,
+            interface=disk_interface,
+            format=disk_format
+        )
         # check, if there are two disks
-        if len(api.vms.get(temp_vm_name).disks.list()) < 2:
+        if mgmt.get_vm_disks_count(temp_vm_name) < 2:
             logger.error("RHEVM:%r Disk failed to add", provider)
             sys.exit(127)
         logger.info("RHEVM:%r Successfully added disk", provider)
@@ -373,29 +353,28 @@ def add_disk_to_vm(api, sdomain, disk_size, disk_format, disk_interface, temp_vm
         logger.exception("RHEVM:%r add_disk_to_temp_vm failed:", provider)
 
 
-def templatize_vm(api, template_name, cluster, temp_vm_name, provider):
+def templatize_vm(mgmt, template_name, cluster, temp_vm_name, provider):
     """Templatizes temporary VM. Result is template with two disks.
 
     Args:
-        api: API to chosen RHEVM provider.
+        mgmt: A ``RHEVMSystem`` instance from wrapanapi.
         template_name: Name of the final template.
         cluster: Cluster to save the final template onto.
     """
     try:
-        if api.templates.get(template_name) is not None:
+        if mgmt.does_template_exist(template_name):
             logger.info("RHEVM:%r Warning: found finished template with this name (%r).",
                     provider, template_name)
             logger.info("RHEVM:%r Skipping this step, attempting to continue", provider)
             return
-        temporary_vm = api.vms.get(temp_vm_name)
-        actual_cluster = api.clusters.get(cluster)
-        new_template = params.Template(name=template_name, vm=temporary_vm, cluster=actual_cluster)
-        api.templates.add(new_template)
-
-        wait_for(check_disks, [api, temp_vm_name], fail_condition=False, delay=5, num_sec=900)
-
+        mgmt.mark_as_template(
+            temp_vm_name,
+            temporary_name=template_name,
+            cluster=cluster,
+            delete=False
+        )
         # check, if template is really there
-        if not api.templates.get(template_name):
+        if not mgmt.does_template_exist(template_name):
             logger.error("RHEVM:%r templatizing temporary VM failed", provider)
             sys.exit(127)
         logger.info("RHEVM:%r successfully templatized the temporary VM", provider)
@@ -405,10 +384,12 @@ def templatize_vm(api, template_name, cluster, temp_vm_name, provider):
 
 # get the domain edomain path on the rhevm
 def get_edomain_path(api, edomain):
-    edomain_id = api.storagedomains.get(edomain).get_id()
-    edomain_conn = api.storagedomains.get(edomain).storageconnections.list()[0]
-    return (edomain_conn.get_path() + '/' + edomain_id,
-            edomain_conn.get_address())
+    # This code should be ported to wrapanapi
+    # edomain_id = api.storagedomains.get(edomain).get_id()
+    # edomain_conn = api.storagedomains.get(edomain).storageconnections.list()[0]
+    # return (edomain_conn.get_path() + '/' + edomain_id,
+    #         edomain_conn.get_address())
+    raise NotImplementedError
 
 
 def cleanup_empty_dir_on_edomain(path, edomainip, sshname, sshpass, provider_ip, provider):
@@ -517,13 +498,15 @@ def get_edomain(api):
     Args:
         api: API to RHEVM instance.
     """
-    edomain_names = []
+    # This code should be ported to wrapanapi
+    # edomain_names = []
 
-    for domain in api.storagedomains.list(status=None):
-        if domain.get_type() == 'export':
-            edomain_names.append(domain.get_name())
+    # for domain in api.storagedomains.list(status=None):
+    #     if domain.get_type() == 'export':
+    #         edomain_names.append(domain.get_name())
 
-    return api_params_resolution(edomain_names, 'export domain', 'edomain')
+    # return api_params_resolution(edomain_names, 'export domain', 'edomain')
+    raise NotImplementedError
 
 
 def get_sdomain(api):
@@ -532,13 +515,15 @@ def get_sdomain(api):
     Args:
         api: API to RHEVM instance.
     """
-    sdomain_names = []
+    # This code should be ported to wrapanapi
+    # sdomain_names = []
 
-    for domain in api.storagedomains.list(status=None):
-        if domain.get_type() == 'data':
-            sdomain_names.append(domain.get_name())
+    # for domain in api.storagedomains.list(status=None):
+    #     if domain.get_type() == 'data':
+    #         sdomain_names.append(domain.get_name())
 
-    return api_params_resolution(sdomain_names, 'storage domain', 'sdomain')
+    # return api_params_resolution(sdomain_names, 'storage domain', 'sdomain')
+    raise NotImplementedError
 
 
 def get_cluster(api):
@@ -547,14 +532,16 @@ def get_cluster(api):
     Args:
         api: API to RHEVM instance.
     """
-    cluster_names = []
+    # This code should be ported to wrapanapi
+    # cluster_names = []
 
-    for cluster in api.clusters.list():
-        for host in api.hosts.list():
-            if host.get_cluster().id == cluster.id:
-                cluster_names.append(cluster.get_name())
+    # for cluster in api.clusters.list():
+    #     for host in api.hosts.list():
+    #         if host.get_cluster().id == cluster.id:
+    #             cluster_names.append(cluster.get_name())
 
-    return api_params_resolution(cluster_names, 'cluster', 'cluster')
+    # return api_params_resolution(cluster_names, 'cluster', 'cluster')
+    raise NotImplementedError
 
 
 def check_kwargs(**kwargs):
@@ -735,10 +722,10 @@ def run(**kwargs):
     valid_providers = []
 
     providers = list_provider_keys("rhevm")
-    if kwargs['provider_data']:
+    if kwargs.get('provider_data'):
         mgmt_sys = providers = kwargs['provider_data']['management_systems']
     for provider in providers:
-        if kwargs['provider_data']:
+        if kwargs.get('provider_data'):
             if mgmt_sys[provider]['type'] != 'rhevm':
                 continue
             sshname = mgmt_sys[provider]['sshname']
@@ -765,7 +752,7 @@ def run(**kwargs):
         valid_providers.append(provider)
 
     for provider in valid_providers:
-        if kwargs['provider_data']:
+        if kwargs.get('provider_data'):
             sshname = mgmt_sys[provider]['sshname']
             sshpass = mgmt_sys[provider]['sshpass']
             username = mgmt_sys[provider]['username']
@@ -777,12 +764,12 @@ def run(**kwargs):
             rhevm_credentials = mgmt_sys[provider]['credentials']
             username = credentials[rhevm_credentials]['username']
             password = credentials[rhevm_credentials]['password']
-
         rhevip = mgmt_sys[provider]['ipaddress']
         thread = Thread(target=upload_template,
                         args=(rhevip, sshname, sshpass, username, password, provider,
                               kwargs.get('image_url'), kwargs.get('template_name'),
-                              kwargs['provider_data'], kwargs['stream']))
+                              kwargs.get('provider_data'), kwargs['stream'],
+                              kwargs['glance']))
         thread.daemon = True
         thread_queue.append(thread)
         thread.start()
