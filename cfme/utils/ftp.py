@@ -8,10 +8,8 @@ import ftplib
 import re
 from datetime import datetime
 from time import strptime, mktime
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
+# py3k todo: crosscheck the stringio type
+from io import StringIO
 
 
 class FTPException(Exception):

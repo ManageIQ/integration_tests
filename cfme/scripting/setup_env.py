@@ -4,12 +4,12 @@ import sys
 
 from cfme.test_framework.sprout.client import SproutClient
 from collections import namedtuple
-from cfme.utils.conf import credentials, cfme_data
+from cfme.utils.conf import credentials
 from cfme.utils.appliance import IPAppliance
 from wait_for import wait_for
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
-pwd = credentials['database']['password']
+pwd = None
 
 
 def tot_time(string):
@@ -32,7 +32,8 @@ def provision_appliances(count, cfme_version, provider_type, provider, lease_tim
 @click.group(help='Commands to set up appliance environments with version arg and lease option')
 def main():
     """Main setup-env group"""
-    pass
+    global pwd  # hack
+    pwd = credentials['database']['password']
 
 
 @main.command('distributed', help='Sets up distributed environment')
