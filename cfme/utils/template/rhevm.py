@@ -7,7 +7,10 @@ import re
 from fauxfactory import gen_alphanumeric
 from glanceclient import Client
 from keystoneauth1 import session, loading
-from ovirtsdk.xml import params
+try:
+    from ovirtsdk.xml import params
+except ImportError:
+    pass
 
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger
