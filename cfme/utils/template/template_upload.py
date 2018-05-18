@@ -4,41 +4,26 @@ from threading import Thread
 
 import cfme.utils.conf
 from cfme.utils import path, trackerbot
-from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.providers import list_provider_keys
-from cfme.utils.template.base import TemplateUploadException
-from cfme.utils.template.ec2 import EC2TemplateUpload
-from cfme.utils.template.gce import GoogleCloudTemplateUpload
-from cfme.utils.template.openstack import OpenstackTemplateUpload
-from cfme.utils.template.scvmm import SCVMMTemplateUpload
-from cfme.utils.template.virtualcenter import VMWareTemplateUpload
-from cfme.utils.template.openshift import OpenshiftTemplateUpload
+from .base import TemplateUploadException
+from .ec2 import EC2TemplateUpload
+from .gce import GoogleCloudTemplateUpload
+from .openstack import OpenstackTemplateUpload
+from .scvmm import SCVMMTemplateUpload
+from .virtualcenter import VMWareTemplateUpload
+from .openshift import OpenshiftTemplateUpload
 
 add_stdout_handler(logger)
 PROVIDER_TYPES = ['openstack', 'virtualcenter', 'scvmm', 'gce', 'ec2', 'openshift']
-ALL_STREAMS = cfme_data['basic_info']['cfme_images_url']
-
-
-class TemplateUpload(object):
-    def factory(self, type_, *args, **kwargs):
-        if type_ == 'openstack':
-            return OpenstackTemplateUpload(*args, **kwargs)
-
-        if type_ == 'virtualcenter':
-            return VMWareTemplateUpload(*args, **kwargs)
-
-        if type_ == 'scvmm':
-            return SCVMMTemplateUpload(*args, **kwargs)
-
-        if type_ == 'gce':
-            return GoogleCloudTemplateUpload(*args, **kwargs)
-
-        if type_ == 'ec2':
-            return EC2TemplateUpload(*args, **kwargs)
-
-        if type_ == 'openshift':
-            return OpenshiftTemplateUpload(*args, **kwargs)
+UPLOADERS = {
+    'openstack': OpenstackTemplateUpload,
+    'virtualcenter': VMWareTemplateUpload,
+    'scvmm': SCVMMTemplateUpload,
+    'gce': GoogleCloudTemplateUpload,
+    'ec2': EC2TemplateUpload,
+    'openshift': OpenshiftTemplateUpload,
+}
 
 
 def parse_cmd_line():
@@ -76,9 +61,10 @@ def parse_cmd_line():
     return parser.parse_known_args()
 
 
-def get_image_url(stream, upload_url):
-    if stream in ALL_STREAMS:
-        image_url = ALL_STREAMS[stream]
+def get_image_url(stream, upload_url, streams=None):
+    streams = maybe_get_streams_from_config(streams)
+    if stream in streams:
+        image_url = streams[stream]
     elif upload_url:
         image_url = upload_url
     else:
@@ -107,15 +93,22 @@ def check_args(cmd_args):
     return True
 
 
-if __name__ == '__main__':
+def maybe_get_streams_from_config(given):
+    if given is not None:
+        return given
+
+    from cfme.utils.conf import cfme_data
+    return cfme_data['basic_info']['cfme_images_url']
+
+
+def main():
+
     cmd_line_args = parse_cmd_line()
     cmd_args = cmd_line_args[0]
     specific_args = cmd_line_args[1]
 
     if not check_args(cmd_args):
         sys.exit(1)
-
-    template_upload = TemplateUpload()
 
     provider_data = prepare_provider_data(cmd_args.provider_data)
 
@@ -139,11 +132,11 @@ if __name__ == '__main__':
     elif stream:
         streams = cmd_args.stream
     else:
-        streams = ALL_STREAMS
+        streams = maybe_get_streams_from_config(None)
 
     thread_queue = []
     for stream in streams:
-        stream_url = ALL_STREAMS.get(stream)
+        stream_url = maybe_get_streams_from_config(None).get(stream)
         image_url = cmd_args.image_url
 
         if not cmd_args.template_name:
@@ -168,7 +161,7 @@ if __name__ == '__main__':
                 template_kwargs = {
                     'stream': stream,
                     'stream_url': stream_url,
-                    'image_url': cmd_args.image_url,
+                    'image_url': image_url,
                     'template_name': template_name,
                     'provider_data': provider_data,
                     'provider': provider,
@@ -176,7 +169,7 @@ if __name__ == '__main__':
                 }
 
                 # Using factory to obtain needed class
-                uploader = template_upload.factory(provider_type, **template_kwargs)
+                uploader = UPLOADERS[provider_type](**template_kwargs)
 
                 if uploader.template_upload_data.get('block_upload'):
                     logger.info("{}:{} Skipped due to block upload.".format(
@@ -190,3 +183,7 @@ if __name__ == '__main__':
 
     for thread in thread_queue:
         thread.join()
+
+
+if __name__ == '__main__':
+    main()
