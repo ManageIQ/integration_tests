@@ -2,7 +2,7 @@ import argparse
 import json
 import re
 import six.moves.urllib.parse
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 from collections import defaultdict, namedtuple
 from datetime import date, datetime
 
@@ -391,7 +391,7 @@ def composite_uncollect(build, source='jenkins'):
     """Composite build function"""
     since = env.get('ts', time.time())
     url = "{0}?build={1}&source={2}&since={3}".format(
-        conf['ostriz'], urllib.quote(build), urllib.quote(source), urllib.quote(since))
+        conf['ostriz'], six.moves.urllib.parse.quote(build), six.moves.urllib.parse.quote(source), six.moves.urllib.parse.quote(since))
     try:
         resp = requests.get(url, timeout=10)
         return resp.json()

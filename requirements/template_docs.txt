@@ -5,6 +5,7 @@
 manageiq-client
 miq_version
 
+python-glanceclient
 
 # https://github.com/Azure/azure-cosmosdb-python/issues/24
 --no-binary azure-cosmosdb-python

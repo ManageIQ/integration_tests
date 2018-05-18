@@ -1,6 +1,8 @@
 import os
 import re
-import urllib2
+import six.moves.urllib.request
+import six.moves.urllib.error
+import six.moves.urllib.parse
 
 from cfme.utils.log import logger
 from cfme.utils.template.base import ProviderTemplateUpload, log_wrap
@@ -32,7 +34,7 @@ class EC2TemplateUpload(ProviderTemplateUpload):
     @log_wrap("download image")
     def download_image(self):
         try:
-            u = urllib2.urlopen(self.image_url)
+            u = six.moves.urllib.request.urlopen(self.image_url)
             meta = u.info()
             file_size = int(meta.getheaders("Content-Length")[0])
 
