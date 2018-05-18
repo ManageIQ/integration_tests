@@ -16,7 +16,7 @@ from cfme.common.provider_views import (
 from cfme.exceptions import DestinationNotFound
 from cfme.infrastructure.cluster import ClusterView, ClusterToolbar
 from cfme.infrastructure.host import Host
-from cfme.infrastructure.virtual_machines import InfraVm
+from cfme.infrastructure.virtual_machines import InfraVm, InfraTemplate
 from cfme.modeling.base import BaseCollection
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -66,6 +66,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     SNAPSHOT_TITLE = 'name'  # attribute of the provider vm's snapshots used for the title
     provider_types = {}
     vm_class = InfraVm
+    template_class = InfraTemplate
     category = "infra"
     pretty_attrs = ['name', 'key', 'zone']
     string_name = "Infrastructure"

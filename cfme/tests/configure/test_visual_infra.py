@@ -186,7 +186,6 @@ def test_infra_list_page_per_item(appliance, request, page, value, set_list):
     assert int(max_item) <= int(item_amt)
 
 
-@pytest.mark.meta(blockers=[1267148, 1273529])
 def test_infra_report_page_per_item(appliance, value, set_report):
     """ Tests report items per page
 
@@ -201,6 +200,10 @@ def test_infra_report_page_per_item(appliance, value, set_report):
         menu_name='VMs Snapshot Summary'
     )
     view = navigate_to(report, 'Details')
+    # FIXME no paginator displayed on Report Info screen
+    # either nav to saved reports via tab, or instantiate a saved report
+    if not view.paginator.is_displayed:
+        pytest.fail('Paginator is not displayed on report details page')
     max_item = view.paginator.max_item
     item_amt = view.paginator.items_amount
     if int(item_amt) >= int(limit):

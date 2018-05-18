@@ -14,27 +14,27 @@ pytestmark = [
 ]
 
 
-# tuples of (collection_name, param_class, destination)
+# tuples of (collection_name, destination)
 # get_collection_entity below processes these to navigate and find an entity
 # so use (collection_name, None, None) if the thing being tested uses BaseEntity/BaseCollection
 # Once everything is converted these should be flattened to just collection names list
 infra_test_items = [
-    ('infra_provider', InfraProvider, None),
-    ('infra_vms', None, None),
-    ('infra_templates', None, None),
-    ('hosts', None, None),
-    ('clusters', None, None),
-    ('datastores', None, None)
+    ('infra_provider', None),  # no param_class needed, provider returned directly
+    ('infra_vms', 'ProviderVms'),
+    ('infra_templates', 'ProviderTemplates'),
+    ('hosts', None),
+    ('clusters', None),
+    ('datastores', None)
 ]
 
 cloud_test_items = [
-    ('cloud_provider', CloudProvider, None),
-    ('cloud_instances', None, None),
-    ('cloud_flavors', None, None),
-    ('cloud_av_zones', None, None),
-    ('cloud_tenants', None, None),
-    ('cloud_keypairs', None, None),
-    ('cloud_images', None, None)
+    ('cloud_provider', None),  # no param_class needed, provider returned directly
+    ('cloud_instances', 'Instances'),
+    ('cloud_flavors', None),
+    ('cloud_av_zones', None),
+    ('cloud_tenants', None),
+    ('cloud_keypairs', None),
+    ('cloud_images', 'Images')
 ]
 
 
@@ -51,21 +51,16 @@ def cloud_provider(request):
     return setup_one_or_skip(request, filters=[prov_filter])
 
 
-def get_collection_entity(appliance, collection_name, param_class, destination, provider):
+def get_collection_entity(appliance, collection_name, destination, provider):
     if collection_name in ['infra_provider', 'cloud_provider']:
         return provider
-    if not param_class:
-        param_class = getattr(appliance.collections, collection_name)
-    view = navigate_to(provider, destination) if destination else navigate_to(param_class, 'All')
-    names = view.entities.entity_names
-    if names:
-        name = names[0]
     else:
-        pytest.skip("No content found for test")
-    try:
-        return param_class.instantiate(name=name, provider=provider)
-    except AttributeError:
-        return param_class(name=name, provider=provider)
+        collection = getattr(appliance.collections, collection_name)
+        view = navigate_to(provider, destination) if destination else navigate_to(collection, 'All')
+        names = view.entities.entity_names
+        if not names:
+            pytest.skip("No content found for test")
+        return collection.instantiate(name=names[0], provider=provider)
 
 
 def _tag_cleanup(test_item, tag):
@@ -85,17 +80,17 @@ def _tag_cleanup(test_item, tag):
 @pytest.fixture(params=cloud_test_items, ids=([item[0] for item in cloud_test_items]),
                 scope='module')
 def cloud_test_item(request, appliance, cloud_provider):
-    collection_name, param_class, destination = request.param
+    collection_name, destination = request.param
     return get_collection_entity(
-        appliance, collection_name, param_class, destination, cloud_provider)
+        appliance, collection_name, destination, cloud_provider)
 
 
 @pytest.fixture(params=infra_test_items, ids=[item[0] for item in infra_test_items],
                 scope='module')
 def infra_test_item(request, appliance, infra_provider):
-    collection_name, param_class, destination = request.param
+    collection_name, destination = request.param
     return get_collection_entity(
-        appliance, collection_name, param_class, destination, infra_provider)
+        appliance, collection_name, destination, infra_provider)
 
 
 @pytest.fixture(scope='function')

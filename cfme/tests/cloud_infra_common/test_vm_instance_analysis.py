@@ -123,7 +123,7 @@ def vm_analysis_provisioning_data(provider, analysis_type):
         provisioning_data.setdefault('cloud_network', vma_data.provisioning.cloud_network)
 
     # If defined, tries to find cluster from provisioning, then provider definition itself
-    if provider.type == 'rhevm':
+    if provider.one_of(RHEVMProvider):
         provider_data = provider.data
         if 'cluster' not in provisioning_data and 'cluster' not in provider_data.provisioning:
             provisioning_data.cluster = provider_data.default_cluster

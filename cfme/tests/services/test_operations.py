@@ -6,6 +6,8 @@ from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import browser
 from cfme.utils.wait import wait_for
@@ -23,13 +25,8 @@ def a_provider(request):
 
 
 @pytest.fixture(scope="module")
-def provider_data(a_provider):
-    return a_provider.data
-
-
-@pytest.fixture(scope="module")
-def provisioning(provider_data):
-    return provider_data.get("provisioning", {})
+def provisioning(a_provider):
+    return a_provider.data.get("provisioning", {})
 
 
 @pytest.fixture(scope="module")
@@ -43,14 +40,15 @@ def vm_name():
 
 
 @pytest.fixture(scope="module")
-def generated_request(appliance,
-                      a_provider, provider_data, provisioning, template_name, vm_name):
+def generated_request(appliance, a_provider, provisioning, template_name, vm_name):
     """Creates a provision request, that is not automatically approved, and returns the search data.
 
     After finishing the test, request should be automatically deleted.
 
     Slightly modified code from :py:module:`cfme.tests.infrastructure.test_provisioning`
     """
+    if a_provider.one_of(RHEVMProvider) and provisioning.get('vlan') is None:
+        pytest.skip('rhevm requires a vlan value in provisioning info')
     first_name = fauxfactory.gen_alphanumeric()
     last_name = fauxfactory.gen_alphanumeric()
     notes = fauxfactory.gen_alphanumeric()
@@ -73,20 +71,19 @@ def generated_request(appliance,
         'environment':
             {'host_name': {'name': host},
              'datastore_name': {'name': datastore}},
+        'network':
+            {'vlan': partial_match(provisioning['vlan'])}
     }
 
     # Same thing, different names. :\
-    if provider_data["type"] == 'rhevm':
+    if a_provider.one_of(RHEVMProvider):
         provisioning_data['catalog']['provision_type'] = 'Native Clone'
-    elif provider_data["type"] == 'virtualcenter':
+    elif a_provider.one_of(VMwareProvider):
         provisioning_data['catalog']['provision_type'] = 'VMware'
 
-    try:
-        provisioning_data['network'] = {'vlan': partial_match(provisioning['vlan'])}
-    except KeyError:
-        # provisioning['vlan'] is required for rhevm provisioning
-        if provider_data["type"] == 'rhevm':
-            raise pytest.fail('rhevm requires a vlan value in provisioning info')
+    # template and provider names for template selection
+    provisioning_data['template_name'] = template_name
+    provisioning_data['provider_name'] = a_provider.name
 
     view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
     request_cells = {
