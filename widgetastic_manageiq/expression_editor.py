@@ -343,6 +343,28 @@ class ExpressionEditor(View, Pretty):
             self.click_commit()
 
 
+class GroupTagExpressionEditor(ExpressionEditor):
+
+    @View.nested
+    class tag_form_view(View):  # noqa
+        tag = BootstrapSelect("chosen_tag")
+        value = BootstrapSelect("chosen_value")
+
+    def fill_tag(self, tag=None, value=None):
+        """ Fills the 'Tag' type of form.
+
+        Args:
+            tag: Name of the field to compare.
+            value: Value to check against.
+        """
+        view = self.tag_form_view
+        view.fill(dict(
+            tag=tag,
+            value=value
+        ))
+        self.click_commit()
+
+
 def get_func(name, context):
     """ Return callable from this module by its name.
 

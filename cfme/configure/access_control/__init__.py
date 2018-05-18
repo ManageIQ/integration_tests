@@ -1,4 +1,6 @@
 import attr
+import six
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Checkbox, View, Text, ConditionalSwitchableView
@@ -7,7 +9,7 @@ from widgetastic_patternfly import (
     BootstrapSwitch, CandidateNotFound, Dropdown)
 from widgetastic_manageiq import (
     UpDownSelect, PaginationPane, SummaryFormItem, Table, BaseListEntity, SummaryForm)
-from widgetastic_manageiq.expression_editor import ExpressionEditor
+from widgetastic_manageiq.expression_editor import GroupTagExpressionEditor
 
 from cfme.base.credential import Credential
 from cfme.base.ui import ConfigurationView
@@ -434,13 +436,13 @@ class UserEdit(CFMENavigateStep):
 # RBAC GROUP METHODS
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-class MyCompatyTagsTreeView(View):
+class MyCompanyTagsTreeView(View):
     tree_locator = 'tags_treebox'
     tree = CbTree(tree_locator)
 
 
-class MyCompatyTagsExpressionView(View):
-    tag_expression = ExpressionEditor()
+class MyCompanyTagsExpressionView(View):
+    tag_expression = GroupTagExpressionEditor()
 
 
 class GroupForm(ConfigurationView):
@@ -466,8 +468,8 @@ class GroupForm(ConfigurationView):
         tag_mode = BootstrapSelect(id='use_filter_expression')
         tag_settings = ConditionalSwitchableView(reference='tag_mode')
 
-        tag_settings.register('Specific Tags', default=True, widget=MyCompatyTagsTreeView)
-        tag_settings.register('Tags Based On Expression', widget=MyCompatyTagsExpressionView)
+        tag_settings.register('Specific Tags', default=True, widget=MyCompanyTagsTreeView)
+        tag_settings.register('Tags Based On Expression', widget=MyCompanyTagsExpressionView)
 
     @View.nested
     class hosts_and_clusters(Tab):  # noqa
@@ -757,6 +759,10 @@ class Group(BaseEntity, Taggable):
         Args:
             tab_view: tab view
             item: path to check box that should be selected/deselected
+                ex. _set_group_restriction([patent, child], True)
+                or tags expression(string) to be set in My company tags in expression editor
+                ex. _set_group_restriction('fill_tag(My Company Tags : Auto Approve - Max CPU, 1)'),
+                    _set_group_restriction('delete_whole_expression')
             update: If True - checkbox state will be updated
 
         Returns: True - if update is successful
@@ -764,12 +770,17 @@ class Group(BaseEntity, Taggable):
         updated_result = False
         if item is not None:
             if update:
-                path, action_type = item
-                if isinstance(path, list):
-                    node = (tab_view.tree.CheckNode(path) if action_type else
-                            tab_view.tree.UncheckNode(path))
-                    tab_view.tree.fill(node)
-                updated_result = True
+                if isinstance(item, six.string_types):
+                    updated_result = tab_view.fill({
+                        'tag_mode': 'Tags Based On Expression',
+                        'tag_settings': {'tag_expression': item}})
+                else:
+                    path, action_type = item
+                    if isinstance(path, list):
+                        tree_view = getattr(tab_view, 'tag_settings', tab_view)
+                        node = (tree_view.tree.CheckNode(path) if action_type else
+                                tree_view.tree.UncheckNode(path))
+                        updated_result = tree_view.tree.fill(node)
         return updated_result
 
     @property
