@@ -166,14 +166,14 @@ def test_cloud_provision_from_template(provider, provisioned_instance):
                       override=True)
 def test_gce_preemptible_provision(appliance, provider, instance_args, soft_assert):
     vm_name, inst_args = instance_args
-    instance = appliance.collections.cloud_instances.create(
-        vm_name, form_values=inst_args)
+    instance = appliance.collections.cloud_instances.create(vm_name,
+                                                            provider,
+                                                            form_values=inst_args)
     instance.wait_to_appear(timeout=800)
     provider.refresh_provider_relationships()
     logger.info("Refreshing provider relationships and power states")
-    refresh_timer = RefreshTimer(time_for_refresh=300)
     wait_for(provider.is_refreshed,
-             [refresh_timer],
+             [RefreshTimer(time_for_refresh=300)],
              message="is_refreshed",
              num_sec=1000,
              delay=60,
