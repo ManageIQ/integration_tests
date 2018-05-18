@@ -40,6 +40,8 @@ class ConsoleMixin(object):
                 # FIXME: Add code to verify the tab has the correct widget
                 #      for a console tab.
                 return handle
+        else:
+            raise ValueError("Console handle should not be None")
 
     @property
     def vm_console(self):
@@ -47,9 +49,6 @@ class ConsoleMixin(object):
         the VMConsole object aside.
         """
         console_handle = self.console_handle(self.appliance.browser)
-
-        if console_handle is None:
-            raise TypeError("Console handle should not be None")
 
         appliance_handle = self.appliance.browser.widgetastic.window_handle
         logger.info("Creating VMConsole:")
