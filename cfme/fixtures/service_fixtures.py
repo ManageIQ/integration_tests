@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 import pytest
+
+from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
+from cfme.cloud.provider.gce import GCEProvider
+from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.rest.gen_data import dialog as _dialog
@@ -52,12 +56,31 @@ def create_catalog_item(appliance, provider, provisioning, dialog, catalog,
         provisioning_data = {
             'catalog': {'catalog_name': {'name': catalog_name, 'provider': provider.name},
                         'vm_name': random_vm_name('serv-fixt')},
-            'properties': {'instance_type': partial_match(provisioning['instance_type']),
-                           'guest_keypair': provisioning['guest_keypair'],
-                           'boot_disk_size': provisioning.get('boot_disk_size', None)},
-            'environment': {'availability_zone': provisioning['availability_zone'],
-                            'cloud_network': provisioning['cloud_network']}
+            'properties': {'instance_type': partial_match(provisioning.get('instance_type', None)),
+                           'guest_keypair': provisioning.get('guest_keypair', None)},
+            'environment': {
+                'availability_zone': provisioning.get('availability_zone', None),
+                'security_groups': [provisioning.get('security_group', None)],
+                'cloud_tenant': provisioning.get('cloud_tenant', None),
+                'cloud_network': provisioning.get('cloud_network', None),
+                'cloud_subnet': provisioning.get('cloud_subnet', None),
+                'resource_groups': provisioning.get('resource_group', None)
+            },
         }
+        # Azure specific
+        if provider.one_of(AzureProvider):
+            recursive_update(provisioning_data, {'customize': {
+                'admin_username': provisioning['customize_username'],
+                'root_password': provisioning['customize_password']},
+            })
+        # GCE specific
+        if provider.one_of(GCEProvider):
+            recursive_update(provisioning_data, {
+                'properties': {
+                    'boot_disk_size': provisioning['boot_disk_size'],
+                    'is_preemptible': True}
+            })
+
     catalog_item = appliance.collections.catalog_items.create(
         provider.catalog_item_type, name=item_name,
         description="my catalog", display_in=True, catalog=catalog,
