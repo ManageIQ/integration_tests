@@ -13,7 +13,7 @@ from cfme.utils.ssh import SSHClient
 # Overrides
 try:
     from ovirtsdk.xml import params
-except ImportError:
+except (ImportError, SyntaxError):
     # there is a hack in place to survive this missing in wrapanapi itself
     pass
 

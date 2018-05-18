@@ -85,7 +85,7 @@ class ProviderFilter(object):
         """ Filters by provider (base) classes """
         if self.classes is None:
             return None
-        return any([provider.one_of(prov_class) for prov_class in self.classes])
+        return any(provider.one_of(prov_class) for prov_class in self.classes)
 
     def _filter_required_fields(self, provider):
         """ Filters by required yaml fields (specified usually during test parametrization) """
@@ -254,7 +254,7 @@ def list_providers(filters=None, use_global_filters=True):
         filters = filters + list(global_filters.values())
     providers = [get_crud(prov_key) for prov_key in providers_data]
     for prov_filter in filters:
-        providers = filter(prov_filter, providers)
+        providers = list(filter(prov_filter, providers))
     return providers
 
 

@@ -42,5 +42,5 @@ def fixture_filter(metafunc, argnames, argvalues):
 
     # Generate the new values
     argnames = f(argnames)
-    argvalues = map(f, argvalues)
+    argvalues = list(map(f, argvalues))
     return argnames, argvalues

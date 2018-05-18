@@ -377,7 +377,7 @@ class CFMENavigateStep(NavigateStep):
         try:
             self.pre_badness_check(_tries, *args, **go_kwargs)
             self.log_message(
-                "Invoking {}, with {} and {}".format(fn.func_name, args, kwargs), level="debug")
+                "Invoking {}, with {} and {}".format(fn.__name__, args, kwargs), level="debug")
             return fn(*args, **kwargs)
         except (KeyboardInterrupt, ValueError):
             # KeyboardInterrupt: Don't block this while navigating

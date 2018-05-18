@@ -77,7 +77,7 @@ class Wharf(object):
         if self.docker_id is not None:
             return self.docker_id
         checkout = self._get('checkout')
-        self.docker_id, self.config = checkout.items()[0]
+        self.docker_id, self.config = next(iter(checkout.items()))
         self._start_renew_thread()
         log.info('Checked out webdriver container %s', self.docker_id)
         log.debug("%r", checkout)
@@ -335,14 +335,14 @@ class WithZoom(object):
 
     def __enter__(self, *args, **kwargs):
         ac = ActionChains(browser())
-        for _ in xrange(abs(self._level)):
+        for _ in range(abs(self._level)):
             ac.send_keys(keys.Keys.CONTROL,
                          keys.Keys.SUBTRACT if self._level < 0 else keys.Keys.ADD)
         ac.perform()
 
     def __exit__(self, *args, **kwargs):
         ac = ActionChains(browser())
-        for _ in xrange(abs(self._level)):
+        for _ in range(abs(self._level)):
             ac.send_keys(keys.Keys.CONTROL,
                          keys.Keys.SUBTRACT if -self._level < 0 else keys.Keys.ADD)
         ac.perform()

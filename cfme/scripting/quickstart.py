@@ -325,6 +325,8 @@ def install_requirements(venv_path, quiet=False):
         'pip', 'install',
         '-r', REQUIREMENT_FILE,
         '--no-binary', 'pycurl',
+        # needed until https://github.com/Azure/azure-cosmosdb-python/pull/23 is released
+        '--no-binary', 'azure-cosmosdb-table',
         *(['-q'] if quiet else []), long_running=quiet)
 
     with open(remember_file, 'w') as fp:

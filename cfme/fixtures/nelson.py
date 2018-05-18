@@ -10,6 +10,8 @@ from sphinx.ext.napoleon import docstring
 from sphinx.ext.napoleon.docstring import NumpyDocstring
 import sphinx
 import yaml
+import six
+import pytest
 
 from cfme.utils.log import get_rel_path, logger
 
@@ -28,12 +30,14 @@ def pytest_collection_modifyitems(items):
         item_class = item.location[0]
         item_class = item_class[:item_class.rfind('.')].replace('/', '.')
         item_name = item.location[2]
-        item_param = re.findall('\.*(\[.*\])', item_name)
+        item_param = re.findall(r'\.*(\[.*\])', item_name)
         if item_param:
             item_name = item_name.replace(item_param[0], '')
         node_name = '{}.{}'.format(item_class, item_name)
         output[node_name] = {}
-        output[node_name]['docstring'] = base64.b64encode(getattr(item.function, '__doc__') or '')
+        docstring = getattr(item.function, '__doc__') or ''
+        output[node_name]['docstring'] = base64.b64encode(
+            docstring if six.PY2 else docstring.encode('utf-8'))
         output[node_name]['name'] = item_name
 
         # This is necessary to convert AttrDict in metadata, or even metadict(previously)
@@ -52,19 +56,15 @@ def pytest_collection_modifyitems(items):
 
 def pytest_pycollect_makeitem(collector, name, obj):
     """pytest hook that adds docstring metadata (if found) to a test's meta mark"""
-    if not isinstance(obj, FunctionType) and not hasattr(obj, 'meta'):
-        # This relies on the meta mark having already been applied to
-        # all test functions before this hook is called
+    if not isinstance(obj, FunctionType):
         return
 
     # __doc__ can be empty or nonexistent, make sure it's an empty string in that case
     metadata = get_meta(obj)
-
-    if not hasattr(obj.meta, 'kwargs'):
-        obj.meta.kwargs = dict()
-    obj.meta.kwargs.update({
-        'from_docs': metadata
-    })
+    # this is just bad - apply the marks better once we go pytest 3.6+
+    # ideally we would check a FunctionDefinition, but pytest isnt there yet
+    # sw we have to rely on a working solution
+    pytest.mark.meta(from_docs=metadata)(obj)
     if metadata:
         test_path = get_rel_path(collector.fspath)
         logger.debug('Parsed docstring metadata on {} in {}'.format(name, test_path))
