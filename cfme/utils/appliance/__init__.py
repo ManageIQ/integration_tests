@@ -2445,10 +2445,7 @@ class Appliance(IPAppliance):
             def is_ip_available():
                 try:
                     ip = provider.mgmt.get_ip_address(vm_name)
-                    if ip is None:
-                        return False
-                    else:
-                        return ip
+                    return ip or False  # get_ip_address might return None
                 except AttributeError:
                     return False
             ec, tc = wait_for(is_ip_available,
