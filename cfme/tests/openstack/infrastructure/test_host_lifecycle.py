@@ -46,14 +46,26 @@ def test_scale_provider_down(provider, host, has_mistral_service):
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
     host.browser.refresh()
     view = navigate_to(host, 'Details')
+    wait_for(
+        lambda: view.entities.summary('Properties').get_text_of('Maintenance Mode') ==
+        'Enabled', delay=15, timeout=300,
+        message="Maintenance Mode of host {} becomes Enabled".format(host.name),
+        fail_func=host.browser.refresh)
     assert view.entities.summary('Properties').get_text_of('Maintenance Mode') == 'Enabled'
     provider.scale_down()
     wait_for(lambda: provider.mgmt.iapi.node.get(host_uuid).provision_state == 'available', delay=5,
              timeout=1200)
-    wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
     host.name = host_uuid  # host's name is changed after scale down
     host.browser.refresh()
+    wait_for(lambda: host.exists, delay=15, timeout=600,
+             message="Hostname changed to {} after scale down".format(host.name),
+             fail_func=provider.browser.refresh)
     view = navigate_to(host, 'Details')
+    wait_for(
+        lambda: view.entities.summary('Openstack Hardware').get_text_of('Provisioning State') ==
+        'available', delay=15, timeout=600,
+        message="Provisioning State of host {} is available".format(host.name),
+        fail_func=host.browser.refresh)
     prov_state = view.entities.summary('Openstack Hardware').get_text_of('Provisioning State')
     assert prov_state == 'available'
 
@@ -87,7 +99,10 @@ def test_register_host(provider, host, has_mistral_service):
     for h in hosts_after:
         if h not in hosts_before:
             host.name = h
-    wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+    wait_for(lambda: host.exists, delay=15, timeout=600,
+             message="Host {} become visible".format(host.name),
+             fail_func=provider.browser.refresh)
+
     assert host.exists
 
 
@@ -101,6 +116,10 @@ def test_introspect_host(host, provider, has_mistral_service):
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
     host.browser.refresh()
     view = navigate_to(host, 'Details')
+    wait_for(
+        lambda: view.entities.summary('Openstack Hardware').get_text_of('Introspected') ==
+        'true', delay=15, timeout=600, fail_func=host.browser.refresh,
+        message="Introspected state of host {} is true".format(host.name))
     assert view.entities.summary('Openstack Hardware').get_text_of('Introspected') == 'true'
 
 
