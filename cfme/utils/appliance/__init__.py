@@ -2456,7 +2456,7 @@ class Appliance(IPAppliance):
                               num_sec=600)
             app_kwargs['hostname'] = str(ec)
 
-        if isinstance(provider, OpenshiftProvider):
+        if provider.one_of(OpenshiftProvider):
             # there should also be present appliance hostname, container, db_host
             provider_creds = conf.credentials[provider.provider_data['credentials']]
             ssh_creds = conf.credentials[provider.provider_data['ssh_creds']]
