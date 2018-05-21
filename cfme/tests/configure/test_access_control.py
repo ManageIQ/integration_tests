@@ -115,7 +115,7 @@ def test_user_assign_multiple_groups(appliance, request, group_collection):
     group_names = [
         'EvmGroup-user', 'EvmGroup-administrator', 'EvmGroup-user_self_service', 'EvmGroup-desktop']
 
-    group_list = [group_collection.instantiate(description=names) for names in group_names]
+    group_list = [group_collection.instantiate(description=name) for name in group_names]
 
     user = new_user(appliance, groups=group_list)
 
@@ -128,6 +128,35 @@ def test_user_assign_multiple_groups(appliance, request, group_collection):
         assert set(assigned_groups) == set(group_names), (
             "User {} assigned groups {} are different from expected groups {}"
             .format(user, view.group_names, group_names))
+
+
+@pytest.mark.tier(2)
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+def test_user_change_groups(appliance, group_collection):
+    """Assign a user to multiple groups and confirm that the user can successfully change groups
+    """
+    group_names = [
+        'EvmGroup-super_administrator', 'EvmGroup-administrator', 'EvmGroup-approver',
+        'EvmGroup-auditor', 'EvmGroup-desktop', 'EvmGroup-operator',
+        'EvmGroup-security', 'EvmGroup-user', 'EvmGroup-vm_user', ]
+
+    group_list = [group_collection.instantiate(description=name) for name in group_names]
+
+    test_user = new_user(appliance, groups=group_list)
+    with test_user:
+        view = navigate_to(appliance.server, 'LoggedIn')
+
+        orig_group = view.current_groupname
+
+        # Set the group list order so that we change to the original group last
+        group_test_list = [name for name in group_names if name != orig_group] + [orig_group]
+
+        for group in group_test_list:
+            view.change_group(group)
+
+            assert group == view.current_groupname, (
+                "User failed to change current group from {} to {}".format(
+                    view.current_groupname, group))
 
 
 # @pytest.mark.meta(blockers=[1035399]) # work around instead of skip

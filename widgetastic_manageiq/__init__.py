@@ -15,7 +15,7 @@ from jsmin import jsmin
 from lxml.html import document_fromstring
 from selenium.common.exceptions import WebDriverException
 from wait_for import TimedOutError, wait_for
-from widgetastic.exceptions import NoSuchElementException
+from widgetastic.exceptions import NoSuchElementException, WidgetOperationFailed
 from widgetastic.log import logged
 from widgetastic.utils import ParametrizedLocator, Parameter, ParametrizedString, attributize_string
 from widgetastic.utils import VersionPick, Version
@@ -37,7 +37,7 @@ from widgetastic.widget import (
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
     Accordion as PFAccordion, BootstrapSwitch, BootstrapTreeview,
-    BootstrapSelect, Button, Dropdown, Input, VerticalNavigation, Tab)
+    BootstrapSelect, Button, Dropdown, Input, NavDropdown, VerticalNavigation, Tab)
 
 from cfme.exceptions import ItemNotFound
 
@@ -826,6 +826,162 @@ class ScriptBox(Widget):
         # We need to fire off the handlers manually in some cases ...
         self.browser.execute_script(
             "{}._handlers.change.map(function(handler) {{ handler() }});".format(self.item_name))
+
+
+class SettingsGroupSubmenu(NavDropdown):
+    """
+    Widget for the Group 'Dropdown' menu that allows a user assigned to multiple groups
+    to change their active group dynamically Multiple group functionality added in 5.9
+
+    REQUIRES: Parent must implement widgetastic_patternfly.NavDropdown so that we can reference the
+        parent state for collapse, expand or is_displayed
+    """
+    GROUP_SUBMENU = './/ul[contains(@class, "dropdown-menu scrollable-menu")]'
+    SELECTED_GROUP_MARKER = ' (Current Group)'
+
+    def __init__(self, parent, locator, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.locator = locator
+
+    def __locator__(self):
+        return self.locator
+
+    @property
+    def is_displayed(self):
+        """Returns True if the Settings menu is expanded displaying the group menu. """
+
+        # Check that the parent is expanded because browser.is_displayed(self) uses move_to_element
+        # to query the element visibility which expands the groups menu since it expands on hover
+        return self.parent.expanded
+
+    @property
+    def expandable(self):
+        """ Returns True if the group menu can be expanded because the user is assigned to
+        multiple groups
+        """
+        try:
+            self.browser.element('./.[contains(@class, "dropdown-submenu")]', parent=self)
+        except NoSuchElementException:
+            return False
+        else:
+            return True
+
+    @property
+    def expanded(self):
+        """ Returns True if the group menu is expanded showing all of the user's assigned
+        groups
+        """
+        if not self.expandable:
+            return False
+        return self.browser.element(self.GROUP_SUBMENU, parent=self).is_displayed()
+
+    def expand(self):
+        """ Expand the Settings->Change Group submenu by hovering.
+
+            Throws:
+                WidgetOperationFailed if the user is only a member of one group OR the menu could
+                    not be expanded
+        """
+        if not self.expandable:
+            raise WidgetOperationFailed('{} is not expandable'.format(self.locator))
+
+        # Make sure the Settings menu is expanded
+        if not self.parent.expanded:
+            self.parent.expand()
+
+        # Hover over 'Change Group'
+        self.move_to()
+        if not self.expanded:
+            raise WidgetOperationFailed('Could not expand {}'.format(self.locator))
+        else:
+            self.logger.info('expanded')
+
+    def collapse(self):
+        """ Collapse the Settings->group menu
+
+            Throws:
+                WidgetOperationFailed if the group menu could not be collapsed
+        """
+        if not (self.parent.is_displayed or self.expandable):
+            return
+
+        self.browser.move_to_element(self.parent)
+        if self.expanded:
+            raise WidgetOperationFailed('Could not collapse {}'.format(self.locator))
+        else:
+            self.logger.info('collapsed')
+
+    @property
+    def text(self):
+        """ Returns the text of the element. """
+        try:
+            return self.browser.text('./a', parent=self)
+        except NoSuchElementException:
+            return None
+
+    @property
+    def items(self):
+        """ Returns a list of the items names. """
+        if not self.expandable:
+            return [self.text]
+        return [
+            self.browser.text(element)
+            for element
+            in self.browser.elements('{}/li'.format(self.GROUP_SUBMENU), parent=self)]
+
+    def has_item(self, item):
+        """
+        Returns True if 'item' is in the list of items
+
+        Args:
+            item - string to check for in the list of items
+        """
+        return item in self.items
+
+    def item_enabled(self, item):
+        """
+        Returns True if 'item' is an enabled element
+
+        Args:
+            item - string to check for in the list of enabled items
+        """
+        if not self.has_item(item):
+            raise WidgetOperationFailed('There is no such item "{}". Available items: {}'.format(
+                item, '; '.join(self.items)))
+        element = self.browser.element(
+            './ul/li[normalize-space(.)={}]'.format(quote(item)), parent=self)
+        return 'disabled' not in self.browser.classes(element)
+
+    def select_item(self, item):
+        """
+        Select 'item' in the webui
+
+        Args:
+            item - string to select in the group list
+        """
+        if not self.item_enabled(item):
+            raise WidgetOperationFailed('Cannot click disabled item {}'.format(item))
+
+        self.expand()
+        self.logger.info('selecting item {}'.format(item))
+        self.browser.click('./ul/li[normalize-space(.)={}]'.format(quote(item)), parent=self)
+
+    def read(self):
+        """ Returns the text of the group element """
+        return self.text
+
+
+class SettingsNavDropdown(NavDropdown):
+    """
+    Wrapper for the User Settings Menu dropdown on every BaseLoggedInPage.
+
+    The 'groups' object references this object (groups.parent) for actions that require the parent
+    web element:
+        - checking for is_displayed
+        - expand/collapse
+    """
+
+    groups = SettingsGroupSubmenu('./ul/li[2]')
 
 
 class SSUIVerticalNavigation(VerticalNavigation):
