@@ -174,8 +174,7 @@ def test_provision_stack(order_stack):
     assert provision_request.is_succeeded()
 
 
-@pytest.mark.uncollectif(lambda: BZ(1575935, forced_streams=['5.8', '5.9']).blocks,
-                         reason='impossible to reconfigure orchestration service due to BZ 1575935')
+@pytest.mark.meta(blockers=[BZ(1575935, forced_streams=['5.8', '5.9'])])
 def test_reconfigure_service(appliance, service_catalogs, request):
     """Tests service reconfiguring
 
