@@ -73,7 +73,7 @@ def metrics_collection(appliance, clean_setup_provider, provider, enable_candu):
         vm_count, [appliance, metrics_tbl, mgmt_system_id],
         delay=20,
         timeout=1500,
-        fail_condition={None},
+        fail_condition=False,
         message="wait for VMs")
 
     # host only for infa
@@ -82,7 +82,7 @@ def metrics_collection(appliance, clean_setup_provider, provider, enable_candu):
             vm_count, [appliance, metrics_tbl, mgmt_system_id],
             delay=20,
             timeout=1500,
-            fail_condition={None},
+            fail_condition=False,
             message="wait for hosts.")
 
 
