@@ -27,19 +27,19 @@ class Product(object):
 
     @property
     def milestones(self):
-        return map(lambda ms: ms["name"], self._data["milestones"])
+        return [ms["name"] for ms in self._data["milestones"]]
 
     @property
     def releases(self):
-        return map(lambda release: release["name"], self._data["releases"])
+        return [release["name"] for release in self._data["releases"]]
 
     @property
     def versions(self):
-        versions = []
-        for version in self._data["versions"]:
-            if version["name"] not in NONE_FIELDS:
-                versions.append(Version(version["name"]))
-        return sorted(versions)
+        return sorted(
+            Version(version["name"])
+            for version in self._data["versions"]
+            if version["name"] not in NONE_FIELDS
+        )
 
     @property
     def latest_version(self):
@@ -63,7 +63,7 @@ class Bugzilla(object):
             yield bug
 
     def products(self, *names):
-        return map(Product, self.bugzilla._proxy.Product.get({"names": names})["products"])
+        return list(map(Product, self.bugzilla._proxy.Product.get({"names": names})["products"]))
 
     def product(self, product):
         if product not in self.__product_cache:
