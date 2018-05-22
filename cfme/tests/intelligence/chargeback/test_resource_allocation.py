@@ -46,7 +46,9 @@ DEVIATION = 1
 
 @pytest.yield_fixture(scope="module")
 def vm_ownership(enable_candu, provider, appliance):
-    """In these tests, chargeback reports are filtered on VM owner.So,VMs have to be
+    """Fixure to assign VM ownership.
+
+    In these tests, chargeback reports are filtered on VM owner.So,VMs have to be
     assigned ownership.
     """
     vm_name = provider.data['cap_and_util']['chargeback_vm']
@@ -80,7 +82,9 @@ def vm_ownership(enable_candu, provider, appliance):
 
 @pytest.yield_fixture(scope="module")
 def enable_candu(provider, appliance):
-    """C&U data collection consumes a lot of memory and CPU.So, we are disabling some server roles
+    """Fixture to enable C&U collection.
+
+    C&U data collection consumes a lot of memory and CPU.So, we are disabling some server roles
     that are not needed for Chargeback reporting.
     """
     candu = appliance.collections.candus
@@ -121,8 +125,9 @@ def assign_custom_rate(new_chargeback_rate, provider):
 
 
 def verify_vm_uptime(appliance, provider):
-    """Verify VM uptime is at least one hour.That is the shortest duration for
-    which VMs can be charged.
+    """Verifies that VM uptime is at least one hour.
+
+    One hour is the shortest duration for which VMs can be charged.
     """
     vm_name = provider.data['cap_and_util']['chargeback_vm']
     vm_creation_time = appliance.rest_api.collections.vms.get(name=vm_name).created_on
