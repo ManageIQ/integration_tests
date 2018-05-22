@@ -52,8 +52,7 @@ def new_compute_rate(enable_candu):
 
 @pytest.fixture(scope="module")
 def assign_chargeback_rate(new_compute_rate):
-    # Assign custom Compute rate to the Enterprise and then queue the Chargeback report.
-    # description = new_compute_rate
+    """Assign custom Compute rate to the Enterprise and then queue the Chargeback report."""
     enterprise = cb.Assign(
         assign_to="The Enterprise",
         selections={
@@ -74,8 +73,9 @@ def assign_chargeback_rate(new_compute_rate):
 
 
 def verify_vm_uptime(appliance, provider, vmname):
-    """Verify VM uptime is at least one hour.That is the shortest duration for
-    which VMs can be charged.
+    """Verifies VM uptime is at least one hour.
+
+    One hour is the shortest duration for which VMs can be charged.
     """
     vm_creation_time = appliance.rest_api.collections.vms.get(name=vmname).created_on
     return appliance.utc_time() - vm_creation_time > timedelta(hours=1)
@@ -115,10 +115,10 @@ def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
 
     if provider.one_of(SCVMMProvider):
         wait_for(verify_vm_uptime, [appliance, provider, vmname], timeout=3610,
-           message='Waiting for VM to be up for at least one hour')
+           delay=10, message='Waiting for VM to be up for at least one hour')
     else:
         wait_for(verify_records_rollups_table, [appliance, provider], timeout=3600,
-        message='Waiting for hourly rollups')
+            delay=10, message='Waiting for hourly rollups')
 
     result = appliance.ssh_client.run_rails_command(
         'Service.queue_chargeback_reports')
