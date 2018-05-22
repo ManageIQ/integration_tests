@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import pytest
-import time
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
-
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.tier(3),
@@ -22,12 +21,11 @@ provider_log = {'azure': 'azure',
                 'rhevm': 'rhevm'}
 
 
-@pytest.yield_fixture()
+@pytest.fixture
 def log_exists(appliance, provider):
     log_exists = bool(appliance.ssh_client.run_command(
         '(ls /var/www/miq/vmdb/log/{}.log >> /dev/null 2>&1 && echo True) || echo False'.format(
             provider_log[provider.type])).output)
-    assert log_exists, "Provider log is missing on the appliance"
     return log_exists
 
 
@@ -68,8 +66,8 @@ def test_provider_log_updated(appliance, provider, log_exists):
         log_before = appliance.ssh_client.run_command(
             "md5sum /var/www/miq/vmdb/log/{}.log | awk '{{ print $1 }}'".format(
                 provider_log[provider.type])).output
-        provider.refresh_provider_relationships()
-        time.sleep(120)
+
+        wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
         log_after = appliance.ssh_client.run_command(
             "md5sum /var/www/miq/vmdb/log/{}.log | awk '{{ print $1 }}'".format(
                 provider_log[provider.type])).output
