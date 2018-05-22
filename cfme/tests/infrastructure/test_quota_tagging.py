@@ -52,7 +52,8 @@ def test_domain(appliance):
                                                       fauxfactory.gen_alphanumeric()),
                                                   enabled=True)
     yield domain
-    domain.delete()
+    if domain.exists:
+        domain.delete()
 
 
 @pytest.fixture(scope='module')
