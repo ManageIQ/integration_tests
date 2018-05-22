@@ -99,9 +99,11 @@ def test_register_host(provider, host, has_mistral_service):
     for h in hosts_after:
         if h not in hosts_before:
             host.name = h
+    provider.browser.refresh()
+    wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
     wait_for(lambda: host.exists, delay=15, timeout=600,
              message="Host {} become visible".format(host.name),
-             fail_func=provider.browser.refresh)
+             fail_func=host.browser.refresh)
 
     assert host.exists
 
