@@ -86,17 +86,20 @@ def check_item_visibility(tag):
 
 
 @pytest.fixture(params=['tag', 'tag_expression'])
-def tag_value(category, tag, request):
+def tag_value(appliance, category, tag, request):
     tag_type = request.param
     if tag_type == 'tag':
         tag_for_create = ([category.display_name, tag.display_name], True)
         tag_for_update = ([category.display_name, tag.display_name], False)
     else:
-        if BZ(1579867, forced_streams=['5.9']).blocks:
-            tag_for_create = 'fill_tag(My Company Tags : Cost Center, Cost Center 001)'
+        if appliance.version > '5.9':
+            if BZ(1579867, forced_streams=['5.9']).blocks:
+                tag_for_create = 'fill_tag(My Company Tags : Cost Center, Cost Center 001)'
+            else:
+                tag_for_create = 'fill_tag(My Company Tags : {})'.format(category.display_name)
+            tag_for_update = 'delete_whole_expression'
         else:
-            tag_for_create = 'fill_tag(My Company Tags : {})'.format(category.display_name)
-        tag_for_update = 'delete_whole_expression'
+            pytest.skip("Tag expression is suported from 5.9 version")
     return tag_for_create, tag_for_update
 
 
