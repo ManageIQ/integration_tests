@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from datetime import date
+from datetime import date, timedelta
 
 import fauxfactory
 import pytest
@@ -7,6 +7,7 @@ import pytest
 import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.services.dashboard import Dashboard
 from cfme import test_requirements
 from cfme.utils.appliance import ViaSSUI
@@ -27,19 +28,6 @@ pytestmark = [
                                           ['provisioning', 'datastore']],
                          scope="module"),
 ]
-
-
-@pytest.fixture(scope="module")
-def enable_candu(appliance):
-    candu = appliance.collections.candus
-    server_info = appliance.server.settings
-    original_roles = server_info.server_roles_db
-    server_info.enable_server_roles(
-        'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
-    candu.enable_all()
-    yield
-    server_info.update_server_roles_db(original_roles)
-    candu.disable_all()
 
 
 @pytest.fixture(scope="module")
@@ -64,8 +52,7 @@ def new_compute_rate(enable_candu):
 
 @pytest.fixture(scope="module")
 def assign_chargeback_rate(new_compute_rate):
-    # Assign custom Compute rate to the Enterprise and then queue the Chargeback report.
-    # description = new_compute_rate
+    """Assign custom Compute rate to the Enterprise and then queue the Chargeback report."""
     enterprise = cb.Assign(
         assign_to="The Enterprise",
         selections={
@@ -83,6 +70,15 @@ def assign_chargeback_rate(new_compute_rate):
         })
     enterprise.computeassign()
     enterprise.storageassign()
+
+
+def verify_vm_uptime(appliance, provider, vmname):
+    """Verifies VM uptime is at least one hour.
+
+    One hour is the shortest duration for which VMs can be charged.
+    """
+    vm_creation_time = appliance.rest_api.collections.vms.get(name=vmname).created_on
+    return appliance.utc_time() - vm_creation_time > timedelta(hours=1)
 
 
 @pytest.fixture(scope="function")
@@ -117,8 +113,12 @@ def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
 
         return False
 
-    wait_for(verify_records_rollups_table, [appliance, provider], timeout=3600,
-        message='Waiting for hourly rollups')
+    if provider.one_of(SCVMMProvider):
+        wait_for(verify_vm_uptime, [appliance, provider, vmname], timeout=3610,
+           delay=10, message='Waiting for VM to be up for at least one hour')
+    else:
+        wait_for(verify_records_rollups_table, [appliance, provider], timeout=3600,
+            delay=10, message='Waiting for hourly rollups')
 
     result = appliance.ssh_client.run_rails_command(
         'Service.queue_chargeback_reports')
@@ -164,8 +164,8 @@ def test_retired_service(appliance, context):
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_monthly_charges(appliance, setup_provider, context, order_service,
-        run_service_chargeback_report):
+def test_monthly_charges(appliance, has_no_providers_modscope, setup_provider, context,
+        order_service, run_service_chargeback_report):
     """Tests chargeback data"""
     with appliance.context.use(context):
         dashboard = Dashboard(appliance)
