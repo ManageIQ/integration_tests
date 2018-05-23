@@ -138,8 +138,4 @@ def test_multiple_cloud_volumes_tag_edit(appliance, soft_assert):
     # remove tags to multiple items at once
     appliance.collections.volumes.remove_tag(volumes, assigned_tag)
     for item in volumes:
-        tag_available = item.get_tags()
-        soft_assert(any(
-            tag.category.display_name != assigned_tag.category.display_name and
-            tag.display_name != assigned_tag.display_name for tag in tag_available), (
-            'Tag is not removed from volume {}'.format(item.name)))
+        soft_assert(not item.get_tags())

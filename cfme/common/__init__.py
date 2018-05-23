@@ -355,7 +355,7 @@ class Taggable(TaggableCommonBase):
         if not updated:
             cancel = True
         self._tags_action(view, cancel, reset)
-        return tag
+        return added_tag
 
     def add_tags(self, tags):
         """Add multiple tags
