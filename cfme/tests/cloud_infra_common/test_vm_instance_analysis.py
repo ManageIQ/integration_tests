@@ -21,6 +21,7 @@ from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils import ssh, safe_string, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, wait_for_decorator
 from cfme.utils.blockers import BZ
@@ -30,7 +31,7 @@ pytestmark = [
     test_requirements.smartstate,
 ]
 
-WINDOWS = {'id': "Red Hat Enterprise Windows", 'icon': 'windows'}
+WINDOWS = {'id': "Red Hat Enterprise Windows", 'icon': 'windows', 'os_type': 'windows'}
 
 RPM_BASED = {
     'rhel': {
@@ -39,7 +40,8 @@ RPM_BASED = {
         'package-number': 'rpm -qa | wc -l',
         'services-number': 'echo $((`ls -lL /etc/init.d | egrep -i -v "readme|total" | wc -l` + '
                            '`ls -l /usr/lib/systemd/system | grep service | wc -l` + '
-                           '`ls -l /usr/lib/systemd/user | grep service | wc -l`))'},
+                           '`ls -l /usr/lib/systemd/user | grep service | wc -l` + '
+                           '`ls -l /etc/systemd/system | grep -E "*.service$" | wc -l`))'},
     'centos': {
         'id': "CentOS", 'release-file': '/etc/centos-release', 'os_type': 'centos',
         'package': 'iso-codes', 'install-command': 'yum install -y {}',
@@ -54,8 +56,10 @@ RPM_BASED = {
         'package': 'iso-codes', 'install-command': 'dnf install -y {}',
         'package-number': 'rpm -qa | wc -l',
         'services-number': 'echo $((`ls -lL /etc/init.d | egrep -i -v "readme|total" | wc -l` +'
-                           ' `ls -l /usr/lib/systemd/system | grep service | wc -l` +'
-                           ' `ls -l /usr/lib/systemd/user | grep service | wc -l`))'},
+                           ' `ls -l /usr/lib/systemd/system | grep service | grep -v network1 | '
+                           '  wc -l` +'
+                           ' `ls -l /usr/lib/systemd/user | grep -E "*.service$" | wc -l` + '
+                           ' `ls -l /etc/systemd/system | grep -E "*.service$" | wc -l`))'},
     'suse': {
         'id': 'Suse', 'release-file': '/etc/SuSE-release', 'os_type': 'suse',
         'package': 'iso-codes', 'install-command': 'zypper install -y {}',
@@ -67,12 +71,13 @@ RPM_BASED = {
 
 DEB_BASED = {
     'ubuntu': {
-        'id': 'Ubuntu 14.04', 'release-file': '/etc/issue.net', 'os_type': 'ubuntu',
+        'id': 'Ubuntu', 'release-file': '/etc/issue.net', 'os_type': 'ubuntu',
         'package': 'iso-codes',
         'install-command': 'env DEBIAN_FRONTEND=noninteractive apt-get -y install {}',
         'package-number': "dpkg --get-selections | wc -l",
         'services-number': 'echo $((`ls -alL /etc/init.d | egrep -iv "readme|total|drwx" | wc -l` +'
-                           ' `ls -alL /etc/systemd/system/ | grep service | wc -l`))'},
+                           ' `ls -alL /etc/systemd/system/ | grep service | wc -l` +'
+                           ' `ls -alL /usr/lib/systemd/user | grep service | wc -l`))'},
     'debian': {
         'id': 'Debian ', 'release-file': '/etc/issue.net', 'os_type': 'debian',
         'package': 'iso-codes',
@@ -235,8 +240,10 @@ def ssa_vm(request, local_setup_provider, provider, vm_analysis_provisioning_dat
     if vm_analysis_provisioning_data['fs-type'] not in ['ntfs', 'fat32']:
         logger.info("Waiting for %s to be available via SSH", connect_ip)
         ssh_client = ssh.SSHClient(
-            hostname=connect_ip, username=vm_analysis_provisioning_data['username'],
-            password=vm_analysis_provisioning_data['password'], port=22)
+            hostname=connect_ip,
+            username=credentials[vm_analysis_provisioning_data.credentials]['username'],
+            password=credentials[vm_analysis_provisioning_data.credentials]['password'],
+            port=22)
         wait_for(ssh_client.uptime, num_sec=3600, handle_exception=True)
         vm.ssh = ssh_client
     vm.system_type = detect_system_type(vm)
@@ -263,7 +270,7 @@ def ssa_analysis_profile():
     for file in ssa_expect_files:
         collected_files.append({"Name": file, "Collect Contents?": True})
 
-    analysis_profile_name = 'default'
+    analysis_profile_name = 'default_{}'.format(fauxfactory.gen_alpha())
     analysis_profile = AnalysisProfile(name=analysis_profile_name,
                                        description=analysis_profile_name,
                                        profile_type=AnalysisProfile.VM_TYPE,
