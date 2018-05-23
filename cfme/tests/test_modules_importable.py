@@ -19,6 +19,7 @@ KNOWN_FAILURES = set(ROOT.dirpath().join(x) for x in[
     'cfme/fixtures/widgets.py',
     'cfme/dashboard.py',
     'cfme/configure/tasks.py',
+    'cfme/utils/template/template_upload.py',
 ])
 
 
