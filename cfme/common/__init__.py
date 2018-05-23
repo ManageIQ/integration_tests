@@ -248,7 +248,82 @@ class TagPageView(BaseLoggedInPage):
         )
 
 
-class Taggable(object):
+class TaggableCommonBase(object):
+    """Class represents common functionality for tagging via collection and entities pages"""
+
+    def _set_random_tag(self, view):
+        random_cat = random.choice(view.form.tag_category.all_options).text
+        # '*' is added in UI almost to all categoly while tag selection,
+        #  but doesn't need for Category object creation
+        random_cat_cut = random_cat[:-1].strip() if random_cat[-1] == '*' else random_cat
+        view.form.tag_category.fill(random_cat)
+        # In order to get the right tags list we need to select category first to get loaded tags
+        random_tag = random.choice([tag_option for tag_option in view.form.tag_name.all_options
+                                    if "select" not in tag_option.text.lower()]).text
+        tag = Tag(display_name=random_tag, category=Category(display_name=random_cat_cut))
+        return tag
+
+    def _assign_tag_action(self, view, tag):
+        """Assign tag on tag page
+
+        Args:
+            view: View to use these actions(tag view)
+            tag: Tag object
+        Returns:
+            True/False updated status
+        """
+        if not tag:
+            tag = self._set_random_tag(view)
+        category_name = tag.category.display_name
+        tag_name = tag.display_name
+        # Handle nested view.form and where the view contains form widgets
+        try:
+            updated = view.form.fill({
+                "tag_category": '{} *'.format(category_name),
+                "tag_name": tag_name
+            })
+        except (NoSuchElementException, SelectItemNotFound):
+            updated = view.form.fill({
+                "tag_category": category_name,
+                "tag_name": tag_name
+            })
+        return tag, updated
+
+    def _unassign_tag_action(self, view, tag):
+        """Remove tag on tag page
+
+        Args:
+            view: View to use these actions(tag view)
+            tag: Tag object
+        """
+        category = tag.category.display_name
+        tag = tag.display_name
+        try:
+            row = view.form.tags.row(category="{} *".format(category), assigned_value=tag)
+        except RowNotFound:
+            row = view.form.tags.row(category=category, assigned_value=tag)
+        row[0].click()
+
+    def _tags_action(self, view, cancel, reset):
+        """ Actions on edit tags page
+
+        Args:
+            view: View to use these actions(tag view)
+            cancel: Set True to cancel all changes, will redirect to details page
+            reset: Set True to reset all changes, edit tag page should be opened
+        """
+        if reset:
+            view.form.reset.click()
+            view.flash.assert_message('All changes have been reset')
+        if cancel:
+            view.form.cancel.click()
+            view.flash.assert_success_message('Tag Edit was cancelled by the user')
+        if not reset and not cancel:
+            view.form.save.click()
+            view.flash.assert_success_message('Tag edits were successfully saved')
+
+
+class Taggable(TaggableCommonBase):
     """
     This class can be inherited by any class that honors tagging.
     Class should have following
@@ -273,26 +348,9 @@ class Taggable(object):
             details (bool): set False if tag should be added for list selection,
                             default is details page
         """
-        if details:
-            view = navigate_to(self, 'EditTagsFromDetails')
-        else:
-            view = navigate_to(self, 'EditTags')
-        if not tag:
-            tag = self._set_random_tag(view)
-        category_name = tag.category.display_name
-        tag_name = tag.display_name
-        # Handle nested view.form and where the view contains form widgets
-        try:
-            updated = view.form.fill({
-                "tag_category": '{} *'.format(category_name),
-                "tag_name": tag_name
-            })
-        except (NoSuchElementException, SelectItemNotFound):
-            logger.exception('Tag category or tag name not found for fill, retrying')
-            updated = view.form.fill({
-                "tag_category": category_name,
-                "tag_name": tag_name
-            })
+        step = 'EditTagsFromDetails' if details else 'EditTags'
+        view = navigate_to(self, step)
+        added_tag, updated = self._assign_tag_action(view, tag)
         # In case if field is not updated cancel the edition
         if not updated:
             cancel = True
@@ -318,17 +376,9 @@ class Taggable(object):
             details (bool): set False if tag should be added for list selection,
                             default is details page
         """
-        if details:
-            view = navigate_to(self, 'EditTagsFromDetails')
-        else:
-            view = navigate_to(self, 'EditTags')
-        category = tag.category.display_name
-        tag = tag.display_name
-        try:
-            row = view.form.tags.row(category="{} *".format(category), assigned_value=tag)
-        except RowNotFound:
-            row = view.form.tags.row(category=category, assigned_value=tag)
-        row[0].click()
+        step = 'EditTagsFromDetails' if details else 'EditTags'
+        view = navigate_to(self, step)
+        self._unassign_tag_action(view, tag)
         self._tags_action(view, cancel, reset)
 
     def remove_tags(self, tags):
@@ -339,18 +389,6 @@ class Taggable(object):
         """
         for tag in tags:
             self.remove_tag(tag=tag)
-
-    def _set_random_tag(self, view):
-        random_cat = random.choice(view.form.tag_category.all_options).text
-        # '*' is added in UI almost to all categoly while tag selection,
-        #  but doesn't need for Category object creation
-        random_cat_cut = random_cat[:-1].strip() if random_cat[-1] == '*' else random_cat
-        view.form.tag_category.fill(random_cat)
-        # In order to get the right tags list we need to select category first to get loaded tags
-        random_tag = random.choice([tag_option for tag_option in view.form.tag_name.all_options
-                                    if "select" not in tag_option.text.lower()]).text
-        tag = Tag(display_name=random_tag, category=Category(display_name=random_cat_cut))
-        return tag
 
     def get_tags(self, tenant="My Company Tags"):
         """ Get list of tags assigned to item.
@@ -380,23 +418,74 @@ class Taggable(object):
                                 display_name=tag_name.strip()))
         return tags
 
-    def _tags_action(self, view, cancel, reset):
-        """ Actions on edit tags page
+
+class TaggableCollection(TaggableCommonBase):
+
+    def add_tag(self, item_objects, tag=None, cancel=False, reset=False):
+        """ Add tag to tested item
 
         Args:
-            view: View to use these actions(tag view)
-            cancel: Set True to cancel all changes, will redirect to details page
-            reset: Set True to reset all changes, edit tag page should be opened
+            item_objects: list of entity object, also can be passed lint on entities names
+            tag: Tag object
+            cancel: set True to cancel tag assigment
+            reset: set True to reset already set up tag
+        Returns:
+            tag object
         """
-        if reset:
-            view.form.reset.click()
-            view.flash.assert_message('All changes have been reset')
-        if cancel:
-            view.form.cancel.click()
-            view.flash.assert_success_message('Tag Edit was cancelled by the user')
-        if not reset and not cancel:
-            view.form.save.click()
-            view.flash.assert_success_message('Tag edits were successfully saved')
+        view = navigate_to(self, 'All')
+        for item in item_objects:
+            name = item if isinstance(item, six.string_types) else item.name
+            view.entities.get_entity(surf_pages=True, name=name).check()
+        view = self._open_edit_tag_page(view)
+        added_tag, updated = self._assign_tag_action(view, tag)
+        # In case if field is not updated cancel the edition
+        if not updated:
+            cancel = True
+        self._tags_action(view, cancel, reset)
+        return added_tag
+
+    def add_tags(self, item_objects, tags):
+        """Add multiple tags
+
+        Args:
+            tags: list of tag objects
+        """
+        for tag in tags:
+            self.add_tag(item_objects, tag=tag)
+
+    def remove_tag(self, item_objects, tag, cancel=False, reset=False):
+        """ Remove tag of tested item
+
+        Args:
+            item_objects: list of entity object, also can be passed lint on entities names
+            tag: Tag object
+            cancel: set True to cancel tag deletion
+            reset: set True to reset tag changes
+        """
+        view = navigate_to(self, 'All')
+        for item in item_objects:
+            name = item if isinstance(item, six.string_types) else item.name
+            view.entities.get_entity(surf_pages=True, name=name).check()
+        view = self._open_edit_tag_page(view)
+        self._unassign_tag_action(view, tag)
+        self._tags_action(view, cancel, reset)
+
+    def remove_tags(self, item_objects, tags):
+        """Remove multiple of tags
+
+        Args:
+            tags: list of tag objects
+        """
+        for tag in tags:
+            self.remove_tag(item_objects, tag=tag)
+
+    def _open_edit_tag_page(self, parent_view):
+        try:
+            parent_view.toolbar.policy.item_select('Edit Tags')
+        except DropdownItemNotFound:
+            parent_view.toolbar.policy.item_select(
+                "Edit 'My Company' Tags for this {}".format(type(self.__name__)))
+        return self.create_view(TagPageView)
 
 
 @navigator.register(Taggable, 'EditTagsFromDetails')

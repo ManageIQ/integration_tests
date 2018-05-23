@@ -14,14 +14,15 @@ from widgetastic_manageiq import (
     TextInput,
 )
 from widgetastic_patternfly import Button, Dropdown
-from widgetastic.widget import View, Text
+from widgetastic.widget import View, Text, NoSuchElementException
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import TagPageView, Taggable
+from cfme.common import TagPageView, Taggable, TaggableCollection
 from cfme.exceptions import VolumeNotFoundError, ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
+from cfme.utils.providers import get_crud_by_name
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for, TimedOutError
 
@@ -303,7 +304,7 @@ class Volume(BaseEntity, Updateable, Taggable):
 
 
 @attr.s
-class VolumeCollection(BaseCollection):
+class VolumeCollection(BaseCollection, TaggableCollection):
     """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
     ENTITY = Volume
 
@@ -362,6 +363,31 @@ class VolumeCollection(BaseCollection):
                 volume.wait_for_disappear()
         else:
             raise VolumeNotFoundError('No Cloud Volume for Deletion')
+
+    def all(self):
+        """returning all Volumes objects for respective storage manager type"""
+        view = navigate_to(self, 'All')
+        view.toolbar.view_selector.select("List View")
+        volumes = []
+        try:
+            if 'provider' in self.filters:
+                for item in view.entities.elements.read():
+                    if self.filters.get('provider').name in item['Storage Manager']:
+                        volumes.append(self.instantiate(name=item['Name'],
+                                                        provider=self.filters.get('provider')))
+            else:
+                for item in view.entities.elements.read():
+                    provider_name = item['Storage Manager'].split()[0]
+                    provider = get_crud_by_name(provider_name)
+                    volumes.append(self.instantiate(name=item['Name'], provider=provider))
+
+        except NoSuchElementException:
+            if volumes:
+                logger.error('VolumeCollection: '
+                             'NoSuchElementException in the middle of entities read')
+            else:
+                logger.warning('The volumes table is probably not present or empty')
+        return volumes
 
 
 @navigator.register(VolumeCollection, 'All')

@@ -121,3 +121,25 @@ def test_storage_volume_edit_tag(volume):
     volume.remove_tag(added_tag)
     tag_available = volume.get_tags()
     assert not tag_available
+
+
+def test_multiple_cloud_volumes_tag_edit(appliance, soft_assert):
+    """Test tag can be added to multiple volumes at once"""
+    all_volumes = appliance.collections.volumes.all()
+    volumes = all_volumes[:3] if len(all_volumes) > 4 else all_volumes
+    assigned_tag = appliance.collections.volumes.add_tag(volumes)
+    for item in volumes:
+        tag_available = item.get_tags()
+        soft_assert(any(
+            tag.category.display_name == assigned_tag.category.display_name and
+            tag.display_name == assigned_tag.display_name for tag in tag_available), (
+            'Tag is not assigned to volume {}'.format(item.name)))
+
+    # remove tags to multiple items at once
+    appliance.collections.volumes.remove_tag(volumes, assigned_tag)
+    for item in volumes:
+        tag_available = item.get_tags()
+        soft_assert(any(
+            tag.category.display_name != assigned_tag.category.display_name and
+            tag.display_name != assigned_tag.display_name for tag in tag_available), (
+            'Tag is not removed from volume {}'.format(item.name)))
