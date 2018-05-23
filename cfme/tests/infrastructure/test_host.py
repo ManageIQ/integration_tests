@@ -61,7 +61,12 @@ def navigate_and_select_quads(provider):
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
 def test_discover_host(request, provider, appliance, host_ips):
-    """Tests hosts discovery."""
+    """Tests hosts discovery.
+
+    Polarion:
+        assignee: mkourim
+        initialEstimate: None
+    """
     if provider.delete_if_exists(cancel=False):
         provider.wait_for_delete()
 
@@ -92,7 +97,15 @@ def test_discover_host(request, provider, appliance, host_ips):
 # Tests to automate BZ 1201092
 @pytest.mark.uncollectif(lambda provider: len(provider.data.get('hosts', {})) < 2)
 def test_multiple_host_good_creds(setup_provider, provider):
-    """  Tests multiple host credentialing  with good credentials """
+    """  Tests multiple host credentialing  with good credentials
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/15h
+        testtype: integration
+    """
     host = random.choice(provider.data["hosts"])
     creds = credentials[host['credentials']]
     cred = Credential(principal=creds.username, secret=creds.password)
@@ -118,7 +131,14 @@ def test_multiple_host_good_creds(setup_provider, provider):
 @pytest.mark.meta(blockers=[BZ(1524411, forced_streams=['5.9', 'upstream'])])
 @pytest.mark.uncollectif(lambda provider: len(provider.data.get('hosts', {})) < 2)
 def test_multiple_host_bad_creds(setup_provider, provider):
-    """    Tests multiple host credentialing with bad credentials """
+    """    Tests multiple host credentialing with bad credentials
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/15h
+    """
     host = random.choice(provider.data["hosts"])
     username = credentials[host['credentials']].username
     cred = Credential(principal=username, secret='bad_password')

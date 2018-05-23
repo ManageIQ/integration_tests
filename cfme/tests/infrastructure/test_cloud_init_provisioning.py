@@ -35,6 +35,7 @@ def vm_name():
     return vm_name
 
 
+@pytest.mark.tier(3)
 def test_provision_cloud_init(appliance, setup_provider, provider, setup_ci_template,
                               vm_name, smtp_test, request, provisioning):
     """Tests cloud init provisioning
@@ -42,6 +43,12 @@ def test_provision_cloud_init(appliance, setup_provider, provider, setup_ci_temp
     Metadata:
         test_flag: cloud_init, provision
         suite: infra_provisioning
+
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: prov
+        caseimportance: medium
+        initialEstimate: 1/4h
     """
     # generate_tests makes sure these have values
     template = provisioning.get('ci-image') or provisioning['image']['name']

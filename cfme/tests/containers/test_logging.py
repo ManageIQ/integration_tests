@@ -52,6 +52,11 @@ def get_ose_logging_url(logging_routes):
                          ids=[ContainersTestItem.get_pretty_id(ti) for ti in TEST_ITEMS])
 def test_external_logging_activated(provider, appliance, test_item, get_ose_logging_url):
 
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     if test_item.obj is ContainersProvider:
         obj_inst = provider
     else:

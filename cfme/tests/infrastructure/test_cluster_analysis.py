@@ -13,11 +13,18 @@ pytestmark = [
 ]
 
 
+@pytest.mark.tier(1)
 def test_run_cluster_analysis(setup_provider, provider, appliance):
     """Tests smarthost analysis
 
     Metadata:
         test_flag: cluster_analysis
+
+    Polarion:
+        assignee: nansari
+        casecomponent: smartst
+        caseimportance: low
+        initialEstimate: 1/6h
     """
     cluster_name = provider.data.remove_test.cluster
     if cluster_name in 'Cluster in Datacenter' and appliance.version < '5.9':

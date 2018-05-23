@@ -105,6 +105,11 @@ TEST_ITEMS = [
                          ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
 def test_tables_fields(provider, test_item, soft_assert, appliance):
 
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to((test_item.obj if test_item.obj is ContainersProvider
                         else getattr(appliance.collections, test_item.collection_name)), 'All')
     view.toolbar.view_selector.select('List View')

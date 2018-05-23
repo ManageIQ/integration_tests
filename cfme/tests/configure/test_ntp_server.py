@@ -44,6 +44,13 @@ def clear_ntp_settings(appliance, empty_ntp_dict):
 
 @pytest.mark.tier(2)
 def test_ntp_crud(request, appliance, empty_ntp_dict, ntp_servers_keys):
+    """
+    Polarion:
+        assignee: mmojzis
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/12h
+    """
     # Adding finalizer
     request.addfinalizer(lambda: appliance.server.settings.update_ntp_servers(empty_ntp_dict))
     """ Insert, Update and Delete the NTP servers """
@@ -59,6 +66,13 @@ def test_ntp_crud(request, appliance, empty_ntp_dict, ntp_servers_keys):
 
 @pytest.mark.tier(3)
 def test_ntp_server_max_character(request, appliance, ntp_servers_keys, empty_ntp_dict):
+    """
+    Polarion:
+        assignee: mmojzis
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/8h
+    """
     request.addfinalizer(partial(clear_ntp_settings, appliance, empty_ntp_dict))
     ntp_file_date_stamp = appliance.ssh_client.run_command(
         "stat --format '%y' /etc/chrony.conf").output
@@ -71,6 +85,11 @@ def test_ntp_server_max_character(request, appliance, ntp_servers_keys, empty_nt
 @pytest.mark.tier(3)
 def test_ntp_conf_file_update_check(request, appliance, empty_ntp_dict, ntp_servers_keys):
 
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     request.addfinalizer(lambda: appliance.server.settings.update_ntp_servers(empty_ntp_dict))
     ntp_file_date_stamp = appliance.ssh_client.run_command(
         "stat --format '%y' /etc/chrony.conf").output
@@ -98,6 +117,11 @@ def test_ntp_conf_file_update_check(request, appliance, empty_ntp_dict, ntp_serv
 
 @pytest.mark.tier(3)
 def test_ntp_server_check(request, appliance, ntp_servers_keys, empty_ntp_dict):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     request.addfinalizer(lambda: appliance.server.settings.update_ntp_servers(empty_ntp_dict))
     orig_date = appliance_date(appliance)
     past_date = orig_date - timedelta(days=10)
@@ -132,4 +156,11 @@ def test_ntp_server_check(request, appliance, ntp_servers_keys, empty_ntp_dict):
 
 @pytest.mark.tier(3)
 def test_clear_ntp_settings(request, appliance, empty_ntp_dict):
+    """
+    Polarion:
+        assignee: mmojzis
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/30h
+    """
     request.addfinalizer(lambda: appliance.server.settings.update_ntp_servers(empty_ntp_dict))

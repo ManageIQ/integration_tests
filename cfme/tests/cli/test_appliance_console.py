@@ -41,8 +41,16 @@ ext_auth_options = [
 
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
 @pytest.mark.smoke
+@pytest.mark.tier(2)
 def test_appliance_console(appliance):
-    """'ap | tee /tmp/opt.txt)' saves stdout to file, 'ap' launch appliance_console."""
+    """'ap | tee /tmp/opt.txt)' saves stdout to file, 'ap' launch appliance_console.
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: config
+        caseimportance: critical
+        initialEstimate: 1/12h
+    """
     command_set = ('ap | tee -a /tmp/opt.txt', 'ap')
     appliance.appliance_console.run_commands(command_set)
     assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep '{} Virtual Appliance'"
@@ -53,9 +61,17 @@ def test_appliance_console(appliance):
                                             .format(appliance.product_name))
 
 
+@pytest.mark.tier(2)
 def test_appliance_console_set_hostname(appliance, restore_hostname):
     """'ap' launch appliance_console, '' clear info screen, '1' loads network settings, '5' gives
-    access to set hostname, 'hostname' sets new hostname."""
+    access to set hostname, 'hostname' sets new hostname.
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: appl
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
 
     hostname = 'test.example.com'
     command_set = ('ap', '', '1', '5', hostname,)
@@ -71,17 +87,31 @@ def test_appliance_console_set_hostname(appliance, restore_hostname):
 
 
 @pytest.mark.parametrize('timezone', tzs, ids=[tz.name for tz in tzs])
+@pytest.mark.tier(2)
 def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modscope):
     """'ap' launch appliance_console, '' clear info screen, '2' set timezone, 'opt' select
-    region, 'timezone' selects zone, 'y' confirm slection, '' finish."""
+    region, 'timezone' selects zone, 'y' confirm slection, '' finish.
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: config
+        initialEstimate: 1/6h
+    """
     command_set = ('ap', '', '2') + timezone[1] + ('y', '')
     temp_appliance_preconfig_modscope.appliance_console.run_commands(command_set)
 
     temp_appliance_preconfig_modscope.appliance_console.timezone_check(timezone)
 
 
+@pytest.mark.tier(1)
 def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
-    """Grab fresh appliance and set time and date through appliance_console and check result"""
+    """Grab fresh appliance and set time and date through appliance_console and check result
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: config
+        initialEstimate: 1/6h
+    """
     app = temp_appliance_preconfig_funcscope
     command_set = ('ap', '', '3', 'y', '2020-10-20', '09:58:00', 'y', '')
     app.appliance_console.run_commands(command_set)
@@ -92,8 +122,15 @@ def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
 
 
 @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+@pytest.mark.tier(2)
 def test_appliance_console_db_maintenance_hourly(appliance_with_preset_time):
-    """Test database hourly re-indexing through appliance console"""
+    """Test database hourly re-indexing through appliance console
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: config
+        initialEstimate: 1/6h
+    """
     app = appliance_with_preset_time
     command_set = ('ap', '', '7', 'y', 'n', '')
     app.appliance_console.run_commands(command_set)
@@ -111,8 +148,15 @@ def test_appliance_console_db_maintenance_hourly(appliance_with_preset_time):
     ['weekly', '10', '2'],
     ['monthly', '10', '20']
 ], ids=['hour', 'day', 'week', 'month'])
+@pytest.mark.tier(2)
 def test_appliance_console_db_maintenance_periodic(period, appliance_with_preset_time):
-    """Tests full vacuums on database through appliance console"""
+    """Tests full vacuums on database through appliance console
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: appl
+        initialEstimate: 1/6h
+    """
     app = appliance_with_preset_time
     command_set = ['ap', '', '7', 'n', 'y']
     command_set.extend(period)
@@ -127,10 +171,18 @@ def test_appliance_console_db_maintenance_periodic(period, appliance_with_preset
     wait_for(maintenance_run, timeout=300)
 
 
+@pytest.mark.tier(2)
 def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
     """'ap' launch appliance_console, '' clear info screen, '5' setup db, '1' Creates v2_key,
     '1' selects internal db, 'y' continue, '1' use partition, 'n' don't create dedicated db, '0'
-    db region number, 'pwd' db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
+    db region number, 'pwd' db password, 'pwd' confirm db password + wait 360 secs and '' finish.
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: config
+        caseimportance: critical
+        initialEstimate: 1/4h
+    """
 
     pwd = app_creds['password']
     command_set = ('ap', '', '5', '1', '1', 'y', '1', 'n', '0', pwd, TimedCommand(pwd, 360), '')
@@ -139,9 +191,17 @@ def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
     unconfigured_appliance.wait_for_web_ui()
 
 
+@pytest.mark.tier(2)
 def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope):
     """'ap' launch appliance_console, '' clear info screen, '5' setup db, '4' reset db, 'y'
-    confirm db reset, '1' db region number + wait 360 secs, '' continue"""
+    confirm db reset, '1' db region number + wait 360 secs, '' continue
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/4h
+    """
 
     temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl stop evmserverd')
     command_set = ('ap', '', '5', '4', 'y', TimedCommand('1', 360), '')
@@ -151,10 +211,18 @@ def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope)
     temp_appliance_preconfig_funcscope.wait_for_web_ui()
 
 
+@pytest.mark.tier(2)
 def test_appliance_console_dedicated_db(unconfigured_appliance, app_creds):
     """'ap' launch appliance_console, '' clear info screen, '5' setup db, '1' Creates v2_key,
     '1' selects internal db, 'y' continue, '1' use partition, 'y' create dedicated db, 'pwd'
-    db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
+    db password, 'pwd' confirm db password + wait 360 secs and '' finish.
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: appl
+        initialEstimate: 1/3h
+        testtype: structural
+    """
 
     pwd = app_creds['password']
     command_set = ('ap', '', '5', '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
@@ -162,6 +230,7 @@ def test_appliance_console_dedicated_db(unconfigured_appliance, app_creds):
     wait_for(lambda: unconfigured_appliance.db.is_dedicated_active)
 
 
+@pytest.mark.tier(2)
 def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     """Testing HA configuration with 3 appliances.
 
@@ -196,6 +265,12 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     Appliance one, stop APPLIANCE_PG_SERVICE and check that the standby node takes over correctly
     and evm starts up again pointing at the new primary database.
 
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: config
+        initialEstimate: 1h
+        testtype: structural
     """
     apps = unconfigured_appliances
     app0_ip = apps[0].hostname
@@ -239,11 +314,20 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     apps[2].wait_for_web_ui()
 
 
+@pytest.mark.tier(2)
 def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_creds, appliance):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '2' fetch v2_key,
     'ip' address to fetch from, '' default username, 'pwd' db password, '' default v2_key location,
     '3' join external region, 'port' ip and port of joining region, '' use default db name, ''
-    default username, 'pwd' db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
+    default username, 'pwd' db password, 'pwd' confirm db password + wait 360 secs and '' finish.
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: config
+        caseimportance: critical
+        initialEstimate: 1/2h
+        testtype: structural
+    """
 
     ip = appliance.hostname
     pwd = app_creds['password']
@@ -254,12 +338,19 @@ def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_cr
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
+@pytest.mark.tier(2)
 def test_appliance_console_external_db_create(
         app_creds, dedicated_db_appliance, unconfigured_appliance_secondary):
     """'ap' launch appliance_console, '' clear info screen, '5' setup db, '1' create v2_key,
     '2' create region in external db, '0' db region number, 'y' confirm create region in external db
     'ip', '' ip and port for dedicated db, '' use default db name, '' default username, 'pwd' db
-    password, 'pwd' confirm db password + wait 360 secs and '' finish."""
+    password, 'pwd' confirm db password + wait 360 secs and '' finish.
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: appl
+        initialEstimate: 1/3h
+    """
 
     ip = dedicated_db_appliance.hostname
     pwd = app_creds['password']
@@ -270,9 +361,17 @@ def test_appliance_console_external_db_create(
     unconfigured_appliance_secondary.wait_for_web_ui()
 
 
+@pytest.mark.tier(2)
 def test_appliance_console_extend_storage(unconfigured_appliance):
     """'ap' launches appliance_console, '' clears info screen, '10' extend storage, '1' select
-    disk, 'y' confirm configuration and '' complete."""
+    disk, 'y' confirm configuration and '' complete.
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: config
+        caseimportance: critical
+        initialEstimate: 1/4h
+    """
 
     command_set = ('ap', '', '10', '1', 'y', '')
     unconfigured_appliance.appliance_console.run_commands(command_set)
@@ -284,7 +383,12 @@ def test_appliance_console_extend_storage(unconfigured_appliance):
 
 def test_appliance_console_ipa(ipa_crud, configured_appliance):
     """'ap' launches appliance_console, '' clears info screen, '11' setup IPA,
-    + wait 40 secs and '' finish."""
+    + wait 40 secs and '' finish.
+
+    Polarion:
+        assignee: mpusater
+        initialEstimate: None
+    """
 
     setup_ipa = '11'
     command_set = ('ap', RETURN, setup_ipa,
@@ -309,7 +413,12 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
 @pytest.mark.parametrize('auth_type', ext_auth_options, ids=[opt.name for opt in ext_auth_options])
 def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configured_appliance):
     """'ap' launches appliance_console, '' clears info screen, '12/15' change ext auth options,
-    'auth_type' auth type to change, '4' apply changes."""
+    'auth_type' auth type to change, '4' apply changes.
+
+    Polarion:
+        assignee: mpusater
+        initialEstimate: None
+    """
     # TODO this depends on the auth_type options being disabled when the test is run
     # TODO it assumes that first switch is to true, then false.
 
@@ -338,7 +447,12 @@ def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configu
 
 def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_appliance):
     """'ap' launches appliance_console, '' clears info screen, '12/15' change ext auth options,
-    'auth_type' auth type to change, '4' apply changes."""
+    'auth_type' auth type to change, '4' apply changes.
+
+    Polarion:
+        assignee: mpusater
+        initialEstimate: None
+    """
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*sso_enabled to true.*',
@@ -367,9 +481,17 @@ def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_app
     evm_tail.validate_logs()
 
 
+@pytest.mark.tier(2)
 def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
     """'ap' launches appliance_console, '' clears info screen, '14' Hardens appliance using SCAP
-    configuration, '' complete."""
+    configuration, '' complete.
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: config
+        caseimportance: critical
+        initialEstimate: 1/3h
+    """
 
     command_set = ('ap', '', '14', '')
     temp_appliance_preconfig.appliance_console.run_commands(command_set)

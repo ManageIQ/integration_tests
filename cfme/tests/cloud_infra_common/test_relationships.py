@@ -147,7 +147,14 @@ def wait_for_relationship_refresh(provider):
     ids=[rel[0] for rel in HOST_RELATIONSHIPS])
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE)
 def test_host_relationships(appliance, provider, setup_provider, host, relationship, view):
-    """Tests relationship navigation for a host"""
+    """Tests relationship navigation for a host
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     host_view = navigate_to(host, "Details")
     if host_view.entities.summary("Relationships").get_text_of(relationship) == "0":
         pytest.skip("There are no relationships for {}".format(relationship))
@@ -162,7 +169,14 @@ def test_host_relationships(appliance, provider, setup_provider, host, relations
     ids=[rel[0] for rel in INFRA_PROVIDER_RELATIONSHIPS])
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE)
 def test_infra_provider_relationships(appliance, provider, setup_provider, relationship, view):
-    """Tests relationship navigation for an infrastructure provider"""
+    """Tests relationship navigation for an infrastructure provider
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     provider_view = navigate_to(provider, "Details")
     if provider_view.entities.summary("Relationships").get_text_of(relationship) == "0":
         pytest.skip("There are no relationships for {}".format(relationship))
@@ -175,7 +189,14 @@ def test_infra_provider_relationships(appliance, provider, setup_provider, relat
     ids=[rel[0] for rel in CLOUD_PROVIDER_RELATIONSHIPS])
 @pytest.mark.provider([CloudProvider], selector=ONE_PER_TYPE)
 def test_cloud_provider_relationships(appliance, provider, setup_provider, relationship, view):
-    """Tests relationship navigation for a cloud provider"""
+    """Tests relationship navigation for a cloud provider
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: cloud
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     # Version dependent strings
     relationship = _fix_item(appliance, relationship)
     provider_view = navigate_to(provider, "Details")
@@ -238,6 +259,10 @@ def test_tagvis_infra_provider_children(prov_child_visibility, setup_provider, r
     Steps:
         1. As admin add tag to provider
         2. Login as restricted user, providers child not visible for user
+
+    Polarion:
+        assignee: rbabyuk
+        initialEstimate: None
     """
     prov_child_visibility(relationship, item_cls, visibility=False)
 
@@ -246,6 +271,7 @@ def test_tagvis_infra_provider_children(prov_child_visibility, setup_provider, r
     ids=[rel[0] for rel in cloud_test_items])
 @pytest.mark.provider([OpenStackProvider], selector=ONE)
 # used OpenStackProvider to cover all relationship as they have each of them
+@pytest.mark.tier(2)
 def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, relationship,
                                         item_cls):
     """ Tests that provider child's should not be visible for restricted user
@@ -255,6 +281,12 @@ def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, r
     Steps:
         1. As admin add tag to provider
         2. Login as restricted user, providers child not visible for user
+
+    Polarion:
+        assignee: rbabyuk
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/8h
     """
     prov_child_visibility(relationship, item_cls, visibility=False)
 
@@ -262,5 +294,12 @@ def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, r
 @pytest.mark.rhv1
 @pytest.mark.provider([CloudInfraProvider])
 def test_provider_refresh_relationship(provider, setup_provider):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     provider.refresh_provider_relationships(method='ui')
     wait_for_relationship_refresh(provider)

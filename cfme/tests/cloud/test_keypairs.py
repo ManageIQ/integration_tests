@@ -19,6 +19,10 @@ def test_keypair_crud(appliance, provider):
         * Provide Keypair name.
         * Select Cloud Provider.
         * Also delete it.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     keypairs = appliance.collections.keypairs
     try:
@@ -42,6 +46,10 @@ def test_keypair_crud_with_key(openstack_provider, appliance):
         * Provide Keypair name.
         * Select Cloud Provider.
         * Also delete it.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     keypairs = appliance.collections.keypairs
     key = RSA.generate(1024)
@@ -67,6 +75,10 @@ def test_keypair_create_cancel(openstack_provider, appliance):
         * Provide Keypair name.
         * Select Cloud Provider.
         * Also delete it.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     keypairs = appliance.collections.keypairs
     keypair = keypairs.create(name="", provider=openstack_provider, cancel=True)
@@ -84,6 +96,10 @@ def test_keypair_add_and_remove_tag(openstack_provider, appliance):
         * Add tag to Keypair.
         * Remove tag from Keypair
         * Also delete it.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     kp_collection = appliance.collections.keypairs

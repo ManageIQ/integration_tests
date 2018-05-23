@@ -90,12 +90,20 @@ def setup_pxe_servers_host_prov(pxe_server, pxe_cust_template, host_provisioning
 
 @pytest.mark.meta(blockers=[1203775, 1232427])
 @pytest.mark.usefixtures('setup_pxe_servers_host_prov')
+@pytest.mark.tier(1)
 def test_host_provisioning(appliance, setup_provider, cfme_data, host_provisioning, provider,
                            smtp_test, request):
     """Tests host provisioning
 
     Metadata:
         test_flag: host_provision
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: automate
+        caseimportance: medium
+        initialEstimate: 1/2h
+        testtype: integration
     """
 
     # Add host before provisioning

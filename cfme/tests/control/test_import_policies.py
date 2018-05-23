@@ -28,16 +28,39 @@ def policy_profile_collection(appliance):
 
 @pytest.mark.meta(blockers=[1106456, 1198111], automates=[1198111])
 def test_import_policies(appliance, import_policy_file):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: low
+        initialEstimate: 1/12h
+    """
     import_export.import_file(appliance, import_policy_file)
 
 
 def test_control_import_invalid_yaml_file(appliance, import_invalid_yaml_file):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/60h
+    """
     error_message = "Error during 'Policy Import': Invalid YAML file"
     with pytest.raises(Exception, match=error_message):
         import_export.import_file(appliance, import_invalid_yaml_file)
 
 
 def test_control_import_existing_policies(appliance, import_policy_file, policy_profile_collection):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: low
+        caseposneg: negative
+        initialEstimate: 1/12h
+    """
     import_export.import_file(appliance, import_policy_file)
     first_import = policy_profile_collection.all_policy_profile_names
     import_export.import_file(appliance, import_policy_file)

@@ -11,6 +11,12 @@ from cfme.utils.wait import wait_for
 @pytest.mark.nondestructive
 @pytest.mark.meta(blockers=[BZ(1531524, forced_streams=["5.9", "upstream"])])
 def test_restart_workers(appliance):
+    """
+    Polarion:
+        assignee: mmojzis
+        caseimportance: low
+        initialEstimate: None
+    """
     worker = appliance.collections.diagnostic_workers.instantiate(name="Generic Worker")
     pids = worker.reload_worker()
     # Wait for all original workers to be gone

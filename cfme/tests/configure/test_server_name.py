@@ -8,7 +8,14 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_server_name(request, appliance):
-    """Tests that changing the server name updates the about page"""
+    """Tests that changing the server name updates the about page
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/15h
+    """
 
     view = navigate_to(appliance.server, 'Details')
     old_server_name = view.server.basic_information.appliance_name.read()

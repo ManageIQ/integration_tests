@@ -37,6 +37,11 @@ def prov_data():
 
 @pytest.fixture(scope='module')
 def test_domain(appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     domain = appliance.collections.domains.create('test_{}'.format(fauxfactory.gen_alphanumeric()),
                                                   'description_{}'.format(
                                                       fauxfactory.gen_alphanumeric()),
@@ -110,6 +115,12 @@ def set_entity_quota_tag(request, entities, appliance):
 )
 def test_quota_tagging(appliance, provider, setup_provider, set_entity_quota_tag,
                        custom_prov_data, vm_name, template_name, prov_data):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: infra
+        initialEstimate: 1/10h
+    """
     prov_data.update(custom_prov_data)
     prov_data['catalog']['vm_name'] = vm_name
     do_vm_provisioning(appliance, template_name=template_name, provider=provider, vm_name=vm_name,

@@ -13,6 +13,11 @@ pytestmark = [
 
 
 def test_object_add_remove_tag(appliance, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     collection = appliance.collections.object_store_objects.filter({'provider': provider})
     all_objects = collection.all()
     if all_objects is None:

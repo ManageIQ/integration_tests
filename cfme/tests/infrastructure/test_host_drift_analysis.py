@@ -63,6 +63,12 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
 
     Metadata:
         test_flag: host_drift_analysis
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: smartst
+        initialEstimate: 1/4h
+        testtype: integration
     """
 
     # tabs changed, hack until configure.tasks is refactored for collections and versioned widgets

@@ -78,6 +78,11 @@ def random_labels(provider, appliance):
 @pytest.mark.polarion('CMP-10572')
 def test_labels_create(provider, soft_assert, random_labels):
 
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     provider.refresh_provider_relationships()
     # Verify that the labels appear in the UI:
     for instance, label_name, label_value, status_code, json_content in random_labels:
@@ -102,6 +107,11 @@ def test_labels_create(provider, soft_assert, random_labels):
 ])
 @pytest.mark.polarion('CMP-10572')
 def test_labels_remove(provider, soft_assert, random_labels):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     # Removing the labels
     for instance, label_name, label_value, status_code, _ in random_labels:
         if status_code:

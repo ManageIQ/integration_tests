@@ -95,6 +95,10 @@ def schedule(appliance):
 def test_paginator(appliance, place_info):
     """
         Check paginator is visible for config pages
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: None
     """
     place_name, place_class, place_navigation, paginator_expected_result = place_info
     if place_class:
@@ -117,6 +121,10 @@ def test_paginator(appliance, place_info):
 def test_paginator_details_page(appliance, place_info, schedule):
     """
         Check paginator is visible for access control pages + schedules
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: None
     """
     place_name, place_class, place_navigation, paginator_expected_result = place_info
     if place_name == 'tag':

@@ -17,4 +17,9 @@ def ensure_alerts(provider):
 
 
 def test_add_alerts_provider(ensure_alerts, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     provider.setup()

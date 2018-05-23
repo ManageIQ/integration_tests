@@ -46,6 +46,11 @@ def clear_search(view):
 @pytest.mark.polarion('CMP-10576')
 def test_breadcrumbs(provider, appliance, soft_assert):
 
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     for data_set in TESTED_OBJECTS:
 
         inst = (provider if data_set.obj is ContainersProvider

@@ -121,7 +121,13 @@ def small_vm(provider, small_template_modscope):
 def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, setup_provider,
                                             set_roottenant_quota, extra_msg, custom_prov_data,
                                             approve, prov_data, vm_name, template_name):
-    """Test Tenant Quota in UI and SSUI"""
+    """Test Tenant Quota in UI and SSUI
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: infra
+        initialEstimate: 1/6h
+    """
     prov_data.update(custom_prov_data)
     prov_data['catalog']['vm_name'] = vm_name
     do_vm_provisioning(appliance, template_name=template_name, provider=provider, vm_name=vm_name,
@@ -156,6 +162,12 @@ def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pro
 def test_tenant_quota_enforce_via_service_infra(request, appliance, provider, setup_provider,
                                                 context, set_roottenant_quota, extra_msg,
                                                 custom_prov_data, catalog_item):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: infra
+        initialEstimate: 1/6h
+    """
     with appliance.context.use(context):
         service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
         if context is ViaSSUI:
@@ -190,6 +202,12 @@ def test_tenant_quota_enforce_via_service_infra(request, appliance, provider, se
 )
 def test_tenant_quota_vm_reconfigure(appliance, provider, setup_provider, set_roottenant_quota,
                                      small_vm, custom_prov_data):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: control
+        initialEstimate: 1/10h
+    """
     original_config = small_vm.configuration.copy()
     new_config = small_vm.configuration.copy()
     setattr(new_config.hw, custom_prov_data['change'], custom_prov_data['value'])
@@ -210,6 +228,12 @@ def test_tenant_quota_vm_reconfigure(appliance, provider, setup_provider, set_ro
 )
 def test_setting_child_quota_more_than_parent(tenants_setup, parent_quota, child_quota,
                                               flash_text):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: prov
+        initialEstimate: 1/12h
+    """
     test_parent, test_child = tenants_setup
     view = navigate_to(test_parent, 'ManageQuotas', wait_for_view=True)
     view.form.fill({'{}_cb'.format(parent_quota[0]): True,

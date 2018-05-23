@@ -60,6 +60,11 @@ def test_webmks_vm_console(request, appliance, provider, vm_obj, configure_webso
         - A command that creates a file will be sent through the console.
         - Using ssh we will check that the command worked (i.e. that the file
           was created.)
+
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: infra
+        initialEstimate: 1/4h
     """
     console_vm_username = credentials[provider.data.templates.get('console_template')
                             ['creds']].get('username')

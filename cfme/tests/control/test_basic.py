@@ -411,6 +411,13 @@ def policy_and_condition(request, policy_collection, condition_collection, appli
 @pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_condition_crud(condition_collection, condition_prerequisites):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     # CR
     condition_class, scope, expression = condition_prerequisites
     condition = condition_collection.create(
@@ -428,6 +435,13 @@ def test_condition_crud(condition_collection, condition_prerequisites):
 @pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_action_crud(action_collection):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: critical
+        initialEstimate: 1/12h
+    """
     # CR
     action = action_collection.create(
         fauxfactory.gen_alphanumeric(),
@@ -446,6 +460,13 @@ def test_action_crud(action_collection):
 @pytest.mark.uncollectif(lambda appliance, policy_class: (
     policy_class in PHYS_POLICIES and appliance.version < "5.9"))
 def test_policy_crud(policy_collection, policy_class):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: critical
+        initialEstimate: 1/12h
+    """
     # CR
     policy = policy_collection.create(policy_class, fauxfactory.gen_alphanumeric())
     # U
@@ -459,6 +480,13 @@ def test_policy_crud(policy_collection, policy_class):
 @pytest.mark.uncollectif(lambda appliance, policy_class: (
     policy_class in PHYS_POLICIES and appliance.version < "5.9"))
 def test_policy_copy(policy_class, policy):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     random_policy_copy = policy.copy()
     assert random_policy_copy.exists
     random_policy_copy.delete()
@@ -470,6 +498,12 @@ def test_policy_copy(policy_class, policy):
     appliance.version < "5.9"))
 def test_assign_two_random_events_to_control_policy(control_policy, control_policy_class,
                                                     soft_assert):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        initialEstimate: 1/12h
+    """
     random_events = random.sample(EVENTS, 2)
     control_policy.assign_events(*random_events)
     soft_assert(control_policy.is_event_assigned(random_events[0]))
@@ -482,6 +516,13 @@ def test_assign_two_random_events_to_control_policy(control_policy, control_poli
 @pytest.mark.meta(blockers=[BZ(1565576, forced_streams=["5.9"],
                   unblock=lambda policy_class: policy_class is not PHYS_POLICIES[0])])
 def test_control_assign_actions_to_event(request, policy_class, policy, action):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: critical
+        initialEstimate: 1/12h
+    """
     if type(policy) in CONTROL_POLICIES:
         event = random.choice(EVENTS)
         policy.assign_events(event)
@@ -502,6 +543,12 @@ def test_assign_condition_to_control_policy(request, policy_and_condition, condi
     Steps:
         * Create a control policy.
         * Assign a condition to the created policy.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: medium
+        initialEstimate: 1/12h
     """
     policy, condition = policy_and_condition
     policy.assign_conditions(condition)
@@ -512,6 +559,13 @@ def test_assign_condition_to_control_policy(request, policy_and_condition, condi
 @pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_policy_profile_crud(policy_profile_collection, two_random_policies):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: critical
+        initialEstimate: 1/12h
+    """
     profile = policy_profile_collection.create(
         fauxfactory.gen_alphanumeric(),
         policies=two_random_policies
@@ -525,6 +579,13 @@ def test_policy_profile_crud(policy_profile_collection, two_random_policies):
 @pytest.mark.parametrize("fill_type,expression,verify", EXPRESSIONS_TO_TEST, ids=[
     expr[0] for expr in EXPRESSIONS_TO_TEST])
 def test_modify_condition_expression(condition_for_expressions, fill_type, expression, verify):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: low
+        initialEstimate: 1/12h
+    """
     with update(condition_for_expressions):
         condition_for_expressions.expression = expression.format(
             condition_for_expressions.FIELD_VALUE)
@@ -535,6 +596,12 @@ def test_modify_condition_expression(condition_for_expressions, fill_type, expre
 @pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_alert_crud(alert_collection):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        initialEstimate: 1/12h
+    """
     # CR
     alert = alert_collection.create(
         fauxfactory.gen_alphanumeric(),
@@ -551,6 +618,13 @@ def test_alert_crud(alert_collection):
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1303645], automates=[1303645])
 def test_control_alert_copy(alert):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     alert_copy = alert.copy(description=fauxfactory.gen_alphanumeric())
     assert alert_copy.exists
     alert_copy.delete()
@@ -560,6 +634,13 @@ def test_control_alert_copy(alert):
 @pytest.mark.tier(2)
 def test_alert_profile_crud(request, alert_profile_class, alert_collection,
         alert_profile_collection):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: critical
+        initialEstimate: 1/12h
+    """
     alert = alert_collection.create(
         fauxfactory.gen_alphanumeric(),
         based_on=alert_profile_class.TYPE,
@@ -579,6 +660,12 @@ def test_alert_profile_crud(request, alert_profile_class, alert_collection,
 
 @pytest.mark.tier(2)
 def test_alert_profile_assigning(alert_profile, appliance):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        initialEstimate: 1/12h
+    """
     view = appliance.browser.create_view(AlertProfileDetailsView)
     if isinstance(alert_profile, alert_profiles.ServerAlertProfile):
         options = dict(assign='Selected Servers', selections=['Servers', 'EVM'])
@@ -600,5 +687,11 @@ def test_alert_profile_assigning(alert_profile, appliance):
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(lambda: current_version() < "5.8")
 def test_control_is_ansible_playbook_available_in_actions_dropdown(action_collection):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        initialEstimate: 1/12h
+    """
     view = navigate_to(action_collection, "Add")
     assert "Run Ansible Playbook" in [option.text for option in view.action_type.all_options]

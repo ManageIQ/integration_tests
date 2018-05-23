@@ -76,6 +76,12 @@ def ensure_vm_running(small_vm):
 @pytest.mark.rhv1
 @pytest.mark.parametrize('change_type', ['cores_per_socket', 'sockets', 'memory'])
 def test_vm_reconfig_add_remove_hw_cold(provider, small_vm, ensure_vm_stopped, change_type):
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: infra
+        initialEstimate: 1/3h
+    """
     orig_config = small_vm.configuration.copy()
     new_config = prepare_new_config(orig_config, change_type)
 
@@ -97,6 +103,12 @@ def test_vm_reconfig_add_remove_hw_cold(provider, small_vm, ensure_vm_stopped, c
 def test_vm_reconfig_add_remove_disk_cold(
         provider, small_vm, ensure_vm_stopped, disk_type, disk_mode):
 
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: infra
+        initialEstimate: 1/3h
+    """
     orig_config = small_vm.configuration.copy()
     new_config = orig_config.copy()
     new_config.add_disk(
@@ -129,7 +141,12 @@ def test_vm_reconfig_add_remove_disk_cold(
 @pytest.mark.rhv3
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6996')])
 def test_reconfig_vm_negative_cancel(provider, small_vm, ensure_vm_stopped):
-    """ Cancel reconfiguration changes """
+    """ Cancel reconfiguration changes
+
+    Polarion:
+        assignee: nansari
+        initialEstimate: None
+    """
     config_vm = small_vm.configuration.copy()
 
     # Some changes in vm reconfigure before cancel
@@ -148,7 +165,12 @@ def test_reconfig_vm_negative_cancel(provider, small_vm, ensure_vm_stopped):
 @pytest.mark.parametrize('change_type', ['sockets', 'memory'])
 def test_vm_reconfig_add_remove_hw_hot(provider, small_vm, ensure_vm_running, change_type):
     """Change number of CPU sockets and amount of memory while VM is runnng.
-        Chaning number of cores per socket on running VM is not supported by RHV."""
+        Chaning number of cores per socket on running VM is not supported by RHV.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     orig_config = small_vm.configuration.copy()
     new_config = prepare_new_config(orig_config, change_type)
 

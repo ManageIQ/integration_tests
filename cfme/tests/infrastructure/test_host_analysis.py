@@ -65,6 +65,12 @@ def test_run_host_analysis(setup_provider_modscope, provider, host_type, host_na
 
     Metadata:
         test_flag: host_analysis
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: smartst
+        caseimportance: medium
+        initialEstimate: 1/3h
     """
     register_event(target_type='Host', target_name=host_name, event_type='request_host_scan')
     register_event(target_type='Host', target_name=host_name, event_type='host_scan_complete')

@@ -42,6 +42,12 @@ def test_group_roles(appliance, setup_aws_auth_provider, group_name, context, so
     AWS IAM groups
 
     NOTE: Only tests vertical navigation tree at the moment, not accordions within the page
+
+    Polarion:
+        assignee: llasmith
+        casecomponent: config
+        initialEstimate: 1/4h
+        testtype: integration
     """
     if context.__name__ == 'ViaUI':
         role_dict = role_access_ui_59z if appliance.version >= '5.9' else role_access_ui_58z

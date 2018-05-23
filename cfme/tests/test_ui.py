@@ -17,6 +17,11 @@ def traverse(dic, paths, path=None):
 
 
 def test_each_page(appliance):
+    """
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: None
+    """
     view = navigate_to(appliance.server, 'Dashboard')
     tree = view.navigation.nav_item_tree()
     paths = []

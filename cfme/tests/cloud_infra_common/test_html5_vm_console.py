@@ -65,6 +65,11 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
         - A command that creates a file will be sent through the console.
         - Using ssh we will check that the command worked (i.e. that the file
           was created.
+
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: appl
+        initialEstimate: 1/4h
     """
     console_vm_username = credentials[provider.data.templates.get('console_template')
                             ['creds']].get('username')

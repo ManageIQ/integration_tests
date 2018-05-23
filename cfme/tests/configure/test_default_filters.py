@@ -14,6 +14,13 @@ pytestmark = [pytest.mark.tier(3),
 
 
 def test_cloudimage_defaultfilters(appliance):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     filters = [['Cloud', 'Instances', 'Images', 'Platform / Amazon']]
     tree_path = ['All Images', 'Global Filters', 'Platform / Amazon']
     appliance.user.my_settings.default_filters.update({'filters': [(k, True) for k in filters]})
@@ -22,6 +29,11 @@ def test_cloudimage_defaultfilters(appliance):
 
 
 def test_cloudinstance_defaultfilters(appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     filters = [['Cloud', 'Instances', 'Instances', 'Platform / Openstack']]
     tree_path = ['All Instances', 'Global Filters', 'Platform / Openstack']
     appliance.user.my_settings.default_filters.update({'filters': [(k, True) for k in filters]})
@@ -30,6 +42,13 @@ def test_cloudinstance_defaultfilters(appliance):
 
 
 def test_infrastructurehost_defaultfilters(appliance):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     filters = [['Infrastructure', 'Hosts', 'Platform / HyperV']]
     appliance.user.my_settings.default_filters.update({'filters': [(k, True) for k in filters]})
     host_collecton = appliance.collections.hosts
@@ -38,6 +57,13 @@ def test_infrastructurehost_defaultfilters(appliance):
 
 
 def test_infrastructurevms_defaultfilters(appliance):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     filters = [['Infrastructure', 'Virtual Machines', 'VMs', 'Platform / VMware']]
     tree_path = ['All VMs', 'Global Filters', 'Platform / VMware']
     appliance.user.my_settings.default_filters.update({'filters': [(k, True) for k in filters]})
@@ -46,6 +72,13 @@ def test_infrastructurevms_defaultfilters(appliance):
 
 
 def test_infrastructuretemplates_defaultfilters(appliance):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     filters = [['Infrastructure', 'Virtual Machines', 'Templates', 'Platform / Redhat']]
     tree_path = ['All Templates', 'Global Filters', 'Platform / Redhat']
     appliance.user.my_settings.default_filters.update({'filters': [(k, True) for k in filters]})
@@ -54,6 +87,13 @@ def test_infrastructuretemplates_defaultfilters(appliance):
 
 
 def test_servicetemplateandimages_defaultfilters(appliance, request):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     filters = [['Services', 'Workloads', 'Templates & Images', 'Platform / Microsoft']]
     tree_path = ['All Templates & Images', 'Global Filters', 'Platform / Microsoft']
     appliance.user.my_settings.default_filters.update({'filters': [(k, True) for k in filters]})
@@ -65,6 +105,13 @@ def test_servicetemplateandimages_defaultfilters(appliance, request):
 
 
 def test_servicevmsandinstances_defaultfilters(appliance, request):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     filters = [['Services', 'Workloads', 'VMs & Instances', 'Platform / Openstack']]
     tree_path = ['All VMs & Instances', 'Global Filters', 'Platform / Openstack']
     appliance.user.my_settings.default_filters.update({'filters': [(k, True) for k in filters]})

@@ -44,6 +44,12 @@ def test_server_roles_changing(request, roles, appliance):
       TODO:
       - Use for parametrization on more roles set?
       - Change the yaml role list to dict.
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/15h
     """
     server_settings = appliance.server.settings
     original_roles = server_settings.server_roles_db

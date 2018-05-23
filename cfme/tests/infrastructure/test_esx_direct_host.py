@@ -96,6 +96,11 @@ def test_validate(host_provider):
             set up a VMware provider.
         * Refresh the provider
         * The provider should refresh without problems.
+
+    Polarion:
+        assignee: None
+        casecomponent: appl
+        initialEstimate: 1/12h
     """
     host_provider.create()
     host_provider.refresh_provider_relationships()

@@ -89,6 +89,12 @@ def test_cloud_grid_page_per_item(appliance, request, page, value, set_grid):
 
     Metadata:
         test_flag: visuals
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: cloud
+        caseimportance: medium
+        initialEstimate: 1/10h
     """
     if isinstance(page, six.string_types):
         page = getattr(appliance.collections, page)
@@ -110,6 +116,12 @@ def test_cloud_tile_page_per_item(appliance, request, page, value, set_tile):
 
     Metadata:
         test_flag: visuals
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: cloud
+        caseimportance: medium
+        initialEstimate: 1/10h
     """
     if isinstance(page, six.string_types):
         page = getattr(appliance.collections, page)
@@ -131,6 +143,12 @@ def test_cloud_list_page_per_item(appliance, request, page, value, set_list):
 
     Metadata:
         test_flag: visuals
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: cloud
+        caseimportance: medium
+        initialEstimate: 1/10h
     """
     if isinstance(page, six.string_types):
         page = getattr(appliance.collections, page)
@@ -153,6 +171,11 @@ def test_cloud_start_page(request, appliance, start_page):
 
     Metadata:
         test_flag: visuals
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        initialEstimate: 1/6h
     """
     request.addfinalizer(lambda: set_default_page(appliance))
     appliance.user.my_settings.visual.login_page = start_page
@@ -163,6 +186,13 @@ def test_cloud_start_page(request, appliance, start_page):
 
 
 def test_cloudprovider_noquads(request, set_cloud_provider_quad):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/30h
+    """
     view = navigate_to(CloudProvider, 'All')
     view.toolbar.view_selector.select('Grid View')
     # Here data property will return an empty dict when the Quadrants option is deactivated.

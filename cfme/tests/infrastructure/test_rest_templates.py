@@ -44,6 +44,10 @@ def test_query_template_attributes(request, appliance, a_provider, soft_assert):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: mkourim
+        initialEstimate: 1/4h
     """
     templates = appliance.rest_api.collections.templates.all
     if templates:
@@ -68,6 +72,12 @@ def test_set_ownership(appliance, template, from_detail):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/8h
     """
     if "set_ownership" not in appliance.rest_api.collections.templates.action.all:
         pytest.skip("set_ownership action for templates is not implemented in this version")
@@ -98,6 +108,11 @@ def test_delete_template_from_detail_post(template):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: mkourim
+        caseimportance: low
+        initialEstimate: 1/4h
     """
     delete_resources_from_detail([template], method='POST')
 
@@ -108,6 +123,11 @@ def test_delete_template_from_detail_delete(template):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: mkourim
+        caseimportance: low
+        initialEstimate: 1/4h
     """
     delete_resources_from_detail([template], method='DELETE')
 
@@ -118,5 +138,10 @@ def test_delete_template_from_collection(template):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: mkourim
+        caseimportance: low
+        initialEstimate: 1/4h
     """
     delete_resources_from_collection([template])

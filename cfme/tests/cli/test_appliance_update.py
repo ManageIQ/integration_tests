@@ -86,8 +86,16 @@ def appliance_preupdate(old_version, appliance):
 
 
 @pytest.mark.uncollectif(lambda: not store.current_appliance.is_downstream)
+@pytest.mark.tier(2)
 def test_update_yum(appliance_preupdate, appliance):
-    """Tests appliance update between versions"""
+    """Tests appliance update between versions
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: appl
+        initialEstimate: 1/4h
+        testtype: structural
+    """
 
     appliance_preupdate.evmserverd.stop()
     with appliance_preupdate.ssh_client as ssh:
@@ -131,9 +139,16 @@ def update_embedded_appliance(enabled_embedded_appliance, appliance):
 
 
 @pytest.mark.ignore_stream("upstream")
+@pytest.mark.tier(1)
 def test_embedded_ansible_update(update_embedded_appliance, appliance, old_version):
     """ Tests updating an appliance which has embedded ansible role enabled, also confirms that the
-        role continues to function correctly after the update has completed"""
+        role continues to function correctly after the update has completed
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: ansible
+        initialEstimate: 1/2h
+    """
     def is_appliance_updated(appliance):
         """Checks if cfme-appliance has been updated"""
         assert appliance.version == update_embedded_appliance.version

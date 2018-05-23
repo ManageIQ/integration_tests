@@ -27,7 +27,13 @@ def get_host_data_by_name(provider, host_name):
 @pytest.mark.parametrize('scenario', get_smartstate_analysis_scenarios())
 def test_workload_smartstate_analysis(appliance, request, scenario):
     """Runs through provider based scenarios initiating smart state analysis against VMs, Hosts,
-    and Datastores"""
+    and Datastores
+
+    Polarion:
+        assignee: otsuman
+        casecomponent: appl
+        initialEstimate: 1/2h
+    """
     from_ts = int(time.time() * 1000)
     logger.debug('Scenario: {}'.format(scenario['name']))
     appliance.install_vddk()

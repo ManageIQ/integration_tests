@@ -37,6 +37,12 @@ def test_cloud_catalog_item(appliance, vm_name, setup_provider, provider, dialog
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/8h
     """
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
     vm = VM.factory("{}0001".format(vm_name), provider)

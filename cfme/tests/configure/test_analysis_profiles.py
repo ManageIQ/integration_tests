@@ -53,7 +53,14 @@ def host_profile():
 @pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_vm_analysis_profile_crud(soft_assert, vm_profile):
-    """CRUD for VM analysis profiles."""
+    """CRUD for VM analysis profiles.
+
+    Polarion:
+        assignee: nansari
+        caseimportance: medium
+        initialEstimate: 1/2h
+        testtype: integration
+    """
     vm_profile.create()
     assert vm_profile.exists
 
@@ -81,7 +88,14 @@ def test_vm_analysis_profile_crud(soft_assert, vm_profile):
 @pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_host_analysis_profile_crud(soft_assert, host_profile):
-    """CRUD for Host analysis profiles."""
+    """CRUD for Host analysis profiles.
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/12h
+    """
     host_profile.create()
     assert host_profile.exists
 
@@ -105,7 +119,14 @@ def test_host_analysis_profile_crud(soft_assert, host_profile):
 # TODO Combine and parametrize VM + Host validation tests
 # Parametrize VM/Host, and (name/description/no item + flash) message as namedtuple
 def test_vmanalysis_profile_description_validation():
-    """ Test to validate description in vm profiles"""
+    """ Test to validate description in vm profiles
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/20h
+    """
     profile = AnalysisProfile(name=fauxfactory.gen_alphanumeric(), description=None,
                               profile_type=AnalysisProfile.VM_TYPE,
                               categories=categories_list)
@@ -120,7 +141,14 @@ def test_vmanalysis_profile_description_validation():
 
 
 def test_analysis_profile_duplicate_name():
-    """ Test to validate duplicate profiles name."""
+    """ Test to validate duplicate profiles name.
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/15h
+    """
     profile = AnalysisProfile(name=fauxfactory.gen_alphanumeric(),
                               description=fauxfactory.gen_alphanumeric(),
                               profile_type=AnalysisProfile.VM_TYPE,
@@ -138,7 +166,14 @@ def test_analysis_profile_duplicate_name():
 
 
 def test_delete_default_analysis_profile():
-    """ Test to validate delete default profiles."""
+    """ Test to validate delete default profiles.
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/15h
+    """
     profile = AnalysisProfile(name="host sample", description='Host Sample',
                               profile_type=AnalysisProfile.HOST_TYPE)
     # Option disabled from details
@@ -156,7 +191,14 @@ def test_delete_default_analysis_profile():
 
 
 def test_edit_default_analysis_profile():
-    """ Test to validate edit default profiles."""
+    """ Test to validate edit default profiles.
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/10h
+    """
     profile = AnalysisProfile(name="host sample", description='Host Sample',
                               profile_type=AnalysisProfile.HOST_TYPE)
     # Option disabled from details
@@ -172,7 +214,14 @@ def test_edit_default_analysis_profile():
 
 
 def test_analysis_profile_item_validation():
-    """ Test to validate analysis profile items."""
+    """ Test to validate analysis profile items.
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/15h
+    """
     profile_name = fauxfactory.gen_alphanumeric()
     profile = AnalysisProfile(name=profile_name, description=profile_name,
                               profile_type=AnalysisProfile.HOST_TYPE)
@@ -188,7 +237,14 @@ def test_analysis_profile_item_validation():
 
 
 def test_analysis_profile_name_validation():
-    """ Test to validate profile name."""
+    """ Test to validate profile name.
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/20h
+    """
     profile = AnalysisProfile(name="", description=fauxfactory.gen_alphanumeric(),
                               profile_type=AnalysisProfile.HOST_TYPE, files=files_list)
     with pytest.raises(AssertionError):
@@ -202,7 +258,14 @@ def test_analysis_profile_name_validation():
 
 
 def test_analysis_profile_description_validation():
-    """ Test to validate profile description."""
+    """ Test to validate profile description.
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/15h
+    """
     profile = AnalysisProfile(name=fauxfactory.gen_alphanumeric(), description="",
                               profile_type=AnalysisProfile.HOST_TYPE, files=files_list)
     with pytest.raises(AssertionError):

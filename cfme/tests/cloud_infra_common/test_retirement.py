@@ -139,6 +139,21 @@ def generate_retirement_date_now():
 @pytest.mark.rhv1
 def test_retirement_now(retire_vm):
     """Tests on-demand retirement of an instance/vm
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: prov
+        caseimportance: critical
+        initialEstimate: 1/6h
+        Steps:
+            1. Open vm summary page
+            2. Lyfecycle -> Retire this VM
+            3. Wait until process will be finished
+        Results:
+            1.
+            2.
+            3. Retired state - Retired         Power state - off or
+               terminated or unknown         Retirement date is present
     """
     # For 5.7 capture two times to assert the retire time is within a window.
     # Too finicky to get it down to minute precision, nor is it really needed here
@@ -157,6 +172,11 @@ def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged):
     """Tests on-demand retirement of an instance/vm
 
     S3 (instance-backed) EC2 instances that aren't lifecycle tagged won't get shut down
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: prov
+        initialEstimate: 1/6h
     """
     # Tag the VM with lifecycle for full retirement based on parameter
     if tagged:
@@ -191,6 +211,11 @@ def test_set_retirement_date(retire_vm, warn):
     """Tests setting retirement date and verifies configured date is reflected in UI
 
     Note we cannot control the retirement time, just day, so we cannot wait for the VM to retire
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: prov
+        initialEstimate: 1/6h
     """
     # TODO retirement supports datetime (no tz) in gaprindashvili/59z, update accordingly
     num_days = 2
@@ -207,6 +232,11 @@ def test_set_retirement_offset(retire_vm, warn):
     """Tests setting the retirement by offset
 
     Minimum is 1 hour, just testing that it is set like test_set_retirement_date
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: cloud
+        initialEstimate: 1/15h
     """
     num_hours = 3
     num_days = 1
@@ -228,6 +258,11 @@ def test_set_retirement_offset(retire_vm, warn):
 @pytest.mark.rhv3
 def test_unset_retirement_date(retire_vm):
     """Tests cancelling a scheduled retirement by removing the set date
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: prov
+        initialEstimate: 1/6h
     """
     num_days = 3
     retire_date = generate_retirement_date(delta=num_days)
@@ -248,6 +283,12 @@ def test_resume_retired_instance(retire_vm, provider, remove_date):
     Two methods to resume:
     1. Set a retirement date in the future
     2. Remove the set retirement date
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: prov
+        caseimportance: medium
+        initialEstimate: 1/2h
     """
     num_days = 5
 

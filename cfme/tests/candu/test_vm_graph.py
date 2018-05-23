@@ -42,6 +42,11 @@ def test_vm_most_recent_hour_graph_screen(graph_type, provider, enable_candu):
         * Check graph displayed or not
         * Check legends hide and display properly or not
         * Check data for legends collected or not
+
+    Polarion:
+        assignee: ndhandre
+        casecomponent: candu
+        initialEstimate: None
     """
 
     vm = VM.factory('cu-24x7', provider)

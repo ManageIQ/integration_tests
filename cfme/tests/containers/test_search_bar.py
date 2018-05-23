@@ -30,6 +30,10 @@ def test_search_bar(provider, appliance, soft_assert):
         * Goes to <object> page
         * Inserts: Irregular symbol, '*' character, full search string, partial search string
         * Verify proper results
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     for collection_name in COLLECTION_NAMES:
         view = navigate_to(getattr(appliance.collections, collection_name), 'All')

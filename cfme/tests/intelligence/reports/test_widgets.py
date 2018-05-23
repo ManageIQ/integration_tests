@@ -69,6 +69,13 @@ def custom_widgets(appliance):
 @pytest.mark.tier(3)
 def test_widgets_on_dashboard(appliance, request, dashboard, default_widgets,
                               custom_widgets, soft_assert):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     with update(dashboard):
         dashboard.widgets = map(lambda w: w.title, custom_widgets)
 
@@ -89,7 +96,14 @@ def test_widgets_on_dashboard(appliance, request, dashboard, default_widgets,
 @test_requirements.dashboard
 @pytest.mark.tier(3)
 def test_widgets_reorder_in_reports(request, dashboard):
-    """Tests drag and drop widgets in Cloud Intel/Reports/Dashboards"""
+    """Tests drag and drop widgets in Cloud Intel/Reports/Dashboards
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     view = navigate_to(dashboard, "Edit")
     previous_names = view.widget_picker.all_dashboard_widgets
     first_widget = previous_names[0]

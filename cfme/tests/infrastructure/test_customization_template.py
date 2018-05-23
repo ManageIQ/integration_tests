@@ -27,7 +27,14 @@ def image_type(appliance):
 @pytest.mark.parametrize("script_type", ["Kickstart", "Sysprep", "CloudInit"],
                          ids=["kickstart", "sysprep", "cloudinit"])
 def test_customization_template_crud(collection, script_type, image_type):
-    """Basic CRUD test for customization templates."""
+    """Basic CRUD test for customization templates.
+
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: prov
+        caseimportance: medium
+        initialEstimate: 1/15h
+    """
 
     template_crud = collection.create(name="{}_{}".format(script_type,
                                                           fauxfactory.gen_alphanumeric(4)),
@@ -41,7 +48,14 @@ def test_customization_template_crud(collection, script_type, image_type):
 
 
 def test_name_required_error_validation_cust_template(collection):
-    """Test to validate name in customization templates."""
+    """Test to validate name in customization templates.
+
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/20h
+    """
 
     with pytest.raises(Exception, match='Name is required'):
         collection.create(
@@ -53,7 +67,14 @@ def test_name_required_error_validation_cust_template(collection):
 
 
 def test_type_required_error_validation(collection):
-    """Test to validate type in customization templates."""
+    """Test to validate type in customization templates.
+
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
 
     with pytest.raises(Exception, match='Type is required'):
         collection.create(
@@ -65,7 +86,14 @@ def test_type_required_error_validation(collection):
 
 
 def test_pxe_image_type_required_error_validation(collection):
-    """Test to validate pxe image type in customization templates."""
+    """Test to validate pxe image type in customization templates.
+
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: prov
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
 
     with pytest.raises(Exception, match="Pxe_image_type can't be blank"):
         collection.create(
@@ -78,7 +106,14 @@ def test_pxe_image_type_required_error_validation(collection):
 
 @pytest.mark.meta(blockers=[BZ(1449116, forced_streams=['5.7', '5.8'])])
 def test_cust_template_duplicate_name_error_validation(collection):
-    """Test to validate duplication in customization templates."""
+    """Test to validate duplication in customization templates.
+
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
 
     name = fauxfactory.gen_alphanumeric(8)
     description = fauxfactory.gen_alphanumeric(16)
@@ -103,6 +138,12 @@ def test_name_max_character_validation(collection):
     """Test to validate name with maximum characters in customization templates.
        Max length is controlled by UI elements - we are not allowed to input more than we should
        Opens template details to verify that extra symbols were cut
+
+    Polarion:
+        assignee: nansari
+        casecomponent: infra
+        caseimportance: low
+        initialEstimate: 1/4h
     """
     template_name = collection.create(
         name=fauxfactory.gen_alphanumeric(256),
@@ -119,6 +160,12 @@ def test_name_max_character_validation(collection):
 def test_customization_template_copy(collection):
     """
     Test to check the copy operation of customization templates.
+
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: prov
+        caseimportance: medium
+        initialEstimate: 1/15h
     """
     template_crud = collection.create(name=fauxfactory.gen_alphanumeric(8),
                                       description=fauxfactory.gen_alphanumeric(16),

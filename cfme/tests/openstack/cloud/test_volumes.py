@@ -37,12 +37,22 @@ def volume(appliance, provider):
 
 
 def test_create_volume(volume, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert volume.exists
     assert volume.size == '{} GB'.format(VOLUME_SIZE)
     assert volume.tenant == provider.data['provisioning']['cloud_tenant']
 
 
 def test_edit_volume(volume, appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_name = fauxfactory.gen_alpha()
     with update(volume):
         volume.name = new_name
@@ -51,5 +61,10 @@ def test_edit_volume(volume, appliance):
 
 
 def test_delete_volume(volume):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     volume.delete()
     assert not volume.exists

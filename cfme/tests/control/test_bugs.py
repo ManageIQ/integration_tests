@@ -150,7 +150,14 @@ def hardware_reconfigured_alert(alert_collection):
 @pytest.mark.meta(blockers=[1155284])
 def test_scope_windows_registry_stuck(request, appliance, infra_provider, policy_collection,
         policy_profile_collection):
-    """If you provide Scope checking windows registry, it messes CFME up. Recoverable."""
+    """If you provide Scope checking windows registry, it messes CFME up. Recoverable.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: low
+        initialEstimate: 1/6h
+    """
     policy = policy_collection.create(
         VMCompliancePolicy,
         "Windows registry scope glitch testing Compliance Policy",
@@ -181,6 +188,12 @@ def test_invoke_custom_automation(request, action_collection):
     Steps:
         * Go create new action, select Invoke Custom Automation
         * The form with additional fields should appear
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     # The action is to have all possible fields filled, that way we can ensure it is good
     action = action_collection.create(
@@ -219,6 +232,13 @@ def test_check_compliance_history(request, virtualcenter_provider, vmware_vm, po
 
     Result:
         Compliance history screen with last 10 checks should be opened
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: medium
+        initialEstimate: 1/6h
+        testtype: nonfunctional
     """
     policy = policy_collection.create(
         VMCompliancePolicy,
@@ -252,6 +272,13 @@ def test_delete_all_actions_from_compliance_policy(request, policy_collection):
 
     Result:
         The policy shouldn't be saved.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/12h
     """
     policy = policy_collection.create(VMCompliancePolicy, fauxfactory.gen_alphanumeric())
     request.addfinalizer(lambda: policy.delete() if policy.exists else None)
@@ -270,6 +297,12 @@ def test_control_identical_descriptions(request, create_function, collections, a
 
     Result:
         The item shouldn't be created.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: low
+        initialEstimate: 1/12h
     """
     args, kwargs = create_function.fn(request, collections[create_function.name])
     flash = appliance.browser.create_view(ControlExplorerView).flash
@@ -285,6 +318,12 @@ def test_vmware_alarm_selection_does_not_fail(alert_collection):
 
     Metadata:
         test_flag: alerts
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: low
+        initialEstimate: 1/12h
     """
     alert_obj = alert_collection.instantiate(
         "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
@@ -314,6 +353,12 @@ def test_vmware_alarm_selection_does_not_fail(alert_collection):
 def test_alert_ram_reconfigured(hardware_reconfigured_alert):
     """Tests the bug when it was not possible to save an alert with RAM option in hardware
     attributes.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: medium
+        initialEstimate: 1/12h
     """
     view = navigate_to(hardware_reconfigured_alert, "Details")
     attr = view.hardware_reconfigured_parameters.get_text_of("Hardware Attribute")

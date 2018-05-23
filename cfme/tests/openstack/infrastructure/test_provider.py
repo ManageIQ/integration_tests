@@ -13,18 +13,33 @@ pytestmark = [
 
 
 def test_api_port(provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view_details = navigate_to(provider, 'Details')
     port = provider.data['endpoints']['default']['api_port']
     api_port = int(view_details.entities.summary('Properties').get_text_of('API Port'))
     assert api_port == port, 'Invalid API Port'
 
 def test_credentials_quads(provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(provider, 'All')
     prov_item = view.entities.get_entity(name=provider.name, surf_pages=True)
     assert prov_item.data.get('creds') and 'checkmark' in prov_item.data['creds']
 
 
 def test_delete_provider(provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     provider.delete(cancel=False)
     provider.wait_for_delete()
     view = navigate_to(provider, 'All')

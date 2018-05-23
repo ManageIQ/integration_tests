@@ -88,7 +88,12 @@ def configure_db_replication(db_address, appliance):
 
 @pytest.fixture(scope="module")
 def test_vm(virtualcenter_provider):
-    """Fixture to provision appliance to the provider being tested if necessary"""
+    """Fixture to provision appliance to the provider being tested if necessary
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     vm_name = random_vm_name('distpwr')
     vm = VM.factory(vm_name, virtualcenter_provider)
 
@@ -109,6 +114,11 @@ def test_appliance_replicate_between_regions(request, virtualcenter_provider):
 
     Metadata:
         test_flag: replication
+
+    Polarion:
+        assignee: tpapaioa
+        caseimportance: low
+        initialEstimate: 1/10h
     """
     appl1, appl2 = get_replication_appliances()
 
@@ -136,6 +146,11 @@ def test_external_database_appliance(request, virtualcenter_provider, appliance)
 
     Metadata:
         test_flag: replication
+
+    Polarion:
+        assignee: None
+        caseimportance: low
+        initialEstimate: None
     """
     appl1, appl2 = get_distributed_appliances(appliance)
 
@@ -161,6 +176,12 @@ def test_appliance_replicate_sync_role_change(request, virtualcenter_provider, a
 
     Metadata:
         test_flag: replication
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/10h
     """
     appl1, appl2 = get_replication_appliances()
     replication_conf = appliance.server.zone.region.replication
@@ -198,6 +219,12 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, virtualcente
 
     Metadata:
         test_flag: replication
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/4h
     """
     appl1, appl2 = get_replication_appliances()
     replication_conf = appliance.server.zone.region.replication
@@ -234,6 +261,12 @@ def test_appliance_replicate_database_disconnection(request, virtualcenter_provi
 
     Metadata:
         test_flag: replication
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/10h
     """
     appl1, appl2 = get_replication_appliances()
     replication_conf = appliance.server.zone.region.replication
@@ -269,6 +302,12 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, virtua
 
     Metadata:
         test_flag: replication
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/4h
     """
     appl1, appl2 = get_replication_appliances()
     replication_conf = appliance.server.zone.region.replication
@@ -305,6 +344,10 @@ def test_distributed_vm_power_control(request, test_vm, virtualcenter_provider, 
 
     Metadata:
         test_flag: replication
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     appl1, appl2 = get_replication_appliances()
 

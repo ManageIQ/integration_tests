@@ -159,6 +159,12 @@ def get_full_path_to_file(path_on_host, schedule_name):
 @pytest.mark.tier(3)
 def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip, appliance):
     """ Test scheduled one-type backup on given machines using smb/nfs
+
+    Polarion:
+        assignee: otsuman
+        casecomponent: appl
+        caseimportance: low
+        initialEstimate: None
     """
 
     # ---- Create new db backup schedule set to run in the next 6 min

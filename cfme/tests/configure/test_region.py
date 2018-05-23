@@ -5,7 +5,12 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 def test_empty_region_description(appliance):
-    """Test changing region description to empty field"""
+    """Test changing region description to empty field
+
+    Polarion:
+        assignee: otsuman
+        initialEstimate: None
+    """
     view = navigate_to(appliance.server.zone.region, 'ChangeRegionName')
     view.region_description.fill("")
     view.save.click()
@@ -14,7 +19,12 @@ def test_empty_region_description(appliance):
 
 
 def test_description_change(appliance, request):
-    """Test changing region description"""
+    """Test changing region description
+
+    Polarion:
+        assignee: otsuman
+        initialEstimate: None
+    """
     view = navigate_to(appliance.server.zone.region, 'ChangeRegionName')
 
     def _reset_region_description(description, view):

@@ -89,6 +89,13 @@ def delete_providers_after_test():
 @pytest.mark.tier(2)
 @pytest.mark.usefixtures('has_no_infra_providers', 'delete_providers_after_test')
 def test_discover_infra(appliance, providers_for_discover, start_ip, max_range):
+    """
+    Polarion:
+        assignee: ndhandre
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/16h
+    """
     collection = appliance.collections.infra_providers
     for provider in providers_for_discover:
         collection.discover(provider, False, start_ip, max_range)

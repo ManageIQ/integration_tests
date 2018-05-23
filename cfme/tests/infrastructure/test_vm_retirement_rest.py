@@ -42,6 +42,11 @@ def test_retire_vm_now(appliance, vm, from_collection):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: mkourim
+        caseimportance: low
+        initialEstimate: 1/3h
     """
     retire_vm = appliance.rest_api.collections.vms.get(name=vm)
     if from_collection:
@@ -83,6 +88,11 @@ def test_retire_vm_future(appliance, vm, from_collection):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: mkourim
+        caseimportance: low
+        initialEstimate: 1/3h
     """
     retire_vm = appliance.rest_api.collections.vms.get(name=vm)
     date = (datetime.datetime.now() + datetime.timedelta(days=5)).strftime("%Y/%m/%d")

@@ -62,7 +62,12 @@ def get_report(appliance, menu_name, candu=False):
 @pytest.mark.polarion('CMP-10617')
 def test_container_reports_base_on_options(soft_assert, appliance):
     """This test verifies that all containers options are available in the report 'based on'
-    Dropdown in the report creation"""
+    Dropdown in the report creation
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(appliance.collections.reports, 'Add')
     if appliance.version < '5.9':
         chargeback_for_images = 'Chargeback Container Images'
@@ -86,7 +91,12 @@ def test_container_reports_base_on_options(soft_assert, appliance):
 
 @pytest.mark.polarion('CMP-9533')
 def test_report_pods_per_ready_status(appliance, soft_assert, provider):
-    """Testing 'Pods per Ready Status' report, see polarion case for more info"""
+    """Testing 'Pods per Ready Status' report, see polarion case for more info
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     pods_per_ready_status = provider.pods_per_ready_status()
     report = get_report(appliance, 'Pods per Ready Status')
     for row in report.data.rows:
@@ -103,7 +113,12 @@ def test_report_pods_per_ready_status(appliance, soft_assert, provider):
 
 @pytest.mark.polarion('CMP-9536')
 def test_report_nodes_by_capacity(appliance, soft_assert, node_hardwares_db_data):
-    """Testing 'Nodes By Capacity' report, see polarion case for more info"""
+    """Testing 'Nodes By Capacity' report, see polarion case for more info
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     report = get_report(appliance, 'Nodes By Capacity')
     for row in report.data.rows:
 
@@ -132,7 +147,12 @@ def test_report_nodes_by_capacity(appliance, soft_assert, node_hardwares_db_data
 
 @pytest.mark.polarion('CMP-10033')
 def test_report_nodes_by_cpu_usage(appliance, soft_assert, vporizer):
-    """Testing 'Nodes By CPU Usage' report, see polarion case for more info"""
+    """Testing 'Nodes By CPU Usage' report, see polarion case for more info
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     report = get_report(appliance, 'Nodes By CPU Usage')
     for row in report.data.rows:
 
@@ -147,7 +167,12 @@ def test_report_nodes_by_cpu_usage(appliance, soft_assert, vporizer):
 
 @pytest.mark.polarion('CMP-10034')
 def test_report_nodes_by_memory_usage(appliance, soft_assert, vporizer):
-    """Testing 'Nodes By Memory Usage' report, see polarion case for more info"""
+    """Testing 'Nodes By Memory Usage' report, see polarion case for more info
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     report = get_report(appliance, 'Nodes By Memory Usage')
     for row in report.data.rows:
 
@@ -162,7 +187,12 @@ def test_report_nodes_by_memory_usage(appliance, soft_assert, vporizer):
 
 @pytest.mark.polarion('CMP-10669')
 def test_report_number_of_nodes_per_cpu_cores(appliance, soft_assert, node_hardwares_db_data):
-    """Testing 'Number of Nodes per CPU Cores' report, see polarion case for more info"""
+    """Testing 'Number of Nodes per CPU Cores' report, see polarion case for more info
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     report = get_report(appliance, 'Nodes by Number of CPU Cores')
     for row in report.data.rows:
 
@@ -176,7 +206,12 @@ def test_report_number_of_nodes_per_cpu_cores(appliance, soft_assert, node_hardw
 @pytest.mark.polarion('CMP-10008')
 def test_report_projects_by_number_of_pods(appliance, soft_assert):
 
-    """Testing 'Projects by Number of Pods' report, see polarion case for more info"""
+    """Testing 'Projects by Number of Pods' report, see polarion case for more info
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
 
     container_projects = appliance.db.client['container_projects']
     container_pods = appliance.db.client['container_groups']
@@ -197,7 +232,12 @@ def test_report_projects_by_number_of_pods(appliance, soft_assert):
 @pytest.mark.meta(blockers=[BZ(1539378, forced_streams=["5.9"])])
 @pytest.mark.polarion('CMP-10009')
 def test_report_projects_by_cpu_usage(appliance, soft_assert, vporizer):
-    """Testing 'Projects By CPU Usage' report, see polarion case for more info"""
+    """Testing 'Projects By CPU Usage' report, see polarion case for more info
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     report = get_report(appliance, 'Projects By CPU Usage')
     for row in report.data.rows:
 
@@ -213,7 +253,12 @@ def test_report_projects_by_cpu_usage(appliance, soft_assert, vporizer):
 @pytest.mark.meta(blockers=[BZ(1539378, forced_streams=["5.9"])])
 @pytest.mark.polarion('CMP-10010')
 def test_report_projects_by_memory_usage(appliance, soft_assert, vporizer):
-    """Testing 'Projects By Memory Usage' report, see polarion case for more info"""
+    """Testing 'Projects By Memory Usage' report, see polarion case for more info
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     report = get_report(appliance, 'Projects By Memory Usage')
     for row in report.data.rows:
 
@@ -230,7 +275,12 @@ def test_report_projects_by_memory_usage(appliance, soft_assert, vporizer):
 @pytest.mark.polarion('CMP-10272')
 def test_report_pod_counts_for_container_images_by_project(appliance, provider, soft_assert):
     """Testing 'Pod counts For Container Images by Project' report,\
-    see polarion case for more info"""
+    see polarion case for more info
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     report = get_report(appliance, 'Pod counts For Container Images by Project', candu=True)
 
     pods_api = provider.mgmt.api.get('pod')[1]['items']
@@ -260,7 +310,12 @@ def test_report_pod_counts_for_container_images_by_project(appliance, provider, 
 @pytest.mark.meta(blockers=[1529963], forced_stream=['5.8', '5.9'])
 @pytest.mark.polarion('CMP-9532')
 def test_report_recently_discovered_pods(appliance, provider, soft_assert):
-    """Testing 'Recently Discovered Pods' report, see polarion case for more info"""
+    """Testing 'Recently Discovered Pods' report, see polarion case for more info
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     report = get_report(appliance, 'Recently Discovered Pods')
     pods_in_report = [row['Name'] for row in report.data.rows]
     pods_per_ready_status = provider.pods_per_ready_status()
@@ -273,7 +328,12 @@ def test_report_recently_discovered_pods(appliance, provider, soft_assert):
 @pytest.mark.long_running_env
 @pytest.mark.polarion('CMP-10273')
 def test_report_number_of_images_per_node(appliance, provider, soft_assert):
-    """Testing 'Number of Images per Node' report, see polarion case for more info"""
+    """Testing 'Number of Images per Node' report, see polarion case for more info
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     pods_api = provider.mgmt.api.get('pod')[-1]['items']
     report = get_report(appliance, 'Number of Images per Node', candu=True)
     report_data = list(report.data.rows)
@@ -294,7 +354,12 @@ def test_report_number_of_images_per_node(appliance, provider, soft_assert):
 @pytest.mark.long_running_env
 @pytest.mark.polarion('CMP-10670')
 def test_report_projects_by_number_of_containers(appliance, provider, soft_assert):
-    """Testing 'Projects by Number of Containers' report, see polarion case for more info"""
+    """Testing 'Projects by Number of Containers' report, see polarion case for more info
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     report = get_report(appliance, 'Projects by Number of Containers')
     pods_api = provider.mgmt.api.get('pod')[-1]['items']
 

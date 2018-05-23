@@ -54,6 +54,11 @@ def test_vm_create(request, appliance, vm_crud, provider, register_event):
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: izapolsk
+        caseimportance: low
+        initialEstimate: None
     """
     action = appliance.collections.actions.create(
         fauxfactory.gen_alpha(),

@@ -23,6 +23,13 @@ def test_domain_present(domain_name, soft_assert, appliance):
     Steps:
         * Open the Automate Explorer.
         * Verify that all of the required domains are present.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: critical
+        initialEstimate: 1/60h
+        testtype: sanity
     """
     dc = DomainCollection(appliance)
     domain = dc.instantiate(name=domain_name)

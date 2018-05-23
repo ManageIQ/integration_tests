@@ -70,16 +70,37 @@ def _get_page(page, appliance):
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
 def test_infra_tile_defaultview(appliance, key):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     set_and_test_default_view(appliance, key, 'Tile View', _get_page(gtl_params[key], appliance))
 
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
 def test_infra_list_defaultview(appliance, key):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     set_and_test_default_view(appliance, key, 'List View', _get_page(gtl_params[key], appliance))
 
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
 def test_infra_grid_defaultview(appliance, key):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     set_and_test_default_view(appliance, key, 'Grid View', _get_page(gtl_params[key], appliance))
 
 
@@ -96,26 +117,64 @@ def set_and_test_compare_view(appliance, group_name, expected_view, selector_typ
 
 
 def test_infra_expanded_view(appliance):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        initialEstimate: 1/8h
+    """
     set_and_test_compare_view(appliance, 'Compare', 'Expanded View')
 
 
 def test_infra_compressed_view(appliance):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        initialEstimate: 1/8h
+    """
     set_and_test_compare_view(appliance, 'Compare', 'Compressed View')
 
 
 def test_infra_details_mode(appliance):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        initialEstimate: 1/10h
+    """
     set_and_test_compare_view(appliance, 'Compare Mode', 'Details Mode', 'modes_selector')
 
 
 def test_infra_exists_mode(appliance):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        initialEstimate: 1/10h
+    """
     set_and_test_compare_view(appliance, 'Compare Mode', 'Exists Mode', 'modes_selector')
 
 
 def test_vm_visibility_off(appliance):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/10h
+    """
     appliance.user.my_settings.default_views.set_default_view_switch_off()
     assert not check_vm_visibility()
 
 
 def test_vm_visibility_on(appliance):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/5h
+    """
     appliance.user.my_settings.default_views.set_default_view_switch_on()
     assert check_vm_visibility(True)

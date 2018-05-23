@@ -102,6 +102,13 @@ def copy_instance(request, copy_domain, appliance):
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1514584, forced_streams=["5.7", "5.8", "5.9"])])
 def test_dynamicdropdown_dialog(appliance, dialog, catalog):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.GENERIC, name=item_name,

@@ -13,6 +13,12 @@ def test_configure_vmdb_last_start_time(appliance):
         Go to Settings -> Configure -> Database
         Compare Vmdb Last Start Time with output of command
         "journalctl -u rh-postgresql{}-postgresql.service  --boot=0 | sed '4!d'"
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/12h
     """
 
     view = navigate_to(appliance.server, 'DatabaseSummary')
@@ -37,6 +43,12 @@ def test_configuration_database_garbage_collection(appliance):
     """
         Navigate to Settings -> Configuration -> Diagnostics -> CFME Region -> Database
         Submit Run database Garbage Collection Now a check UI/logs for errors.
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/12h
     """
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=[

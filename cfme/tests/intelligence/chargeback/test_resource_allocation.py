@@ -303,39 +303,69 @@ def generic_test_resource_alloc(resource_alloc, chargeback_report_custom, column
 
 
 def test_verify_alloc_memory(resource_alloc, chargeback_report_custom, soft_assert):
-    """Test to verify memory allocation"""
+    """Test to verify memory allocation
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     generic_test_resource_alloc(resource_alloc, chargeback_report_custom,
         'Memory Allocated over Time Period', 'memory_alloc', soft_assert)
 
 
 def test_verify_alloc_cpu(resource_alloc, chargeback_report_custom, soft_assert):
-    """Test to verify cpu allocation"""
+    """Test to verify cpu allocation
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     generic_test_resource_alloc(resource_alloc, chargeback_report_custom,
         'vCPUs Allocated over Time Period', 'vcpu_alloc', soft_assert)
 
 
 def test_verify_alloc_storage(resource_alloc, chargeback_report_custom, soft_assert):
-    """Test to verify storage allocation"""
+    """Test to verify storage allocation
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     generic_test_resource_alloc(resource_alloc, chargeback_report_custom,
         'Storage Allocated', 'storage_alloc', soft_assert)
 
 
 def test_validate_alloc_memory_cost(chargeback_costs_custom, chargeback_report_custom,
         soft_assert):
-    """Test to validate cost for memory allocation"""
+    """Test to validate cost for memory allocation
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_custom,
         'Memory Allocated Cost', 'memory_alloc_cost', soft_assert)
 
 
 def test_validate_alloc_vcpu_cost(chargeback_costs_custom, chargeback_report_custom,
         soft_assert):
-    """Test to validate cost for vCPU allocation"""
+    """Test to validate cost for vCPU allocation
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_custom,
         'vCPUs Allocated Cost', 'vcpu_alloc_cost', soft_assert)
 
 
 def test_validate_alloc_storage_cost(chargeback_costs_custom, chargeback_report_custom,
         soft_assert):
-    """Test to validate cost for storage allocation"""
+    """Test to validate cost for storage allocation
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_custom,
         'Storage Allocated Cost', 'storage_alloc_cost', soft_assert)

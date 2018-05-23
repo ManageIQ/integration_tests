@@ -69,6 +69,12 @@ def test_vm_discovery(request, setup_provider, provider, vm_crud):
 
     Metadata:
         test_flag: discovery
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: cloud
+        caseimportance: critical
+        initialEstimate: 1/4h
     """
 
     @request.addfinalizer

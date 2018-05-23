@@ -33,6 +33,10 @@ def test_tenant_crud(tenant):
 
     Metadata:
         test_flag: tenant
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     with update(tenant):

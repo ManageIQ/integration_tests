@@ -140,6 +140,12 @@ def check_vm_exists(vm_ownership):
 
 @pytest.mark.rhv3
 def test_form_button_validation(request, user1, setup_provider, provider, vm_crud):
+    """
+    Polarion:
+        assignee: apagac
+        casecomponent: infra
+        initialEstimate: 1/3h
+    """
     # Reset button test
     vm_crud.set_ownership(user=user1.name, click_reset=True)
     # Cancel button test
@@ -152,6 +158,12 @@ def test_form_button_validation(request, user1, setup_provider, provider, vm_cru
 
 @pytest.mark.rhv2
 def test_user_ownership_crud(request, user1, setup_provider, provider, vm_crud):
+    """
+    Polarion:
+        assignee: apagac
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     # Set the ownership and checking it
     vm_crud.set_ownership(user=user1.name)
     with user1:
@@ -163,6 +175,12 @@ def test_user_ownership_crud(request, user1, setup_provider, provider, vm_crud):
 
 @pytest.mark.rhv3
 def test_group_ownership_on_user_only_role(request, user2, setup_provider, provider, vm_crud):
+    """
+    Polarion:
+        assignee: apagac
+        casecomponent: infra
+        initialEstimate: 1/3h
+    """
     # user is only a member of a single group so it will always be the current group
     user_group_name = user2.groups[0].description
     vm_crud.set_ownership(group=user_group_name)
@@ -176,6 +194,13 @@ def test_group_ownership_on_user_only_role(request, user2, setup_provider, provi
 @pytest.mark.rhv3
 def test_group_ownership_on_user_or_group_role(
         request, user3, setup_provider, provider, vm_crud):
+    """
+    Polarion:
+        assignee: apagac
+        casecomponent: infra
+        caseimportance: low
+        initialEstimate: 1/4h
+    """
     # user is only a member of a single group so it will always be the current group
     user_group_name = user3.groups[0].description
     vm_crud.set_ownership(group=user_group_name)
@@ -194,6 +219,10 @@ def test_template_set_ownership(request, provider, setup_provider, vm_crud):
     then sets it back and in the end removes the template.
     VM is removed via fixture.
     Tests BZ 1446801 in RHCF3-14353
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     template = vm_crud.publish_to_template(template_name=random_vm_name(context='ownrs'))
     template.set_ownership('<No Owner>')

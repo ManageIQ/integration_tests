@@ -44,7 +44,12 @@ def new_instance(provider):
 
 
 def test_create_instance(new_instance, soft_assert):
-    """Creates an instance and verifies it appears on UI"""
+    """Creates an instance and verifies it appears on UI
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(new_instance, 'Details')
     prov_data = new_instance.provider.data['provisioning']
     power_state = view.entities.summary('Power Management').get_text_of('Power State')
@@ -67,6 +72,11 @@ def test_create_instance(new_instance, soft_assert):
 
 
 def test_stop_instance(new_instance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.STOP)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_OFF)
@@ -76,6 +86,11 @@ def test_stop_instance(new_instance):
 
 
 def test_suspend_instance(new_instance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SUSPEND)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_SUSPENDED)
@@ -85,6 +100,11 @@ def test_suspend_instance(new_instance):
 
 
 def test_pause_instance(new_instance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.PAUSE)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_PAUSED)
@@ -94,6 +114,11 @@ def test_pause_instance(new_instance):
 
 
 def test_shelve_instance(new_instance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SHELVE)
     try:
@@ -107,6 +132,11 @@ def test_shelve_instance(new_instance):
 
 
 def test_shelve_offload_instance(new_instance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SHELVE)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_SHELVED)
@@ -123,6 +153,11 @@ def test_shelve_offload_instance(new_instance):
 
 
 def test_start_instance(new_instance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_instance.power_control_from_provider(OpenStackInstance.STOP)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_OFF)
     new_instance.power_control_from_cfme(from_details=True,
@@ -134,6 +169,11 @@ def test_start_instance(new_instance):
 
 
 def test_soft_reboot_instance(new_instance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SOFT_REBOOT)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_REBOOTING)
@@ -145,6 +185,11 @@ def test_soft_reboot_instance(new_instance):
 
 
 def test_hard_reboot_instance(new_instance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.HARD_REBOOT)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_REBOOTING)
@@ -156,6 +201,12 @@ def test_hard_reboot_instance(new_instance):
 
 
 def test_delete_instance(new_instance):
+    """
+    Polarion:
+        assignee: mmojzis
+        caseimportance: low
+        initialEstimate: None
+    """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.TERMINATE)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_UNKNOWN)
@@ -170,6 +221,11 @@ def test_delete_instance(new_instance):
 
 
 def test_list_vms_infra_node(appliance, provider, soft_assert):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     if not getattr(provider, 'infra_provider', None):
         pytest.skip("Provider {prov} doesn't have infra provider set".format(prov=provider.name))
 

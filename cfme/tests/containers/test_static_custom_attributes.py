@@ -55,6 +55,10 @@ def test_add_static_custom_attributes(add_delete_custom_attributes, provider):
         * Go to provider summary page
     Expected results:
         * The attributes was successfully added
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     view = refresh_and_navigate(provider, 'Details')
@@ -74,6 +78,10 @@ def test_edit_static_custom_attributes(provider):
         * Go to provider summary page
     Expected results:
         * The attributes was successfully updated to the new values
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     provider.add_custom_attributes(*ATTRIBUTES_DATASET)
@@ -98,6 +106,10 @@ def test_delete_static_custom_attributes(add_delete_custom_attributes, request, 
     Expected results:
         * The attributes was successfully deleted
         (you should not see a custom attributes table)
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     provider.delete_custom_attributes(*ATTRIBUTES_DATASET)
@@ -136,6 +148,10 @@ def test_add_attribute_with_empty_name(provider):
     Expected results:
         * You should get an error
         * You should not see this attribute in the custom  attributes table
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     with pytest.raises(APIException):
         provider.add_custom_attributes(
@@ -150,7 +166,12 @@ def test_add_attribute_with_empty_name(provider):
 
 @pytest.mark.polarion('CMP-10404')
 def test_add_date_attr_with_wrong_value(provider):
-    """Trying to add attribute of type date with non-date value"""
+    """Trying to add attribute of type date with non-date value
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     ca = CustomAttribute('nondate', "koko", 'Date')
     with pytest.raises(APIException):
         provider.add_custom_attributes(ca)
@@ -164,7 +185,12 @@ def test_add_date_attr_with_wrong_value(provider):
 
 @pytest.mark.polarion('CMP-10405')
 def test_edit_non_exist_attribute(provider):
-    """Trying to edit non-exist attribute"""
+    """Trying to edit non-exist attribute
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     ca = choice(ATTRIBUTES_DATASET)
     # Note: we need to implement it inside the test instead of using
     #       the API (provider.edit_custom_attributes) in order to
@@ -187,6 +213,11 @@ def test_edit_non_exist_attribute(provider):
 @pytest.mark.polarion('CMP-10543')
 def test_delete_non_exist_attribute(provider):
 
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     ca = choice(ATTRIBUTES_DATASET)
     with pytest.raises(APIException):
         provider.delete_custom_attributes(ca)
@@ -198,6 +229,11 @@ def test_delete_non_exist_attribute(provider):
 @pytest.mark.meta(blockers=[BZ(1544800, forced_streams=["5.8", "5.9"])])
 @pytest.mark.polarion('CMP-10542')
 def test_add_already_exist_attribute(provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     ca = choice(ATTRIBUTES_DATASET)
     provider.add_custom_attributes(ca)
     with pytest.raises(APIException):
@@ -210,6 +246,11 @@ def test_add_already_exist_attribute(provider):
 
 @pytest.mark.polarion('CMP-10540')
 def test_very_long_name_with_special_characters(request, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     ca = CustomAttribute(get_random_string(1000), 'very_long_name', None)
     request.addfinalizer(lambda: provider.delete_custom_attributes(ca))
     provider.add_custom_attributes(ca)
@@ -220,6 +261,11 @@ def test_very_long_name_with_special_characters(request, provider):
 @pytest.mark.meta(blockers=[BZ(1540647, forced_streams=["5.8", "5.9"])])
 @pytest.mark.polarion('CMP-10541')
 def test_very_long_value_with_special_characters(request, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     ca = CustomAttribute('very_long_value', get_random_string(1000), None)
     request.addfinalizer(lambda: provider.delete_custom_attributes(ca))
     provider.add_custom_attributes(ca)

@@ -12,6 +12,11 @@ pytestmark = [
 
 
 def test_number_of_cpu(provider, soft_assert):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view_details = navigate_to(provider, 'Details')
     v = view_details.entities.summary('Properties').get_text_of('Aggregate Node CPU Resources')
     soft_assert(float(v.split()[0]) > 0, "Aggregate Node CPU Resources is 0")
@@ -22,6 +27,11 @@ def test_number_of_cpu(provider, soft_assert):
 
 
 def test_node_memory(provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view_details = navigate_to(provider, 'Details')
     node_memory = view_details.entities.summary('Properties').get_text_of('Aggregate Node Memory')
     assert float(node_memory.split()[0]) > 0

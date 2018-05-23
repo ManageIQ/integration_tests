@@ -109,5 +109,10 @@ def tagging_check(tag):
 @pytest.mark.polarion('CMP-10837')
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
 def test_tag_container_objects(tagging_check, container_test_item, tag_place):
-    """ Test for container items tagging action from list and details pages """
+    """ Test for container items tagging action from list and details pages
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     tagging_check(container_test_item, tag_place)

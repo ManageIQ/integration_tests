@@ -29,6 +29,10 @@ def test_iso_datastore_crud(setup_provider, no_iso_dss, provider):
 
     Metadata:
         test_flag: iso
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     template_crud = pxe.ISODatastore(provider.name)
     template_crud.create()

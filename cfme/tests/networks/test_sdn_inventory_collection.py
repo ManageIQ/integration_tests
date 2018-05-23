@@ -15,6 +15,11 @@ pytestmark = [
 def test_sdn_api_inventory_networks(provider, appliance):
     """Pulls the list of networks from the Provider API and from the appliance. Compare the 2
     results. If Similar, then test is successful
+
+    Polarion:
+        assignee: None
+        casecomponent: cloud
+        initialEstimate: 1/10h
     """
     prov_networks = sorted(provider.mgmt.list_network())
     cfme_networks = sorted([nt.name for nt in appliance.collections.cloud_networks.all()])
@@ -37,6 +42,11 @@ def test_sdn_api_inventory_networks(provider, appliance):
 def test_sdn_api_inventory_routers(provider, appliance):
     """Pulls the list of routers from the Provider API and from the appliance. Compare the 2
     results. If Similar, then test is successful
+
+    Polarion:
+        assignee: None
+        casecomponent: cloud
+        initialEstimate: 1/10h
     """
     prov_routers = sorted(provider.mgmt.list_router())
     cfme_routers = sorted([rt.name for rt in appliance.collections.network_routers.all()])
@@ -48,6 +58,11 @@ def test_sdn_api_inventory_routers(provider, appliance):
 def test_sdn_api_inventory_subnets(provider, appliance):
     """Pulls the list of subnets from the Provider API and from the appliance. Compare the 2
     results. If Similar, then test is successful
+
+    Polarion:
+        assignee: None
+        casecomponent: cloud
+        initialEstimate: 1/10h
     """
     prov_subnets = []
     cfme_subnets = [sb.name for sb in appliance.collections.network_subnets.all()]
@@ -67,6 +82,11 @@ def test_sdn_api_inventory_subnets(provider, appliance):
 def test_sdn_api_inventory_security_groups(provider, appliance):
     """Pulls the list of security groups from the Provider API and from the appliance. Compare
     the 2 results. If Similar, then test is successful
+
+    Polarion:
+        assignee: None
+        casecomponent: cloud
+        initialEstimate: 1/10h
     """
     prov_sec_gp = sorted(provider.mgmt.list_security_group())
     cfme_sec_gp = sorted([sec.name for sec in appliance.collections.network_security_groups.all()])
@@ -79,6 +99,11 @@ def test_sdn_api_inventory_security_groups(provider, appliance):
 def test_sdn_api_inventory_loadbalancers(provider, appliance):
     """Pulls the list of loadbalancers from the Provider API and from the appliance. Compare the 2
     results. If Similar, then test is successful
+
+    Polarion:
+        assignee: None
+        casecomponent: cloud
+        initialEstimate: 1/10h
     """
     prov_load_balancers = sorted(provider.mgmt.list_load_balancer())
     cfme_load_balancers = sorted([lb.name for lb in appliance.collections.balancers.all()])

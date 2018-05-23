@@ -53,6 +53,13 @@ def schedule_data(request):
 @pytest.mark.meta(blockers=[BZ(1531600, forced_streams=["5.9"])])
 @test_requirements.report
 def test_custom_report_crud(custom_report_values, appliance):
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     custom_report = appliance.collections.reports.create(**custom_report_values)
     with update(custom_report):
         custom_report.title += fauxfactory.gen_alphanumeric()
@@ -67,6 +74,12 @@ def test_custom_report_crud(custom_report_values, appliance):
 @pytest.mark.meta(blockers=[1202412])
 @test_requirements.report
 def test_schedule_crud(schedule_data, appliance):
+    """
+    Polarion:
+        assignee: rbabyuk
+        casecomponent: config
+        initialEstimate: 1/8h
+    """
     schedules = ScheduleCollection(appliance)
     schedule = schedules.create(**schedule_data)
     with update(schedule):
@@ -79,6 +92,11 @@ def test_schedule_crud(schedule_data, appliance):
 @pytest.mark.tier(3)
 @test_requirements.report
 def test_reports_disable_enable_schedule(schedule_data, appliance):
+    """
+    Polarion:
+        assignee: nansari
+        initialEstimate: None
+    """
     schedules = appliance.collections.schedules
     schedule = schedules.create(**schedule_data)
     schedules.disable_schedules(schedule)
@@ -91,6 +109,13 @@ def test_reports_disable_enable_schedule(schedule_data, appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 def test_menuwidget_crud(appliance):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: report
+        caseimportance: low
+        initialEstimate: 1/12h
+    """
     w = appliance.collections.dashboard_report_widgets.create(
         appliance.collections.dashboard_report_widgets.MENU,
         fauxfactory.gen_alphanumeric(),
@@ -112,6 +137,13 @@ def test_menuwidget_crud(appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 def test_reportwidget_crud(appliance):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: report
+        caseimportance: low
+        initialEstimate: 1/12h
+    """
     w = appliance.collections.dashboard_report_widgets.create(
         appliance.collections.dashboard_report_widgets.REPORT,
         fauxfactory.gen_alphanumeric(),
@@ -133,6 +165,13 @@ def test_reportwidget_crud(appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 def test_chartwidget_crud(appliance):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: report
+        caseimportance: low
+        initialEstimate: 1/12h
+    """
     w = appliance.collections.dashboard_report_widgets.create(
         appliance.collections.dashboard_report_widgets.CHART,
         fauxfactory.gen_alphanumeric(),
@@ -152,6 +191,13 @@ def test_chartwidget_crud(appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 def test_rssfeedwidget_crud(appliance):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: report
+        caseimportance: low
+        initialEstimate: 1/12h
+    """
     w = appliance.collections.dashboard_report_widgets.create(
         appliance.collections.dashboard_report_widgets.RSS,
         fauxfactory.gen_alphanumeric(),
@@ -181,6 +227,13 @@ def test_rssfeedwidget_crud(appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 def test_dashboard_crud(appliance):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     d = appliance.collections.report_dashboards.create(
         fauxfactory.gen_alphanumeric(),
         "EvmGroup-administrator",
@@ -200,6 +253,13 @@ def test_dashboard_crud(appliance):
 @pytest.mark.tier(2)
 @test_requirements.report
 def test_run_report(appliance):
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/16h
+    """
     report = appliance.rest_api.collections.reports.get(name='VM Disk Usage')
     response = report.action.run()
     assert_response(appliance)
@@ -218,6 +278,13 @@ def test_run_report(appliance):
 @pytest.mark.tier(3)
 @test_requirements.report
 def test_import_report(appliance):
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/16h
+    """
     menu_name = 'test_report_{}'.format(fauxfactory.gen_alphanumeric())
     data = {
         'report': {

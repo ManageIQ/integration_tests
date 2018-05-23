@@ -46,6 +46,10 @@ def test_host_most_recent_hour_graph_screen(graph_type, provider, host, enable_c
         * Check graph displayed or not
         * Check legends hide and display properly or not
         * Check data for legends collected or not
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     host.wait_candu_data_available(timeout=1200)

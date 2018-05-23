@@ -238,6 +238,12 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider
 
     Metadata:
         test_flag: alerts, provision
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: low
+        initialEstimate: 1/3h
     """
     vm = full_template_vm
     alert = alert_collection.instantiate("VM Power On > 2 in last 15 min")
@@ -272,6 +278,12 @@ def test_alert_rtp(request, full_template_vm, smtp_test, provider, setup_candu, 
 
     Metadata:
         test_flag: alerts, provision, metrics_collection
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     email = fauxfactory.gen_email()
     alert = alert_collection.create(
@@ -305,6 +317,12 @@ def test_alert_timeline_cpu(request, full_template_vm, set_performance_capture_t
 
     Metadata:
         test_flag: alerts, provision, metrics_collection
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: low
+        initialEstimate: 1/6h
     """
     alert = alert_collection.create(
         "TL event by CPU {}".format(fauxfactory.gen_alpha(length=4)),
@@ -351,6 +369,12 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, full_
 
     Metadata:
         test_flag: alerts, provision, metrics_collection
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     match_string = fauxfactory.gen_alpha(length=8)
     alert = alert_collection.create(
@@ -406,6 +430,12 @@ def test_alert_hardware_reconfigured(request, configure_fleecing, alert_collecti
     Then the alert for CPU count change should be triggered. It is either CPU increased or decreased
     depending on what has been done in your step 2, not the result of step 4. Step 4 is just to
     trigger the event.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: medium
+        initialEstimate: 1/4h
     """
     vm = full_template_vm
     email = fauxfactory.gen_email()

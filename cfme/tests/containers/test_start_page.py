@@ -49,6 +49,11 @@ data_sets = (
 @pytest.mark.polarion('CMP-10601')
 def test_start_page(appliance, soft_assert):
 
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     for data_set in data_sets:
         appliance.user.my_settings.visual.login_page = data_set.page_name
         login_page = navigate_to(appliance.server, 'LoginScreen')

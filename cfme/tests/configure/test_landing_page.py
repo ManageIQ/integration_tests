@@ -137,6 +137,12 @@ def test_landing_page_admin(start_page, appliance, my_settings, request):
             This test checks the functioning of the landing page; 'Start at Login'
             option on 'Visual' tab of setting page for administrator. This test case doesn't
             check the exact page but verifies that all the landing page options works properly.
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/8h
     """
     request.addfinalizer(lambda: set_to_default('Cloud Intel / Dashboard', my_settings))
     assert set_landing_page(start_page, appliance, my_settings)

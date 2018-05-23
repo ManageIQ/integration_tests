@@ -102,6 +102,10 @@ def test_login_evm_group(appliance, auth_mode, prov_key, user_type, auth_provide
             * ``auth_data.yaml`` file
             * auth provider configured with user as a member of a group matching default EVM group
         Test will configure auth and login
+
+    Polarion:
+        assignee: mpusater
+        initialEstimate: None
     """
     user_col = appliance.collections.users
     # get a list of (user_obj, groupname) tuples, creating the user object inline
@@ -167,6 +171,10 @@ def test_login_retrieve_group(appliance, request, prov_key, auth_mode, auth_prov
         Steps:
             * Make sure corresponding auth_modes data is updated to ``auth_data.yaml``
             * this test fetches the auth_modes from yaml and generates tests per auth_mode.
+
+    Polarion:
+        assignee: mpusater
+        initialEstimate: None
     """
     # get a list of (user_obj, groupname) tuples, creating the user object inline
     # Replace spaces with dashes in UPN type usernames for login compatibility

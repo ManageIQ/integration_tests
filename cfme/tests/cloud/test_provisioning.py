@@ -158,12 +158,24 @@ def test_cloud_provision_from_template(provider, provisioned_instance):
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: prov
+        caseimportance: critical
+        initialEstimate: 1/6h
     """
     assert provisioned_instance.does_vm_exist_on_provider(), "Instance wasn't provisioned"
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(GCEProvider))
 def test_gce_preemptible_provision(provider, testing_instance, soft_assert):
+    """
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: cloud
+        initialEstimate: 1/6h
+    """
     instance, inst_args, image = testing_instance
     instance.create(**inst_args)
     instance.wait_to_appear(timeout=800)
@@ -188,6 +200,12 @@ def test_cloud_provision_from_template_using_rest(
 
     Metadata:
         test_flag: provision, rest
+
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: prov
+        caseimportance: critical
+        initialEstimate: 1/6h
     """
     if 'flavors' not in appliance.rest_api.collections.all_names:
         pytest.skip("This appliance does not have `flavors` collection.")
@@ -288,6 +306,11 @@ def test_manual_placement_using_rest(
 
     Metadata:
         test_flag: provision, rest
+
+    Polarion:
+        assignee: mkourim
+        caseimportance: medium
+        initialEstimate: 1/4h
     """
     image_guid = appliance.rest_api.collections.templates.get(
         name=provisioning['image']['name']).guid
@@ -494,6 +517,10 @@ def test_cloud_provision_from_template_with_attached_disks(
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     instance, inst_args, image = testing_instance
     # Modify availiability_zone for Azure provider
@@ -539,6 +566,10 @@ def test_provision_with_boot_volume(request, testing_instance, provider, soft_as
 
     Metadata:
         test_flag: provision, volumes
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     instance, inst_args, image = testing_instance
 
@@ -598,6 +629,10 @@ def test_provision_with_additional_volume(request, testing_instance, provider, s
 
     Metadata:
         test_flag: provision, volumes
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     instance, inst_args, image = testing_instance
 
@@ -672,6 +707,10 @@ def test_cloud_provision_with_tag(provisioned_instance, tag):
         * Visit instance page, it should display the selected tags
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: rbabyuk
+        initialEstimate: 1/8h
     """
     assert provisioned_instance.does_vm_exist_on_provider(), "Instance wasn't provisioned"
     tags = provisioned_instance.get_tags()

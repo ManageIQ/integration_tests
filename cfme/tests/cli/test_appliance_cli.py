@@ -29,8 +29,16 @@ requires_59 = pytest.mark.uncollectif(
 
 
 @requires_59
+@pytest.mark.tier(1)
 def test_appliance_console_cli_datetime(temp_appliance_preconfig_funcscope):
-    """Grab fresh appliance and set time and date through appliance_console_cli and check result"""
+    """Grab fresh appliance and set time and date through appliance_console_cli and check result
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     app = temp_appliance_preconfig_funcscope
     app.ssh_client.run_command("appliance_console_cli --datetime 2020-10-20T09:59:00")
 
@@ -41,16 +49,30 @@ def test_appliance_console_cli_datetime(temp_appliance_preconfig_funcscope):
 
 @requires_59
 @pytest.mark.parametrize('timezone', tzs, ids=[tz[0] for tz in tzs])
+@pytest.mark.tier(2)
 def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modscope):
-    """Set and check timezones are set correctly through appliance conosle cli"""
+    """Set and check timezones are set correctly through appliance conosle cli
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: appl
+        initialEstimate: 1/12h
+    """
     app = temp_appliance_preconfig_modscope
     app.ssh_client.run_command("appliance_console_cli --timezone {}".format(timezone))
     app.appliance_console.timezone_check(timezone)
 
 
 @requires_59
+@pytest.mark.tier(2)
 def test_appliance_console_cli_db_maintenance_hourly(appliance_with_preset_time):
-    """Test database hourly re-indexing through appliance console"""
+    """Test database hourly re-indexing through appliance console
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: appl
+        initialEstimate: 1/6h
+    """
     app = appliance_with_preset_time
     app.ssh_client.run_command("appliance_console_cli --db-hourly-maintenance")
 
@@ -61,7 +83,14 @@ def test_appliance_console_cli_db_maintenance_hourly(appliance_with_preset_time)
     wait_for(maintenance_run, timeout=300)
 
 
+@pytest.mark.tier(2)
 def test_appliance_console_cli_set_hostname(appliance, restore_hostname):
+    """
+    Polarion:
+        assignee: lcouzens
+        casecomponent: appl
+        initialEstimate: 1/12h
+    """
     hostname = 'test.example.com'
     appliance.appliance_console_cli.set_hostname(hostname)
     result = appliance.ssh_client.run_command("hostname -f")
@@ -69,7 +98,15 @@ def test_appliance_console_cli_set_hostname(appliance, restore_hostname):
     assert result.output.strip() == hostname
 
 
+@pytest.mark.tier(2)
 def test_appliance_console_cli_internal_fetch_key(app_creds, unconfigured_appliance, appliance):
+    """
+    Polarion:
+        assignee: lcouzens
+        casecomponent: appl
+        caseimportance: medium
+        initialEstimate: 1/3h
+    """
     fetch_key_ip = appliance.hostname
     unconfigured_appliance.appliance_console_cli.configure_appliance_internal_fetch_key(
         0, 'localhost', app_creds['username'], app_creds['password'], 'vmdb_production',
@@ -79,8 +116,16 @@ def test_appliance_console_cli_internal_fetch_key(app_creds, unconfigured_applia
     unconfigured_appliance.wait_for_web_ui()
 
 
+@pytest.mark.tier(2)
 def test_appliance_console_cli_external_join(app_creds, appliance,
                                              temp_appliance_unconfig_funcscope):
+    """
+    Polarion:
+        assignee: lcouzens
+        casecomponent: appl
+        caseimportance: medium
+        initialEstimate: 1/4h
+    """
     appliance_ip = appliance.hostname
     temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_external_join(
         appliance_ip, app_creds['username'], app_creds['password'], 'vmdb_production', appliance_ip,
@@ -89,8 +134,15 @@ def test_appliance_console_cli_external_join(app_creds, appliance,
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
+@pytest.mark.tier(2)
 def test_appliance_console_cli_external_create(app_creds, dedicated_db_appliance,
                                                unconfigured_appliance_secondary):
+    """
+    Polarion:
+        assignee: lcouzens
+        casecomponent: config
+        initialEstimate: 1/3h
+    """
     hostname = dedicated_db_appliance.hostname
     unconfigured_appliance_secondary.appliance_console_cli.configure_appliance_external_create(5,
         hostname, app_creds['username'], app_creds['password'], 'vmdb_production', hostname,
@@ -102,6 +154,11 @@ def test_appliance_console_cli_external_create(app_creds, dedicated_db_appliance
 @pytest.mark.parametrize('auth_type', ['sso_enabled', 'saml_enabled', 'local_login_disabled'],
     ids=['sso', 'saml', 'local_login'])
 def test_appliance_console_cli_external_auth(auth_type, ipa_crud, app_creds, configured_appliance):
+    """
+    Polarion:
+        assignee: mpusater
+        initialEstimate: None
+    """
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*{} to true.*'.format(auth_type)],
                             hostname=configured_appliance.hostname,
@@ -131,6 +188,11 @@ def no_ipa_config(configured_appliance):
 
 
 def test_appliance_console_cli_ipa(ipa_crud, configured_appliance, no_ipa_config):
+    """
+    Polarion:
+        assignee: mpusater
+        initialEstimate: None
+    """
     ipa_args = ipa_crud.as_external_value()
     configured_appliance.appliance_console_cli.configure_ipa(**ipa_args)
     assert wait_for(lambda: configured_appliance.sssd.running)
@@ -139,7 +201,14 @@ def test_appliance_console_cli_ipa(ipa_crud, configured_appliance, no_ipa_config
 
 
 @requires_59
+@pytest.mark.tier(1)
 def test_appliance_console_cli_extend_storage(unconfigured_appliance):
+    """
+    Polarion:
+        assignee: lcouzens
+        casecomponent: config
+        initialEstimate: 1/6h
+    """
     unconfigured_appliance.ssh_client.run_command('appliance_console_cli -t auto')
 
     def is_storage_extended():
@@ -148,7 +217,15 @@ def test_appliance_console_cli_extend_storage(unconfigured_appliance):
 
 
 @requires_59
+@pytest.mark.tier(1)
 def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
+    """
+    Polarion:
+        assignee: lcouzens
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     unconfigured_appliance.ssh_client.run_command('appliance_console_cli -l auto')
 
     def is_storage_extended():
@@ -157,7 +234,14 @@ def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
 
 
 @requires_59
+@pytest.mark.tier(1)
 def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, app_creds):
+    """
+    Polarion:
+        assignee: lcouzens
+        casecomponent: config
+        initialEstimate: 1/6h
+    """
     unconfigured_appliance.appliance_console_cli.configure_appliance_dedicated_db(
         app_creds['username'], app_creds['password'], 'vmdb_production',
         unconfigured_appliance.unpartitioned_disks[0]
@@ -168,8 +252,15 @@ def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, ap
 @pytest.mark.uncollectif(
     lambda appliance: appliance.version < '5.9.1',
     reason="this test requires appliance version < 5.9.1")
+@pytest.mark.tier(2)
 def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
-    """Tests the configuration of HA with three appliances including failover to standby node"""
+    """Tests the configuration of HA with three appliances including failover to standby node
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: appl
+        initialEstimate: 1h
+    """
     apps = unconfigured_appliances
     app0_ip = apps[0].hostname
     app1_ip = apps[1].hostname

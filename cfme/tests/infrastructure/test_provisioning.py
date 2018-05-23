@@ -48,6 +48,12 @@ def test_infra_provision_from_template(appliance, setup_provider, provider, vm_n
                 evmgroup-administrator:
                 evmgroup-operator: NoSuchElementException
                 evmgroup-auditor: NoSuchElementException
+
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: prov
+        caseimportance: critical
+        initialEstimate: 1/6h
     """
 
     template = provisioning['template']
@@ -101,6 +107,12 @@ def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_t
     Metadata:
         test_flag: provision
         suite: infra_provisioning
+
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: prov
+        caseimportance: medium
+        initialEstimate: 1/8h
     """
     # generate_tests makes sure these have values
     template, host, datastore = map(provisioning.get, ('template', 'host', 'datastore'))

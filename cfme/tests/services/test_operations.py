@@ -102,7 +102,13 @@ def generated_request(appliance,
 
 @pytest.mark.tier(3)
 def test_services_request_direct_url(appliance, generated_request):
-    """Go to the request page, save the url and try to access it directly."""
+    """Go to the request page, save the url and try to access it directly.
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        initialEstimate: 1/8h
+    """
     widgetastic = appliance.browser.widgetastic
     selenium = widgetastic.selenium
     assert navigate_to(generated_request, 'Details'), "could not find the request!"
@@ -119,7 +125,12 @@ def test_services_request_direct_url(appliance, generated_request):
 
 @pytest.mark.tier(3)
 def test_copy_request(request, generated_request, vm_name, template_name):
-    """Check if request gets properly copied."""
+    """Check if request gets properly copied.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     modifications = {'catalog': {'vm_name': fauxfactory.gen_alphanumeric(length=16)}}
     new_request = generated_request.copy_request(values=modifications)
     request.addfinalizer(new_request.remove_request)

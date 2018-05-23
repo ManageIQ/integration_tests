@@ -11,7 +11,14 @@ from cfme.utils.wait import wait_for
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_session_timeout(request, appliance):
-    """Sets the timeout to shortest possible time and waits if it really times out."""
+    """Sets the timeout to shortest possible time and waits if it really times out.
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/8h
+    """
 
     auth_settings = appliance.server.authentication
 
@@ -46,6 +53,10 @@ def test_bind_timeout_rest(appliance, request):
 
     Notes:
         Written for BZ 1553394
+
+    Polarion:
+        assignee: mkourim
+        initialEstimate: None
     """
     old_bind = appliance.get_yaml_config().get('authentication', {}).get('bind_timeout')
     if not old_bind:

@@ -13,6 +13,11 @@ pytestmark = [
 
 @pytest.mark.polarion('CMP-9880')
 def test_edit_selected_containers_provider(provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     '''Testing Configuration -> Edit... button functionality
     Step:
         In Providers summary page - click configuration

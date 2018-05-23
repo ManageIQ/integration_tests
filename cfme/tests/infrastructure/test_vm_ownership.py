@@ -25,6 +25,11 @@ class TestVmOwnershipRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         if "set_ownership" not in appliance.rest_api.collections.services.action.all:
             pytest.skip("Set owner action for service is not implemented in this version")
@@ -45,6 +50,11 @@ class TestVmOwnershipRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         rest_vm = appliance.rest_api.collections.vms.get(name=vm)
         group = appliance.rest_api.collections.groups.get(
@@ -74,6 +84,11 @@ class TestVmOwnershipRESTAPI(object):
             * Assert it has the attribute ``evm_owner`` as we set it.
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         rest_vm = appliance.rest_api.collections.vms.get(name=vm)
         if from_detail:

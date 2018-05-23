@@ -88,6 +88,10 @@ def test_iso_provision_from_template(appliance, provider, vm_name, smtp_test, da
     Metadata:
         test_flag: iso, provision
         suite: infra_provisioning
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     # generate_tests makes sure these have values
     iso_template, host, datastore, iso_file, iso_kickstart,\

@@ -17,6 +17,11 @@ pytestmark = [
 @pytest.mark.parametrize("tested_part", ["Cloud Subnets", "Cloud Networks", "Network Routers",
                          "Security Groups", "Network Ports", "Load Balancers"])
 def test_sdn_provider_relationships_navigation(provider, tested_part, appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(provider, 'Details')
     net_prov_name = view.entities.summary("Relationships").get_text_of("Network Manager")
 
@@ -30,6 +35,12 @@ def test_sdn_provider_relationships_navigation(provider, tested_part, appliance)
 
 
 def test_provider_topology_navigation(provider, appliance):
+    """
+    Polarion:
+        assignee: None
+        casecomponent: cloud
+        initialEstimate: 1/10h
+    """
     view = navigate_to(provider, 'Details')
     net_prov_name = view.entities.summary("Relationships").get_text_of("Network Manager")
 

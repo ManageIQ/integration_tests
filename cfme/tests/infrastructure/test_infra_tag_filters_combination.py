@@ -68,5 +68,11 @@ def test_tagvis_tag_datacenter_combination(testing_vis_object, group_tag_datacen
             2. Login as restricted user, item is visible for user
             3. As admin remove tag
             4. Login as restricted user, iten is not visible for user
+
+    Polarion:
+        assignee: rbabyuk
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/8h
     """
     check_item_visibility(testing_vis_object, visibility)

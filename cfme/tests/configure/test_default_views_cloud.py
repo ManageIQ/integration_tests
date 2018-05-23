@@ -36,16 +36,37 @@ def set_and_test_default_view(appliance, group_name, expected_view, page):
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
 def test_cloud_tile_defaultview(appliance, request, key):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     set_and_test_default_view(appliance, key, 'Tile View', gtl_params[key])
 
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
 def test_cloud_list_defaultview(appliance, request, key):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     set_and_test_default_view(appliance, key, 'List View', gtl_params[key])
 
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
 def test_cloud_grid_defaultview(appliance, request, key):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     set_and_test_default_view(appliance, key, 'Grid View', gtl_params[key])
 
 
@@ -62,16 +83,40 @@ def set_and_test_compare_view(appliance, group_name, expected_view, selector_typ
 
 
 def test_cloud_expanded_view(appliance, request):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        initialEstimate: 1/8h
+    """
     set_and_test_compare_view(appliance, 'Compare', 'Expanded View')
 
 
 def test_cloud_compressed_view(appliance, request):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        initialEstimate: 1/8h
+    """
     set_and_test_compare_view(appliance, 'Compare', 'Compressed View')
 
 
 def test_cloud_details_mode(appliance, request):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        initialEstimate: 1/10h
+    """
     set_and_test_compare_view(appliance, 'Compare Mode', 'Details Mode', 'modes_selector')
 
 
 def test_cloud_exists_mode(appliance, request):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        initialEstimate: 1/10h
+    """
     set_and_test_compare_view(appliance, 'Compare Mode', 'Exists Mode', 'modes_selector')

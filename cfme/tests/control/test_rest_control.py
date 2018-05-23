@@ -34,6 +34,10 @@ class TestConditionsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: 1/4h
         """
         query_resource_attributes(conditions[0], soft_assert=soft_assert)
 
@@ -42,6 +46,11 @@ class TestConditionsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         for condition in conditions:
             record = appliance.rest_api.collections.conditions.get(id=condition.id)
@@ -53,6 +62,11 @@ class TestConditionsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(conditions, method=method, num_sec=100, delay=5)
 
@@ -61,6 +75,11 @@ class TestConditionsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_collection(conditions, num_sec=100, delay=5)
 
@@ -72,6 +91,11 @@ class TestConditionsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         num_conditions = len(conditions)
         uniq = [fauxfactory.gen_alphanumeric(5) for _ in range(num_conditions)]
@@ -113,6 +137,10 @@ class TestPoliciesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: 1/4h
         """
         query_resource_attributes(policies[0], soft_assert=soft_assert)
 
@@ -121,6 +149,11 @@ class TestPoliciesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         for policy in policies:
             record = appliance.rest_api.collections.policies.get(id=policy.id)
@@ -131,6 +164,11 @@ class TestPoliciesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(policies, method='POST', num_sec=100, delay=5)
 
@@ -142,6 +180,11 @@ class TestPoliciesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(policies, method='DELETE', num_sec=100, delay=5)
 
@@ -150,6 +193,11 @@ class TestPoliciesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_collection(policies, num_sec=100, delay=5)
 
@@ -163,6 +211,11 @@ class TestPoliciesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         num_policies = len(policies)
         uniq = [fauxfactory.gen_alphanumeric(5) for _ in range(num_policies)]

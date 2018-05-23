@@ -154,6 +154,12 @@ def test_provision_stack(appliance, stack, service_catalogs, request):
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: stack
+        caseimportance: critical
+        initialEstimate: 1/3h
     """
     provision_request = service_catalogs.order()
     provision_request.wait_for_request(method='ui')
@@ -167,6 +173,12 @@ def test_reconfigure_service(appliance, service_catalogs, request):
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: cloud
+        caseimportance: low
+        initialEstimate: 1/6h
     """
     provision_request = service_catalogs.order()
     provision_request.wait_for_request(method='ui')
@@ -183,6 +195,12 @@ def test_remove_template_provisioning(appliance, template, service_catalogs, req
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: stack
+        caseimportance: low
+        initialEstimate: 1/15h
     """
     # This is part of test - remove template and see if provision fails, so not added as finalizer
     provision_request = service_catalogs.order()
@@ -198,6 +216,10 @@ def test_retire_stack(appliance, provider, service_catalogs, stack, request):
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: lkhomenk
+        initialEstimate: None
     """
     provision_request = service_catalogs.order()
     provision_request.wait_for_request(method='ui')

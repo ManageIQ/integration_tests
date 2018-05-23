@@ -240,9 +240,17 @@ def alert_profile(appliance, alert, full_template_vm_modscope):
         alert_profile.delete()
 
 
+@pytest.mark.tier(3)
 def test_automate_ansible_playbook_method_type_crud(appliance, ansible_repository, domain,
         namespace, klass):
-    """CRUD test for ansible playbook method."""
+    """CRUD test for ansible playbook method.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: ansible
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     method = klass.methods.create(
         name=fauxfactory.gen_alphanumeric(),
         location="playbook",
@@ -257,9 +265,17 @@ def test_automate_ansible_playbook_method_type_crud(appliance, ansible_repositor
     method.delete()
 
 
+@pytest.mark.tier(3)
 def test_automate_ansible_playbook_method_type(request, appliance, domain, namespace, klass,
         instance, method):
-    """Tests execution an ansible playbook via ansible playbook method using Simulation."""
+    """Tests execution an ansible playbook via ansible playbook method using Simulation.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: ansible
+        caseimportance: medium
+        initialEstimate: 1/4h
+    """
     simulate(
         appliance=appliance,
         request="Call_Instance",
@@ -274,7 +290,15 @@ def test_automate_ansible_playbook_method_type(request, appliance, domain, names
     assert appliance.ssh_client.run_command('[ -f "/var/tmp/modified-release" ]').success
 
 
+@pytest.mark.tier(3)
 def test_ansible_playbook_button_crud(ansible_catalog_item, appliance, request):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: ansible
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(),
         hover=fauxfactory.gen_alphanumeric(),
@@ -304,6 +328,11 @@ def test_ansible_playbook_button_crud(ansible_catalog_item, appliance, request):
 
 def test_embedded_ansible_custom_button_localhost(full_template_vm_modscope, custom_vm_button,
         appliance, service_request, service, ansible_catalog_item):
+    """
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: None
+    """
     with update(custom_vm_button):
         custom_vm_button.inventory = "Localhost"
     view = navigate_to(full_template_vm_modscope, "Details")
@@ -320,8 +349,16 @@ def test_embedded_ansible_custom_button_localhost(full_template_vm_modscope, cus
     assert view.provisioning.results.get_text_of("Status") == "successful"
 
 
+@pytest.mark.tier(3)
 def test_embedded_ansible_custom_button_target_machine(full_template_vm_modscope, custom_vm_button,
         ansible_credential, appliance, service_request, service):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: medium
+        initialEstimate: None
+    """
     with update(custom_vm_button):
         custom_vm_button.inventory = "Target Machine"
     view = navigate_to(full_template_vm_modscope, "Details")
@@ -338,8 +375,16 @@ def test_embedded_ansible_custom_button_target_machine(full_template_vm_modscope
     assert view.provisioning.results.get_text_of("Status") == "successful"
 
 
+@pytest.mark.tier(3)
 def test_embedded_ansible_custom_button_specific_hosts(full_template_vm_modscope, custom_vm_button,
         ansible_credential, appliance, service_request, service):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        caseimportance: medium
+        initialEstimate: None
+    """
     with update(custom_vm_button):
         custom_vm_button.inventory = "Specific Hosts"
         custom_vm_button.hosts = full_template_vm_modscope.ip_address
@@ -357,9 +402,16 @@ def test_embedded_ansible_custom_button_specific_hosts(full_template_vm_modscope
     assert view.provisioning.results.get_text_of("Status") == "successful"
 
 
+@pytest.mark.tier(3)
 def test_alert_run_ansible_playbook(full_template_vm_modscope, alert_profile, request, appliance):
     """Tests execution of an ansible playbook method by triggering a management event from an
     alert.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: ansible
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     added_tag = full_template_vm_modscope.add_tag()
     full_template_vm_modscope.remove_tag(added_tag)

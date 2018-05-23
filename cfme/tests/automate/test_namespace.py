@@ -33,6 +33,13 @@ def parent_namespace(request, domain):
 @pytest.mark.sauce
 @pytest.mark.tier(1)
 def test_namespace_crud(request, parent_namespace):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: critical
+        initialEstimate: 1/16h
+    """
     ns = parent_namespace.namespaces.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha())
@@ -49,6 +56,13 @@ def test_namespace_crud(request, parent_namespace):
 
 @pytest.mark.tier(1)
 def test_namespace_delete_from_table(request, parent_namespace):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: medium
+        initialEstimate: 1/30h
+    """
     generated = []
     for _ in range(3):
         namespace = parent_namespace.namespaces.create(
@@ -63,6 +77,13 @@ def test_namespace_delete_from_table(request, parent_namespace):
 
 @pytest.mark.tier(2)
 def test_duplicate_namespace_disallowed(request, parent_namespace):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseposneg: negative
+        initialEstimate: 1/16h
+    """
     ns = parent_namespace.namespaces.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha())

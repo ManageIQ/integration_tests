@@ -16,6 +16,11 @@ pytestmark = [
 def test_manage_nsg_group(provider, setup_provider, register_event):
     """
     tests that create/remove azure network security groups events are received and parsed by CFME
+
+    Polarion:
+        assignee: lkhomenk
+        caseimportance: low
+        initialEstimate: None
     """
 
     nsg_name = random_vm_name(context='nsg')
@@ -61,6 +66,11 @@ def test_manage_nsg_group(provider, setup_provider, register_event):
 def test_vm_capture(request, provider, setup_provider, register_event):
     """
     tests that generalize and capture vm azure events are received and parsed by CFME
+
+    Polarion:
+        assignee: None
+        caseimportance: low
+        initialEstimate: None
     """
 
     mgmt = provider.mgmt

@@ -21,6 +21,11 @@ def containers(appliance, provider):
 
 
 def test_add_remove_tag(containers):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     container = random.choice(containers)
 
     # add tag with category Department and tag communication

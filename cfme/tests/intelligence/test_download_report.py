@@ -42,7 +42,14 @@ def report(appliance):
 @pytest.mark.skip
 @pytest.mark.parametrize("filetype", ["txt", "csv"])
 def test_download_report_firefox(needs_firefox, infra_provider, report, filetype):
-    """ Download the report as a file and check whether it was downloaded. """
+    """ Download the report as a file and check whether it was downloaded.
+
+    Polarion:
+        assignee: nansari
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/16h
+    """
     extension = "." + filetype
     clean_temp_directory()
     report.download(filetype)

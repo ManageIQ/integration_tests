@@ -51,6 +51,10 @@ def test_storage_volume_create_cancelled_validation(appliance, provider):
         * Navigate to storage add volume page
         * Click Cancel button
         * Assert flash message
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     volume_collection = appliance.collections.volumes
     manager_name = '{} Cinder Manager'.format(provider.name)
@@ -75,6 +79,10 @@ def test_storage_volume_crud(appliance, provider):
     Steps:
         * Crate new volume
         * Delete volume
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     # create volume
     volume_collection = appliance.collections.volumes
@@ -109,6 +117,10 @@ def test_storage_volume_edit_tag(volume):
     Steps:
         * Add tag and check
         * Remove tag and check
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     # add tag with category Department and tag communication

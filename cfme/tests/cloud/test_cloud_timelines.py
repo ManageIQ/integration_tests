@@ -252,6 +252,12 @@ class InstEvent(object):
 
 
 def test_cloud_timeline_create_event(new_instance, soft_assert, azone):
+    """
+    Polarion:
+        assignee: None
+        casecomponent: cloud
+        initialEstimate: 1/10h
+    """
     targets = (new_instance, new_instance.provider, azone)
     event = 'create'
     inst_event = InstEvent(new_instance, event)
@@ -262,6 +268,12 @@ def test_cloud_timeline_create_event(new_instance, soft_assert, azone):
 
 @pytest.mark.meta(blockers=[BZ(1542962, forced_streams=['5.8'])])
 def test_cloud_timeline_policy_event(new_instance, control_policy, soft_assert):
+    """
+    Polarion:
+        assignee: None
+        casecomponent: cloud
+        initialEstimate: 1/10h
+    """
     event = 'policy'
     targets = (new_instance, new_instance.provider)
     inst_event = InstEvent(new_instance, event)
@@ -271,6 +283,12 @@ def test_cloud_timeline_policy_event(new_instance, control_policy, soft_assert):
 
 
 def test_cloud_timeline_stop_event(new_instance, soft_assert, azone):
+    """
+    Polarion:
+        assignee: None
+        casecomponent: cloud
+        initialEstimate: 1/10h
+    """
     targets = (new_instance, new_instance.provider, azone)
     event = 'stop'
     inst_event = InstEvent(new_instance, event)
@@ -280,6 +298,12 @@ def test_cloud_timeline_stop_event(new_instance, soft_assert, azone):
 
 
 def test_cloud_timeline_start_event(new_instance, soft_assert, azone):
+    """
+    Polarion:
+        assignee: None
+        casecomponent: cloud
+        initialEstimate: 1/10h
+    """
     targets = (new_instance, new_instance.provider, azone)
     event = 'start'
     inst_event = InstEvent(new_instance, 'start')
@@ -289,7 +313,13 @@ def test_cloud_timeline_start_event(new_instance, soft_assert, azone):
 
 
 def test_cloud_timeline_diagnostic(new_instance, mark_vm_as_appliance, soft_assert):
-    """Check Configuration/diagnostic/timelines. """
+    """Check Configuration/diagnostic/timelines.
+
+    Polarion:
+        assignee: None
+        casecomponent: cloud
+        initialEstimate: 1/10h
+    """
     event = 'start'
     targets = (new_instance.appliance.server,)
     inst_event = InstEvent(new_instance, event)
@@ -300,6 +330,12 @@ def test_cloud_timeline_diagnostic(new_instance, mark_vm_as_appliance, soft_asse
 @pytest.mark.meta(blockers=[BZ(1537520, forced_streams=['5.8'])])
 @pytest.mark.provider([EC2Provider], override=True, scope='function')
 def test_cloud_timeline_rename_event(new_instance, soft_assert, azone):
+    """
+    Polarion:
+        assignee: None
+        casecomponent: cloud
+        initialEstimate: 1/10h
+    """
     event = 'rename'
     targets = (new_instance, new_instance.provider, azone)
     inst_event = InstEvent(new_instance, event)
@@ -311,6 +347,12 @@ def test_cloud_timeline_rename_event(new_instance, soft_assert, azone):
 @pytest.mark.uncollectif(lambda provider, appliance: provider.one_of(EC2Provider) and
                          appliance.version < "5.9")
 def test_cloud_timeline_delete_event(new_instance, soft_assert, azone):
+    """
+    Polarion:
+        assignee: None
+        casecomponent: cloud
+        initialEstimate: 1/10h
+    """
     event = 'delete'
     targets = (new_instance, new_instance.provider, azone)
     inst_event = InstEvent(new_instance, event)

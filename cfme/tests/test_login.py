@@ -21,7 +21,13 @@ pytestmark = pytest.mark.usefixtures('browser')
 @pytest.mark.uncollectif(lambda context, appliance: context == ViaSSUI and
                          appliance.version == version.UPSTREAM)
 def test_login(context, method, appliance):
-    """ Tests that the appliance can be logged into and shows dashboard page. """
+    """ Tests that the appliance can be logged into and shows dashboard page.
+
+    Polarion:
+        assignee: mpusater
+        caseimportance: low
+        initialEstimate: 1/4h
+    """
 
     with appliance.context.use(context):
         logged_in_page = appliance.server.login()
@@ -38,7 +44,13 @@ def test_login(context, method, appliance):
 @pytest.mark.sauce
 @pytest.mark.parametrize('context', [ViaUI])
 def test_bad_password(context, request, appliance):
-    """ Tests logging in with a bad password. """
+    """ Tests logging in with a bad password.
+
+    Polarion:
+        assignee: mpusater
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
 
     username = conf.credentials['default']['username']
     password = "badpassword@#$"

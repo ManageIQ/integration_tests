@@ -105,6 +105,12 @@ def test_pxe_provision_from_template(appliance, provider, vm_name, smtp_test, se
     Metadata:
         test_flag: pxe, provision
         suite: infra_provisioning
+
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: prov
+        initialEstimate: 1/6h
+        testtype: integration
     """
 
     # generate_tests makes sure these have values

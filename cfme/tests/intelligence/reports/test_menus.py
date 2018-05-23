@@ -32,6 +32,12 @@ def report_menus(group):
 @pytest.mark.meta(blockers=[BZ(1541324, forced_streams=["5.9"])])
 @pytest.mark.parametrize("group", GROUPS)
 def test_shuffle_top_level(appliance, group, report_menus):
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: report
+        initialEstimate: 1/6h
+    """
     # Shuffle the order
     with report_menus.manage_folder(group) as folder:
         order = shuffle(folder.fields)
@@ -49,6 +55,13 @@ def test_shuffle_top_level(appliance, group, report_menus):
 @pytest.mark.meta(blockers=[BZ(1541324, forced_streams=["5.9"])])
 @pytest.mark.parametrize("group", GROUPS)
 def test_shuffle_first_level(appliance, group, report_menus):
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/3h
+    """
     # Find a folder
     view = navigate_to(appliance.collections.reports, "All")
     tree = view.reports.tree.read_contents()[1]

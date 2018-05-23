@@ -147,6 +147,11 @@ TEST_ITEMS = [
                          ids=[ContainersTestItem.get_pretty_id(ti) for ti in TEST_ITEMS])
 def test_properties(provider, appliance, test_item, soft_assert):
 
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     instances = test_item.collection_object(appliance).get_random_instances(count=2)
 
     for instance in instances:
@@ -166,6 +171,11 @@ def test_properties(provider, appliance, test_item, soft_assert):
 
 def test_pods_conditions(provider, appliance, soft_assert):
 
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     selected_pods_cfme = {pd.name: pd
                           for pd in PodCollection(appliance).get_random_instances(count=3)}
 

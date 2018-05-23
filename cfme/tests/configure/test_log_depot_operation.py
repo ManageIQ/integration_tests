@@ -193,6 +193,11 @@ def test_collect_log_depot(log_depot, appliance, configured_depot, request):
     """ Boilerplate test to verify functionality of this concept
 
     Will be extended and improved.
+
+    Polarion:
+        assignee: otsuman
+        casecomponent: config
+        initialEstimate: 1/4h
     """
     # Wipe the FTP contents in the end
     @request.addfinalizer
@@ -219,6 +224,12 @@ def test_collect_log_depot(log_depot, appliance, configured_depot, request):
 def test_collect_unconfigured(appliance):
     """ Test checking is collect button enable and disable after log depot was configured
 
+
+    Polarion:
+        assignee: otsuman
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/4h
     """
     server_log_depot = appliance.server.collect_logs
     with update(server_log_depot):
@@ -245,6 +256,12 @@ def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_mac
                                   configured_external_appliance, zone_collect, collect_type,
                                   from_slave):
 
+    """
+    Polarion:
+        assignee: otsuman
+        casecomponent: config
+        initialEstimate: 1/4h
+    """
     appliance = temp_appliance_preconfig
     log_depot.machine_ip = depot_machine_ip
     collect_logs = (
@@ -297,6 +314,12 @@ def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_mac
 @pytest.mark.tier(3)
 def test_collect_single_servers(log_depot, appliance, depot_machine_ip, request, zone_collect,
                                 collect_type):
+    """
+    Polarion:
+        assignee: otsuman
+        casecomponent: config
+        initialEstimate: 1/4h
+    """
     log_depot.machine_ip = depot_machine_ip
 
     @request.addfinalizer

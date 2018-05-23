@@ -384,6 +384,10 @@ def test_validate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_cust
     """Test to validate CPU usage cost reported in chargeback reports.
     The cost reported in the Chargeback report should be approximately equal to the
     cost estimated in the chargeback_costs_custom fixture.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     for groups in chargeback_report_custom:
         if not groups["CPU Used Cost"]:
@@ -403,6 +407,10 @@ def test_validate_memory_usage_cost(chargeback_costs_custom, chargeback_report_c
     """Test to validate memory usage cost reported in chargeback reports.
     The cost reported in the Chargeback report should be approximately equal to the
     cost estimated in the chargeback_costs_custom fixture.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     for groups in chargeback_report_custom:
         if not groups["Memory Used Cost"]:
@@ -421,6 +429,10 @@ def test_validate_network_usage_cost(chargeback_costs_custom, chargeback_report_
     """Test to validate network usage cost reported in chargeback reports.
     The cost reported in the Chargeback report should be approximately equal to the
     cost estimated in the chargeback_costs_custom fixture.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     for groups in chargeback_report_custom:
         if not groups["Network I/O Used Cost"]:
@@ -439,6 +451,10 @@ def test_validate_disk_usage_cost(chargeback_costs_custom, chargeback_report_cus
     """Test to validate disk usage cost reported in chargeback reports.
     The cost reported in the Chargeback report should be approximately equal to the
     cost estimated in the chargeback_costs_custom fixture.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     for groups in chargeback_report_custom:
         if not groups["Disk I/O Used Cost"]:
@@ -457,6 +473,10 @@ def test_validate_storage_usage_cost(chargeback_costs_custom, chargeback_report_
     """Test to validate storage usage cost reported in chargeback reports.
     The cost reported in the Chargeback report should be approximately equal to the
     cost estimated in the chargeback_costs_custom fixture.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     for groups in chargeback_report_custom:
         if not groups["Storage Used Cost"]:

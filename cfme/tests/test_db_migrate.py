@@ -85,6 +85,14 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope_upgrade, appliance):
 @pytest.mark.meta(
     blockers=[BZ(1354466, unblock=lambda db_url: 'ldap' not in db_url)])
 def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
+    """
+    Polarion:
+        assignee: lcouzens
+        casecomponent: control
+        caseimportance: medium
+        initialEstimate: 1/2h
+        testtype: upgrade
+    """
     app = temp_appliance_extended_db
     # Download the database
     logger.info("Downloading database: {}".format(db_desc))
@@ -134,7 +142,14 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
         dbversion in ('scvmm_58', 'ec2_5540') and appliance.version < "5.9")
 @pytest.mark.parametrize('dbversion', ['ec2_5540', 'azure_5620', 'rhev_57', 'scvmm_58'],
         ids=['55', '56', '57', '58'])
+@pytest.mark.tier(2)
 def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance_global_region):
+    """
+    Polarion:
+        assignee: lcouzens
+        casecomponent: appl
+        initialEstimate: 1/3h
+    """
     app = temp_appliance_remote
     app2 = temp_appliance_global_region
     # Download the database
@@ -188,8 +203,17 @@ def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance
     wait_for(is_provider_replicated, func_args=[app, app2], timeout=30)
 
 
+@pytest.mark.tier(2)
 def test_upgrade_single_inplace(appliance_preupdate, appliance):
-    """Tests appliance upgrade between streams"""
+    """Tests appliance upgrade between streams
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: appl
+        caseimportance: critical
+        initialEstimate: 1/3h
+        testtype: upgrade
+    """
     appliance_preupdate.evmserverd.stop()
     result = appliance_preupdate.ssh_client.run_command('yum update -y', timeout=3600)
     assert result.success, "update failed {}".format(result.output)

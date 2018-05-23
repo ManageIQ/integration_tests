@@ -29,7 +29,14 @@ def compare(db_item, report_item):
 @pytest.mark.rhv3
 def test_providers_summary(appliance, soft_assert):
     """Checks some informations about the provider. Does not check memory/frequency as there is
-    presence of units and rounding."""
+    presence of units and rounding.
+
+    Polarion:
+        assignee: nansari
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     report = appliance.collections.reports.instantiate(
         type="Configuration Management",
         subtype="Providers",
@@ -60,6 +67,13 @@ def test_providers_summary(appliance, soft_assert):
 
 @pytest.mark.rhv3
 def test_cluster_relationships(appliance, soft_assert):
+    """
+    Polarion:
+        assignee: ansinha
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/10h
+    """
     report = appliance.collections.reports.instantiate(
         type="Relationships",
         subtype="Virtual Machines, Folders, Clusters",
@@ -107,6 +121,12 @@ def test_cluster_relationships(appliance, soft_assert):
 @pytest.mark.meta(blockers=[BZ(1504010, forced_streams=['5.7', '5.8', 'upstream']),
                             BZ(1571254, forced_streams=['5.8', '5.9'])])
 def test_operations_vm_on(soft_assert, appliance, request):
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: report
+        initialEstimate: 1/6h
+    """
     adb = appliance.db.client
     vms = adb['vms']
     hosts = adb['hosts']
@@ -153,7 +173,14 @@ def test_operations_vm_on(soft_assert, appliance, request):
 @pytest.mark.rhv3
 def test_datastores_summary(soft_assert, appliance, request):
     """Checks Datastores Summary report with DB data. Checks all data in report, even rounded
-    storage sizes."""
+    storage sizes.
+
+    Polarion:
+        assignee: nansari
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     adb = appliance.db.client
     storages = adb['storages']
     vms = adb['vms']

@@ -16,6 +16,11 @@ pytestmark = [test_requirements.generic_objects]
 @pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.9')
 @pytest.mark.parametrize('context', [ViaREST])
 def test_generic_objects_crud(appliance, context, request):
+    """
+    Polarion:
+        assignee: mkourim
+        initialEstimate: 1/4h
+    """
     with appliance.context.use(context):
         definition = appliance.collections.generic_object_definitions.create(
             name='rest_generic_class{}'.format(fauxfactory.gen_alphanumeric()),

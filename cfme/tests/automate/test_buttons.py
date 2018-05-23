@@ -31,6 +31,11 @@ def test_button_group_crud(request, appliance):
         * Change the hover text, ensure the text is changed on details page
         * Delete the button group
         * Assert that the button group no longer exists.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        initialEstimate: 1/12h
     """
     # 1) Create it
     buttongroup = appliance.collections.button_groups.create(
@@ -81,6 +86,11 @@ def test_button_crud(appliance, dialog, request):
         * Change the hover text, ensure the text is changed on details page
         * Delete the button
         * Assert that the button no longer exists.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        initialEstimate: 1/12h
     """
     buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(),
@@ -112,6 +122,12 @@ def test_button_crud(appliance, dialog, request):
 @pytest.mark.provider([InfraProvider], scope='function', selector=ONE)
 @pytest.mark.tier(3)
 def test_button_on_host(appliance, request, provider, setup_provider):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        initialEstimate: 1/10h
+    """
     buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
@@ -134,6 +150,11 @@ def test_button_avp_displayed(appliance, dialog, request):
     Steps:
         * Open a dialog to create a button.
         * Locate the section with attribute/value pairs.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        initialEstimate: 1/12h
     """
     # This is optional, our nav tree does not have unassigned button
     buttongroup = appliance.collections.button_groups.create(

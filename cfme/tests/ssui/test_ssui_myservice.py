@@ -32,7 +32,13 @@ pytestmark = [
 @pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_myservice_crud(appliance, setup_provider, context, order_service):
-    """Test Myservice crud in SSUI."""
+    """Test Myservice crud in SSUI.
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: ssui
+        initialEstimate: 1/4h
+    """
     catalog_item = order_service
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
@@ -47,7 +53,12 @@ def test_myservice_crud(appliance, setup_provider, context, order_service):
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_retire_service_ssui(appliance, setup_provider,
                         context, order_service, request):
-    """Test retire service."""
+    """Test retire service.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     catalog_item = order_service
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
@@ -62,7 +73,12 @@ def test_retire_service_ssui(appliance, setup_provider,
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_service_start(appliance, setup_provider, context,
                        order_service, provider, request):
-    """Test service stop"""
+    """Test service stop
+
+    Polarion:
+        assignee: sshveta
+        initialEstimate: None
+    """
     catalog_item = order_service
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
@@ -93,7 +109,12 @@ def test_service_start(appliance, setup_provider, context,
 def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
         configure_console_vnc, order_service, take_screenshot,
         console_template, provider):
-    """Test Myservice VM Console in SSUI."""
+    """Test Myservice VM Console in SSUI.
+
+    Polarion:
+        assignee: kkulkarn
+        initialEstimate: None
+    """
     catalog_item = order_service
     service_name = catalog_item.name
     console_vm_username = credentials[catalog_item.provider.data.templates.console_template

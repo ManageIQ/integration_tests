@@ -78,6 +78,11 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
 
     Memory checkbox should be displayed and active when VM is running ('Power On').
     Memory checkbox should not be displayed when VM is stopped ('Power Off').
+
+    Polarion:
+        assignee: apagac
+        casecomponent: infra
+        initialEstimate: 1/3h
     """
     # Make sure the VM is powered on
     small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_ON, cancel=False)
@@ -106,6 +111,10 @@ def test_snapshot_crud(small_test_vm, provider):
 
     Metadata:
         test_flag: snapshot, provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     # has_name is false if testing RHEVMProvider
     snapshot = new_snapshot(small_test_vm, has_name=(not provider.one_of(RHEVMProvider)))
@@ -122,6 +131,10 @@ def test_create_without_description(small_test_vm):
 
     Metadata:
         test_flag: snapshot, provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     snapshot = new_snapshot(small_test_vm, has_name=False, create_description=False)
     with pytest.raises(AssertionError):
@@ -137,6 +150,12 @@ def test_delete_all_snapshots(small_test_vm, provider):
 
     Metadata:
         test_flag: snapshot, provision
+
+    Polarion:
+        assignee: apagac
+        casecomponent: infra
+        caseimportance: low
+        initialEstimate: 1/3h
     """
     snapshot1 = new_snapshot(small_test_vm)
     snapshot1.create()
@@ -228,6 +247,11 @@ def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_ev
 
     Metadata:
         test_flag: snapshot, provision
+
+    Polarion:
+        assignee: None
+        caseimportance: low
+        initialEstimate: None
     """
     verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request)
 
@@ -239,6 +263,11 @@ def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_ev
 
     Metadata:
         test_flag: snapshot, provision
+
+    Polarion:
+        assignee: apagac
+        casecomponent: infra
+        initialEstimate: 1/3h
     """
     verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request,
                            active_snapshot=True)
@@ -253,6 +282,10 @@ def test_revert_on_running_vm(small_test_vm):
 
     Metadata:
         test_flag: snapshot, provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     snapshot = new_snapshot(small_test_vm, has_name=False)
     snapshot.create()
@@ -288,6 +321,11 @@ def test_verify_vm_state_revert_snapshot(provider, parent_vm, small_test_vm):
      - powered on
      - powered off
      - powered off
+
+    Polarion:
+        assignee: apagac
+        casecomponent: infra
+        initialEstimate: 1/3h
     """
     power = small_test_vm.POWER_ON if parent_vm.startswith('on') else small_test_vm.POWER_OFF
     memory = 'with_memory' in parent_vm
@@ -305,6 +343,11 @@ def test_operations_suspended_vm(small_test_vm, soft_assert):
 
     Metadata:
         test_flag: snapshot, provision
+
+    Polarion:
+        assignee: apagac
+        casecomponent: infra
+        initialEstimate: 1/2h
     """
     # Create first snapshot when VM is running
     snapshot1 = new_snapshot(small_test_vm)
@@ -340,6 +383,12 @@ def test_operations_suspended_vm(small_test_vm, soft_assert):
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider),
                          'Not VMware provider')
 def test_operations_powered_off_vm(small_test_vm):
+    """
+    Polarion:
+        assignee: apagac
+        casecomponent: infra
+        initialEstimate: 1/2h
+    """
     # Make sure the VM is off
     small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_OFF, cancel=False)
     small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_OFF)
@@ -365,6 +414,11 @@ def test_operations_powered_off_vm(small_test_vm):
 
 @pytest.mark.rhv3
 def test_snapshot_history_btn(small_test_vm, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     snapshot = new_snapshot(small_test_vm, has_name=(not provider.one_of(RHEVMProvider)))
     snapshot.create()
     vm_details_view = navigate_to(small_test_vm, 'Details')
@@ -391,6 +445,12 @@ def test_create_snapshot_via_ae(appliance, request, domain, small_test_vm):
         * Run the simulation of the method against the VM, preferably setting
             ``snap_name`` to something that can be checked
         * Wait until snapshot with such name appears.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: infra
+        caseimportance: low
+        initialEstimate: 1/3h
     """
     # PREPARE
     file = data_path.join("ui").join("automate").join("test_create_snapshot_via_ae.rb")

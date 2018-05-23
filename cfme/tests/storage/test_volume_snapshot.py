@@ -74,6 +74,10 @@ def test_storage_snapshot_create_cancelled_validation(volume):
         * Fill snapshot name
         * Click Cancel button
         * Assert flash message
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     snapshot_name = fauxfactory.gen_alpha()
@@ -96,6 +100,10 @@ def test_storage_snapshot_create_reset_validation(volume):
         * Fill snapshot name
         * Click Reset button
         * Assert flash message
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     snapshot_name = fauxfactory.gen_alpha()
@@ -114,6 +122,10 @@ def test_storage_volume_snapshot_crud(volume):
     Steps:
         * Create a snapshot
         * Delete a snapshot
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     # create new snapshot
@@ -159,6 +171,10 @@ def test_storage_volume_snapshot_edit_tag_from_detail(snapshot, tag):
         * Navigate to Snapshot Detail page
         * Add new Tag
         * Remove Tag
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     # add tag with category Department and tag communication

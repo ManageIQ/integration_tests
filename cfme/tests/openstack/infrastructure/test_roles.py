@@ -27,6 +27,11 @@ def roles(appliance, provider):
 
 
 def test_host_role_association(appliance, provider, soft_assert):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     host_collection = appliance.collections.hosts
     hosts = host_collection.all(provider)
     assert len(hosts) > 0
@@ -48,12 +53,22 @@ def test_host_role_association(appliance, provider, soft_assert):
 
 
 def test_roles_name(roles):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     for role in roles:
         role_name = role.name.split('-')[1]
         assert role_name in ROLES
 
 
 def test_roles_summary(roles, soft_assert):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     err_ptrn = '{} are shown incorrectly'
 
     for role in roles:
@@ -78,6 +93,11 @@ def test_roles_summary(roles, soft_assert):
 
 
 def test_role_delete(roles):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     role = choice(roles)
     role.delete()
     view = navigate_to(role, 'AllForProvider')

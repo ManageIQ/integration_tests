@@ -20,8 +20,16 @@ def enabled_embedded_appliance(appliance):
     appliance.disable_embedded_ansible_role()
 
 
+@pytest.mark.tier(3)
 def test_embedded_ansible_enable(enabled_embedded_appliance):
-    """Tests whether the embedded ansible role and all workers have started correctly"""
+    """Tests whether the embedded ansible role and all workers have started correctly
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: ansible
+        caseimportance: critical
+        initialEstimate: 1/6h
+    """
     assert wait_for(func=lambda: enabled_embedded_appliance.is_embedded_ansible_running, num_sec=30)
     assert wait_for(func=lambda: enabled_embedded_appliance.is_rabbitmq_running, num_sec=30)
     assert wait_for(func=lambda: enabled_embedded_appliance.is_nginx_running, num_sec=30)
@@ -31,8 +39,16 @@ def test_embedded_ansible_enable(enabled_embedded_appliance):
         container=enabled_embedded_appliance._ansible_pod_name)
 
 
+@pytest.mark.tier(3)
 def test_embedded_ansible_disable(enabled_embedded_appliance):
-    """Tests whether the embedded ansible role and all workers have stopped correctly"""
+    """Tests whether the embedded ansible role and all workers have stopped correctly
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: ansible
+        caseimportance: critical
+        initialEstimate: 1/6h
+    """
     assert wait_for(func=lambda: enabled_embedded_appliance.is_rabbitmq_running, num_sec=30)
     assert wait_for(func=lambda: enabled_embedded_appliance.is_nginx_running, num_sec=30)
     enabled_embedded_appliance.disable_embedded_ansible_role()

@@ -226,6 +226,10 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: None
         """
         outcome = query_resource_attributes(services[0])
         for failure in outcome.failed:
@@ -247,6 +251,11 @@ class TestServiceRESTAPI(object):
             * Check if the service with ``new_name`` exists
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         for service in services:
             new_name = fauxfactory.gen_alphanumeric()
@@ -265,6 +274,11 @@ class TestServiceRESTAPI(object):
             * Check if the services with ``new_name`` each exists
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         new_names = []
         services_data_edited = []
@@ -289,6 +303,11 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(services, method='POST')
 
@@ -297,6 +316,11 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(services, method='DELETE')
 
@@ -305,6 +329,11 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         delete_resources_from_collection(services)
 
@@ -316,6 +345,11 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.services
         vm = get_vms_in_service(vm_service).pop()
@@ -338,6 +372,11 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         date = (datetime.datetime.now() + datetime.timedelta(days=5)).strftime("%Y/%m/%d")
         future = {
@@ -369,6 +408,11 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         user = appliance.rest_api.collections.users.get(userid="admin")
         data = {
@@ -386,6 +430,11 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         user = appliance.rest_api.collections.users.get(userid="admin")
         requests = [{
@@ -410,6 +459,11 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.services
         vm = get_vms_in_service(vm_service).pop()
@@ -433,6 +487,11 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: medium
+            initialEstimate: 1/4h
         """
         vm = get_vms_in_service(vm_service).pop()
         assert vm_service.vms[0].id == vm.id
@@ -442,6 +501,10 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         service = services(request, appliance, num=1).pop()
         rest_vm = appliance.rest_api.collections.vms.get(name=vm)
@@ -456,6 +519,10 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         vm = get_vms_in_service(vm_service).pop()
         request.addfinalizer(vm.action.delete)
@@ -471,6 +538,10 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         vm_assigned = get_vms_in_service(vm_service).pop()
         vm_added = appliance.rest_api.collections.vms.get(name=vm)
@@ -491,6 +562,11 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.services
         service = collection.action.create(service_body())[0]
@@ -509,6 +585,11 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.services
         grandparent = collection.action.create(service_body())[0]
@@ -532,6 +613,11 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.services
         parent = collection.action.create(service_body())[0]
@@ -549,6 +635,10 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.services
         parent = collection.action.create(service_body())[0]
@@ -570,6 +660,11 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.services
         service = collection.action.create(service_body())[0]
@@ -597,6 +692,11 @@ class TestServiceRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.services
         parent = collection.action.create(service_body())[0]
@@ -633,6 +733,10 @@ class TestServiceDialogsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: 1/4h
         """
         query_resource_attributes(service_dialogs[0], soft_assert=soft_assert)
 
@@ -641,6 +745,10 @@ class TestServiceDialogsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         _dialog_rest(request, appliance.rest_api)
         assert_response(appliance)
@@ -652,6 +760,10 @@ class TestServiceDialogsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         new_descriptions = []
         if from_detail:
@@ -694,6 +806,12 @@ class TestServiceDialogsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            casecomponent: services
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(service_dialogs, method=method)
 
@@ -702,6 +820,12 @@ class TestServiceDialogsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            casecomponent: services
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_collection(service_dialogs)
 
@@ -712,6 +836,10 @@ class TestServiceTemplateRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: 1/4h
         """
         query_resource_attributes(service_templates[0], soft_assert=soft_assert)
 
@@ -720,6 +848,11 @@ class TestServiceTemplateRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: medium
+            initialEstimate: 1/4h
         """
         for service_template in service_templates:
             record = appliance.rest_api.collections.service_templates.get(id=service_template.id)
@@ -735,6 +868,11 @@ class TestServiceTemplateRESTAPI(object):
             * Check if the service_template with ``new_name`` exists
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         for service_template in service_templates:
             new_name = fauxfactory.gen_alphanumeric()
@@ -749,6 +887,11 @@ class TestServiceTemplateRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         delete_resources_from_collection(service_templates)
 
@@ -758,6 +901,11 @@ class TestServiceTemplateRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: medium
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(service_templates, method='POST')
 
@@ -766,6 +914,11 @@ class TestServiceTemplateRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(service_templates, method='DELETE')
 
@@ -783,6 +936,11 @@ class TestServiceTemplateRESTAPI(object):
             * Check if the service_templates were unassigned to the service catalog
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/3h
         """
 
         stpl = service_templates[0]
@@ -816,6 +974,11 @@ class TestServiceTemplateRESTAPI(object):
             * Check if the service_templates with ``new_name`` each exists
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         new_names = []
         service_tpls_data_edited = []
@@ -842,6 +1005,10 @@ class TestServiceCatalogsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: 1/4h
         """
         outcome = query_resource_attributes(service_catalogs[0])
         for failure in outcome.failed:
@@ -857,6 +1024,11 @@ class TestServiceCatalogsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: medium
+            initialEstimate: 1/4h
         """
         new_descriptions = []
         if from_detail:
@@ -896,6 +1068,11 @@ class TestServiceCatalogsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: medium
+            initialEstimate: 1/4h
         """
         catalog = service_catalogs[0]
         unassign_templates(service_templates)
@@ -938,6 +1115,11 @@ class TestServiceCatalogsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: medium
+            initialEstimate: 1/4h
         """
         catalog = service_catalogs[0]
         unassign_templates(service_templates)
@@ -989,6 +1171,11 @@ class TestServiceCatalogsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: medium
+            initialEstimate: 1/4h
         """
         # this doesn't return resource in the "service_requests" collection
         # using workaround with `response.json()`
@@ -1028,6 +1215,11 @@ class TestServiceCatalogsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: medium
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(service_catalogs, method=method, num_sec=100, delay=5)
 
@@ -1036,6 +1228,11 @@ class TestServiceCatalogsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: medium
+            initialEstimate: 1/4h
         """
         delete_resources_from_collection(service_catalogs, num_sec=300, delay=5)
 
@@ -1115,6 +1312,10 @@ class TestPendingRequestsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: 1/4h
         """
         query_resource_attributes(pending_request, soft_assert=soft_assert)
 
@@ -1123,6 +1324,10 @@ class TestPendingRequestsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: 1/4h
         """
         # Wait a bit to check that it will not get auto-approved
         # This `wait_for` is expected to fail.
@@ -1140,6 +1345,10 @@ class TestPendingRequestsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail([pending_request], method=method)
 
@@ -1148,6 +1357,10 @@ class TestPendingRequestsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: 1/4h
         """
         delete_resources_from_collection([pending_request])
 
@@ -1156,6 +1369,10 @@ class TestPendingRequestsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: 1/4h
         """
         pending_request.action.approve(reason='I said so.')
         assert_response(appliance)
@@ -1182,6 +1399,10 @@ class TestPendingRequestsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: 1/4h
         """
         pending_request.action.deny(reason='I said so.')
         assert_response(appliance)
@@ -1234,6 +1455,10 @@ class TestServiceRequests(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         new_template = _service_templates(request, appliance, num=1)
         new_template = new_template[0]
@@ -1285,6 +1510,10 @@ class TestBlueprintsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: 1/4h
         """
         outcome = query_resource_attributes(blueprints[0])
         for failure in outcome.failed:
@@ -1300,6 +1529,12 @@ class TestBlueprintsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            casecomponent: services
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         for blueprint in blueprints:
             record = appliance.rest_api.collections.blueprints.get(id=blueprint.id)
@@ -1314,6 +1549,11 @@ class TestBlueprintsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(blueprints, method=method)
 
@@ -1323,6 +1563,11 @@ class TestBlueprintsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_collection(blueprints)
 
@@ -1335,6 +1580,12 @@ class TestBlueprintsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            casecomponent: services
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         response_len = len(blueprints)
         new = [{
@@ -1373,6 +1624,10 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: 1/4h
         """
         query_resource_attributes(orchestration_templates[0], soft_assert=soft_assert)
 
@@ -1382,6 +1637,12 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            casecomponent: services
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         for template in orchestration_templates:
             record = appliance.rest_api.collections.orchestration_templates.get(id=template.id)
@@ -1395,6 +1656,12 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            casecomponent: services
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_collection(orchestration_templates, not_found=True)
 
@@ -1405,6 +1672,11 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(orchestration_templates, method='POST')
 
@@ -1414,6 +1686,11 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(orchestration_templates, method='DELETE')
 
@@ -1426,6 +1703,12 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            casecomponent: services
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         response_len = len(orchestration_templates)
         new = [{
@@ -1457,6 +1740,11 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: medium
+            initialEstimate: 1/4h
         """
         num_orch_templates = len(orchestration_templates)
         new = []
@@ -1500,6 +1788,11 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: medium
+            initialEstimate: 1/4h
         """
         num_orch_templates = len(orchestration_templates)
         new = []
@@ -1527,6 +1820,10 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: 1/4h
         """
         uniq = fauxfactory.gen_alphanumeric(5)
         payload = {
@@ -1560,6 +1857,10 @@ class TestServiceOrderCart(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: 1/4h
         """
         query_resource_attributes(cart, soft_assert=soft_assert)
 
@@ -1569,6 +1870,10 @@ class TestServiceOrderCart(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         assert cart.state == 'cart'
         cart_dict = appliance.rest_api.get('{}/cart'.format(cart.collection._href))
@@ -1580,6 +1885,10 @@ class TestServiceOrderCart(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         # This will fail somehow once BZ 1493788 is fixed.
         # There can be one and only one shopping cart for the authenticated user.
@@ -1596,6 +1905,10 @@ class TestServiceOrderCart(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         requests = [{'service_template_href': tmplt.href} for tmplt in service_templates]
         body = {'service_requests': requests}
@@ -1618,6 +1931,10 @@ class TestServiceOrderCart(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         assert cart.service_requests.subcount == 0
         self.add_requests(cart, service_templates_class)
@@ -1632,6 +1949,10 @@ class TestServiceOrderCart(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         self.add_requests(cart, service_templates_class)
         cart_req_ids = {req.id for req in cart.service_requests}
@@ -1651,6 +1972,10 @@ class TestServiceOrderCart(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         self.add_requests(cart, service_templates_class)
         cart_req_ids = {req.id for req in cart.service_requests}
@@ -1670,6 +1995,10 @@ class TestServiceOrderCart(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         self.add_requests(cart, service_templates_class)
         cart_req_ids = {req.id for req in cart.service_requests}
@@ -1687,6 +2016,10 @@ class TestServiceOrderCart(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         with pytest.raises(Exception, match='Cannot copy a service order in the cart state'):
             cart.action.copy(name='new_cart')
@@ -1698,6 +2031,10 @@ class TestServiceOrderCart(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         selected_templates = service_templates_class[:2]
         self.add_requests(cart, selected_templates)
@@ -1736,6 +2073,10 @@ class TestServiceOrderCart(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail([cart], method=method)
 
@@ -1745,5 +2086,9 @@ class TestServiceOrderCart(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            initialEstimate: 1/4h
         """
         delete_resources_from_collection([cart])

@@ -80,6 +80,11 @@ def wait_for_tag(obj_inst):
                                forced_streams=['5.7'],
                                unblock=lambda test_item: test_item.obj != Container)])
 def test_smart_management_add_tag(provider, appliance, test_item):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     logger.debug("Setting smart mgmt tag to {obj_type}".format(obj_type=test_item.obj.__name__))
     # validate no tag set to project
     obj_inst = (provider if test_item.obj is ContainersProvider

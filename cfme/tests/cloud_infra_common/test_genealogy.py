@@ -57,6 +57,12 @@ def test_vm_genealogy_detected(
 
     Metadata:
         test_flag: genealogy, provision
+
+    Polarion:
+        assignee: apagac
+        casecomponent: infra
+        caseimportance: low
+        initialEstimate: 1/6h
     """
     vm_crud.create_on_provider(find_in_cfme=True, allow_skip="default")
 

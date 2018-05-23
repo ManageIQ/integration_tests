@@ -44,7 +44,12 @@ discovery_ips = [
 
 @pytest.mark.sauce
 def test_empty_discovery_form_validation_infra(appliance):
-    """ Tests that the flash message is correct when discovery form is empty."""
+    """ Tests that the flash message is correct when discovery form is empty.
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/15h
+    """
     collection = appliance.collections.infra_providers
     collection.discover(None)
     view = appliance.browser.create_view(InfraProvidersDiscoverView)
@@ -53,7 +58,13 @@ def test_empty_discovery_form_validation_infra(appliance):
 
 @pytest.mark.sauce
 def test_discovery_cancelled_validation_infra(appliance):
-    """ Tests that the flash message is correct when discovery is cancelled."""
+    """ Tests that the flash message is correct when discovery is cancelled.
+
+    Polarion:
+        assignee: ndhandre
+        caseimportance: low
+        initialEstimate: 1/15h
+    """
     collection = appliance.collections.infra_providers
     collection.discover(None, cancel=True)
     view = appliance.browser.create_view(InfraProvidersView)
@@ -63,7 +74,12 @@ def test_discovery_cancelled_validation_infra(appliance):
 
 @pytest.mark.sauce
 def test_add_cancelled_validation_infra(appliance):
-    """Tests that the flash message is correct when add is cancelled."""
+    """Tests that the flash message is correct when add is cancelled.
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/15h
+    """
     appliance.collections.infra_providers.create(prov_class=VMwareProvider, cancel=True)
     view = appliance.browser.create_view(InfraProvidersView)
     view.flash.assert_success_message('Add of Infrastructure Provider was cancelled by the user')
@@ -71,7 +87,12 @@ def test_add_cancelled_validation_infra(appliance):
 
 @pytest.mark.sauce
 def test_type_required_validation_infra(appliance):
-    """Test to validate type while adding a provider"""
+    """Test to validate type while adding a provider
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/15h
+    """
     with pytest.raises(AssertionError):
         appliance.collections.infra_providers.create(prov_class=VMwareProvider)
     view = appliance.browser.create_view(InfraProviderAddView)
@@ -79,7 +100,12 @@ def test_type_required_validation_infra(appliance):
 
 
 def test_name_required_validation_infra(appliance):
-    """Tests to validate the name while adding a provider"""
+    """Tests to validate the name while adding a provider
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/15h
+    """
     collections = appliance.collections.infra_providers
     endpoint = VirtualCenterEndpoint(hostname=fauxfactory.gen_alphanumeric(5))
 
@@ -92,7 +118,12 @@ def test_name_required_validation_infra(appliance):
 
 
 def test_host_name_required_validation_infra(appliance):
-    """Test to validate the hostname while adding a provider"""
+    """Test to validate the hostname while adding a provider
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/15h
+    """
     endpoint = VirtualCenterEndpoint(hostname=None)
     collections = appliance.collections.infra_providers
     prov = collections.instantiate(prov_class=VMwareProvider, name=fauxfactory.gen_alphanumeric(5),
@@ -108,7 +139,12 @@ def test_host_name_required_validation_infra(appliance):
 
 
 def test_name_max_character_validation_infra(request, infra_provider):
-    """Test to validate max character for name field"""
+    """Test to validate max character for name field
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/15h
+    """
     request.addfinalizer(lambda: infra_provider.delete_if_exists(cancel=False))
     name = fauxfactory.gen_alphanumeric(255)
     with update(infra_provider):
@@ -117,7 +153,12 @@ def test_name_max_character_validation_infra(request, infra_provider):
 
 
 def test_host_name_max_character_validation_infra(appliance):
-    """Test to validate max character for host name field"""
+    """Test to validate max character for host name field
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: None
+    """
     endpoint = VirtualCenterEndpoint(hostname=fauxfactory.gen_alphanumeric(256))
     collections = appliance.collections.infra_providers
     prov = collections.instantiate(prov_class=VMwareProvider,
@@ -131,7 +172,12 @@ def test_host_name_max_character_validation_infra(appliance):
 
 
 def test_api_port_max_character_validation_infra(appliance):
-    """Test to validate max character for api port field"""
+    """Test to validate max character for api port field
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/15h
+    """
     collections = appliance.collections.infra_providers
     endpoint = RHEVMEndpoint(hostname=fauxfactory.gen_alphanumeric(5),
                              api_port=fauxfactory.gen_alphanumeric(16),
@@ -158,6 +204,10 @@ def test_providers_discovery(request, appliance, provider):
 
     Metadata:
         test_flag: crud
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/8h
     """
     appliance.collections.infra_providers.discover(provider, cancel=False,
                                                    start_ip=provider.start_ip,
@@ -176,6 +226,12 @@ def test_infra_provider_add_with_bad_credentials(provider):
 
     Metadata:
         test_flag: crud
+
+    Polarion:
+        assignee: ndhandre
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: None
     """
     provider.default_endpoint.credentials = Credential(
         principal='bad',
@@ -197,6 +253,12 @@ def test_infra_provider_crud(provider):
 
     Metadata:
         test_flag: crud
+
+    Polarion:
+        assignee: ndhandre
+        casecomponent: infra
+        caseimportance: critical
+        initialEstimate: None
     """
     provider.create()
     # Fails on upstream, all provider types - BZ1087476
@@ -225,6 +287,10 @@ def test_provider_rhv_create_delete_tls(request, provider, verify_tls):
 
     Metadata:
        test_flag: crud
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     prov = copy(provider)
     request.addfinalizer(lambda: prov.delete_if_exists(cancel=False))
@@ -245,7 +311,14 @@ def test_provider_rhv_create_delete_tls(request, provider, verify_tls):
 
 
 def test_infrastructure_add_provider_trailing_whitespaces(appliance):
-    """Test to validate the hostname and username should be without whitespaces"""
+    """Test to validate the hostname and username should be without whitespaces
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: infra
+        caseimportance: low
+        initialEstimate: 1/8h
+    """
     collections = appliance.collections.infra_providers
     credentials = Credential(principal="test test", secret=fauxfactory.gen_alphanumeric(5))
     endpoint = VirtualCenterEndpoint(hostname="test test", credentials=credentials)
@@ -262,6 +335,12 @@ def test_infrastructure_add_provider_trailing_whitespaces(appliance):
 
 
 def test_infra_discovery_screen(appliance):
+    """
+    Polarion:
+        assignee: ndhandre
+        casecomponent: infra
+        initialEstimate: None
+    """
     collections = appliance.collections.infra_providers
     view = navigate_to(collections, 'Discover')
     assert view.is_displayed

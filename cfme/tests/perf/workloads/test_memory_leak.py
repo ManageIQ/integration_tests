@@ -52,7 +52,13 @@ def prepare_workers(appliance):
 @pytest.mark.parametrize('scenario', get_memory_leak_scenarios())
 def test_workload_memory_leak(request, scenario, appliance, provider):
     """Runs through provider based scenarios setting one worker instance and maximum threshold and
-    running for a set period of time. Memory Monitor creates graphs and summary info."""
+    running for a set period of time. Memory Monitor creates graphs and summary info.
+
+    Polarion:
+        assignee: otsuman
+        casecomponent: appl
+        initialEstimate: 1/2h
+    """
     from_ts = int(time.time() * 1000)
     logger.debug('Scenario: {}'.format(scenario['name']))
 

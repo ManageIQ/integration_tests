@@ -43,8 +43,16 @@ def child_visibility(appliance, network_provider, relationship, view):
 @pytest.mark.parametrize("relationship,view", network_test_items,
                          ids=[rel[0] for rel in network_test_items])
 @pytest.mark.provider([OpenStackProvider], selector=ONE_PER_CATEGORY)
+@pytest.mark.tier(2)
 def test_tagvis_network_provider_children(provider, appliance, request, relationship, view,
                                           tag, user_restricted):
+    """
+    Polarion:
+        assignee: rbabyuk
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     prov_view = navigate_to(provider, 'Details')
     net_prov_name = prov_view.entities.summary("Relationships").get_text_of("Network Manager")
     collection = appliance.collections.network_providers

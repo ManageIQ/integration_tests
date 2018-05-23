@@ -177,6 +177,12 @@ def catalog_item(appliance, ansible_repository):
 
 @pytest.mark.tier(1)
 def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: ansible
+        initialEstimate: 1/12h
+    """
     updated_description = "edited_{}".format(fauxfactory.gen_alpha())
     with update(ansible_repository):
         ansible_repository.description = updated_description
@@ -192,6 +198,12 @@ def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
                          credential_type == "Red Hat Virtualization")
 def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansible, credential_type,
         credentials, appliance):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: ansible
+        initialEstimate: 1/6h
+    """
     credential = credentials_collection.create(
         "{}_credential_{}".format(credential_type, fauxfactory.gen_alpha()),
         credential_type,
@@ -230,6 +242,12 @@ def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansib
 @pytest.mark.meta(blockers=[1437108])
 @pytest.mark.tier(2)
 def test_embed_tower_playbooks_list_changed(appliance, wait_for_ansible):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: ansible
+        initialEstimate: 1/6h
+    """
     "Tests if playbooks list changed after playbooks repo removing"
     playbooks = []
     repositories_collection = appliance.collections.ansible_repositories
@@ -246,6 +264,12 @@ def test_embed_tower_playbooks_list_changed(appliance, wait_for_ansible):
 
 @pytest.mark.tier(2)
 def test_control_crud_ansible_playbook_action(request, catalog_item, action_collection):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        initialEstimate: 1/12h
+    """
     action = action_collection.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Run Ansible Playbook",
@@ -279,6 +303,12 @@ def test_control_crud_ansible_playbook_action(request, catalog_item, action_coll
 @pytest.mark.tier(2)
 def test_control_add_ansible_playbook_action_invalid_address(request, catalog_item,
         action_collection):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: control
+        initialEstimate: 1/12h
+    """
     action = action_collection.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Run Ansible Playbook",
@@ -306,6 +336,12 @@ def test_embedded_ansible_credential_with_private_key(request, wait_for_ansible,
 
     Adding new ssh credentials via Automation/Ansible/Credentials, add new credentials does not
     actually create new credentials with ssh keys.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: ansible
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     credential = credentials_collection.create(
         fauxfactory.gen_alpha(),

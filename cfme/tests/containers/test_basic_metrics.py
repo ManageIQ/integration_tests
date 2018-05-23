@@ -52,7 +52,11 @@ def test_basic_metrics(provider):
     """ Basic Metrics availability test
         This test checks that the Metrics service is up
         Curls the hawkular status page and checks if it's up
-        """
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     try:
         router = [router for router in provider.mgmt.o_api.get('route')[1]['items']
                   if router["metadata"]["name"] == 'hawkular-metrics' or
@@ -70,6 +74,11 @@ def test_basic_metrics(provider):
 def test_validate_metrics_collection_db(provider,
                                         enable_capacity_and_utilization,
                                         reduce_metrics_collection_threshold):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert provider.wait_for_collected_metrics(
         timeout=WAIT_FOR_METRICS_CAPTURE_THRESHOLD_IN_MINUTES)
 
@@ -79,6 +88,11 @@ def test_validate_metrics_collection_provider_gui(provider,
                                                   reduce_metrics_collection_threshold,
                                                   wait_for_metrics_rollup, soft_assert):
 
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     utilization = navigate_to(provider, "Utilization")
     soft_assert(utilization.cpu.all_data,
                 "No cpu's metrics exist in the cpu utilization graph!")

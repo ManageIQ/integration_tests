@@ -19,6 +19,10 @@ def test_physical_infra_provider_crud(provider, has_no_providers):
 
     Metadata:
         test_flag: crud
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     provider.create()
 

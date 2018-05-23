@@ -19,7 +19,13 @@ roles_cap_and_util = ['automate', 'database_operations', 'ems_inventory', 'ems_m
 @pytest.mark.parametrize('scenario', get_capacity_and_utilization_scenarios())
 def test_workload_capacity_and_utilization(request, scenario, appliance):
     """Runs through provider based scenarios enabling C&U and running for a set period of time.
-    Memory Monitor creates graphs and summary at the end of each scenario."""
+    Memory Monitor creates graphs and summary at the end of each scenario.
+
+    Polarion:
+        assignee: otsuman
+        casecomponent: appl
+        initialEstimate: 1/2h
+    """
     from_ts = int(time.time() * 1000)
     logger.debug('Scenario: {}'.format(scenario['name']))
 

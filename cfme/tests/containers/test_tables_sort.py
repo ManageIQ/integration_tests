@@ -32,6 +32,11 @@ TEST_ITEMS = [
 @pytest.mark.skip(reason='https://github.com/ManageIQ/integration_tests/issues/6385')
 def test_tables_sort(test_item, soft_assert, appliance):
 
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     current_view = navigate_to((test_item.obj if test_item.obj is ContainersProvider
         else getattr(appliance.collections, test_item.collection_name)), 'All')
     current_view.toolbar.view_selector.select('List View')

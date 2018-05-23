@@ -160,6 +160,10 @@ class TestAutomationRequestsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: None
         """
         query_resource_attributes(requests_pending[0], soft_assert=soft_assert)
 
@@ -172,6 +176,11 @@ class TestAutomationRequestsRESTAPI(object):
 
         Metadata:
             test_flag: rest, requests
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         create_requests(collection, appliance.rest_api, automation_requests_data, multiple)
 
@@ -181,6 +190,11 @@ class TestAutomationRequestsRESTAPI(object):
 
         Metadata:
             test_flag: rest, requests
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         create_pending_requests(collection, appliance.rest_api, requests_pending)
 
@@ -193,6 +207,11 @@ class TestAutomationRequestsRESTAPI(object):
 
         Metadata:
             test_flag: rest, requests
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         approve_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
@@ -205,6 +224,11 @@ class TestAutomationRequestsRESTAPI(object):
 
         Metadata:
             test_flag: rest, requests
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         deny_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
@@ -220,6 +244,10 @@ class TestAutomationRequestsRESTAPI(object):
 
         Metadata:
             test_flag: rest, requests
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: 1/4h
         """
         # testing BZ 1418338
         edit_requests(collection, appliance.rest_api, requests_pending, from_detail)
@@ -247,6 +275,10 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            initialEstimate: None
         """
         query_resource_attributes(requests_pending[0], soft_assert=soft_assert)
 
@@ -259,6 +291,11 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Metadata:
             test_flag: rest, requests
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         create_requests(collection, appliance.rest_api, automation_requests_data, multiple)
 
@@ -268,6 +305,11 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Metadata:
             test_flag: rest, requests
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         create_pending_requests(collection, appliance.rest_api, requests_pending)
 
@@ -280,6 +322,11 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Metadata:
             test_flag: rest, requests
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         approve_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
@@ -292,6 +339,11 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Metadata:
             test_flag: rest, requests
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         deny_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
@@ -304,6 +356,11 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Metadata:
             test_flag: rest, requests
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         edit_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
@@ -312,6 +369,11 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Metadata:
             test_flag: rest, requests
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         output = mp.Queue()
         entry_point = appliance.rest_api._entry_point

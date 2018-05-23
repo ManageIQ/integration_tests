@@ -40,6 +40,13 @@ def report_vms(appliance, infra_provider):
 ])
 @test_requirements.report
 def test_custom_vm_report(soft_assert, report_vms):
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: report
+        caseimportance: low
+        initialEstimate: 1/16h
+    """
     cluster = "Cluster / Deployment Role Name"
     host = "Host / Node Name"
     for row in report_vms:

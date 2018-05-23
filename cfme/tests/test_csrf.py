@@ -12,6 +12,11 @@ def test_csrf_post(appliance):
     POST requests use the CSRF token to validate requests, so setting the token
     to something invalid should set off the CSRF detector and reject the request
 
+
+    Polarion:
+        assignee: None
+        caseimportance: low
+        initialEstimate: None
     """
     dashboard = navigate_to(appliance.server, 'Dashboard')
     dashboard.csrf_token = "Bogus!"

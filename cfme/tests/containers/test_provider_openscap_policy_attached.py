@@ -63,6 +63,11 @@ def get_table_attr(instance, table_name, attr):
 def test_check_compliance_provider_policy(provider, soft_assert, delete_all_container_tasks,
                                           openscap_assigned_rand_image):
 
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     # Perform SSA Scan then check compliance with last know configuration
     openscap_assigned_rand_image.perform_smartstate_analysis(wait_for_finish=True, timeout='20M')
 

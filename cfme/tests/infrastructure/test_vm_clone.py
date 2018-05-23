@@ -46,7 +46,14 @@ def create_vm(appliance, provider, request):
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+@pytest.mark.tier(1)
 def test_vm_clone(appliance, provider, clone_vm_name, create_vm):
+    """
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: prov
+        initialEstimate: 1/6h
+    """
     provision_type = 'VMware'
     create_vm.clone_vm("email@xyz.com", "first", "last", clone_vm_name, provision_type)
     request_description = clone_vm_name
@@ -60,7 +67,13 @@ def test_vm_clone(appliance, provider, clone_vm_name, create_vm):
 @pytest.mark.rhv3
 @pytest.mark.uncollectif(lambda provider: provider.one_of(VMwareProvider))
 def test_vm_clone_neg(provider, clone_vm_name, create_vm):
-    """Tests that we can't clone non-VMware VM"""
+    """Tests that we can't clone non-VMware VM
+
+    Polarion:
+        assignee: lkhomenk
+        casecomponent: prov
+        initialEstimate: 1/6h
+    """
     provision_type = 'VMware'
     with pytest.raises(DropdownItemNotFound):
             create_vm.clone_vm("email@xyz.com", "first", "last", clone_vm_name, provision_type)

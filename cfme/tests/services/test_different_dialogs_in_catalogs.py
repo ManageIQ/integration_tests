@@ -94,6 +94,12 @@ def test_tagdialog_catalog_item(appliance, provider, catalog_item, request):
     """Tests tag dialog catalog item
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: rbabyuk
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/8h
     """
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())

@@ -37,6 +37,11 @@ def test_vm_migrate(appliance, new_vm, provider):
 
     Metadata:
         test_flag: migrate, provision
+
+    Polarion:
+        assignee: rpfannsc
+        initialEstimate: 1/4h
+        testtype: integration
     """
     # auto_test_services should exist to test migrate VM
     view = navigate_to(new_vm, 'Details')

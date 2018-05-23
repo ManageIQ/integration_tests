@@ -73,6 +73,12 @@ def test_add_vm_to_service(myservice, request, copy_domain, new_vm, appliance):
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/4h
     """
     method_torso = """
     def add_to_service

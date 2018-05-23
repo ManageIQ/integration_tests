@@ -65,6 +65,10 @@ def test_add_provider_naming_conventions(provider, appliance, soft_assert, sync_
             - Long Alphanumeric name
             - Integer name
         * Assert that provider was added successfully with each of those
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     for provider_name in provider_names:
         new_provider = copy(provider)
@@ -93,7 +97,11 @@ def test_add_provider_ssl(provider, default_sec_protocol, soft_assert, sync_ssl_
         * Try to add a Container Provider with each of the following security options:
             Default Endpoint = SSL trusting custom CA/SSL without validation/SSL
         * Assert that provider was added successfully
-        """
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_provider = copy(provider)
     endpoints = {'default': new_provider.endpoints['default']}
     endpoints['default'].sec_protocol = default_sec_protocol
@@ -128,7 +136,11 @@ def test_add_mertics_provider_ssl(provider, appliance, test_item, soft_assert,
             Default Endpoint = SSL trusting custom CA/SSL without validation/SSL
             Hawkular Endpoint = SSL trusting custom CA/SSL without validation/SSL
         * Assert that provider was added successfully
-        """
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_provider = copy(provider)
     new_provider.endpoints['default'].sec_protocol = test_item.default_sec_protocol
     new_provider.endpoints['metrics'].sec_protocol = test_item.metrics_sec_protocol

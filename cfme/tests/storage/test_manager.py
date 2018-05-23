@@ -38,6 +38,11 @@ def collection_manager(request, openstack_provider, appliance):
 
 
 def test_manager_navigation(collection_manager):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     collection, manager = collection_manager
     view = navigate_to(collection, 'All')
     assert view.is_displayed
@@ -57,6 +62,10 @@ def test_storage_manager_edit_tag(collection_manager):
     Steps:
         * Add tag and check
         * Remove tag and check
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     manager = collection_manager[1]
@@ -82,6 +91,10 @@ def test_storage_manager_delete(collection_manager, provider_cleanup):
         * Delete storage manager from inventory
         * Assert flash message
         * Check storage manager exists or not
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     manager = collection_manager[1]
     manager.delete()

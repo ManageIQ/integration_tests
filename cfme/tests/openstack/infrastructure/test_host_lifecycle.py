@@ -39,7 +39,12 @@ def has_mistral_service(provider):
 def test_scale_provider_down(provider, host, has_mistral_service):
     """Scale down Openstack Infrastructure provider
     Metadata:
-        test_flag: openstack_scale"""
+        test_flag: openstack_scale
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     host.toggle_maintenance_mode()
     host_uuid = host.name.split()[0]  # cut off deployment role part from host's name
     wait_for(lambda: provider.mgmt.iapi.node.get(host_uuid).maintenance, timeout=600, delay=5)
@@ -73,7 +78,12 @@ def test_scale_provider_down(provider, host, has_mistral_service):
 def test_delete_host(appliance, host, provider, has_mistral_service):
     """Remove host from appliance and Ironic service
     Metadata:
-        test_flag: openstack_scale"""
+        test_flag: openstack_scale
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     def is_host_disappeared():
         return host.name not in [h.uuid for h in provider.mgmt.iapi.node.list()]
 
@@ -88,7 +98,12 @@ def test_delete_host(appliance, host, provider, has_mistral_service):
 def test_register_host(provider, host, has_mistral_service):
     """Register new host by uploading instackenv.json file
     Metadata:
-        test_flag: openstack_scale"""
+        test_flag: openstack_scale
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     hosts_before = [h.uuid for h in provider.mgmt.iapi.node.list()]
     provider.register(provider.data['instackenv_file_path'])
     # Wait for a new host to appear
@@ -109,7 +124,12 @@ def test_register_host(provider, host, has_mistral_service):
 def test_introspect_host(host, provider, has_mistral_service):
     """Introspect host
     Metadata:
-        test_flag: openstack_scale"""
+        test_flag: openstack_scale
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     host.run_introspection()
     wait_for(lambda: provider.mgmt.iapi.node.get(host.name).inspection_finished_at, delay=15,
              timeout=600)
@@ -126,7 +146,12 @@ def test_introspect_host(host, provider, has_mistral_service):
 def test_provide_host(host, provider, has_mistral_service):
     """Provide host
     Metadata:
-        test_flag: openstack_scale"""
+        test_flag: openstack_scale
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     host.provide_node()
     wait_for(lambda: provider.mgmt.iapi.node.get(host.name).provision_state == 'available', delay=5,
              timeout=300)
@@ -140,7 +165,12 @@ def test_provide_host(host, provider, has_mistral_service):
 def test_scale_provider_out(host, provider, has_mistral_service):
     """Scale out Infra provider
     Metadata:
-        test_flag: openstack_scale"""
+        test_flag: openstack_scale
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     # Host has to be given a profile role before the scale out
     params = [{'path': '/properties/capabilities', 'value': 'profile:compute,boot_option:local',
                'op': 'replace'}]

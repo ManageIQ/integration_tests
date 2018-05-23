@@ -35,6 +35,10 @@ def test_query_vm_attributes(vm, soft_assert):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: mkourim
+        initialEstimate: 1/4h
     """
     outcome = query_resource_attributes(vm)
     for failure in outcome.failed:
@@ -55,6 +59,11 @@ def test_vm_scan(appliance, vm, from_detail):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: mkourim
+        caseimportance: medium
+        initialEstimate: 1/3h
     """
     if from_detail:
         response = vm.action.scan()
@@ -81,6 +90,10 @@ def test_edit_vm(request, vm, appliance, from_detail):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: mkourim
+        initialEstimate: 1/4h
     """
     request.addfinalizer(vm.action.delete)
     new_description = 'Test REST VM {}'.format(fauxfactory.gen_alphanumeric(5))
@@ -107,9 +120,21 @@ def test_edit_vm(request, vm, appliance, from_detail):
 @pytest.mark.tier(3)
 @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
 def test_delete_vm_from_detail(vm, method):
+    """
+    Polarion:
+        assignee: mkourim
+        caseimportance: low
+        initialEstimate: 1/4h
+    """
     delete_resources_from_detail([vm], method=method, num_sec=300, delay=10)
 
 
 @pytest.mark.tier(3)
 def test_delete_vm_from_collection(vm):
+    """
+    Polarion:
+        assignee: mkourim
+        caseimportance: low
+        initialEstimate: 1/4h
+    """
     delete_resources_from_collection([vm], not_found=True, num_sec=300, delay=10)

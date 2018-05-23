@@ -70,6 +70,12 @@ def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
 
     Metadata:
         test_flag: retire, provision
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: automate
+        caseimportance: medium
+        initialEstimate: 1/3h
     """
     num_days = 5
     soft_assert(testing_vm.retirement_date == 'Never', "The retirement date is not 'Never'!")

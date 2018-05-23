@@ -43,6 +43,11 @@ def host_off(host_collection, provider):
 
 
 def test_host_power_off(host_on):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     host_on.power_off()
     host_on.refresh()
     result = host_on.wait_for_host_state_change('off', 1000)
@@ -50,6 +55,11 @@ def test_host_power_off(host_on):
 
 
 def test_host_power_on(host_off):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     host_off.power_on()
     host_off.refresh()
     result = host_off.wait_for_host_state_change('on', 1000)

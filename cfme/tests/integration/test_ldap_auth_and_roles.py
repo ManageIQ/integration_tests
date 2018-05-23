@@ -16,6 +16,12 @@ def test_group_roles(
     Validates expected menu and submenu names are present for default
     LDAP group roles
 
+
+    Polarion:
+        assignee: llasmith
+        casecomponent: config
+        initialEstimate: 1/4h
+        testtype: integration
     """
     request.addfinalizer(appliance.server.login_admin)
 

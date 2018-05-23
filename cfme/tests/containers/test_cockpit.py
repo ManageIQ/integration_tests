@@ -18,6 +18,10 @@ pytestmark = [
 def test_cockpit_button_access(appliance, provider, cockpit, request):
     """ The test verifies the existence of cockpit "Web Console"
         button on master node, click the button if enabled, verify no errors are displayed.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     request.addfinalizer(lambda: appliance.server.settings.disable_server_roles('cockpit_ws'))

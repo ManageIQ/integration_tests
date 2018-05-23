@@ -89,7 +89,13 @@ def catalog_item(appliance, provider, provisioning, template_name, dialog, catal
 def test_tenant_quota_enforce_via_lifecycle_cloud(request, appliance, provider, setup_provider,
                                             set_roottenant_quota, extra_msg, custom_prov_data,
                                             approve, prov_data, vm_name, template_name):
-    """Test Tenant Quota in UI"""
+    """Test Tenant Quota in UI
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: control
+        initialEstimate: 1/10h
+    """
     prov_data.update(custom_prov_data)
     prov_data['catalog']['vm_name'] = vm_name
     prov_data.update({
@@ -127,7 +133,13 @@ def test_tenant_quota_enforce_via_lifecycle_cloud(request, appliance, provider, 
 def test_tenant_quota_enforce_via_service_cloud(request, appliance, provider, setup_provider,
                                                 context, set_roottenant_quota, custom_prov_data,
                                                 extra_msg, template_name, catalog_item):
-    """Test Tenant Quota in UI and SSUI"""
+    """Test Tenant Quota in UI and SSUI
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: control
+        initialEstimate: 1/10h
+    """
     with appliance.context.use(context):
         service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
         if context is ViaSSUI:

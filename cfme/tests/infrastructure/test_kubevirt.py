@@ -12,6 +12,11 @@ pytestmark = [
 
 
 def test_k6t_provider_crud(provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     provider.create()
 
     with update(provider):

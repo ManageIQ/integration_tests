@@ -37,6 +37,12 @@ def get_host_data_by_name(provider_key, host_name):
 def test_host_good_creds(appliance, request, setup_provider, provider):
     """
     Tests host credentialing  with good credentials
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: infra
+        caseimportance: low
+        initialEstimate: 1/12h
     """
     test_host = random.choice(provider.data["hosts"])
     host_data = get_host_data_by_name(provider.key, test_host.name)
@@ -61,6 +67,12 @@ def test_host_good_creds(appliance, request, setup_provider, provider):
 def test_host_bad_creds(appliance, request, setup_provider, provider):
     """
     Tests host credentialing  with bad credentials
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/15h
     """
     test_host = random.choice(provider.data["hosts"])
     host_collection = appliance.collections.hosts

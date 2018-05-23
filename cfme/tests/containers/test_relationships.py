@@ -65,6 +65,10 @@ def test_relationships_tables(provider, has_persistent_volume, appliance, test_i
     in the Relationships table also appears in the Properties table,
     or to the page where the number of rows is equal to the number
     that is displayed in the Relationships table.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     instance = (provider if test_item.obj is ContainersProvider
                 else test_item.collection_obj(appliance).get_random_instances().pop())
@@ -97,6 +101,10 @@ def test_container_status_relationships_data_integrity(provider, appliance, soft
     """ This test verifies that the sum of running, waiting and terminated containers
         in the status summary table
         is the same number that appears in the Relationships table containers field
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     for obj in PodCollection(appliance).get_random_instances(count=3):
         view = navigate_to(obj, 'Details')

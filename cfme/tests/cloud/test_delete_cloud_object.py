@@ -32,6 +32,10 @@ def test_delete_instance_appear_after_refresh(setup_provider, provider):
 
     Metadata:
         test_flag: delete_object
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: None
     """
     instance_name = provider.data['remove_test']['instance']
     test_instance = VM.factory(instance_name, provider)
@@ -46,6 +50,10 @@ def test_delete_image_appear_after_refresh(setup_provider, provider, set_grid, r
 
     Metadata:
         test_flag: delete_object
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: None
     """
     image_name = provider.data['remove_test']['image']
     test_image = VM.factory(image_name, provider, template=True)
@@ -62,6 +70,10 @@ def test_delete_stack_appear_after_refresh(setup_provider, provider, provisionin
 
     Metadata:
         test_flag: delete_object
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: None
     """
 
     stack = StackCollection(appliance).instantiate(name=provisioning['stacks'][0],

@@ -69,6 +69,12 @@ def chargeback_storage_rate(rate_type='fixed'):
 
 
 def test_add_new_compute_chargeback(chargeback_compute_rate):
+    """
+    Polarion:
+        assignee: nachandr
+        casecomponent: candu
+        initialEstimate: 1/12h
+    """
     chargeback_compute_rate.create()
     view = chargeback_compute_rate.create_view(
         navigator.get_class(chargeback_compute_rate, 'All').VIEW)
@@ -79,6 +85,13 @@ def test_add_new_compute_chargeback(chargeback_compute_rate):
 
 @pytest.mark.tier(3)
 def test_compute_chargeback_duplicate_disallowed(chargeback_compute_rate):
+    """
+    Polarion:
+        assignee: nachandr
+        casecomponent: candu
+        caseimportance: low
+        initialEstimate: 1/12h
+    """
     chargeback_compute_rate.create()
     assert chargeback_compute_rate.exists
     with pytest.raises(AssertionError):
@@ -103,6 +116,13 @@ def test_compute_chargeback_duplicate_disallowed(chargeback_compute_rate):
     BZ(1532368, forced_streams='5.9',
        unblock=lambda storage_chargeback: 'variable' not in storage_chargeback)])
 def test_add_new_storage_chargeback(storage_chargeback, request):
+    """
+    Polarion:
+        assignee: nachandr
+        casecomponent: candu
+        caseimportance: medium
+        initialEstimate: 1/20h
+    """
     cb_rate = chargeback_storage_rate(storage_chargeback)
 
     @request.addfinalizer
@@ -121,6 +141,13 @@ def test_add_new_storage_chargeback(storage_chargeback, request):
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1468561, forced_streams=["5.8"])])
 def test_edit_compute_chargeback(chargeback_compute_rate):
+    """
+    Polarion:
+        assignee: nachandr
+        casecomponent: candu
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     chargeback_compute_rate.create()
     assert chargeback_compute_rate.exists
     with update(chargeback_compute_rate):
@@ -139,6 +166,13 @@ def test_edit_compute_chargeback(chargeback_compute_rate):
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1468561, forced_streams=["5.8"])])
 def test_edit_storage_chargeback():
+    """
+    Polarion:
+        assignee: nachandr
+        casecomponent: candu
+        caseimportance: low
+        initialEstimate: 1/12h
+    """
     storage_rate = chargeback_storage_rate()  # TODO parametrize on variable
     storage_rate.create()
     assert storage_rate.exists
@@ -157,6 +191,13 @@ def test_edit_storage_chargeback():
 
 @pytest.mark.tier(3)
 def test_delete_compute_chargeback(chargeback_compute_rate):
+    """
+    Polarion:
+        assignee: nachandr
+        casecomponent: candu
+        caseimportance: low
+        initialEstimate: 1/12h
+    """
     chargeback_compute_rate.create()
     assert chargeback_compute_rate.exists
 
@@ -170,6 +211,13 @@ def test_delete_compute_chargeback(chargeback_compute_rate):
 
 @pytest.mark.tier(3)
 def test_delete_storage_chargeback():
+    """
+    Polarion:
+        assignee: nachandr
+        casecomponent: candu
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     storage_rate = chargeback_storage_rate()  # TODO parametrize on variable
     storage_rate.create()
     assert storage_rate.exists
@@ -195,6 +243,12 @@ class TestRatesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: nachandr
+            casecomponent: candu
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         for rate in rates:
             record = appliance.rest_api.collections.rates.get(id=rate.id)
@@ -210,6 +264,12 @@ class TestRatesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: nachandr
+            casecomponent: candu
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         new_descriptions = []
         if multiple:
@@ -249,6 +309,12 @@ class TestRatesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: nachandr
+            casecomponent: candu
+            caseimportance: medium
+            initialEstimate: 1/20h
         """
         delete_resources_from_detail(rates, method=method)
 
@@ -258,5 +324,11 @@ class TestRatesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: nachandr
+            casecomponent: candu
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_collection(rates)

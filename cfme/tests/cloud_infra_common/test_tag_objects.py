@@ -125,13 +125,25 @@ def tagging_check(tag):
 
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
 def test_tag_cloud_objects(tagging_check, cloud_test_item, tag_place):
-    """ Test for cloud items tagging action from list and details pages """
+    """ Test for cloud items tagging action from list and details pages
+
+    Polarion:
+        assignee: rbabyuk
+        casecomponent: web_ui
+        initialEstimate: 1/12h
+    """
     tagging_check(cloud_test_item, tag_place)
 
 
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
 def test_tag_infra_objects(tagging_check, infra_test_item, tag_place):
-    """ Test for infrastructure items tagging action from list and details pages """
+    """ Test for infrastructure items tagging action from list and details pages
+
+    Polarion:
+        assignee: rbabyuk
+        casecomponent: web_ui
+        initialEstimate: 1/12h
+    """
     tagging_check(infra_test_item, tag_place)
 
 
@@ -147,6 +159,11 @@ def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility,
         2. Login as restricted user, item is visible for user
         3. As admin remove tag
         4. Login as restricted user, item is not visible for user
+
+    Polarion:
+        assignee: rbabyuk
+        casecomponent: config
+        initialEstimate: 1/8h
     """
     if isinstance(cloud_test_item, KeyPair) and appliance.version < '5.9':
         pytest.skip('Keypairs visibility works starting 5.9')
@@ -166,5 +183,10 @@ def test_tagvis_infra_object(infra_test_item, check_item_visibility,
         2. Login as restricted user, item is visible for user
         3. As admin remove tag
         4. Login as restricted user, iten is not visible for user
+
+    Polarion:
+        assignee: rbabyuk
+        casecomponent: web_ui
+        initialEstimate: 1/12h
     """
     check_item_visibility(infra_test_item, visibility)

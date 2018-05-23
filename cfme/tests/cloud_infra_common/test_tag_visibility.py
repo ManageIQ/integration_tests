@@ -23,5 +23,10 @@ def tagged_vm(tag, has_no_providers_modscope, setup_provider_modscope, provider)
 
 @pytest.mark.rhv3
 def test_tag_vis_vm(tagged_vm, user_restricted):
+    """
+    Polarion:
+        assignee: rbabyuk
+        initialEstimate: None
+    """
     with user_restricted:
         assert tagged_vm.exists, "vm not found"

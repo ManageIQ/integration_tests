@@ -41,6 +41,13 @@ def klass(request, namespace):
 @pytest.mark.tier(2)
 @pytest.mark.polarion('RHCF3-3922')
 def test_instance_crud(klass):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: critical
+        initialEstimate: 1/16h
+    """
     instance = klass.instances.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
@@ -58,6 +65,13 @@ def test_instance_crud(klass):
 @pytest.mark.tier(2)
 @pytest.mark.polarion('RHCF3-20871')
 def test_duplicate_instance_disallowed(request, klass):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseposneg: negative
+        initialEstimate: 1/60h
+    """
     name = fauxfactory.gen_alphanumeric()
     klass.instances.create(name=name)
     with pytest.raises(Exception, match="Name has already been taken"):
@@ -68,6 +82,12 @@ def test_duplicate_instance_disallowed(request, klass):
 @pytest.mark.tier(3)
 @pytest.mark.polarion('RHCF3-20872')
 def test_instance_display_name_unset_from_ui(request, klass):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        initialEstimate: 1/30h
+    """
     instance = klass.instances.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric())

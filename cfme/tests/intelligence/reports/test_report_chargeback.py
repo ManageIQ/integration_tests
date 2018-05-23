@@ -26,6 +26,12 @@ def _cleanup_report(report):
 def test_charge_report_filter_owner(appliance, infra_provider, request):
     """Tests creation of chargeback report that is filtered by owner
 
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: candu
+        caseimportance: low
+        initialEstimate: 1/12h
     """
 
     report = appliance.collections.reports.create(
@@ -58,6 +64,12 @@ def test_charge_report_filter_owner(appliance, infra_provider, request):
 def test_charge_report_filter_tag(appliance, infra_provider, request):
     """Tests creation of chargeback report that is filtered by tag
 
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: candu
+        caseimportance: low
+        initialEstimate: 1/12h
     """
 
     report = appliance.collections.reports.create(

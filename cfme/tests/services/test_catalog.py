@@ -13,6 +13,12 @@ pytestmark = [test_requirements.service, pytest.mark.tier(2)]
 
 @pytest.mark.sauce
 def test_catalog_crud(appliance):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        initialEstimate: 1/8h
+    """
     catalog_name = fauxfactory.gen_alphanumeric()
     cat = appliance.collections.catalogs.create(name=catalog_name, description='my catalog')
 
@@ -27,6 +33,13 @@ def test_catalog_crud(appliance):
 
 @pytest.mark.sauce
 def test_catalog_duplicate_name(appliance):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     catalog_name = fauxfactory.gen_alphanumeric()
     cat = appliance.collections.catalogs.create(name=catalog_name, description='my catalog')
     with pytest.raises(AssertionError):
@@ -39,7 +52,14 @@ def test_catalog_duplicate_name(appliance):
 @pytest.mark.meta(blockers=[BZ(1460891, forced_streams=['5.8', '5.9', 'upstream'])])
 @pytest.mark.sauce
 def test_permissions_catalog_add(appliance):
-    """ Tests that a catalog can be added only with the right permissions"""
+    """ Tests that a catalog can be added only with the right permissions
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     # This test needs to retain a reference to the catalog created when `_create_catalog` is run
     # from within `single_task_permission_test`, so we use a list so that we don't have to use all
     # sorts of global variables. This list will only ever have 1 item in it.

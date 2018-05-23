@@ -111,14 +111,24 @@ def router_with_gw(provider, appliance, ext_subnet):
 
 
 def test_create_network(network, provider):
-    """Creates private cloud network and verifies it's relationships"""
+    """Creates private cloud network and verifies it's relationships
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert network.exists
     assert network.parent_provider.name == provider.name
     assert network.cloud_tenant == provider.data['tenant']
 
 
 def test_edit_network(network):
-    """Edits private cloud network's name"""
+    """Edits private cloud network's name
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     network.edit(name=fauxfactory.gen_alpha())
     wait_for(network.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
@@ -127,7 +137,12 @@ def test_edit_network(network):
 
 
 def test_delete_network(network):
-    """Deletes private cloud network"""
+    """Deletes private cloud network
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     network.delete()
     wait_for(network.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
@@ -135,7 +150,12 @@ def test_delete_network(network):
 
 
 def test_create_subnet(subnet, provider):
-    """Creates private subnet and verifies it's relationships"""
+    """Creates private subnet and verifies it's relationships
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert subnet.exists
     assert subnet.parent_provider.name == provider.name
     assert subnet.cloud_tenant == provider.data['tenant']
@@ -145,7 +165,12 @@ def test_create_subnet(subnet, provider):
 
 
 def test_edit_subnet(subnet):
-    """Edits private subnet's name"""
+    """Edits private subnet's name
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     subnet.edit(new_name=fauxfactory.gen_alpha())
     wait_for(subnet.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
@@ -153,7 +178,12 @@ def test_edit_subnet(subnet):
 
 
 def test_delete_subnet(subnet):
-    """Deletes private subnet"""
+    """Deletes private subnet
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     subnet.delete()
     wait_for(subnet.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
@@ -162,20 +192,35 @@ def test_delete_subnet(subnet):
 
 
 def test_create_router(router, provider):
-    """Create router without gateway"""
+    """Create router without gateway
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert router.exists
     assert router.cloud_tenant == provider.data['tenant']
 
 
 def test_create_router_with_gateway(router_with_gw, provider):
-    """Creates router with gateway (external network)"""
+    """Creates router with gateway (external network)
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert router_with_gw.exists
     assert router_with_gw.cloud_tenant == provider.data['tenant']
     assert router_with_gw.cloud_network == router_with_gw.ext_network
 
 
 def test_edit_router(router):
-    """Edits router's name"""
+    """Edits router's name
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     router.edit(name=fauxfactory.gen_alpha())
     wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
@@ -184,7 +229,12 @@ def test_edit_router(router):
 
 
 def test_delete_router(router, appliance):
-    """Deletes router"""
+    """Deletes router
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     router.delete()
     wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
@@ -193,7 +243,12 @@ def test_delete_router(router, appliance):
 
 
 def test_clear_router_gateway(router_with_gw):
-    """Deletes a gateway from the router"""
+    """Deletes a gateway from the router
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     router_with_gw.edit(change_external_gw=False)
     wait_for(router_with_gw.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10),
              timeout=600, delay=10)
@@ -203,7 +258,12 @@ def test_clear_router_gateway(router_with_gw):
 
 
 def test_add_gateway_to_router(router, ext_subnet):
-    """Adds gateway to the router"""
+    """Adds gateway to the router
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     router.edit(change_external_gw=True, ext_network=ext_subnet.network,
                 ext_network_subnet=ext_subnet.name)
     wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
@@ -213,7 +273,12 @@ def test_add_gateway_to_router(router, ext_subnet):
 
 
 def test_add_interface_to_router(router, subnet):
-    """Adds interface (subnet) to router"""
+    """Adds interface (subnet) to router
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     router.add_interface(subnet.name)
     wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)

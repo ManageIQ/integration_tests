@@ -36,6 +36,13 @@ def report(appliance):
 @pytest.mark.parametrize('view_mode', ['Hybrid View', 'Graph View', 'Tabular View'])
 @pytest.mark.meta(blockers=[BZ(1401560)])
 def test_report_view(report, view_mode):
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     view = navigate_to(report, 'Details')
     view.view_selector.select(view_mode)
     assert view.view_selector.selected == view_mode, "View setting failed for {}".format(view)

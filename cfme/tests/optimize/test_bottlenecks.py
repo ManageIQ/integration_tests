@@ -71,7 +71,12 @@ def db_restore(temp_appliance_extended_db):
 
 @pytest.mark.tier(2)
 def test_bottlenecks_report_event_groups(temp_appliance_extended_db, db_restore, db_tbl, db_events):
-    """ Checks event_groups selectbox in report tab. It should filter events by type """
+    """ Checks event_groups selectbox in report tab. It should filter events by type
+
+    Polarion:
+        assignee: otsuman
+        initialEstimate: None
+    """
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         # Enabling this option to show all possible values
@@ -87,7 +92,12 @@ def test_bottlenecks_report_event_groups(temp_appliance_extended_db, db_restore,
 
 @pytest.mark.tier(2)
 def test_bottlenecks_report_show_host_events(temp_appliance_extended_db, db_restore, db_events):
-    """ Checks host_events checkbox in report tab. It should show or not host events """
+    """ Checks host_events checkbox in report tab. It should show or not host events
+
+    Polarion:
+        assignee: otsuman
+        initialEstimate: None
+    """
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         view.report.show_host_events.fill(False)
@@ -102,7 +112,12 @@ def test_bottlenecks_report_show_host_events(temp_appliance_extended_db, db_rest
 
 @pytest.mark.tier(2)
 def test_bottlenecks_report_time_zone(temp_appliance_extended_db, db_restore, db_tbl, db_events):
-    """ Checks time zone selectbox in report tab. It should change time zone of events in table """
+    """ Checks time zone selectbox in report tab. It should change time zone of events in table
+
+    Polarion:
+        assignee: otsuman
+        initialEstimate: None
+    """
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         row = view.report.event_details[0]
@@ -120,7 +135,12 @@ def test_bottlenecks_report_time_zone(temp_appliance_extended_db, db_restore, db
 @pytest.mark.tier(2)
 def test_bottlenecks_summary_event_groups(temp_appliance_extended_db, db_restore, db_tbl,
                                           db_events):
-    """ Checks event_groups selectbox in summary tab. It should filter events by type """
+    """ Checks event_groups selectbox in summary tab. It should filter events by type
+
+    Polarion:
+        assignee: otsuman
+        initialEstimate: None
+    """
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         # Enabling this option to show all possible values
@@ -136,7 +156,12 @@ def test_bottlenecks_summary_event_groups(temp_appliance_extended_db, db_restore
 
 @pytest.mark.tier(2)
 def test_bottlenecks_summary_show_host_events(temp_appliance_extended_db, db_restore, db_events):
-    """ Checks host_events checkbox in summary tab. It should show or not host events """
+    """ Checks host_events checkbox in summary tab. It should show or not host events
+
+    Polarion:
+        assignee: otsuman
+        initialEstimate: None
+    """
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         view.summary.show_host_events.fill(False)
@@ -151,7 +176,12 @@ def test_bottlenecks_summary_show_host_events(temp_appliance_extended_db, db_res
 
 @pytest.mark.tier(2)
 def test_bottlenecks_summary_time_zone(temp_appliance_extended_db, db_restore, db_tbl, db_events):
-    """ Checks time zone selectbox in summary tab. It should change time zone of events in chart """
+    """ Checks time zone selectbox in summary tab. It should change time zone of events in chart
+
+    Polarion:
+        assignee: otsuman
+        initialEstimate: None
+    """
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         events = view.summary.chart.get_events()

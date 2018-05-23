@@ -92,6 +92,12 @@ def test_run_datastore_analysis(setup_provider, datastore, soft_assert, datastor
 
     Metadata:
         test_flag: datastore_analysis
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: smartst
+        initialEstimate: 1/3h
+        testtype: integration
     """
     # Initiate analysis
     try:

@@ -12,6 +12,11 @@ from cfme.infrastructure.provider.scvmm import SCVMMProvider
     reason="No host group")
 @pytest.mark.provider([SCVMMProvider], scope="module")
 def test_no_dvd_ruins_refresh(provider, small_template):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     host_group = provider.data["provisioning"]["host_group"]
     with provider.mgmt.with_vm(
             small_template.name,

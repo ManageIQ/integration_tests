@@ -127,6 +127,12 @@ def test_infra_grid_page_per_item(appliance, request, page, value, set_grid):
 
     Metadata:
         test_flag: visuals
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/12h
     """
     if isinstance(page, six.string_types):
         page = getattr(appliance.collections, page)
@@ -149,6 +155,12 @@ def test_infra_tile_page_per_item(appliance, request, page, value, set_tile):
 
     Metadata:
         test_flag: visuals
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/10h
     """
     if isinstance(page, six.string_types):
         page = getattr(appliance.collections, page)
@@ -171,6 +183,12 @@ def test_infra_list_page_per_item(appliance, request, page, value, set_list):
 
     Metadata:
         test_flag: visuals
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/10h
     """
     if isinstance(page, six.string_types):
         page = getattr(appliance.collections, page)
@@ -193,6 +211,12 @@ def test_infra_report_page_per_item(appliance, value, set_report):
 
     Metadata:
         test_flag: visuals
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/10h
     """
     appliance.user.my_settings.visual.report_view_limit = value
     limit = appliance.user.my_settings.visual.report_view_limit
@@ -217,6 +241,10 @@ def test_infra_start_page(visual, request, appliance, start_page):
 
     Metadata:
         test_flag: visuals
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     request.addfinalizer(set_default_page)
     if appliance.user.my_settings.visual.login_page != start_page:
@@ -236,6 +264,12 @@ def test_infraprovider_noquads(request, set_infra_provider_quad):
     """
         This test checks that Infraprovider Quadrant when switched off from Mysetting page under
         Visual Tab under "Show Infrastructure Provider Quadrants" option works properly.
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/30h
     """
     view = navigate_to(InfraProvider, 'All')
     view.toolbar.view_selector.select('Grid View')
@@ -247,6 +281,12 @@ def test_host_noquads(appliance, request, set_host_quad):
     """
         This test checks that Host Quadrant when switched off from Mysetting page under
         Visual Tab under "Show Host Quadrants" option works properly.
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/30h
     """
     host_collection = appliance.collections.hosts
     view = navigate_to(host_collection, 'All')
@@ -259,6 +299,12 @@ def test_datastore_noquads(request, set_datastore_quad, appliance):
     """
         This test checks that Host Quadrant when switched off from Mysetting page under
         Visual Tab under "Show Datastores Quadrants" option works properly.
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/30h
     """
     dc = DatastoreCollection(appliance)
     view = navigate_to(dc, 'All')
@@ -271,6 +317,12 @@ def test_vm_noquads(request, set_vm_quad):
     """
         This test checks that VM Quadrant when switched off from Mysetting page under
         Visual Tab under "Show VM Quadrants" option works properly.
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: web_ui
+        caseimportance: low
+        initialEstimate: 1/30h
     """
     view = navigate_to(vms.InfraVm, 'VMsOnly')
     view.toolbar.view_selector.select('Grid View')
@@ -283,6 +335,12 @@ def test_template_noquads(request, set_template_quad):
     """
         This test checks that Template Quadrant when switched off from Mysetting page under
         Visual Tab under "Show Template Quadrants" option works properly.
+
+    Polarion:
+        assignee: ansinha
+        casecomponent: web_ui
+        caseimportance: low
+        initialEstimate: 1/20h
     """
     view = navigate_to(vms.Template, 'TemplatesOnly')
     view.toolbar.view_selector.select('Grid View')

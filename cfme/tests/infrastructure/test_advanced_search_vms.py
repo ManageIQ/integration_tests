@@ -55,11 +55,21 @@ def vm_advanced_search():
 
 
 def test_can_open_vm_advanced_search(vm_advanced_search):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     vm_advanced_search.entities.search.open_advanced_search()
 
 
 def test_vm_filter_without_user_input(appliance, vm_advanced_search, vms, subset_of_vms,
                                       expression_for_vms_subset):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     # Set up the filter
     vm_advanced_search.entities.search.advanced_search(expression_for_vms_subset)
     vm_advanced_search.flash.assert_no_error()
@@ -72,6 +82,11 @@ def test_vm_filter_without_user_input(appliance, vm_advanced_search, vms, subset
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_vm_filter_with_user_input(
         appliance, vm_advanced_search, vms, subset_of_vms, expression_for_vms_subset):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     vm = sample(subset_of_vms, 1)[0]
     # Set up the filter
     vm_advanced_search.entities.search.advanced_search(
@@ -86,6 +101,11 @@ def test_vm_filter_with_user_input(
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_vm_filter_with_user_input_and_cancellation(vm_advanced_search, vms, subset_of_vms,
                                                     expression_for_vms_subset):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     vm = sample(subset_of_vms, 1)[0]
     # Set up the filter
     vm_advanced_search.entities.search.advanced_search(
@@ -97,6 +117,11 @@ def test_vm_filter_with_user_input_and_cancellation(vm_advanced_search, vms, sub
 
 
 def test_vm_filter_save_cancel(vm_advanced_search, vms, subset_of_vms, expression_for_vms_subset):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     filter_name = fauxfactory.gen_alphanumeric()
     # Set up the filter
     vm_advanced_search.entities.search.save_filter(
@@ -111,6 +136,11 @@ def test_vm_filter_save_cancel(vm_advanced_search, vms, subset_of_vms, expressio
 
 def test_vm_filter_save_and_load(appliance, request, vm_advanced_search, vms, subset_of_vms,
                                  expression_for_vms_subset):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     filter_name = fauxfactory.gen_alphanumeric()
     vm = sample(subset_of_vms, 1)[0]
     # Set up the filter
@@ -133,6 +163,11 @@ def test_vm_filter_save_and_load(appliance, request, vm_advanced_search, vms, su
 
 
 def test_vm_filter_save_and_cancel_load(request, vm_advanced_search):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     filter_name = fauxfactory.gen_alphanumeric()
     # Set up the filter
     vm_advanced_search.entities.search.save_filter(
@@ -151,6 +186,11 @@ def test_vm_filter_save_and_cancel_load(request, vm_advanced_search):
 
 
 def test_vm_filter_save_and_load_cancel(request, vms, subset_of_vms, vm_advanced_search):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     filter_name = fauxfactory.gen_alphanumeric()
     vm = sample(subset_of_vms, 1)[0]
     # Set up the filter
@@ -175,6 +215,11 @@ def test_vm_filter_save_and_load_cancel(request, vms, subset_of_vms, vm_advanced
 
 
 def test_quick_search_without_vm_filter(appliance, request, vms, subset_of_vms):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(InfraVm, 'VMsOnly')
     view.flash.assert_no_error()
     vm = sample(subset_of_vms, 1)[0]
@@ -190,6 +235,11 @@ def test_quick_search_without_vm_filter(appliance, request, vms, subset_of_vms):
 
 def test_quick_search_with_vm_filter(
         vm_advanced_search, vms, subset_of_vms, appliance, expression_for_vms_subset):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     vm_advanced_search.entities.search.advanced_search(expression_for_vms_subset)
     vm_advanced_search.flash.assert_no_error()
     # Filter this host only
@@ -202,6 +252,11 @@ def test_quick_search_with_vm_filter(
 
 
 def test_can_delete_vm_filter(vm_advanced_search):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     filter_name = fauxfactory.gen_alphanumeric()
     vm_advanced_search.entities.search.save_filter(
         "fill_count(Virtual Machine.Files, >, 0)", filter_name)
@@ -216,7 +271,12 @@ def test_can_delete_vm_filter(vm_advanced_search):
 
 
 def test_delete_button_should_appear_after_save_vm(request, vm_advanced_search):
-    """Delete button appears only after load, not after save"""
+    """Delete button appears only after load, not after save
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     filter_name = fauxfactory.gen_alphanumeric()
     vm_advanced_search.entities.search.save_filter(
         "fill_count(Virtual Machine.Files, >, 0)", filter_name)
@@ -231,7 +291,12 @@ def test_delete_button_should_appear_after_save_vm(request, vm_advanced_search):
 
 
 def test_cannot_delete_vm_filter_more_than_once(vm_advanced_search):
-    """When Delete button appars, it does not want to go away"""
+    """When Delete button appars, it does not want to go away
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     filter_name = fauxfactory.gen_alphanumeric()
     vm_advanced_search.entities.search.save_filter(
         "fill_count(Virtual Machine.Files, >, 0)", filter_name)

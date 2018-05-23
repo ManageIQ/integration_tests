@@ -128,7 +128,13 @@ def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
 @pytest.mark.rhv3
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_total_services(appliance, setup_provider, context, order_service):
-    """Tests total services count displayed on dashboard."""
+    """Tests total services count displayed on dashboard.
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: ssui
+        initialEstimate: 1/4h
+    """
 
     with appliance.context.use(context):
         dashboard = Dashboard(appliance)
@@ -137,7 +143,13 @@ def test_total_services(appliance, setup_provider, context, order_service):
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_current_service(appliance, context):
-    """Tests current services count displayed on dashboard."""
+    """Tests current services count displayed on dashboard.
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: ssui
+        initialEstimate: 1/4h
+    """
 
     with appliance.context.use(context):
         dashboard = Dashboard(appliance)
@@ -146,7 +158,13 @@ def test_current_service(appliance, context):
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_retiring_soon(appliance, context):
-    """Tests retiring soon(int displayed) service count on dashboard."""
+    """Tests retiring soon(int displayed) service count on dashboard.
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: ssui
+        initialEstimate: 1/4h
+    """
 
     with appliance.context.use(context):
         dashboard = Dashboard(appliance)
@@ -155,7 +173,13 @@ def test_retiring_soon(appliance, context):
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_retired_service(appliance, context):
-    """Tests count of retired services(int) displayed on dashboard."""
+    """Tests count of retired services(int) displayed on dashboard.
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: ssui
+        initialEstimate: 1/4h
+    """
 
     with appliance.context.use(context):
         dashboard = Dashboard(appliance)
@@ -166,7 +190,12 @@ def test_retired_service(appliance, context):
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_monthly_charges(appliance, setup_provider, context, order_service,
         run_service_chargeback_report):
-    """Tests chargeback data"""
+    """Tests chargeback data
+
+    Polarion:
+        assignee: nachandr
+        initialEstimate: None
+    """
     with appliance.context.use(context):
         dashboard = Dashboard(appliance)
         monthly_charges = dashboard.monthly_charges()
@@ -176,7 +205,13 @@ def test_monthly_charges(appliance, setup_provider, context, order_service,
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_total_requests(appliance, context):
-    """Tests total requests displayed."""
+    """Tests total requests displayed.
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: ssui
+        initialEstimate: 1/4h
+    """
 
     with appliance.context.use(context):
         dashboard = Dashboard(appliance)
@@ -185,7 +220,13 @@ def test_total_requests(appliance, context):
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_pending_requests(appliance, context):
-    """Tests pending requests displayed on dashboard."""
+    """Tests pending requests displayed on dashboard.
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: ssui
+        initialEstimate: 1/4h
+    """
 
     with appliance.context.use(context):
         dashboard = Dashboard(appliance)
@@ -194,7 +235,13 @@ def test_pending_requests(appliance, context):
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_approved_requests(appliance, context):
-    """Tests approved requests displayed on dashboard."""
+    """Tests approved requests displayed on dashboard.
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: ssui
+        initialEstimate: 1/4h
+    """
 
     with appliance.context.use(context):
         dashboard = Dashboard(appliance)
@@ -203,7 +250,13 @@ def test_approved_requests(appliance, context):
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_denied_requests(appliance, context):
-    """Tests denied requests displayed on dashboard."""
+    """Tests denied requests displayed on dashboard.
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: ssui
+        initialEstimate: 1/4h
+    """
 
     with appliance.context.use(context):
         dashboard = Dashboard(appliance)

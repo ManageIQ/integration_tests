@@ -42,7 +42,12 @@ def enable_regions(provider):
 @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
                          reason='no more support for cloud provider discovery')
 def test_empty_discovery_form_validation_cloud(appliance):
-    """ Tests that the flash message is correct when discovery form is empty."""
+    """ Tests that the flash message is correct when discovery form is empty.
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: None
+    """
     collection = appliance.collections.cloud_providers
 
     collection.discover(None, AzureProvider)
@@ -56,7 +61,13 @@ def test_empty_discovery_form_validation_cloud(appliance):
 @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
                          reason='no more support for cloud provider discovery')
 def test_discovery_cancelled_validation_cloud(appliance):
-    """ Tests that the flash message is correct when discovery is cancelled."""
+    """ Tests that the flash message is correct when discovery is cancelled.
+
+    Polarion:
+        assignee: ndhandre
+        caseimportance: low
+        initialEstimate: 1/16h
+    """
     collection = appliance.collections.cloud_providers
     collection.discover(None, AzureProvider, cancel=True)
     view = appliance.browser.create_view(CloudProvidersView)
@@ -66,7 +77,12 @@ def test_discovery_cancelled_validation_cloud(appliance):
 @pytest.mark.tier(3)
 @test_requirements.discovery
 def test_add_cancelled_validation_cloud(request, appliance):
-    """Tests that the flash message is correct when add is cancelled."""
+    """Tests that the flash message is correct when add is cancelled.
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/16h
+    """
     collection = appliance.collections.cloud_providers
     prov = collection.instantiate(prov_class=EC2Provider)
     request.addfinalizer(prov.delete_if_exists)
@@ -83,6 +99,11 @@ def test_add_cancelled_validation_cloud(request, appliance):
 @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
                          reason='no more support for cloud provider discovery')
 def test_discovery_password_mismatch_validation_cloud(appliance):
+    """
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: None
+    """
     cred = Credential(
         principal=fauxfactory.gen_alphanumeric(5),
         secret=fauxfactory.gen_alphanumeric(5),
@@ -98,6 +119,11 @@ def test_discovery_password_mismatch_validation_cloud(appliance):
 @pytest.mark.usefixtures('has_no_cloud_providers')
 @test_requirements.discovery
 def test_providers_discovery_amazon(appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     # This test was being uncollected anyway, and needs to be parametrized and not directory call
     # out to specific credential keys
     # amazon_creds = get_credentials_from_config('cloudqe_amazon')
@@ -119,6 +145,10 @@ def test_providers_discovery(request, appliance, provider):
 
     Metadata:
         test_flag: crud
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/8h
     """
     if provider.one_of(AzureProvider):
         cred = Credential(
@@ -150,6 +180,12 @@ def test_cloud_provider_add_with_bad_credentials(provider, enable_regions):
 
     Metadata:
         test_flag: crud
+
+    Polarion:
+        assignee: ndhandre
+        casecomponent: cloud
+        caseimportance: medium
+        initialEstimate: None
     """
     default_credentials = provider.default_endpoint.credentials
 
@@ -186,6 +222,11 @@ def test_cloud_provider_crud(provider, enable_regions):
 
     Metadata:
         test_flag: crud
+
+    Polarion:
+        assignee: ndhandre
+        casecomponent: cloud
+        initialEstimate: None
     """
     provider.create()
     provider.validate_stats(ui=True)
@@ -204,7 +245,12 @@ def test_cloud_provider_crud(provider, enable_regions):
 @pytest.mark.tier(3)
 @test_requirements.discovery
 def test_type_required_validation_cloud(request, appliance):
-    """Test to validate type while adding a provider"""
+    """Test to validate type while adding a provider
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/10h
+    """
     collection = appliance.collections.cloud_providers
     view = navigate_to(collection, 'Add')
     view.fill({'name': 'foo'})
@@ -214,7 +260,12 @@ def test_type_required_validation_cloud(request, appliance):
 @pytest.mark.tier(3)
 @test_requirements.discovery
 def test_name_required_validation_cloud(request, appliance):
-    """Tests to validate the name while adding a provider"""
+    """Tests to validate the name while adding a provider
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/15h
+    """
     collection = appliance.collections.cloud_providers
     prov = collection.instantiate(prov_class=EC2Provider,
                                   name=None,
@@ -229,7 +280,13 @@ def test_name_required_validation_cloud(request, appliance):
 
 @pytest.mark.tier(3)
 def test_region_required_validation(request, soft_assert, appliance):
-    """Tests to validate the region while adding a provider"""
+    """Tests to validate the region while adding a provider
+
+    Polarion:
+        assignee: nansari
+        caseimportance: low
+        initialEstimate: 1/6h
+    """
     collection = appliance.collections.cloud_providers
     prov = collection.instantiate(prov_class=EC2Provider, name=fauxfactory.gen_alphanumeric(5),
                                   region=None)
@@ -244,7 +301,12 @@ def test_region_required_validation(request, soft_assert, appliance):
 @pytest.mark.tier(3)
 @test_requirements.discovery
 def test_host_name_required_validation_cloud(request, appliance):
-    """Test to validate the hostname while adding a provider"""
+    """Test to validate the hostname while adding a provider
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/15h
+    """
     endpoint = RHOSEndpoint(hostname=None,
                             ip_address=fauxfactory.gen_ipaddr(prefix=[10]),
                             security_protocol=None)
@@ -263,7 +325,13 @@ def test_host_name_required_validation_cloud(request, appliance):
 
 @pytest.mark.tier(3)
 def test_api_port_blank_validation(request, appliance):
-    """Test to validate blank api port while adding a provider"""
+    """Test to validate blank api port while adding a provider
+
+    Polarion:
+        assignee: nansari
+        caseimportance: low
+        initialEstimate: 1/6h
+    """
     endpoint = RHOSEndpoint(hostname=fauxfactory.gen_alphanumeric(5),
                             ip_address=fauxfactory.gen_ipaddr(prefix=[10]),
                             api_port='',
@@ -285,6 +353,12 @@ def test_api_port_blank_validation(request, appliance):
 @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
                          reason='EC2 option not available')
 def test_user_id_max_character_validation(appliance):
+    """
+    Polarion:
+        assignee: ndhandre
+        caseimportance: low
+        initialEstimate: 1/8h
+    """
     cred = Credential(principal=fauxfactory.gen_alphanumeric(51), secret='')
     collection = appliance.collections.cloud_providers
     collection.discover(cred, EC2Provider)
@@ -294,6 +368,12 @@ def test_user_id_max_character_validation(appliance):
 @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
                          reason='EC2 option not available')
 def test_password_max_character_validation(appliance):
+    """
+    Polarion:
+        assignee: nansari
+        caseimportance: low
+        initialEstimate: 1/6h
+    """
     password = fauxfactory.gen_alphanumeric(51)
     cred = Credential(
         principal=fauxfactory.gen_alphanumeric(5),
@@ -306,7 +386,12 @@ def test_password_max_character_validation(appliance):
 @pytest.mark.tier(3)
 @test_requirements.discovery
 def test_name_max_character_validation_cloud(request, cloud_provider):
-    """Test to validate that provider can have up to 255 characters in name"""
+    """Test to validate that provider can have up to 255 characters in name
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/15h
+    """
     request.addfinalizer(lambda: cloud_provider.delete_if_exists(cancel=False))
     name = fauxfactory.gen_alphanumeric(255)
     with update(cloud_provider):
@@ -316,7 +401,12 @@ def test_name_max_character_validation_cloud(request, cloud_provider):
 
 @pytest.mark.tier(3)
 def test_hostname_max_character_validation_cloud(appliance):
-    """Test to validate max character for hostname field"""
+    """Test to validate max character for hostname field
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/15h
+    """
     endpoint = RHOSEndpoint(hostname=fauxfactory.gen_alphanumeric(256),
                             api_port=None,
                             security_protocol=None)
@@ -337,7 +427,13 @@ def test_hostname_max_character_validation_cloud(appliance):
 @pytest.mark.tier(3)
 @test_requirements.discovery
 def test_api_port_max_character_validation_cloud(appliance):
-    """Test to validate max character for api port field"""
+    """Test to validate max character for api port field
+
+    Polarion:
+        assignee: ndhandre
+        casecomponent: cloud
+        initialEstimate: 1/15h
+    """
     endpoint = RHOSEndpoint(hostname=fauxfactory.gen_alphanumeric(5),
                             api_port=fauxfactory.gen_alphanumeric(16),
                             security_protocol='Non-SSL')
@@ -355,7 +451,14 @@ def test_api_port_max_character_validation_cloud(appliance):
 
 @pytest.mark.tier(3)
 def test_openstack_provider_has_api_version(appliance):
-    """Check whether the Keystone API version field is present for Openstack."""
+    """Check whether the Keystone API version field is present for Openstack.
+
+    Polarion:
+        assignee: None
+        caseimportance: low
+        initialEstimate: None
+        testtype: integration
+    """
     view = navigate_to(appliance.collections.cloud_providers, 'Add')
     view.fill({"prov_type": "OpenStack"})
     assert view.api_version.is_displayed, "API version select is not visible"
@@ -375,6 +478,10 @@ def test_select_key_pair_none_while_provisioning(request, has_no_cloud_providers
         3. Go to Properties
         4. Select None in Guest Access Key Pair
         5. None should be selected
+
+    Polarion:
+        assignee: rbabyuk
+        initialEstimate: None
     """
     provider.region_name = 'South America (Sao Paulo)'
     request.addfinalizer(provider.delete_if_exists)
@@ -399,6 +506,11 @@ def test_cloud_names_grid_floating_ips(appliance, ec2_provider, soft_assert):
         Go to Network -> Floating IPs
         Change view to grid
         Test if names are displayed
+
+    Polarion:
+        assignee: mmojzis
+        caseimportance: medium
+        initialEstimate: 1/30h
     """
     floating_ips_collection = appliance.collections.network_floating_ips
     view = navigate_to(floating_ips_collection, "All")
@@ -420,6 +532,12 @@ def test_display_network_topology(appliance, openstack_provider):
         2. Make sure it has no floating IPs
         3. Go to Networks -> Topology
         4. Topology should be shown without errors.
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: prov
+        caseimportance: medium
+        initialEstimate: 1/8h
     """
     floating_ips_collection = appliance.collections.network_floating_ips
     view = navigate_to(floating_ips_collection, "All")
@@ -450,6 +568,11 @@ class TestProvidersRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         if from_detail:
             networks = appliance.rest_api.collections.providers.get(
@@ -474,6 +597,11 @@ class TestProvidersRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         network = appliance.rest_api.collections.providers.get(
             name=cloud_provider.name).cloud_networks[0]
@@ -493,6 +621,11 @@ class TestProvidersRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         for profile in arbitration_profiles:
             record = appliance.rest_api.collections.arbitration_profiles.get(id=profile.id)
@@ -509,6 +642,11 @@ class TestProvidersRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(arbitration_profiles, method=method)
 
@@ -520,6 +658,11 @@ class TestProvidersRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_collection(arbitration_profiles)
 
@@ -532,6 +675,11 @@ class TestProvidersRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         response_len = len(arbitration_profiles)
         zone = appliance.rest_api.collections.availability_zones[-1]
@@ -561,6 +709,11 @@ class TestProvidersRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         num_rules = 2
         profile = arbitration_profiles[0]
@@ -591,6 +744,11 @@ class TestProvidersRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: mkourim
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         data = [{
             'description': 'test admin rule {}'.format(fauxfactory.gen_alphanumeric(5)),

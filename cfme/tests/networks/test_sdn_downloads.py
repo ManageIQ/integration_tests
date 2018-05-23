@@ -45,7 +45,13 @@ def download_summary(spec_object):
     lambda appliance, filetype: appliance.version == LATEST and filetype == 'pdf'
 )
 def test_download_lists_base(filetype, collection_type, appliance):
-    """ Download the items from base lists. """
+    """ Download the items from base lists.
+
+    Polarion:
+        assignee: None
+        casecomponent: cloud
+        initialEstimate: 1/10h
+    """
     collection = getattr(appliance.collections, collection_type)
     download(collection, filetype)
 
@@ -55,7 +61,13 @@ def test_download_lists_base(filetype, collection_type, appliance):
 )
 @pytest.mark.parametrize("collection_type", OBJECTCOLLECTIONS)
 def test_download_pdf_summary(appliance, collection_type, provider):
-    """ Download the summary details of specific object """
+    """ Download the summary details of specific object
+
+    Polarion:
+        assignee: None
+        casecomponent: cloud
+        initialEstimate: 1/10h
+    """
     collection = getattr(appliance.collections, collection_type)
     if collection.all():
         random_obj = collection.all()[0].name

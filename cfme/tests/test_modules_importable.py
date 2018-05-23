@@ -25,6 +25,11 @@ KNOWN_FAILURES = set(ROOT.dirpath().join(x) for x in[
 @pytest.mark.parametrize('module_path', MODULES, ids=ROOT.dirpath().bestrelpath)
 @pytest.mark.long_running
 def test_import_own_module(module_path):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     if module_path in KNOWN_FAILURES:
         pytest.skip("{} is a known failed path".format(ROOT.dirpath().bestrelpath(module_path)))
     subprocess.check_call(

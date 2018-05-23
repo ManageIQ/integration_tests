@@ -51,7 +51,14 @@ def round_min(value, base=5):
             else int(base * round(float(value) / base)))
 
 
+@pytest.mark.tier(2)
 def test_schedule_crud(appliance, current_server_time):
+    """
+    Polarion:
+        assignee: rbabyuk
+        casecomponent: config
+        initialEstimate: 1/8h
+    """
     current_time, _ = current_server_time
     start_date = current_time + relativedelta.relativedelta(days=2)
     schedule = appliance.collections.system_schedules.create(
@@ -83,6 +90,11 @@ def test_schedule_crud(appliance, current_server_time):
 
 
 def test_schedule_analysis_in_the_past(appliance, current_server_time, request):
+    """
+    Polarion:
+        assignee: rbabyuk
+        initialEstimate: None
+    """
     current_time, _ = current_server_time
     past_time = current_time - relativedelta.relativedelta(minutes=5)
     if round_min(past_time.minute) == 0:
@@ -105,6 +117,11 @@ def test_schedule_analysis_in_the_past(appliance, current_server_time, request):
 
 
 def test_create_multiple_schedules_in_one_timezone(appliance, request):
+    """
+    Polarion:
+        assignee: rbabyuk
+        initialEstimate: None
+    """
     schedule_list = []
     request.addfinalizer(lambda: map(lambda item: item.delete(), schedule_list))
 
@@ -120,6 +137,11 @@ def test_create_multiple_schedules_in_one_timezone(appliance, request):
 
 
 def test_inactive_schedule(appliance, current_server_time):
+    """
+    Polarion:
+        assignee: rbabyuk
+        initialEstimate: None
+    """
     current_time, _ = current_server_time
     start_date = current_time + relativedelta.relativedelta(minutes=5)
 
@@ -139,6 +161,11 @@ def test_inactive_schedule(appliance, current_server_time):
 @pytest.mark.parametrize('run_types', run_types, ids=[type[0] for type in run_types])
 def test_schedule_timer(appliance, run_types, host_with_credentials, request, current_server_time):
 
+    """
+    Polarion:
+        assignee: rbabyuk
+        initialEstimate: None
+    """
     run_time, time_diff, time_num = run_types
     current_time, tz_num = current_server_time
     start_date = current_time + relativedelta.relativedelta(minutes=5)

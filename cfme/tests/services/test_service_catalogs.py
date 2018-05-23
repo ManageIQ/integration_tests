@@ -36,6 +36,12 @@ def test_order_catalog_item(appliance, provider, catalog_item, request,
     """Tests order catalog item
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: low
+        initialEstimate: 1/8h
     """
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())
@@ -61,6 +67,11 @@ def test_order_catalog_item_via_rest(
     """Same as :py:func:`test_order_catalog_item`, but using REST.
     Metadata:
         test_flag: provision, rest
+
+    Polarion:
+        assignee: mkourim
+        caseimportance: low
+        initialEstimate: 1/4h
     """
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(lambda: VM.factory(vm_name, provider).cleanup_on_provider())
@@ -88,6 +99,20 @@ def test_order_catalog_bundle(appliance, provider, catalog_item, request):
     """Tests ordering a catalog bundle
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/4h
+        Steps:
+            1. Create Catalog item
+            2. Create Catalog bundle and select above created item as resource
+            3. Order Catalog bundle
+        Results:
+            1.
+            2.
+            3. Service Provisioned
     """
 
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
@@ -117,6 +142,12 @@ def test_no_template_catalog_item(provider, provisioning, vm_name, dialog, catal
     """Tests no template catalog item
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: low
+        initialEstimate: 1/4h
     """
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type=provider.catalog_name, name=item_name,
@@ -131,6 +162,12 @@ def test_edit_catalog_after_deleting_provider(provider, catalog_item):
     """Tests edit catalog item after deleting provider
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: low
+        initialEstimate: 1/8h
     """
     provider.delete(cancel=False)
     changes = {'basic_info.description': 'my edited description'}
@@ -150,6 +187,10 @@ def test_request_with_orphaned_template(appliance, provider, catalog_item):
     """Tests edit catalog item after deleting provider
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
@@ -170,6 +211,13 @@ def test_advanced_search_registry_element(request, appliance):
         Go to Services -> Workloads
         Advanced Search -> Registry element
         Element types select bar shouldn't disappear.
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: web_ui
+        caseimportance: low
+        caseposneg: negative
+        initialEstimate: 1/15h
     """
     view = navigate_to(VmsInstances(appliance=appliance), 'All')
     view.search.open_advanced_search()
