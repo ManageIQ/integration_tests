@@ -102,42 +102,13 @@ def is_ovirt_engine_running(rhevm_ip, sshname, sshpass):
         return False
 
 
-def change_edomain_state(api, state, edomain, provider):
+def change_edomain_state(mgmt, state, edomain, provider):
     try:
-        dcs = api.datacenters.list()
-        for dc in dcs:
-            export_domain = dc.storagedomains.get(edomain)
-            if export_domain:
-                if state == 'maintenance' and export_domain.get_status().state == 'active':
-                    # may be tasks on the storage, try multiple times
-                    logger.info('RHEVM:%s %s in active, waiting for deactivate...',
-                                provider, edomain)
-                    wait_for(lambda: dc.storagedomains.get(edomain).deactivate(), delay=5,
-                             num_sec=600, handle_exception=True)
-                elif state == 'active' and export_domain.get_status().state != 'active':
-                    logger.info('RHEVM:%s %s not active, waiting for active...',
-                                provider, edomain)
-                    wait_for(lambda: dc.storagedomains.get(edomain).activate(), delay=5,
-                             num_sec=600, handle_exception=True)
-
-                wait_for(is_edomain_in_state, [api, state, edomain],
-                         fail_condition=False, delay=5, num_sec=240)
-                logger.info('RHEVM:%s %s successfully set to %s state', provider, edomain, state)
-                return True
-        return False
+        return mgmt.change_storage_domain_state(state, edomain, provider)
     except Exception:
         logger.exception("RHEVM:%s Exception occurred while changing %s state to %s",
                          provider, edomain, state)
         return False
-
-
-def is_edomain_in_state(api, state, edomain):
-    dcs = api.datacenters.list()
-    for dc in dcs:
-        export_domain = dc.storagedomains.get(edomain)
-        if export_domain:
-            return export_domain.get_status().state == state
-    return False
 
 
 def get_ova_name(ovaurl):
@@ -159,13 +130,13 @@ def download_ova(ssh_client, ovaurl):
         sys.exit(127)
 
 
-def template_from_ova(api, username, password, rhevip, edomain, ovaname, ssh_client,
+def template_from_ova(mgmt, username, password, rhevip, edomain, ovaname, ssh_client,
                       temp_template_name, provider):
     """Uses rhevm-image-uploader or engine-image-uploader based on rhevm-image-uploader version
        to make a template from ova file.
 
     Args:
-        api: API for RHEVM.
+        mgmt: API for RHEVM.
         username: Username to chosen RHEVM provider.
         password: Password to chosen RHEVM provider.
         rhevip: IP of chosen RHEVM provider.
@@ -175,7 +146,7 @@ def template_from_ova(api, username, password, rhevip, edomain, ovaname, ssh_cli
         temp_template_name: temporary template name (this template will be deleted)
     """
     try:
-        if api.storagedomains.get(edomain).templates.get(temp_template_name) is not None:
+        if mgmt.storagedomains.get(edomain).templates.get(temp_template_name) is not None:
             logger.info("RHEVM:%r Warning: found another template with this name.", provider)
             logger.info("RHEVM:%r Skipping this step. Attempting to continue...", provider)
             return
