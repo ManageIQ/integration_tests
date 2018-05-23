@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from riggerlib import recursive_update
+from widgetastic.utils import partial_match
 
 from cfme.configure.configuration.region_settings import Tag, Category
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils.generators import random_vm_name
 from cfme.utils.update import update
 
 pytestmark = [
-    pytest.mark.provider([RHEVMProvider, VMwareProvider], scope="module")
+    pytest.mark.provider([RHEVMProvider, VMwareProvider], scope="module", selector=ONE_PER_TYPE)
 ]
 
 
@@ -28,11 +31,18 @@ def template_name(provider):
 
 
 @pytest.fixture()
-def prov_data():
-    return {
-        "catalog": {'vm_name': ''},
-        "environment": {'automatic_placement': True},
-    }
+def prov_data(provider, vm_name):
+    if provider.one_of(RHEVMProvider):
+        return {
+            "catalog": {'vm_name': vm_name},
+            "environment": {'automatic_placement': True},
+            "network": {'vlan': partial_match('ovirtmgmt')},
+        }
+    else:
+        return {
+            "catalog": {'vm_name': vm_name},
+            "environment": {'automatic_placement': True},
+        }
 
 
 @pytest.fixture(scope='module')
@@ -42,7 +52,8 @@ def test_domain(appliance):
                                                       fauxfactory.gen_alphanumeric()),
                                                   enabled=True)
     yield domain
-    domain.delete()
+    if domain.exists:
+        domain.delete()
 
 
 @pytest.fixture(scope='module')
@@ -108,10 +119,10 @@ def set_entity_quota_tag(request, entities, appliance):
     indirect=['set_entity_quota_tag'],
     ids=['max_memory', 'max_storage', 'max_cpu']
 )
-def test_quota_tagging(appliance, provider, setup_provider, set_entity_quota_tag,
-                       custom_prov_data, vm_name, template_name, prov_data):
-    prov_data.update(custom_prov_data)
-    prov_data['catalog']['vm_name'] = vm_name
+def test_quota_tagging(appliance, provider, setup_provider, set_entity_quota_tag, custom_prov_data,
+                       vm_name, template_name, prov_data):
+    recursive_update(prov_data, custom_prov_data)
+
     do_vm_provisioning(appliance, template_name=template_name, provider=provider, vm_name=vm_name,
                        provisioning_data=prov_data, smtp_test=False, wait=False, request=None)
 
