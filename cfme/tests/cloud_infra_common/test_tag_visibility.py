@@ -100,7 +100,6 @@ def check_vm_visibility(user_restricted, appliance, request):
             orig_group = view.current_groupname
             if group.description != orig_group:
                 view.change_group(group.description)
-                request.addfinalizer(lambda: view.change_group(orig_group))
             try:
                 navigate_to(vm, 'Details')
                 actual_visibility = True
@@ -201,7 +200,7 @@ def test_tag_expression_not_and_condition(request, vms_for_tagging, location_tag
     """
     first_vm, second_vm = vms_for_tagging
     group = group_with_tag_expression(
-        ';select_first_expression;click_and;select_first_expression;click_not;'.join(
+        ';select_first_expression;click_not;select_first_expression;click_or;'.join(
             ['fill_tag(My Company Tags : {}, {})'.format(
                 tag.category.display_name, tag.display_name)
                 for tag in [location_tag, service_level_tag]]))
@@ -233,7 +232,7 @@ def test_tag_expression_not_or_condition(request, vms_for_tagging, location_tag,
     """
     first_vm, _ = vms_for_tagging
     group = group_with_tag_expression(
-        ';select_first_expression;click_or;select_first_expression;click_not;'.join(
+        ';select_first_expression;click_not;select_first_expression;click_or;'.join(
             ['fill_tag(My Company Tags : {}, {})'.format(
                 tag.category.display_name, tag.display_name)
                 for tag in [location_tag, service_level_tag]]))

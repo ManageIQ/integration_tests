@@ -436,13 +436,22 @@ class UserEdit(CFMENavigateStep):
 # RBAC GROUP METHODS
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-class MyCompanyTagsTreeView(View):
+class MyCompanyTagsTree(View):
     tree_locator = 'tags_treebox'
     tree = CbTree(tree_locator)
 
 
 class MyCompanyTagsExpressionView(View):
     tag_expression = GroupTagExpressionEditor()
+
+
+class MyCompanyTagsWithExpression(View):
+    """ Represents 'My company tags' tab in Group Form """
+    tag_mode = BootstrapSelect(id='use_filter_expression')
+    tag_settings = ConditionalSwitchableView(reference='tag_mode')
+
+    tag_settings.register('Specific Tags', default=True, widget=MyCompanyTagsTree)
+    tag_settings.register('Tags Based On Expression', widget=MyCompanyTagsExpressionView)
 
 
 class GroupForm(ConfigurationView):
@@ -465,11 +474,8 @@ class GroupForm(ConfigurationView):
     class my_company_tags(Tab):  # noqa
         """ Represents 'My company tags' tab in Group Form """
         TAB_NAME = "My Company Tags"
-        tag_mode = BootstrapSelect(id='use_filter_expression')
-        tag_settings = ConditionalSwitchableView(reference='tag_mode')
-
-        tag_settings.register('Specific Tags', default=True, widget=MyCompanyTagsTreeView)
-        tag_settings.register('Tags Based On Expression', widget=MyCompanyTagsExpressionView)
+        form = VersionPick({Version.lowest(): View.nested(MyCompanyTagsTree),
+                            '5.9': View.nested(MyCompanyTagsWithExpression)})
 
     @View.nested
     class hosts_and_clusters(Tab):  # noqa
@@ -771,13 +777,14 @@ class Group(BaseEntity, Taggable):
         if item is not None:
             if update:
                 if isinstance(item, six.string_types):
-                    updated_result = tab_view.fill({
+                    updated_result = tab_view.form.fill({
                         'tag_mode': 'Tags Based On Expression',
                         'tag_settings': {'tag_expression': item}})
                 else:
                     path, action_type = item
                     if isinstance(path, list):
-                        tree_view = getattr(tab_view, 'tag_settings', tab_view)
+                        tab_form = getattr(tab_view, 'form', tab_view)
+                        tree_view = getattr(tab_form, 'tag_settings', tab_form)
                         node = (tree_view.tree.CheckNode(path) if action_type else
                                 tree_view.tree.UncheckNode(path))
                         updated_result = tree_view.tree.fill(node)
@@ -841,7 +848,6 @@ class GroupCollection(BaseCollection):
             'role_select': group.role,
             'group_tenant': group.tenant
         })
-
         group._set_group_restriction(view.my_company_tags, group.tag)
         group._set_group_restriction(view.hosts_and_clusters, group.host_cluster)
         group._set_group_restriction(view.vms_and_templates, group.vm_template)
