@@ -198,9 +198,16 @@ class TestTagsViaREST(object):
 
     @pytest.mark.tier(3)
     @pytest.mark.meta(blockers=[BZ(1451025, forced_streams=['5.7'])])
+    @pytest.mark.uncollectif(
+        lambda appliance, collection_name: appliance.version < '5.9' and
+        collection_name in ["availability_zones", "cloud_networks", "cloud_networks",
+                            "cloud_subnets", "flavors", "network_routers", "security_groups"],
+        reason="5.8 version doesn't support all available collection for tagging"
+    )
     @pytest.mark.parametrize(
         "collection_name", ["clusters", "hosts", "data_stores", "providers", "resource_pools",
-        "services", "service_templates", "tenants", "vms"])
+        "services", "service_templates", "tenants", "vms", "availability_zones", "cloud_networks",
+        "cloud_networks", "cloud_subnets", "flavors", "network_routers", "security_groups"])
     def test_assign_and_unassign_tag(self, appliance, tags_mod, a_provider, services_mod,
             service_templates, tenants, vm, collection_name):
         """Tests assigning and unassigning tags.
