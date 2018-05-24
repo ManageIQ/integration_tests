@@ -27,7 +27,7 @@ def test_assigned_roles(provider):
 
 def test_nodes(provider):
     view = navigate_to(provider, 'Details')
-    nodes = len(provider.mgmt.list_node())
+    nodes = len(provider.mgmt.iapi.node.list())
 
     assert int(view.entities.summary('Relationships').get_text_of('Nodes')) == nodes
 
