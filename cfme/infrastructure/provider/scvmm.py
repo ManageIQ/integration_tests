@@ -1,5 +1,4 @@
 import attr
-
 from widgetastic_patternfly import BootstrapSelect, Input
 from wrapanapi.scvmm import SCVMMSystem
 
@@ -37,6 +36,7 @@ class SCVMMProvider(InfraProvider):
     )
     settings_key = 'ems_scvmm'
     ui_prov_type = 'Microsoft System Center VMM'
+    log_name = 'scvmm'
 
     @property
     def view_value_mapping(self):

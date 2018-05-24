@@ -1,5 +1,4 @@
 import attr
-
 from wrapanapi.openstack import OpenstackSystem
 
 from cfme.cloud.instance.openstack import OpenStackInstance
@@ -23,6 +22,7 @@ class OpenStackProvider(CloudProvider):
     db_types = ["Openstack::CloudManager"]
     endpoints_form = OpenStackInfraEndpointForm
     settings_key = 'ems_openstack'
+    log_name = 'fog'
 
     # xpath locators for elements, to be used by selenium
     _console_connection_status_element = '//*[@id="noVNC_status"]'

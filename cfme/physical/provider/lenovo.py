@@ -1,5 +1,4 @@
 import attr
-
 from widgetastic_patternfly import Input
 from wrapanapi.lenovo import LenovoSystem
 
@@ -31,6 +30,7 @@ class LenovoProvider(PhysicalProvider):
     refresh_text = "Refresh Relationships and Power States"
     db_types = ["Lenovo::PhysicalInfraManager"]
     settings_key = 'ems_lenovo'
+    log_name = 'lenovo'
 
     @classmethod
     def from_config(cls, prov_config, prov_key):

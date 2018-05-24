@@ -1,5 +1,4 @@
 import attr
-
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Tab, Input, BootstrapSwitch, Button
@@ -77,6 +76,7 @@ class RHEVMProvider(InfraProvider):
     _ctrl_alt_del_xpath = '//*[@id="ctrlaltdel"]'
     _fullscreen_xpath = '//*[@id="fullscreen"]'
     bad_credentials_error_msg = "Credential validation was not successful"
+    log_name = 'rhevm'
 
     ems_events = [
         ('vm_create', {'event_type': 'USER_ADD_VM_FINISHED_SUCCESS', 'vm_or_template_id': None}),

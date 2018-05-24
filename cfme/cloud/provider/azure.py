@@ -1,5 +1,4 @@
 import attr
-
 from wrapanapi.msazure import AzureSystem
 
 from cfme.cloud.instance.azure import AzureInstance
@@ -46,6 +45,7 @@ class AzureProvider(CloudProvider):
     endpoints_form = AzureEndpointForm
     discover_name = "Azure"
     settings_key = 'ems_azure'
+    log_name = 'azure'
 
     region = attr.ib(default=None)
     tenant_id = attr.ib(default=None)
