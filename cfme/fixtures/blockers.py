@@ -13,7 +13,28 @@ All of them are converted to the :py:class:`utils.blockers.Blocker` instances
 import pytest
 
 from cfme.fixtures.pytest_store import store
-from cfme.utils.blockers import Blocker, BZ, GH
+from cfme.utils.blockers import disable_blockers, Blocker
+
+
+def pytest_addoption(parser):
+    group = parser.getgroup('Blockers options')
+    group.addoption('--list-blockers',
+                    action='store_true',
+                    default=False,
+                    dest='list_blockers',
+                    help='Specify to list the blockers (takes some time though).')
+    group.addoption(
+        "--disable-blockers", action="store_true", default=False,
+        dest="disable_blockers",
+        help=(
+            "Disables blockers totally, marking all blocking as False"
+             )
+    )
+
+
+def pytest_configure(config):
+    if config.getoption('disable_blockers'):
+        disable_blockers()
 
 
 @pytest.fixture(scope="function")
@@ -54,15 +75,6 @@ def bug(blocker):
     return lambda bug_id, **kwargs: blocker("BZ#{}".format(bug_id), **kwargs).bugzilla_bug
 
 
-def pytest_addoption(parser):
-    group = parser.getgroup('Blockers options')
-    group.addoption('--list-blockers',
-                    action='store_true',
-                    default=False,
-                    dest='list_blockers',
-                    help='Specify to list the blockers (takes some time though).')
-
-
 @pytest.mark.trylast
 def pytest_collection_modifyitems(session, config, items):
     if not config.getvalue("list_blockers"):
@@ -83,7 +95,7 @@ def pytest_collection_modifyitems(session, config, items):
     if blocking:
         store.terminalreporter.write("Known blockers:\n", bold=True)
         for blocker in blocking:
-            if isinstance(blocker, BZ):
+            if isinstance(blocker, blockers.BZ):
                 bug = blocker.bugzilla_bug
                 store.terminalreporter.write("- #{} - {}\n".format(bug.id, bug.status))
                 store.terminalreporter.write("  {}\n".format(bug.summary))
@@ -91,7 +103,7 @@ def pytest_collection_modifyitems(session, config, items):
                     "  {} -> {}\n".format(str(bug.version), str(bug.target_release)))
                 store.terminalreporter.write(
                     "  https://bugzilla.redhat.com/show_bug.cgi?id={}\n\n".format(bug.id))
-            elif isinstance(blocker, GH):
+            elif isinstance(blocker, blockers.GH):
                 bug = blocker.data
                 store.terminalreporter.write("- {}\n".format(str(bug)))
                 store.terminalreporter.write("  {}\n".format(bug.title))

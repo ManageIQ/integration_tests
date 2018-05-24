@@ -10,6 +10,13 @@ from cfme.utils import classproperty, conf, version
 from cfme.utils.bz import Bugzilla
 from cfme.utils.log import logger
 
+DISABLE_BLOCKERS = False
+
+
+def disable_blockers():
+    global DISABLE_BLOCKERS
+    DISABLE_BLOCKERS = True
+
 
 class Blocker(object):
     """Base class for all blockers
@@ -122,6 +129,8 @@ class GH(Blocker):
 
     @property
     def blocks(self):
+        if DISABLE_BLOCKERS:
+            return False
         if self.upstream_only and version.appliance_is_downstream():
             return False
         if self.data.state == "closed":
@@ -181,6 +190,8 @@ class BZ(Blocker):
 
     @property
     def blocks(self):
+        if DISABLE_BLOCKERS:
+            return False
         try:
             bug = self.data
             if bug is None:
@@ -241,6 +252,8 @@ class JIRA(Blocker):
 
     @property
     def blocks(self):
+        if DISABLE_BLOCKERS:
+            return False
         jira = self.jira
         if jira is None:
             # JIRA unspecified, shut up and don't block
