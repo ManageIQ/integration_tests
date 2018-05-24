@@ -2,6 +2,8 @@
 import fauxfactory
 import pytest
 
+from widgetastic.utils import partial_match
+
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore, SystemImage
@@ -79,7 +81,7 @@ def vm_name():
 # @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6692',
 #                                unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_iso_provision_from_template(appliance, provider, vm_name, datastore_init,
-                                     request, setup_provider):
+                                     request, setup_provider, smtp_test):
     """Tests ISO provisioning
 
     Metadata:
@@ -109,6 +111,6 @@ def test_iso_provision_from_template(appliance, provider, vm_name, datastore_ini
             'custom_template': {'name': iso_kickstart},
             'root_password': iso_root_password},
         'network': {
-            'vlan': vlan}}
+            'vlan': partial_match(vlan)}}
     do_vm_provisioning(appliance, iso_template, provider, vm_name, provisioning_data, request,
                        smtp_test, num_sec=1500)
