@@ -1167,10 +1167,12 @@ def check_templates_in_provider(self, provider_id):
     try:
         templates = map(str, provider.api.list_template())
     except Exception as err:
-        self.logger.warning("Provider will be marked as not working because of %s", err)
+        self.logger.warning("Provider %s will be marked as not working because of %s",
+                            provider_id, err)
         provider.working = False
         provider.save(update_fields=['working'])
     else:
+        self.logger.info("Provider %s will be marked as working", provider_id)
         provider.working = True
         provider.save(update_fields=['working'])
         with provider.edit_metadata as metadata:
