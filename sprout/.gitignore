@@ -1,0 +1,9 @@
+access.log
+celerybeat-schedule
+db.sqlite3
+dump.rdb
+error.log
+log/*
+sprout-manager.log
+sprout/local_settings.py
+
