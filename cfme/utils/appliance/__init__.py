@@ -685,7 +685,7 @@ class IPAppliance(object):
     @cached_property
     def miqqe_version(self):
         """Returns version of applied JS patch or None if not present"""
-        result = self.ssh_client.run_command('grep "[0-9]\+" /var/www/miq/vmdb/.miqqe_version')
+        result = self.ssh_client.run_command('grep "[0-9]\\+" /var/www/miq/vmdb/.miqqe_version')
         if result.success:
             return int(result.output)
         return None
@@ -1332,7 +1332,7 @@ class IPAppliance(object):
         if cleanup:
             client.run_command(
                 "cd /etc/yum.repos.d && find . -not -name 'redhat.repo' "
-                "-not -name 'rhel-source.repo' -not -name . -exec rm {} \;")
+                "-not -name 'rhel-source.repo' -not -name . -exec rm {} \\;")
 
         for url in urls:
             self.add_product_repo(url)
@@ -1622,7 +1622,8 @@ class IPAppliance(object):
             if ssh.run_command("grep -F '{}' /etc/default/evm".format(path)).failed:
                 log_callback('Installing SDK ({})'.format(foldername))
                 result = ssh.run_command(
-                    'echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:{}" >> /etc/default/evm'.format(
+                    'echo "export LD_LIBRARY_PATH=\\$LD_LIBRARY_PATH:{}"'
+                    '>> /etc/default/evm'.format(
                         path))
                 if result.failed:
                     log_raise(Exception, 'SDK installation failure ($?={}): {}'
