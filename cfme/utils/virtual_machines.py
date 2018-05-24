@@ -7,12 +7,12 @@ from cfme.utils.providers import get_crud
 from cfme.fixtures.pytest_store import store
 from novaclient.exceptions import OverLimit as OSOverLimit
 from wrapanapi.rhevm import Error as RHEVRequestError
+from wrapanapi.exceptions import VMInstanceNotCloned
 from ssl import SSLError
 from cfme.utils.log import logger
-from cfme.utils.mgmt_system import exceptions
 
 
-DEFAULT_SKIP = (OSOverLimit, RHEVRequestError, exceptions.VMInstanceNotCloned, SSLError)
+DEFAULT_SKIP = (OSOverLimit, RHEVRequestError, VMInstanceNotCloned, SSLError)
 
 
 def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **deploy_args):
