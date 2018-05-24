@@ -1,10 +1,10 @@
 import importscan
-
 import sentaku
 
 from widgetastic.widget import ParametrizedView, Select, Text, View
-from widgetastic_patternfly import Button, Input, BootstrapSelect
-from widgetastic.utils import deflatten_dict, Parameter, ParametrizedString, VersionPick
+from widgetastic_patternfly import Input, BootstrapSelect
+from widgetastic.utils import (deflatten_dict, Parameter, ParametrizedString,
+                               ParametrizedLocator, VersionPick)
 
 from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
@@ -59,28 +59,26 @@ class BaseOrderForm(View):
         param_input = Input(id=ParametrizedString("param_{key}"))
         dropdown = VersionPick({
             Version.lowest(): BootstrapSelect(Parameter("key")),
-            "5.9": BootstrapSelect(locator=ParametrizedString(
-                ".//div[contains(@class, 'bootstrap-select') and "
-                "select[@id={key|quote}]]"))
+            "5.9": BootstrapSelect(locator=ParametrizedLocator(
+                './/div[contains(@class, "bootstrap-select")]/select[@id={key|quote}]/..'))
         })
         param_dropdown = VersionPick({
             Version.lowest(): BootstrapSelect(ParametrizedString("param_{key}")),
-            "5.9": BootstrapSelect(locator=ParametrizedString(
-                ".//div[contains(@class, 'bootstrap-select') and "
-                "select[@id='param_{key}']]"))
+            "5.9": BootstrapSelect(locator=ParametrizedLocator(
+                ".//div[contains(@class, 'bootstrap-select')]/select[@id='param_{key}']/.."))
         })
 
         @property
         def visible_widget(self):
-            if self.input.is_displayed:
+            if self.browser.wait_for_element(self.input.locator, exception=False):
                 return self.input
-            elif self.dropdown.is_displayed:
+            elif self.browser.wait_for_element(self.dropdown.locator, exception=False):
                 return self.dropdown
-            elif self.param_input.is_displayed:
+            elif self.browser.wait_for_element(self.param_input.locator, exception=False):
                 return self.param_input
-            elif self.param_dropdown.is_displayed:
+            elif self.browser.wait_for_element(self.param_dropdown.locator, exception=False):
                 return self.param_dropdown
-            elif self.select.is_displayed:
+            elif self.browser.wait_for_element(self.select.locator, exception=False):
                 return self.select
             else:
                 raise ItemNotFound("Visible widget is not found")
