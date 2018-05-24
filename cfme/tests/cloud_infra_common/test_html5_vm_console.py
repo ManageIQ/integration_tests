@@ -8,11 +8,11 @@ import re
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.provider import CloudInfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.common.vm import VM
 from cfme.utils import ssh
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.conf import credentials
+from cfme.utils.generators import random_vm_name
 from cfme.utils.providers import ProviderFilter
 from wait_for import wait_for
 from cfme.markers.env_markers.provider import providers
@@ -28,15 +28,18 @@ pytestmark = [
 
 
 @pytest.fixture(scope="function")
-def vm_obj(request, provider, setup_provider, console_template, vm_name):
+def vm_obj(request, provider, setup_provider, console_template):
     """
     Create a VM on the provider with the given template, and return the vm_obj.
 
     Cleanup VM when done
     """
-    vm_obj = VM.factory(vm_name, provider, template_name=console_template.name)
+    collection = provider.appliance.provider_based_collection(provider)
+    vm_obj = collection.instantiate(random_vm_name('html5-con'),
+                                    provider,
+                                    template_name=console_template.name)
 
-    request.addfinalizer(lambda: vm_obj.cleanup_on_provider())
+    request.addfinalizer(lambda: vm_obj.delete_from_provider())
 
     vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip="default")
     if provider.one_of(OpenStackProvider):

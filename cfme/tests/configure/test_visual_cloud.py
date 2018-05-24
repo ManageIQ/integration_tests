@@ -3,10 +3,9 @@ import pytest
 import six
 
 from cfme import test_requirements
-from cfme.cloud.availability_zone import AvailabilityZone, AvailabilityZoneAllView
+from cfme.cloud.availability_zone import AvailabilityZoneAllView
 from cfme.cloud.provider import CloudProvider, CloudProvidersView
-from cfme.cloud.flavor import Flavor, FlavorAllView
-from cfme.cloud.instance import Instance
+from cfme.cloud.flavor import FlavorAllView
 from cfme.cloud.keypairs import KeyPairAllView
 from cfme.cloud.stack import StackAllView
 from cfme.cloud.tenant import TenantAllView
@@ -34,12 +33,12 @@ def value(request):
 
 
 @pytest.fixture(scope='module', params=[CloudProvider,
-                                        AvailabilityZone,
+                                        'cloud_av_zones',
                                         'cloud_tenants',
-                                        Flavor,
-                                        Instance,
-                                        'stacks',
-                                        'keypairs'])
+                                        'cloud_flavors',
+                                        'cloud_instances',
+                                        'cloud_stacks',
+                                        'cloud_keypairs'])
 def page(request):
     return request.param
 

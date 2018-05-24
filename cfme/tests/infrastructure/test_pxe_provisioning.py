@@ -4,7 +4,6 @@ import pytest
 
 from widgetastic.utils import partial_match
 
-from cfme.common.vm import VM
 from cfme.utils.conf import cfme_data
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -121,7 +120,10 @@ def test_pxe_provision_from_template(appliance, provider, vm_name, smtp_test, se
         )
     )
 
-    request.addfinalizer(lambda: VM.factory(vm_name, provider).cleanup_on_provider())
+    request.addfinalizer(
+        lambda: appliance.collections.infra_vms.instantiate(vm_name,
+                                                            provider).delete_from_provider()
+    )
 
     provisioning_data = {
         'catalog': {

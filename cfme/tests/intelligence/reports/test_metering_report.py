@@ -18,7 +18,6 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.provider import CloudInfraProvider
 from cfme.cloud.provider import CloudProvider
-from cfme.common.vm import VM
 from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import providers
@@ -75,7 +74,9 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
         cost_center='Workload',
         value_assign='Database')
 
-    vm = VM.factory(vm_name, provider)
+    # No vm creation or cleanup
+    collection = provider.appliance.provider_based_collection(provider)
+    vm = collection.instantiate(vm_name, provider)
 
     try:
         vm.set_ownership(user=user.name)

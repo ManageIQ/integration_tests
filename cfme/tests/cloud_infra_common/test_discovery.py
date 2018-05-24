@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import pytest
 import time
+
 from cfme.common.provider import BaseProvider
-from cfme.common.vm import VM
 from cfme.exceptions import CFMEException
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.utils.generators import random_vm_name
@@ -25,7 +25,8 @@ def vm_name():
 
 @pytest.fixture(scope="module")
 def vm_crud(vm_name, provider):
-    return VM.factory(vm_name, provider)
+    collection = provider.appliance.provider_based_collection(provider)
+    return collection.instantiate(vm_name, provider)
 
 
 def if_scvmm_refresh_provider(provider):
@@ -73,7 +74,7 @@ def test_vm_discovery(request, setup_provider, provider, vm_crud):
 
     @request.addfinalizer
     def _cleanup():
-        vm_crud.cleanup_on_provider()
+        vm_crud.delete_from_provider()
         if_scvmm_refresh_provider(provider)
 
     vm_crud.create_on_provider(allow_skip="default")
@@ -83,6 +84,6 @@ def test_vm_discovery(request, setup_provider, provider, vm_crud):
         vm_crud.wait_to_appear(timeout=600, load_details=False)
     except TimedOutError:
         pytest.fail("VM was not found in CFME")
-    vm_crud.cleanup_on_provider()
+    vm_crud.delete_from_provider()
     if_scvmm_refresh_provider(provider)
     wait_for_vm_state_changes(vm_crud)

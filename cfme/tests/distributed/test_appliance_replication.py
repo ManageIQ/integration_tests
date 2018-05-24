@@ -5,7 +5,6 @@ from time import sleep
 from six.moves.urllib.parse import urlparse
 
 from cfme.base.ui import ServerView
-from cfme.common.vm import VM
 from cfme.utils.appliance import provision_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
@@ -90,7 +89,8 @@ def configure_db_replication(db_address, appliance):
 def test_vm(virtualcenter_provider):
     """Fixture to provision appliance to the provider being tested if necessary"""
     vm_name = random_vm_name('distpwr')
-    vm = VM.factory(vm_name, virtualcenter_provider)
+    collection = virtualcenter_provider.appliance.provider_based_collection(virtualcenter_provider)
+    vm = collection.instantiate(vm_name, virtualcenter_provider)
 
     if not virtualcenter_provider.mgmt.does_vm_exist(vm_name):
         logger.info("deploying %r on provider %r", vm_name, virtualcenter_provider.key)
@@ -98,7 +98,7 @@ def test_vm(virtualcenter_provider):
     else:
         logger.info("recycling deployed vm %r on provider %r", vm_name, virtualcenter_provider.key)
     yield vm
-    vm.cleanup_on_provider()
+    vm.delete_from_provider()
 
 
 @pytest.mark.tier(2)

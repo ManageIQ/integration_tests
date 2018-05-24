@@ -5,7 +5,6 @@ import pytest
 from widgetastic.utils import partial_match
 
 from cfme import test_requirements
-from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
@@ -13,11 +12,12 @@ from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
 from cfme.utils.blockers import GH
 from cfme.utils.conf import cfme_data
+from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('vm_name', 'uses_infra_providers'),
+    pytest.mark.usefixtures('uses_infra_providers'),
     test_requirements.service,
     pytest.mark.tier(2)
 ]
@@ -65,7 +65,7 @@ def iso_datastore(provider, appliance):
 
 
 @pytest.fixture(scope="function")
-def setup_iso_datastore(setup_provider_modscope, iso_cust_template, iso_datastore, provisioning):
+def setup_iso_datastore(setup_provider, iso_cust_template, iso_datastore, provisioning):
     if not iso_datastore.exists():
         iso_datastore.create()
     iso_datastore.set_iso_image_type(provisioning['iso_file'], provisioning['iso_image_type'])
@@ -74,7 +74,7 @@ def setup_iso_datastore(setup_provider_modscope, iso_cust_template, iso_datastor
 
 
 @pytest.fixture(scope="function")
-def catalog_item(appliance, setup_provider, provider, vm_name, dialog, catalog, provisioning):
+def catalog_item(appliance, provider, dialog, catalog, provisioning):
     iso_template, host, datastore, iso_file, iso_kickstart,\
         iso_root_password, iso_image_type, vlan = map(provisioning.get, ('pxe_template', 'host',
                                 'datastore', 'iso_file', 'iso_kickstart',
@@ -82,7 +82,7 @@ def catalog_item(appliance, setup_provider, provider, vm_name, dialog, catalog, 
 
     provisioning_data = {
         'catalog': {'catalog_name': {'name': iso_template, 'provider': provider.name},
-                    'vm_name': vm_name,
+                    'vm_name': random_vm_name('iso_service'),
                     'provision_type': 'ISO',
                     'iso_file': {'name': iso_file}},
         'environment': {'host_name': {'name': host},
@@ -103,17 +103,19 @@ def catalog_item(appliance, setup_provider, provider, vm_name, dialog, catalog, 
 
 
 @pytest.mark.rhv1
-@pytest.mark.usefixtures('setup_iso_datastore')
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6692',
                                unblock=lambda provider: not provider.one_of(RHEVMProvider))])
-def test_rhev_iso_servicecatalog(appliance, setup_provider, provider, catalog_item, request):
+def test_rhev_iso_servicecatalog(appliance, provider, catalog_item, setup_iso_datastore, request):
     """Tests RHEV ISO service catalog
 
     Metadata:
         test_flag: iso, provision
     """
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
-    request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())
+    request.addfinalizer(
+        lambda: appliance.collections.infra_vms.instantiate(
+            "{}_0001".format(vm_name), provider).delete_from_provider()
+    )
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     # nav to requests page happens on successful provision

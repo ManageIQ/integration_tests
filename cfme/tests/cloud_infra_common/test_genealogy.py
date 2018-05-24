@@ -4,7 +4,6 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.common.provider import BaseProvider
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -26,8 +25,10 @@ pytestmark = [
 
 @pytest.fixture(scope="function")
 def vm_crud(provider, small_template):
-    return VM.factory(random_vm_name(context='genealogy'), provider,
-                      template_name=small_template.name)
+    collection = provider.appliance.provider_based_collection(provider)
+    return collection.instantiate(random_vm_name(context='genealogy'),
+                                  provider,
+                                  template_name=small_template.name)
 
 
 # uncollected above in pytest_generate_tests
@@ -60,7 +61,7 @@ def test_vm_genealogy_detected(
     """
     vm_crud.create_on_provider(find_in_cfme=True, allow_skip="default")
 
-    request.addfinalizer(lambda: vm_crud.cleanup_on_provider())
+    request.addfinalizer(lambda: vm_crud.delete_from_provider())
 
     provider.mgmt.wait_vm_steady(vm_crud.name)
 

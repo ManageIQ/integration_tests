@@ -5,6 +5,7 @@ from widgetastic_patternfly import Button, Input
 from wrapanapi.google import GoogleCloudSystem
 
 from cfme.base.credential import ServiceAccountCredential
+from cfme.cloud.instance.gce import GCEInstance
 from cfme.common.provider import DefaultEndpoint
 from cfme.services.catalogs.catalog_items import GoogleCatalogItem
 from . import CloudProvider
@@ -38,6 +39,7 @@ class GCEProvider(CloudProvider):
     catalog_item_type = GoogleCatalogItem
     type_name = "gce"
     mgmt_class = GoogleCloudSystem
+    vm_class = GCEInstance
     db_types = ["Google::CloudManager"]
     endpoints_form = GCEEndpointForm
     settings_key = 'ems_google'

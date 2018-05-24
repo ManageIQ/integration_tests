@@ -4,8 +4,8 @@ import fauxfactory
 import pytest
 
 from cfme.cloud.provider.gce import GCEProvider
-from cfme.common.provider import BaseProvider
-from cfme.common.vm import VM
+from cfme.cloud.provider import CloudProvider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils.blockers import BZ
@@ -15,7 +15,7 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers'),
     pytest.mark.tier(2),
-    pytest.mark.provider([BaseProvider],
+    pytest.mark.provider([CloudProvider, InfraProvider],
                          required_fields=['provisioning'],
                          scope='module'),
 ]
@@ -24,15 +24,15 @@ pytestmark = [
 @pytest.fixture(scope="function")
 def vm_crud(provider, setup_provider_modscope, small_template_modscope):
     template = small_template_modscope
-
     base_name = 'test-events-' if provider.one_of(GCEProvider) else 'test_events_'
     vm_name = base_name + fauxfactory.gen_alpha(length=8).lower()
 
-    vm = VM.factory(vm_name, provider, template_name=template.name)
+    collection = provider.appliance.provider_based_collection(provider)
+    vm = collection.instantiate(vm_name, provider, template_name=template.name)
     yield vm
 
     if vm.does_vm_exist_on_provider():
-        vm.cleanup_on_provider()
+        vm.delete_from_provider()
 
 
 @pytest.mark.rhv2

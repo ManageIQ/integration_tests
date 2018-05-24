@@ -5,7 +5,6 @@ import fauxfactory
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
-from cfme.common.vm import VM
 from cfme.infrastructure.provider import CloudInfraProvider, InfraProvider
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -33,11 +32,12 @@ COLLECTIONS.extend(COLLECTIONS_ADDED_IN_59)
 def vm_obj(provider, setup_provider_modscope, small_template_modscope):
     """Creates new VM or instance"""
     vm_name = random_vm_name('attrs')
-    new_vm = VM.factory(vm_name, provider, template_name=small_template_modscope.name)
+    collection = provider.appliance.provider_based_collection(provider)
+    new_vm = collection.instantiate(vm_name, provider, template_name=small_template_modscope.name)
 
     yield new_vm
 
-    new_vm.cleanup_on_provider()
+    new_vm.delete_from_provider()
 
 
 @pytest.fixture(scope='module')

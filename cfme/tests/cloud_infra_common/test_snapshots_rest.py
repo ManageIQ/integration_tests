@@ -5,7 +5,6 @@ import fauxfactory
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -39,7 +38,10 @@ def collection(appliance, provider):
 def vm(provider, appliance, collection, setup_provider_modscope, small_template_modscope):
     """Creates new VM or instance."""
     vm_name = random_vm_name('snpsht')
-    new_vm = VM.factory(vm_name, provider, template_name=small_template_modscope.name)
+    prov_collection = provider.appliance.provider_based_collection(provider)
+    new_vm = prov_collection.instantiate(vm_name,
+                                         provider,
+                                         small_template_modscope.name)
 
     if not collection.find_by(name=vm_name):
         new_vm.create_on_provider(find_in_cfme=True, allow_skip='default')

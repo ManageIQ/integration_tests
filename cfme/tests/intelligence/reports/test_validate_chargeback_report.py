@@ -35,7 +35,6 @@ from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.provider import CloudInfraProvider
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.blockers import BZ
@@ -76,7 +75,9 @@ def vm_ownership(enable_candu, provider, appliance):
     group_collection = appliance.collections.groups
     cb_group = group_collection.instantiate(description='EvmGroup-user')
 
-    vm = VM.factory(vm_name, provider)
+    # No vm creation or cleanup
+    collection = provider.appliance.provider_based_collection(provider)
+    vm = collection.instantiate(vm_name, provider)
     user = None
     try:
         user = appliance.collections.users.create(

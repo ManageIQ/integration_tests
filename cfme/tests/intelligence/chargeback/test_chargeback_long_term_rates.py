@@ -15,7 +15,6 @@ import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils.log import logger
@@ -58,7 +57,10 @@ def vm_ownership(enable_candu, provider, appliance):
     group_collection = appliance.collections.groups
     cb_group = group_collection.instantiate(description='EvmGroup-user')
 
-    vm = VM.factory(vm_name, provider)
+    # don't assume collection is infra, in case test collected against other provider types
+    # No vm creation or cleanup
+    collection = appliance.provider_based_collection(provider)
+    vm = collection.instantiate(vm_name, provider)
     user = appliance.collections.users.create(
         name='{}_{}'.format(provider.name, fauxfactory.gen_alphanumeric()),
         credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()),

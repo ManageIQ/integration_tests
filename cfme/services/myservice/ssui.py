@@ -6,7 +6,6 @@ from widgetastic.widget import Text, Select
 from widgetastic_patternfly import Input, Button
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
-from cfme.common.vm import VM
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ssui import (
     navigator, SSUINavigateStep, navigate_to, ViaSSUI
@@ -207,8 +206,12 @@ def delete(self):
 def launch_vm_console(self, catalog_item):
     navigate_to(self, 'VM Console')
     # TODO need to remove 0001 from the line below and find correct place/way to put it in code
-    vm_obj = VM.factory(catalog_item.prov_data['catalog']['vm_name'] + '0001',
-                catalog_item.provider, template_name=catalog_item.catalog_name)
+    collection = catalog_item.provider.appliance.provider_based_collection(catalog_item.provider)
+    vm_obj = collection.instantiate(
+        '{}{}'.format(catalog_item.prov_data['catalog']['vm_name'], '0001'),
+        catalog_item.provider,
+        template_name=catalog_item.catalog_name
+    )
     wait_for(
         func=lambda: vm_obj.vm_console, num_sec=30, delay=2, handle_exception=True,
         message="waiting for VM Console window to open"

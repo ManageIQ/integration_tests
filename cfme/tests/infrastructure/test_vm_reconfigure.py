@@ -1,6 +1,5 @@
 import pytest
 
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.blockers import GH
@@ -44,15 +43,17 @@ def reconfigure_vm(vm, config):
                 .format(vars(config.hw), config.disks))
 
 
-@pytest.fixture(scope='function')
-def small_vm(provider, small_template):
-    vm = VM.factory(random_vm_name(context='reconfig'), provider, small_template.name)
+@pytest.fixture(scope='module')
+def small_vm(appliance, provider, small_template_modscope):
+    vm = appliance.collections.infra_vms.instantiate(random_vm_name(context='reconfig'),
+                                                     provider,
+                                                     small_template_modscope.name)
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     vm.refresh_relationships()
 
     yield vm
 
-    vm.cleanup_on_provider()
+    vm.delete_from_provider()
 
 
 @pytest.fixture(scope='function')

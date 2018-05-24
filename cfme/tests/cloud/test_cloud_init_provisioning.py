@@ -3,8 +3,8 @@
 # in selenium (the group is selected then immediately reset)
 import fauxfactory
 import pytest
+from widgetastic.utils import partial_match
 
-from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.pxe import get_template_from_config
@@ -38,7 +38,7 @@ def vm_name(request):
 
 
 @pytest.mark.tier(3)
-def test_provision_cloud_init(request, setup_provider, provider, provisioning,
+def test_provision_cloud_init(appliance, request, setup_provider, provider, provisioning,
                               setup_ci_template, vm_name):
     """ Tests provisioning from a template with cloud_init
 
@@ -52,9 +52,6 @@ def test_provision_cloud_init(request, setup_provider, provider, provisioning,
 
     mgmt_system = provider.mgmt
 
-    instance = Instance.factory(vm_name, provider, image)
-
-    request.addfinalizer(instance.cleanup_on_provider)
     # TODO: extend inst_args for other providers except EC2 if needed
     inst_args = {
         'request': {'email': 'image_provisioner@example.com',
@@ -62,7 +59,7 @@ def test_provision_cloud_init(request, setup_provider, provider, provisioning,
                     'last_name': 'Provisioner',
                     'notes': note},
         'catalog': {'vm_name': vm_name},
-        'properties': {'instance_type': provisioning['instance_type'],
+        'properties': {'instance_type': partial_match(provisioning['instance_type']),
                        'guest_keypair': provisioning['guest_keypair']},
         'environment': {'availability_zone': provisioning['availability_zone'],
                         'cloud_network': provisioning['cloud_network'],
@@ -70,13 +67,17 @@ def test_provision_cloud_init(request, setup_provider, provider, provisioning,
         'customize': {'custom_template': {'name': provisioning['ci-template']}}
     }
 
+    # for image selection in before_fill
+    inst_args['template_name'] = image
+
     if provider.one_of(OpenStackProvider):
         floating_ip = mgmt_system.get_first_floating_ip()
         inst_args['environment']['public_ip_address'] = floating_ip
 
     logger.info('Instance args: {}'.format(inst_args))
 
-    instance.create(**inst_args)
+    instance = appliance.collections.cloud_instances.create(vm_name, provider, inst_args)
+    request.addfinalizer(instance.delete_from_provider)
     provision_request = provider.appliance.collections.requests.instantiate(vm_name,
                                                                    partial_check=True)
     provision_request.wait_for_request()

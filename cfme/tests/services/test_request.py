@@ -2,14 +2,13 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('vm_name', 'uses_infra_providers', 'catalog_item'),
+    pytest.mark.usefixtures('uses_infra_providers', 'setup_provider'),
     pytest.mark.long_running,
     test_requirements.service,
     pytest.mark.tier(3),
@@ -17,11 +16,13 @@ pytestmark = [
 ]
 
 
-def test_copy_request_bz1194479(appliance, setup_provider, provider, catalog_item, request):
+def test_copy_request_bz1194479(appliance, provider, catalog_item, request):
     """Automate BZ 1194479"""
     vm_name = catalog_item.prov_data["catalog"]["vm_name"]
-    request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())
-    catalog_item.create()
+    request.addfinalizer(
+        lambda: appliance.collections.infra_vms.instantiate(
+            "{}0001".format(vm_name), provider).delete_from_provider()
+    )
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     request_description = catalog_item.name

@@ -8,9 +8,8 @@ from datetime import timedelta, date
 from cfme import test_requirements
 from cfme.infrastructure.virtual_machines import InfraVmSummaryView
 from cfme.infrastructure.provider import InfraProvider
-from cfme.common.vm import VM
-from cfme.utils.blockers import BZ
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Dropdown
@@ -27,18 +26,14 @@ pytestmark = [
 
 
 @pytest.fixture(scope="function")
-def vm_name():
-    vm_name = 'test_ae_methods_{}'.format(fauxfactory.gen_alphanumeric())
-    return vm_name
-
-
-@pytest.fixture(scope="function")
-def testing_vm(request, vm_name, setup_provider, provider, provisioning):
-    vm_obj = VM.factory(vm_name, provider, provisioning["template"])
+def testing_vm(request, setup_provider, provider, provisioning):
+    collection = provider.appliance.provider_based_collection(provider)
+    vm_name = random_vm_name('ae-methods')
+    vm_obj = collection.instantiate(vm_name, provider, provisioning["template"])
 
     def _finalize():
         try:
-            vm_obj.cleanup_on_provider()
+            vm_obj.delete_from_provider()
         except Exception:
             logger.warn('Failed deleting VM from provider: %s', vm_name)
     request.addfinalizer(_finalize)
@@ -77,12 +72,11 @@ def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
     testing_vm.set_retirement_date(retirement_date)
     wait_for(lambda: testing_vm.retirement_date != 'Never', message="retirement date set")
     set_date = testing_vm.retirement_date
-    vm_retire_date_fmt = VM.RETIRE_DATE_FMT.pick(appliance.version)
+    vm_retire_date_fmt = testing_vm.RETIRE_DATE_FMT
 
-    if not BZ(1419150, forced_streams='5.6').blocks:
-        soft_assert(set_date == retirement_date.strftime(vm_retire_date_fmt),
-                    "The retirement date '{}' did not match expected date '{}'"
-                    .format(set_date, retirement_date.strftime(vm_retire_date_fmt)))
+    soft_assert(set_date == retirement_date.strftime(vm_retire_date_fmt),
+                "The retirement date '{}' did not match expected date '{}'"
+                .format(set_date, retirement_date.strftime(vm_retire_date_fmt)))
 
     # Create the vm_retire_extend button and click on it
     grp_name = "grp_{}".format(fauxfactory.gen_alphanumeric())

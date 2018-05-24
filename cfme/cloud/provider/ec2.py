@@ -5,6 +5,7 @@ from widgetastic_patternfly import Tab, Input, Button
 from wrapanapi.ec2 import EC2System
 
 from cfme.common.candu_views import VMUtilizationView
+from cfme.cloud.instance.ec2 import EC2Instance
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.services.catalogs.catalog_items import AmazonCatalogItem
@@ -56,6 +57,7 @@ class EC2Provider(CloudProvider):
     vm_utilization_view = EC2InstanceUtilizationView
     type_name = "ec2"
     mgmt_class = EC2System
+    vm_class = EC2Instance
     db_types = ["Amazon::CloudManager"]
     endpoints_form = EC2EndpointForm
     discover_name = "Amazon EC2"

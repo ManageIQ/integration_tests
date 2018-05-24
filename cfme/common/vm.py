@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 """Module containing classes with common behaviour for both VMs and Instances of all types."""
 from datetime import datetime, date, timedelta
+
+import attr
 from wrapanapi import exceptions
 
 from cfme.common import Taggable
 from cfme.common.vm_console import ConsoleMixin
 from cfme.common.vm_views import DriftAnalysis, DriftHistory, VMPropertyDetailView
 from cfme.configure.tasks import is_vm_analysis_finished, TasksView
-from cfme.exceptions import (
-    VmOrInstanceNotFound, ItemNotFound, OptionNotAvailable, UnknownProviderType)
+from cfme.exceptions import VmOrInstanceNotFound, ItemNotFound, OptionNotAvailable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
-from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
@@ -50,40 +51,14 @@ class _TemplateMixin(object):
     pass
 
 
-class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, Navigatable, ConsoleMixin):
+@attr.s
+class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, ConsoleMixin):
     """Base VM and Template class that holds the largest common functionality between VMs,
     instances, templates and images.
 
     In order to inherit these, you have to implement the ``on_details`` method.
     """
     pretty_attrs = ['name', 'provider', 'template_name']
-
-    ###
-    # Factory class methods
-    #
-    @classmethod
-    def factory(cls, vm_name, provider, template_name=None, template=False):
-        """Factory class method that determines the correct subclass for given provider.
-
-        For reference how does that work, refer to the entrypoints in the setup.py
-
-        Args:
-            vm_name: Name of the VM/Instance as it appears in the UI
-            provider: The provider object (not the string!)
-            template_name: Source template name. Useful when the VM/Instance does not exist and you
-                want to create it.
-            template: Whether the generated object class should be VM/Instance or a template class.
-        """
-        try:
-            return all_types(template)[provider.type](vm_name, provider, template_name)
-        except KeyError:
-            # Matching via provider type failed. Maybe we have some generic classes for infra/cloud?
-            try:
-                return all_types(template)[provider.category](vm_name, provider, template_name)
-            except KeyError:
-                raise UnknownProviderType(
-                    'Unknown type of provider CRUD object: {}'
-                    .format(provider.__class__.__name__))
 
     ###
     # To be set or implemented
@@ -104,14 +79,15 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, Navigatable,
     ###
     # Shared behaviour
     #
-    def __init__(self, name, provider, template_name=None, appliance=None):
-        super(BaseVM, self).__init__()
-        Navigatable.__init__(self, appliance=appliance)
-        if type(self) in {BaseVM, VM, Template}:
+    name = attr.ib()
+    provider = attr.ib()
+
+    def __new__(cls, *args, **kwargs):
+        if cls in [BaseVM, VM, Template]:
             raise NotImplementedError('This class cannot be instantiated.')
-        self.name = name
-        self.provider = provider
-        self.template_name = template_name
+        else:
+            # magic {waves hands}
+            return object.__new__(cls)
 
     ###
     # Properties
@@ -179,7 +155,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, Navigatable,
             view.toolbar.configuration.item_select(self.REMOVE_SINGLE,
                                                    handle_alert=not cancel)
         else:
-            view = navigate_to(self, 'All')
+            view = navigate_to(self.parent, 'All')
             self.find_quadicon().check()
             view.toolbar.configuration.item_select(self.REMOVE_SELECTED, handle_alert=not cancel)
 
@@ -187,7 +163,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, Navigatable,
     def exists(self):
         """Checks presence of the quadicon in the CFME."""
         try:
-            self.find_quadicon()
+            navigate_to(self, 'Details')
             return True
         except VmOrInstanceNotFound:
             return False
@@ -222,7 +198,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, Navigatable,
         """
         # todo :refactor this method replace it with vm methods like get_state
         if from_any_provider:
-            view = navigate_to(self, 'All')
+            view = navigate_to(self.parent, 'All')
         else:
             view = navigate_to(self, 'AllForProvider', use_resetter=False)
 
@@ -262,13 +238,6 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, Navigatable,
         view = navigate_to(self, 'Details')
         view.entities.summary(properties[0]).click_at(properties[1])
         return self.create_view(VMPropertyDetailView)
-
-    @classmethod
-    def get_first_vm(cls, provider):
-        """Get first VM/Instance."""
-        # todo: move this to base provider ?
-        view = navigate_to(cls, 'AllForProvider', provider=provider)
-        return view.entities.get_first_entity()
 
     @property
     def last_analysed(self):
@@ -334,7 +303,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, Navigatable,
         if from_details:
             view = navigate_to(self, 'Details', use_resetter=False)
         else:
-            view = navigate_to(self, 'All')
+            view = navigate_to(self.parent, 'All')
             self.find_quadicon(from_any_provider=from_any_provider).check()
         view.toolbar.configuration.item_select("Refresh Relationships and Power States",
                                                handle_alert=not cancel)
@@ -359,7 +328,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, Navigatable,
         if from_details:
             view = navigate_to(self, 'Details', use_resetter=False)
         else:
-            view = navigate_to(self, 'All')
+            view = navigate_to(self.parent, 'All')
             self.find_quadicon().check()
         view.toolbar.configuration.item_select('Perform SmartState Analysis',
                                                handle_alert=not cancel)
@@ -376,7 +345,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, Navigatable,
         """
         wait_for(
             lambda: self.exists,
-            num_sec=timeout, delay=30, fail_func=self.browser.refresh, fail_condition=True,
+            num_sec=timeout, delay=5, fail_func=self.browser.refresh, fail_condition=True,
             message="wait for vm to not exist")
 
     wait_for_delete = wait_to_disappear  # An alias for more fitting verbosity
@@ -453,7 +422,37 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, Navigatable,
         view.flash.assert_success_message(msg)
 
 
+@attr.s
+class BaseVMCollection(BaseCollection):
+    ENTITY = BaseVM
+
+    def instantiate(self, name, provider, template_name=None):
+        """Factory class method that determines the correct subclass for given provider.
+
+        For reference how does that work, refer to the entrypoints in the setup.py
+
+        Args:
+            vm_name: Name of the VM/Instance as it appears in the UI
+            provider: The provider object (not the string!)
+            template_name: Source template name. Useful when the VM/Instance does not exist and you
+                want to create it.
+        """
+        # When this collection is filtered and used for instantiation, the ENTITY attribute
+        # points to BaseVM instead of a specific VM type ENTITY class
+        # For this reason we don't use self.ENTITY, but instead lookup the entity class
+        # through the provider's attributes
+
+        if isinstance(self, TemplateCollection):
+            # This is a Template derived class, not a VM
+            return provider.template_class.from_collection(self, name, provider)
+        else:
+            return provider.vm_class.from_collection(self, name, provider, template_name)
+
+
+@attr.s
 class VM(BaseVM):
+    template_name = attr.ib(default=None)
+
     TO_RETIRE = None
 
     # May be overriden by implementors of BaseVM
@@ -485,7 +484,7 @@ class VM(BaseVM):
         if from_details:
             view = navigate_to(self, 'Details', use_resetter=False)
         else:
-            view = navigate_to(self, 'All')
+            view = navigate_to(self.parent, 'All')
 
         if self.is_pwr_option_available_in_cfme(option=option, from_details=from_details):
 
@@ -557,7 +556,7 @@ class VM(BaseVM):
             view = navigate_to(self, 'Details', use_resetter=False)
             view.toolbar.reload.click()
         else:
-            view = navigate_to(self, "All")
+            view = navigate_to(self.parent, "All")
             entity = self.find_quadicon()
             entity.check()
         if view.toolbar.power.has_item(option):
@@ -567,10 +566,10 @@ class VM(BaseVM):
 
     def delete_from_provider(self):
         """
-        Delete VM/instance from provider.
+        Delete VM/instance from provider mgmt
 
-        You cannot expect additional cleanup of attached resources by calling this method. You
-        should use cleanup_on_provider() to guarantee that.
+        Can be overridden and used through super() by classes inheriting VM in order to add
+        additional resource cleanup through the provider mgmt
         """
         logger.info("Begin delete_from_provider for VM '{}'".format(self.name))
         if not self.provider.mgmt.does_vm_exist(self.name):
@@ -607,7 +606,7 @@ class VM(BaseVM):
             if find_in_cfme:
                 self.wait_to_appear(timeout=timeout, load_details=False)
         except Exception as e:
-            logger.warn("Couldn't find VM or Instance in CMFE")
+            logger.warn("Couldn't find VM or Instance in CFME")
             if delete_on_failure:
                 logger.info("Removing VM or Instance from mgmt system")
                 self.provider.mgmt.delete_vm(self.name)
@@ -733,18 +732,6 @@ class VM(BaseVM):
             )
         else:
             raise ValueError("Invalid state '{}'".format(state))
-
-    def cleanup_on_provider(self):
-        """
-        Method to remove a VM from the provider after tests.
-
-        Checks that the VM exists on the provider, ensures it is in 'powered off' state,
-        and deletes it. Any exceptions raised during delete will be logged only.
-
-        This method may be overriden at the provider-specific level to delete and
-        then do some additional work afterwards (like deleting resources attached to this VM)
-        """
-        self.delete_from_provider()
 
     def set_retirement_date(self, when=None, offset=None, warn=None):
         """Overriding common method to use widgetastic views/widgets properly
@@ -919,13 +906,21 @@ class VM(BaseVM):
         return drift_analysis_view.drift_analysis.is_changed(drift_section)
 
 
+@attr.s
+class VMCollection(BaseVMCollection):
+    ENTITY = VM
+
+
+@attr.s
 class Template(BaseVM, _TemplateMixin):
-    """A base class for all templates. The constructor is a bit different, it scraps template_name.
+    """A base class for all templates.
     """
-    def __init__(self, name, provider, template_name=None):
-        # template_name gets ignored because template does not have a template, logically.
-        super(Template, self).__init__(name, provider, template_name=None)
 
     def does_template_exist_on_provider(self):
         """Check if template exists on provider itself"""
         return self.provider.mgmt.does_template_exist(self.name)
+
+
+@attr.s
+class TemplateCollection(BaseVMCollection):
+    ENTITY = Template

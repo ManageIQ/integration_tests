@@ -2,7 +2,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.virtual_machines import InfraVm, Template
 from cfme.fixtures.provider import setup_one_or_skip
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -13,9 +12,9 @@ from cfme.utils.update import update
 pytestmark = [test_requirements.tag, pytest.mark.tier(2)]
 
 test_items = [
-    ('clusters', None, None),
-    ('vms', InfraVm, 'ProviderVms'),
-    ('templates', Template, 'ProviderTemplates')
+    ('clusters', None),
+    ('infra_vms', 'ProviderVms'),
+    ('infra_templates', 'ProviderTemplates')
 ]
 
 
@@ -26,24 +25,21 @@ def a_provider(request):
     return setup_one_or_skip(request, filters=[prov_filter])
 
 
-@pytest.fixture(params=test_items, ids=[collection_type for collection_type, _, _ in test_items],
+@pytest.fixture(params=test_items, ids=[collection_type for collection_type, _ in test_items],
                 scope='function')
 def testing_vis_object(request, a_provider, appliance):
     """ Fixture creates class object for tag visibility test
 
     Returns: class object of certain type
     """
-    collection_name, param_class, destination = request.param
-    if not param_class:
-        param_class = getattr(appliance.collections, collection_name)
-    view = navigate_to(a_provider, destination) if destination else navigate_to(param_class, 'All')
+    collection_name, destination = request.param
+    collection = getattr(appliance.collections, collection_name)
+    view = navigate_to(a_provider, destination) if destination else navigate_to(collection, 'All')
     names = view.entities.entity_names
     if not names:
-        pytest.skip("No content found for test")
-    try:
-        return param_class.instantiate(name=names[0], provider=a_provider)
-    except AttributeError:
-        return param_class(name=names[0], provider=a_provider)
+        pytest.skip("No content found for test of {}".format(collection))
+
+    return collection.instantiate(name=names[0], provider=a_provider)
 
 
 @pytest.fixture(scope='module')

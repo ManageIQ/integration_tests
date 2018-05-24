@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.infrastructure.pxe import get_template_from_config
@@ -11,7 +10,7 @@ from cfme.utils.wait import wait_for
 
 
 pytestmark = [
-    pytest.mark.usefixtures('uses_infra_providers'),
+    pytest.mark.usefixtures('uses_infra_providers', 'setup_provider', 'setup_ci_template'),
     pytest.mark.meta(server_roles="+automate +notifier"),
     pytest.mark.provider([RHEVMProvider],
                          required_fields=[['provisioning', 'ci-template'],
@@ -31,12 +30,11 @@ def setup_ci_template(provisioning, appliance):
 
 @pytest.fixture(scope="function")
 def vm_name():
-    vm_name = 'test_tmpl_prov_{}'.format(fauxfactory.gen_alphanumeric())
+    vm_name = 'test_prov_{}'.format(fauxfactory.gen_alphanumeric())
     return vm_name
 
 
-def test_provision_cloud_init(appliance, setup_provider, provider, setup_ci_template,
-                              vm_name, smtp_test, request, provisioning):
+def test_provision_cloud_init(appliance, provider, vm_name, smtp_test, request, provisioning):
     """Tests cloud init provisioning
 
     Metadata:
@@ -47,7 +45,8 @@ def test_provision_cloud_init(appliance, setup_provider, provider, setup_ci_temp
     template = provisioning.get('ci-image') or provisioning['image']['name']
     host, datastore, vlan = map(provisioning.get, ('host', 'datastore', 'vlan'))
 
-    request.addfinalizer(lambda: VM.factory(vm_name, provider).cleanup_on_provider())
+    request.addfinalizer(
+        appliance.collections.infra_vms.instantiate(vm_name, provider).delete_from_provider)
 
     provisioning_data = {
         'catalog': {

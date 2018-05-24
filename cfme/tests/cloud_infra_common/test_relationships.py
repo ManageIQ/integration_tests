@@ -2,12 +2,11 @@
 import random
 
 import pytest
+from navmazing import NavigationDestinationNotFound
 
-from cfme.cloud.availability_zone import ProviderAvailabilityZoneAllView, AvailabilityZone
-from cfme.cloud.flavor import ProviderFlavorAllView, Flavor
-from cfme.cloud.instance import Instance
-from cfme.cloud.instance.image import Image
+from cfme.cloud.availability_zone import ProviderAvailabilityZoneAllView
 from cfme.cloud.provider import CloudProvider
+from cfme.cloud.flavor import ProviderFlavorAllView
 from cfme.cloud.provider import CloudProviderImagesView, CloudProviderInstancesView
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.stack import ProviderStackAllView
@@ -20,8 +19,8 @@ from cfme.infrastructure.cluster import ClusterDetailsView, ProviderAllClustersV
 from cfme.infrastructure.datastore import HostAllDatastoresView, ProviderAllDatastoresView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.virtual_machines import (HostTemplatesOnlyAllView,
-                                                  ProviderTemplatesOnlyAllView, InfraVm, Template)
+from cfme.infrastructure.virtual_machines import (
+    HostTemplatesOnlyAllView, ProviderTemplatesOnlyAllView)
 from cfme.markers.env_markers.provider import ONE, ONE_PER_TYPE
 from cfme.networks.provider import NetworkProvider
 from cfme.networks.views import NetworkProviderDetailsView, ProviderSecurityGroupAllView
@@ -62,24 +61,26 @@ CLOUD_PROVIDER_RELATIONSHIPS = [
 ]
 # TODO: add Host Aggregates view to CLOUD_PROVIDER_RELATIONSHIPS
 
+# tuples of (collection_key, item_class) for parametrization
+# if item_class is none the collection instance is looked up against appliance using collection_key
 cloud_test_items = [
-    ("instances", Instance),
-    ("flavors", Flavor),
-    ("availability_zones", AvailabilityZone),
-    ("cloud_tenants", None),
-    ("images", Image),
-    ("security_groups", None),
-    ("stacks", None),
-    ("block_managers", None),
-    ("network_providers", None)
+    "cloud_instances",
+    "cloud_flavors",
+    "cloud_av_zones",
+    "cloud_tenants",
+    "cloud_images",
+    "security_groups",
+    "cloud_stacks",
+    "block_managers",
+    "network_providers"
 ]
 
 infra_test_items = [
-    ("clusters", None),
-    ("hosts", None),
-    ("datastores", None),
-    ("vms", InfraVm),
-    ("templates", Template)
+    "clusters",
+    "hosts",
+    "datastores",
+    "infra_vms",
+    "infra_templates"
 ]
 
 
@@ -189,11 +190,10 @@ def test_cloud_provider_relationships(appliance, provider, setup_provider, relat
 
 @pytest.fixture(scope='function')
 def prov_child_visibility(appliance, provider, request, tag, user_restricted):
-    def _prov_child_visibility(relationship, item_cls, visibility):
+    def _prov_child_visibility(relationship, visibility):
         provider.add_tag(tag=tag)
-        if not item_cls:
-            item_cls = getattr(appliance.collections, relationship)
-        actual_visibility = _check_actual_visibility(item_cls)
+        rel_cls = getattr(appliance.collections, relationship)
+        actual_visibility = _check_actual_visibility(rel_cls)
         if not actual_visibility:
             pytest.skip("There are no relationships for {}".format(relationship))
 
@@ -202,12 +202,15 @@ def prov_child_visibility(appliance, provider, request, tag, user_restricted):
             provider.remove_tag(tag=tag)
 
         with user_restricted:
-            actual_visibility = _check_actual_visibility(item_cls)
+            actual_visibility = _check_actual_visibility(rel_cls)
 
         assert actual_visibility == visibility
 
     def _check_actual_visibility(item_cls):
-        view = navigate_to(item_cls, 'All')
+        try:
+            view = navigate_to(item_cls, 'All')
+        except NavigationDestinationNotFound:
+            view = navigate_to(item_cls.parent, 'All')
         try:
             if hasattr(view.entities, 'entity_names'):
                 assert view.entities.entity_names
@@ -225,12 +228,10 @@ def prov_child_visibility(appliance, provider, request, tag, user_restricted):
     return _prov_child_visibility
 
 
-@pytest.mark.parametrize("relationship,item_cls", infra_test_items,
-    ids=[rel[0] for rel in infra_test_items])
+@pytest.mark.parametrize("relationship", infra_test_items)
 @pytest.mark.provider([VMwareProvider], selector=ONE)
 # used VMwareProvider to cover all relationship as they have each of them
-def test_tagvis_infra_provider_children(prov_child_visibility, setup_provider, relationship,
-                                        item_cls):
+def test_tagvis_infra_provider_children(prov_child_visibility, setup_provider, relationship):
     """ Tests that provider child's should not be visible for restricted user
     Prerequisites:
         Catalog, tag, role, group and restricted user should be created
@@ -239,15 +240,13 @@ def test_tagvis_infra_provider_children(prov_child_visibility, setup_provider, r
         1. As admin add tag to provider
         2. Login as restricted user, providers child not visible for user
     """
-    prov_child_visibility(relationship, item_cls, visibility=False)
+    prov_child_visibility(relationship, visibility=False)
 
 
-@pytest.mark.parametrize("relationship,item_cls", cloud_test_items,
-    ids=[rel[0] for rel in cloud_test_items])
+@pytest.mark.parametrize("relationship", cloud_test_items)
 @pytest.mark.provider([OpenStackProvider], selector=ONE)
 # used OpenStackProvider to cover all relationship as they have each of them
-def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, relationship,
-                                        item_cls):
+def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, relationship):
     """ Tests that provider child's should not be visible for restricted user
     Prerequisites:
         Catalog, tag, role, group and restricted user should be created
@@ -256,7 +255,7 @@ def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, r
         1. As admin add tag to provider
         2. Login as restricted user, providers child not visible for user
     """
-    prov_child_visibility(relationship, item_cls, visibility=False)
+    prov_child_visibility(relationship, visibility=False)
 
 
 @pytest.mark.rhv1

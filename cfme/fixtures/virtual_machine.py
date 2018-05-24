@@ -1,19 +1,15 @@
 """ Fixtures ensuring that a VM/instance is in the specified state for the test
 """
 
-
 import pytest
-from cfme.common.vm import VM
 
 
 def _get_vm_obj_if_exists_on_provider(provider, vm_name):
-    vm = VM.factory(vm_name, provider)
-    if not vm.does_vm_exist_on_provider():
-        raise ValueError(
-            "Unable to ensure VM state: "
-            "VM '{}' does not exist on provider '{}'".format(vm_name, provider.key)
-        )
-    return vm
+    if not provider.mgmt.does_vm_exist(vm_name):
+        raise ValueError("Unable to ensure VM state: VM '{}' does not exist on provider '{}'"
+                         .format(vm_name, provider.key))
+    collection = provider.appliance.provider_based_collection(provider)
+    return collection.instantiate(vm_name, provider)
 
 
 @pytest.fixture(scope="function")
@@ -43,6 +39,7 @@ def ensure_vm_stopped(provider, vm_name):
     vm = _get_vm_obj_if_exists_on_provider(provider, vm_name)
     return vm.ensure_state_on_provider(vm.STATE_OFF)
 
+
 @pytest.fixture(scope="function")
 def ensure_vm_suspended(provider, vm_name):
     """ Ensures that the VM/instance is suspended for the test
@@ -69,4 +66,3 @@ def ensure_vm_paused(provider, vm_name):
     """
     vm = _get_vm_obj_if_exists_on_provider(provider, vm_name)
     return vm.ensure_state_on_provider(vm.STATE_PAUSED)
-

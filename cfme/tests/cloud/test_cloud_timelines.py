@@ -3,8 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme.base.ui import ServerDiagnosticsView
-from cfme.cloud.availability_zone import AvailabilityZone
-from cfme.cloud.instance import Instance
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.control.explorer.policies import VMControlPolicy
@@ -23,8 +21,10 @@ pytestmark = [
 
 
 @pytest.fixture(scope='function')
-def new_instance(provider):
-    inst = Instance.factory(random_vm_name('cloud-timeline', max_length=20), provider)
+def new_instance(appliance, provider):
+    inst = appliance.collections.cloud_instances.instantiate(random_vm_name('cloud-timeline',
+                                                                            max_length=20),
+                                                             provider)
     logger.debug('Fixture new_instance set up! Name: %r Provider: %r', inst.name,
                  inst.provider.name)
     inst.create_on_provider(allow_skip="default", find_in_cfme=True)
@@ -64,12 +64,12 @@ def control_policy(appliance, new_instance, request):
 
 
 @pytest.fixture(scope='function')
-def azone(new_instance):
+def azone(new_instance, appliance):
     zone_id = new_instance.get_vm_via_rest().availability_zone_id
-    zones = new_instance.appliance.rest_api.collections.availability_zones
-    zone_name = next(zone.name for zone in zones if zone.id == zone_id)
-    inst_zone = AvailabilityZone(name=zone_name, provider=new_instance.provider,
-                                 appliance=new_instance.appliance)
+    rest_zones = new_instance.appliance.rest_api.collections.availability_zones
+    zone_name = next(zone.name for zone in rest_zones if zone.id == zone_id)
+    inst_zone = appliance.collections.cloud_av_zones.instantiate(name=zone_name,
+                                                                 provider=new_instance.provider)
     return inst_zone
 
 

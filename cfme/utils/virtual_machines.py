@@ -44,7 +44,7 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
             deploy_args.update(template=provider_crud.data['templates']['small_template']['name'])
         except KeyError:
             raise KeyError('small_template not defined for Provider {} in cfme_data.yaml'
-                .format(provider_key))
+                           .format(provider_key))
     else:
         deploy_args.update(template=template_name)
 
@@ -60,10 +60,11 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
         except Exception as e:
             logger.exception('Could not provisioning VM/instance %s (%s: %s)',
                 vm_name, type(e).__name__, str(e))
-            try:
-                provider_crud.mgmt.delete_vm(vm_name)
-            except Exception:
-                logger.exception("Unable to clean up vm:", vm_name)
+            if vm_name in provider_crud.mgmt.list_vm():
+                try:
+                    provider_crud.mgmt.delete_vm(vm_name)
+                except Exception:
+                    logger.exception("Unable to clean up vm:", vm_name)
             raise
     except skip_exceptions as e:
         e_c = type(e)

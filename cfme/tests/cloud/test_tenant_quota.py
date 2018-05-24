@@ -4,7 +4,6 @@ import pytest
 from widgetastic.utils import partial_match
 
 from cfme import test_requirements
-from cfme.cloud.instance import Instance
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI, ViaUI
@@ -29,6 +28,7 @@ def template_name(provisioning):
 
 @pytest.fixture(scope="module")
 def roottenant(appliance):
+    # configuration tenants, not cloud tenants
     return appliance.collections.tenants.get_root_tenant()
 
 
@@ -94,7 +94,7 @@ def test_tenant_quota_enforce_via_lifecycle_cloud(request, appliance, provider, 
     prov_data['catalog']['vm_name'] = vm_name
     prov_data.update({
         'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}})
-    instance = Instance.factory(vm_name, provider, template_name)
+    instance = appliance.collections.cloud_instances.instantiate(vm_name, provider, template_name)
     instance.create(**prov_data)
 
     # nav to requests page to check quota validation

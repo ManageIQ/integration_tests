@@ -2,7 +2,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.common.vm import VM
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
@@ -65,7 +64,9 @@ def configure_vddk(request, appliance, provider, vm):
 def vm(request, provider, small_template_modscope, ssa_analysis_profile):
     """ Fixture to provision instance on the provider """
     vm_name = random_vm_name("ssa", max_length=16)
-    vm_obj = VM.factory(vm_name, provider, template_name=small_template_modscope.name)
+    vm_obj = provider.appliance.collections.infra_vms.instantiate(vm_name,
+                                                                  provider,
+                                                                  small_template_modscope.name)
     vm_obj.create_on_provider(find_in_cfme=True, allow_skip="default")
     provider.mgmt.start_vm(vm_obj.name)
     provider.mgmt.wait_vm_running(vm_obj.name)
@@ -73,7 +74,7 @@ def vm(request, provider, small_template_modscope, ssa_analysis_profile):
     @request.addfinalizer
     def _finalize():
         try:
-            vm_obj.cleanup_on_provider()
+            vm_obj.delete_from_provider()
             provider.refresh_provider_relationships()
         except Exception as e:
             logger.exception(e)

@@ -2,9 +2,6 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.cloud.instance import Instance
-from cfme.cloud.instance.image import Image
-from cfme.infrastructure import virtual_machines as vms
 from cfme.services import workloads
 from cfme.utils.appliance.implementations.ui import navigate_to
 
@@ -17,7 +14,7 @@ def test_cloudimage_defaultfilters(appliance):
     filters = [['Cloud', 'Instances', 'Images', 'Platform / Amazon']]
     tree_path = ['All Images', 'Global Filters', 'Platform / Amazon']
     appliance.user.my_settings.default_filters.update({'filters': [(k, True) for k in filters]})
-    view = navigate_to(Image, 'All')
+    view = navigate_to(appliance.collections.cloud_images, 'All')
     assert view.sidebar.images.tree.has_path(*tree_path), 'Default Filter settings Failed!'
 
 
@@ -25,7 +22,7 @@ def test_cloudinstance_defaultfilters(appliance):
     filters = [['Cloud', 'Instances', 'Instances', 'Platform / Openstack']]
     tree_path = ['All Instances', 'Global Filters', 'Platform / Openstack']
     appliance.user.my_settings.default_filters.update({'filters': [(k, True) for k in filters]})
-    view = navigate_to(Instance, 'All')
+    view = navigate_to(appliance.collections.cloud_instances, 'All')
     assert view.sidebar.instances.tree.has_path(*tree_path), 'Default Filter settings Failed!'
 
 
@@ -41,7 +38,7 @@ def test_infrastructurevms_defaultfilters(appliance):
     filters = [['Infrastructure', 'Virtual Machines', 'VMs', 'Platform / VMware']]
     tree_path = ['All VMs', 'Global Filters', 'Platform / VMware']
     appliance.user.my_settings.default_filters.update({'filters': [(k, True) for k in filters]})
-    view = navigate_to(vms.InfraVm, 'VMsOnly')
+    view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
     assert view.sidebar.vms.tree.has_path(*tree_path), 'Default Filter settings Failed!'
 
 
@@ -49,7 +46,7 @@ def test_infrastructuretemplates_defaultfilters(appliance):
     filters = [['Infrastructure', 'Virtual Machines', 'Templates', 'Platform / Redhat']]
     tree_path = ['All Templates', 'Global Filters', 'Platform / Redhat']
     appliance.user.my_settings.default_filters.update({'filters': [(k, True) for k in filters]})
-    view = navigate_to(vms.Template, 'TemplatesOnly')
+    view = navigate_to(appliance.collections.infra_templates, 'TemplatesOnly')
     assert view.sidebar.templates.tree.has_path(*tree_path), 'Default Filter settings Failed!'
 
 

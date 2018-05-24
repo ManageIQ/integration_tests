@@ -10,12 +10,10 @@ from widgetastic_patternfly import CheckableBootstrapTreeview as CbTree
 
 from cfme import test_requirements
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -71,13 +69,20 @@ def prov_data(provisioning, provider):
 def provisioner(appliance, request, setup_provider, provider, vm_name):
 
     def _provisioner(template, provisioning_data, delayed=None):
-        vm = InfraVm(name=vm_name, provider=provider, template_name=template)
+        vm = appliance.collections.infra_vms.instantiate(name=vm_name,
+                                                         provider=provider,
+                                                         template_name=template)
+        provisioning_data['template_name'] = template
+        provisioning_data['provider_name'] = provider.name
         view = navigate_to(vm, 'Provision')
         view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
         base_view = vm.appliance.browser.create_view(BaseLoggedInPage)
         base_view.flash.assert_no_error()
 
-        request.addfinalizer(lambda: VM.factory(vm_name, provider).cleanup_on_provider())
+        request.addfinalizer(
+            lambda: appliance.collections.infra_vms.instantiate(vm_name,
+                                                                provider).delete_from_provider()
+        )
         request_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
         provision_request = appliance.collections.requests.instantiate(
             description=request_description)

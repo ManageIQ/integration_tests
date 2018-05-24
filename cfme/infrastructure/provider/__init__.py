@@ -9,18 +9,14 @@ from widgetastic.utils import Fillable
 from cfme.base.ui import Server
 from cfme.common import TagPageView
 from cfme.common.provider import CloudInfraProvider, provider_types
-from cfme.common.provider_views import (InfraProviderAddView,
-                                        InfraProviderEditView,
-                                        InfraProviderDetailsView,
-                                        ProviderTimelinesView,
-                                        InfraProvidersDiscoverView,
-                                        InfraProvidersView,
-                                        ProviderNodesView,
-                                        ProviderTemplatesView,
-                                        ProviderVmsView)
+from cfme.common.provider_views import (
+    InfraProviderAddView, InfraProviderEditView, InfraProviderDetailsView, ProviderTimelinesView,
+    InfraProvidersDiscoverView, InfraProvidersView, ProviderNodesView, ProviderTemplatesView,
+    ProviderVmsView)
 from cfme.exceptions import DestinationNotFound
 from cfme.infrastructure.cluster import ClusterView, ClusterToolbar
 from cfme.infrastructure.host import Host
+from cfme.infrastructure.virtual_machines import InfraVm, InfraTemplate
 from cfme.modeling.base import BaseCollection
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -66,10 +62,13 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         myprov.create()
 
     """
+    STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
+    SNAPSHOT_TITLE = 'name'  # attribute of the provider vm's snapshots used for the title
     provider_types = {}
+    vm_class = InfraVm
+    template_class = InfraTemplate
     category = "infra"
     pretty_attrs = ['name', 'key', 'zone']
-    STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
     string_name = "Infrastructure"
     templates_destination_name = "Templates"
     template_name = "Templates"

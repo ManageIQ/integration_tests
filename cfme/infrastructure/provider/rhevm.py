@@ -1,5 +1,6 @@
 import attr
 
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Tab, Input, BootstrapSwitch, Button
 from wrapanapi.rhevm import RHEVMSystem
@@ -61,6 +62,7 @@ class RHEVMVMUtilizationView(VMUtilizationView):
 
 @attr.s(hash=False)
 class RHEVMProvider(InfraProvider):
+    SNAPSHOT_TITLE = 'description'  # Different for RHEV providers than other infra
     catalog_item_type = RHVCatalogItem
     vm_utilization_view = RHEVMVMUtilizationView
     type_name = "rhevm"
@@ -125,26 +127,26 @@ class RHEVMProvider(InfraProvider):
         try:
             return self.appliance.browser.widgetastic.selenium.find_element_by_xpath(
                 self._console_connection_status_element).text
-        except:
+        except NoSuchElementException:
             raise ItemNotFound("Element not found on screen, is current focus on console window?")
 
     def get_remote_console_canvas(self):
         try:
             return self.appliance.browser.widgetastic.selenium.find_element_by_xpath(
                 self._canvas_element)
-        except:
+        except NoSuchElementException:
             raise ItemNotFound("Element not found on screen, is current focus on console window?")
 
     def get_console_ctrl_alt_del_btn(self):
         try:
             return self.appliance.browser.widgetastic.selenium.find_element_by_xpath(
                 self._ctrl_alt_del_xpath)
-        except:
+        except NoSuchElementException:
             raise ItemNotFound("Element not found on screen, is current focus on console window?")
 
     def get_console_fullscreen_btn(self):
         try:
             return self.appliance.browser.widgetastic.selenium.find_element_by_xpath(
                 self._fullscreen_xpath)
-        except:
+        except NoSuchElementException:
             raise ItemNotFound("Element not found on screen, is current focus on console window?")

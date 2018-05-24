@@ -2,7 +2,6 @@ import fauxfactory
 import pytest
 
 from cfme.base.ui import ServerDiagnosticsView
-from cfme.common.vm import VM
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -27,11 +26,13 @@ pytestmark = [
 
 @pytest.fixture()
 def new_vm(provider):
-    vm = VM.factory(random_vm_name('timelines', max_length=16), provider)
+    vm = provider.appliance.collections.infra_vms.instantiate(
+        random_vm_name('timelines', max_length=16), provider
+    )
     vm.create_on_provider(find_in_cfme=True)
     logger.debug('Fixture new_vm set up! Name: %r Provider: %r', vm.name, vm.provider.name)
     yield vm
-    vm.cleanup_on_provider()
+    vm.delete_from_provider()
 
 
 @pytest.fixture()

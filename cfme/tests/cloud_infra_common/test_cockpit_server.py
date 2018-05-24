@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.provider import CloudInfraProvider
-from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.wait import wait_for
 
 
 @pytest.fixture(scope="function")
-def new_vm(provider, request):
+def new_vm(appliance, provider, request):
     if provider.one_of(CloudProvider):
-        vm = Instance.factory(random_vm_name(context='cockpit'), provider)
+        vm = appliance.collections.cloud_instances.instantiate(random_vm_name(context='cockpit'),
+                                                               provider)
     else:
-        vm = InfraVm.factory(random_vm_name(context='cockpit'), provider)
+        vm = appliance.collections.infra_vms.instantiate(random_vm_name(context='cockpit'),
+                                                         provider)
     if not provider.mgmt.does_vm_exist(vm.name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
-        request.addfinalizer(vm.cleanup_on_provider)
+        request.addfinalizer(vm.delete_from_provider)
     return vm
 
 

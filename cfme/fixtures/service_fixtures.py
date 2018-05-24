@@ -8,6 +8,7 @@ from cfme.rest.gen_data import dialog as _dialog
 from cfme.rest.gen_data import service_catalog_obj as _catalog
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.fixtures.provider import console_template
 
@@ -23,12 +24,12 @@ def catalog(request, appliance):
 
 
 @pytest.fixture(scope="function")
-def catalog_item(appliance, provider, provisioning, vm_name, dialog, catalog):
-    catalog_item = create_catalog_item(appliance, provider, provisioning, vm_name, dialog, catalog)
+def catalog_item(appliance, provider, provisioning, dialog, catalog):
+    catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog)
     return catalog_item
 
 
-def create_catalog_item(appliance, provider, provisioning, vm_name, dialog, catalog,
+def create_catalog_item(appliance, provider, provisioning, dialog, catalog,
         console_test=False):
     provision_type, template, host, datastore, iso_file, vlan = map(provisioning.get,
         ('provision_type', 'template', 'host', 'datastore', 'iso_file', 'vlan'))
@@ -40,7 +41,7 @@ def create_catalog_item(appliance, provider, provisioning, vm_name, dialog, cata
         catalog_name = template
         provisioning_data = {
             'catalog': {'catalog_name': {'name': catalog_name, 'provider': provider.name},
-                        'vm_name': vm_name,
+                        'vm_name': random_vm_name('serv-fixt'),
                         'provision_type': provision_type},
             'environment': {'host_name': {'name': host},
                             'datastore_name': {'name': datastore}},
@@ -50,7 +51,7 @@ def create_catalog_item(appliance, provider, provisioning, vm_name, dialog, cata
         catalog_name = provisioning['image']['name']
         provisioning_data = {
             'catalog': {'catalog_name': {'name': catalog_name, 'provider': provider.name},
-                        'vm_name': vm_name},
+                        'vm_name': random_vm_name('serv-fixt')},
             'properties': {'instance_type': partial_match(provisioning['instance_type']),
                            'guest_keypair': provisioning['guest_keypair'],
                            'boot_disk_size': provisioning.get('boot_disk_size', None)},
@@ -66,17 +67,15 @@ def create_catalog_item(appliance, provider, provisioning, vm_name, dialog, cata
 
 
 @pytest.fixture
-def order_service(appliance, provider, provisioning, vm_name, dialog, catalog, request):
+def order_service(appliance, provider, provisioning, dialog, catalog, request):
     """ Orders service once the catalog item is created"""
 
     if hasattr(request, 'param'):
         param = request.param
-        catalog_item = create_catalog_item(appliance, provider, provisioning,
-                                           vm_name, dialog, catalog,
+        catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog,
                                            console_test=True if 'console_test' in param else None)
     else:
-        catalog_item = create_catalog_item(appliance, provider, provisioning,
-                                           vm_name, dialog, catalog)
+        catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog)
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     provision_request = service_catalogs.order()
     provision_request.wait_for_request(method='ui')

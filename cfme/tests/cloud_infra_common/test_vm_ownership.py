@@ -4,7 +4,6 @@ import pytest
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.provider import CloudInfraProvider
-from cfme.common.vm import VM
 from cfme.exceptions import VmOrInstanceNotFound
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.blockers import BZ
@@ -22,12 +21,13 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def vm_crud(provider):
-    vm = VM.factory(random_vm_name(context='ownrs'), provider)
+    collection = provider.appliance.provider_based_collection(provider)
+    vm = collection.instantiate(random_vm_name(context='ownrs'), provider)
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     yield vm
 
     try:
-        vm.cleanup_on_provider()
+        vm.delete_from_provider()
     except Exception:
         logger.exception('Exception deleting test vm "%s" on %s', vm.name, provider.name)
 
@@ -202,8 +202,8 @@ def test_template_set_ownership(request, provider, setup_provider, vm_crud):
 
 
 # @pytest.mark.meta(blockers=[1202947])
-# def test_ownership_transfer(request, user1, user3, setup_infra_provider):
-#    user_ownership_vm = VM.factory('cu-9-5', setup_infra_provider)
+# def test_ownership_transfer(appliance, request, user1, user3, setup_infra_provider):
+#    user_ownership_vm = appliance.collections.infra_vms.instantiate('cu-9-5', setup_infra_provider)
 #    user_ownership_vm.set_ownership(user=user1.name)
 #    with user1:
 #        # Checking before and after the ownership transfer

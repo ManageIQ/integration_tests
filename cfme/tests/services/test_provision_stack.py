@@ -135,7 +135,8 @@ def service_catalogs(appliance, catalog_item, stack_data):
 
 @pytest.fixture
 def stack(appliance, provider, stack_data):
-    return appliance.collections.stacks.instantiate(stack_data['stack_name'], provider=provider)
+    return appliance.collections.cloud_stacks.instantiate(stack_data['stack_name'],
+                                                          provider=provider)
 
 
 def _cleanup(appliance=None, provision_request=None, service=None):

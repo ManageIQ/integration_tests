@@ -4,7 +4,6 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.simulation import simulate
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
@@ -14,8 +13,7 @@ from cfme.utils.log import logger
 
 pytestmark = [
     test_requirements.service,
-    pytest.mark.usefixtures('setup_provider', 'vm_name',
-                            'catalog_item', 'uses_infra_providers'),
+    pytest.mark.usefixtures('setup_provider', 'catalog_item', 'uses_infra_providers'),
     pytest.mark.long_running,
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.tier(3),
@@ -24,13 +22,15 @@ pytestmark = [
 
 
 @pytest.fixture(scope='function')
-def new_vm(provider, setup_provider, small_template_modscope):
+def new_vm(appliance, provider, setup_provider, small_template_modscope):
     """Fixture to provision and delete vm on the provider"""
     vm_name = 'test_service_{}'.format(fauxfactory.gen_alphanumeric())
-    vm = VM.factory(vm_name, provider, small_template_modscope.name)
+    collection = appliance.provider_based_collection(provider)
+
+    vm = collection.instantiate(vm_name, provider, small_template_modscope.name)
     vm.create_on_provider(find_in_cfme=True, timeout=700, allow_skip="default")
     yield vm
-    vm.cleanup_on_provider()
+    vm.delete_from_provider()
     provider.refresh_provider_relationships()
 
 
@@ -49,7 +49,9 @@ def copy_domain(request, appliance):
 @pytest.fixture(scope='function')
 def myservice(appliance, provider, catalog_item, request):
     vm_name = catalog_item.prov_data["catalog"]["vm_name"]
-    request.addfinalizer(lambda: VM.factory(vm_name + "_0001", provider).cleanup_on_provider())
+    collection = provider.appliance.provider_based_collection(provider)
+    request.addfinalizer(
+        lambda: collection.instantiate('{}_0001'.format(vm_name), provider).delete_from_provider())
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)

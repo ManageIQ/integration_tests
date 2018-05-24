@@ -1,12 +1,14 @@
 """ Page functions for Flavor pages
 """
-from navmazing import NavigateToSibling, NavigateToAttribute
+import attr
+
+from navmazing import NavigateToAttribute
 from widgetastic_patternfly import Dropdown, Button, View
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.exceptions import FlavorNotFound, ItemNotFound
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseEntity, BaseCollection
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
     BaseEntitiesView, ItemsToolBarViewSelector, SummaryTable, Text, Table, Accordion, ManageIQTree,
@@ -95,19 +97,23 @@ class FlavorDetailsView(FlavorView):
     entities = FlavorDetailsEntities()
 
 
-class Flavor(Taggable, Navigatable):
+@attr.s
+class Flavor(BaseEntity, Taggable):
     """
     Flavor class to support navigation
     """
     _param_name = "Flavor"
 
-    def __init__(self, name, provider, appliance=None):
-        self.name = name
-        self.provider = provider
-        Navigatable.__init__(self, appliance=appliance)
+    name = attr.ib()
+    provider = attr.ib()
 
 
-@navigator.register(Flavor, 'All')
+@attr.s
+class FlavorCollection(BaseCollection):
+    ENTITY = Flavor
+
+
+@navigator.register(FlavorCollection, 'All')
 class FlavorAll(CFMENavigateStep):
     VIEW = FlavorAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -119,7 +125,7 @@ class FlavorAll(CFMENavigateStep):
 @navigator.register(Flavor, 'Details')
 class FlavorDetails(CFMENavigateStep):
     VIEW = FlavorDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')

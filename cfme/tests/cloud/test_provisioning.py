@@ -10,14 +10,12 @@ from widgetastic.utils import partial_match
 from widgetastic_patternfly import CheckableBootstrapTreeview as Check_tree
 
 from cfme import test_requirements
-from cfme.automate.explorer.domain import DomainCollection
-from cfme.cloud.instance import Instance
+from cfme.base.login import BaseLoggedInPage
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.common.vm import VM
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
@@ -29,9 +27,10 @@ from cfme.utils.wait import wait_for, RefreshTimer
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     test_requirements.provision, pytest.mark.tier(2),
-    pytest.mark.provider(
-        [CloudProvider], required_fields=[['provisioning', 'image']], scope="function"
-    )
+    pytest.mark.provider([CloudProvider],
+                         required_fields=[['provisioning', 'image']],
+                         scope="function"),
+    pytest.mark.usefixtures('setup_provider')
 ]
 
 
@@ -41,23 +40,18 @@ def vm_name():
 
 
 @pytest.fixture()
-def testing_instance(request, setup_provider, provider, provisioning, vm_name, tag):
+def instance_args(request, appliance, provider, provisioning, vm_name, tag):
     """ Fixture to prepare instance parameters for provisioning
     """
-    image = provisioning['image']['name']
-    note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
-        image, vm_name, provider.key))
-
-    instance = Instance.factory(vm_name, provider, image)
-
-    inst_args = dict()
+    inst_args = dict(template_name=provisioning['image']['name'])
 
     # Base instance info
     inst_args['request'] = {
         'email': 'image_provisioner@example.com',
         'first_name': 'Image',
         'last_name': 'Provisioner',
-        'notes': note,
+        'notes': 'Testing provisioning from image {} to vm {} on provider {}'
+                 .format(inst_args.get('template_name'), vm_name, provider.key),
     }
     # TODO Move this into helpers on the provider classes
     recursive_update(inst_args, {'catalog': {'vm_name': vm_name}})
@@ -112,30 +106,29 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name, t
                 'root_password': vm_password}})
     if auto:
         inst_args.update({'environment': {'automatic_placement': auto}})
-    yield instance, inst_args, image
-
-    logger.info('Fixture cleanup, deleting test instance: %s', instance.name)
-    try:
-        instance.cleanup_on_provider()
-    except Exception as ex:
-        logger.warning('Exception while deleting instance fixture, continuing: {}'
-                       .format(ex.message))
+    yield vm_name, inst_args
 
 
 @pytest.fixture(scope='function')
-def provisioned_instance(provider, testing_instance, appliance):
+def provisioned_instance(provider, instance_args, appliance):
     """ Checks provisioning status for instance """
-    instance, inst_args, image = testing_instance
-    instance.create(**inst_args)
+    vm_name, inst_args = instance_args
+    instance = appliance.collections.cloud_instances.create(vm_name,
+                                                            provider,
+                                                            form_values=inst_args)
+    view = appliance.browser.create_view(BaseLoggedInPage)  # not the page we're on, but has flash
+    view.flash.assert_success_message(instance.PROVISION_START)
+
     logger.info('Waiting for cfme provision request for vm %s', instance.name)
-    request_description = 'Provision from [{}] to [{}]'.format(image, instance.name)
+    request_description = 'Provision from [{}] to [{}]'.format(inst_args.get('template_name'),
+                                                               instance.name)
     provision_request = appliance.collections.requests.instantiate(request_description)
     try:
         provision_request.wait_for_request(method='ui')
-    except Exception as e:
-        logger.info(
-            "Provision failed {}: {}".format(e, provision_request.request_state))
-        raise e
+    except Exception:
+        logger.exception(
+            "Provision failed: {}".format(provision_request.request_state))
+        raise
     assert provision_request.is_succeeded(method='ui'), (
         "Provisioning failed with the message {}".format(
             provision_request.row.last_message.text))
@@ -149,10 +142,17 @@ def provisioned_instance(provider, testing_instance, appliance):
              num_sec=1000,
              delay=60,
              handle_exception=True)
-    return instance
+    yield instance
+
+    logger.info('Instance cleanup, deleting %s', instance.name)
+    try:
+        instance.delete_from_provider()
+    except Exception as ex:
+        logger.warning('Exception while deleting instance fixture, continuing: {}'
+                       .format(ex.message))
 
 
-@pytest.mark.parametrize('testing_instance', [True, False], ids=["Auto", "Manual"], indirect=True)
+@pytest.mark.parametrize('instance_args', [True, False], ids=["Auto", "Manual"], indirect=True)
 def test_cloud_provision_from_template(provider, provisioned_instance):
     """ Tests instance provision from template
 
@@ -162,16 +162,18 @@ def test_cloud_provision_from_template(provider, provisioned_instance):
     assert provisioned_instance.does_vm_exist_on_provider(), "Instance wasn't provisioned"
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(GCEProvider))
-def test_gce_preemptible_provision(provider, testing_instance, soft_assert):
-    instance, inst_args, image = testing_instance
-    instance.create(**inst_args)
+@pytest.mark.provider([GCEProvider], required_fields=[['provisioning', 'image']],
+                      override=True)
+def test_gce_preemptible_provision(appliance, provider, instance_args, soft_assert):
+    vm_name, inst_args = instance_args
+    instance = appliance.collections.cloud_instances.create(vm_name,
+                                                            provider,
+                                                            form_values=inst_args)
     instance.wait_to_appear(timeout=800)
     provider.refresh_provider_relationships()
     logger.info("Refreshing provider relationships and power states")
-    refresh_timer = RefreshTimer(time_for_refresh=300)
     wait_for(provider.is_refreshed,
-             [refresh_timer],
+             [RefreshTimer(time_for_refresh=300)],
              message="is_refreshed",
              num_sec=1000,
              delay=60,
@@ -183,7 +185,7 @@ def test_gce_preemptible_provision(provider, testing_instance, soft_assert):
 
 
 def test_cloud_provision_from_template_using_rest(
-        appliance, request, setup_provider, provider, vm_name, provisioning):
+        appliance, request, provider, vm_name, provisioning):
     """ Tests provisioning from a template using the REST API.
 
     Metadata:
@@ -263,9 +265,10 @@ def test_cloud_provision_from_template_using_rest(
                              'root_username': vm_user,
                              'root_password': vm_password}})
 
-    request.addfinalizer(
-        lambda: VM.factory(vm_name, provider).cleanup_on_provider()
-    )
+    @request.addfinalizer
+    def _delete_vm():
+        vm = provider.appliance.collections.cloud_instances.instantiate(vm_name, provider)
+        vm.delete_from_provider()
 
     response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)[0]
     assert_response(appliance)
@@ -281,9 +284,10 @@ def test_cloud_provision_from_template_using_rest(
         num_sec=1000, delay=5, message="VM {} becomes visible".format(vm_name))
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider, OpenStackProvider))
+@pytest.mark.provider([EC2Provider, OpenStackProvider], required_fields=[['provisioning', 'image']],
+                      override=True)
 def test_manual_placement_using_rest(
-        appliance, request, setup_provider, provider, vm_name, provisioning):
+        appliance, request, provider, vm_name, provisioning):
     """ Tests provisioning cloud instance with manual placement using the REST API.
 
     Metadata:
@@ -417,7 +421,8 @@ def test_manual_placement_using_rest(
         provision_data['vm_fields']['cloud_tenant'] = cloud_tenant_id
 
     request.addfinalizer(
-        lambda: VM.factory(vm_name, provider).cleanup_on_provider()
+        lambda: appliance.collections.cloud_instances.instantiate(vm_name,
+                                                                  provider).delete_from_provider()
     )
 
     response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)[0]
@@ -446,19 +451,19 @@ ONE_FIELD = """{{:volume_id => "{}", :device_name => "{}"}}"""
 
 @pytest.fixture(scope="module")
 def domain(request, appliance):
-    domain = DomainCollection(appliance).create(name=fauxfactory.gen_alphanumeric(), enabled=True)
+    domain = appliance.collections.domains.create(name=fauxfactory.gen_alphanumeric(), enabled=True)
     request.addfinalizer(domain.delete_if_exists)
     return domain
 
 
 @pytest.fixture(scope="module")
 def original_request_class(appliance):
-    return DomainCollection(appliance).instantiate(name='ManageIQ')\
-        .namespaces.instantiate(name='Cloud')\
-        .namespaces.instantiate(name='VM')\
-        .namespaces.instantiate(name='Provisioning')\
-        .namespaces.instantiate(name='StateMachines')\
-        .classes.instantiate(name='Methods')
+    return (appliance.collections.domains.instantiate(name='ManageIQ')
+            .namespaces.instantiate(name='Cloud')
+            .namespaces.instantiate(name='VM')
+            .namespaces.instantiate(name='Provisioning')
+            .namespaces.instantiate(name='StateMachines')
+            .classes.instantiate(name='Methods'))
 
 
 @pytest.fixture(scope="module")
@@ -466,12 +471,12 @@ def modified_request_class(request, domain, original_request_class):
     with pytest.raises(Exception, match="error: Error during 'Automate Class copy'"):
         # methods of this class might have been copied by other fixture, so this error can occur
         original_request_class.copy_to(domain)
-    klass = domain\
-        .namespaces.instantiate(name='Cloud')\
-        .namespaces.instantiate(name='VM')\
-        .namespaces.instantiate(name='Provisioning')\
-        .namespaces.instantiate(name='StateMachines')\
-        .classes.instantiate(name='Methods')
+    klass = (domain
+             .namespaces.instantiate(name='Cloud')
+             .namespaces.instantiate(name='VM')
+             .namespaces.instantiate(name='Provisioning')
+             .namespaces.instantiate(name='StateMachines')
+             .classes.instantiate(name='Methods'))
     request.addfinalizer(klass.delete_if_exists)
     return klass
 
@@ -485,17 +490,17 @@ def copy_domains(original_request_class, domain):
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.parametrize("disks", [1, 2])
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
+@pytest.mark.provider([OpenStackProvider], required_fields=[['provisioning', 'image']],
+                      override=True)
 def test_cloud_provision_from_template_with_attached_disks(
-        request, testing_instance, provider, disks,
-        soft_assert, domain, modified_request_class,
-        copy_domains, provisioning):
+        appliance, request, instance_args, provider, disks, soft_assert, domain,
+        modified_request_class, copy_domains, provisioning):
     """ Tests provisioning from a template and attaching disks
 
     Metadata:
         test_flag: provision
     """
-    instance, inst_args, image = testing_instance
+    vm_name, inst_args = instance_args
     # Modify availiability_zone for Azure provider
     if provider.one_of(AzureProvider):
         recursive_update(inst_args, {'environment': {'availability_zone': provisioning("av_set")}})
@@ -521,26 +526,31 @@ def test_cloud_provision_from_template_with_attached_disks(
                 method.script = """prov = $evm.root["miq_provision"]"""
         request.addfinalizer(_finish_method)
 
-        instance.create(**inst_args)
+        instance = appliance.collections.cloud_instances.create(vm_name,
+                                                                provider,
+                                                                form_values=inst_args)
 
         for volume_id in volumes:
             soft_assert(vm_name in provider.mgmt.volume_attachments(volume_id))
         for volume, device in device_mapping:
             soft_assert(provider.mgmt.volume_attachments(volume)[vm_name] == device)
-        instance.cleanup_on_provider()  # To make it possible to delete the volume
+        instance.delete_from_provider()  # To make it possible to delete the volume
         wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
 
 
 # Not collected for EC2 in generate_tests above
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_provision_with_boot_volume(request, testing_instance, provider, soft_assert,
+@pytest.mark.provider([OpenStackProvider], required_fields=[['provisioning', 'image']],
+                      override=True)
+def test_provision_with_boot_volume(request, instance_args, provider, soft_assert,
                                     modified_request_class, appliance, copy_domains):
     """ Tests provisioning from a template and attaching one booting volume.
 
     Metadata:
         test_flag: provision, volumes
     """
-    instance, inst_args, image = testing_instance
+    vm_name, inst_args = instance_args
+
+    image = inst_args.get('template_name')
 
     with provider.mgmt.with_volume(1, imageRef=provider.mgmt.get_template_id(image)) as volume:
         # Set up automate
@@ -568,7 +578,9 @@ def test_provision_with_boot_volume(request, testing_instance, provider, soft_as
             with update(method):
                 method.script = """prov = $evm.root["miq_provision"]"""
 
-        instance.create(**inst_args)
+        instance = appliance.collections.cloud_instances.create(vm_name,
+                                                                provider,
+                                                                form_values=inst_args)
 
         request_description = 'Provision from [{}] to [{}]'.format(image,
                                                                    instance.name)
@@ -589,8 +601,9 @@ def test_provision_with_boot_volume(request, testing_instance, provider, soft_as
 
 
 # Not collected for EC2 in generate_tests above
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_provision_with_additional_volume(request, testing_instance, provider, small_template,
+@pytest.mark.provider([OpenStackProvider], required_fields=[['provisioning', 'image']],
+                      override=True)
+def test_provision_with_additional_volume(request, instance_args, provider, small_template,
                                           soft_assert, modified_request_class, appliance,
                                           copy_domains):
     """ Tests provisioning with setting specific image from AE and then also making it create and
@@ -599,7 +612,7 @@ def test_provision_with_additional_volume(request, testing_instance, provider, s
     Metadata:
         test_flag: provision, volumes
     """
-    instance, inst_args, image = testing_instance
+    vm_name, inst_args = instance_args
 
     # Set up automate
     method = modified_request_class.methods.instantiate(name="openstack_CustomizeRequest")
@@ -630,7 +643,9 @@ def test_provision_with_additional_volume(request, testing_instance, provider, s
             method.script = """prov = $evm.root["miq_provision"]"""
     request.addfinalizer(_finish_method)
 
-    instance.create(**inst_args)
+    instance = appliance.collections.cloud_instances.create(vm_name,
+                                                            provider,
+                                                            form_values=inst_args)
 
     request_description = 'Provision from [{}] to [{}]'.format(small_template.name, instance.name)
     provision_request = appliance.collections.requests.instantiate(request_description)
@@ -654,14 +669,14 @@ def test_provision_with_additional_volume(request, testing_instance, provider, s
         volume = provider.mgmt.get_volume(volume_id)
         assert volume.size == 3
     finally:
-        instance.cleanup_on_provider()
+        instance.delete_from_provider()
         wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
         if "volume_id" in locals():  # To handle the case of 1st or 2nd assert
             if provider.mgmt.volume_exists(volume_id):
                 provider.mgmt.delete_volume(volume_id)
 
 
-@pytest.mark.parametrize('testing_instance', ['tag'], indirect=True)
+@pytest.mark.parametrize('instance_args', ['tag'], indirect=True)
 def test_cloud_provision_with_tag(provisioned_instance, tag):
     """ Tests tagging instance using provisioning dialogs.
 

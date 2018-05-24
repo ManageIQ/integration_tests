@@ -2,6 +2,7 @@ import attr
 
 from wrapanapi.openstack import OpenstackSystem
 
+from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.common.provider import EventsEndpoint
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.provider.openstack_infra import RHOSEndpoint, OpenStackInfraEndpointForm
@@ -18,6 +19,7 @@ class OpenStackProvider(CloudProvider):
     catalog_item_type = OpenStackCatalogItem
     type_name = "openstack"
     mgmt_class = OpenstackSystem
+    vm_class = OpenStackInstance
     db_types = ["Openstack::CloudManager"]
     endpoints_form = OpenStackInfraEndpointForm
     settings_key = 'ems_openstack'

@@ -2,7 +2,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.common.provider import CloudInfraProvider
-from cfme.common.vm import VM
 
 pytestmark = [
     test_requirements.tag,
@@ -14,7 +13,8 @@ pytestmark = [
 @pytest.fixture(scope="module")
 def tagged_vm(tag, has_no_providers_modscope, setup_provider_modscope, provider):
     ownership_vm = provider.data.cap_and_util.capandu_vm
-    tag_vm = VM.factory(ownership_vm, provider)
+    collection = provider.appliance.provider_based_collection(provider)
+    tag_vm = collection.instantiate(ownership_vm, provider)
     tag_vm.add_tag(tag=tag)
     yield tag_vm
     tag_vm.appliance.server.login_admin()

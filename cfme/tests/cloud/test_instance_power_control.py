@@ -4,10 +4,10 @@ import pytest
 
 from cfme import test_requirements
 from cfme.base.login import BaseLoggedInPage
-from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -17,17 +17,20 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.long_running,
     test_requirements.power,
-    pytest.mark.provider([CloudProvider], scope='function', required_fields=['test_power_control']),
+    pytest.mark.provider([CloudProvider], scope='function',
+                         required_fields=['test_power_control']),
     pytest.mark.usefixtures('setup_provider'),
 ]
 
 
-def create_instance(provider):
-    instance = Instance.factory(random_vm_name('pwr-c'), provider)
+def create_instance(appliance, provider, template_name):
+    instance = appliance.collections.cloud_instances.instantiate(random_vm_name('pwr-c'),
+                                                                 provider,
+                                                                 template_name)
     if not provider.mgmt.does_vm_exist(instance.name):
         instance.create_on_provider(allow_skip="default", find_in_cfme=True)
-    elif instance.provider.type == "ec2" and \
-            provider.mgmt.is_vm_state(instance.name, provider.mgmt.states['deleted']):
+    elif (instance.provider.one_of(EC2Provider) and
+            provider.mgmt.is_vm_state(instance.name, provider.mgmt.states['deleted'])):
         provider.mgmt.set_name(
             instance.name, 'test_terminated_{}'.format(fauxfactory.gen_alphanumeric(8)))
         instance.create_on_provider(allow_skip="default", find_in_cfme=True)
@@ -35,21 +38,21 @@ def create_instance(provider):
 
 
 @pytest.fixture(scope="function")
-def testing_instance(provider):
+def testing_instance(appliance, provider, small_template, setup_provider):
     """ Fixture to provision instance on the provider
     """
-    instance = create_instance(provider)
+    instance = create_instance(appliance, provider, small_template.name)
     yield instance
-    instance.cleanup_on_provider()
+    instance.delete_from_provider()
 
 
 @pytest.fixture(scope="function")
-def testing_instance2(provider):
+def testing_instance2(appliance, provider, small_template, setup_provider):
     """ Fixture to provision instance on the provider
     """
-    instance2 = create_instance(provider)
+    instance2 = create_instance(appliance, provider, small_template.name)
     yield instance2
-    instance2.cleanup_on_provider()
+    instance2.delete_from_provider()
 
 
 # This fixture must be named 'vm_name' because its tied to cfme/fixtures/virtual_machine
@@ -294,7 +297,7 @@ def test_power_on_or_off_multiple(provider, testing_instance, testing_instance2,
     testing_instance2.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
 
     def _get_view_with_icons_checked():
-        view = navigate_to(testing_instance, 'All')
+        view = navigate_to(testing_instance.parent, 'All')
         view.toolbar.view_selector.select('Grid View')
         view.paginator.set_items_per_page(1000)
         view.entities.get_entity(name=testing_instance.name).check()

@@ -10,7 +10,6 @@ from cfme.common.provider import base_types
 from cfme.configure.access_control import AddUserView
 from cfme.configure.tasks import TasksView
 from cfme.exceptions import RBACOperationBlocked
-from cfme.infrastructure import virtual_machines as vms
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -76,7 +75,6 @@ def new_role(appliance, name=None):
 @pytest.fixture(scope='function')
 def check_item_visibility(tag):
     def _check_item_visibility(item, user_restricted):
-        category_name = ' '.join((tag.category.display_name, '*'))
         item.add_tag(tag)
         with user_restricted:
             assert item.exists
@@ -635,24 +633,25 @@ def test_assign_user_to_new_group(appliance, group_collection):
 
 def _test_vm_provision(appliance):
     logger.info("Checking for provision access")
-    view = navigate_to(vms.InfraVm, 'VMsOnly')
+    view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
     view.toolbar.lifecycle.item_enabled('Provision VMs')
 
 # this fixture is used in disabled tests. it should be updated along with tests
 # def _test_vm_power_on():
 #     """Ensures power button is shown for a VM"""
 #     logger.info("Checking for power button")
-#     vm_name = vms.InfraVm.get_first_vm()
+#     vm_name = ## use collection.all and pick the first
 #     logger.debug("VM " + vm_name + " selected")
 #     if not vms.is_pwr_option_visible(vm_name, option=vms.InfraVm.POWER_ON):
 #         raise OptionNotAvailable("Power button does not exist")
 
 
-def _test_vm_removal():
+# Test using this method has been commented out
+def _test_vm_removal(appliance, provider):
     logger.info("Testing for VM removal permission")
-    vm_name = vms.get_first_vm()
-    logger.debug("VM {} selected".format(vm_name))
-    vms.remove(vm_name, cancel=True)
+    vm = appliance.collections.infra_vms.all()[0]  # pick first vm from collection
+    logger.debug("VM {} selected".format(vm.name))
+    vm.delete(cancel=True)
 
 
 @pytest.mark.tier(3)
@@ -681,7 +680,7 @@ def test_permission_edit(appliance, request, product_features):
     user = new_user(appliance, [group])
     with user:
             # Navigation should succeed with valid permissions
-            navigate_to(vms.InfraVm, 'VMsOnly')
+            navigate_to(appliance.collections.infra_vms, 'VMsOnly')
 
     appliance.server.login_admin()
     role.update({'product_features': [(['Everything'], True)] +
@@ -689,7 +688,7 @@ def test_permission_edit(appliance, request, product_features):
                  })
     with user:
         with pytest.raises(Exception, message='Permissions have not been updated'):
-            navigate_to(vms.InfraVm, 'VMsOnly')
+            navigate_to(appliance.collections.infra_vms, 'VMsOnly')
 
     @request.addfinalizer
     def _delete_user_group_role():
@@ -819,7 +818,6 @@ def single_task_permission_test(appliance, product_features, actions):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1262764])
 def test_permissions_role_crud(appliance):
     single_task_permission_test(appliance,
                                 [['Everything', 'Settings', 'Configuration'],

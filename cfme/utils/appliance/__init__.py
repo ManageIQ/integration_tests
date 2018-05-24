@@ -480,8 +480,8 @@ class IPAppliance(object):
         region = kwargs.pop('region', 0)
         key_address = kwargs.pop('key_address', None)
         db_address = kwargs.pop('db_address', None)
-        on_openstack = kwargs.pop('on_openstack', False)
         on_gce = kwargs.pop('on_gce', False)
+        on_openstack = kwargs.pop('on_openstack', False)
         with self as ipapp:
             ipapp.wait_for_ssh()
 
@@ -2407,6 +2407,34 @@ class IPAppliance(object):
             result = self.appliance_console_cli.set_hostname(str(fqdn))
             return result.success
 
+    def provider_based_collection(self, provider, coll_type='vms'):
+        """Given a provider, fetches a collection for the given collection type
+
+        Some collections are provider based, like infra vms and cloud instances
+        This provides an easy way to pick which one is right for your provider
+
+        Args:
+            provider: provider class/instance for lookup
+            coll_type: which collection type to return based on the provider type
+
+        Notes:
+            Add coll_type support as there are collections dependent on a provider type
+
+        Examples:
+            # returns the infra_vms collection
+            appliance.collections.provider_based_collection(rhevm_provider, 'vms')
+        """
+        from cfme.cloud.provider import CloudProvider  # for checking provider type
+        if coll_type == 'vms':
+            return getattr(self.collections,
+                           'cloud_instances' if provider.one_of(CloudProvider) else 'infra_vms')
+        if coll_type == 'templates':
+            return getattr(self.collections,
+                           'cloud_images' if provider.one_of(CloudProvider) else 'infra_templates')
+        else:
+            raise ValueError('No support for coll_type: "{}" collection name lookup'
+                             .format(coll_type))
+
 
 class Appliance(IPAppliance):
     """Appliance represents an already provisioned cfme appliance vm
@@ -2561,14 +2589,14 @@ class Appliance(IPAppliance):
             if self.is_on_rhev:
                 from cfme.infrastructure.virtual_machines import InfraVm
                 log_callback('Setting up CFME VM relationship...')
-                from cfme.common.vm import VM
                 from cfme.utils.providers import get_crud
-                vm = VM.factory(self.vm_name, get_crud(self.provider_key))
+                vm = self.collections.infra_vms.instantiate(self.vm_name,
+                                                            get_crud(self.provider_key))
                 cfme_rel = InfraVm.CfmeRelationship(vm)
                 cfme_rel.set_relationship(str(self.server.name), self.server.sid)
 
     def does_vm_exist(self):
-        return self.provider.does_vm_exist(self.vm_name)
+        return self.provider.mgmt.does_vm_exist(self.vm_name)
 
     def rename(self, new_name):
         """Changes appliance name
