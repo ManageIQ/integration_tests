@@ -46,7 +46,7 @@ pytestmark = [
 
 class VMWrapper(Pretty):
     """This class binds a provider_mgmt object with VM name. Useful for on/off operation"""
-    __slots__ = ("_prov", "_vm", "api", "crud")
+    __slots__ = ("_prov", "_vm", "api")
     pretty_attrs = ['_vm', '_prov']
 
     def __init__(self, provider, vm_name, api):
