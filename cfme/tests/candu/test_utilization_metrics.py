@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import random
-import time
 from operator import attrgetter
 
 import pytest
@@ -18,6 +17,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 from cfme.fixtures.provider import setup_or_skip
 
 pytestmark = [
@@ -30,27 +30,25 @@ pytestmark = [
 
 
 @pytest.fixture(scope="module")
-def enable_candu(appliance):
-    candu = appliance.collections.candus
-    server_settings = appliance.server.settings
-    original_roles = server_settings.server_roles_db
-    try:
-        server_settings.enable_server_roles(
-            'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
-        server_settings.disable_server_roles('automate', 'smartstate')
-        candu.enable_all()
-        yield
-    finally:
-        candu.disable_all()
-        server_settings.update_server_roles_db(original_roles)
-
-
-@pytest.fixture(scope="module")
 def clean_setup_provider(request, provider):
     BaseProvider.clear_providers()
     setup_or_skip(request, provider)
     yield
     BaseProvider.clear_providers()
+
+
+def vm_count(appliance, metrics_tbl, mgmt_system_id):
+    return bool(appliance.db.client.session.query(metrics_tbl).filter(
+        metrics_tbl.parent_ems_id == mgmt_system_id).filter(
+        metrics_tbl.resource_type == "VmOrTemplate").count()
+    )
+
+
+def host_count(appliance, metrics_tbl, mgmt_system_id):
+    return bool(appliance.db.client.session.query(metrics_tbl).filter(
+        metrics_tbl.parent_ems_id == mgmt_system_id).filter(
+        metrics_tbl.resource_type == "Host").count()
+    )
 
 
 @pytest.fixture(scope="module")
@@ -69,36 +67,23 @@ def metrics_collection(appliance, clean_setup_provider, provider, enable_candu):
     ).first().id
 
     logger.info("ID fetched; testing metrics collection now")
-    start_time = time.time()
-    host_count = 0
-    vm_count = 0
-    timeout = 1200.0  # 20 min
-    while time.time() < start_time + timeout:
-        remaining = (start_time + timeout) - time.time()
-        # ToDo: Refactor code with wait_for
 
-        logger.info("name: %s, id: %s, vms: %s, hosts: %s, %d seconds remain until timeout",
-            provider.key, mgmt_system_id, vm_count, host_count, remaining)
-        # Count host and vm metrics for the provider we're testing
-        host_count = appliance.db.client.session.query(metrics_tbl).filter(
-            metrics_tbl.parent_ems_id == mgmt_system_id).filter(
-            metrics_tbl.resource_type == "Host"
-        ).count()
-        vm_count = appliance.db.client.session.query(metrics_tbl).filter(
-            metrics_tbl.parent_ems_id == mgmt_system_id).filter(
-            metrics_tbl.resource_type == "VmOrTemplate"
-        ).count()
-        # only vms are collected for cloud
-        if provider.category == "cloud" and vm_count:
-            return
-        # both vms and hosts must be collected for infra
-        elif provider.category == "infra" and vm_count and host_count:
-            return
-        else:
-            time.sleep(20)
+    # vms for both infa and cloud provider
+    wait_for(
+        vm_count, [appliance, metrics_tbl, mgmt_system_id],
+        delay=20,
+        timeout=1500,
+        fail_condition=False,
+        message="wait for VMs")
 
-    if time.time() > start_time + timeout:
-        raise Exception("Timed out waiting for metrics to be collected")
+    # host only for infa
+    if provider.category == "infra":
+        wait_for(
+            vm_count, [appliance, metrics_tbl, mgmt_system_id],
+            delay=20,
+            timeout=1500,
+            fail_condition=False,
+            message="wait for hosts.")
 
 
 def get_host_name(provider):
