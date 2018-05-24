@@ -1,6 +1,8 @@
 from contextlib import closing
 from threading import Lock
-from urllib2 import urlopen, URLError
+
+from six.moves.urllib.request import urlopen
+from six.moves.urllib.error import URLError
 
 from fauxfactory import gen_alphanumeric
 

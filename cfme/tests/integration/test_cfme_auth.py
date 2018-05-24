@@ -63,6 +63,10 @@ def pytest_generate_tests(metafunc):
     argnames = ['auth_mode', 'prov_key', 'user_type']
     argvalues = []
     if 'auth_providers' not in auth_data:
+        metafunc.parametrize(argnames, [
+            pytest.param(
+                None, None, None,
+                marks=pytest.mark.uncollect("auth providers data missing"))])
         return
     for mode in test_param_maps.keys():
         for auth_type in test_param_maps.get(mode, {}):
@@ -70,7 +74,7 @@ def pytest_generate_tests(metafunc):
                                   for key, prov_dict in iteritems(auth_data.auth_providers)
                                   if prov_dict.type == auth_type}
             for user_type in test_param_maps[mode][auth_type]['user_types']:
-                argvalues.extend([[mode, key, user_type]
+                argvalues.extend([(mode, key, user_type)
                                  for key, prov_dict in iteritems(eligible_providers)
                                  if user_type in prov_dict.get('user_types', [])])
     metafunc.parametrize(argnames, argvalues)

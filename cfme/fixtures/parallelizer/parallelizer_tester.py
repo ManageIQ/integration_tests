@@ -10,7 +10,7 @@ import random
 from time import sleep
 
 import pytest
-
+from six.moves import range
 # uncommment this to slow things down, if desired
 # pytestmark= pytest.mark.usefixtures("wait")
 
@@ -18,7 +18,7 @@ num_copies = 20
 
 
 @pytest.fixture(
-    params=xrange(10, 10 * num_copies),
+    params=range(10, 10 * num_copies),
     autouse=True,
     scope='module',
 )
