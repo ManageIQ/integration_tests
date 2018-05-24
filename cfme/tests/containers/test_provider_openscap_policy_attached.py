@@ -4,7 +4,6 @@ from collections import namedtuple
 import dateparser
 import pytest
 
-from cfme.configure.tasks import delete_all_tasks
 from cfme.containers.provider import (ContainersProvider, refresh_and_navigate)
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
@@ -28,8 +27,9 @@ TESTED_ATTRIBUTES__openscap = (
 
 
 @pytest.fixture(scope='function')
-def delete_all_container_tasks():
-    delete_all_tasks('AllTasks')
+def delete_all_container_tasks(appliance):
+    col = appliance.collections.tasks.filter({'tab': 'AllTasks'})
+    col.delete_all()
 
 
 @pytest.fixture(scope='function')

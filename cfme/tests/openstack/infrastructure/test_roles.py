@@ -1,10 +1,8 @@
 import pytest
 from random import choice
 
-from cfme.configure.tasks import is_host_analysis_finished
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.wait import wait_for
 
 
 pytestmark = [
@@ -33,8 +31,9 @@ def test_host_role_association(appliance, provider, soft_assert):
     for host in hosts:
         host.run_smartstate_analysis()
 
-        wait_for(is_host_analysis_finished, [host.name], delay=15,
-                 timeout="10m", fail_func=host.browser.refresh)
+        task = appliance.collections.tasks.instantiate(
+            name="SmartState Analysis for '{}'".format(host.name), tab='MyOtherTasks')
+        task.wait_for_finished()
         view = navigate_to(host, 'Details')
         role_name = str(view.title.text.split()[1]).translate(None, '()')
         role_name = 'Compute' if role_name == 'NovaCompute' else role_name

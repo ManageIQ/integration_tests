@@ -172,6 +172,7 @@ setup(
             'system_image_types = cfme.infrastructure.pxe:SystemImageTypeCollection',
             ('system_schedules = '
                 'cfme.configure.configuration.system_schedules:SystemSchedulesCollection'),
+            'tasks = cfme.configure.tasks:TasksCollection',
             'tenants = cfme.configure.access_control:TenantCollection',
             'time_profiles = cfme.configure.settings:TimeProfileCollection',
             'users = cfme.configure.access_control:UserCollection',

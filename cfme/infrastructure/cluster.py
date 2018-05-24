@@ -8,7 +8,6 @@ from widgetastic_patternfly import Button, Dropdown
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
-from cfme.configure.tasks import is_cluster_analysis_finished, TasksView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
@@ -250,10 +249,10 @@ class Cluster(Pretty, BaseEntity, Taggable):
             'Cluster / Deployment Role: scan successfully initiated'
         )
         if wait_for_task_result:
-            view = self.appliance.browser.create_view(TasksView)
-            wait_for(lambda: is_cluster_analysis_finished(self.name),
-                     delay=15, timeout="15m",
-                     fail_func=view.reload.click)
+            task = self.appliance.collections.tasks.instantiate(
+                name="SmartState Analysis for [{}]".format(self.name), tab='MyOtherTasks')
+            task.wait_for_finished()
+            return task
 
 
 @attr.s
