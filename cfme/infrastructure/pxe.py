@@ -678,6 +678,68 @@ class PXESystemImageTypeEditView(PXESystemImageTypeForm):
     cancel = Button('Cancel')
 
 
+class SystemImage(Updateable, Navigatable):
+
+    def __init__(self, name=None, image_type=None, datastore=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
+        self.name = name
+        self.image_type = image_type
+        self.datastore = datastore
+
+    def set_image_type(self):
+        view = navigate_to(self, 'Edit')
+        changed = view.image_type.fill_with(self.image_type)
+        if changed:
+            view.save.click()
+        else:
+            view.cancel.click()
+
+
+class PXESystemImageDeatilsView(PXEMainView):
+
+    @property
+    def is_displayed(self):
+        return self.sidebar.datastores.tree.read()[-1] == self.context['object'].name
+
+    @View.nested
+    class entities(View):  # noqa
+        basic_information = SummaryTable(title="Basic Information")
+
+
+class PXESystemImageEditView(PXEMainView):
+
+    @property
+    def is_displayed(self):
+        return False
+
+    image_type = BootstrapSelect(id='image_typ')
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+
+@navigator.register(SystemImage, 'Details')
+class SystemImageDetails(CFMENavigateStep):
+    VIEW = PXESystemImageDeatilsView
+    prerequisite = NavigateToSibling('PXEMainPage')
+
+    def step(self):
+        self.view.sidebar.datastores.tree.click_path(
+            'All ISO Datastores',
+            self.view.context['object'].datastore.provider,
+            'ISO Images',
+            self.view.context['object'].name)
+
+
+@navigator.register(SystemImage, 'Edit')
+class SystemImageEdit(CFMENavigateStep):
+    VIEW = PXESystemImageEditView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.view.toolbar.configuration.item_select('Edit this ISO Image')
+
+
 @attr.s
 class SystemImageType(Updateable, Pretty, BaseEntity):
     """Model of a System Image Type in CFME.
@@ -999,6 +1061,7 @@ class ISODatastoreDetails(CFMENavigateStep):
         self.view.sidebar.datastores.tree.click_path("All ISO Datastores", self.obj.provider)
 
 
+@navigator.register(SystemImage, 'PXEMainPage')
 @navigator.register(PXEServer, 'PXEMainPage')
 @navigator.register(CustomizationTemplateCollection, 'PXEMainPage')
 @navigator.register(SystemImageTypeCollection, 'PXEMainPage')
