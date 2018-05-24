@@ -104,7 +104,7 @@ def is_ovirt_engine_running(rhevm_ip, sshname, sshpass):
 
 def change_edomain_state(mgmt, state, edomain, provider):
     try:
-        return mgmt.change_storage_domain_state(state, edomain, provider)
+        return mgmt.change_storage_domain_state(state, edomain)
     except Exception:
         logger.exception("RHEVM:%s Exception occurred while changing %s state to %s",
                          provider, edomain, state)
@@ -136,7 +136,7 @@ def template_from_ova(mgmt, username, password, rhevip, edomain, ovaname, ssh_cl
        to make a template from ova file.
 
     Args:
-        mgmt: API for RHEVM.
+        mgmt: A ``RHEVMSystem`` instance from wrapanapi..
         username: Username to chosen RHEVM provider.
         password: Password to chosen RHEVM provider.
         rhevip: IP of chosen RHEVM provider.
@@ -146,7 +146,7 @@ def template_from_ova(mgmt, username, password, rhevip, edomain, ovaname, ssh_cl
         temp_template_name: temporary template name (this template will be deleted)
     """
     try:
-        if mgmt.storagedomains.get(edomain).templates.get(temp_template_name) is not None:
+        if mgmt.get_template_from_storage_domain(temp_template_name, edomain):
             logger.info("RHEVM:%r Warning: found another template with this name.", provider)
             logger.info("RHEVM:%r Skipping this step. Attempting to continue...", provider)
             return
@@ -179,35 +179,27 @@ def template_from_ova(mgmt, username, password, rhevip, edomain, ovaname, ssh_cl
         logger.exception("RHEVM:%r template_from_ova failed:", provider)
 
 
-def import_template(api, edomain, sdomain, cluster, temp_template_name, provider):
+def import_template(mgmt, edomain, sdomain, cluster, temp_template_name, provider):
     """Imports template from export domain to storage domain.
 
     Args:
-        api: API to RHEVM instance.
+        mgmt: A ``RHEVMSystem`` instance from wrapanapi..
         edomain: Export domain of selected RHEVM provider.
         sdomain: Storage domain of selected RHEVM provider.
         cluster: Cluster to save imported template on.
     """
-    # This code should be ported to wrapanapi
-    # try:
-    #     if api.templates.get(temp_template_name) is not None:
-    #         logger.info("RHEVM:%r Warning: found another template with this name.", provider)
-    #         logger.info("RHEVM:%r Skipping this step, attempting to continue...", provider)
-    #         return
-    #     actual_template = api.storagedomains.get(edomain).templates.get(temp_template_name)
-    #     actual_storage_domain = api.storagedomains.get(sdomain)
-    #     actual_cluster = api.clusters.get(cluster)
-    #     import_action = params.Action(async=False, cluster=actual_cluster,
-    #                                   storage_domain=actual_storage_domain)
-    #     actual_template.import_template(action=import_action)
-    #     # Check if the template is really there
-    #     if not api.templates.get(temp_template_name):
-    #         logger.info("RHEVM:%r The template failed to import on data domain", provider)
-    #         sys.exit(127)
-    #     logger.info("RHEVM:%r successfully imported template on data domain", provider)
-    # except Exception:
-    #     logger.exception("RHEVM:%r import_template to data domain failed:", provider)
-    raise NotImplementedError
+    try:
+        if temp_template_name in mgmt.list_template():
+            logger.info("RHEVM:%r Warning: found another template with this name.", provider)
+            logger.info("RHEVM:%r Skipping this step, attempting to continue...", provider)
+            return
+        mgmt.import_template(edomain, sdomain, cluster, temp_template_name)
+        if not mgmt.does_template_exist(temp_template_name):
+            logger.info("RHEVM:%r The template failed to import on data domain", provider)
+            sys.exit(127)
+        logger.info("RHEVM:%r successfully imported template on data domain", provider)
+    except Exception:
+        logger.exception("RHEVM:%r import_template to data domain failed:", provider)
 
 
 def make_vm_from_template(mgmt, stream, cfme_data, cluster, temp_template_name,
@@ -219,7 +211,7 @@ def make_vm_from_template(mgmt, stream, cfme_data, cluster, temp_template_name,
         mgmt: A ``RHEVMSystem`` instance from wrapanapi.
         cluster: Cluster to save the temporary VM on.
         mgmt_network: management network on RHEVM box, its 'ovirtmgmt' by default on rhv4.0 and
-        'rhevm' on older RHEVM versions.
+            'rhevm' on older RHEVM versions.
         temp_template_name: temporary template name created from ova
         temp_vm_name: temporary vm name to be created.
         provider: provider_key
@@ -255,40 +247,25 @@ def make_vm_from_template(mgmt, stream, cfme_data, cluster, temp_template_name,
         logger.exception("RHEVM:%r Make_temp_vm_from_template failed:", provider)
 
 
-def check_disks(api, temp_vm_name):
-    # This code should be ported to wrapanapi
-    # disks = api.vms.get(temp_vm_name).disks.list()
-    # for disk in disks:
-    #     if disk.get_status().state != "ok":
-    #         return False
-    # return True
-    raise NotImplementedError
-
-
 # sometimes, rhevm is just not cooperative. This is function used to wait for template on
 # export domain to become unlocked
-def check_edomain_template(api, edomain, temp_template_name):
-    '''
-    checks for the edomain templates status, and returns True, if template state is ok
-    otherwise returns False. try, except block returns the False in case of Exception,
-    as wait_for handles the timeout Exceptions.
-    :param api: API to chosen RHEVM provider.
-    :param edomain: export domain.
-    :return: True or False based on the template status.
-    '''
-    # try:
-    #     template = api.storagedomains.get(edomain).templates.get(temp_template_name)
-    #     if template.get_status().state != "ok":
-    #         return False
-    #     return True
-    # except Exception:
-    #     return False
-    raise NotImplementedError
+def check_edomain_template(mgmt, edomain, temp_template):
+    """Checks for the edomain templates status and returns True, if template state is ok
+       otherwise returns False. try, except block returns the False in case of Exception,
+       as wait_for handles the timeout Exceptions.
 
+    Args:
+        mgmt: A ``RHEVMSystem`` instance from wrapanapi.
+        edomain: export domain.
 
-# verify the template deletion
-def is_edomain_template_deleted(api, name, edomain):
-    return not api.storagedomains.get(edomain).templates.get(name)
+    Returns:
+        True or False based on the template status.
+    """
+    try:
+        template = mgmt.get_template_from_storage_domain(temp_template, edomain)
+        return template.status.value == "ok"
+    except Exception:
+        return False
 
 
 def add_disk_to_vm(mgmt, sdomain, disk_size, disk_format, disk_interface, temp_vm_name,
@@ -296,7 +273,7 @@ def add_disk_to_vm(mgmt, sdomain, disk_size, disk_format, disk_interface, temp_v
     """Adds second disk to a temporary VM.
 
     Args:
-        mgmt: API to chosen RHEVM provider.
+        mgmt: A ``RHEVMSystem`` instance from wrapanapi.
         sdomain: Storage domain to save new disk onto.
         disk_size: Size of the new disk (in B).
         disk_format: Format of the new disk.
@@ -353,19 +330,18 @@ def templatize_vm(mgmt, template_name, cluster, temp_vm_name, provider):
         logger.exception("RHEVM:%r templatizing temporary VM failed", provider)
 
 
-# get the domain edomain path on the rhevm
-def get_edomain_path(api, edomain):
-    # This code should be ported to wrapanapi
-    # edomain_id = api.storagedomains.get(edomain).get_id()
-    # edomain_conn = api.storagedomains.get(edomain).storageconnections.list()[0]
-    # return (edomain_conn.get_path() + '/' + edomain_id,
-    #         edomain_conn.get_address())
-    raise NotImplementedError
+def get_edomain_path(mgmt, edomain):
+    """Get the domain edomain path on the rhevm."""
+    edomain_id = mgmt._get_storage_domain(edomain).id
+    edomain_conn = mgmt.get_storage_domain_connections(edomain)[0]
+    return ("{}/{}".format(edomain_conn.path, edomain_id),
+            edomain_conn.address)
 
 
 def cleanup_empty_dir_on_edomain(path, edomainip, sshname, sshpass, provider_ip, provider):
     """Cleanup all the empty directories on the edomain/edomain_id/master/vms
-    else api calls will result in 400 Error with ovf not found,
+    else api calls will result in 400 Error with ovf not found.
+
     Args:
         path: path for vms directory on edomain.
         edomain: Export domain of chosen RHEVM provider.
@@ -398,11 +374,11 @@ def cleanup_empty_dir_on_edomain(path, edomainip, sshname, sshpass, provider_ip,
         return False
 
 
-def cleanup(api, edomain, ssh_client, ovaname, provider, temp_template_name, temp_vm_name):
+def cleanup(mgmt, edomain, ssh_client, ovaname, provider, temp_template_name, temp_vm_name):
     """Cleans up all the mess that the previous functions left behind.
 
     Args:
-        api: API to chosen RHEVM provider.
+        mgmt: A ``RHEVMSystem`` instance from wrapanapi..
         edomain: Export domain of chosen RHEVM provider.
     """
     try:
@@ -413,29 +389,27 @@ def cleanup(api, edomain, ssh_client, ovaname, provider, temp_template_name, tem
             logger.error('Failure deleting ova file: %r', str(result))
 
         logger.info("RHEVM:%r Deleting the temp_vm on sdomain...", provider)
-        temporary_vm = api.vms.get(temp_vm_name)
-        if temporary_vm:
-            temporary_vm.delete()
+        if mgmt.does_vm_exist(temp_vm_name):
+            mgmt.delete_vm(temp_vm_name)
 
         logger.info("RHEVM:%r Deleting the temp_template on sdomain...", provider)
-        temporary_template = api.templates.get(temp_template_name)
-        if temporary_template:
-            temporary_template.delete()
+        if mgmt.does_template_exist(temp_template_name):
+            mgmt.delete_template(temp_template_name)
 
         # waiting for template on export domain
-        unimported_template = api.storagedomains.get(edomain).templates.get(
-            temp_template_name)
+        unimported_template = mgmt.get_template_from_storage_domain(temp_template_name, edomain)
         logger.info("RHEVM:%r waiting for template on export domain...", provider)
-        wait_for(check_edomain_template, [api, edomain, temp_template_name],
+        wait_for(check_edomain_template, [mgmt, edomain, temp_template_name],
                  fail_condition=False, delay=5, num_sec=600)
 
         if unimported_template:
             logger.info("RHEVM:%r deleting the template on export domain...", provider)
-            wait_for(unimported_template.delete, delay=10, num_sec=600, handle_exception=True)
+            wait_for(mgmt.delete_template, [unimported_template], delay=10, num_sec=600,
+                     handle_exception=True)
 
         logger.info("RHEVM:%r waiting for template delete on export domain...", provider)
-        wait_for(is_edomain_template_deleted, [api, temp_template_name, edomain],
-                 fail_condition=False, delay=5, num_sec=600)
+        wait_for(mgmt.get_template_from_storage_domain, [temp_template_name, edomain],
+                 delay=5, num_sec=600)
         logger.info("RHEVM:%r successfully deleted template on export domain...", provider)
 
     except Exception:
@@ -463,56 +437,34 @@ def api_params_resolution(item_list, item_name, item_param):
     return item_list[0]
 
 
-def get_edomain(api):
+def get_edomain(mgmt):
     """Discovers suitable export domain automatically.
 
     Args:
-        api: API to RHEVM instance.
+        mgmt: A ``RHEVMSystem`` instance from wrapanapi.
     """
-    # This code should be ported to wrapanapi
-    # edomain_names = []
-
-    # for domain in api.storagedomains.list(status=None):
-    #     if domain.get_type() == 'export':
-    #         edomain_names.append(domain.get_name())
-
-    # return api_params_resolution(edomain_names, 'export domain', 'edomain')
-    raise NotImplementedError
+    storage_domains = mgmt.list_datastore(sd_type="export")
+    return api_params_resolution(storage_domains, "export domain", "edomain")
 
 
-def get_sdomain(api):
+def get_sdomain(mgmt):
     """Discovers suitable storage domain automatically.
 
     Args:
-        api: API to RHEVM instance.
+        mgmt: A ``RHEVMSystem`` instance from wrapanapi.
     """
-    # This code should be ported to wrapanapi
-    # sdomain_names = []
-
-    # for domain in api.storagedomains.list(status=None):
-    #     if domain.get_type() == 'data':
-    #         sdomain_names.append(domain.get_name())
-
-    # return api_params_resolution(sdomain_names, 'storage domain', 'sdomain')
-    raise NotImplementedError
+    storage_domains = mgmt.list_datastore(sd_type="data")
+    return api_params_resolution(storage_domains, "storage domain", "sdomain")
 
 
-def get_cluster(api):
+def get_cluster(mgmt):
     """Discovers suitable cluster automatically.
 
     Args:
-        api: API to RHEVM instance.
+        mgmt: A ``RHEVMSystem`` instance from wrapanapi.
     """
-    # This code should be ported to wrapanapi
-    # cluster_names = []
-
-    # for cluster in api.clusters.list():
-    #     for host in api.hosts.list():
-    #         if host.get_cluster().id == cluster.id:
-    #             cluster_names.append(cluster.get_name())
-
-    # return api_params_resolution(cluster_names, 'cluster', 'cluster')
-    raise NotImplementedError
+    clusters = mgmt.list_cluster()
+    return api_params_resolution(clusters, 'cluster', 'cluster')
 
 
 def check_kwargs(**kwargs):
@@ -522,19 +474,19 @@ def check_kwargs(**kwargs):
             sys.exit(127)
 
 
-def update_params_api(api, **kwargs):
+def update_params_api(mgmt, **kwargs):
     """Updates parameters with ones determined from api call.
 
     Args:
-        api: API to RHEVM instance.
+        mgmt: A ``RHEVMSystem`` instance from wrapanapi.
         kwargs: Kwargs generated from cfme_data['template_upload']['template_upload_rhevm']
     """
     if kwargs.get('edomain') is None:
-        kwargs['edomain'] = get_edomain(api)
+        kwargs['edomain'] = get_edomain(mgmt)
     if kwargs.get('sdomain') is None:
-        kwargs['sdomain'] = get_sdomain(api)
+        kwargs['sdomain'] = get_sdomain(mgmt)
     if kwargs.get('cluster') is None:
-        kwargs['cluster'] = get_cluster(api)
+        kwargs['cluster'] = get_cluster(mgmt)
 
     return kwargs
 
@@ -611,10 +563,10 @@ def upload_template(rhevip, sshname, sshpass, username, password,
         if provider_data:
             kwargs = make_kwargs_rhevm(provider_data, provider)
             providers = provider_data['management_systems']
-            api = get_mgmt(kwargs.get('provider'), providers=providers).api
+            mgmt = get_mgmt(kwargs.get('provider'), providers=providers)
         else:
             kwargs = make_kwargs_rhevm(cfme_data, provider)
-            api = get_mgmt(kwargs.get('provider')).api
+            mgmt = get_mgmt(kwargs.get('provider'))
         kwargs['image_url'] = image_url
         kwargs['template_name'] = template_name
         ovaname = get_ova_name(image_url)
@@ -625,12 +577,12 @@ def upload_template(rhevip, sshname, sshpass, username, password,
         if template_name is None:
             template_name = cfme_data['basic_info']['appliance_template']
 
-        path, edomain_ip = get_edomain_path(api, kwargs.get('edomain'))
+        path, edomain_ip = get_edomain_path(mgmt, kwargs.get('edomain'))
 
-        kwargs = update_params_api(api, **kwargs)
+        kwargs = update_params_api(mgmt, **kwargs)
         check_kwargs(**kwargs)
 
-        if api.templates.get(template_name) is not None:
+        if mgmt.does_template_exist(template_name):
             logger.info("RHEVM:%r Found finished template with name %r.", provider, template_name)
             logger.info("RHEVM:%r The script will now end.", provider)
             return True
@@ -639,38 +591,38 @@ def upload_template(rhevip, sshname, sshpass, username, password,
             download_ova(ssh_client, kwargs.get('image_url'))
             try:
                 logger.info("RHEVM:%r Templatizing .ova file", provider)
-                template_from_ova(api, username, password, rhevip, kwargs.get('edomain'),
+                template_from_ova(mgmt, username, password, rhevip, kwargs.get('edomain'),
                                   ovaname, ssh_client, temp_template_name, provider)
 
                 logger.info("RHEVM:%r Importing new template to data domain", provider)
-                import_template(api, kwargs.get('edomain'), kwargs.get('sdomain'),
+                import_template(mgmt, kwargs.get('edomain'), kwargs.get('sdomain'),
                                 kwargs.get('cluster'), temp_template_name, provider)
 
                 logger.info("RHEVM:%r Making a temporary VM from new template", provider)
-                make_vm_from_template(api, kwargs.get('cluster'), temp_template_name, temp_vm_name,
+                make_vm_from_template(mgmt, kwargs.get('cluster'), temp_template_name, temp_vm_name,
                                       provider, mgmt_network=kwargs.get('mgmt_network'))
 
                 logger.info("RHEVM:%r Adding disk to created VM", provider)
-                add_disk_to_vm(api, kwargs.get('sdomain'), kwargs.get('disk_size'),
+                add_disk_to_vm(mgmt, kwargs.get('sdomain'), kwargs.get('disk_size'),
                                kwargs.get('disk_format'), kwargs.get('disk_interface'),
                                temp_vm_name, provider)
 
                 logger.info("RHEVM:%r Templatizing VM", provider)
-                templatize_vm(api, template_name, kwargs.get('cluster'), temp_vm_name, provider)
+                templatize_vm(mgmt, template_name, kwargs.get('cluster'), temp_vm_name, provider)
 
                 if not provider_data:
                     logger.info("RHEVM:%r Add template %r to trackerbot", provider, template_name)
                     trackerbot.trackerbot_add_provider_template(stream, provider, template_name)
             finally:
-                cleanup(api, kwargs.get('edomain'), ssh_client, ovaname, provider,
+                cleanup(mgmt, kwargs.get('edomain'), ssh_client, ovaname, provider,
                         temp_template_name, temp_vm_name)
-                change_edomain_state(api, 'maintenance', kwargs.get('edomain'), provider)
+                change_edomain_state(mgmt, 'maintenance', kwargs.get('edomain'), provider)
                 cleanup_empty_dir_on_edomain(path, edomain_ip,
                                              sshname, sshpass, rhevip, provider)
-                change_edomain_state(api, 'active', kwargs.get('edomain'), provider)
-                api.disconnect()
+                change_edomain_state(mgmt, 'active', kwargs.get('edomain'), provider)
+                mgmt.disconnect()
                 logger.info("RHEVM:%r Template %r upload Ended", provider, template_name)
-        if provider_data and api.templates.get(template_name):
+        if provider_data and mgmt.does_template_exist(template_name):
             logger.info("RHEVM:%r Deploying Template %r", provider, template_name)
             vm_name = 'test_{}_{}'.format(template_name, fauxfactory.gen_alphanumeric(8))
             deploy_args = {'provider': provider, 'vm_name': vm_name,
