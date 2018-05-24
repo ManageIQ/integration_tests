@@ -59,7 +59,7 @@ def test_sdn_balancers_tagvis(check_item_visibility, visibility, network_prov_wi
         1. As admin add tag
         2. Login as restricted user, item is visible for user
         3. As admin remove tag
-        4. Login as restricted user, iten is not visible for user
+        4. Login as restricted user, item is not visible for user
     """
     balancers_for_provider = network_prov_with_load_balancers[0].balancers.all()
     check_item_visibility(balancers_for_provider[0], visibility)
