@@ -12,7 +12,8 @@ from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (Accordion, ManageIQTree, Calendar, SummaryTable,
-                                  BaseNonInteractiveEntitiesView, ItemsToolBarViewSelector)
+                                  BaseNonInteractiveEntitiesView, ItemsToolBarViewSelector,
+                                  BaseEntitiesView)
 
 
 class MyServiceToolbar(View):
@@ -94,6 +95,7 @@ class MyServiceDetailView(MyServicesView):
         relationships = SummaryTable(title='Relationships')
         vm = SummaryTable(title='Totals for Service VMs ')
         smart_mgmt = SummaryTable(title='Smart Management')
+        generic_objects = SummaryTable(title='Generic Objects')
 
     @View.nested
     class provisioning(Tab):  # noqa
@@ -185,6 +187,22 @@ class ServiceVMDetailsView(VMDetailsEntities):
             self.in_myservices and self.myservice.is_opened and
             self.title.text == 'VM and Instance "{}"'.format(self.context['object'].name)
         )
+
+
+class AllGenericObjectInstanceView(BaseLoggedInPage):
+    @View.nested
+    class toolbar(View):  # noqa
+        reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
+                                           '5.9': 'Refresh this page'}))
+        policy = Dropdown(text='Policy')
+        download = Dropdown(text='Download')
+        view_selector = View.nested(ItemsToolBarViewSelector)
+    title = Text('.//div[@id="main-content"]//h1')
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        return self.title.text == '{} (All Generic Objects)'.format(self.context['object'].name)
 
 
 @MiqImplementationContext.external_for(MyService.retire, ViaUI)
@@ -386,3 +404,13 @@ class MyServiceVMDetails(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.vm_name).click()
+
+
+@navigator.register(MyService, 'GenericObjectInstance')
+class AllGenericObjectInstance(CFMENavigateStep):
+    VIEW = AllGenericObjectInstanceView
+
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.details.generic_objects.click_at('Instances')

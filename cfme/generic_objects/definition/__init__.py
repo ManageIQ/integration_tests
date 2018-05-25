@@ -5,6 +5,10 @@ import importscan
 import sentaku
 
 from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.generic_objects.definition.button_groups import (
+    GenericObjectButtonGroupsCollection, GenericObjectButtonsCollection)
+from cfme.generic_objects.instance import GenericObjectInstanceCollection
+
 from cfme.utils.update import Updateable
 
 
@@ -14,15 +18,25 @@ class GenericObjectDefinition(BaseEntity, Updateable, sentaku.modeling.ElementMi
 
     Read/Update/Delete functionality.
     """
+    _collections = {
+        'generic_objects': GenericObjectInstanceCollection,
+        'generic_object_groups_buttons': GenericObjectButtonGroupsCollection,
+        'generic_object_buttons': GenericObjectButtonsCollection
+    }
+
     update = sentaku.ContextualMethod()
     delete = sentaku.ContextualMethod()
     exists = sentaku.ContextualProperty()
+    add_button = sentaku.ContextualMethod()
+    add_button_group = sentaku.ContextualMethod()
+    generic_objects = sentaku.ContextualProperty()
 
     name = attr.ib()
     description = attr.ib()
     attributes = attr.ib(default=None)  # e.g. {'address': 'string'}
     associations = attr.ib(default=None)  # e.g. {'services': 'Service'}
     methods = attr.ib(default=None)  # e.g. ['method1', 'method2']
+    custom_image_file_path = attr.ib(default=None)
     rest_response = attr.ib(default=None, init=False)
 
 
@@ -34,5 +48,6 @@ class GenericObjectDefinitionCollection(BaseCollection, sentaku.modeling.Element
     create = sentaku.ContextualMethod()
 
 
-from . import rest  # NOQA last for import cycles
+from . import rest, ui  # NOQA last for import cycles
 importscan.scan(rest)
+importscan.scan(ui)
