@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.common.vm import VM
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -81,7 +80,10 @@ def vm(request, provider, ssa_analysis_profile, register_appliance):
     vm_name = 'test-rhi-{}'.format(fauxfactory.gen_alphanumeric())
     vm_data = provider.data.vm_analysis_new
     provisioning_data = vm_data.provisioning
-    vm_obj = VM.factory(vm_name, provider, template_name=vm_data['vms']['rhel74']['image'])
+    collection = provider.appliance.provider_based_collection(provider)
+    vm_obj = collection.instantiate(vm_name,
+                                    provider,
+                                    template_name=vm_data['vms']['rhel74']['image'])
     vm_obj.create_on_provider(find_in_cfme=True, **provisioning_data)
     logger.info("VM %s provisioned, waiting for IP address to be assigned", vm_name)
 
@@ -98,8 +100,8 @@ def vm(request, provider, ssa_analysis_profile, register_appliance):
     if connect_ip:
         ssh_client = ssh.SSHClient(
             hostname=connect_ip,
-            username=credentials[provisioning_data.credentials]['username'],
-            password=credentials[provisioning_data.credentials]['password'],
+            username=credentials[vm_data['vms']['rhel74']['credentials']]['username'],
+            password=credentials[vm_data['vms']['rhel74']['credentials']]['password'],
             port=22)
         # TODO: Add another tag in cfme_yaml file to distinguish RHI VM
         username = conf.credentials['rhsm']['username']
