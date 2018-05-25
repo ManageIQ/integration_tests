@@ -32,6 +32,9 @@ def test_sdn_prov_balancers_number(network_prov_with_load_balancers):
     Test number of balancers on 1 provider
     Prerequisites:
         Only one refreshed cloud provider in cfme database
+
+    Metadata:
+        test_flag: sdn
     """
     for prov, sum_all in network_prov_with_load_balancers:
         view = navigate_to(prov, 'Details')
@@ -40,7 +43,11 @@ def test_sdn_prov_balancers_number(network_prov_with_load_balancers):
 
 
 def test_sdn_balancers_detail(provider, network_prov_with_load_balancers):
-    """ Test of getting attribute from balancer object """
+    """ Test of getting attribute from balancer object
+
+    Metadata:
+        test_flag: sdn
+    """
     for prov, _ in network_prov_with_load_balancers:
         for balancer in prov.balancers.all():
             check = balancer.network_provider

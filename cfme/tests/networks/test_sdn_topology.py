@@ -22,7 +22,11 @@ def elements_collection(setup_provider_modscope, appliance, provider):
 
 
 def test_topology_search(request, elements_collection):
-    """Testing search functionality in Topology view."""
+    """Testing search functionality in Topology view.
+
+    Metadata:
+        test_flag: sdn
+    """
     elements = elements_collection.all()
     logger.info(str(elements))
     element_to_search = random.choice(elements)
@@ -44,7 +48,11 @@ def test_topology_search(request, elements_collection):
 
 
 def test_topology_toggle_display(elements_collection):
-    """Testing display functionality in Topology view."""
+    """Testing display functionality in Topology view.
+
+    Metadata:
+        test_flag: sdn
+    """
     vis_terms = {True: 'Visible', False: 'Hidden'}
     for state in (True, False):
         for legend in elements_collection.legends:

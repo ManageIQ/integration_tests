@@ -18,7 +18,11 @@ pytestmark = [
 
 
 def test_sdn_port_detail_name(provider, appliance):
-    """ Test equality of quadicon and detail names """
+    """ Test equality of quadicon and detail names
+
+    Metadata:
+        test_flag: sdn
+    """
     port_collection = NetworkPortCollection(appliance)
     ports = port_collection.all()
     if len(ports) > 5:
@@ -33,7 +37,11 @@ def test_sdn_port_detail_name(provider, appliance):
 
 
 def test_sdn_port_net_prov(provider, appliance):
-    """ Test functionality of quadicon and detail network providers"""
+    """ Test functionality of quadicon and detail network providers
+
+    Metadata:
+        test_flag: sdn
+    """
     prov_collection = NetworkProviderCollection(appliance)
 
     for net_provider in prov_collection.all():
