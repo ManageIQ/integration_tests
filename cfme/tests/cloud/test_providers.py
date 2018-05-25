@@ -11,7 +11,7 @@ from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
-from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.azure import AzureProvider, AzureEndpoint
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider, RHOSEndpoint
@@ -20,6 +20,7 @@ from cfme.common.provider_views import (
 from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils import conf
 from cfme.utils.rest import (
     assert_response,
     delete_resources_from_collection,
@@ -351,6 +352,68 @@ def test_api_port_max_character_validation_cloud(appliance):
         view = prov.create_view(prov.endpoints_form)
         text = view.default.api_port.value
         assert text == prov.default_endpoint.api_port[0:15]
+
+
+@pytest.mark.tier(2)
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider))
+def test_azure_subscription_required(request, provider):
+    """
+    Tests that provider can't be added w/o subscription
+
+    Metadata:
+        test_flag: crud
+    """
+    provider.subscription_id = ''
+    request.addfinalizer(provider.delete_if_exists)
+    flash = 'Credential validation was not successful: ' \
+            'Incorrect credentials - check your Azure Subscription ID'
+    with pytest.raises(AssertionError, match=flash):
+        provider.create()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.usefixtures('has_no_cloud_providers')
+def test_azure_multiple_subscription(appliance, request):
+    """
+    Verifies that different azure providers have different resources access
+
+    Steps:
+    1. Add all Azure providers
+    2. Compare their VMs/Templates
+
+    Metadata:
+        test_flag: crud
+    """
+    providers = conf.cfme_data.get("management_systems", {})
+    azure_providers = []
+    for provider in providers.items():
+        if provider[1].get('type') == 'azure':
+            azure_providers.append(provider)
+    prov_inventory = []
+    for provider in azure_providers:
+        endpoint = AzureEndpoint(**provider[1]['endpoints']['default'])
+        endpoint.credentials.domain = None
+        crud_provider = appliance.collections.cloud_providers.instantiate(
+            name=provider[0],
+            prov_class=AzureProvider,
+            region=provider[1]['region'],
+            tenant_id=provider[1]['tenant_id'],
+            subscription_id=provider[1]['subscription_id'],
+            key=provider[0],
+            endpoints=endpoint)
+        request.addfinalizer(crud_provider.clear_providers)
+        crud_provider.create()
+        crud_provider.validate_stats()
+        prov_inventory.append((crud_provider.name,
+                               crud_provider.num_vm(),
+                               crud_provider.num_template()))
+
+    for index, prov_a in enumerate(prov_inventory[:-1]):
+        for prov_b in prov_inventory[index + 1:]:
+            assert prov_a[1] != prov_b[1], "Same num_vms for {} and {}".format(prov_a[0],
+                                                                               prov_b[0])
+            assert prov_a[2] != prov_b[2], "Same num_templates for {} and {}".format(prov_a[0],
+                                                                                     prov_b[0])
 
 
 @pytest.mark.tier(3)
