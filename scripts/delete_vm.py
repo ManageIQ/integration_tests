@@ -6,7 +6,7 @@ import re
 import sys
 
 # RHEVM
-from ovirtsdk.api import API
+from wrapanapi.rhevm import RHEVMSystem
 
 # VSPHERE
 from wrapanapi.virtualcenter import VMWareSystem
@@ -39,17 +39,16 @@ def parse_cmd_line():
     return args
 
 
-def rhevm_create_api(url, username, password):
+def rhevm_create_api(hostname, username, password):
     """Creates rhevm api endpoint.
 
     Args:
-        url: URL to rhevm provider
+        hostname: hostname to rhevm provider
         username: username used to log in into rhevm
         password: password used to log in into rhevm
     """
-    apiurl = 'https://{}:443/api'.format(url)
-    return API(url=apiurl, username=username, password=password, insecure=True,
-               persistent_auth=False)
+    return RHEVMSystem(hostname=hostname, username=username, password=password, insecure=True,
+                       persistent_auth=False)
 
 
 def vsphere_create_api(url, username, password):
@@ -83,8 +82,7 @@ def rhevm_vm_status(api, vm_name):
         api: api endpoint to rhevm
         vm_name: name of the vm
     """
-    vm = api.vms.get(vm_name)
-    return vm.get_status().state
+    return api.vm_status(vm_name)
 
 
 def vsphere_vm_status(api, vm_name):
@@ -98,10 +96,7 @@ def rhevm_is_vm_up(api, vm_name):
         api: api endpoint to rhevm
         vm_name: name of the vm
     """
-    vm = api.vms.get(vm_name)
-    if vm.get_status().state == 'up':
-        return True
-    return False
+    return api.is_vm_running(vm_name)
 
 
 def vsphere_is_vm_up(api, vm_name):
@@ -124,10 +119,7 @@ def rhevm_is_vm_down(api, vm_name):
         api: api endpoint to rhevm
         vm_name: name of the vm
     """
-    vm = api.vms.get(vm_name)
-    if vm.get_status().state == 'down':
-        return True
-    return False
+    return api.is_vm_stopped(vm_name)
 
 
 def vsphere_is_vm_down(api, vm_name):
@@ -151,18 +143,7 @@ def rhevm_delete_vm(api, vm_name):
         api: api endpoint to rhevm
         vm_name: name of the vm
     """
-    vm = api.vms.get(vm_name)
-    vm_status = rhevm_vm_status(api, vm_name)
-    if vm_status != 'up' and vm_status != 'down':
-        # something is wrong, locked image etc
-        exc_msg = "VM status: {}".format(vm_status)
-        raise Exception(exc_msg)
-    if vm_status == "up":
-        print("Powering down: {}".format(vm.get_name()))
-        vm.stop()
-        wait_for(rhevm_is_vm_down, [api, vm_name], fail_condition=False, delay=10, num_sec=120)
-    print("Deleting: {}".format(vm_name))
-    vm.delete()
+    api.delete_vm(vm_name)
 
 
 def rhevm_delete_template(api, tmp_name):
@@ -172,12 +153,7 @@ def rhevm_delete_template(api, tmp_name):
         api: api endpoint to rhevm
         tmp_name: name of the template
     """
-    tmp = api.templates.get(tmp_name)
-    if tmp.get_status().state == 'locked':
-        raise Exception("Template is locked.")
-    elif tmp.get_status().state == 'ok':
-        print("Deleting: {}".format(tmp.get_name()))
-        tmp.delete()
+    api.delete_template(tmp_name)
 
 
 def vsphere_delete_vm(api, vm_name):
@@ -232,7 +208,7 @@ def rhevm_check_with_api(api, rhevm_use_start_time, run_time, text):
         run_time: when this run time is exceeded for the VM, it will be deleted
         text: when this string is found in the name of VM, it may be deleted
     """
-    vms = api.vms.list()
+    vms = api.list_vm()
     vms_to_delete = []
     templates_to_delete = []
 
@@ -245,22 +221,21 @@ def rhevm_check_with_api(api, rhevm_use_start_time, run_time, text):
             templates_to_delete.append(template.get_name())
 
     for vm in vms:
-        vm_name = vm.get_name()
         if not rhevm_use_start_time:
-            creation_time = vm.get_creation_time()
+            creation_time = api.vm_creation_time(vm)
             crt = creation_time.replace(tzinfo=None)
             runtime = TIME_NOW - crt
-            if runtime.days >= run_time and is_affected(vm_name, text):
-                print("To delete: {} with runtime: {}".format(vm_name, runtime.days))
-                vms_to_delete.append(vm_name)
+            if runtime.days >= run_time and is_affected(vm, text):
+                print("To delete: {} with runtime: {}".format(vm, runtime.days))
+                vms_to_delete.append(vm)
         else:
-            if rhevm_is_vm_up(api, vm_name):
-                start_time = vm.get_start_time()
+            if rhevm_is_vm_up(api, vm):
+                start_time = api._get_vm(vm).creation_time
                 stt = start_time.replace(tzinfo=None)
                 runtime = TIME_NOW - stt
-                if runtime.days >= run_time and is_affected(vm_name, text):
-                    print("To delete: {} with runtime: {}".format(vm_name, runtime.days))
-                    vms_to_delete.append(vm_name)
+                if runtime.days >= run_time and is_affected(vm, text):
+                    print("To delete: {} with runtime: {}".format(vm, runtime.days))
+                    vms_to_delete.append(vm)
     return (vms_to_delete, templates_to_delete)
 
 

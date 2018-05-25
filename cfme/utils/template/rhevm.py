@@ -3,7 +3,6 @@ NOT TESTED YET
 """
 
 import re
-
 from fauxfactory import gen_alphanumeric
 from glanceclient import Client
 from keystoneauth1 import session, loading
