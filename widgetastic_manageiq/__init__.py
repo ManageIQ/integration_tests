@@ -860,7 +860,7 @@ class SettingsGroupSubmenu(NavDropdown):
         multiple groups
         """
         try:
-            self.browser.element('./.[contains(@class, "dropdown-submenu")]', parent=self)
+            self.browser.element('../*[contains(@class, "dropdown-submenu")]', parent=self)
         except NoSuchElementException:
             return False
         else:
