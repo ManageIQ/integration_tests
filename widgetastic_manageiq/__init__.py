@@ -18,7 +18,7 @@ from wait_for import TimedOutError, wait_for
 from widgetastic.exceptions import NoSuchElementException, WidgetOperationFailed
 from widgetastic.log import logged
 from widgetastic.utils import ParametrizedLocator, Parameter, ParametrizedString, attributize_string
-from widgetastic.utils import VersionPick, Version
+from widgetastic.utils import VersionPick, Version, partial_match
 from widgetastic.widget import (
     Table as VanillaTable,
     TableColumn as VanillaTableColumn,
@@ -4207,3 +4207,152 @@ class LineChart(Widget, ClickableMixin):
         for row in self.tooltip.rows():
             tooltip_data.update({row[0].text: row[1].text})
         return tooltip_data
+
+# Widget and its form views for Infra Planning Wizard
+
+
+class MultiSelectList(Widget):
+    """Multi Select Box to be used in Infra Planning Wizard for v2v.
+
+    Args:
+        div_id (str): id of div element that contains multiselectbox
+
+    Usage:
+        e.g. target_clusters = MultiSelectList('target_clusters')
+    """
+    ROOT = ParametrizedLocator('.//div[contains(@id,{@div_id|quote})]')
+    ITEMS_LOCATOR = './div/div/div/span[contains(@class,"dual-pane-mapper-item-container")]'
+    SELECTED_ITEMS_LOCATOR = (
+        './div[contains(@class,"selected")]/div/div'
+        '/span[contains(@class,"dual-pane-mapper-item-container")]')
+    PARTIAL_TEXT = (
+        './div/div/div/span[contains(@class,"dual-pane-mapper-item-container")'
+        'and contains(normalize-space(.),"{}")]')
+
+    def __init__(self, parent, div_id, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.div_id = div_id
+
+    @property
+    def all_items(self):
+        """Returns list of all items."""
+        return [self.browser.text(item) for item in self._all_item_elements]
+
+    @property
+    def item_count(self):
+        """Returns item count."""
+        return len(self.all_items)
+
+    @property
+    def list_selected_items(self):
+        """Returns list of items that are currently selected."""
+        return [self.browser.text(item) for item in self.list_selected_items_elements]
+
+    @property
+    def _all_item_elements(self):
+        """Returns list of item locators for each of the items."""
+        return self.browser.elements(self.ITEMS_LOCATOR)
+
+    @property
+    def list_selected_items_elements(self):
+        """Returns list of item locators for currently selected items."""
+        return self.browser.elements(self.SELECTED_ITEMS_LOCATOR)
+
+    def _get_all_options(self):
+        """ Method to return dict of all the item webelement locators and text"""
+        return {self.browser.text(element): element for element in self._all_item_elements}
+
+    def read(self):
+        """Method to read elements that are currently selected."""
+        return self.list_selected_items
+
+    def fill(self, values):
+        """Click/Select multiple the items in the multiselectbox
+
+        Args:
+            items: 'list' of items of type 'str' to be matched
+        Returns:
+            True if all values were found and clicked.
+        """
+        # TODO self.browser.plugin.ensure_page_safe() should be here
+        wait_for(lambda: "loading" not in self.browser.classes(self), timeout=5)
+        if values == self.list_selected_items or values == [] or values is None:
+            return False
+        for item in values:
+            self.select_by_text(item)
+        return True
+
+    def select_by_text(self, text):
+        """Select/click option using text
+
+        Args:
+            text(str): text to be matched. If you want to partial text match,
+                 use the :py:class:`BootstrapNav.partial` to wrap the value.
+        """
+        try:
+            if text and not isinstance(text, partial_match):
+                self.logger.info("Not using partial text matching to find %s", text)
+                self._get_all_options()[text].click()
+
+            elif text and isinstance(text, partial_match):
+                self.logger.info("Using partial text matching to find %s", text)
+                all_options = self.browser.elements(self.PARTIAL_TEXT.format(text.item))
+                for option in all_options:
+                    option.click()
+        except KeyError:
+            raise ItemNotFound("{} was not found in {}".format(text, self.all_items))
+
+
+class InfraMappingTreeView(Widget):
+    """Widget to capture/interact with the InfraMappingTreeView in Infra Mapping Wizard for v2v.
+
+    Args:
+        tree_class(str): Class name of the div representing this TreeView
+    """
+    ROOT = ParametrizedLocator('.//div[contains(@class,{@tree_class|quote})]')
+    ROOT_ITEMS = './/ul/li[./span[contains(@class,"expand-icon")] and position() > 1]'
+    ITEMS_LOCATOR = './/ul/li[./span[contains(@class, "glyphicon")] and position() > 1]'
+    SELECTED_NODE = './/li[contains(@class, "node-selected")]'
+
+    def __init__(self, parent, tree_class=None, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.tree_class = tree_class
+
+    @property
+    def mapping_targets(self):
+        """Returns list of Mapping targets or in other words, leaf nodes."""
+        return [self.browser.text(el) for el in self.browser.elements(self.ROOT_ITEMS)]
+
+    @property
+    def mapping_sources(self):
+        """Returns list of Mapping sources or in other words, parent nodes to leaf nodes."""
+        return [self.browser.text(el) for el in self.browser.elements(self.ITEMS_LOCATOR)]
+
+    @property
+    def selected_item(self):
+        """Returns list of items that are currently selected."""
+        try:
+            return self.browser.text(self.browser.element(self.SELECTED_NODE))
+        except NoSuchElementException:
+            # return None is needed else fill() method cannot do value==self.selected_item
+            return None
+
+    @property
+    def _all_item_elements(self):
+        """Returns list of selectors for all items."""
+        tree_elements = dict()
+        for element in self.browser.elements(self.ITEMS_LOCATOR):
+            tree_elements[self.browser.text(element)] = element
+
+        for element in self.browser.elements(self.ROOT_ITEMS):
+            tree_elements[self.browser.text(element)] = element
+        return tree_elements
+
+    def read(self):
+        return self.selected_item
+
+    def fill(self, value):
+        if value == self.selected_item:
+            return False
+        self._all_item_elements[value or self.selected_item].click()
+        return True
