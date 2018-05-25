@@ -5,7 +5,6 @@ from cfme import test_requirements
 from cfme.common.provider import CloudInfraProvider
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
 
@@ -58,12 +57,12 @@ def service_level_tag():
 
 
 @pytest.fixture(scope='module')
-def vms_for_tagging(provider, request):
+def vms_for_tagging(provider, request, appliance):
     """Get two existing vms for tagging"""
     view = navigate_to(provider, 'ProviderVms')
     all_names = view.entities.all_entity_names
-    first_vm = InfraVm(name=all_names[0], provider=provider)
-    second_vm = InfraVm(name=all_names[1], provider=provider)
+    first_vm = appliance.collections.infra_vms.instantiate(name=all_names[0], provider=provider)
+    second_vm = appliance.collections.infra_vms.instantiate(name=all_names[1], provider=provider)
     return first_vm, second_vm
 
 
