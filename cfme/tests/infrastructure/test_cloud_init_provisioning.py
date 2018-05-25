@@ -2,6 +2,8 @@
 import fauxfactory
 import pytest
 
+from widgetastic.utils import partial_match
+
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.infrastructure.pxe import get_template_from_config
@@ -16,15 +18,15 @@ pytestmark = [
                          required_fields=[['provisioning', 'ci-template'],
                                           ['provisioning', 'ci-username'],
                                           ['provisioning', 'ci-pass'],
-                                          ['provisioning', 'image'],
+                                          ['provisioning', 'ci-image'],
                                           ['provisioning', 'vlan']],
                          scope='module'),
 ]
 
 
 @pytest.fixture(scope="module")
-def setup_ci_template(provisioning, appliance):
-    cloud_init_template_name = provisioning['ci-template']
+def setup_ci_template(provider, appliance):
+    cloud_init_template_name = provider.data['provisioning']['ci-template']
     get_template_from_config(cloud_init_template_name, create=True, appliance=appliance)
 
 
@@ -56,9 +58,10 @@ def test_provision_cloud_init(appliance, provider, vm_name, smtp_test, request, 
             'host_name': {'name': host},
             'datastore_name': {'name': datastore}},
         'network': {
-            'vlan': vlan},
+            'vlan': partial_match(vlan)},
         'customize': {
-            'custom_template': {'name': [provisioning['ci-template']]}}
+            'customize_type': 'Specification',
+            'custom_template': {'Name': provisioning['ci-template']}}
     }
 
     do_vm_provisioning(appliance, template, provider, vm_name, provisioning_data, request,
