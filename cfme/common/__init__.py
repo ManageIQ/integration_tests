@@ -448,6 +448,7 @@ class TaggableCollection(TaggableCommonBase):
         """Add multiple tags
 
         Args:
+            item_objects: list of entity object, also can be passed lint on entities names
             tags: list of tag objects
         """
         for tag in tags:
@@ -474,6 +475,7 @@ class TaggableCollection(TaggableCommonBase):
         """Remove multiple of tags
 
         Args:
+            item_objects: list of entity object, also can be passed lint on entities names
             tags: list of tag objects
         """
         for tag in tags:
