@@ -92,14 +92,11 @@ def tag_value(appliance, category, tag, request):
         tag_for_create = ([category.display_name, tag.display_name], True)
         tag_for_update = ([category.display_name, tag.display_name], False)
     else:
-        if appliance.version > '5.9':
-            if BZ(1579867, forced_streams=['5.9']).blocks:
-                tag_for_create = 'fill_tag(My Company Tags : Cost Center, Cost Center 001)'
-            else:
-                tag_for_create = 'fill_tag(My Company Tags : {})'.format(category.display_name)
-            tag_for_update = 'delete_whole_expression'
+        if BZ(1579867, forced_streams=['5.9']).blocks:
+            tag_for_create = 'fill_tag(My Company Tags : Cost Center, Cost Center 001)'
         else:
-            pytest.skip("Tag expression is suported from 5.9 version")
+            tag_for_create = 'fill_tag(My Company Tags : {})'.format(category.display_name)
+        tag_for_update = 'delete_whole_expression'
     return tag_for_create, tag_for_update
 
 
@@ -403,6 +400,9 @@ def test_group_crud(group_collection):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
+@pytest.mark.uncollectif(lambda appliance, tag_value: appliance.version < '5.9' and
+                         tag_value == 'tag_expression',
+                         reason="Tag expression not available for 5.8 version")
 def test_group_crud_with_tag(a_provider, group_collection, tag_value):
     """Test for verifying group create with tag defined
 

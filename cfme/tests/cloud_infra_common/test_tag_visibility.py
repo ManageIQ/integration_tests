@@ -11,12 +11,13 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 pytestmark = [
     test_requirements.tag,
     pytest.mark.tier(3),
-    pytest.mark.provider([CloudInfraProvider], required_fields=['cap_and_util'], scope='module')
+    pytest.mark.provider([CloudInfraProvider], required_fields=['cap_and_util'], scope='module'),
+    pytest.mark.usefixtures('setup_provider')
 ]
 
 
 @pytest.fixture(scope="module")
-def tagged_vm(tag, has_no_providers_modscope, setup_provider_modscope, provider):
+def tagged_vm(tag, has_no_providers_modscope, provider):
     ownership_vm = provider.data.cap_and_util.capandu_vm
     collection = provider.appliance.provider_based_collection(provider)
     tag_vm = collection.instantiate(ownership_vm, provider)
@@ -199,7 +200,7 @@ def test_tag_expression_not_and_condition(request, vms_for_tagging, location_tag
     """
     first_vm, second_vm = vms_for_tagging
     group = group_with_tag_expression(
-        ';select_first_expression;click_not;select_first_expression;click_or;'.join(
+        ';select_first_expression;click_not;select_first_expression;click_and;'.join(
             ['fill_tag(My Company Tags : {}, {})'.format(
                 tag.category.display_name, tag.display_name)
                 for tag in [location_tag, service_level_tag]]))
