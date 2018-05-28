@@ -35,12 +35,24 @@ Contributing
 * Please keep large lint changes separate from new features, though this point
   should become less relevant over time.
 * All pull requests should be squashed down to logical blocks of distinctive
-  functionality that work by themselves and do not result in brokenness of master
+  functionality that work by themselves and do not result in brokenness of master.
 
   * As an example, if you were working on a test which required new pages,
     utilities and tests, it would be OK to split the page, utility and test
     changes into separate requests or commits, providing they were in the correct
     order of dependency.
+
+* It is a good practice to sign your commits.
+
+  * You will need to generate a GPG key with gpg version 2.1.17 or greater and
+    sign your commits. See [this link](https://help.github.com/articles/generating-a-new-gpg-key/)
+    for information about how to do that. Some instalations on Linux may
+    require you to use ``gpg2`` instead of ``gpg``.
+  * Remember to sign your commit by using ``-S|--gpg-sign``.
+  * There are some checks being made when your pull request is opened. They
+    are used to verify the signature in your commits. If you are external
+    to the ManageIQ team, those checks will fail because we do not have
+    access to your generated keys, but you can safely ignore them.
 
 Reviewers
 ^^^^^^^^^
@@ -159,7 +171,7 @@ We also do a few things that aren't explicitly called out in PEP 8:
 * Docstrings can be used in strings with multiple lines::
 
     string_with_multiple_lines = """Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-    eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis 
+    eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
     nostrud exercitation"""
 
 
@@ -234,7 +246,7 @@ We also do a few things that aren't explicitly called out in PEP 8:
             Nothing at all.
 
         Raises:
-	    CertainQuestionsError: Raises certain questions about the authors sanity.
+          CertainQuestionsError: Raises certain questions about the authors sanity.
         """
 
 * In addition to being broken up into the three sections of standard library,
@@ -256,7 +268,7 @@ We also do a few things that aren't explicitly called out in PEP 8:
 
     a = "new"
     b = 2
-    
+
     "a {} string for {}".format(a, b)
 
     "{name} is {emotion}".format(name="john", emotion="happy")
@@ -310,7 +322,7 @@ Layout
     fixture that exposes the utility to the tests. Modules in this directory
     will be auto loaded.
 
-  	* ``tests/`` Unit tests for utils
+    * ``tests/`` Unit tests for utils
 
 * ``conf/`` Place for configuration files
 * ``data/`` Test data. The structure of this directory should match the
