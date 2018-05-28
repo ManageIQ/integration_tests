@@ -608,7 +608,8 @@ class TestProvidersRESTAPI(object):
 
 
 @pytest.mark.provider([CloudProvider], override=True, selector=ONE)
-def test_tagvis_provision_fields(request, appliance, user_restricted, tag, soft_assert):
+def test_tagvis_provision_fields(setup_provider, request, appliance, user_restricted, tag,
+                                 soft_assert):
     """Test for network environment fields for restricted user"""
     image = appliance.collections.cloud_images.all()[0]
     image.add_tag(tag)
