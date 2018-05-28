@@ -63,7 +63,7 @@ def iso_datastore(provider, appliance):
 
 
 @pytest.fixture
-def datastore_init(iso_cust_template, iso_datastore, provisioning):
+def datastore_init(iso_cust_template, iso_datastore, provisioning, setup_provider):
     if not iso_datastore.exists():
         iso_datastore.create()
     iso_image = SystemImage(provisioning['iso_file'], provisioning['iso_image_type'], iso_datastore)
@@ -81,7 +81,7 @@ def vm_name():
 # @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6692',
 #                                unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_iso_provision_from_template(appliance, provider, vm_name, datastore_init,
-                                     request, setup_provider, smtp_test):
+                                     request, smtp_test):
     """Tests ISO provisioning
 
     Metadata:
