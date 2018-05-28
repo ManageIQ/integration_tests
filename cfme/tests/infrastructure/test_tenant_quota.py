@@ -11,6 +11,7 @@ from cfme.provisioning import do_vm_provisioning
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI, ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import GH
 from cfme.utils.generators import random_vm_name
 
 pytestmark = [
@@ -141,6 +142,7 @@ def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pro
 
 
 @pytest.mark.rhv3
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7297')])
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here
