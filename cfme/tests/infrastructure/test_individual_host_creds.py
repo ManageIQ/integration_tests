@@ -7,6 +7,7 @@ from cfme.common.host_views import HostDetailsView, HostEditView
 from cfme.infrastructure import host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.utils import conf
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
@@ -17,12 +18,6 @@ pytestmark = [
     pytest.mark.provider([InfraProvider], required_fields=['hosts'], scope='module')
 ]
 
-
-msgs = {
-    'virtualcenter': 'Cannot complete login due to an incorrect user name or password.',
-    'rhevm': 'Login failed due to a bad username or password.',
-    'scvmm': 'Check credentials. Remote error message: WinRM::WinRMAuthorizationError',
-}
 
 # Credential type UI Element id and it's name in Authentication Table
 credentials_type = {'remote_login': 'Remote Login Credentials',
@@ -110,7 +105,9 @@ def test_host_bad_creds(appliance, request, setup_provider, provider, creds):
     host_collection = appliance.collections.hosts
     host_obj = host_collection.instantiate(name=test_host.name, provider=provider)
 
-    with pytest.raises(Exception, match=msgs[provider.type]):
+    flash_msg = 'Login failed due to a bad username or password.'
+
+    with pytest.raises(Exception, match=flash_msg):
         with update(host_obj, validate_credentials=True):
             host_obj.credentials = {creds: host.get_credentials_from_config('bad_credentials')}
             # TODO Remove this workaround once our SCVMM env will work with common DNS

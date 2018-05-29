@@ -310,12 +310,15 @@ class HostAddView(HostFormView):
 
 class HostEditView(HostFormView):
     """View for editing a single host"""
+    breadcrumb = BreadCrumb()
     save_button = Button("Save")
     reset_button = Button("Reset")
 
     @property
     def is_displayed(self):
-        return self.in_compute_infrastructure_hosts and self.title.text == "Info/Settings"
+        expected_name = self.context['object'].name
+        return (self.in_compute_infrastructure_hosts and self.title.text == "Info/Settings" and
+                expected_name in self.breadcrumb.locations[1])
 
 
 class HostsEditView(HostEditView):
