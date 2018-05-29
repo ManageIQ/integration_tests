@@ -84,19 +84,16 @@ class OpenStackProvider(CloudProvider):
         from cfme.utils.providers import get_crud
         infra_prov_key = prov_config.get('infra_provider_key')
         infra_provider = get_crud(infra_prov_key) if infra_prov_key else None
-        api_version = prov_config.get('api_version', None)
 
-        if not api_version:
-            api_version = 'Keystone v2'
         return cls.appliance.collections.cloud_providers.instantiate(
             prov_class=cls,
             name=prov_config['name'],
             api_port=prov_config['port'],
-            api_version=api_version,
+            api_version=prov_config.get('api_version', 'Keystone v2'),
             endpoints=endpoints,
             zone=prov_config['server_zone'],
             key=prov_key,
-            keystone_v3_domain_id=prov_config.get('domain_id', None),
+            keystone_v3_domain_id=prov_config.get('domain_id'),
             sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),
             tenant_mapping=prov_config.get('tenant_mapping', False),
             infra_provider=infra_provider)

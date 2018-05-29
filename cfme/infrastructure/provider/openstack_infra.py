@@ -66,11 +66,16 @@ class OpenstackInfraProvider(InfraProvider):
         'Login failed due to a bad username or password.'
     )
 
+    api_version = attr.ib(default=None)
+    keystone_v3_domain_id = attr.ib(default=None)
+
     @property
     def view_value_mapping(self):
         return {
             'name': self.name,
             'prov_type': 'OpenStack Platform Director',
+            'api_version': self.api_version,
+            'keystone_v3_domain_id': self.keystone_v3_domain_id
         }
 
     def has_nodes(self):
@@ -100,7 +105,9 @@ class OpenstackInfraProvider(InfraProvider):
             endpoints=endpoints,
             key=prov_key,
             start_ip=start_ip,
-            end_ip=end_ip)
+            end_ip=end_ip,
+            api_version=prov_config.get('api_version', 'Keystone v2'),
+            keystone_v3_domain_id=prov_config.get('domain_id'))
 
     def register(self, file_path):
         """Register new nodes (Openstack)
