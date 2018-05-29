@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.net import ip_address, resolve_hostname
 from cfme.utils.providers import get_crud_by_name
-from cfme import test_requirements
-
 
 pytestmark = [
     pytest.mark.tier(3),
@@ -29,7 +28,11 @@ def compare(db_item, report_item):
 @pytest.mark.rhv3
 def test_providers_summary(appliance, soft_assert):
     """Checks some informations about the provider. Does not check memory/frequency as there is
-    presence of units and rounding."""
+    presence of units and rounding.
+
+    Metadata:
+        test_flag: inventory
+    """
     report = appliance.collections.reports.instantiate(
         type="Configuration Management",
         subtype="Providers",
@@ -60,6 +63,12 @@ def test_providers_summary(appliance, soft_assert):
 
 @pytest.mark.rhv3
 def test_cluster_relationships(appliance, soft_assert):
+    """Tests vm power options from on
+
+    Metadata:
+        test_flag: inventory
+    """
+
     report = appliance.collections.reports.instantiate(
         type="Relationships",
         subtype="Virtual Machines, Folders, Clusters",
@@ -107,6 +116,12 @@ def test_cluster_relationships(appliance, soft_assert):
 @pytest.mark.meta(blockers=[BZ(1504010, forced_streams=['5.7', '5.8', 'upstream']),
                             BZ(1571254, forced_streams=['5.8', '5.9'])])
 def test_operations_vm_on(soft_assert, appliance, request):
+    """Tests vm power options from on
+
+    Metadata:
+        test_flag: report
+    """
+
     adb = appliance.db.client
     vms = adb['vms']
     hosts = adb['hosts']
@@ -153,7 +168,11 @@ def test_operations_vm_on(soft_assert, appliance, request):
 @pytest.mark.rhv3
 def test_datastores_summary(soft_assert, appliance, request):
     """Checks Datastores Summary report with DB data. Checks all data in report, even rounded
-    storage sizes."""
+    storage sizes.
+
+    Metadata:
+        test_flag: inventory
+    """
     adb = appliance.db.client
     storages = adb['storages']
     vms = adb['vms']

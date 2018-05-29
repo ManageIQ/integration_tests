@@ -29,7 +29,11 @@ def new_vm(appliance, provider, request):
 @pytest.mark.provider([CloudInfraProvider])
 @pytest.mark.parametrize('enable', [False, True], ids=['disabled', 'enabled'])
 def test_cockpit_server_role(appliance, provider, setup_provider, new_vm, enable):
-    """ The test checks the cockpit "Web Console" button enable and disabled working. """
+    """ The test checks the cockpit "Web Console" button enable and disabled working.
+
+    Metadata:
+        test_flag: inventory
+    """
 
     if enable:
         appliance.server.settings.enable_server_roles('cockpit_ws')

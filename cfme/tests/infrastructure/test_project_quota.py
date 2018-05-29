@@ -102,7 +102,11 @@ def new_user(appliance, new_group, new_credential):
 def test_project_quota_enforce_via_lifecycle_infra(appliance, provider, setup_provider, new_user,
                                                   set_project_quota, extra_msg, custom_prov_data,
                                                   approve, prov_data, vm_name, template_name):
-    """Test project quota via lifecycle method"""
+    """Test project quota via lifecycle method
+
+    Metadata:
+        test_flag: quota
+    """
     with new_user:
         recursive_update(prov_data, custom_prov_data)
         do_vm_provisioning(appliance, template_name=template_name, provider=provider,

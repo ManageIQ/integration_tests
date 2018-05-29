@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -8,11 +9,9 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.provisioning import do_vm_provisioning
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance import ViaSSUI, ViaUI
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
-
-from widgetastic.utils import partial_match
 
 pytestmark = [
     test_requirements.quota,
@@ -122,7 +121,11 @@ def small_vm(provider, small_template_modscope):
 def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, setup_provider,
                                             set_roottenant_quota, extra_msg, custom_prov_data,
                                             approve, prov_data, vm_name, template_name):
-    """Test Tenant Quota in UI and SSUI"""
+    """Test Tenant Quota in UI and SSUI
+
+    Metadata:
+        test_flag: quota
+    """
     prov_data.update(custom_prov_data)
     prov_data['catalog']['vm_name'] = vm_name
     do_vm_provisioning(appliance, template_name=template_name, provider=provider, vm_name=vm_name,
@@ -157,6 +160,11 @@ def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pro
 def test_tenant_quota_enforce_via_service_infra(request, appliance, provider, setup_provider,
                                                 context, set_roottenant_quota, extra_msg,
                                                 custom_prov_data, catalog_item):
+    """Tests quota enforcement via service infra
+
+    Metadata:
+        test_flag: quota
+    """
     with appliance.context.use(context):
         service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
         if context is ViaSSUI:
@@ -191,6 +199,11 @@ def test_tenant_quota_enforce_via_service_infra(request, appliance, provider, se
 )
 def test_tenant_quota_vm_reconfigure(appliance, provider, setup_provider, set_roottenant_quota,
                                      small_vm, custom_prov_data):
+    """Tests quota with vm reconfigure
+
+    Metadata:
+        test_flag: quota
+    """
     original_config = small_vm.configuration.copy()
     new_config = small_vm.configuration.copy()
     setattr(new_config.hw, custom_prov_data['change'], custom_prov_data['value'])

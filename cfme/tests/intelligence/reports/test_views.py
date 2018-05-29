@@ -6,9 +6,8 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils.blockers import BZ
 from cfme.utils.appliance.implementations.ui import navigate_to
-
+from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.tier(3),
@@ -36,6 +35,11 @@ def report(appliance):
 @pytest.mark.parametrize('view_mode', ['Hybrid View', 'Graph View', 'Tabular View'])
 @pytest.mark.meta(blockers=[BZ(1401560)])
 def test_report_view(report, view_mode):
+    """Tests provisioning via PXE
+
+    Metadata:
+        test_flag: report
+    """
     view = navigate_to(report, 'Details')
     view.view_selector.select(view_mode)
     assert view.view_selector.selected == view_mode, "View setting failed for {}".format(view)

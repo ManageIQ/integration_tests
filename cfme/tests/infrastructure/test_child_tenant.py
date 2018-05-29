@@ -118,7 +118,11 @@ def test_child_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, set
                                                         new_user, set_child_tenant_quota, extra_msg,
                                                         custom_prov_data, approve, prov_data,
                                                         vm_name, template_name):
-    """Test child tenant feature via lifecycle method."""
+    """Test child tenant feature via lifecycle method.
+
+    Metadata:
+        test_flag: quota
+    """
     with new_user:
         recursive_update(prov_data, custom_prov_data)
         do_vm_provisioning(appliance, template_name=template_name, provider=provider,

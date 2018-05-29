@@ -11,20 +11,21 @@ Required YAML keys:
         nothing terrible happens, but provisioning can be then assigned to a datastore that does not
         work (iso datastore or whatever), therefore failing the provision.
 """
-import fauxfactory
-import pytest
 from functools import partial
 
+import fauxfactory
+import pytest
+
+from cfme import test_requirements
+from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.control.explorer import conditions, policies
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.cloud.provider.azure import AzureProvider
-from cfme import test_requirements
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils import conf
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.hosts import setup_host_creds
@@ -34,7 +35,6 @@ from cfme.utils.update import update
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for, TimedOutError
 from . import do_scan, wait_for_ssa_enabled
-
 
 pytestmark = [
     pytest.mark.long_running,
@@ -879,6 +879,9 @@ def test_action_check_compliance(request, provider, vm, vm_name, policy_for_test
     """Tests action "Check Host or VM Compliance". Policy profile should have control and compliance
     policies. Control policy initiates compliance check and compliance policy determines is the vm
     compliant or not. After reloading vm details screen the compliance status should be changed.
+
+    Metadata:
+        test_flag: policy
     """
     compliance_policy.assign_conditions(compliance_condition)
     if any(vm_tag.category.display_name == tag.category.display_name and

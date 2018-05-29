@@ -19,7 +19,6 @@ from cfme.utils.ssh import SSHClient
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
-
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.tier(2),
@@ -79,6 +78,9 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
 
     Memory checkbox should be displayed and active when VM is running ('Power On').
     Memory checkbox should not be displayed when VM is stopped ('Power Off').
+
+    Metadata:
+        test_flag: power_control
     """
     # Make sure the VM is powered on
     small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_ON, cancel=False)
@@ -366,6 +368,10 @@ def test_operations_powered_off_vm(small_test_vm):
 
 @pytest.mark.rhv3
 def test_snapshot_history_btn(small_test_vm, provider):
+    """Tests snapshot history button
+    Metadata:
+        test_flag: snapshot
+    """
     snapshot = new_snapshot(small_test_vm, has_name=(not provider.one_of(RHEVMProvider)))
     snapshot.create()
     vm_details_view = navigate_to(small_test_vm, 'Details')

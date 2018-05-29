@@ -4,10 +4,10 @@ import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
-from cfme.markers.env_markers.provider import ONE
 
 pytestmark = [
     test_requirements.automate,
@@ -112,6 +112,11 @@ def test_button_crud(appliance, dialog, request):
 @pytest.mark.provider([InfraProvider], scope='function', selector=ONE)
 @pytest.mark.tier(3)
 def test_button_on_host(appliance, request, provider, setup_provider):
+    """Tests button on host
+
+    Metadata:
+        test_flag: inventory
+    """
     buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),

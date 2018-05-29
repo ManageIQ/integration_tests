@@ -32,6 +32,9 @@ def log_exists(appliance, provider):
 def test_provider_log_exists(log_exists):
     """
     Tests if provider log exists
+
+    Metadata:
+        test_flag: log
     """
     assert log_exists
 
@@ -43,6 +46,9 @@ def test_provider_log_rotate(appliance, provider, log_exists):
     Steps:
     1. Force log rotation with default config miq_logs.conf
     2. Verify that new
+
+    Metadata:
+        test_flag: log
     """
     if log_exists:
         appliance.ssh_client.run_command('logrotate -f /etc/logrotate.d/miq_logs.conf')
@@ -61,6 +67,9 @@ def test_provider_log_updated(appliance, provider, log_exists):
     2. Refresh provider
     3. Store log once again
     4. Compare logs from 1 and 3
+
+    Metadata:
+        test_flag: log
     """
     if log_exists:
         log_before = appliance.ssh_client.run_command(
