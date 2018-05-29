@@ -3,7 +3,6 @@ import pytest
 from collections import namedtuple
 
 from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.ssh import SSHClient
@@ -29,7 +28,8 @@ def provider_app_crud(provider_class, appliance):
 def provision_vm(request, provider):
     """Function to provision appliance to the provider being tested"""
     vm_name = "test_rest_db_{}".format(fauxfactory.gen_alphanumeric())
-    vm = VM.factory(vm_name, provider)
+    coll = provider.appliance.provider_based_collection(provider, coll_type='vms')
+    vm = coll.instantiate(vm_name, provider)
     request.addfinalizer(vm.delete_from_provider)
     if not provider.mgmt.does_vm_exist(vm_name):
         logger.info("deploying %s on provider %s", vm_name, provider.key)

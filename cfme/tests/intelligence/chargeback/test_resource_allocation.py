@@ -37,7 +37,6 @@ import cfme.intelligence.chargeback.rates as rates
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.provider.gce import GCEProvider
-from cfme.common.vm import VM
 from cfme.infrastructure.provider import CloudInfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -80,11 +79,12 @@ def vm_ownership(enable_candu, provider, appliance):
     group_collection = appliance.collections.groups
     cb_group = group_collection.instantiate(description='EvmGroup-user')
 
-    vm = VM.factory(vm_name, provider)
+    vm = appliance.provider_based_collection(provider, coll_type='vms').instantiate(vm_name,
+                                                                                    provider)
     user = appliance.collections.users.create(
         name="{}_{}".format(provider.name, fauxfactory.gen_alphanumeric()),
         credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()),
-            secret='secret'),
+                              secret='secret'),
         email='abc@example.com',
         groups=cb_group,
         cost_center='Workload',
