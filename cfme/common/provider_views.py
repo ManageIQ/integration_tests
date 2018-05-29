@@ -455,6 +455,7 @@ class ProviderAddView(BaseLoggedInPage):
 
 class InfraProviderAddView(ProviderAddView):
     api_version = BootstrapSelect(id='api_version')  # only for OpenStack
+    keystone_v3_domain_id = Input('keystone_v3_domain_id')  # OpenStack only
 
     @property
     def is_displayed(self):
