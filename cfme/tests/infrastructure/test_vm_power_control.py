@@ -359,6 +359,9 @@ def test_no_template_power_control(provider, soft_assert):
         * Verify the Power toolbar button is not visible
         * Click on some template to get into the details page
         * Verify the Power toolbar button is not visible
+
+    Metadata:
+        test_flag: power_control
     """
     view = navigate_to(provider, 'ProviderTemplates')
     view.toolbar.view_selector.select('Grid View')
@@ -393,6 +396,8 @@ def test_no_power_controls_on_archived_vm(testing_vm, archived_vm, soft_assert):
     Steps:
         * Open the view of VM Details
         * Verify the Power toolbar button is not visible
+    Metadata:
+        test_flag: power_control
     """
     view = navigate_to(testing_vm, 'AnyProviderDetails', use_resetter=False)
     soft_assert(not view.toolbar.power.is_displayed, "Power displayed in archived VM's details!")
@@ -402,18 +407,33 @@ def test_no_power_controls_on_archived_vm(testing_vm, archived_vm, soft_assert):
 @pytest.mark.uncollectif(lambda provider: provider.one_of(SCVMMProvider) and
                          BZ(1520489, forced_streams=['5.9']).blocks, 'BZ 1520489')
 def test_archived_vm_status(testing_vm, archived_vm):
+    """Tests archived vm status
+
+    Metadata:
+        test_flag: inventory
+    """
     vm_state = testing_vm.find_quadicon(from_any_provider=True).data['state']
     assert ('currentstate-archived' in vm_state)
 
 
 @pytest.mark.rhv3
 def test_orphaned_vm_status(testing_vm, orphaned_vm):
+    """Tests orphaned vm status
+
+    Metadata:
+        test_flag: inventory
+    """
     vm_state = testing_vm.find_quadicon(from_any_provider=True).data['state']
     assert ('currentstate-orphaned' in vm_state)
 
 
 @pytest.mark.rhv1
 def test_vm_power_options_from_on(provider, soft_assert, testing_vm, ensure_vm_running):
+    """Tests vm power options from on
+
+    Metadata:
+        test_flag: power_control
+    """
     testing_vm.wait_for_vm_state_change(
         desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
     check_power_options(provider, soft_assert, testing_vm, testing_vm.STATE_ON)
@@ -421,6 +441,11 @@ def test_vm_power_options_from_on(provider, soft_assert, testing_vm, ensure_vm_r
 
 @pytest.mark.rhv3
 def test_vm_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_stopped):
+    """Tests vm power options from off
+
+    Metadata:
+        test_flag: power_control
+    """
     testing_vm.wait_for_vm_state_change(
         desired_state=testing_vm.STATE_OFF, timeout=720, from_details=True)
     check_power_options(provider, soft_assert, testing_vm, testing_vm.STATE_OFF)
@@ -430,6 +455,11 @@ def test_vm_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_
 @pytest.mark.meta(blockers=[BZ(1571830, forced_streams=['5.8', '5.9'],
     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
+    """Tests vm guest os reset
+
+    Metadata:
+        test_flag: power_control
+    """
     wait_for_vm_tools(testing_vm_tools)
     view = navigate_to(testing_vm_tools, "Details")
     last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
@@ -453,6 +483,11 @@ def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_ass
     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.uncollectif(lambda provider: not provider.one_of((VMwareProvider, RHEVMProvider)))
 def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
+    """Tests vm guest os reset
+
+    Metadata:
+        test_flag: power_control
+    """
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
     wait_for_vm_tools(testing_vm_tools)

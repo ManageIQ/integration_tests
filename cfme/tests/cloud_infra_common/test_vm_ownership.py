@@ -10,7 +10,6 @@ from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 
-
 pytestmark = [
     test_requirements.ownership,
     pytest.mark.meta(blockers=[BZ(1380781, forced_streams=["5.7"])]),
@@ -140,6 +139,11 @@ def check_vm_exists(vm_ownership):
 
 @pytest.mark.rhv3
 def test_form_button_validation(request, user1, setup_provider, provider, vm_crud):
+    """Tests group ownership
+
+    Metadata:
+        test_flag: rbac
+    """
     # Reset button test
     vm_crud.set_ownership(user=user1.name, click_reset=True)
     # Cancel button test
@@ -152,6 +156,11 @@ def test_form_button_validation(request, user1, setup_provider, provider, vm_cru
 
 @pytest.mark.rhv2
 def test_user_ownership_crud(request, user1, setup_provider, provider, vm_crud):
+    """Tests user ownership
+
+    Metadata:
+        test_flag: rbac
+    """
     # Set the ownership and checking it
     vm_crud.set_ownership(user=user1.name)
     with user1:
@@ -163,6 +172,12 @@ def test_user_ownership_crud(request, user1, setup_provider, provider, vm_crud):
 
 @pytest.mark.rhv3
 def test_group_ownership_on_user_only_role(request, user2, setup_provider, provider, vm_crud):
+    """Tests group ownership
+
+    Metadata:
+        test_flag: rbac
+    """
+
     # user is only a member of a single group so it will always be the current group
     user_group_name = user2.groups[0].description
     vm_crud.set_ownership(group=user_group_name)
@@ -176,6 +191,11 @@ def test_group_ownership_on_user_only_role(request, user2, setup_provider, provi
 @pytest.mark.rhv3
 def test_group_ownership_on_user_or_group_role(
         request, user3, setup_provider, provider, vm_crud):
+    """Tests group ownership
+
+    Metadata:
+        test_flag: rbac
+    """
     # user is only a member of a single group so it will always be the current group
     user_group_name = user3.groups[0].description
     vm_crud.set_ownership(group=user_group_name)

@@ -5,8 +5,8 @@ import pytest
 from navmazing import NavigationDestinationNotFound
 
 from cfme.cloud.availability_zone import ProviderAvailabilityZoneAllView
-from cfme.cloud.provider import CloudProvider
 from cfme.cloud.flavor import ProviderFlavorAllView
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider import CloudProviderImagesView, CloudProviderInstancesView
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.stack import ProviderStackAllView
@@ -148,7 +148,11 @@ def wait_for_relationship_refresh(provider):
     ids=[rel[0] for rel in HOST_RELATIONSHIPS])
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE)
 def test_host_relationships(appliance, provider, setup_provider, host, relationship, view):
-    """Tests relationship navigation for a host"""
+    """Tests relationship navigation for a host
+
+    Metadata:
+        test_flag: inventory
+    """
     host_view = navigate_to(host, "Details")
     if host_view.entities.summary("Relationships").get_text_of(relationship) == "0":
         pytest.skip("There are no relationships for {}".format(relationship))
@@ -163,7 +167,11 @@ def test_host_relationships(appliance, provider, setup_provider, host, relations
     ids=[rel[0] for rel in INFRA_PROVIDER_RELATIONSHIPS])
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE)
 def test_infra_provider_relationships(appliance, provider, setup_provider, relationship, view):
-    """Tests relationship navigation for an infrastructure provider"""
+    """Tests relationship navigation for an infrastructure provider
+
+    Metadata:
+        test_flag: inventory
+    """
     provider_view = navigate_to(provider, "Details")
     if provider_view.entities.summary("Relationships").get_text_of(relationship) == "0":
         pytest.skip("There are no relationships for {}".format(relationship))
@@ -261,5 +269,10 @@ def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, r
 @pytest.mark.rhv1
 @pytest.mark.provider([CloudInfraProvider])
 def test_provider_refresh_relationship(provider, setup_provider):
+    """Tests provider refresh
+
+    Metadata:
+        test_flag: inventory
+    """
     provider.refresh_provider_relationships(method='ui')
     wait_for_relationship_refresh(provider)

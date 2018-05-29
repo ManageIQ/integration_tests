@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-import pytest
 import random
-from cfme.utils import conf
+
+import pytest
 
 from cfme.infrastructure import host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.utils import conf
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
-
 
 pytestmark = [
     pytest.mark.tier(3),
@@ -37,6 +37,9 @@ def get_host_data_by_name(provider_key, host_name):
 def test_host_good_creds(appliance, request, setup_provider, provider):
     """
     Tests host credentialing  with good credentials
+
+    Metadata:
+        test_flag: inventory
     """
     test_host = random.choice(provider.data["hosts"])
     host_data = get_host_data_by_name(provider.key, test_host.name)
@@ -61,6 +64,9 @@ def test_host_good_creds(appliance, request, setup_provider, provider):
 def test_host_bad_creds(appliance, request, setup_provider, provider):
     """
     Tests host credentialing  with bad credentials
+
+    Metadata:
+        test_flag: inventory
     """
     test_host = random.choice(provider.data["hosts"])
     host_collection = appliance.collections.hosts

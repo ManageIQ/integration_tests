@@ -121,6 +121,11 @@ def set_entity_quota_tag(request, entities, appliance):
 )
 def test_quota_tagging(appliance, provider, setup_provider, set_entity_quota_tag, custom_prov_data,
                        vm_name, template_name, prov_data):
+    """Tests quota tagging
+
+    Metadata:
+        test_flag: quota
+    """
     recursive_update(prov_data, custom_prov_data)
 
     do_vm_provisioning(appliance, template_name=template_name, provider=provider, vm_name=vm_name,
