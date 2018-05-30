@@ -260,7 +260,7 @@ class Details(CFMENavigateStep):
 
 
 @navigator.register(Image, 'EditTags')
-class ImageRegistryEditTags(CFMENavigateStep):
+class EditTags(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 

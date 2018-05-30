@@ -582,10 +582,6 @@ class ContainerObjectAllBaseView(ProvidersView):
             return self.SUMMARY_TEXT.pick(self.context['object'].appliance.version)
 
     @property
-    def table(self):
-        return self.entities.elements
-
-    @property
     def is_displayed(self):
         # We use 'in' for this condition since when we use search it'll include (Names with "...")
         return self.SUMMARY_TEXT in self.summary.text

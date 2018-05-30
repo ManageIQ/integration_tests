@@ -1,18 +1,21 @@
 import pytest
 
-from cfme.utils.version import current_version
-from cfme.utils.appliance.implementations.ui import navigate_to
-
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
 from cfme.containers.node import Node, NodeCollection
+from cfme.markers.env_markers.provider import providers
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.providers import ProviderFilter
+from cfme.utils.version import current_version
 
 NUM_OF_DEFAULT_LOG_ROUTES = 2
 pytestmark = [
     pytest.mark.uncollectif(lambda provider: current_version() < "5.8"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1),
-    pytest.mark.provider([ContainersProvider], scope='function')]
-
+    pytest.mark.provider(gen_func=providers,
+                         filters=[ProviderFilter(classes=[ContainersProvider],
+                                                 required_flags=['cmqe_logging'])],
+                         scope='function')]
 
 TEST_ITEMS = [
     pytest.mark.polarion('CMP-10634')(ContainersTestItem(
@@ -55,7 +58,7 @@ def test_external_logging_activated(provider, appliance, test_item, get_ose_logg
     if test_item.obj is ContainersProvider:
         obj_inst = provider
     else:
-        obj_inst = test_item.collection_obj(appliance).get_random_instances().pop()
+        obj_inst = test_item.collection_obj(appliance).all()[0]
 
     view = navigate_to(obj_inst, 'Details')
     assert view.toolbar.monitoring.item_enabled('External Logging'), (
