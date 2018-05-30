@@ -23,6 +23,8 @@ from manageiq_client.api import APIException, ManageIQClient as VanillaMiqApi
 from six.moves.urllib.parse import urlparse
 from werkzeug.local import LocalStack, LocalProxy
 
+from cfme.fixtures import ui_coverage
+from cfme.fixtures.pytest_store import store
 from cfme.utils import clear_property_cache
 from cfme.utils import conf, ssh, ports
 from cfme.utils.datafile import load_data_file
@@ -32,8 +34,6 @@ from cfme.utils.path import data_path, patches_path, scripts_path, conf_path
 from cfme.utils.ssh import SSHTail
 from cfme.utils.version import Version, get_stream, pick
 from cfme.utils.wait import wait_for, TimedOutError
-from cfme.fixtures import ui_coverage
-from cfme.fixtures.pytest_store import store
 from .db import ApplianceDB
 from .implementations.rest import ViaREST
 from .implementations.ssui import ViaSSUI
@@ -392,7 +392,7 @@ class IPAppliance(object):
         try:
             from cfme.fixtures.artifactor_plugin import fire_art_hook
             from pytest import config
-            from fixture.pytest_store import store
+            from cfme.fixtures.pytest_store import store
         except ImportError:
             logger.info('Not inside pytest run, ignoring')
             return
