@@ -41,9 +41,9 @@ def template_name(provider):
 
 
 @pytest.fixture()
-def prov_data():
+def prov_data(vm_name):
     return {
-        "catalog": {'vm_name': ''},
+        "catalog": {'vm_name': vm_name},
         "environment": {'automatic_placement': True},
     }
 
@@ -91,9 +91,7 @@ def set_entity_quota_source(max_quota_test_instance, entity):
 
 
 @pytest.fixture(params=[('groups', 'group', 'EvmGroup-super_administrator'),
-                        ('users', 'user', 'Administrator')],
-                ids=['group', 'user'],
-                scope='module')
+                        ('users', 'user', 'Administrator')], ids=['group', 'user'], scope='module')
 def entities(appliance, request, max_quota_test_instance):
     collection, entity, description = request.param
     set_entity_quota_source(max_quota_test_instance, entity)
@@ -109,10 +107,7 @@ def entities(appliance, request, max_quota_test_instance):
         [{'hardware': {'vm_num': '21'}}],
         [{'hardware': {'num_sockets': '8'}}]
     ],
-    ids=['max_memory',
-         'max_storage',
-         'max_vm',
-         'max_cpu']
+    ids=['max_memory', 'max_storage', 'max_vm', 'max_cpu']
 )
 def test_quota(appliance, provider, setup_provider, custom_prov_data, vm_name, admin_email,
                entities, template_name, prov_data):
