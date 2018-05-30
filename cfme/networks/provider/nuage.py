@@ -57,6 +57,7 @@ class NuageProvider(NetworkProvider):
     endpoints_form = NuageEndpointForm
     mgmt_class = NuageSystem
     settings_key = 'ems_nuage'
+    log_name = 'nuage'
 
     _collections = {
         'security_groups': SecurityGroupCollection,

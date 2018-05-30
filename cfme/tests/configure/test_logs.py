@@ -9,23 +9,22 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.tier(3),
-    pytest.mark.provider([AzureProvider, EC2Provider, RHEVMProvider, SCVMMProvider],
-                         scope='module'),
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.provider(
+        [AzureProvider, EC2Provider, RHEVMProvider, SCVMMProvider], scope="module"
+    ),
+    pytest.mark.usefixtures("setup_provider"),
 ]
-
-# Provider type - provider log name
-provider_log = {'azure': 'azure',
-                'ec2': 'aws',
-                'scvmm': 'scvmm',
-                'rhevm': 'rhevm'}
 
 
 @pytest.fixture
 def log_exists(appliance, provider):
-    log_exists = bool(appliance.ssh_client.run_command(
-        '(ls /var/www/miq/vmdb/log/{}.log >> /dev/null 2>&1 && echo True) || echo False'.format(
-            provider_log[provider.type])).output)
+    log_exists = bool(
+        appliance.ssh_client.run_command(
+            "(ls /var/www/miq/vmdb/log/{}.log >> /dev/null 2>&1 && echo True) || echo False".format(
+                provider.log_name
+            )
+        ).output
+    )
     return log_exists
 
 
@@ -51,11 +50,15 @@ def test_provider_log_rotate(appliance, provider, log_exists):
         test_flag: log
     """
     if log_exists:
-        appliance.ssh_client.run_command('logrotate -f /etc/logrotate.d/miq_logs.conf')
+        appliance.ssh_client.run_command("logrotate -f /etc/logrotate.d/miq_logs.conf")
         logs_count = appliance.ssh_client.run_command(
-            'ls -l /var/www/miq/vmdb/log/{}.log*|wc -l'.format(provider_log[provider.type])).output
+            "ls -l /var/www/miq/vmdb/log/{}.log*|wc -l".format(
+                provider.log_name
+            )
+        ).output
         assert logs_count > 1, "{}.log wasn't rotated by default miq_logs.conf".format(
-            provider_log[provider.type])
+            provider.log_name
+        )
 
 
 def test_provider_log_updated(appliance, provider, log_exists):
@@ -74,10 +77,14 @@ def test_provider_log_updated(appliance, provider, log_exists):
     if log_exists:
         log_before = appliance.ssh_client.run_command(
             "md5sum /var/www/miq/vmdb/log/{}.log | awk '{{ print $1 }}'".format(
-                provider_log[provider.type])).output
+                provider.log_name
+            )
+        ).output
 
         wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
         log_after = appliance.ssh_client.run_command(
             "md5sum /var/www/miq/vmdb/log/{}.log | awk '{{ print $1 }}'".format(
-                provider_log[provider.type])).output
+                provider.log_name
+            )
+        ).output
         assert log_before != log_after, "Log hashes are the same"

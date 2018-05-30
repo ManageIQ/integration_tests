@@ -1,5 +1,4 @@
 import attr
-
 from wrapanapi.virtualcenter import VMWareSystem
 
 from cfme.common.candu_views import VMUtilizationView
@@ -44,6 +43,7 @@ class VMwareProvider(InfraProvider):
     _ctrl_alt_del_xpath = '(//*[@id="ctrlaltdel"]|//*[@id="sendCtrlAltDelButton"])'
     _fullscreen_xpath = '//*[@id="fullscreen"]'
     bad_credentials_error_msg = 'Cannot complete login due to an incorrect user name or password.'
+    log_name = 'vim'
 
     ems_events = [
         ('vm_create', {'event_type': 'VmDeployedEvent', 'dest_vm_or_template_id': None}),

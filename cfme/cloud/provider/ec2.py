@@ -1,11 +1,10 @@
 import attr
-
 from widgetastic.widget import View
 from widgetastic_patternfly import Tab, Input, Button
 from wrapanapi.ec2 import EC2System
 
-from cfme.common.candu_views import VMUtilizationView
 from cfme.cloud.instance.ec2 import EC2Instance
+from cfme.common.candu_views import VMUtilizationView
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.services.catalogs.catalog_items import AmazonCatalogItem
@@ -62,6 +61,7 @@ class EC2Provider(CloudProvider):
     endpoints_form = EC2EndpointForm
     discover_name = "Amazon EC2"
     settings_key = 'ems_amazon'
+    log_name = 'aws'
 
     region = attr.ib(default=None)
     region_name = attr.ib(default=None)
