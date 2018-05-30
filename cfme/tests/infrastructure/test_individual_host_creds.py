@@ -8,6 +8,7 @@ from cfme.infrastructure import host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
@@ -18,6 +19,10 @@ pytestmark = [
     pytest.mark.provider([InfraProvider], required_fields=['hosts'], scope='module')
 ]
 
+
+msgs = {'virtualcenter': 'Login failed due to a bad username or password.',
+        'rhevm': 'Login failed due to a bad username or password.',
+        'scvmm': 'Check credentials. Remote error message: WinRM::WinRMAuthorizationError'}
 
 # Credential type UI Element id and it's name in Authentication Table
 credentials_type = {'remote_login': 'Remote Login Credentials',
@@ -34,9 +39,13 @@ def get_host_data_by_name(provider_key, host_name):
 
 
 @pytest.mark.rhv1
-@pytest.mark.meta(blockers=[BZ(1516849,
-                            forced_streams=['5.8', '5.9', 'upstream'],
-                            unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+@pytest.mark.meta(blockers=[
+                  BZ(1584246, forced_streams=['5.8', '5.9'],
+                     unblock=lambda provider: not provider.one_of(VMwareProvider)),
+                  BZ(1584261, forced_streams=['5.8'],
+                     unblock=lambda creds: creds == 'default'),
+                  BZ(1584280, forced_streams=['5.9'],
+                     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
                          ids=["default", "remote", "web"])
 def test_host_good_creds(appliance, request, setup_provider, provider, creds):
@@ -83,9 +92,13 @@ def test_host_good_creds(appliance, request, setup_provider, provider, creds):
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[BZ(1516849,
-                            forced_streams=['5.8', '5.9', 'upstream'],
-                            unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+@pytest.mark.meta(blockers=[
+                  BZ(1584246, forced_streams=['5.8', '5.9'],
+                     unblock=lambda provider: not provider.one_of(VMwareProvider)),
+                  BZ(1584261, forced_streams=['5.8'],
+                     unblock=lambda creds: creds == 'default'),
+                  BZ(1584280, forced_streams=['5.9'],
+                     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
                          ids=["default", "remote", "web"])
 def test_host_bad_creds(appliance, request, setup_provider, provider, creds):
@@ -104,9 +117,7 @@ def test_host_bad_creds(appliance, request, setup_provider, provider, creds):
     host_data = get_host_data_by_name(provider.key, test_host.name)
     host_collection = appliance.collections.hosts
     host_obj = host_collection.instantiate(name=test_host.name, provider=provider)
-
-    flash_msg = 'Login failed due to a bad username or password.'
-
+    flash_msg = msgs.get(provider.type)
     with pytest.raises(Exception, match=flash_msg):
         with update(host_obj, validate_credentials=True):
             host_obj.credentials = {creds: host.get_credentials_from_config('bad_credentials')}

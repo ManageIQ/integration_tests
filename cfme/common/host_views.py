@@ -33,7 +33,6 @@ from widgetastic_manageiq import (
     NonJSBaseEntity,
     PaginationPane,
     ParametrizedSummaryTable,
-    SummaryTable,
     Table,
     TimelinesView
 )
@@ -316,9 +315,7 @@ class HostEditView(HostFormView):
 
     @property
     def is_displayed(self):
-        expected_name = self.context['object'].name
-        return (self.in_compute_infrastructure_hosts and self.title.text == "Info/Settings" and
-                expected_name in self.breadcrumb.locations[1])
+        return False
 
 
 class HostsEditView(HostEditView):
