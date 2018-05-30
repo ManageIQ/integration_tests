@@ -2,8 +2,9 @@
 import fauxfactory
 import pytest
 
+from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import (
-    a_provider as _a_provider,
     categories as _categories,
     service_templates as _service_templates,
     tags as _tags,
@@ -19,6 +20,10 @@ from cfme.utils.rest import (
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
+pytestmark = [
+    pytest.mark.provider(classes=[InfraProvider], selector=ONE),
+    pytest.mark.usefixtures('setup_provider')
+]
 
 @pytest.fixture
 def category(appliance):
@@ -104,16 +109,12 @@ class TestTagsViaREST(object):
         return _tenants(request, appliance.rest_api, num=1)
 
     @pytest.fixture(scope="module")
-    def a_provider(self, request):
-        return _a_provider(request)
-
-    @pytest.fixture(scope="module")
     def service_templates(self, request, appliance):
         return _service_templates(request, appliance)
 
     @pytest.fixture(scope="module")
-    def vm(self, request, a_provider, appliance):
-        return _vm(request, a_provider, appliance.rest_api)
+    def vm(self, request, provider, appliance):
+        return _vm(request, provider, appliance.rest_api)
 
     @pytest.mark.tier(2)
     def test_edit_tags_rest(self, appliance, tags):
@@ -209,7 +210,7 @@ class TestTagsViaREST(object):
         "collection_name", ["clusters", "hosts", "data_stores", "providers", "resource_pools",
         "services", "service_templates", "tenants", "vms", "availability_zones", "cloud_networks",
         "cloud_networks", "cloud_subnets", "flavors", "network_routers", "security_groups"])
-    def test_assign_and_unassign_tag(self, appliance, tags_mod, a_provider, services_mod,
+    def test_assign_and_unassign_tag(self, appliance, tags_mod, provider, services_mod,
             service_templates, tenants, vm, collection_name):
         """Tests assigning and unassigning tags.
 

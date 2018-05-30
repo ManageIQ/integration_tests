@@ -8,21 +8,18 @@ import pytest
 from widgetastic.exceptions import NoSuchElementException
 
 from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.providers import ProviderFilter
-from cfme.fixtures.provider import setup_one_or_skip
 
-pytestmark = [pytest.mark.tier(3)]
-
-
-@pytest.fixture(scope="module")
-def a_provider(request):
-    pf = ProviderFilter(classes=[InfraProvider], required_fields=['large'])
-    setup_one_or_skip(request, filters=[pf])
+pytestmark = [
+    pytest.mark.tier(3),
+    pytest.mark.provider(classes=[InfraProvider], required_fields=['large'], selector=ONE),
+    pytest.mark.usefixtures('setup_provider')
+]
 
 
 @pytest.fixture(scope="module")
-def vms(appliance, a_provider):
+def vms(appliance, provider):
     """Ensure the infra providers are set up and get list of vms"""
     view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
     view.entities.search.remove_search_filters()
