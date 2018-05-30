@@ -19,6 +19,9 @@ def test_sdn_crud(provider, appliance):
     """ Test for functional addition of network manager with cloud provider
         and functional references to components on detail page
     Prerequisites: Cloud provider in cfme
+
+    Metadata:
+        test_flag: sdn
     """
     view = navigate_to(provider, 'Details')
     net_prov_name = view.entities.summary("Relationships").get_text_of("Network Manager")
