@@ -11,7 +11,7 @@ from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
-from cfme.cloud.provider.azure import AzureProvider, AzureEndpoint
+from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider, RHOSEndpoint
@@ -20,7 +20,7 @@ from cfme.common.provider_views import (
 from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils import conf
+from cfme.utils.providers import list_providers, ProviderFilter
 from cfme.utils.rest import (
     assert_response,
     delete_resources_from_collection,
@@ -384,29 +384,18 @@ def test_azure_multiple_subscription(appliance, request, soft_assert):
     Metadata:
         test_flag: crud
     """
-    providers = conf.cfme_data.get("management_systems", {})
-    azure_providers = []
-    for provider in providers.items():
-        if provider[1].get('type') == 'azure':
-            azure_providers.append(provider)
+    pf = ProviderFilter(classes=[AzureProvider], required_flags=['crud'])
+    providers = list_providers([pf])
+    if len(providers) < 2:
+        pytest.skip("this test needs at least 2 AzureProviders")
     prov_inventory = []
-    for provider in azure_providers:
-        endpoint = AzureEndpoint(**provider[1]['endpoints']['default'])
-        endpoint.credentials.domain = None
-        crud_provider = appliance.collections.cloud_providers.instantiate(
-            name=provider[0],
-            prov_class=AzureProvider,
-            region=provider[1]['region'],
-            tenant_id=provider[1]['tenant_id'],
-            subscription_id=provider[1]['subscription_id'],
-            key=provider[0],
-            endpoints=endpoint)
-        request.addfinalizer(crud_provider.clear_providers)
-        crud_provider.create()
-        crud_provider.validate_stats()
-        prov_inventory.append((crud_provider.name,
-                               crud_provider.num_vm(),
-                               crud_provider.num_template()))
+    for provider in providers:
+        request.addfinalizer(provider.clear_providers)
+        provider.create()
+        provider.validate_stats()
+        prov_inventory.append((provider.name,
+                               provider.num_vm(),
+                               provider.num_template()))
 
     for index, prov_a in enumerate(prov_inventory[:-1]):
         for prov_b in prov_inventory[index + 1:]:
