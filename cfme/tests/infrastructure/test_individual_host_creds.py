@@ -88,7 +88,8 @@ def test_host_good_creds(appliance, request, setup_provider, provider, creds):
             return 'None'
         return creds_value
 
-    wait_for(lambda: _refresh() == 'Valid', num_sec=180, delay=15)
+    wait_for(lambda: _refresh() == 'Valid', num_sec=180, delay=15,
+             message='Waiting for \'{}\' state change'.format(credentials_type[creds]))
 
 
 @pytest.mark.rhv3
@@ -146,4 +147,5 @@ def test_host_bad_creds(appliance, request, setup_provider, provider, creds):
             return 'None'
         return creds_value
 
-    wait_for(lambda: _refresh() in ['Error', 'Invalid'], num_sec=180, delay=15)
+    wait_for(lambda: _refresh() in ['Error', 'Invalid'], num_sec=180, delay=15,
+             message='Waiting for \'{}\' state change'.format(credentials_type[creds]))
