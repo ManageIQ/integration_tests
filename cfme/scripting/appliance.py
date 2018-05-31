@@ -13,7 +13,6 @@ from cached_property import cached_property
 from cfme.utils import os
 from cfme.utils.conf import cfme_data, env
 from functools import partial
-from cfme.utils.repo_gen import process_url, build_file
 
 
 def get_appliance(appliance_ip):
@@ -36,14 +35,12 @@ def main():
 @main.command('upgrade', help='Upgrades an appliance to latest Z-stream')
 @click.argument('appliance-ip', default=None, required=False)
 @click.option('--cfme-only', is_flag=True, help='Upgrade cfme packages only')
-@click.option('--update-to', default='5.9.z', help='Supported versions 5.8.1, 5.8.2, 5.8.z,'
-              ' 5.9.1, 5.9.2, 5.9.z (.z means latest and default is 5.9.z)')
+@click.option('--update-to', default='5.9.z', help='Supported versions 5.9.z,'
+              ' 5.10.z (.z means latest and default is 5.9.z)')
 def upgrade_appliance(appliance_ip, cfme_only, update_to):
     """Upgrades an appliance"""
     supported_version_repo_map = {
-        '5.8.z': 'update_url_58', '5.8.0': 'update_url_580', '5.8.1': 'update_url_581',
-        '5.8.2': 'update_url_582', '5.9.z': 'update_url_59', '5.9.0': 'update_url_590',
-        '5.9.1': 'update_url_591', '5.9.2': 'update_url_592'
+        '5.9.z': 'update_url_59', '5.10.z': 'update_url_510',
     }
     assert update_to in supported_version_repo_map, "{} is not a supported version".format(
         update_to
@@ -57,11 +54,10 @@ def upgrade_appliance(appliance_ip, cfme_only, update_to):
     assert app.version > '5.7', "{} is not supported, must be 5.7 or higher".format(app.version)
     print('Extending appliance partitions')
     app.db.extend_partition()
-    urls = process_url(cfme_data['basic_info'][update_url])
-    output = build_file(urls)
+    urls = cfme_data['basic_info'][update_url]
     print('Adding update repo to appliance')
     with tempfile.NamedTemporaryFile('w') as f:
-        f.write(output)
+        f.write(urls)
         f.flush()
         os.fsync(f.fileno())
         app.ssh_client.put_file(

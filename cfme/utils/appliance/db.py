@@ -60,21 +60,22 @@ class ApplianceDB(AppliancePlugin):
 
     def extend_partition(self):
         """Extends the /var partition with DB while shrinking the unused /repo partition"""
-        if self.is_partition_extended:
-            return
-        with self.appliance.ssh_client as ssh:
-            result = ssh.run_command("df -h")
-            self.logger.info("File systems before extending the DB partition:\n{}"
-                             .format(result.output))
-            ssh.run_command("umount /repo")
-            ssh.run_command("lvreduce --force --size -9GB /dev/mapper/VG--CFME-lv_repo")
-            ssh.run_command("mkfs.xfs -f /dev/mapper/VG--CFME-lv_repo")
-            ssh.run_command("lvextend --resizefs --size +9GB /dev/mapper/VG--CFME-lv_var")
-            ssh.run_command("mount -a")
-            result = ssh.run_command("df -h")
-            self.logger.info("File systems after extending the DB partition:\n{}"
-                             .format(result.output))
-            ssh.run_command("touch /var/www/miq/vmdb/.db_partition_extended")
+        if self.appliance.version < '5.8.1':
+            if self.is_partition_extended:
+                return
+            with self.appliance.ssh_client as ssh:
+                result = ssh.run_command("df -h")
+                self.logger.info("File systems before extending the DB partition:\n{}"
+                                 .format(result.output))
+                ssh.run_command("umount /repo")
+                ssh.run_command("lvreduce --force --size -9GB /dev/mapper/VG--CFME-lv_repo")
+                ssh.run_command("mkfs.xfs -f /dev/mapper/VG--CFME-lv_repo")
+                ssh.run_command("lvextend --resizefs --size +9GB /dev/mapper/VG--CFME-lv_var")
+                ssh.run_command("mount -a")
+                result = ssh.run_command("df -h")
+                self.logger.info("File systems after extending the DB partition:\n{}"
+                                 .format(result.output))
+                ssh.run_command("touch /var/www/miq/vmdb/.db_partition_extended")
 
     def drop(self):
         """ Drops the vmdb_production database
