@@ -153,13 +153,7 @@ def providers(metafunc, filters=None, selector=ALL):
     else:
         allowed_providers = potential_providers
 
-    need_prov_keys = False
-    for filter in filters:
-        if isinstance(filter, ProviderFilter):
-            for filt in filter.classes:
-                if hasattr(filt, 'type_name'):
-                    need_prov_keys = True
-                    break
+    need_prov_keys = any(getattr(filt, 'type_name', None) is not None for filt in filter.classes)
 
     for provider in allowed_providers:
         argvalues.append([provider])
