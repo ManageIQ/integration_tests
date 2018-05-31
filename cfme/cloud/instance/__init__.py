@@ -323,7 +323,7 @@ class InstanceCollection(VMCollection):
             Calling create on a sub-class of instance will generate the properly formatted
             dictionary when the correct fields are supplied.
         """
-        instance = self.instantiate(vm_name, provider)
+        instance = self.instantiate(vm_name, provider, form_values.get('template_name'))
         form_values.update({'provider_name': provider.name})
         view = navigate_to(self, 'Provision')
 
