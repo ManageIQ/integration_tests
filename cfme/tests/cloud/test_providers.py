@@ -365,15 +365,15 @@ def test_azure_subscription_required(request, provider):
     """
     provider.subscription_id = ''
     request.addfinalizer(provider.delete_if_exists)
-    flash = 'Credential validation was not successful: ' \
-            'Incorrect credentials - check your Azure Subscription ID'
+    flash = ('Credential validation was not successful: '
+            'Incorrect credentials - check your Azure Subscription ID')
     with pytest.raises(AssertionError, match=flash):
         provider.create()
 
 
 @pytest.mark.tier(2)
 @pytest.mark.usefixtures('has_no_cloud_providers')
-def test_azure_multiple_subscription(appliance, request):
+def test_azure_multiple_subscription(appliance, request, soft_assert):
     """
     Verifies that different azure providers have different resources access
 
@@ -410,10 +410,10 @@ def test_azure_multiple_subscription(appliance, request):
 
     for index, prov_a in enumerate(prov_inventory[:-1]):
         for prov_b in prov_inventory[index + 1:]:
-            assert prov_a[1] != prov_b[1], "Same num_vms for {} and {}".format(prov_a[0],
-                                                                               prov_b[0])
-            assert prov_a[2] != prov_b[2], "Same num_templates for {} and {}".format(prov_a[0],
-                                                                                     prov_b[0])
+            soft_assert(prov_a[1] != prov_b[1], "Same num_vms for {} and {}".format(prov_a[0],
+                                                                               prov_b[0]))
+            soft_assert(prov_a[2] != prov_b[2], "Same num_templates for {} and {}".format(prov_a[0],
+                                                                                     prov_b[0]))
 
 
 @pytest.mark.tier(3)
