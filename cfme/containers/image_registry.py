@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import attr
-from cached_property import cached_property
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.utils import VersionPick, Version
-from wrapanapi.containers.image_registry import ImageRegistry as ApiImageRegistry
 
 from cfme.common import Taggable, TagPageView
 from cfme.containers.provider import (ContainerObjectAllBaseView,
@@ -41,10 +39,6 @@ class ImageRegistry(BaseEntity, Taggable, Navigatable):
 
     host = attr.ib()
     provider = attr.ib()
-
-    @cached_property
-    def mgmt(self):
-        return ApiImageRegistry(self.provider.mgmt, self.name, self.host, None)
 
     @property
     def name(self):

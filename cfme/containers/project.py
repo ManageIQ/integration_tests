@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import attr
-from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import VersionPick, Version
-from wrapanapi.containers.project import Project as ApiProject
 
 
 from cfme.common import Taggable, TagPageView
@@ -45,10 +43,6 @@ class Project(BaseEntity, Taggable, Labelable):
 
     name = attr.ib()
     provider = attr.ib()
-
-    @cached_property
-    def mgmt(self):
-        return ApiProject(self.provider.mgmt, self.name)
 
 
 @attr.s
