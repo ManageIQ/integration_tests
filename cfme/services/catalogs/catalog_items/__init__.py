@@ -34,7 +34,13 @@ class BasicInfoForm(ServicesCatalogView):
     field_entry_point = Input(name='fqname')
     retirement_entry_point = Input(name='retire_fqname')
     select_resource = BootstrapSelect('resource_id')
-    tree = ManageIQTree('automate_treebox')
+
+    @View.nested
+    class modal(View):  # noqa
+        tree = ManageIQTree('automate_treebox')
+        include_domain = Checkbox(id='include_domain_prefix_chk')
+        apply = Button('Apply')
+        cancel = Button('Cancel')
 
 
 class ButtonGroupForm(ServicesCatalogView):

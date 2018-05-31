@@ -2,6 +2,7 @@ import pytest
 from six.moves.urllib.parse import urlparse
 
 from cfme.automate.import_export import AutomateGitRepository
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
@@ -36,3 +37,29 @@ def test_automate_git_domain_removed_from_disk(appliance, imported_domain):
     repo_path = urlparse(GIT_REPO_URL).path
     assert appliance.ssh_client.run_command(
         '[ ! -d "/var/www/vmdb/data/git_repos{}" ]'.format(repo_path)).success
+
+
+def test_automate_git_domain_displayed_in_service(appliance, imported_domain, branch):
+    """Tests if a domain is displayed in a service.
+
+    Checks if the domain imported from git is displayed and usable in the pop-up tree in the
+    dialog for creating services.
+
+    """
+    collection = appliance.collections.catalog_items
+    cat_item = collection.instantiate(collection.GENERIC, "test")
+    view = navigate_to(cat_item, "Add")
+    view.field_entry_point.fill("")
+    view.modal.tree.click_path(
+        "Datastore",
+        "{0} ({1}) ({0}) (Locked)".format(imported_domain.name, branch),
+        "Service",
+        "Provisioning",
+        "StateMachines",
+        "ServiceProvision_Template",
+        "CatalogItemInitialization"
+    )
+    view.modal.include_domain.fill(True)
+    view.modal.apply.click()
+    assert view.field_entry_point.value == ("/{}/Service/Provisioning/StateMachines/"
+        "ServiceProvision_Template/CatalogItemInitialization".format(imported_domain.name))
