@@ -169,7 +169,7 @@ msrestazure==0.4.31
 multi-key-dict==2.0.3
 multimethods.py==0.5.3
 munch==2.3.2
-navmazing==1.1.4
+navmazing==1.1.5
 nbconvert==5.3.1
 nbformat==4.4.0
 netaddr==0.7.19
