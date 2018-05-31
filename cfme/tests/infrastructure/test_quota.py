@@ -40,7 +40,7 @@ def template_name(provider):
         return provider.data.templates.get('big_template')['name']
 
 
-@pytest.fixture()
+@pytest.fixture
 def prov_data(vm_name):
     return {
         "catalog": {'vm_name': vm_name},
@@ -82,7 +82,7 @@ def max_quota_test_instance(appliance, test_domain):
         namespaces.instantiate('CommonMethods'). \
         classes.instantiate('QuotaStateMachine'). \
         instances.instantiate('quota')
-    yield instance
+    return instance
 
 
 def set_entity_quota_source(max_quota_test_instance, entity):
@@ -95,10 +95,11 @@ def set_entity_quota_source(max_quota_test_instance, entity):
 def entities(appliance, request, max_quota_test_instance):
     collection, entity, description = request.param
     set_entity_quota_source(max_quota_test_instance, entity)
-    yield getattr(appliance.collections, collection).instantiate(description)
+    return getattr(appliance.collections, collection).instantiate(description)
 
 
 @pytest.mark.rhv2
+# Here cust_prov_data is the dict required during provisioning of the VM.
 @pytest.mark.parametrize(
     ['custom_prov_data'],
     [
@@ -111,6 +112,7 @@ def entities(appliance, request, max_quota_test_instance):
 )
 def test_quota(appliance, provider, setup_provider, custom_prov_data, vm_name, admin_email,
                entities, template_name, prov_data):
+    """This test case checks quota limit using the automate's predefine method 'quota source'"""
     recursive_update(prov_data, custom_prov_data)
     do_vm_provisioning(appliance, template_name=template_name, provider=provider, vm_name=vm_name,
                        provisioning_data=prov_data, smtp_test=False, wait=False, request=None)
