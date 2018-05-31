@@ -20,7 +20,7 @@ pytestmark = [
 ]
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def admin_email(appliance):
     """Required for user quota tagging services to work, as it's mandatory for it's functioning."""
     user = appliance.collections.users
@@ -45,17 +45,17 @@ def template_name(provider):
         return provider.data.templates.get('big_template')['name']
 
 
-@pytest.fixture()
-def prov_data(provider, vm_name):
+@pytest.fixture
+def prov_data(provider, vm_name, template_name):
     if provider.one_of(RHEVMProvider):
         return {
-            "catalog": {'vm_name': vm_name},
+            "catalog": {'vm_name': vm_name, 'catalog_name': {'name': template_name}},
             "environment": {'automatic_placement': True},
             "network": {'vlan': partial_match('ovirtmgmt')},
         }
     else:
         return {
-            "catalog": {'vm_name': vm_name},
+            "catalog": {'vm_name': vm_name, 'catalog_name': {'name': template_name}},
             "environment": {'automatic_placement': True},
         }
 
@@ -73,6 +73,7 @@ def test_domain(appliance):
 
 @pytest.fixture
 def catalog_item(appliance, provider, dialog, catalog, prov_data):
+
     collection = appliance.collections.catalog_items
     catalog_item = collection.create(provider.catalog_item_type,
                                      name='test_{}'.format(fauxfactory.gen_alphanumeric()),
@@ -109,7 +110,7 @@ def max_quota_test_instance(appliance, test_domain):
         namespaces.instantiate('CommonMethods'). \
         classes.instantiate('QuotaStateMachine'). \
         instances.instantiate('quota')
-    yield instance
+    return instance
 
 
 def set_entity_quota_source(max_quota_test_instance, entity):
@@ -122,7 +123,7 @@ def set_entity_quota_source(max_quota_test_instance, entity):
 def entities(appliance, request, max_quota_test_instance):
     collection, entity, description = request.param
     set_entity_quota_source(max_quota_test_instance, entity)
-    yield getattr(appliance.collections, collection).instantiate(description)
+    return getattr(appliance.collections, collection).instantiate(description)
 
 
 @pytest.fixture(scope='function')
@@ -164,6 +165,8 @@ def test_quota_tagging_infra_via_lifecycle(request, appliance, provider, setup_p
 
 @pytest.mark.rhv2
 @pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
+# Here set_entity_quota_tag is used for setting the tag value.
+# Here custom_prov_data is used to provide the value fo the catalog item to be created.
 @pytest.mark.parametrize(
     ['set_entity_quota_tag', 'custom_prov_data'],
     [
@@ -177,6 +180,8 @@ def test_quota_tagging_infra_via_lifecycle(request, appliance, provider, setup_p
 def test_quota_tagging_infra_via_services(request, appliance, provider, setup_provider, admin_email,
                                           context, set_entity_quota_tag, custom_prov_data,
                                           prov_data, catalog_item):
+    """This test case verifies the quota tagging is working correctly for the infra providers."""
+
     prov_data.update(custom_prov_data)
     with appliance.context.use(context):
         service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
