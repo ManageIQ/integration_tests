@@ -36,7 +36,7 @@ RUN echo "export PYTHONPATH=$CFME_ENV/:${PYTHONPATH}" >> /etc/bashrc && \
 
 RUN export PYCURL_SSL_LIBRARY=nss && find . -iname "*.pyc" -exec rm '{}' \;
 
-RUN curl -L  https://raw.githubusercontent.com/RedHatQE/cfme_tests/master/requirements/frozen.txt > requirements.txt && \
+RUN curl -L  https://raw.githubusercontent.com/ManageIQ/integration_tests/master/requirements/frozen.py3.txt > requirements.txt && \
     source /root/.bashrc; PYCURL_SSL_LIBRARY=nss pip install -Ur ./requirements.txt \
     --no-binary numpy --no-binary matplotlib && \
     rm -rf ~/.cache/pip
