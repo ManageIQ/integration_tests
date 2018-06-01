@@ -9,7 +9,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore, SystemImage
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils import testgen
-from cfme.utils.blockers import GH
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 
 pytestmark = [
@@ -78,8 +78,8 @@ def vm_name():
 
 @pytest.mark.rhv1
 @pytest.mark.tier(2)
-# @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6692',
-#                                unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+@pytest.mark.meta(blockers=[BZ(1584675, forced_streams=['5.8', '5.9'],
+                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_iso_provision_from_template(appliance, provider, vm_name, datastore_init,
                                      request, smtp_test):
     """Tests ISO provisioning
