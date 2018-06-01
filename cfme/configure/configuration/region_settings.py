@@ -229,11 +229,11 @@ class CompanyTagsEditView(CompanyTagsAddView):
 
 class Tag(Pretty, Navigatable, Updateable):
     """ Class represents a category in CFME UI
+
         Args:
             name: Name of the tag
             display_name: Tag display name
             category: Tags Category
-
     """
     pretty_attrs = ['name', 'display_name', 'category']
 
@@ -340,11 +340,11 @@ class MapTagsEditView(MapTagsAddView):
 
 
 @attr.s
-class MapTag(BaseEntity, Pretty):
+class MapTag(BaseEntity, Pretty, Updateable):
     """ Class represents a category in CFME UI
 
         Args:
-            entity: Name of the tag
+            entity_type: Name of the tag
             label: Tag display name
             category: Tags Category
 
@@ -353,7 +353,7 @@ class MapTag(BaseEntity, Pretty):
 
     entity_type = attr.ib()
     label = attr.ib()
-    category = attr.ib(default="My Company")
+    category = attr.ib()
 
     def update(self, updates, cancel=False):
         """ Update tag map method
@@ -371,17 +371,12 @@ class MapTag(BaseEntity, Pretty):
 
         if cancel:
             view.cancel_button.click()
-            flash_message = (
-                'Edit of Container Label Tag Mapping "{}" was cancelled by the user'.format(
-                    self.label)
-            )
         else:
             view.save_button.click()
-            flash_message = 'Container Label Tag Mapping "{}" was saved'.format(self.label)
 
-        view = self.create_view(MapTagsAllView, override=updates)
-        if not BZ(1510473, forced_streams=['5.9']).blocks:
-            view.flash.assert_success_message(flash_message)
+        view = self.create_view(navigator.get_class(self.parent, 'All').VIEW, override=updates)
+        assert view.is_displayed
+        view.flash.assert_no_error()
 
     def delete(self, cancel=False):
         """ Delete existing user
@@ -396,10 +391,9 @@ class MapTag(BaseEntity, Pretty):
         view.browser.handle_alert(cancel=cancel)
 
         if not cancel:
-            view = self.create_view(MapTagsAllView)
-            if not BZ(1510473, forced_streams=['5.9']).blocks:
-                view.flash.assert_success_message(
-                    'Container Label Tag Mapping "{}": Delete successful'.format(self.label))
+            view = self.create_view(navigator.get_class(self.parent, 'All').VIEW)
+        assert view.is_displayed
+        view.flash.assert_no_error()
 
 
 @attr.s
@@ -418,7 +412,7 @@ class MapTagsCollection(BaseCollection):
             ))
         return all_map_tagging
 
-    def create(self, cancel=False):
+    def create(self, entity_type, label, category, cancel=False):
         """ Map tags creation method
 
             Args:
@@ -427,21 +421,25 @@ class MapTagsCollection(BaseCollection):
         """
         view = navigate_to(self, 'Add')
         view.fill({
-            'resource_entity': self.entity_type,
-            'resource_label': self.label,
-            'category': self.category
+            'resource_entity': entity_type,
+            'resource_label': label,
+            'category': category
         })
 
         if cancel:
             view.cancel_button.click()
-            flash_message = 'Add of new Container Label Tag Mapping was cancelled by the user'
         else:
             view.add_button.click()
-            flash_message = 'Container Label Tag Mapping "{}" was added'.format(self.label)
 
-        view = self.create_view(MapTagsAllView)
-        if not BZ(1510473, forced_streams=['5.9']).blocks:
-            view.flash.assert_success_message(flash_message)
+        view = self.create_view(navigator.get_class(self.parent, 'All').VIEW)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+
+        return self.instantiate(
+            entity_type=entity_type,
+            label=label,
+            category=category
+        )
 
 
 @navigator.register(MapTagsCollection, 'All')
@@ -551,7 +549,6 @@ class RedHatUpdates(Navigatable, Pretty):
         set_default_rhsm_address: Click the Default button connected to
             the RHSM (only) address if `True`
         set_default_repository: Click the Default button connected to the repo/channel if `True`
-
         Note:
             With satellite 6, it is necessary to validate credentials to obtain
             available organizations from the server.
@@ -963,7 +960,6 @@ class Replication(NavigatableMixin):
                      db creds get from credentials
                  replication_type(str): Replication type, use 'global' or 'remote'
                  reset: Pass True to reset made changes
-
         """
         db_creds = conf.credentials.database
         if not replication_type:
