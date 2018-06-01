@@ -390,7 +390,7 @@ class MapTag(BaseEntity, Pretty):
                 cancel: Default value 'False', map will be deleted
                         'True' - map will not be deleted
         """
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.parent, 'All')
         row = view.table.row(tag_category=self.category)
         row.actions.click()
         view.browser.handle_alert(cancel=cancel)
