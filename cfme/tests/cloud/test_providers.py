@@ -364,7 +364,8 @@ def test_openstack_provider_has_api_version(appliance):
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda provider:
                          not provider.one_of(EC2Provider) or 'govcloud' in provider.data.tags)
-def test_select_key_pair_none_while_provisioning(request, has_no_cloud_providers, provider):
+def test_select_key_pair_none_while_provisioning(appliance, request, has_no_cloud_providers,
+                                                 provider):
     """
         GH Issue: https://github.com/ManageIQ/manageiq/issues/10575
 
@@ -382,7 +383,7 @@ def test_select_key_pair_none_while_provisioning(request, has_no_cloud_providers
     provider.create()
     provider.validate()
 
-    view = navigate_to(Instance, 'Provision')
+    view = navigate_to(appliance.collections.cloud_instances, 'Provision')
     view.image_table[0].click()
     view.form.continue_button.click()
 
