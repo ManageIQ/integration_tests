@@ -388,7 +388,6 @@ class MapTag(BaseEntity, Pretty, Updateable):
             entity_type: Name of the tag
             label: Tag display name
             category: Tags Category
-
     """
     pretty_attrs = ['entity_type', 'label', 'category']
 

@@ -1,16 +1,18 @@
+import fauxfactory
 import pytest
 from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.exceptions import ItemNotFound
-from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
 
 pytestmark = [
-    pytest.mark.provider([AzureProvider], selector=ONE_PER_CATEGORY, scope='function'),
-    pytest.mark.usefixtures('setup_provider')
+    pytest.mark.provider([AzureProvider, EC2Provider], selector=ONE_PER_TYPE, scope='function'),
+    pytest.mark.usefixtures('setup_provider', 'refresh_provider')
 ]
 
 
@@ -24,7 +26,7 @@ def map_tags(appliance, provider, request):
 
 
 @pytest.fixture(scope='function')
-def vm(appliance, provider):
+def tagged_vm(appliance, provider):
     # cu-24x7 vm is tagged with test:testing in provider
     tag_vm = provider.data.cap_and_util.capandu_vm
     collection = provider.appliance.provider_based_collection(provider)
@@ -41,8 +43,29 @@ def refresh_provider(provider):
     return True
 
 
+@pytest.fixture(params=['instances', 'images'])
+def tag_mapping_items(request, appliance, provider):
+    entity_type = request.param
+    collection = getattr(appliance.collections, 'cloud_{}'.format(entity_type))
+    collection.filters = {'provider': provider}
+    view = navigate_to(collection, 'AllForProvider')
+    name = view.entities.get_first_entity().name
+    mgmt_item = (
+        provider.mgmt.get_template(name) if entity_type == 'images' else provider.mgmt.get_vm(name)
+    )
+    return collection.instantiate(name=name, provider=provider), mgmt_item, entity_type
+
+
+@pytest.fixture
+def tag_components():
+    # Return tuple with random tag_label and tag_value
+    return ('tag_label_{}'.format(fauxfactory.gen_alphanumeric()),
+            'tag_value_{}'.format(fauxfactory.gen_alphanumeric()))
+
+
 @test_requirements.tag
-def test_tag_mapping_azure_instances(vm, map_tags, refresh_provider):
+@pytest.mark.provider([AzureProvider], selector=ONE_PER_TYPE, scope='function', override=True)
+def test_tag_mapping_azure_instances(tagged_vm, map_tags):
     """"
     Polarion:
         assignee: anikifor
@@ -60,7 +83,7 @@ def test_tag_mapping_azure_instances(vm, map_tags, refresh_provider):
             3.
             4. Field value is "My Company Tags Testing: testing"
     """
-    view = navigate_to(vm, 'Details')
+    view = navigate_to(tagged_vm, 'Details')
 
     def my_company_tags():
         return view.tag.get_text_of('My Company Tags') != 'No My Company Tags have been assigned'
@@ -73,32 +96,118 @@ def test_tag_mapping_azure_instances(vm, map_tags, refresh_provider):
     assert view.tag.get_text_of('My Company Tags')[0] == 'Testing: testing'
 
 
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_ec2_tags_mapping():
-    """
-    Requirement: Have an ec2 provider
+@test_requirements.tag
+def test_labels_update(provider, tag_mapping_items, tag_components, soft_assert):
+    """" Test updates of tag labels on entity details
 
     Polarion:
         assignee: anikifor
         casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/5h
-        startsin: 5.8
+        caseimportance: high
+        initialEstimate: 1/12h
         testSteps:
-            1. Create an instance and tag it with test:testing
-            2. Go to Configuration -> CFME Region -> Map Tags
-            3. Add a tag:
-            Entity: Instance (Amazon)
-            Label: test
-            Category: Testing
-            4. Refresh provider
-            5. Go to summary of that instance
-            6. In Smart Management field should be:
-            My Company Tags testing: Testing
-            7. Delete that instance
+            1. Set a tag through provider mgmt interface
+            2. Refresh Provider
+            3. Go to entity details and get labels
+            4. unset tag through provider mgmt interface
+            5. Go to entity details and get labels
+        expectedResults:
+            1.
+            2.
+            3. labels includes label + tag
+            4.
+            5. labels should not include tag label
     """
-    pass
+    entity, mgmt_entity, entity_type = tag_mapping_items
+    tag_label, tag_value = tag_components
+    mgmt_entity.set_tag(tag_label, tag_value)
+    provider.refresh_provider_relationships(method='ui')
+    view = navigate_to(entity, 'Details')
+    # get_tags() doesn't work here as we're looking at labels, not smart management
+    current_tag_value = view.entities.summary('Labels').get_text_of(tag_label)
+    soft_assert(
+        current_tag_value == tag_value, (
+            'Tag values is not that expected, actual - {}, expected - {}'.format(
+                current_tag_value, tag_value
+            )
+        )
+    )
+    mgmt_entity.unset_tag(tag_label, tag_value)
+    provider.refresh_provider_relationships(method='ui')
+    view = navigate_to(entity, 'Details', force=True)
+    fields = view.entities.summary('Labels').fields
+    soft_assert(
+        tag_label not in fields,
+        '{} label was not removed from details page'.format(tag_label)
+    )
+
+
+@test_requirements.tag
+def test_mapping_tags(
+    appliance, provider, tag_mapping_items, tag_components, soft_assert, category, request
+):
+    """Test mapping tags on provider instances and images
+    Polarion:
+        assignee: anikifor
+        casecomponent: Cloud
+        caseimportance: high
+        initialEstimate: 1/12h
+        testSteps:
+            1. Set a tag through provider mgmt interface
+            2. create a CFME tag map for entity type
+            3. Go to entity details and get smart management table
+            4. Delete the tag map
+            5. Go to entity details and get smart management table
+        expectedResults:
+            1.
+            2.
+            3. smart management should include category name and tag
+            4.
+            5. smart management table should NOT include category name and tag
+    """
+    entity, mgmt_entity, entity_type = tag_mapping_items
+    tag_label, tag_value = tag_components
+    mgmt_entity.set_tag(tag_label, tag_value)
+    request.addfinalizer(
+        lambda: mgmt_entity.unset_tag(tag_label, tag_value)
+    )
+
+    provider_type = provider.discover_name.split(' ')[0]
+    # Check the add form to find the correct resource entity type selection string
+    view = navigate_to(appliance.collections.map_tags, 'Add')
+    select_text = None  # init this since we set it within if, and reference it in for/else:
+    options = []  # track the option strings for logging in failure
+    for option in view.resource_entity.all_options:
+        option_text = option.text  # read it once since its used multiple times
+        options.append(option_text)
+        if provider_type in option_text and entity_type.capitalize()[:-1] in option_text:
+            select_text = option_text
+            break
+    else:
+        # no match / break for select_text
+        if select_text is None:
+            pytest.fail(
+                'Failed to match the entity type [{}] and provider type [{}] in options: [{}]'
+                .format(entity_type, provider_type, options)
+            )
+    view.cancel.click()  # close the open form
+
+    map_tag = appliance.collections.map_tags.create(
+        entity_type=select_text,
+        label=tag_label,
+        category=category.name
+    )
+
+    # check the tag shows up
+    provider.refresh_provider_relationships(method='ui')
+    soft_assert('{}: {}'.format(category.name, tag_value) in entity.get_tags())
+
+    # delete it
+    map_tag.delete()
+
+    # check the tag goes away
+    provider.refresh_provider_relationships(method='ui')
+    soft_assert(not '{}: {}'.format(category.name, tag_value) in entity.get_tags())
 
 
 @pytest.mark.manual

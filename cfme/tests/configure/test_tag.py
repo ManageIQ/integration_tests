@@ -11,6 +11,7 @@ from cfme.rest.gen_data import service_templates as _service_templates
 from cfme.rest.gen_data import tags as _tags
 from cfme.rest.gen_data import tenants as _tenants
 from cfme.rest.gen_data import vm as _vm
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
@@ -43,6 +44,7 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider')
 ]
 
+
 @pytest.fixture
 def category(appliance):
     cg = appliance.collections.categories.create(
@@ -70,6 +72,30 @@ def test_tag_crud(category):
     with update(tag):
         tag.display_name = fauxfactory.gen_alphanumeric(32).lower()
     tag.delete()
+
+
+def test_map_tagging_crud(appliance, category, soft_assert):
+    """Test Mam tagging grud with flash message assertion"""
+    label = fauxfactory.gen_alphanumeric(8)
+    random_category_name = fauxfactory.gen_alphanumeric(8)
+    map_tags_collection = appliance.collections.map_tags
+    map_tag_entity = map_tags_collection.create('Container Project', label, category.name)
+
+    view = appliance.browser.create_view(navigator.get_class(map_tags_collection, 'All').VIEW)
+    view.flash.assert_success_message('Container Label Tag Mapping "{}" was added'.format(label))
+
+    map_tag_entity.update({'category': random_category_name})
+
+    view = appliance.browser.create_view(navigator.get_class(map_tags_collection, 'All').VIEW)
+    view.flash.assert_success_message('Container Label Tag Mapping "{}" was saved'.format(label))
+    row = view.table.rows(resource_label=label)
+    soft_assert(row.tag_category.text == 'random_category_name')
+
+    map_tag_entity.delete()
+    view = appliance.browser.create_view(navigator.get_class(map_tags_collection, 'All').VIEW)
+    if not BZ(1510473, forced_streams=['5.9']).blocks:
+        view.flash.assert_success_message(
+            'Container Label Tag Mapping "{}": Delete successful'.format(label))
 
 
 class TestTagsViaREST(object):

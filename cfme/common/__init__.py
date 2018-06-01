@@ -435,7 +435,7 @@ class Taggable(TaggableCommonBase):
             ItemNotFound: when nav destination DNE, or times out on wait (is_displayed was false)
         """
         try:
-            view = navigate_to(self, 'Details')
+            view = navigate_to(self, 'Details', force=True)
         except (NavigationDestinationNotFound, DestinationNotFound):
             raise ItemNotFound('Details page does not exist for: {}'.format(self))
         except TimedOutError:
