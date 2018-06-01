@@ -54,11 +54,26 @@ def test_labels_update(provider, tag_mapping_items, tag_label, tag_value, soft_a
 
 
 def test_mapping_tags(appliance, provider, tag_mapping_items, tag_label, tag_value,
-                     soft_assert, category):
+                     soft_assert, category, request):
     item, type = tag_mapping_items
     provider.mgmt.set_tag(item.name, tag_label, tag_value, type)
+    request.addfinalizer(lambda: provider.mgmt.unset_tag(item.name, tag_label, tag_value, type))
     provider_type = provider.discover_name.split(' ')[0]
-    type = '{} ({})'.format(type.capitalize()[:-1], provider.type)
-    appliance.collections.map_tags.create(entity_type=type, label=tag_label, category=category)
+    view = navigate_to(appliance.collections.map_tags, 'Add')
+
+    for option in view.resource_entity.all_options:
+        if type.capitalize()[:-1] in option.text and provider_type in option.text:
+            select_text = option.text
+            break
+    map_tag = appliance.collections.map_tags.create(
+        entity_type=select_text, label=tag_label, category=category.name
+    )
     provider.refresh_provider_relationships(method='ui')
     view = navigate_to(item, 'Details')
+    assigned_tags = view.entities.summary('Smart Management').get_text_of('My Company Tags')
+    soft_assert('{}: {}'.format(category.name, tag_value) in assigned_tags)
+    map_tag.delete()
+    provider.refresh_provider_relationships(method='ui')
+    view = navigate_to(item, 'Details')
+    assigned_tags = view.entities.summary('Smart Management').get_text_of('My Company Tags')
+    soft_assert(not '{}: {}'.format(category.name, tag_value) in assigned_tags)
