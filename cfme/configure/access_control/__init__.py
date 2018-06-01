@@ -304,17 +304,16 @@ class UserCollection(BaseCollection):
         return self.instantiate(name=fullname or userid, credential=creds)
 
     def create(self, name=None, credential=None, email=None, groups=None, cost_center=None,
-               value_assign=None, fullname=None, cancel=False):
+               value_assign=None, cancel=False):
         """ User creation method
 
         Args:
             name: Name of the user
-            credential: User's credentials
+            credential: User's credentials, credential.principal is used as username
             email: User's email
             groups: Add User to multiple groups in Versions >= 5.9.
             cost_center: User's cost center
             value_assign: user's value to assign
-            fullname: users full name
             cancel: True - if you want to cancel user creation,
                     by defaul user will be created
 
@@ -346,15 +345,20 @@ class UserCollection(BaseCollection):
         #   null items since they "shouldn't" exist
         user_group_names = [getattr(ug, 'description', None) for ug in user.groups if ug]
 
-        view = navigate_to(self, 'Add')
-        view.fill({
+        fill_values = {
             'name_txt': user.name,
             'userid_txt': user.credential.principal,
-            'password_txt': user.credential.secret,
-            'password_verify_txt': user.credential.verify_secret,
             'email_txt': user.email,
             'user_group_select': user_group_names
-        })
+        }
+        # only fill password if auth_mode is set to Database
+        if self.appliance.server.authentication.auth_mode.lower() == 'database':
+            fill_values.update({
+                'password_txt': user.credential.secret,
+                'password_verify_txt': user.credential.verify_secret}
+            )
+        view = navigate_to(self, 'Add')
+        view.fill(fill_values)
 
         if cancel:
             view.cancel_button.click()

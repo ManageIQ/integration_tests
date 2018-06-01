@@ -11,7 +11,6 @@ from cfme.exceptions import UnknownProviderType
 from cfme.utils.conf import credentials, auth_data
 
 auth_prov_data = auth_data.get("auth_providers", {})  # setup on module import
-user_type_keys = USER_TYPES.keys()
 
 LDAP_PORT = 389
 LDAPS_PORT = 636
@@ -79,14 +78,18 @@ class BaseAuthProvider(object):
         """
         config_copy = deepcopy(prov_config)  # copy to avoid modifying passed attrdict
         config_copy.update(credentials[config_copy.get('credentials')])
-        class_attrs = [att.name for att in cls.__attrs_attrs__]
-        class_params = {k: v for k, v in iteritems(config_copy) if k in class_attrs}
+        class_params = {k: v
+                        for k, v in iteritems(config_copy)
+                        if k in attr.fields_dict(cls)}
         return cls(key=prov_key, **class_params)
 
     def as_fill_value(self, user_type=None, auth_mode=None):
         """Basic implementation matches instance attributes to view form attributes"""
-        class_attrs = [att.name for att in self.__attrs_attrs__]
-        include_attrs = [getattr(self.__class__, name)
+        if user_type not in USER_TYPES.keys():
+            raise ValueError('invalid user_type "{}", must be key in USER_TYPES'.format(user_type))
+        class_attrs = attr.fields_dict(type(self))  # dict of attr objects keyed by name
+        # attr filter needs the Attribute object
+        include_attrs = [class_attrs.get(name)
                          for name in self.view_class.cls_widget_names()
                          if name in class_attrs]
         fill = attr.asdict(self, filter=attr.filters.include(*include_attrs))
@@ -96,8 +99,9 @@ class BaseAuthProvider(object):
         """openLDAP and FreeIPA providers can be configured for external auth
         Same view for all auth provider types
         """
-        class_attrs = [att.name for att in self.__attrs_attrs__]
-        include_attrs = [getattr(self.__class__, name)
+        class_attrs = attr.fields_dict(type(self))  # dict of attr objects keyed by name
+        # attr filter needs the Attribute object
+        include_attrs = [class_attrs.get(name)
                          for name in ExternalAuthenticationView.cls_widget_names()
                          if name in class_attrs]
         fill = attr.asdict(self, filter=attr.filters.include(*include_attrs))
@@ -157,20 +161,16 @@ class MIQAuthProvider(BaseAuthProvider):
             user_type: key for USER_TYPES, used to lookup user_suffix
             auth_mode: key for AUTH_MODES, used to lookup port
         """
-        if user_type not in user_type_keys:
-            raise ValueError('invalid user_type "{}", must be key in USER_TYPES'.format(user_type))
-        class_attrs = [att.name for att in self.__attrs_attrs__]
-        include_attrs = [getattr(self.__class__, name)
-                         for name in self.view_class.cls_widget_names()
-                         if name in class_attrs]
-        fill = attr.asdict(self, filter=attr.filters.include(*include_attrs))
+        fill = super(MIQAuthProvider, self).as_fill_value(user_type=user_type, auth_mode=auth_mode)
+
         # Handle args that have multiple possibilities depending on user_type and auth_mode
         if self.ports:
             fill['port'] = self.ports[auth_mode]
         else:
+            # default port numbers if not specified
             fill['port'] = LDAP_PORT if auth_mode == 'ldap' else LDAPS_PORT
         fill['user_suffix'] = self.user_types.get(user_type, {}).get('user_suffix')
-        # value
+        # value lookup for user type
         fill['user_type'] = USER_TYPES[user_type]
         return fill
 

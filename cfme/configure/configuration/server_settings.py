@@ -516,9 +516,10 @@ class LdapAuthenticationView(View):
     user_type = BootstrapSelect(id='authentication_user_type')
     domain_prefix = Input(name='authentication_domain_prefix')
     user_suffix = Input(name='authentication_user_suffix')
-
-    get_roles = Checkbox(name='ldap_role')
-    get_groups = Checkbox(name='get_direct_groups')
+    # the role/checkbox names are backasswards
+    # the div label is 'Get [...] Groups' and the input name is [...]_role
+    get_roles = Checkbox(name='get_direct_groups')
+    get_groups = Checkbox(name='ldap_role')
     follow_referrals = Checkbox(name='follow_referrals')
     base_dn = Input(name='authentication_basedn')
     bind_dn = Input(name='authentication_bind_dn')
@@ -536,6 +537,7 @@ class AmazonAuthenticationView(View):
 
     access_key = Input(name='authentication_amazon_key')
     secret_key = Input(name='authentication_amazon_secret')
+    # the div label is 'Get [...] Groups' and the input name is [...]_role
     get_groups = Checkbox(name='amazon_role')
     validate = Button('Validate')
 
@@ -545,6 +547,7 @@ class ExternalAuthenticationView(View):
 
     enable_sso = Checkbox(name='sso_enabled')
     enable_saml = Checkbox(name='saml_enabled')
+    # the div label is 'Get [...] Groups' and the input name is [...]_role
     get_groups = Checkbox(name='httpd_role')
 
 
