@@ -10,7 +10,8 @@ The main clue to know what is limited by the filters and what isn't is the 'filt
 """
 import operator
 from collections import Mapping, OrderedDict
-from copy import copy
+
+import attr
 
 import six
 
@@ -28,6 +29,16 @@ global_filters = {}
 PROVIDER_MGMT_CACHE = {}
 
 
+OPERATOR_MAP = OrderedDict([
+    ('>=', operator.ge),
+    ('<=', operator.le),
+    ('==', operator.eq),
+    ('!=', operator.ne),
+    ('>', operator.gt),
+    ('<', operator.lt),
+])
+
+
 def load_setuptools_entrypoints():
     """ Load modules from querying the specified setuptools entrypoint name."""
     from pkg_resources import (iter_entry_points, DistributionNotFound,
@@ -43,6 +54,11 @@ def load_setuptools_entrypoints():
                 "Plugin {} could not be loaded: {}!".format(ep.name, e))
 
 
+def xset():
+    return attr.ib(default=None, converter=attr.converters.optional(set))
+
+
+@attr.s
 class ProviderFilter(object):
     """ Filter used to obtain only providers matching given requirements
 
@@ -57,74 +73,54 @@ class ProviderFilter(object):
         conjunctive: If true, all subfilters are applied and all must match (default)
                      If false (disjunctive), at least one of the subfilters must match
     """
-    _version_operator_map = OrderedDict([('>=', operator.ge),
-                                        ('<=', operator.le),
-                                        ('==', operator.eq),
-                                        ('!=', operator.ne),
-                                        ('>', operator.gt),
-                                        ('<', operator.lt)])
 
-    def __init__(self, keys=None, classes=None, required_fields=None, required_tags=None,
-                 required_flags=None, restrict_version=False, inverted=False, conjunctive=True):
-        self.keys = keys
-        self.classes = classes
-        self.required_fields = required_fields
-        self.required_tags = required_tags
-        self.required_flags = required_flags
-        self.restrict_version = restrict_version
-        self.inverted = inverted
-        self.conjunctive = conjunctive
+    keys = xset()
+    classes = xset()
+    required_fields = attr.ib(default=False)
+    required_tags = xset()
+    required_flags = xset()
+    restrict_version = attr.ib(default=False)
+    inverted = attr.ib(default=False)
+    compile_results = attr.ib(default=all)
 
     def _filter_keys(self, provider):
         """ Filters by provider keys """
-        if self.keys is None:
-            return None
-        return provider.key in self.keys
+        if self.keys:
+            return provider.key in self.keys
 
     def _filter_classes(self, provider):
         """ Filters by provider (base) classes """
-        if self.classes is None:
-            return None
-        return any(provider.one_of(prov_class) for prov_class in self.classes)
+        if self.classes:
+            return provider.one_of(*self.classes)
 
     def _filter_required_fields(self, provider):
         """ Filters by required yaml fields (specified usually during test parametrization) """
-        if self.required_fields is None:
-            return None
+        if not self.required_fields:
+            return
         for field_or_fields in self.required_fields:
             if isinstance(field_or_fields, tuple):
                 field_ident, field_value = field_or_fields
             else:
                 field_ident, field_value = field_or_fields, None
             if isinstance(field_ident, six.string_types):
-                if field_ident not in provider.data:
-                    return False
-                else:
-                    if field_value:
-                        if provider.data[field_ident] != field_value:
-                            return False
-            else:
-                o = provider.data
-                try:
-                    for field in field_ident:
+                field_ident = [field_ident]
+            o = provider.data
+            try:
+                for field in field_ident:
                         if not isinstance(o, Mapping):
                             raise KeyError
-                        o = o[field]
-                    if field_value:
-                        if o != field_value:
-                            return False
-                except (IndexError, KeyError):
-                    return False
+                    o = o[field]
+                if field_value:
+                    if o != field_value:
+                        return False
+            except (IndexError, KeyError):
+                return False
         return True
 
     def _filter_required_tags(self, provider):
         """ Filters by required yaml tags """
-        prov_tags = provider.data.get('tags', [])
-        if self.required_tags is None:
-            return None
-        if set(self.required_tags) & set(prov_tags):
-            return True
-        return False
+        if self.required_tags:
+            return bool(self.required_tags.intersection(provider.data.get('tags') or []))
 
     def _filter_required_flags(self, provider):
         """ Filters by required yaml flags """
@@ -153,6 +149,7 @@ class ProviderFilter(object):
                 return False
         return True
 
+
     def _filter_restricted_version(self, provider):
         """ Filters by yaml version restriction; not applied if SSH is not available """
         if self.restrict_version:
@@ -169,7 +166,7 @@ class ProviderFilter(object):
             if restricted_version:
                 version_restrictions.append(restricted_version)
             for restriction in version_restrictions:
-                for op, comparator in ProviderFilter._version_operator_map.items():
+                for op, comparator in OPERATOR_MAP.items():
                     # split string by op; if the split works, version won't be empty
                     head, op, ver = restriction.partition(op)
                     if not ver:  # This means that the operator was not found
@@ -219,15 +216,9 @@ class ProviderFilter(object):
         flags_l = self._filter_required_flags(provider)
         version_l = self._filter_restricted_version(provider)
         results = [keys_l, classes_l, fields_l, tags_l, flags_l, version_l]
-        relevant_results = [res for res in results if res in [True, False]]
-        compiling_fn = all if self.conjunctive else any
+        relevant_results = [res for res in results if res in (True, False)]
         # If all / any filters return true, the provider was not blocked (unless inverted)
-        if compiling_fn(relevant_results):
-            return not self.inverted
-        return self.inverted
-
-    def copy(self):
-        return copy(self)
+        return self.compile_results(relevant_results) ^ self.inverted
 
 
 # Only providers without the 'disabled' tag

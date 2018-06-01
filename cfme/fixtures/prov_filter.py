@@ -20,7 +20,7 @@ def pytest_configure(config):
     if not cmd_filter:
         cmd_filter = ["default"]
 
-    new_filter = ProviderFilter(keys=cmd_filter, required_tags=cmd_filter, conjunctive=False)
+    new_filter = ProviderFilter(keys=cmd_filter, required_tags=cmd_filter, compile_results=any)
     global_filters['use_provider'] = new_filter
 
     logger.debug('Filtering providers with {}, leaves {}'.format(
