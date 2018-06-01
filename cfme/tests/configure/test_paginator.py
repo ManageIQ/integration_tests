@@ -3,7 +3,7 @@ import pytest
 from widgetastic.exceptions import NoSuchElementException
 
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
-from cfme.configure.configuration.region_settings import Category, Tag, MapTags, RedHatUpdates
+from cfme.configure.configuration.region_settings import Category, Tag, RedHatUpdates
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 general_list_pages = [
@@ -49,7 +49,7 @@ general_list_pages = [
 
     ('candus', None, 'Details', False),
     ('category', Category, 'All', False),
-    ('map_tags', MapTags, 'All', False),
+    ('map_tags', None, 'All', False),
     ('red_hat_updates', RedHatUpdates, 'Details', False),
     ('analysis_profile', AnalysisProfile, 'All', True),
     ('system_schedules', None, 'Add', False),
