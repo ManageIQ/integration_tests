@@ -177,7 +177,6 @@ class CompanyCategoriesEditView(CompanyCategoriesAddView):
 @attr.s
 class Category(Pretty, BaseEntity, Updateable):
     """ Class represents a category in CFME UI
-
         Args:
             name: Name of the category
             display_name: Category display name
@@ -185,7 +184,6 @@ class Category(Pretty, BaseEntity, Updateable):
             show_in_console: Option to show category in console (True/False)
             single_value: Option if category is single value (True/False)
             capture_candu: True/False, capture c&u data by tag
-
     """
     pretty_attrs = ['name', 'display_name', 'description', 'show_in_console',
                     'single_value', 'capture_candu']
@@ -201,7 +199,6 @@ class Category(Pretty, BaseEntity, Updateable):
 
     def update(self, updates, cancel=False):
         """ Update category method
-
             Args:
                 updates: category data that should be changed
                 cancel:
@@ -226,7 +223,6 @@ class Category(Pretty, BaseEntity, Updateable):
 
     def delete(self, cancel=False):
         """ Delete existing category
-
             Args:
                 cancel: Default value 'False', category will be deleted
                         'True' - deletion of category will be canceled
@@ -370,12 +366,10 @@ class MapTagsEditView(MapTagsAddView):
 @attr.s
 class MapTag(BaseEntity, Pretty, Updateable):
     """ Class represents a category in CFME UI
-
         Args:
             entity_type: Name of the tag
             label: Tag display name
             category: Tags Category
-
     """
     pretty_attrs = ['entity_type', 'label', 'category']
 
@@ -385,7 +379,6 @@ class MapTag(BaseEntity, Pretty, Updateable):
 
     def update(self, updates, cancel=False):
         """ Update tag map method
-
             Args:
                 updates: tag map data that should be changed
                 cancel: True - if you want to cancel map edition,
@@ -408,7 +401,6 @@ class MapTag(BaseEntity, Pretty, Updateable):
 
     def delete(self, cancel=False):
         """ Delete existing user
-
             Args:
                 cancel: Default value 'False', map will be deleted
                         'True' - map will not be deleted
@@ -559,7 +551,6 @@ class RedHatUpdatesEditView(RegionView):
 
 class RedHatUpdates(Navigatable, Pretty):
     """ Class represents a Red Hat updates tab in CFME UI
-
     Args:
         service: Service type (registration method).
         url: Service server URL address.
@@ -613,7 +604,6 @@ class RedHatUpdates(Navigatable, Pretty):
 
     def update_registration(self, validate=True, cancel=False):
         """ Fill in the registration form, validate and save/cancel
-
         Args:
             validate: Click the Validate button and check the
                       flash message for errors if `True` (default `True`)
@@ -671,7 +661,6 @@ class RedHatUpdates(Navigatable, Pretty):
 
     def register_appliances(self, *appliance_names):
         """ Register appliances by names
-
         Args:
             appliance_names: Names of appliances to register; will register all if empty
         """
@@ -682,7 +671,6 @@ class RedHatUpdates(Navigatable, Pretty):
 
     def update_appliances(self, *appliance_names):
         """ Update appliances by names
-
         Args:
             appliance_names: Names of appliances to update; will update all if empty
         """
@@ -693,7 +681,6 @@ class RedHatUpdates(Navigatable, Pretty):
 
     def check_updates(self, *appliance_names):
         """ Run update check on appliances by names
-
         Args:
             appliance_names: Names of appliances to check; will check all if empty
         """
@@ -715,7 +702,6 @@ class RedHatUpdates(Navigatable, Pretty):
 
     def is_registered(self, *appliance_names):
         """ Check if each appliance is registered
-
         Args:
             appliance_names: Names of appliances to check; will check all if empty
         """
@@ -729,7 +715,6 @@ class RedHatUpdates(Navigatable, Pretty):
 
     def is_subscribed(self, *appliance_names):
         """ Check if appliances are subscribed
-
         Args:
             appliance_names: Names of appliances to check; will check all if empty
         """
@@ -740,7 +725,6 @@ class RedHatUpdates(Navigatable, Pretty):
 
     def versions_match(self, version, *appliance_names):
         """ Check if versions of appliances match version
-
         Args:
             version: Version to match against
             appliance_names: Names of appliances to check; will check all if empty
@@ -752,7 +736,6 @@ class RedHatUpdates(Navigatable, Pretty):
 
     def checked_updates(self, *appliance_names):
         """ Check if appliances checked if there is an update available
-
         Args:
             appliance_names: Names of appliances to check; will check all if empty
         """
@@ -763,7 +746,6 @@ class RedHatUpdates(Navigatable, Pretty):
 
     def platform_updates_available(self, *appliance_names):
         """ Check if appliances have a platform update available
-
         Args:
             appliance_names: Names of appliances to check; will check all if empty
         """
@@ -774,7 +756,6 @@ class RedHatUpdates(Navigatable, Pretty):
 
     def get_available_version(self):
         """ Get available version printed on the page
-
         Returns:
             `None` if not available; string with version otherwise
              e.g. ``1.2.2.3``
@@ -788,7 +769,6 @@ class RedHatUpdates(Navigatable, Pretty):
 
     def get_repository_names(self):
         """Get available repositories names
-
         Returns:
             string: summary info for repositories names
         """
@@ -797,7 +777,6 @@ class RedHatUpdates(Navigatable, Pretty):
 
     def select_appliances(self, *appliance_names):
         """ Select appliances by names
-
         Args:
             appliance_names: Names of appliances to select; will select all if empty
         """
@@ -811,7 +790,6 @@ class RedHatUpdates(Navigatable, Pretty):
 
     def get_appliance_rows(self, *appliance_names):
         """ Get appliances as table rows
-
         Args:
             appliance_names: Names of appliances to get; will get all if empty
         """
@@ -867,7 +845,6 @@ class CANDUCollection(BaseCollection):
 
     def _set_state(self, enable=True, reset=False):
         """ Enable/Disable C and U
-
             Args:
                 enable: Switches states, 'True'- enable
                 reset: Reset changes, default is 'False' - changes will not be reset
@@ -889,7 +866,6 @@ class CANDUCollection(BaseCollection):
 
     def enable_all(self, reset=False):
         """ Enable C and U
-
             Args:
                 reset: Reset changes, default is 'False' - changes will not be reset
         """
@@ -897,7 +873,6 @@ class CANDUCollection(BaseCollection):
 
     def disable_all(self, reset=False):
         """ Disable C and U
-
             Args:
                 reset: Reset changes, default is 'False' - changes will not be reset
         """
@@ -972,7 +947,6 @@ class ReplicationRemoteView(ReplicationView):
 
 class Replication(NavigatableMixin):
     """ Class represents a Replication tab in CFME UI
-
         Note:
         Remote settings is not covered for now as 'Excluded Tables' element widget should be added
     """
@@ -982,7 +956,6 @@ class Replication(NavigatableMixin):
 
     def set_replication(self, updates=None, replication_type=None, reset=False):
         """ Set replication settings
-
             Args:
                  updates(dict): Replication update values, mandatory is host,
                      db creds get from credentials
@@ -1020,7 +993,6 @@ class Replication(NavigatableMixin):
 
     def _global_replication_row(self, host=None):
         """ Get replication row from table
-
             Args:
                 host: host values
             Returns:
@@ -1034,7 +1006,6 @@ class Replication(NavigatableMixin):
 
     def get_replication_status(self, replication_type='global', host=None):
         """ Get replication status, if replication is active
-
             Args:
                 replication_type: Replication type string, default is global
                 host: host to check
@@ -1048,7 +1019,6 @@ class Replication(NavigatableMixin):
 
     def get_global_replication_backlog(self, host=None):
         """ Get global replication backlog value
-
             Args:
                 host: host value
             Returns: backlog number value

@@ -455,6 +455,7 @@ class InstanceCollection(VMCollection):
 
 
 @navigator.register(InstanceCollection, 'All')
+@navigator.register(Instance, 'All')
 class All(CFMENavigateStep):
     VIEW = InstanceAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -479,8 +480,7 @@ class AllForProvider(CFMENavigateStep):
             view = navigate_to(self.obj, 'All')
         except NavigationDestinationNotFound:
             view = navigate_to(self.obj.parent, 'All')
-        finally:
-            return view
+        return view
 
     def step(self, *args, **kwargs):
         if isinstance(self.obj, InstanceCollection) and self.obj.filters.get('provider'):
