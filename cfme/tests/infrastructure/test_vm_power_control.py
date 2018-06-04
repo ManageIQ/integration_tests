@@ -92,7 +92,7 @@ def check_power_options(provider, soft_assert, vm, power_state):
     # VMware and RHEVM have extended power options
     if not provider.one_of(SCVMMProvider):
         mustnt_be_available['off'].extend([vm.GUEST_RESTART, vm.GUEST_SHUTDOWN])
-    if not provider.one_of((SCVMMProvider, RHEVMProvider)):
+    if not provider.one_of(SCVMMProvider, RHEVMProvider):
         mustnt_be_available['on'].extend([vm.GUEST_RESTART, vm.GUEST_SHUTDOWN])
     if provider.one_of(RHEVMProvider):
         must_be_available['on'].remove(vm.RESET)
@@ -481,7 +481,7 @@ def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_ass
 
 @pytest.mark.meta(blockers=[BZ(1571895, forced_streams=['5.8', '5.9'],
     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
-@pytest.mark.uncollectif(lambda provider: not provider.one_of((VMwareProvider, RHEVMProvider)))
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider))
 def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
     """Tests vm guest os reset
 

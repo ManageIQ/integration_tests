@@ -84,8 +84,8 @@ def catalog_item(appliance, provider, dialog, catalog, provisioning):
 
 @pytest.mark.rhv1
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6692',
-                               unblock=lambda provider_data:
-                               not provider_data.one_of(RHEVMProvider))])
+                               unblock=lambda provider:
+                               not provider.one_of(RHEVMProvider))])
 def test_rhev_iso_servicecatalog(appliance, provider, setup_provider, catalog_item,
                                  setup_iso_datastore, request):
     """Tests RHEV ISO service catalog

@@ -390,8 +390,11 @@ def console_template_modscope(provider):
 
 @pytest.mark.hookwrapper
 def pytest_fixture_setup(fixturedef, request):
-    # this is workaround which allows us to get rid of provider instantiation during collection time
-    # it also allows to prevent collection calls against DummyAppliance
+    # since we use DataProvider at collection time and BaseProvider in fixtures and tests,
+    # we need to instantiate BaseProvider and replace DataProvider obj with it right before first
+    # provider fixture request.
+    # There were several other ways to do that. However, those bumped into different
+    # scope mismatch issues.
     if fixturedef.argname == 'provider':
         kwargs = {}
         for argname in fixturedef.argnames:

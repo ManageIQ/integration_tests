@@ -1,11 +1,12 @@
+import attr
 import pytest
-import yaml
+import six
 from collections import defaultdict
 from distutils.version import LooseVersion
 
 from cfme.markers.env import EnvironmentMarker
+from cfme.utils import conf
 from cfme.utils.log import logger
-from cfme.utils.path import project_path
 from cfme.utils.providers import ProviderFilter, list_providers, all_types
 from cfme.utils.pytest_shortcuts import fixture_filter
 from cfme.utils.version import Version
@@ -47,6 +48,15 @@ class DPFilter(ProviderFilter):
         """
         classes_l = self._filter_classes(provider)
         results = [classes_l]
+        if not provider.one_of(DataProvider):
+            from cfme.common.provider import BaseProvider
+            if provider.one_of(BaseProvider):
+                if self.required_fields:
+                    results.append(self._filter_required_fields(provider))
+                if self.required_tags:
+                    results.append(self._filter_required_tags(provider))
+                if self.required_flags:
+                    results.append(self._filter_required_flags(provider))
         relevant_results = [res for res in results if res in [True, False]]
         compiling_fn = all if self.conjunctive else any
         # If all / any filters return true, the provider was not blocked (unless inverted)
@@ -129,6 +139,11 @@ def parametrize(metafunc, argnames, argvalues, *args, **kwargs):
             )(metafunc.function)
 
 
+def data_provider_types(provider):
+    return all_types()[provider.type_name]
+
+
+@attr.s
 class DataProvider(object):
     """A simple holder for a pseudo provider.
 
@@ -136,14 +151,13 @@ class DataProvider(object):
     uncollections to take place in the case that we do not actually have an environment set up
     for this particular provider.
     """
-    def __init__(self, category, type, version):
-        self.category = category
-        self.type_name = type
-        self.version = version
-        self.klass = all_types()[self.type_name]
+    category = attr.ib()
+    type_name = attr.ib()
+    version = attr.ib()
+    klass = attr.ib(default=attr.Factory(data_provider_types, takes_self=True))
 
     def one_of(self, *classes):
-        return any([klass in self.klass.__mro__ for klass in classes])
+        return issubclass(self.klass, classes)
 
     def __repr__(self):
         return '{}({})[{}]'.format(self.type_name, self.category, self.version)
@@ -160,9 +174,11 @@ def all_required(miq_version, filters=None):
     """
     # Load the supportability YAML and extrace the providers portion
     stream = Version(miq_version).series()
-    with open(project_path.join('supportability.yaml').strpath) as f:
-        data = yaml.load(f)
-    data_for_stream = data[stream]['providers']
+    try:
+        data_for_stream = conf.supportability[stream]['providers']
+    except KeyError:
+        # there are cases when such data isn't available. For instance travis
+        data_for_stream = {}
 
     # Build up a list of tuples in the form of category, type dictionary,
     #  [('cloud', {'openstack': [8, 9, 10]}), ('cloud', {'ec2'})]
@@ -175,7 +191,7 @@ def all_required(miq_version, filters=None):
     # Build up a list of data providers by iterating the types list from above
     dprovs = []
     for cat, prov_type_or_dict in types:
-        if isinstance(prov_type_or_dict, basestring):
+        if isinstance(prov_type_or_dict, six.string_types):
             # If the provider is versionless, ie, EC2, GCE, set the version number to 0
             dprovs.append(DataProvider(cat, prov_type_or_dict, 0))
         else:
@@ -228,69 +244,18 @@ def providers(metafunc, filters=None, selector=ALL):
     # be a list of DataProvider objects and will be filtered based upon what the test has asked for
     supported_providers = all_required('5.9', filters)
 
-    # Now we run through the selectors and build up a list of supported providers which match our
-    # requirements. This then forms the providers that the test should run against.
-    if selector == ONE:
-        if supported_providers:
-            allowed_providers = [supported_providers[0]]
-        else:
-            allowed_providers = []
-    elif selector == LATEST:
-        allowed_providers = [sorted(
-            supported_providers, key=lambda k:LooseVersion(
-                str(k.version)), reverse=True
-        )[0]]
-    elif selector == ONE_PER_TYPE:
-        types = set()
-
-        def add_prov(prov):
-            types.add(prov.type_name)
-            return prov
-
-        allowed_providers = [
-            add_prov(prov) for prov in supported_providers if prov.type_name not in types
-        ]
-    elif selector == ONE_PER_CATEGORY:
-        categories = set()
-
-        def add_prov(prov):
-            categories.add(prov.category)
-            return prov
-
-        allowed_providers = [
-            add_prov(prov) for prov in supported_providers if prov.category not in categories
-        ]
-    elif selector == ONE_PER_VERSION:
-        # This needs to handle versions per type
-        versions = defaultdict(set)
-
-        def add_prov(prov):
-            versions[prov.type_name].add(prov.version)
-            return prov
-
-        allowed_providers = [
-            add_prov(prov)
-            for prov in supported_providers
-            if prov.version not in versions[prov.type_name]
-        ]
-    else:
-        # If there are no selectors, then the allowed providers are whichever are supported
-        allowed_providers = supported_providers
-
-    # This list will now tell us exactly which providers should be run for this test
-    required_providers = allowed_providers
-
     def get_valid_provider(provider):
         # We now search theough all the available providers looking for one that matches the
         # criteria. If we don't find one, we return None
         for a_prov in available_providers:
             try:
-                assert a_prov.version
-                if (a_prov.version == provider.version and
+                if not a_prov.version:
+                    raise ValueError("provider {p} has no version".format(p=a_prov))
+                elif (a_prov.version == provider.version and
                         a_prov.type == provider.type_name and
                         a_prov.category == provider.category):
                     return a_prov
-            except (AssertionError, KeyError):
+            except (KeyError, ValueError):
                 if (a_prov.type == provider.type_name and
                         a_prov.category == provider.category):
                     return a_prov
@@ -307,43 +272,80 @@ def providers(metafunc, filters=None, selector=ALL):
                     need_prov_keys = True
                     break
 
-    # Now we iterate through the required providers and try to match them to the available ones
-    for provider in required_providers:
-        the_prov = get_valid_provider(provider)
+    matching_provs = [(prov, get_valid_provider(prov)) for prov in supported_providers
+                      if get_valid_provider(prov)]
 
-        # If no provider is sound then we append the DataProvider, and a skip mark. This means
-        # that the environment didn't have that particular provider. Boo hoo!
-        if the_prov:
-            provider.key = the_prov.key
-            argvalues.append(pytest.param(provider))
+    # Now we run through the selectors and build up a list of supported providers which match our
+    # requirements. This then forms the providers that the test should run against.
+    if selector == ONE:
+        if matching_provs:
+            allowed_providers = [matching_provs[0]]
         else:
-            # psav, are you sure this is correct that we collect providers which are absent ?
-            continue
-            # argvalues.append(
-            #     pytest.param(
-            #         provider, marks=pytest.mark.skip("Environment for this provider,
-            # not available")
-            #     )
-            # )
+            allowed_providers = []
+    elif selector == LATEST:
+        allowed_providers = [sorted(
+            matching_provs, key=lambda k:LooseVersion(
+                str(k[0].version)), reverse=True
+        )[0]]
+    elif selector == ONE_PER_TYPE:
+        types = set()
+
+        def add_prov(prov):
+            types.add(prov[0].type_name)
+            return prov
+
+        allowed_providers = [
+            add_prov(prov) for prov in matching_provs if prov[0].type_name not in types
+        ]
+    elif selector == ONE_PER_CATEGORY:
+        categories = set()
+
+        def add_prov(prov):
+            categories.add(prov[0].category)
+            return prov
+
+        allowed_providers = [
+            add_prov(prov) for prov in matching_provs if prov[0].category not in categories
+        ]
+    elif selector == ONE_PER_VERSION:
+        # This needs to handle versions per type
+        versions = defaultdict(set)
+
+        def add_prov(prov):
+            versions[prov[0].type_name].add(prov[0].version)
+            return prov
+
+        allowed_providers = [
+            add_prov(prov)
+            for prov in matching_provs
+            if prov[0].version not in versions[prov[0].type_name]
+        ]
+    else:
+        # If there are no selectors, then the allowed providers are whichever are supported
+        allowed_providers = matching_provs
+
+    # Now we iterate through the required providers and try to match them to the available ones
+    for data_prov, real_prov in allowed_providers:
+        data_prov.key = real_prov.key
+        argvalues.append(pytest.param(data_prov))
 
         # Use the provider key for idlist, helps with readable parametrized test output
-        # TODO: handle EC2
-        ver = provider.version if provider.version else None
+        ver = data_prov.version if data_prov.version else None
         if ver:
-            the_id = "{}-{}".format(provider.type_name, provider.version)
+            the_id = "{}-{}".format(data_prov.type_name, data_prov.version)
         else:
-            the_id = "{}".format(provider.type_name)
+            the_id = "{}".format(data_prov.type_name)
 
         # Now we modify the id based on what selector we chose
         if selector == ONE:
             if need_prov_keys:
-                idlist.append(provider.type_name)
+                idlist.append(data_prov.type_name)
             else:
-                idlist.append(provider.category)
+                idlist.append(data_prov.category)
         elif selector == ONE_PER_CATEGORY:
-            idlist.append(provider.category)
+            idlist.append(data_prov.category)
         elif selector == ONE_PER_TYPE:
-            idlist.append(provider.type_name)
+            idlist.append(data_prov.type_name)
         else:
             idlist.append(the_id)
 

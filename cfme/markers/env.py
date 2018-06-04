@@ -17,9 +17,6 @@ class EnvironmentMarker(object):
     """Base Environment Marker"""
     PARAM_BY_DEFAULT = False
 
-    def __init__(self, appliance=None):
-        self.appliance = appliance
-
     def process_env_mark(self, metafunc):
         if hasattr(metafunc.function, self.NAME):
             if getattr(metafunc.function, self.NAME).args:
@@ -54,20 +51,18 @@ class TCPEnvironmentMarker(EnvironmentMarker):
 
 
 class PodifiedEnvironmentMarker(EnvironmentMarker):
-    """TCP Environment Marker"""
+    """Podified Appliance Environment Marker"""
     NAME = 'podified'
     CHOICES = ['pod', 'vm']
 
 
 def pytest_generate_tests(metafunc):
     from cfme.markers.env_markers.provider import ProviderEnvironmentMarker
-    holder = metafunc.config.pluginmanager.getplugin('appliance-holder')
-    appliance = holder.held_appliance if holder else None
     markers = [
-        BrowserEnvironmentMarker(appliance),
-        TCPEnvironmentMarker(appliance),
-        ProviderEnvironmentMarker(appliance),
-        PodifiedEnvironmentMarker(appliance)
+        BrowserEnvironmentMarker(),
+        TCPEnvironmentMarker(),
+        ProviderEnvironmentMarker(),
+        PodifiedEnvironmentMarker()
     ]
     for marker in markers:
         marker.process_env_mark(metafunc)

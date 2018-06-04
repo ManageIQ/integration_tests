@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
+import pytest
 import random
 import socket
-
-import pytest
 
 from cfme.base.credential import Credential
 from cfme.common.host_views import HostsEditView

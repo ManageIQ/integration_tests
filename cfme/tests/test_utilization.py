@@ -5,14 +5,11 @@ import time
 
 from cfme import test_requirements
 from cfme.fixtures.pytest_store import store
-
-from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.provider import BaseProvider
 from cfme.containers.provider import ContainersProvider
 from cfme.fixtures.provider import setup_or_skip
 from cfme.utils import conf
 from cfme.utils.log import logger
-from cfme.utils.version import current_version
 
 
 # Tests for vmware,rhev, openstack, ec2, azure, gce providers have been moved to
@@ -53,8 +50,6 @@ def clean_setup_provider(request, provider):
     BaseProvider.clear_providers()
 
 
-@pytest.mark.uncollectif(
-    lambda provider: current_version() < "5.7" and provider.one_of(GCEProvider))
 def test_metrics_collection(clean_setup_provider, provider, enable_candu):
     """Check the db is gathering collection data for the given provider
 
