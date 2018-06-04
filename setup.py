@@ -97,6 +97,7 @@ setup(
                 'cfme.services.catalogs.catalog_items.catalog_bundles:CatalogBundlesCollection'),
             'catalog_items = cfme.services.catalogs.catalog_items:CatalogItemsCollection',
             'catalogs = cfme.services.catalogs.catalog:CatalogCollection',
+            'categories =cfme.configure.configuration.region_settings:CategoriesCollection',
             'cloud_av_zones = cfme.cloud.availability_zone:AvailabilityZoneCollection',
             'cloud_flavors = cfme.cloud.flavor:FlavorCollection',
             'cloud_images = cfme.cloud.instance.image:ImageCollection',
@@ -174,6 +175,7 @@ setup(
             'system_image_types = cfme.infrastructure.pxe:SystemImageTypeCollection',
             ('system_schedules = '
                 'cfme.configure.configuration.system_schedules:SystemSchedulesCollection'),
+            'tags =cfme.configure.configuration.region_settings:TagsCollection'
             'tasks = cfme.configure.tasks:TasksCollection',
             'tenants = cfme.configure.access_control:TenantCollection',
             'time_profiles = cfme.configure.settings:TimeProfileCollection',
