@@ -1,34 +1,24 @@
 # -*- coding: utf-8 -*-
-import base64
-import re
 import yaml
 import six
 
-try:
-    import six.moves.cPickle as pickle
-except ImportError:
-    import pickle   # NOQA
-
 import wrapanapi
 
-from cached_property import cached_property
 from celery import chain
 from contextlib import contextmanager
 from datetime import timedelta, date
 from django.contrib.auth.models import User, Group as DjangoGroup
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
-from django.db.models import Q
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 from json_field import JSONField
 
-from sprout import critical_section, redis
+from sprout import critical_section
 from sprout.log import create_logger
 
 from cfme.utils.appliance import Appliance as CFMEAppliance, IPAppliance
-from cfme.utils.bz import Bugzilla
 from cfme.utils.conf import cfme_data
 from cfme.utils.providers import get_mgmt
 from cfme.utils.timeutil import nice_seconds
@@ -1538,67 +1528,3 @@ class UserApplianceQuota(models.Model):
     per_pool_quota = models.IntegerField(null=True, blank=True)
     total_pool_quota = models.IntegerField(null=True, blank=True)
     total_vm_quota = models.IntegerField(null=True, blank=True)
-
-
-class BugQuery(models.Model):
-    EMAIL_PLACEHOLDER = re.compile(r'\{\{EMAIL\}\}')
-    CACHE_TIMEOUT = 180
-    name = models.CharField(max_length=64)
-    url = models.TextField()
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
-
-    @property
-    def is_global(self):
-        return self.owner is None
-
-    @property
-    def is_parametrized(self):
-        return self.EMAIL_PLACEHOLDER.search(self.url) is not None
-
-    @cached_property
-    def bugzilla(self):
-        # Returns the original bugzilla object
-        return Bugzilla.from_config().bugzilla
-
-    def query_for_user(self, user):
-        if self.is_parametrized:
-            if not user.email:
-                return None
-            url = self.EMAIL_PLACEHOLDER.sub(user.email, self.url)
-        else:
-            url = self.url
-        return self.bugzilla.url_to_query(url)
-
-    def list_bugs(self, user):
-        cache_id = 'bq-{}-{}'.format(self.id, user.id)
-        cached = redis.get(cache_id)
-        if cached is not None:
-            return pickle.loads(base64.b64decode(cached))
-        query = self.query_for_user(user)
-        if query is None:
-            result = []
-        else:
-            def process_bug(bug):
-                return {
-                    'id': bug.id,
-                    'weburl': bug.weburl,
-                    'summary': bug.summary,
-                    'severity': bug.severity,
-                    'status': bug.status,
-                    'component': bug.component,
-                    'version': bug.version,
-                    'fixed_in': bug.fixed_in,
-                    'whiteboard': bug.whiteboard,
-                    'flags': ['{}{}'.format(flag['name'], flag['status']) for flag in bug.flags],
-                }
-
-            result = [process_bug(bug) for bug in self.bugzilla.query(query)]
-        redis.set(cache_id, base64.b64encode(pickle.dumps(result)), ex=self.CACHE_TIMEOUT)
-        return result
-
-    @classmethod
-    def visible_for_user(cls, user):
-        return [
-            bq for bq in
-            cls.objects.filter(Q(owner=None) | Q(owner=user)).order_by('owner', 'id')
-            if not (bq.is_parametrized and not user.email)]

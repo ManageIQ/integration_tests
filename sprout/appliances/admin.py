@@ -10,7 +10,7 @@ from django_object_actions import DjangoObjectActions
 # Register your models here.
 from appliances.models import (
     Provider, Template, Appliance, Group, AppliancePool, DelayedProvisionTask,
-    MismatchVersionMailer, UserApplianceQuota, User, BugQuery, GroupShepherd)
+    MismatchVersionMailer, UserApplianceQuota, User, GroupShepherd)
 from appliances import tasks
 from sprout.log import create_logger
 
@@ -211,8 +211,3 @@ class UserApplianceQuotaInline(admin.StackedInline):
 @register_for(User, reregister=True)
 class CustomUserAdmin(UserAdmin):
     inlines = (UserApplianceQuotaInline, )
-
-
-@register_for(BugQuery)
-class BugQueryAdmin(Admin):
-    pass
