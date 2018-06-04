@@ -330,7 +330,7 @@ class CredentialsCollection(BaseCollection):
     ENTITY = Credential
 
     def create(self, name, credential_type, **credentials):
-        add_page = navigate_to(self, "Add")
+        add_page = navigate_to(self, "Add", wait_for_view=True)
         machine_credential_fill_dict = {
             "username": credentials.get("username"),
             "password": credentials.get("password"),

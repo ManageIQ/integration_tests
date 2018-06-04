@@ -6,6 +6,7 @@ import pytest
 from widgetastic_patternfly import BootstrapSelect
 
 from cfme import test_requirements
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -68,6 +69,21 @@ def ansible_credential(appliance, ansible_repository):
         "Machine",
         username=fauxfactory.gen_alpha(),
         password=fauxfactory.gen_alpha()
+    )
+    yield credential
+
+    if credential.exists:
+        credential.delete()
+
+
+@pytest.fixture
+def ansible_amazon_credential(appliance, provider, ansible_repository):
+    creds = provider.get_credentials_from_config(provider.data["credentials"])
+    credential = appliance.collections.ansible_credentials.create(
+        fauxfactory.gen_alpha(),
+        "Amazon",
+        access_key=creds.principal,
+        secret_key=creds.secret
     )
     yield credential
 
@@ -441,3 +457,27 @@ def test_ansible_group_id_in_payload(service_catalog, service_request, service):
     result_dict = json.loads(json_str[5].replace('", "', "").replace('\\"', '"').replace(
         '\\, "', '",').split('" ] } PLAY')[0])
     assert "group" in result_dict["manageiq"]
+
+
+@pytest.mark.provider([EC2Provider], scope="function")
+def test_embed_tower_exec_play_against_amazon(request, provider, setup_provider,
+        ansible_catalog_item, service, ansible_amazon_credential, service_catalog):
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {
+            "playbook": "list_ec2_instances.yml",
+            "cloud_type": "Amazon",
+            "cloud_credential": ansible_amazon_credential.name
+        }
+
+    @request.addfinalizer
+    def _revert():
+        with update(ansible_catalog_item):
+            ansible_catalog_item.provisioning = {
+                "playbook": "dump_all_variables.yml",
+                "cloud_type": "<Choose>"
+            }
+
+    service_request = service_catalog.order()
+    service_request.wait_for_request(method="ui", num_sec=300, delay=20)
+    view = navigate_to(service, "Details")
+    assert view.provisioning.results.get_text_of("Status") == "successful"
