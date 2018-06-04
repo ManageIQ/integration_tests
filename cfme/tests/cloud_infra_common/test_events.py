@@ -53,7 +53,7 @@ def test_vm_create(request, appliance, vm_crud, provider, register_event):
         * Assert the tag appears.
 
     Metadata:
-        test_flag: provision
+        test_flag: provision, events
     """
     action = appliance.collections.actions.create(
         fauxfactory.gen_alpha(),

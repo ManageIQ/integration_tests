@@ -12,9 +12,12 @@ pytestmark = [
 ]
 
 
-def test_manage_nsg_group(provider, setup_provider, register_event):
+def test_manage_nsg_group(appliance, provider, setup_provider, register_event):
     """
     tests that create/remove azure network security groups events are received and parsed by CFME
+
+    Metadata:
+        test_flag: events
     """
 
     nsg_name = random_vm_name(context='nsg')
@@ -25,7 +28,7 @@ def test_manage_nsg_group(provider, setup_provider, register_event):
 
     def add_cmp(_, y):
         # In 5.9 version `y` is a dict, not a yaml stream.
-        data = yaml.load(y) if provider.appliance.version < '5.9' else y
+        data = yaml.load(y) if appliance.version < '5.9' else y
 
         return (data['resourceId'].endswith(nsg_name) and
                 (data['status']['value'] == 'Accepted' and
@@ -41,7 +44,7 @@ def test_manage_nsg_group(provider, setup_provider, register_event):
 
     def rm_cmp(_, y):
         # In 5.9 version `y` is a dict, not a yaml stream.
-        data = yaml.load(y) if provider.appliance.version < '5.9' else y
+        data = yaml.load(y) if appliance.version < '5.9' else y
 
         return data['resourceId'].endswith(nsg_name) and data['status']['value'] == 'Succeeded'
 
@@ -57,13 +60,16 @@ def test_manage_nsg_group(provider, setup_provider, register_event):
     provider.mgmt.remove_netsec_group(nsg_name, resource_group)
 
 
-def test_vm_capture(request, provider, setup_provider, register_event):
+def test_vm_capture(appliance, request, provider, setup_provider, register_event):
     """
     tests that generalize and capture vm azure events are received and parsed by CFME
+
+    Metadata:
+        test_flag: events, provision
     """
 
     mgmt = provider.mgmt
-    vm = provider.appliance.collections.cloud_instances.instantiate(
+    vm = appliance.collections.cloud_instances.instantiate(
         random_vm_name(context='capture'), provider)
 
     if not mgmt.does_vm_exist(vm.name):
@@ -75,7 +81,7 @@ def test_vm_capture(request, provider, setup_provider, register_event):
 
     def cmp_function(_, y):
         # In 5.9 version `y` is a dict, not a yaml stream.
-        data = yaml.load(y) if provider.appliance.version < '5.9' else y
+        data = yaml.load(y) if appliance.version < '5.9' else y
 
         return data['resourceId'].endswith(vm.name) and data['status']['value'] == 'Succeeded'
 
