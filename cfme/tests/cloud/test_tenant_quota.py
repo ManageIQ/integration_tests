@@ -94,8 +94,8 @@ def test_tenant_quota_enforce_via_lifecycle_cloud(request, appliance, provider, 
     prov_data['catalog']['vm_name'] = vm_name
     prov_data.update({
         'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}})
-    instance = appliance.collections.cloud_instances.instantiate(vm_name, provider, template_name)
-    instance.create(**prov_data)
+    prov_data.update({'template_name': template_name})
+    appliance.collections.cloud_instances.create(vm_name, provider, prov_data)
 
     # nav to requests page to check quota validation
     request_description = 'Provision from [{}] to [{}{}]'.format(template_name, vm_name, extra_msg)
