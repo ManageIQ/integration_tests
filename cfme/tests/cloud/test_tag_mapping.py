@@ -39,7 +39,7 @@ def test_labels_update(provider, tag_mapping_items, tag_label, tag_value, soft_a
     soft_assert(
         current_tag_value == tag_value, (
             'Tag values is not that expected, actual - {}, expected - {}'.format(
-            current_tag_value, tag_value
+                current_tag_value, tag_value
             )
         )
     )

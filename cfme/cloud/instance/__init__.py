@@ -480,7 +480,8 @@ class AllForProvider(CFMENavigateStep):
             view = navigate_to(self.obj, 'All')
         except NavigationDestinationNotFound:
             view = navigate_to(self.obj.parent, 'All')
-        return view
+        finally:
+            return view
 
     def step(self, *args, **kwargs):
         if isinstance(self.obj, InstanceCollection) and self.obj.filters.get('provider'):
