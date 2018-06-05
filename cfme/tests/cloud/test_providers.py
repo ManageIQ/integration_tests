@@ -20,6 +20,7 @@ from cfme.common.provider_views import (
 from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.providers import list_providers, ProviderFilter
 from cfme.utils.rest import (
     assert_response,
     delete_resources_from_collection,
@@ -351,6 +352,57 @@ def test_api_port_max_character_validation_cloud(appliance):
         view = prov.create_view(prov.endpoints_form)
         text = view.default.api_port.value
         assert text == prov.default_endpoint.api_port[0:15]
+
+
+@pytest.mark.tier(2)
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider))
+def test_azure_subscription_required(request, provider):
+    """
+    Tests that provider can't be added w/o subscription
+
+    Metadata:
+        test_flag: crud
+    """
+    provider.subscription_id = ''
+    request.addfinalizer(provider.delete_if_exists)
+    flash = ('Credential validation was not successful: '
+            'Incorrect credentials - check your Azure Subscription ID')
+    with pytest.raises(AssertionError, match=flash):
+        provider.create()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.usefixtures('has_no_cloud_providers')
+def test_azure_multiple_subscription(appliance, request, soft_assert):
+    """
+    Verifies that different azure providers have different resources access
+
+    Steps:
+    1. Add all Azure providers
+    2. Compare their VMs/Templates
+
+    Metadata:
+        test_flag: crud
+    """
+    pf = ProviderFilter(classes=[AzureProvider], required_flags=['crud'])
+    providers = list_providers([pf])
+    if len(providers) < 2:
+        pytest.skip("this test needs at least 2 AzureProviders")
+    prov_inventory = []
+    for provider in providers:
+        request.addfinalizer(provider.clear_providers)
+        provider.create()
+        provider.validate_stats()
+        prov_inventory.append((provider.name,
+                               provider.num_vm(),
+                               provider.num_template()))
+
+    for index, prov_a in enumerate(prov_inventory[:-1]):
+        for prov_b in prov_inventory[index + 1:]:
+            soft_assert(prov_a[1] != prov_b[1], "Same num_vms for {} and {}".format(prov_a[0],
+                                                                               prov_b[0]))
+            soft_assert(prov_a[2] != prov_b[2], "Same num_templates for {} and {}".format(prov_a[0],
+                                                                                     prov_b[0]))
 
 
 @pytest.mark.tier(3)
