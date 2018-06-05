@@ -11,13 +11,14 @@ from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.services.dashboard import Dashboard
 from cfme import test_requirements
 from cfme.utils.appliance import ViaSSUI
+from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate"),
+    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7297')]),
     pytest.mark.usefixtures('uses_infra_providers'),
     test_requirements.ssui,
     pytest.mark.long_running,
