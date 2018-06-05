@@ -49,15 +49,21 @@ class SummaryFormItem(Widget):
         '//label[normalize-space(.)={}]/following-sibling::div')
     SINGLE_ITEM_LOCATOR = '//label[normalize-space(.)={}]/following-sibling::div'
 
-    def __init__(self, parent, group_title, item_name, text_filter=None, logger=None):
+    def __init__(self, parent, group_title, item_name, locator=None, text_filter=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
         self.group_title = group_title
         self.item_name = item_name
         if text_filter is not None and not callable(text_filter):
             raise TypeError('text_filter= must be a callable')
         self.text_filter = text_filter
+        self._locator = locator
 
     def __locator__(self):
+        if self._locator:
+            if not self.group_title:
+                return self._locator.format(quote(self.item_name))
+            else:
+                return self._locator.format(quote(self.group_title), quote(self.item_name))
         if not self.group_title:
             return self.SINGLE_ITEM_LOCATOR.format(quote(self.item_name))
         else:
@@ -4166,8 +4172,6 @@ class LineChart(Widget, ClickableMixin):
         for row in self.tooltip.rows():
             tooltip_data.update({row[0].text: row[1].text})
         return tooltip_data
-
-# Widget and its form views for Infra Planning Wizard
 
 
 class MultiSelectList(Widget):
