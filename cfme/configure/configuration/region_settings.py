@@ -18,6 +18,134 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 
 
+# =======================================TAGS=============================================
+
+table_button_classes = [Button.DEFAULT, Button.SMALL, Button.BLOCK]
+
+
+class CompanyTagsAllView(RegionView):
+    """Company Tags list view"""
+    # todo try this DynamicTable
+    category_dropdown = BootstrapSelect('classification_name')
+    table = DynamicTable(locator='//div[@id="classification_entries_div"]/table',
+                         column_widgets={
+                             'Name': Input(id='entry_name'),
+                             'Description': Input(id='entry_description'),
+                             'Actions': Button(title='Add this entry',
+                                               classes=table_button_classes)},
+                         assoc_column='Name', rows_ignore_top=1, action_row=0)
+
+    @property
+    def is_displayed(self):
+        return (
+            self.company_categories.is_active() and
+            self.table.is_displayed
+        )
+
+
+class CompanyTagsAddView(CompanyTagsAllView):
+    """Add Company Tags view"""
+    tag_name = Input(id='entry_name')
+    tag_description = Input(id='entry_description')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.company_categories.is_active() and
+            self.tag_name.is_displayed
+        )
+
+
+class CompanyTagsEditView(CompanyTagsAddView):
+    """Edit Company Tags view"""
+    save_button = Button('Save')
+    reset_button = Button('Reset')
+
+
+@attr.s
+class Tag(Pretty, BaseEntity, Updateable):
+    """ Class represents a category in CFME UI
+        Args:
+            name: Name of the tag
+            display_name: Tag display name
+            category: Tags Category
+
+    """
+    pretty_attrs = ['name', 'display_name', 'category']
+
+    name = attr.ib()
+    display_name = attr.ib()
+
+    def update(self, updates):
+        """ Update category method """
+        view = navigate_to(self, 'Edit')
+        view.table.fill(
+            {self.name: {'Name': updates.get('name'), 'Description': updates.get('display_name')}}
+        )
+        view.flash.assert_no_error()
+
+    def delete(self, cancel=False):
+        """ Delete category method """
+        view = navigate_to(self, 'All')
+        row = view.table.row(name=self.name)
+        row.actions.click()
+        view.browser.handle_alert(cancel=cancel)
+        view.flash.assert_no_error()
+
+
+@attr.s
+class TagsCollection(BaseCollection):
+
+    ENTITY = Tag
+
+    def create(self, name, display_name):
+        """ Create category method """
+        view = navigate_to(self, 'All')
+        view.table.fill([{'Name': name, 'Description': display_name}])
+        view.table.row_save()
+        return self.instantiate(name=name, display_name=display_name)
+
+    def all(self):
+        view = navigate_to(self, 'All')
+        all_tags = []
+        for name, values_dict in view.table.read().items():
+            all_tags = all_tags.append(
+                self.instantiate(name=name, display_name=values_dict['Description'])
+            )
+
+
+@navigator.register(TagsCollection, 'All')
+class TagsAll(CFMENavigateStep):
+    VIEW = CompanyTagsAllView
+    prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
+
+    def step(self):
+        if self.obj.appliance.version < '5.9':
+            self.prerequisite_view.company_tags.select()
+        else:
+            self.prerequisite_view.tags.company_tags.select()
+        self.view.fill({'category_dropdown': self.obj.parent.display_name})
+
+
+@navigator.register(TagsCollection, 'Add')
+class TagsAdd(CFMENavigateStep):
+    VIEW = CompanyTagsAddView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        pass
+        #self.prerequisite_view.add_button.click()
+
+
+@navigator.register(Tag, 'Edit')
+class TagsEdit(CFMENavigateStep):
+    VIEW = CompanyTagsEditView
+    prerequisite = NavigateToAttribute('parent', 'All')
+
+    def step(self):
+        self.prerequisite_view.table.row(name=self.obj.name).click()
+
+
 # =====================================CATEGORY===================================
 
 
@@ -113,7 +241,7 @@ class Category(Pretty, BaseEntity, Updateable):
         else:
             view.save_button.click()
 
-        view = self.create_view(navigator.get_class(self, 'All').VIEW)
+        view = self.create_view(navigator.get_class(self.parent, 'All').VIEW)
         assert view.is_displayed
         view.flash.assert_no_error()
 
@@ -129,7 +257,7 @@ class Category(Pretty, BaseEntity, Updateable):
         row.actions.click()
         view.browser.handle_alert(cancel=cancel)
         if not cancel:
-            view = self.create_view(navigator.get_class(self, 'All').VIEW)
+            view = self.create_view(navigator.get_class(self.parent, 'All').VIEW)
         assert view.is_displayed
         view.flash.assert_no_error()
 
@@ -210,120 +338,6 @@ class CategoryEdit(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.table.row(name=self.obj.name).click()
 
-# =======================================TAGS=============================================
-
-
-class CompanyTagsAllView(RegionView):
-    """Company Tags list view"""
-    category_dropdown = BootstrapSelect('classification_name')
-    table = DynamicTable('//div[@id="classification_entries_div"]/table')
-    add_button = Button('Add')
-
-    cancel_button = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.company_categories.is_active() and
-            self.table.is_displayed
-        )
-
-
-class CompanyTagsAddView(CompanyTagsAllView):
-    """Add Company Tags view"""
-    tag_name = Input(id='entry_name')
-    tag_description = Input(id='entry_description')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.company_categories.is_active() and
-            self.tag_name.is_displayed
-        )
-
-
-class CompanyTagsEditView(CompanyTagsAddView):
-    """Edit Company Tags view"""
-    save_button = Button('Save')
-    reset_button = Button('Reset')
-
-
-@attr.s
-class Tag(Pretty, BaseEntity, Updateable):
-    """ Class represents a category in CFME UI
-
-        Args:
-            name: Name of the tag
-            display_name: Tag display name
-            category: Tags Category
-    """
-    pretty_attrs = ['name', 'display_name', 'category']
-
-    name = attr.ib()
-    display_name = attr.ib()
-    category = attr.ib()
-
-    def update(self, updates):
-        """ Update category method """
-        view = navigate_to(self, 'Edit')
-        view.fill({
-            'tag_name': updates.get('name'),
-            'tag_description': updates.get('display_name')
-        })
-        view.table.row_save()
-        view.flash.assert_no_error()
-
-    def delete(self, cancel=True):
-        """ Delete category method """
-        view = navigate_to(self, 'All')
-        row = view.table.row(name=self.name)
-        row.actions.click()
-        view.browser.handle_alert(cancel=cancel)
-        view.flash.assert_no_error()
-
-
-@attr.s
-class TagsCollection(BaseCollection):
-
-    def create(self, name, display_name):
-        """ Create category method """
-        view = navigate_to(self, 'Add')
-        view.fill({
-            'tag_name': name,
-            'tag_description': display_name
-        })
-        view.add_button.click()
-
-
-@navigator.register(TagsCollection, 'All')
-class TagsAll(CFMENavigateStep):
-    VIEW = CompanyTagsAllView
-    prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
-
-    def step(self):
-        if self.obj.appliance.version < '5.9':
-            self.prerequisite_view.company_tags.select()
-        else:
-            self.prerequisite_view.tags.company_tags.select()
-        self.view.fill({'category_dropdown': self.obj.parent.display_name})
-
-
-@navigator.register(TagsCollection, 'Add')
-class TagsAdd(CFMENavigateStep):
-    VIEW = CompanyTagsAddView
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        self.prerequisite_view.add_button.click()
-
-
-@navigator.register(Tag, 'Edit')
-class TagsEdit(CFMENavigateStep):
-    VIEW = CompanyTagsEditView
-    prerequisite = NavigateToAttribute('parent', 'All')
-
-    def step(self):
-        self.prerequisite_view.table.row(name=self.obj.name).click()
 
 # =======================================MAP TAGS==============================================
 
