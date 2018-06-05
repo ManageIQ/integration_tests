@@ -83,7 +83,7 @@ class AutomateGitRepository(Navigatable):
         git_select = self.create_view(GitImportSelectorView)
         assert git_select.is_displayed
         git_select.flash.assert_no_error()
-        assert git_select.fill(self.fill_values_branch_select(branch, tag))
+        git_select.fill(self.fill_values_branch_select(branch, tag))
         git_select.submit.click()
         git_select.browser.plugin.ensure_page_safe(timeout='5m')
         imex_page = self.create_view(AutomateImportExportView)
