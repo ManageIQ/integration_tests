@@ -3,7 +3,6 @@ import attr
 from cached_property import cached_property
 
 from navmazing import NavigateToSibling, NavigateToAttribute
-from wrapanapi.containers.image import Image as ApiImage
 
 from cfme.common import (Taggable, PolicyProfileAssignable,
                          TagPageView)
@@ -49,10 +48,6 @@ class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssi
     name = attr.ib()
     id = attr.ib()
     provider = attr.ib()
-
-    @cached_property
-    def mgmt(self):
-        return ApiImage(self.provider.mgmt, self.name, self.sha256)
 
     @cached_property
     def sha256(self):

@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 # added new list_tbl definition
 import attr
-from cached_property import cached_property
-
-from wrapanapi.containers.node import Node as ApiNode
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
@@ -74,11 +71,6 @@ class Node(BaseEntity, Taggable, Labelable, PolicyProfileAssignable, ConsoleMixi
 
     name = attr.ib()
     provider = attr.ib()
-
-    @cached_property
-    def mgmt(self):
-        """API to use for Nodes"""
-        return ApiNode(self.provider.mgmt, self.name)
 
     @property
     def exists(self):

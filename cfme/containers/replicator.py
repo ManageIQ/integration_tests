@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import attr
-from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import VersionPick, Version
-from wrapanapi.containers.replicator import Replicator as ApiReplicator
 
 from cfme.common import Taggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
@@ -40,10 +38,6 @@ class Replicator(BaseEntity, Taggable, Labelable):
     name = attr.ib()
     project_name = attr.ib()
     provider = attr.ib()
-
-    @cached_property
-    def mgmt(self):
-        return ApiReplicator(self.provider.mgmt, self.name, self.project_name)
 
 
 @attr.s

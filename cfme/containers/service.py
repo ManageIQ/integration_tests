@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 import attr
-from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-
-from wrapanapi.containers.service import Service as ApiService
 
 from cfme.common import Taggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
@@ -34,10 +31,6 @@ class Service(BaseEntity, Taggable, Labelable):
     name = attr.ib()
     project_name = attr.ib()
     provider = attr.ib()
-
-    @cached_property
-    def mgmt(self):
-        return ApiService(self.provider.mgmt, self.name, self.project_name)
 
 
 @attr.s

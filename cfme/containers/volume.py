@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import attr
-from cached_property import cached_property
 
 from navmazing import NavigateToSibling, NavigateToAttribute
-from wrapanapi.containers.volume import Volume as ApiVolume
 
 from cfme.common import Taggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
@@ -33,10 +31,6 @@ class Volume(BaseEntity, Taggable, Labelable):
 
     name = attr.ib()
     provider = attr.ib()
-
-    @cached_property
-    def mgmt(self):
-        return ApiVolume(self.provider.mgmt, self.name)
 
 
 @attr.s
