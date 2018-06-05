@@ -8,7 +8,7 @@ from widgetastic_manageiq import VanillaTable, SummaryFormItem, Table, Dropdown
 from widgetastic.widget import Checkbox, Text
 
 from cfme.base.ui import RegionView
-from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import conf
 from cfme.utils.appliance import Navigatable, NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -229,11 +229,11 @@ class CompanyTagsEditView(CompanyTagsAddView):
 
 class Tag(Pretty, Navigatable, Updateable):
     """ Class represents a category in CFME UI
+
         Args:
             name: Name of the tag
             display_name: Tag display name
             category: Tags Category
-
     """
     pretty_attrs = ['name', 'display_name', 'category']
 
@@ -339,51 +339,21 @@ class MapTagsEditView(MapTagsAddView):
     reset_button = Button('Reset')
 
 
-class MapTags(Navigatable, Pretty, Updateable):
+@attr.s
+class MapTag(BaseEntity, Pretty, Updateable):
     """ Class represents a category in CFME UI
 
         Args:
-            entity: Name of the tag
+            entity_type: Name of the tag
             label: Tag display name
             category: Tags Category
 
     """
-    pretty_attrs = ['entity', 'label', 'category']
+    pretty_attrs = ['entity_type', 'label', 'category']
 
-    def __init__(self, entity=None, label=None, category=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.entity = entity
-        self.label = label
-        self.category = category
-
-    def _form_mapping(self, **kwargs):
-        """Returns dist used to fill forms """
-        return {
-            'resource_entity': kwargs.get('entity'),
-            'resource_label': kwargs.get('label'),
-            'category': kwargs.get('category')
-        }
-
-    def create(self, cancel=False):
-        """ Map tags creation method
-
-            Args:
-                cancel: True - if you want to cancel map creation,
-                        by defaul map will be created
-        """
-        view = navigate_to(self, 'Add')
-        view.fill(self._form_mapping(**self.__dict__))
-
-        if cancel:
-            view.cancel_button.click()
-            flash_message = 'Add of new Container Label Tag Mapping was cancelled by the user'
-        else:
-            view.add_button.click()
-            flash_message = 'Container Label Tag Mapping "{}" was added'.format(self.label)
-
-        view = self.create_view(MapTagsAllView)
-        if not BZ(1510473, forced_streams=['5.9']).blocks:
-            view.flash.assert_success_message(flash_message)
+    entity_type = attr.ib()
+    label = attr.ib()
+    category = attr.ib()
 
     def update(self, updates, cancel=False):
         """ Update tag map method
@@ -401,17 +371,12 @@ class MapTags(Navigatable, Pretty, Updateable):
 
         if cancel:
             view.cancel_button.click()
-            flash_message = (
-                'Edit of Container Label Tag Mapping "{}" was cancelled by the user'.format(
-                    self.label)
-            )
         else:
             view.save_button.click()
-            flash_message = 'Container Label Tag Mapping "{}" was saved'.format(self.label)
 
-        view = self.create_view(MapTagsAllView, override=updates)
-        if not BZ(1510473, forced_streams=['5.9']).blocks:
-            view.flash.assert_success_message(flash_message)
+        view = self.create_view(navigator.get_class(self.parent, 'All').VIEW, override=updates)
+        assert view.is_displayed
+        view.flash.assert_no_error()
 
     def delete(self, cancel=False):
         """ Delete existing user
@@ -420,19 +385,64 @@ class MapTags(Navigatable, Pretty, Updateable):
                 cancel: Default value 'False', map will be deleted
                         'True' - map will not be deleted
         """
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.parent, 'All')
         row = view.table.row(tag_category=self.category)
         row.actions.click()
         view.browser.handle_alert(cancel=cancel)
 
         if not cancel:
-            view = self.create_view(MapTagsAllView)
-            if not BZ(1510473, forced_streams=['5.9']).blocks:
-                view.flash.assert_success_message(
-                    'Container Label Tag Mapping "{}": Delete successful'.format(self.label))
+            view = self.create_view(navigator.get_class(self.parent, 'All').VIEW)
+        assert view.is_displayed
+        view.flash.assert_no_error()
 
 
-@navigator.register(MapTags, 'All')
+@attr.s
+class MapTagsCollection(BaseCollection):
+
+    ENTITY = MapTag
+
+    def all(self):
+        all_map_tagging = []
+        view = navigate_to(self, 'Add')
+        for row in view.table:
+            all_map_tagging.append(self.instantiate(
+                entity_type=row.resource_entity.text,
+                label=row.resource_label.text,
+                category=row.tag_category.text,
+            ))
+        return all_map_tagging
+
+    def create(self, entity_type, label, category, cancel=False):
+        """ Map tags creation method
+
+            Args:
+                cancel: True - if you want to cancel map creation,
+                        by defaul map will be created
+        """
+        view = navigate_to(self, 'Add')
+        view.fill({
+            'resource_entity': entity_type,
+            'resource_label': label,
+            'category': category
+        })
+
+        if cancel:
+            view.cancel_button.click()
+        else:
+            view.add_button.click()
+
+        view = self.create_view(navigator.get_class(self.parent, 'All').VIEW)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+
+        return self.instantiate(
+            entity_type=entity_type,
+            label=label,
+            category=category
+        )
+
+
+@navigator.register(MapTagsCollection, 'All')
 class MapTagsAll(CFMENavigateStep):
     VIEW = MapTagsAllView
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
@@ -444,7 +454,7 @@ class MapTagsAll(CFMENavigateStep):
             self.prerequisite_view.tags.map_tags.select()
 
 
-@navigator.register(MapTags, 'Add')
+@navigator.register(MapTagsCollection, 'Add')
 class MapTagsAdd(CFMENavigateStep):
     VIEW = MapTagsAddView
     prerequisite = NavigateToSibling('All')
@@ -453,10 +463,10 @@ class MapTagsAdd(CFMENavigateStep):
         self.prerequisite_view.add_button.click()
 
 
-@navigator.register(MapTags, 'Edit')
+@navigator.register(MapTag, 'Edit')
 class MapTagsEdit(CFMENavigateStep):
     VIEW = MapTagsEditView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.table.row(tag_category=self.obj.category).click()
@@ -539,7 +549,6 @@ class RedHatUpdates(Navigatable, Pretty):
         set_default_rhsm_address: Click the Default button connected to
             the RHSM (only) address if `True`
         set_default_repository: Click the Default button connected to the repo/channel if `True`
-
         Note:
             With satellite 6, it is necessary to validate credentials to obtain
             available organizations from the server.
@@ -951,7 +960,6 @@ class Replication(NavigatableMixin):
                      db creds get from credentials
                  replication_type(str): Replication type, use 'global' or 'remote'
                  reset: Pass True to reset made changes
-
         """
         db_creds = conf.credentials.database
         if not replication_type:
