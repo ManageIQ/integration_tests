@@ -4,8 +4,8 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View
 from widgetastic_patternfly import Text, TextInput, Button, BootstrapSelect
 from widgetastic_manageiq import (
-    InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList
-)
+    InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList,
+    MigrationPlanRequestDetailsList)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -254,6 +254,13 @@ class AddMigrationPlanView(View):
         return self.title.text == 'Migration Plan Wizard'
 
 
+class MigrationPlanRequestDetailsView(View):
+    migration_request_details_list = MigrationPlanRequestDetailsList("plan-request-details-list")
+
+    @property
+    def is_displayed(self):
+        return self.migration_request_details_list.is_displayed
+
 # Collections Entities
 
 
@@ -290,6 +297,7 @@ class MigrationPlan(BaseEntity):
     # TODO: Ytale is updating rest of the code in this entity in separate PR.
     category = 'migrationplan'
     string_name = 'Migration Plan'
+    name = 'fsdf'
 
 
 @attr.s
@@ -331,3 +339,13 @@ class AddMigrationPlan(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.create_migration_plan.click()
+
+
+@navigator.register(MigrationPlanCollection, 'Details')
+class MigrationPlanRequestDetails(CFMENavigateStep):
+    VIEW = MigrationPlanRequestDetailsView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        # TODO: REPLACE self.obj.ENTITY.name with self.obj.name
+        self.prerequisite_view.migrations_not_started_list.click_plan(self.obj.ENTITY.name)

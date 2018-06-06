@@ -4591,3 +4591,76 @@ class InfraMappingList(Widget):
         except NoSuchElementException:
             raise ItemNotFound('Collapse button not present,'
                 'map clusters/networks/datastores/associated_plans details is not expaded.')
+
+
+class MigrationPlanRequestDetailsList(Widget):
+    """Represents the list of Migration Plan Request Details."""
+
+    ROOT = ParametrizedLocator('.//div[contains(@class,{@list_class|quote})]')
+    ITEM_LOCATOR = ParametrizedLocator('./div[contains(@class,"list-group-item")]')
+    # ITEM_TEXT_LOCATOR helps locate name of the Migration plan. ITEM_LOCATOR.text does not suffice.
+    # Also, ITEM_LOCATOR does not yield element which can be clicked to navigate to details page.
+    ITEM_TEXT_LOCATOR = './/div[contains(@class,"list-group-item-heading")]'
+    ITEM_DESCRIPTION_LOCATOR = './/div[contains(@class,"list-group-item-text")]'
+    ITEM_CLUSTERS_LOCATOR = './/div[./span[contains(@class,"pficon-cluster")]]'
+    ITEM_ASSOCIATED_PLANS_LOCATOR = './/div[./span[contains(@class,"pficon-catalog")]]'
+
+    def __init__(self, parent, list_class, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.list_class = list_class
+
+    @property
+    def all_items(self):
+        return [self.browser.text(item) for item in self.browser.elements(self.ITEM_TEXT_LOCATOR)]
+
+    def _get_map_element(self, map_name):
+        for item in self.browser.elements(self.ITEM_LOCATOR):
+            el = self.browser.element(".//*[@class='list-group-item-heading']", parent=item)
+            if self.browser.text(el) == map_name:
+                return item
+        raise ItemNotFound("Infra Mapping: {} not found".format(map_name))
+
+    def expand_map(self, map_name):
+        """Find item by text and click to view details."""
+        el = self._get_map_element(map_name)
+        self.browser.click(self.browser.element(self.ITEM_TEXT_LOCATOR, parent=el))
+
+    def read(self):
+        return self.all_items
+
+    def fill(self, value):
+        """Finds item by text and click to view details."""
+        if isinstance(value, list) and len(value) > 1:
+            raise TypeError("Fill can only take one value from list to click on.")
+        self.expand_plan(value)
+        return True
+
+    def get_map_description(self, map_name):
+        try:
+            el = self._get_map_element(map_name)
+            return self.browser.text(self.browser.element(self.ITEM_DESCRIPTION_LOCATOR,
+                 parent=el))
+        except NoSuchElementException:
+            # Map with no description
+            return None
+
+    def get_map_source_clusters(self, map_name):
+        el = self._get_map_element(map_name)
+        for item in self.browser.elements(self.ITEM_CLUSTERS_LOCATOR, parent=el):
+            if "Source Cluster" in item.text:
+                return item.text
+
+    def get_map_target_clusters(self, map_name):
+        el = self._get_map_element(map_name)
+        for item in self.browser.elements(self.ITEM_CLUSTERS_LOCATOR, parent=el):
+            if "Target Cluster" in item.text:
+                return item.text
+
+    def get_associated_plans_count(self, map_name):
+        try:
+            el = self._get_map_element(map_name)
+            return self.browser.text(self.browser.element(self.ITEM_ASSOCIATED_PLANS_LOCATOR,
+                 parent=el))
+        except NoSuchElementException:
+            # Plan with no associated plans
+            return None
