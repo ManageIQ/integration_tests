@@ -4443,9 +4443,15 @@ class InfraMappingList(Widget):
     """Represents the list of Infrastructure Mappings."""
 
     ROOT = ParametrizedLocator('.//div[contains(@class,{@list_class|quote})]')
+<<<<<<< HEAD
     ITEM_LOCATOR = './div[contains(@class,"list-group-item")]'
     # ITEM_TEXT_LOCATOR helps locate name of the Migration plan. ITEM_LOCATOR.text does not suffice.
     # Also, ITEM_LOCATOR does not yield element which can be clicked to navigate to details page.
+=======
+    ITEM_LOCATOR = ParametrizedLocator('./div[contains(@class,"list-group-item")]')
+    # ITEM_TEXT_LOCATOR helps locate name of the Infra mapping. ITEM_LOCATOR.text does not suffice.
+    # Also, ITEM_LOCATOR does not yield element which can be clicked to expand.
+>>>>>>> Added more features to widget
     ITEM_TEXT_LOCATOR = './/div[contains(@class,"list-group-item-heading")]'
     ITEM_STATUS_LOCATOR = './/div[contains(@class,"list-group-item-text")]'
     ITEM_CLUSTERS_LOCATOR = './/div[./span[contains(@class,"pficon-cluster")]]'
@@ -4601,9 +4607,11 @@ class MigrationPlanRequestDetailsList(Widget):
     # ITEM_TEXT_LOCATOR helps locate name of the Migration plan. ITEM_LOCATOR.text does not suffice.
     # Also, ITEM_LOCATOR does not yield element which can be clicked to navigate to details page.
     ITEM_TEXT_LOCATOR = './/div[contains(@class,"list-group-item-heading")]'
-    ITEM_DESCRIPTION_LOCATOR = './/div[contains(@class,"list-group-item-text")]'
-    ITEM_CLUSTERS_LOCATOR = './/div[./span[contains(@class,"pficon-cluster")]]'
-    ITEM_ASSOCIATED_PLANS_LOCATOR = './/div[./span[contains(@class,"pficon-catalog")]]'
+    ITEM_MESSAGE_LOCATOR = './/div[./button/span[contains(@class,"pficon-info")]]'
+    ITEM_TIMER_LOCATOR = './/div[./span[contains(@class,"fa-clock-o")]]'
+    ITEM_ADDITIONAL_INFO_BUTTON_LOCATOR = './/div/button[./span[contains(@class,"pficon-info")]]'
+    ITEM_PROGRESS_DESCRIPTION_LOCATOR = './/div[contains(@class,"progress-description ")]'
+    ITEM_DOWNLOAD_LOG_BUTTON_LOCATOR = './/div[./a][contains(@class,"list-view-pf-actions")]'
 
     def __init__(self, parent, list_class, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -4613,17 +4621,12 @@ class MigrationPlanRequestDetailsList(Widget):
     def all_items(self):
         return [self.browser.text(item) for item in self.browser.elements(self.ITEM_TEXT_LOCATOR)]
 
-    def _get_map_element(self, map_name):
+    def _get_vm_element(self, vm_name):
         for item in self.browser.elements(self.ITEM_LOCATOR):
             el = self.browser.element(".//*[@class='list-group-item-heading']", parent=item)
-            if self.browser.text(el) == map_name:
+            if self.browser.text(el) == vm_name:
                 return item
-        raise ItemNotFound("Infra Mapping: {} not found".format(map_name))
-
-    def expand_map(self, map_name):
-        """Find item by text and click to view details."""
-        el = self._get_map_element(map_name)
-        self.browser.click(self.browser.element(self.ITEM_TEXT_LOCATOR, parent=el))
+        raise ItemNotFound("VM: {} not found".format(vm_name))
 
     def read(self):
         return self.all_items
@@ -4635,32 +4638,37 @@ class MigrationPlanRequestDetailsList(Widget):
         self.expand_plan(value)
         return True
 
-    def get_map_description(self, map_name):
+    def get_message_text(self, vm_name):
         try:
-            el = self._get_map_element(map_name)
-            return self.browser.text(self.browser.element(self.ITEM_DESCRIPTION_LOCATOR,
+            el = self._get_vm_element(vm_name)
+            return self.browser.text(self.browser.element(self.ITEM_MESSAGE_LOCATOR,
                  parent=el))
         except NoSuchElementException:
-            # Map with no description
+            # Plan not started yet
             return None
 
-    def get_map_source_clusters(self, map_name):
-        el = self._get_map_element(map_name)
-        for item in self.browser.elements(self.ITEM_CLUSTERS_LOCATOR, parent=el):
-            if "Source Cluster" in item.text:
-                return item.text
+    def get_clock(self, vm_name):
+        el = self._get_vm_element(vm_name)
+        return self.browser.text(self.browser.element(self.ITEM_TIMER_LOCATOR,
+            parent=el))
 
-    def get_map_target_clusters(self, map_name):
-        el = self._get_map_element(map_name)
-        for item in self.browser.elements(self.ITEM_CLUSTERS_LOCATOR, parent=el):
-            if "Target Cluster" in item.text:
-                return item.text
-
-    def get_associated_plans_count(self, map_name):
+    def open_additional_info_popup(self, vm_name):
         try:
-            el = self._get_map_element(map_name)
-            return self.browser.text(self.browser.element(self.ITEM_ASSOCIATED_PLANS_LOCATOR,
-                 parent=el))
+            el = self._get_vm_element(vm_name)
+            self.browser.element(self.ITEM_ADDITIONAL_INFO_BUTTON_LOCATOR, parent=el).click()
         except NoSuchElementException:
-            # Plan with no associated plans
+            # Plan not started yet
+            return None
+
+    def get_progress_description(self, vm_name):
+        el = self._get_vm_element(vm_name)
+        return self.browser.text(self.browser.element(self.ITEM_PROGRESS_DESCRIPTION_LOCATOR,
+            parent=el))
+
+    def download_log(self, vm_name):
+        try:
+            el = self._get_vm_element(vm_name)
+            self.browser.element(self.ITEM_DOWNLOAD_LOG_BUTTON_LOCATOR, parent=el).click()
+        except NoSuchElementException:
+            # Plan not started yet
             return None
