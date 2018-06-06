@@ -14,7 +14,6 @@ from widgetastic.widget import Table, Text, View
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -390,6 +389,18 @@ class Taggable(TaggableCommonBase):
         for tag in tags:
             self.remove_tag(tag=tag)
 
+    def _set_random_tag(self, view):
+        random_cat = random.choice(view.form.tag_category.all_options).text
+        # '*' is added in UI almost to all categoly while tag selection,
+        #  but doesn't need for Category object creation
+        random_cat_cut = random_cat[:-1].strip() if random_cat[-1] == '*' else random_cat
+        view.form.tag_category.fill(random_cat)
+        # In order to get the right tags list we need to select category first to get loaded tags
+        random_tag = random.choice([tag_option for tag_option in view.form.tag_name.all_options
+                                    if "select" not in tag_option.text.lower()]).text
+        category = self.appliance.collections.categories.instantiate(display_name=random_cat_cut)
+        return category.collections.tags.instantiate(display_name=random_tag)
+
     def get_tags(self, tenant="My Company Tags"):
         """ Get list of tags assigned to item.
 
@@ -414,8 +425,9 @@ class Taggable(TaggableCommonBase):
             # check for users/groups page in case one tag string is returned
             for tag in [tags_text] if isinstance(tags_text, six.string_types) else list(tags_text):
                 tag_category, tag_name = tag.split(':')
-                tags.append(Tag(category=Category(display_name=tag_category),
-                                display_name=tag_name.strip()))
+                category = self.appliance.collections.categories.instantiate(
+                    display_name=tag_category)
+                tags.append(category.collections.tags.instantiate(display_name=tag_name.strip()))
         return tags
 
 

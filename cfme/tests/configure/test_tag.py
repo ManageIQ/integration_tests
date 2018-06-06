@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 
-from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.rest.gen_data import (
     a_provider as _a_provider,
     categories as _categories,
@@ -22,25 +21,27 @@ from cfme.utils.wait import wait_for
 
 
 @pytest.fixture
-def category():
-    cg = Category(name=fauxfactory.gen_alphanumeric(8).lower(),
-                  description=fauxfactory.gen_alphanumeric(32),
-                  display_name=fauxfactory.gen_alphanumeric(32))
-    cg.create()
+def category(appliance):
+    cg = appliance.collections.categories.create(
+        name=fauxfactory.gen_alphanumeric(8).lower(),
+        description=fauxfactory.gen_alphanumeric(32),
+        display_name=fauxfactory.gen_alphanumeric(32)
+    )
     yield cg
-    cg.delete()
+    if cg.exists:
+        cg.delete()
 
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_tag_crud(category):
-    tag = Tag(name=fauxfactory.gen_alphanumeric(8).lower(),
-              display_name=fauxfactory.gen_alphanumeric(32),
-              category=category)
-    tag.create()
+    tag = category.collections.tags.create(
+        name=fauxfactory.gen_alphanumeric(8).lower(),
+        display_name=fauxfactory.gen_alphanumeric(32)
+    )
     with update(tag):
         tag.display_name = fauxfactory.gen_alphanumeric(32)
-    tag.delete(cancel=False)
+    tag.delete()
 
 
 class TestTagsViaREST(object):

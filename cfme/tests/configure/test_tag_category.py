@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 
-from cfme.configure.configuration.region_settings import Category
 from cfme.rest.gen_data import categories as _categories
 from cfme.utils.rest import (
     assert_response,
@@ -15,14 +14,15 @@ from cfme.utils.wait import wait_for
 
 @pytest.mark.tier(2)
 @pytest.mark.sauce
-def test_category_crud():
-    cg = Category(name=fauxfactory.gen_alphanumeric(8).lower(),
-                  description=fauxfactory.gen_alphanumeric(32),
-                  display_name=fauxfactory.gen_alphanumeric(32))
-    cg.create()
+def test_category_crud(appliance):
+    cg = appliance.collections.categories.create(
+        name=fauxfactory.gen_alphanumeric(8).lower(),
+        description=fauxfactory.gen_alphanumeric(32),
+        display_name=fauxfactory.gen_alphanumeric(32)
+    )
     with update(cg):
         cg.description = fauxfactory.gen_alphanumeric(32)
-    cg.delete(cancel=False)
+    cg.delete()
 
 
 class TestCategoriesViaREST(object):

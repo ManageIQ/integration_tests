@@ -2,7 +2,6 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.configure.configuration.region_settings import Tag, Category
 from cfme.common.host_views import HostDriftAnalysis
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
@@ -90,7 +89,9 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
     )
 
     # add a tag and a finalizer to remove it
-    added_tag = Tag(display_name='Accounting', category=Category(display_name='Department'))
+    added_tag = appliance.collections.categories.instantiate(
+        display_name='Department').collections.tags.instantiate(
+        display_name='Accounting')
     a_host.add_tag(added_tag)
     request.addfinalizer(lambda: a_host.remove_tag(added_tag))
 

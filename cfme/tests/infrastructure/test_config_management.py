@@ -1,6 +1,5 @@
 import fauxfactory
 import pytest
-from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils.update import update
 from cfme.utils.testgen import config_managers, generate
 
@@ -25,23 +24,26 @@ def config_system(config_manager):
 
 
 @pytest.fixture(scope="module")
-def category():
-    cg = Category(name=fauxfactory.gen_alpha(8).lower(),
-                  description=fauxfactory.gen_alphanumeric(length=32),
-                  display_name=fauxfactory.gen_alphanumeric(length=32))
-    cg.create()
+def category(appliance):
+    cg = appliance.collections.categories.create(
+        name=fauxfactory.gen_alphanumeric(8).lower(),
+        description=fauxfactory.gen_alphanumeric(32),
+        display_name=fauxfactory.gen_alphanumeric(32)
+    )
     yield cg
-    cg.delete()
+    if cg.exists:
+        cg.delete()
 
 
 @pytest.fixture(scope="module")
 def tag(category):
-    tag = Tag(name=fauxfactory.gen_alpha(8).lower(),
-              display_name=fauxfactory.gen_alphanumeric(length=32),
-              category=category)
-    tag.create()
+    tag = category.collections.tags.create(
+        name=fauxfactory.gen_alphanumeric(8).lower(),
+        display_name=fauxfactory.gen_alphanumeric(32)
+    )
     yield tag
-    tag.delete()
+    if tag.exists:
+        tag.delete()
 
 
 @pytest.mark.tier(3)

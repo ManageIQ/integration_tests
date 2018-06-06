@@ -3,7 +3,7 @@ import pytest
 from widgetastic.exceptions import NoSuchElementException
 
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
-from cfme.configure.configuration.region_settings import Category, Tag, RedHatUpdates
+from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 general_list_pages = [
@@ -48,8 +48,8 @@ general_list_pages = [
 
 
     ('candus', None, 'Details', False),
-    ('category', Category, 'All', False),
     ('map_tags', None, 'All', False),
+    ('category', None, 'All', False),
     ('red_hat_updates', RedHatUpdates, 'Details', False),
     ('analysis_profile', AnalysisProfile, 'All', True),
     ('system_schedules', None, 'Add', False),
@@ -67,7 +67,7 @@ details_pages = [
     ('analysis_profile', AnalysisProfile, 'Details', False),
     ('system_schedules', None, 'All', True),
     ('system_schedules', None, 'Details', False),
-    ('tag', Tag, 'All', False),
+    ('tag', None, 'All', False),
 ]
 
 
@@ -120,8 +120,9 @@ def test_paginator_details_page(appliance, place_info, schedule):
     """
     place_name, place_class, place_navigation, paginator_expected_result = place_info
     if place_name == 'tag':
-        cg = Category(name='department', description='Department')
-        test_class = place_class(category=cg)
+        category = appliance.collections.categories.instantiate(
+            name='department', display_name='Department')
+        test_class = category.collections.tags
         view = navigate_to(test_class, place_navigation)
     else:
         test_class = place_class if place_class else getattr(appliance.collections, place_name)

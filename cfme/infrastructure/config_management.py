@@ -8,7 +8,6 @@ from widgetastic_patternfly import BootstrapSelect, Dropdown, Tab
 from cfme.base.credential import Credential as BaseCredential
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable, TagPageView
-from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils import ParamClassName
 from cfme.utils import version, conf
 from cfme.utils.appliance import Navigatable
@@ -491,9 +490,12 @@ class ConfigSystem(Pretty, Navigatable, Taggable):
         """Overridden get_tags method to deal with the fact that configured systems don't have a
         details view."""
         view = navigate_to(self, 'EditTags')
-        return [Tag(category=Category(display_name=r.category.text.replace('*', '').strip()),
-                    display_name=r.assigned_value.text.strip())
-                for r in view.form.tags]
+        return [
+            self.appliance.collections.categories.instantiate(
+                display_name=r.category.text.replace('*', '').strip()).collections.tags.instantiate(
+                display_name=r.assigned_value.text.strip())
+            for r in view.form.tags
+        ]
 
 
 class Satellite(ConfigManager):

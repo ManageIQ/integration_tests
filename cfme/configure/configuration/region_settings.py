@@ -3,7 +3,7 @@ import re
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic_patternfly import Input, BootstrapSelect, Button, BootstrapSwitch
-# TODO replace with dynamic table
+from widgetastic.exceptions import RowNotFound
 from widgetastic_manageiq import VanillaTable, SummaryFormItem, Table, Dropdown, DynamicTable
 from widgetastic.widget import Checkbox, Text
 
@@ -25,7 +25,6 @@ table_button_classes = [Button.DEFAULT, Button.SMALL, Button.BLOCK]
 
 class CompanyTagsAllView(RegionView):
     """Company Tags list view"""
-    # todo try this DynamicTable
     category_dropdown = BootstrapSelect('classification_name')
     table = DynamicTable(locator='//div[@id="classification_entries_div"]/table',
                          column_widgets={
@@ -38,28 +37,9 @@ class CompanyTagsAllView(RegionView):
     @property
     def is_displayed(self):
         return (
-            self.company_categories.is_active() and
+            self.company_tags.is_active() and
             self.table.is_displayed
         )
-
-
-class CompanyTagsAddView(CompanyTagsAllView):
-    """Add Company Tags view"""
-    tag_name = Input(id='entry_name')
-    tag_description = Input(id='entry_description')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.company_categories.is_active() and
-            self.tag_name.is_displayed
-        )
-
-
-class CompanyTagsEditView(CompanyTagsAddView):
-    """Edit Company Tags view"""
-    save_button = Button('Save')
-    reset_button = Button('Reset')
 
 
 @attr.s
@@ -71,26 +51,38 @@ class Tag(Pretty, BaseEntity, Updateable):
             category: Tags Category
 
     """
-    pretty_attrs = ['name', 'display_name', 'category']
+    pretty_attrs = ['name', 'display_name']
 
-    name = attr.ib()
     display_name = attr.ib()
+    name = attr.ib(default=None)
 
     def update(self, updates):
         """ Update category method """
-        view = navigate_to(self, 'Edit')
-        view.table.fill(
-            {self.name: {'Name': updates.get('name'), 'Description': updates.get('display_name')}}
-        )
+        view = navigate_to(self.parent, 'All')
+        view.table.fill({
+            self.display_name: {
+                'Name': updates.get('name'),
+                'Description': updates.get('display_name')
+            }
+        })
         view.flash.assert_no_error()
 
     def delete(self, cancel=False):
         """ Delete category method """
         view = navigate_to(self, 'All')
-        row = view.table.row(name=self.name)
-        row.actions.click()
+        view.table.row(description=self.display_name).actions.click()
         view.browser.handle_alert(cancel=cancel)
         view.flash.assert_no_error()
+
+    @property
+    def exists(self):
+        """Check if tag exists"""
+        view = navigate_to(self.parent, 'All')
+        try:
+            view.table.row(description=self.display_name)
+            return True
+        except RowNotFound:
+            return False
 
 
 @attr.s
@@ -106,6 +98,7 @@ class TagsCollection(BaseCollection):
         return self.instantiate(name=name, display_name=display_name)
 
     def all(self):
+        """Get all tags for the category"""
         view = navigate_to(self, 'All')
         all_tags = []
         for name, values_dict in view.table.read().items():
@@ -125,25 +118,6 @@ class TagsAll(CFMENavigateStep):
         else:
             self.prerequisite_view.tags.company_tags.select()
         self.view.fill({'category_dropdown': self.obj.parent.display_name})
-
-
-@navigator.register(TagsCollection, 'Add')
-class TagsAdd(CFMENavigateStep):
-    VIEW = CompanyTagsAddView
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        pass
-        #self.prerequisite_view.add_button.click()
-
-
-@navigator.register(Tag, 'Edit')
-class TagsEdit(CFMENavigateStep):
-    VIEW = CompanyTagsEditView
-    prerequisite = NavigateToAttribute('parent', 'All')
-
-    def step(self):
-        self.prerequisite_view.table.row(name=self.obj.name).click()
 
 
 # =====================================CATEGORY===================================
@@ -213,9 +187,9 @@ class Category(Pretty, BaseEntity, Updateable):
 
     _collections = {'tags': TagsCollection}
 
-    name = attr.ib()
     display_name = attr.ib()
-    description = attr.ib()
+    name = attr.ib(default=None)
+    description = attr.ib(default=None)
     show_in_console = attr.ib(default=True)
     single_value = attr.ib(default=True)
     capture_candu = attr.ib(default=False)
@@ -245,7 +219,7 @@ class Category(Pretty, BaseEntity, Updateable):
         assert view.is_displayed
         view.flash.assert_no_error()
 
-    def delete(self, cancel=True):
+    def delete(self, cancel=False):
         """ Delete existing category
 
             Args:
@@ -253,13 +227,23 @@ class Category(Pretty, BaseEntity, Updateable):
                         'False' - deletion of category will be canceled
         """
         view = navigate_to(self.parent, 'All')
-        row = view.table.row(name=self.name)
+        row = view.table.row(description=self.display_name)
         row.actions.click()
-        view.browser.handle_alert(cancel=cancel)
+        view.browser.handle_alert(cancel=not cancel)
         if not cancel:
             view = self.create_view(navigator.get_class(self.parent, 'All').VIEW)
         assert view.is_displayed
         view.flash.assert_no_error()
+
+    @property
+    def exists(self):
+        """Check if category exists"""
+        view = navigate_to(self.parent, 'All')
+        try:
+            view.table.row(description=self.display_name)
+            return True
+        except RowNotFound:
+            return False
 
 
 @attr.s
@@ -300,8 +284,8 @@ class CategoriesCollection(BaseCollection):
         assert view.is_displayed
         view.flash.assert_no_error()
         return self.instantiate(
-            name=name,
             display_name=display_name,
+            name=name,
             description=description,
             show_in_console=show_in_console,
             single_value=single_value,

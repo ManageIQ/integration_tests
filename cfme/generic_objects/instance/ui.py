@@ -7,7 +7,6 @@ from widgetastic_manageiq import (ItemsToolBarViewSelector, BaseEntitiesView,
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable, TagPageView
-from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
 from . import GenericObjectInstance, GenericObjectInstanceCollection
@@ -92,9 +91,6 @@ def exists(self):
 
 @MiqImplementationContext.external_for(GenericObjectInstance.add_tag, ViaUI)
 def add_tag(self, tag=None, cancel=False, reset=False, details=True):
-    # ToDo remove when taggable use random object
-    if not tag:
-        tag = Tag(display_name='Cost Center 001', category=Category(display_name='Cost Center'))
     Taggable.add_tag(self, tag=tag, cancel=cancel, reset=reset, details=details)
     return tag
 

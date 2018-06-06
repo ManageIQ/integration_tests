@@ -4,7 +4,6 @@ import pytest
 from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
-from cfme.configure.configuration.region_settings import Tag, Category
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -129,7 +128,9 @@ def entities(appliance, request, max_quota_test_instance):
 @pytest.fixture(scope='function')
 def set_entity_quota_tag(request, entities, appliance):
     tag, value = request.param
-    tag = Tag(display_name=value, category=Category(display_name=tag))
+    tag = appliance.collections.categories.instantiate(
+        display_name=tag).collections.tags.instantiate(
+        display_name=value)
     entities.add_tag(tag)
     yield
     # will refresh page as navigation to configuration is blocked if alert are on requests page
