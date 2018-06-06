@@ -146,6 +146,7 @@ def template_from_ova(mgmt, username, password, rhevip, edomain, ovaname, ssh_cl
         temp_template_name: temporary template name (this template will be deleted)
     """
     try:
+        change_edomain_state(mgmt, 'active', edomain, provider)
         if mgmt.get_template_from_storage_domain(temp_template_name, edomain):
             logger.info("RHEVM:%r Warning: found another template with this name.", provider)
             logger.info("RHEVM:%r Skipping this step. Attempting to continue...", provider)
@@ -177,9 +178,10 @@ def template_from_ova(mgmt, username, password, rhevip, edomain, ovaname, ssh_cl
         logger.info("RHEVM:%r successfully created template from ova file:", provider)
     except Exception:
         logger.exception("RHEVM:%r template_from_ova failed:", provider)
+        raise
 
 
-def import_template(mgmt, edomain, sdomain, cluster, temp_template_name, provider):
+def import_template(mgmt, cfme_data, edomain, sdomain, cluster, temp_template_name, provider):
     """Imports template from export domain to storage domain.
 
     Args:
@@ -198,8 +200,14 @@ def import_template(mgmt, edomain, sdomain, cluster, temp_template_name, provide
             logger.info("RHEVM:%r The template failed to import on data domain", provider)
             sys.exit(127)
         logger.info("RHEVM:%r successfully imported template on data domain", provider)
+        logger.info('RHEVM:%r updating nic on template')
+        network_name = cfme_data.management_systems[provider].template_upload.management_network
+        mgmt.update_template_nic(template_name=temp_template_name,
+                                 network_name=network_name,
+                                 nic_name='eth0')
     except Exception:
         logger.exception("RHEVM:%r import_template to data domain failed:", provider)
+        raise
 
 
 def make_vm_from_template(mgmt, stream, cfme_data, cluster, temp_template_name,
@@ -233,11 +241,8 @@ def make_vm_from_template(mgmt, stream, cfme_data, cluster, temp_template_name,
             cluster=cluster,
             cpu=cores,
             sockets=sockets,
-            ram=vm_memory
-        )
+            ram=vm_memory)
 
-        if mgmt_network:
-            mgmt.update_vm_nic(temp_vm_name, mgmt_network)
         # check, if the vm is really there
         if not mgmt.does_vm_exist(temp_vm_name):
             logger.error("RHEVM:%r temp VM could not be provisioned", provider)
@@ -245,6 +250,7 @@ def make_vm_from_template(mgmt, stream, cfme_data, cluster, temp_template_name,
         logger.info("RHEVM:%r successfully provisioned temp vm", provider)
     except Exception:
         logger.exception("RHEVM:%r Make_temp_vm_from_template failed:", provider)
+        raise
 
 
 # sometimes, rhevm is just not cooperative. This is function used to wait for template on
@@ -299,6 +305,7 @@ def add_disk_to_vm(mgmt, sdomain, disk_size, disk_format, disk_interface, temp_v
         logger.info("RHEVM:%r Successfully added disk", provider)
     except Exception:
         logger.exception("RHEVM:%r add_disk_to_temp_vm failed:", provider)
+        raise
 
 
 def templatize_vm(mgmt, template_name, cluster, temp_vm_name, provider):
@@ -328,6 +335,7 @@ def templatize_vm(mgmt, template_name, cluster, temp_vm_name, provider):
         logger.info("RHEVM:%r successfully templatized the temporary VM", provider)
     except Exception:
         logger.exception("RHEVM:%r templatizing temporary VM failed", provider)
+        raise
 
 
 def get_edomain_path(mgmt, edomain):
@@ -397,6 +405,7 @@ def cleanup(mgmt, edomain, ssh_client, ovaname, provider, temp_template_name, te
             mgmt.delete_template(temp_template_name)
 
         # waiting for template on export domain
+        change_edomain_state(mgmt, 'active', edomain, provider)
         unimported_template = mgmt.get_template_from_storage_domain(temp_template_name, edomain)
         logger.info("RHEVM:%r waiting for template on export domain...", provider)
         wait_for(check_edomain_template, [mgmt, edomain, temp_template_name],
@@ -404,12 +413,8 @@ def cleanup(mgmt, edomain, ssh_client, ovaname, provider, temp_template_name, te
 
         if unimported_template:
             logger.info("RHEVM:%r deleting the template on export domain...", provider)
-            wait_for(mgmt.delete_template, [unimported_template], delay=10, num_sec=600,
-                     handle_exception=True)
+            mgmt.delete_template(unimported_template)
 
-        logger.info("RHEVM:%r waiting for template delete on export domain...", provider)
-        wait_for(mgmt.get_template_from_storage_domain, [temp_template_name, edomain],
-                 delay=5, num_sec=600)
         logger.info("RHEVM:%r successfully deleted template on export domain...", provider)
 
     except Exception:
@@ -595,12 +600,14 @@ def upload_template(rhevip, sshname, sshpass, username, password,
                                   ovaname, ssh_client, temp_template_name, provider)
 
                 logger.info("RHEVM:%r Importing new template to data domain", provider)
-                import_template(mgmt, kwargs.get('edomain'), kwargs.get('sdomain'),
+                import_template(mgmt, cfme_data, kwargs.get('edomain'), kwargs.get('sdomain'),
                                 kwargs.get('cluster'), temp_template_name, provider)
 
                 logger.info("RHEVM:%r Making a temporary VM from new template", provider)
-                make_vm_from_template(mgmt, kwargs.get('cluster'), temp_template_name, temp_vm_name,
-                                      provider, mgmt_network=kwargs.get('mgmt_network'))
+                make_vm_from_template(mgmt, stream, cfme_data,
+                                      kwargs.get('cluster'),
+                                      temp_template_name, temp_vm_name, provider,
+                                      mgmt_network=kwargs.get('mgmt_network'))
 
                 logger.info("RHEVM:%r Adding disk to created VM", provider)
                 add_disk_to_vm(mgmt, kwargs.get('sdomain'), kwargs.get('disk_size'),
@@ -691,8 +698,7 @@ def run(**kwargs):
         thread = Thread(target=upload_template,
                         args=(rhevip, sshname, sshpass, username, password, provider,
                               kwargs.get('image_url'), kwargs.get('template_name'),
-                              kwargs.get('provider_data'), kwargs['stream'],
-                              kwargs['glance']))
+                              kwargs.get('provider_data'), kwargs['stream']))
         thread.daemon = True
         thread_queue.append(thread)
         thread.start()
