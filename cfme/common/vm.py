@@ -3,17 +3,21 @@
 from datetime import datetime, date, timedelta
 
 import attr
+from riggerlib import recursive_update
 from wrapanapi import exceptions
 
+from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.common.vm_console import ConsoleMixin
 from cfme.common.vm_views import DriftAnalysis, DriftHistory, VMPropertyDetailView
 from cfme.exceptions import VmOrInstanceNotFound, ItemNotFound, OptionNotAvailable
 from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.services.requests import RequestsView
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
+from cfme.utils.rest import assert_response
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
 from cfme.utils.virtual_machines import deploy_template
@@ -78,6 +82,9 @@ class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, 
     ###
     # Shared behaviour
     #
+    PROVISION_CANCEL = 'Add of new VM Provision Request was cancelled by the user'
+    PROVISION_START = ('VM Provision Request was Submitted, you will be notified when your VMs '
+                       'are ready')
     name = attr.ib()
     provider = attr.ib()
 
@@ -447,6 +454,125 @@ class BaseVMCollection(BaseCollection):
             return provider.template_class.from_collection(self, name, provider)
         else:
             return provider.vm_class.from_collection(self, name, provider, template_name)
+
+    def create(self, vm_name, provider, form_values=None, cancel=False,
+               check_existing=False, find_in_cfme=False, wait=True):
+        """Provisions an vm/instance with the given properties through CFME
+
+        Args:
+            vm_name: the vm/instance's name
+            provider: provider object
+            form_values: dictionary of form values for provisioning, structured into tabs
+            cancel: boolean, whether or not to cancel form filling
+            check_existing: verify if such vm_name exists
+            find_in_cfme: verify that vm was created and appeared in CFME
+            wait: wait for vm provision request end
+
+        Note:
+            Calling create on a sub-class of instance will generate the properly formatted
+            dictionary when the correct fields are supplied.
+        """
+        vm = self.instantiate(vm_name, provider)
+        if check_existing and vm.exists:
+            return vm
+        if not provider.is_refreshed():
+            provider.refresh_provider_relationships()
+            wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
+        if not form_values:
+            form_values = vm.vm_default_args
+        else:
+            inst_args = vm.vm_default_args
+            form_values = recursive_update(inst_args, form_values)
+        if form_values.get('environment').get('automatic_placement'):
+            form_values['environment'] = {'automatic_placement': True}
+        form_values.update({'provider_name': provider.name})
+        if not form_values.get('template_name'):
+            template_name = (provider.data.get('provisioning').get('image', {}).get('name') or
+                             provider.data.get('provisioning').get('template'))
+            vm.template_name = template_name
+            form_values.update({'template_name': template_name})
+        view = navigate_to(self, 'Provision')
+        view.form.fill(form_values)
+
+        if cancel:
+            view.form.cancel_button.click()
+            view = self.browser.create_view(BaseLoggedInPage)
+            view.flash.assert_success_message(self.ENTITY.PROVISION_CANCEL)
+            view.flash.assert_no_error()
+        else:
+            view.form.submit_button.click()
+
+            view = vm.appliance.browser.create_view(RequestsView)
+            wait_for(lambda: view.flash.messages, fail_condition=[], timeout=10, delay=2,
+                     message='wait for Flash Success')
+            view.flash.assert_no_error()
+
+            if wait:
+                request_description = 'Provision from [{}] to [{}]'.format(
+                    form_values.get('template_name'), vm.name)
+                provision_request = vm.appliance.collections.requests.instantiate(
+                    request_description)
+                logger.info('Waiting for cfme provision request for vm %s', vm.name)
+                provision_request.wait_for_request(method='ui', num_sec=900)
+                if provision_request.is_succeeded(method='ui'):
+                    logger.info('Waiting for vm %s to appear on provider %s', vm.name,
+                                provider.key)
+                    wait_for(provider.mgmt.does_vm_exist, [vm.name],
+                             handle_exception=True, num_sec=600)
+                else:
+                    logger.warn("Provisioning failed with the message {}".format(
+                        provision_request.row.last_message.text))
+                    return None
+        if find_in_cfme:
+            vm.wait_to_appear(timeout=800)
+
+        return vm
+
+    def create_rest(self, vm_name, provider, form_values=None, check_existing=False):
+        """
+        Provisions a VM/Instance with the default self.vm_default_args_rest.
+        self.vm_default_args_rest may be overridden by form_values.
+        For more details about rest attributes please check:
+        https://access.redhat.com/documentation/en-us/red_hat_cloudforms/4.6/html-single/
+        red_hat_cloudforms_rest_api/index#provision-request-supported-attributes or
+        http://manageiq.org/docs/reference/fine/api/appendices/provision_attributes
+        NOTE: placement_auto defaults to True for requests made from the API or CloudForms Automate.
+        Args:
+            vm_name: vm name
+            provider: provider object
+            form_values: overrides default provision arguments or extends it.
+            check_existing: cancel creation if VM exists
+        Return: Instance object
+        """
+        vm = self.instantiate(vm_name, provider)
+        if check_existing and vm.exists:
+            vm
+        else:
+            if not provider.is_refreshed():
+                provider.refresh_provider_relationships()
+                wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
+
+            if not form_values:
+                form_values = vm.vm_default_args_rest
+            else:
+                inst_args = vm.vm_default_args_rest
+                form_values = recursive_update(inst_args, form_values)
+            response = self.appliance.rest_api.collections.provision_requests.action.create(
+                **form_values)[0]
+            assert_response(vm.appliance)
+
+            provision_request = vm.appliance.collections.requests.instantiate(
+                description=response.description)
+
+            provision_request.wait_for_request(num_sec=900)
+            if provision_request.is_succeeded():
+                wait_for(lambda: provider.mgmt.does_vm_exist(vm.name), num_sec=1000, delay=5,
+                         message="VM {} becomes visible".format(vm.name))
+            else:
+                logger.error("Provisioning failed with the message {}".
+                            format(provision_request.rest.message))
+                raise Exception(provision_request.rest.message)
+        return vm
 
 
 @attr.s

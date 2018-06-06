@@ -6,31 +6,30 @@ from textwrap import dedent
 import fauxfactory
 import pytest
 from riggerlib import recursive_update
-from widgetastic.utils import partial_match
 from widgetastic_patternfly import CheckableBootstrapTreeview as Check_tree
 
 from cfme import test_requirements
-from cfme.base.login import BaseLoggedInPage
-from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider import CloudInfraProvider
 from cfme.cloud.provider.azure import AzureProvider
-from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.fixtures.provider import setup_one_or_skip
+from cfme.markers.env_markers.provider import providers
+from cfme.utils import normalize_text
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
+from cfme.utils.providers import ProviderFilter
 from cfme.utils.log import logger
-from cfme.utils.rest import assert_response
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for, RefreshTimer
 
+
+pf = ProviderFilter(classes=[CloudInfraProvider], required_flags=['provision'])
+
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate"),
+    pytest.mark.meta(server_roles="+automate +notifier"),
     test_requirements.provision, pytest.mark.tier(2),
-    pytest.mark.provider([CloudProvider],
-                         required_fields=[['provisioning', 'image']],
-                         scope="function"),
-    pytest.mark.usefixtures('setup_provider')
+    # pytest.mark.usefixtures('setup_provider')
 ]
 
 
@@ -40,22 +39,23 @@ def vm_name():
 
 
 @pytest.fixture()
+def a_provider(request):
+    pf = ProviderFilter(classes=[CloudInfraProvider], required_flags=['provision'])
+    return setup_one_or_skip(request, filters=[pf])
+
+
+@pytest.fixture()
 def instance_args(request, appliance, provider, provisioning, vm_name, tag):
     """ Fixture to prepare instance parameters for provisioning
     """
-    inst_args = dict(template_name=provisioning['image']['name'])
+    inst_args = dict(template_name=provisioning.get('image', {}).get('image') or provisioning.get(
+        'template'))
 
     # Base instance info
     inst_args['request'] = {
-        'email': 'image_provisioner@example.com',
-        'first_name': 'Image',
-        'last_name': 'Provisioner',
         'notes': 'Testing provisioning from image {} to vm {} on provider {}'
                  .format(inst_args.get('template_name'), vm_name, provider.key),
     }
-    # TODO Move this into helpers on the provider classes
-    recursive_update(inst_args, {'catalog': {'vm_name': vm_name}})
-
     # Check whether auto-selection of environment is passed
     auto = False  # By default provisioning will be manual
     try:
@@ -71,77 +71,17 @@ def instance_args(request, appliance, provider, provisioning, vm_name, tag):
         # in case nothing was passed just skip
         pass
 
-    recursive_update(inst_args, {
-        'environment': {
-            'availability_zone': provisioning.get('availability_zone', None),
-            'security_groups': [provisioning.get('security_group', None)],
-            'cloud_network': provisioning.get('cloud_network', None),
-            'cloud_subnet': provisioning.get('cloud_subnet', None),
-            'resource_groups': provisioning.get('resource_group', None)
-        },
-        'properties': {
-            'instance_type': partial_match(provisioning.get('instance_type', None)),
-            'guest_keypair': provisioning.get('guest_keypair', None)}
-    })
-    # GCE specific
-    if provider.one_of(GCEProvider):
-        recursive_update(inst_args, {
-            'properties': {
-                'boot_disk_size': provisioning['boot_disk_size'],
-                'is_preemptible': True}
-        })
-
-    # Azure specific
-    if provider.one_of(AzureProvider):
-        # Azure uses different provisioning keys for some reason
-        try:
-            template = provider.data.templates.small_template
-            vm_user = credentials[template.creds].username
-            vm_password = credentials[template.creds].password
-        except AttributeError:
-            pytest.skip('Could not find small_template or credentials for {}'.format(provider.name))
-        recursive_update(inst_args, {
-            'customize': {
-                'admin_username': vm_user,
-                'root_password': vm_password}})
     if auto:
         inst_args.update({'environment': {'automatic_placement': auto}})
     yield vm_name, inst_args
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture()
 def provisioned_instance(provider, instance_args, appliance):
     """ Checks provisioning status for instance """
     vm_name, inst_args = instance_args
-    instance = appliance.collections.cloud_instances.create(vm_name,
-                                                            provider,
-                                                            form_values=inst_args)
-    view = appliance.browser.create_view(BaseLoggedInPage)  # not the page we're on, but has flash
-    view.flash.assert_success_message(instance.PROVISION_START)
-
-    logger.info('Waiting for cfme provision request for vm %s', instance.name)
-    request_description = 'Provision from [{}] to [{}]'.format(inst_args.get('template_name'),
-                                                               instance.name)
-    provision_request = appliance.collections.requests.instantiate(request_description)
-    try:
-        provision_request.wait_for_request(method='ui')
-    except Exception:
-        logger.exception(
-            "Provision failed: {}".format(provision_request.request_state))
-        raise
-    assert provision_request.is_succeeded(method='ui'), (
-        "Provisioning failed with the message {}".format(
-            provision_request.row.last_message.text))
-    instance.wait_to_appear(timeout=800)
-    provider.refresh_provider_relationships()
-    logger.info("Refreshing provider relationships and power states")
-    refresh_timer = RefreshTimer(time_for_refresh=300)
-    wait_for(provider.is_refreshed,
-             [refresh_timer],
-             message="is_refreshed",
-             num_sec=1000,
-             delay=60,
-             handle_exception=True)
+    collection = appliance.provider_based_collection(provider)
+    instance = collection.create(vm_name, provider, form_values=inst_args)
     yield instance
 
     logger.info('Instance cleanup, deleting %s', instance.name)
@@ -152,9 +92,11 @@ def provisioned_instance(provider, instance_args, appliance):
                        .format(ex.message))
 
 
+@pytest.mark.provider(gen_func=providers, filters=[pf], scope="function")
+@pytest.mark.usefixtures('setup_provider')
 @pytest.mark.parametrize('instance_args', [True, False], ids=["Auto", "Manual"], indirect=True)
-def test_cloud_provision_from_template(provider, provisioned_instance):
-    """ Tests instance provision from template
+def test_provision_from_template(provider, provisioned_instance):
+    """ Tests instance provision from template via CFME UI
 
     Metadata:
         test_flag: provision
@@ -164,8 +106,10 @@ def test_cloud_provision_from_template(provider, provisioned_instance):
 
 @pytest.mark.provider([GCEProvider], required_fields=[['provisioning', 'image']],
                       override=True)
+@pytest.mark.usefixtures('setup_provider')
 def test_gce_preemptible_provision(appliance, provider, instance_args, soft_assert):
     vm_name, inst_args = instance_args
+    inst_args['properties']['is_preemptible'] = True
     instance = appliance.collections.cloud_instances.create(vm_name,
                                                             provider,
                                                             form_values=inst_args)
@@ -184,258 +128,140 @@ def test_gce_preemptible_provision(appliance, provider, instance_args, soft_asse
     soft_assert(instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
 
 
-def test_cloud_provision_from_template_using_rest(
-        appliance, request, provider, vm_name, provisioning):
+@pytest.mark.rhv2
+@pytest.mark.parametrize("edit", [True, False], ids=["edit", "approve"])
+def test_provision_approval(appliance, a_provider, vm_name, smtp_test, request,
+                            edit):
+    """ Tests provisioning approval. Tests couple of things.
+
+    * Approve manually
+    * Approve by editing the request to conform
+
+    Prerequisities:
+        * A provider that can provision.
+        * Automate role enabled
+        * User with e-mail set so you can receive and view them
+
+    Steps:
+        * Create a provisioning request that does not get automatically approved (eg. ``num_vms``
+            bigger than 1)
+        * Wait for an e-mail to come, informing you that the auto-approval was unsuccessful.
+        * Depending on whether you want to do manual approval or edit approval, do:
+            * MANUAL: manually approve the request in UI
+            * EDIT: Edit the request in UI so it conforms the rules for auto-approval.
+        * Wait for an e-mail with approval
+        * Wait until the request finishes
+        * Wait until an email, informing about finished provisioning, comes.
+
+    Metadata:
+        test_flag: provision
+        suite: infra_provisioning
+    """
+    # generate_tests makes sure these have values
+    # template, host, datastore = map(provisioning.get, ('template', 'host', 'datastore'))
+
+    # It will provision two of them
+    vm_names = [vm_name + "001", vm_name + "002"]
+    collection = appliance.provider_based_collection(a_provider)
+    inst_args = {'catalog': {
+        'vm_name': vm_name,
+        'num_vms': '2'
+    }}
+    vm = collection.create(vm_name, a_provider, form_values=inst_args, wait=False)
+    request.addfinalizer(
+        lambda: [collection.instantiate(name, a_provider).delete_from_provider()
+                 for name in vm_names]
+    )
+
+    wait_for(
+        lambda:
+        len(filter(
+            lambda mail:
+            "your request for a new vms was not autoapproved" in normalize_text(mail["subject"]),
+            smtp_test.get_emails())) == 1,
+        num_sec=90, delay=5)
+    wait_for(
+        lambda:
+        len(filter(
+            lambda mail:
+            "virtual machine request was not approved" in normalize_text(mail["subject"]),
+            smtp_test.get_emails())) == 1,
+        num_sec=90, delay=5)
+    smtp_test.clear_database()
+
+    cells = {'Description': 'Provision from [{}] to [{}###]'.format(vm.template_name, vm.name)}
+    provision_request = appliance.collections.requests.instantiate(cells=cells)
+    navigate_to(provision_request, 'Details')
+    if edit:
+        # Automatic approval after editing the request to conform
+        new_vm_name = vm_name + "-xx"
+        modifications = {
+            'catalog': {'num_vms': "1", 'vm_name': new_vm_name},
+            'Description': 'Provision from [{}] to [{}]'.format(vm.template_name, new_vm_name)}
+        provision_request.edit_request(values=modifications)
+        vm_names = [new_vm_name]  # Will be just one now
+        request.addfinalizer(
+            lambda: collection.instantiate(new_vm_name, a_provider).delete_from_provider()
+        )
+    else:
+        # Manual approval
+        provision_request.approve_request(method='ui', reason="Approved")
+        vm_names = [vm_name + "001", vm_name + "002"]  # There will be two VMs
+        request.addfinalizer(
+            lambda: [appliance.collections.infra_vms.instantiate(name,
+                                                                 a_provider).delete_from_provider()
+                     for name in vm_names]
+        )
+    wait_for(
+        lambda:
+        len(filter(
+            lambda mail:
+            "your virtual machine configuration was approved" in normalize_text(mail["subject"]),
+            smtp_test.get_emails())) == 1,
+        num_sec=120, delay=5)
+    smtp_test.clear_database()
+
+    # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
+    logger.info('Waiting for vms %s to appear on provider %s', ", ".join(vm_names), a_provider.key)
+    wait_for(
+        lambda: all(map(a_provider.mgmt.does_vm_exist, vm_names)),
+        handle_exception=True, num_sec=600)
+
+    provision_request.wait_for_request(method='ui')
+    msg = "Provisioning failed with the message {}".format(provision_request.row.last_message.text)
+    assert provision_request.is_succeeded(method='ui'), msg
+
+    # Wait for e-mails to appear
+    def verify():
+        return (
+            len(filter(
+                lambda mail:
+                "your virtual machine request has completed vm {}".format(normalize_text(vm_name))
+                in normalize_text(mail["subject"]),
+                smtp_test.get_emails())) == len(vm_names)
+        )
+    wait_for(verify, message="email receive check", delay=5)
+
+
+@pytest.mark.provider(gen_func=providers, filters=[pf], scope="function")
+@pytest.mark.usefixtures('setup_provider')
+@pytest.mark.parametrize('auto', [True, False], ids=["Auto", "Manual"])
+def test_provision_from_template_using_rest(
+        appliance, request, provider, vm_name, auto):
     """ Tests provisioning from a template using the REST API.
 
     Metadata:
         test_flag: provision, rest
     """
-    if 'flavors' not in appliance.rest_api.collections.all_names:
-        pytest.skip("This appliance does not have `flavors` collection.")
-    image_guid = appliance.rest_api.collections.templates.find_by(
-        name=provisioning['image']['name'])[0].guid
-    if ':' in provisioning['instance_type'] and provider.one_of(EC2Provider, GCEProvider):
-        instance_type = provisioning['instance_type'].split(':')[0].strip()
-    elif provider.type == 'azure':
-        instance_type = provisioning['instance_type'].lower()
+    if auto:
+        form_values = {"vm_fields": {"placement_auto": True}}
     else:
-        instance_type = provisioning['instance_type']
-    flavors = appliance.rest_api.collections.flavors.find_by(name=instance_type)
-    assert flavors
-    # TODO: Multi search when it works
-    for flavor in flavors:
-        if flavor.ems.name == provider.name:
-            flavor_id = flavor.id
-            break
-    else:
-        pytest.fail(
-            "Cannot find flavour {} for provider {}".format(instance_type, provider.name))
-
-    provision_data = {
-        "version": "1.1",
-        "template_fields": {
-            "guid": image_guid,
-        },
-        "vm_fields": {
-            "vm_name": vm_name,
-            "instance_type": flavor_id,
-            "request_type": "template",
-        },
-        "requester": {
-            "user_name": "admin",
-            "owner_first_name": "Administrator",
-            "owner_last_name": "Administratorovich",
-            "owner_email": "admin@example.com",
-            "auto_approve": True,
-        },
-        "tags": {
-        },
-        "additional_values": {
-        },
-        "ems_custom_attributes": {
-        },
-        "miq_custom_attributes": {
-        }
-    }
-
-    if not isinstance(provider, AzureProvider):
-        recursive_update(provision_data, {
-                         'vm_fields': {
-                             'availability_zone': provisioning['availability_zone'],
-                             'security_groups': [provisioning['security_group']],
-                             'guest_keypair': provisioning['guest_keypair']}})
-    if isinstance(provider, GCEProvider):
-        recursive_update(provision_data, {
-                         'vm_fields': {
-                             'cloud_network': provisioning['cloud_network'],
-                             'boot_disk_size': provisioning['boot_disk_size'].replace(' ', '.'),
-                             'zone': provisioning['availability_zone'],
-                             'region': provider.data["region"]}})
-    elif isinstance(provider, AzureProvider):
-        try:
-            template = provider.data.templates.small_template
-            vm_user = credentials[template.creds].username
-            vm_password = credentials[template.creds].password
-        except AttributeError:
-            pytest.skip('Could not find small_template or credentials for {}'.format(provider.name))
-        # mapping: product/dialogs/miq_dialogs/miq_provision_azure_dialogs_template.yaml
-        recursive_update(provision_data, {
-                         'vm_fields': {
-                             'root_username': vm_user,
-                             'root_password': vm_password}})
-
-    @request.addfinalizer
-    def _delete_vm():
-        vm = provider.appliance.collections.cloud_instances.instantiate(vm_name, provider)
-        vm.delete_from_provider()
-
-    response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)[0]
-    assert_response(appliance)
-
-    provision_request = appliance.collections.requests.instantiate(description=response.description)
-
-    provision_request.wait_for_request()
-    assert provision_request.is_succeeded(), ("Provisioning failed with the message {}".format(
-        provision_request.rest.message))
+        form_values = None
+    collection = appliance.provider_based_collection(provider)
+    instance = collection.create_rest(vm_name, provider, form_values=form_values)
 
     wait_for(
-        lambda: provider.mgmt.does_vm_exist(vm_name),
-        num_sec=1000, delay=5, message="VM {} becomes visible".format(vm_name))
-
-
-@pytest.mark.provider([EC2Provider, OpenStackProvider], required_fields=[['provisioning', 'image']],
-                      override=True)
-def test_manual_placement_using_rest(
-        appliance, request, provider, vm_name, provisioning):
-    """ Tests provisioning cloud instance with manual placement using the REST API.
-
-    Metadata:
-        test_flag: provision, rest
-    """
-    image_guid = appliance.rest_api.collections.templates.get(
-        name=provisioning['image']['name']).guid
-    provider_rest = appliance.rest_api.collections.providers.get(name=provider.name)
-    security_group_name = provisioning['security_group'].split(':')[0].strip()
-    if ':' in provisioning['instance_type'] and provider.one_of(EC2Provider):
-        instance_type = provisioning['instance_type'].split(':')[0].strip()
-    else:
-        instance_type = provisioning['instance_type']
-
-    flavors = appliance.rest_api.collections.flavors.find_by(name=instance_type)
-    assert flavors
-    flavor = None
-    for flavor in flavors:
-        if flavor.ems_id == provider_rest.id:
-            break
-    else:
-        pytest.fail("Cannot find flavour.")
-
-    provider_data = appliance.rest_api.get(provider_rest._href +
-        '?attributes=cloud_networks,cloud_subnets,security_groups,cloud_tenants')
-
-    # find out cloud network
-    assert provider_data['cloud_networks']
-    cloud_network_name = provisioning.get('cloud_network').strip()
-    if provider.one_of(EC2Provider):
-        cloud_network_name = cloud_network_name.split()[0]
-    cloud_network = None
-    for cloud_network in provider_data['cloud_networks']:
-        # If name of cloud network is available, find match.
-        # Otherwise just "enabled" is enough.
-        if cloud_network_name and cloud_network_name != cloud_network['name']:
-            continue
-        if cloud_network['enabled']:
-            break
-    else:
-        pytest.fail("Cannot find cloud network.")
-
-    # find out security group
-    assert provider_data['security_groups']
-    security_group = None
-    for group in provider_data['security_groups']:
-        if (group.get('cloud_network_id') == cloud_network['id'] and
-                group['name'] == security_group_name):
-            security_group = group
-            break
-        # OpenStack doesn't seem to have the "cloud_network_id" attribute.
-        # At least try to find the group where the group name matches.
-        elif not security_group and group['name'] == security_group_name:
-            security_group = group
-    if not security_group:
-        pytest.fail("Cannot find security group.")
-
-    # find out cloud subnet
-    assert provider_data['cloud_subnets']
-    cloud_subnet = None
-    for cloud_subnet in provider_data['cloud_subnets']:
-        if (cloud_subnet.get('cloud_network_id') == cloud_network['id'] and
-                cloud_subnet['status'] in ('available', 'active')):
-            break
-    else:
-        pytest.fail("Cannot find cloud subnet.")
-
-    def _find_availability_zone_id():
-        subnet_data = appliance.rest_api.get(provider_rest._href + '?attributes=cloud_subnets')
-        for subnet in subnet_data['cloud_subnets']:
-            if subnet['id'] == cloud_subnet['id'] and 'availability_zone_id' in subnet:
-                return subnet['availability_zone_id']
-        return False
-
-    # find out availability zone
-    availability_zone_id = None
-    if provisioning.get('availability_zone'):
-        availability_zone_entities = appliance.rest_api.collections.availability_zones.find_by(
-            name=provisioning['availability_zone'])
-        if availability_zone_entities and availability_zone_entities[0].ems_id == flavor.ems_id:
-            availability_zone_id = availability_zone_entities[0].id
-    if not availability_zone_id and 'availability_zone_id' in cloud_subnet:
-        availability_zone_id = cloud_subnet['availability_zone_id']
-    if not availability_zone_id:
-        availability_zone_id, _ = wait_for(
-            _find_availability_zone_id, num_sec=100, delay=5, message="availability_zone present")
-
-    # find out cloud tenant
-    cloud_tenant_id = None
-    tenant_name = provisioning.get('cloud_tenant')
-    if tenant_name:
-        for tenant in provider_data.get('cloud_tenants', []):
-            if (tenant['name'] == tenant_name and
-                    tenant['enabled'] and
-                    tenant['ems_id'] == flavor.ems_id):
-                cloud_tenant_id = tenant['id']
-
-    provision_data = {
-        "version": "1.1",
-        "template_fields": {
-            "guid": image_guid
-        },
-        "vm_fields": {
-            "vm_name": vm_name,
-            "instance_type": flavor.id,
-            "request_type": "template",
-            "placement_auto": False,
-            "cloud_network": cloud_network['id'],
-            "cloud_subnet": cloud_subnet['id'],
-            "placement_availability_zone": availability_zone_id,
-            "security_groups": security_group['id'],
-            "monitoring": "basic"
-        },
-        "requester": {
-            "user_name": "admin",
-            "owner_first_name": "Administrator",
-            "owner_last_name": "Administratorovich",
-            "owner_email": "admin@example.com",
-            "auto_approve": True,
-        },
-        "tags": {
-        },
-        "additional_values": {
-        },
-        "ems_custom_attributes": {
-        },
-        "miq_custom_attributes": {
-        }
-    }
-    if cloud_tenant_id:
-        provision_data['vm_fields']['cloud_tenant'] = cloud_tenant_id
-
-    request.addfinalizer(
-        lambda: appliance.collections.cloud_instances.instantiate(vm_name,
-                                                                  provider).delete_from_provider()
-    )
-
-    response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)[0]
-    assert_response(appliance)
-
-    provision_request = appliance.collections.requests.instantiate(description=response.description)
-
-    provision_request.wait_for_request()
-    assert provision_request.is_succeeded(), ("Provisioning failed with the message {}".format(
-        provision_request.rest.message))
-
-    wait_for(
-        lambda: provider.mgmt.does_vm_exist(vm_name),
+        lambda: instance.exists,
         num_sec=1000, delay=5, message="VM {} becomes visible".format(vm_name))
 
 
