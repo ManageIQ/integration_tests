@@ -14,12 +14,11 @@ SLAVEID = None
 
 class SlaveManager(object):
     """SlaveManager which coordinates with the master process for parallel testing"""
-    def __init__(self, config, slaveid, appliance_config, zmq_endpoint):
+    def __init__(self, config, slaveid, zmq_endpoint):
         self.config = config
         self.session = None
         self.collection = None
         self.slaveid = conf.runtime['env']['slaveid'] = slaveid
-        self.appliance_config = conf.runtime['env']['appliances'][0] = appliance_config
         self.log = cfme.utils.log.logger
         conf.clear()
         # Override the logger in utils.log
@@ -36,14 +35,14 @@ class SlaveManager(object):
 
     def send_event(self, name, **kwargs):
         kwargs['_event_name'] = name
-        self.log.trace("sending {} {!r}".format(name, kwargs))
+        self.log.debug("sending {} {!r}".format(name, kwargs))
         self.sock.send_json(kwargs)
         recv = self.sock.recv_json()
         if recv == 'die':
             self.log.info('Slave instructed to die by master; shutting down')
             raise SystemExit()
         else:
-            self.log.trace('received "{!r}" from master'.format(recv))
+            self.log.debug('received "{!r}" from master'.format(recv))
             if recv != 'ack':
                 return recv
 
@@ -61,7 +60,7 @@ class SlaveManager(object):
         self.session = session
         self.collection = {item.nodeid: item for item in session.items}
         terminalreporter.disable()
-        self.send_event("collectionfinish", node_ids=self.collection.keys())
+        self.send_event("collectionfinish", node_ids=list(self.collection.keys()))
 
     def pytest_runtest_logstart(self, nodeid, location):
         """pytest runtest logstart hook
@@ -189,9 +188,9 @@ def _init_config(slave_options, slave_args):
     config = get_config()
     config.args = slave_args
     config._preparse(config.args, addopts=False)
-    config.option = slave_options
+    config.option.__dict__.update(slave_options)
     # The master handles the result log, slaves shouldn't also write to it
-    config.option['resultlog'] = None
+    config.option.resultlog = None
     # Unset appliances to prevent the slaves from starting distributes tests :)
     config.option.appliances = []
     config.pluginmanager.set_blocked('cfme.fixtures.parallelizer')
@@ -203,9 +202,11 @@ def _init_config(slave_options, slave_args):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('slaveid', help='The name of this slave')
-    parser.add_argument('appliance_json', help='The json data about the used appliance')
-    parser.add_argument('ts', help='The timestap to use for collections')
+    parser.add_argument('--worker', help='The worker id of this process')
+    parser.add_argument('--appliance', help='The json data about the used appliance')
+    parser.add_argument('--ts', help='The timestap to use for collections')
+
+    parser.add_argument('--config', help='The timestap to use for collections')
     args = parser.parse_args()
 
     # TODO: clean the logic up here
@@ -215,37 +216,40 @@ if __name__ == '__main__':
     # overwrite the default logger before anything else is imported,
     # to get our best chance at having everything import the replaced logger
     import cfme.utils.log
-    cfme.utils.log.setup_for_worker(args.slaveid)
+    cfme.utils.log.setup_for_worker(args.worker)
     slave_log = cfme.utils.log.logger
 
     try:
-        appliance_config = json.loads(args.appliance_json)
+        appliance = IPAppliance.from_json(args.appliance)
     except ValueError:
         slave_log.error("Error parsing appliance json")
         raise
+    else:
+        stack.push(appliance)
 
-    appliance = IPAppliance(**appliance_config)
-    stack.push(appliance)
+    try:
+        config = json.loads(args.config)
+    except ValueError:
+        slave_log.error("Error parsing pytest config from json")
 
     from cfme.fixtures import terminalreporter
     from cfme.fixtures.pytest_store import store
     from cfme.utils import conf
 
-    conf.runtime['env']['slaveid'] = args.slaveid
+    conf.runtime['env']['slaveid'] = args.worker
     conf.runtime['env']['ts'] = args.ts
     store.parallelizer_role = 'slave'
 
-    slave_args = conf.slave_config.pop('args')
-    slave_options = conf.slave_config.pop('options')
+    slave_args = config.pop('args')
+    slave_options = config.pop('options')
     ip_address = appliance.hostname
-    appliance_data = conf.slave_config.get("appliance_data", {})
+    appliance_data = config["appliance_data"]
     if ip_address in appliance_data:
         template_name, provider_name = appliance_data[ip_address]
         conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
         conf.runtime["cfme_data"]["basic_info"]["appliances_provider"] = provider_name
-    config = _init_config(slave_options, slave_args)
-    slave_manager = SlaveManager(config, args.slaveid, appliance_config,
-        conf.slave_config['zmq_endpoint'])
-    config.pluginmanager.register(slave_manager, 'slave_manager')
-    config.hook.pytest_cmdline_main(config=config)
+    pytest_config = _init_config(slave_options, slave_args)
+    slave_manager = SlaveManager(pytest_config, args.worker, config['zmq_endpoint'])
+    pytest_config.pluginmanager.register(slave_manager, 'slave_manager')
+    pytest_config.hook.pytest_cmdline_main(config=pytest_config)
     signal.signal(signal.SIGQUIT, slave_manager.handle_quit)
