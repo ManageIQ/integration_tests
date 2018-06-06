@@ -446,7 +446,7 @@ class Table(VanillaTable):
         # for filtering the None out
         try:
             return filter(
-                None, re.search(r'sorting_(asc|desc)|fa-sort-(asc|desc)', klass).groups())[0]
+                None, re.search(r'(sorting_|fa-sort-)(asc|desc)', klass).groups())[0]
         except IndexError:
             raise ValueError(
                 'Could not figure out which column is used for sorting now. The class was {!r}'
@@ -1382,7 +1382,7 @@ class Paginator(Widget):
     def page_info(self):
         cur_page = self.browser.element(self.CUR_PAGE_CTL, parent=self._paginator)
         text = cur_page.text
-        return re.search('(\d+)?-?(\d+)\s+of\s+(\d+)', text).groups()
+        return re.search(r'(\d+)?-?(\d+)\s+of\s+(\d+)', text).groups()
 
 
 class ReportDataControllerMixin(object):
@@ -2631,7 +2631,7 @@ class TimelinesChart(View):
         prepared_categories = []
         for num, element in enumerate(br.elements(self.CATEGORIES), start=1):
             # categories have number of events inside them
-            mo = re.search('^(.*?)(\s\(\s*\d+\s*\)\s*)*$', br.text(element))
+            mo = re.search(r'^(.*?)(\s\(\s*\d+\s*\)\s*)*$', br.text(element))
             category_name = mo.groups()[0]
 
             if len(categories) == 0 or (len(categories) > 0 and category_name in categories):
@@ -2650,7 +2650,7 @@ class TimelinesChart(View):
         # parsing event and preparing its attributes
         event = self.TimelinesEvent()
         for line in node.text_content().split('\n'):
-            attr_name, attr_val = re.search('^(.*?):(.*)$', line).groups()
+            attr_name, attr_val = re.search(r'^(.*?):(.*)$', line).groups()
             attr_name = attr_name.strip().lower().replace(' ', '_')
             setattr(event, attr_name, attr_val.strip())
         event.category = category
@@ -3332,7 +3332,7 @@ class BaseEntitiesView(View):
                 for row in self.elements.rows():
                     # ex: miqRowClick('2', '/ems_infra/', false); return false;
                     attr = br.get_attribute('onclick', row)
-                    el_id = re.search("miqRowClick\('([\d|r]+)", attr).group(1)
+                    el_id = re.search(r"miqRowClick\('([\d|r]+)", attr).group(1)
                     el_name = row.name.text if getattr(row, 'name', None) else ''
                     elements.append({'name': el_name, 'entity_id': el_id})
             else:
