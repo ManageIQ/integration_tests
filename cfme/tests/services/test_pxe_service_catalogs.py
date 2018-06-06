@@ -82,7 +82,7 @@ def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
 
 
 @pytest.fixture(scope="function")
-def catalog_item(appliance, provider, vm_name, dialog, catalog, provisioning,
+def catalog_item(appliance, provider, dialog, catalog, provisioning,
                  setup_pxe_servers_vm_prov):
     # generate_tests makes sure these have values
     pxe_template, host, datastore, pxe_server, pxe_image, pxe_kickstart, pxe_root_password,\
