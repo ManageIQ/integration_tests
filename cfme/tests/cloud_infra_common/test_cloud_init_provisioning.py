@@ -9,6 +9,7 @@ from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.pxe import get_template_from_config
 from cfme.markers.env_markers.provider import providers
 from cfme.utils import ssh
@@ -18,10 +19,11 @@ from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
 
 
-pf = ProviderFilter(classes=[CloudInfraProvider], required_flags=['provision', 'cloud_init'])
+pf1 = ProviderFilter(classes=[CloudInfraProvider], required_flags=['provision', 'cloud_init'])
+pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)  # SCVMM doesn't support cloud-init
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.provider(gen_func=providers, filters=[pf], scope="module")
+    pytest.mark.provider(gen_func=providers, filters=[pf1, pf2], scope="module")
 ]
 
 
@@ -42,6 +44,7 @@ def vm_name():
 @pytest.mark.uncollectif(lambda provider, appliance: provider.one_of(GCEProvider) and
                          appliance.version < "5.9",
                          reason="GCE supports cloud_init in 5.9+ BZ 1395757")
+@pytest.mark.uncollectif(lambda provider: provider.one_of(VMwareProvider), reason="BZ 1568038")
 def test_provision_cloud_init(appliance, request, setup_provider, provider, provisioning,
                         setup_ci_template, vm_name):
     """ Tests provisioning from a template with cloud_init
@@ -56,7 +59,6 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
 
     mgmt_system = provider.mgmt
 
-    # TODO: extend inst_args for other providers except EC2 if needed
     inst_args = {
         'request': {'notes': note},
         'customize': {'custom_template': {'name': provisioning['ci-template']}}
@@ -69,7 +71,7 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
     if provider.one_of(OpenStackProvider):
         floating_ip = mgmt_system.get_first_floating_ip()
         inst_args['environment'] = {'public_ip_address': floating_ip}
-    if provider.one_of(InfraProvider):
+    if provider.one_of(InfraProvider) and appliance.version > '5.9':
         inst_args['customize']['customize_type'] = 'Specification'
 
     logger.info('Instance args: {}'.format(inst_args))

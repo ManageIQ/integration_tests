@@ -150,10 +150,6 @@ def test_provision_approval(appliance, a_provider, vm_name, smtp_test, request,
         'num_vms': '2'
     }}
     vm = collection.create(vm_name, a_provider, form_values=inst_args, wait=False)
-    request.addfinalizer(
-        lambda: [collection.instantiate(name, a_provider).delete_from_provider()
-                 for name in vm_names]
-    )
 
     wait_for(
         lambda:
