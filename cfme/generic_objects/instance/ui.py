@@ -91,8 +91,7 @@ def exists(self):
 
 @MiqImplementationContext.external_for(GenericObjectInstance.add_tag, ViaUI)
 def add_tag(self, tag=None, cancel=False, reset=False, details=True):
-    Taggable.add_tag(self, tag=tag, cancel=cancel, reset=reset, details=details)
-    return tag
+    return Taggable.add_tag(self, tag=tag, cancel=cancel, reset=reset, details=details)
 
 
 @MiqImplementationContext.external_for(GenericObjectInstance.remove_tag, ViaUI)

@@ -37,10 +37,10 @@ def category(appliance):
 def test_tag_crud(category):
     tag = category.collections.tags.create(
         name=fauxfactory.gen_alphanumeric(8).lower(),
-        display_name=fauxfactory.gen_alphanumeric(32)
+        display_name=fauxfactory.gen_alphanumeric(32).lower()
     )
     with update(tag):
-        tag.display_name = fauxfactory.gen_alphanumeric(32)
+        tag.display_name = fauxfactory.gen_alphanumeric(32).lower()
     tag.delete()
 
 

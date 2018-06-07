@@ -69,7 +69,7 @@ class Tag(Pretty, BaseEntity, Updateable):
 
     def delete(self, cancel=False):
         """ Delete category method """
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.parent, 'All')
         view.table.row(description=self.display_name).actions.click()
         view.browser.handle_alert(cancel=cancel)
         view.flash.assert_no_error()
@@ -83,6 +83,10 @@ class Tag(Pretty, BaseEntity, Updateable):
             return True
         except RowNotFound:
             return False
+
+    @property
+    def category(self):
+        return self.parent.parent
 
 
 @attr.s
