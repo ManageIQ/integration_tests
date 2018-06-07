@@ -117,21 +117,26 @@ class MiqBrowserPlugin(DefaultPlugin):
         js_code = """
                     function PageHasChanges()
                     {
-                        if(ManageIQ.angular.scope)
-                        {
-                           if(angular.isDefined(ManageIQ.angular.scope.angularForm)
-                           &&ManageIQ.angular.scope.angularForm.$dirty
-                           &&!miqDomElementExists("ignore_form_changes"))
-                              return true
+                        try {
+                            if(ManageIQ.angular.scope)
+                            {
+                               if(angular.isDefined(ManageIQ.angular.scope.angularForm)
+                               &&ManageIQ.angular.scope.angularForm.$dirty
+                               &&!miqDomElementExists("ignore_form_changes"))
+                                  return true
+                            }
+                            else
+                            {
+                               if((miqDomElementExists("buttons_on")&&
+                               $("#buttons_on").is(":visible")||null!==ManageIQ.changes)
+                               &&!miqDomElementExists("ignore_form_changes"))
+                                  return true
+                            }
+                            return false
+                        } catch(err) {
+                            // ssui pages don't have ManageIQ
+                            return false
                         }
-                        else
-                        {
-                           if((miqDomElementExists("buttons_on")&&
-                           $("#buttons_on").is(":visible")||null!==ManageIQ.changes)
-                           &&!miqDomElementExists("ignore_form_changes"))
-                              return true
-                        }
-                        return false
                     };
                     return PageHasChanges();
                   """
