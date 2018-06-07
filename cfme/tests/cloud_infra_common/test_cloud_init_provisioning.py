@@ -3,24 +3,25 @@
 # in selenium (the group is selected then immediately reset)
 import pytest
 
-from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider import CloudInfraProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.pxe import get_template_from_config
+from cfme.markers.env_markers.provider import providers
 from cfme.utils import ssh
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
+from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
 
+
+pf = ProviderFilter(classes=[CloudInfraProvider], required_flags=['provision', 'cloud_init'])
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.provider([CloudProvider], required_fields=[
-        ['provisioning', 'ci-template'],
-        ['provisioning', 'ci-username'],
-        ['provisioning', 'ci-pass'],
-        ['provisioning', 'ci-image']],
-        scope="module")
+    pytest.mark.provider(gen_func=providers, filters=[pf], scope="module")
 ]
 
 
@@ -42,7 +43,7 @@ def vm_name():
                          appliance.version < "5.9",
                          reason="GCE supports cloud_init in 5.9+ BZ 1395757")
 def test_provision_cloud_init(appliance, request, setup_provider, provider, provisioning,
-                              setup_ci_template, vm_name):
+                        setup_ci_template, vm_name):
     """ Tests provisioning from a template with cloud_init
 
     Metadata:
@@ -68,11 +69,13 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
     if provider.one_of(OpenStackProvider):
         floating_ip = mgmt_system.get_first_floating_ip()
         inst_args['environment'] = {'public_ip_address': floating_ip}
+    if provider.one_of(InfraProvider):
+        inst_args['customize']['customize_type'] = 'Specification'
 
     logger.info('Instance args: {}'.format(inst_args))
 
-    instance = appliance.collections.cloud_instances.create(vm_name, provider,
-                                                            form_values=inst_args)
+    collection = appliance.provider_based_collection(provider)
+    instance = collection.create(vm_name, provider, form_values=inst_args)
     request.addfinalizer(instance.delete_from_provider)
     provision_request = provider.appliance.collections.requests.instantiate(vm_name,
                                                                    partial_check=True)

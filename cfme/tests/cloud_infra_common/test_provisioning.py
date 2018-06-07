@@ -21,15 +21,12 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.log import logger
 from cfme.utils.update import update
-from cfme.utils.wait import wait_for, RefreshTimer
-
+from cfme.utils.wait import wait_for
 
 pf = ProviderFilter(classes=[CloudInfraProvider], required_flags=['provision'])
-
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
     test_requirements.provision, pytest.mark.tier(2),
-    # pytest.mark.usefixtures('setup_provider')
 ]
 
 
@@ -45,7 +42,7 @@ def a_provider(request):
 
 
 @pytest.fixture()
-def instance_args(request, appliance, provider, provisioning, vm_name, tag):
+def instance_args(request, provider, provisioning, vm_name):
     """ Fixture to prepare instance parameters for provisioning
     """
     inst_args = dict(template_name=provisioning.get('image', {}).get('image') or provisioning.get(
@@ -60,13 +57,7 @@ def instance_args(request, appliance, provider, provisioning, vm_name, tag):
     auto = False  # By default provisioning will be manual
     try:
         parameter = request.param
-        if parameter == 'tag':
-            inst_args['purpose'] = {
-                'apply_tags': Check_tree.CheckNode(
-                    ['{} *'.format(tag.category.display_name), tag.display_name])
-            }
-        else:
-            auto = parameter
+        auto = parameter
     except AttributeError:
         # in case nothing was passed just skip
         pass
@@ -113,15 +104,6 @@ def test_gce_preemptible_provision(appliance, provider, instance_args, soft_asse
     instance = appliance.collections.cloud_instances.create(vm_name,
                                                             provider,
                                                             form_values=inst_args)
-    instance.wait_to_appear(timeout=800)
-    provider.refresh_provider_relationships()
-    logger.info("Refreshing provider relationships and power states")
-    wait_for(provider.is_refreshed,
-             [RefreshTimer(time_for_refresh=300)],
-             message="is_refreshed",
-             num_sec=1000,
-             delay=60,
-             handle_exception=True)
     view = navigate_to(instance, "Details")
     preemptible = view.entities.summary("Properties").get_text_of("Preemptible")
     soft_assert('Yes' in preemptible, "GCE Instance isn't Preemptible")
@@ -502,8 +484,7 @@ def test_provision_with_additional_volume(request, instance_args, provider, smal
                 provider.mgmt.delete_volume(volume_id)
 
 
-@pytest.mark.parametrize('instance_args', ['tag'], indirect=True)
-def test_cloud_provision_with_tag(provisioned_instance, tag):
+def test_provision_with_tag(appliance, vm_name, tag, a_provider):
     """ Tests tagging instance using provisioning dialogs.
 
     Steps:
@@ -514,8 +495,13 @@ def test_cloud_provision_with_tag(provisioned_instance, tag):
     Metadata:
         test_flag: provision
     """
-    assert provisioned_instance.does_vm_exist_on_provider(), "Instance wasn't provisioned"
-    tags = provisioned_instance.get_tags()
+
+    inst_args = {'purpose': {
+        'apply_tags': Check_tree.CheckNode(
+            ['{} *'.format(tag.category.display_name), tag.display_name])}}
+    collection = appliance.provider_based_collection(a_provider)
+    instance = collection.create(vm_name, a_provider, form_values=inst_args)
+    tags = instance.get_tags()
     assert any(
         instance_tag.category.display_name == tag.category.display_name and
         instance_tag.display_name == tag.display_name for instance_tag in tags), (

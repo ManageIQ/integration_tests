@@ -1014,11 +1014,9 @@ class InfraVm(VM):
                 break
         else:
             raise Exception('No such template {} on provider!'.format(template_name))
-
         host_id = self.appliance.rest_api.collections.hosts.get(name=provisioning['host']).id
-        ds_id = self.appliance.rest_api.collections.data_stores.get(name=provisioning[
-            'datastore']).id
-
+        ds_id = self.appliance.rest_api.collections.data_stores.get(
+            name=provisioning['datastore']).id
         inst_args = {
             "version": "1.1",
             "template_fields": {
@@ -1049,6 +1047,8 @@ class InfraVm(VM):
 
         if self.provider.one_of(RHEVMProvider):
             inst_args['vm_fields']['provision_type'] = 'native_clone'
+            cluster_id = self.appliance.rest_api.collections.clusters.get(name='Default').id
+            inst_args['vm_fields']['placement_cluster_name'] = cluster_id
             # TODO Workaround for BZ 1541036/1449157. <Template> uses template vnic_profile
             # shouldn't be default
             if self.appliance.version > '5.9.0.16':
