@@ -54,8 +54,9 @@ def sync_ssl_certificate(provider):
 
 @pytest.fixture(scope="module")
 def ensure_metrics_endpoint(provider):
-    if not provider.endpoints.has_key("metrics"):
+    if "metrics" not in provider.endpoints:
         pytest.skip("No metrics endpoint exist on this provider")
+
 
 @pytest.mark.polarion('CMP-9836')
 @pytest.mark.usefixtures('has_no_containers_providers')
@@ -121,8 +122,8 @@ def test_add_provider_ssl(provider, default_sec_protocol, soft_assert, sync_ssl_
         ti.args[1].default_sec_protocol, ti.args[1].metrics_sec_protocol)
     for ti in TEST_ITEMS])
 @pytest.mark.usefixtures('has_no_containers_providers')
-def test_add_mertics_provider_ssl(ensure_metrics_endpoint, provider, appliance, test_item, soft_assert,
-                                  sync_ssl_certificate):
+def test_add_mertics_provider_ssl(ensure_metrics_endpoint, provider, appliance, test_item,
+                                  soft_assert, sync_ssl_certificate):
     """This test checks adding container providers with 3 different security protocols:
     SSL trusting custom CA, SSL without validation and SSL
     The test checks the Default Endpoint as well as the Hawkular Endpoint

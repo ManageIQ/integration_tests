@@ -13,6 +13,7 @@ from cfme.utils.ocp_cli import OcpCli
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for, TimedOutError
 from . import ContainersProvider, ContainersProviderDefaultEndpoint, ContainersProviderEndpointsForm
+from urllib2 import URLError
 
 
 class CustomAttribute(object):
@@ -328,6 +329,20 @@ class OpenshiftProvider(ContainersProvider):
              None
         """
 
+        def copy_certificate():
+            is_succeed = True
+            try:
+                # Copy certificate to the appliance
+                provider_ssh.get_file("/etc/origin/master/ca.crt", "/tmp/ca.crt")
+                appliance_ssh.put_file("/tmp/ca.crt",
+                                       "/etc/pki/ca-trust/source/anchors/{crt}".format(
+                                           crt=cert_name))
+            except URLError:
+                logger.debug("Fail to copy certificate from Openshift to CFME")
+                is_succeed = False
+            finally:
+                return is_succeed
+
         provider_ssh = self.cli.ssh_client
         appliance_ssh = self.appliance.ssh_client()
 
@@ -347,12 +362,8 @@ class OpenshiftProvider(ContainersProvider):
         if stdout.readline().replace('\n', "") != "0":
             cert_name = "{provider_name}.ca.crt".format(
                 provider_name=self.provider_data.hostname.split(".")[0])
-
-            # Copy certificate to the appliance
-            provider_ssh.get_file("/etc/origin/master/ca.crt", "/tmp/ca.crt")
-            appliance_ssh.put_file("/tmp/ca.crt",
-                                   "/etc/pki/ca-trust/source/anchors/{crt}".format(crt=cert_name))
-
+            wait_for(copy_certificate, num_sec=600, delay=30,
+                     message="Copy certificate from OCP to CFME")
             appliance_ssh.exec_command("update-ca-trust")
 
             # restarting evemserverd to apply the new SSL certificate
