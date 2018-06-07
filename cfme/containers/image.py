@@ -53,7 +53,7 @@ class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssi
     def sha256(self):
         return self.id.split('@')[-1]
 
-    def perform_smartstate_analysis(self, wait_for_finish=False, timeout='7M'):
+    def perform_smartstate_analysis(self, wait_for_finish=False, timeout='20M'):
         """Performing SmartState Analysis on this Image
         """
         # task_name change from str to regular expression pattern following Bugzilla Bug 1483590
@@ -66,8 +66,8 @@ class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssi
         if wait_for_finish:
             try:
                 task = self.appliance.collections.tasks.instantiate(
-                    name=self.name, tab='AllTasks')
-                task.wait_for_finished()
+                    name="Container Image Analysis: '{}'".format(self.name), tab='AllTasks')
+                task.wait_for_finished(timeout=timeout)
             except TimedOutError:
                 raise TimedOutError('Timeout exceeded, Waited too much time for SSA to finish ({}).'
                                     .format(timeout))
@@ -202,14 +202,14 @@ class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssi
 
         # task_name change from str to regular expression
         # the str compile on tasks module
-        image_enities_names = []
+        image_entities_names = []
         images_view = navigate_to(self, 'All')
         self.check_image_entities(image_entities)
 
         images_view.toolbar.configuration.item_select(
             'Perform SmartState Analysis', handle_alert=True)
         for image_entity in image_entities:
-            image_enities_names.append(image_entity.name)
+            image_entities_names.append("Container Image Analysis: '{}'".format(image_entity.name))
             images_view.flash.assert_success_message(
                 '"{}": Analysis successfully initiated'.format(image_entity.name), partial=True
             )
@@ -217,10 +217,10 @@ class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssi
         if wait_for_finish:
             try:
                 col = self.appliance.collections.tasks.filter({'tab': 'AllTasks'})
-                col.wait_for_finished(image_enities_names, timeout=timeout)
+                col.wait_for_finished(5, timeout, *image_entities_names)
 
                 # check all task passed successfully with no error
-                if col.is_successfully_finished(image_enities_names, silent_failure=True):
+                if col.is_successfully_finished(True, *image_entities_names):
                     return True
                 else:
                     logger.error('Some Images SSA tasks finished with error message,'
