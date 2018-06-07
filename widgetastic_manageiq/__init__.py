@@ -4064,7 +4064,7 @@ class LineChart(Widget, ClickableMixin):
        chart_name = LineChart(id='miq_chart_parent_candu_0')
     """
 
-    ROOT = ParametrizedLocator(".//div[@id='candu_charts_div']//div[@id='{@id}']")
+    ROOT = ParametrizedLocator("{@locator}")
     ZOOM_IN = ".//a/i[contains(@class, 'fa-search-plus')]"
     ZOOM_OUT = ".//a/i[contains(@class, 'fa-search-minus')]"
     BS_TITLE_LOCATOR = ".//h2"
@@ -4073,10 +4073,15 @@ class LineChart(Widget, ClickableMixin):
     tooltip = Table(locator='.//div[contains(@class,"c3-tooltip-container")]/table')
     LEGENDS = ".//*[contains(@class, 'c3-legend-item c3-legend-item-')]"
 
-    def __init__(self, parent, id, logger=None):
+    def __init__(self, parent, id=None, locator=None, logger=None):
         """Create the widget"""
         Widget.__init__(self, parent, logger=logger)
-        self.id = id
+        if id:
+            self.locator = ".//*[@id={}]".format(quote(id))
+        elif locator:
+            self.locator = locator
+        else:
+            raise TypeError('You need to specify either id or locator')
 
     def zoom_in(self):
         """For zoom in to chart"""
