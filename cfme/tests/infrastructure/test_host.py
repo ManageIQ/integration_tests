@@ -132,6 +132,8 @@ def test_multiple_host_bad_creds(setup_provider, provider):
 
     if provider.one_of(RHEVMProvider):
         msg = 'Login failed due to a bad username or password.'
+    elif provider.one_of(SCVMMProvider):
+        msg = 'Check credentials. Remote error message: WinRM::WinRMAuthorizationError'
     else:
         msg = 'Cannot complete login due to an incorrect user name or password.'
     edit_view.flash.assert_message(msg)
