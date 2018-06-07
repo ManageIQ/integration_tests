@@ -36,7 +36,7 @@ from widgetastic.widget import (
     do_not_read_this_widget)
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
-    Accordion as PFAccordion, BootstrapSwitch, BootstrapTreeview,
+    Accordion as PFAccordion, BootstrapSwitch, BootstrapTreeview, SelectorDropdown,
     BootstrapSelect, Button, Dropdown, Input, NavDropdown, VerticalNavigation, Tab)
 
 from cfme.exceptions import ItemNotFound
@@ -4443,15 +4443,9 @@ class InfraMappingList(Widget):
     """Represents the list of Infrastructure Mappings."""
 
     ROOT = ParametrizedLocator('.//div[contains(@class,{@list_class|quote})]')
-<<<<<<< HEAD
     ITEM_LOCATOR = './div[contains(@class,"list-group-item")]'
     # ITEM_TEXT_LOCATOR helps locate name of the Migration plan. ITEM_LOCATOR.text does not suffice.
     # Also, ITEM_LOCATOR does not yield element which can be clicked to navigate to details page.
-=======
-    ITEM_LOCATOR = ParametrizedLocator('./div[contains(@class,"list-group-item")]')
-    # ITEM_TEXT_LOCATOR helps locate name of the Infra mapping. ITEM_LOCATOR.text does not suffice.
-    # Also, ITEM_LOCATOR does not yield element which can be clicked to expand.
->>>>>>> Added more features to widget
     ITEM_TEXT_LOCATOR = './/div[contains(@class,"list-group-item-heading")]'
     ITEM_STATUS_LOCATOR = './/div[contains(@class,"list-group-item-text")]'
     ITEM_CLUSTERS_LOCATOR = './/div[./span[contains(@class,"pficon-cluster")]]'
@@ -4612,6 +4606,9 @@ class MigrationPlanRequestDetailsList(Widget):
     ITEM_ADDITIONAL_INFO_BUTTON_LOCATOR = './/div/button[./span[contains(@class,"pficon-info")]]'
     ITEM_PROGRESS_DESCRIPTION_LOCATOR = './/div[contains(@class,"progress-description ")]'
     ITEM_DOWNLOAD_LOG_BUTTON_LOCATOR = './/div[./a][contains(@class,"list-view-pf-actions")]'
+    ITEM_IS_ERRORED_LOCATOR = './/div[contains(@class,"pficon-error-circle-o")]'
+    ITEM_PROGRESS_SPINNER_LOCATOR = './/div[contains(@class,"spinner")]'
+    ITEM_IS_SUCCESSFUL_LOCATOR = './/div[contains(@class,"pficon-ok")]'
 
     def __init__(self, parent, list_class, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -4632,11 +4629,8 @@ class MigrationPlanRequestDetailsList(Widget):
         return self.all_items
 
     def fill(self, value):
-        """Finds item by text and click to view details."""
-        if isinstance(value, list) and len(value) > 1:
-            raise TypeError("Fill can only take one value from list to click on.")
-        self.expand_plan(value)
-        return True
+        # Fill operation is not applicable as the item is not clickable
+        pass
 
     def get_message_text(self, vm_name):
         try:
@@ -4672,3 +4666,70 @@ class MigrationPlanRequestDetailsList(Widget):
         except NoSuchElementException:
             # Plan not started yet
             return None
+
+    def is_errored(self, vm_name):
+        """See if cross icon indicating failure present."""
+        try:
+            el = self._get_vm_element(vm_name)
+            return self.browser.element(self.ITEM_IS_ERRORED_LOCATOR, parent=el).is_displayed()
+        except NoSuchElementException:
+            # This means element not present, so no error
+            return False
+
+    def is_in_progress(self, vm_name):
+        """ Checks if spinner is present indicating progress."""
+        try:
+            el = self._get_vm_element(vm_name)
+            return self.browser.element(self.ITEM_PROGRESS_SPINNER_LOCATOR,
+             parent=el).is_displayed()
+        except NoSuchElementException:
+            # This means element not present, so not in-progress
+            return False
+
+    def is_successful(self, vm_name):
+        """ Checks if check icon is present indicating success."""
+        try:
+            el = self._get_vm_element(vm_name)
+            return self.browser.element(self.ITEM_IS_SUCCESSFUL_LOCATOR,
+             parent=el).is_displayed()
+        except NoSuchElementException:
+            # This means element not present, so plan may not have started
+            return False
+
+
+class MigrationPlanRequestDetailsPaginator(Paginator):
+    """ Represents Paginator control for V2V."""
+
+    PAGINATOR_CTL = './/div[contains(@class,"form-group")][./ul]'
+    './input[contains(@class,"pagination-pf-page")]'
+    CUR_PAGE_CTL = './/span[./span[contains(@class,"pagination-pf-items-current")]]'
+    PAGE_BUTTON_CTL = './/li/a[contains(@title,{})]'
+
+    def next_page(self):
+        self._click_button('Next Page')
+
+    def prev_page(self):
+        self._click_button('Previous Page')
+
+    def last_page(self):
+        self._click_button('Last Page')
+
+    def first_page(self):
+        self._click_button('First Page')
+
+    def page_info(self):
+        return self.browser.element(self.CUR_PAGE_CTL, parent=self._paginator).text
+
+
+class MigrationPlanRequestDetailsPaginationDropup(SelectorDropdown):
+    ROOT = ParametrizedLocator(
+        './/div[contains(@class, "dropup") and ./button[@{@b_attr}={@b_attr_value|quote}]]')
+
+
+class MigrationPlanRequestDetailsPaginationPane(View):
+    """ Represents Paginator Pane for SSUI."""
+
+    ROOT = './/form[contains(@class,"content-view-pf-pagination")]'
+
+    items_on_page = MigrationPlanRequestDetailsPaginationDropup('id', 'pagination-row-dropdown')
+    paginator = MigrationPlanRequestDetailsPaginator()

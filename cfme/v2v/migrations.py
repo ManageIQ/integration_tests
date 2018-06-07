@@ -2,7 +2,7 @@ import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View
-from widgetastic_patternfly import Text, TextInput, Button, BootstrapSelect
+from widgetastic_patternfly import Text, TextInput, Button, BootstrapSelect, SelectorDropdown
 from widgetastic_manageiq import (
     InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList,
     MigrationPlanRequestDetailsList)
@@ -256,6 +256,8 @@ class AddMigrationPlanView(View):
 
 class MigrationPlanRequestDetailsView(View):
     migration_request_details_list = MigrationPlanRequestDetailsList("plan-request-details-list")
+    sort_type = SelectorDropdown('id', 'sortTypeMenu')
+    paginator_view = View.include(MigrationPlanRequestDetailsPaginationPane)
 
     @property
     def is_displayed(self):
@@ -297,7 +299,7 @@ class MigrationPlan(BaseEntity):
     # TODO: Ytale is updating rest of the code in this entity in separate PR.
     category = 'migrationplan'
     string_name = 'Migration Plan'
-    name = 'fsdf'
+    name = 'iSCSI to iSCSI p4 DND'
 
 
 @attr.s
@@ -347,5 +349,6 @@ class MigrationPlanRequestDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        # TODO: REPLACE self.obj.ENTITY.name with self.obj.name
+        # TODO: REPLACE self.obj.ENTITY.name by self.obj.name when migration plan
+        # entity-collection complete
         self.prerequisite_view.migrations_not_started_list.click_plan(self.obj.ENTITY.name)
