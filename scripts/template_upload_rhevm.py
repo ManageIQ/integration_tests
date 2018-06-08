@@ -200,7 +200,7 @@ def import_template(mgmt, cfme_data, edomain, sdomain, cluster, temp_template_na
             logger.info("RHEVM:%r The template failed to import on data domain", provider)
             sys.exit(127)
         logger.info("RHEVM:%r successfully imported template on data domain", provider)
-        logger.info('RHEVM:%r updating nic on template')
+        logger.info('RHEVM:%r updating nic on template', provider)
         network_name = cfme_data.management_systems[provider].template_upload.management_network
         mgmt.update_template_nic(template_name=temp_template_name,
                                  network_name=network_name,
