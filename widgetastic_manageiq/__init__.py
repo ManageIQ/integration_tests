@@ -4437,3 +4437,157 @@ class MigrationPlansList(Widget):
             raise TypeError("Fill can only take one value from list to click on.")
         self.select_plan(value)
         return True
+
+
+class InfraMappingList(Widget):
+    """Represents the list of Infrastructure Mappings."""
+
+    ROOT = ParametrizedLocator('.//div[contains(@class,{@list_class|quote})]')
+    ITEM_LOCATOR = './div[contains(@class,"list-group-item")]'
+    # ITEM_TEXT_LOCATOR helps locate name of the Migration plan. ITEM_LOCATOR.text does not suffice.
+    # Also, ITEM_LOCATOR does not yield element which can be clicked to navigate to details page.
+    ITEM_TEXT_LOCATOR = './/div[contains(@class,"list-group-item-heading")]'
+    ITEM_STATUS_LOCATOR = './/div[contains(@class,"list-group-item-text")]'
+    ITEM_CLUSTERS_LOCATOR = './/div[./span[contains(@class,"pficon-cluster")]]'
+    ITEM_NETWORKS_LOCATOR = './/div[./span[contains(@class,"pficon-network")]]'
+    ITEM_DATASTORES_LOCATOR = './/div[./span[contains(@class,"fa-database")]]'
+    # Locates Associated Plans Button
+    ITEM_ASSOCIATED_PLANS_BUTTON_LOCATOR = './/div[./span[contains(@class,"pficon-catalog")]]'
+    # Locates Associated Plans list
+    ITEM_ASSOCIATED_PLANS_LIST_LOCATOR = ('.//div[contains(@class,'
+    '"infra-mapping-associated-plans-row")]')
+    SOURCE_ITEMS_LIST_LOCATOR = './/div[contains(@class,"infra-mapping-item-source")]/div'
+    TARGET_ITEMS_LIST_LOCATOR = './/div[contains(@class,"infra-mapping-item-target")]'
+    ITEM_EXPAND_LOCATOR = './span[contains(@class,"fa-angle-down")]'
+    ITEM_COLLAPSE_DETAILS_BUTTON_LOCATOR = './/span[contains(@class, "pficon-close")]'
+
+    def __init__(self, parent, list_class, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.list_class = list_class
+
+    @property
+    def all_items(self):
+        return [self.browser.text(item) for item in self.browser.elements(self.ITEM_TEXT_LOCATOR)]
+
+    def _get_map_element(self, map_name):
+        for item in self.browser.elements(self.ITEM_LOCATOR):
+            el = self.browser.element(".//*[@class='list-group-item-heading']", parent=item)
+            if self.browser.text(el) == map_name:
+                return item
+        raise ItemNotFound("Infra Mapping: {} not found".format(map_name))
+
+    def expand_map_clusters(self, map_name):
+        """Click on clusters to expand to show details."""
+        el = self._get_map_element(map_name)
+        clusters_button_el = self.browser.element(self.ITEM_CLUSTERS_LOCATOR, parent=el)
+        if len(self.browser.elements(self.ITEM_EXPAND_LOCATOR, parent=clusters_button_el)) == 0:
+            self.browser.click(self.browser.element(self.ITEM_CLUSTERS_LOCATOR, parent=el))
+
+    def expand_map_networks(self, map_name):
+        """Click on networks to expand to show details."""
+        el = self._get_map_element(map_name)
+        networks_button_el = self.browser.element(self.ITEM_NETWORKS_LOCATOR, parent=el)
+        if len(self.browser.elements(self.ITEM_EXPAND_LOCATOR, parent=networks_button_el)) == 0:
+            self.browser.click(self.browser.element(self.ITEM_NETWORKS_LOCATOR, parent=el))
+
+    def expand_map_datastores(self, map_name):
+        """Click on datastores to expand to show details."""
+        el = self._get_map_element(map_name)
+        datastores_button_el = self.browser.element(self.ITEM_DATASTORES_LOCATOR, parent=el)
+        if len(self.browser.elements(self.ITEM_EXPAND_LOCATOR, parent=datastores_button_el)) == 0:
+            self.browser.click(self.browser.element(self.ITEM_DATASTORES_LOCATOR, parent=el))
+
+    def expand_map_associated_plans(self, map_name):
+        """Click on associated plans to expand to show details."""
+        try:
+            el = self._get_map_element(map_name)
+            associated_plans_button_el = self.browser.element(
+                self.ITEM_ASSOCIATED_PLANS_BUTTON_LOCATOR, parent=el)
+            if len(self.browser.elements(self.ITEM_EXPAND_LOCATOR,
+                    parent=associated_plans_button_el)) == 0:
+                self.browser.click(self.browser.element(
+                    self.ITEM_ASSOCIATED_PLANS_BUTTON_LOCATOR, parent=el))
+        except NoSuchElementException:
+            raise ItemNotFound("There are no associated plans with map {}".format(map_name))
+
+    def read(self):
+        return self.all_items
+
+    def get_map_status(self, map_name):
+        """Get status text of the given mapping."""
+        el = self._get_map_element(map_name)
+        return self.browser.text(self.browser.element(self.ITEM_STATUS_LOCATOR,
+             parent=el))
+
+    def _get_sources(self, map_name):
+        el = self._get_map_element(map_name)
+        return [self.browser.text(item) for item
+         in self.browser.elements(self.SOURCE_ITEMS_LIST_LOCATOR, parent=el)]
+
+    def _get_targets(self, map_name):
+        el = self._get_map_element(map_name)
+        return [self.browser.text(item) for item
+         in self.browser.elements(self.TARGET_ITEMS_LIST_LOCATOR, parent=el)]
+
+    def get_map_source_clusters(self, map_name):
+        """Returns all source clusters of a mapping by map_name."""
+        self.expand_map_clusters(map_name)
+        return self._get_sources(map_name)
+
+    def get_map_target_clusters(self, map_name):
+        """Returns all target clusters of a mapping by map_name."""
+        self.expand_map_clusters(map_name)
+        return self._get_targets(map_name)
+
+    def get_map_source_networks(self, map_name):
+        """Returns all source networks of a mapping by map_name."""
+        self.expand_map_networks(map_name)
+        return self._get_sources(map_name)
+
+    def get_map_target_networks(self, map_name):
+        """Returns all target networks of a mapping by map_name."""
+        self.expand_map_networks(map_name)
+        return self._get_targets(map_name)
+
+    def get_map_source_datastores(self, map_name):
+        """Returns all source datastores of a mapping by map_name."""
+        self.expand_map_datastores(map_name)
+        return self._get_sources(map_name)
+
+    def get_map_target_datastores(self, map_name):
+        """Returns all target datastores of a mapping by map_name."""
+        self.expand_map_datastores(map_name)
+        return self._get_targets(map_name)
+
+    def get_associated_plans_count(self, map_name):
+        """Returns count of number of plans associated with a mapping by map_name."""
+        try:
+            el = self._get_map_element(map_name)
+            return self.browser.text(self.browser.element(self.ITEM_ASSOCIATED_PLANS_BUTTON_LOCATOR,
+                 parent=el)).split("Associated Plans")[0]
+        except NoSuchElementException:
+            # Plan with no associated plans
+            return 0
+
+    def get_associated_plans(self, map_name):
+        """Returns string names of plans associated with a mapping by map_name.
+
+        We cannot split it to return a list as there is no way to differentiate,
+        its all single block of text under a div."""
+        try:
+            self.expand_map_associated_plans(map_name)
+            el = self._get_map_element(map_name)
+            return self.browser.text(self.browser.element(self.ITEM_ASSOCIATED_PLANS_LIST_LOCATOR,
+                     parent=el))
+        except ItemNotFound:
+            # If there is no plan associated
+            return None
+
+    def collapse_details(self, map_name):
+        """This method can be used to collapse the details pane opened by expand_<> methods."""
+        try:
+            el = self._get_map_element(map_name)
+            self.browser.click(self.ITEM_COLLAPSE_DETAILS_BUTTON_LOCATOR, parent=el)
+        except NoSuchElementException:
+            raise ItemNotFound('Collapse button not present,'
+                'map clusters/networks/datastores/associated_plans details is not expaded.')
