@@ -9,6 +9,7 @@ from cfme.common.provider_views import ProviderNodesView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
@@ -136,3 +137,14 @@ def test_multiple_host_bad_creds(setup_provider, provider):
     edit_view.flash.assert_message(msg)
 
     edit_view.cancel_button.click()
+
+
+@pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
+def test_tag_host_after_provider_delete(provider, appliance, setup_provider, request):
+    """Test if host can be tagged after delete"""
+    host_data = provider.hosts[0]
+    host = appliance.collections.hosts.instantiate(name=host_data.name, provider=provider)
+    provider.delete(cancel=False)
+    provider.wait_for_delete()
+    tag = host.add_tag()
+    request.addfinalizer(lambda: host.remove_tag(tag))

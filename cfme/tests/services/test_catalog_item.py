@@ -6,6 +6,7 @@ from selenium.common.exceptions import NoSuchElementException
 import cfme.tests.configure.test_access_control as tac
 from cfme import test_requirements
 from cfme.base.login import BaseLoggedInPage
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.update import update
@@ -54,13 +55,12 @@ def catalog_bundle(appliance, catalog_item):
 
 
 @pytest.fixture(scope="function")
-def check_catalog_visibility(request, user_restricted, tag):
+def check_catalog_visibility(user_restricted, tag):
     def _check_catalog_visibility(test_item_object):
         """
             Args:
                 test_item_object: object for visibility check
         """
-        category_name = ' '.join((tag.category.display_name, '*'))
         test_item_object.add_tag(tag)
         with user_restricted:
             assert test_item_object.exists
@@ -148,3 +148,25 @@ def test_tagvis_catalog_bundle(check_catalog_visibility, catalog_bundle):
             4. Login as restricted user, catalog bundle is not visible for user
         """
     check_catalog_visibility(catalog_bundle)
+
+
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9',
+                         reason='Catalog item restriction was not added to 5.8')
+def test_restricted_catalog_items_select_for_catalog_bundle(appliance, request, catalog_item,
+                                                            user_restricted, tag, soft_assert):
+    """Test catalog item restriction while bundle creation"""
+    catalog_bundles = appliance.collections.catalog_bundles
+    with user_restricted:
+        view = navigate_to(catalog_bundles, 'Add')
+        available_options = view.resources.select_resource.all_options
+        soft_assert(len(available_options) == 1 and available_options[0].text == '<Choose>', (
+            'Catalog item list in not empty, but should be'
+        ))
+    catalog_item.add_tag(tag)
+    request.addfinalizer(lambda: catalog_item.remove_tag(tag))
+    with user_restricted:
+        view = navigate_to(catalog_bundles, 'Add')
+        available_options = view.resources.select_resource.all_options
+        soft_assert(any(
+            option.text == catalog_item.name for option in available_options), (
+            'Restricted catalog item is not visible while bundle creation'))

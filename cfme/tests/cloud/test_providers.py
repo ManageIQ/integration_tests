@@ -17,6 +17,7 @@ from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider, RHOSEndpoint
 from cfme.common.provider_views import (
     CloudProviderAddView, CloudProvidersView, CloudProvidersDiscoverView)
+from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -657,3 +658,25 @@ class TestProvidersRESTAPI(object):
         assert_response(appliance)
         for rule in response:
             assert not hasattr(rule, 'arbitration_profile_id')
+
+
+@pytest.mark.provider([CloudProvider], override=True, selector=ONE)
+def test_tagvis_provision_fields(setup_provider, request, appliance, user_restricted, tag,
+                                 soft_assert):
+    """Test for network environment fields for restricted user"""
+    image = appliance.collections.cloud_images.all()[0]
+    image.add_tag(tag)
+    request.addfinalizer(lambda: image.remove_tag(tag))
+    with user_restricted:
+        view = navigate_to(appliance.collections.cloud_instances, 'Provision')
+        soft_assert(len(view.image_table.read()) == 1)
+        view.image_table.row(name=image.name).click()
+        view.form.continue_button.click()
+        environment_fields_check = [view.form.environment.cloud_tenant,
+                                    view.form.environment.availability_zone,
+                                    view.form.environment.cloud_network,
+                                    view.form.environment.security_groups,
+                                    view.form.environment.public_ip_address,
+                                    view.form.properties.guest_keypair]
+
+        soft_assert(len(select) == 1 for select in environment_fields_check)

@@ -160,6 +160,7 @@ class ImageCollection(TemplateCollection):
 
 
 @navigator.register(ImageCollection, 'All')
+@navigator.register(Image, 'All')
 class ImageAll(CFMENavigateStep):
     VIEW = ImageAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
