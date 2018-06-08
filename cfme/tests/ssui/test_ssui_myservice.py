@@ -98,9 +98,9 @@ def test_vm_console(request, appliance, setup_provider, context, configure_webso
     """Test Myservice VM Console in SSUI."""
     catalog_item = order_service
     service_name = catalog_item.name
-    console_vm_username = credentials[catalog_item.provider.data.templates.console_template
+    console_vm_username = credentials[provider.data.templates.console_template
                             .creds].username
-    console_vm_password = credentials[catalog_item.provider.data.templates.console_template
+    console_vm_password = credentials[provider.data.templates.console_template
                             .creds].password
     with appliance.context.use(context):
         myservice = MyService(appliance, service_name)
@@ -132,7 +132,7 @@ def test_vm_console(request, appliance, setup_provider, context, configure_webso
                 vm_console.send_keys("{}".format(console_vm_password))
                 logger.info("Wait to get the '$' prompt")
                 if not provider.one_of(OpenStackProvider):
-                    vm_console.wait_for_text(text_to_find=catalog_item.provider.data.templates.
+                    vm_console.wait_for_text(text_to_find=provider.data.templates.
                         console_template.prompt_text, timeout=200)
 
                 def _validate_login():

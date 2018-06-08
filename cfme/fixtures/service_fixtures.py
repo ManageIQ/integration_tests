@@ -61,7 +61,7 @@ def create_catalog_item(appliance, provider, provisioning, dialog, catalog,
     catalog_item = appliance.collections.catalog_items.create(
         provider.catalog_item_type, name=item_name,
         description="my catalog", display_in=True, catalog=catalog,
-        dialog=dialog, prov_data=provisioning_data
+        dialog=dialog, prov_data=provisioning_data, provider=provider
     )
     return catalog_item
 
