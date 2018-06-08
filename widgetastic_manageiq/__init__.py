@@ -4077,7 +4077,7 @@ class LineChart(Widget, ClickableMixin):
         """Create the widget"""
         Widget.__init__(self, parent, logger=logger)
         if id:
-            self.locator = ".//*[@id={}]".format(quote(id))
+            self.locator = ".//div[@id={}]".format(quote(id))
         elif locator:
             self.locator = locator
         else:
