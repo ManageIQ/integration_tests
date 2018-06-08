@@ -9,7 +9,6 @@ from widgetastic.exceptions import MoveTargetOutOfBoundsException
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -680,3 +679,29 @@ def test_tagvis_provision_fields(setup_provider, request, appliance, user_restri
                                     view.form.properties.guest_keypair]
 
         soft_assert(len(select) == 1 for select in environment_fields_check)
+
+
+@pytest.mark.tier(3)
+@pytest.mark.provider([OpenStackProvider], override=True)
+def test_domain_id_validation(request, provider):
+    """ Test validating Keystone V3 needs domain_id
+
+    prerequisites:
+        * appliance
+
+    Steps:
+        * Navigate add Cloud provider and select OpenStack
+        * Select Keystone V3 as API Version
+        * Validate without Domain ID
+    """
+    prov = provider
+    prov.api_version = 'Keystone v3'
+    prov.keystone_v3_domain_id = None
+    request.addfinalizer(prov.delete_if_exists)
+    # It must raise an exception because it keeps on the form
+    with pytest.raises(AssertionError):
+        prov.create()
+    view = prov.create_view(CloudProviderAddView)
+
+    # ToDo: Assert proper flash message after BZ-1545520 fix.
+    assert view.flash.messages[0].type == 'error'
