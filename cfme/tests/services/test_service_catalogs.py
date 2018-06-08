@@ -148,7 +148,7 @@ def test_edit_catalog_after_deleting_provider(provider, catalog_item):
             catalog_item.update(changes)
         view = provider.create_view(EditCatalogItemView)
         view.flash.assert_message("'Environment/Cluster Name' is required", t='error')
-        view.flash.assert_message("'Network/Network' is required", t='error')
+        view.flash.assert_message("'Network/Virtual NIC Profile ID' is required", t='error')
     else:
         catalog_item.update(changes)
 
