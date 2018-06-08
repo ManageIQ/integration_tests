@@ -3,13 +3,54 @@ import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View
 from widgetastic_patternfly import Text, TextInput, Button, BootstrapSelect, SelectorDropdown
+from widgetastic.utils import ParametrizedLocator
 from widgetastic_manageiq import (
     InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList,
-    MigrationPlanRequestDetailsList)
+    MigrationPlanRequestDetailsList, Paginator)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+
+
+# Widgets
+
+class MigrationPlanRequestDetailsPaginator(Paginator):
+    """ Represents Paginator control for V2V."""
+
+    PAGINATOR_CTL = './/div[contains(@class,"form-group")][./ul]'
+    './input[contains(@class,"pagination-pf-page")]'
+    CUR_PAGE_CTL = './/span[./span[contains(@class,"pagination-pf-items-current")]]'
+    PAGE_BUTTON_CTL = './/li/a[contains(@title,{})]'
+
+    def next_page(self):
+        self._click_button('Next Page')
+
+    def prev_page(self):
+        self._click_button('Previous Page')
+
+    def last_page(self):
+        self._click_button('Last Page')
+
+    def first_page(self):
+        self._click_button('First Page')
+
+    def page_info(self):
+        return self.browser.text(self.browser.element(self.CUR_PAGE_CTL, parent=self._paginator))
+
+
+class MigrationPlanRequestDetailsPaginationDropup(SelectorDropdown):
+    ROOT = ParametrizedLocator(
+        './/div[contains(@class, "dropup") and ./button[@{@b_attr}={@b_attr_value|quote}]]')
+
+
+class MigrationPlanRequestDetailsPaginationPane(View):
+    """ Represents Paginator Pane for SSUI."""
+
+    ROOT = './/form[contains(@class,"content-view-pf-pagination")]'
+
+    items_on_page = MigrationPlanRequestDetailsPaginationDropup('id', 'pagination-row-dropdown')
+    paginator = MigrationPlanRequestDetailsPaginator()
 
 
 # Views

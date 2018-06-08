@@ -36,7 +36,7 @@ from widgetastic.widget import (
     do_not_read_this_widget)
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
-    Accordion as PFAccordion, BootstrapSwitch, BootstrapTreeview, SelectorDropdown,
+    Accordion as PFAccordion, BootstrapSwitch, BootstrapTreeview,
     BootstrapSelect, Button, Dropdown, Input, NavDropdown, VerticalNavigation, Tab)
 
 from cfme.exceptions import ItemNotFound
@@ -4628,10 +4628,6 @@ class MigrationPlanRequestDetailsList(Widget):
     def read(self):
         return self.all_items
 
-    def fill(self, value):
-        # Fill operation is not applicable as the item is not clickable
-        pass
-
     def get_message_text(self, vm_name):
         try:
             el = self._get_vm_element(vm_name)
@@ -4695,41 +4691,3 @@ class MigrationPlanRequestDetailsList(Widget):
         except NoSuchElementException:
             # This means element not present, so plan may not have started
             return False
-
-
-class MigrationPlanRequestDetailsPaginator(Paginator):
-    """ Represents Paginator control for V2V."""
-
-    PAGINATOR_CTL = './/div[contains(@class,"form-group")][./ul]'
-    './input[contains(@class,"pagination-pf-page")]'
-    CUR_PAGE_CTL = './/span[./span[contains(@class,"pagination-pf-items-current")]]'
-    PAGE_BUTTON_CTL = './/li/a[contains(@title,{})]'
-
-    def next_page(self):
-        self._click_button('Next Page')
-
-    def prev_page(self):
-        self._click_button('Previous Page')
-
-    def last_page(self):
-        self._click_button('Last Page')
-
-    def first_page(self):
-        self._click_button('First Page')
-
-    def page_info(self):
-        return self.browser.element(self.CUR_PAGE_CTL, parent=self._paginator).text
-
-
-class MigrationPlanRequestDetailsPaginationDropup(SelectorDropdown):
-    ROOT = ParametrizedLocator(
-        './/div[contains(@class, "dropup") and ./button[@{@b_attr}={@b_attr_value|quote}]]')
-
-
-class MigrationPlanRequestDetailsPaginationPane(View):
-    """ Represents Paginator Pane for SSUI."""
-
-    ROOT = './/form[contains(@class,"content-view-pf-pagination")]'
-
-    items_on_page = MigrationPlanRequestDetailsPaginationDropup('id', 'pagination-row-dropdown')
-    paginator = MigrationPlanRequestDetailsPaginator()
