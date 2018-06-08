@@ -307,6 +307,7 @@ class CloudInfraCatalogItem(BaseCatalogItem):
     display_in = attr.ib(default=None)
     dialog = attr.ib(default=None)
     domain = attr.ib(default='ManageIQ (Locked)')
+    provider = attr.ib(default=None)
     item_type = None
 
     @property
@@ -332,6 +333,7 @@ class NonCloudInfraCatalogItem(BaseCatalogItem):
     display_in = attr.ib(default=None)
     dialog = attr.ib(default=None)
     domain = attr.ib(default='ManageIQ (Locked)')
+    provider = attr.ib(default=None)
     item_type = None
 
     @cached_property

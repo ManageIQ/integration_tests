@@ -210,7 +210,7 @@ def launch_vm_console(self, catalog_item):
     vm_obj = collection.instantiate(
         '{}{}'.format(catalog_item.prov_data['catalog']['vm_name'], '0001'),
         catalog_item.provider,
-        template_name=catalog_item.catalog_name
+        template_name=catalog_item.name
     )
     wait_for(
         func=lambda: vm_obj.vm_console, num_sec=30, delay=2, handle_exception=True,
