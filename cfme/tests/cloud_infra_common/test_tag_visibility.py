@@ -4,6 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.common.provider import CloudInfraProvider
 from cfme.configure.configuration.region_settings import Category, Tag
+from cfme.exceptions import VmOrInstanceNotFound
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -58,7 +59,7 @@ def service_level_tag():
 
 
 @pytest.fixture(scope='module')
-def vms_for_tagging(provider, request, appliance):
+def vms_for_tagging(provider, appliance):
     """Get two existing vms for tagging"""
     view = navigate_to(provider, 'ProviderVms')
     all_names = view.entities.all_entity_names
@@ -84,7 +85,7 @@ def group_with_tag_expression(appliance, user_restricted, request):
 
 
 @pytest.fixture
-def check_vm_visibility(user_restricted, appliance, request):
+def check_vm_visibility(user_restricted, appliance):
     def _check_vm_visibility(group, vm, vis_expect):
         """
         Args:
@@ -103,7 +104,7 @@ def check_vm_visibility(user_restricted, appliance, request):
             try:
                 navigate_to(vm, 'Details')
                 actual_visibility = True
-            except Exception:
+            except VmOrInstanceNotFound:
                 actual_visibility = False
         assert actual_visibility == vis_expect, (
             'VM visibility is not as expected, expected {}'.format(vis_expect)
