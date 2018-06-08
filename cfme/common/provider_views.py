@@ -450,7 +450,11 @@ class ProviderAddView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return self.logged_in_as_current_user
+        return (
+            self.title.is_displayed and self.name.is_displayed and
+            self.prov_type.is_displayed and self.zone.is_displayed and
+            self.add.is_displayed and self.cancel.is_displayed
+        )
 
 
 class InfraProviderAddView(ProviderAddView):

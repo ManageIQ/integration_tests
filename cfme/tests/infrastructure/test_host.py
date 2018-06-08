@@ -9,6 +9,7 @@ from cfme.common.provider_views import ProviderNodesView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -132,6 +133,8 @@ def test_multiple_host_bad_creds(setup_provider, provider):
 
     if provider.one_of(RHEVMProvider):
         msg = 'Login failed due to a bad username or password.'
+    elif provider.one_of(SCVMMProvider):
+        msg = 'Check credentials. Remote error message: WinRM::WinRMAuthorizationError'
     else:
         msg = 'Cannot complete login due to an incorrect user name or password.'
     edit_view.flash.assert_message(msg)

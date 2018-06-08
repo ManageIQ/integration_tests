@@ -183,7 +183,7 @@ def test_infra_provider_add_with_bad_credentials(provider):
         verify_secret='reallybad'
     )
 
-    with pytest.raises(Exception, match=provider.bad_credentials_error_msg):
+    with pytest.raises(AssertionError, match=provider.bad_credentials_error_msg):
         provider.create(validate_credentials=True)
 
 
