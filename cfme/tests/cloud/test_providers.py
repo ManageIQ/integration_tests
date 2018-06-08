@@ -27,6 +27,7 @@ from cfme.utils.rest import (
     delete_resources_from_detail,
 )
 from cfme.utils.update import update
+from cfme.utils.wait import TimedOutError
 from cfme.fixtures.provider import enable_provider_regions
 from cfme.fixtures.pytest_store import store
 
@@ -92,6 +93,43 @@ def test_discovery_password_mismatch_validation_cloud(appliance):
     collection.discover(cred, EC2Provider)
     view = appliance.browser.create_view(CloudProvidersView)
     view.flash.assert_message('Password/Verify Password do not match')
+
+
+@pytest.mark.tier(3)
+@pytest.mark.uncollectif(lambda appliance: appliance.version >= '5.9',
+                        reason='no more support for cloud provider discovery')
+def test_discovery_error_azure_cloud(appliance):
+    """ Test Azure discovery with fake data
+
+    prerequisites:
+        * appliance supporting discovery
+
+    Steps:
+        * Navigate Cloud provider discovery and select Azure
+        * Fill all fields with fake data
+        * Start Discovery
+        * Even with wrong data discovery will start with the proper flash message assert it
+        * Check for provider should not discover
+    """
+    cred = Credential(
+        principal=fauxfactory.gen_alphanumeric(5),
+        secret=fauxfactory.gen_alphanumeric(8),
+        tenant_id=fauxfactory.gen_alphanumeric(10),
+        subscription_id=fauxfactory.gen_alphanumeric(10))
+
+    collection = appliance.collections.cloud_providers
+    view = navigate_to(collection, 'All')
+    initial_count = len(view.entities.entity_names)
+
+    collection.discover(cred, AzureProvider)
+    view = appliance.browser.create_view(CloudProvidersView)
+    view.flash.assert_success_message('Cloud Providers: Discovery successfully initiated')
+
+    # While waiting for new provider, TimeOutError will come (Negative Test)
+    with pytest.raises(TimedOutError):
+        collection.wait_for_new_provider(timeout=120)
+
+    assert len(view.entities.entity_names) <= initial_count
 
 
 @pytest.mark.tier(3)
