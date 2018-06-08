@@ -3,7 +3,7 @@ import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View
 from widgetastic_patternfly import Text, TextInput, Button, BootstrapSelect
-from widgetastic_manageiq import InfraMappingTreeView, MultiSelectList
+from widgetastic_manageiq import InfraMappingTreeView, MultiSelectList, MigrationPlansList
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -220,6 +220,8 @@ class MigrationDashboardView(BaseLoggedInPage):
     create_infrastructure_mapping = Text(locator='(//a|//button)'
         '[text()="Create Infrastructure Mapping"]')
     create_migration_plan = Text(locator='(//a|//button)[text()="Create Migration Plan"]')
+    migration_plans_not_started_list = MigrationPlansList("plans-not-started-list")
+    migration_plans_completed_list = MigrationPlansList("plans-complete-list")
 
     @property
     def is_displayed(self):

@@ -4356,3 +4356,79 @@ class InfraMappingTreeView(Widget):
             return False
         self._all_item_elements[value or self.selected_item].click()
         return True
+
+
+class MigrationPlansList(Widget):
+    """Represents the list of Migration Plans."""
+
+    ROOT = ParametrizedLocator('.//div[contains(@class,{@list_class|quote})]')
+    ITEM_LOCATOR = ParametrizedLocator('.//div[contains(@class,"{@list_class}__list-item")]')
+    # ITEM_TEXT_LOCATOR helps locate name of the Migration plan. ITEM_LOCATOR.text does not suffice.
+    # Also, ITEM_LOCATOR does not yield element which can be clicked to navigate to details page.
+    ITEM_TEXT_LOCATOR = './/div[contains(@class,"list-group-item-heading")]'
+    ITEM_TIMER_LOCATOR = './/div[./span[contains(@class,"fa-clock-o")]]'
+    ITEM_DESCRIPTION_LOCATOR = './/div[contains(@class,"list-group-item-text")]'
+    ITEM_VM_LOCATOR = ('.//div[./span[contains(@class,"pficon-virtual-machine") '
+            'or contains(@class,"pficon-screen")]]')
+    ITEM_BUTTON_LOCATOR = './div[contains(@class,"list-view-pf-actions")]//button'
+
+    def __init__(self, parent, list_class, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.list_class = list_class
+
+    @property
+    def all_items(self):
+        return [self.browser.text(item) for item in self.browser.elements(self.ITEM_TEXT_LOCATOR)]
+
+    def get_vm_count_in_plan(self, plan_name):
+        el = self._get_plan_element(plan_name)
+        return self.browser.text(self.browser.element(self.ITEM_VM_LOCATOR, parent=el))
+
+    def get_clock(self, plan_name):
+        try:
+            el = self._get_plan_element(plan_name)
+            return self.browser.text(self.browser.element(self.ITEM_TIMER_LOCATOR, parent=el))
+        except NoSuchElementException:
+            # Plan with no clock
+            return None
+
+    def get_plan_description(self, plan_name):
+        try:
+            el = self._get_plan_element(plan_name)
+            return self.browser.text(self.browser.element(self.ITEM_DESCRIPTION_LOCATOR,
+                 parent=el))
+        except NoSuchElementException:
+            # Plan with no description
+            return None
+
+    def _get_plan_element(self, plan_name):
+        for item in self.browser.elements(self.ITEM_LOCATOR):
+            el = self.browser.element(".//*[@class='list-group-item-heading']", parent=item)
+            if self.browser.text(el) == plan_name:
+                return item
+        else:
+            raise ItemNotFound("Migration Plan: {} not found".format(plan_name))
+
+    def migrate_plan(self, plan_name):
+        """Find item by text and click migrate or retry button."""
+        try:
+            el = self._get_plan_element(plan_name)
+            self.browser.click(self.browser.element(self.ITEM_BUTTON_LOCATOR, parent=el))
+        except NoSuchElementException:
+            # In case of retry button, sometimes buttons is not present
+            raise ItemNotFound("Migrate/Retry Button not present or plan not found")
+
+    def select_plan(self, plan_name):
+        """Find item by text and click to view details."""
+        el = self._get_plan_element(plan_name)
+        self.browser.click(self.browser.element(self.ITEM_TEXT_LOCATOR, parent=el))
+
+    def read(self):
+        return self.all_items
+
+    def fill(self, value):
+        """Finds item by text and click to view details."""
+        if isinstance(value, list) and len(value) > 1:
+            raise TypeError("Fill can only take one value from list to click on.")
+        self.select_plan(value)
+        return True
