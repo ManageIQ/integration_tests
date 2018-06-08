@@ -19,10 +19,11 @@ from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils import ssh, safe_string, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
+from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for, wait_for_decorator
-from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.tier(3),
@@ -160,6 +161,7 @@ def local_setup_provider(request, setup_provider_modscope, provider, appliance):
     # TODO: allow for vddk parameterization
     if provider.one_of(VMwareProvider):
         appliance.install_vddk()
+        request.addfinalizer(appliance.uninstall_vddk)
         set_hosts_credentials(appliance, request, provider)
 
     # Make sure all roles are set
@@ -191,78 +193,114 @@ def ssa_compliance_profile(appliance, provider, ssa_compliance_policy):
 
 
 @pytest.fixture(scope="module")
-def ssa_vm(request, local_setup_provider, provider, vm_analysis_provisioning_data,
+def ssa_single_vm(request, local_setup_provider, provider, vm_analysis_provisioning_data,
            appliance, analysis_type):
     """ Fixture to provision instance on the provider """
-    template_name = vm_analysis_provisioning_data['image']
-    vm_name = 'test-ssa-{}-{}'.format(fauxfactory.gen_alphanumeric(), analysis_type)
-    collection = provider.appliance.provider_based_collection(provider)
-    vm = collection.instantiate(vm_name,
-                                provider,
-                                template_name=vm_analysis_provisioning_data.image)
-    request.addfinalizer(lambda: vm.delete_from_provider())
+    def _ssa_single_vm():
+        template_name = vm_analysis_provisioning_data['image']
+        vm_name = 'test-ssa-{}-{}'.format(fauxfactory.gen_alphanumeric(), analysis_type)
+        collection = provider.appliance.provider_based_collection(provider)
+        vm = collection.instantiate(vm_name,
+                                    provider,
+                                    template_name=vm_analysis_provisioning_data.image)
+        provision_data = vm_analysis_provisioning_data.copy()
+        del provision_data['image']
 
-    provision_data = vm_analysis_provisioning_data.copy()
-    del provision_data['image']
+        if "test_ssa_compliance" in request._pyfuncitem.name:
+            provisioning_data = {"catalog": {'vm_name': vm_name},
+                                 "environment": {'automatic_placement': True}}
+            do_vm_provisioning(vm_name=vm_name, appliance=appliance, provider=provider,
+                               provisioning_data=provisioning_data, template_name=template_name,
+                               request=request, smtp_test=False, num_sec=2500)
+        else:
+            deploy_template(vm.provider.key, vm_name, template_name, timeout=2500)
+            vm.wait_to_appear(timeout=900, load_details=False)
 
-    if "test_ssa_compliance" in request._pyfuncitem.name:
-        provisioning_data = {"catalog": {'vm_name': vm_name},
-                             "environment": {'automatic_placement': True}}
-        do_vm_provisioning(vm_name=vm_name, appliance=appliance, provider=provider,
-                           provisioning_data=provisioning_data, template_name=template_name,
-                           request=request, smtp_test=False
-                           )
-    else:
-        vm.create_on_provider(find_in_cfme=True, **provision_data)
+        request.addfinalizer(lambda: vm.delete_from_provider())
 
-    if provider.one_of(OpenStackProvider):
-        public_net = provider.data['public_network']
-        vm.provider.mgmt.assign_floating_ip(vm.name, public_net)
+        if provider.one_of(OpenStackProvider):
+            public_net = provider.data['public_network']
+            vm.provider.mgmt.assign_floating_ip(vm.name, public_net)
 
-    logger.info("VM %s provisioned, waiting for IP address to be assigned", vm_name)
+        logger.info("VM %s provisioned, waiting for IP address to be assigned", vm_name)
 
-    @wait_for_decorator(timeout="20m", delay=5)
-    def get_ip_address():
-        logger.info("Power state for {} vm: {}, is_vm_stopped: {}".format(
-            vm_name, provider.mgmt.vm_status(vm_name), provider.mgmt.is_vm_stopped(vm_name)))
-        if provider.mgmt.is_vm_stopped(vm_name):
-            provider.mgmt.start_vm(vm_name)
+        @wait_for_decorator(timeout="20m", delay=5)
+        def get_ip_address():
+            logger.info("Power state for {} vm: {}, is_vm_stopped: {}".format(
+                vm_name, provider.mgmt.vm_status(vm_name), provider.mgmt.is_vm_stopped(vm_name)))
+            if provider.mgmt.is_vm_stopped(vm_name):
+                provider.mgmt.start_vm(vm_name)
 
-        ip = provider.mgmt.current_ip_address(vm_name)
-        logger.info("Fetched IP for %s: %s", vm_name, ip)
-        return ip is not None
+            ip = provider.mgmt.current_ip_address(vm_name)
+            logger.info("Fetched IP for %s: %s", vm_name, ip)
+            return ip is not None
 
-    connect_ip = provider.mgmt.get_ip_address(vm_name)
-    assert connect_ip is not None
+        connect_ip = provider.mgmt.get_ip_address(vm_name)
+        assert connect_ip is not None
 
-    # Check that we can at least get the uptime via ssh this should only be possible
-    # if the username and password have been set via the cloud-init script so
-    # is a valid check
-    if vm_analysis_provisioning_data['fs-type'] not in ['ntfs', 'fat32']:
-        logger.info("Waiting for %s to be available via SSH", connect_ip)
-        ssh_client = ssh.SSHClient(
-            hostname=connect_ip,
-            username=credentials[vm_analysis_provisioning_data.credentials]['username'],
-            password=credentials[vm_analysis_provisioning_data.credentials]['password'],
-            port=22)
-        wait_for(ssh_client.uptime, num_sec=3600, handle_exception=True)
-        vm.ssh = ssh_client
-    vm.system_type = detect_system_type(vm)
-    logger.info("Detected system type: %s", vm.system_type)
-    vm.image = vm_analysis_provisioning_data['image']
-    vm.connect_ip = connect_ip
+        # Check that we can at least get the uptime via ssh this should only be possible
+        # if the username and password have been set via the cloud-init script so
+        # is a valid check
+        if vm_analysis_provisioning_data['fs-type'] not in ['ntfs', 'fat32']:
+            logger.info("Waiting for %s to be available via SSH", connect_ip)
 
-    # TODO:  if rhev and iscsi, it need direct_lun
-    if provider.type == 'rhevm':
-        logger.info("Setting a relationship between VM and appliance")
-        cfme_rel = InfraVm.CfmeRelationship(vm)
-        cfme_rel.set_relationship(appliance.server.name, appliance.server_id())
+            ssh_client = ssh.SSHClient(
+                hostname=connect_ip,
+                username=credentials[vm_analysis_provisioning_data.credentials]['username'],
+                password=credentials[vm_analysis_provisioning_data.credentials]['password'],
+                port=22)
+            wait_for(ssh_client.uptime, num_sec=3600, handle_exception=True)
+            vm.ssh = ssh_client
+        vm.system_type = detect_system_type(vm)
+        logger.info("Detected system type: %s", vm.system_type)
+        vm.image = vm_analysis_provisioning_data['image']
+        vm.connect_ip = connect_ip
 
-    yield vm
+        # TODO:  if rhev and iscsi, it need direct_lun
+        if provider.type == 'rhevm':
+            logger.info("Setting a relationship between VM and appliance")
+            cfme_rel = InfraVm.CfmeRelationship(vm)
+            cfme_rel.set_relationship(appliance.server.name, appliance.server_id())
+        # Close the SSH client if we have one
+        request.addfinalizer(lambda: vm.ssh.close() if getattr(vm, 'ssh', None) else None)
+        return vm
+    return _ssa_single_vm
 
-    # Close the SSH client if we have one
-    if getattr(vm, 'ssh', None):
-        vm.ssh.close()
+
+@pytest.fixture(scope="module")
+def ssa_vm(ssa_single_vm, assign_profile_to_vm):
+    """Single vm with assigned profile"""
+    ssa_vm = ssa_single_vm()
+    assign_profile_to_vm(ssa_vm)
+    return ssa_vm
+
+
+@pytest.fixture(scope="module")
+def vm_system_type(ssa_vm):
+    return ssa_vm.system_type['os_type']
+
+
+@pytest.fixture(scope="module")
+def ssa_multiple_vms(ssa_single_vm, assign_profile_to_vm):
+    """Create couple vms for test ssa multiple vms"""
+    vms = []
+    for item in range(3):
+        vm = ssa_single_vm()
+        assign_profile_to_vm(vm)
+        vms.append(vm)
+    return vms
+
+
+@pytest.fixture(scope="module")
+def assign_profile_to_vm(appliance, ssa_policy, request):
+    """ Assign policy profile to vm"""
+    def _assign_profile_to_vm(vm):
+        profile = appliance.collections.policy_profiles.create(
+            'ssa_policy_profile_{}'.format(fauxfactory.gen_alpha()), policies=[ssa_policy])
+        request.addfinalizer(profile.delete)
+        vm.assign_policy_profiles(profile.description)
+        request.addfinalizer(lambda: vm.unassign_policy_profiles(profile.description))
+    return _assign_profile_to_vm
 
 
 @pytest.fixture(scope="module")
@@ -271,16 +309,19 @@ def ssa_analysis_profile():
     for file in ssa_expect_files:
         collected_files.append({"Name": file, "Collect Contents?": True})
 
-    analysis_profile_name = 'default_{}'.format(fauxfactory.gen_alpha())
+    analysis_profile_name = 'default'
     analysis_profile = AnalysisProfile(name=analysis_profile_name,
                                        description=analysis_profile_name,
                                        profile_type=AnalysisProfile.VM_TYPE,
-                                       categories=["System", "Software", "System",
+                                       categories=["System", "Software", "Services",
                                                    "User Accounts", "VM Configuration"],
                                        files=collected_files)
+    if analysis_profile.exists:
+        analysis_profile.delete()
     analysis_profile.create()
     yield analysis_profile
-    analysis_profile.delete()
+    if analysis_profile.exists:
+        analysis_profile.delete()
 
 
 @pytest.fixture(scope="module")
@@ -305,17 +346,6 @@ def ssa_policy(appliance, ssa_action):
     policy.assign_events()
 
 
-@pytest.fixture(scope="module")
-def ssa_profiled_vm(appliance, ssa_vm, ssa_policy):
-    profile = appliance.collections.policy_profiles.create(
-        'ssa_policy_profile_{}'.format(fauxfactory.gen_alpha()), policies=[ssa_policy])
-
-    ssa_vm.assign_policy_profiles(profile.description)
-    yield ssa_vm
-    ssa_vm.unassign_policy_profiles(profile.description)
-    profile.delete()
-
-
 def detect_system_type(vm):
     if hasattr(vm, 'ssh'):
         system_release = safe_string(vm.ssh.run_command("cat /etc/os-release").output)
@@ -329,7 +359,7 @@ def detect_system_type(vm):
 
 
 @pytest.fixture(scope="module")
-def schedule_ssa(appliance, ssa_vm, ssa_profiled_vm, wait_for_task_result=True):
+def schedule_ssa(appliance, ssa_vm, wait_for_task_result=True):
     dt = datetime.utcnow()
     delta_min = 5 - (dt.minute % 5)
     if delta_min < 3:  # If the schedule would be set to run in less than 2mins
@@ -359,11 +389,68 @@ def schedule_ssa(appliance, ssa_vm, ssa_profiled_vm, wait_for_task_result=True):
     return ss
 
 
+@pytest.fixture
+def compare_linux_vm_data(soft_assert):
+
+    def _compare_linux_vm_data(ssa_vm):
+        expected_users = ssa_vm.ssh.run_command("cat /etc/passwd | wc -l").output.strip('\n')
+        expected_groups = ssa_vm.ssh.run_command("cat /etc/group | wc -l").output.strip('\n')
+        expected_packages = ssa_vm.ssh.run_command(
+            ssa_vm.system_type['package-number']).output.strip('\n')
+        expected_services = ssa_vm.ssh.run_command(
+            ssa_vm.system_type['services-number']).output.strip('\n')
+
+        view = navigate_to(ssa_vm, 'Details')
+        current_users = view.entities.summary('Security').get_text_of('Users')
+        current_groups = view.entities.summary('Security').get_text_of('Groups')
+        current_packages = view.entities.summary('Configuration').get_text_of('Packages')
+        current_services = view.entities.summary('Configuration').get_text_of('Init Processes')
+
+        soft_assert(current_users == expected_users,
+                    "users: '{}' != '{}'".format(current_users, expected_users))
+        soft_assert(current_groups == expected_groups,
+                    "groups: '{}' != '{}'".format(current_groups, expected_groups))
+        soft_assert(current_packages == expected_packages,
+                    "packages: '{}' != '{}'".format(current_packages, expected_packages))
+        soft_assert(current_services == expected_services,
+                    "services: '{}' != '{}'".format(current_services, expected_services))
+
+    return _compare_linux_vm_data
+
+
+@pytest.fixture
+def compare_windows_vm_data(soft_assert):
+
+    def _compare_windows_vm_data(ssa_vm):
+        """Make sure windows-specific data is not empty"""
+        view = navigate_to(ssa_vm, 'Details')
+        current_patches = view.entities.summary('Security').get_text_of('Patches')
+        current_applications = view.entities.summary('Configuration')\
+            .get_text_of('Applications')
+        current_win32_services = view.entities.summary('Configuration')\
+            .get_text_of('Win32 Services')
+        current_kernel_drivers = view.entities.summary('Configuration')\
+            .get_text_of('Kernel Drivers')
+        current_fs_drivers = view.entities.summary('Configuration')\
+            .get_text_of('File System Drivers')
+
+        soft_assert(current_patches != '0', "patches: '{}' != '0'".format(current_patches))
+        soft_assert(current_applications != '0', "applications: '{}' != '0'".format(
+            current_applications))
+        soft_assert(current_win32_services != '0',
+                    "win32 services: '{}' != '0'".format(current_win32_services))
+        soft_assert(current_kernel_drivers != '0',
+                    "kernel drivers: '{}' != '0'".format(current_kernel_drivers))
+        soft_assert(current_fs_drivers != '0', "fs drivers: '{}' != '0'".format(current_fs_drivers))
+
+    return _compare_windows_vm_data
+
+
 @pytest.mark.rhv2
 @pytest.mark.tier(1)
 @pytest.mark.long_running
 def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_provisioning_data,
-                      appliance, ssa_profiled_vm):
+                      appliance, ssa_vm, compare_windows_vm_data):
     """ Tests SSA can be performed on a template
 
     Metadata:
@@ -397,165 +484,72 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
         soft_assert(c_packages != '0', "packages: '{}' != '0'".format(c_packages))
     else:
         # Make sure windows-specific data is not empty
-        c_patches = view.entities.summary('Security').get_text_of('Patches')
-        c_applications = view.entities.summary('Configuration').get_text_of('Applications')
-        c_win32_services = view.entities.summary('Configuration').get_text_of('Win32 Services')
-        c_kernel_drivers = view.entities.summary('Configuration').get_text_of('Kernel Drivers')
-        c_fs_drivers = view.entities.summary('Configuration').get_text_of('File System Drivers')
-
-        soft_assert(c_patches != '0', "patches: '{}' != '0'".format(c_patches))
-        soft_assert(c_applications != '0', "applications: '{}' != '0'".format(c_applications))
-        soft_assert(c_win32_services != '0', "win32 services: '{}' != '0'".format(c_win32_services))
-        soft_assert(c_kernel_drivers != '0', "kernel drivers: '{}' != '0'".format(c_kernel_drivers))
-        soft_assert(c_fs_drivers != '0', "fs drivers: '{}' != '0'".format(c_fs_drivers))
-
+        compare_windows_vm_data(ssa_vm)
 
 @pytest.mark.tier(2)
 @pytest.mark.long_running
-def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_profiled_vm,
-                        soft_assert, appliance):
+def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_vm,
+                        soft_assert, appliance, vm_system_type):
     """ Tests SSA can be performed and returns sane results
 
     Metadata:
         test_flag: vm_analysis
     """
-    e_users = None
-    e_groups = None
-    e_packages = None
-    e_services = None
-    e_os_type = ssa_profiled_vm.system_type['os_type']
-
-    if ssa_profiled_vm.system_type != WINDOWS:
-        e_users = ssa_profiled_vm.ssh.run_command("cat /etc/passwd | wc -l").output.strip('\n')
-        e_groups = ssa_profiled_vm.ssh.run_command("cat /etc/group | wc -l").output.strip('\n')
-        e_packages = ssa_profiled_vm.ssh.run_command(
-            ssa_profiled_vm.system_type['package-number']).output.strip('\n')
-        e_services = ssa_profiled_vm.ssh.run_command(
-            ssa_profiled_vm.system_type['services-number']).output.strip('\n')
-
-    logger.info("Expecting to have %s users, %s groups, %s packages and %s services", e_users,
-                e_groups, e_packages, e_services)
-    ssa_profiled_vm.smartstate_scan(wait_for_task_result=True)
+    ssa_vm.smartstate_scan(wait_for_task_result=True)
     task = appliance.collections.tasks.instantiate(
-        name='Scan from Vm {}'.format(ssa_profiled_vm.name), tab='AllTasks')
+        name='Scan from Vm {}'.format(ssa_vm.name), tab='AllTasks')
     task.wait_for_finished()
-    # Check release and quadicon
-    quadicon_os_icon = ssa_profiled_vm.find_quadicon().data['os']
-    view = navigate_to(ssa_profiled_vm, 'Details')
-    details_os_icon = view.entities.summary('Properties').get_text_of('Operating System')
-    logger.info("Icons: %s, %s", details_os_icon, quadicon_os_icon)
-    c_lastanalyzed = ssa_profiled_vm.last_analysed
-    c_users = view.entities.summary('Security').get_text_of('Users')
-    c_groups = view.entities.summary('Security').get_text_of('Groups')
-    c_packages = 0
-    c_services = 0
-    if ssa_profiled_vm.system_type != WINDOWS:
-        c_packages = view.entities.summary('Configuration').get_text_of('Packages')
-        c_services = view.entities.summary('Configuration').get_text_of('Init Processes')
-
-    logger.info("SSA shows %s users, %s groups %s packages and %s services", c_users, c_groups,
-                c_packages, c_services)
-
-    soft_assert(c_lastanalyzed != 'Never', "Last Analyzed is set to Never")
-    soft_assert(e_os_type in details_os_icon.lower(),
-                "details icon: '{}' not in '{}'".format(e_os_type, details_os_icon))
-    soft_assert(e_os_type in quadicon_os_icon.lower(),
-                "quad icon: '{}' not in '{}'".format(e_os_type, quadicon_os_icon))
-
-    if ssa_profiled_vm.system_type != WINDOWS:
-        soft_assert(c_users == e_users, "users: '{}' != '{}'".format(c_users, e_users))
-        soft_assert(c_groups == e_groups, "groups: '{}' != '{}'".format(c_groups, e_groups))
-        soft_assert(c_packages == e_packages, "packages: '{}' != '{}'".format(c_packages,
-                                                                      e_packages))
-        soft_assert(c_services == e_services,
-                    "services: '{}' != '{}'".format(c_services, e_services))
-    else:
-        # Make sure windows-specific data is not empty
-        c_patches = view.entities.summary('Security').get_text_of('Patches')
-        c_applications = view.entities.summary('Configuration').get_text_of('Applications')
-        c_win32_services = view.entities.summary('Configuration').get_text_of('Win32 Services')
-        c_kernel_drivers = view.entities.summary('Configuration').get_text_of('Kernel Drivers')
-        c_fs_drivers = view.entities.summary('Configuration').get_text_of('File System Drivers')
-
-        soft_assert(c_patches != '0', "patches: '{}' != '0'".format(c_patches))
-        soft_assert(c_applications != '0', "applications: '{}' != '0'".format(c_applications))
-        soft_assert(c_win32_services != '0', "win32 services: '{}' != '0'".format(c_win32_services))
-        soft_assert(c_kernel_drivers != '0', "kernel drivers: '{}' != '0'".format(c_kernel_drivers))
-        soft_assert(c_fs_drivers != '0', "fs drivers: '{}' != '0'".format(c_fs_drivers))
-
-
-@pytest.mark.rhv3
-@pytest.mark.tier(2)
-@pytest.mark.long_running
-@pytest.mark.meta(blockers=[BZ(1578792, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: 'rhel' not in str(provider.data.get('vm_analysis_new').get('vms')))])
-def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, appliance):
-    """ Tests SSA can be performed and returns sane results
-
-    Metadata:
-        test_flag: vm_analysis
-    """
-    e_users = None
-    e_groups = None
-    e_packages = None
-    e_services = None
-    e_os_type = ssa_vm.system_type['os_type']
-
-    if ssa_vm.system_type != WINDOWS:
-        e_users = ssa_vm.ssh.run_command("cat /etc/passwd | wc -l").output.strip('\n')
-        e_groups = ssa_vm.ssh.run_command("cat /etc/group | wc -l").output.strip('\n')
-        e_packages = ssa_vm.ssh.run_command(
-            ssa_vm.system_type['package-number']).output.strip('\n')
-        e_services = ssa_vm.ssh.run_command(
-            ssa_vm.system_type['services-number']).output.strip('\n')
-
-    logger.info("Expecting to have %s users, %s groups, %s packages and %s services", e_users,
-                e_groups, e_packages, e_services)
     # Check release and quadicon
     quadicon_os_icon = ssa_vm.find_quadicon().data['os']
     view = navigate_to(ssa_vm, 'Details')
     details_os_icon = view.entities.summary('Properties').get_text_of('Operating System')
     logger.info("Icons: %s, %s", details_os_icon, quadicon_os_icon)
     c_lastanalyzed = ssa_vm.last_analysed
-    c_users = view.entities.summary('Security').get_text_of('Users')
-    c_groups = view.entities.summary('Security').get_text_of('Groups')
-    c_packages = 0
-    c_services = 0
-    if ssa_vm.system_type != WINDOWS:
-        c_packages = view.entities.summary('Configuration').get_text_of('Packages')
-        c_services = view.entities.summary('Configuration').get_text_of('Init Processes')
 
-    logger.info("SSA shows %s users, %s groups %s packages and %s services", c_users, c_groups,
-                c_packages, c_services)
+    soft_assert(c_lastanalyzed != 'Never', "Last Analyzed is set to Never")
+    soft_assert(vm_system_type in details_os_icon.lower(),
+                "details icon: '{}' not in '{}'".format(vm_system_type, details_os_icon))
+    soft_assert(vm_system_type in quadicon_os_icon.lower(),
+                "quad icon: '{}' not in '{}'".format(vm_system_type, quadicon_os_icon))
+
+    if ssa_vm.system_type != WINDOWS:
+        compare_linux_vm_data(ssa_vm)
+    else:
+        # Make sure windows-specific data is not empty
+        compare_windows_vm_data(ssa_vm)
+
+
+@pytest.mark.rhv3
+@pytest.mark.tier(2)
+@pytest.mark.long_running
+@pytest.mark.meta(blockers=[BZ(1578792, forced_streams=['5.8', '5.9'],
+    unblock=lambda provider: vm_system_type != 'redhat')])
+def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type):
+    """ Tests SSA can be performed and returns sane results
+
+    Metadata:
+        test_flag: vm_analysis
+    """
+    # Check release and quadicon
+    quadicon_os_icon = ssa_vm.find_quadicon().data['os']
+    view = navigate_to(ssa_vm, 'Details')
+    details_os_icon = view.entities.summary('Properties').get_text_of('Operating System')
+    logger.info("Icons: %s, %s", details_os_icon, quadicon_os_icon)
+    c_lastanalyzed = ssa_vm.last_analysed
 
     soft_assert(c_lastanalyzed != 'Never', "Last Analyzed is set to Never")
     # RHEL has 'Red Hat' in details_os_icon, but 'redhat' in quadicon_os_icon
-    os_type = e_os_type if e_os_type != 'redhat' else 'red hat'
+    os_type = vm_system_type if vm_system_type != 'redhat' else 'red hat'
     soft_assert(os_type in details_os_icon.lower(),
-                "details icon: '{}' not in '{}'".format(os_type, details_os_icon))
-    soft_assert(e_os_type in quadicon_os_icon.lower(),
-                "quad icon: '{}' not in '{}'".format(e_os_type, quadicon_os_icon))
+                "details icon: '{}' not in '{}'".format(vm_system_type, details_os_icon))
+    soft_assert(vm_system_type in quadicon_os_icon.lower(),
+                "quad icon: '{}' not in '{}'".format(vm_system_type, quadicon_os_icon))
 
     if ssa_vm.system_type != WINDOWS:
-        soft_assert(c_users == e_users, "users: '{}' != '{}'".format(c_users, e_users))
-        soft_assert(c_groups == e_groups, "groups: '{}' != '{}'".format(c_groups, e_groups))
-        soft_assert(c_packages == e_packages, "packages: '{}' != '{}'".format(c_packages,
-                                                                      e_packages))
-        soft_assert(c_services == e_services,
-                    "services: '{}' != '{}'".format(c_services, e_services))
+        compare_linux_vm_data(ssa_vm)
     else:
         # Make sure windows-specific data is not empty
-        c_patches = view.entities.summary('Security').get_text_of('Patches')
-        c_applications = view.entities.summary('Configuration').get_text_of('Applications')
-        c_win32_services = view.entities.summary('Configuration').get_text_of('Win32 Services')
-        c_kernel_drivers = view.entities.summary('Configuration').get_text_of('Kernel Drivers')
-        c_fs_drivers = view.entities.summary('Configuration').get_text_of('File System Drivers')
-
-        soft_assert(c_patches != '0', "patches: '{}' != '0'".format(c_patches))
-        soft_assert(c_applications != '0', "applications: '{}' != '0'".format(c_applications))
-        soft_assert(c_win32_services != '0', "win32 services: '{}' != '0'".format(c_win32_services))
-        soft_assert(c_kernel_drivers != '0', "kernel drivers: '{}' != '0'".format(c_kernel_drivers))
-        soft_assert(c_fs_drivers != '0', "fs drivers: '{}' != '0'".format(c_fs_drivers))
+        compare_windows_vm_data(ssa_vm)
 
 
 @pytest.mark.rhv1
@@ -565,30 +559,13 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, appliance):
     BZ(1551273, forced_streams=['5.8', '5.9'],
     unblock=lambda provider: not provider.one_of(RHEVMProvider)),
     BZ(1578792, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: 'rhel' not in str(provider.data.get('vm_analysis_new').get('vms')))])
-def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profiled_vm):
+    unblock=lambda provider: vm_system_type != 'redhat')])
+def test_ssa_vm(ssa_vm, soft_assert, vm_system_type):
     """ Tests SSA can be performed and returns sane results
 
     Metadata:
         test_flag: vm_analysis
     """
-    e_users = None
-    e_groups = None
-    e_packages = None
-    e_services = None
-    e_os_type = ssa_vm.system_type['os_type']
-
-    if ssa_vm.system_type != WINDOWS:
-        e_users = ssa_vm.ssh.run_command("cat /etc/passwd | wc -l").output.strip('\n')
-        e_groups = ssa_vm.ssh.run_command("cat /etc/group | wc -l").output.strip('\n')
-        e_packages = ssa_vm.ssh.run_command(
-            ssa_vm.system_type['package-number']).output.strip('\n')
-        e_services = ssa_vm.ssh.run_command(
-            ssa_vm.system_type['services-number']).output.strip('\n')
-
-    logger.info("Expecting to have {} users, {} groups, {} packages and {} services".format(
-        e_users, e_groups, e_packages, e_services))
-
     ssa_vm.smartstate_scan(wait_for_task_result=True)
     # Check release and quadricon
     quadicon_os_icon = ssa_vm.find_quadicon().data['os']
@@ -596,55 +573,31 @@ def test_ssa_vm(ssa_vm, soft_assert, appliance, ssa_profiled_vm):
     details_os_icon = view.entities.summary('Properties').get_text_of('Operating System')
     logger.info("Icons: %s, %s", details_os_icon, quadicon_os_icon)
     c_lastanalyzed = ssa_vm.last_analysed
-    c_users = view.entities.summary('Security').get_text_of('Users')
-    c_groups = view.entities.summary('Security').get_text_of('Groups')
-    c_packages = 0
-    c_services = 0
-    if ssa_vm.system_type != WINDOWS:
-        c_packages = view.entities.summary('Configuration').get_text_of('Packages')
-        c_services = view.entities.summary('Configuration').get_text_of('Init Processes')
-
-    logger.info("SSA shows {} users, {} groups {} packages and {} services".format(
-        c_users, c_groups, c_packages, c_services))
 
     soft_assert(c_lastanalyzed != 'Never', "Last Analyzed is set to Never")
     # RHEL has 'Red Hat' in details_os_icon, but 'redhat' in quadicon_os_icon
-    os_type = e_os_type if e_os_type != 'redhat' else 'red hat'
+    os_type = vm_system_type if vm_system_type != 'redhat' else 'red hat'
     soft_assert(os_type in details_os_icon.lower(),
                 "details icon: '{}' not in '{}'".format(os_type, details_os_icon))
-    soft_assert(e_os_type in quadicon_os_icon.lower(),
-                "quad icon: '{}' not in '{}'".format(e_os_type, quadicon_os_icon))
+    soft_assert(vm_system_type in quadicon_os_icon.lower(),
+                "quad icon: '{}' not in '{}'".format(vm_system_type, quadicon_os_icon))
 
     if ssa_vm.system_type != WINDOWS:
-        soft_assert(c_users == e_users, "users: '{}' != '{}'".format(c_users, e_users))
-        soft_assert(c_groups == e_groups, "groups: '{}' != '{}'".format(c_groups, e_groups))
-        soft_assert(c_packages == e_packages, "packages: '{}' != '{}'".format(c_packages,
-                                                                      e_packages))
-        soft_assert(c_services == e_services,
-                    "services: '{}' != '{}'".format(c_services, e_services))
+        compare_linux_vm_data(ssa_vm)
     else:
         # Make sure windows-specific data is not empty
-        c_patches = view.entities.summary('Security').get_text_of('Patches')
-        c_applications = view.entities.summary('Configuration').get_text_of('Applications')
-        c_win32_services = view.entities.summary('Configuration').get_text_of('Win32 Services')
-        c_kernel_drivers = view.entities.summary('Configuration').get_text_of('Kernel Drivers')
-        c_fs_drivers = view.entities.summary('Configuration').get_text_of('File System Drivers')
-
-        soft_assert(c_patches != '0', "patches: '{}' != '0'".format(c_patches))
-        soft_assert(c_applications != '0', "applications: '{}' != '0'".format(c_applications))
-        soft_assert(c_win32_services != '0', "win32 services: '{}' != '0'".format(c_win32_services))
-        soft_assert(c_kernel_drivers != '0', "kernel drivers: '{}' != '0'".format(c_kernel_drivers))
-        soft_assert(c_fs_drivers != '0', "fs drivers: '{}' != '0'".format(c_fs_drivers))
+        compare_windows_vm_data(ssa_vm)
 
 
 @pytest.mark.rhv3
 @pytest.mark.long_running
-def test_ssa_users(ssa_vm, appliance, ssa_profiled_vm):
+def test_ssa_users(ssa_vm):
     """ Tests SSA fetches correct results for users list
 
     Metadata:
         test_flag: vm_analysis
     """
+
     username = fauxfactory.gen_alphanumeric()
     expected_users = None
 
@@ -677,12 +630,13 @@ def test_ssa_users(ssa_vm, appliance, ssa_profiled_vm):
 
 @pytest.mark.rhv3
 @pytest.mark.long_running
-def test_ssa_groups(ssa_vm, appliance, ssa_profiled_vm):
+def test_ssa_groups(ssa_vm):
     """ Tests SSA fetches correct results for groups
 
     Metadata:
         test_flag: vm_analysis
     """
+
     group = fauxfactory.gen_alphanumeric()
     expected_group = None
 
@@ -714,7 +668,7 @@ def test_ssa_groups(ssa_vm, appliance, ssa_profiled_vm):
 @pytest.mark.long_running
 @pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
-def test_ssa_packages(ssa_vm, soft_assert, appliance, ssa_profiled_vm):
+def test_ssa_packages(ssa_vm):
     """ Tests SSA fetches correct results for packages
 
     Metadata:
@@ -760,7 +714,7 @@ def test_ssa_packages(ssa_vm, soft_assert, appliance, ssa_profiled_vm):
     BZ(1553808, forced_streams=['5.8', '5.9'],
     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.long_running
-def test_ssa_files(appliance, ssa_vm, soft_assert):
+def test_ssa_files(ssa_vm):
     """Tests that instances can be scanned for specific file."""
 
     if ssa_vm.system_type == WINDOWS:
@@ -785,7 +739,7 @@ def test_ssa_files(appliance, ssa_vm, soft_assert):
 @pytest.mark.rhv2
 @pytest.mark.tier(2)
 @pytest.mark.long_running
-def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profiled_vm):
+def test_drift_analysis(request, ssa_vm, soft_assert, appliance):
     """ Tests drift analysis is correct
 
     Metadata:
@@ -845,3 +799,39 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance, ssa_profiled_vm
         drift_analysis_view.drift_analysis.check_section_attribute_availability(
             '{} (1)'.format(added_tag.category.display_name)),
         "{} row should be visible, but not".format(added_tag.display_name))
+
+
+@pytest.mark.tier(2)
+@pytest.mark.long_running
+@pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
+                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+def test_ssa_multiple_vms(ssa_multiple_vms, soft_assert, appliance, compare_linux_vm_data,
+                          compare_windows_vm_data):
+    """ Tests SSA run while selecting multiple vms at once
+
+    Metadata:
+        test_flag: vm_analysis
+    """
+
+    view = navigate_to(ssa_multiple_vms[0], 'AllForProvider')
+    view.toolbar.view_selector.select('List View')
+    view.paginator.set_items_per_page(1000)
+    for ssa_vm in ssa_multiple_vms:
+        view.entities.get_entity(name=ssa_vm.name, surf_pages=True).check()
+    # run SSA for all created vms
+    view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
+    view.flash.assert_message('Analysis initiated for 3 VMs and Instances from the CFME Database')
+
+    for ssa_vm in ssa_multiple_vms:
+        # check SSA results for all created vms
+        task = appliance.collections.tasks.instantiate(
+            name='Scan from Vm {}'.format(ssa_vm.name), tab='AllTasks')
+        task.wait_for_finished()
+
+        current_lastanalyzed = ssa_vm.last_analysed
+        soft_assert(current_lastanalyzed != 'Never', "Last Analyzed is set to Never")
+
+        if ssa_vm.system_type != WINDOWS:
+            compare_linux_vm_data(ssa_vm)
+        else:
+            compare_windows_vm_data(ssa_vm)
