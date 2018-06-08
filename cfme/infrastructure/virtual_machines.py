@@ -34,7 +34,7 @@ from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
-    SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
+    SummaryTable, Table, TimelinesView, CompareToolBarActionsView, Search)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 
@@ -183,6 +183,7 @@ class VmTemplatesAllForProviderView(InfraVmView):
 class VmsOnlyAllView(InfraVmView):
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
+    search = View.nested(Search)
     including_entities = View.include(VMEntities, use_parent=True)
 
     @property
@@ -199,6 +200,7 @@ class VmsOnlyAllView(InfraVmView):
 class TemplatesOnlyAllView(InfraVmView):
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
+    search = View.nested(Search)
     including_entities = View.include(VMEntities, use_parent=True)
 
     @property

@@ -16,7 +16,7 @@ from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
-    Accordion, BaseEntitiesView, ItemsToolBarViewSelector, ManageIQTree, SummaryTable)
+    Accordion, BaseEntitiesView, ItemsToolBarViewSelector, ManageIQTree, SummaryTable, Search)
 
 
 class VolumeBackupToolbar(View):
@@ -72,6 +72,7 @@ class VolumeBackupView(BaseLoggedInPage):
 class VolumeBackupAllView(VolumeBackupView):
     """The all Volume Backup page"""
     toolbar = View.nested(VolumeBackupToolbar)
+    search = View.nested(Search)
     including_entities = View.include(BaseEntitiesView, use_parent=True)
 
     @property

@@ -5,7 +5,7 @@ from widgetastic_patternfly import (Dropdown, Accordion, Button, TextInput,
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.provider_views import ProviderAddView, ProviderEditView
 from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
-                                  BaseEntitiesView, ParametrizedSummaryTable)
+                                  BaseEntitiesView, ParametrizedSummaryTable, Search)
 
 
 class NetworkProviderToolBar(View):
@@ -64,6 +64,8 @@ class NetworkProviderView(BaseLoggedInPage):
     """ Represents whole All NetworkProviders page """
     toolbar = View.nested(NetworkProviderToolBar)
     sidebar = View.nested(NetworkProviderSideBar)
+    search = View.nested(Search)
+
     including_entities = View.include(NetworkProviderEntities, use_parent=True)
 
     @property
@@ -146,6 +148,7 @@ class BalancerView(BaseLoggedInPage):
     """ Represents whole All NetworkProviders page """
     toolbar = View.nested(BalancerToolBar)
     sidebar = View.nested(BalancerSideBar)
+    search = View.nested(Search)
     including_entities = View.include(NetworkProviderEntities, use_parent=True)
 
     @property
@@ -216,6 +219,7 @@ class CloudNetworkView(BaseLoggedInPage):
     """ Represents whole All Cloud network page """
     toolbar = View.nested(CloudNetworkToolBar)
     sidebar = View.nested(CloudNetworkSideBar)
+    search = View.nested(Search)
     including_entities = View.include(NetworkProviderEntities, use_parent=True)
 
     @property
@@ -316,6 +320,7 @@ class NetworkPortView(BaseLoggedInPage):
     """ Represents whole All NetworkPorts page """
     toolbar = View.nested(NetworkPortToolBar)
     sidebar = View.nested(NetworkPortSideBar)
+    search = View.nested(Search)
     including_entities = View.include(NetworkPortEntities, use_parent=True)
 
     @property
@@ -387,6 +392,7 @@ class NetworkRouterView(BaseLoggedInPage):
     """ Represents whole All NetworkRouters page """
     toolbar = View.nested(NetworkRouterToolBar)
     sidebar = View.nested(NetworkRouterSideBar)
+    search = View.nested(Search)
     including_entities = View.include(NetworkRouterEntities, use_parent=True)
 
     @property
@@ -496,6 +502,7 @@ class SecurityGroupView(BaseLoggedInPage):
     """ Represents whole All SecurityGroups page """
     toolbar = View.nested(SecurityGroupToolBar)
     sidebar = View.nested(SecurityGroupSideBar)
+    search = View.nested(Search)
     including_entities = View.include(SecurityGroupEntities, use_parent=True)
 
     @property
@@ -607,6 +614,7 @@ class SubnetView(BaseLoggedInPage):
     """ Represents whole All Subnets page """
     toolbar = View.nested(SubnetToolBar)
     sidebar = View.nested(SubnetSideBar)
+    search = View.nested(Search)
     including_entities = View.include(SubnetEntities, use_parent=True)
 
     @property
@@ -761,6 +769,7 @@ class FloatingIpEntities(BaseEntitiesView):
 class FloatingIpView(BaseLoggedInPage):
     """ Represents whole All FloatingIP page """
     toolbar = View.nested(FloatingIpToolBar)
+    search = View.nested(Search)
     including_entities = View.include(FloatingIpEntities, use_parent=True)
 
     @property
@@ -773,6 +782,7 @@ class FloatingIpDetailsView(BaseLoggedInPage):
     """ Represents detail view of floating ip """
     toolbar = View.nested(FloatingIpDetailsToolBar)
     sidebar = View.nested(FloatingIpDetailsSideBar)
+    search = View.nested(Search)
 
     @View.nested
     class entities(View):  # noqa

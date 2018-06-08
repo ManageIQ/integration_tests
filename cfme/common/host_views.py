@@ -11,7 +11,7 @@ from cfme.base.login import BaseLoggedInPage
 from widgetastic_manageiq import (
     Accordion, BaseEntitiesView, BaseListEntity, BaseQuadIconEntity, BaseTileIconEntity, Button,
     Checkbox, DriftComparison, Input, ItemsToolBarViewSelector, JSBaseEntity, ManageIQTree,
-    NonJSBaseEntity, PaginationPane, ParametrizedSummaryTable, Table, TimelinesView)
+    NonJSBaseEntity, PaginationPane, ParametrizedSummaryTable, Table, TimelinesView, Search)
 
 
 class ComputeInfrastructureHostsView(BaseLoggedInPage):
@@ -217,6 +217,7 @@ class HostsView(ComputeInfrastructureHostsView):
 
     default_filter_btn = Button(title="Set the current filter as my default")
     paginator = PaginationPane()
+    search = View.nested(Search)
     including_entities = View.include(HostEntitiesView, use_parent=True)
 
     @property

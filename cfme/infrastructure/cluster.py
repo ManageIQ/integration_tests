@@ -16,7 +16,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for, TimedOutError
 from widgetastic_manageiq import (
     Accordion, ItemsToolBarViewSelector, ManageIQTree, SummaryTable, Text, TimelinesView,
-    BaseEntitiesView)
+    BaseEntitiesView, Search)
 
 
 # TODO: since Cluster always requires provider, it will use only one way to get to Cluster Detail's
@@ -86,6 +86,7 @@ class ClusterAllView(ClusterView):
             self.entities.title.text == 'Clusters')
 
     toolbar = View.nested(ClusterToolbar)
+    search = View.nested(Search)
     including_entities = View.include(BaseEntitiesView, use_parent=True)
 
 

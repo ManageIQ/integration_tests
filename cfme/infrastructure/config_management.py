@@ -18,7 +18,7 @@ from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     Accordion, BaseEntitiesView, Button, ItemsToolBarViewSelector, ManageIQTree, SummaryTable,
-    Version, VersionPick, Table)
+    Version, VersionPick, Table, Search)
 
 
 class ConfigManagementToolbar(View):
@@ -149,6 +149,7 @@ class ConfigManagementAllView(ConfigManagementView):
     """The main list view"""
     toolbar = View.nested(ConfigManagementToolbar)
     sidebar = View.nested(ConfigManagementSideBar)
+    search = View.nested(Search)
     including_entities = View.include(ConfigManagementEntities, use_parent=True)
 
     @property

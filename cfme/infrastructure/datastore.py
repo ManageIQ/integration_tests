@@ -25,7 +25,8 @@ from widgetastic_manageiq import (ManageIQTree,
                                   BaseListEntity,
                                   BaseQuadIconEntity,
                                   BaseTileIconEntity,
-                                  JSBaseEntity)
+                                  JSBaseEntity,
+                                  Search)
 
 
 class DatastoreToolBar(View):
@@ -119,6 +120,7 @@ class DatastoresView(BaseLoggedInPage):
     """
     toolbar = View.nested(DatastoreToolBar)
     sidebar = View.nested(DatastoreSideBar)
+    search = View.nested(Search)
     including_entities = View.include(DatastoreEntities, use_parent=True)
 
     @property
