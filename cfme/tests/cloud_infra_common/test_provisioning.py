@@ -32,7 +32,7 @@ pytestmark = [
 
 @pytest.fixture()
 def vm_name():
-    return random_vm_name(context='prov')
+    return random_vm_name(context='prov', max_length=12)
 
 
 @pytest.fixture()
@@ -172,7 +172,7 @@ def test_provision_approval(appliance, a_provider, vm_name, smtp_test, request,
     navigate_to(provision_request, 'Details')
     if edit:
         # Automatic approval after editing the request to conform
-        new_vm_name = vm_name + "-xx"
+        new_vm_name = '{}-xx'.format(vm_name)
         modifications = {
             'catalog': {'num_vms': "1", 'vm_name': new_vm_name},
             'Description': 'Provision from [{}] to [{}]'.format(vm.template_name, new_vm_name)}

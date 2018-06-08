@@ -69,7 +69,9 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
     if provider.one_of(AzureProvider):
         inst_args['environment'] = {'public_ip_address': "New"}
     if provider.one_of(OpenStackProvider):
-        floating_ip = mgmt_system.get_first_floating_ip()
+        ip_pool = provider.data['public_network']
+        floating_ip = mgmt_system.get_first_floating_ip(pool=ip_pool)
+        provider.refresh_provider_relationships()
         inst_args['environment'] = {'public_ip_address': floating_ip}
     if provider.one_of(InfraProvider) and appliance.version > '5.9':
         inst_args['customize']['customize_type'] = 'Specification'
