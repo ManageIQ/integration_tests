@@ -9,11 +9,12 @@ from cfme.networks.views import (CloudNetworkAddView, CloudNetworkEditView, Clou
                                  CloudNetworkView)
 from cfme.utils import providers, version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
 
 
 @attr.s
-class CloudNetwork(Taggable, BaseEntity):
+class CloudNetwork(Taggable, BaseEntity, Updateable):
     """Class representing cloud networks in cfme database"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'
@@ -22,7 +23,7 @@ class CloudNetwork(Taggable, BaseEntity):
     db_types = ['CloudNetwork']
 
     name = attr.ib()
-    provider_obj = attr.ib(default=None)
+    provider_obj = attr.ib()
 
     @property
     def provider(self):
@@ -57,7 +58,7 @@ class CloudNetwork(Taggable, BaseEntity):
         view = navigate_to(self, 'Details')
         return view.entities.relationships.get_text_of('Cloud tenant')
 
-    def edit(self, name, change_external=None, change_admin_state=None, change_shared=None):
+    def update(self, updates):
         """Edit cloud network
 
         Args:
@@ -67,19 +68,30 @@ class CloudNetwork(Taggable, BaseEntity):
             change_shared: (bool) is network shared, 'Yes' or 'No'
         """
         view = navigate_to(self, 'Edit')
-        view.fill({'network_name': name,
-                   'ext_router': change_external,
-                   'administrative_state': change_admin_state,
-                   'shared': change_shared})
-        view.save.click()
-        view.flash.assert_success_message('Cloud Network "{}" updated'.format(name))
-        self.name = name
+        view.fill_with({
+            'network_name': updates.get('name'),
+            'ext_router': updates.get('change_external'),
+            'administrative_state': updates.get('change_admin_state'),
+            'shared': updates.get('change_shared')
+        }, on_change=view.save.click)
+        view.flash.assert_no_error()
+        wait_for(self.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        if 'name' in updates:
+            view = self.create_view(CloudNetworkDetailsView)
+            wait_for(
+                lambda: view.entities.properties.get_text_of('Name') == updates['name'],
+                timeout='5m',
+                fail_func=view.browser.refresh,
+                delay=10
+            )
 
     def delete(self):
         """Delete this cloud network"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Delete this Cloud Network', handle_alert=True)
         view.flash.assert_success_message('Delete initiated for 1 Cloud Network.')
+        wait_for(self.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        wait_for(lambda: not self.exists, timeout='5m', fail_func=view.browser.refresh)
 
     @property
     def network_provider(self):

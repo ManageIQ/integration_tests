@@ -5,7 +5,7 @@ from widgetastic_patternfly import (Dropdown, Accordion, Button, TextInput,
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.provider_views import ProviderAddView, ProviderEditView
 from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
-                                  BaseEntitiesView, ParametrizedSummaryTable)
+                                  BaseEntitiesView, ParametrizedSummaryTable, BreadCrumb)
 
 
 class NetworkProviderToolBar(View):
@@ -425,6 +425,7 @@ class NetworkRouterAddView(BaseLoggedInPage):
     subnet_name = Select(name='cloud_subnet_id')
     cloud_tenant = Select(name='cloud_tenant_id')
     add = Button('Add')
+    cancel = Button('Cancel')
 
     @property
     def is_displayed(self):
@@ -438,6 +439,7 @@ class NetworkRouterEditView(BaseLoggedInPage):
     network_name = Select(name='cloud_network_id')
     subnet_name = Select(name='cloud_subnet_id')
     save = Button('Save')
+    cancel = Button('Cancel')
 
     @property
     def is_displayed(self):
@@ -537,6 +539,32 @@ class SecurityGroupDetailsView(BaseLoggedInPage):
                 self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
 
 
+class SecurityGroupAddEntities(View):
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+
+
+class SecurityGroupAddForm(View):
+    network_manager = BootstrapSelect(id='ems_id')
+    name = TextInput(name='name')
+    description = TextInput(name='description')
+    cloud_tenant = Select(name='cloud_tenant_id')
+    add = Button('Add')
+    cancel = Button('Cancel')
+
+
+class SecurityGroupAddView(SecurityGroupView):
+    @property
+    def is_displayed(self):
+        return (
+            self.in_security_groups and
+            self.entities.breadcrumb.active_location == 'Add New Security Group' and
+            self.entities.title.text == 'Add New Security Group')
+
+    entities = View.nested(SecurityGroupAddEntities)
+    form = View.nested(SecurityGroupAddForm)
+
+
 class SubnetToolBar(View):
     """ Represents provider toolbar and its controls """
     configuration = Dropdown(text='Configuration')
@@ -555,9 +583,9 @@ class SubnetDetailsToolBar(View):
 class SubnetAddView(BaseLoggedInPage):
     """ Represents Add view of subnet """
     title = Text('//div[@id="main-content"]//h1')
-    network_manager = Select(id='ems_id')
-    cloud_tenant = Select(name='cloud_tenant_id')
-    network = Select(name='network_id')
+    network_manager = BootstrapSelect(id='ems_id')
+    cloud_tenant = BootstrapSelect(name='cloud_tenant_id')
+    network = BootstrapSelect(name='network_id')
     subnet_name = TextInput(name='name')
     subnet_cidr = TextInput(name='cidr')
     gateway = TextInput(name='gateway_ip')
