@@ -680,9 +680,9 @@ def test_tagvis_provision_fields(setup_provider, request, appliance, user_restri
 
         soft_assert(len(select) == 1 for select in environment_fields_check)
 
-        
+
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
+@pytest.mark.provider([OpenStackProvider], override=True)
 def test_domain_id_validation(request, provider):
     """ Test validating Keystone V3 needs domain_id
 
