@@ -19,7 +19,6 @@ from cfme.common.provider_views import (
 from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.log import logger
 from cfme.utils.providers import list_providers, ProviderFilter
 from cfme.utils.rest import (
     assert_response,
@@ -125,10 +124,10 @@ def test_discovery_error_azure_cloud(appliance):
     view = appliance.browser.create_view(CloudProvidersView)
     view.flash.assert_success_message('Cloud Providers: Discovery successfully initiated')
 
-    try:
+    # While waiting for new provider, TimeOutError will come (Negative Test)
+    with pytest.raises(TimedOutError):
         collection.wait_for_new_provider()
-    except TimedOutError:
-        logger.warning('Timed out waiting for new provider, continuing')
+
     assert len(view.entities.entity_names) <= initial_count
 
 
