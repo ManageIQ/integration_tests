@@ -1,10 +1,15 @@
 import attr
+import six
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.utils import VersionPick, Version
-from widgetastic.widget import Checkbox, View, Text
+from widgetastic.widget import Checkbox, View, Text, ConditionalSwitchableView
 from widgetastic_patternfly import (
     BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview as CbTree,
     BootstrapSwitch, CandidateNotFound, Dropdown)
+from widgetastic_manageiq import (
+    UpDownSelect, PaginationPane, SummaryFormItem, Table, BaseListEntity, SummaryForm)
+from widgetastic_manageiq.expression_editor import GroupTagExpressionEditor
 
 from cfme.base.credential import Credential
 from cfme.base.ui import ConfigurationView
@@ -17,8 +22,6 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (
-    UpDownSelect, PaginationPane, SummaryFormItem, Table, BaseListEntity, SummaryForm)
 
 
 EVM_DEFAULT_GROUPS = [
@@ -436,6 +439,25 @@ class UserEdit(CFMENavigateStep):
 ####################################################################################################
 # RBAC GROUP METHODS
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+class MyCompanyTagsTree(View):
+    tree_locator = 'tags_treebox'
+    tree = CbTree(tree_locator)
+
+
+class MyCompanyTagsExpressionView(View):
+    tag_expression = GroupTagExpressionEditor()
+
+
+class MyCompanyTagsWithExpression(View):
+    """ Represents 'My company tags' tab in Group Form """
+    tag_mode = BootstrapSelect(id='use_filter_expression')
+    tag_settings = ConditionalSwitchableView(reference='tag_mode')
+
+    tag_settings.register('Specific Tags', default=True, widget=MyCompanyTagsTree)
+    tag_settings.register('Tags Based On Expression', widget=MyCompanyTagsExpressionView)
+
+
 class GroupForm(ConfigurationView):
     """ Group Form in CFME UI."""
     ldap_groups_for_user = BootstrapSelect(id='ldap_groups_user')
@@ -456,8 +478,8 @@ class GroupForm(ConfigurationView):
     class my_company_tags(Tab):  # noqa
         """ Represents 'My company tags' tab in Group Form """
         TAB_NAME = "My Company Tags"
-        tree_locator = 'tags_treebox'
-        tree = CbTree(tree_locator)
+        form = VersionPick({Version.lowest(): View.nested(MyCompanyTagsTree),
+                            '5.9': View.nested(MyCompanyTagsWithExpression)})
 
     @View.nested
     class hosts_and_clusters(Tab):  # noqa
@@ -747,6 +769,10 @@ class Group(BaseEntity, Taggable):
         Args:
             tab_view: tab view
             item: path to check box that should be selected/deselected
+                ex. _set_group_restriction([patent, child], True)
+                or tags expression(string) to be set in My company tags in expression editor
+                ex. _set_group_restriction('fill_tag(My Company Tags : Auto Approve - Max CPU, 1)'),
+                    _set_group_restriction('delete_whole_expression')
             update: If True - checkbox state will be updated
 
         Returns: True - if update is successful
@@ -754,12 +780,18 @@ class Group(BaseEntity, Taggable):
         updated_result = False
         if item is not None:
             if update:
-                path, action_type = item
-                if isinstance(path, list):
-                    node = (tab_view.tree.CheckNode(path) if action_type else
-                            tab_view.tree.UncheckNode(path))
-                    tab_view.tree.fill(node)
-                updated_result = True
+                if isinstance(item, six.string_types):
+                    updated_result = tab_view.form.fill({
+                        'tag_mode': 'Tags Based On Expression',
+                        'tag_settings': {'tag_expression': item}})
+                else:
+                    path, action_type = item
+                    if isinstance(path, list):
+                        tab_form = getattr(tab_view, 'form', tab_view)
+                        tree_view = getattr(tab_form, 'tag_settings', tab_form)
+                        node = (tree_view.tree.CheckNode(path) if action_type else
+                                tree_view.tree.UncheckNode(path))
+                        updated_result = tree_view.tree.fill(node)
         return updated_result
 
     @property
@@ -820,7 +852,6 @@ class GroupCollection(BaseCollection):
             'role_select': group.role,
             'group_tenant': group.tenant
         })
-
         group._set_group_restriction(view.my_company_tags, group.tag)
         group._set_group_restriction(view.hosts_and_clusters, group.host_cluster)
         group._set_group_restriction(view.vms_and_templates, group.vm_template)
