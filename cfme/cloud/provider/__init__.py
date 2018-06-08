@@ -186,11 +186,11 @@ class CloudProviderCollection(BaseCollection):
             view.start.click()
 
     # todo: combine with discover ?
-    def wait_for_new_provider(self):
+    def wait_for_new_provider(self, timeout=1000):
         view = navigate_to(self, 'All')
         logger.info('Waiting for a provider to appear...')
         wait_for(lambda: int(view.entities.paginator.items_amount), fail_condition=0,
-                 message="Wait for any provider to appear", num_sec=1000,
+                 message="Wait for any provider to appear", num_sec=timeout,
                  fail_func=view.browser.refresh)
 
 

@@ -98,14 +98,14 @@ def test_discovery_password_mismatch_validation_cloud(appliance):
 @pytest.mark.uncollectif(lambda appliance: appliance.version >= '5.9',
                         reason='no more support for cloud provider discovery')
 def test_discovery_error_azure_cloud(appliance):
-    """ Test Azure discovery with feck data
+    """ Test Azure discovery with fake data
 
     prerequisites:
         * appliance supporting discovery
 
     Steps:
         * Navigate Cloud provider discovery and select Azure
-        * Fill all fields with feck data
+        * Fill all fields with fake data
         * Start Discovery
         * Even with wrong data discovery will start with the proper flash message assert it
         * Check for provider should not discover
@@ -126,7 +126,7 @@ def test_discovery_error_azure_cloud(appliance):
 
     # While waiting for new provider, TimeOutError will come (Negative Test)
     with pytest.raises(TimedOutError):
-        collection.wait_for_new_provider()
+        collection.wait_for_new_provider(timeout=120)
 
     assert len(view.entities.entity_names) <= initial_count
 
