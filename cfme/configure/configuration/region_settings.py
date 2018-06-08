@@ -227,13 +227,13 @@ class Category(Pretty, BaseEntity, Updateable):
         """ Delete existing category
 
             Args:
-                cancel: Default value 'True', category will be deleted
-                        'False' - deletion of category will be canceled
+                cancel: Default value 'False', category will be deleted
+                        'True' - deletion of category will be canceled
         """
         view = navigate_to(self.parent, 'All')
         row = view.table.row(description=self.display_name)
         row.actions.click()
-        view.browser.handle_alert(cancel=not cancel)
+        view.browser.handle_alert(cancel=cancel)
         if not cancel:
             view = self.create_view(navigator.get_class(self.parent, 'All').VIEW)
         assert view.is_displayed
