@@ -9,7 +9,6 @@ from widgetastic.exceptions import MoveTargetOutOfBoundsException
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -97,8 +96,8 @@ def test_discovery_password_mismatch_validation_cloud(appliance):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
-                         reason='no more support for cloud provider discovery')
+@pytest.mark.uncollectif(lambda appliance: appliance.version >= '5.9',
+                        reason='no more support for cloud provider discovery')
 def test_discovery_error_azure_cloud(appliance):
     """ Test Azure discovery with feck data
 
