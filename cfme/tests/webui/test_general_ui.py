@@ -7,28 +7,45 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 @pytest.fixture()
 def import_tags(appliance):
+    scripts = [
+        'rhconsulting_tags.rake',
+        'rhconsulting_options.rb',
+        'rhconsulting_illegal_chars.rb'
+    ]
     client = appliance.ssh_client
-    client.run_command('cd /var/www/miq/vmdb/lib/tasks/')
-    client.run_command('wget https://raw.githubusercontent.com/rhtconsulting/'
-                       'cfme-rhconsulting-scripts/master/rhconsulting_tags.rake ')
-    client.run_command('wget https://raw.githubusercontent.com/rhtconsulting/'
-                       'cfme-rhconsulting-scripts/master/rhconsulting_options.rb')
-    client.run_command('wget https://raw.githubusercontent.com/rhtconsulting/'
-                       'cfme-rhconsulting-scripts/master/rhconsulting_illegal_chars.rb')
-    client.run_command(
-        'cd /tmp && wget https://github.com/ManageIQ/manageiq/files/384909/tags.yml.gz'
-    )
-    client.run_command(
-        'gunzip tags.yml.gz && vmdb && bin/rake rhconsulting:tags:import[/tmp/tags.yml]'
-    )
-    category_groups = client.run_command('cat /tmp/tags.yml | grep description').\
-        output.split('\n- description:')
+    try:
+        for script in scripts:
+            assert client.run_command('cd /var/www/miq/vmdb/lib/tasks/ && '
+                                      'wget https://raw.githubusercontent.com/rhtconsulting/'
+                                      'cfme-rhconsulting-scripts/master/{}'.format(script)).success
+    except AssertionError:
+        for script in scripts:
+            client.run_command(
+                'cd /var/www/miq/vmdb/lib/tasks/ && rm -f {}'.format(script))
+        pytest.skip('Not all scripts were successfully downloaded')
+    try:
+        assert client.run_command(
+            'cd /tmp && wget https://github.com/ManageIQ/manageiq/files/384909/tags.yml.gz &&'
+            'gunzip tags.yml.gz'
+        ).success
+        assert client.run_command(
+            'vmdb && bin/rake rhconsulting:tags:import[/tmp/tags.yml]').success
+    except AssertionError:
+        client.run_command('cd /tmp && rm -f tags.yml*')
+        pytest.skip('Tags import is failed')
+
+    output = client.run_command('cat /tmp/tags.yml | grep description').output
+    category_groups = output.split('\n- description:')
     tags = {}
     for category in category_groups:
         category_tags = category.split(' - description: ')
         category_name = category_tags.pop(0).strip().replace('- description: ', '')
         tags[category_name] = category_tags
-    return tags
+    yield tags
+    for script in scripts:
+        client.run_command(
+            'cd /var/www/miq/vmdb/lib/tasks/ && rm -f {}'.format(script))
+    client.run_command('cd /tmp && rm -f tags.yml*')
 
 
 @pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE)
@@ -55,8 +72,9 @@ def test_configuration_large_number_of_tags(appliance, import_tags, soft_assert)
     group = appliance.collections.groups.instantiate(description='EvmGroup-administrator')
     view = navigate_to(group, 'Details')
     for category, tags in import_tags.items():
+        category = category.replace('  ', ' ')
         for tag in tags:
-            soft_assert(view.entities.my_company_tags.tree.has_path(category.replace('  ', ' '),
-                                                                    tag.strip()), (
-                'Tag {} was not imported'.format(tag.strip())
+            tag = tag.strip()
+            soft_assert(view.entities.my_company_tags.tree.has_path(category, tag), (
+                'Tag {} was not imported'.format(tag)
             ))
