@@ -17,7 +17,7 @@ def test_sdn_api_inventory_networks(provider, appliance):
     results. If Similar, then test is successful
 
     Metadata:
-        test_flag: sdn
+        test_flag: sdn, inventory
     """
     prov_networks = sorted(provider.mgmt.list_network())
     cfme_networks = sorted([nt.name for nt in appliance.collections.cloud_networks.all()])
@@ -42,7 +42,7 @@ def test_sdn_api_inventory_routers(provider, appliance):
     results. If Similar, then test is successful
 
     Metadata:
-        test_flag: sdn
+        test_flag: sdn, inventory
     """
     prov_routers = sorted(provider.mgmt.list_router())
     cfme_routers = sorted([rt.name for rt in appliance.collections.network_routers.all()])
@@ -56,7 +56,7 @@ def test_sdn_api_inventory_subnets(provider, appliance):
     results. If Similar, then test is successful
 
     Metadata:
-        test_flag: sdn
+        test_flag: sdn, inventory
     """
     prov_subnets = []
     cfme_subnets = [sb.name for sb in appliance.collections.network_subnets.all()]
@@ -78,7 +78,7 @@ def test_sdn_api_inventory_security_groups(provider, appliance):
     the 2 results. If Similar, then test is successful
 
     Metadata:
-        test_flag: sdn
+        test_flag: sdn, inventory
     """
     prov_sec_gp = sorted(provider.mgmt.list_security_group())
     cfme_sec_gp = sorted([sec.name for sec in appliance.collections.network_security_groups.all()])
@@ -93,7 +93,7 @@ def test_sdn_api_inventory_loadbalancers(provider, appliance):
     results. If Similar, then test is successful
 
     Metadata:
-        test_flag: sdn
+        test_flag: sdn, inventory
     """
     prov_load_balancers = sorted(provider.mgmt.list_load_balancer())
     cfme_load_balancers = sorted([lb.name for lb in appliance.collections.balancers.all()])

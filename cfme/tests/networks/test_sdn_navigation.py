@@ -19,7 +19,7 @@ pytestmark = [
 def test_sdn_provider_relationships_navigation(provider, tested_part, appliance):
     """
     Metadata:
-        test_flag: sdn
+        test_flag: sdn, relationship
     """
     view = navigate_to(provider, 'Details')
     net_prov_name = view.entities.summary("Relationships").get_text_of("Network Manager")
@@ -36,7 +36,7 @@ def test_sdn_provider_relationships_navigation(provider, tested_part, appliance)
 def test_provider_topology_navigation(provider, appliance):
     """
     Metadata:
-        test_flag: sdn
+        test_flag: relationship
     """
     view = navigate_to(provider, 'Details')
     net_prov_name = view.entities.summary("Relationships").get_text_of("Network Manager")
