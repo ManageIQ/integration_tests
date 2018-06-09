@@ -19,7 +19,8 @@ from cfme.test_framework.sprout.client import SproutClient
 
 
 @contextmanager
-def temp_appliances(count=1, preconfigured=True, lease_time=180, stream=None, provider_type=None):
+def temp_appliances(count=1, preconfigured=True, lease_time=180, stream=None, provider_type=None,
+                    **kwargs):
     """ Provisions one or more appliances for testing
 
     Args:
@@ -32,7 +33,9 @@ def temp_appliances(count=1, preconfigured=True, lease_time=180, stream=None, pr
     try:
         sprout_client = SproutClient.from_config()
         apps, request_id = sprout_client.provision_appliances(provider_type=provider_type,
-            count=count, lease_time=lease_time, preconfigured=preconfigured, stream=stream)
+                                                              count=count, lease_time=lease_time,
+                                                              preconfigured=preconfigured,
+                                                              stream=stream, **kwargs)
         yield apps
     finally:
         for app in apps:
