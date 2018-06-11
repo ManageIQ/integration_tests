@@ -2070,7 +2070,7 @@ class IPAppliance(object):
             logger.error('Incorrect provider type')
             logger.exception(ex)
             raise Exception('Impossible to create proxy with current provider type')
-        return self.update_advanced_settings(vmdb_config)
+        self.update_advanced_settings(vmdb_config)
 
     def set_session_timeout(self, timeout=86400, quiet=True):
         """Sets the timeout of UI timeout.
