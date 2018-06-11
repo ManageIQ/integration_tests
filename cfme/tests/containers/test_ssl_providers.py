@@ -52,12 +52,6 @@ def sync_ssl_certificate(provider):
     provider.sync_ssl_certificate()
 
 
-@pytest.fixture(scope="module")
-def ensure_metrics_endpoint(provider):
-    if "metrics" not in provider.endpoints:
-        pytest.skip("No metrics endpoint exist on this provider")
-
-
 @pytest.mark.polarion('CMP-9836')
 @pytest.mark.usefixtures('has_no_containers_providers')
 def test_add_provider_naming_conventions(provider, appliance, soft_assert, sync_ssl_certificate):
