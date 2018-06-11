@@ -4608,7 +4608,8 @@ class MigrationPlanRequestDetailsList(Widget):
     ITEM_DOWNLOAD_LOG_BUTTON_LOCATOR = './/div[./a][contains(@class,"list-view-pf-actions")]'
     ITEM_IS_ERRORED_LOCATOR = './/div[contains(@class,"pficon-error-circle-o")]'
     ITEM_PROGRESS_SPINNER_LOCATOR = './/div[contains(@class,"spinner")]'
-    ITEM_IS_SUCCESSFUL_LOCATOR = './/div[contains(@class,"pficon-ok")]'
+    ITEM_IS_SUCCESSFUL_LOCATOR = './/div/span[contains(@class,"pficon-ok")]'
+    ITEM_ADDITIONAL_INFO_POPUP_LOCATOR = '//div[contains(@class,"task-info-popover")]'
 
     def __init__(self, parent, list_class, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -4646,6 +4647,7 @@ class MigrationPlanRequestDetailsList(Widget):
         try:
             el = self._get_vm_element(vm_name)
             self.browser.element(self.ITEM_ADDITIONAL_INFO_BUTTON_LOCATOR, parent=el).click()
+            return True
         except NoSuchElementException:
             # Plan not started yet
             return None
@@ -4686,8 +4688,16 @@ class MigrationPlanRequestDetailsList(Widget):
         """ Checks if check icon is present indicating success."""
         try:
             el = self._get_vm_element(vm_name)
-            return self.browser.element(self.ITEM_IS_SUCCESSFUL_LOCATOR,
-             parent=el).is_displayed()
+            return self.browser.is_displayed(self.ITEM_IS_SUCCESSFUL_LOCATOR,
+             parent=el)
         except NoSuchElementException:
             # This means element not present, so plan may not have started
             return False
+
+    def read_additional_info_popup(self, vm_name):
+        if self.open_additional_info_popup(vm_name):
+            el = self.browser.element(self.ITEM_ADDITIONAL_INFO_POPUP_LOCATOR)
+            return {'Status': self.browser.text('./h3', parent=el),
+            'Started': self.browser.text('./div[2]/div/div[1]', parent=el),
+            'Description': self.browser.text('./div[2]/div/div[2]', parent=el),
+            'Conversion Host': self.browser.text('./div[2]/div/div[3]', parent=el)}
