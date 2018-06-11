@@ -17,8 +17,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 params_values = [
     (MyService, 'All', 'myservices', 'Service : Name'),
     (VmsInstances, 'All', 'workloads_vms', 'VM and Instance : Name'),
-
     (TemplatesImages, 'All', 'workloads_templates', 'VM Template and Image : Name'),
+
     ('cloud_providers', 'All', 'cloudprovider', 'Cloud Provider : Name'),
     ('cloud_av_zones', 'All', 'availabilityzone', 'Availability Zone : Name'),
     (HostAggregates, 'All', 'hostaggregate', 'Host Aggregate : Name'),
@@ -32,7 +32,6 @@ params_values = [
     ('infra_providers', 'All', 'infraproviders', 'Infrastructure Provider : Name'),
     ('clusters', 'All', 'clusters', 'Cluster / Deployment Role : Name'),
     ('hosts', 'All', 'hosts', 'Host / Node : Name'),
-    ('clusters', 'All', 'clusters', 'Cluster / Deployment Role : Name'),
     ('infra_vms', 'VMsOnly', 'vms', 'Virtual Machine : Name'),
     ('infra_templates', 'TemplatesOnly', 'templates', 'Template : Name'),
     ('resource_pools', 'All', 'resource_pools', 'Resource Pool : Name'),
@@ -57,15 +56,14 @@ params_values = [
 
     (ConfigManager, 'All', 'configuration_management', 'Configuration Manager : Name'),
     (ConfigSystem, 'All', 'configuration_management_systems',
-     'Configured System (Red Hat Satellite) : Name'),
+     'Configured System (Red Hat Satellite) : Hostname'),
 
     ('network_providers', 'All', 'network_managers', 'Network Manager : Name'),
     ('cloud_networks', 'All', 'network_networks', 'Cloud Network : Name'),
     ('network_subnets', 'All', 'network_subnets', 'Cloud Subnet : Name'),
     ('network_routers', 'All', 'network_routers', 'Network Router : Name'),
-    ('network_providers', 'All', 'network_managers', 'Network Manager : Name'),
     ('network_security_groups', 'All', 'network_security_groups', 'Security Group : Name'),
-    ('network_floating_ips', 'All', 'network_floating_ips', 'Floating IP : Name'),
+    ('network_floating_ips', 'All', 'network_floating_ips', 'Floating IP : Address'),
     ('network_ports', 'All', 'network_ports', 'Network Port : Name'),
     ('balancers', 'All', 'network_load_balancers', 'Load Balancer : Name'),
 
@@ -79,9 +77,9 @@ params_values = [
      'Cloud Object Store Object : Name'),
 
     (TowerExplorerProvider, 'All', 'ansible_tower_explorer_provider',
-     'Automation manager (Ansible Tower) : Name'),
+     'Automation Manager (Ansible Tower) : Name'),
     (TowerExplorerSystem, 'All', 'ansible_tower_explorer_system',
-     'Configured System (Ansible Tower) : Name'),
+     'Configured System (Ansible Tower) : Hostname'),
     (TowerExplorerJobTemplates, 'All', 'ansible_tower_explorer_job_templates',
      'Job Template (Ansible Tower) : Name'),
     (TowerJobs, 'All', 'ansible_tower_jobs', 'Ansible Tower Job : Name'),
@@ -92,6 +90,8 @@ pytestmark = [
         'params', params_values,
         ids=['{}_{}'.format(param[2], param[1].lower()) for param in params_values]
     ),
+    pytest.mark.uncollectif(lambda params, appliance: params[0] in (MyService, 'physical_providers',
+        'physical_servers', 'volume_backups', 'volume_snapshots') and appliance.version < 5.9)
 ]
 
 
@@ -106,7 +106,7 @@ def _navigation(params, appliance):
 def test_advanced_search_button_displayed(params, appliance):
     view = _navigation(params, appliance)
     if not view.search.is_advanced_search_possible:
-        raise pytest.fail(
+        pytest.fail(
             "Advanced search button is not displayed for {}_{}".format(
                 params[2], params[1].lower())
         )
@@ -116,6 +116,6 @@ def test_can_open_advanced_search(params, appliance):
     view = _navigation(params, appliance)
     view.search.open_advanced_search()
     if not view.search.is_advanced_search_opened:
-        raise pytest.fail("Advanced search is not openable for {}_{}".format(
+        pytest.fail("Advanced search cannot be opened for {}_{}".format(
             params[2], params[1].lower())
         )

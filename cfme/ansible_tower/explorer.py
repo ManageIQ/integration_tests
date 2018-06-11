@@ -2,11 +2,11 @@ from navmazing import NavigateToAttribute
 from widgetastic.widget import Text, View
 from widgetastic_patternfly import Dropdown
 from widgetastic.utils import VersionPick, Version
+from widgetastic_manageiq import Search, ItemsToolBarViewSelector, Button, Accordion, ManageIQTree
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
-from widgetastic_manageiq import Search, ItemsToolBarViewSelector, Button, Accordion, ManageIQTree
 
 
 class TowerExplorerAccordion(View):
@@ -58,12 +58,10 @@ class TowerExplorerProviderView(TowerExplorerView):
 
 
 class TowerExplorerSystemView(TowerExplorerView):
-    search = View.nested(Search)
     toolbar = View.nested(TowerExplorerSystemJobTemplatesToolbar)
 
 
 class TowerExplorerJobTemplatesView(TowerExplorerView):
-    search = View.nested(Search)
     toolbar = View.nested(TowerExplorerSystemJobTemplatesToolbar)
 
 
@@ -122,7 +120,6 @@ class TowerExplorerProviderAll(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
-        self.view.search.clear_simple_search()
 
 
 @navigator.register(TowerExplorerSystem, 'All')
@@ -134,7 +131,6 @@ class TowerExplorerSystemAll(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
         self.view.sidebar.tower_explorer_systems.tree.click_path(
             'All Ansible Tower Configured Systems')
-        self.view.search.clear_simple_search()
 
 
 @navigator.register(TowerExplorerJobTemplates, 'All')
@@ -146,4 +142,3 @@ class TowerExplorerJobTemplatesAll(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
         self.view.sidebar.tower_explorer_job_templates.tree.click_path(
             'All Ansible Tower Job Templates')
-        self.view.search.clear_simple_search()
