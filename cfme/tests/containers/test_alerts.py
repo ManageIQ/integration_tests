@@ -17,7 +17,5 @@ pytestmark = [
 # TODO There needs to be more to this test
 
 
-@pytest.mark.uncollectif(lambda provider: 'alerts' not in provider.endpoints,
-                         reason='No alerts endpoint found for this provider')
 def test_add_alerts_provider(provider):
     provider.setup()
