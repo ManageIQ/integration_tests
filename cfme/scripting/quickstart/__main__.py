@@ -1,3 +1,4 @@
+from __future__ import print_function
 from . import IN_VIRTUAL_ENV, USE_LEGACY_VENV_PATH, mk_parser, main
 
 import sys
