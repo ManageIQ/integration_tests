@@ -12,7 +12,7 @@ from cfme.common.vm_views import (
     ProvisionView, VMToolbar, VMEntities, VMDetailsEntities, EditView,
     SetOwnershipView, ManagementEngineView, PolicySimulationView,
     RetirementView, RetirementViewWithOffset)
-from cfme.exceptions import (FlavorNotFound, InstanceNotFound, ItemNotFound, DestinationNotFound)
+from cfme.exceptions import (InstanceNotFound, ItemNotFound, DestinationNotFound)
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
@@ -321,7 +321,8 @@ class Instance(VM):
             },
             'properties': {
                 'instance_type': partial_match(provisioning.get('instance_type')),
-                'guest_keypair': provisioning.get('guest_keypair')}
+                'guest_keypair': provisioning.get('guest_keypair')
+            }
         }
 
         return inst_args
@@ -334,7 +335,6 @@ class Instance(VM):
         """
         from cfme.cloud.provider.azure import AzureProvider
         from cfme.cloud.provider.ec2 import EC2Provider
-        from cfme.cloud.provider.openstack import OpenStackProvider
 
         if not self.provider.is_refreshed():
             self.provider.refresh_provider_relationships()
@@ -345,100 +345,39 @@ class Instance(VM):
 
         # find out image guid
         image_name = provisioning['image']['name']
-        images = self.appliance.rest_api.collections.templates.filter(Q('name', '=', image_name))
-        for image in images:
-            # Filtering deprecated templates which don't have ems_id
-            try:
-                ems_id = image.ems_id
-            except AttributeError:
-                continue
-            if ems_id == provider_rest.id:
-                image_guid = image.guid
-                break
-
+        image = self.appliance.rest_api.collections.templates.filter(
+            Q('name', '=', image_name) & Q('ems_id', '=', provider_rest.id))[0]
+        # find out flavor
         if ':' in provisioning['instance_type'] and self.provider.one_of(EC2Provider):
             instance_type = provisioning['instance_type'].split(':')[0].strip()
         else:
             instance_type = provisioning['instance_type']
-
-        # find out flavor
-        flavors = self.appliance.rest_api.collections.flavors.find_by(name=instance_type)
-        assert flavors, "Flavor {} wasn't found"
-        for flavor in flavors:
-            try:
-                ems_id = flavor.ems_id
-            except AttributeError:
-                continue
-            if ems_id == provider_rest.id and flavor.ems.name == self.provider.name:
-                flavor_id = flavor.id
-                break
-        else:
-            raise FlavorNotFound("Cannot find flavour {} for provider {}".
-                                 format(instance_type, self.provider.name))
-
-        provider_data = self.appliance.rest_api.get(
-            '{}?attributes=cloud_networks,cloud_subnets,cloud_tenants'.format(provider_rest._href))
-
+        flavor = self.appliance.rest_api.collections.flavors.filter(
+            Q('name', '=', instance_type) & Q('ems_id', '=', provider_rest.id))[0]
         # find out cloud network
-        assert provider_data['cloud_networks']
         cloud_network_name = provisioning.get('cloud_network').strip()
         if self.provider.one_of(EC2Provider, AzureProvider):
             cloud_network_name = cloud_network_name.split()[0]
-        cloud_network = None
-        for cloud_network in provider_data['cloud_networks']:
-            # If name of cloud network is available, find match.
-            # Otherwise just "enabled" is enough.
-            if cloud_network_name and cloud_network_name != cloud_network['name']:
-                continue
-            if cloud_network['enabled']:
-                break
-        else:
-            raise ItemNotFound("Cloudnetwork '{}' ID wasn't found".format(cloud_network))
-
+        cloud_network = self.appliance.rest_api.collections.cloud_networks.filter(
+            Q('name', '=', cloud_network_name) & Q('enabled', '=', 'true'))[0]
         # find out cloud subnet
-        assert provider_data['cloud_subnets']
-        cloud_subnet = None
-        for cloud_subnet in provider_data['cloud_subnets']:
-            if cloud_subnet.get('cloud_network_id') == cloud_network['id']:
-                if not self.provider.one_of(AzureProvider, OpenStackProvider):
-                    if cloud_subnet['status'] in ('available', 'active'):
-                        break
-                else:
-                    break
-        else:
-            raise ItemNotFound("Cloud_subnet '{}' ID wasn't found".format(cloud_subnet))
-
-        def _find_availability_zone_id():
-            subnet_data = self.appliance.rest_api.get('{}?attributes=cloud_subnets'.
-                                                      format(provider_rest._href))
-            for subnet in subnet_data['cloud_subnets']:
-                if subnet['id'] == cloud_subnet['id'] and 'availability_zone_id' in subnet:
-                    return subnet['availability_zone_id']
-            return False
-
+        cloud_subnet = self.appliance.rest_api.collections.cloud_subnets.filter(
+            Q('cloud_network_id', '=', cloud_network['id']))[0]
         # find out availability zone
         availability_zone_id = None
-        if provisioning.get('availability_zone'):
-            av_zone_entities = self.appliance.rest_api.collections.availability_zones.find_by(
-                name=provisioning['availability_zone'])
-            if av_zone_entities and av_zone_entities[0].ems_id == flavor.ems_id:
-                availability_zone_id = av_zone_entities[0].id
-        if not availability_zone_id and 'availability_zone_id' in cloud_subnet:
+        av_zone_name = provisioning.get('availability_zone')
+        if av_zone_name:
+            availability_zone_id = self.appliance.rest_api.collections.availability_zones.filter(
+                Q('name', '=', av_zone_name) & Q('ems_id', '=', flavor.ems_id))[0].id
+        if not availability_zone_id and cloud_subnet.availability_zone_id:
             availability_zone_id = cloud_subnet['availability_zone_id']
-        if not availability_zone_id:
-            availability_zone_id, _ = wait_for(
-                _find_availability_zone_id, num_sec=100, delay=5,
-                message="availability_zone present")
-
         # find out cloud tenant
-        cloud_tenant_id = None
         tenant_name = provisioning.get('cloud_tenant')
         if tenant_name:
-            for tenant in provider_data.get('cloud_tenants', []):
-                if (tenant['name'] == tenant_name and
-                        tenant['enabled'] and
-                        tenant['ems_id'] == flavor.ems_id):
-                    cloud_tenant_id = tenant['id']
+            tenant = self.appliance.rest_api.collections.cloud_tenants.filter(
+                Q('name', '=', tenant_name) &
+                Q('ems_id', '=', provider_rest.id) &
+                Q('enabled', '=', 'true'))[0]
 
         resource_group_id = None
         if self.provider.one_of(AzureProvider):
@@ -455,12 +394,12 @@ class Instance(VM):
         inst_args = {
             "version": "1.1",
             "template_fields": {
-                "guid": image_guid
+                "guid": image.guid
             },
             "vm_fields": {
                 "placement_auto": False,
                 "vm_name": self.name,
-                "instance_type": flavor_id,
+                "instance_type": flavor['id'],
                 "request_type": "template",
                 "cloud_network": cloud_network['id'],
                 "cloud_subnet": cloud_subnet['id'],
@@ -479,8 +418,8 @@ class Instance(VM):
             "miq_custom_attributes": {
             }
         }
-        if cloud_tenant_id:
-            inst_args['vm_fields']['cloud_tenant'] = cloud_tenant_id
+        if tenant_name:
+            inst_args['vm_fields']['cloud_tenant'] = tenant['id']
 
         if resource_group_id:
             inst_args['vm_fields']['resource_group'] = resource_group_id

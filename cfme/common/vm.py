@@ -10,7 +10,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.common.vm_console import ConsoleMixin
 from cfme.common.vm_views import DriftAnalysis, DriftHistory, VMPropertyDetailView
-from cfme.exceptions import VmOrInstanceNotFound, ItemNotFound, OptionNotAvailable
+from cfme.exceptions import CFMEException, VmOrInstanceNotFound, ItemNotFound, OptionNotAvailable
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.services.requests import RequestsView
 from cfme.utils import ParamClassName
@@ -571,7 +571,7 @@ class BaseVMCollection(BaseCollection):
             else:
                 logger.error("Provisioning failed with the message {}".
                             format(provision_request.rest.message))
-                raise Exception(provision_request.rest.message)
+                raise CFMEException(provision_request.rest.message)
         return vm
 
 
