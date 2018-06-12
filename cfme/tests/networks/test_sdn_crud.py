@@ -1,10 +1,10 @@
 import pytest
+import random
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.networks.provider import NetworkProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
@@ -24,9 +24,8 @@ def test_sdn_crud(provider, appliance):
         test_flag: sdn
     """
     view = navigate_to(provider, 'Details')
-    net_prov_name = view.entities.summary("Relationships").get_text_of("Network Manager")
-    collection = appliance.collections.network_providers
-    network_provider = collection.instantiate(prov_class=NetworkProvider, name=net_prov_name)
+    collection = appliance.collections.network_providers.filter({'provider': provider})
+    network_provider = random.choice(collection.all())
 
     view = navigate_to(network_provider, 'Details')
     parent_name = view.entities.relationships.get_text_of("Parent Cloud Provider")

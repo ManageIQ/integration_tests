@@ -12,6 +12,7 @@ from cfme.networks.network_port import NetworkPortCollection
 from cfme.networks.network_router import NetworkRouterCollection
 from cfme.networks.security_group import SecurityGroupCollection
 from cfme.networks.subnet import SubnetCollection
+from cfme.networks.topology import NetworkTopologyView
 from cfme.networks.views import (
     NetworkProviderDetailsView,
     NetworkProviderView,
@@ -24,6 +25,7 @@ from cfme.networks.views import (
     OneProviderSubnetView,
     NetworkProviderEditView
 )
+from cfme.utils.providers import get_crud_by_name
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
@@ -282,11 +284,19 @@ class NetworkProviderCollection(BaseCollection):
     def all(self):
         view = navigate_to(self, 'All')
         list_networks = view.entities.get_all(surf_pages=True)
-        return [self.instantiate(prov_class=self.ENTITY, name=p.name) for p in list_networks]
+        network_providers = []
 
-    # A rare collection override of instantiate
-    def instantiate(self, prov_class, *args, **kwargs):
-        return prov_class.from_collection(self, *args, **kwargs)
+        if 'provider' in self.filters:
+            for item in list_networks:
+                if self.filters.get('provider').name in item.name:
+                    network_providers.append(self.instantiate(name=item.name,
+                                    provider=self.filters.get('provider')))
+        else:
+            for item in list_networks:
+                provider = get_crud_by_name(item.name.split()[0])
+                network_providers.append(self.instantiate(name=item.name, provider=provider))
+
+        return network_providers
 
     def create(self, prov_class, *args, **kwargs):
         # ugly workaround until I move everything to main class
@@ -444,6 +454,7 @@ class OpenNetworkBalancers(CFMENavigateStep):
 @navigator.register(NetworkProvider, 'TopologyFromDetails')
 class OpenTopologyFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
+    VIEW = NetworkTopologyView
 
     def step(self):
         self.prerequisite_view.entities.overview.click_at('Topology')

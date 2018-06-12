@@ -1,10 +1,10 @@
 import pytest
+import random
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.networks.provider import NetworkProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
@@ -21,11 +21,8 @@ def test_sdn_provider_relationships_navigation(provider, tested_part, appliance)
     Metadata:
         test_flag: sdn
     """
-    view = navigate_to(provider, 'Details')
-    net_prov_name = view.entities.summary("Relationships").get_text_of("Network Manager")
-
-    collection = appliance.collections.network_providers
-    network_provider = collection.instantiate(prov_class=NetworkProvider, name=net_prov_name)
+    collection = appliance.collections.network_providers.filter({'provider': provider})
+    network_provider = random.choice(collection.all())
 
     view = navigate_to(network_provider, 'Details')
     value = view.entities.relationships.get_text_of(tested_part)
@@ -38,13 +35,7 @@ def test_provider_topology_navigation(provider, appliance):
     Metadata:
         test_flag: sdn
     """
-    view = navigate_to(provider, 'Details')
-    net_prov_name = view.entities.summary("Relationships").get_text_of("Network Manager")
-
-    collection = appliance.collections.network_providers
-    network_provider = collection.instantiate(prov_class=NetworkProvider, name=net_prov_name)
-
-    navigate_to(network_provider, "TopologyFromDetails")
-
-    provider.delete_if_exists(cancel=False)
-    provider.wait_for_delete()
+    collection = appliance.collections.network_providers.filter({'provider': provider})
+    network_provider = random.choice(collection.all())
+    view = navigate_to(network_provider, "TopologyFromDetails")
+    assert view.is_displayed
