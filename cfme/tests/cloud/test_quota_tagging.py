@@ -5,8 +5,6 @@ from riggerlib import recursive_update
 
 from cfme import test_requirements
 from cfme.configure.configuration.region_settings import Category, Tag
-from cfme.cloud.instance import Instance
-from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI, ViaUI
@@ -17,7 +15,7 @@ from widgetastic.utils import partial_match
 
 pytestmark = [
     test_requirements.quota,
-    pytest.mark.provider([GCEProvider, OpenStackProvider],
+    pytest.mark.provider([OpenStackProvider],
                          required_fields=[['provisioning', 'image']], scope="module")
 ]
 
@@ -51,14 +49,6 @@ def prov_data(provider, vm_name, template_name):
             "catalog": {'vm_name': vm_name, 'catalog_name': {'name': template_name}},
             "environment": {'automatic_placement': True},
             "properties": {'instance_type': partial_match('m1.large')}
-        }
-
-    if provider.one_of(GCEProvider):
-        return {
-            "catalog": {'vm_name': vm_name, 'catalog_name': {'name': template_name}},
-            "environment": {'automatic_placement': True},
-            "properties": {'instance_type': partial_match('1.8 GB'),
-                           'boot_disk_size': partial_match('50'), 'is_preemptible': True}
         }
 
 
@@ -112,7 +102,7 @@ def max_quota_test_instance(appliance, test_domain):
         namespaces.instantiate('CommonMethods'). \
         classes.instantiate('QuotaStateMachine'). \
         instances.instantiate('quota')
-    yield instance
+    return instance
 
 
 def set_entity_quota_source(max_quota_test_instance, entity):
@@ -125,7 +115,7 @@ def set_entity_quota_source(max_quota_test_instance, entity):
 def entities(appliance, request, max_quota_test_instance):
     collection, entity, description = request.param
     set_entity_quota_source(max_quota_test_instance, entity)
-    yield getattr(appliance.collections, collection).instantiate(description)
+    return getattr(appliance.collections, collection).instantiate(description)
 
 
 @pytest.fixture(scope='function')
@@ -139,8 +129,6 @@ def set_entity_quota_tag(request, entities, appliance):
     entities.remove_tag(tag)
 
 
-# OpenStackProvider has infra issue, so skipping the test for it.
-@pytest.mark.uncollectif(lambda provider, appliance: provider.one_of(OpenStackProvider))
 @pytest.mark.parametrize(
     ['set_entity_quota_tag'],
     [
@@ -156,8 +144,8 @@ def test_quota_tagging_cloud_via_lifecycle(request, appliance, provider, prov_da
     """Test Group and User Quota in UI using tagging"""
     recursive_update(prov_data, {
         'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}})
-    instance = Instance.factory(vm_name, provider, template_name)
-    instance.create(**prov_data)
+    prov_data.update({'template_name': template_name})
+    appliance.collections.cloud_instances.create(vm_name, provider, prov_data)
     # nav to requests page to check quota validation
     request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
     provision_request = appliance.collections.requests.instantiate(request_description)
@@ -166,8 +154,6 @@ def test_quota_tagging_cloud_via_lifecycle(request, appliance, provider, prov_da
     assert provision_request.row.reason.text == "Quota Exceeded"
 
 
-# OpenStackProvider has infra issue, so skipping the test for it.
-@pytest.mark.uncollectif(lambda provider, appliance: provider.one_of(OpenStackProvider))
 @pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
 @pytest.mark.parametrize(
     ['set_entity_quota_tag'],
