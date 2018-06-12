@@ -183,7 +183,8 @@ def setup_replication_env(cfme_version, provider_type, provider, lease, sprout_p
     if remote_worker:
         print("Remote Worker Appliance Configuration")
         ip2 = apps[2].hostname
-        command_set2 = ['ap', '', opt, '2', ip1, '', pwd, '', '3', ip1, '', '', '', pwd, pwd]
+        command_set2 = \
+            ('ap', '', opt, '2', ip1, '', pwd, '', '3', ip1, '', '', '', pwd, TimedCommand('', 360))
         apps[2].appliance_console.run_commands(command_set2)
         apps[2].wait_for_evm_service()
         apps[2].wait_for_web_ui()
