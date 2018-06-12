@@ -331,7 +331,8 @@ class Details(CFMENavigateStep):
     VIEW = NetworkProviderDetailsView
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(name=self.obj.name).click()
+        self.prerequisite_view.entities.get_entity(
+            name=self.obj.name, surf_pages=True).click()
 
 
 @navigator.register(NetworkProvider, 'Edit')
