@@ -37,7 +37,7 @@ class IFrameText(Widget):
 
 class InventoryView(BaseLoggedInPage):
 
-    table = Table("//div/table")
+    table = Table(locator='//table[contains(@class, "table")]')
     title = IFrameText(locator='//*[contains(@class, "page-title")]',
                        url="/redhat_access/insights/inventory")
     systems = IFrameText(locator='//*[contains(@class, "system-count")]',

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import fauxfactory
 import pytest
 
 from cfme import test_requirements
@@ -10,6 +9,7 @@ from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils import conf, ssh
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
+from cfme.utils.generators import random_vm_name
 from cfme.utils.hosts import setup_host_creds
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, wait_for_decorator
@@ -26,6 +26,13 @@ pytestmark = [
 ]
 
 
+ssa_expect_files = [
+    "/etc/hosts",
+    "/etc/redhat-access-insights/machine-id",
+    "/etc/passwd"
+]
+
+
 @pytest.fixture
 def register_appliance(request, appliance, reg_method='rhsm'):
     red_hat_updates = RedHatUpdates(service='rhsm', url='subscription.rhn.redhat.com',
@@ -37,27 +44,20 @@ def register_appliance(request, appliance, reg_method='rhsm'):
 
         red_hat_updates.register_appliances()
         wait_for(
-            func=red_hat_updates.is_registering,
-            func_args=[appliance.server.name],
-            delay=10,
-            num_sec=300,
-            fail_func=red_hat_updates.refresh
-        )
-
-        wait_for(
             func=red_hat_updates.is_registered,
             func_args=[appliance.server.name],
             delay=20,
-            num_sec=500,
+            num_sec=800,
             fail_func=red_hat_updates.refresh
         )
-    request.addfinalizer(appliance.unregister)
+    yield
+    appliance.unregister()
 
 
 @pytest.fixture(scope="module")
 def ssa_analysis_profile():
     collected_files = []
-    for file in ["/etc/hosts", "/etc/passwd", "/etc/redhat-access-insights/machine-id"]:
+    for file in ssa_expect_files:
         collected_files.append({"Name": file, "Collect Contents?": True})
 
     analysis_profile_name = 'default'
@@ -77,7 +77,7 @@ def ssa_analysis_profile():
 def vm(request, provider, ssa_analysis_profile, register_appliance):
     """ Fixture to provision instance on the provider """
     # TODO use fauxfactory instead of random_vms
-    vm_name = 'test-rhi-{}'.format(fauxfactory.gen_alphanumeric())
+    vm_name = random_vm_name('rhi')
     vm_data = provider.data.vm_analysis_new
     provisioning_data = vm_data.provisioning
     collection = provider.appliance.provider_based_collection(provider)
