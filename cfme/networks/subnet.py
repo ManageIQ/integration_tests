@@ -88,8 +88,8 @@ class Subnet(Taggable, BaseEntity):
     def parent_provider(self):
         """ Return object of parent cloud provider """
         view = navigate_to(self, 'Details')
-        field_name = 'Parent Cloud Provider' if self.appliance.version >= '5.9' else 'Parent ems cloud'
-        provider_name = view.entities.relationships.get_text_of(field_name)
+        entity = 'Parent Cloud Provider' if self.appliance.version >= '5.9' else 'Parent ems cloud'
+        provider_name = view.entities.relationships.get_text_of(entity)
         return providers.get_crud_by_name(provider_name)
 
     @property
@@ -178,7 +178,7 @@ class OpenCloudNetworks(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(name=self.obj.name).click()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
 @navigator.register(SubnetCollection, 'Add')

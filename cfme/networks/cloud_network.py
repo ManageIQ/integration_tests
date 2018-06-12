@@ -163,7 +163,7 @@ class Details(CFMENavigateStep):
     VIEW = CloudNetworkDetailsView
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(name=self.obj.name).click()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
 @navigator.register(CloudNetworkCollection, 'Add')
