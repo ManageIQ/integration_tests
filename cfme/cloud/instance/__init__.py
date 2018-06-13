@@ -304,8 +304,7 @@ class Instance(VM):
 
     @property
     def vm_default_args(self):
-        """
-        Represents dictionary used for Vm/Instance provision with minimum required default args
+        """Represents dictionary used for Vm/Instance provision with minimum required default args
         """
         provisioning = self.provider.data['provisioning']
         inst_args = {
@@ -328,8 +327,7 @@ class Instance(VM):
 
     @property
     def vm_default_args_rest(self):
-        """
-        Represents dictionary used for REST API Instance provision with minimum required default
+        """Represents dictionary used for REST API Instance provision with minimum required default
         args
         """
         from cfme.cloud.provider.azure import AzureProvider

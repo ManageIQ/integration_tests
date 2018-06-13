@@ -529,8 +529,8 @@ class BaseVMCollection(BaseCollection):
         return vm
 
     def create_rest(self, vm_name, provider, form_values=None, check_existing=False):
-        """
-        Provisions a VM/Instance with the default self.vm_default_args_rest.
+        """Provisions a VM/Instance with the default self.vm_default_args_rest.
+
         self.vm_default_args_rest may be overridden by form_values.
         For more details about rest attributes please check:
         https://access.redhat.com/documentation/en-us/red_hat_cloudforms/4.6/html-single/
@@ -559,7 +559,7 @@ class BaseVMCollection(BaseCollection):
                 form_values = recursive_update(inst_args, form_values)
             response = self.appliance.rest_api.collections.provision_requests.action.create(
                 **form_values)[0]
-            assert_response(vm.appliance)
+            assert_response(self.appliance)
 
             provision_request = vm.appliance.collections.requests.instantiate(
                 description=response.description)

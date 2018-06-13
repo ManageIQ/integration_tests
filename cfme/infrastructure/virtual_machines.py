@@ -991,9 +991,9 @@ class InfraVm(VM):
 
     @property
     def vm_default_args_rest(self):
-        """
-        Represents dictionary used for REST API Vm/Instance provision with minimum required default
-        args
+        """Represents dictionary used for REST API Vm/Instance provision with minimum required
+        default args
+
         """
         from cfme.infrastructure.provider.rhevm import RHEVMProvider
         if not self.provider.is_refreshed():
