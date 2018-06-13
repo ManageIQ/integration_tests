@@ -4,13 +4,18 @@ import subprocess
 from cfme.utils import path
 import pytest
 
+PYTHON_DEB = 'apt-get -yq update && apt-get -yq install python python3'
+PYTHON_RPM = '{cmd} -yq update && {cmd} -yq install python python3'
 IMAGE_SPEC = [
-    ('fedora:24', 'python3'),
-    ('fedora:25', 'python3'),
-    ('fedora:26', 'python3'),
-    ('fedora:27', 'python3'),
-    pytest.param('centos:7', 'python2', marks=pytest.mark.xfail(
-        run=False, reason='bad centos packageset')),
+
+    ('fedora:24', PYTHON_RPM.format(cmd="dnf")),
+    ('fedora:25', PYTHON_RPM.format(cmd="dnf")),
+    ('fedora:26', PYTHON_RPM.format(cmd="dnf")),
+    ('fedora:27', PYTHON_RPM.format(cmd="dnf")),
+    ('centos:7', PYTHON_RPM.format(cmd="yum")),
+    ('debian:stable', PYTHON_DEB),
+    ('ubuntu:artful', PYTHON_DEB),
+    ('ubuntu:bionic', PYTHON_DEB)
 ]
 
 
@@ -36,19 +41,20 @@ def yamls_volume():
     return volume
 
 
-@pytest.mark.parametrize('image, python', IMAGE_SPEC)
+@pytest.mark.parametrize('image, prepare', IMAGE_SPEC, ids=[x[0] for x in IMAGE_SPEC])
+@pytest.mark.parametrize('python', ['python2', 'python3'])
 @pytest.mark.long_running
-def test_quickstart_run(image, python, root_volume, yamls_volume, check_docker):
+def test_quickstart_run(image, python, prepare, root_volume, yamls_volume, check_docker):
     subprocess.check_call(
-        "docker run "
+        "docker run --rm "
         "--volume {root_volume}:/cfme/cfme_tests "
         "--volume {yamls_volume}:/cfme/cfme-qe-yamls "
         "--tty -w /cfme/cfme_tests "
         ""
         "{image} "
-        "bash -c '"
-        "{python} -m cfme.scripting.quickstart && "
-        "{python} -m cfme.scripting.quickstart'"
+        "bash -c '{prepare} &&"
+        "{python} -m cfme.scripting.quickstart --mk-virtualenv ../test_venv && "
+        "{python} -m cfme.scripting.quickstart --mk-virtualenv ../test_venv'"
 
         .format(**locals()),
         shell=True)

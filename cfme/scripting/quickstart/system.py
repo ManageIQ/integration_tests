@@ -52,20 +52,16 @@ if os.path.exists(OS_RELEASE_FILE):
             if version:
                 OS_VERSION = version.group(1)
 
+FC_OLD = (
+    " python2-virtualenv gcc postgresql-devel libxml2-devel"
+    " libxslt-devel zeromq3-devel libcurl-devel"
+    " redhat-rpm-config gcc-c++ openssl-devel"
+    " libffi-devel python-devel tesseract"
+    " freetype-devel python2-debuginfo python3-debuginfo 'dnf-command(debuginfo-install)'")
+
 # These package specs include debuginfo packages, which have to be processed out
 REDHAT_PACKAGES_SPECS = [
-    ("Fedora release 23", "nss",
-     " python-virtualenv gcc postgresql-devel libxml2-devel"
-     " libxslt-devel zeromq3-devel libcurl-devel"
-     " redhat-rpm-config gcc-c++ openssl-devel"
-     " libffi-devel python-devel tesseract"
-     " freetype-devel python-debuginfo"),
-    ("Fedora release 24", "nss",
-     " python-virtualenv gcc postgresql-devel libxml2-devel"
-     " libxslt-devel zeromq3-devel libcurl-devel"
-     " redhat-rpm-config gcc-c++ openssl-devel"
-     " libffi-devel python-devel tesseract"
-     " freetype-devel python-debuginfo"),
+    ("Fedora release 24", "nss", FC_OLD),
     ("Fedora release 25", "nss",
      " python2-virtualenv gcc postgresql-devel libxml2-devel"
      " libxslt-devel zeromq3-devel libcurl-devel"
@@ -106,19 +102,18 @@ REDHAT_PACKAGES_SPECS = [
      " yum-utils")
 ]
 
+
+UBUNTU_PKGS = (
+    "python-virtualenv gcc postgresql libxml2-dev"
+    " libxslt1-dev libzmq3-dev libcurl4-openssl-dev"
+    " g++ openssl libffi-dev python-dev libtesseract3"
+    " libpng-dev libfreetype6-dev libssl-dev python-dbg"
+)
+
 OS_PACKAGES_SPECS = [
     # Extend this
-    ("Ubuntu", "16.04.3 LTS (Xenial Xerus)", "openssl",
-     " python-virtualenv gcc postgresql libxml2-dev"
-     " libxslt1-dev libzmq3-dev libcurl4-openssl-dev"
-     " g++ openssl libffi-dev python-dev libtesseract3"
-     " libpng-dev libfreetype6-dev libssl-dev python-dbg"),
-
-    ("Ubuntu", "16.04.4 LTS (Xenial Xerus)", "openssl",
-     " python-virtualenv gcc postgresql libxml2-dev"
-     " libxslt1-dev libzmq3-dev libcurl4-openssl-dev"
-     " g++ openssl libffi-dev python-dev libtesseract3"
-     " libpng-dev libfreetype6-dev libssl-dev python-dbg")
+    ("Ubuntu", "16.04.3 LTS (Xenial Xerus)", "openssl", UBUNTU_PKGS),
+    ("Ubuntu", "16.04.4 LTS (Xenial Xerus)", "openssl", UBUNTU_PKGS)
 ]
 
 # Holder for processed -debuginfo packages
@@ -164,20 +159,22 @@ else:
     INSTALL_COMMAND = None
 
 
-def retry_install_once(command):
+def retry_install_once(command, shell):
+    # TODO: remove subprocess.call usage once debugging is done
+    import subprocess
     try:
-        run_cmd_or_exit(command)
+        run_cmd_or_exit(command, shell=shell, call=subprocess.call)
     except SystemExit:
         print("Hit error during yum/dnf install or debuginfo-install, re-trying...")
         time.sleep(5)
-        run_cmd_or_exit(command)
+        run_cmd_or_exit(command, shell=shell, call=subprocess.call)
 
 
 def install_system_packages():
     if INSTALL_COMMAND and REQUIRED_PACKAGES:
-        run_cmd_or_exit(INSTALL_COMMAND + REQUIRED_PACKAGES, shell=True)
+        retry_install_once(INSTALL_COMMAND + REQUIRED_PACKAGES, shell=True)
     if DEBUG_INSTALL_COMMAND and DEBUG_PACKAGES:
-        run_cmd_or_exit('{} {}'.format(DEBUG_INSTALL_COMMAND, ' '.join(DEBUG_PACKAGES)),
+        retry_install_once('{} {}'.format(DEBUG_INSTALL_COMMAND, ' '.join(DEBUG_PACKAGES)),
                         shell=True)
     else:
         print("WARNING: unknown distribution,",
