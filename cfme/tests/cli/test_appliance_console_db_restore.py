@@ -123,7 +123,7 @@ def get_ext_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm, 
 
 
 @pytest.fixture
-def get_ha_appliances_with_providers(appliance, unconfigured_appliances, app_creds):
+def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
     """Configure HA environment
 
     Appliance one configuring dedicated database, 'ap' launch appliance_console,
@@ -155,7 +155,7 @@ def get_ha_appliances_with_providers(appliance, unconfigured_appliances, app_cre
     monitor. wait 30 seconds for service to start '' finish.
 
     """
-    mon = '9' if appliance.version < '5.9.3.1' else '8'
+    mon = '9' if unconfigured_appliances[0].version < '5.9.3.1' else '8'
     appl1, appl2, appl3 = unconfigured_appliances
     app0_ip = appl1.hostname
     app1_ip = appl2.hostname
