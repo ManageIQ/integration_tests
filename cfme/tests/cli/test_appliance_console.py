@@ -91,7 +91,8 @@ def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
     wait_for(date_changed)
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
+@pytest.mark.uncollectif(
+    lambda appliance: appliance.version < '5.9' or appliance.version <= '5.9.3')
 def test_appliance_console_db_maintenance_hourly(appliance_with_preset_time):
     """Test database hourly re-indexing through appliance console"""
     app = appliance_with_preset_time
@@ -105,6 +106,8 @@ def test_appliance_console_db_maintenance_hourly(appliance_with_preset_time):
     wait_for(maintenance_run, timeout=300)
 
 
+@pytest.mark.uncollectif(lambda appliance: appliance.version >= '5.9.3.1',
+    reason="Feature removed in latest 5.9.3")
 @pytest.mark.parametrize('period', [
     ['hourly'],
     ['daily', '10'],
@@ -197,6 +200,7 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     and evm starts up again pointing at the new primary database.
 
     """
+    mon = '9' if unconfigured_appliances[0].version < '5.9.3.1' else '8'
     apps = unconfigured_appliances
     app0_ip = apps[0].hostname
     app1_ip = apps[1].hostname
@@ -220,7 +224,7 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
         TimedCommand('y', 60), '')
     apps[1].appliance_console.run_commands(command_set)
     # Configure automatic failover on EVM appliance
-    command_set = ('ap', '', '9', TimedCommand('1', 30), '')
+    command_set = ('ap', '', mon, TimedCommand('1', 30), '')
     apps[2].appliance_console.run_commands(command_set)
 
     def is_ha_monitor_started(appliance):
@@ -273,8 +277,8 @@ def test_appliance_console_external_db_create(
 def test_appliance_console_extend_storage(unconfigured_appliance):
     """'ap' launches appliance_console, '' clears info screen, '10' extend storage, '1' select
     disk, 'y' confirm configuration and '' complete."""
-
-    command_set = ('ap', '', '10', '1', 'y', '')
+    opt = '10' if unconfigured_appliance.version < '5.9.3.1' else '9'
+    command_set = ('ap', '', opt, '1', 'y', '')
     unconfigured_appliance.appliance_console.run_commands(command_set)
 
     def is_storage_extended():
@@ -286,14 +290,14 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
     """'ap' launches appliance_console, '' clears info screen, '11' setup IPA,
     + wait 40 secs and '' finish."""
 
-    setup_ipa = '11'
+    setup_ipa = '11' if configured_appliance.version < '5.9.3.1' else '10'
     command_set = ('ap', RETURN, setup_ipa,
-                   ipa_crud.host1,
-                   ipa_crud.ipadomain or RETURN,
-                   ipa_crud.iparealm or RETURN,
-                   ipa_crud.ipaprincipal or RETURN,
-                   ipa_crud.bind_password,
-                   TimedCommand('y', 40), RETURN)
+               ipa_crud.host1,
+               ipa_crud.ipadomain or RETURN,
+               ipa_crud.iparealm or RETURN,
+               ipa_crud.ipaprincipal or RETURN,
+               ipa_crud.bind_password,
+               TimedCommand('y', 40), RETURN)
     configured_appliance.appliance_console.run_commands(command_set)
     configured_appliance.sssd.wait_for_running()
     assert configured_appliance.ssh_client.run_command("cat /etc/ipa/default.conf |"
@@ -319,7 +323,7 @@ def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configu
                             username=app_creds['sshlogin'],
                             password=app_creds['sshpass'])
     evm_tail.fix_before_start()
-    ext_auth = '12'
+    ext_auth = '12' if configured_appliance.version < '5.9.3.1' else '11'
     command_set = ('ap', '', ext_auth, auth_type.index, '4')
     configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
@@ -331,7 +335,7 @@ def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configu
                             password=app_creds['sshpass'])
 
     evm_tail.fix_before_start()
-    command_set = ('ap', '', '12', auth_type.index, '4')
+    command_set = ('ap', '', ext_auth, auth_type.index, '4')
     configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
@@ -348,7 +352,7 @@ def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_app
                             username=app_creds['sshlogin'],
                             password=app_creds['password'])
     evm_tail.fix_before_start()
-    ext_auth = '12'
+    ext_auth = '12' if configured_appliance.version < '5.9.3.1' else '11'
     command_set = ('ap', '', ext_auth, '1', '2', '3', '4')
     configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
@@ -371,7 +375,8 @@ def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
     """'ap' launches appliance_console, '' clears info screen, '14' Hardens appliance using SCAP
     configuration, '' complete."""
 
-    command_set = ('ap', '', '14', '')
+    opt = '14' if temp_appliance_preconfig.version < '5.9.3.1' else '13'
+    command_set = ('ap', '', opt, '')
     temp_appliance_preconfig.appliance_console.run_commands(command_set)
 
     with tempfile.NamedTemporaryFile('w') as f:

@@ -92,7 +92,7 @@ def setup_ha_env(cfme_version, provider_type, provider, lease, desc):
     ip2 = apps[2].hostname
     opt = '5' if cfme_version >= "5.8" else '8'
     rep = '6' if cfme_version >= "5.8" else '9'
-    if cfme_version < '5.9':
+    if cfme_version < '5.8':
         mon = '12'
     elif cfme_version > '5.9.3':
         mon = '8'
