@@ -32,7 +32,8 @@ def setup_host_creds(provider, host_name, remove_creds=False, ignore_errors=Fals
             with update(test_host):
                 if test_host.ip_address is None:
                     test_host.ip_address = socket.gethostbyname_ex(host_name)[2][0]
-                test_host.credentials = host.get_credentials_from_config(host_data['credentials'])
+                test_host.credentials = host.Host.get_credentials_from_config(
+                    host_data['credentials'])
         elif test_host.has_valid_credentials and remove_creds:
             with update(test_host):
                 test_host.credentials = host.Host.Credential(principal="", secret="",

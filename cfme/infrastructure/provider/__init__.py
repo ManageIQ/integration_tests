@@ -18,7 +18,6 @@ from cfme.infrastructure.cluster import ClusterView, ClusterToolbar
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.virtual_machines import InfraVm, InfraTemplate
 from cfme.modeling.base import BaseCollection
-from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
@@ -167,14 +166,9 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         result = []
         host_collection = self.appliance.collections.hosts
         for host in self.data.get("hosts", []):
-            creds = conf.credentials.get(host["credentials"], {})
-            cred = Host.Credential(
-                principal=creds["username"],
-                secret=creds["password"],
-                verify_secret=creds["password"],
-            )
-
-            result.append(host_collection.instantiate(name=host["name"], credentials=cred,
+            creds = {cred_type: Host.Credential.from_config(cred) for
+                     cred_type, cred in host["credentials"].items()}
+            result.append(host_collection.instantiate(name=host["name"], credentials=creds,
                                                       provider=self))
         return result
 

@@ -39,8 +39,11 @@ def pytest_generate_tests(metafunc):
 
         host = hosts[0]
         ip_address = resolve_hostname(host["name"])
-        endpoint = VirtualCenterEndpoint(credentials=host["credentials"], hostname=host["name"],
-                                         ip_address=ip_address)
+        endpoint = VirtualCenterEndpoint(
+            credentials=host["credentials"]["default"],
+            hostname=host["name"],
+            ip_address=ip_address
+        )
         # Mock provider data
         provider_data = {}
         provider_data.update(args['provider'].data)
