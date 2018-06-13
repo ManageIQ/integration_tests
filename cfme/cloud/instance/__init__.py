@@ -369,8 +369,6 @@ class Instance(VM):
         if av_zone_name:
             availability_zone_id = self.appliance.rest_api.collections.availability_zones.filter(
                 Q('name', '=', av_zone_name) & Q('ems_id', '=', flavor.ems_id))[0].id
-        if not availability_zone_id and cloud_subnet.availability_zone_id:
-            availability_zone_id = cloud_subnet['availability_zone_id']
         # find out cloud tenant
         tenant_name = provisioning.get('cloud_tenant')
         if tenant_name:
@@ -403,7 +401,6 @@ class Instance(VM):
                 "request_type": "template",
                 "cloud_network": cloud_network['id'],
                 "cloud_subnet": cloud_subnet['id'],
-                "placement_availability_zone": availability_zone_id,
 
             },
             "requester": {
@@ -420,10 +417,10 @@ class Instance(VM):
         }
         if tenant_name:
             inst_args['vm_fields']['cloud_tenant'] = tenant['id']
-
         if resource_group_id:
             inst_args['vm_fields']['resource_group'] = resource_group_id
-
+        if availability_zone_id:
+            inst_args['vm_fields']['placement_availability_zone'] = availability_zone_id
         if self.provider.one_of(EC2Provider):
             inst_args['vm_fields']['monitoring'] = 'basic'
 
