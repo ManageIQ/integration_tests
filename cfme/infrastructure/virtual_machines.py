@@ -9,7 +9,6 @@ import attr
 import fauxfactory
 import re
 
-from manageiq_client.filters import Q
 from navmazing import NavigateToSibling, NavigationDestinationNotFound, NavigateToAttribute
 from widgetastic.utils import partial_match, Parameter, VersionPick, Version
 from widgetastic.widget import (
@@ -1002,25 +1001,15 @@ class InfraVm(VM):
             wait_for(self.provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
         provisioning = self.provider.data['provisioning']
         template_name = provisioning['template']
-        templates = self.appliance.rest_api.collections.templates.filter(
-            Q('name', '=', template_name))
-        for template in templates:
-            try:
-                ems_id = template.ems_id
-            except AttributeError:
-                continue
-            if ems_id == self.provider.id:
-                template_guid = template.guid
-                break
-        else:
-            raise Exception('No such template {} on provider!'.format(template_name))
+        template = self.appliance.rest_api.collections.templates.get(name=template_name,
+                                                                     ems_id=self.provider.id)
         host_id = self.appliance.rest_api.collections.hosts.get(name=provisioning['host']).id
         ds_id = self.appliance.rest_api.collections.data_stores.get(
             name=provisioning['datastore']).id
         inst_args = {
             "version": "1.1",
             "template_fields": {
-                "guid": template_guid,
+                "guid": template.guid,
             },
             "vm_fields": {
                 "placement_auto": False,

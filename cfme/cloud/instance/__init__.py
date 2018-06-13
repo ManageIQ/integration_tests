@@ -1,5 +1,4 @@
 import attr
-from manageiq_client.filters import Q
 from navmazing import NavigateToSibling, NavigateToAttribute, NavigationDestinationNotFound
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import CheckableBootstrapTreeview, Dropdown, Button
@@ -345,37 +344,41 @@ class Instance(VM):
 
         # find out image guid
         image_name = provisioning['image']['name']
-        image = self.appliance.rest_api.collections.templates.filter(
-            Q('name', '=', image_name) & Q('ems_id', '=', provider_rest.id))[0]
+        image = self.appliance.rest_api.collections.templates.get(name=image_name,
+                                                                  ems_id=provider_rest.id)
         # find out flavor
         if ':' in provisioning['instance_type'] and self.provider.one_of(EC2Provider):
             instance_type = provisioning['instance_type'].split(':')[0].strip()
         else:
             instance_type = provisioning['instance_type']
-        flavor = self.appliance.rest_api.collections.flavors.filter(
-            Q('name', '=', instance_type) & Q('ems_id', '=', provider_rest.id))[0]
+        flavor = self.appliance.rest_api.collections.flavors.get(name=instance_type,
+                                                                 ems_id=provider_rest.id)
         # find out cloud network
         cloud_network_name = provisioning.get('cloud_network').strip()
         if self.provider.one_of(EC2Provider, AzureProvider):
             cloud_network_name = cloud_network_name.split()[0]
-        cloud_network = self.appliance.rest_api.collections.cloud_networks.filter(
-            Q('name', '=', cloud_network_name) & Q('enabled', '=', 'true'))[0]
+        cloud_network = self.appliance.rest_api.collections.cloud_networks.get(
+            name=cloud_network_name, enabled='true')
         # find out cloud subnet
-        cloud_subnet = self.appliance.rest_api.collections.cloud_subnets.filter(
-            Q('cloud_network_id', '=', cloud_network['id']))[0]
+        cloud_subnet = self.appliance.rest_api.collections.cloud_subnets.get(
+            cloud_network_id=cloud_network['id'])
         # find out availability zone
-        availability_zone_id = None
+        azone_id = None
         av_zone_name = provisioning.get('availability_zone')
         if av_zone_name:
-            availability_zone_id = self.appliance.rest_api.collections.availability_zones.filter(
-                Q('name', '=', av_zone_name) & Q('ems_id', '=', flavor.ems_id))[0].id
+            azone_id = self.appliance.rest_api.collections.availability_zones.get(
+                name=av_zone_name, ems_id=flavor.ems_id).id
         # find out cloud tenant
         tenant_name = provisioning.get('cloud_tenant')
         if tenant_name:
-            tenant = self.appliance.rest_api.collections.cloud_tenants.filter(
-                Q('name', '=', tenant_name) &
-                Q('ems_id', '=', provider_rest.id) &
-                Q('enabled', '=', 'true'))[0]
+            try:
+                tenant = self.appliance.rest_api.collections.cloud_tenants.get(
+                    name=tenant_name,
+                    ems_id=provider_rest.id,
+                    enabled='true')
+            except IndexError:
+                raise ItemNotFound("Tenant {} not found on provider {}".format(
+                    tenant_name, self.provider.name))
 
         resource_group_id = None
         if self.provider.one_of(AzureProvider):
@@ -419,8 +422,8 @@ class Instance(VM):
             inst_args['vm_fields']['cloud_tenant'] = tenant['id']
         if resource_group_id:
             inst_args['vm_fields']['resource_group'] = resource_group_id
-        if availability_zone_id:
-            inst_args['vm_fields']['placement_availability_zone'] = availability_zone_id
+        if azone_id:
+            inst_args['vm_fields']['placement_availability_zone'] = azone_id
         if self.provider.one_of(EC2Provider):
             inst_args['vm_fields']['monitoring'] = 'basic'
 
