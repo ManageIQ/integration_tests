@@ -274,7 +274,7 @@ class TaggableCommonBase(object):
         """
         if not tag:
             tag = self._set_random_tag(view)
-        category_name = tag.category.display_name
+        category_name = tag.category
         tag_name = tag.display_name
         # Handle nested view.form and where the view contains form widgets
         try:
@@ -348,7 +348,6 @@ class Taggable(TaggableCommonBase):
             details (bool): set False if tag should be added for list selection,
                             default is details page
         """
-
         step = 'EditTagsFromDetails' if details else 'EditTags'
         view = navigate_to(self, step)
         added_tag, updated = self._assign_tag_action(view, tag)
