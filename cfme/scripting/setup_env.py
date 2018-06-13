@@ -92,7 +92,12 @@ def setup_ha_env(cfme_version, provider_type, provider, lease, desc):
     ip2 = apps[2].hostname
     opt = '5' if cfme_version >= "5.8" else '8'
     rep = '6' if cfme_version >= "5.8" else '9'
-    mon = '9' if cfme_version >= "5.8" else '12'
+    if cfme_version < '5.9':
+        mon = '12'
+    elif cfme_version > '5.9.3':
+        mon = '8'
+    else:
+        mon = '9'
     port = (ip0, '') if cfme_version >= "5.8" else (ip0,)
     command_set0 = ('ap', '', opt, '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
     apps[0].appliance_console.run_commands(command_set0)

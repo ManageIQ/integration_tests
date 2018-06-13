@@ -123,7 +123,7 @@ def get_ext_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm, 
 
 
 @pytest.fixture
-def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
+def get_ha_appliances_with_providers(appliance, unconfigured_appliances, app_creds):
     """Configure HA environment
 
     Appliance one configuring dedicated database, 'ap' launch appliance_console,
@@ -155,6 +155,7 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
     monitor. wait 30 seconds for service to start '' finish.
 
     """
+    mon = '9' if appliance.version < '5.9.3.1' else '8'
     appl1, appl2, appl3 = unconfigured_appliances
     app0_ip = appl1.hostname
     app1_ip = appl2.hostname
@@ -178,7 +179,7 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
         TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
     # Configure automatic failover on EVM appliance
-    command_set = ('ap', '', '9', TimedCommand('1', 30), '')
+    command_set = ('ap', '', mon, TimedCommand('1', 30), '')
     appl3.appliance_console.run_commands(command_set)
 
     def is_ha_monitor_started(appliance):
