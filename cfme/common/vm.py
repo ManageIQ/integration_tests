@@ -483,7 +483,8 @@ class BaseVMCollection(BaseCollection):
         else:
             inst_args = vm.vm_default_args
             form_values = recursive_update(inst_args, form_values)
-        if form_values.get('environment', {}).get('automatic_placement'):
+        env = form_values.get('environment') or {}
+        if env.get('automatic_placement'):
             form_values['environment'] = {'automatic_placement': True}
         form_values.update({'provider_name': provider.name})
         if not form_values.get('template_name'):
