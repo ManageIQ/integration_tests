@@ -1,0 +1,5 @@
+.cfme_venv/
+build/
+dist/
+docs/_build
+*.pyc
