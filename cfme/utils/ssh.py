@@ -572,7 +572,7 @@ class SSHClient(paramiko.SSHClient):
 
     def uptime(self):
         out = self.run_command('cat /proc/uptime').output
-        match = re.findall('\d+\.\d+', out)
+        match = re.findall(r'\d+\.\d+', out)
 
         if match:
             return float(match[0])

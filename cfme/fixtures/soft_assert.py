@@ -35,9 +35,18 @@ import traceback
 import cfme.utils
 from cfme.utils.appliance import DummyAppliance, find_appliance
 
+import base64
+
+
 # Use a thread-local store for failed soft asserts, making it thread-safe
 # in parallel testing and shared among the functions in this module.
 _thread_locals = local()
+
+
+def base64_from_text(text):
+    if not isinstance(text, bytes):
+        text = text.encode("utf-8")
+    return base64.b64encode(text)
 
 
 @pytest.mark.hookwrapper(tryfirst=True)
@@ -103,13 +112,13 @@ def handle_assert_artifacts(request, fail_message=None):
         return
     if not fail_message:
         short_tb = '{}'.format(sys.exc_info()[1])
-        short_tb = short_tb.encode('base64')
+        short_tb = base64_from_text(short_tb)
         var_tb = traceback.format_tb(sys.exc_info()[2])
         full_tb = "".join(var_tb)
-        full_tb = full_tb.encode('base64')
+        full_tb = base64_from_text(full_tb)
 
     else:
-        short_tb = full_tb = fail_message.encode('base64')
+        short_tb = full_tb = base64_from_text(fail_message)
 
     try:
         ss = cfme.utils.browser.browser().get_screenshot_as_base64()
@@ -121,7 +130,7 @@ def handle_assert_artifacts(request, fail_message=None):
         else:
             ss_error = type(b_ex).__name__
     if ss_error:
-        ss_error = ss_error.encode('base64')
+        ss_error = base64_from_text(ss_error)
 
     # A simple id to match the artifacts together
     sa_id = "softassert-{}".format(fauxfactory.gen_alpha(length=3).upper())

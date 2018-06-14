@@ -52,7 +52,6 @@ from cfme.fixtures.parallelizer import remote
 from cfme.fixtures.pytest_store import store
 from cfme.utils import at_exit, conf
 from cfme.utils.log import create_sublogger
-from cfme.utils.path import conf_path
 from cfme.test_framework.appliance import PLUGIN_KEY as APPLIANCE_PLUGIN
 
 # Initialize slaveid to None, indicating this as the master process
@@ -103,9 +102,10 @@ signal.signal(signal.SIGQUIT, handle_end_session)
 @attr.s(hash=False)
 class SlaveDetail(object):
 
-    slaveid_generator = ('slave{:02d}'.format(i) for i in count())
+    slaveid_generator = ('slave{:02d}'.format(i).encode('ascii') for i in count())
 
     appliance = attr.ib()
+    worker_config = attr.ib()
     id = attr.ib(default=attr.Factory(
         lambda: next(SlaveDetail.slaveid_generator)))
     forbid_restart = attr.ib(default=False, init=False)
@@ -119,10 +119,14 @@ class SlaveDetail(object):
             return
         devnull = open(os.devnull, 'w')
         # worker output redirected to null; useful info comes via messages and logs
-        self.process = subprocess.Popen(
-            ['python', remote.__file__, self.id, self.appliance.as_json, conf.runtime['env']['ts']],
-            stdout=devnull,
-        )
+        self.process = subprocess.Popen([
+            'python', remote.__file__,
+            '--worker', self.id,
+            '--appliance', self.appliance.as_json,
+            '--ts', conf.runtime['env']['ts'],
+            '--config', json.dumps(self.worker_config)
+
+        ], stdout=devnull)
         at_exit(self.process.kill)
 
     def poll(self):
@@ -165,24 +169,19 @@ class ParallelSession(object):
         self.sock.bind(zmq_endpoint)
 
         # clean out old slave config if it exists
-        slave_config = conf_path.join('slave_config.yaml')
-        slave_config.check() and slave_config.remove()
 
-        # write out the slave config
-        conf.runtime['slave_config'] = {
+        self.worker_config = {
             'args': self.config.args,
             'options': dict(  # copy to avoid aliasing
-                self.config.option.__dict__,
+                vars(self.config.option),
                 use_sprout=False,   # Slaves don't use sprout
             ),
             'zmq_endpoint': zmq_endpoint,
+            'appliance_data': getattr(self, "slave_appliances_data", {})
         }
-        if hasattr(self, "slave_appliances_data"):
-            conf.runtime['slave_config']["appliance_data"] = self.slave_appliances_data
-        conf.save('slave_config')
 
         for appliance in self.appliances:
-            slave_data = SlaveDetail(appliance=appliance)
+            slave_data = SlaveDetail(appliance=appliance, worker_config=self.worker_config)
             self.slaves[slave_data.id] = slave_data
 
         for slave in sorted(self.slaves):
@@ -237,7 +236,9 @@ class ParallelSession(object):
 
         """
         event_json = json.dumps(event_data)
-        self.sock.send_multipart([slave.id, '', event_json])
+        if not isinstance(event_json, bytes):
+            event_json = event_json.encode('utf-8')
+        self.sock.send_multipart([slave.id, b'', event_json])
 
     def recv(self):
         # poll the zmq socket, populate the recv queue deque with responses
@@ -264,6 +265,8 @@ class ParallelSession(object):
         """
         # differentiate master and slave messages by default
         prefix = getattr(prefix, 'id', prefix)
+        if not isinstance(prefix, str):
+            prefix = prefix.decode('ascii')
         if not markup:
             if prefix == 'master':
                 markup = {'blue': True}
@@ -308,7 +311,7 @@ class ParallelSession(object):
                     self.print_message(
                         '{} still shutting down, '
                         'will continue polling for {} seconds '
-                        .format(slaveid, remaining_time), blue=True)
+                        .format(slaveid.decode('ascii'), remaining_time), blue=True)
                 sleep(poll_sleep_time)
 
         # start the poll
@@ -364,7 +367,7 @@ class ParallelSession(object):
 
         - sets up distributed terminal reporter
         - sets up zmp ipc socket for the slaves to use
-        - writes pytest options and args to slave_config.yaml
+        - writes pytest options and args to worker_config.yaml
         - starts the slaves
         - register atexit kill hooks to destroy slaves at the end if things go terribly wrong
 

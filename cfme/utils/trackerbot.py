@@ -1,9 +1,9 @@
 import argparse
 import json
 import re
-import six.moves.urllib.parse
-import six.moves.urllib.request
-import six.moves.urllib.error
+from six.moves.urllib_parse import urlparse, parse_qs
+
+
 from collections import defaultdict, namedtuple
 from datetime import date, datetime
 
@@ -18,13 +18,15 @@ from cfme.utils.log import logger
 from cfme.utils.providers import providers_data
 from cfme.utils.version import get_stream
 
+session = requests.Session()
+
 
 # regexen to match templates to streams and pull out the date
 # stream names must be slugified (alphanumeric, dashes, underscores only)
 # regex must include month and day, may include year
 # If year is unset, will be the most recent month/day (not in the future)
 stream_matchers = (
-    (get_stream('latest'), '^miq-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
+    (get_stream('latest'), r'^miq-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
     (get_stream('5.2'), r'^cfme-52.*-(?P<month>\d{2})(?P<day>\d{2})'),
     (get_stream('5.3'), r'^cfme-53.*-(?P<month>\d{2})(?P<day>\d{2})'),
     (get_stream('5.4'), r'^cfme-54.*-(?P<month>\d{2})(?P<day>\d{2})'),
@@ -94,7 +96,7 @@ def api(trackerbot_url=None):
     if trackerbot_url is None:
         trackerbot_url = conf['url']
 
-    return slumber.API(trackerbot_url)
+    return slumber.API(trackerbot_url, session=session)
 
 
 def futurecheck(check_date):
@@ -369,11 +371,11 @@ def depaginate(api, result):
     ret_objects = result['objects']
     while meta['next']:
         # parse out url bits for constructing the new api req
-        next_url = six.moves.urllib.parse.urlparse(meta['next'])
+        next_url = urlparse(meta['next'])
         # ugh...need to find the word after 'api/' in the next URL to
         # get the resource endpoint name; not sure how to make this better
         next_endpoint = next_url.path.strip('/').split('/')[-1]
-        next_params = {k: v[0] for k, v in six.moves.urllib.parse.parse_qs(next_url.query).items()}
+        next_params = {k: v[0] for k, v in parse_qs(next_url.query).items()}
         result = getattr(api, next_endpoint).get(**next_params)
         ret_objects.extend(result['objects'])
         meta = result['meta']
@@ -391,13 +393,11 @@ def depaginate(api, result):
 def composite_uncollect(build, source='jenkins'):
     """Composite build function"""
     since = env.get('ts', time.time())
-    url = "{0}?build={1}&source={2}&since={3}".format(
-        conf['ostriz'],
-        six.moves.urllib.parse.quote(build),
-        six.moves.urllib.parse.quote(source),
-        six.moves.urllib.parse.quote(since))
     try:
-        resp = requests.get(url, timeout=10)
+        resp = session.get(
+            conf['ostriz'],
+            params={"build": build, "source": source, "since": since},
+            timeout=10)
         return resp.json()
     except Exception as e:
         print(e)
