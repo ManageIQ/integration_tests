@@ -1,4 +1,5 @@
 import pytest
+import random
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -68,5 +69,6 @@ def test_sdn_balancers_tagvis(check_item_visibility, visibility, network_prov_wi
         3. As admin remove tag
         4. Login as restricted user, item is not visible for user
     """
-    balancers_for_provider = network_prov_with_load_balancers[0].balancers.all()
+    network_prov = random.choice(network_prov_with_load_balancers)[0]
+    balancers_for_provider = network_prov.balancers.all()
     check_item_visibility(balancers_for_provider[0], visibility)
