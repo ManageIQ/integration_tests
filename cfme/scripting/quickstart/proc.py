@@ -7,6 +7,10 @@ from pipes import quote
 
 
 PRISTINE_ENV = dict(os.environ)
+if PRISTINE_ENV.get('CFME_QUICKSTART_DEBUG'):
+    _call = subprocess.check_call
+else:
+    _call = subprocess.check_output
 
 
 def command_text(command, shell):
@@ -17,7 +21,7 @@ def command_text(command, shell):
 
 
 def run_cmd_or_exit(command, shell=False, long_running=False,
-                    call=subprocess.check_call, **kw):
+                    call=_call, **kw):
     res = None
     try:
         if long_running:

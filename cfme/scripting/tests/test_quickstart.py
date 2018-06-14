@@ -53,6 +53,7 @@ def test_quickstart_run(image, python, prepare, root_volume, yamls_volume, check
         "--volume {yamls_volume}:/cfme/cfme-qe-yamls "
         "--tty -w /cfme/cfme_tests "
         "-e DEBIAN_FRONTEND=noninteractive "
+        "-e CFME_QUICKSTART_DEBUG=1 "
         ""
         "{image} "
         "bash -c '{prepare} &&"

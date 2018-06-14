@@ -135,14 +135,12 @@ else:
 
 
 def retry_install_once(command, shell):
-    # TODO: remove subprocess.call usage once debugging is done
-    import subprocess
     try:
-        run_cmd_or_exit(command, shell=shell, call=subprocess.check_call)
+        run_cmd_or_exit(command, shell=shell)
     except SystemExit:
         print("Hit error during yum/dnf install or debuginfo-install, re-trying...")
         time.sleep(5)
-        run_cmd_or_exit(command, shell=shell, call=subprocess.check_call)
+        run_cmd_or_exit(command, shell=shell)
 
 
 def install_system_packages():
