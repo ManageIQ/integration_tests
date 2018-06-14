@@ -4,10 +4,9 @@ import subprocess
 from cfme.utils import path
 import pytest
 
-PYTHON_DEB = 'apt-get -yq update && apt-get -yq install python python3'
+PYTHON_DEB = 'apt-get -y update && apt-get -y install python python3'
 PYTHON_RPM = '{cmd} -yq update && {cmd} -yq install python python3'
 IMAGE_SPEC = [
-
     ('fedora:24', PYTHON_RPM.format(cmd="dnf")),
     ('fedora:25', PYTHON_RPM.format(cmd="dnf")),
     ('fedora:26', PYTHON_RPM.format(cmd="dnf")),
@@ -15,7 +14,7 @@ IMAGE_SPEC = [
     ('centos:7', PYTHON_RPM.format(cmd="yum")),
     ('debian:stable', PYTHON_DEB),
     ('ubuntu:artful', PYTHON_DEB),
-    ('ubuntu:bionic', PYTHON_DEB)
+    ('ubuntu:bionic', PYTHON_DEB),
 ]
 
 
@@ -42,7 +41,10 @@ def yamls_volume():
 
 
 @pytest.mark.parametrize('image, prepare', IMAGE_SPEC, ids=[x[0] for x in IMAGE_SPEC])
-@pytest.mark.parametrize('python', ['python2', 'python3'])
+@pytest.mark.parametrize('python', [
+    'python2',
+    pytest.param('python3', marks=pytest.mark.xfail(reason="dump2polarion bug"))
+])
 @pytest.mark.long_running
 def test_quickstart_run(image, python, prepare, root_volume, yamls_volume, check_docker):
     subprocess.check_call(
@@ -50,6 +52,7 @@ def test_quickstart_run(image, python, prepare, root_volume, yamls_volume, check
         "--volume {root_volume}:/cfme/cfme_tests "
         "--volume {yamls_volume}:/cfme/cfme-qe-yamls "
         "--tty -w /cfme/cfme_tests "
+        "-e DEBIAN_FRONTEND=noninteractive "
         ""
         "{image} "
         "bash -c '{prepare} &&"

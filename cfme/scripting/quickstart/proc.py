@@ -17,7 +17,7 @@ def command_text(command, shell):
 
 
 def run_cmd_or_exit(command, shell=False, long_running=False,
-                    call=subprocess.check_output, **kw):
+                    call=subprocess.check_call, **kw):
     res = None
     try:
         if long_running:

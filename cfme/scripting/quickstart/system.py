@@ -10,7 +10,7 @@ REDHAT_RELEASE_FILE = '/etc/redhat-release'
 
 HAS_DNF = os.path.exists('/usr/bin/dnf')
 HAS_YUM = os.path.exists('/usr/bin/yum')
-HAS_APT = os.path.exists('/usr/bin/apt')
+HAS_APT = os.path.exists('/usr/bin/apt-get')
 
 OS_RELEASE_FILE = '/etc/os-release'
 OS_NAME_REGEX = r'NAME="([\w\W]+)"'
@@ -32,7 +32,7 @@ elif HAS_YUM:
     INSTALL_COMMAND = 'yum install -y'
     DEBUG_INSTALL_COMMAND = 'debuginfo-install -y'
 elif HAS_APT:
-    INSTALL_COMMAND = 'apt install -y'
+    INSTALL_COMMAND = 'apt-get install -y'
     # No separate debuginfo for apt
 
 if not IS_ROOT:
@@ -52,68 +52,43 @@ if os.path.exists(OS_RELEASE_FILE):
             if version:
                 OS_VERSION = version.group(1)
 
-FC_OLD = (
-    " python2-virtualenv gcc postgresql-devel libxml2-devel"
-    " libxslt-devel zeromq3-devel libcurl-devel"
-    " redhat-rpm-config gcc-c++ openssl-devel"
-    " libffi-devel python-devel tesseract"
-    " freetype-devel python2-debuginfo python3-debuginfo 'dnf-command(debuginfo-install)'")
+RH_BASE = (
+    " python2-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel"
+    " zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel"
+    " libffi-devel python-devel tesseract freetype-devel"
+    " python2-debuginfo python3-debuginfo "
+)
 
+RH_BASE_NEW = RH_BASE.replace("zeromq3-devel", "zeromq-devel")
+DNF_EXTRA = " 'dnf-command(debuginfo-install)'"
+YUM_EXTRA = " yum-utils"
 # These package specs include debuginfo packages, which have to be processed out
 REDHAT_PACKAGES_SPECS = [
-    ("Fedora release 24", "nss", FC_OLD),
-    ("Fedora release 25", "nss",
-     " python2-virtualenv gcc postgresql-devel libxml2-devel"
-     " libxslt-devel zeromq3-devel libcurl-devel"
-     " redhat-rpm-config gcc-c++ openssl-devel"
-     " libffi-devel python2-devel tesseract"
-     " freetype-devel python-debuginfo"),
-    ("Fedora release 26", "nss",
-     " python2-virtualenv gcc postgresql-devel libxml2-devel"
-     " libxslt-devel zeromq-devel libcurl-devel"
-     " redhat-rpm-config gcc-c++ openssl-devel"
-     " libffi-devel python2-devel tesseract"
-     " freetype-devel python-debuginfo"),
-    ("Fedora release 27", "openssl",
-     " python2-virtualenv gcc postgresql-devel libxml2-devel"
-     " libxslt-devel zeromq-devel libcurl-devel"
-     " redhat-rpm-config gcc-c++ openssl-devel"
-     " libffi-devel python2-devel tesseract"
-     " freetype-devel python-debuginfo"),
-    ("CentOS Linux release 7", "nss",
-     " python-virtualenv gcc postgresql-devel libxml2-devel"
-     " libxslt-devel zeromq3-devel libcurl-devel"
-     " redhat-rpm-config gcc-c++ openssl-devel"
-     " libffi-devel python-devel tesseract"
-     " libpng-devel freetype-devel yum-utils"),
-    ("Red Hat Enterprise Linux Server release 7", "nss",
-     " python-virtualenv gcc postgresql-devel libxml2-devel"
-     " libxslt-devel zeromq3-devel libcurl-devel"
-     " redhat-rpm-config gcc-c++ openssl-devel"
-     " libffi-devel python-devel tesseract"
-     " libpng-devel freetype-devel python-debuginfo"
-     " yum-utils"),
+    ("Fedora release 24", "nss", RH_BASE + DNF_EXTRA),
+    ("Fedora release 25", "nss", RH_BASE + DNF_EXTRA),
+    ("Fedora release 26", "nss", RH_BASE_NEW + DNF_EXTRA),
+    ("Fedora release 27", "openssl", RH_BASE_NEW + DNF_EXTRA),
+    ("CentOS Linux release 7", "nss", RH_BASE + YUM_EXTRA),
+    ("Red Hat Enterprise Linux Server release 7", "nss", RH_BASE + YUM_EXTRA),
     ("Red Hat Enterprise Linux Workstation release 7", "nss",
-     " python-virtualenv gcc postgresql-devel libxml2-devel"
-     " libxslt-devel zeromq3-devel libcurl-devel"
-     " redhat-rpm-config gcc-c++ openssl-devel"
-     " libffi-devel python-devel tesseract"
-     " libpng-devel freetype-devel python-debuginfo"
-     " yum-utils")
+     RH_BASE + YUM_EXTRA)
 ]
 
 
-UBUNTU_PKGS = (
-    "python-virtualenv gcc postgresql libxml2-dev"
+DEB_PKGS = (
+    " python-virtualenv gcc postgresql libxml2-dev"
     " libxslt1-dev libzmq3-dev libcurl4-openssl-dev"
-    " g++ openssl libffi-dev python-dev libtesseract3"
+    " g++ openssl libffi-dev python-dev libtesseract-dev"
     " libpng-dev libfreetype6-dev libssl-dev python-dbg"
 )
 
 OS_PACKAGES_SPECS = [
     # Extend this
-    ("Ubuntu", "16.04.3 LTS (Xenial Xerus)", "openssl", UBUNTU_PKGS),
-    ("Ubuntu", "16.04.4 LTS (Xenial Xerus)", "openssl", UBUNTU_PKGS)
+    ("Ubuntu", "16.04.3 LTS (Xenial Xerus)", "openssl", DEB_PKGS),
+    ("Ubuntu", "16.04.4 LTS (Xenial Xerus)", "openssl", DEB_PKGS),
+    ("Ubuntu", "17.10 (Artful Aardvark)", "openssl", DEB_PKGS),
+    ("Ubuntu", "18.04 LTS (Bionic Beaver)", "openssl", DEB_PKGS),
+    ("Debian GNU/Linux", "9 (stretch)", "openssl", DEB_PKGS),
 ]
 
 # Holder for processed -debuginfo packages
@@ -163,11 +138,11 @@ def retry_install_once(command, shell):
     # TODO: remove subprocess.call usage once debugging is done
     import subprocess
     try:
-        run_cmd_or_exit(command, shell=shell, call=subprocess.call)
+        run_cmd_or_exit(command, shell=shell, call=subprocess.check_call)
     except SystemExit:
         print("Hit error during yum/dnf install or debuginfo-install, re-trying...")
         time.sleep(5)
-        run_cmd_or_exit(command, shell=shell, call=subprocess.call)
+        run_cmd_or_exit(command, shell=shell, call=subprocess.check_call)
 
 
 def install_system_packages():
