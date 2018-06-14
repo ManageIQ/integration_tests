@@ -8,7 +8,9 @@ from cfme.physical.provider.lenovo import LenovoProvider
 from cfme.utils import testgen
 from cfme.utils.update import update
 
-pytest_generate_tests = testgen.generate([LenovoProvider], scope="function")
+pytestmark = [
+    pytest.mark.provider([LenovoProvider], scope="function")
+]
 
 
 @pytest.mark.tier(3)

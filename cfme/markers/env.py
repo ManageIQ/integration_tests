@@ -33,7 +33,7 @@ class EnvironmentMarker(object):
                 return
         elif self.PARAM_BY_DEFAULT:
             metafunc.fixturenames.append(self.NAME)
-            testgen.parametrize(metafunc, self.NAME, [self.CHOICES[0]])
+            testgen.parametrize(metafunc, self.NAME, self.CHOICES)  # ALL THE THINGS
         else:
             return
 
@@ -50,12 +50,22 @@ class TCPEnvironmentMarker(EnvironmentMarker):
     CHOICES = ['ipv4', 'ipv6']
 
 
+class PodifiedEnvironmentMarker(EnvironmentMarker):
+    """Podified Appliance Environment Marker"""
+    NAME = 'podified'
+    CHOICES = ['pod', 'vm']
+
+
 def pytest_generate_tests(metafunc):
     from cfme.markers.env_markers.provider import ProviderEnvironmentMarker
     markers = [
         BrowserEnvironmentMarker(),
         TCPEnvironmentMarker(),
-        ProviderEnvironmentMarker()
+        ProviderEnvironmentMarker(),
+        PodifiedEnvironmentMarker()
     ]
     for marker in markers:
         marker.process_env_mark(metafunc)
+
+
+glob = {}

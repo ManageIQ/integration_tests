@@ -6,6 +6,7 @@ import miq_version
 from cfme import test_requirements
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils import testgen
 
@@ -58,7 +59,7 @@ def host_with_credentials(appliance, provider, host_name):
 @pytest.mark.rhv1
 @pytest.mark.uncollectif(
     lambda provider, appliance:
-    appliance.version == miq_version.UPSTREAM and provider.type == 'rhevm')
+    appliance.version == miq_version.UPSTREAM and provider.one_of(RHEVMProvider))
 def test_run_host_analysis(setup_provider_modscope, provider, host_type, host_name, register_event,
                            soft_assert, host_with_credentials):
     """ Run host SmartState analysis

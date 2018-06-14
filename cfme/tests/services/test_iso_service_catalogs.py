@@ -9,7 +9,6 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.utils import testgen
 from cfme.utils.blockers import GH
 from cfme.utils.conf import cfme_data
 from cfme.utils.generators import random_vm_name
@@ -19,38 +18,19 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('uses_infra_providers'),
     test_requirements.service,
-    pytest.mark.tier(2)
+    pytest.mark.tier(2),
+    pytest.mark.provider([InfraProvider], required_fields=[
+        'iso_datastore',
+        ['provisioning', 'host'],
+        ['provisioning', 'datastore'],
+        ['provisioning', 'iso_template'],
+        ['provisioning', 'iso_file'],
+        ['provisioning', 'iso_kickstart'],
+        ['provisioning', 'iso_root_password'],
+        ['provisioning', 'iso_image_type'],
+        ['provisioning', 'vlan'],
+    ], scope="module")
 ]
-
-
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, [InfraProvider], required_fields=[
-            'iso_datastore',
-            ['provisioning', 'host'],
-            ['provisioning', 'datastore'],
-            ['provisioning', 'iso_template'],
-            ['provisioning', 'iso_file'],
-            ['provisioning', 'iso_kickstart'],
-            ['provisioning', 'iso_root_password'],
-            ['provisioning', 'iso_image_type'],
-            ['provisioning', 'vlan'],
-        ])
-
-    new_idlist = []
-    new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-
-        iso_cust_template = args['provider'].data['provisioning']['iso_kickstart']
-        if iso_cust_template not in cfme_data.get('customization_templates', {}).keys():
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
 @pytest.fixture(scope="module")
@@ -104,8 +84,10 @@ def catalog_item(appliance, provider, dialog, catalog, provisioning):
 
 @pytest.mark.rhv1
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6692',
-                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
-def test_rhev_iso_servicecatalog(appliance, provider, catalog_item, setup_iso_datastore, request):
+                               unblock=lambda provider:
+                               not provider.one_of(RHEVMProvider))])
+def test_rhev_iso_servicecatalog(appliance, provider, setup_provider, catalog_item,
+                                 setup_iso_datastore, request):
     """Tests RHEV ISO service catalog
 
     Metadata:

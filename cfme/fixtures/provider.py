@@ -39,16 +39,20 @@ to set it up will be made.
 import pytest
 import random
 import six
+import sys
+from collections import Mapping
 from collections import defaultdict
+from _pytest.compat import getimfunc
+from _pytest.fixtures import call_fixture_func
+from _pytest.outcomes import TEST_OUTCOME
 
 from cfme.common.provider import BaseProvider, all_types
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.fixtures.pytest_store import store
 from cfme.fixtures.templateloader import TEMPLATES
 from cfme.utils.appliance import ApplianceException
-from cfme.utils.providers import ProviderFilter, list_providers
 from cfme.utils.log import logger
-from collections import Mapping
+from cfme.utils.providers import ProviderFilter, list_providers
 
 # List of problematic providers that will be ignored
 _problematic_providers = set()
@@ -382,3 +386,38 @@ def console_template(provider):
 @pytest.fixture(scope="module")
 def console_template_modscope(provider):
     return _get_template(provider, 'console_template')
+
+
+@pytest.mark.hookwrapper
+def pytest_fixture_setup(fixturedef, request):
+    # since we use DataProvider at collection time and BaseProvider in fixtures and tests,
+    # we need to instantiate BaseProvider and replace DataProvider obj with it right before first
+    # provider fixture request.
+    # There were several other ways to do that. However, those bumped into different
+    # scope mismatch issues.
+    if fixturedef.argname == 'provider':
+        kwargs = {}
+        for argname in fixturedef.argnames:
+            fixdef = request._get_active_fixturedef(argname)
+            result, arg_cache_key, exc = fixdef.cached_result
+            request._check_scope(argname, request.scope, fixdef.scope)
+            kwargs[argname] = result
+
+        fixturefunc = fixturedef.func
+        if request.instance is not None:
+            fixturefunc = getimfunc(fixturedef.func)
+            if fixturefunc != fixturedef.func:
+                fixturefunc = fixturefunc.__get__(request.instance)
+        my_cache_key = request.param_index
+        try:
+            provider_data = call_fixture_func(fixturefunc, request, kwargs)
+        except TEST_OUTCOME:
+            fixturedef.cached_result = (None, my_cache_key, sys.exc_info())
+            raise
+        from cfme.utils.providers import get_crud
+        provider = get_crud(provider_data.key)
+        fixturedef.cached_result = (provider, my_cache_key, None)
+        request.param = provider
+        yield provider
+    else:
+        yield
