@@ -546,7 +546,7 @@ class BaseVMCollection(BaseCollection):
         """
         vm = self.instantiate(vm_name, provider)
         if check_existing and vm.exists:
-            vm
+            return vm
         else:
             if not provider.is_refreshed():
                 provider.refresh_provider_relationships()

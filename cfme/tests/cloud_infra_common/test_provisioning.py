@@ -13,7 +13,6 @@ from cfme.cloud.provider import CloudInfraProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.fixtures.provider import setup_one_or_skip
 from cfme.markers.env_markers.provider import providers
 from cfme.utils import normalize_text
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -23,22 +22,20 @@ from cfme.utils.log import logger
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
-pf = ProviderFilter(classes=[CloudInfraProvider], required_flags=['provision'])
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
     test_requirements.provision, pytest.mark.tier(2),
+    pytest.mark.provider(gen_func=providers,
+                         filters=[ProviderFilter(classes=[CloudInfraProvider],
+                                                 required_flags=['provision'])],
+                         scope="function"),
+    pytest.mark.usefixtures('setup_provider')
 ]
 
 
 @pytest.fixture()
 def vm_name():
     return random_vm_name(context='prov', max_length=12)
-
-
-@pytest.fixture()
-def a_provider(request):
-    pf = ProviderFilter(classes=[CloudInfraProvider], required_flags=['provision'])
-    return setup_one_or_skip(request, filters=[pf])
 
 
 @pytest.fixture()
@@ -83,8 +80,6 @@ def provisioned_instance(provider, instance_args, appliance):
                        .format(ex.message))
 
 
-@pytest.mark.provider(gen_func=providers, filters=[pf], scope="function")
-@pytest.mark.usefixtures('setup_provider')
 @pytest.mark.parametrize('instance_args', [True, False], ids=["Auto", "Manual"], indirect=True)
 def test_provision_from_template(provider, provisioned_instance):
     """ Tests instance provision from template via CFME UI
@@ -112,7 +107,7 @@ def test_gce_preemptible_provision(appliance, provider, instance_args, soft_asse
 
 @pytest.mark.rhv2
 @pytest.mark.parametrize("edit", [True, False], ids=["edit", "approve"])
-def test_provision_approval(appliance, a_provider, vm_name, smtp_test, request,
+def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
                             edit):
     """ Tests provisioning approval. Tests couple of things.
 
@@ -144,12 +139,12 @@ def test_provision_approval(appliance, a_provider, vm_name, smtp_test, request,
 
     # It will provision two of them
     vm_names = [vm_name + "001", vm_name + "002"]
-    collection = appliance.provider_based_collection(a_provider)
+    collection = appliance.provider_based_collection(provider)
     inst_args = {'catalog': {
         'vm_name': vm_name,
         'num_vms': '2'
     }}
-    vm = collection.create(vm_name, a_provider, form_values=inst_args, wait=False)
+    vm = collection.create(vm_name, provider, form_values=inst_args, wait=False)
 
     wait_for(
         lambda:
@@ -179,7 +174,7 @@ def test_provision_approval(appliance, a_provider, vm_name, smtp_test, request,
         provision_request.edit_request(values=modifications)
         vm_names = [new_vm_name]  # Will be just one now
         request.addfinalizer(
-            lambda: collection.instantiate(new_vm_name, a_provider).delete_from_provider()
+            lambda: collection.instantiate(new_vm_name, provider).delete_from_provider()
         )
     else:
         # Manual approval
@@ -187,7 +182,7 @@ def test_provision_approval(appliance, a_provider, vm_name, smtp_test, request,
         vm_names = [vm_name + "001", vm_name + "002"]  # There will be two VMs
         request.addfinalizer(
             lambda: [appliance.collections.infra_vms.instantiate(name,
-                                                                 a_provider).delete_from_provider()
+                                                                 provider).delete_from_provider()
                      for name in vm_names]
         )
     wait_for(
@@ -200,9 +195,9 @@ def test_provision_approval(appliance, a_provider, vm_name, smtp_test, request,
     smtp_test.clear_database()
 
     # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
-    logger.info('Waiting for vms %s to appear on provider %s', ", ".join(vm_names), a_provider.key)
+    logger.info('Waiting for vms %s to appear on provider %s', ", ".join(vm_names), provider.key)
     wait_for(
-        lambda: all(map(a_provider.mgmt.does_vm_exist, vm_names)),
+        lambda: all(map(provider.mgmt.does_vm_exist, vm_names)),
         handle_exception=True, num_sec=600)
 
     provision_request.wait_for_request(method='ui')
@@ -221,11 +216,8 @@ def test_provision_approval(appliance, a_provider, vm_name, smtp_test, request,
     wait_for(verify, message="email receive check", delay=5)
 
 
-@pytest.mark.provider(gen_func=providers, filters=[pf], scope="function")
-@pytest.mark.usefixtures('setup_provider')
 @pytest.mark.parametrize('auto', [True, False], ids=["Auto", "Manual"])
-def test_provision_from_template_using_rest(
-        appliance, request, provider, vm_name, auto):
+def test_provision_from_template_using_rest(appliance, request, provider, vm_name, auto):
     """ Tests provisioning from a template using the REST API.
 
     Metadata:
@@ -480,7 +472,7 @@ def test_provision_with_additional_volume(request, instance_args, provider, smal
                 provider.mgmt.delete_volume(volume_id)
 
 
-def test_provision_with_tag(appliance, vm_name, tag, a_provider):
+def test_provision_with_tag(appliance, vm_name, tag, provider):
     """ Tests tagging instance using provisioning dialogs.
 
     Steps:
@@ -495,8 +487,8 @@ def test_provision_with_tag(appliance, vm_name, tag, a_provider):
     inst_args = {'purpose': {
         'apply_tags': Check_tree.CheckNode(
             ['{} *'.format(tag.category.display_name), tag.display_name])}}
-    collection = appliance.provider_based_collection(a_provider)
-    instance = collection.create(vm_name, a_provider, form_values=inst_args)
+    collection = appliance.provider_based_collection(provider)
+    instance = collection.create(vm_name, provider, form_values=inst_args)
     tags = instance.get_tags()
     assert any(
         instance_tag.category.display_name == tag.category.display_name and
