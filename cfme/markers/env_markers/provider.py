@@ -153,10 +153,22 @@ def providers(metafunc, filters=None, selector=ALL):
     else:
         allowed_providers = potential_providers
 
+    need_prov_keys = any(getattr(filt, 'type_name', None) is not None for filt in filter.classes)
+
     for provider in allowed_providers:
         argvalues.append([provider])
         # Use the provider key for idlist, helps with readable parametrized test output
-        idlist.append(provider.key)
+        if selector == ONE:
+            if need_prov_keys:
+                idlist.append(provider.type_name)
+            else:
+                idlist.append(provider.category)
+        elif selector == ONE_PER_CATEGORY:
+            idlist.append(provider.category)
+        elif selector == ONE_PER_TYPE:
+            idlist.append(provider.type_name)
+        else:
+            idlist.append(provider.key)
         # Add provider to argnames if missing
         if 'provider' in metafunc.fixturenames and 'provider' not in argnames:
             metafunc.function = pytest.mark.uses_testgen()(metafunc.function)
