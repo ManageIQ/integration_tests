@@ -93,8 +93,13 @@ def dedicated_db_appliance(app_creds, unconfigured_appliance):
 @pytest.fixture(scope="function")
 def appliance_with_preset_time(temp_appliance_preconfig_funcscope):
     """Grabs fresh appliance and sets time and date prior to running tests"""
-    temp_appliance_preconfig_funcscope.ssh_client.run_command(
-        "appliance_console_cli --datetime 2020-10-20T09:58:00")
+    command_set = ('ap', '', '3', 'y', '2020-10-20', '09:58:00', 'y', '')
+    temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
+
+    def date_changed():
+        return temp_appliance_preconfig_funcscope.ssh_client.run_command(
+            "date +%F-%T | grep 2020-10-20-09").success
+    wait_for(date_changed)
     return temp_appliance_preconfig_funcscope
 
 
