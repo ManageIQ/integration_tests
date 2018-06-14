@@ -48,21 +48,6 @@ def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modsc
     app.appliance_console.timezone_check(timezone)
 
 
-@requires_59
-@pytest.mark.uncollectif(lambda appliance: appliance.version > '5.9.3',
-    reason="Feature removed in latest 5.9.3")
-def test_appliance_console_cli_db_maintenance_hourly(appliance_with_preset_time):
-    """Test database hourly re-indexing through appliance console"""
-    app = appliance_with_preset_time
-    app.ssh_client.run_command("appliance_console_cli --db-hourly-maintenance")
-
-    def maintenance_run():
-        return app.ssh_client.run_command(
-            "grep REINDEX /var/www/miq/vmdb/log/hourly_continuous_pg_maint_stdout.log").success
-
-    wait_for(maintenance_run, timeout=300)
-
-
 def test_appliance_console_cli_set_hostname(appliance, restore_hostname):
     hostname = 'test.example.com'
     appliance.appliance_console_cli.set_hostname(hostname)
