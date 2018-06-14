@@ -91,8 +91,8 @@ def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
     wait_for(date_changed)
 
 
-@pytest.mark.uncollectif(
-    lambda appliance: appliance.version < '5.9' or appliance.version <= '5.9.3')
+@pytest.mark.uncollectif(lambda appliance: appliance.version >= '5.9.3.1',
+    reason="Feature removed in latest 5.9.3")
 def test_appliance_console_db_maintenance_hourly(appliance_with_preset_time):
     """Test database hourly re-indexing through appliance console"""
     app = appliance_with_preset_time

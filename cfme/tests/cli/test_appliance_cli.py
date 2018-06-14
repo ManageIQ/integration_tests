@@ -49,7 +49,7 @@ def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modsc
 
 
 @requires_59
-@pytest.mark.uncollectif(lambda appliance: appliance.version >= '5.9.3.1',
+@pytest.mark.uncollectif(lambda appliance: appliance.version > '5.9.3',
     reason="Feature removed in latest 5.9.3")
 def test_appliance_console_cli_db_maintenance_hourly(appliance_with_preset_time):
     """Test database hourly re-indexing through appliance console"""
