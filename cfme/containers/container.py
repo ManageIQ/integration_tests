@@ -8,7 +8,7 @@ from widgetastic_patternfly import VerticalNavigation
 
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
-                                      GetRandomInstancesMixin)
+                                      GetRandomInstancesMixin, LoggingableView)
 from cfme.common import Taggable, TagPageView
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
@@ -16,7 +16,19 @@ from cfme.utils.providers import get_crud_by_name
 from widgetastic.utils import VersionPick, Version
 
 
-class ContainerAllView(ContainerObjectAllBaseView):
+class ContainerView(ContainerObjectAllBaseView, LoggingableView):
+    """The base view for header and nav checking"""
+
+    @property
+    def in_containers(self):
+        """Determine if the Containers page is currently open"""
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Containers', 'Containers']
+        )
+
+
+class ContainerAllView(ContainerView):
     """Containers All view"""
     SUMMARY_TEXT = "Containers"
     containers = Table(locator="//div[@id='list_grid']//table")
@@ -36,7 +48,7 @@ class ContainerAllView(ContainerObjectAllBaseView):
 
     @property
     def is_displayed(self):
-        return self.summary.is_displayed
+        return self.in_containers and super(ContainerAllView, self).is_displayed
 
 
 class ContainerDetailsView(ContainerObjectDetailsBaseView):

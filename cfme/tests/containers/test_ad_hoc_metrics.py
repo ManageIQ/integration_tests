@@ -1,14 +1,20 @@
 import pytest
 import requests
+
 from cfme.utils.log import logger
 from cfme.containers.provider import ContainersProvider
+from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
-
+from cfme.utils.providers import ProviderFilter
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1),
-    pytest.mark.provider([ContainersProvider], scope='function')]
+    pytest.mark.provider(gen_func=providers,
+                         filters=[ProviderFilter(classes=[ContainersProvider],
+                                                 required_flags=['metrics_collection'])],
+                         scope='function')
+]
 
 
 @pytest.fixture(scope="function")

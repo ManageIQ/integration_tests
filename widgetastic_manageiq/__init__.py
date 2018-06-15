@@ -397,14 +397,14 @@ class Table(VanillaTable):
         # Old one
         './thead/tr/th[contains(@class, "sorting_asc") or contains(@class, "sorting_desc")]',
         # New one
-        './thead/tr/th[./div/i[contains(@class, "fa-sort-")]]/a',
-        './thead/tr/th[contains(@class, "ng-binding ng-scope")]'])
+        './thead/tr/th[./div/i[contains(@class, "fa-sort-")]]'])
     SORTED_BY_CLASS_LOC = '|'.join([
         # Old one
         './thead/tr/th[contains(@class, "sorting_asc") or contains(@class, "sorting_desc")]',
         # New one
         './thead/tr/th/div/i[contains(@class, "fa-sort-")]'])
-    SORT_LINK = './thead/tr/th[{}]'
+    SORT_LINK = VersionPick({Version.lowest(): './thead/tr/th[{}]/a',
+                            '5.9': './thead/tr/th[{}]'})
     Row = TableRow
 
     @property

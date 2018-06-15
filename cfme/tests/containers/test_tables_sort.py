@@ -29,23 +29,22 @@ TEST_ITEMS = [
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
                          ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
-@pytest.mark.skip(reason='https://github.com/ManageIQ/integration_tests/issues/6385')
 def test_tables_sort(test_item, soft_assert, appliance):
 
     current_view = navigate_to((test_item.obj if test_item.obj is ContainersProvider
         else getattr(appliance.collections, test_item.collection_name)), 'All')
     current_view.toolbar.view_selector.select('List View')
 
-    for col, header_text in enumerate(current_view.table.headers):
+    for col, header_text in enumerate(current_view.entities.elements.headers):
 
         if not header_text:
             continue
         current_view.entities.paginator.set_items_per_page(1000)
         # Checking both orders
-        current_view.table.click_sort(header_text)
-        rows_ascending = [r[col].text for r in current_view.table.rows()]
-        current_view.table.click_sort(header_text)
-        rows_descending = [r[col].text for r in current_view.table.rows()]
+        current_view.entities.elements.sort_by(column=header_text, order='asc')
+        rows_ascending = [r[col].text for r in current_view.entities.elements.rows()]
+        current_view.entities.elements.sort_by(column=header_text, order='desc')
+        rows_descending = [r[col].text for r in current_view.entities.elements.rows()]
 
         soft_assert(
             rows_ascending[::-1] == rows_descending,

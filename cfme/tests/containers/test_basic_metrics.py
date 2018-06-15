@@ -3,6 +3,7 @@ import requests
 from cfme.containers.provider import ContainersProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
+from cfme.utils.path import scripts_path
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -17,7 +18,8 @@ ROLLUP_METRICS_CALC_THRESHOLD_IN_MINUTES = "50m"
 
 @pytest.fixture(scope="module")
 def reduce_metrics_collection_threshold(appliance):
-    appliance.ssh_client.put_file("scripts/openshift/change_metrics_collection_threshold.rb",
+    f_name = scripts_path.join('openshift/change_metrics_collection_threshold.rb').strpath
+    appliance.ssh_client.put_file(f_name,
                                   "/var/www/miq/vmdb")
     appliance.ssh_client.run_rails_command(
         "change_metrics_collection_threshold.rb {threshold}.minutes".format(
