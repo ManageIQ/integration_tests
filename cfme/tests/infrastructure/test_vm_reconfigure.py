@@ -45,8 +45,14 @@ def reconfigure_vm(vm, config):
                 .format(vars(config.hw), config.disks))
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def small_vm(appliance, provider, small_template_modscope):
+    """This fixture is function-scoped, because there is no un-ambiguous way how to search for
+    reconfigure request in UI in situation when you have two requests for the same reconfiguration
+    and for the same VM name. This happens if you run test_vm_reconfig_add_remove_hw_cold and then
+    test_vm_reconfig_add_remove_hw_hot or vice versa. Making thix fixture function-scoped will
+    ensure that the VM under test has a different name each time so the reconfigure requests
+    are unique as a result."""
     vm = appliance.collections.infra_vms.instantiate(random_vm_name(context='reconfig'),
                                                      provider,
                                                      small_template_modscope.name)
