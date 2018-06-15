@@ -200,7 +200,7 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     and evm starts up again pointing at the new primary database.
 
     """
-    mon = '9' if unconfigured_appliances[0].version < '5.9.3.1' else '8'
+    mon = '9' if unconfigured_appliances.version < '5.9.3.1' else '8'
     apps = unconfigured_appliances
     app0_ip = apps[0].hostname
     app1_ip = apps[1].hostname
@@ -220,8 +220,12 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
         TimedCommand('y', 60), '')
     apps[0].appliance_console.run_commands(command_set)
     # Configure secondary replication node
-    command_set = ('ap', '', '6', '2', '1', '2', '', '', pwd, pwd, app0_ip, app1_ip, 'y',
-        TimedCommand('y', 60), '')
+    if apps[0].version > '5.9':
+        command_set = ('ap', '', '6', '2', '2', app0_ip, '', pwd, '', '1', '2', '', '', pwd, pwd,
+                       app0_ip, app1_ip, 'y', TimedCommand('y', 60), '')
+    else:
+        command_set = ('ap', '', '6', '2', '1', '2', '', '', pwd, pwd, app0_ip, app1_ip, 'y',
+                       TimedCommand('y', 60), '')
     apps[1].appliance_console.run_commands(command_set)
     # Configure automatic failover on EVM appliance
     command_set = ('ap', '', mon, TimedCommand('1', 30), '')
@@ -292,12 +296,12 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
 
     setup_ipa = '11' if configured_appliance.version < '5.9.3.1' else '10'
     command_set = ('ap', RETURN, setup_ipa,
-               ipa_crud.host1,
-               ipa_crud.ipadomain or RETURN,
-               ipa_crud.iparealm or RETURN,
-               ipa_crud.ipaprincipal or RETURN,
-               ipa_crud.bind_password,
-               TimedCommand('y', 40), RETURN)
+                   ipa_crud.host1,
+                   ipa_crud.ipadomain or RETURN,
+                   ipa_crud.iparealm or RETURN,
+                   ipa_crud.ipaprincipal or RETURN,
+                   ipa_crud.bind_password,
+                   TimedCommand('y', 40), RETURN)
     configured_appliance.appliance_console.run_commands(command_set)
     configured_appliance.sssd.wait_for_running()
     assert configured_appliance.ssh_client.run_command("cat /etc/ipa/default.conf |"

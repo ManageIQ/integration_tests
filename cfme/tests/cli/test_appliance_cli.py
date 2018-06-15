@@ -182,7 +182,7 @@ def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
         'vmdb_production', apps[1].unpartitioned_disks[0]
     )
     # Configure automatic failover on EVM appliance
-    command_set = ('ap', '', '9', '1', '')
+    command_set = ('ap', '', '8', '1', '')
     apps[2].appliance_console.run_commands(command_set)
 
     def is_ha_monitor_started(appliance):
