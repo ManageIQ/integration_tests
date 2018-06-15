@@ -1,0 +1,24 @@
+exclude: ^data
+repos:
+- repo: https://github.com/ambv/black
+  rev: 18.6b2
+  hooks:
+  - id: black
+    args: [--safe, --quiet]
+    language_version: python3.6
+    exclude: '.*' # for now disable - we shal gradually reenable it
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v1.3.0
+  hooks:
+  - id: trailing-whitespace
+  - id: end-of-file-fixer
+  - id: check-yaml
+    exclude: data
+  - id: debug-statements
+    exclude: ^(sprout|scripts|cfme/fixtures/rdb.py)
+  - id: flake8
+    exclude: '.*' # there is flake8 issues in the codebase - fixing is a followup
+- repo: https://github.com/asottile/pyupgrade
+  rev: v1.3.1
+  hooks:
+  - id: pyupgrade
