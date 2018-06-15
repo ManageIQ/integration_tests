@@ -1,5 +1,7 @@
 import pytest
 
+from widgetastic.utils import attributize_string
+
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
 from cfme.containers.replicator import Replicator
 from cfme.containers.route import Route
@@ -31,20 +33,28 @@ TEST_ITEMS = [
                          ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
 def test_tables_sort(test_item, soft_assert, appliance):
 
-    current_view = navigate_to((test_item.obj if test_item.obj is ContainersProvider
+    view = navigate_to((test_item.obj if test_item.obj is ContainersProvider
         else getattr(appliance.collections, test_item.collection_name)), 'All')
-    current_view.toolbar.view_selector.select('List View')
+    view.toolbar.view_selector.select('List View')
+    view.entities.paginator.set_items_per_page(1000)
 
-    for col, header_text in enumerate(current_view.entities.elements.headers):
-
+    for col, header_text in enumerate(view.entities.elements.headers):
         if not header_text:
             continue
-        current_view.entities.paginator.set_items_per_page(1000)
         # Checking both orders
-        current_view.entities.elements.sort_by(column=header_text, order='asc')
-        rows_ascending = [r[col].text for r in current_view.entities.elements.rows()]
-        current_view.entities.elements.sort_by(column=header_text, order='desc')
-        rows_descending = [r[col].text for r in current_view.entities.elements.rows()]
+        view.entities.elements.sort_by(column=header_text, order='asc')
+        # sorted_by returns attributized string
+        # in CFME 5.8, the sort on IP Address column for container providers fails to sort?
+        soft_assert((view.entities.elements.sorted_by == attributize_string(header_text) and
+                    view.entities.elements.sort_order == 'asc'),
+                    'Failed checking sorted_by {} and sort_order asc'.format(header_text))
+        rows_ascending = [r[col].text for r in view.entities.elements.rows()]
+        # opposite sort order
+        view.entities.elements.sort_by(column=header_text, order='desc')
+        soft_assert((view.entities.elements.sorted_by == attributize_string(header_text) and
+                    view.entities.elements.sort_order == 'desc'),
+                    'Failed checking sorted_by {} and sort_order desc'.format(header_text))
+        rows_descending = [r[col].text for r in view.entities.elements.rows()]
 
         soft_assert(
             rows_ascending[::-1] == rows_descending,

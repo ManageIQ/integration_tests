@@ -431,7 +431,11 @@ class Table(VanillaTable):
 
     @property
     def sorted_by(self):
-        """Returns the name of column that the table is sorted by. Attributized!"""
+        """Returns the name of column that the table is sorted by.
+        Notes:
+            Attributized!
+            That means its lowercase
+        """
         return attributize_string(self.browser.text(self.SORTED_BY_LOC, parent=self))
 
     @property
@@ -446,7 +450,7 @@ class Table(VanillaTable):
         # for filtering the None out
         try:
             return filter(
-                None, re.search(r'(sorting_|fa-sort-)(asc|desc)', klass).groups())[0]
+                None, re.search(r'(sorting_|fa-sort-)(asc|desc)', klass).groups())[1]
         except IndexError:
             raise ValueError(
                 'Could not figure out which column is used for sorting now. The class was {!r}'
