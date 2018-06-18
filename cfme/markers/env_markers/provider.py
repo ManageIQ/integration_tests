@@ -1,7 +1,8 @@
+from collections import defaultdict
+
 import attr
 import pytest
 import six
-from collections import defaultdict
 from distutils.version import LooseVersion
 
 from cfme.markers.env import EnvironmentMarker
@@ -242,7 +243,9 @@ def providers(metafunc, filters=None, selector=ALL):
 
     # supported_providers are the ones "supported" in the supportability.yaml file. It will
     # be a list of DataProvider objects and will be filtered based upon what the test has asked for
-    supported_providers = all_required('5.9', filters)
+    holder = metafunc.config.pluginmanager.get_plugin('appliance-holder')
+    series = holder.held_appliance.version.series()
+    supported_providers = all_required(series, filters)
 
     def get_valid_provider(provider):
         # We now search theough all the available providers looking for one that matches the
