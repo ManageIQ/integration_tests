@@ -4,6 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.utils.blockers import GH
 from cfme.utils.rest import assert_response, query_resource_attributes
 from cfme.utils.wait import wait_for
 
@@ -180,6 +181,7 @@ def test_create_pending_provision_requests(request, appliance, provider, small_t
 
 
 @pytest.mark.rhv3
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7372')])
 def test_provision_attributes(appliance, provider, small_template, soft_assert):
     """Tests that it's possible to display additional attributes in /api/provision_requests/:id.
 
