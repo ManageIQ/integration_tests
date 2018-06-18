@@ -265,7 +265,7 @@ def poke_trackerbot(self):
             provider.save(update_fields=['provider_type'])
         template_name = template["template"]["name"]
         ga_released = template['template']['ga_released']
-        date = TemplateName.parse_template(template_name).build_date
+        date = TemplateName.parse_template(template_name).datestamp
 
         # nasty trackerbot slightly corrupts json data and it is parsed in wrong way
         # as a result
@@ -295,7 +295,7 @@ def poke_trackerbot(self):
                                                       'template_type'])
         except ObjectDoesNotExist:
             if template_name in provider.templates:
-                date = TemplateName.parse_template(template_name).build_date
+                date = TemplateName.parse_template(template_name).datestamp
                 if date is None:
                     self.logger.warning(
                         "Ignoring template {} because it does not have a date!".format(
@@ -390,7 +390,7 @@ def create_appliance_template(self, provider_id, group_id, template_name, source
         except ObjectDoesNotExist:
             pass
         # Fire off the template preparation
-        date = TemplateName.parse_template(template_name).build_date
+        date = TemplateName.parse_template(template_name).datestamp
         if not date:
             return
         template_version = TemplateName.parse_template(template_name).version
