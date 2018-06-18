@@ -38,7 +38,7 @@ from cfme.utils import conf
 from cfme.utils.appliance import Appliance as CFMEAppliance
 from cfme.utils.path import project_path
 from cfme.utils.timeutil import parsetime
-from cfme.utils.trackerbot import api, depaginate, parse_template
+from cfme.utils.trackerbot import api, depaginate
 from cfme.utils.wait import wait_for
 
 
@@ -265,7 +265,7 @@ def poke_trackerbot(self):
             provider.save(update_fields=['provider_type'])
         template_name = template["template"]["name"]
         ga_released = template['template']['ga_released']
-        date = parse_template(template_name).datestamp
+        date = TemplateName.parse_template(template_name).build_date
 
         # nasty trackerbot slightly corrupts json data and it is parsed in wrong way
         # as a result
@@ -295,7 +295,7 @@ def poke_trackerbot(self):
                                                       'template_type'])
         except ObjectDoesNotExist:
             if template_name in provider.templates:
-                date = parse_template(template_name).datestamp
+                date = TemplateName.parse_template(template_name).build_date
                 if date is None:
                     self.logger.warning(
                         "Ignoring template {} because it does not have a date!".format(
@@ -390,7 +390,7 @@ def create_appliance_template(self, provider_id, group_id, template_name, source
         except ObjectDoesNotExist:
             pass
         # Fire off the template preparation
-        date = parse_template(template_name).datestamp
+        date = TemplateName.parse_template(template_name).build_date
         if not date:
             return
         template_version = TemplateName.parse_template(template_name).version
