@@ -1,0 +1,10 @@
+
+build:
+  image: latest
+
+formats: []
+requirements_file: requirements/frozen_docs.py2.txt
+
+python:
+  version: 2
+  setup_py_install: true
