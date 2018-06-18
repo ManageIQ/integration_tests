@@ -35,7 +35,7 @@ stream_matchers = (
     (get_stream('5.7'), r'^cfme-57.*-(?P<month>\d{2})(?P<day>\d{2})'),
     (get_stream('5.8'), r'^cfme-58.*-(?P<month>\d{2})(?P<day>\d{2})'),
     (get_stream('5.9'), r'^cfme-59.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.10'), r'^cfme-510.*--(?P<month>\d{2})(?P<day>\d{2})'),
+    (get_stream('5.10'), r'^cfme-510.*-(?P<month>\d{2})(?P<day>\d{2})'),
     ('upstream_stable', r'^miq-stable-(?P<release>gapri[-\w]*?)'  # release name limit to 5 chars
                         r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
     ('upstream_euwe', r'^miq-stable-(?P<release>euwe[-\w]*?)'
