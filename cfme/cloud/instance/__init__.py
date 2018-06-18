@@ -1,9 +1,8 @@
 import attr
 from navmazing import NavigateToSibling, NavigateToAttribute, NavigationDestinationNotFound
-from riggerlib import recursive_update
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import CheckableBootstrapTreeview, Dropdown, Button
-from widgetastic.utils import VersionPick, Version
+from widgetastic.utils import VersionPick, Version, partial_match
 from widgetastic.widget import View
 
 from cfme.base.login import BaseLoggedInPage
@@ -13,7 +12,6 @@ from cfme.common.vm_views import (
     SetOwnershipView, ManagementEngineView, PolicySimulationView,
     RetirementView, RetirementViewWithOffset)
 from cfme.exceptions import (InstanceNotFound, ItemNotFound, DestinationNotFound)
-from cfme.services.requests import RequestsView
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
@@ -179,9 +177,7 @@ class Instance(VM):
     TO_RETIRE = "Retire this Instance"
     QUADICON_TYPE = "instance"
     VM_TYPE = "Instance"
-    PROVISION_CANCEL = 'Add of new VM Provision Request was cancelled by the user'
-    PROVISION_START = ('VM Provision Request was Submitted, you will be notified when your VMs '
-                       'are ready')
+
     REMOVE_SINGLE = 'Remove Instance'
     TO_OPEN_EDIT = "Edit this Instance"
     DETAILS_VIEW_CLASS = InstanceDetailsView
@@ -306,54 +302,135 @@ class Instance(VM):
         view.toolbar.power.item_select(kwargs.get('option'),
                                        handle_alert=not kwargs.get('cancel', False))
 
+    @property
+    def vm_default_args(self):
+        """Represents dictionary used for Vm/Instance provision with minimum required default args
+        """
+        provisioning = self.provider.data['provisioning']
+        inst_args = {
+            'request': {'email': 'vm_provision@cfmeqe.com'},
+            'catalog': {
+                'vm_name': self.name},
+            'environment': {
+                'availability_zone': provisioning.get('availability_zone'),
+                'cloud_network': provisioning.get('cloud_network'),
+                'cloud_subnet': provisioning.get('cloud_subnet'),
+                'resource_groups': provisioning.get('resource_group')
+            },
+            'properties': {
+                'instance_type': partial_match(provisioning.get('instance_type')),
+                'guest_keypair': provisioning.get('guest_keypair')
+            }
+        }
+
+        return inst_args
+
+    @property
+    def vm_default_args_rest(self):
+        """Represents dictionary used for REST API Instance provision with minimum required default
+        args
+        """
+        from cfme.cloud.provider.azure import AzureProvider
+        from cfme.cloud.provider.ec2 import EC2Provider
+
+        if not self.provider.is_refreshed():
+            self.provider.refresh_provider_relationships()
+            wait_for(self.provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        provisioning = self.provider.data['provisioning']
+
+        provider_rest = self.appliance.rest_api.collections.providers.get(name=self.provider.name)
+
+        # find out image guid
+        image_name = provisioning['image']['name']
+        image = self.appliance.rest_api.collections.templates.get(name=image_name,
+                                                                  ems_id=provider_rest.id)
+        # find out flavor
+        if ':' in provisioning['instance_type'] and self.provider.one_of(EC2Provider):
+            instance_type = provisioning['instance_type'].split(':')[0].strip()
+        else:
+            instance_type = provisioning['instance_type']
+        flavor = self.appliance.rest_api.collections.flavors.get(name=instance_type,
+                                                                 ems_id=provider_rest.id)
+        # find out cloud network
+        cloud_network_name = provisioning.get('cloud_network').strip()
+        if self.provider.one_of(EC2Provider, AzureProvider):
+            cloud_network_name = cloud_network_name.split()[0]
+        cloud_network = self.appliance.rest_api.collections.cloud_networks.get(
+            name=cloud_network_name, enabled='true')
+        # find out cloud subnet
+        cloud_subnet = self.appliance.rest_api.collections.cloud_subnets.get(
+            cloud_network_id=cloud_network['id'])
+        # find out availability zone
+        azone_id = None
+        av_zone_name = provisioning.get('availability_zone')
+        if av_zone_name:
+            azone_id = self.appliance.rest_api.collections.availability_zones.get(
+                name=av_zone_name, ems_id=flavor.ems_id).id
+        # find out cloud tenant
+        tenant_name = provisioning.get('cloud_tenant')
+        if tenant_name:
+            try:
+                tenant = self.appliance.rest_api.collections.cloud_tenants.get(
+                    name=tenant_name,
+                    ems_id=provider_rest.id,
+                    enabled='true')
+            except IndexError:
+                raise ItemNotFound("Tenant {} not found on provider {}".format(
+                    tenant_name, self.provider.name))
+
+        resource_group_id = None
+        if self.provider.one_of(AzureProvider):
+            resource_groups = self.appliance.rest_api.get(
+                '{}?attributes=resource_groups'.format(provider_rest._href))['resource_groups']
+            resource_group_id = None
+            resource_group_name = provisioning.get('resource_group')
+            for res_group in resource_groups:
+                if (res_group['name'] == resource_group_name and
+                        res_group['ems_id'] == provider_rest.id):
+                    resource_group_id = res_group['id']
+                    break
+
+        inst_args = {
+            "version": "1.1",
+            "template_fields": {
+                "guid": image.guid
+            },
+            "vm_fields": {
+                "placement_auto": False,
+                "vm_name": self.name,
+                "instance_type": flavor['id'],
+                "request_type": "template",
+                "cloud_network": cloud_network['id'],
+                "cloud_subnet": cloud_subnet['id'],
+
+            },
+            "requester": {
+                "user_name": "admin",
+                "owner_email": "admin@example.com",
+                "auto_approve": True,
+            },
+            "tags": {
+            },
+            "ems_custom_attributes": {
+            },
+            "miq_custom_attributes": {
+            }
+        }
+        if tenant_name:
+            inst_args['vm_fields']['cloud_tenant'] = tenant['id']
+        if resource_group_id:
+            inst_args['vm_fields']['resource_group'] = resource_group_id
+        if azone_id:
+            inst_args['vm_fields']['placement_availability_zone'] = azone_id
+        if self.provider.one_of(EC2Provider):
+            inst_args['vm_fields']['monitoring'] = 'basic'
+
+        return inst_args
+
 
 @attr.s
 class InstanceCollection(VMCollection):
     ENTITY = Instance
-
-    def create(self, vm_name, provider, form_values, cancel=False):
-        """Provisions an instance with the given properties through CFME
-
-        Args:
-            vm_name: the instance's name
-            form_values: dictionary of form values for provisioning, structured into tabs
-            cancel: boolean, whether or not to cancel form filling
-
-        Note:
-            Calling create on a sub-class of instance will generate the properly formatted
-            dictionary when the correct fields are supplied.
-        """
-        instance = self.instantiate(vm_name, provider, form_values.get('template_name'))
-        form_values.update({'provider_name': provider.name})
-        view = navigate_to(self, 'Provision')
-
-        # Only support 1 security group for now
-        # TODO: handle multiple
-        if ('environment' in form_values and
-                'security_groups' in form_values['environment'] and
-                isinstance(form_values['environment']['security_groups'], (list, tuple))):
-
-            first_group = form_values['environment']['security_groups'][0]
-            recursive_update(form_values, {'environment': {'security_groups': first_group}})
-
-        view.form.fill(form_values)
-
-        if cancel:
-            view.form.cancel_button.click()
-            # Redirects to Instance All
-            view = self.browser.create_view(InstanceAllView)
-            wait_for(lambda: view.is_displayed, timeout=10, delay=2, message='wait for redirect')
-            view.flash.assert_success_message(self.ENTITY.PROVISION_CANCEL)
-            view.flash.assert_no_error()
-        else:
-            view.form.submit_button.click()
-
-            view = self.appliance.browser.create_view(RequestsView)
-            wait_for(lambda: view.flash.messages, fail_condition=[], timeout=10, delay=2,
-                     message='wait for Flash Success')
-            view.flash.assert_no_error()
-
-        return instance
 
     def all(self):
         """Return entities for all items in collection"""

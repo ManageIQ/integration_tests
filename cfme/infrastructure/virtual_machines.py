@@ -971,6 +971,80 @@ class InfraVm(VM):
                                                             provider=self.provider)
         return host
 
+    @property
+    def vm_default_args(self):
+        """Represents dictionary used for Vm/Instance provision with mandatory default args"""
+        provisioning = self.provider.data['provisioning']
+        inst_args = {
+            'request': {
+                'email': 'vm_provision@cfmeqe.com'},
+            'catalog': {
+                'vm_name': self.name},
+            'environment': {
+                'host_name': {'name': provisioning['host']},
+                'datastore_name': {'name': provisioning['datastore']}},
+            'network': {
+                'vlan': partial_match(provisioning['vlan'])}
+        }
+
+        return inst_args
+
+    @property
+    def vm_default_args_rest(self):
+        """Represents dictionary used for REST API Vm/Instance provision with minimum required
+        default args
+
+        """
+        from cfme.infrastructure.provider.rhevm import RHEVMProvider
+        if not self.provider.is_refreshed():
+            self.provider.refresh_provider_relationships()
+            wait_for(self.provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        provisioning = self.provider.data['provisioning']
+        template_name = provisioning['template']
+        template = self.appliance.rest_api.collections.templates.get(name=template_name,
+                                                                     ems_id=self.provider.id)
+        host_id = self.appliance.rest_api.collections.hosts.get(name=provisioning['host']).id
+        ds_id = self.appliance.rest_api.collections.data_stores.get(
+            name=provisioning['datastore']).id
+        inst_args = {
+            "version": "1.1",
+            "template_fields": {
+                "guid": template.guid,
+            },
+            "vm_fields": {
+                "placement_auto": False,
+                "vm_name": self.name,
+                "request_type": "template",
+                "placement_ds_name": ds_id,
+                "placement_host_name": host_id,
+                "vlan": provisioning["vlan"],
+            },
+            "requester": {
+                "user_name": "admin",
+                "owner_email": "admin@cfmeqe.com",
+                "auto_approve": True,
+            },
+            "tags": {
+            },
+            "additional_values": {
+            },
+            "ems_custom_attributes": {
+            },
+            "miq_custom_attributes": {
+            }
+        }
+
+        if self.provider.one_of(RHEVMProvider):
+            inst_args['vm_fields']['provision_type'] = 'native_clone'
+            cluster_id = self.appliance.rest_api.collections.clusters.get(name='Default').id
+            inst_args['vm_fields']['placement_cluster_name'] = cluster_id
+            # TODO Workaround for BZ 1541036/1449157. <Template> uses template vnic_profile
+            # shouldn't be default
+            if self.appliance.version > '5.9.0.16':
+                inst_args['vm_fields']['vlan'] = '<Template>'
+
+        return inst_args
+
 
 @attr.s
 class InfraVmCollection(VMCollection):
@@ -1337,7 +1411,7 @@ class TemplatesAll(CFMENavigateStep):
             raise DestinationNotFound("the destination isn't found")
 
 
-@navigator.register(InfraVm, 'Provision')
+@navigator.register(InfraVmCollection, 'Provision')
 class ProvisionVM(CFMENavigateStep):
     VIEW = ProvisionView
     prerequisite = NavigateToSibling('All')
