@@ -1568,15 +1568,11 @@ Sprout template version mismatch spammer™
                 for mismatch in mismatches
             )
         )
-        user_mails = []
-        for user in User.objects.filter(is_superuser=True):
-            if user.email:
-                user_mails.append(user.email)
         result = send_mail(
             "Template version mismatches detected",
             email_body,
             "sprout-template-version-mismatch@example.com",
-            user_mails,
+            ['cfme-qe-infra@redhat.com'],
         )
         if result > 0:
             for mismatch in mismatches:
