@@ -3,6 +3,7 @@
 """ Module dealing with Configure/Tasks section.
 """
 import attr
+import re
 
 from navmazing import NavigateToAttribute
 from widgetastic.exceptions import RowNotFound
@@ -226,8 +227,8 @@ class TasksCollection(BaseCollection):
     def is_finished(self, *tasks):
         view = navigate_to(self, self.tab)
         tab_view = getattr(view.tabs, self.tab.lower())
-        for row in tab_view.table.rows:
-            if row.name in tasks and row.state.lower() != "finished":
+        for row in tab_view.table.rows():
+            if row.task_name.text in tasks and row.state.text.lower() != "finished":
                 return False
         return True
 
@@ -235,8 +236,15 @@ class TasksCollection(BaseCollection):
         view = navigate_to(self, self.tab)
         tab_view = getattr(view.tabs, self.tab.lower())
         rows = []
+        # expected_status support also regular expression pattern
+        expected_status = re.compile('finished', re.IGNORECASE)
         for task in tasks:
-            rows.append(tab_view.table.rows(task_name=task, state='finished'))
+            try:
+                rows.append(list(tab_view.table.rows(task_name=task, state=expected_status)).pop())
+            except IndexError:
+                logger.warn('IndexError exception suppressed when searching for task row,'
+                            ' no match found.')
+                return False
         for row in rows:
             message = row.message.text.lower()
             if row[1].browser.is_displayed('i[@class="pficon pficon-error-circle-o"]',
@@ -251,9 +259,9 @@ class TasksCollection(BaseCollection):
         return True
 
     def wait_for_finished(self, delay=5, timeout='5m', *tasks):
-        view = navigate_to(self.parent, self.tab)
+        view = navigate_to(self, self.tab)
         wait_for(
-            lambda: self.is_finished(tasks), delay=delay, timeout=timeout,
+            lambda: self.is_finished(*tasks), delay=delay, timeout=timeout,
             fail_func=view.reload.click)
 
 
