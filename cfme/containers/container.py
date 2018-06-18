@@ -3,17 +3,18 @@ import attr
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from widgetastic_manageiq import Accordion, ManageIQTree, View, Table
 from widgetastic_patternfly import VerticalNavigation
+from widgetastic.utils import VersionPick, Version
 
-from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
+from cfme.containers.provider import (ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
-                                      GetRandomInstancesMixin, LoggingableView)
+                                      GetRandomInstancesMixin, Labelable, LoggingableView)
+from cfme.exceptions import ItemNotFound
 from cfme.common import Taggable, TagPageView
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.providers import get_crud_by_name
-from widgetastic.utils import VersionPick, Version
+from widgetastic_manageiq import Accordion, ManageIQTree, View, Table
 
 
 class ContainerView(ContainerObjectAllBaseView, LoggingableView):
@@ -70,6 +71,16 @@ class Container(BaseEntity, Taggable, Labelable):
     @property
     def project_name(self):
         return self.pod.project_name
+
+    @property
+    def exists(self):
+        """Return True if the Container exists"""
+        try:
+            navigate_to(self, 'Details')
+        except ItemNotFound:
+            return False
+        else:
+            return True
 
 
 @attr.s

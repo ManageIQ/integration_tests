@@ -3,21 +3,21 @@ import attr
 from cached_property import cached_property
 
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.widget import View
 
-from cfme.common import (Taggable, PolicyProfileAssignable,
-                         TagPageView)
-from cfme.containers.provider import (Labelable,
-                                      ContainerObjectAllBaseView,
-                                      ContainerObjectDetailsBaseView, LoadDetailsMixin,
-                                      refresh_and_navigate, ContainerObjectDetailsEntities,
-                                      GetRandomInstancesMixin)
+from cfme.common import (Taggable, TagPageView, PolicyProfileAssignable)
+from cfme.containers.provider import (ContainerObjectAllBaseView,
+                                      ContainerObjectDetailsBaseView,
+                                      ContainerObjectDetailsEntities, GetRandomInstancesMixin,
+                                      Labelable, LoadDetailsMixin,
+                                      refresh_and_navigate)
+from cfme.exceptions import ItemNotFound
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.wait import wait_for, TimedOutError
-from widgetastic_manageiq import SummaryTable, BaseEntitiesView
-from widgetastic.widget import View
 from cfme.utils.providers import get_crud_by_name
+from cfme.utils.wait import TimedOutError, wait_for
+from widgetastic_manageiq import BaseEntitiesView, SummaryTable
 
 
 class ImageAllView(ContainerObjectAllBaseView):
@@ -48,6 +48,16 @@ class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssi
     name = attr.ib()
     id = attr.ib()
     provider = attr.ib()
+
+    @property
+    def exists(self):
+        """Return True if the Image exists"""
+        try:
+            navigate_to(self, 'Details')
+        except ItemNotFound:
+            return False
+        else:
+            return True
 
     @cached_property
     def sha256(self):

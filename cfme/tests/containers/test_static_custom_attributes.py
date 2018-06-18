@@ -43,7 +43,7 @@ def add_delete_custom_attributes(provider):
     yield
     try:
         provider.delete_custom_attributes(*ATTRIBUTES_DATASET)
-    except:
+    except APIException:
         logger.info("No custom attributes to delete")
 
 
@@ -195,17 +195,18 @@ def test_delete_non_exist_attribute(provider):
                     .format(ca.value))
 
 
-@pytest.mark.meta(blockers=[BZ(1544800, forced_streams=["5.8", "5.9"])])
 @pytest.mark.polarion('CMP-10542')
 def test_add_already_exist_attribute(provider):
     ca = choice(ATTRIBUTES_DATASET)
     provider.add_custom_attributes(ca)
-    with pytest.raises(APIException):
+    try:
         provider.add_custom_attributes(ca)
-        provider.delete_custom_attributes(ca)
+    except APIException:
         pytest.fail('You tried to add a custom attribute that already exists'
                     '({}) and didn\'t get an error!'
                     .format(ca.value))
+    finally:
+        provider.delete_custom_attributes(ca)
 
 
 @pytest.mark.polarion('CMP-10540')

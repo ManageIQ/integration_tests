@@ -5,11 +5,12 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import VersionPick, Version
 
 from cfme.common import Taggable, TagPageView
-from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
-                                      ContainerObjectDetailsBaseView,
+from cfme.containers.provider import (ContainerObjectAllBaseView,
+                                      ContainerObjectDetailsBaseView, Labelable,
                                       GetRandomInstancesMixin)
+from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.providers import get_crud_by_name
 
 
@@ -42,6 +43,16 @@ class Project(BaseEntity, Taggable, Labelable):
 
     name = attr.ib()
     provider = attr.ib()
+
+    @property
+    def exists(self):
+        """Return True if the Project exists"""
+        try:
+            navigate_to(self, 'Details')
+        except ItemNotFound:
+            return False
+        else:
+            return True
 
 
 @attr.s

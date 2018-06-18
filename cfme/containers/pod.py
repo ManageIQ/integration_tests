@@ -2,18 +2,19 @@
 import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic_manageiq import NestedSummaryTable, SummaryTable
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View
 
 from cfme.common import Taggable, TagPageView
-from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
+from cfme.containers.provider import (ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
-                                      ContainerObjectDetailsEntities,
+                                      ContainerObjectDetailsEntities, Labelable,
                                       GetRandomInstancesMixin)
+from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.providers import get_crud_by_name
+from widgetastic_manageiq import NestedSummaryTable
 
 
 class PodAllView(ContainerObjectAllBaseView):
@@ -35,7 +36,6 @@ class PodDetailsView(ContainerObjectDetailsBaseView):
     class entities(ContainerObjectDetailsEntities):  # noqa
         volumes = NestedSummaryTable(title='Volumes')
         conditions = NestedSummaryTable(title='Conditions')
-        container_statuses_summary = SummaryTable(title='Container Statuses Summary')
 
 
 @attr.s
@@ -48,6 +48,16 @@ class Pod(BaseEntity, Taggable, Labelable):
     name = attr.ib()
     project_name = attr.ib()
     provider = attr.ib()
+
+    @property
+    def exists(self):
+        """Return True if the Pod exists"""
+        try:
+            navigate_to(self, 'Details')
+        except ItemNotFound:
+            return False
+        else:
+            return True
 
 
 @attr.s

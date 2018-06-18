@@ -8,12 +8,12 @@ from traceback import format_exc
 
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_manageiq import StatusBox, ContainerSummaryTable
+from widgetastic_manageiq import StatusBox
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Text, View, TextInput
 from widgetastic_patternfly import (
     BreadCrumb, SelectorDropdown, Dropdown, BootstrapSelect, Input, Button, Tab)
-from wrapanapi.utils import eval_strings
+
 
 from cfme import exceptions
 from cfme.base.credential import TokenCredential
@@ -35,7 +35,7 @@ from cfme.utils.varmeth import variable
 from cfme.utils.version import LATEST
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
-    SummaryTable, Accordion, ManageIQTree, LineChart)
+    ParametrizedSummaryTable, Accordion, ManageIQTree, LineChart)
 
 
 class ContainersProviderDefaultEndpoint(DefaultEndpoint):
@@ -318,16 +318,15 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
         view = navigate_to(self, "Details")
         return int(view.entities.summary("Relationships").get_text_of("Image Registries"))
 
-    def pods_per_ready_status(self):
-        """Grabing the Container Statuses Summary of the pods from API"""
-        #  TODO: Add later this logic to wrapanapi
-        entities = self.mgmt.api.get('pod')[1]['items']
+    # TODO: change to wrapanapi after openshift refactor
+    def pods_per_ready_status(self, namespace=None):
+        """Get the Container Statuses of the pods from Wrapanapi"""
+        # By default, None namespace returns all pods
+        all_pods = self.mgmt.list_pods(namespace=namespace)
         out = {}
-        for entity_j in entities:
-            out[entity_j['metadata']['name']] = {
-                condition['type']: eval_strings([condition['status']]).pop()
-                for condition in entity_j['status'].get('conditions', [])
-            }
+        for pod in all_pods:
+            # A Pod can run multiple containters, create a list of the status of each container
+            out[pod.metadata.name] = {status.ready for status in pod.status.container_statuses}
         return out
 
 
@@ -553,12 +552,7 @@ class ContainerObjectAllBaseView(ProvidersView):
 
 
 class ContainerObjectDetailsEntities(View):
-    properties = SummaryTable(title="Properties")
-    status = SummaryTable(title="Status")
-    relationships = SummaryTable(title="Relationships")
-    overview = SummaryTable(title="Overview")
-    smart_management = SummaryTable(title="Smart Management")
-    labels = SummaryTable(title="Labels")
+    summary = ParametrizedSummaryTable()
 
 
 class ContainerObjectDetailsBaseView(BaseLoggedInPage, LoggingableView):
@@ -570,7 +564,7 @@ class ContainerObjectDetailsBaseView(BaseLoggedInPage, LoggingableView):
     containers = StatusBox('Containers')
     services = StatusBox('Services')
     images = StatusBox('Images')
-    pods = ContainerSummaryTable(title='Pods')
+    summary = ParametrizedSummaryTable()
     SUMMARY_TEXT = None
 
     @View.nested

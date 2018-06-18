@@ -95,7 +95,7 @@ def test_report_pods_per_ready_status(appliance, soft_assert, provider):
         if soft_assert(name in pods_per_ready_status,  # this check based on BZ#1435958
                 'Could not find pod "{}" in openshift.'
                 .format(name)):
-            expected_readiness = bool(pods_per_ready_status.get(name, {}).get('Ready', False))
+            expected_readiness = bool(all(pod for pod in pods_per_ready_status.get(name, False)))
             soft_assert(expected_readiness == readiness_ui,
                         'For pod "{}" expected readiness is "{}" Found "{}"'
                         .format(name, expected_readiness, readiness_ui))
@@ -232,22 +232,22 @@ def test_report_pod_counts_for_container_images_by_project(appliance, provider, 
     see polarion case for more info"""
     report = get_report(appliance, 'Pod counts For Container Images by Project', candu=True)
 
-    pods_api = provider.mgmt.api.get('pod')[1]['items']
+    pods_api = provider.mgmt.list_pods()
     pods_per_project = {}
-    for project in provider.mgmt.list_project():
-        pods_per_project[project.name] = [
-            pd for pd in pods_api if pd['metadata']['namespace'] == project.name]
+    for project in provider.mgmt.list_project_names():
+        pods_per_project[project] = [
+            pd for pd in pods_api if pd.metadata.namespace == project]
 
     rows = list(report.data.rows)
     for row in rows:
         project_name, pod_name = row['Project Name'], row['Pod Name']
-        pod = filter(lambda pd: pd['metadata']['name'] == pod_name,
+        pod = filter(lambda pd: pd.metadata.name == pod_name,
                      pods_per_project[project_name])
         soft_assert(pod, 'Could not find pod "{}" of project "{}" in the report.'
                     .format(pod_name, project_name))
         pod = pod.pop()
         for pd in pods_per_project[project_name]:
-            expected_image = pd['spec']['containers'][-1]['image']
+            expected_image = pd.spec.containers[0].image
             pod_images = [r['Image Name'] for r in rows if r['Pod Name'] == pod_name]
             # Use 'in' since the image name in the API may include also registry and tag
             soft_assert(filter(lambda img_nm: img_nm in expected_image, pod_images),
@@ -271,13 +271,13 @@ def test_report_recently_discovered_pods(appliance, provider, soft_assert):
 @pytest.mark.polarion('CMP-10273')
 def test_report_number_of_images_per_node(appliance, provider, soft_assert):
     """Testing 'Number of Images per Node' report, see polarion case for more info"""
-    pods_api = provider.mgmt.api.get('pod')[-1]['items']
+    pods_api = provider.mgmt.list_pods()
     report = get_report(appliance, 'Number of Images per Node', candu=True)
     report_data = list(report.data.rows)
     for pod in pods_api:
-        expected_image = pod['spec']['containers'][0]['image']
-        node = pod['spec']['nodeName']
-        pod_name = pod['metadata']['name']
+        expected_image = pod.spec.containers[0].image
+        node = pod.spec.node_name
+        pod_name = pod.metadata.name
         pod_images = [row['Image Name'] for row in report_data
                       if row['Pod Name'] == pod_name and
                       row['Node Name'] == node]
@@ -292,7 +292,7 @@ def test_report_number_of_images_per_node(appliance, provider, soft_assert):
 def test_report_projects_by_number_of_containers(appliance, provider, soft_assert):
     """Testing 'Projects by Number of Containers' report, see polarion case for more info"""
     report = get_report(appliance, 'Projects by Number of Containers')
-    pods_api = provider.mgmt.api.get('pod')[-1]['items']
+    pods_api = provider.mgmt.list_pods()
 
     # Since there is no provider column, in case of more than 1 provider we get some projects
     # multiple times in the report. Because of that for each project name we are collecting
@@ -306,8 +306,8 @@ def test_report_projects_by_number_of_containers(appliance, provider, soft_asser
 
     for project_name, containers_counts in projects_containers_count.items():
         containers_counts_api = sum(
-            [len(pod['spec']['containers']) for pod in pods_api
-            if pod['metadata']['namespace'] == project_name]
+            [len(pod.spec.containers) for pod in pods_api
+             if pod.metadata.namespace == project_name]
         )
         soft_assert(containers_counts_api in containers_counts,
                     'Expected containers count for project {} should be {}. Found {} instead.'

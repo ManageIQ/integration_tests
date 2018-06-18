@@ -5,6 +5,7 @@ from six.moves.urllib.error import URLError
 from wrapanapi.systems.container import Openshift
 
 from cfme.common.provider import DefaultEndpoint
+from cfme.common.vm_console import ConsoleMixin
 from cfme.control.explorer.alert_profiles import ProviderAlertProfile, NodeAlertProfile
 from cfme.utils import ssh
 from cfme.utils.log import logger
@@ -79,7 +80,7 @@ class AlertsEndpoint(ServiceBasedEndpoint):
 
 
 @attr.s(hash=False)
-class OpenshiftProvider(ContainersProvider):
+class OpenshiftProvider(ContainersProvider, ConsoleMixin):
     num_route = ['num_route']
     STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + num_route
     type_name = "openshift"
@@ -97,6 +98,7 @@ class OpenshiftProvider(ContainersProvider):
     image_tag = attr.ib(default=None)
     cve_loc = attr.ib(default=None)
     virt_type = attr.ib(default=None)
+    provider = attr.ib(default=None)
 
     def create(self, **kwargs):
 

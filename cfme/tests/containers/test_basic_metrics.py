@@ -1,16 +1,23 @@
 import pytest
 import requests
 import xmltodict
+
 from cfme.containers.provider import ContainersProvider
+from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.path import scripts_path
+from cfme.utils.providers import ProviderFilter
+
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1),
-    pytest.mark.provider([ContainersProvider], scope='function')]
-
+    pytest.mark.provider(gen_func=providers,
+                         filters=[ProviderFilter(classes=[ContainersProvider],
+                                                 required_flags=['metrics_collection'])],
+                         scope='function')
+]
 
 SET_METRICS_CAPTURE_THRESHOLD_IN_MINUTES = 5
 WAIT_FOR_METRICS_CAPTURE_THRESHOLD_IN_MINUTES = "15m"
@@ -33,8 +40,10 @@ def enable_capacity_and_utilization(appliance):
 
     logger.info("Enabling metrics collection roles")
     appliance.server.settings.enable_server_roles(*args)
-
-    yield
+    if appliance.wait_for_server_roles(args, delay=10, timeout=300):
+        yield
+    else:
+        pytest.skip("Failed to set server roles on appliance {}".format(appliance))
 
     logger.info("Disabling metrics collection roles")
     appliance.server.settings.disable_server_roles(*args)
@@ -57,12 +66,12 @@ def test_basic_metrics(provider):
         Curls the hawkular status page and checks if it's up
         """
     try:
-        router = [router for router in provider.mgmt.o_api.get('route')[1]['items']
-                  if router["metadata"]["name"] == 'hawkular-metrics' or
-                  router["metadata"]["name"] == 'prometheus'].pop()
-    except IndexError:
-        pytest.skip('No Metrics Route available for {}'.format(provider.key))
-    metrics_url = router["status"]["ingress"][0]["host"]
+        router = [router for router in provider.mgmt.list_route()
+                  if router.metadata.name == 'hawkular-metrics' or
+                  router.metadata.name == 'prometheus'].pop()
+        metrics_url = router.status.ingress[0].host
+    except AttributeError:
+        pytest.skip('Could not determine metric route for {}'.format(provider.key))
     creds = provider.get_credentials_from_config(provider.key, cred_type='token')
     header = {"Authorization": "Bearer {token}".format(token=creds.token)}
     response = requests.get("https://{url}:443".format(url=metrics_url), headers=header,
