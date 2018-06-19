@@ -1,5 +1,6 @@
 import attr
 import csv
+import tempfile
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from selenium.webdriver.common.keys import Keys
@@ -510,13 +511,13 @@ class MigrationPlanCollection(BaseCollection):
         if csv_import:
             view.general.select_vm.select("Import a CSV file with a list of VMs to be migrated")
             view.next_btn.click()
-            with open('v2v_vms.csv', 'w') as file:
+            temp_file = tempfile.NamedTemporaryFile(suffix='.csv')
+            with open(temp_file.name, 'w') as file:
                 headers = ['Name', 'Provider']
                 writer = csv.DictWriter(file, fieldnames=headers)
                 writer.writeheader()
                 for vm in vm_names:
                     writer.writerow({'Name': vm.name, 'Provider': vm.provider.name})
-            file.close()
             view.vms.hidden_field.fill('v2v_vms.csv')
         else:
             view.next_btn.click()
