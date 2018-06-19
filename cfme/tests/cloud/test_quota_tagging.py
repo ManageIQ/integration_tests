@@ -83,25 +83,28 @@ def catalog_item(appliance, provider, dialog, catalog, prov_data):
 def max_quota_test_instance(appliance, test_domain):
     miq = appliance.collections.domains.instantiate('ManageIQ')
 
-    original_instance = miq. \
-        namespaces.instantiate('System'). \
-        namespaces.instantiate('CommonMethods'). \
-        classes.instantiate('QuotaMethods'). \
-        instances.instantiate('quota_source')
+    original_instance = (
+        miq.namespaces.instantiate('System')
+        .namespaces.instantiate('CommonMethods')
+        .classes.instantiate('QuotaMethods')
+        .instances.instantiate('quota_source')
+    )
     original_instance.copy_to(domain=test_domain)
 
-    original_instance = miq. \
-        namespaces.instantiate('System'). \
-        namespaces.instantiate('CommonMethods'). \
-        classes.instantiate('QuotaStateMachine'). \
-        instances.instantiate('quota')
+    original_instance = (
+        miq.namespaces.instantiate('System')
+        .namespaces.instantiate('CommonMethods')
+        .classes.instantiate('QuotaStateMachine')
+        .instances.instantiate('quota')
+    )
     original_instance.copy_to(domain=test_domain)
 
-    instance = test_domain. \
-        namespaces.instantiate('System'). \
-        namespaces.instantiate('CommonMethods'). \
-        classes.instantiate('QuotaStateMachine'). \
-        instances.instantiate('quota')
+    instance = (
+        test_domain.namespaces.instantiate('System')
+        .namespaces.instantiate('CommonMethods')
+        .classes.instantiate('QuotaStateMachine')
+        .instances.instantiate('quota')
+    )
     return instance
 
 
