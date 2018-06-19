@@ -41,7 +41,7 @@ class AppliancePlugin(object):
 
     Instance of such plugin is then created upon first access.
     """
-    appliance = attr.ib(repr=False, convert=proxy)
+    appliance = attr.ib(repr=False, converter=proxy)
 
     @cached_property
     def logger(self):
