@@ -1,15 +1,59 @@
 import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
+from selenium.webdriver.common.keys import Keys
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
-from widgetastic_patternfly import Text, TextInput, Button, BootstrapSelect
+from widgetastic_patternfly import Text, TextInput, Button, BootstrapSelect, SelectorDropdown
+from widgetastic.utils import ParametrizedLocator
 from widgetastic_manageiq import (
-    InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList
-)
+    InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList,
+    MigrationPlanRequestDetailsList, Paginator)
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+
+
+# Widgets
+
+class MigrationPlanRequestDetailsPaginator(Paginator):
+    """ Represents Paginator control for V2V."""
+
+    PAGINATOR_CTL = './/div[contains(@class,"form-group")][./ul]'
+    './input[contains(@class,"pagination-pf-page")]'
+    CUR_PAGE_CTL = './/span[./span[contains(@class,"pagination-pf-items-current")]]'
+    PAGE_BUTTON_CTL = './/li/a[contains(@title,{})]'
+
+    def next_page(self):
+        self._click_button('Next Page')
+
+    def prev_page(self):
+        self._click_button('Previous Page')
+
+    def last_page(self):
+        self._click_button('Last Page')
+
+    def first_page(self):
+        self._click_button('First Page')
+
+    def page_info(self):
+        return self.browser.text(self.browser.element(self.CUR_PAGE_CTL, parent=self._paginator))
+
+
+class MigrationPlanRequestDetailsPaginationDropup(SelectorDropdown):
+    ROOT = ParametrizedLocator(
+        './/div[contains(@class, "dropup") and ./button[@{@b_attr}={@b_attr_value|quote}]]')
+
+
+class MigrationPlanRequestDetailsPaginationPane(View):
+    """ Represents Paginator Pane for V2V."""
+
+    ROOT = './/form[contains(@class,"content-view-pf-pagination")]'
+
+    items_on_page = MigrationPlanRequestDetailsPaginationDropup('id', 'pagination-row-dropdown')
+    paginator = MigrationPlanRequestDetailsPaginator()
 
 
 # Views
@@ -254,6 +298,84 @@ class AddMigrationPlanView(View):
         return self.title.text == 'Migration Plan Wizard'
 
 
+class MigrationPlanRequestDetailsView(View):
+    migration_request_details_list = MigrationPlanRequestDetailsList("plan-request-details-list")
+    sort_type = SelectorDropdown('id', 'sortTypeMenu')
+    paginator_view = View.include(MigrationPlanRequestDetailsPaginationPane, use_parent=True)
+    search_box = TextInput(locator=".//div[contains(@class,'input-group')]/input")
+    clear_filters = Text(".//a[text()='Clear All Filters']")
+    # Used for Ascending/Descending sort
+    sort_order = Text(".//button[./span[contains(@class,'sort-direction')]]")
+    # Used to select filter_by 'Name' or 'Status'
+    filter_by_dropdown = SelectorDropdown('id', 'filterFieldTypeMenu')
+    # USed to select specific status from dropdown to filter items by
+    filter_by_status_dropdown = SelectorDropdown('id', 'filterCategoryMenu')
+    # USed to select sort by options like 'VM Name', 'Started' or 'Status'
+    sort_by_dropdown = SelectorDropdown('id', 'sortTypeMenu')
+
+    @property
+    def is_displayed(self):
+        return self.migration_request_details_list.is_displayed
+
+    def filter_by_vm_name(self, vm_name):
+        """Enter VM Name in search box and hit ENTER to filter the list of VMs.
+
+        Args:
+            vm_name(str): Takes VM Name as arg.
+        """
+        try:
+            self.filter_by_dropdown.item_select("VM Name")
+        except NoSuchElementException:
+            self.logger.info("filter_by_dropdown not present, "
+                "migration plan may not have started yet.Ignoring.")
+        self.search_box.fill(vm_name)
+        self.browser.send_keys(Keys.ENTER, self.search_box)
+
+    def get_migration_status_by_vm_name(self, vm_name):
+        """Search VM using filter_by_name and return its status.
+
+        Args:
+            vm_name(str): Takes VM Name as arg.
+        """
+        try:
+            # Try to clear previously applied filters, if any.
+            self.clear_filters.click()
+        except NoSuchElementException:
+            # Ignore as button won't be visible if there were no filters applied.
+            self.logger.info("Clear Filters button not present, ignoring.")
+        self.filter_with_vm_name(vm_name)
+        status = {"Message": self.migration_request_details_list.get_message_text(vm_name),
+        "Description": self.migration_request_details_list.get_progress_description(vm_name),
+        "Time Elapsed": self.migration_request_details_list.get_clock(vm_name)}
+        return status
+
+    def filter_by_status(self, status):
+        """Set filter_by_dropdown to 'Status' and uses status arg by user to set status filter.
+
+        Args:
+            status(str): Takes status string as arg. Valid status options are:
+            ['Pending', 'Validating', 'Pre-migration', 'Migrating', 'VM Transformations Ccompleted',
+             'VM Transformations Failed']
+        """
+        try:
+            self.filter_by_dropdown.item_select("Status")
+            self.filter_by_status_dropdown.item_select(status)
+        except NoSuchElementException:
+            raise ItemNotFound("Migration plan is in Not Started State,"
+                " hence filter status dropdown not visible")
+
+    def sort_by(self, option):
+        """Sort VM list by using one of the 'Started','VM Name' or 'Status' option.
+
+        Args:
+            status(str): Takes status string as arg.
+        """
+        try:
+            self.sort_by_dropdown.item_select(option)
+        except NoSuchElementException:
+            raise ItemNotFound("Migration plan is in Not Started State,"
+                " hence sort_by dropdown not visible")
+
 # Collections Entities
 
 
@@ -290,6 +412,7 @@ class MigrationPlan(BaseEntity):
     # TODO: Ytale is updating rest of the code in this entity in separate PR.
     category = 'migrationplan'
     string_name = 'Migration Plan'
+    name = 'plan1'
 
 
 @attr.s
@@ -331,3 +454,14 @@ class AddMigrationPlan(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.create_migration_plan.click()
+
+
+@navigator.register(MigrationPlanCollection, 'Details')
+class MigrationPlanRequestDetails(CFMENavigateStep):
+    VIEW = MigrationPlanRequestDetailsView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        # TODO: REPLACE self.obj.ENTITY.name by self.obj.name when migration plan
+        # entity-collection complete
+        self.prerequisite_view.migration_plans_not_started_list.select_plan(self.obj.ENTITY.name)

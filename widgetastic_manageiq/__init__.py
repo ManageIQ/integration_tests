@@ -4591,3 +4591,113 @@ class InfraMappingList(Widget):
         except NoSuchElementException:
             raise ItemNotFound('Collapse button not present,'
                 'map clusters/networks/datastores/associated_plans details is not expaded.')
+
+
+class MigrationPlanRequestDetailsList(Widget):
+    """Represents the list of Migration Plan Request Details."""
+
+    ROOT = ParametrizedLocator('.//div[contains(@class,{@list_class|quote})]')
+    ITEM_LOCATOR = ParametrizedLocator('./div[contains(@class,"list-group-item")]')
+    # ITEM_TEXT_LOCATOR helps locate name of the Migration plan. ITEM_LOCATOR.text does not suffice.
+    # Also, ITEM_LOCATOR does not yield element which can be clicked to navigate to details page.
+    ITEM_TEXT_LOCATOR = './/div[contains(@class,"list-group-item-heading")]'
+    ITEM_MESSAGE_LOCATOR = './/div[./button/span[contains(@class,"pficon-info")]]'
+    ITEM_TIMER_LOCATOR = './/div[./span[contains(@class,"fa-clock-o")]]'
+    ITEM_ADDITIONAL_INFO_BUTTON_LOCATOR = './/div/button[./span[contains(@class,"pficon-info")]]'
+    ITEM_PROGRESS_DESCRIPTION_LOCATOR = './/div[contains(@class,"progress-description ")]'
+    ITEM_DOWNLOAD_LOG_BUTTON_LOCATOR = './/div[./a][contains(@class,"list-view-pf-actions")]'
+    ITEM_IS_ERRORED_LOCATOR = './/div[contains(@class,"pficon-error-circle-o")]'
+    ITEM_PROGRESS_SPINNER_LOCATOR = './/div[contains(@class,"spinner")]'
+    ITEM_IS_SUCCESSFUL_LOCATOR = './/div/span[contains(@class,"pficon-ok")]'
+    ITEM_ADDITIONAL_INFO_POPUP_LOCATOR = '//div[contains(@class,"task-info-popover")]'
+
+    def __init__(self, parent, list_class, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.list_class = list_class
+
+    @property
+    def all_items(self):
+        return [self.browser.text(item) for item in self.browser.elements(self.ITEM_TEXT_LOCATOR)]
+
+    def _get_vm_element(self, vm_name):
+        for item in self.browser.elements(self.ITEM_LOCATOR):
+            el = self.browser.element(".//*[@class='list-group-item-heading']", parent=item)
+            if self.browser.text(el) == vm_name:
+                return item
+        raise ItemNotFound("VM: {} not found".format(vm_name))
+
+    def read(self):
+        return self.all_items
+
+    def get_message_text(self, vm_name):
+        try:
+            el = self._get_vm_element(vm_name)
+            return self.browser.text(self.browser.element(self.ITEM_MESSAGE_LOCATOR,
+                 parent=el))
+        except NoSuchElementException:
+            # Plan not started yet
+            return None
+
+    def get_clock(self, vm_name):
+        el = self._get_vm_element(vm_name)
+        return self.browser.text(self.browser.element(self.ITEM_TIMER_LOCATOR,
+            parent=el))
+
+    def open_additional_info_popup(self, vm_name):
+        try:
+            el = self._get_vm_element(vm_name)
+            self.browser.element(self.ITEM_ADDITIONAL_INFO_BUTTON_LOCATOR, parent=el).click()
+            return True
+        except NoSuchElementException:
+            # Plan not started yet
+            return None
+
+    def get_progress_description(self, vm_name):
+        el = self._get_vm_element(vm_name)
+        return self.browser.text(self.browser.element(self.ITEM_PROGRESS_DESCRIPTION_LOCATOR,
+            parent=el))
+
+    def download_log(self, vm_name):
+        try:
+            el = self._get_vm_element(vm_name)
+            self.browser.element(self.ITEM_DOWNLOAD_LOG_BUTTON_LOCATOR, parent=el).click()
+        except NoSuchElementException:
+            # Plan not started yet
+            return None
+
+    def is_errored(self, vm_name):
+        """See if cross icon indicating failure present."""
+        try:
+            el = self._get_vm_element(vm_name)
+            return self.browser.element(self.ITEM_IS_ERRORED_LOCATOR, parent=el).is_displayed()
+        except NoSuchElementException:
+            # This means element not present, so no error
+            return False
+
+    def is_in_progress(self, vm_name):
+        """ Checks if spinner is present indicating progress."""
+        try:
+            el = self._get_vm_element(vm_name)
+            return self.browser.element(self.ITEM_PROGRESS_SPINNER_LOCATOR,
+             parent=el).is_displayed()
+        except NoSuchElementException:
+            # This means element not present, so not in-progress
+            return False
+
+    def is_successful(self, vm_name):
+        """ Checks if check icon is present indicating success."""
+        try:
+            el = self._get_vm_element(vm_name)
+            return self.browser.is_displayed(self.ITEM_IS_SUCCESSFUL_LOCATOR,
+             parent=el)
+        except NoSuchElementException:
+            # This means element not present, so plan may not have started
+            return False
+
+    def read_additional_info_popup(self, vm_name):
+        if self.open_additional_info_popup(vm_name):
+            el = self.browser.element(self.ITEM_ADDITIONAL_INFO_POPUP_LOCATOR)
+            return {'Status': self.browser.text('./h3', parent=el),
+            'Started': self.browser.text('./div[2]/div/div[1]', parent=el),
+            'Description': self.browser.text('./div[2]/div/div[2]', parent=el),
+            'Conversion Host': self.browser.text('./div[2]/div/div[3]', parent=el)}
