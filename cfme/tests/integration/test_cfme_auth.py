@@ -92,19 +92,19 @@ def test_login_evm_group(appliance, request, auth_user_data, user_type, soft_ass
             * auth provider configured with user as a member of a group matching default EVM group
         Test will configure auth and login
     """
-    user_col = appliance.collections.users
     # get a list of (user_obj, groupname) tuples, creating the user object inline
     # Replace spaces with dashes in UPN type usernames for login compatibility
     # filtering on those that have evmgroup in groupname
     user_tuples = []
     for user in auth_user_data:
-        if 'evmgroup' in user.groupname.lower():
+        evm_matched_groups = [group for group in user.groups if 'evmgroup' in group.lower()]
+        if evm_matched_groups:
             user_tuples.append(
-                (user_col.simple_user(
+                (appliance.collections.users.simple_user(
                     user.username.replace(' ', '-') if user_type == 'upn' else user.username,
                     credentials[user.password]['password'],
                     fullname=user.fullname),
-                user.groupname)
+                evm_matched_groups[0])
             )
 
     for user, groupname in user_tuples:
@@ -127,7 +127,7 @@ def test_login_evm_group(appliance, request, auth_user_data, user_type, soft_ass
         request.addfinalizer(user.delete)
 
 
-def retrieve_group(appliance, auth_mode, user_data, auth_provider):
+def retrieve_group(appliance, auth_mode, username, groupname, auth_provider):
     """Retrieve group from ext/ldap auth provider through UI
 
     Args:
@@ -137,9 +137,9 @@ def retrieve_group(appliance, auth_mode, user_data, auth_provider):
 
     """
     group = appliance.collections.groups.instantiate(
-        description=user_data['groupname'],
-        role="EvmRole-user",
-        user_to_lookup=user_data["username"],
+        description=groupname,
+        role='EvmRole-user',
+        user_to_lookup=username,
         ldap_credentials=Credential(principal=auth_provider.bind_dn,
                                     secret=auth_provider.bind_password))
     add_method = ('add_group_from_ext_auth_lookup'
@@ -174,9 +174,12 @@ def test_login_retrieve_group(appliance, request, auth_user_data, user_type, aut
             user.username.replace(' ', '-') if user_type == 'upn' else user.username,
             credentials[user.password]['password'],
             fullname=user.fullname),
-        retrieve_group(appliance, auth_mode, user, auth_provider))
+        retrieve_group(appliance, auth_mode, user.username, group, auth_provider))
         for user in auth_user_data
-        if 'evmgroup' not in user.groupname.lower()]  # exclude built-in evm groups
+        for group in user.groups
+        if 'evmgroup' not in group.lower()]  # exclude built-in evm groups
+
+    logger.info('USER_GROUP_TUPLES: %r', user_group_tuples)
 
     for user, group in user_group_tuples:
         with user:

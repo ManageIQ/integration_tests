@@ -41,7 +41,8 @@ def auth_user_data(auth_provider, user_type):
           username: ldapuser2
           password: mysecretpassworddontguess
           fullname: Ldap User2
-          groupname: customgroup1
+          groups:
+            - customgroup1
           providers:
             - freeipa01
           user_types:
