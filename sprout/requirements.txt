@@ -9,4 +9,4 @@ gunicorn
 pika
 python-memcached
 
-miq_version
+miq-version==0.1.4
