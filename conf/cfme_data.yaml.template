@@ -33,7 +33,10 @@ management_systems:
             - iscsi
         hosts:
             - name: myhost
-              credentials: myhost
+              credentials:
+                  default: myhost
+                  remote_login: remote_login_cred
+                  web_services: web_services_cred
               type: esxi
               test_fleece: True
         datastores:
@@ -90,7 +93,10 @@ management_systems:
             - iscsi
         hosts:
             - name: myhost
-              credentials: myhost
+              credentials:
+                  default: myhost
+                  remote_login: remote_login_cred
+                  web_services: web_services_cred
               type: rhel
               test_fleece: False
         datastores:

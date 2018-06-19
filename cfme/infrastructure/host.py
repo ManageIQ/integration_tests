@@ -407,6 +407,19 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
             fail_func=view.browser.refresh
         )
 
+    @classmethod
+    def get_credentials_from_config(cls, credentials_config):
+        """Retrieves the credentials from the credentials yaml.
+
+        Args:
+            credentials_config: a dict with host credentials in the credentials yaml.
+
+        Returns:
+            A dict with credential types and :py:class:`cfme.base.credential.Credential` instances
+        """
+        return {cred_type: cls.Credential.from_config(cred) for
+                cred_type, cred in credentials_config.items()}
+
 
 @attr.s
 class HostCollection(BaseCollection):
@@ -537,8 +550,8 @@ class HostCollection(BaseCollection):
 
     def _get_config(self, host_key):
         host_config = conf.cfme_data.get('management_hosts', {})[host_key]
-        credentials = {'default': get_credentials_from_config(host_config['credentials'])}
-        ipmi_credentials = get_credentials_from_config(host_config['ipmi_credentials'])
+        credentials = Host.get_credentials_from_config(host_config['credentials'])
+        ipmi_credentials = Host.Credential.from_config(host_config['ipmi_credentials'])
         ipmi_credentials.ipmi = True
         return host_config, credentials, ipmi_credentials
 
@@ -661,10 +674,3 @@ class Utilization(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.monitoring.item_select('Utilization')
-
-
-def get_credentials_from_config(credential_config_name):
-    creds = conf.credentials[credential_config_name]
-    username = ("{}\\{}".format(creds.domain, creds.username) if creds.get('domain') else
-                creds.username)
-    return Host.Credential(principal=username, secret=creds["password"])

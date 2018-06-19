@@ -3,7 +3,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.exceptions import MenuItemNotFound
-from cfme.infrastructure.host import Host, get_credentials_from_config
+from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import testgen, hosts
@@ -72,7 +72,7 @@ def datastores_hosts_setup(provider, datastore, request, appliance):
         host_collection = appliance.collections.hosts
         test_host = host_collection.instantiate(name=host_entity.name, provider=provider)
         test_host.update_credentials_rest(
-            credentials=get_credentials_from_config(host_data.credentials))
+            credentials=Host.get_credentials_from_config(host_data.credentials))
         request.addfinalizer(lambda: test_host.update_credentials_rest(
             credentials=Host.Credential(principal="", secret="")))
 

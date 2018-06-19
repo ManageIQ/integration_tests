@@ -20,15 +20,18 @@ pytestmark = [
 ]
 
 
-msgs = {'virtualcenter': 'Login failed due to a bad username or password.',
-        'rhevm': 'Login failed due to a bad username or password.',
-        'scvmm': 'Check credentials. Remote error message: WinRM::WinRMAuthorizationError'}
+msgs = {
+    'virtualcenter': 'Login failed due to a bad username or password.',
+    'rhevm': 'Login failed due to a bad username or password.',
+    'scvmm': 'Check credentials. Remote error message: WinRM::WinRMAuthorizationError'
+}
 
 # Credential type UI Element id and it's name in Authentication Table
-credentials_type = {'remote_login': 'Remote Login Credentials',
-                    'default': 'Default Credentials',
-                    'web_services': 'Web Services Credentials',
-                    }
+credentials_type = {
+    'remote_login': 'Remote Login Credentials',
+    'default': 'Default Credentials',
+    'web_services': 'Web Services Credentials'
+}
 
 
 def get_host_data_by_name(provider_key, host_name):
@@ -40,12 +43,11 @@ def get_host_data_by_name(provider_key, host_name):
 
 @pytest.mark.rhv1
 @pytest.mark.meta(blockers=[
-                  BZ(1584246, forced_streams=['5.8', '5.9'],
-                     unblock=lambda provider: not provider.one_of(VMwareProvider)),
                   BZ(1584261, forced_streams=['5.8'],
                      unblock=lambda creds: creds == 'default'),
                   BZ(1584280, forced_streams=['5.9'],
-                     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+                     unblock=lambda provider, creds: not provider.one_of(RHEVMProvider) or
+                     creds != 'web_services')])
 @pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
                          ids=["default", "remote", "web"])
 def test_host_good_creds(appliance, request, setup_provider, provider, creds):
@@ -73,7 +75,8 @@ def test_host_good_creds(appliance, request, setup_provider, provider, creds):
                 principal="", secret="", verify_secret="")}
 
     with update(host_obj, validate_credentials=True):
-        host_obj.credentials = {creds: host.get_credentials_from_config(host_data['credentials'])}
+        host_obj.credentials = {creds: host.Host.Credential.from_config(
+                                host_data['credentials'][creds])}
         # TODO Remove this workaround once our SCVMM env will work with common DNS
         if provider.one_of(SCVMMProvider):
             host_obj.hostname = host_data['ipaddress']
@@ -97,9 +100,7 @@ def test_host_good_creds(appliance, request, setup_provider, provider, creds):
                   BZ(1584246, forced_streams=['5.8', '5.9'],
                      unblock=lambda provider: not provider.one_of(VMwareProvider)),
                   BZ(1584261, forced_streams=['5.8'],
-                     unblock=lambda creds: creds == 'default'),
-                  BZ(1584280, forced_streams=['5.9'],
-                     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+                     unblock=lambda creds: creds == 'default')])
 @pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
                          ids=["default", "remote", "web"])
 def test_host_bad_creds(appliance, request, setup_provider, provider, creds):
@@ -121,7 +122,7 @@ def test_host_bad_creds(appliance, request, setup_provider, provider, creds):
     flash_msg = msgs.get(provider.type)
     with pytest.raises(Exception, match=flash_msg):
         with update(host_obj, validate_credentials=True):
-            host_obj.credentials = {creds: host.get_credentials_from_config('bad_credentials')}
+            host_obj.credentials = {creds: host.Host.Credential(principal="wrong", secret="wrong")}
             # TODO Remove this workaround once our SCVMM env will work with common DNS
             if provider.one_of(SCVMMProvider):
                 host_obj.hostname = host_data['ipaddress']
