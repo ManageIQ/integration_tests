@@ -1,5 +1,4 @@
 import pytest
-import random
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -25,7 +24,7 @@ def test_sdn_crud(provider, appliance):
     """
     view = navigate_to(provider, 'Details')
     collection = appliance.collections.network_providers.filter({'provider': provider})
-    network_provider = random.choice(collection.all())
+    network_provider = collection.all()[0]
 
     view = navigate_to(network_provider, 'Details')
     parent_name = view.entities.relationships.get_text_of("Parent Cloud Provider")

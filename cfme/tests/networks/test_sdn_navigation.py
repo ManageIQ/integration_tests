@@ -1,5 +1,4 @@
 import pytest
-import random
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -22,7 +21,7 @@ def test_sdn_provider_relationships_navigation(provider, tested_part, appliance)
         test_flag: sdn
     """
     collection = appliance.collections.network_providers.filter({'provider': provider})
-    network_provider = random.choice(collection.all())
+    network_provider = collection.all()[0]
 
     view = navigate_to(network_provider, 'Details')
     value = view.entities.relationships.get_text_of(tested_part)
@@ -36,6 +35,6 @@ def test_provider_topology_navigation(provider, appliance):
         test_flag: sdn
     """
     collection = appliance.collections.network_providers.filter({'provider': provider})
-    network_provider = random.choice(collection.all())
+    network_provider = collection.all()[0]
     view = navigate_to(network_provider, "TopologyFromDetails")
     assert view.is_displayed
