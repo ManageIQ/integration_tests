@@ -16,55 +16,10 @@ import time
 from cfme.utils.conf import env
 from cfme.utils.log import logger
 from cfme.utils.providers import providers_data
-from cfme.utils.version import get_stream
 
 session = requests.Session()
 
 
-# regexen to match templates to streams and pull out the date
-# stream names must be slugified (alphanumeric, dashes, underscores only)
-# regex must include month and day, may include year
-# If year is unset, will be the most recent month/day (not in the future)
-stream_matchers = (
-    (get_stream('latest'), r'^miq-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.2'), r'^cfme-52.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.3'), r'^cfme-53.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.4'), r'^cfme-54.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.5'), r'^cfme-55.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.6'), r'^cfme-56.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.7'), r'^cfme-57.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.8'), r'^cfme-58.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.9'), r'^cfme-59.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.10'), r'^cfme-510.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    ('upstream_stable', r'^miq-stable-(?P<release>gapri[-\w]*?)'  # release name limit to 5 chars
-                        r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
-    ('upstream_euwe', r'^miq-stable-(?P<release>euwe[-\w]*?)'
-                      r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
-    ('upstream_fine', r'^miq-stable-(?P<release>fine[-\w]*?)'
-                      r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
-    # new format, TODO remove with TemplateName update, no more CFME nightly
-    ('downstream-nightly', r'^cfme-nightly-\d*-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
-
-    # Regex for standardized dates using TemplateName class below
-    # TODO swap these in when TemplateName is in use
-    # (get_stream('5.7'), r'^cfme-57.*-(?P<year>\d{4})?(?P<month>\d{2})(?P<day>\d{2})')
-    # (get_stream('5.8'), r'^cfme-58.*-(?P<year>\d{4})?(?P<month>\d{2})(?P<day>\d{2})')
-    # (get_stream('5.9'), r'^cfme-59.*-(?P<year>\d{4})?(?P<month>\d{2})(?P<day>\d{2})')
-    # Nightly builds have potentially multiple version streams bound to them so we
-    # cannot use get_stream()
-    # ('upstream_stable', r'^miq-(?P<release>gapri[-\w]*?)'
-    #                    r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})')
-    # ('upstream_euwe', r'^miq-(?P<release>euwe[-\w]*?)'
-    #                  r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})')
-    # ('upstream_fine', r'^miq-(?P<release>fine[-\w]*?)'
-    #                  r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})')
-
-)
-generic_matchers = (
-    ('sprout', r'^s_tpl'),
-    ('sprout', r'^sprout_template'),
-    ('rhevm-internal', r'^auto-tmp'),
-)
 conf = env.get('trackerbot', {})
 _active_streams = None
 
@@ -118,41 +73,6 @@ def active_streams(api, force=False):
     if _active_streams is None or force:
         _active_streams = [stream['name'] for stream in api.group.get(stream=True)['objects']]
     return _active_streams
-
-
-def parse_template(template_name):
-    """Given a template name, attempt to extract its group name and upload date
-
-    Returns:
-        * None if no groups matched
-        * group_name, datestamp of the first matching group. group name will be a string,
-          datestamp with be a :py:class:`datetime.date <python:datetime.date>`, or None if
-          a date can't be derived from the template name
-    """
-    for group_name, regex in stream_matchers:
-        matches = re.match(regex, template_name)
-        if matches:
-            groups = matches.groupdict()
-            # hilarity may ensue if this code is run right before the new year
-            today = date.today()
-            year = int(groups.get('year', today.year))
-            month, day = int(groups['month']), int(groups['day'])
-            # validate the template date by turning into a date obj
-            try:
-                # year, month, day might have been parsed incorrectly with loose regex
-                template_date = futurecheck(date(year, month, day))
-            except ValueError:
-                logger.exception('Failed to parse year: %s, month: %s, day: %s correctly '
-                                 'from template %s with regex %s',
-                                 year, month, day, template_name, regex)
-                continue
-            return TemplateInfo(group_name, template_date, True)
-    for group_name, regex in generic_matchers:
-        matches = re.match(regex, template_name)
-        if matches:
-            return TemplateInfo(group_name, None, False)
-    # If no match, unknown
-    return TemplateInfo('unknown', None, False)
 
 
 def provider_templates(api):

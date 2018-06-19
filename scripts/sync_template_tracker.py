@@ -3,9 +3,10 @@
 import sys
 import traceback
 from collections import defaultdict
+from slumber.exceptions import SlumberHttpBaseException
 from threading import Lock, Thread
 
-from slumber.exceptions import SlumberHttpBaseException
+from miq_version import TemplateName
 
 from cfme.utils import trackerbot, net
 from cfme.utils.conf import cfme_data
@@ -50,7 +51,7 @@ def main(trackerbot_url, mark_usable=None):
     for template_name, providers in template_providers.items():
         template_name = str(template_name)
 
-        group_name, datestamp, stream = trackerbot.parse_template(template_name)
+        group_name, datestamp, stream = TemplateName.parse_template(template_name)
 
         # Don't want sprout templates
         if group_name in ('sprout', 'rhevm-internal'):
