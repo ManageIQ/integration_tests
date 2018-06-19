@@ -2069,7 +2069,7 @@ class IPAppliance(object):
         except KeyError as ex:
             logger.error('Incorrect provider type')
             logger.exception(ex)
-            raise Exception('Impossible to create proxy with current provider type')
+            raise ApplianceException('Impossible to create proxy with current provider type')
         self.update_advanced_settings(vmdb_config)
 
     def set_session_timeout(self, timeout=86400, quiet=True):
