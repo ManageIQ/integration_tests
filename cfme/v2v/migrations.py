@@ -4,14 +4,14 @@ import csv
 from navmazing import NavigateToAttribute, NavigateToSibling
 from selenium.webdriver.common.keys import Keys
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import Checkbox, View
+from widgetastic.widget import Checkbox, View, Widget
 from widgetastic.utils import ParametrizedLocator
 from widgetastic_manageiq import (
     InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList, Paginator,
-    Table, MigrationPlan, RequestDetailsList, RadioGroup, HiddenFileInput, MigrationDropdown
+    Table, MigrationPlanRequestDetailsList, RadioGroup, HiddenFileInput
 )
-from widgetastic_patternfly import Text, TextInput, Button, BootstrapSelect, SelectorDropdown
-
+from widgetastic_patternfly import (Text, TextInput, Button, BootstrapSelect, SelectorDropdown,
+                                    Dropdown)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
@@ -264,6 +264,23 @@ class InfraMappingWizard(View):
     def after_fill(self, was_change):
         if was_change:
             self.result.close_btn.click()
+
+
+# Widget for migration selection dropdown
+class MigrationDropdown(Dropdown):
+    """Represents the migration plan dropdown of v2v.
+
+    Args:
+        text: Text of the button, can be inner text or the title attribute.
+    """
+    ROOT = './/div[contains(@class, "dropdown") and .//button[contains(@id, "dropdown-filter")]]'
+    BUTTON_LOCATOR = './/*[contains(@id, "dropdown-filter")]'
+    ITEMS_LOCATOR = './/ul[contains(@aria-labelledby,"dropdown-filter")]/li/a'
+    ITEM_LOCATOR = './/ul[contains(@aria-labelledby,"dropdown-filter")]/li/a[normalize-space(.)={}]'
+
+    def __init__(self, parent, text, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.text = text
 
 
 class MigrationDashboardView(BaseLoggedInPage):
@@ -529,6 +546,7 @@ class MigrationPlanCollection(BaseCollection):
         return self.instantiate(name)
 
 # Navigations
+
 
 @navigator.register(InfrastructureMappingCollection, 'All')
 @navigator.register(MigrationPlanCollection, 'All')
