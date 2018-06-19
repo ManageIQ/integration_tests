@@ -1,10 +1,12 @@
+Command
 Django<1.10
 -e git+git://github.com/izapolsk/django-json-field.git#egg=json_field
+celery[redis]<3.2
 django-object-actions
 django-ipware
-celery[redis]<3.2
-python-memcached
 flower
 gunicorn
-Command
 pika
+python-memcached
+
+miq-version==0.1.4

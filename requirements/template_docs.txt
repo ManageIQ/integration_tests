@@ -3,7 +3,7 @@
 # Internal dependencies
 # MIQ REST API Client
 manageiq-client
-miq_version
+miq-version
 
 python-glanceclient
 

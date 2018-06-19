@@ -29,6 +29,7 @@ import socket
 from appliances.models import (
     Provider, Group, Template, Appliance, AppliancePool, DelayedProvisionTask,
     MismatchVersionMailer, User, GroupShepherd)
+from miq_version import Version, TemplateName
 from sprout import settings, redis
 from sprout.irc_bot import send_message
 from sprout.log import create_logger
@@ -37,38 +38,12 @@ from cfme.utils import conf
 from cfme.utils.appliance import Appliance as CFMEAppliance
 from cfme.utils.path import project_path
 from cfme.utils.timeutil import parsetime
-from cfme.utils.trackerbot import api, depaginate, parse_template
-from cfme.utils.version import Version
+from cfme.utils.trackerbot import api, depaginate
 from cfme.utils.wait import wait_for
 
 
 LOCK_EXPIRE = 60 * 15  # 15 minutes
-VERSION_REGEXPS = [
-    r"^cfme-(\d)(\d)(\d)(\d)(\d{2})",  # 1.2.3.4.11
-    # newer format
-    r"cfme-(\d)(\d)(\d)[.](\d{2})-",         # cfme-524.02-    -> 5.2.4.2
-    r"cfme-(\d)(\d)(\d)[.](\d{2})[.](\d)-",  # cfme-524.02.1-    -> 5.2.4.2.1
-    # 4 digits
-    r"cfme-(?:nightly-)?(\d)(\d)(\d)(\d)-",      # cfme-5242-    -> 5.2.4.2
-    r"cfme-(\d)(\d)(\d)-(\d)-",     # cfme-520-1-   -> 5.2.0.1
-    # 5 digits  (not very intelligent but no better solution so far)
-    r"cfme-(?:nightly-)?(\d)(\d)(\d)(\d{2})-",   # cfme-53111-   -> 5.3.1.11, cfme-53101 -> 5.3.1.1
-]
-VERSION_REGEXPS = map(re.compile, VERSION_REGEXPS)
-VERSION_REGEXP_UPSTREAM = re.compile(r'^miq-stable-([^-]+)-')
 TRACKERBOT_PAGINATE = 100
-
-
-def retrieve_cfme_appliance_version(template_name):
-    """If possible, retrieve the appliance's version from template's name."""
-    for regexp in VERSION_REGEXPS:
-        match = regexp.search(template_name)
-        if match is not None:
-            return ".".join(map(str, map(int, match.groups())))
-    else:
-        match = VERSION_REGEXP_UPSTREAM.search(template_name)
-        if match is not None:
-            return match.groups()[0]
 
 
 def gen_appliance_name(template_id, username=None):
@@ -290,7 +265,7 @@ def poke_trackerbot(self):
             provider.save(update_fields=['provider_type'])
         template_name = template["template"]["name"]
         ga_released = template['template']['ga_released']
-        date = parse_template(template_name).datestamp
+        date = TemplateName.parse_template(template_name).datestamp
 
         # nasty trackerbot slightly corrupts json data and it is parsed in wrong way
         # as a result
@@ -320,13 +295,13 @@ def poke_trackerbot(self):
                                                       'template_type'])
         except ObjectDoesNotExist:
             if template_name in provider.templates:
-                date = parse_template(template_name).datestamp
+                date = TemplateName.parse_template(template_name).datestamp
                 if date is None:
                     self.logger.warning(
                         "Ignoring template {} because it does not have a date!".format(
                             template_name))
                     continue
-                template_version = retrieve_cfme_appliance_version(template_name)
+                template_version = TemplateName.parse_template(template_name).version
                 if template_version is None:
                     # Make up a faux version
                     # First 3 fields of version get parsed as a zstream
@@ -415,10 +390,10 @@ def create_appliance_template(self, provider_id, group_id, template_name, source
         except ObjectDoesNotExist:
             pass
         # Fire off the template preparation
-        date = parse_template(template_name).datestamp
+        date = TemplateName.parse_template(template_name).datestamp
         if not date:
             return
-        template_version = retrieve_cfme_appliance_version(template_name)
+        template_version = TemplateName.parse_template(template_name).version
         if template_version is None:
             # Make up a faux version
             # First 3 fields of version get parsed as a zstream
@@ -1568,15 +1543,11 @@ Sprout template version mismatch spammer™
                 for mismatch in mismatches
             )
         )
-        user_mails = []
-        for user in User.objects.filter(is_superuser=True):
-            if user.email:
-                user_mails.append(user.email)
         result = send_mail(
             "Template version mismatches detected",
             email_body,
             "sprout-template-version-mismatch@example.com",
-            user_mails,
+            ['cfme-qe-infra@redhat.com'],
         )
         if result > 0:
             for mismatch in mismatches:
