@@ -4,12 +4,14 @@ import csv
 from navmazing import NavigateToAttribute, NavigateToSibling
 from selenium.webdriver.common.keys import Keys
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import View
-from widgetastic_patternfly import Text, TextInput, Button, BootstrapSelect, SelectorDropdown
+from widgetastic.widget import Checkbox, View
 from widgetastic.utils import ParametrizedLocator
 from widgetastic_manageiq import (
-    InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList,
-    MigrationPlanRequestDetailsList, Paginator)
+    InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList, Paginator,
+    Table, MigrationPlan, RequestDetailsList, RadioGroup, HiddenFileInput, MigrationDropdown
+)
+from widgetastic_patternfly import Text, TextInput, Button, BootstrapSelect, SelectorDropdown
+
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
@@ -274,36 +276,6 @@ class MigrationDashboardView(BaseLoggedInPage):
     # TODO: Latest upstream nightly have changes in dropdown text
     migr_dropdown = MigrationDropdown(text="Migration Plans Not Started")
 
-    @View.nested
-    class plan_not_started(View):  # noqa
-        # TODO: kk is going to add this widget
-        """
-            Can be access it as,
-                view.migr_dropdown.item_select("Migration Plans Not Started")
-                view.plan_not_started.widget.widget_method()
-        """
-        pass
-
-    @View.nested
-    class plan_in_progress(View):  # noqa
-        # TODO: in-progress widget
-        """
-             Can be access it as,
-                view.migr_dropdown.item_select("Migration Plans in Progress")
-                view.plan_in_progress.widget.widget_method()
-        """
-        pass
-
-    @View.nested
-    class plan_completed(View):  # noqa
-        # TODO: kk is going to add this widget
-        """
-             Can be access it as,
-                view.migr_dropdown.item_select("Migration Plans Completed")
-                view.plan_completed.widget.widget_method()
-        """
-        pass
-
     @property
     def is_displayed(self):
         return self.navigation.currently_selected == ['Compute', 'Migration']
@@ -488,23 +460,16 @@ class InfrastructureMappingCollection(BaseCollection):
         view.form.fill(form_data)
         return infra_map
 
-# TODO: Next Entity and Collection classes are to be filled by Yadnyawalk(ytale),
-# which he will submit PR for once my PR merged.
-
 
 @attr.s
 class MigrationPlan(BaseEntity):
     """Class representing v2v Migration Plan"""
-    # TODO: Ytale is updating rest of the code in this entity in separate PR.
-    category = 'migrationplan'
-    string_name = 'Migration Plan'
-    name = 'plan1'
+    name = attr.ib()
 
 
 @attr.s
 class MigrationPlanCollection(BaseCollection):
     """Collection object for migration plan object"""
-    # TODO: Ytale is updating rest of the code in this collection in separate PR.
     ENTITY = MigrationPlan
 
     def create(self, name, infra_map, vm_names, description=None, csv_import=False,
@@ -554,10 +519,11 @@ class MigrationPlanCollection(BaseCollection):
         view.options.create_btn.click()
         wait_for(lambda: view.results.msg.is_displayed, timeout=60, message='Wait for Results view')
 
+        base_flash = "Migration Plan: '{}'".format(name)
         if start_migration:
-            base_flash = "Migration Plan: '{}' is in progress".format(name)
+            base_flash = "{} is in progress".format(base_flash)
         else:
-            base_flash = "Migration Plan: '{}' has been saved".format(name)
+            base_flash = "{} has been saved".format(base_flash)
         assert view.results.msg.read() == base_flash
         view.results.close_btn.click()
         return self.instantiate(name)

@@ -4705,3 +4705,35 @@ class MigrationPlanRequestDetailsList(Widget):
             'Started': self.browser.text('./div[2]/div/div[1]', parent=el),
             'Description': self.browser.text('./div[2]/div/div[2]', parent=el),
             'Conversion Host': self.browser.text('./div[2]/div/div[3]', parent=el)}
+
+
+class HiddenFileInput(BaseFileInput):
+    """Uploads file via hidden input form field
+    Prerequisite:
+        Type of input field should be file (type='file')
+    """
+    def fill(self, filepath):
+        self.browser.set_attribute("style", "display;", self)
+        self.browser.send_keys(filepath, self)
+
+    @property
+    def is_displayed(self):
+        self.browser.set_attribute("style", "display;", self)
+        return self.browser.is_displayed(self)
+
+
+class MigrationDropdown(Dropdown):
+    """Represents the migration plan dropdown of v2v.
+
+    Args:
+        text: Text of the button, can be inner text or the title attribute.
+    """
+    ROOT = ParametrizedLocator('.//div[contains(@class, "dropdown") and '
+                               './/button[contains(@id, "dropdown-filter")]]')
+    BUTTON_LOCATOR = './/*[contains(@id, "dropdown-filter")]'
+    ITEMS_LOCATOR = './/ul[contains(@aria-labelledby,"dropdown-filter")]/li/a'
+    ITEM_LOCATOR = './/ul[contains(@aria-labelledby,"dropdown-filter")]/li/a[normalize-space(.)={}]'
+
+    def __init__(self, parent, text, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.text = text
