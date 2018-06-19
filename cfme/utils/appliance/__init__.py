@@ -27,6 +27,7 @@ from cfme.fixtures import ui_coverage
 from cfme.fixtures.pytest_store import store
 from cfme.utils import clear_property_cache
 from cfme.utils import conf, ssh, ports
+from cfme.utils.blockers import BZ
 from cfme.utils.datafile import load_data_file
 from cfme.utils.log import logger, create_sublogger, logger_wrap
 from cfme.utils.net import net_check
@@ -1718,6 +1719,12 @@ class IPAppliance(object):
         Args:
             timeout: Number of seconds to wait until timeout (default ``900``)
         """
+        if self.is_pod and BZ(1576744, forced_streams=['5.9']).blocks:
+            # TODO: to remove this when BZ is fixed
+            # openshift's ansible pod gets ready very long first time.
+            # it even gets restarted once or twice
+            timeout *= 3
+
         wait_for(
             func=lambda: self.is_embedded_ansible_running,
             message='appliance.is_embedded_ansible_running',
