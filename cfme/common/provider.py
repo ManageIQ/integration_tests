@@ -1,7 +1,7 @@
-import attr
 import datetime
-from collections import Iterable
+from collections import Iterable, defaultdict
 
+import attr
 from manageiq_client.api import APIException
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Button, Input
@@ -23,28 +23,39 @@ from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for, RefreshTimer
 from . import PolicyProfileAssignable
 
+_base_types_cache = {}
+_provider_types_cache = defaultdict(dict)
+_all_types_cache = {}
+
 
 # TODO: Move to collection when it happens
 def base_types():
     from pkg_resources import iter_entry_points
-    return {ep.name: ep.resolve() for ep in iter_entry_points('manageiq.provider_categories')}
+    if not _base_types_cache:
+        _base_types_cache.update({
+            ep.name: ep.resolve() for ep in iter_entry_points('manageiq.provider_categories')
+        })
+    return _base_types_cache
 
 
 # TODO: Move to collection when it happens
 def provider_types(category):
     from pkg_resources import iter_entry_points
-    return {
-        ep.name: ep.resolve() for ep in iter_entry_points(
-            'manageiq.provider_types.{}'.format(category))
-    }
+    if category not in _provider_types_cache:
+        _provider_types_cache[category] = {
+            ep.name: ep.resolve() for ep in iter_entry_points(
+                'manageiq.provider_types.{}'.format(category))
+        }
+    return _provider_types_cache[category]
 
 
 # TODO: Move to collection when it happens
 def all_types():
-    all_types = base_types()
-    for category in list(all_types):
-        all_types.update(provider_types(category))
-    return all_types
+    if not _all_types_cache:
+        _all_types_cache.update(base_types())
+        for category in list(_all_types_cache):
+            _all_types_cache.update(provider_types(category))
+    return _all_types_cache
 
 
 # TODO: Move to collection when it happens
