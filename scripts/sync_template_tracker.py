@@ -51,7 +51,7 @@ def main(trackerbot_url, mark_usable=None):
     for template_name, providers in template_providers.items():
         template_name = str(template_name)
 
-        group_name, datestamp, stream = TemplateName.parse_template(template_name)
+        group_name, datestamp, stream, version = TemplateName.parse_template(template_name)
 
         # Don't want sprout templates
         if group_name in ('sprout', 'rhevm-internal'):
