@@ -8,6 +8,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.provisioning import do_vm_provisioning
+from cfme.utils.blockers import GH
 from cfme.utils.generators import random_vm_name
 
 pytestmark = [
@@ -98,7 +99,10 @@ def new_user(appliance, new_group, new_credential):
         user.delete()
 
 
-@pytest.mark.rhv2
+@pytest.mark.rhv3
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7385',
+    unblock=lambda provider, appliance_version:
+    not provider.one_of(RHEVMProvider) or appliance_version < '5.9')])
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here
