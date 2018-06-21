@@ -129,7 +129,10 @@ class ServerCollection(BaseCollection, sentaku.modeling.ElementMixin):
             name = server.name
         except AttributeError:
             logger.error('The EVM has no name, setting it to EVM')
-            name = 'EVM' if self.appliance.version == LATEST else server.name
+            if self.appliance.version == LATEST or self.appliance.is_pod:
+                name = 'EVM'
+            else:
+                name = server.name
             server = self.instantiate(name=name, sid=server.id)
             server.update_advanced_settings({'server': {'name': "EVM"}})
             return server
