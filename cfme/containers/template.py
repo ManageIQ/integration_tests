@@ -3,7 +3,7 @@ import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 
-from cfme.common import Taggable, TagPageView
+from cfme.common import Taggable, TagPageView, TaggableCollection
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
     ContainerObjectDetailsBaseView, GetRandomInstancesMixin)
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -34,7 +34,7 @@ class Template(BaseEntity, Taggable, Labelable):
 
 
 @attr.s
-class TemplateCollection(GetRandomInstancesMixin, BaseCollection):
+class TemplateCollection(GetRandomInstancesMixin, BaseCollection, TaggableCollection):
     """Collection object for :py:class:`Template`."""
 
     ENTITY = Template

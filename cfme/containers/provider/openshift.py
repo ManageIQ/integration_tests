@@ -4,6 +4,7 @@ from os import path
 
 from wrapanapi.containers.providers.rhopenshift import Openshift
 
+from cfme.common import Taggable
 from cfme.common.provider import DefaultEndpoint
 from cfme.control.explorer.alert_profiles import ProviderAlertProfile, NodeAlertProfile
 from cfme.utils import ssh
@@ -79,7 +80,7 @@ class AlertsEndpoint(ServiceBasedEndpoint):
 
 
 @attr.s(hash=False)
-class OpenshiftProvider(ContainersProvider):
+class OpenshiftProvider(ContainersProvider, Taggable):
     num_route = ['num_route']
     STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + num_route
     type_name = "openshift"

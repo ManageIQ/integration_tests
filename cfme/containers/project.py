@@ -5,7 +5,7 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import VersionPick, Version
 
 
-from cfme.common import Taggable, TagPageView
+from cfme.common import Taggable, TagPageView, TaggableCollection
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
                                       GetRandomInstancesMixin)
@@ -46,7 +46,7 @@ class Project(BaseEntity, Taggable, Labelable):
 
 
 @attr.s
-class ProjectCollection(GetRandomInstancesMixin, BaseCollection):
+class ProjectCollection(GetRandomInstancesMixin, BaseCollection, TaggableCollection):
     """Collection object for :py:class:`Project`."""
 
     ENTITY = Project

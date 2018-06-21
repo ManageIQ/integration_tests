@@ -6,7 +6,7 @@ from widgetastic_manageiq import NestedSummaryTable, SummaryTable
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View
 
-from cfme.common import Taggable, TagPageView
+from cfme.common import Taggable, TagPageView, TaggableCollection
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
                                       ContainerObjectDetailsEntities,
@@ -51,7 +51,7 @@ class Pod(BaseEntity, Taggable, Labelable):
 
 
 @attr.s
-class PodCollection(GetRandomInstancesMixin, BaseCollection):
+class PodCollection(GetRandomInstancesMixin, BaseCollection, TaggableCollection):
     """Collection object for :py:class:`Pod`."""
 
     ENTITY = Pod

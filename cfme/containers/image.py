@@ -5,7 +5,7 @@ from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import (Taggable, PolicyProfileAssignable,
-                         TagPageView)
+                         TagPageView, TaggableCollection)
 from cfme.containers.provider import (Labelable,
                                       ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView, LoadDetailsMixin,
@@ -111,7 +111,7 @@ class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssi
 
 
 @attr.s
-class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssignable):
+class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssignable, TaggableCollection):
     """Collection object for :py:class:`Image`."""
 
     ENTITY = Image

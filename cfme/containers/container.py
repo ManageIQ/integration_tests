@@ -9,7 +9,7 @@ from widgetastic_patternfly import VerticalNavigation
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
                                       GetRandomInstancesMixin, LoggingableView)
-from cfme.common import Taggable, TagPageView
+from cfme.common import Taggable, TagPageView, TaggableCollection
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from cfme.utils.providers import get_crud_by_name
@@ -73,7 +73,7 @@ class Container(BaseEntity, Taggable, Labelable):
 
 
 @attr.s
-class ContainerCollection(GetRandomInstancesMixin, BaseCollection):
+class ContainerCollection(GetRandomInstancesMixin, BaseCollection, TaggableCollection):
     """Collection object for :py:class:`Container`."""
 
     ENTITY = Container
