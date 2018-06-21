@@ -5,6 +5,7 @@ from navmazing import NavigateToSibling
 from widgetastic_patternfly import VerticalNavigation
 
 from cfme.common import Taggable
+from cfme.common import TaggableCollection
 from cfme.common import TagPageView
 from cfme.containers.provider import ContainerObjectAllBaseView
 from cfme.containers.provider import ContainerObjectDetailsBaseView
@@ -80,7 +81,7 @@ class Container(BaseEntity, Taggable, Labelable):
 
 
 @attr.s
-class ContainerCollection(GetRandomInstancesMixin, BaseCollection):
+class ContainerCollection(GetRandomInstancesMixin, BaseCollection, TaggableCollection):
     """Collection object for :py:class:`Container`."""
 
     ENTITY = Container

@@ -8,6 +8,7 @@ from widgetastic_patternfly import BreadCrumb
 
 from cfme.common import PolicyProfileAssignable
 from cfme.common import Taggable
+from cfme.common import TaggableCollection
 from cfme.common import TagPageView
 from cfme.common.provider_views import ProviderDetailsToolBar
 from cfme.common.vm_console import ConsoleMixin
@@ -75,7 +76,7 @@ class Node(BaseEntity, Taggable, Labelable, PolicyProfileAssignable, ConsoleMixi
 
 
 @attr.s
-class NodeCollection(GetRandomInstancesMixin, BaseCollection):
+class NodeCollection(GetRandomInstancesMixin, BaseCollection, TaggableCollection):
     """Collection object for :py:class:`Node`."""
 
     ENTITY = Node

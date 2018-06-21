@@ -4,6 +4,7 @@ from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 
 from cfme.common import Taggable
+from cfme.common import TaggableCollection
 from cfme.common import TagPageView
 from cfme.containers.provider import ContainerObjectAllBaseView
 from cfme.containers.provider import ContainerObjectDetailsBaseView
@@ -40,7 +41,7 @@ class Template(BaseEntity, Taggable, Labelable):
 
 
 @attr.s
-class TemplateCollection(GetRandomInstancesMixin, BaseCollection):
+class TemplateCollection(GetRandomInstancesMixin, BaseCollection, TaggableCollection):
     """Collection object for :py:class:`Template`."""
 
     ENTITY = Template

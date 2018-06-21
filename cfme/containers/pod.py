@@ -5,6 +5,7 @@ from navmazing import NavigateToSibling
 from widgetastic.widget import View
 
 from cfme.common import Taggable
+from cfme.common import TaggableCollection
 from cfme.common import TagPageView
 from cfme.containers.provider import ContainerObjectAllBaseView
 from cfme.containers.provider import ContainerObjectDetailsBaseView
@@ -49,7 +50,7 @@ class Pod(BaseEntity, Taggable, Labelable):
 
 
 @attr.s
-class PodCollection(GetRandomInstancesMixin, BaseCollection):
+class PodCollection(GetRandomInstancesMixin, BaseCollection, TaggableCollection):
     """Collection object for :py:class:`Pod`."""
 
     ENTITY = Pod

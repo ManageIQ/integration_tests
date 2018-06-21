@@ -25,6 +25,7 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BaseNonInteractiveEntitiesView
@@ -458,21 +459,32 @@ class Taggable(TaggableCommonBase):
 
 class TaggableCollection(TaggableCommonBase):
 
-    def add_tag(self, item_objects, tag=None, cancel=False, reset=False):
+    def add_tag(self, items, tag=None, cancel=False, reset=False, entity_filter_key='name'):
         """ Add tag to tested item
 
         Args:
-            item_objects: list of entity object, also can be passed lint on entities names
+            items: list of entity objects or entities names
             tag: Tag object
             cancel: set True to cancel tag assigment
             reset: set True to reset already set up tag
+            entity_filter_key: used when items are objects, this is the attribute name to filter on
         Returns:
             tag object
         """
         view = navigate_to(self, 'All')
-        for item in item_objects:
-            name = item if isinstance(item, six.string_types) else item.name
-            view.entities.get_entity(surf_pages=True, name=name).check()
+        for item in items:
+            entity_kwargs = {}
+            try:
+                # setup a entities widget filter with the given key, using the item if its string
+                # or the item's attribute (given key) otherwise
+                entity_kwargs[entity_filter_key] = (item if isinstance(item, six.string_types)
+                                                    else getattr(item, entity_filter_key))
+            except AttributeError:
+                logger.exception('TaggableCollection item does not have attribute to search by: %s',
+                                 entity_filter_key)
+                raise
+            # checkbox for given entity
+            view.entities.get_entity(surf_pages=True, **entity_kwargs).check()
         view = self._open_edit_tag_page(view)
         added_tag, updated = self._assign_tag_action(view, tag)
         # In case if field is not updated cancel the edition
@@ -481,42 +493,54 @@ class TaggableCollection(TaggableCommonBase):
         self._tags_action(view, cancel, reset)
         return added_tag
 
-    def add_tags(self, item_objects, tags):
+    def add_tags(self, items, tags):
         """Add multiple tags
 
         Args:
-            item_objects: list of entity object, also can be passed lint on entities names
+            items: list of entity object, also can be passed lint on entities names
             tags: list of tag objects
         """
         for tag in tags:
-            self.add_tag(item_objects, tag=tag)
+            self.add_tag(items, tag=tag)
 
-    def remove_tag(self, item_objects, tag, cancel=False, reset=False):
+    def remove_tag(self, items, tag, cancel=False, reset=False, entity_filter_key='name'):
         """ Remove tag of tested item
 
         Args:
-            item_objects: list of entity object, also can be passed lint on entities names
+            items: list of entity object, also can be passed lint on entities names
             tag: Tag object
             cancel: set True to cancel tag deletion
             reset: set True to reset tag changes
+            entity_filter_key: used when items are objects, this is the attribute name to filter on
+
         """
         view = navigate_to(self, 'All')
-        for item in item_objects:
-            name = item if isinstance(item, six.string_types) else item.name
-            view.entities.get_entity(surf_pages=True, name=name).check()
+        for item in items:
+            entity_kwargs = {}
+            try:
+                # setup a entities widget filter with the given key, using the item if its string
+                # or the item's attribute (given key) otherwise
+                entity_kwargs[entity_filter_key] = (item if isinstance(item, six.string_types)
+                                                    else getattr(item, entity_filter_key))
+            except AttributeError:
+                logger.exception('TaggableCollection item does not have attribute to search by: %s',
+                                 entity_filter_key)
+                raise
+            # checkbox for given entity
+            view.entities.get_entity(surf_pages=True, **entity_kwargs).check()
         view = self._open_edit_tag_page(view)
         self._unassign_tag_action(view, tag)
         self._tags_action(view, cancel, reset)
 
-    def remove_tags(self, item_objects, tags):
+    def remove_tags(self, items, tags):
         """Remove multiple of tags
 
         Args:
-            item_objects: list of entity object, also can be passed lint on entities names
+            items: list of entity object, also can be passed lint on entities names
             tags: list of tag objects
         """
         for tag in tags:
-            self.remove_tag(item_objects, tag=tag)
+            self.remove_tag(items, tag=tag)
 
     def _open_edit_tag_page(self, parent_view):
         try:
