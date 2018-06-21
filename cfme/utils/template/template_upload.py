@@ -2,8 +2,10 @@ import argparse
 import sys
 from threading import Thread
 
+from miq_version import TemplateName
+
 import cfme.utils.conf
-from cfme.utils import path, trackerbot
+from cfme.utils import path
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.providers import list_provider_keys
@@ -147,7 +149,7 @@ if __name__ == '__main__':
         image_url = cmd_args.image_url
 
         if not cmd_args.template_name:
-            template_name = trackerbot.TemplateName(stream_url).template_name
+            template_name = TemplateName(stream_url).template_name
         else:
             template_name = "{}-{}".format(cmd_args.template_name, stream)
 

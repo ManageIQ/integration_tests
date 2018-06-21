@@ -26,7 +26,8 @@ from six.moves.urllib.parse import urljoin
 from contextlib import closing
 from urllib2 import urlopen, HTTPError
 
-from cfme.utils import path, trackerbot
+from miq_version import TemplateName
+
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger, add_stdout_handler
 
@@ -410,7 +411,7 @@ def main():
             )
             if not stream:
                 # Stream is none, using automatic naming strategy, parse stream from template name
-                template_parser = trackerbot.parse_template(kwargs['template_name'])
+                template_parser = TemplateName.parse_template(kwargs['template_name'])
                 if template_parser.stream:
                     kwargs['stream'] = template_parser.group_name
 

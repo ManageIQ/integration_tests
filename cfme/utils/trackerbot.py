@@ -1,74 +1,20 @@
 import argparse
 import json
-import re
+import time
+import requests
+import slumber
+
+from collections import defaultdict
 from six.moves.urllib_parse import urlparse, parse_qs
 
-
-from collections import defaultdict, namedtuple
-from datetime import date, datetime
-
-import attr
-import slumber
-import requests
-from lxml import html
-import time
-
 from cfme.utils.conf import env
-from cfme.utils.log import logger
 from cfme.utils.providers import providers_data
-from cfme.utils.version import get_stream
 
 session = requests.Session()
 
 
-# regexen to match templates to streams and pull out the date
-# stream names must be slugified (alphanumeric, dashes, underscores only)
-# regex must include month and day, may include year
-# If year is unset, will be the most recent month/day (not in the future)
-stream_matchers = (
-    (get_stream('latest'), r'^miq-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.2'), r'^cfme-52.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.3'), r'^cfme-53.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.4'), r'^cfme-54.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.5'), r'^cfme-55.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.6'), r'^cfme-56.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.7'), r'^cfme-57.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.8'), r'^cfme-58.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.9'), r'^cfme-59.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    (get_stream('5.10'), r'^cfme-510.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    ('upstream_stable', r'^miq-stable-(?P<release>gapri[-\w]*?)'  # release name limit to 5 chars
-                        r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
-    ('upstream_euwe', r'^miq-stable-(?P<release>euwe[-\w]*?)'
-                      r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
-    ('upstream_fine', r'^miq-stable-(?P<release>fine[-\w]*?)'
-                      r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
-    # new format, TODO remove with TemplateName update, no more CFME nightly
-    ('downstream-nightly', r'^cfme-nightly-\d*-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
-
-    # Regex for standardized dates using TemplateName class below
-    # TODO swap these in when TemplateName is in use
-    # (get_stream('5.7'), r'^cfme-57.*-(?P<year>\d{4})?(?P<month>\d{2})(?P<day>\d{2})')
-    # (get_stream('5.8'), r'^cfme-58.*-(?P<year>\d{4})?(?P<month>\d{2})(?P<day>\d{2})')
-    # (get_stream('5.9'), r'^cfme-59.*-(?P<year>\d{4})?(?P<month>\d{2})(?P<day>\d{2})')
-    # Nightly builds have potentially multiple version streams bound to them so we
-    # cannot use get_stream()
-    # ('upstream_stable', r'^miq-(?P<release>gapri[-\w]*?)'
-    #                    r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})')
-    # ('upstream_euwe', r'^miq-(?P<release>euwe[-\w]*?)'
-    #                  r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})')
-    # ('upstream_fine', r'^miq-(?P<release>fine[-\w]*?)'
-    #                  r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})')
-
-)
-generic_matchers = (
-    ('sprout', r'^s_tpl'),
-    ('sprout', r'^sprout_template'),
-    ('rhevm-internal', r'^auto-tmp'),
-)
 conf = env.get('trackerbot', {})
 _active_streams = None
-
-TemplateInfo = namedtuple('TemplateInfo', ['group_name', 'datestamp', 'stream'])
 
 
 def cmdline_parser():
@@ -100,59 +46,11 @@ def api(trackerbot_url=None):
     return slumber.API(trackerbot_url, session=session)
 
 
-def futurecheck(check_date):
-    """Given a date object, return a date object that isn't from the future
-
-    Some templates only have month/day values, not years. We create a date object
-
-    """
-    today = date.today()
-    while check_date > today:
-        check_date = date(check_date.year - 1, check_date.month, check_date.day)
-
-    return check_date
-
-
 def active_streams(api, force=False):
     global _active_streams
     if _active_streams is None or force:
         _active_streams = [stream['name'] for stream in api.group.get(stream=True)['objects']]
     return _active_streams
-
-
-def parse_template(template_name):
-    """Given a template name, attempt to extract its group name and upload date
-
-    Returns:
-        * None if no groups matched
-        * group_name, datestamp of the first matching group. group name will be a string,
-          datestamp with be a :py:class:`datetime.date <python:datetime.date>`, or None if
-          a date can't be derived from the template name
-    """
-    for group_name, regex in stream_matchers:
-        matches = re.match(regex, template_name)
-        if matches:
-            groups = matches.groupdict()
-            # hilarity may ensue if this code is run right before the new year
-            today = date.today()
-            year = int(groups.get('year', today.year))
-            month, day = int(groups['month']), int(groups['day'])
-            # validate the template date by turning into a date obj
-            try:
-                # year, month, day might have been parsed incorrectly with loose regex
-                template_date = futurecheck(date(year, month, day))
-            except ValueError:
-                logger.exception('Failed to parse year: %s, month: %s, day: %s correctly '
-                                 'from template %s with regex %s',
-                                 year, month, day, template_name, regex)
-                continue
-            return TemplateInfo(group_name, template_date, True)
-    for group_name, regex in generic_matchers:
-        matches = re.match(regex, template_name)
-        if matches:
-            return TemplateInfo(group_name, None, False)
-    # If no match, unknown
-    return TemplateInfo('unknown', None, False)
 
 
 def provider_templates(api):
@@ -403,113 +301,6 @@ def composite_uncollect(build, source='jenkins'):
     except Exception as e:
         print(e)
         return {'tests': []}
-
-
-@attr.s
-class TemplateName(object):
-    """Generate a template name from given link, a timestamp, and optional version string
-
-    This method should handle naming templates from the following URL types:
-
-    - http://<build-server-address>/builds/manageiq/master/latest/
-    - http://<build-server-address>/builds/manageiq/gaprindashvili/stable/
-    - http://<build-server-address>/builds/manageiq/fine/stable/
-    - http://<build-server-address>/builds/cfme/5.8/stable/
-    - http://<build-server-address>/builds/cfme/5.9/latest/
-
-    These builds fall into a few categories:
-
-    - MIQ nightly (master/latest)  (upstream)
-    - MIQ stable (<name>/stable)  (upstream_stable, upstream_fine, etc)
-    - CFME nightly (<stream>/latest)  (downstream-nightly)
-    - CFME stream (<stream>/stable)  (downstream-<stream>)
-
-    The generated template names should follow the syntax with 5 digit version numbers:
-
-    - MIQ nightly: miq-nightly-<yyyymmdd>  (miq-nightly-201711212330)
-    - MIQ stable: miq-<name>-<number>-yyyymmdd  (miq-fine-4-20171024, miq-gapri-20180130)
-    - CFME nightly: cfme-nightly-<version>-<yyyymmdd>  (cfme-nightly-59000-20170901)
-    - CFME stream: cfme-<version>-<yyyymmdd>  (cfme-57402-20171202)
-
-    Release names for upstream will be truncated to 5 letters (thanks gaprindashvili...)
-    """
-    SHA = 'SHA256SUM'
-    CFME_ID = 'cfme'
-    MIQ_ID = 'manageiq'
-    build_url = attr.ib()  # URL to the build folder with ova/vhd/qc2/etc images
-
-    @property
-    def build_version(self):
-        """Version string from version file in build folder (cfme)
-        release name and build number from an image file (MIQ)
-
-        Will substitute 'nightly' for master URLs
-
-        Raises:
-            ValueError if unable to parse version string or release name from files
-
-        Returns:
-            String 5-digit version number or release name for MIQ
-        """
-        v = requests.get('/'.join([self.build_url, 'version']))
-        if v.ok:
-            logger.info('version file found, parsing dotted version string')
-            match = re.search(
-                '^(?P<major>\d)\.?(?P<minor>\d)\.?(?P<patch>\d)\.?(?P<build>\d{1,2})',
-                v.content)
-            if match:
-                return ''.join([match.group('major'),
-                                match.group('minor'),
-                                match.group('patch'),
-                                match.group('build').zfill(2)])  # zero left-pad
-            else:
-                raise ValueError('Unable to match version string in %s/version: {}'
-                                 .format(self.build_url, v.content))
-        else:
-            logger.info('No version file found in %s, pulling build name from image file',
-                        self.build_url)
-            build_dir = requests.get(self.build_url)
-            link_parser = html.fromstring(build_dir.content)
-            # Find image file links, use first one to pattern match name
-            # iterlinks returns tuple of (element, attribute, link, position)
-            images = [l
-                      for _, a, l, _ in link_parser.iterlinks()
-                      if a == 'href' and l.endswith('.ova') or l.endswith('.vhd')]
-            if images:
-                # pull release and its possible number (with -) from image string
-                # examples: miq-prov-fine-4-date-hash.vhd, miq-prov-gaprindashvilli-date-hash.vhd
-                match = re.search(
-                    'manageiq-(?:[\w]+?)-(?P<release>[\w]+?)(?P<number>-\d)?-\d{''3,}',
-                    str(images[0]))
-                if match:
-                    # if its a master image, version is 'nightly', otherwise use release+number
-                    return ('nightly'
-                            if 'master' in match.group('release')
-                            else '{}{}'.format(match.group('release')[:5], match.group('number')))
-                else:
-                    raise ValueError('Unable to match version string in image file: {}'
-                                     .format(images[0]))
-            else:
-                raise ValueError('No image of ova or vhd type found to parse version from in {}'
-                                 .format(self.build_url))
-
-    @property
-    def build_date(self):
-        """Get a build date from the SHA256SUM"""
-        r = requests.get('/'.join([self.build_url, self.SHA]))
-        if r.ok:
-            timestamp = datetime.strptime(r.headers.get('Last-Modified'),
-                                          "%a, %d %b %Y %H:%M:%S %Z")
-            return timestamp.strftime('%Y%m%d')
-        else:
-            raise ValueError('{} file not found in {}'.format(self.SHA, self.build_url))
-
-    @property
-    def template_name(self):
-        """Actually construct the template name"""
-        return '-'.join([self.CFME_ID if self.CFME_ID in self.build_url else self.MIQ_ID,
-                         self.build_version,
-                         self.build_date])
 
 
 # Dict subclasses to help with JSON serialization
