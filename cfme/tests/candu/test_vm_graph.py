@@ -6,6 +6,7 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
 
@@ -128,5 +129,8 @@ def test_graph_screen(provider, interval, graph_type, enable_candu, collect_data
         # check graph display data or not
         # Note: legend like %Ready have less value some time zero. so sum data for all legend
         for data in graph.data_for_legends(leg).values():
-            graph_data += float(data[leg].replace(',', '').replace('%', '').split()[0])
+            try:
+                graph_data += float(data[leg].replace(',', '').replace('%', '').split()[0])
+            except KeyError:
+                logger.warning("{} has not data point on graph".format(leg))
     assert graph_data > 0
