@@ -4,7 +4,7 @@ import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.utils import VersionPick, Version
 
-from cfme.common import Taggable, TagPageView
+from cfme.common import Taggable, TagPageView, TaggableCollection
 from cfme.containers.provider import (ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
                                       GetRandomInstancesMixin)
@@ -57,7 +57,7 @@ class ImageRegistry(BaseEntity, Taggable, Navigatable):
 
 
 @attr.s
-class ImageRegistryCollection(GetRandomInstancesMixin, BaseCollection):
+class ImageRegistryCollection(GetRandomInstancesMixin, BaseCollection, TaggableCollection):
     """Collection object for :py:class:`Image Registry`."""
 
     ENTITY = ImageRegistry

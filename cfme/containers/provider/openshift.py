@@ -4,6 +4,7 @@ from os import path
 from six.moves.urllib.error import URLError
 from wrapanapi.systems.container import Openshift
 
+from cfme.common import Taggable
 from cfme.common.provider import DefaultEndpoint
 from cfme.common.vm_console import ConsoleMixin
 from cfme.control.explorer.alert_profiles import ProviderAlertProfile, NodeAlertProfile
@@ -80,7 +81,8 @@ class AlertsEndpoint(ServiceBasedEndpoint):
 
 
 @attr.s(hash=False)
-class OpenshiftProvider(ContainersProvider, ConsoleMixin):
+class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
+
     num_route = ['num_route']
     STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + num_route
     type_name = "openshift"

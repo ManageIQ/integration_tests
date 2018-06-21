@@ -18,7 +18,7 @@ from widgetastic_patternfly import (
 from cfme import exceptions
 from cfme.base.credential import TokenCredential
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import TagPageView, PolicyProfileAssignable
+from cfme.common import TagPageView, PolicyProfileAssignable, TaggableCollection
 from cfme.common.candu_views import OptionForm
 from cfme.common.provider import BaseProvider, DefaultEndpoint, DefaultEndpointForm, provider_types
 from cfme.common.provider_views import (
@@ -323,7 +323,7 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
 
 
 @attr.s
-class ContainersProviderCollection(BaseCollection):
+class ContainersProviderCollection(BaseCollection, TaggableCollection):
     """Collection object for ContainersProvider objects
     """
 

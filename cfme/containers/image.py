@@ -5,14 +5,15 @@ from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
 
-from cfme.common import (Taggable, TagPageView, PolicyProfileAssignable)
-from cfme.containers.provider import (ContainerObjectAllBaseView,
-                                      ContainerObjectDetailsBaseView,
-                                      ContainerObjectDetailsEntities, GetRandomInstancesMixin,
-                                      Labelable, LoadDetailsMixin,
-                                      refresh_and_navigate)
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.common import (Taggable, PolicyProfileAssignable,
+                         TagPageView, TaggableCollection)
+from cfme.containers.provider import (Labelable,
+                                      ContainerObjectAllBaseView,
+                                      ContainerObjectDetailsBaseView, LoadDetailsMixin,
+                                      refresh_and_navigate, ContainerObjectDetailsEntities,
+                                      GetRandomInstancesMixin)
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
@@ -121,7 +122,7 @@ class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssi
 
 
 @attr.s
-class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssignable):
+class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssignable, TaggableCollection):
     """Collection object for :py:class:`Image`."""
 
     ENTITY = Image
