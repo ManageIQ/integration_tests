@@ -275,7 +275,7 @@ class MigrationDropdown(Dropdown):
         text: Text of the button, can be inner text or the title attribute.
     """
     ROOT = './/div[contains(@class, "dropdown") and .//button[contains(@id, "dropdown-filter")]]'
-    BUTTON_LOCATOR = './/*[contains(@id, "dropdown-filter")]'
+    BUTTON_LOCATOR = './/button[contains(@id, "dropdown-filter")]'
     ITEMS_LOCATOR = './/ul[contains(@aria-labelledby,"dropdown-filter")]/li/a'
     ITEM_LOCATOR = './/ul[contains(@aria-labelledby,"dropdown-filter")]/li/a[normalize-space(.)={}]'
 
@@ -322,14 +322,14 @@ class AddMigrationPlanView(View):
         infra_map = BootstrapSelect('infrastructure_mapping')
         name = TextInput(name='name')
         description = TextInput(name='description')
-        select_vm = RadioGroup('.//*[contains(@id,"vm_choice_radio")]')
+        select_vm = RadioGroup('.//div[contains(@id,"vm_choice_radio")]')
 
     @View.nested
     class vms(View):  # noqa
         import_btn = Button('Import')
         importcsv = Button('Import CSV')
-        hidden_field = HiddenFileInput(locator='.//*[contains(@accept,".csv")]')
-        table = Table('.//*[contains(@class, "container-fluid")]/table',
+        hidden_field = HiddenFileInput(locator='.//input[contains(@accept,".csv")]')
+        table = Table('.//div[contains(@class, "container-fluid")]/table',
                       column_widgets={"Select": Checkbox(locator=".//input")})
         filter_by_dropdown = SelectorDropdown('id', 'filterFieldTypeMenu')
         search_box = TextInput(locator=".//div[contains(@class,'input-group')]/input")
@@ -362,12 +362,12 @@ class AddMigrationPlanView(View):
     @View.nested
     class options(View):  # noqa
         create_btn = Button('Create')
-        run_migration = RadioGroup('.//*[contains(@id,"migration_plan_choice_radio")]')
+        run_migration = RadioGroup('.//div[contains(@id,"migration_plan_choice_radio")]')
 
     @View.nested
     class results(View):  # noqa
         close_btn = Button('Close')
-        msg = Text('.//*[contains(@id,"migration-plan-results-message")]')
+        msg = Text('.//h3[contains(@id,"migration-plan-results-message")]')
 
     @property
     def is_displayed(self):
@@ -518,7 +518,7 @@ class MigrationPlanCollection(BaseCollection):
                 writer.writeheader()
                 for vm in vm_names:
                     writer.writerow({'Name': vm.name, 'Provider': vm.provider.name})
-            view.vms.hidden_field.fill('v2v_vms.csv')
+            view.vms.hidden_field.fill(temp_file.name)
         else:
             view.next_btn.click()
 
@@ -542,7 +542,7 @@ class MigrationPlanCollection(BaseCollection):
             base_flash = "{} is in progress".format(base_flash)
         else:
             base_flash = "{} has been saved".format(base_flash)
-        assert view.results.msg.read() == base_flash
+        assert view.results.msg.text == base_flash
         view.results.close_btn.click()
         return self.instantiate(name)
 

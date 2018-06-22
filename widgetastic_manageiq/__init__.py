@@ -4709,6 +4709,7 @@ class MigrationPlanRequestDetailsList(Widget):
 
 class HiddenFileInput(BaseFileInput):
     """Uploads file via hidden input form field
+
     Prerequisite:
         Type of input field should be file (type='file')
     """
