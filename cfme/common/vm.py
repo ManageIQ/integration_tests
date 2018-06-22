@@ -458,7 +458,7 @@ class BaseVMCollection(BaseCollection):
             return provider.vm_class.from_collection(self, name, provider, template_name)
 
     def create(self, vm_name, provider, form_values=None, cancel=False,
-               check_existing=False, find_in_cfme=False, wait=True):
+               check_existing=False, find_in_cfme=False, wait=True, extra_msg=None, approve=False):
         """Provisions an vm/instance with the given properties through CFME
 
         Args:
@@ -469,6 +469,8 @@ class BaseVMCollection(BaseCollection):
             check_existing: verify if such vm_name exists
             find_in_cfme: verify that vm was created and appeared in CFME
             wait: wait for vm provision request end
+            extra_msg: extra message appended to the description of the request.
+            approve: If a request for the vm/instance need's approval.
 
         Note:
             Calling create on a sub-class of instance will generate the properly formatted
@@ -510,13 +512,18 @@ class BaseVMCollection(BaseCollection):
                 wait_for(lambda: view.flash.messages, fail_condition=[], timeout=10, delay=2,
                         message='wait for Flash Success')
             view.flash.assert_no_error()
-
             if wait:
-                request_description = 'Provision from [{}] to [{}]'.format(
-                    form_values.get('template_name'), vm.name)
+                if extra_msg is None:
+                    request_description = 'Provision from [{}] to [{}]'.format(
+                        form_values.get('template_name'), vm.name)
+                else:
+                    request_description = 'Provision from [{}] to [{}{}]'.format(
+                        form_values.get('template_name'), vm.name, extra_msg)
                 provision_request = vm.appliance.collections.requests.instantiate(
                     request_description)
                 logger.info('Waiting for cfme provision request for vm %s', vm.name)
+                if approve:
+                    provision_request.approve_request(method='ui', reason="Approved")
                 provision_request.wait_for_request(method='ui', num_sec=900)
                 if provision_request.is_succeeded(method='ui'):
                     logger.info('Waiting for vm %s to appear on provider %s', vm.name,
