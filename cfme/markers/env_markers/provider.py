@@ -247,9 +247,10 @@ def providers(metafunc, filters=None, selector=ALL):
     series = holder.held_appliance.version.series()
     supported_providers = all_required(series, filters)
 
-    def get_valid_provider(provider):
-        # We now search theough all the available providers looking for one that matches the
+    def get_valid_providers(provider):
+        # We now search through all the available providers looking for one that matches the
         # criteria. If we don't find one, we return None
+        prov_tuples = []
         for a_prov in available_providers:
             try:
                 if not a_prov.version:
@@ -257,13 +258,12 @@ def providers(metafunc, filters=None, selector=ALL):
                 elif (a_prov.version == provider.version and
                         a_prov.type == provider.type_name and
                         a_prov.category == provider.category):
-                    return a_prov
+                    prov_tuples.append((provider, a_prov))
             except (KeyError, ValueError):
                 if (a_prov.type == provider.type_name and
                         a_prov.category == provider.category):
-                    return a_prov
-        else:
-            return None
+                    prov_tuples.append((provider, a_prov))
+        return prov_tuples
 
     # A small routine to check if we need to supply the idlist a provider type or
     # a real type/version
@@ -275,8 +275,9 @@ def providers(metafunc, filters=None, selector=ALL):
                     need_prov_keys = True
                     break
 
-    matching_provs = [(prov, get_valid_provider(prov)) for prov in supported_providers
-                      if get_valid_provider(prov)]
+    matching_provs = [valid_provider
+                      for prov in supported_providers
+                      for valid_provider in get_valid_providers(prov)]
 
     # Now we run through the selectors and build up a list of supported providers which match our
     # requirements. This then forms the providers that the test should run against.
