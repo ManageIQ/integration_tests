@@ -4714,10 +4714,10 @@ class HiddenFileInput(BaseFileInput):
         Type of input field should be file (type='file')
     """
     def fill(self, filepath):
-        self.browser.set_attribute("style", "display;", self)
+        self.browser.set_attribute("style", "display", self)
         self.browser.send_keys(filepath, self)
 
     @property
     def is_displayed(self):
-        self.browser.set_attribute("style", "display;", self)
+        self.browser.set_attribute("style", "display", self)
         return self.browser.is_displayed(self)
