@@ -28,10 +28,10 @@ class BootstrapSelect(VanillaBootstrapSelect):
     ROOT = ParametrizedLocator('.//select[normalize-space(@name)={@id|quote}]/..')
 
     def fill(self, value):
+        # Some BootstrapSelects appears on the page only if another select changed. Therefore we
+        # should wait until it appears and only then we can fill it.
+        self.wait_displayed()
         super(BootstrapSelect, self).fill(value)
-        # After repository field filling we should wait until another fields appear
-        if "repository" in self.id:
-            self.parent_view.playbook.wait_displayed()
 
 
 class ActionsCell(View):
@@ -122,6 +122,7 @@ class AnsibleCatalogItemForm(ServicesCatalogView):
         playbook = BootstrapSelect("provisioning_playbook_id")
         machine_credential = BootstrapSelect("provisioning_machine_credential_id")
         cloud_type = BootstrapSelect("provisioning_cloud_type")
+        cloud_credential = BootstrapSelect("provisioning_cloud_credential_id")
         localhost = Input(id="provisioning_inventory_localhost")
         specify_host_values = Input(id="provisioning_inventory_specify")
         hosts = Input("provisioning_inventory")
@@ -143,6 +144,7 @@ class AnsibleCatalogItemForm(ServicesCatalogView):
         playbook = BootstrapSelect("retirement_playbook_id")
         machine_credential = BootstrapSelect("retirement_machine_credential_id")
         cloud_type = BootstrapSelect("retirement_cloud_type")
+        cloud_credential = BootstrapSelect("retirement_cloud_credential_id")
         localhost = Input(id="retirement_inventory_localhost")
         specify_host_values = Input(id="retirement_inventory_specify")
         hosts = Input("retirement_inventory")
