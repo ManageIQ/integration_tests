@@ -33,7 +33,11 @@ pytestmark = [
     GH('ManageIQ/integration_tests:7297')])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_myservice_crud(appliance, setup_provider, context, order_service):
-    """Test Myservice crud in SSUI."""
+    """Test Myservice crud in SSUI.
+
+    Metadata:
+        test_flag: ssui, services
+    """
     catalog_item = order_service
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
@@ -49,7 +53,11 @@ def test_myservice_crud(appliance, setup_provider, context, order_service):
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_retire_service_ssui(appliance, setup_provider,
                         context, order_service, request):
-    """Test retire service."""
+    """Test retire service.
+
+    Metadata:
+        test_flag: ssui, services
+    """
     catalog_item = order_service
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
@@ -64,7 +72,11 @@ def test_retire_service_ssui(appliance, setup_provider,
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_service_start(appliance, setup_provider, context,
                        order_service, provider, request):
-    """Test service stop"""
+    """Test service stop
+
+    Metadata:
+        test_flag: ssui, services
+    """
     catalog_item = order_service
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
@@ -91,7 +103,11 @@ def test_service_start(appliance, setup_provider, context,
 def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
         configure_console_vnc, order_service, take_screenshot,
         console_template, provider):
-    """Test Myservice VM Console in SSUI."""
+    """Test Myservice VM Console in SSUI.
+
+    Metadata:
+        test_flag: ssui
+    """
     if (provider.one_of(VMwareProvider) and provider.version >= 6.5 or
             'html5_console' in provider.data.get('excluded_test_flags', [])):
         pytest.skip('VNC consoles are unsupported on VMware ESXi 6.5 and later')

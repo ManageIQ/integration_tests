@@ -25,7 +25,11 @@ pytestmark = [
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_service_catalog_crud_ssui(appliance, setup_provider,
                                    context, order_service):
-    """Tests Service Catalog in SSUI."""
+    """Tests Service Catalog in SSUI.
+
+    Metadata:
+        test_flag: ssui
+    """
 
     catalog_item = order_service
     with appliance.context.use(context):

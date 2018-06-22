@@ -18,7 +18,7 @@ pytestmark = [
 def test_sdn_provider_relationships_navigation(provider, tested_part, appliance):
     """
     Metadata:
-        test_flag: sdn
+        test_flag: sdn, relationship
     """
     collection = appliance.collections.network_providers.filter({'provider': provider})
     network_provider = collection.all()[0]
@@ -32,7 +32,7 @@ def test_sdn_provider_relationships_navigation(provider, tested_part, appliance)
 def test_provider_topology_navigation(provider, appliance):
     """
     Metadata:
-        test_flag: sdn
+        test_flag: relationship
     """
     collection = appliance.collections.network_providers.filter({'provider': provider})
     network_provider = collection.all()[0]
