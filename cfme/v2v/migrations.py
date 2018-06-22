@@ -339,20 +339,20 @@ class AddMigrationPlanView(View):
             self.search_box.fill(vm_name)
             self.browser.send_keys(Keys.ENTER, self.search_box)
 
-        def filter_by_source_cluster(self, vm_name):
+        def filter_by_source_cluster(self, cluster_name):
             try:
                 self.filter_by_dropdown.item_select("Source Cluster")
             except NoSuchElementException:
                 self.logger.info("`Source Cluster` not present in filter dropdown!")
-            self.search_box.fill(vm_name)
+            self.search_box.fill(cluster_name)
             self.browser.send_keys(Keys.ENTER, self.search_box)
 
-        def filter_by_path(self, vm_name):
+        def filter_by_path(self, path):
             try:
                 self.filter_by_dropdown.item_select("Path")
             except NoSuchElementException:
                 self.logger.info("`Path` not present in filter dropdown!")
-            self.search_box.fill(vm_name)
+            self.search_box.fill(path)
             self.browser.send_keys(Keys.ENTER, self.search_box)
 
     @View.nested
@@ -486,14 +486,14 @@ class MigrationPlanCollection(BaseCollection):
     """Collection object for migration plan object"""
     ENTITY = MigrationPlan
 
-    def create(self, name, infra_map, vm_names, description=None, csv_import=False,
+    def create(self, name, infra_map, vm_list, description=None, csv_import=False,
                start_migration=False):
         """Create new migration plan in UI
         Args:
             name: (string) plan name
             description: (string) plan description
             infra_map: (object) infra map object name
-            vm_names: (list) vm names
+            vm_list: (list) list of vm objects
             csv_import: (bool) flag for importing vms
             start_migration: (bool) flag for start migration
         """
@@ -512,7 +512,7 @@ class MigrationPlanCollection(BaseCollection):
                 headers = ['Name', 'Provider']
                 writer = csv.DictWriter(file, fieldnames=headers)
                 writer.writeheader()
-                for vm in vm_names:
+                for vm in vm_list:
                     writer.writerow({'Name': vm.name, 'Provider': vm.provider.name})
             view.vms.hidden_field.fill(temp_file.name)
         else:
@@ -520,11 +520,11 @@ class MigrationPlanCollection(BaseCollection):
 
         wait_for(lambda: view.vms.table.is_displayed, timeout=60, message='Wait for VMs view',
                  delay=2)
-        for vm in vm_names:
+        for vm in vm_list:
             view.vms.filter_by_name(vm.name)
             for row in view.vms.table.rows():
-                if row['VM Name'].read() in vm_names:
-                    row['Select'].fill(True)
+                if row.vm_name.read() in vm_list:
+                    row.select.fill(True)
             view.vms.clear_filters.click()
         view.next_btn.click()
 
