@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import pytest
+from collections import namedtuple
+
 from fauxfactory import gen_alphanumeric
 from six import iteritems
-
 
 from cfme.base.credential import Credential
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -278,3 +279,82 @@ def test_login_local_group(appliance, local_users, local_group, soft_assert):
             soft_assert(local_group.description.lower() in display_groups,
                         'local group "{}" not displayed in UI groups list "{}"'
                         .format(local_group.description, display_groups))
+
+
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream('5.8')
+@pytest.mark.uncollectif(lambda auth_mode: auth_mode == 'amazon',
+                         'Amazon auth_data needed for group switch testing')
+def test_user_group_switching(appliance, auth_user_data, auth_mode, user_type, auth_provider,
+                              soft_assert, request):
+    """Test switching groups on a single user, between retreived group and built-in group"""
+    UserGroups = namedtuple("UserGroups", "user, retrieved, groups")
+    user_group_tuples = []
+    for user in auth_user_data:
+        if len(user.groups) > 1:  # skip users with only one group
+            for group in user.groups:
+                # pick non-evm group when there are multiple groups for the user
+                if 'evmgroup' not in group.lower():
+                    name_arg = (user.username.replace(' ', '-')
+                                if user_type == 'upn'
+                                else user.username)
+                    user_group_tuples.append(UserGroups(
+                        # make a simple_user instance, no CFME user create
+                        appliance.collections.users.simple_user(name_arg,
+                                                                credentials[user.password].password,
+                                                                fullname=user.fullname),
+                        # create group in CFME via retrieve_group which looks it up on auth_provider
+                        retrieve_group(appliance, auth_mode, user.username, group, auth_provider),
+                        # The users complete list of groups
+                        user.groups))
+                else:
+                    logger.info('Skipping user "%s" group "%s", its an evm group', user, group)
+        else:
+            logger.info('Skipping user for group switching test, only one group: %s', user)
+
+    logger.info('USER_GROUP_TUPLES: %r', user_group_tuples)
+
+    for test_user in user_group_tuples:
+        with test_user.user:
+            view = navigate_to(appliance.server, 'LoggedIn', wait_for_view=True)
+            display_name = view.current_fullname
+            display_groups = [name for name in view.group_names]
+            active_group = view.current_groupname
+            # Check there are multiple groups displayed
+            soft_assert(len(display_groups) > 1, 'Only a single group is displayed for the user')
+            # gate the rest of the test on there actually being multiple groups selectable
+            if len(display_groups) > 1:
+                display_other_group = set([g for g in display_groups if g != active_group]).pop()
+                # check the user name is displayed
+                soft_assert(display_name == test_user.user.name,
+                            'user full name "{}" did not match UI display name "{}"'
+                            .format(test_user.user, display_name))
+                # Not checking current group, determined by group priority
+                # check retrieved group is there
+                soft_assert(test_user.retrieved.description in display_groups,
+                            'user group "{}" not displayed in UI groups list "{}"'
+                            .format(test_user.retrieved.description, display_groups))
+
+                # change to the other group
+                view.change_group(display_other_group)
+                soft_assert(view.is_displayed,
+                            'Login view is no longer displayed after switching group for {}'
+                            .format(test_user))
+                # assert selected group has changed
+                soft_assert(display_other_group == view.current_groupname)
+            else:
+                logger.warning('Skipping group switch test for user %s, only one group displayed',
+                               test_user)
+
+    appliance.server.login_admin()
+    for test_user in user_group_tuples:
+        soft_assert(test_user.user.exists,
+                    'User record for "{}" should exist after login'.format(test_user.user))
+
+    @request.addfinalizer
+    def _cleanup():
+        for test_user in user_group_tuples:
+            if test_user.user.exists:
+                test_user.user.delete()
+            if test_user.retrieved.exists:
+                test_user.retrieved.delete()
