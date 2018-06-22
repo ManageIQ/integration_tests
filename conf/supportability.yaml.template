@@ -51,6 +51,8 @@
         - 3.6
         - 3.7
         - 3.9
+    physical:
+        - lenovo
 'master':
   providers:
     infra:
@@ -78,3 +80,5 @@
         - 3.6
         - 3.7
         - 3.9
+    physical:
+        - lenovo
