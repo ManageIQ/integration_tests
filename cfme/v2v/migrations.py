@@ -1,19 +1,24 @@
 import attr
+import csv
+import tempfile
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from selenium.webdriver.common.keys import Keys
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import View
-from widgetastic_patternfly import Text, TextInput, Button, BootstrapSelect, SelectorDropdown
+from widgetastic.widget import Checkbox, View
 from widgetastic.utils import ParametrizedLocator
 from widgetastic_manageiq import (
-    InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList,
-    MigrationPlanRequestDetailsList, Paginator)
+    InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList, Paginator,
+    Table, MigrationPlanRequestDetailsList, RadioGroup, HiddenFileInput
+)
+from widgetastic_patternfly import (Text, TextInput, Button, BootstrapSelect, SelectorDropdown,
+                                    Dropdown)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.wait import wait_for
 
 
 # Widgets
@@ -262,13 +267,28 @@ class InfraMappingWizard(View):
             self.result.close_btn.click()
 
 
+# Widget for migration selection dropdown
+class MigrationDropdown(Dropdown):
+    """Represents the migration plan dropdown of v2v.
+
+    Args:
+        text: Text of the button, can be inner text or the title attribute.
+    """
+    ROOT = './/div[contains(@class, "dropdown") and .//button[contains(@id, "dropdown-filter")]]'
+    BUTTON_LOCATOR = './/button[contains(@id, "dropdown-filter")]'
+    ITEMS_LOCATOR = './/ul[contains(@aria-labelledby,"dropdown-filter")]/li/a'
+    ITEM_LOCATOR = './/ul[contains(@aria-labelledby,"dropdown-filter")]/li/a[normalize-space(.)={}]'
+
+
 class MigrationDashboardView(BaseLoggedInPage):
     create_infrastructure_mapping = Text(locator='(//a|//button)'
-        '[text()="Create Infrastructure Mapping"]')
+                                                 '[text()="Create Infrastructure Mapping"]')
     create_migration_plan = Text(locator='(//a|//button)[text()="Create Migration Plan"]')
     migration_plans_not_started_list = MigrationPlansList("plans-not-started-list")
     migration_plans_completed_list = MigrationPlansList("plans-complete-list")
     infra_mapping_list = InfraMappingList("infra-mappings-list-view")
+    # TODO: Latest upstream nightly have changes in dropdown text
+    migr_dropdown = MigrationDropdown(text="Migration Plans Not Started")
 
     @property
     def is_displayed(self):
@@ -292,6 +312,58 @@ class AddMigrationPlanView(View):
     # because want to keep it consistent
     next_btn = Button('Next')
     cancel_btn = Button('Cancel')
+
+    @View.nested
+    class general(View):  # noqa
+        infra_map = BootstrapSelect('infrastructure_mapping')
+        name = TextInput(name='name')
+        description = TextInput(name='description')
+        select_vm = RadioGroup('.//div[contains(@id,"vm_choice_radio")]')
+
+    @View.nested
+    class vms(View):  # noqa
+        import_btn = Button('Import')
+        importcsv = Button('Import CSV')
+        hidden_field = HiddenFileInput(locator='.//input[contains(@accept,".csv")]')
+        table = Table('.//div[contains(@class, "container-fluid")]/table',
+                      column_widgets={"Select": Checkbox(locator=".//input")})
+        filter_by_dropdown = SelectorDropdown('id', 'filterFieldTypeMenu')
+        search_box = TextInput(locator=".//div[contains(@class,'input-group')]/input")
+        clear_filters = Text(".//a[text()='Clear All Filters']")
+
+        def filter_by_name(self, vm_name):
+            try:
+                self.filter_by_dropdown.item_select("VM Name")
+            except NoSuchElementException:
+                self.logger.info("`VM Name` not present in filter dropdown!")
+            self.search_box.fill(vm_name)
+            self.browser.send_keys(Keys.ENTER, self.search_box)
+
+        def filter_by_source_cluster(self, cluster_name):
+            try:
+                self.filter_by_dropdown.item_select("Source Cluster")
+            except NoSuchElementException:
+                self.logger.info("`Source Cluster` not present in filter dropdown!")
+            self.search_box.fill(cluster_name)
+            self.browser.send_keys(Keys.ENTER, self.search_box)
+
+        def filter_by_path(self, path):
+            try:
+                self.filter_by_dropdown.item_select("Path")
+            except NoSuchElementException:
+                self.logger.info("`Path` not present in filter dropdown!")
+            self.search_box.fill(path)
+            self.browser.send_keys(Keys.ENTER, self.search_box)
+
+    @View.nested
+    class options(View):  # noqa
+        create_btn = Button('Create')
+        run_migration = RadioGroup('.//div[contains(@id,"migration_plan_choice_radio")]')
+
+    @View.nested
+    class results(View):  # noqa
+        close_btn = Button('Close')
+        msg = Text('.//h3[contains(@id,"migration-plan-results-message")]')
 
     @property
     def is_displayed(self):
@@ -402,27 +474,76 @@ class InfrastructureMappingCollection(BaseCollection):
         view.form.fill(form_data)
         return infra_map
 
-# TODO: Next Entity and Collection classes are to be filled by Yadnyawalk(ytale),
-# which he will submit PR for once my PR merged.
-
 
 @attr.s
 class MigrationPlan(BaseEntity):
     """Class representing v2v Migration Plan"""
-    # TODO: Ytale is updating rest of the code in this entity in separate PR.
-    category = 'migrationplan'
-    string_name = 'Migration Plan'
-    name = 'plan1'
+    name = attr.ib()
 
 
 @attr.s
 class MigrationPlanCollection(BaseCollection):
-    """Collection object for Migration Plan object"""
-    # TODO: Ytale is updating rest of the code in this collection in separate PR.
+    """Collection object for migration plan object"""
     ENTITY = MigrationPlan
 
+    def create(self, name, infra_map, vm_list, description=None, csv_import=False,
+               start_migration=False):
+        """Create new migration plan in UI
+        Args:
+            name: (string) plan name
+            description: (string) plan description
+            infra_map: (object) infra map object name
+            vm_list: (list) list of vm objects
+            csv_import: (bool) flag for importing vms
+            start_migration: (bool) flag for start migration
+        """
+        view = navigate_to(self, 'Add')
+        view.general.fill({
+            'infra_map': infra_map,
+            'name': name,
+            'description': description
+        })
+
+        if csv_import:
+            view.general.select_vm.select("Import a CSV file with a list of VMs to be migrated")
+            view.next_btn.click()
+            temp_file = tempfile.NamedTemporaryFile(suffix='.csv')
+            with open(temp_file.name, 'w') as file:
+                headers = ['Name', 'Provider']
+                writer = csv.DictWriter(file, fieldnames=headers)
+                writer.writeheader()
+                for vm in vm_list:
+                    writer.writerow({'Name': vm.name, 'Provider': vm.provider.name})
+            view.vms.hidden_field.fill(temp_file.name)
+        else:
+            view.next_btn.click()
+
+        wait_for(lambda: view.vms.table.is_displayed, timeout=60, message='Wait for VMs view',
+                 delay=2)
+        for vm in vm_list:
+            view.vms.filter_by_name(vm.name)
+            for row in view.vms.table.rows():
+                if row.vm_name.read() in vm_list:
+                    row.select.fill(True)
+            view.vms.clear_filters.click()
+        view.next_btn.click()
+
+        if start_migration:
+            view.options.run_migration.select("Start migration immediately")
+        view.options.create_btn.click()
+        wait_for(lambda: view.results.msg.is_displayed, timeout=60, message='Wait for Results view')
+
+        base_flash = "Migration Plan: '{}'".format(name)
+        if start_migration:
+            base_flash = "{} is in progress".format(base_flash)
+        else:
+            base_flash = "{} has been saved".format(base_flash)
+        assert view.results.msg.text == base_flash
+        view.results.close_btn.click()
+        return self.instantiate(name)
 
 # Navigations
+
 
 @navigator.register(InfrastructureMappingCollection, 'All')
 @navigator.register(MigrationPlanCollection, 'All')

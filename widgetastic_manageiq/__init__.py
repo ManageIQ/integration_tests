@@ -4705,3 +4705,19 @@ class MigrationPlanRequestDetailsList(Widget):
             'Started': self.browser.text('./div[2]/div/div[1]', parent=el),
             'Description': self.browser.text('./div[2]/div/div[2]', parent=el),
             'Conversion Host': self.browser.text('./div[2]/div/div[3]', parent=el)}
+
+
+class HiddenFileInput(BaseFileInput):
+    """Uploads file via hidden input form field
+
+    Prerequisite:
+        Type of input field should be file (type='file')
+    """
+    def fill(self, filepath):
+        self.browser.set_attribute("style", "display", self)
+        self.browser.send_keys(filepath, self)
+
+    @property
+    def is_displayed(self):
+        self.browser.set_attribute("style", "display", self)
+        return self.browser.is_displayed(self)
