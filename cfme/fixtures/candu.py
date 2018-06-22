@@ -27,7 +27,7 @@ def enable_candu(appliance):
     server_settings.update_server_roles_db(original_roles)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def collect_data(appliance, provider, interval='hourly', back='7.days'):
     """Collect hourly back data for vsphere provider"""
     vm_name = provider.data['cap_and_util']['chargeback_vm']
@@ -37,4 +37,4 @@ def collect_data(appliance, provider, interval='hourly', back='7.days'):
         "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
         vm.perf_capture({}, {}.ago.utc, Time.now.utc)\""
         .format(provider.id, repr(vm_name), repr(interval), back))
-    yield ret.success
+    return ret.success

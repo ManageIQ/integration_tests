@@ -82,7 +82,7 @@ def test_vm_most_recent_hour_graph_screen(graph_type, provider, enable_candu):
 
 
 # To-Do add support for other provider
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider], scope='module', override=True)
 @pytest.mark.parametrize('interval', INTERVAL)
 @pytest.mark.parametrize('graph_type', VM_GRAPHS)
 def test_graph_screen(provider, interval, graph_type, enable_candu, collect_data):
