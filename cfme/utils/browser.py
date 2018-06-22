@@ -257,7 +257,7 @@ class BrowserManager(object):
                     browser_kwargs['desired_capabilities']['chromeOptions'] = {}
                     browser_kwargs[
                         'desired_capabilities']['chromeOptions']['args'] = ['--no-sandbox']
-                    del browser_kwargs['desired_capabilities']['marionette']
+                    browser_kwargs['desired_capabilities'].pop('marionette', None)
                 if browser_conf[
                         'webdriver_options'][
                             'desired_capabilities']['browserName'].lower() == 'firefox':
