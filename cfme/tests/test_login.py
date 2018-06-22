@@ -4,8 +4,8 @@ import pytest
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.base.ui import LoginPage
-from cfme.utils.appliance import ViaSSUI, ViaUI
 from cfme.utils import conf, version
+from cfme.utils.appliance import ViaSSUI, ViaUI
 
 pytestmark = pytest.mark.usefixtures('browser')
 
@@ -84,7 +84,7 @@ def test_update_password(context, request, appliance):
 
     # Try to login with the user with old password
     error_message = "Incorrect username or password"
-    with error.expected(error_message):
+    with pytest.raises(Exception, match=error_message):
         appliance.server.login(user)
 
     user.delete()

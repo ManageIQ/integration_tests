@@ -7,7 +7,6 @@ from collections import namedtuple
 from shutil import rmtree
 from string import Template
 from tempfile import mkdtemp
-from six.moves.urllib_error import URLError
 
 import os
 import requests
@@ -19,12 +18,13 @@ from selenium.webdriver.common import keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.remote.file_detector import UselessFileDetector
+from six.moves.urllib_error import URLError
 from werkzeug.local import LocalProxy
 
+from cfme.fixtures.pytest_store import store, write_line
 from cfme.utils import conf, tries, clear_property_cache
 from cfme.utils.log import logger as log  # TODO remove after artifactor handler
 from cfme.utils.path import data_path
-from cfme.fixtures.pytest_store import store, write_line
 
 # import logging
 # log = logging.getLogger('cfme.browser')
@@ -246,6 +246,19 @@ class BrowserManager(object):
             atexit.register(wharf.checkin)
             return cls(WharfFactory(webdriver_class, browser_kwargs, wharf))
         else:
+            if webdriver_name == "Remote":
+                if browser_conf[
+                        'webdriver_options'][
+                            'desired_capabilities']['browserName'].lower() == 'chrome':
+                    browser_kwargs['desired_capabilities']['chromeOptions'] = {}
+                    browser_kwargs[
+                        'desired_capabilities']['chromeOptions']['args'] = ['--no-sandbox']
+                    del browser_kwargs['desired_capabilities']['marionette']
+                if browser_conf[
+                        'webdriver_options'][
+                            'desired_capabilities']['browserName'].lower() == 'firefox':
+                    browser_kwargs['desired_capabilities']['marionette'] = False
+
             return cls(BrowserFactory(webdriver_class, browser_kwargs))
 
     def _is_alive(self):
