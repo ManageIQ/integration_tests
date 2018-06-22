@@ -130,7 +130,7 @@ requests-oauthlib==0.8.0
 requests-toolbelt==0.8.0
 riggerlib==3.1.5
 scp==0.11.0
-selenium==2.53.6
+selenium==3.12.0
 selenium-smart-locator==0.2.0
 Send2Trash==1.5.0
 sentaku==0.6.2
