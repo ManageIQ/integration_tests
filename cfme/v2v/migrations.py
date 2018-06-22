@@ -5,7 +5,7 @@ import tempfile
 from navmazing import NavigateToAttribute, NavigateToSibling
 from selenium.webdriver.common.keys import Keys
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import Checkbox, View, Widget
+from widgetastic.widget import Checkbox, View
 from widgetastic.utils import ParametrizedLocator
 from widgetastic_manageiq import (
     InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList, Paginator,
@@ -278,10 +278,6 @@ class MigrationDropdown(Dropdown):
     BUTTON_LOCATOR = './/button[contains(@id, "dropdown-filter")]'
     ITEMS_LOCATOR = './/ul[contains(@aria-labelledby,"dropdown-filter")]/li/a'
     ITEM_LOCATOR = './/ul[contains(@aria-labelledby,"dropdown-filter")]/li/a[normalize-space(.)={}]'
-
-    def __init__(self, parent, text, logger=None):
-        Widget.__init__(self, parent, logger=logger)
-        self.text = text
 
 
 class MigrationDashboardView(BaseLoggedInPage):
