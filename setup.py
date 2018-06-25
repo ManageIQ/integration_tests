@@ -88,6 +88,10 @@ setup(
             'ansible_credentials = cfme.ansible.credentials:CredentialsCollection',
             'ansible_playbooks = cfme.ansible.playbooks:PlaybooksCollection',
             'ansible_repositories = cfme.ansible.repositories:RepositoryCollection',
+            ('ansible_tower_job_templates = '
+                'cfme.ansible_tower.explorer:AnsibleTowerJobTemplatesCollection'),
+            'ansible_tower_providers = cfme.ansible_tower.explorer:AnsibleTowerProvidersCollection',
+            'ansible_tower_systems = cfme.ansible_tower.explorer:AnsibleTowerSystemsCollection',
             'balancers = cfme.networks.balancer:BalancerCollection',
             'block_managers = cfme.storage.manager:BlockManagerCollection',
             'button_groups = cfme.automate.buttons:ButtonGroupCollection',
