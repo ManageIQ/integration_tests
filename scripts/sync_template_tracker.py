@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """Populate template tracker with information based on cfme_data"""
 import sys
-import traceback
 from collections import defaultdict
 from slumber.exceptions import SlumberHttpBaseException
 from threading import Lock, Thread
@@ -10,20 +9,25 @@ from miq_version import TemplateName
 
 from cfme.utils import trackerbot, net
 from cfme.utils.conf import cfme_data
+from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.providers import list_provider_keys, get_mgmt
 
+add_stdout_handler(logger)
 
-def main(trackerbot_url, mark_usable=None):
+
+def main(trackerbot_url, mark_usable=None, selected_provider=None):
     api = trackerbot.api(trackerbot_url)
 
     thread_q = []
     thread_lock = Lock()
     template_providers = defaultdict(list)
-    all_providers = set(list_provider_keys())
+    all_providers = (set(list_provider_keys())
+                     if not selected_provider
+                     else set(selected_provider))
     unresponsive_providers = set()
     # Queue up list_template calls
     for provider_key in all_providers:
-        ipaddress = cfme_data['management_systems'][provider_key].get('ipaddress')
+        ipaddress = cfme_data.management_systems[provider_key].get('ipaddress')
         if ipaddress and not net.is_pingable(ipaddress):
             continue
         thread = Thread(target=get_provider_templates,
@@ -50,50 +54,56 @@ def main(trackerbot_url, mark_usable=None):
     # Find some templates and update the API
     for template_name, providers in template_providers.items():
         template_name = str(template_name)
-
-        group_name, datestamp, stream, version = TemplateName.parse_template(template_name)
+        template_info = TemplateName.parse_template(template_name)
 
         # Don't want sprout templates
-        if group_name in ('sprout', 'rhevm-internal'):
-            print('Ignoring {} from group {}'.format(template_name, group_name))
+        if template_info.group_name in ('sprout', 'rhevm-internal'):
+            logger.info('Ignoring %s from group %s', template_name, template_info.group_name)
             continue
 
         seen_templates.add(template_name)
-        group = trackerbot.Group(group_name, stream=stream)
-        template = trackerbot.Template(template_name, group, datestamp)
+        group = trackerbot.Group(template_info.group_name, stream=template_info.stream)
+        try:
+            template = trackerbot.Template(template_name, group, template_info.datestamp)
+        except ValueError:
+            logger.exception('Failure parsing provider %s template: %s',
+                             provider_key, template_name)
+            continue
 
         for provider_key in providers:
             provider = trackerbot.Provider(provider_key)
 
             if '{}_{}'.format(template_name, provider_key) in existing_provider_templates:
-                print('Template {} already tracked for provider {}'.format(
-                    template_name, provider_key))
+                logger.info('Template %s already tracked for provider %s',
+                            template_name, provider_key)
                 continue
 
             try:
                 trackerbot.mark_provider_template(api, provider, template, **usable)
-                print('Added {} template {} on provider {} (datestamp: {})'.format(
-                    group_name, template_name, provider_key, datestamp))
-            except SlumberHttpBaseException as ex:
-                print("{}\t{}".format(ex.response.status_code, ex.content))
+                logger.info('Added %s template %s on provider %s (datestamp: %s)',
+                            template_info.group_name,
+                            template_name,
+                            provider_key,
+                            template_info.datestamp)
+            except SlumberHttpBaseException:
+                logger.exception('%s: exception marking template %s', provider, template)
 
     # Remove provider relationships where they no longer exist, skipping unresponsive providers,
     # and providers not known to this environment
     for pt in trackerbot.depaginate(api, api.providertemplate.get())['objects']:
-        provider_key, template_name = pt['provider']['key'], pt['template']['name']
-        if provider_key not in template_providers[template_name] \
-                and provider_key not in unresponsive_providers:
-            if provider_key in all_providers:
-                print("Cleaning up template {} on {}".format(template_name, provider_key))
-                trackerbot.delete_provider_template(api, provider_key, template_name)
+        key, template_name = pt['provider']['key'], pt['template']['name']
+        if key not in template_providers[template_name] and key not in unresponsive_providers:
+            if key in all_providers:
+                logger.info("Cleaning up template %s on %s", template_name, key)
+                trackerbot.delete_provider_template(api, key, template_name)
             else:
-                print("Skipping template cleanup {} on unknown provider {}".format(
-                    template_name, provider_key))
+                logger.info("Skipping template cleanup %s on unknown provider %s",
+                            template_name, key)
 
     # Remove templates that aren't on any providers anymore
     for template in trackerbot.depaginate(api, api.template.get())['objects']:
         if not template['providers']:
-            print("Deleting template {} (no providers)".format(template['name']))
+            logger.info("Deleting template %s (no providers)", template['name'])
             api.template(template['name']).delete()
 
     # This is included in case we ever want it, but for now I think it's better to handle this
@@ -128,15 +138,15 @@ def get_provider_templates(provider_key, template_providers, unresponsive_provid
             templates = [t.get('name') for t in provider_mgmt.get_private_images().items()[0][1]]
         else:
             templates = provider_mgmt.list_template()
-        print(provider_key, 'returned {} templates'.format(len(templates)))
+        logger.info('%s: returned %s templates', provider_key, len(templates))
         with thread_lock:
             for template in templates:
                 # If it ends with 'db', skip it, it's a largedb/nodb variant
                 if str(template).lower().endswith('db'):
                     continue
                 template_providers[template].append(provider_key)
-    except:
-        print("{}\t{}\t{}".format(provider_key, 'failed:', traceback.format_exc().splitlines()[-1]))
+    except Exception:
+        logger.exception('%s\t%s', provider_key, 'exception getting templates')
         with thread_lock:
             unresponsive_providers.add(provider_key)
 
@@ -145,9 +155,12 @@ def parse_cmdline():
     parser = trackerbot.cmdline_parser()
     parser.add_argument('--mark-usable', default=None, action='store_true',
         help="Mark all added templates as usable")
+    parser.add_argument('--provider-key', default=None, help='A specific provider key to sync for',
+                        dest='selected_provider', nargs='*')
     args = parser.parse_args()
     return dict(args._get_kwargs())
 
 
 if __name__ == '__main__':
-    sys.exit(main(**parse_cmdline()))
+    parsed_args = parse_cmdline()
+    sys.exit(main(**parsed_args))
