@@ -531,7 +531,7 @@ class ContainerProviderAddViewUpdated(ContainerProviderAddView, ContainerProvide
         for widget_name in self.COND_WIDGETS:
             widget = getattr(self, widget_name)
             if widget.is_displayed:
-                widget.fill(values.get(widget_name))
+                widget.fill(values.get(widget_name) or 'Disabled')
 
 
 class PhysicalProviderAddView(ProviderAddView):
