@@ -137,7 +137,6 @@ setup(
             'infra_providers = cfme.infrastructure.provider:InfraProviderCollection',
             'infra_templates = cfme.infrastructure.virtual_machines:InfraTemplateCollection',
             'infra_vms = cfme.infrastructure.virtual_machines:InfraVmCollection',
-            'infrastructure_mapping = cfme.v2v.migrations:InfrastructureMappingCollection',
             'map_tags = cfme.configure.configuration.region_settings:MapTagsCollection',
             'network_floating_ips = cfme.networks.floating_ips:FloatingIpCollection',
             'network_ports = cfme.networks.network_port:NetworkPortCollection',
