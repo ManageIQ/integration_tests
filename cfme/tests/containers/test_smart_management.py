@@ -3,15 +3,13 @@ import random
 import pytest
 from cfme.containers.provider import (ContainersProvider, ContainersTestItem,
     refresh_and_navigate)
-from cfme.containers.image import Image, ImageCollection
-from cfme.containers.project import Project, ProjectCollection
-from cfme.containers.image_registry import (ImageRegistry,
-                                            ImageRegistryCollection)
-from cfme.containers.node import Node, NodeCollection
-from cfme.containers.pod import Pod, PodCollection
-from cfme.containers.template import Template, TemplateCollection
-from cfme.containers.container import Container, ContainerCollection
-from cfme.containers.provider import ContainersProviderCollection
+from cfme.containers.image import Image
+from cfme.containers.project import Project
+from cfme.containers.image_registry import ImageRegistry
+from cfme.containers.node import Node
+from cfme.containers.pod import Pod
+from cfme.containers.template import Template
+from cfme.containers.container import Container
 from cfme.utils.log import create_sublogger
 from cfme.utils.wait import wait_for
 
@@ -30,7 +28,8 @@ TEST_ITEMS = [
     pytest.mark.polarion('CMP-10320')(ContainersTestItem(
         Template, 'CMP-10320', collection_obj="container_templates", get_entity_by="name")),
     pytest.mark.polarion('CMP-9992')(ContainersTestItem(
-        ImageRegistry, 'CMP-9992', collection_obj="container_image_registries", get_entity_by="host")),
+        ImageRegistry, 'CMP-9992', collection_obj="container_image_registries",
+        get_entity_by="host")),
     pytest.mark.polarion('CMP-9981')(ContainersTestItem(
         Image, 'CMP-9981', collection_obj="container_images"), get_entity_by="name"),
     pytest.mark.polarion('CMP-9964')(ContainersTestItem(
@@ -40,7 +39,8 @@ TEST_ITEMS = [
     pytest.mark.polarion('CMP-9870')(ContainersTestItem(
         Project, 'CMP-9870', collection_obj="container_projects"), get_entity_by="name"),
     pytest.mark.polarion('CMP-9854')(ContainersTestItem(
-        ContainersProvider, 'CMP-9854', collection_obj="containers_providers"), get_entity_by="name")
+        ContainersProvider, 'CMP-9854', collection_obj="containers_providers"),
+        get_entity_by="name")
 ]
 
 
@@ -58,8 +58,10 @@ def get_clean_entity(**kwargs):
     entity.remove_tags(tags)
     return entity
 
+
 def get_object_name(obj):
     return obj.__module__.title().split(".")[-1]
+
 
 def wait_for_tag(obj_inst):
     # Waiting for some tag to appear at "My Company Tags" and return pop'ed last tag

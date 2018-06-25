@@ -111,7 +111,8 @@ class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssi
 
 
 @attr.s
-class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssignable, TaggableCollection):
+class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssignable,
+                      TaggableCollection):
     """Collection object for :py:class:`Image`."""
 
     ENTITY = Image
