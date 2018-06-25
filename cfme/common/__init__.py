@@ -418,7 +418,7 @@ class Taggable(TaggableCommonBase):
 
 class TaggableCollection(TaggableCommonBase):
 
-    def add_tag(self, item_objects, tag=None, cancel=False, reset=False):
+    def add_tag(self, item_objects, tag=None, cancel=False, reset=False, get_entity_by="name"):
         """ Add tag to tested item
 
         Args:
@@ -431,8 +431,9 @@ class TaggableCollection(TaggableCommonBase):
         """
         view = navigate_to(self, 'All')
         for item in item_objects:
-            name = item if isinstance(item, six.string_types) else item.name
-            view.entities.get_entity(surf_pages=True, name=name).check()
+            kwargs = {get_entity_by: item if isinstance(
+                item, six.string_types) else getattr(item, get_entity_by)}
+            view.entities.get_entity(surf_pages=True, **kwargs).check()
         view = self._open_edit_tag_page(view)
         added_tag, updated = self._assign_tag_action(view, tag)
         # In case if field is not updated cancel the edition
