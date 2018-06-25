@@ -26,21 +26,21 @@ logger = create_sublogger("smart_management")
 
 TEST_ITEMS = [
     pytest.mark.polarion('CMP-9948')(ContainersTestItem(
-        Container, 'CMP-9948', collection_obj="containers")),
+        Container, 'CMP-9948', collection_obj="containers", get_entity_by="name")),
     pytest.mark.polarion('CMP-10320')(ContainersTestItem(
-        Template, 'CMP-10320', collection_obj="container_templates")),
+        Template, 'CMP-10320', collection_obj="container_templates", get_entity_by="name")),
     pytest.mark.polarion('CMP-9992')(ContainersTestItem(
-        ImageRegistry, 'CMP-9992', collection_obj="container_image_registries")),
+        ImageRegistry, 'CMP-9992', collection_obj="container_image_registries", get_entity_by="host")),
     pytest.mark.polarion('CMP-9981')(ContainersTestItem(
-        Image, 'CMP-9981', collection_obj="container_images")),
+        Image, 'CMP-9981', collection_obj="container_images"), get_entity_by="name"),
     pytest.mark.polarion('CMP-9964')(ContainersTestItem(
-        Node, 'CMP-9964', collection_obj="container_nodes")),
+        Node, 'CMP-9964', collection_obj="container_nodes"), get_entity_by="name"),
     pytest.mark.polarion('CMP-9932')(ContainersTestItem(
-        Pod, 'CMP-9932', collection_obj="container_pods")),
+        Pod, 'CMP-9932', collection_obj="container_pods"), get_entity_by="name"),
     pytest.mark.polarion('CMP-9870')(ContainersTestItem(
-        Project, 'CMP-9870', collection_obj="container_projects")),
+        Project, 'CMP-9870', collection_obj="container_projects"), get_entity_by="name"),
     pytest.mark.polarion('CMP-9854')(ContainersTestItem(
-        ContainersProvider, 'CMP-9854', collection_obj="containers_providers"))
+        ContainersProvider, 'CMP-9854', collection_obj="containers_providers"), get_entity_by="name")
 ]
 
 
@@ -87,9 +87,8 @@ def test_smart_management_add_tag(appliance, provider, test_item):
     logger.debug('Selected object is "{obj_name}"'.format(obj_name=obj_inst.name))
 
     # Config random tag for object
-    tag = obj_collection.add_tag([obj_inst])
+    tag = obj_collection.add_tag([obj_inst], get_entity_by=test_item.get_entity_by)
     logger.debug("Set function result: {tag}".format(tag=tag))
-
 
     all_tags = obj_inst.get_tags()
     logger.debug("Current exist tag: {tag}".format(tag=tag))
