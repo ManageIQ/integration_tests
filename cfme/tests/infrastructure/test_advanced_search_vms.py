@@ -52,7 +52,7 @@ def vm_view(appliance):
     view.entities.search.remove_search_filters()
 
 
-def test_can_open_vm_view(vm_view):
+def test_can_open_vm_advanced_search(vm_view):
     vm_view.entities.search.open_advanced_search()
 
 
