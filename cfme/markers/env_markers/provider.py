@@ -211,7 +211,7 @@ def all_required(miq_version, filters=None):
     return dprovs
 
 
-def providers(metafunc, filters=None, selector=ALL):
+def providers(metafunc, filters=None, selector=ALL, fixture_name='provider'):
     """ Gets providers based on given (+ global) filters
 
     Note:
@@ -354,15 +354,16 @@ def providers(metafunc, filters=None, selector=ALL):
             idlist.append(the_id)
 
         # Add provider to argnames if missing
-        if 'provider' in metafunc.fixturenames and 'provider' not in argnames:
+        if fixture_name in metafunc.fixturenames and fixture_name not in argnames:
             metafunc.function = pytest.mark.uses_testgen()(metafunc.function)
-            argnames.append('provider')
+            argnames.append(fixture_name)
         if metafunc.config.getoption('sauce') or selector == ONE:
             break
     return argnames, argvalues, idlist
 
 
-def providers_by_class(metafunc, classes, required_fields=None, selector=ALL):
+def providers_by_class(
+        metafunc, classes, required_fields=None, selector=ALL, fixture_name='provider'):
     """ Gets providers by their class
 
     Args:
@@ -382,7 +383,7 @@ def providers_by_class(metafunc, classes, required_fields=None, selector=ALL):
         pytest_generate_tests = testgen.parametrize([GCEProvider], scope='module')
     """
     pf = DPFilter(classes=classes, required_fields=required_fields)
-    return providers(metafunc, filters=[pf], selector=selector)
+    return providers(metafunc, filters=[pf], selector=selector, fixture_name=fixture_name)
 
 
 class ProviderEnvironmentMarker(EnvironmentMarker):
@@ -390,36 +391,44 @@ class ProviderEnvironmentMarker(EnvironmentMarker):
 
     def process_env_mark(self, metafunc):
         if hasattr(metafunc.function, self.NAME):
-            mark = None
+            mark_dict = defaultdict(list)
             for mark in getattr(metafunc.function, self.NAME):
-                if 'override' in mark.kwargs.keys() and mark.kwargs['override']:
-                    break
-            else:
-                if len(getattr(metafunc.function, self.NAME)._marks) >= 2:
-                    raise Exception(
-                        "You have an override provider without "
-                        "specifying the override flag [{}]".format(metafunc.function.__name__)
-                    )
+                # Find all provider-ish markers
+                fixture_name = mark.kwargs.get('fixture_name', 'provider')
+                mark_dict[fixture_name].append(mark)
 
-            args = mark.args
-            kwargs = mark.kwargs.copy()
-            if 'override' in kwargs:
-                kwargs.pop('override')
-            scope = kwargs.pop('scope', 'function')
-            indirect = kwargs.pop('indirect', False)
-            filter_unused = kwargs.pop('filter_unused', True)
-            selector = kwargs.pop('selector', ALL)
-            gen_func = kwargs.pop('gen_func', providers_by_class)
+            for name, marks in mark_dict.items():
+                mark = None
+                for mark in marks:
+                    if mark.kwargs.get('override', False):
+                        break
+                else:
+                    if len(mark_dict[name]) >= 2:
+                        raise Exception(
+                            "You have an override provider without "
+                            "specifying the override flag [{}]".format(metafunc.function.__name__)
+                        )
 
-            # If parametrize doesn't get you what you need, steal this and modify as needed
-            kwargs.update({'selector': selector})
-            argnames, argvalues, idlist = gen_func(metafunc, *args, **kwargs)
-            # Filter out argnames that aren't requested on the metafunc test item, so not all tests
-            # need all fixtures to run, and tests not using gen_func's fixtures aren't parametrized.
-            if filter_unused:
-                argnames, argvalues = fixture_filter(metafunc, argnames, argvalues)
-                # See if we have to parametrize at all after filtering
-            parametrize(
-                metafunc, argnames, argvalues, indirect=indirect,
-                ids=idlist, scope=scope, selector=selector
-            )
+                args = mark.args
+                kwargs = mark.kwargs.copy()
+                if 'override' in kwargs:
+                    kwargs.pop('override')
+                scope = kwargs.pop('scope', 'function')
+                indirect = kwargs.pop('indirect', False)
+                filter_unused = kwargs.pop('filter_unused', True)
+                selector = kwargs.pop('selector', ALL)
+                gen_func = kwargs.pop('gen_func', providers_by_class)
+
+                # If parametrize doesn't get you what you need, steal this and modify as needed
+                kwargs.update({'selector': selector})
+                argnames, argvalues, idlist = gen_func(metafunc, *args, **kwargs)
+                # Filter out argnames that aren't requested on the metafunc test item,
+                # so not all tests need all fixtures to run, and tests not using gen_func's
+                # fixtures aren't parametrized.
+                if filter_unused:
+                    argnames, argvalues = fixture_filter(metafunc, argnames, argvalues)
+                    # See if we have to parametrize at all after filtering
+                parametrize(
+                    metafunc, argnames, argvalues, indirect=indirect,
+                    ids=idlist, scope=scope, selector=selector
+                )
