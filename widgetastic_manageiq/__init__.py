@@ -4727,16 +4727,16 @@ class MigrationProgressBar(Widget):
     """Represents in-progress plan widget for v2v migration"""
 
     # TODO: XPATH requested to devel (repo:miq_v2v_ui_plugin issues:415)
-    ROOT = ParametrizedLocator(".//div[5]/div/div[3]/div[3]/div/div")
-    TITLE_LOCATOR = ".//*[contains(@class, 'card-pf-title')]"
+    ROOT = './/div[5]/div/div[3]/div[3]/div/div'
+    TITLE_LOCATOR = './/h3[contains(@class,"card-pf-title")]'
     # TODO: XPATH requested to devel (repo:miq_v2v_ui_plugin issues:415)
-    ITEMS_LOCATOR = ".//*[contains(@id, 'items')]"
-    ITEM_LOCATOR = ".//*[contains(@class, 'card-pf card-pf-match-height in-progress')]"
-    TIMER_LOCATOR = ".//*[contains(@class, 'active-migration-elapsed-time')]"
+    ITEMS_LOCATOR = './/div[contains(@id,"progress-bar-items")]'
+    ITEM_LOCATOR = './/div[contains(@class,"in-progress")]'
+    TIMER_LOCATOR = './/div[contains(@class,"active-migration-elapsed-time")]'
     # TODO: XPATH requested to devel (repo:miq_v2v_ui_plugin issues:415)
-    SIZE_LOCATOR = ".//*[contains(@id, 'size-migrated')]"
+    SIZE_LOCATOR = './/strong[contains(@id,"size-migrated")]'
     # TODO: XPATH requested to devel (repo:miq_v2v_ui_plugin issues:415)
-    VMS_LOCATOR = ".//*[contains(@id, 'vms-migrated')]"
+    VMS_LOCATOR = './/strong[contains(@id,"vms-migrated")]'
 
     def __init__(self, parent, list_class, logger=None):
         Widget.__init__(self, parent, logger=logger)
