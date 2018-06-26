@@ -93,7 +93,7 @@ def test_smart_management_add_tag(provider, appliance, test_item):
     tag = obj_collection.add_tag([obj_inst], get_entity_by=test_item.get_entity_by)
     logger.debug("Set function result: {tag}".format(tag=tag))
 
-    all_tags = obj_inst.get_tags()
+    all_tags = wait_for(obj_inst.get_tags, num_sec=30, delay=5).out
     logger.debug("Current exist tag: {tag}".format(tag=tag))
 
     # Validate tag wsa set successfully
