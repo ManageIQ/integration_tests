@@ -287,8 +287,7 @@ class MigrationDashboardView(BaseLoggedInPage):
     migration_plans_not_started_list = MigrationPlansList("plans-not-started-list")
     migration_plans_completed_list = MigrationPlansList("plans-complete-list")
     infra_mapping_list = InfraMappingList("infra-mappings-list-view")
-    # TODO: Latest upstream nightly have changes in dropdown text
-    migr_dropdown = MigrationDropdown(text="Migration Plans Not Started")
+    migr_dropdown = MigrationDropdown(text="Not Started Plans")
 
     @property
     def is_displayed(self):
