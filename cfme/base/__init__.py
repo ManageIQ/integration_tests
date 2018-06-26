@@ -8,7 +8,6 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
-from cfme.utils.version import LATEST
 
 
 @attr.s
@@ -129,12 +128,9 @@ class ServerCollection(BaseCollection, sentaku.modeling.ElementMixin):
             name = server.name
         except AttributeError:
             logger.error('The EVM has no name, setting it to EVM')
-            if self.appliance.version == LATEST or self.appliance.is_pod:
-                name = 'EVM'
-            else:
-                name = server.name
+            name = 'EVM'
             server = self.instantiate(name=name, sid=server.id)
-            server.update_advanced_settings({'server': {'name': "EVM"}})
+            server.update_advanced_settings({'server': {'name': name}})
             return server
         return self.instantiate(name=name, sid=server.id)
 

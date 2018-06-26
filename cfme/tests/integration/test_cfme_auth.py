@@ -24,8 +24,8 @@ pytestmark = [
            unblock=lambda auth_mode, prov_key: not (
                auth_mode in ['external', 'ldaps'] and
                auth_data.auth_providers[prov_key].type == 'openldaps')
-           )
-    ]),
+           ),
+        BZ(1593171)]),  # 510z groups page doesn't load
     pytest.mark.usefixtures('prov_key', 'auth_mode', 'auth_provider', 'configure_auth')
 ]
 
@@ -98,7 +98,7 @@ def test_login_evm_group(appliance, request, auth_user_data, user_type, soft_ass
     # filtering on those that have evmgroup in groupname
     user_tuples = []
     for user in auth_user_data:
-        evm_matched_groups = [group for group in user.groups if 'evmgroup' in group.lower()]
+        evm_matched_groups = [group for group in user.groups or [] if 'evmgroup' in group.lower()]
         if evm_matched_groups:
             user_tuples.append(
                 (appliance.collections.users.simple_user(
