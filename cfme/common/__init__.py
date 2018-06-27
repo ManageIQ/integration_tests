@@ -274,7 +274,7 @@ class TaggableCommonBase(object):
         """
         if not tag:
             tag = self._set_random_tag(view)
-        category_name = tag.category.display_name
+        category_name = tag.category
         tag_name = tag.display_name
         # Handle nested view.form and where the view contains form widgets
         try:

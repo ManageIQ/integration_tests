@@ -22,7 +22,8 @@ from widgetastic_manageiq import (BreadCrumb,
                                   BaseQuadIconEntity,
                                   BaseListEntity,
                                   NonJSBaseEntity,
-                                  JSBaseEntity)
+                                  JSBaseEntity,
+                                  SummaryTable)
 
 
 class ProviderQuadIconEntity(BaseQuadIconEntity):
@@ -115,6 +116,7 @@ class ProviderDetailsView(BaseLoggedInPage):
         represents Details page when it is switched to Summary aka Tables view
         """
         summary = ParametrizedSummaryTable()
+        smart_management = SummaryTable(title="Smart Management")
 
     @entities.register('Dashboard View')
     class ProviderDetailsDashboardView(View):
