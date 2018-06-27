@@ -2443,6 +2443,19 @@ class IPAppliance(object):
             raise ValueError('No support for coll_type: "{}" collection name lookup'
                              .format(coll_type))
 
+    def _switch_migration_ui(self, enable):
+        self.update_advanced_settings({'product': {'transformation': enable}})
+        self.appliance.server.logout()
+        self.restart_evm_service()
+        self.wait_for_evm_service()
+        self.wait_for_web_ui()
+
+    def enable_migration_ui(self):
+        self._switch_migration_ui(True)
+
+    def disable_migration_ui(self):
+        self. _switch_migration_ui(False)
+
 
 class Appliance(IPAppliance):
     """Appliance represents an already provisioned cfme appliance vm
