@@ -95,11 +95,12 @@ def test_tenant_quota_enforce_via_lifecycle_cloud(request, appliance, provider, 
     prov_data.update({
         'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}})
     prov_data.update({'template_name': template_name})
-    appliance.collections.cloud_instances.create(vm_name, provider, prov_data, extra_msg=extra_msg,
-                                                 approve=approve)
+    request_description = 'Provision from [{}] to [{}{}]'.format(template_name, vm_name, extra_msg)
+    appliance.collections.cloud_instances.create(vm_name, provider, prov_data, auto_approve=approve,
+                                                 override=True,
+                                                 request_description=request_description)
 
     # nav to requests page to check quota validation
-    request_description = 'Provision from [{}] to [{}{}]'.format(template_name, vm_name, extra_msg)
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     assert provision_request.row.reason.text == "Quota Exceeded"

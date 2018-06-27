@@ -4,7 +4,6 @@ import pytest
 from riggerlib import recursive_update
 
 from cfme import test_requirements
-from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI, ViaUI
@@ -192,7 +191,7 @@ def test_quota_tagging_cloud_via_services(appliance, request, provider, setup_pr
         [{}, '', False],
         [{}, '', False],
         [{}, '', False],
-        [{'catalog': {'num_vms': '12'}}, '###', True]
+        [{'catalog': {'num_vms': '21'}}, '###', True]
 
     ],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
@@ -204,13 +203,13 @@ def test_quota_cloud(request, appliance, provider, prov_data, setup_provider, te
     recursive_update(prov_data, {
         'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}})
     prov_data.update({'template_name': template_name})
-    appliance.collections.cloud_instances.create(vm_name, provider, prov_data, extra_msg=extra_msg,
-                                                 approve=approve)
+    request_description = 'Provision from [{}] to [{}{}]'.format(template_name, vm_name, extra_msg)
+    appliance.collections.cloud_instances.create(vm_name, provider, prov_data, auto_approve=approve,
+                                                 override=True,
+                                                 request_description=request_description)
 
     # nav to requests page to check quota validation
-    request_description = 'Provision from [{}] to [{}{}]'.format(template_name, vm_name, extra_msg)
     provision_request = appliance.collections.requests.instantiate(request_description)
+    request.addfinalizer(provision_request.remove_request)
     provision_request.wait_for_request(method='ui')
     assert provision_request.row.reason.text == "Quota Exceeded"
-
-    request.addfinalizer(provision_request.remove_request)
