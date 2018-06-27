@@ -1,10 +1,8 @@
 from __future__ import print_function
 
-import time
-
 import os
 import re
-
+import time
 from . import run_cmd_or_exit
 
 IS_ROOT = os.getuid() == 0
@@ -70,7 +68,6 @@ REDHAT_PACKAGES_SPECS = [
     ("Fedora release 25", "nss", RH_BASE + DNF_EXTRA),
     ("Fedora release 26", "nss", RH_BASE_NEW + DNF_EXTRA),
     ("Fedora release 27", "openssl", RH_BASE_NEW + DNF_EXTRA),
-    ("Fedora release 28", "openssl", RH_BASE_NEW + DNF_EXTRA),
     ("CentOS Linux release 7", "nss", RH_BASE + YUM_EXTRA),
     ("Red Hat Enterprise Linux Server release 7", "nss", RH_BASE + YUM_EXTRA),
     ("Red Hat Enterprise Linux Workstation release 7", "nss",
