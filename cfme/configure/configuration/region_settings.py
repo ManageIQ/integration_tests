@@ -45,6 +45,7 @@ class CompanyTagsAllView(RegionView):
 @attr.s
 class Tag(Pretty, BaseEntity, Updateable):
     """ Class represents a category in CFME UI
+
         Args:
             name: Name of the tag
             display_name: Tag display name
