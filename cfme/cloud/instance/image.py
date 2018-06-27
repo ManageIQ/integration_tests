@@ -181,8 +181,7 @@ class ImageAllForProvider(CFMENavigateStep):
             view = navigate_to(self.obj, 'All')
         except NavigationDestinationNotFound:
             view = navigate_to(self.obj.parent, 'All')
-        finally:
-            return view
+        return view
 
     def step(self, *args, **kwargs):
         """Navigate to provider filtered collection

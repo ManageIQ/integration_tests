@@ -451,7 +451,7 @@ class MapTagsCollection(BaseCollection):
         else:
             view.add_button.click()
 
-        view = self.create_view(navigator.get_class(self.parent, 'All').VIEW)
+        view = self.create_view(navigator.get_class(self, 'All').VIEW)
         assert view.is_displayed
         view.flash.assert_no_error()
 
