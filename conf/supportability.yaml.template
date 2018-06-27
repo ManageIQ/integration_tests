@@ -84,5 +84,6 @@
         - 3.9
     physical:
         - lenovo
+        - redfish
     networks:
         - nuage

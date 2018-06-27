@@ -150,6 +150,7 @@ nuage = cfme.networks.provider.nuage:NuageProvider
 
 [manageiq.provider_types.physical]
 lenovo = cfme.physical.provider.lenovo:LenovoProvider
+redfish = cfme.physical.provider.redfish:RedfishProvider
 
 [manageiq.template_categories]
 cloud = cfme.cloud.instance.image:Image

@@ -158,6 +158,15 @@ management_systems:
                 ipaddress: 10.0.0.1
                 hostname: lenovo.hostname
                 api_port: 3000
+    redfish:
+        name: redfish
+        type: redfish
+        endpoints:
+            default:
+                credentials: redfish
+                hostname: redfish.hostname
+                security_protocol: SSL
+                api_port: 443
     nuage:
         name: nuage_net
         type: nuage
