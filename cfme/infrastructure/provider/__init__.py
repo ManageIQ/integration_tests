@@ -5,6 +5,7 @@ import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from widgetastic.utils import Fillable
+from widgetastic_patternfly import BreadCrumb
 
 from cfme.base.ui import Server
 from cfme.common import TagPageView
@@ -23,7 +24,7 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import BreadCrumb, BaseEntitiesView, View, NoSuchElementException
+from widgetastic_manageiq import BaseEntitiesView, View, NoSuchElementException
 
 
 class ProviderClustersView(ClusterView):

@@ -4,25 +4,14 @@ from lxml.html import document_fromstring
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View, Text, ConditionalSwitchableView, ParametrizedView
-from widgetastic_patternfly import Dropdown, BootstrapSelect, Tab
+from widgetastic_patternfly import BreadCrumb, Dropdown, BootstrapSelect, Tab
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.host_views import HostEntitiesView
-from widgetastic_manageiq import (BreadCrumb,
-                                  ParametrizedSummaryTable,
-                                  Button,
-                                  TimelinesView,
-                                  DetailsToolBarViewSelector,
-                                  ItemsToolBarViewSelector,
-                                  Checkbox,
-                                  Input,
-                                  BaseEntitiesView,
-                                  PaginationPane,
-                                  BaseTileIconEntity,
-                                  BaseQuadIconEntity,
-                                  BaseListEntity,
-                                  NonJSBaseEntity,
-                                  JSBaseEntity)
+from widgetastic_manageiq import (
+    ParametrizedSummaryTable, Button, TimelinesView, DetailsToolBarViewSelector,
+    ItemsToolBarViewSelector, Checkbox, Input, BaseEntitiesView, PaginationPane, BaseTileIconEntity,
+    BaseQuadIconEntity, BaseListEntity, NonJSBaseEntity, JSBaseEntity)
 
 
 class ProviderQuadIconEntity(BaseQuadIconEntity):

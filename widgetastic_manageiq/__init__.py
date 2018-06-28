@@ -2,13 +2,13 @@
 import atexit
 import json
 import math
+import os
+import re
 from collections import namedtuple
 from datetime import date
 from math import ceil
 from tempfile import NamedTemporaryFile
 
-import os
-import re
 import six
 from cached_property import cached_property
 from jsmin import jsmin
@@ -17,27 +17,18 @@ from selenium.common.exceptions import WebDriverException
 from wait_for import TimedOutError, wait_for
 from widgetastic.exceptions import NoSuchElementException, WidgetOperationFailed
 from widgetastic.log import logged
-from widgetastic.utils import ParametrizedLocator, Parameter, ParametrizedString, attributize_string
-from widgetastic.utils import VersionPick, Version, partial_match
+from widgetastic.utils import (
+    ParametrizedLocator, Parameter, ParametrizedString, attributize_string, VersionPick, Version,
+    partial_match)
 from widgetastic.widget import (
-    Table as VanillaTable,
-    TableColumn as VanillaTableColumn,
-    TableRow as VanillaTableRow,
-    Widget,
-    View,
-    Select,
-    TextInput,
-    Text,
-    Checkbox,
-    ParametrizedView,
     FileInput as BaseFileInput,
-    ClickableMixin,
-    ConditionalSwitchableView,
-    do_not_read_this_widget)
+    Table as VanillaTable, TableColumn as VanillaTableColumn, TableRow as VanillaTableRow,
+    Widget, View, Select, TextInput, Text, Checkbox, ParametrizedView, ClickableMixin,
+    ConditionalSwitchableView, do_not_read_this_widget)
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
-    Accordion as PFAccordion, BootstrapSwitch, BootstrapTreeview,
-    BootstrapSelect, Button, Dropdown, Input, NavDropdown, VerticalNavigation, Tab)
+    Accordion as PFAccordion, BootstrapSwitch, BootstrapTreeview, BootstrapSelect,
+    Button, Dropdown, Input, VerticalNavigation, NavDropdown, Tab, BreadCrumb)
 
 from cfme.exceptions import ItemNotFound
 
@@ -1872,47 +1863,6 @@ class RadioGroup(Widget):
 
     def fill(self, name):
         return self.select(name)
-
-
-class BreadCrumb(Widget):
-    """ CFME BreadCrumb navigation control
-
-    .. code-block:: python
-
-        breadcrumb = BreadCrumb()
-        breadcrumb.click_location(breadcrumb.locations[0])
-    """
-    ROOT = '//ol[@class="breadcrumb"]'
-    ELEMENTS = './/li'
-
-    def __init__(self, parent, locator=None, logger=None):
-        Widget.__init__(self, parent=parent, logger=logger)
-        self._locator = locator or self.ROOT
-
-    def __locator__(self):
-        return self._locator
-
-    @property
-    def _path_elements(self):
-        return self.browser.elements(self.ELEMENTS, parent=self)
-
-    @property
-    def locations(self):
-        return [self.browser.text(loc) for loc in self._path_elements]
-
-    @property
-    def active_location(self):
-        br = self.browser
-        return next(br.text(loc) for loc in self._path_elements if 'active' in br.classes(loc))
-
-    def click_location(self, name, handle_alert=True):
-        br = self.browser
-        location = next(loc for loc in self._path_elements if br.text(loc) == name)
-        result = br.click(location, ignore_ajax=handle_alert)
-        if handle_alert:
-            self.browser.handle_alert(wait=2.0, squash=True)
-            self.browser.plugin.ensure_page_safe()
-        return result
 
 
 class ItemsToolBarViewSelector(View):

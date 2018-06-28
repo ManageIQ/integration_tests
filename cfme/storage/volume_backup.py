@@ -5,7 +5,7 @@ import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from widgetastic.widget import View, Text, NoSuchElementException
-from widgetastic_patternfly import BootstrapSelect, Button, Dropdown
+from widgetastic_patternfly import BreadCrumb, BootstrapSelect, Button, Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import TagPageView, Taggable
@@ -16,13 +16,7 @@ from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
-    Accordion,
-    BaseEntitiesView,
-    BreadCrumb,
-    ItemsToolBarViewSelector,
-    ManageIQTree,
-    SummaryTable
-)
+    Accordion, BaseEntitiesView, ItemsToolBarViewSelector, ManageIQTree, SummaryTable)
 
 
 class VolumeBackupToolbar(View):

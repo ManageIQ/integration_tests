@@ -5,7 +5,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick
 from widgetastic.widget import View
-from widgetastic_patternfly import BootstrapNav, Button, Dropdown, Input
+from widgetastic_patternfly import BreadCrumb, BootstrapNav, Button, Dropdown, Input
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
@@ -16,7 +16,7 @@ from cfme.utils.log import logger
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for, TimedOutError
 from widgetastic_manageiq import (
-    Accordion, BootstrapSelect, BreadCrumb, ItemsToolBarViewSelector, PaginationPane,
+    Accordion, BootstrapSelect, ItemsToolBarViewSelector, PaginationPane,
     SummaryTable, Table, Text, BaseNonInteractiveEntitiesView, BaseEntitiesView)
 
 

@@ -5,8 +5,8 @@ import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Table, Checkbox, View
-from widgetastic_manageiq import BreadCrumb, SummaryForm, SummaryFormItem, PaginationPane, Button
-from widgetastic_patternfly import Input, Tab, BootstrapTreeview
+from widgetastic_manageiq import SummaryForm, SummaryFormItem, PaginationPane, Button
+from widgetastic_patternfly import BreadCrumb, Input, Tab, BootstrapTreeview
 from widgetastic.utils import Version, VersionPick
 
 from cfme.base.login import BaseLoggedInPage

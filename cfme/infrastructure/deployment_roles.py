@@ -5,32 +5,19 @@ import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import Version, VersionPick
-from widgetastic.widget import ParametrizedView, View
-from widgetastic_patternfly import (BootstrapNav,
-                                    Button,
-                                    Dropdown
-                                    )
+from widgetastic.widget import ParametrizedView, View, Text
+from widgetastic_patternfly import (
+    BreadCrumb, BootstrapNav, Button, Dropdown)
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import PolicyProfileAssignable
 from cfme.exceptions import ItemNotFound, RoleNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from widgetastic_manageiq import (Accordion,
-                                  BaseEntitiesView,
-                                  BaseListEntity,
-                                  BaseQuadIconEntity,
-                                  BaseTileIconEntity,
-                                  BootstrapSelect,
-                                  BreadCrumb,
-                                  CompareToolBarActionsView,
-                                  ItemsToolBarViewSelector,
-                                  JSBaseEntity,
-                                  NonJSBaseEntity,
-                                  SummaryTable,
-                                  Table,
-                                  Text
-                                  )
+from widgetastic_manageiq import (
+    Accordion, BaseEntitiesView, BaseListEntity, BaseQuadIconEntity, BaseTileIconEntity,
+    BootstrapSelect, CompareToolBarActionsView, ItemsToolBarViewSelector, JSBaseEntity,
+    NonJSBaseEntity, SummaryTable, Table)
 
 
 class DeploymentRoleToolbar(View):

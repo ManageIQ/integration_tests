@@ -7,7 +7,7 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import (
     View, TableRow, Text, TextInput, ParametrizedView, Image, ConditionalSwitchableView)
 from widgetastic_patternfly import (
-    Dropdown, BootstrapSelect, Tab, Input, CheckableBootstrapTreeview)
+    BreadCrumb, Dropdown, BootstrapSelect, Tab, Input, CheckableBootstrapTreeview)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import TemplateNotFound
@@ -15,7 +15,7 @@ from cfme.utils.log import logger
 from widgetastic_manageiq import (
     Calendar, Checkbox, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect, RadioGroup,
     VersionPick, Version, BaseEntitiesView, NonJSBaseEntity, BaseListEntity, BaseQuadIconEntity,
-    BaseTileIconEntity, JSBaseEntity, BaseNonInteractiveEntitiesView, BreadCrumb, PaginationPane,
+    BaseTileIconEntity, JSBaseEntity, BaseNonInteractiveEntitiesView, PaginationPane,
     DriftComparison, ParametrizedSummaryTable
 )
 

@@ -3,7 +3,7 @@
 import attr
 
 from navmazing import NavigateToAttribute
-from widgetastic_patternfly import Dropdown, Button, View
+from widgetastic_patternfly import Dropdown, Button, View, BreadCrumb
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
@@ -12,7 +12,7 @@ from cfme.modeling.base import BaseEntity, BaseCollection
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
     BaseEntitiesView, ItemsToolBarViewSelector, SummaryTable, Text, Table, Accordion, ManageIQTree,
-    BreadCrumb, PaginationPane)
+    PaginationPane)
 
 
 class FlavorView(BaseLoggedInPage):

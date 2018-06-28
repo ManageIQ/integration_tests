@@ -3,14 +3,7 @@
 import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, View
-from widgetastic_patternfly import Button, Dropdown
-from widgetastic_manageiq import (
-    BaseEntitiesView,
-    BreadCrumb,
-    ItemsToolBarViewSelector,
-    PaginationPane,
-    SummaryTable,
-)
+from widgetastic_patternfly import BreadCrumb, Button, Dropdown
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
@@ -18,6 +11,8 @@ from cfme.common import Taggable, TagPageView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from widgetastic_manageiq import (
+    BaseEntitiesView, ItemsToolBarViewSelector, PaginationPane, SummaryTable)
 
 
 class PlaybookBaseView(BaseLoggedInPage):
