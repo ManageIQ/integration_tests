@@ -90,6 +90,7 @@ setup(
             'ansible_repositories = cfme.ansible.repositories:RepositoryCollection',
             ('ansible_tower_job_templates = '
                 'cfme.ansible_tower.explorer:AnsibleTowerJobTemplatesCollection'),
+            'ansible_tower_jobs = cfme.ansible_tower.jobs:TowerJobsCollection',
             'ansible_tower_providers = cfme.ansible_tower.explorer:AnsibleTowerProvidersCollection',
             'ansible_tower_systems = cfme.ansible_tower.explorer:AnsibleTowerSystemsCollection',
             'balancers = cfme.networks.balancer:BalancerCollection',
@@ -104,6 +105,7 @@ setup(
             'categories =cfme.configure.configuration.region_settings:CategoriesCollection',
             'cloud_av_zones = cfme.cloud.availability_zone:AvailabilityZoneCollection',
             'cloud_flavors = cfme.cloud.flavor:FlavorCollection',
+            'cloud_host_aggregates = cfme.cloud.host_aggregates:HostAggregatesCollection',
             'cloud_images = cfme.cloud.instance.image:ImageCollection',
             'cloud_instances = cfme.cloud.instance:InstanceCollection',
             'cloud_keypairs = cfme.cloud.keypairs:KeyPairCollection',
@@ -113,6 +115,7 @@ setup(
             'cloud_tenants = cfme.cloud.tenant:TenantCollection',
             'clusters = cfme.infrastructure.cluster:ClusterCollection',
             'conditions = cfme.control.explorer.conditions:ConditionCollection',
+            'container_builds = cfme.containers.build:BuildCollection',
             'container_image_registries = cfme.containers.image_registry:ImageRegistryCollection',
             'container_images = cfme.containers.image:ImageCollection',
             'container_nodes = cfme.containers.node:NodeCollection',

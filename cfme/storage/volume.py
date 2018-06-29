@@ -5,7 +5,6 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import TextInput
 from widgetastic_patternfly import BreadCrumb, Button, Dropdown
 from widgetastic_manageiq import Search
-from widgetastic_patternfly import Button, Dropdown
 
 from widgetastic.widget import View, Text, NoSuchElementException
 

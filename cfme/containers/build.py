@@ -1,10 +1,12 @@
+import attr
+
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Text, View
 from widgetastic_patternfly import Dropdown
 from widgetastic_manageiq import Search, ItemsToolBarViewSelector
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseEntity, BaseCollection
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
@@ -36,11 +38,17 @@ class BuildDefaultView(BuildView):
         )
 
 
-class Build(Navigatable):
+@attr.s
+class Build(BaseEntity):
     pass
 
 
-@navigator.register(Build, 'All')
+@attr.s
+class BuildCollection(BaseCollection):
+    ENTITY = Build
+
+
+@navigator.register(BuildCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = BuildDefaultView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')

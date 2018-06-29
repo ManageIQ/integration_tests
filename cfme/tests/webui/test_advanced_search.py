@@ -2,16 +2,8 @@ import pytest
 import six
 
 from cfme.services.myservice import MyService
-from cfme.cloud.host_aggregates import HostAggregates
 from cfme.services.workloads import VmsInstances, TemplatesImages
-from cfme.containers.build import Build
 from cfme.infrastructure.config_management import ConfigManager, ConfigSystem
-from cfme.ansible_tower.explorer import (
-    TowerExplorerProvider,
-    TowerExplorerSystem,
-    TowerExplorerJobTemplates
-)
-from cfme.ansible_tower.jobs import TowerJobs
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 params_values = [
@@ -21,7 +13,7 @@ params_values = [
 
     ('cloud_providers', 'All', 'cloudprovider', 'Cloud Provider : Name'),
     ('cloud_av_zones', 'All', 'availabilityzone', 'Availability Zone : Name'),
-    (HostAggregates, 'All', 'hostaggregate', 'Host Aggregate : Name'),
+    ('cloud_host_aggregates', 'All', 'hostaggregate', 'Host Aggregate : Name'),
     ('cloud_tenants', 'All', 'tenant', 'Cloud Tenant : Name'),
     ('cloud_flavors', 'All', 'flavor', 'Flavor : Name'),
     ('cloud_instances', 'All', 'instances', 'Instance : Name'),
@@ -49,7 +41,7 @@ params_values = [
     ('containers', 'All', 'containers', 'Container : Name'),
     ('container_nodes', 'All', 'container_nodes', 'Container Node : Name'),
     ('container_volumes', 'All', 'container_volumes', 'Persistent Volume : Name'),
-    (Build, 'All', 'container_builds', 'Container Build : Name'),
+    ('container_builds', 'All', 'container_builds', 'Container Build : Name'),
     ('container_image_registries', 'All', 'image_registries', 'Container Image Registry : Name'),
     ('container_images', 'All', 'container_images', 'Container Image : Name'),
     ('container_templates', 'All', 'container_templates', 'Container Template : Name'),
@@ -76,19 +68,19 @@ params_values = [
     ('object_store_objects', 'All', 'object_store_objects',
      'Cloud Object Store Object : Name'),
 
-    (TowerExplorerProvider, 'All', 'ansible_tower_explorer_provider',
+    ('ansible_tower_providers', 'All', 'ansible_tower_explorer_provider',
      'Automation Manager (Ansible Tower) : Name'),
-    (TowerExplorerSystem, 'All', 'ansible_tower_explorer_system',
+    ('ansible_tower_systems', 'All', 'ansible_tower_explorer_system',
      'Configured System (Ansible Tower) : Hostname'),
-    (TowerExplorerJobTemplates, 'All', 'ansible_tower_explorer_job_templates',
+    ('ansible_tower_job_templates', 'All', 'ansible_tower_explorer_job_templates',
      'Job Template (Ansible Tower) : Name'),
-    (TowerJobs, 'All', 'ansible_tower_jobs', 'Ansible Tower Job : Name'),
+    ('ansible_tower_jobs', 'All', 'ansible_tower_jobs', 'Ansible Tower Job : Name'),
 ]
 
 pytestmark = [
     pytest.mark.parametrize(
         'params', params_values,
-        ids=['{}_{}'.format(param[2], param[1].lower()) for param in params_values]
+        ids=['{}-{}'.format(param[2], param[1].lower()) for param in params_values]
     ),
     pytest.mark.uncollectif(lambda params, appliance: params[0] in (MyService, 'physical_providers',
         'physical_servers', 'volume_backups', 'volume_snapshots') and appliance.version < 5.9)
