@@ -6,6 +6,7 @@ import sentaku
 
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.version import LATEST
@@ -285,6 +286,26 @@ class Region(BaseEntity, sentaku.modeling.ElementMixin):
         )
         assert result.ok
 
+    def set_help_menu_configuration(self, config):
+        """Set help configuration
+
+        Args:
+            config: dict with fields values
+        """
+        view = navigate_to(self, 'HelpMenu')
+        view.fill({
+            'documentation_title': config.get('documentation_title'),
+            'documentation_url': config.get('documentation_url'),
+            'documentation_type': config.get('documentation_type'),
+            'product_title': config.get('product_title'),
+            'product_url': config.get('product_url'),
+            'product_type': config.get('product_type'),
+            'about_title': config.get('about_title'),
+            'about_url': config.get('about_url'),
+            'about_type': config.get('about_type')
+        })
+        view.submit.click()
+        view.flash.assert_no_error()
 
 @attr.s
 class RegionCollection(BaseCollection, sentaku.modeling.ElementMixin):

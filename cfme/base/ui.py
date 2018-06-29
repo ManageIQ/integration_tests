@@ -980,9 +980,23 @@ class RegionChangeNameView(RegionView):
 
 
 class HelpMenuView(RegionView):
+    documentation_title = Input('documentation_title')
+    documentation_url = Input('documentation_href')
+    documentation_type = BootstrapSelect('documentation_type')
+
+    product_title = Input('product_title')
+    product_url = Input('product_href')
+    product_type = BootstrapSelect('product_type')
+
+    about_title = Input('about_title')
+    about_url = Input('about_href')
+    about_type = BootstrapSelect('about_type')
+
+    submit = Button('Submit')
+
     @property
     def is_displayed(self):
-        return self.help_menu.is_active()
+        return self.help_menu.is_active() and self.documentation_title.is_displayed
 
 
 @navigator.register(Region, 'Details')
