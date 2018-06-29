@@ -2057,6 +2057,21 @@ class IPAppliance(object):
                 raise ApplianceException('No server id is set, cannot modify yaml config via REST')
             self.server.update_advanced_settings(settings_dict)
 
+    def set_proxy(self, host, port, user=None, password=None, prov_type=None):
+        vmdb_config = self.advanced_settings
+        proxy_type = prov_type or 'default'
+        settings = {'host': host,
+                    'port': port,
+                    'user': user,
+                    'password': password}
+        try:
+            vmdb_config['http_proxy'][proxy_type] = settings
+        except KeyError as ex:
+            logger.error('Incorrect provider type')
+            logger.exception(ex)
+            raise ApplianceException('Impossible to create proxy with current provider type')
+        self.update_advanced_settings(vmdb_config)
+
     def set_session_timeout(self, timeout=86400, quiet=True):
         """Sets the timeout of UI timeout.
 
