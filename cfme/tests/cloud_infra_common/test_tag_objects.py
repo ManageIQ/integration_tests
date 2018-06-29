@@ -3,15 +3,15 @@
 import pytest
 
 from cfme.cloud.keypairs import KeyPair
-from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
-from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([InfraProvider, EC2Provider], scope='module', selector=ONE_PER_TYPE)
+    pytest.mark.provider([InfraProvider, CloudProvider], scope='module', selector=ONE_PER_CATEGORY)
 ]
 
 
@@ -19,28 +19,33 @@ pytestmark = [
 # get_collection_entity below processes these to navigate and find an entity
 # so use (collection_name, None, None) if the thing being tested uses BaseEntity/BaseCollection
 # Once everything is converted these should be flattened to just collection names list
-cloud_infra_test_items = [
+
+infra_test_items = [
     ('infra_provider', None),  # no param_class needed, provider returned directly
-    ('infra_vms', 'ProviderVms'),
-    ('infra_templates', 'ProviderTemplates'),
+    ('infra_vms', True),
+    ('infra_templates', True),
     ('hosts', None),
     ('clusters', None),
-    ('datastores', None),
+    ('datastores', None)
+]
+cloud_test_items = [
     ('cloud_provider', None),  # no param_class needed, provider returned directly
-    ('cloud_instances', 'Instances'),
+    ('cloud_instances', True),
     ('cloud_flavors', None),
     ('cloud_av_zones', None),
     ('cloud_tenants', None),
     ('cloud_keypairs', None),
-    ('cloud_images', 'Images')
+    ('cloud_images', True)
 ]
+
 
 def get_collection_entity(appliance, collection_name, destination, provider):
     if collection_name in ['infra_provider', 'cloud_provider']:
         return provider
     else:
         collection = getattr(appliance.collections, collection_name)
-        view = navigate_to(provider, destination) if destination else navigate_to(collection, 'All')
+        step_name = 'AllForProvider' if destination else 'All'
+        view = navigate_to(provider, step_name)
         names = view.entities.entity_names
         if not names:
             pytest.skip("No content found for test")
@@ -61,9 +66,17 @@ def _tag_cleanup(test_item, tag):
     return result
 
 
-@pytest.fixture(params=cloud_infra_test_items, ids=([item[0] for item in cloud_infra_test_items]),
+@pytest.fixture(params=cloud_test_items, ids=([item[0] for item in cloud_test_items]),
                 scope='module')
-def cloud_infra_test_item(request, appliance, provider):
+def cloud_test_item(request, appliance, provider):
+    collection_name, destination = request.param
+    return get_collection_entity(
+        appliance, collection_name, destination, provider)
+
+
+@pytest.fixture(params=infra_test_items, ids=([item[0] for item in infra_test_items]),
+                scope='module')
+def infra_test_item(request, appliance, provider):
     collection_name, destination = request.param
     return get_collection_entity(
         appliance, collection_name, destination, provider)
@@ -93,26 +106,48 @@ def tagging_check(tag):
     return _tagging_check
 
 
+@pytest.mark.uncollectif(lambda provider: provider.one_of(InfraProvider))
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
-def test_tag_objects(tagging_check, cloud_infra_test_items, tag_place):
+def test_tag_cloud_objects(tagging_check, cloud_test_item, tag_place):
     """ Test for cloud items tagging action from list and details pages """
-    tagging_check(cloud_infra_test_items, tag_place)
+    tagging_check(cloud_test_item, tag_place)
 
 
+@pytest.mark.uncollectif(lambda provider: provider.one_of(CloudProvider))
+@pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
+def test_tag_infra_objects(tagging_check, infra_test_item, tag_place):
+    """ Test for infrastructure items tagging action from list and details pages """
+    tagging_check(infra_test_item, tag_place)
+
+
+@pytest.mark.uncollectif(lambda provider: provider.one_of(InfraProvider))
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
-def test_tagvis_object(check_item_visibility, cloud_infra_test_items, visibility,
-                             appliance):
+def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility, appliance):
     """ Tests infra provider and its items honors tag visibility
     Prerequisites:
         Catalog, tag, role, group and restricted user should be created
-
     Steps:
         1. As admin add tag
         2. Login as restricted user, item is visible for user
         3. As admin remove tag
         4. Login as restricted user, item is not visible for user
     """
-    if isinstance(cloud_infra_test_items, KeyPair) and appliance.version < '5.9':
+    if isinstance(cloud_test_item, KeyPair) and appliance.version < '5.9':
         pytest.skip('Keypairs visibility works starting 5.9')
 
-        check_item_visibility(cloud_infra_test_items, visibility)
+        check_item_visibility(cloud_test_item, visibility)
+
+
+@pytest.mark.uncollectif(lambda provider: provider.one_of(CloudProvider))
+@pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
+def test_tagvis_infra_object(infra_test_item, check_item_visibility, visibility):
+    """ Tests infra provider and its items honors tag visibility
+    Prerequisites:
+        Catalog, tag, role, group and restricted user should be created
+    Steps:
+        1. As admin add tag
+        2. Login as restricted user, item is visible for user
+        3. As admin remove tag
+        4. Login as restricted user, iten is not visible for user
+    """
+    check_item_visibility(infra_test_item, visibility)
