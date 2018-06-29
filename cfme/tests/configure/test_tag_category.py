@@ -2,8 +2,8 @@
 import fauxfactory
 import pytest
 
-from cfme.configure.configuration.region_settings import Category
 from cfme.rest.gen_data import categories as _categories
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.rest import (
     assert_response,
     delete_resources_from_collection,
@@ -15,14 +15,19 @@ from cfme.utils.wait import wait_for
 
 @pytest.mark.tier(2)
 @pytest.mark.sauce
-def test_category_crud():
-    cg = Category(name=fauxfactory.gen_alphanumeric(8).lower(),
-                  description=fauxfactory.gen_alphanumeric(32),
-                  display_name=fauxfactory.gen_alphanumeric(32))
-    cg.create()
+def test_category_crud(appliance, soft_assert):
+    cg = appliance.collections.categories.create(
+        name=fauxfactory.gen_alphanumeric(8).lower(),
+        description=fauxfactory.gen_alphanumeric(32),
+        display_name=fauxfactory.gen_alphanumeric(32)
+    )
+    view = appliance.browser.create_view(navigator.get_class(cg.parent, 'All').VIEW)
+    soft_assert(view.flash.assert_message('Category "{}" was added'.format(cg.display_name)))
     with update(cg):
         cg.description = fauxfactory.gen_alphanumeric(32)
-    cg.delete(cancel=False)
+    soft_assert(view.flash.assert_message('Category "{}" was saved'.format(cg.name)))
+    cg.delete()
+    soft_assert(view.flash.assert_message('Category "{}": Delete successful'.format(cg.name)))
 
 
 class TestCategoriesViaREST(object):

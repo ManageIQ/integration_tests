@@ -10,7 +10,6 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm_views import DriftAnalysis
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
-from cfme.configure.configuration.region_settings import Tag, Category
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -765,7 +764,9 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance):
     drift_new = int(view.entities.summary("Relationships").get_text_of("Drift History"))
 
     # add a tag and a finalizer to remove it
-    added_tag = Tag(display_name='Accounting', category=Category(display_name='Department'))
+    added_tag = appliance.collections.categories.instantiate(
+        display_name='Department').collections.tags.instantiate(
+        display_name='Accounting')
     ssa_vm.add_tag(added_tag)
     request.addfinalizer(lambda: ssa_vm.remove_tag(added_tag))
     ssa_vm.smartstate_scan(wait_for_task_result=True)

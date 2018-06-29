@@ -10,7 +10,6 @@ from widgetastic.widget import Table, Text, View
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BaseNonInteractiveEntitiesView
@@ -255,8 +254,8 @@ class TaggableCommonBase(object):
         # In order to get the right tags list we need to select category first to get loaded tags
         random_tag = random.choice([tag_option for tag_option in view.form.tag_name.all_options
                                     if "select" not in tag_option.text.lower()]).text
-        tag = Tag(display_name=random_tag, category=Category(display_name=random_cat_cut))
-        return tag
+        category = self.appliance.collections.categories.instantiate(display_name=random_cat_cut)
+        return category.collections.tags.instantiate(display_name=random_tag)
 
     def _assign_tag_action(self, view, tag):
         """Assign tag on tag page
@@ -409,8 +408,9 @@ class Taggable(TaggableCommonBase):
             # check for users/groups page in case one tag string is returned
             for tag in [tags_text] if isinstance(tags_text, six.string_types) else list(tags_text):
                 tag_category, tag_name = tag.split(':')
-                tags.append(Tag(category=Category(display_name=tag_category),
-                                display_name=tag_name.strip()))
+                category = self.appliance.collections.categories.instantiate(
+                    display_name=tag_category)
+                tags.append(category.collections.tags.instantiate(display_name=tag_name.strip()))
         return tags
 
 

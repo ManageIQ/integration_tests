@@ -7,7 +7,6 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.common.provider import CloudInfraProvider
-from cfme.configure.configuration.region_settings import Tag, Category
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.generators import random_vm_name
@@ -156,16 +155,16 @@ def test_retirement_now(retire_vm):
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider),
                          reason='Only valid for EC2 provider')
 @pytest.mark.parametrize('tagged', [True, False], ids=['tagged', 'untagged'])
-def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged):
+def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged, appliance):
     """Tests on-demand retirement of an instance/vm
 
     S3 (instance-backed) EC2 instances that aren't lifecycle tagged won't get shut down
     """
     # Tag the VM with lifecycle for full retirement based on parameter
     if tagged:
-        retire_ec2_s3_vm.add_tag(
-            Tag(display_name='LifeCycle', category=Category(
-                display_name='Fully retire VM and remove from Provider')))
+        retire_ec2_s3_vm.add_tag(appliance.collections.categories.instantiate(
+            display_name='Fully retire VM and remove from Provider').collections.tags.instantiate(
+            display_name='LifeCycle'))
         expected_power_state = ['terminated']
     else:
         # no tagging

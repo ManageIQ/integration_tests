@@ -3,8 +3,8 @@ import re
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic_patternfly import Input, BootstrapSelect, Button, BootstrapSwitch
-# TODO replace with dynamic table
-from widgetastic_manageiq import VanillaTable, SummaryFormItem, Table, Dropdown
+from widgetastic.exceptions import RowNotFound
+from widgetastic_manageiq import VanillaTable, SummaryFormItem, Table, Dropdown, DynamicTable
 from widgetastic.widget import Checkbox, Text
 
 from cfme.base.ui import RegionView
@@ -16,6 +16,113 @@ from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+
+
+# =======================================TAGS=============================================
+
+table_button_classes = [Button.DEFAULT, Button.SMALL, Button.BLOCK]
+
+
+class CompanyTagsAllView(RegionView):
+    """Company Tags list view"""
+    category_dropdown = BootstrapSelect('classification_name')
+    table = DynamicTable(locator='//div[@id="classification_entries_div"]/table',
+                         column_widgets={
+                             'Name': Input(id='entry_name'),
+                             'Description': Input(id='entry_description'),
+                             'Actions': Button(title='Add this entry',
+                                               classes=table_button_classes)},
+                         assoc_column='Name', rows_ignore_top=1, action_row=0)
+
+    @property
+    def is_displayed(self):
+        return (
+            self.company_tags.is_active() and
+            self.table.is_displayed
+        )
+
+
+@attr.s
+class Tag(Pretty, BaseEntity, Updateable):
+    """ Class represents a category in CFME UI
+
+        Args:
+            name: Name of the tag
+            display_name: Tag display name
+            category: Tags Category
+
+    """
+    pretty_attrs = ['name', 'display_name']
+
+    display_name = attr.ib()
+    name = attr.ib(default=None)
+
+    def update(self, updates):
+        """ Update category method """
+        view = navigate_to(self.parent, 'All')
+        view.table.fill({
+            self.display_name: {
+                'Name': updates.get('name'),
+                'Description': updates.get('display_name')
+            }
+        })
+        view.flash.assert_no_error()
+
+    def delete(self, cancel=False):
+        """ Delete category method """
+        view = navigate_to(self.parent, 'All')
+        view.table.row(description=self.display_name).actions.click()
+        view.browser.handle_alert(cancel=cancel)
+        view.flash.assert_no_error()
+
+    @property
+    def exists(self):
+        """Check if tag exists"""
+        view = navigate_to(self.parent, 'All')
+        try:
+            view.table.row(description=self.display_name)
+            return True
+        except RowNotFound:
+            return False
+
+    @property
+    def category(self):
+        return self.parent.parent
+
+
+@attr.s
+class TagsCollection(BaseCollection):
+
+    ENTITY = Tag
+
+    def create(self, name, display_name):
+        """ Create category method """
+        view = navigate_to(self, 'All')
+        view.table.fill([{'Name': name, 'Description': display_name}])
+        view.table.row_save()
+        return self.instantiate(name=name, display_name=display_name)
+
+    def all(self):
+        """Get all tags for the category"""
+        view = navigate_to(self, 'All')
+        all_tags = []
+        for name, values_dict in view.table.read().items():
+            all_tags = all_tags.append(
+                self.instantiate(name=name, display_name=values_dict['Description'])
+            )
+
+
+@navigator.register(TagsCollection, 'All')
+class TagsAll(CFMENavigateStep):
+    VIEW = CompanyTagsAllView
+    prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
+
+    def step(self):
+        if self.obj.appliance.version < '5.9':
+            self.prerequisite_view.company_tags.select()
+        else:
+            self.prerequisite_view.tags.company_tags.select()
+        self.view.fill({'category_dropdown': self.obj.parent.display_name})
 
 
 # =====================================CATEGORY===================================
@@ -67,7 +174,8 @@ class CompanyCategoriesEditView(CompanyCategoriesAddView):
         )
 
 
-class Category(Pretty, Navigatable, Updateable):
+@attr.s
+class Category(Pretty, BaseEntity, Updateable):
     """ Class represents a category in CFME UI
 
         Args:
@@ -82,85 +190,115 @@ class Category(Pretty, Navigatable, Updateable):
     pretty_attrs = ['name', 'display_name', 'description', 'show_in_console',
                     'single_value', 'capture_candu']
 
-    def __init__(self, name=None, display_name=None, description=None, show_in_console=True,
-                 single_value=True, capture_candu=False, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.display_name = display_name
-        self.description = description
-        self.show_in_console = show_in_console
-        self.single_value = single_value
-        self.capture_candu = capture_candu
+    _collections = {'tags': TagsCollection}
 
-    def _form_mapping(self, **kwargs):
-        """Returns dist used to fill forms """
-        return {
-            'name': kwargs.get('name'),
-            'display_name': kwargs.get('display_name'),
-            'long_description': kwargs.get('description'),
-            'show_in_console': kwargs.get('show_in_console'),
-            'single_value': kwargs.get('single_value'),
-            'capture_candu': kwargs.get('capture_candu'),
-        }
-
-    def create(self, cancel=False):
-        """ Create category method
-
-            Args:
-                cancel: To cancel creation pass True, cancellation message will be verified
-                        By defaul user will be created
-        """
-        view = navigate_to(self, 'Add')
-        view.fill(self._form_mapping(**self.__dict__))
-
-        if cancel:
-            view.cancel_button.click()
-            flash_message = 'Add of new Category was cancelled by the user'
-        else:
-            view.add_button.click()
-            flash_message = 'Category "{}" was added'.format(self.display_name)
-
-        view = self.create_view(CompanyCategoriesAllView)
-        if not BZ(1510473, forced_streams=['5.9']).blocks:
-            view.flash.assert_success_message(flash_message)
+    display_name = attr.ib()
+    name = attr.ib(default=None)
+    description = attr.ib(default=None)
+    show_in_console = attr.ib(default=True)
+    single_value = attr.ib(default=True)
+    capture_candu = attr.ib(default=False)
 
     def update(self, updates, cancel=False):
         """ Update category method
 
             Args:
                 updates: category data that should be changed
+                cancel:
         """
         view = navigate_to(self, 'Edit')
-        view.fill(self._form_mapping(**updates))
+        view.fill({
+            'name': updates.get('name'),
+            'display_name': updates.get('display_name'),
+            'long_description': updates.get('description'),
+            'show_in_console': updates.get('show_in_console'),
+            'single_value': updates.get('single_value'),
+            'capture_candu': updates.get('capture_candu'),
+        })
         if cancel:
             view.cancel_button.click()
-            flash_message = 'Edit of Category "{}" was cancelled by the user'.format(self.name)
         else:
             view.save_button.click()
-            flash_message = 'Category "{}" was saved'.format(self.name)
 
-        view = self.create_view(CompanyCategoriesAllView)
-        if not BZ(1510473, forced_streams=['5.9']).blocks:
-            view.flash.assert_success_message(flash_message)
+        view = self.create_view(navigator.get_class(self.parent, 'All').VIEW)
+        assert view.is_displayed
+        view.flash.assert_no_error()
 
-    def delete(self, cancel=True):
+    def delete(self, cancel=False):
         """ Delete existing category
 
             Args:
-                cancel: Default value 'True', category will be deleted
-                        'False' - deletion of category will be canceled
+                cancel: Default value 'False', category will be deleted
+                        'True' - deletion of category will be canceled
         """
-        view = navigate_to(self, 'All')
-        row = view.table.row(name=self.name)
+        view = navigate_to(self.parent, 'All')
+        row = view.table.row(description=self.display_name)
         row.actions.click()
         view.browser.handle_alert(cancel=cancel)
         if not cancel:
-            if not BZ(1525929, forced_streams=['5.9']).blocks:
-                view.flash.assert_success_message(
-                    'Category "{}": Delete successful'.format(self.name))
+            view = self.create_view(navigator.get_class(self.parent, 'All').VIEW)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+
+    @property
+    def exists(self):
+        """Check if category exists"""
+        view = navigate_to(self.parent, 'All')
+        try:
+            view.table.row(description=self.display_name)
+            return True
+        except RowNotFound:
+            return False
 
 
-@navigator.register(Category, 'All')
+@attr.s
+class CategoriesCollection(BaseCollection):
+
+    ENTITY = Category
+
+    def create(self, name, display_name, description, show_in_console=True, single_value=True,
+               capture_candu=False, cancel=False):
+        """ Create category method
+
+        Args:
+            name: Name of the category
+            display_name: Category display name
+            description: Category description
+            show_in_console: Option to show category in console (True/False)
+            single_value: Option if category is single value (True/False)
+            capture_candu: True/False, capture c&u data by tag
+            cancel: To cancel creation pass True, cancellation message will be verified
+                    By default user will be created
+        """
+        view = navigate_to(self, 'Add')
+        view.fill({
+            'name': name,
+            'display_name': display_name,
+            'long_description': description,
+            'show_in_console': show_in_console,
+            'single_value': single_value,
+            'capture_candu': capture_candu,
+        })
+
+        if cancel:
+            view.cancel_button.click()
+        else:
+            view.add_button.click()
+
+        view = self.create_view(navigator.get_class(self, 'All').VIEW)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        return self.instantiate(
+            display_name=display_name,
+            name=name,
+            description=description,
+            show_in_console=show_in_console,
+            single_value=single_value,
+            capture_candu=capture_candu
+        )
+
+
+@navigator.register(CategoriesCollection, 'All')
 class CategoryAll(CFMENavigateStep):
     VIEW = CompanyCategoriesAllView
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
@@ -172,7 +310,7 @@ class CategoryAll(CFMENavigateStep):
             self.prerequisite_view.tags.company_categories.select()
 
 
-@navigator.register(Category, 'Add')
+@navigator.register(CategoriesCollection, 'Add')
 class CategoryAdd(CFMENavigateStep):
     VIEW = CompanyCategoriesAddView
     prerequisite = NavigateToSibling('All')
@@ -184,121 +322,11 @@ class CategoryAdd(CFMENavigateStep):
 @navigator.register(Category, 'Edit')
 class CategoryEdit(CFMENavigateStep):
     VIEW = CompanyCategoriesEditView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.table.row(name=self.obj.name).click()
 
-# =======================================TAGS=============================================
-
-
-class CompanyTagsAllView(RegionView):
-    """Company Tags list view"""
-    category_dropdown = BootstrapSelect('classification_name')
-    table = VanillaTable('//div[@id="classification_entries_div"]/table')
-    add_button = Button('Add')
-
-    cancel_button = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.company_categories.is_active() and
-            self.table.is_displayed
-        )
-
-
-class CompanyTagsAddView(CompanyTagsAllView):
-    """Add Company Tags view"""
-    tag_name = Input(id='entry_name')
-    tag_description = Input(id='entry_description')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.company_categories.is_active() and
-            self.tag_name.is_displayed
-        )
-
-
-class CompanyTagsEditView(CompanyTagsAddView):
-    """Edit Company Tags view"""
-    save_button = Button('Save')
-    reset_button = Button('Reset')
-
-
-class Tag(Pretty, Navigatable, Updateable):
-    """ Class represents a category in CFME UI
-
-        Args:
-            name: Name of the tag
-            display_name: Tag display name
-            category: Tags Category
-    """
-    pretty_attrs = ['name', 'display_name', 'category']
-
-    def __init__(self, name=None, display_name=None, category=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.display_name = display_name
-        self.category = category
-
-    def _form_mapping(self, **kwargs):
-        """Returns dist used to fill forms """
-        return {
-            'tag_name': kwargs.get('name'),
-            'tag_description': kwargs.get('display_name')
-        }
-
-    def create(self):
-        """ Create category method """
-        view = navigate_to(self, 'Add')
-        view.fill(self._form_mapping(**self.__dict__))
-        view.add_button.click()
-
-    def update(self, updates):
-        """ Update category method """
-        view = navigate_to(self, 'Edit')
-        view.fill(self._form_mapping(**updates))
-        view.save_button.click()
-
-    def delete(self, cancel=True):
-        """ Delete category method """
-        view = navigate_to(self, 'All')
-        row = view.table.row(name=self.name)
-        row.actions.click()
-        view.browser.handle_alert(cancel=cancel)
-
-
-@navigator.register(Tag, 'All')
-class TagsAll(CFMENavigateStep):
-    VIEW = CompanyTagsAllView
-    prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
-
-    def step(self):
-        if self.obj.appliance.version < '5.9':
-            self.prerequisite_view.company_tags.select()
-        else:
-            self.prerequisite_view.tags.company_tags.select()
-        self.view.fill({'category_dropdown': self.obj.category.display_name})
-
-
-@navigator.register(Tag, 'Add')
-class TagsAdd(CFMENavigateStep):
-    VIEW = CompanyTagsAddView
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        self.prerequisite_view.add_button.click()
-
-
-@navigator.register(Tag, 'Edit')
-class TagsEdit(CFMENavigateStep):
-    VIEW = CompanyTagsEditView
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        self.prerequisite_view.table.row(name=self.obj.name).click()
 
 # =======================================MAP TAGS==============================================
 

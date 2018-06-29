@@ -2,14 +2,13 @@ import fauxfactory
 import pytest
 
 from cfme.base.credential import Credential
-from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
 
 @pytest.fixture(scope="session")
-def category():
+def category(appliance):
     """
         Returns random created category object
         Object can be used in all test run session
@@ -19,12 +18,14 @@ def category():
     # display_name should be with max length of 32
     else:
         display_name = fauxfactory.gen_alphanumeric(length=32)
-    cg = Category(name=fauxfactory.gen_alpha(8).lower(),
-                  description=fauxfactory.gen_alphanumeric(length=32),
-                  display_name=display_name)
-    cg.create()
+        cg = appliance.collections.categories.create(
+            name=fauxfactory.gen_alpha(8).lower(),
+            description=fauxfactory.gen_alphanumeric(length=32),
+            display_name=display_name
+        )
     yield cg
-    cg.delete(False)
+    if cg.exists:
+        cg.delete()
 
 
 @pytest.fixture(scope="session")
@@ -33,12 +34,13 @@ def tag(category):
         Returns random created tag object
         Object can be used in all test run session
     """
-    tag = Tag(name=fauxfactory.gen_alpha(8).lower(),
-              display_name=fauxfactory.gen_alphanumeric(length=32),
-              category=category)
-    tag.create()
+    tag = category.collections.tags.create(
+        name=fauxfactory.gen_alpha(8).lower(),
+        display_name=fauxfactory.gen_alphanumeric(length=32)
+    )
     yield tag
-    tag.delete(False)
+    if tag.exists:
+        tag.delete()
 
 
 @pytest.fixture(scope="module")
