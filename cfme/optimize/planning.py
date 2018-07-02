@@ -5,7 +5,7 @@ from widgetastic_manageiq import (Button, Table, Checkbox, Input, LineChart,
 from widgetastic_patternfly import Tab
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 locator = ('.//h3[normalize-space(.)={}]/following-sibling::dl//'
@@ -87,10 +87,8 @@ class PlanningView(BaseLoggedInPage):
             self.navigation.currently_selected == ['Optimize', 'Planning'])
 
 
-class Planning(Navigatable):
-
-    def __init__(self, appliance=None):
-        Navigatable.__init__(self, appliance)
+class Planning(NavigatableMixin):
+    pass
 
 
 @navigator.register(Planning, 'All')
