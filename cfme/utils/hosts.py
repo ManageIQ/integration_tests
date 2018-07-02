@@ -36,8 +36,8 @@ def setup_host_creds(provider, host_name, remove_creds=False, ignore_errors=Fals
                     host_data['credentials'])
         elif test_host.has_valid_credentials and remove_creds:
             with update(test_host):
-                test_host.credentials = host.Host.Credential(principal="", secret="",
-                                                             verify_secret="")
+                test_host.credentials = {"default": host.Host.Credential(principal="", secret="",
+                                                                         verify_secret="")}
     except Exception:
         if not ignore_errors:
             raise
