@@ -5,6 +5,7 @@ from six import string_types
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.configure.settings import DefaultViewsForm
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
@@ -20,6 +21,16 @@ gtl_params = {
 
 
 # TODO refactor for setup_provider parametrization with new 'latest' tag
+
+def test_default_view_cloud_reset(appliance, soft_assert):
+    """
+        This test case performs Reset button test.
+    """
+    navigate_to(appliance.user.my_settings, "DefaultViews")
+    view = appliance.browser.create_view(DefaultViewsForm)
+    soft_assert(view.reset.disabled is True)
+    view.clouds.availability_zones.select_button('List View')
+    soft_assert(view.reset.disabled is False)
 
 
 def set_and_test_default_view(appliance, group_name, expected_view, page):

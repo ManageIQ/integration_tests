@@ -7,10 +7,12 @@ from cfme.services.myservice import MyService
 from cfme.services.workloads import VmsInstances, TemplatesImages
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.exceptions import ItemNotFound
+from cfme.configure.settings import DefaultViewsForm
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
-              pytest.mark.usefixtures('virtualcenter_provider')]
+              pytest.mark.usefixtures('virtualcenter_provider')
+              ]
 
 
 # TODO refactor for setup_provider parametrization with new 'latest' tag
@@ -25,6 +27,17 @@ gtl_params = {
     'VMs & Instances': VmsInstances,
     'Templates & Images': TemplatesImages
 }
+
+
+def test_default_view_infra_reset(appliance, soft_assert):
+    """
+        This test case performs Reset button test.
+    """
+    navigate_to(appliance.user.my_settings, "DefaultViews")
+    view = appliance.browser.create_view(DefaultViewsForm)
+    soft_assert(view.reset.disabled is True)
+    view.infrastructure.infrastructure_providers.select_button('Grid View')
+    soft_assert(view.reset.disabled is False)
 
 
 def set_and_test_default_view(appliance, group_name, view, page):
