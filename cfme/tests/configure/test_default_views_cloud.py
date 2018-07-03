@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 import pytest
+import random
 from six import string_types
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.configure.settings import DefaultViewsForm
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
               pytest.mark.usefixtures('openstack_provider')]
+
 
 gtl_params = {
     'Cloud Providers': CloudProvider,
@@ -23,14 +24,21 @@ gtl_params = {
 # TODO refactor for setup_provider parametrization with new 'latest' tag
 
 def test_default_view_cloud_reset(appliance, soft_assert):
+    """This test case performs Reset button test.
+
+    Steps:
+        * Navigate to DefaultViews page
+        * Check Reset Button is disabled
+        * Select 'availability_zones' button from cloud region and change it's default mode
+        * Check Reset Button is enabled
     """
-        This test case performs Reset button test.
-    """
-    navigate_to(appliance.user.my_settings, "DefaultViews")
-    view = appliance.browser.create_view(DefaultViewsForm)
-    soft_assert(view.reset.disabled is True)
-    view.clouds.availability_zones.select_button('List View')
-    soft_assert(view.reset.disabled is False)
+    view = navigate_to(appliance.user.my_settings, "DefaultViews")
+    assert view.tabs.default_views.reset.disabled
+    cloud_btn = view.tabs.default_views.clouds.availability_zones
+    views = ['Tile View', 'Grid View', 'List View']
+    views.remove(cloud_btn.active_button)
+    cloud_btn.select_button(random.choice(views))
+    assert not view.tabs.default_views.reset.disabled
 
 
 def set_and_test_default_view(appliance, group_name, expected_view, page):
