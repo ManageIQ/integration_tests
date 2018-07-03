@@ -38,6 +38,8 @@ class PlanningFilter(BaseLoggedInPage):
 
 
 class PlanningSummaryTab(Tab):
+    TAB_NAME = "Summary"
+
     display_vms_limit = BootstrapSelect('display_vms')
     vm_planning_chart = LineChart(id='miq_chart_planning_0')
     table = Table('//table[@class="table table-bordered table-striped"]')
@@ -55,6 +57,8 @@ class PlanningSummaryTab(Tab):
 
 
 class PlanningReportTab(Tab):
+    TAB_NAME = "Report"
+
     table = Table('//table[@class="table table-striped table-bordered"]')
     vm_mode = SummaryFormItem('Reference VM Profile', 'Source')
     cpu_speed = SummaryFormItem('Reference VM Profile', 'CPU Speed')
