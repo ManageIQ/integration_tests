@@ -38,7 +38,7 @@ RUN export PYCURL_SSL_LIBRARY=nss && find . -iname "*.pyc" -exec rm '{}' \;
 
 RUN curl -L  https://raw.githubusercontent.com/ManageIQ/integration_tests/master/requirements/frozen.py2.txt > requirements.txt && \
     source /root/.bashrc; PYCURL_SSL_LIBRARY=nss pip install -Ur ./requirements.txt \
-    --no-binary numpy --no-binary matplotlib && \
+    --no-binary numpy --no-binary matplotlib && pip install pudb && \
     rm -rf ~/.cache/pip
 
 RUN find . -name \*.pyc -delete && find . -name __pycache__ -delete
