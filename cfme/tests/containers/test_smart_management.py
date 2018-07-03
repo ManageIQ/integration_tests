@@ -31,16 +31,16 @@ TEST_ITEMS = [
         ImageRegistry, 'CMP-9992', collection_obj="container_image_registries",
         get_entity_by="host")),
     pytest.mark.polarion('CMP-9981')(ContainersTestItem(
-        Image, 'CMP-9981', collection_obj="container_images"), get_entity_by="name"),
+        Image, 'CMP-9981', collection_obj="container_images", get_entity_by="name")),
     pytest.mark.polarion('CMP-9964')(ContainersTestItem(
-        Node, 'CMP-9964', collection_obj="container_nodes"), get_entity_by="name"),
+        Node, 'CMP-9964', collection_obj="container_nodes", get_entity_by="name")),
     pytest.mark.polarion('CMP-9932')(ContainersTestItem(
-        Pod, 'CMP-9932', collection_obj="container_pods"), get_entity_by="name"),
+        Pod, 'CMP-9932', collection_obj="container_pods", get_entity_by="name")),
     pytest.mark.polarion('CMP-9870')(ContainersTestItem(
-        Project, 'CMP-9870', collection_obj="container_projects"), get_entity_by="name"),
+        Project, 'CMP-9870', collection_obj="container_projects", get_entity_by="name")),
     pytest.mark.polarion('CMP-9854')(ContainersTestItem(
-        ContainersProvider, 'CMP-9854', collection_obj="containers_providers"),
-        get_entity_by="name")
+        ContainersProvider, 'CMP-9854', collection_obj="containers_providers",
+        get_entity_by="name"))
 ]
 
 
@@ -52,7 +52,7 @@ def get_entity(collection):
 @pytest.fixture(scope="function")
 def get_clean_entity(**kwargs):
     collection = kwargs.get("collection", None)
-    entity = kwargs.get("entity", get_entity(collection))
+    entity = kwargs.get("entity") if "entity" in kwargs else get_entity(collection)
 
     tags = entity.get_tags()
     entity.remove_tags(tags)
