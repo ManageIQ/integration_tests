@@ -44,8 +44,9 @@ def get_collection_entity(appliance, collection_name, destination, provider):
         return provider
     else:
         collection = getattr(appliance.collections, collection_name)
+        collection.filters = {'provider': provider}
         step_name = 'AllForProvider' if destination else 'All'
-        view = navigate_to(provider, step_name)
+        view = navigate_to(collection, step_name)
         names = view.entities.entity_names
         if not names:
             pytest.skip("No content found for test")
