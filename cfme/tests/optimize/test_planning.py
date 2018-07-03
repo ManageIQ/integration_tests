@@ -3,7 +3,6 @@ import pytest
 
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
-from cfme.optimize.planning import Planning
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
@@ -13,8 +12,8 @@ pytestmark = [
 ]
 
 
-def test_planning_manual_input(provider):
-    view = navigate_to(Planning, 'All')
+def test_planning_manual_input(appliance):
+    view = navigate_to(appliance.collections.planning, 'All')
     view.fill({'vm_mode': 'Manual Input',
                'cpu_speed_input': '10',
                'vcpu_count_input': '1',
@@ -33,8 +32,8 @@ def test_planning_manual_input(provider):
                          ids=['allocation', 'reservation', 'usage'])
 @pytest.mark.parametrize('target_type', ['Clusters', 'Hosts'],
                          ids=['clusters', 'hosts'])
-def test_planning_valid(provider, vm_mode, target_type):
-    view = navigate_to(Planning, 'All')
+def test_planning_valid(provider, vm_mode, target_type, appliance):
+    view = navigate_to(appliance.collections.planning, 'All')
     # need to fill it first otherwise some options will be unavailable
     view.vm_mode.fill(vm_mode)
     view.fill({'filter_type': 'By Providers',
@@ -60,7 +59,7 @@ def test_planning_valid(provider, vm_mode, target_type):
 @pytest.mark.parametrize('target_type', ['Clusters', 'Hosts'],
                          ids=['clusters', 'hosts'])
 def test_planning_invalid_values(appliance, provider, vm_mode, target_type):
-    view = navigate_to(Planning, 'All')
+    view = navigate_to(appliance.collections.planning, 'All')
     # need to fill it first otherwise some options will be unavailable
     view.vm_mode.fill(vm_mode)
     view.fill({'filter_type': '<Choose>'})
