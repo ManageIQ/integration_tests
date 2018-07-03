@@ -80,6 +80,7 @@ openstack_nodes = cfme.infrastructure.openstack_node:OpenstackNodeCollection
 orchestration_templates = cfme.services.catalogs.orchestration_template:OrchestrationTemplatesCollection
 physical_providers = cfme.physical.provider:PhysicalProviderCollection
 physical_servers = cfme.physical.physical_server:PhysicalServerCollection
+physical_switches = cfme.physical.physical_switch:PhysicalSwitchCollection
 policies = cfme.control.explorer.policies:PolicyCollection
 policy_profiles = cfme.control.explorer.policy_profiles:PolicyProfileCollection
 projects = cfme.configure.access_control:ProjectCollection
@@ -162,4 +163,3 @@ openstack = cfme.cloud.instance.openstack:OpenStackInstance
 
 [pytest11]
 cfme = cfme.test_framework.pytest_plugin
-
