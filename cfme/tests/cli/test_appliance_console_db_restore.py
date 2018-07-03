@@ -155,7 +155,6 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
     monitor. wait 30 seconds for service to start '' finish.
 
     """
-    mon = '9' if unconfigured_appliances[0].version < '5.9.3.1' else '8'
     appl1, appl2, appl3 = unconfigured_appliances
     app0_ip = appl1.hostname
     app1_ip = appl2.hostname
@@ -179,7 +178,7 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
         TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
     # Configure automatic failover on EVM appliance
-    command_set = ('ap', '', mon, TimedCommand('1', 30), '')
+    command_set = ('ap', '', '8', TimedCommand('1', 30), '')
     appl3.appliance_console.run_commands(command_set)
 
     def is_ha_monitor_started(appliance):
@@ -282,8 +281,8 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream or appliance.version < '5.9',
-                         reason='Test not supported below 5.9')
+@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
+                         reason='Test only for downstream version of product')
 def test_appliance_console_restore_pg_basebackup_replicated(
         request, get_replicated_appliances_with_providers):
     appl1, appl2 = get_replicated_appliances_with_providers
