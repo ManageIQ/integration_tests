@@ -241,7 +241,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
             return False
 
     def update_credentials_rest(self, credentials):
-        """ Updates host's credentials via rest api
+        """Updates host's default credential endpoint via rest api
 
         Args:
             credentials (dict) : credentials from yaml file
@@ -255,11 +255,15 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
             elif isinstance(credentials['default'], self.Credential):
                 creds = credentials['default']
             else:
-                raise TypeError("credentials must be a dict or a Credential instance")
+                raise TypeError("credentials must be a string or a Credential instance")
             host.action.edit(credentials={"userid": creds.principal,
                                           "password": creds.secret})
         except APIException:
             return False
+
+    def remove_credentials_rest(self):
+        self.update_credentials_rest({
+            "default": self.Credential(principal="", secret="", verify_secret="")})
 
     def get_datastores(self):
         """Gets list of all datastores used by this host.

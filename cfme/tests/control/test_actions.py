@@ -27,7 +27,6 @@ from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
-from cfme.utils.hosts import setup_host_creds
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import update
@@ -121,11 +120,12 @@ def vddk_url(provider):
 
 @pytest.fixture(scope="function")
 def configure_fleecing(appliance, provider, vm, vddk_url):
-    setup_host_creds(provider, vm.api.host.name)
+    host, = [host for host in provider.hosts.all() if host.name == vm.api.host.name]
+    host.update_credentials_rest(host.credentials)
     appliance.install_vddk(vddk_url=vddk_url)
     yield
     appliance.uninstall_vddk()
-    setup_host_creds(provider, vm.api.host.name, remove_creds=True)
+    host.remove_credentials_rest()
 
 
 def _get_vm(request, provider, template_name, vm_name):

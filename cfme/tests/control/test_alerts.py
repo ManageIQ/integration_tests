@@ -15,7 +15,6 @@ from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data, credentials
-from cfme.utils.hosts import setup_host_creds
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.ssh import SSHClient
@@ -117,12 +116,13 @@ def vddk_url(provider):
 @pytest.fixture(scope="function")
 def configure_fleecing(appliance, provider, full_template_vm, vddk_url):
     view = navigate_to(full_template_vm, "Details")
-    host = view.entities.summary("Relationships").get_text_of("Host")
-    setup_host_creds(provider, host)
+    host_name = view.entities.summary("Relationships").get_text_of("Host")
+    host, = [host for host in provider.hosts.all() if host.name == host_name]
+    host.update_credentials_rest(host.credentials)
     appliance.install_vddk(vddk_url=vddk_url)
     yield
     appliance.uninstall_vddk()
-    setup_host_creds(provider, host, remove_creds=True)
+    host.remove_credentials_rest()
 
 
 @pytest.fixture

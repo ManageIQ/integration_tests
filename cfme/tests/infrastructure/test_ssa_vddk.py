@@ -7,7 +7,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
-from cfme.utils.hosts import setup_host_creds
 from cfme.utils.log import logger
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 
@@ -52,14 +51,15 @@ def configure_vddk(request, appliance, provider, vm):
     vddk_version = request.param
     vddk_url = conf.cfme_data.get("basic_info").get("vddk_url").get(vddk_version)
     view = navigate_to(vm, 'Details')
-    host = view.entities.summary("Relationships").get_text_of("Host")
-    setup_host_creds(provider, host)
+    host_name = view.entities.summary("Relationships").get_text_of("Host")
+    host, = [host for host in provider.hosts.all() if host.name == host_name]
+    host.update_credentials_rest(host.credentials)
     appliance.install_vddk(vddk_url=vddk_url)
 
     @request.addfinalizer
     def _finalize():
         appliance.uninstall_vddk()
-        setup_host_creds(provider, host, remove_creds=True)
+        host.remove_credentials_rest()
 
 
 @pytest.fixture(scope="module")

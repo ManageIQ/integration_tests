@@ -179,6 +179,20 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     def view_value_mapping(self):
         return {'name': self.name}
 
+    def setup_hosts_credentials(self):
+        """Setup credentials for all provider's hosts"""
+        for host in self.hosts.all():
+            host_data = None
+            for data in self.data['hosts']:
+                if data['name'] == host.name:
+                    host_data = data
+                    break
+            host.update_credentials_rest(credentials=host_data['credentials'])
+
+    def remove_hosts_credentials(self):
+        for host in self.hosts.all():
+            host.remove_credentials_rest()
+
 
 # todo: update all docstrings
 @attr.s

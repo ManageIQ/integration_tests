@@ -8,7 +8,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
-from cfme.utils.hosts import setup_host_creds
 from cfme.utils.update import update
 
 pytestmark = [
@@ -29,9 +28,9 @@ run_types = (
 def host_with_credentials(appliance, provider):
     """ Add credentials to hosts """
     host = provider.hosts.all()[0]
-    setup_host_creds(provider, host.name)
+    host.update_credentials_rest(host.credentials)
     yield host
-    setup_host_creds(provider, host.name, remove_creds=True)
+    host.remove_credentials_rest()
 
 
 @pytest.fixture
