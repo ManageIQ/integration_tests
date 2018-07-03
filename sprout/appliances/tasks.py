@@ -858,7 +858,6 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
         else:
             # Something got screwed really bad
             appliance.set_status("Error happened: {}({})".format(type(e).__name__, str(e)))
-            self.retry(args=(appliance_id, lease_time_minutes), exc=e, countdown=60, max_retries=5)
 
         # Ignore that and provision it somewhere else
         if appliance.appliance_pool:
@@ -867,6 +866,7 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
             pool = appliance.appliance_pool
             try:
                 if appliance.provider_api.does_vm_exist(appliance.name):
+                    appliance.set_status("Clonning finished with errors. So, removing vm")
                     # Better to check it, you never know when does that fail
                     appliance.provider_api.delete_vm(appliance.name)
                     wait_for(
@@ -874,6 +874,9 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
                         [appliance.name], timeout='5m', delay=10)
             except:
                 pass  # Diaper here
+
+            self.logger.warning('Appliance %s was not deployed correctly. '
+                                'It has to be redeployed', appliance_id)
             appliance.delete(do_not_touch_ap=True)
             with transaction.atomic():
                 new_task = DelayedProvisionTask(
