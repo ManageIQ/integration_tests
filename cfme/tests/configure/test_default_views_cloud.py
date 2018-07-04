@@ -23,7 +23,7 @@ gtl_params = {
 
 # TODO refactor for setup_provider parametrization with new 'latest' tag
 
-def test_default_view_cloud_reset(appliance, soft_assert):
+def test_default_view_cloud_reset(appliance):
     """This test case performs Reset button test.
 
     Steps:
