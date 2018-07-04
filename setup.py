@@ -134,7 +134,7 @@ setup(
                 'cfme.generic_objects.definition:GenericObjectDefinitionCollection'),
             'generic_objects = cfme.generic_objects.instance:GenericObjectInstanceCollection',
             'groups = cfme.configure.access_control:GroupCollection',
-            'hosts = cfme.infrastructure.host:HostCollection',
+            'hosts = cfme.infrastructure.host:HostsCollection',
             'infra_providers = cfme.infrastructure.provider:InfraProviderCollection',
             'infra_templates = cfme.infrastructure.virtual_machines:InfraTemplateCollection',
             'infra_vms = cfme.infrastructure.virtual_machines:InfraVmCollection',

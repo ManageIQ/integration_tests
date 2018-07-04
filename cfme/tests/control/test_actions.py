@@ -257,7 +257,7 @@ def policy_for_testing(provider, vm_name, policy_name, policy_profile_name, comp
 
 @pytest.fixture(scope="module")
 def host(provider, setup_provider_modscope):
-    return provider.hosts[0]
+    return provider.hosts.all()[0]
 
 
 @pytest.fixture(scope="module")

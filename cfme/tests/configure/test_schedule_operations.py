@@ -28,7 +28,7 @@ run_types = (
 @pytest.fixture(scope='module')
 def host_with_credentials(appliance, provider):
     """ Add credentials to hosts """
-    host = provider.hosts[0]
+    host = provider.hosts.all()[0]
     setup_host_creds(provider, host.name)
     yield host
     setup_host_creds(provider, host.name, remove_creds=True)

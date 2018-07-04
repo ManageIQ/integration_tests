@@ -50,7 +50,7 @@ def policy_profile_name():
 
 @pytest.fixture
 def host(provider, setup_provider):
-    return provider.hosts[0]
+    return provider.hosts.all()[0]
 
 
 @pytest.fixture

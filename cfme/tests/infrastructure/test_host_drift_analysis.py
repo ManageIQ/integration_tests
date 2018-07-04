@@ -45,14 +45,12 @@ def a_host(host, appliance, provider):
 
 @pytest.fixture(scope='module')
 def set_host_credentials(provider, a_host, setup_provider_modscope):
-    host_list = provider.hosts
-    host_names = [host.name for host in host_list]
-    for host_name in host_names:
-        host_data = [host for host in host_list if host.name == host_name][0]
-        a_host.update_credentials_rest(credentials=host_data.credentials)
+    host_data, = [data for data in provider.data['hosts'] if data['name'] == a_host.name]
+    a_host.update_credentials_rest(credentials=host_data['credentials'])
 
     yield
-    a_host.update_credentials_rest(credentials=Host.Credential(principal="", secret=""))
+    a_host.update_credentials_rest(
+        credentials={'default': Host.Credential(principal='', secret='')})
 
 
 @pytest.mark.rhv3

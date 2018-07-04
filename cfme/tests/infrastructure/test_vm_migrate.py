@@ -46,7 +46,7 @@ def test_vm_migrate(appliance, new_vm, provider):
     # auto_test_services should exist to test migrate VM
     view = navigate_to(new_vm, 'Details')
     vm_host = view.entities.summary('Relationships').get_text_of('Host')
-    hosts = [vds.name for vds in provider.hosts if vds.name not in vm_host]
+    hosts = [vds.name for vds in provider.hosts.all() if vds.name not in vm_host]
     if hosts:
         migrate_to = hosts[0]
     else:

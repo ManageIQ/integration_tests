@@ -9,6 +9,7 @@ from widgetastic_patternfly import BreadCrumb
 
 from cfme.base.ui import Server
 from cfme.common import TagPageView
+from cfme.common.host_views import ProviderAllHostsView
 from cfme.common.provider import CloudInfraProvider, provider_types
 from cfme.common.provider_views import (
     InfraProviderAddView, InfraProviderEditView, InfraProviderDetailsView, ProviderTimelinesView,
@@ -16,7 +17,7 @@ from cfme.common.provider_views import (
     ProviderVmsView)
 from cfme.exceptions import DestinationNotFound
 from cfme.infrastructure.cluster import ClusterView, ClusterToolbar
-from cfme.infrastructure.host import Host
+from cfme.infrastructure.host import HostsCollection
 from cfme.infrastructure.virtual_machines import InfraVm, InfraTemplate
 from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -84,6 +85,8 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     start_ip = attr.ib(default=None)
     end_ip = attr.ib(default=None)
     provider_data = attr.ib(default=None)
+
+    _collections = {'hosts': HostsCollection}
 
     def __attrs_post_init__(self):
         super(InfraProvider, self).__attrs_post_init__()
@@ -161,17 +164,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
 
     @property
     def hosts(self):
-        """Returns list of :py:class:`cfme.infrastructure.host.Host` that should belong to this
-        provider according to the YAML
-        """
-        result = []
-        host_collection = self.appliance.collections.hosts
-        for host in self.data.get("hosts", []):
-            creds = {cred_type: Host.Credential.from_config(cred) for
-                     cred_type, cred in host["credentials"].items()}
-            result.append(host_collection.instantiate(name=host["name"], credentials=creds,
-                                                      provider=self))
-        return result
+        return self.collections.hosts
 
     def get_clusters(self):
         """returns the list of clusters belonging to the provider"""
@@ -383,6 +376,15 @@ class DetailsFromProvider(CFMENavigateStep):
     def step(self, *args, **kwargs):
         """Navigate to the correct view"""
         self.prerequisite_view.entities.summary('Relationships').click_at('Clusters')
+
+
+@navigator.register(InfraProvider, 'Hosts')
+class ProviderHosts(CFMENavigateStep):
+    VIEW = ProviderAllHostsView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary('Relationships').click_at('Hosts')
 
 
 @navigator.register(InfraProvider, 'ProviderNodes')  # matching other infra class destinations
