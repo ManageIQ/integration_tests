@@ -26,11 +26,11 @@ TEST_ITEMS = [
         Container, 'CMP-9948', collection_obj="containers", get_entity_by="name")),
     pytest.mark.polarion('CMP-10320')(ContainersTestItem(
         Template, 'CMP-10320', collection_obj="container_templates", get_entity_by="name")),
+    pytest.mark.polarion('CMP-9981')(ContainersTestItem(
+        Image, 'CMP-9981', collection_obj="container_images", get_entity_by="name")),
     pytest.mark.polarion('CMP-9992')(ContainersTestItem(
         ImageRegistry, 'CMP-9992', collection_obj="container_image_registries",
         get_entity_by="host")),
-    pytest.mark.polarion('CMP-9981')(ContainersTestItem(
-        Image, 'CMP-9981', collection_obj="container_images", get_entity_by="name")),
     pytest.mark.polarion('CMP-9964')(ContainersTestItem(
         Node, 'CMP-9964', collection_obj="container_nodes", get_entity_by="name")),
     pytest.mark.polarion('CMP-9932')(ContainersTestItem(
@@ -43,7 +43,7 @@ TEST_ITEMS = [
 ]
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def get_entity(collection):
 
     # Map all object by name
@@ -61,7 +61,7 @@ def get_entity(collection):
         pytest.skip("No unique item was found")
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def get_clean_entity(**kwargs):
     collection = kwargs.get("collection", None)
     entity = kwargs.get("entity") if "entity" in kwargs else get_entity(collection)
