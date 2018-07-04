@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """A model of an Infrastructure Host in CFME."""
 import attr
-
 from manageiq_client.api import APIException
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
@@ -23,7 +22,6 @@ from cfme.common.host_views import (
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.datastore import HostAllDatastoresView
 from cfme.modeling.base import BaseEntity, BaseCollection
-
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from cfme.utils.ipmi import IPMI
@@ -250,8 +248,8 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
         # TODO: Move to Sentaku
         try:
             host = self.appliance.rest_api.collections.hosts.get(name=self.name)
-            host.action.edit(credentials={"userid": credentials.principal,
-                                          "password": credentials.secret})
+            host.action.edit(credentials={"userid": credentials['default'].principal,
+                                          "password": credentials['default'].secret})
         except APIException:
             return False
 
