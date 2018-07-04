@@ -39,7 +39,8 @@ def test_providers_summary(appliance, soft_assert):
         menu_name="Providers Summary"
     ).queue(wait_for_finish=True)
     # Skip cloud and network providers as they don't share some attributes with infra providers
-    skipped_providers = {"ec2", "openstack", "redhat_network"}
+    # Also skip the embedded ansible provider
+    skipped_providers = {"ec2", "openstack", "redhat_network", "embedded_ansible_automation"}
     for provider in report.data.rows:
         if provider["MS Type"] in skipped_providers:
             continue
