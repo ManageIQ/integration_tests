@@ -3,7 +3,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.common.provider import CloudInfraProvider
-from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.exceptions import VmOrInstanceNotFound
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
@@ -36,25 +35,25 @@ def test_tag_vis_vm(tagged_vm, user_restricted):
 
 # For now use existing tags as for bz 1579867, should be replaced with random created tag fixture
 @pytest.fixture(scope='module')
-def location_tag():
+def location_tag(appliance):
     """Existing tag object"""
-    category = Category(name='location',
-                        display_name='Location')
-    tag = Tag(name='paris',
-              display_name='Paris',
-              category=category)
+    category = appliance.collections.categories.create(name='location', display_name='Location')
+    tag = appliance.collections.tags.create(name='paris', display_name='Paris', category=category)
     return tag
 
 
 # For now use existing tags as for bz 1579867, should be replaced with random created tag fixture
 @pytest.fixture(scope='module')
-def service_level_tag():
+def service_level_tag(appliance):
     """Existing tag object"""
-    category = Category(name='service_level',
-                        display_name='Service Level')
-    tag = Tag(name='silver',
-              display_name='Silver',
-              category=category)
+    category = appliance.collections.categories.create(
+        name='service_level', display_name='Service Level'
+    )
+    tag = appliance.collections.tags.create(
+        name='silver',
+        display_name='Silver',
+        category=category
+    )
     return tag
 
 
@@ -115,8 +114,10 @@ def check_vm_visibility(user_restricted, appliance):
 @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9',
                          reason="Tag expression starts from 5.9 version")
 @pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
-def test_tag_expression_and_condition(request, vms_for_tagging, location_tag,
-        service_level_tag, group_with_tag_expression, check_vm_visibility):
+def test_tag_expression_and_condition(
+    request, vms_for_tagging, location_tag,
+    service_level_tag, group_with_tag_expression, check_vm_visibility
+):
     """Test for tag expression with AND condition
         Steps:
         1. Create group with expression tag1 AND tag2
@@ -141,8 +142,10 @@ def test_tag_expression_and_condition(request, vms_for_tagging, location_tag,
 @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9',
                          reason="Tag expression starts from 5.9 version")
 @pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
-def test_tag_expression_or_condition(request, vms_for_tagging, location_tag,
-        service_level_tag, group_with_tag_expression, check_vm_visibility):
+def test_tag_expression_or_condition(
+    request, vms_for_tagging, location_tag,
+    service_level_tag, group_with_tag_expression, check_vm_visibility
+):
     """Test for tag expression with OR condition
         Steps:
         1. Create group with expression tag1 OR tag2
@@ -167,8 +170,10 @@ def test_tag_expression_or_condition(request, vms_for_tagging, location_tag,
 @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9',
                          reason="Tag expression starts from 5.9 version")
 @pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
-def test_tag_expression_not_condition(request, vms_for_tagging, location_tag,
-                                      group_with_tag_expression, check_vm_visibility):
+def test_tag_expression_not_condition(
+    request, vms_for_tagging, location_tag,
+    group_with_tag_expression, check_vm_visibility
+):
     """Test for tag expression with NOT condition
         Steps:
         1. Create group with expression NOT tag1
@@ -189,9 +194,11 @@ def test_tag_expression_not_condition(request, vms_for_tagging, location_tag,
 @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9',
                          reason="Tag expression starts from 5.9 version")
 @pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
-def test_tag_expression_not_and_condition(request, vms_for_tagging, location_tag,
-                                      service_level_tag, group_with_tag_expression,
-                                     check_vm_visibility):
+def test_tag_expression_not_and_condition(
+        request, vms_for_tagging, location_tag,
+        service_level_tag, group_with_tag_expression,
+        check_vm_visibility
+):
     """Test for tag expression with NOT and AND condition
         Steps:
         1. Create group with expression NOT tag1 AND tag2
@@ -222,9 +229,10 @@ def test_tag_expression_not_and_condition(request, vms_for_tagging, location_tag
 @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9',
                          reason="Tag expression starts from 5.9 version")
 @pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
-def test_tag_expression_not_or_condition(request, vms_for_tagging, location_tag,
-                                      service_level_tag, group_with_tag_expression,
-                                     check_vm_visibility):
+def test_tag_expression_not_or_condition(
+    request, vms_for_tagging, location_tag, service_level_tag, group_with_tag_expression,
+    check_vm_visibility
+):
     """Test for tag expression with NOT and OR condition
         Steps:
         1. Create group with expression NOT tag1 OR tag2
