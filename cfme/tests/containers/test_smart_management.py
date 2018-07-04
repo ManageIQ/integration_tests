@@ -1,8 +1,7 @@
 import random
 
 import pytest
-from cfme.containers.provider import (ContainersProvider, ContainersTestItem,
-    refresh_and_navigate)
+from cfme.containers.provider import ContainersProvider, ContainersTestItem
 from cfme.containers.image import Image
 from cfme.containers.project import Project
 from cfme.containers.image_registry import ImageRegistry
@@ -46,7 +45,20 @@ TEST_ITEMS = [
 
 @pytest.fixture(scope="function")
 def get_entity(collection):
-    return random.choice(collection.all())
+
+    # Map all object by name
+    mapping = {item.name: item for item in collection.all()}
+
+    # Filter only the unique items
+    unique_items = [key for key in set(mapping.keys()) if mapping.keys().count(key) == 1]
+
+    # If there is at least one  unique item
+    if unique_items:
+        # Return a random item
+        selected_item_name = random.choice(unique_items)
+        return mapping[selected_item_name]
+    else:
+        pytest.skip("No unique item was found")
 
 
 @pytest.fixture(scope="function")
@@ -57,20 +69,6 @@ def get_clean_entity(**kwargs):
     tags = entity.get_tags()
     entity.remove_tags(tags)
     return entity
-
-
-def get_object_name(obj):
-    return obj.__module__.title().split(".")[-1]
-
-
-def wait_for_tag(obj_inst):
-    # Waiting for some tag to appear at "My Company Tags" and return pop'ed last tag
-    def is_tag():
-        view = refresh_and_navigate(obj_inst, 'Details')
-        return view.entities.smart_management.read().get('My Company Tags', [])
-    last_tag = wait_for(is_tag, fail_condition=[], num_sec=30, delay=5).out
-    logger.debug("Last tag type: {t}".format(t=type(last_tag)))
-    return last_tag.pop() if isinstance(last_tag, list) else last_tag
 
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
@@ -84,8 +82,8 @@ def test_smart_management_add_tag(provider, appliance, test_item):
 
     # validate no tag set to project
     obj_collection = getattr(appliance.collections, test_item.collection_obj)
-    obj_inst = get_clean_entity(entity=provider) if test_item.obj is ContainersProvider \
-        else get_clean_entity(collection=obj_collection)
+    obj_inst = get_clean_entity(entity=provider) \
+        if test_item.obj is ContainersProvider else get_clean_entity(collection=obj_collection)
 
     logger.debug('Selected object is "{obj_name}"'.format(obj_name=obj_inst.name))
 
@@ -97,10 +95,9 @@ def test_smart_management_add_tag(provider, appliance, test_item):
     logger.debug("Current exist tag: {tag}".format(tag=tag))
 
     # Validate tag wsa set successfully
-    assert len(all_tags) == 1, "Fail to set a tag for {obj_type}".format(
-        obj_type=get_object_name(test_item.obj))
+    assert len(all_tags) == 1, "Wrong tag count fount for {obj}".format(obj=obj_inst.PLURAL)
     actual_tags_on_instance = all_tags.pop()
 
     # Validate tag value
-    assert tag.display_name == actual_tags_on_instance.display_name, \
-        "Tag value not correctly configured"
+    assert tag.display_name == actual_tags_on_instance.display_name, (
+        "Tag value not correctly configured")
