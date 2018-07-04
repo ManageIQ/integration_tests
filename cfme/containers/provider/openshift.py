@@ -13,7 +13,6 @@ from cfme.utils.ocp_cli import OcpCli
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for, TimedOutError
 from . import ContainersProvider, ContainersProviderDefaultEndpoint, ContainersProviderEndpointsForm
-from urllib2 import URLError
 
 
 class CustomAttribute(object):
