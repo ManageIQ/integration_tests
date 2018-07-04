@@ -34,7 +34,8 @@ def test_default_view_infra_reset(appliance):
     Steps:
         * Navigate to DefaultViews page
         * Check Reset Button is disabled
-        * Select 'infrastructure_providers' button from infrastructure region and change it's default mode
+        * Select 'infrastructure_providers' button from infrastructure region
+        * Change it's default mode
         * Check Reset Button is enabled
     """
     view = navigate_to(appliance.user.my_settings, "DefaultViews")
