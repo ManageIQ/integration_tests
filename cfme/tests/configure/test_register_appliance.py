@@ -156,7 +156,7 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
 
     # FIXME workaround BZ 1532201 (An exception to the rule as it waits for backend config)
     time.sleep(15)
-
+    request.addfinalizer(appliance.unregister)
     red_hat_updates.register_appliances()  # Register all
 
     wait_for(
@@ -173,8 +173,6 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
         delay=20,
         num_sec=400
     )
-
-    request.addfinalizer(appliance.unregister)
 
 
 def test_rhsm_registration_check_repo_names(
