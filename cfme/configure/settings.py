@@ -259,6 +259,7 @@ class DefaultViewsForm(View):
         show_vms = BootstrapSwitch('display_vms')
 
     save = Button('Save')
+    reset = Button('Reset')
 
 
 class DefaultFiltersForm(View):

@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 import pytest
+import random
 from six import string_types
 
 from cfme import test_requirements
+from cfme.exceptions import ItemNotFound
 from cfme.services.myservice import MyService
 from cfme.services.workloads import VmsInstances, TemplatesImages
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.exceptions import ItemNotFound
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
@@ -25,6 +26,25 @@ gtl_params = {
     'VMs & Instances': VmsInstances,
     'Templates & Images': TemplatesImages
 }
+
+
+def test_default_view_infra_reset(appliance):
+    """This test case performs Reset button test.
+
+    Steps:
+        * Navigate to DefaultViews page
+        * Check Reset Button is disabled
+        * Select 'infrastructure_providers' button from infrastructure region
+        * Change it's default mode
+        * Check Reset Button is enabled
+    """
+    view = navigate_to(appliance.user.my_settings, "DefaultViews")
+    assert view.tabs.default_views.reset.disabled
+    infra_btn = view.tabs.default_views.infrastructure.infrastructure_providers
+    views = ['Tile View', 'Grid View', 'List View']
+    views.remove(infra_btn.active_button)
+    infra_btn.select_button(random.choice(views))
+    assert not view.tabs.default_views.reset.disabled
 
 
 def set_and_test_default_view(appliance, group_name, view, page):
