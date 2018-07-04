@@ -74,7 +74,7 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
                                                          template_name=template)
         provisioning_data['template_name'] = template
         provisioning_data['provider_name'] = provider.name
-        view = navigate_to(vm, 'Provision')
+        view = navigate_to(appliance.collections.infra_vms, 'Provision')
         view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
         base_view = vm.appliance.browser.create_view(BaseLoggedInPage)
         base_view.flash.assert_no_error()
