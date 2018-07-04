@@ -337,8 +337,8 @@ class OpenshiftProvider(ContainersProvider):
                 appliance_ssh.put_file("/tmp/ca.crt",
                                        "/etc/pki/ca-trust/source/anchors/{crt}".format(
                                            crt=cert_name))
-            except URLError:
-                logger.debug("Fail to copy certificate from Openshift to CFME")
+            except Exception:
+                logger.debug("Fail to deploy certificate from Openshift to CFME")
                 is_succeed = False
             finally:
                 return is_succeed
