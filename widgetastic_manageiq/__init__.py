@@ -4671,3 +4671,62 @@ class HiddenFileInput(BaseFileInput):
     def is_displayed(self):
         self.browser.set_attribute("style", "display", self)
         return self.browser.is_displayed(self)
+
+
+class MigrationProgressBar(Widget):
+    """Represents in-progress plan widget for v2v migration"""
+
+    ROOT = ParametrizedLocator("{@locator}")
+    TITLE_LOCATOR = './/h3[contains(@class,"card-pf-title")]'
+    ITEM_LOCATOR = './/div[contains(@class,"in-progress")]'
+    TIMER_LOCATOR = './/div[contains(@class,"active-migration-elapsed-time")]'
+    # TODO: XPATH requested to devel (repo:miq_v2v_ui_plugin issues:415)
+    SIZE_LOCATOR = './/strong[contains(@id,"size-migrated")]'
+    # TODO: XPATH requested to devel (repo:miq_v2v_ui_plugin issues:415)
+    VMS_LOCATOR = './/strong[contains(@id,"vms-migrated")]'
+
+    def __init__(self, parent, locator, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.locator = locator
+
+    @property
+    def all_items(self):
+        return [self.browser.text(item) for item in self.browser.elements(self.TITLE_LOCATOR)]
+
+    def read(self):
+        return self.all_items
+
+    def _get_vm_element(self, item_name):
+        for el in self.browser.elements(self.TITLE_LOCATOR):
+            if self.browser.text(el) == item_name:
+                return item_name
+        raise ItemNotFound("Item: {} not found".format(item_name))
+
+    def get_clock(self, vm_name):
+        """Returns in-process time of migration at that time"""
+        el = self._get_vm_element(vm_name)
+        return self.browser.text(self.TIMER_LOCATOR, parent=el)
+
+    def get_migrated_size(self, size):
+        """Returns size of disk migrated at that time"""
+        el = self._get_vm_element(size)
+        text = self.browser.text(self.SIZE_LOCATOR, parent=el)
+        return re.findall(r"\d+\.\d+", text)[0]
+
+    def get_total_size(self, size):
+        """Returns total size of disk been migrated"""
+        el = self._get_vm_element(size)
+        text = self.browser.text(self.SIZE_LOCATOR, parent=el)
+        return re.findall(r"\d+\.\d+", text)[1]
+
+    def migrated_vms(self, no):
+        """Returns number of vm/s are in migration process"""
+        el = self._get_vm_element(no)
+        text = self.browser.text(self.VMS_LOCATOR, parent=el)
+        return re.findall("\d+", text)[0]
+
+    def total_vm_to_be_migrated(self, no):
+        """Returns number of vm/s in migration process"""
+        el = self._get_vm_element(no)
+        text = self.browser.text(self.VMS_LOCATOR, parent=el)
+        return re.findall("\d+", text)[1]
