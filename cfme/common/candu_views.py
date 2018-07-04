@@ -1,7 +1,7 @@
-from widgetastic.widget import ConditionalSwitchableView, Text, TextInput, View
+from widgetastic.widget import ConditionalSwitchableView, Text, View
 
 from widgetastic_manageiq import LineChart
-from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import BootstrapSelect, DatePicker
 
 
 class OptionForm(View):
@@ -11,7 +11,7 @@ class OptionForm(View):
     show_mints_back = BootstrapSelect(id='perf_minutes')
     range = Text("//div[label[contains(.,'Range')]]//p")
     time_profile = Text("//div[label[contains(.,'Time Profile')]]//p")
-    calendar = TextInput(locator=".//input[@id='miq_date_1']")
+    calendar = DatePicker(id='miq_date_1')
 
 
 class VMUtilizationView(View):
