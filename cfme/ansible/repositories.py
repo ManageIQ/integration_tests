@@ -352,6 +352,15 @@ class Add(CFMENavigateStep):
         dropdown.item_select("Add New Repository")
 
 
+@navigator.register(Repository, "Edit")
+class Edit(CFMENavigateStep):
+    VIEW = RepositoryEditView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self):
+        self.prerequisite_view.toolbar.configuration.item_select("Edit this Repository")
+
+
 @navigator.register(Repository, 'EditTags')
 class EditTagsFromListCollection(CFMENavigateStep):
     VIEW = TagPageView
