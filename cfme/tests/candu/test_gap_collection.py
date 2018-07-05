@@ -28,8 +28,8 @@ def order_data(appliance, provider, enable_candu):
     start_date = end_date - timedelta(days=2)
 
     view = navigate_to(appliance.server.zone, 'CANDUGapCollection')
-    view.candugapcollection.end_date.fill(end_date)
-    view.candugapcollection.start_date.fill(start_date)
+    view.candugapcollection.fill({'end_date': end_date,
+                                'start_date': start_date})
     view.candugapcollection.submit.click()
 
 

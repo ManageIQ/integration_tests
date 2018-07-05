@@ -1374,8 +1374,8 @@ class ZoneDiagnosticsView(ConfigurationView):
     @View.nested
     class candugapcollection(Tab):  # noqa
         TAB_NAME = "C & U Gap Collection"
-        start_date = DatePicker(id='miq_date_1')
         end_date = DatePicker(id='miq_date_2')
+        start_date = DatePicker(id='miq_date_1')
         submit = Button(title='Submit')
 
     @property
