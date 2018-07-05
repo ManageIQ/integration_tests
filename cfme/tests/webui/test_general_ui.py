@@ -1,3 +1,4 @@
+import fauxfactory
 import pytest
 
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -48,6 +49,33 @@ def import_tags(appliance):
     client.run_command('cd /tmp && rm -f tags.yml*')
 
 
+@pytest.fixture
+def set_help_menu_options(appliance):
+    region = appliance.collections.regions.instantiate()
+    view = navigate_to(region, 'HelpMenu')
+    original_documentation_title = view.browser.get_attribute(
+        attr='placeholder', locator=view.documentation_title.locator)
+    original_product_title = view.browser.get_attribute(
+        attr='placeholder', locator=view.product_title.locator)
+    original_about_title = view.browser.get_attribute(
+        attr='placeholder', locator=view.about_title.locator)
+
+    documentation_title = fauxfactory.gen_alpha()
+    product_title = fauxfactory.gen_alpha()
+    about_title = fauxfactory.gen_alpha()
+    region.set_help_menu_configuration({
+        'documentation_title': documentation_title,
+        'product_title': product_title,
+        'about_title': about_title
+    })
+    yield documentation_title, product_title, about_title
+    region.set_help_menu_configuration({
+        'documentation_title': original_documentation_title,
+        'product_title': original_product_title,
+        'about_title': original_about_title
+    })
+
+
 @pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE)
 def test_add_provider_trailing_whitespaces(provider, soft_assert):
     """Test to validate the hostname and username should be without whitespaces """
@@ -78,3 +106,17 @@ def test_configuration_large_number_of_tags(appliance, import_tags, soft_assert)
             soft_assert(view.entities.my_company_tags.tree.has_path(category, tag), (
                 'Tag {} was not imported'.format(tag)
             ))
+
+
+def test_configuration_help_menu(appliance, set_help_menu_options, soft_assert):
+    """
+    Test Steps:
+        1) Goto Configuration--> Select Region 0[0] from Accordion
+        2) Click on the "Help Menu" tab
+        3) Fill the fields
+        4) Check if the changes are reflected or not
+    """
+    view = navigate_to(appliance.server, 'Dashboard')
+    for option in set_help_menu_options:
+        soft_assert(view.help.has_item(
+            option), '{} option is not available in help menu'.format(option))
