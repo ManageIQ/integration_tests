@@ -5,6 +5,7 @@ from collections import namedtuple
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.browser import manager
 from cfme.utils.ssh import SSHClient
 from cfme.utils.conf import credentials, cfme_data
 from cfme.utils.log import logger
@@ -265,6 +266,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     appl1.appliance_console.run_commands(command_set)
     appl1.start_evm_service()
     appl1.wait_for_web_ui()
+    manager.quit()
     appl1.reboot()
     appl1.ssh_client.run_command(
         'curl -kL https://localhost/ansibleapi | grep "Ansible Tower REST API"')

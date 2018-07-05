@@ -49,6 +49,7 @@ def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modsc
     app.appliance_console.timezone_check(timezone)
 
 
+@pytest.mark.uncollectif(lambda: BZ(1598427, forced_streams=['5.10']).blocks, 'BZ 1598427')
 def test_appliance_console_cli_set_hostname(configured_appliance):
     hostname = 'test.example.com'
     configured_appliance.appliance_console_cli.set_hostname(hostname)
