@@ -264,10 +264,12 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     appl1.db.restart_db_service()
     command_set = ('ap', '', '4', '1', '/tmp/backup/base.tar.gz', TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
+    manager.quit()
     appl1.start_evm_service()
     appl1.wait_for_web_ui()
-    manager.quit()
     appl1.reboot()
+    appl1.start_evm_service()
+    appl1.wait_for_web_ui()
     appl1.ssh_client.run_command(
         'curl -kL https://localhost/ansibleapi | grep "Ansible Tower REST API"')
     repositories = appl1.collections.ansible_repositories
