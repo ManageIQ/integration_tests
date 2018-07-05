@@ -328,7 +328,7 @@ class OpenshiftProvider(ContainersProvider):
              None
         """
 
-        def copy_certificate():
+        def _copy_certificate():
             is_succeed = True
             try:
                 # Copy certificate to the appliance
@@ -361,7 +361,7 @@ class OpenshiftProvider(ContainersProvider):
         if stdout.readline().replace('\n', "") != "0":
             cert_name = "{provider_name}.ca.crt".format(
                 provider_name=self.provider_data.hostname.split(".")[0])
-            wait_for(copy_certificate, num_sec=600, delay=30,
+            wait_for(_copy_certificate, num_sec=600, delay=30,
                      message="Copy certificate from OCP to CFME")
             appliance_ssh.exec_command("update-ca-trust")
 
