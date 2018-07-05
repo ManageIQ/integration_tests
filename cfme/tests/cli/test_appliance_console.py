@@ -53,19 +53,19 @@ def test_appliance_console(appliance):
                                             .format(appliance.product_name))
 
 
-def test_appliance_console_set_hostname(appliance, restore_hostname):
+def test_appliance_console_set_hostname(configured_appliance):
     """'ap' launch appliance_console, '' clear info screen, '1' loads network settings, '5' gives
     access to set hostname, 'hostname' sets new hostname."""
 
     hostname = 'test.example.com'
     command_set = ('ap', '', '1', '5', hostname,)
-    appliance.appliance_console.run_commands(command_set)
+    configured_appliance.appliance_console.run_commands(command_set)
 
     def is_hostname_set(appliance):
         assert appliance.ssh_client.run_command("hostname -f | grep {hostname}"
             .format(hostname=hostname))
-    wait_for(is_hostname_set, func_args=[appliance])
-    result = appliance.ssh_client.run_command("hostname -f")
+    wait_for(is_hostname_set, func_args=[configured_appliance])
+    result = configured_appliance.ssh_client.run_command("hostname -f")
     assert result.success
     assert result.output.strip() == hostname
 

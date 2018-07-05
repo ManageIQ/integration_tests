@@ -49,10 +49,10 @@ def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modsc
     app.appliance_console.timezone_check(timezone)
 
 
-def test_appliance_console_cli_set_hostname(appliance, restore_hostname):
+def test_appliance_console_cli_set_hostname(configured_appliance):
     hostname = 'test.example.com'
-    appliance.appliance_console_cli.set_hostname(hostname)
-    result = appliance.ssh_client.run_command("hostname -f")
+    configured_appliance.appliance_console_cli.set_hostname(hostname)
+    result = configured_appliance.ssh_client.run_command("hostname -f")
     assert result.success
     assert result.output.strip() == hostname
 

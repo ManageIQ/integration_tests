@@ -45,14 +45,6 @@ def fqdn_appliance(appliance, preconfigured, count):
     sp.destroy_pool(pool_id)
 
 
-@pytest.fixture(scope='function')
-def restore_hostname(appliance):
-    """store and reset hostname"""
-    orig_host = appliance.ssh_client.run_command('hostname')
-    yield
-    appliance.appliance_console_cli.set_hostname(orig_host)
-
-
 @pytest.fixture()
 def unconfigured_appliance(appliance):
     with fqdn_appliance(appliance, preconfigured=False, count=1) as apps:
