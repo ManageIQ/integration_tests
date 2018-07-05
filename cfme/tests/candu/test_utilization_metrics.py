@@ -114,7 +114,7 @@ def query_metric_db(appliance, provider, metric, vm_name=None, host_name=None):
 @pytest.mark.rhv2
 # Tests to check that specific metrics are being collected
 @pytest.mark.meta(
-    blockers=[BZ(1511099, forced_streams=["5.8", "5.9", "upstream"],
+    blockers=[BZ(1511099, forced_streams=["5.8", "upstream"],
     unblock=lambda provider: not provider.one_of(GCEProvider))]
 )
 def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
@@ -161,7 +161,7 @@ def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
     unblock=lambda provider: not provider.one_of(RHEVMProvider))]
 )
 @pytest.mark.meta(
-    blockers=[BZ(1511099, forced_streams=["5.8", "5.9", "upstream"],
+    blockers=[BZ(1511099, forced_streams=["5.8", "upstream"],
     unblock=lambda provider: not provider.one_of(GCEProvider))]
 )
 def test_raw_metric_vm_network(metrics_collection, appliance, provider):
@@ -179,7 +179,7 @@ def test_raw_metric_vm_network(metrics_collection, appliance, provider):
 @pytest.mark.uncollectif(
     lambda provider: provider.one_of(EC2Provider))
 @pytest.mark.meta(
-    blockers=[BZ(1511099, forced_streams=["5.8", "5.9", "upstream"],
+    blockers=[BZ(1511099, forced_streams=["5.8", "upstream"],
     unblock=lambda provider: not provider.one_of(GCEProvider))]
 )
 def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
