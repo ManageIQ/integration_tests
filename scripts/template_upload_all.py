@@ -81,8 +81,6 @@ def template_name(image_link, image_ts, checksum_link, version=None):
             return "cfme-nightly-{}-{}".format(version, result[0][:-2])
         elif version:
             # proper build
-            if len(version) == 4:
-                version = version[:-1] + '0' + version[-1:]
             return "cfme-{}-{}{}{}".format(version, image_ts, image_dt.hour, image_dt.minute)
         else:
             # other nightly; leaving it in in case this template-naming comes back
