@@ -4,6 +4,7 @@ import pytest
 
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.providers import get_crud
 
 
 pytestmark = [
@@ -12,11 +13,19 @@ pytestmark = [
 ]
 
 
+@pytest.fixture(scope='module')
+def provider_recreate(provider):
+    yield
+    uc = get_crud(provider.name)
+    uc.create()
+
+
 def test_api_port(provider):
     view_details = navigate_to(provider, 'Details')
     port = provider.data['endpoints']['default']['api_port']
     api_port = int(view_details.entities.summary('Properties').get_text_of('API Port'))
     assert api_port == port, 'Invalid API Port'
+
 
 def test_credentials_quads(provider):
     view = navigate_to(provider, 'All')
@@ -24,6 +33,7 @@ def test_credentials_quads(provider):
     assert prov_item.data.get('creds') and 'checkmark' in prov_item.data['creds']
 
 
+@pytest.mark.usefixtures('provider_recreate')
 def test_delete_provider(provider):
     provider.delete(cancel=False)
     provider.wait_for_delete()
