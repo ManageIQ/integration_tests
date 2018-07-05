@@ -174,8 +174,8 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
         TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
     # Configure secondary replication node
-    command_set = ('ap', '', '6', '2', '1', '2', '', '', pwd, pwd, app0_ip, app1_ip, 'y',
-        TimedCommand('y', 60), '')
+    command_set = ('ap', '', '6', '2', '2', app0_ip, '', pwd, '', '1', '2', '', '', pwd, pwd,
+                   app0_ip, app1_ip, 'y', TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
     # Configure automatic failover on EVM appliance
     command_set = ('ap', '', '8', TimedCommand('1', 30), '')

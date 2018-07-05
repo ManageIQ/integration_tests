@@ -1,5 +1,6 @@
 import pytest
 
+from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
 from wait_for import wait_for
 
@@ -152,9 +153,7 @@ def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, ap
     wait_for(lambda: unconfigured_appliance.db.is_dedicated_active)
 
 
-@pytest.mark.uncollectif(
-    lambda appliance: appliance.version < '5.9.1',
-    reason="this test requires appliance version < 5.9.1")
+@pytest.mark.uncollectif(lambda: BZ(1544854, forced_streams=['5.10']).blocks, 'BZ 1544854')
 def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
     """Tests the configuration of HA with three appliances including failover to standby node"""
     apps = unconfigured_appliances
@@ -186,16 +185,16 @@ def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
     apps[2].appliance_console.run_commands(command_set)
 
     def is_ha_monitor_started(appliance):
-        return bool(appliance.ssh_client.run_command(
-            "grep {} /var/www/miq/vmdb/config/failover_databases.yml".format(app1_ip)).success)
+        return appliance.ssh_client.run_command(
+            "grep {} /var/www/miq/vmdb/config/failover_databases.yml".format(app1_ip)).success
     wait_for(is_ha_monitor_started, func_args=[apps[2]], timeout=300, handle_exception=True)
     # Cause failover to occur
     result = apps[0].ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
     assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
 
     def is_failover_started(appliance):
-        return bool(appliance.ssh_client.run_command(
-            "grep 'Starting to execute failover' /var/www/miq/vmdb/log/ha_admin.log").success)
+        return appliance.ssh_client.run_command(
+            "grep 'Starting to execute failover' /var/www/miq/vmdb/log/ha_admin.log").success
     wait_for(is_failover_started, func_args=[apps[2]], timeout=450, handle_exception=True)
     apps[2].wait_for_evm_service()
     apps[2].wait_for_web_ui()

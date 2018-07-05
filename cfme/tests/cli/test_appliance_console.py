@@ -91,45 +91,6 @@ def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
     wait_for(date_changed)
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version >= '5.9.3.1',
-    reason="Feature removed in latest 5.9.3")
-def test_appliance_console_db_maintenance_hourly(appliance_with_preset_time):
-    """Test database hourly re-indexing through appliance console"""
-    app = appliance_with_preset_time
-    command_set = ('ap', '', '7', 'y', 'n', '')
-    app.appliance_console.run_commands(command_set)
-
-    def maintenance_run():
-        return app.ssh_client.run_command(
-            "grep REINDEX /var/www/miq/vmdb/log/hourly_continuous_pg_maint_stdout.log").success
-
-    wait_for(maintenance_run, timeout=300)
-
-
-@pytest.mark.uncollectif(lambda appliance: appliance.version >= '5.9.3.1',
-    reason="Feature removed in latest 5.9.3")
-@pytest.mark.parametrize('period', [
-    ['hourly'],
-    ['daily', '10'],
-    ['weekly', '10', '2'],
-    ['monthly', '10', '20']
-], ids=['hour', 'day', 'week', 'month'])
-def test_appliance_console_db_maintenance_periodic(period, appliance_with_preset_time):
-    """Tests full vacuums on database through appliance console"""
-    app = appliance_with_preset_time
-    command_set = ['ap', '', '7', 'n', 'y']
-    command_set.extend(period)
-    app.appliance_console.run_commands(command_set)
-
-    def maintenance_run():
-        return app.ssh_client.run_command(
-            "grep 'periodic vacuum full completed' "
-            "/var/www/miq/vmdb/log/hourly_continuous_pg_maint_stdout.log"
-        ).success
-
-    wait_for(maintenance_run, timeout=300)
-
-
 def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
     """'ap' launch appliance_console, '' clear info screen, '5' setup db, '1' Creates v2_key,
     '1' selects internal db, 'y' continue, '1' use partition, 'n' don't create dedicated db, '0'
