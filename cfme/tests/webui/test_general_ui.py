@@ -120,3 +120,39 @@ def test_configuration_help_menu(appliance, set_help_menu_options, soft_assert):
     for option in set_help_menu_options:
         soft_assert(view.help.has_item(
             option), '{} option is not available in help menu'.format(option))
+
+
+def test_automate_can_edit_copied_method(appliance, request):
+    """
+    1) Go to Automate -> Explorer
+    2) Create a new Domain
+    3) Go to ManageIQ/Service/Provisioning/StateMachines/ServiceProvision_Template/update_serviceprovision_status
+    4) Copy it to the newly created Datastore
+    5) Select it and try to edit it in the new Datastore
+    6) Save it
+    It should be saved successfully
+    """
+
+    domain = appliance.collections.domains.create(
+        name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha(),
+        enabled=False)
+    request.addfinalizer(domain.delete_if_exists)
+    domain_origin = appliance.collections.domains.instantiate('ManageIQ')
+
+    method = domain_origin.namespaces.instantiate('Service').\
+        collections.namespaces.instantiate('Provisioning').\
+        collections.namespaces.instantiate('StateMachines').\
+        collections.classes.instantiate('ServiceProvision_Template').\
+        collections.methods.instantiate('update_serviceprovision_status')
+    view = navigate_to(method, 'Copy')
+    view.copy_button.click()
+    copied_method = domain.namespaces.instantiate('Service').\
+        collections.namespaces.instantiate('Provisioning').\
+        collections.namespaces.instantiate('StateMachines').\
+        collections.classes.instantiate('ServiceProvision_Template').\
+        collections.methods.instantiate('update_serviceprovision_status')
+
+    copied_method.update({
+        'inline_name': fauxfactory.gen_alpha()
+    })
