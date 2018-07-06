@@ -22,7 +22,6 @@ def test_sdn_crud(provider, appliance):
     Metadata:
         test_flag: sdn
     """
-    view = navigate_to(provider, 'Details')
     collection = appliance.collections.network_providers.filter({'provider': provider})
     network_provider = collection.all()[0]
 
