@@ -4,6 +4,8 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -80,17 +82,24 @@ def test_service_start(appliance, setup_provider, context,
     catalog_item = order_service
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
-        if provider.one_of(InfraProvider):
+        if provider.one_of(InfraProvider, EC2Provider, AzureProvider):
             # For Infra providers vm is provisioned.Hence Stop option is shown
+            # For Azure, EC2 Providers Instance is provisioned.Hence Stop option is shown
             my_service.service_power(power='Stop')
             view = my_service.create_view(DetailsMyServiceView)
-            view.notification.assert_message(
-                "{} was {}.".format(catalog_item.name, 'stopped'))
+            wait_for(lambda: view.resource_power_status.power_status == 'Off',
+                     timeout=1000,
+                     fail_condition=None,
+                     message='Wait for resources off',
+                     delay=20)
         else:
             my_service.service_power(power='Start')
             view = my_service.create_view(DetailsMyServiceView)
-            view.notification.assert_message(
-                "{} was {}.".format(catalog_item.name, 'started'))
+            wait_for(lambda: view.resource_power_status.power_status == 'On',
+                     timeout=1000,
+                     fail_condition=None,
+                     message='Wait for resources on',
+                     delay=20)
 
         @request.addfinalizer
         def _finalize():
