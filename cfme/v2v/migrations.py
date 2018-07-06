@@ -291,7 +291,9 @@ class MigrationDashboardView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return self.navigation.currently_selected == ['Compute', 'Migration']
+        return (self.navigation.currently_selected == ['Compute', 'Migration'] and
+            (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0) and
+            (len(self.browser.elements('.//div[contains(@class,"card-pf")]')) > 0))
 
 
 class AddInfrastructureMappingView(View):
@@ -469,7 +471,7 @@ class InfrastructureMappingCollection(BaseCollection):
             description=form_data['general'].get('description', ''),
             form_data=form_data
         )
-        view = navigate_to(self, 'Add')
+        view = navigate_to(self, 'Add', wait_for_view=True)
         view.form.fill(form_data)
         return infra_map
 
@@ -553,10 +555,6 @@ class All(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Migration')
 
-    def resetter(self):
-        """Reset the view"""
-        self.view.browser.refresh()
-
 
 @navigator.register(InfrastructureMappingCollection, 'Add')
 class AddInfrastructureMapping(CFMENavigateStep):
@@ -564,6 +562,7 @@ class AddInfrastructureMapping(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
+        self.prerequisite_view.wait_displayed()
         self.prerequisite_view.create_infrastructure_mapping.click()
 
 
@@ -573,6 +572,7 @@ class AddMigrationPlan(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
+        self.prerequisite_view.wait_displayed()
         self.prerequisite_view.create_migration_plan.click()
 
 

@@ -94,7 +94,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         """ Returns the providers number of templates, as shown on the Details page."""
         results = list(self.appliance.db.client.engine.execute(
             'SELECT DISTINCT storages.name, hosts.ems_id '
-            'FROM ext_management_systems ems, hosts, storages st, host_storages hst'
+            'FROM ext_management_systems ems, hosts, storages st, host_storages hst '
             'WHERE hosts.id=hst.host_id AND '
             'st.id=hst.storage_id AND '
             'hosts.ems_id=ems.id AND '
