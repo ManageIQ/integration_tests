@@ -45,7 +45,6 @@ def test_appliance_console(appliance):
     """'ap | tee /tmp/opt.txt)' saves stdout to file, 'ap' launch appliance_console."""
     command_set = ('ap | tee -a /tmp/opt.txt', 'ap')
     appliance.appliance_console.run_commands(command_set)
-    assert appliance.ssh_client.run_command("cat /tmp/opt.txt")
     assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep '{} Virtual Appliance'"
                                             .format(appliance.product_name))
     assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep '{} Database:'"
