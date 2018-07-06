@@ -258,6 +258,13 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
         if getattr(self, "project", None):
             provider_attributes["project"] = self.project
 
+        if self.type_name in ('openstack_infra', 'openstack'):
+            if getattr(self, 'api_version', None):
+                version = 'v3' if 'v3' in self.api_version else 'v2'
+                provider_attributes['api_version'] = version
+                if version == 'v3' and getattr(self, 'keystone_v3_domain_id', None):
+                    provider_attributes['uid_ems'] = self.keystone_v3_domain_id
+
         if self.type_name == "azure":
             provider_attributes["uid_ems"] = self.tenant_id
             provider_attributes["provider_region"] = self.region.lower().replace(" ", "")
@@ -303,8 +310,11 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
             connection_configs.append(default_connection)
         if getattr(endpoint_default, "security_protocol", None):
             security_protocol = endpoint_default.security_protocol.lower()
-            if security_protocol == "basic (ssl)":
+            if security_protocol in ('basic (ssl)', 'ssl without validation'):
                 security_protocol = "ssl"
+            elif security_protocol == "ssl":
+                security_protocol = 'ssl-with-validation'
+
             default_connection["endpoint"]["security_protocol"] = security_protocol
             connection_configs.append(default_connection)
 
@@ -336,6 +346,24 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
         if hasattr(endpoint_candu, "verify_tls") and not endpoint_candu.verify_tls:
             candu_connection["endpoint"]["verify_ssl"] = 0
         connection_configs.append(candu_connection)
+
+    def _fill_rsa_endpoint_dicts(self, provider_attributes, connection_configs):
+        """Fills dicts with rsa endpoint data.
+
+        Helper method for ``self.create_rest``
+        """
+        if "rsa_keypair" not in self.endpoints:
+            return
+
+        endpoint_rsa = self.endpoints["rsa_keypair"]
+        if isinstance(provider_attributes["credentials"], dict):
+            provider_attributes["credentials"] = [provider_attributes["credentials"]]
+
+        provider_attributes["credentials"].append({
+            "userid": endpoint_rsa.credentials.principal,
+            "auth_key": endpoint_rsa.credentials.secret,
+            "auth_type": "ssh_keypair",
+        })
 
     def _compile_connection_configurations(self, provider_attributes, connection_configs):
         """Compiles togetger all dicts with data for ``connection_configurations``.
@@ -382,6 +410,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
         self._fill_provider_attributes(provider_attributes)
         self._fill_default_endpoint_dicts(provider_attributes, connection_configs)
         self._fill_candu_endpoint_dicts(provider_attributes, connection_configs)
+        self._fill_rsa_endpoint_dicts(provider_attributes, connection_configs)
         self._compile_connection_configurations(provider_attributes, connection_configs)
 
         try:
