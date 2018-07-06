@@ -5,6 +5,7 @@ from collections import namedtuple
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.browser import manager
 from cfme.utils.ssh import SSHClient
 from cfme.utils.conf import credentials, cfme_data
 from cfme.utils.log import logger
@@ -174,11 +175,11 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
         TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
     # Configure secondary replication node
-    command_set = ('ap', '', '6', '2', '1', '2', '', '', pwd, pwd, app0_ip, app1_ip, 'y',
-        TimedCommand('y', 60), '')
+    command_set = ('ap', '', '6', '2', '2', app0_ip, '', pwd, '', '1', '2', '', '', pwd, pwd,
+                   app0_ip, app1_ip, 'y', TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
     # Configure automatic failover on EVM appliance
-    command_set = ('ap', '', '9', TimedCommand('1', 30), '')
+    command_set = ('ap', '', '8', TimedCommand('1', 30), '')
     appl3.appliance_console.run_commands(command_set)
 
     def is_ha_monitor_started(appliance):
@@ -263,9 +264,12 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     appl1.db.restart_db_service()
     command_set = ('ap', '', '4', '1', '/tmp/backup/base.tar.gz', TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
+    manager.quit()
     appl1.start_evm_service()
     appl1.wait_for_web_ui()
     appl1.reboot()
+    appl1.start_evm_service()
+    appl1.wait_for_web_ui()
     appl1.ssh_client.run_command(
         'curl -kL https://localhost/ansibleapi | grep "Ansible Tower REST API"')
     repositories = appl1.collections.ansible_repositories
@@ -281,8 +285,8 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream or appliance.version < '5.9',
-                         reason='Test not supported below 5.9')
+@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
+                         reason='Test only for downstream version of product')
 def test_appliance_console_restore_pg_basebackup_replicated(
         request, get_replicated_appliances_with_providers):
     appl1, appl2 = get_replicated_appliances_with_providers

@@ -53,19 +53,19 @@ def test_appliance_console(appliance):
                                             .format(appliance.product_name))
 
 
-def test_appliance_console_set_hostname(appliance, restore_hostname):
+def test_appliance_console_set_hostname(configured_appliance):
     """'ap' launch appliance_console, '' clear info screen, '1' loads network settings, '5' gives
     access to set hostname, 'hostname' sets new hostname."""
 
     hostname = 'test.example.com'
     command_set = ('ap', '', '1', '5', hostname,)
-    appliance.appliance_console.run_commands(command_set)
+    configured_appliance.appliance_console.run_commands(command_set)
 
     def is_hostname_set(appliance):
         assert appliance.ssh_client.run_command("hostname -f | grep {hostname}"
             .format(hostname=hostname))
-    wait_for(is_hostname_set, func_args=[appliance])
-    result = appliance.ssh_client.run_command("hostname -f")
+    wait_for(is_hostname_set, func_args=[configured_appliance])
+    result = configured_appliance.ssh_client.run_command("hostname -f")
     assert result.success
     assert result.output.strip() == hostname
 
@@ -89,42 +89,6 @@ def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
     def date_changed():
         return app.ssh_client.run_command("date +%F-%T | grep 2020-10-20-10:00").success
     wait_for(date_changed)
-
-
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
-def test_appliance_console_db_maintenance_hourly(appliance_with_preset_time):
-    """Test database hourly re-indexing through appliance console"""
-    app = appliance_with_preset_time
-    command_set = ('ap', '', '7', 'y', 'n', '')
-    app.appliance_console.run_commands(command_set)
-
-    def maintenance_run():
-        return app.ssh_client.run_command(
-            "grep REINDEX /var/www/miq/vmdb/log/hourly_continuous_pg_maint_stdout.log").success
-
-    wait_for(maintenance_run, timeout=300)
-
-
-@pytest.mark.parametrize('period', [
-    ['hourly'],
-    ['daily', '10'],
-    ['weekly', '10', '2'],
-    ['monthly', '10', '20']
-], ids=['hour', 'day', 'week', 'month'])
-def test_appliance_console_db_maintenance_periodic(period, appliance_with_preset_time):
-    """Tests full vacuums on database through appliance console"""
-    app = appliance_with_preset_time
-    command_set = ['ap', '', '7', 'n', 'y']
-    command_set.extend(period)
-    app.appliance_console.run_commands(command_set)
-
-    def maintenance_run():
-        return app.ssh_client.run_command(
-            "grep 'periodic vacuum full completed' "
-            "/var/www/miq/vmdb/log/hourly_continuous_pg_maint_stdout.log"
-        ).success
-
-    wait_for(maintenance_run, timeout=300)
 
 
 def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
@@ -216,11 +180,15 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
         TimedCommand('y', 60), '')
     apps[0].appliance_console.run_commands(command_set)
     # Configure secondary replication node
-    command_set = ('ap', '', '6', '2', '1', '2', '', '', pwd, pwd, app0_ip, app1_ip, 'y',
-        TimedCommand('y', 60), '')
+    if apps[0].version > '5.9':
+        command_set = ('ap', '', '6', '2', '2', app0_ip, '', pwd, '', '1', '2', '', '', pwd, pwd,
+                       app0_ip, app1_ip, 'y', TimedCommand('y', 60), '')
+    else:
+        command_set = ('ap', '', '6', '2', '1', '2', '', '', pwd, pwd, app0_ip, app1_ip, 'y',
+                       TimedCommand('y', 60), '')
     apps[1].appliance_console.run_commands(command_set)
     # Configure automatic failover on EVM appliance
-    command_set = ('ap', '', '9', TimedCommand('1', 30), '')
+    command_set = ('ap', '', '8', TimedCommand('1', 30), '')
     apps[2].appliance_console.run_commands(command_set)
 
     def is_ha_monitor_started(appliance):
@@ -271,10 +239,9 @@ def test_appliance_console_external_db_create(
 
 
 def test_appliance_console_extend_storage(unconfigured_appliance):
-    """'ap' launches appliance_console, '' clears info screen, '10' extend storage, '1' select
+    """'ap' launches appliance_console, '' clears info screen, '9' extend storage, '1' select
     disk, 'y' confirm configuration and '' complete."""
-
-    command_set = ('ap', '', '10', '1', 'y', '')
+    command_set = ('ap', '', '9', '1', 'y', '')
     unconfigured_appliance.appliance_console.run_commands(command_set)
 
     def is_storage_extended():
@@ -283,11 +250,10 @@ def test_appliance_console_extend_storage(unconfigured_appliance):
 
 
 def test_appliance_console_ipa(ipa_crud, configured_appliance):
-    """'ap' launches appliance_console, '' clears info screen, '11' setup IPA,
+    """'ap' launches appliance_console, '' clears info screen, '10' setup IPA,
     + wait 40 secs and '' finish."""
 
-    setup_ipa = '11'
-    command_set = ('ap', RETURN, setup_ipa,
+    command_set = ('ap', RETURN, '10',
                    ipa_crud.host1,
                    ipa_crud.ipadomain or RETURN,
                    ipa_crud.iparealm or RETURN,
@@ -301,14 +267,14 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
 
     # Unconfigure to cleanup
     # When setup_ipa option selected, will prompt to unconfigure, then to proceed with new config
-    command_set = ('ap', RETURN, setup_ipa, TimedCommand('y', 40), TimedCommand('n', 5))
+    command_set = ('ap', RETURN, '10', TimedCommand('y', 40), TimedCommand('n', 5))
     configured_appliance.appliance_console.run_commands(command_set)
     wait_for(lambda: not configured_appliance.sssd.running)
 
 
 @pytest.mark.parametrize('auth_type', ext_auth_options, ids=[opt.name for opt in ext_auth_options])
 def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configured_appliance):
-    """'ap' launches appliance_console, '' clears info screen, '12/15' change ext auth options,
+    """'ap' launches appliance_console, '' clears info screen, '11' change ext auth options,
     'auth_type' auth type to change, '4' apply changes."""
     # TODO this depends on the auth_type options being disabled when the test is run
     # TODO it assumes that first switch is to true, then false.
@@ -319,8 +285,7 @@ def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configu
                             username=app_creds['sshlogin'],
                             password=app_creds['sshpass'])
     evm_tail.fix_before_start()
-    ext_auth = '12'
-    command_set = ('ap', '', ext_auth, auth_type.index, '4')
+    command_set = ('ap', '', '11', auth_type.index, '4')
     configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
@@ -331,7 +296,7 @@ def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configu
                             password=app_creds['sshpass'])
 
     evm_tail.fix_before_start()
-    command_set = ('ap', '', '12', auth_type.index, '4')
+    command_set = ('ap', '', '11', auth_type.index, '4')
     configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
@@ -348,8 +313,7 @@ def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_app
                             username=app_creds['sshlogin'],
                             password=app_creds['password'])
     evm_tail.fix_before_start()
-    ext_auth = '12'
-    command_set = ('ap', '', ext_auth, '1', '2', '3', '4')
+    command_set = ('ap', '', '11', '1', '2', '3', '4')
     configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
@@ -362,16 +326,16 @@ def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_app
                             password=app_creds['password'])
 
     evm_tail.fix_before_start()
-    command_set = ('ap', '', ext_auth, '1', '2', '3', '4')
+    command_set = ('ap', '', '11', '1', '2', '3', '4')
     configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
 
 def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
-    """'ap' launches appliance_console, '' clears info screen, '14' Hardens appliance using SCAP
+    """'ap' launches appliance_console, '' clears info screen, '13' Hardens appliance using SCAP
     configuration, '' complete."""
 
-    command_set = ('ap', '', '14', '')
+    command_set = ('ap', '', '13', '')
     temp_appliance_preconfig.appliance_console.run_commands(command_set)
 
     with tempfile.NamedTemporaryFile('w') as f:
