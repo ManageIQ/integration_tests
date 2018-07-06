@@ -1412,6 +1412,7 @@ class TemplatesAll(CFMENavigateStep):
 
 
 @navigator.register(InfraVmCollection, 'Provision')
+@navigator.register(InfraVm, 'Provision')
 class ProvisionVM(CFMENavigateStep):
     VIEW = ProvisionView
     prerequisite = NavigateToSibling('All')
