@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from six import iteritems
 
 import cfme.utils.auth as authutil
-from cfme.test_framework.sprout.client import SproutClient, SproutException
+from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils.conf import cfme_data, credentials, auth_data
 from cfme.utils.log import logger
 from cfme.utils.version import get_stream
@@ -19,30 +19,19 @@ TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 
 @contextmanager
 def fqdn_appliance(appliance, preconfigured, count):
-    sp = SproutClient.from_config()
-    available_providers = set(sp.call_method('available_providers'))
-    required_providers = set(cfme_data['fqdn_providers'])
-    usable_providers = available_providers & required_providers
     version = appliance.version.vstring
     stream = get_stream(appliance.version)
-    for provider in usable_providers:
-        try:
-            apps, pool_id = sp.provision_appliances(
-                count=count, preconfigured=preconfigured, version=version, stream=stream,
-                provider=provider
-            )
-            break
-        except Exception as e:
-            logger.warning("Couldn't provision appliance with following error:")
-            logger.warning("{}".format(e))
-            continue
-    else:
-        logger.error("Couldn't provision an appliance at all")
-        raise SproutException('No provision available')
-    yield apps
-    for app in apps:
-        app.ssh_client.close()
-    sp.destroy_pool(pool_id)
+    try:
+        sprout_client = SproutClient.from_config()
+        apps, request_id = sprout_client.provision_appliances(
+            provider_type='rhevm', count=count, version=version, preconfigured=preconfigured,
+            stream=stream)
+        yield apps
+    finally:
+        for app in apps:
+            app.ssh_client.close()
+        if request_id:
+            sprout_client.destroy_pool(request_id)
 
 
 @pytest.fixture()
