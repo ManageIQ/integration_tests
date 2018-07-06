@@ -6,6 +6,7 @@ import yaml
 from cfme import test_requirements
 from cfme.intelligence.reports.schedules import ScheduleCollection
 from cfme.intelligence.reports.widgets import AllDashboardWidgetsView
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.path import data_path
 from cfme.utils.rest import assert_response
@@ -240,3 +241,21 @@ def test_import_report(appliance):
     response, = appliance.rest_api.collections.reports.action.execute_action("import", data)
     assert_response(appliance)
     assert response['message'] == 'Skipping Report (already in DB): [{}]'.format(menu_name)
+
+
+@pytest.mark.sauce
+@pytest.mark.tier(3)
+@test_requirements.report
+def test_reports_delete_saved_report(custom_report_values, appliance):
+    """This test case deletes reports from the Saved Reports list.
+    """
+    report = appliance.collections.reports.create(**custom_report_values)
+    report.queue(wait_for_finish=True)
+    view = navigate_to(appliance.collections.saved_reports, 'All')
+    # iterates through every row and checks if the 'Name' column matches the given value
+    for row in view.table.rows():
+        if row.read()['Name'] == report.title:
+            row[0].check()
+    view.configuration.item_select(
+        item='Delete selected Saved Reports', handle_alert=True)
+    report.delete()
