@@ -6,7 +6,7 @@ import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.webdriver.common.keys import Keys
 from widgetastic.widget import View, Table, Text, Image, FileInput
-from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
+from widgetastic_patternfly import (Accordion, Input, Button, Dropdown, DatePicker,
                                     FlashMessages, BootstrapSelect, Tab)
 
 from cfme.base.credential import Credential
@@ -35,6 +35,7 @@ from . import Server, Region, Zone, ZoneCollection
 def address(self):
     logger.info("USING UI ADDRESS")
     return self.appliance.url
+
 
 class LoginPage(View):
     flash = FlashMessages('//div[@class="flash_text_div"]')
@@ -1315,6 +1316,7 @@ class SmartProxyAffinity(CFMENavigateStep):
             raise ZoneNotFound(
                 "No unique Zones with the description '{}'".format(self.obj.description))
 
+
 # Zone Add #
 class ZoneAddView(ZoneForm):
     add_button = Button('Add')
@@ -1372,6 +1374,9 @@ class ZoneDiagnosticsView(ConfigurationView):
     @View.nested
     class candugapcollection(Tab):  # noqa
         TAB_NAME = "C & U Gap Collection"
+        end_date = DatePicker(id='miq_date_2')
+        start_date = DatePicker(id='miq_date_1')
+        submit = Button(title='Submit')
 
     @property
     def is_displayed(self):
