@@ -9,7 +9,7 @@ from cfme.containers.node import Node
 from cfme.containers.pod import Pod
 from cfme.containers.template import Template
 from cfme.containers.container import Container
-from cfme.utils.log import create_sublogger
+from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
 from cfme.utils.blockers import BZ
@@ -19,15 +19,12 @@ pytestmark = [
     pytest.mark.tier(1),
     pytest.mark.provider([ContainersProvider], scope='function')
 ]
-logger = create_sublogger("smart_management")
 
 TEST_ITEMS = [
     pytest.mark.polarion('CMP-9948')(ContainersTestItem(
         Container, 'CMP-9948', collection_obj="containers", get_entity_by="name")),
     pytest.mark.polarion('CMP-10320')(ContainersTestItem(
         Template, 'CMP-10320', collection_obj="container_templates", get_entity_by="name")),
-    pytest.mark.polarion('CMP-9981')(ContainersTestItem(
-        Image, 'CMP-9981', collection_obj="container_images", get_entity_by="name")),
     pytest.mark.polarion('CMP-9992')(ContainersTestItem(
         ImageRegistry, 'CMP-9992', collection_obj="container_image_registries",
         get_entity_by="host")),
