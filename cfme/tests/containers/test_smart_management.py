@@ -2,14 +2,12 @@ import random
 
 import pytest
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
-from cfme.containers.image import Image
 from cfme.containers.project import Project
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.node import Node
 from cfme.containers.pod import Pod
 from cfme.containers.template import Template
 from cfme.containers.container import Container
-from cfme.utils.log import create_sublogger
 from cfme.utils.wait import wait_for
 
 from cfme.utils.blockers import BZ
@@ -19,15 +17,12 @@ pytestmark = [
     pytest.mark.tier(1),
     pytest.mark.provider([ContainersProvider], scope='function')
 ]
-logger = create_sublogger("smart_management")
 
 TEST_ITEMS = [
     pytest.mark.polarion('CMP-9948')(ContainersTestItem(
         Container, 'CMP-9948', collection_obj="containers", get_entity_by="name")),
     pytest.mark.polarion('CMP-10320')(ContainersTestItem(
         Template, 'CMP-10320', collection_obj="container_templates", get_entity_by="name")),
-    pytest.mark.polarion('CMP-9981')(ContainersTestItem(
-        Image, 'CMP-9981', collection_obj="container_images", get_entity_by="name")),
     pytest.mark.polarion('CMP-9992')(ContainersTestItem(
         ImageRegistry, 'CMP-9992', collection_obj="container_image_registries",
         get_entity_by="host")),
@@ -85,14 +80,10 @@ def test_smart_management_add_tag(provider, appliance, test_item):
     obj_inst = get_clean_entity(entity=provider) \
         if test_item.obj is ContainersProvider else get_clean_entity(collection=obj_collection)
 
-    logger.debug('Selected object is "{obj_name}"'.format(obj_name=obj_inst.name))
-
     # Config random tag for object
     tag = obj_collection.add_tag([obj_inst], get_entity_by=test_item.get_entity_by)
-    logger.debug("Set function result: {tag}".format(tag=tag))
 
     all_tags = wait_for(obj_inst.get_tags, num_sec=30, delay=5).out
-    logger.debug("Current exist tag: {tag}".format(tag=tag))
 
     # Validate tag wsa set successfully
     assert len(all_tags) == 1, "Wrong tag count fount for {obj}".format(obj=obj_inst.PLURAL)
