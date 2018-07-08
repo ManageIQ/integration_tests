@@ -56,6 +56,9 @@ def get_entity(collection):
         pytest.skip("No unique item was found")
 
 
+@pytest.mark.meta(blockers=[BZ(1479412,
+                               forced_streams=['5.7'],
+                               unblock=lambda test_item: test_item.obj != Container)])
 @pytest.fixture
 def get_clean_entity(**kwargs):
     collection = kwargs.get("collection", None)
