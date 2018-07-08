@@ -21,6 +21,8 @@ pytestmark = [
 ]
 
 TEST_ITEMS = [
+    pytest.mark.polarion('CMP-9981')(ContainersTestItem(
+        Image, 'CMP-9981', collection_obj="container_images", get_entity_by="name")),
     pytest.mark.polarion('CMP-9948')(ContainersTestItem(
         Container, 'CMP-9948', collection_obj="containers", get_entity_by="name")),
     pytest.mark.polarion('CMP-10320')(ContainersTestItem(
