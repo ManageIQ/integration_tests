@@ -4,7 +4,7 @@ from bugzilla import Bugzilla as _Bugzilla
 from collections import Sequence
 
 from cached_property import cached_property
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.conf import cfme_data, credentials, env
 from cfme.utils.log import logger
 from cfme.utils.version import (
     LATEST, Version, current_version, appliance_build_datetime, appliance_is_downstream)
@@ -78,16 +78,18 @@ class Bugzilla(object):
 
     @classmethod
     def from_config(cls):
-        url = cfme_data.get("bugzilla", {}).get("url")
-        product = cfme_data.get("bugzilla", {}).get("product")
+        bz_conf = env.get('bugzilla', {})  # default empty so we can call .get() later
+        url = bz_conf.get('url')
         if url is None:
-            raise Exception("No Bugzilla URL specified!")
-        cr_root = cfme_data.get("bugzilla", {}).get("credentials")
-        username = credentials.get(cr_root, {}).get("username")
-        password = credentials.get(cr_root, {}).get("password")
-        return cls(
-            url=url, user=username, password=password, cookiefile=None,
-            tokenfile=None, product=product)
+            url = 'https://bugzilla.redhat.com/xmlrpc.cgi'
+            logger.warning("No Bugzilla URL specified in conf, using default: %s", url)
+        cred_key = bz_conf.get("bugzilla", {}).get("credentials")
+        return cls(url=url,
+                   user=credentials.get(cred_key, {}).get("username"),
+                   password=credentials.get(cred_key, {}).get("password"),
+                   cookiefile=None,
+                   tokenfile=None,
+                   product=bz_conf.get("bugzilla", {}).get("product"))
 
     @cached_property
     def bugzilla(self):
