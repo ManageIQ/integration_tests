@@ -649,6 +649,7 @@ def request_appliance_pool(self, appliance_pool_id, time_minutes):
 def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes):
     pool = AppliancePool.objects.get(id=appliance_pool_id)
     if pool.fulfilled:
+        pool.logger.info("Applying lease time and renaming appliances")
         for appliance in pool.appliances:
             apply_lease_times.delay(appliance.id, time_minutes)
         rename_appliances_for_pool.delay(pool.id)
@@ -657,10 +658,12 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
             pool.save(update_fields=['finished'])
     else:
         # Look whether we can swap any provisioning appliance with some in shepherd
+        pool.logger.info("Replacing unfinished appliances with ones from pool")
         unfinished = list(
             Appliance.objects.filter(
                 appliance_pool=pool, ready=False, marked_for_deletion=False).all())
         random.shuffle(unfinished)
+        pool.logger.info('There are %s unfinished appliances', len(unfinished))
         if len(unfinished) > 0:
             n = Appliance.give_to_pool(pool, len(unfinished))
             with transaction.atomic():
@@ -669,6 +672,7 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
                     appl.appliance_pool = None
                     appl.save(update_fields=['appliance_pool'])
         try:
+            pool.logger.info("Retrying to apply lease again")
             self.retry(args=(appliance_pool_id, time_minutes), countdown=30, max_retries=120)
         except MaxRetriesExceededError:  # Bad luck, pool fulfillment failed. So destroy it.
             pool.logger.error("Waiting for fulfillment failed. Initiating the destruction process.")
