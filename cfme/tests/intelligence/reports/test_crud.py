@@ -254,7 +254,7 @@ def test_reports_delete_saved_report(custom_report_values, appliance):
     view = navigate_to(appliance.collections.saved_reports, 'All')
     # iterates through every row and checks if the 'Name' column matches the given value
     for row in view.table.rows():
-        if row.read()['Name'] == report.title:
+        if row.name.read() == report.title:
             row[0].check()
     view.configuration.item_select(
         item='Delete selected Saved Reports', handle_alert=True)
