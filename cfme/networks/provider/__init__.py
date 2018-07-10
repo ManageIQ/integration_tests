@@ -2,9 +2,9 @@ import attr
 from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from cfme.exceptions import DestinationNotFound
 from cfme.common import Taggable
 from cfme.common.provider import BaseProvider, prepare_endpoints
+from cfme.exceptions import DestinationNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.networks.balancer import BalancerCollection
 from cfme.networks.cloud_network import CloudNetworkCollection
@@ -25,10 +25,10 @@ from cfme.networks.views import (
     OneProviderSubnetView,
     NetworkProviderEditView
 )
-from cfme.utils.providers import get_crud_by_name
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
+from cfme.utils.providers import get_crud_by_name
 
 
 @attr.s(hash=False)
@@ -297,6 +297,9 @@ class NetworkProviderCollection(BaseCollection):
                 network_providers.append(self.instantiate(name=item.name, provider=provider))
 
         return network_providers
+
+    def instantiate(self, prov_class, *args, **kwargs):
+        return prov_class.from_collection(self, *args, **kwargs)
 
     def create(self, prov_class, *args, **kwargs):
         # ugly workaround until I move everything to main class
