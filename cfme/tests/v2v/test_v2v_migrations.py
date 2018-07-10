@@ -9,6 +9,10 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
+from cfme.v2v.migrations import MigrationDashboardView
 
 pytestmark = [pytest.mark.ignore_stream('5.8')]
 
@@ -188,6 +192,26 @@ def enable_disable_migration_ui(appliance):
     appliance.disable_migration_ui()
 
 
+vms = []
+
+
+@pytest.fixture(scope="module")
+def vm_list(appliance, provider):
+    """Fixture to provide list of vm objects"""
+    # TODO: Need to add list of vm and its configuration in cfme_data.yaml
+    templates = [provider.data.templates.big_template['name']]
+    for template in templates:
+        vm_name = random_vm_name(context='v2v-auto')
+        collection = appliance.provider_based_collection(provider)
+        vm = collection.instantiate(vm_name, provider, template_name=template)
+
+        if not provider.mgmt.does_vm_exist(vm_name):
+            logger.info("deploying {} on provider {}".format(vm_name, provider.key))
+            vm.create_on_provider(allow_skip="default")
+            vms.append(vm)
+    return vms
+
+
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs'],
                             ['nfs', 'iscsi'], ['iscsi', 'iscsi']], indirect=True)
 def test_single_datastore_single_vm_mapping_crud(appliance, enable_disable_migration_ui,
@@ -225,3 +249,19 @@ def test_dual_datastore_dual_vm_mapping_crud(appliance, enable_disable_migration
     mapping = infrastructure_mapping_collection.create(form_data_dual_datastore)
     view = navigate_to(infrastructure_mapping_collection, 'All', wait_for_view=True)
     assert mapping.name in view.infra_mapping_list.read()
+
+
+def test_end_to_end_migration(appliance, enable_disable_migration_ui, vm_list, create_provider):
+    infrastructure_mapping_collection = appliance.collections.v2v_mappings
+    mapping = infrastructure_mapping_collection.create(['nfs', 'nfs'])
+    coll = appliance.collections.v2v_plans
+    coll.create(name="plan_{}".format(fauxfactory.gen_alphanumeric()),
+                description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+                infra_map=mapping.name,
+                vm_list=vm_list,
+                start_migration=True)
+    view = appliance.browser.create_view(MigrationDashboardView)
+    # explicit wait for spinner of in-progress status card
+    wait_for(lambda: bool(view.progress_bar.is_plan_started(coll.name)),
+             message="migration plan is starting, be patient please", delay=5, num_sec=120)
+    assert view._get_status(coll.name) == "Completed Plans"
