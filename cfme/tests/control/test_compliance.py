@@ -9,7 +9,6 @@ from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policies import HostCompliancePolicy, VMCompliancePolicy
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
-from cfme.utils.blockers import BZ
 from cfme.utils.hosts import setup_providers_hosts_credentials
 from cfme.utils.update import update
 from . import do_scan
@@ -188,7 +187,6 @@ def test_check_files(request, compliance_vm, analysis_profile, condition_collect
     assert compliance_vm.compliant
 
 
-@pytest.mark.uncollectif(lambda: BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576')
 def test_compliance_with_unconditional_policy(host, assign_policy_for_testing):
     assign_policy_for_testing.assign_actions_to_event(
         "Host Compliance Check",

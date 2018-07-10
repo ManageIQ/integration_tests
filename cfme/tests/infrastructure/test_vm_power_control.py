@@ -386,10 +386,10 @@ def test_no_template_power_control(provider, soft_assert):
 
 
 @pytest.mark.rhv3
-@pytest.mark.uncollectif(lambda provider: provider.one_of(SCVMMProvider) and
-                         BZ(1520489, forced_streams=['5.9']).blocks, 'BZ 1520489')
-@pytest.mark.meta(blockers=[BZ(1592430, forced_streams=['5.8', '5.9', '5.10'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+@pytest.mark.meta(blockers=[BZ(1520489, forced_streams=['5.9'],
+                               unblock=lambda provider: not provider.one_of(SCVMMProvider)),
+                            BZ(1592430, forced_streams=['5.8', '5.9', '5.10'],
+                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_no_power_controls_on_archived_vm(testing_vm, archived_vm, soft_assert):
     """ Ensures that no power button is displayed from details view of archived vm
 
@@ -406,10 +406,10 @@ def test_no_power_controls_on_archived_vm(testing_vm, archived_vm, soft_assert):
 
 
 @pytest.mark.rhv3
-@pytest.mark.uncollectif(lambda provider: provider.one_of(SCVMMProvider) and
-                         BZ(1520489, forced_streams=['5.9']).blocks, 'BZ 1520489')
-@pytest.mark.meta(blockers=[BZ(1592430, forced_streams=['5.8', '5.9', '5.10'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+@pytest.mark.meta(blockers=[BZ(1520489, forced_streams=['5.9'],
+                               unblock=lambda provider: not provider.one_of(SCVMMProvider)),
+                            BZ(1592430, forced_streams=['5.8', '5.9', '5.10'],
+                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_archived_vm_status(testing_vm, archived_vm):
     """Tests archived vm status
 
@@ -484,8 +484,8 @@ def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_ass
 
 
 @pytest.mark.meta(blockers=[BZ(1571895, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider))
+                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+@pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True)
 def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
     """Tests vm guest os reset
 
