@@ -178,7 +178,7 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip, applia
         'time_zone': "(GMT+00:00) UTC",
         'start_date': dt,
         'start_hour': hour,
-        'start_min': minute,
+        'start_minute': minute,
         'depot_name': fauxfactory.gen_alphanumeric()
     }
     if db_backup_data.protocol_type == 'smb':
