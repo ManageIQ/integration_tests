@@ -649,6 +649,7 @@ def request_appliance_pool(self, appliance_pool_id, time_minutes):
 def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes):
     pool = AppliancePool.objects.get(id=appliance_pool_id)
     if pool.fulfilled:
+        pool.logger.info("Applying lease time and renaming appliances")
         for appliance in pool.appliances:
             apply_lease_times.delay(appliance.id, time_minutes)
         rename_appliances_for_pool.delay(pool.id)
@@ -657,10 +658,12 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
             pool.save(update_fields=['finished'])
     else:
         # Look whether we can swap any provisioning appliance with some in shepherd
+        pool.logger.info("Replacing unfinished appliances with ones from pool")
         unfinished = list(
             Appliance.objects.filter(
                 appliance_pool=pool, ready=False, marked_for_deletion=False).all())
         random.shuffle(unfinished)
+        pool.logger.info('There are %s unfinished appliances', len(unfinished))
         if len(unfinished) > 0:
             n = Appliance.give_to_pool(pool, len(unfinished))
             with transaction.atomic():
@@ -669,6 +672,7 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
                     appl.appliance_pool = None
                     appl.save(update_fields=['appliance_pool'])
         try:
+            pool.logger.info("Retrying to apply lease again")
             self.retry(args=(appliance_pool_id, time_minutes), countdown=30, max_retries=120)
         except MaxRetriesExceededError:  # Bad luck, pool fulfillment failed. So destroy it.
             pool.logger.error("Waiting for fulfillment failed. Initiating the destruction process.")
@@ -760,6 +764,8 @@ def apply_lease_times(self, appliance_id, time_minutes):
         appliance.datetime_leased = timezone.now()
         appliance.leased_until = appliance.datetime_leased + timedelta(minutes=int(time_minutes))
         appliance.save(update_fields=['datetime_leased', 'leased_until'])
+        self.logger.info(
+            "Lease time has been applied successfully on appliance {}".format(appliance_id))
 
 
 @logged_task()
@@ -1417,6 +1423,7 @@ def delete_template_from_provider(self, template_id):
 
 @singleton_task()
 def appliance_rename(self, appliance_id, new_name):
+    self.logger.info("Start renaming process for {} to {}".format(appliance_id, new_name))
     try:
         appliance = Appliance.objects.get(id=appliance_id)
     except ObjectDoesNotExist:
@@ -1436,6 +1443,7 @@ def appliance_rename(self, appliance_id, new_name):
 
 @singleton_task()
 def rename_appliances_for_pool(self, pool_id):
+    self.logger.info("Renaming appliances in pool {}".format(pool_id))
     with transaction.atomic():
         try:
             appliance_pool = AppliancePool.objects.get(id=pool_id)

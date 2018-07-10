@@ -1015,7 +1015,7 @@ class Appliance(MetadataMixin):
                         template=template, **cpuram_filter).all()[:limit - len(appliances)]:
                     with appliance.kill_lock:
                         appliance.appliance_pool = pool
-                        appliance.save()
+                        appliance.save(update_fields=['appliance_pool'])
                         appliance.set_status("Given to pool {}".format(pool.id))
                         tasks = [appliance_power_on.si(appliance.id)]
                         if pool.yum_update:
@@ -1396,8 +1396,7 @@ class AppliancePool(MetadataMixin):
     @property
     def fulfilled(self):
         try:
-            return len(self.appliance_ips) == self.total_count\
-                and all(a.ready for a in self.appliances)
+            return all(a.ready for a in self.appliances)
         except ObjectDoesNotExist:
             return False
 
