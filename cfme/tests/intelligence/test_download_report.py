@@ -29,23 +29,22 @@ def needs_firefox():
 
 
 @pytest.fixture(scope="module")
-def report(appliance):
-    return appliance.collections.reports.instantiate(
+def report(appliance, request):
+    saved_report = appliance.collections.reports.instantiate(
         type="Configuration Management",
         subtype="Virtual Machines",
         menu_name="Hardware Information for VMs"
     ).queue(wait_for_finish=True)
+    request.addfinalizer(saved_report.delete)
+    return saved_report
 
 
-# TODO Prevent Firefox from popping up "Save file" in order to add 'pdf' parametrization
-# Files download is unsolved, since the browser runs in a separate container
-@pytest.mark.skip
-@pytest.mark.parametrize("filetype", ["txt", "csv"])
+@pytest.mark.parametrize("filetype", ["txt", "csv", "pdf"])
 def test_download_report_firefox(needs_firefox, infra_provider, report, filetype):
-    """ Download the report as a file and check whether it was downloaded. """
+    """Download the report as a file and check whether it was downloaded."""
     extension = "." + filetype
     clean_temp_directory()
     report.download(filetype)
     wait_for(lambda: any([file.endswith(extension) for file in os.listdir(
-        browser.firefox_profile_tmpdir)]), num_sec=60.0)
+        browser.firefox_profile_tmpdir)]), num_sec=360.0)
     clean_temp_directory()
