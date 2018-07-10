@@ -19,7 +19,7 @@ def do_vm_provisioning(appliance, template_name, provider, vm_name, provisioning
             'notes': note}})
     provisioning_data['template_name'] = template_name
     provisioning_data['provider_name'] = provider.name
-    view = navigate_to(vm, 'Provision')
+    view = navigate_to(vm.parent, 'Provision')
     view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
     view.flash.assert_no_error()
     if not wait:
