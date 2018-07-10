@@ -18,7 +18,6 @@ from cfme.utils.blockers import BZ
 from cfme.utils.ftp import FTPClient
 from cfme.utils.providers import get_crud
 from cfme.utils.update import update
-from cfme.utils.version import current_version
 from cfme.utils.virtual_machines import deploy_template
 
 pytestmark = [test_requirements.log_depot]
@@ -235,9 +234,6 @@ def test_collect_unconfigured(appliance):
     assert view.toolbar.collect.item_enabled('Collect all logs') is False
 
 
-@pytest.mark.uncollectif(lambda from_slave: from_slave and
-                         BZ.bugzilla.get_bug(1443927).is_opened and current_version() >= '5.8')
-@pytest.mark.meta(blockers=[BZ(1436367, forced_streams=["5.8"])])
 @pytest.mark.parametrize('from_slave', [True, False], ids=['from_slave', 'from_master'])
 @pytest.mark.parametrize('zone_collect', [True, False], ids=['zone_collect', 'server_collect'])
 @pytest.mark.parametrize('collect_type', ['all', 'current'], ids=['collect_all', 'collect_current'])
