@@ -246,16 +246,16 @@ def test_import_report(appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 @test_requirements.report
-def test_reports_delete_saved_report(custom_report_values, appliance):
-    """This test case deletes reports from the Saved Reports list.
+def test_reports_delete_saved_report(custom_report_values, appliance, request):
+    """The test case selects reports from the Saved Reports list and deletes them.
     """
     report = appliance.collections.reports.create(**custom_report_values)
+    request.addfinalizer(report.delete)
     report.queue(wait_for_finish=True)
     view = navigate_to(appliance.collections.saved_reports, 'All')
     # iterates through every row and checks if the 'Name' column matches the given value
     for row in view.table.rows():
-        if row.name.read() == report.title:
+        if row.name.text == report.title:
             row[0].check()
     view.configuration.item_select(
         item='Delete selected Saved Reports', handle_alert=True)
-    report.delete()
