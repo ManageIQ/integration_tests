@@ -764,6 +764,8 @@ def apply_lease_times(self, appliance_id, time_minutes):
         appliance.datetime_leased = timezone.now()
         appliance.leased_until = appliance.datetime_leased + timedelta(minutes=int(time_minutes))
         appliance.save(update_fields=['datetime_leased', 'leased_until'])
+        self.logger.info(
+            "Lease time has been applied successfully on appliance {}".format(appliance_id))
 
 
 @logged_task()
