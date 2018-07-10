@@ -1423,6 +1423,7 @@ def delete_template_from_provider(self, template_id):
 
 @singleton_task()
 def appliance_rename(self, appliance_id, new_name):
+    self.logger.info("Start renaming process for {} to {}".format(appliance_id, new_name))
     try:
         appliance = Appliance.objects.get(id=appliance_id)
     except ObjectDoesNotExist:
@@ -1442,6 +1443,7 @@ def appliance_rename(self, appliance_id, new_name):
 
 @singleton_task()
 def rename_appliances_for_pool(self, pool_id):
+    self.logger.info("Renaming appliances in pool {}".format(pool_id))
     with transaction.atomic():
         try:
             appliance_pool = AppliancePool.objects.get(id=pool_id)
