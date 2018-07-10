@@ -387,6 +387,9 @@ def get_mgmt(provider_key, providers=None, credentials=None):
         provider_kwargs['provider_key'] = provider_key
     provider_kwargs['logger'] = logger
 
+    if isinstance(provider_key, Mapping):
+        provider_key = provider_key['hostname']
+
     if provider_key not in PROVIDER_MGMT_CACHE:
         mgmt_instance = get_class_from_type(provider_data['type']).mgmt_class(**provider_kwargs)
         PROVIDER_MGMT_CACHE[provider_key] = mgmt_instance
