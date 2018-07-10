@@ -49,7 +49,7 @@ def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modsc
     app.appliance_console.timezone_check(timezone)
 
 
-@pytest.mark.uncollectif(lambda: BZ(1598427, forced_streams=['5.10', '5.9']).blocks, 'BZ 1598427')
+@pytest.mark.meta(blockers=[BZ(1598427, forced_streams=['5.9', '5.10'])])
 def test_appliance_console_cli_set_hostname(configured_appliance):
     hostname = 'test.example.com'
     configured_appliance.appliance_console_cli.set_hostname(hostname)
@@ -154,7 +154,7 @@ def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, ap
     wait_for(lambda: unconfigured_appliance.db.is_dedicated_active)
 
 
-@pytest.mark.uncollectif(lambda: BZ(1544854, forced_streams=['5.10', '5.9']).blocks, 'BZ 1544854')
+@pytest.mark.meta(blockers=[BZ(1544854, forced_streams=['5.9', '5.10'])])
 def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
     """Tests the configuration of HA with three appliances including failover to standby node"""
     apps = unconfigured_appliances
