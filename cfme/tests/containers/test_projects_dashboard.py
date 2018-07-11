@@ -27,27 +27,37 @@ def get_api_object_counts(appliance, project_name, provider):
     """ Fetches amount of Containers/Services/Images from the API per selected project name"""
     assert isinstance(provider, ContainersProvider)
     return {
-        Container: len(provider.mgmt.list_container(project_name=project_name)),
-        Service: len(provider.mgmt.list_service(project_name=project_name)),
-        Image: len(get_container_images_amt(provider, project_name))
+        Container: len(flatten_list(provider.mgmt.list_container(namespace=project_name),
+                                    flattened_list=[])),
+        Service: len(provider.mgmt.list_service(namespace=project_name)),
+        # TODO: remove sorted set when wrapanapi updates will return unique image IDs
+        # number of unique images
+        Image: len(sorted(set(provider.mgmt.list_image_id(namespace=project_name))))
     }
 
 
-def get_container_images_amt(provider, project_name=None):
-    """ Fetches images amount from the API per selected project name"""
-    project_images = [
-        img for img
-        in provider.mgmt.list_image()
-        if img.image_project_name == project_name
-    ]
-    return project_images
+def flatten_list(org_list, flattened_list=[]):
+    """Expands nested list elements to new flatten list
+    Use for get len for of nested list
+
+    Args:
+            org_list: (list) nested list
+            flattened_list: (list) empty list
+    Returns: flatten list
+    """
+    for elem in org_list:
+        if not isinstance(elem, list):
+            flattened_list.append(elem)
+        else:
+            flatten_list(elem, flattened_list)
+    return flattened_list
 
 
 def get_api_pods_names(provider):
     """ Fetches Pod names from the API per selected project name"""
     pod_name = []
-    for pod in provider.mgmt.list_container_group(project_name=PROJECT_NAME):
-        pod_name.append(pod.name)
+    for pod in provider.mgmt.list_pods(namespace=PROJECT_NAME):
+        pod_name.append(pod.metadata.name)
     return pod_name
 
 
