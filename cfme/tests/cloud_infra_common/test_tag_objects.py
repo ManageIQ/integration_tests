@@ -11,7 +11,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([InfraProvider, CloudProvider], scope='module', selector=ONE_PER_CATEGORY)
+    pytest.mark.provider([InfraProvider, CloudProvider], selector=ONE_PER_CATEGORY)
 ]
 
 
@@ -21,21 +21,21 @@ pytestmark = [
 # Once everything is converted these should be flattened to just collection names list
 
 infra_test_items = [
-    ('infra_provider', None),  # no param_class needed, provider returned directly
-    ('infra_vms', True),
-    ('infra_templates', True),
-    ('hosts', None),
-    ('clusters', None),
-    ('datastores', None)
+    ('infra_provider', 'All'),  # no param_class needed, provider returned directly
+    ('infra_vms', 'AllForProvider'),
+    ('infra_templates', 'AllForProvider'),
+    ('hosts', 'All'),
+    ('clusters', 'All'),
+    ('datastores', 'All')
 ]
 cloud_test_items = [
-    ('cloud_provider', None),  # no param_class needed, provider returned directly
-    ('cloud_instances', True),
-    ('cloud_flavors', None),
-    ('cloud_av_zones', None),
-    ('cloud_tenants', None),
-    ('cloud_keypairs', None),
-    ('cloud_images', True)
+    ('cloud_provider', 'All'),  # no param_class needed, provider returned directly
+    ('cloud_instances', 'AllForProvider'),
+    ('cloud_flavors', 'All'),
+    ('cloud_av_zones', 'All'),
+    ('cloud_tenants', 'All'),
+    ('cloud_keypairs', 'All'),
+    ('cloud_images', 'AllForProvider')
 ]
 
 
@@ -45,8 +45,7 @@ def get_collection_entity(appliance, collection_name, destination, provider):
     else:
         collection = getattr(appliance.collections, collection_name)
         collection.filters = {'provider': provider}
-        step_name = 'AllForProvider' if destination else 'All'
-        view = navigate_to(collection, step_name)
+        view = navigate_to(collection, destination)
         names = view.entities.entity_names
         if not names:
             pytest.skip("No content found for test")
