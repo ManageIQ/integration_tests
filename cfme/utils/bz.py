@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 import re
-from bugzilla import Bugzilla as _Bugzilla
 from collections import Sequence
+
+import six
+from bugzilla import Bugzilla as _Bugzilla
+from miq_version import Version, LATEST
 
 from cached_property import cached_property
 from cfme.utils.conf import cfme_data, credentials, env
 from cfme.utils.log import logger
-from cfme.utils.version import (
-    LATEST, Version, current_version, appliance_build_datetime, appliance_is_downstream)
-import six
+from cfme.utils.version import current_version, appliance_build_datetime, appliance_is_downstream
 
 NONE_FIELDS = {"---", "undefined", "unspecified"}
 
@@ -168,11 +169,11 @@ class Bugzilla(object):
                 # It is an upstream bug
                 logger.info('Found a matching upstream bug #%d for bug #%d', variant.id, bug.id)
                 return variant
-            elif ((variant.version is not None and variant.target_release is not None) and
-                    (
-                        variant.version.is_in_series(version_series) or
-                        variant.target_release.is_in_series(version_series))):
-                    filtered.add(variant)
+            elif (isinstance(variant.version, Version) and
+                  isinstance(variant.target_release, Version) and
+                  (variant.version.is_in_series(version_series) or
+                   variant.target_release.is_in_series(version_series))):
+                filtered.add(variant)
             else:
                 logger.warning(
                     "ATTENTION!!: No release flags, wrong versions, ignoring %s", variant.id)
@@ -187,11 +188,11 @@ class Bugzilla(object):
                 return None
         # First, use versions
         for bug in filtered:
-            if ((bug.version is not None and bug.target_release is not None) and
-                    check_fixed_in(bug.fixed_in, version_series) and
-                    (
-                        bug.version.is_in_series(version_series) or
-                        bug.target_release.is_in_series(version_series))):
+            if (isinstance(bug.version, Version) and
+                isinstance(bug.target_release, Version) and
+                check_fixed_in(bug.fixed_in, version_series) and
+                (bug.version.is_in_series(version_series) or
+                 bug.target_release.is_in_series(version_series))):
                 return bug
         # Otherwise prefer release_flag
         for bug in filtered:
