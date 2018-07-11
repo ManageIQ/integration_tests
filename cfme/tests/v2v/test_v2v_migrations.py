@@ -196,7 +196,7 @@ vms = []
 
 
 @pytest.fixture(scope="module")
-def vm_list(appliance, provider):
+def vm_list(request, appliance, provider):
     """Fixture to provide list of vm objects"""
     # TODO: Need to add list of vm and its configuration in cfme_data.yaml
     templates = [provider.data.templates.big_template['name']]
@@ -207,7 +207,7 @@ def vm_list(appliance, provider):
 
         if not provider.mgmt.does_vm_exist(vm_name):
             logger.info("deploying {} on provider {}".format(vm_name, provider.key))
-            vm.create_on_provider(allow_skip="default")
+            vm.create_on_provider(allow_skip="default", datastore=request.param)
             vms.append(vm)
     return vms
 
@@ -251,9 +251,13 @@ def test_dual_datastore_dual_vm_mapping_crud(appliance, enable_disable_migration
     assert mapping.name in view.infra_mapping_list.read()
 
 
-def test_end_to_end_migration(appliance, enable_disable_migration_ui, vm_list, create_provider):
+@pytest.mark.parametrize('vm_list', ['NFS_Datastore_1', 'iSCSI_Datastore_1'], ids=['NFS', 'ISCSI'],
+                         indirect=True)
+@pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
+def test_end_to_end_migration(appliance, enable_disable_migration_ui, vm_list, create_provider,
+                              form_data_single_datastore):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    mapping = infrastructure_mapping_collection.create(['nfs', 'nfs'])
+    mapping = infrastructure_mapping_collection.create(form_data_single_datastore)
     coll = appliance.collections.v2v_plans
     coll.create(name="plan_{}".format(fauxfactory.gen_alphanumeric()),
                 description="desc_{}".format(fauxfactory.gen_alphanumeric()),

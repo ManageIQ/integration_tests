@@ -4704,7 +4704,7 @@ class MigrationProgressBar(Widget):
     SIZE_LOCATOR = './/strong[contains(@id,"size-migrated")]'
     # TODO: XPATH requested to devel (repo:miq_v2v_ui_plugin issues:415)
     VMS_LOCATOR = './/strong[contains(@id,"vms-migrated")]'
-    PROGRESS_BAR = 'div[contains(@class,"progress")]/div[contains(@class,"in-progress")]'
+    PROGRESS_BAR = './/div[contains(@class,"progress")]/div[contains(@class,"in-progress")]'
 
     def __init__(self, parent, locator, logger=None):
         Widget.__init__(self, parent, logger=logger)
