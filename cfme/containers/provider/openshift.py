@@ -14,6 +14,7 @@ from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for, TimedOutError
 from . import ContainersProvider, ContainersProviderDefaultEndpoint, ContainersProviderEndpointsForm
 
+from six.moves.urllib.error import URLError
 
 class CustomAttribute(object):
     def __init__(self, name, value, field_type=None, href=None):
@@ -336,7 +337,7 @@ class OpenshiftProvider(ContainersProvider):
                 appliance_ssh.put_file("/tmp/ca.crt",
                                        "/etc/pki/ca-trust/source/anchors/{crt}".format(
                                            crt=cert_name))
-            except Exception:
+            except URLError:
                 logger.debug("Fail to deploy certificate from Openshift to CFME")
                 is_succeed = False
             finally:
