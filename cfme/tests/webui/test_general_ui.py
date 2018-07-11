@@ -126,7 +126,8 @@ def test_automate_can_edit_copied_method(appliance, request):
     """
     1) Go to Automate -> Explorer
     2) Create a new Domain
-    3) Go to ManageIQ/Service/Provisioning/StateMachines/ServiceProvision_Template/update_serviceprovision_status
+    3) Go to ManageIQ/Service/Provisioning/StateMachines/
+        ServiceProvision_Template/update_serviceprovision_status
     4) Copy it to the newly created Datastore
     5) Select it and try to edit it in the new Datastore
     6) Save it
@@ -140,19 +141,48 @@ def test_automate_can_edit_copied_method(appliance, request):
     request.addfinalizer(domain.delete_if_exists)
     domain_origin = appliance.collections.domains.instantiate('ManageIQ')
 
-    method = domain_origin.namespaces.instantiate('Service').\
-        collections.namespaces.instantiate('Provisioning').\
-        collections.namespaces.instantiate('StateMachines').\
-        collections.classes.instantiate('ServiceProvision_Template').\
+    method = (
+        domain_origin.namespaces.instantiate('Service').
+        collections.namespaces.instantiate('Provisioning').
+        collections.namespaces.instantiate('StateMachines').
+        collections.classes.instantiate('ServiceProvision_Template').
         collections.methods.instantiate('update_serviceprovision_status')
+    )
     view = navigate_to(method, 'Copy')
     view.copy_button.click()
-    copied_method = domain.namespaces.instantiate('Service').\
-        collections.namespaces.instantiate('Provisioning').\
-        collections.namespaces.instantiate('StateMachines').\
-        collections.classes.instantiate('ServiceProvision_Template').\
+    copied_method = (
+        domain.namespaces.instantiate('Service').
+        collections.namespaces.instantiate('Provisioning').
+        collections.namespaces.instantiate('StateMachines').
+        collections.classes.instantiate('ServiceProvision_Template').
         collections.methods.instantiate('update_serviceprovision_status')
+    )
 
     copied_method.update({
         'inline_name': fauxfactory.gen_alpha()
     })
+
+
+def test_infrastructure_filter_20k_vms(appliance, request):
+    """Test steps:
+
+        1) Go to rails console and create 20000 vms
+        2) In the UI go to Compute -> Infrastructure -> Virtual Machines -> VMs
+        3) Create filter Field -> Virtual Machine: Vendor = "vmware"
+        4) There should be filtered 20k vms
+    """
+    rails_create_command = ('20000.times { |i| ManageIQ::Providers::Vmware::InfraManager::'
+                            'Vm.create :name => "vm_%05d" % (1+i),'
+                            ' :vendor => "vmware", :location => "foo" }')
+    rails_cleanup_command = ('20000.times { |i| ManageIQ::Providers::Vmware::InfraManager::'
+                             'Vm.where(:name => "vm_%05d" % (1+i)).first.delete}')
+    assert appliance.ssh_client.run_rails_command("'{}'".format(rails_create_command))
+    request.addfinalizer(
+        lambda: appliance.ssh_client.run_rails_command("'{}'".format(rails_cleanup_command))
+    )
+
+    view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
+    view.entities.search.save_filter(
+        'fill_field(Virtual Machine : Vendor, =, vmware)', 'vmware', apply_filter=True)
+    items_amount = int(view.entities.paginator.items_amount)
+    assert items_amount >= 20000, 'Vms count is less than should be filtered'
