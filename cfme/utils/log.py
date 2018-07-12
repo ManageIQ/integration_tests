@@ -454,9 +454,10 @@ class ArtifactorHandler(logging.Handler):
 
 logger, cfme_file_handler = setup_logger(logging.getLogger('cfme'))
 # Have wrapanapi log to the same fileHandler as cfme
-setup_logger(logging.getLogger('wrapanapi'), cfme_file_handler)
+wrapanapi_logger = setup_logger(logging.getLogger('wrapanapi'), cfme_file_handler)
 artifactor_handler = ArtifactorHandler()
 logger.addHandler(artifactor_handler)
+wrapanapi_logger.addHandler(artifactor_handler)
 
 add_prefix = PrefixAddingLoggerFilter()
 logger.addFilter(add_prefix)
