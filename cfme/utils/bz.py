@@ -105,7 +105,7 @@ class Bugzilla(object):
 
     @cached_property
     def open_states(self):
-        return self.__config_options.get("skip", set())
+        return set(self.__config_options.get("skip", []))
 
     @cached_property
     def upstream_version(self):
