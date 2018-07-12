@@ -7,7 +7,7 @@ from bugzilla import Bugzilla as _Bugzilla
 from miq_version import Version, LATEST
 
 from cached_property import cached_property
-from cfme.utils.conf import cfme_data, credentials, env
+from cfme.utils.conf import credentials, env
 from cfme.utils.log import logger
 from cfme.utils.version import current_version, appliance_build_datetime, appliance_is_downstream
 
@@ -49,7 +49,9 @@ class Product(object):
 
 class Bugzilla(object):
     def __init__(self, **kwargs):
+        # __kwargs passed to _Bugzilla instantiation, pop our args out
         self.__product = kwargs.pop("product", None)
+        self.config_options = kwargs.pop('config_options', {})
         self.__kwargs = kwargs
         self.__bug_cache = {}
         self.__product_cache = {}
@@ -90,7 +92,8 @@ class Bugzilla(object):
                    password=credentials.get(cred_key, {}).get("password"),
                    cookiefile=None,
                    tokenfile=None,
-                   product=bz_conf.get("bugzilla", {}).get("product"))
+                   product=bz_conf.get("bugzilla", {}).get("product"),
+                   config_options=bz_conf)
 
     @cached_property
     def bugzilla(self):
@@ -98,18 +101,18 @@ class Bugzilla(object):
 
     @cached_property
     def loose(self):
-        return cfme_data.get("bugzilla", {}).get("loose", [])
+        return self.config_options.get("loose", [])
 
     @cached_property
     def open_states(self):
-        return cfme_data.get("bugzilla", {}).get("skip", set([]))
+        return self.config_options.get("skip", set([]))
 
     @cached_property
     def upstream_version(self):
         if self.default_product is not None:
             return self.default_product.latest_version
         else:
-            return Version(cfme_data.get("bugzilla", {}).get("upstream_version", "9.9"))
+            return Version(self.config_options.get("upstream_version", "9.9"))
 
     def get_bug(self, id):
         id = int(id)
