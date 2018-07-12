@@ -37,7 +37,9 @@ def test_tag_vis_vm(tagged_vm, user_restricted):
 @pytest.fixture(scope='module')
 def location_tag(appliance):
     """Existing tag object"""
-    category = appliance.collections.categories.create(name='location', display_name='Location')
+    category = appliance.collections.categories.create(
+        name='location', display_name='Location',
+        description=fauxfactory.gen_alphanumeric(length=32))
     tag = appliance.collections.tags.create(name='paris', display_name='Paris', category=category)
     return tag
 
@@ -47,7 +49,8 @@ def location_tag(appliance):
 def service_level_tag(appliance):
     """Existing tag object"""
     category = appliance.collections.categories.create(
-        name='service_level', display_name='Service Level'
+        name='service_level', display_name='Service Level',
+        description=fauxfactory.gen_alphanumeric(length=32)
     )
     tag = appliance.collections.tags.create(
         name='silver',
