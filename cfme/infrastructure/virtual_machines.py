@@ -247,11 +247,11 @@ class InfraVmDetailsView(InfraVmView):
     title = Text('#explorer_title_text')
     toolbar = ConditionalSwitchableView(reference='entities.title')
 
-    @toolbar.register(lambda title: "VM and Instance" in title)
+    @toolbar.register(lambda title: "VM and Instance" in title or "Virtual Machine" in title)
     class VmsToolbar(InfraVmDetailsToolbar):
         pass
 
-    @toolbar.register(lambda title: "VM Template and Image" in title)
+    @toolbar.register(lambda title: "VM Template and Image" in title or "Template" in title)
     class TemplatesToolbar(InfraGenericDetailsToolbar):
         pass
 
@@ -1307,7 +1307,17 @@ class VmAll(CFMENavigateStep):
 @navigator.register(InfraVm, 'VMsOnlyDetails')
 class VmDetails(CFMENavigateStep):
     VIEW = InfraVmDetailsView
-    prerequisite = NavigateToSibling('VMsOnly')
+
+    def prerequisite(self):
+        view = None
+        try:
+            view = navigate_to(self.obj, 'VMsOnly')
+        except NavigationDestinationNotFound:
+            view = navigate_to(self.obj.parent, 'VMsOnly')
+        finally:
+            if view is None:
+                raise NavigationDestinationNotFound('No view set during prerequisite')
+        return view
 
     def step(self, *args, **kwargs):
         try:

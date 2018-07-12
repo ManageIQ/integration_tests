@@ -439,11 +439,22 @@ class UserEdit(CFMENavigateStep):
 ####################################################################################################
 # RBAC GROUP METHODS
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-class MyCompanyTags(Tab):
-    """ Represents 'My company tags' tab in Group Form """
-    TAB_NAME = "My Company Tags"
+class MyCompanyTagsTree(View):
     tree_locator = 'tags_treebox'
     tree = CbTree(tree_locator)
+
+
+class MyCompanyTagsExpressionView(View):
+    tag_expression = GroupTagExpressionEditor()
+
+
+class MyCompanyTagsWithExpression(View):
+    """ Represents 'My company tags' tab in Group Form """
+    tag_mode = BootstrapSelect(id='use_filter_expression')
+    tag_settings = ConditionalSwitchableView(reference='tag_mode')
+
+    tag_settings.register('Specific Tags', default=True, widget=MyCompanyTagsTree)
+    tag_settings.register('Tags Based On Expression', widget=MyCompanyTagsExpressionView)
 
 
 class Hosts_And_Clusters(Tab):  # noqa
@@ -474,7 +485,13 @@ class GroupForm(ConfigurationView):
     cancel_button = Button('Cancel')
     retrieve_button = Button('Retrieve')
 
-    my_company_tags = View.nested(MyCompanyTags)
+    @View.nested
+    class my_company_tags(Tab):  # noqa
+        """ Represents 'My company tags' tab in Group Form """
+        TAB_NAME = "My Company Tags"
+        form = VersionPick({Version.lowest(): View.nested(MyCompanyTagsTree),
+                            '5.9': View.nested(MyCompanyTagsWithExpression)})
+
     hosts_and_clusters = View.nested(Hosts_And_Clusters)
     vms_and_templates = View.nested(Vms_And_Templates)
 
@@ -494,7 +511,13 @@ class AddGroupView(GroupForm):
 class DetailsGroupEntities(View):
     smart_management = SummaryForm('Smart Management')
 
-    my_company_tags = View.nested(MyCompanyTags)
+    @View.nested
+    class my_company_tags(Tab):  # noqa
+        """ Represents 'My company tags' tab in Group Form """
+        TAB_NAME = "My Company Tags"
+        form = VersionPick({Version.lowest(): View.nested(MyCompanyTagsTree),
+                            '5.9': View.nested(MyCompanyTagsWithExpression)})
+
     hosts_and_clusters = View.nested(Hosts_And_Clusters)
     vms_and_templates = View.nested(Vms_And_Templates)
 
