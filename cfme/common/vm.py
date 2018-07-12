@@ -522,9 +522,10 @@ class BaseVMCollection(BaseCollection):
                     wait_for(provider.mgmt.does_vm_exist, [vm.name],
                              handle_exception=True, num_sec=600)
                 else:
-                    logger.warn("Provisioning failed with the message {}".format(
-                        provision_request.row.last_message.text))
-                    return None
+                    raise Exception(
+                        "Provisioning vm {} failed with: {}"
+                        .format(name, provision_request.row.last_message.text)
+                    )
         if find_in_cfme:
             vm.wait_to_appear(timeout=800)
 
