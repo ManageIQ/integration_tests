@@ -178,3 +178,13 @@ def test_delete_instance(new_instance):
         assert False, "entity still exists"
     except ItemNotFound:
         pass
+
+
+@pytest.mark.provider([OpenStackProvider],
+                      required_fields=[['provisioning', 'image', 'os_distro']],
+                      override=True, scope='module')
+def test_instance_operating_system_linux(new_instance):
+    view = navigate_to(new_instance, 'Details')
+    os = view.entities.summary('Properties').get_text_of("Operating System")
+    prov_data_os = new_instance.provider.data['provisioning']['image']['os_distro']
+    assert os == prov_data_os, 'OS type mismatch: expected {} and got {}'.format(prov_data_os, os)
