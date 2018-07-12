@@ -8,11 +8,10 @@ from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import testgen
-from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to, navigator
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-from cfme.v2v.migrations import MigrationDashboardView
 
 pytestmark = [pytest.mark.ignore_stream('5.8')]
 
@@ -196,17 +195,17 @@ vms = []
 
 
 @pytest.fixture(scope="module")
-def vm_list(request, appliance, provider):
+def vm_list(request, appliance, nvc_prov, rhvm_prov):
     """Fixture to provide list of vm objects"""
     # TODO: Need to add list of vm and its configuration in cfme_data.yaml
-    templates = [provider.data.templates.big_template['name']]
+    templates = [nvc_prov.data.templates.big_template['name']]
     for template in templates:
         vm_name = random_vm_name(context='v2v-auto')
-        collection = appliance.provider_based_collection(provider)
-        vm = collection.instantiate(vm_name, provider, template_name=template)
+        collection = appliance.provider_based_collection(nvc_prov)
+        vm = collection.instantiate(vm_name, nvc_prov, template_name=template)
 
-        if not provider.mgmt.does_vm_exist(vm_name):
-            logger.info("deploying {} on provider {}".format(vm_name, provider.key))
+        if not nvc_prov.mgmt.does_vm_exist(vm_name):
+            logger.info("deploying {} on provider {}".format(vm_name, nvc_prov.key))
             vm.create_on_provider(allow_skip="default", datastore=request.param)
             vms.append(vm)
     return vms
@@ -264,7 +263,7 @@ def test_end_to_end_migration(appliance, enable_disable_migration_ui, vm_list, c
                 infra_map=mapping.name,
                 vm_list=vm_list,
                 start_migration=True)
-    view = appliance.browser.create_view(MigrationDashboardView)
+    view = appliance.browser.create_view(navigator.get_class(coll, 'All').VIEW)
     # explicit wait for spinner of in-progress status card
     wait_for(lambda: bool(view.progress_bar.is_plan_started(coll.name)),
              message="migration plan is starting, be patient please", delay=5, num_sec=120)
