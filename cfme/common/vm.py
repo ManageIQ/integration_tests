@@ -524,7 +524,7 @@ class BaseVMCollection(BaseCollection):
                 else:
                     raise Exception(
                         "Provisioning vm {} failed with: {}"
-                        .format(name, provision_request.row.last_message.text)
+                        .format(vm.name, provision_request.row.last_message.text)
                     )
         if find_in_cfme:
             vm.wait_to_appear(timeout=800)
