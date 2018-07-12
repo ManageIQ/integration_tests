@@ -333,7 +333,7 @@ def make_file_handler(filename, root=log_path.strpath, level=None, **kw):
     filename = os.path.join(root, filename)
     handler = logging.FileHandler(filename, **kw)
     formatter = logging.Formatter(
-        '%(asctime)-15s [%(levelname).1s] %(message)s (%(pathname)s:%(lineno)s)')
+        '%(asctime)-15s [%(levelname).1s] [%(name)s] %(message)s (%(pathname)s:%(lineno)s)')
     handler.setFormatter(formatter)
     if level is not None:
         handler.setLevel(level)
@@ -341,7 +341,8 @@ def make_file_handler(filename, root=log_path.strpath, level=None, **kw):
 
 
 def console_handler(level):
-    formatter = logging.Formatter('[%(levelname)s] %(message)s (%(pathname)s:%(lineno)s)')
+    formatter = logging.Formatter(
+        '[%(levelname)s] [%(name)s] %(message)s (%(pathname)s:%(lineno)s)')
     handler = logging.StreamHandler()
     handler.setLevel(level)
     handler.setFormatter(formatter)
