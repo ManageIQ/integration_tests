@@ -181,7 +181,7 @@ def test_create_pending_provision_requests(request, appliance, provider, small_t
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[BZ(1592326, forced_stream=['5.8', '5.9', '5.10'])])
+@pytest.mark.meta(blockers=[BZ(1592326, forced_streams=['5.8', '5.9', '5.10'])])
 def test_provision_attributes(appliance, provider, small_template, soft_assert):
     """Tests that it's possible to display additional attributes in /api/provision_requests/:id.
 
