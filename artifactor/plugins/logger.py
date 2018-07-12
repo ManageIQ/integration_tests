@@ -64,6 +64,7 @@ class Logger(ArtifactorBasePlugin):
         if not slaveid:
             slaveid = "Master"
         self.store[slaveid].in_progress = False
+        self.store[slaveid].handler.close()
 
     @ArtifactorBasePlugin.check_configured
     def log_message(self, log_record, slaveid):
