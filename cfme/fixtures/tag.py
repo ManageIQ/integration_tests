@@ -18,11 +18,12 @@ def category(appliance):
     # display_name should be with max length of 32
     else:
         display_name = fauxfactory.gen_alphanumeric(length=32)
-        cg = appliance.collections.categories.create(
-            name=fauxfactory.gen_alpha(8).lower(),
-            description=fauxfactory.gen_alphanumeric(length=32),
-            display_name=display_name
-        )
+
+    cg = appliance.collections.categories.create(
+        name=fauxfactory.gen_alpha(8).lower(),
+        description=fauxfactory.gen_alphanumeric(length=32),
+        display_name=display_name
+    )
     yield cg
     if cg.exists:
         cg.delete()
