@@ -298,7 +298,7 @@ class Perflog(object):
     tracking_events = {}
 
     def __init__(self, perflog_name='perf'):
-        self.logger = setup_logger(logging.getLogger(perflog_name))
+        self.logger, _ = setup_logger(logging.getLogger(perflog_name))
 
     def start(self, event_name):
         """Start tracking the named event
@@ -348,7 +348,7 @@ def console_handler(level):
     return handler
 
 
-def setup_logger(logger):
+def setup_logger(logger, file_handler=None):
     # prevent the root logger effective level from affecting us
     # this is a hack
     logger.setLevel(1)
@@ -361,7 +361,9 @@ def setup_logger(logger):
     # a custom RotatingFileHandler class. At some point, we should do that, and move the
     # entire logging config into env.yaml
 
-    logger.addHandler(make_file_handler(logger.name + '.log', level=conf['level']))
+    if not file_handler:
+        file_handler = make_file_handler(logger.name + '.log', level=conf['level'])
+    logger.addHandler(file_handler)
 
     if conf['errors_to_console']:
         logger.addHandler(console_handler(logging.ERROR))
@@ -369,7 +371,7 @@ def setup_logger(logger):
         logger.addHandler(console_handler(conf['to_console']))
 
     logger.addFilter(_RelpathFilter())
-    return logger
+    return logger, file_handler
 
 
 def create_sublogger(logger_sub_name):
@@ -449,7 +451,9 @@ class ArtifactorHandler(logging.Handler):
             )
 
 
-logger = setup_logger(logging.getLogger('cfme'))
+logger, cfme_file_handler = setup_logger(logging.getLogger('cfme'))
+# Have wrapanapi log to the same fileHandler as cfme
+setup_logger(logging.getLogger('wrapanapi'), cfme_file_handler)
 artifactor_handler = ArtifactorHandler()
 logger.addHandler(artifactor_handler)
 
