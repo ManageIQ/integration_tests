@@ -159,7 +159,7 @@ def test_automate_can_edit_copied_method(appliance, request):
     )
 
     copied_method.update({
-        'inline_name': fauxfactory.gen_alpha()
+        'name': fauxfactory.gen_alpha()
     })
 
 
