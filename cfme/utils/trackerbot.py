@@ -1,10 +1,10 @@
 import argparse
 import json
 import time
+from collections import defaultdict
+
 import requests
 import slumber
-
-from collections import defaultdict
 from six.moves.urllib_parse import urlparse, parse_qs
 
 from cfme.utils.conf import env
@@ -289,13 +289,16 @@ def depaginate(api, result):
     }
 
 
-def composite_uncollect(build, source='jenkins'):
+def composite_uncollect(build, source='jenkins', limit_ts=None):
     """Composite build function"""
     since = env.get('ts', time.time())
+    params = {"build": build, "source": source, "since": since}
+    if limit_ts:
+        params['limit_ts'] = limit_ts
     try:
         resp = session.get(
             conf['ostriz'],
-            params={"build": build, "source": source, "since": since},
+            params=params,
             timeout=10)
         return resp.json()
     except Exception as e:
