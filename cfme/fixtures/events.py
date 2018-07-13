@@ -56,7 +56,7 @@ from cfme.utils.wait import wait_for, TimedOutError
 
 
 # xxx better logger name
-logger = setup_logger(logging.getLogger('events'))
+logger, _ = setup_logger(logging.getLogger('events'))
 
 
 @pytest.hookimpl(hookwrapper=True)

@@ -350,6 +350,19 @@ def console_handler(level):
 
 
 def setup_logger(logger, file_handler=None):
+    """
+    Given a logger with 'name', set up that logger with proper levels based on logging conf
+
+    If logging conf is not specified for the 'name', then _default_conf defined in this
+    file is used.
+
+    Args:
+        file_handler -- FileHandler to attach to this logger.
+            If None, a new one is created with name "<logger_name>.log"
+
+    Returns:
+        tuple of (<logger>, <file handler attached to this logger>)
+    """
     # prevent the root logger effective level from affecting us
     # this is a hack
     logger.setLevel(1)
