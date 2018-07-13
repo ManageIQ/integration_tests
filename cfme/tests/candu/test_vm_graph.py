@@ -1,6 +1,7 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -15,7 +16,8 @@ pytestmark = [
     test_requirements.c_and_u,
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider([VMwareProvider, RHEVMProvider, EC2Provider, AzureProvider],
-                         required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')])
+                        scope='module',
+                        required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')])
 ]
 
 VM_GRAPHS = ['vm_cpu', 'vm_cpu_state', 'vm_memory', 'vm_disk', 'vm_network']
@@ -81,8 +83,13 @@ def test_vm_most_recent_hour_graph_screen(graph_type, provider, enable_candu):
     assert graph_data > 0
 
 
-# To-Do add support for other provider
-@pytest.mark.provider([VMwareProvider], scope='module', override=True)
+@pytest.mark.uncollectif(lambda provider, interval, graph_type:
+                         ((provider.one_of(RHEVMProvider) or provider.one_of(AzureProvider)) and
+                          graph_type == "vm_cpu_state") or
+                         (provider.one_of(EC2Provider) and
+                          graph_type in ["vm_cpu_state", "vm_memory", "vm_disk"]) or
+                         ((provider.one_of(CloudProvider) or provider.one_of(RHEVMProvider)) and
+                         interval == 'Daily'))
 @pytest.mark.parametrize('interval', INTERVAL)
 @pytest.mark.parametrize('graph_type', VM_GRAPHS)
 def test_graph_screen(provider, interval, graph_type, enable_candu, collect_data):
