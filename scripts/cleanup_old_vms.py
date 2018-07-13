@@ -1,7 +1,6 @@
 #!/usr/bin/env python2
 import argparse
-import datetime
-from datetime import timedelta
+from datetime import timedelta, datetime
 import re
 import sys
 from collections import namedtuple
@@ -11,6 +10,7 @@ from multiprocessing import Manager, Pool
 import pytz
 from tabulate import tabulate
 from wrapanapi.exceptions import VMInstanceNotFound
+from six.moves import input
 
 from cfme.utils.appliance import DummyAppliance
 from cfme.utils.log import logger, add_stdout_handler
@@ -156,7 +156,7 @@ def scan_vm(provider_key, vm_name, delta, match_queue, scan_failure_queue):
     Returns:
         None: Uses the Queues to 'return' data
     """
-    now = datetime.datetime.now(tz=pytz.UTC)
+    now = datetime.now(tz=pytz.UTC)
     # Nested exceptions to try and be safe about the scanned values and to get complete results
     failure = False
     status = NULL
@@ -309,7 +309,7 @@ def cleanup_vms(texts, max_hours=24, providers=None, tags=None, prompt=True):
         scan_fail_vms.append(scan_fail_queue.get())
 
     if vms_to_delete and prompt:
-        yesno = raw_input('Delete these VMs? [y/N]: ')
+        yesno = input('Delete these VMs? [y/N]: ')
         if str(yesno).lower() != 'y':
             logger.info('Exiting.')
             return 0
