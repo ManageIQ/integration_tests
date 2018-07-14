@@ -1396,7 +1396,8 @@ class AppliancePool(MetadataMixin):
     @property
     def fulfilled(self):
         try:
-            return all(a.ready for a in self.appliances)
+            return (len(self.appliance_ips) == self.total_count and
+                    all(a.ready for a in self.appliances))
         except ObjectDoesNotExist:
             return False
 
