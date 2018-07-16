@@ -658,13 +658,13 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
             pool.save(update_fields=['finished'])
     else:
         # Look whether we can swap any provisioning appliance with some in shepherd
-        pool.logger.info("Replacing unfinished appliances with ones from pool")
+        pool.logger.info("Pool isn't fulfilled yet")
         unfinished = list(
             Appliance.objects.filter(
                 appliance_pool=pool, ready=False, marked_for_deletion=False).all())
         random.shuffle(unfinished)
-        pool.logger.info('There are %s unfinished appliances', len(unfinished))
         if len(unfinished) > 0:
+            pool.logger.info('There are %s unfinished appliances', len(unfinished))
             n = Appliance.give_to_pool(pool, len(unfinished))
             with transaction.atomic():
                 for _ in range(n):
