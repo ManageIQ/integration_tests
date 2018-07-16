@@ -1,5 +1,6 @@
 import pytest
 import requests
+import xmltodict
 from cfme.containers.provider import ContainersProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -88,3 +89,22 @@ def test_validate_metrics_collection_provider_gui(provider,
                 "No memory's metrics exist in the memory utilization graph!")
     soft_assert(utilization.network.all_data,
                 "No network's metrics exist in the network utilization graph!")
+
+
+def test_flash_msg_not_contains_html_tags(provider):
+    edit_view = navigate_to(provider, 'Edit')
+    metrics_view = getattr(provider.endpoints_form(edit_view), "metrics")
+    metrics_view.validate.click()
+    flash_msg_text = '/n'.join(edit_view.flash.read())
+
+    # Try to parse flash message as  HTML
+    # if the parsing finished successfully, It's a sign for HTML tags exists in
+    # the flash msg which has to fail the test
+    # otherwise the test pass
+    is_translated_to_html = False
+    try:
+        xmltodict.parse(flash_msg_text)
+    except xmltodict.expat.ExpatError:
+        is_translated_to_html = True
+
+    assert is_translated_to_html, "Flash massage contains HTML tags"
