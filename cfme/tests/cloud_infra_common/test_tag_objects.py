@@ -10,8 +10,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.tier(2),
-    pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([InfraProvider, CloudProvider], selector=ONE_PER_CATEGORY)
+    pytest.mark.usefixtures('setup_provider')
 ]
 
 
@@ -66,23 +65,21 @@ def _tag_cleanup(test_item, tag):
     return result
 
 
-@pytest.fixture(params=cloud_test_items, ids=([item[0] for item in cloud_test_items]),
-                scope='module')
+@pytest.fixture(params=cloud_test_items, ids=([item[0] for item in cloud_test_items]))
 def cloud_test_item(request, appliance, provider):
     collection_name, destination = request.param
     return get_collection_entity(
         appliance, collection_name, destination, provider)
 
 
-@pytest.fixture(params=infra_test_items, ids=([item[0] for item in infra_test_items]),
-                scope='module')
+@pytest.fixture(params=infra_test_items, ids=([item[0] for item in infra_test_items]))
 def infra_test_item(request, appliance, provider):
     collection_name, destination = request.param
     return get_collection_entity(
         appliance, collection_name, destination, provider)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture
 def tagging_check(tag):
 
     def _tagging_check(test_item, tag_place):
@@ -106,21 +103,14 @@ def tagging_check(tag):
     return _tagging_check
 
 
-@pytest.mark.uncollectif(lambda provider: provider.one_of(InfraProvider))
+@pytest.mark.provider([CloudProvider], selector=ONE_PER_CATEGORY)
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
 def test_tag_cloud_objects(tagging_check, cloud_test_item, tag_place):
     """ Test for cloud items tagging action from list and details pages """
     tagging_check(cloud_test_item, tag_place)
 
 
-@pytest.mark.uncollectif(lambda provider: provider.one_of(CloudProvider))
-@pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
-def test_tag_infra_objects(tagging_check, infra_test_item, tag_place):
-    """ Test for infrastructure items tagging action from list and details pages """
-    tagging_check(infra_test_item, tag_place)
-
-
-@pytest.mark.uncollectif(lambda provider: provider.one_of(InfraProvider))
+@pytest.mark.provider([CloudProvider], selector=ONE_PER_CATEGORY)
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
 def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility, appliance):
     """ Tests infra provider and its items honors tag visibility
@@ -138,7 +128,14 @@ def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility,
         check_item_visibility(cloud_test_item, visibility)
 
 
-@pytest.mark.uncollectif(lambda provider: provider.one_of(CloudProvider))
+@pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
+@pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
+def test_tag_infra_objects(tagging_check, infra_test_item, tag_place):
+    """ Test for infrastructure items tagging action from list and details pages """
+    tagging_check(infra_test_item, tag_place)
+
+
+@pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
 def test_tagvis_infra_object(infra_test_item, check_item_visibility, visibility):
     """ Tests infra provider and its items honors tag visibility
