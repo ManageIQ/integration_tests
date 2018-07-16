@@ -1,7 +1,15 @@
 exclude: ^data
 repos:
+- repo: https://github.com/asottile/seed-isort-config
+  rev: v1.0.1
+  hooks:
+  - id: seed-isort-config
+- repo: https://github.com/pre-commit/mirrors-isort
+  rev: v4.3.4
+  hooks:
+  - id: isort
 - repo: https://github.com/ambv/black
-  rev: 18.6b2
+  rev: 18.6b4
   hooks:
   - id: black
     args: [--safe, --quiet]
@@ -19,6 +27,6 @@ repos:
   - id: flake8
     exclude: '.*' # there is flake8 issues in the codebase - fixing is a followup
 - repo: https://github.com/asottile/pyupgrade
-  rev: v1.3.1
+  rev: v1.4.0
   hooks:
   - id: pyupgrade
