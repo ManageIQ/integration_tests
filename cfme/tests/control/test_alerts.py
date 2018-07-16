@@ -23,6 +23,8 @@ from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 from . import do_scan, wait_for_ssa_enabled
 
+from wrapanapi import VmState
+
 pf1 = ProviderFilter(classes=[InfraProvider])
 pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)
 
@@ -210,11 +212,10 @@ def wait_candu(full_template_vm):
 
 @pytest.fixture(scope="function")
 def ssh(provider, full_template, full_template_vm):
-    vm_name = full_template_vm.name
     with SSHClient(
             username=credentials[full_template.creds]['username'],
             password=credentials[full_template.creds]['password'],
-            hostname=provider.mgmt.get_ip_address(vm_name)) as ssh_client:
+            hostname=full_template_vm.mgmt.ip) as ssh_client:
         yield ssh_client
 
 
@@ -247,18 +248,15 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider
 
     setup_for_alerts(request, [alert], "VM Power On", vm.name, provider)
 
-    if not provider.mgmt.is_vm_stopped(vm.name):
-        provider.mgmt.stop_vm(vm.name)
+    vm.mgmt.ensure_state(VmState.STOPPED)
     provider.refresh_provider_relationships()
     vm.wait_for_vm_state_change(vm.STATE_OFF)
     for i in range(5):
         vm.power_control_from_cfme(option=vm.POWER_ON, cancel=False)
-        wait_for(lambda: provider.mgmt.is_vm_running(vm.name), num_sec=300,
-                 message="Check if vm is running")
+        vm.mgmt.wait_for_state(VmState.RUNNING, timeout=300)
         vm.wait_for_vm_state_change(vm.STATE_ON)
         vm.power_control_from_cfme(option=vm.POWER_OFF, cancel=False)
-        wait_for(lambda: provider.mgmt.is_vm_stopped(vm.name), num_sec=300,
-                 message="Check if vm is stopped")
+        vm.mgmt.wait_for_state(VmState.STOPPED)
         vm.wait_for_vm_state_change(vm.STATE_OFF)
 
     wait_for_alert(smtp_test, alert, delay=16 * 60)
@@ -429,7 +427,7 @@ def test_alert_hardware_reconfigured(request, configure_fleecing, alert_collecti
     setup_for_alerts(request, [alert], vm_name=vm.name)
     wait_for_ssa_enabled(vm)
     sockets_count = vm.configuration.hw.sockets
-    vm.power_control_from_provider("Power Off")
+
     for i in range(1, 3):
         do_scan(vm, rediscover=False)
         vm.reconfigure(changes={"cpu": True, "sockets": str(sockets_count + i), "disks": ()})

@@ -1,3 +1,4 @@
+from cached_property import cached_property
 import re
 
 from cfme.utils.template.base import ProviderTemplateUpload, log_wrap
@@ -48,12 +49,15 @@ class VMWareTemplateUpload(ProviderTemplateUpload):
             if upload_result.success:
                 return True
 
+    @cached_property
+    def _vm_mgmt(self):
+        return self.mgmt.get_vm(self.template_name)
+
     @log_wrap("add disk to VM")
     def add_disk_to_vm(self):
         # adding disk #1 (base disk is 0)
-        result, msg = self.mgmt.add_disk_to_vm(vm_name=self.template_name,
-                                               capacity_in_kb=8388608,
-                                               provision_type='thin')
+        result, msg = self._vm_mgmt.add_disk(capacity_in_kb=8388608,
+                                             provision_type='thin')
 
         if result[0]:
             return True
@@ -61,7 +65,7 @@ class VMWareTemplateUpload(ProviderTemplateUpload):
     @log_wrap("templatize VM")
     def templatize_vm(self):
         try:
-            self.mgmt.mark_as_template(self.template_name)
+            self._vm_mgmt.mark_as_template()
             return True
         except Exception:
             return False

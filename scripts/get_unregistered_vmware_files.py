@@ -92,15 +92,15 @@ def get_registered_vm_files(provider_key):
         print("{} processing all the registered files..".format(provider_key))
         vm_registered_files = defaultdict(set)
         provider = get_mgmt(provider_key)
-        for vm_name in provider.list_vm():
+        for vm in provider.list_vms():
             try:
-                vm_file_path = provider.get_vm_config_files_path(vm_name)
+                vm_file_path = vm.get_config_files_path()
                 vm_directory_name = re.findall(r'\s(.*)/\w*', vm_file_path)
-                vm_registered_files[vm_directory_name[0]] = vm_name
+                vm_registered_files[vm_directory_name[0]] = vm.name
             except Exception as e:
                 logger.error(e)
                 logger.error('Failed to get creation/boot time for {} on {}'.format(
-                    vm_name, provider_key))
+                    vm.name, provider_key))
                 continue
         print("\n**************************REGISTERED FILES ON {}***********************\n".format(
             provider_key))

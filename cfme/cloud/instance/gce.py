@@ -39,25 +39,6 @@ class GCEInstance(Instance):
             'on': [self.START],
             'off': [self.STOP, self.SOFT_REBOOT]}
 
-    def power_control_from_provider(self, option):
-        """Power control the instance from the provider
-
-        Args:
-            option: power control action to take against instance
-        Raises:
-            OptionNotAvailable: option param must have proper value
-        """
-        if option == GCEInstance.START:
-            self.provider.mgmt.start_vm(self.name)
-        elif option == GCEInstance.STOP:
-            self.provider.mgmt.stop_vm(self.name)
-        elif option == GCEInstance.RESTART:
-            self.provider.mgmt.restart_vm(self.name)
-        elif option == GCEInstance.TERMINATE:
-            self.provider.mgmt.delete_vm(self.name)
-        else:
-            raise OptionNotAvailable(option + " is not a supported action")
-
     @property
     def vm_default_args(self):
         """Represents dictionary used for Vm/Instance provision with GCE mandatory default args"""

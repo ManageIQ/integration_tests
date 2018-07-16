@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from wrapanapi import VmState
 
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
@@ -49,14 +50,14 @@ def provision_vm(provider, template):
 def small_test_vm(setup_provider_modscope, provider, small_template_modscope, request):
     vm = provision_vm(provider, small_template_modscope)
     yield vm
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
 
 
 @pytest.fixture(scope="module")
 def full_test_vm(setup_provider_modscope, provider, full_template_modscope, request):
     vm = provision_vm(provider, full_template_modscope)
     yield vm
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
 
 
 def new_snapshot(test_vm, has_name=True, memory=False, create_description=True):
@@ -92,7 +93,7 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
     # Power off the VM
     small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_OFF, cancel=False)
     small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_OFF)
-    soft_assert(small_test_vm.provider.mgmt.is_vm_stopped(small_test_vm.name), "VM is not stopped!")
+    soft_assert(small_test_vm.mgmt.is_stopped, "VM is not stopped!")
     # Check that checkbox is not displayed
     view = navigate_to(small_test_vm, 'SnapshotsAdd')
     assert not view.snapshot_vm_memory.is_displayed, (
@@ -163,7 +164,7 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     full_template = getattr(provider.data.templates, 'full_template')
     # Define parameters of the ssh connection
     ssh_kwargs = {
-        'hostname': snapshot1.parent_vm.provider.mgmt.get_ip_address(snapshot1.parent_vm.name),
+        'hostname': snapshot1.parent_vm.mgmt.ip,
         'username': credentials[full_template.creds]['username'],
         'password': credentials[full_template.creds]['password']
     }
@@ -205,7 +206,7 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     # Let's power it ON again
     full_test_vm.power_control_from_cfme(option=full_test_vm.POWER_ON, cancel=False)
     full_test_vm.wait_for_vm_state_change(desired_state=full_test_vm.STATE_ON, timeout=900)
-    soft_assert(full_test_vm.provider.mgmt.is_vm_running(full_test_vm.name), "vm not running")
+    soft_assert(full_test_vm.mgmt.is_running, "vm not running")
     # Wait for successful ssh connection
     wait_for(lambda: ssh_client.run_command('test -e snapshot1.txt').success,
              num_sec=400, delay=10, handle_exception=True, fail_func=ssh_client.close(),
@@ -296,9 +297,9 @@ def test_verify_vm_state_revert_snapshot(provider, parent_vm, small_test_vm):
     memory = 'with_memory' in parent_vm
 
     small_test_vm.power_control_from_cfme(option=power, cancel=False)
-    provider.mgmt.wait_vm_steady(small_test_vm.name)
+    small_test_vm.mgmt.wait_for_steady_state()
     setup_snapshot_env(small_test_vm, memory)
-    assert bool(small_test_vm.provider.mgmt.is_vm_running(small_test_vm.name)) == memory
+    assert bool(small_test_vm.mgmt.is_running) == memory
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider),
@@ -315,7 +316,7 @@ def test_operations_suspended_vm(small_test_vm, soft_assert):
     wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=snapshot1.refresh,
              message="Waiting for the first snapshot to become active")
     # Suspend the VM
-    small_test_vm.power_control_from_provider(option=small_test_vm.SUSPEND)
+    small_test_vm.mgmt.ensure_state(VmState.SUSPENDED)
     small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_SUSPENDED)
     # Create second snapshot when VM is suspended
     snapshot2 = new_snapshot(small_test_vm)
@@ -327,13 +328,13 @@ def test_operations_suspended_vm(small_test_vm, soft_assert):
     wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=snapshot1.refresh,
              message="Waiting for the first snapshot to become active after revert")
     # Check VM state, VM should be off
-    assert small_test_vm.provider.mgmt.is_vm_stopped(small_test_vm.name)
+    assert small_test_vm.mgmt.is_stopped
     # Revert back to second snapshot
     snapshot2.revert_to()
     wait_for(lambda: snapshot2.active, num_sec=300, delay=20, fail_func=snapshot2.refresh,
              message="Waiting for the second snapshot to become active after revert")
     # Check VM state, VM should be suspended
-    assert small_test_vm.provider.mgmt.is_vm_suspended(small_test_vm.name)
+    assert small_test_vm.mgmt.is_suspended
     # Try to delete both snapshots while the VM is suspended
     # The delete method will make sure the snapshots are indeed deleted
     snapshot1.delete()

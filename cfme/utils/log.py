@@ -298,7 +298,7 @@ class Perflog(object):
     tracking_events = {}
 
     def __init__(self, perflog_name='perf'):
-        self.logger = setup_logger(logging.getLogger(perflog_name))
+        self.logger, _ = setup_logger(logging.getLogger(perflog_name))
 
     def start(self, event_name):
         """Start tracking the named event
@@ -333,7 +333,7 @@ def make_file_handler(filename, root=log_path.strpath, level=None, **kw):
     filename = os.path.join(root, filename)
     handler = logging.FileHandler(filename, **kw)
     formatter = logging.Formatter(
-        '%(asctime)-15s [%(levelname).1s] %(message)s (%(pathname)s:%(lineno)s)')
+        '%(asctime)-15s [%(levelname).1s] [%(name)s] %(message)s (%(pathname)s:%(lineno)s)')
     handler.setFormatter(formatter)
     if level is not None:
         handler.setLevel(level)
@@ -341,14 +341,28 @@ def make_file_handler(filename, root=log_path.strpath, level=None, **kw):
 
 
 def console_handler(level):
-    formatter = logging.Formatter('[%(levelname)s] %(message)s (%(pathname)s:%(lineno)s)')
+    formatter = logging.Formatter(
+        '[%(levelname)s] [%(name)s] %(message)s (%(pathname)s:%(lineno)s)')
     handler = logging.StreamHandler()
     handler.setLevel(level)
     handler.setFormatter(formatter)
     return handler
 
 
-def setup_logger(logger):
+def setup_logger(logger, file_handler=None):
+    """
+    Given a logger with 'name', set up that logger with proper levels based on logging conf
+
+    If logging conf is not specified for the 'name', then _default_conf defined in this
+    file is used.
+
+    Args:
+        file_handler -- FileHandler to attach to this logger.
+            If None, a new one is created with name "<logger_name>.log"
+
+    Returns:
+        tuple of (<logger>, <file handler attached to this logger>)
+    """
     # prevent the root logger effective level from affecting us
     # this is a hack
     logger.setLevel(1)
@@ -361,7 +375,9 @@ def setup_logger(logger):
     # a custom RotatingFileHandler class. At some point, we should do that, and move the
     # entire logging config into env.yaml
 
-    logger.addHandler(make_file_handler(logger.name + '.log', level=conf['level']))
+    if not file_handler:
+        file_handler = make_file_handler(logger.name + '.log', level=conf['level'])
+    logger.addHandler(file_handler)
 
     if conf['errors_to_console']:
         logger.addHandler(console_handler(logging.ERROR))
@@ -369,7 +385,7 @@ def setup_logger(logger):
         logger.addHandler(console_handler(conf['to_console']))
 
     logger.addFilter(_RelpathFilter())
-    return logger
+    return logger, file_handler
 
 
 def create_sublogger(logger_sub_name):
@@ -449,9 +465,13 @@ class ArtifactorHandler(logging.Handler):
             )
 
 
-logger = setup_logger(logging.getLogger('cfme'))
+logger, cfme_file_handler = setup_logger(logging.getLogger('cfme'))
+# Have wrapanapi log to the same FileHandler as cfme
+wrapanapi_logger, _ = setup_logger(logging.getLogger('wrapanapi'), cfme_file_handler)
 artifactor_handler = ArtifactorHandler()
 logger.addHandler(artifactor_handler)
+# Also have wrapanapi use the ArtifactorHandler to combine cfme+wrapanapi logging there
+wrapanapi_logger.addHandler(artifactor_handler)
 
 add_prefix = PrefixAddingLoggerFilter()
 logger.addFilter(add_prefix)
@@ -492,7 +512,7 @@ def _configure_warnings():
     wlog.propagate = False
 
 
-def setup_for_worker(workername, loggers=('cfme', 'py.warnings')):
+def setup_for_worker(workername, loggers=('cfme', 'py.warnings', 'wrapanapi')):
     # this function is a bad hack, at some point we want a more ballanced setup
     for logger in loggers:
         log = logging.getLogger(logger)

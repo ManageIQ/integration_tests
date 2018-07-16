@@ -54,36 +54,6 @@ class OpenStackInstance(Instance):
             'on': [self.START],
             'off': [self.SUSPEND, self.SOFT_REBOOT, self.HARD_REBOOT]}
 
-    def power_control_from_provider(self, option):
-        """Power control the instance from the provider
-
-        Args:
-            option: power control action to take against instance
-
-        Raises:
-            OptionNotAvailable: option param must have proper value
-        """
-        if option == OpenStackInstance.START:
-            self.provider.mgmt.start_vm(self.name)
-        elif option == OpenStackInstance.STOP:
-            self.provider.mgmt.stop_vm(self.name)
-        elif option == OpenStackInstance.SUSPEND:
-            self.provider.mgmt.suspend_vm(self.name)
-        elif option == OpenStackInstance.PAUSE:
-            self.provider.mgmt.pause_vm(self.name)
-        elif option == OpenStackInstance.SHELVE:
-            # TODO: rewrite it once wrapanapi will get shelve
-            # and shelve_offload methods
-            self.provider.mgmt._find_instance_by_name(self.name).shelve()
-        elif option == OpenStackInstance.SHELVE_OFFLOAD:
-            self.provider.mgmt._find_instance_by_name(self.name).shelve_offload()
-        elif option == OpenStackInstance.RESTART:
-            self.provider.mgmt.restart_vm(self.name)
-        elif option == OpenStackInstance.TERMINATE:
-            self.provider.mgmt.delete_vm(self.name)
-        else:
-            raise OptionNotAvailable(option + " is not a supported action")
-
 
 @attr.s
 class OpenstackInstanceCollection(InstanceCollection):

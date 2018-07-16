@@ -137,19 +137,19 @@ def delete_stacks(provider_mgmt, excluded_stacks, stack_template, output):
     stack_list = []
     provider_name = provider_mgmt.kwargs['name']
     try:
-        for stack in provider_mgmt.list_stack():
+        for stack in provider_mgmt.list_stacks():
             if (excluded_stacks and
-                    stack.stack_name in excluded_stacks or
-                    not stack.stack_name.startswith(stack_template)):
-                logger.info("  Excluding Stack name: %r", stack.stack_name)
+                    stack.name in excluded_stacks or
+                    not stack.name.startswith(stack_template)):
+                logger.info("  Excluding Stack name: %r", stack.name)
                 continue
             else:
                 today = datetime.utcnow().replace(tzinfo=None)
                 some_date = today - timedelta(days=1)
                 if stack.creation_time < some_date:
-                    stack_list.append([provider_name, stack.stack_name])
+                    stack_list.append([provider_name, stack.name])
                     try:
-                        provider_mgmt.delete_stack(stack.stack_name)
+                        stack.cleanup()
                     except Exception as e:
                         logger.error(e)
                         continue

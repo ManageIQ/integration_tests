@@ -41,6 +41,7 @@ from cfme.utils.timeutil import parsetime
 from cfme.utils.trackerbot import api, depaginate
 from cfme.utils.wait import wait_for
 
+from wrapanapi import VmState, Openshift
 
 LOCK_EXPIRE = 60 * 15  # 15 minutes
 TRACKERBOT_PAGINATE = 100
@@ -185,7 +186,11 @@ def kill_appliance_delete(self, appliance_id, _delete_already_issued=False):
             appliance.set_status("Deleting the appliance from provider")
             # If we haven't issued the delete order, do it now
             if not _delete_already_issued:
-                appliance.provider_api.delete_vm(appliance.name)
+                # TODO: change after openshift wrapanapi refactor
+                if isinstance(appliance.provider_api, Openshift):
+                    appliance.provider_api.delete_vm(appliance.name)
+                else:
+                    appliance.vm_mgmt.cleanup()
                 delete_issued = True
             # In any case, retry to wait for the VM to be deleted, but next time do not issue delete
             self.retry(args=(appliance_id, True), countdown=5, max_retries=60)
@@ -454,11 +459,23 @@ def prepare_template_deploy(self, template_id):
             if "allowed_datastores" not in kwargs and "allowed_datastores" in provider_data:
                 kwargs["allowed_datastores"] = provider_data["allowed_datastores"]
             self.logger.info("Deployment kwargs: {}".format(repr(kwargs)))
-            template.provider_api.deploy_template(
-                template.original_name, vm_name=template.name, **kwargs)
+
+            # TODO: change after openshift wrapanapi refactor
+            vm = None
+            if isinstance(template.provider_api, Openshift):
+                template.provider_api.deploy_template(
+                    template.original_name, vm_name=template.name, **kwargs)
+            else:
+                vm = template.template_mgmt.deploy(vm_name=template.name, **kwargs)
         else:
             template.set_status("Waiting for deployment to be finished.")
-            template.provider_api.wait_vm_running(template.name)
+            # TODO: change after openshift wrapanapi refactor
+            if isinstance(template.provider_api, Openshift):
+                template.provider_api.wait_vm_running(template.name)
+            else:
+                # 'vm' should not be 'None' here
+                # wrapanapi's template deploy method should return a wrapanapi VM object
+                vm.ensure_state(VmState.RUNNING)
     except Exception as e:
         template.set_status(
             "Could not properly deploy the template. Retrying. {}: {}".format(
@@ -560,8 +577,12 @@ def prepare_template_poweroff(self, template_id):
         if not template.provider.is_working:
             raise RuntimeError('Provider is not working.')
         template.set_status("Powering off")
-        template.provider_api.stop_vm(template.name)
-        template.provider_api.wait_vm_stopped(template.name)
+        # TODO: change after openshift wrapanapi refactor
+        if isinstance(template.provider_api, Openshift):
+            template.provider_api.stop_vm(template.name)
+            template.provider_api.wait_vm_stopped(template.name)
+        else:
+            template.vm_mgmt.ensure_state(VmState.STOPPED)
     except Exception as e:
         template.set_status("Could not power off the appliance. Retrying.")
         self.retry(args=(template_id,), exc=e, countdown=10, max_retries=5)
@@ -581,8 +602,12 @@ def prepare_template_finish(self, template_id):
             Template.objects.get(id=template_id).temporary_name = tmp_name  # metadata, autosave
         else:
             tmp_name = template.temporary_name
-        template.provider_api.mark_as_template(
-            template.name, temporary_name=tmp_name, delete_on_error=False)
+            # TODO: change after openshift wrapanapi refactor
+            if isinstance(template.provider_api, Openshift):
+                template.provider_api.mark_as_template(
+                    template.name, temporary_name=tmp_name, delete_on_error=False)
+            else:
+                template.vm_mgmt.mark_as_template(temporary_name=tmp_name, delete_on_error=False)
         with transaction.atomic():
             template = Template.objects.get(id=template_id)
             template.ready = True
@@ -607,15 +632,27 @@ def prepare_template_delete_on_error(self, template_id):
             raise RuntimeError('Provider is not working.')
         template.set_status("Template creation failed. Deleting it.")
         if template.provider_api.does_vm_exist(template.name):
-            template.provider_api.delete_vm(template.name)
+            # TODO: change after openshift wrapanapi refactor
+            if isinstance(template.provider_api, Openshift):
+                template.provider_api.delete_vm(template.name)
+            else:
+                template.vm_mgmt.cleanup()
             wait_for(template.provider_api.does_vm_exist, [template.name], timeout='5m', delay=10)
         if template.provider_api.does_template_exist(template.name):
-            template.provider_api.delete_template(template.name)
+            # TODO: change after openshift wrapanapi refactor
+            if isinstance(template.provider_api, Openshift):
+                template.provider_api.delete_template(template.name)
+            else:
+                template.provider_api.get_template(template.name).cleanup()
             wait_for(
                 template.provider_api.does_template_exist, [template.name], timeout='5m', delay=10)
         if (template.temporary_name is not None and
                 template.provider_api.does_template_exist(template.temporary_name)):
-            template.provider_api.delete_template(template.temporary_name)
+            # TODO: change after openshift wrapanapi refactor
+            if isinstance(template.provider_api, Openshift):
+                template.provider_api.delete_template(template.temporary_name)
+            else:
+                template.provider_api.get_template(template.temporary_name).cleanup()
             wait_for(
                 template.provider_api.does_template_exist,
                 [template.temporary_name], timeout='5m', delay=10)
@@ -841,10 +878,16 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
                     kwargs['cpu'] = appliance.appliance_pool.override_cpu
             if appliance.is_openshift and appliance.template.custom_data:
                 kwargs['tags'] = appliance.template.custom_data.get('TAGS')
-            vm_data = appliance.provider_api.deploy_template(appliance.template.name,
-                      vm_name=appliance.name, progress_callback=lambda progress:
-                appliance.set_status("Deploy progress: {}".format(progress)), **kwargs)
+
+            # TODO: change after openshift wrapanapi refactor
             if appliance.is_openshift:
+                vm_data = appliance.provider_api.deploy_template(
+                    appliance.template.name,
+                    vm_name=appliance.name,
+                    progress_callback=lambda progress: appliance.set_status(
+                        "Deploy progress: {}".format(progress)),
+                    **kwargs
+                )
                 with transaction.atomic():
                     appliance.openshift_ext_ip = vm_data['external_ip']
                     appliance.openshift_project = vm_data['project']
@@ -852,6 +895,13 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
                     appliance.save(update_fields=['openshift_ext_ip',
                                                   'openshift_project',
                                                   'ip_address'])
+            else:
+                appliance.template_mgmt.deploy(
+                    vm_name=appliance.name,
+                    progress_callback=lambda progress: appliance.set_status(
+                        "Deploy progress: {}".format(progress)),
+                    **kwargs
+                )
     except Exception as e:
         messages = {"limit", "cannot add", "quota"}
         if isinstance(e, OSOverLimit):
@@ -874,11 +924,16 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
                 if appliance.provider_api.does_vm_exist(appliance.name):
                     appliance.set_status("Clonning finished with errors. So, removing vm")
                     # Better to check it, you never know when does that fail
-                    appliance.provider_api.delete_vm(appliance.name)
+                    # TODO: change after openshift wrapanapi refactor
+                    if appliance.is_openshift:
+                        appliance.provider_api.delete_vm(appliance.name)
+                    else:
+                        appliance.vm_mgmt.cleanup()
+
                     wait_for(
                         appliance.provider_api.does_vm_exist,
                         [appliance.name], timeout='5m', delay=10)
-            except:
+            except Exception:
                 pass  # Diaper here
 
             self.logger.warning('Appliance %s was not deployed correctly. '
@@ -946,11 +1001,23 @@ def appliance_power_on(self, appliance_id):
     try:
         if not appliance.provider.is_working:
             raise RuntimeError('Provider is not working.')
-        if appliance.provider_api.is_vm_running(appliance.name):
-            try:
-                current_ip = appliance.provider_api.current_ip_address(appliance.name)
-            except Exception:
-                current_ip = None
+        # TODO: change after openshift wrapanapi refactor
+        # we could use vm.ensure_state(VmState.RUNNING) here in future
+        if appliance.is_openshift:
+            vm_running = appliance.provider_api.is_vm_running(appliance.name)
+            vm_steady = appliance.provider_api.in_steady_state(appliance.name)
+        else:
+            vm_running = appliance.vm_mgmt.is_running
+            vm_steady = appliance.vm_mgmt.in_steady_state
+        if vm_running:
+            # TODO: change after openshift wrapanapi refactor
+            if appliance.is_openshift:
+                try:
+                    current_ip = appliance.provider_api.current_ip_address(appliance.name)
+                except Exception:
+                    current_ip = None
+            else:
+                current_ip = appliance.vm_mgmt.ip
             if current_ip is not None:
                 # IP present
                 Appliance.objects.get(id=appliance_id).set_status("Appliance was powered on.")
@@ -975,13 +1042,22 @@ def appliance_power_on(self, appliance_id):
                 # IP not present yet
                 Appliance.objects.get(id=appliance_id).set_status("Appliance waiting for IP.")
                 self.retry(args=(appliance_id, ), countdown=20, max_retries=40)
-        elif not appliance.provider_api.in_steady_state(appliance.name):
+        elif not vm_steady:
+            # TODO: change after openshift wrapanapi refactor
+            if appliance.is_openshift:
+                current_state = appliance.provider_api.vm_status(appliance.name)
+            else:
+                current_state = appliance.vm_mgmt.state
             appliance.set_status("Waiting for appliance to be steady (current state: {}).".format(
-                appliance.provider_api.vm_status(appliance.name)))
+                current_state))
             self.retry(args=(appliance_id, ), countdown=20, max_retries=40)
         else:
             appliance.set_status("Powering on.")
-            appliance.provider_api.start_vm(appliance.name)
+            # TODO: change after openshift wrapanapi refactor
+            if appliance.is_openshift:
+                appliance.provider_api.start_vm(appliance.name)
+            else:
+                appliance.vm_mgmt.start()
             self.retry(args=(appliance_id, ), countdown=20, max_retries=40)
     except Exception as e:
         provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
@@ -1025,7 +1101,20 @@ def appliance_power_off(self, appliance_id):
         if not appliance.provider.is_working:
             raise RuntimeError('Provider is not working.')
         api = appliance.provider_api
-        if not api.does_vm_exist(appliance.name) or api.is_vm_stopped(appliance.name):
+        # TODO: change after openshift wrapanapi refactor
+        # we could use vm.ensure_state(VmState.STOPPED) here in future
+        vm_exists = False
+        if api.does_vm_exist(appliance.name):
+            vm_exists = True
+            if appliance.is_openshift:
+                vm_stopped = api.is_vm_stopped(appliance.name)
+                vm_suspended = api.is_vm_suspended(appliance.name)
+                vm_steady = api.in_steady_state(appliance.name)
+            else:
+                vm_stopped = appliance.vm_mgmt.is_vm_stopped
+                vm_suspended = appliance.vm_mgmt.is_suspended
+                vm_steady = appliance.vm_mgmt.in_steady_state
+        if not vm_exists or vm_stopped:
             Appliance.objects.get(id=appliance_id).set_status("Appliance was powered off.")
             with transaction.atomic():
                 appliance = Appliance.objects.get(id=appliance_id)
@@ -1034,17 +1123,30 @@ def appliance_power_off(self, appliance_id):
                 appliance.save()
             sync_provider_hw.delay(appliance.template.provider.id)
             return
-        elif api.is_vm_suspended(appliance.name):
+        elif vm_suspended:
             appliance.set_status("Starting appliance from suspended state to properly off it.")
-            api.start_vm(appliance.name)
+            # TODO: change after openshift wrapanapi refactor
+            if appliance.is_openshift:
+                api.start_vm(appliance.name)
+            else:
+                appliance.vm_mgmt.start()
             self.retry(args=(appliance_id,), countdown=20, max_retries=40)
-        elif not api.in_steady_state(appliance.name):
+        elif not vm_steady:
+            # TODO: change after openshift wrapanapi refactor
+            if appliance.is_openshift:
+                vm_status = api.vm_status(appliance.name)
+            else:
+                vm_status = appliance.vm_mgmt.state
             appliance.set_status("Waiting for appliance to be steady (current state: {}).".format(
-                api.vm_status(appliance.name)))
+                vm_status))
             self.retry(args=(appliance_id,), countdown=20, max_retries=40)
         else:
             appliance.set_status("Powering off.")
-            api.stop_vm(appliance.name)
+            # TODO: change after openshift wrapanapi refactor
+            if appliance.is_openshift:
+                api.stop_vm(appliance.name)
+            else:
+                appliance.vm_mgmt.stop()
             self.retry(args=(appliance_id,), countdown=20, max_retries=40)
     except Exception as e:
         provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
@@ -1061,7 +1163,15 @@ def appliance_suspend(self, appliance_id):
     try:
         if not appliance.provider.is_working:
             raise RuntimeError('Provider is not working.')
-        if appliance.provider_api.is_vm_suspended(appliance.name):
+        # TODO: change after openshift wrapanapi refactor
+        # we could use vm.ensure_state(VmState.SUSPENDED) here in future
+        if appliance.is_openshift:
+            vm_suspended = api.is_vm_suspended(appliance.name)
+            vm_steady = api.in_steady_state(appliance.name)
+        else:
+            vm_suspended = appliance.vm_mgmt.is_suspended
+            vm_steady = appliance.vm_mgmt.in_steady_state
+        if vm_suspended:
             Appliance.objects.get(id=appliance_id).set_status("Appliance was suspended.")
             with transaction.atomic():
                 appliance = Appliance.objects.get(id=appliance_id)
@@ -1070,13 +1180,22 @@ def appliance_suspend(self, appliance_id):
                 appliance.save()
             sync_provider_hw.delay(appliance.template.provider.id)
             return
-        elif not appliance.provider_api.in_steady_state(appliance.name):
+        elif not vm_steady:
+            # TODO: change after openshift wrapanapi refactor
+            if appliance.is_openshift:
+                vm_status = api.vm_status(appliance.name)
+            else:
+                vm_status = appliance.vm_mgmt.state
             appliance.set_status("Waiting for appliance to be steady (current state: {}).".format(
-                appliance.provider_api.vm_status(appliance.name)))
+                vm_status))
             self.retry(args=(appliance_id,), countdown=20, max_retries=30)
         else:
             appliance.set_status("Suspending.")
-            appliance.provider_api.suspend_vm(appliance.name)
+            # TODO: change after openshift wrapanapi refactor
+            if appliance.is_openshift:
+                appliance.provider_api.suspend_vm(appliance.name)
+            else:
+                appliance.vm_mgmt.suspend()
             self.retry(args=(appliance_id,), countdown=20, max_retries=30)
     except Exception as e:
         provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
@@ -1091,7 +1210,11 @@ def retrieve_appliance_ip(self, appliance_id):
         if not appliance.provider.is_working:
             raise RuntimeError('Provider is not working.')
         appliance.set_status("Retrieving IP address.")
-        ip_address = appliance.provider_api.current_ip_address(appliance.name)
+        # TODO: change after openshift wrapanapi refactor
+        if appliance.is_openshift:
+            ip_address = appliance.provider_api.current_ip_address(appliance.name)
+        else:
+            ip_address = appliance.vm_mgmt.ip
         if ip_address is None:
             self.retry(args=(appliance_id,), countdown=30, max_retries=20)
         with transaction.atomic():
@@ -1120,10 +1243,10 @@ def refresh_appliances_provider(self, provider_id):
     """
     self.logger.info("Refreshing appliances in {}".format(provider_id))
     provider = Provider.objects.get(id=provider_id, working=True, disabled=False)
-    if not hasattr(provider.api, "all_vms"):
+    if not hasattr(provider.api, "list_vms"):
         # Ignore this provider
         return
-    vms = provider.api.all_vms()
+    vms = provider.api.list_vms()
     dict_vms = {}
     uuid_vms = {}
     for vm in vms:
@@ -1137,7 +1260,7 @@ def refresh_appliances_provider(self, provider_id):
             appliance.name = vm.name
             appliance.ip_address = vm.ip
             appliance.set_power_state(Appliance.POWER_STATES_MAPPING.get(
-                vm.power_state, Appliance.Power.UNKNOWN))
+                vm.state, Appliance.Power.UNKNOWN))
             appliance.save()
         elif appliance.name in dict_vms:
             vm = dict_vms[appliance.name]
@@ -1145,7 +1268,7 @@ def refresh_appliances_provider(self, provider_id):
             appliance.uuid = vm.uuid
             appliance.ip_address = vm.ip
             appliance.set_power_state(Appliance.POWER_STATES_MAPPING.get(
-                vm.power_state, Appliance.Power.UNKNOWN))
+                vm.state, Appliance.Power.UNKNOWN))
             appliance.save()
             self.logger.info("Retrieved UUID for appliance {}/{}: {}".format(
                 appliance.id, appliance.name, appliance.uuid))
@@ -1168,7 +1291,11 @@ def check_templates_in_provider(self, provider_id):
     provider = Provider.objects.get(id=provider_id, disabled=False)
     # Get templates and update metadata
     try:
-        templates = map(str, provider.api.list_template())
+        # TODO: change after openshift wrapanapi refactor
+        if isinstance(provider.api, Openshift):
+            templates = map(str, provider.api.list_template())
+        else:
+            templates = [tmpl.name for tmpl in provider.api.list_templates()]
     except Exception as err:
         self.logger.warning("Provider %s will be marked as not working because of %s",
                             provider_id, err)
@@ -1383,25 +1510,41 @@ def wait_appliance_ready(self, appliance_id):
 @singleton_task()
 def anyvm_power_on(self, provider, vm):
     provider = Provider.objects.get(id=provider, working=True, disabled=False)
-    provider.api.start_vm(vm)
+    # TODO: change after openshift wrapanapi refactor
+    if isinstance(provider.api, Openshift):
+        provider.api.start_vm(vm)
+    else:
+        provider.api.get_vm(vm).start()
 
 
 @singleton_task()
 def anyvm_power_off(self, provider, vm):
     provider = Provider.objects.get(id=provider, working=True, disabled=False)
-    provider.api.stop_vm(vm)
+    # TODO: change after openshift wrapanapi refactor
+    if isinstance(provider.api, Openshift):
+        provider.api.stop_vm(vm)
+    else:
+        provider.api.get_vm(vm).stop()
 
 
 @singleton_task()
 def anyvm_suspend(self, provider, vm):
     provider = Provider.objects.get(id=provider, working=True, disabled=False)
-    provider.api.suspend_vm(vm)
+    # TODO: change after openshift wrapanapi refactor
+    if isinstance(provider.api, Openshift):
+        provider.api.suspend_vm(vm)
+    else:
+        provider.api.get_vm(vm).suspend()
 
 
 @singleton_task()
 def anyvm_delete(self, provider, vm):
     provider = Provider.objects.get(id=provider, working=True, disabled=False)
-    provider.api.delete_vm(vm)
+    # TODO: change after openshift wrapanapi refactor
+    if isinstance(provider.api, Openshift):
+        provider.api.delete_vm(vm)
+    else:
+        provider.api.get_vm(vm).cleanup()
 
 
 @singleton_task()
@@ -1410,7 +1553,11 @@ def delete_template_from_provider(self, template_id):
     if not template.provider.is_working:
         raise RuntimeError('Provider is not working.')
     try:
-        template.provider_api.delete_template(template.name)
+        # TODO: change after openshift wrapanapi refactor
+        if isinstance(template.provider.api, Openshift):
+            template.template_mgmt.cleanup()
+        else:
+            template.provider_api.delete_template(template.name)
     except Exception as e:
         self.logger.exception(e)
         return False
@@ -1436,7 +1583,8 @@ def appliance_rename(self, appliance_id, new_name):
         return None
     with redis.appliances_ignored_when_renaming(appliance.name, new_name):
         self.logger.info("Renaming {}/{} to {}".format(appliance_id, appliance.name, new_name))
-        appliance.name = appliance.provider_api.rename_vm(appliance.name, new_name)
+        appliance.vm_mgmt.rename(new_name)
+        appliance.name = appliance.vm_mgmt.name
         appliance.save(update_fields=['name'])
     return appliance.name
 
@@ -1449,11 +1597,12 @@ def rename_appliances_for_pool(self, pool_id):
             appliance_pool = AppliancePool.objects.get(id=pool_id)
         except ObjectDoesNotExist:
             return
+        # TODO: change after openshift wrapanapi refactor
         appliances = [
             appliance
             for appliance
             in appliance_pool.appliances
-            if appliance.provider_api.can_rename
+            if not appliance.is_openshift and hasattr(appliance.vm_mgmt, 'rename')
         ]
         for appliance in appliances:
             if not appliance.provider.allow_renaming:
@@ -1583,10 +1732,12 @@ def connect_direct_lun(self, appliance_id):
     appliance = Appliance.objects.get(id=appliance_id)
     if not appliance.provider.is_working:
         raise RuntimeError('Provider is not working.')
-    if not hasattr(appliance.provider_api, "connect_direct_lun_to_appliance"):
+    # TODO: change after openshift wrapanapi refactor
+    if not appliance.is_openshift and not hasattr(appliance.vm_mgmt, "connect_direct_lun"):
         return False
     try:
-        appliance.provider_api.connect_direct_lun_to_appliance(appliance.name, False)
+        # TODO: connect_direct_lun needs args, fix this method call.
+        appliance.vm_mgmt.connect_direct_lun()
     except Exception as e:
         appliance.set_status("LUN: {}: {}".format(type(e).__name__, str(e)))
         return False
@@ -1605,10 +1756,12 @@ def disconnect_direct_lun(self, appliance_id):
         raise RuntimeError('Provider is not working.')
     if not appliance.lun_disk_connected:
         return False
-    if not hasattr(appliance.provider_api, "connect_direct_lun_to_appliance"):
+    # TODO: change after openshift wrapanapi refactor
+    if not appliance.is_openshift and not hasattr(appliance.vm_mgmt, "disconnect_disk"):
         return False
     try:
-        appliance.provider_api.connect_direct_lun_to_appliance(appliance.name, True)
+        # TODO: we need a disk name to disconnect, fix this method call.
+        appliance.vm_mgmt.disconnect_disk('na')
     except Exception as e:
         appliance.set_status("LUN: {}: {}".format(type(e).__name__, str(e)))
         return False
@@ -1809,19 +1962,19 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
     """'re'-synchronizes any vms that might be lost during outages."""
     provider = Provider.objects.get(id=provider_id, working=True, disabled=False)
     provider_api = provider.api
-    if not hasattr(provider_api, 'list_vm'):
-        # This provider does not have VMs (eg. Hawkular or Openshift)
+    if not hasattr(provider_api, 'list_vms'):
+        # This provider does not have VMs
         return
-    for vm_name in sorted(map(str, provider_api.list_vm())):
-        if Appliance.objects.filter(name=vm_name, template__provider=provider).count() != 0:
+    for vm in sorted(provider_api.list_vms()):
+        if Appliance.objects.filter(name=vm.name, template__provider=provider).count() != 0:
             continue
         # We have an untracked VM. Let's investigate
         try:
-            appliance_id = provider_api.get_meta_value(vm_name, 'sprout_id')
+            appliance_id = vm.get_meta_value('sprout_id')
         except KeyError:
             continue
-        except NotImplementedError:
-            # Do not bother if not implemented in the API
+        except (AttributeError, NotImplementedError):
+            # Do not bother if not implemented in the VM object's API
             return
 
         # just check it again ...
@@ -1833,73 +1986,56 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
         construct = {'id': appliance_id}
         # Retrieve appliance data
         try:
-            self.logger.info('Trying to reconstruct appliance %d/%s', appliance_id, vm_name)
-            construct['name'] = vm_name
-            template_id = provider_api.get_meta_value(vm_name, 'sprout_source_template_id')
+            self.logger.info('Trying to reconstruct appliance %d/%s', appliance_id, vm.name)
+            construct['name'] = vm.name
+            template_id = vm.get_meta_value('sprout_source_template_id')
             # Templates are not deleted from the DB so this should be OK.
             construct['template'] = Template.objects.get(id=template_id)
-            construct['name'] = vm_name
-            construct['ready'] = provider_api.get_meta_value(vm_name, 'sprout_ready')
-            construct['description'] = provider_api.get_meta_value(vm_name, 'sprout_description')
-            construct['lun_disk_connected'] = provider_api.get_meta_value(
-                vm_name, 'sprout_lun_disk_connected')
-            construct['swap'] = provider_api.get_meta_value(vm_name, 'sprout_swap')
-            construct['ssh_failed'] = provider_api.get_meta_value(vm_name, 'sprout_ssh_failed')
+            construct['name'] = vm.name
+            construct['ready'] = vm.get_meta_value('sprout_ready')
+            construct['description'] = vm.get_meta_value('sprout_description')
+            construct['lun_disk_connected'] = vm.get_meta_value('sprout_lun_disk_connected')
+            construct['swap'] = vm.get_meta_value('sprout_swap')
+            construct['ssh_failed'] = vm.get_meta_value('sprout_ssh_failed')
             # Time fields
-            construct['datetime_leased'] = parsedate(
-                provider_api.get_meta_value(vm_name, 'sprout_datetime_leased'))
-            construct['leased_until'] = parsedate(
-                provider_api.get_meta_value(vm_name, 'sprout_leased_until'))
-            construct['status_changed'] = parsedate(
-                provider_api.get_meta_value(vm_name, 'sprout_status_changed'))
-            construct['created_on'] = parsedate(
-                provider_api.get_meta_value(vm_name, 'sprout_created_on'))
-            construct['modified_on'] = parsedate(
-                provider_api.get_meta_value(vm_name, 'sprout_modified_on'))
+            construct['datetime_leased'] = parsedate(vm.get_meta_value('sprout_datetime_leased'))
+            construct['leased_until'] = parsedate(vm.get_meta_value('sprout_leased_until'))
+            construct['status_changed'] = parsedate(vm.get_meta_value('sprout_status_changed'))
+            construct['created_on'] = parsedate(vm.get_meta_value('sprout_created_on'))
+            construct['modified_on'] = parsedate(vm.get_meta_value('sprout_modified_on'))
         except KeyError as e:
-            self.logger.error('Failed to reconstruct %d/%s', appliance_id, vm_name)
+            self.logger.error('Failed to reconstruct %d/%s', appliance_id, vm.name)
             self.logger.exception(e)
             continue
         # Retrieve pool data if applicable
         try:
-            pool_id = provider_api.get_meta_value(vm_name, 'sprout_pool_id')
+            pool_id = vm.get_meta_value('sprout_pool_id')
             pool_construct = {'id': pool_id}
-            pool_construct['total_count'] = provider_api.get_meta_value(
-                vm_name, 'sprout_pool_total_count')
-            group_id = provider_api.get_meta_value(
-                vm_name, 'sprout_pool_group')
+            pool_construct['total_count'] = vm.get_meta_value('sprout_pool_total_count')
+            group_id = vm.get_meta_value('sprout_pool_group')
             pool_construct['group'] = Group.objects.get(id=group_id)
             try:
-                construct_provider_id = provider_api.get_meta_value(
-                    vm_name, 'sprout_pool_provider')
+                construct_provider_id = vm.get_meta_value('sprout_pool_provider')
                 pool_construct['provider'] = Provider.objects.get(id=construct_provider_id)
             except (KeyError, ObjectDoesNotExist):
                 # optional
                 pool_construct['provider'] = None
-            pool_construct['version'] = provider_api.get_meta_value(
-                vm_name, 'sprout_pool_version')
-            pool_construct['date'] = parsedate(provider_api.get_meta_value(
-                vm_name, 'sprout_pool_appliance_date'))
-            owner_id = provider_api.get_meta_value(
-                vm_name, 'sprout_pool_owner_id')
+            pool_construct['version'] = vm.get_meta_value('sprout_pool_version')
+            pool_construct['date'] = parsedate(vm.get_meta_value('sprout_pool_appliance_date'))
+            owner_id = vm.get_meta_value('sprout_pool_owner_id')
             try:
                 owner = User.objects.get(id=owner_id)
             except ObjectDoesNotExist:
-                owner_username = provider_api.get_meta_value(
-                    vm_name, 'sprout_pool_owner_username')
+                owner_username = vm.get_meta_value('sprout_pool_owner_username')
                 owner = User(id=owner_id, username=owner_username)
                 owner.save()
             pool_construct['owner'] = owner
-            pool_construct['preconfigured'] = provider_api.get_meta_value(
-                vm_name, 'sprout_pool_preconfigured')
-            pool_construct['description'] = provider_api.get_meta_value(
-                vm_name, 'sprout_pool_description')
-            pool_construct['not_needed_anymore'] = provider_api.get_meta_value(
-                vm_name, 'sprout_pool_not_needed_anymore')
-            pool_construct['finished'] = provider_api.get_meta_value(
-                vm_name, 'sprout_pool_finished')
-            pool_construct['yum_update'] = provider_api.get_meta_value(
-                vm_name, 'sprout_pool_yum_update')
+            pool_construct['preconfigured'] = vm.get_meta_value('sprout_pool_preconfigured')
+            pool_construct['description'] = vm.get_meta_value('sprout_pool_description')
+            pool_construct['not_needed_anymore'] = vm.get_meta_value(
+                'sprout_pool_not_needed_anymore')
+            pool_construct['finished'] = vm.get_meta_value('sprout_pool_finished')
+            pool_construct['yum_update'] = vm.get_meta_value('sprout_pool_yum_update')
             try:
                 construct['appliance_pool'] = AppliancePool.objects.get(id=pool_id)
             except ObjectDoesNotExist:
@@ -2085,9 +2221,17 @@ def nuke_template_configuration(self, template_id):
 
     if template.provider.api.does_vm_exist(template.name):
         self.logger.info('Found the template as a VM')
-        template.provider.api.delete_vm(template.name)
+        # TODO: change after openshift wrapanapi refactor
+        if isinstance(template.provider.api, Openshift):
+            template.provider.api.delete_vm(template.name)
+        else:
+            template.provider.api.get_vm(template.name).cleanup()
     if template.provider.api.does_template_exist(template.name):
         self.logger.info('Found the template as a template')
-        template.provider.api.delete_template(template.name)
+        # TODO: change after openshift wrapanapi refactor
+        if isinstance(template.provider.api, Openshift):
+            template.provider.api.delete_template(template.name)
+        else:
+            template.provider.api.get_template(template.name).cleanup()
     template.delete()
     return True

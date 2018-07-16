@@ -31,7 +31,7 @@ def provision_vm(request, provider):
     vm_name = "test_rest_db_{}".format(fauxfactory.gen_alphanumeric())
     coll = provider.appliance.provider_based_collection(provider, coll_type='vms')
     vm = coll.instantiate(vm_name, provider)
-    request.addfinalizer(vm.delete_from_provider)
+    request.addfinalizer(vm.cleanup_on_provider)
     if not provider.mgmt.does_vm_exist(vm_name):
         logger.info("deploying %s on provider %s", vm_name, provider.key)
         vm.create_on_provider(allow_skip="default")
@@ -251,7 +251,7 @@ def test_appliance_console_restore_db_local(request, get_appliances_with_provide
     # Verify that existing provider can detect new VMs on the second appliance
     virtual_crud = provider_app_crud(VMwareProvider, appl2)
     vm = provision_vm(request, virtual_crud)
-    assert vm.provider.mgmt.is_vm_running(vm.name), "vm running"
+    assert vm.mgmt.is_running, "vm not running"
 
 
 @pytest.mark.tier(2)
@@ -317,8 +317,8 @@ def test_appliance_console_restore_pg_basebackup_replicated(
     virtual_crud_appl2 = provider_app_crud(VMwareProvider, appl2)
     vm1 = provision_vm(request, virtual_crud_appl1)
     vm2 = provision_vm(request, virtual_crud_appl2)
-    assert vm1.provider.mgmt.is_vm_running(vm1.name), "vm running"
-    assert vm2.provider.mgmt.is_vm_running(vm2.name), "vm running"
+    assert vm1.mgmt.is_running, "vm not running"
+    assert vm2.mgmt.is_running, "vm not running"
 
 
 @pytest.mark.tier(2)
@@ -354,8 +354,8 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
     virtual_crud_appl2 = provider_app_crud(VMwareProvider, appl2)
     vm1 = provision_vm(request, virtual_crud_appl1)
     vm2 = provision_vm(request, virtual_crud_appl2)
-    assert vm1.provider.mgmt.is_vm_running(vm1.name), "vm running"
-    assert vm2.provider.mgmt.is_vm_running(vm2.name), "vm running"
+    assert vm1.mgmt.is_running, "vm not running"
+    assert vm2.mgmt.is_running, "vm not running"
 
 
 @pytest.mark.tier(2)
@@ -395,8 +395,8 @@ def test_appliance_console_restore_db_replicated(
     virtual_crud_appl2 = provider_app_crud(VMwareProvider, appl2)
     vm1 = provision_vm(request, virtual_crud_appl1)
     vm2 = provision_vm(request, virtual_crud_appl2)
-    assert vm1.provider.mgmt.is_vm_running(vm1.name), "vm running"
-    assert vm2.provider.mgmt.is_vm_running(vm2.name), "vm running"
+    assert vm1.mgmt.is_running, "vm not running"
+    assert vm2.mgmt.is_running, "vm not running"
 
 
 @pytest.mark.tier(2)
@@ -442,7 +442,7 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
     # Verify that existing provider can detect new VMs after restore/failover
     virtual_crud = provider_app_crud(VMwareProvider, appl3)
     vm = provision_vm(request, virtual_crud)
-    assert vm.provider.mgmt.is_vm_running(vm.name), "vm running"
+    assert vm.mgmt.is_running, "vm not running"
 
 
 @pytest.mark.tier(2)
@@ -474,7 +474,7 @@ def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers
     # Verify that existing provider can detect new VMs on the second appliance
     virtual_crud = provider_app_crud(VMwareProvider, appl2)
     vm = provision_vm(request, virtual_crud)
-    assert vm.provider.mgmt.is_vm_running(vm.name), "vm running"
+    assert vm.mgmt.is_running, "vm not running"
 
 
 @pytest.mark.tier(2)
@@ -508,4 +508,4 @@ def test_appliance_console_restore_db_samba(request, get_appliances_with_provide
     # Verify that existing provider can detect new VMs on the second appliance
     virtual_crud = provider_app_crud(VMwareProvider, appl2)
     vm = provision_vm(request, virtual_crud)
-    assert vm.provider.mgmt.is_vm_running(vm.name), "vm running"
+    assert vm.mgmt.is_running, "vm not running"

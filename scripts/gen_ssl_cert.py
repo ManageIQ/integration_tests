@@ -52,7 +52,7 @@ def create_cert(
     cert.get_subject().C = country
     cert.get_subject().ST = state
     cert.get_subject().L = city
-    cert.get_subject().O = organization
+    cert.get_subject().O = organization  # noqa
     cert.get_subject().OU = organizational_unit
     cert.get_subject().CN = gethostname()
     cert.set_serial_number(1000)

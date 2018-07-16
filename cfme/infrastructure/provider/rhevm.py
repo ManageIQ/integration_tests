@@ -2,7 +2,7 @@ import attr
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Tab, Input, BootstrapSwitch, Button
-from wrapanapi.rhevm import RHEVMSystem
+from wrapanapi.systems import RHEVMSystem
 
 from cfme.common.candu_views import VMUtilizationView
 from cfme.common.provider import CANDUEndpoint, DefaultEndpoint, DefaultEndpointForm

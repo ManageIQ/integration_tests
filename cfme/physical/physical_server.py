@@ -3,7 +3,7 @@
 import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from cached_property import cached_property
-from wrapanapi.lenovo import LenovoSystem
+from wrapanapi.systems import LenovoSystem
 
 from cfme.common import PolicyProfileAssignable, Taggable
 from cfme.common.physical_server_views import (

@@ -57,7 +57,7 @@ def myservice(appliance, provider, catalog_item, request):
 
     yield catalog_item.name, vm_name
 
-    appliance.collections.infra_vms.instantiate(vm_name, provider).delete_from_provider()
+    appliance.collections.infra_vms.instantiate(vm_name, provider).cleanup_on_provider()
 
 
 @pytest.mark.parametrize('context', [ViaUI])

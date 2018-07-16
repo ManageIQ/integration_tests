@@ -2,7 +2,7 @@ import attr
 from cached_property import cached_property
 from os import path
 
-from wrapanapi.containers.providers.rhopenshift import Openshift
+from wrapanapi.systems.container import Openshift
 
 from cfme.common.provider import DefaultEndpoint
 from cfme.control.explorer.alert_profiles import ProviderAlertProfile, NodeAlertProfile

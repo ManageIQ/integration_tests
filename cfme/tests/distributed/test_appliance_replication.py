@@ -98,7 +98,7 @@ def test_vm(virtualcenter_provider):
     else:
         logger.info("recycling deployed vm %r on provider %r", vm_name, virtualcenter_provider.key)
     yield vm
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
 
 
 @pytest.mark.tier(2)
@@ -331,5 +331,5 @@ def test_distributed_vm_power_control(request, test_vm, virtualcenter_provider, 
         test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=900)
         soft_assert(test_vm.find_quadicon().data['state'] == 'currentstate-off')
         soft_assert(
-            not test_vm.provider.mgmt.is_vm_running(test_vm.name),
+            not test_vm.mgmt.is_running,
             "vm running")

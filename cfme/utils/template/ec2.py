@@ -109,7 +109,7 @@ class EC2TemplateUpload(ProviderTemplateUpload):
             self.mgmt.copy_image(source_region=self.mgmt.api.region.name,
                                  source_image=ami_id,
                                  image_id=self.template_name)
-            self.mgmt.deregister_image(image_id=ami_id)
+            self.mgmt.get_template(ami_id).cleanup()
             return True
 
         except:

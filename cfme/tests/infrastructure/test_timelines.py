@@ -32,7 +32,7 @@ def new_vm(provider):
     vm.create_on_provider(find_in_cfme=True)
     logger.debug('Fixture new_vm set up! Name: %r Provider: %r', vm.name, vm.provider.name)
     yield vm
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
 
 
 @pytest.fixture()
@@ -141,38 +141,42 @@ class VMEvent(object):
             raise
 
     def _setup_vm(self):
-        if not self.vm.provider.mgmt.does_vm_exist(self.vm.name):
+        if not self.vm.exists_on_provider:
             logger.info('Will set up the VM %r ton the provider', self.vm.name)
             return self.vm.create_on_provider(find_in_cfme=True)
         else:
             logger.info('%r already exists on the provider.', self.vm.name)
 
     def _power_on(self):
-        return self.vm.provider.mgmt.start_vm(self.vm.name)
+        return self.vm.mgmt.start()
 
     def _power_off(self):
-        return self.vm.provider.mgmt.stop_vm(self.vm.name)
+        return self.vm.mgmt.stop()
 
     def _restart_vm(self):
         return self._power_off() and self._power_on()
 
     def _suspend(self):
-        return (self.vm.provider.mgmt.suspend_vm(self.vm.name) and
-                self.vm.provider.mgmt.start_vm(self.vm.name))
+        return (self.vm.mgmt.suspend() and self.vm.mgmt.start())
 
     def _rename_vm(self):
         logger.info('%r will be renamed', self.vm.name)
-        new_name = self.vm.provider.mgmt.rename_vm(self.vm.name, self.vm.name + '-renamed')
+        new_name = self.vm.name + '-renamed'
+        rename_success = self.vm.mgmt.rename(self.vm.name + '-renamed')
+        if not rename_success:
+            raise Exception(
+                'Renaming {} to {} on the provider failed'.format(
+                    self.vm.name, new_name)
+            )
         logger.info('%r new name is %r', self.vm.name, new_name)
         self.vm.name = new_name
-        logger.info('self.vm.name is now %r', self.vm.name)
         logger.info('%r will be rebooted', self.vm.name)
-        self.vm.provider.mgmt.restart_vm(self.vm.name)
+        self.vm.mgmt.restart()
         return self.vm.name
 
     def _delete_vm(self):
         logger.info('%r will be deleted.', self.vm.name)
-        return self.vm.provider.mgmt.delete_vm(self.vm.name)
+        return self.vm.mgmt.delete()
 
     def _clone_vm(self):
         msg = '{name} will be cloned to {name}-clone.'.format(name=self.vm.name)

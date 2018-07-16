@@ -1,6 +1,7 @@
 import fauxfactory
 import pytest
 from widgetastic.utils import partial_match
+from wrapanapi.exceptions import NotFoundError
 
 from cfme import test_requirements
 from cfme.common.vm import VM
@@ -46,8 +47,14 @@ def test_provision_vm_to_virtual_network(appliance, setup_provider, provider,
         test_flag: provision
     """
     vm_name = random_vm_name('provd')
-    request.addfinalizer(
-        lambda: appliance.rest_api.collections.vms.get(name=vm_name).action.delete())
+
+    def _cleanup():
+        try:
+            provider.mgmt.get_vm(vm_name).cleanup()
+        except NotFoundError:
+            pass
+
+    request.addfinalizer(_cleanup)
 
     template = provisioning['template']
     provisioning_data = {

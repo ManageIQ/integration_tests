@@ -21,7 +21,7 @@ from cfme.utils.path import scripts_path
 from cfme.utils.smtp_collector_client import SMTPCollectorClient
 
 
-logger = setup_logger(logging.getLogger('emails'))
+logger, _ = setup_logger(logging.getLogger('emails'))
 
 
 @pytest.fixture(scope="function")

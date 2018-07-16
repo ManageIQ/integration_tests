@@ -18,7 +18,7 @@ from cfme.utils.providers import list_provider_keys
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.wait import wait_for
-from wrapanapi.scvmm import SCVMMSystem
+from wrapanapi.systems import SCVMMSystem
 
 add_stdout_handler(logger)
 
@@ -225,6 +225,7 @@ def create_template(provider, **kwargs):
     if template_name:
         logger.info("SCVMM:%s Add template %s to trackerbot", provider, template_name)
         trackerbot.trackerbot_add_provider_template(kwargs.get('stream'), provider, template_name)
+
 
 def run(**kwargs):
     providers = list_provider_keys("scvmm")

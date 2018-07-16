@@ -74,7 +74,7 @@ def test_vm_discovery(request, setup_provider, provider, vm_crud):
 
     @request.addfinalizer
     def _cleanup():
-        vm_crud.delete_from_provider()
+        vm_crud.cleanup_on_provider()
         if_scvmm_refresh_provider(provider)
 
     vm_crud.create_on_provider(allow_skip="default")
@@ -84,6 +84,6 @@ def test_vm_discovery(request, setup_provider, provider, vm_crud):
         vm_crud.wait_to_appear(timeout=600, load_details=False)
     except TimedOutError:
         pytest.fail("VM was not found in CFME")
-    vm_crud.delete_from_provider()
+    vm_crud.cleanup_on_provider()
     if_scvmm_refresh_provider(provider)
     wait_for_vm_state_changes(vm_crud)

@@ -100,7 +100,7 @@ def small_vm(provider, small_template_modscope):
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     vm.refresh_relationships()
     yield vm
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
 
 
 @pytest.mark.rhv2

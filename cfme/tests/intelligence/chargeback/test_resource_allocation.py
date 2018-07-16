@@ -44,6 +44,8 @@ from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
+from wrapanapi import VmState
+
 pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.long_running,
@@ -69,18 +71,14 @@ def vm_ownership(enable_candu, provider, appliance):
     assigned ownership.
     """
     vm_name = provider.data['cap_and_util']['chargeback_vm']
-
-    if not provider.mgmt.does_vm_exist(vm_name):
+    vm = appliance.provider_based_collection(provider, coll_type='vms').instantiate(vm_name,
+                                                                                    provider)
+    if not vm.exists_on_provider:
         pytest.skip('Skipping test, {} VM does not exist'.format(vm_name))
-    if not provider.mgmt.is_vm_running(vm_name):
-        provider.mgmt.start_vm(vm_name)
-        provider.mgmt.wait_vm_running(vm_name)
+    vm.mgmt.ensure_state(VmState.RUNNING)
 
     group_collection = appliance.collections.groups
     cb_group = group_collection.instantiate(description='EvmGroup-user')
-
-    vm = appliance.provider_based_collection(provider, coll_type='vms').instantiate(vm_name,
-                                                                                    provider)
     user = appliance.collections.users.create(
         name="{}_{}".format(provider.name, fauxfactory.gen_alphanumeric()),
         credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()),

@@ -11,6 +11,8 @@ from cfme.utils.hosts import setup_host_creds
 from cfme.utils.log import logger
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 
+from wrapanapi import VmState
+
 pytestmark = [
     pytest.mark.tier(3),
     test_requirements.smartstate,
@@ -68,13 +70,12 @@ def vm(request, provider, small_template_modscope, ssa_analysis_profile):
                                                                   provider,
                                                                   small_template_modscope.name)
     vm_obj.create_on_provider(find_in_cfme=True, allow_skip="default")
-    provider.mgmt.start_vm(vm_obj.name)
-    provider.mgmt.wait_vm_running(vm_obj.name)
+    vm_obj.mgmt.ensure_state(VmState.RUNNING)
 
     @request.addfinalizer
     def _finalize():
         try:
-            vm_obj.delete_from_provider()
+            vm_obj.cleanup_on_provider()
             provider.refresh_provider_relationships()
         except Exception as e:
             logger.exception(e)

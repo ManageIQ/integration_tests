@@ -22,6 +22,8 @@ from cfme.utils.providers import get_mgmt, list_provider_keys
 from cfme.utils.ssh import SSHClient
 from cfme.utils.wait import wait_for
 
+from wrapanapi import NotFoundError
+
 lock = Lock()
 
 add_stdout_handler(logger)
@@ -191,7 +193,7 @@ def import_template(mgmt, cfme_data, edomain, sdomain, cluster, temp_template_na
         cluster: Cluster to save imported template on.
     """
     try:
-        if temp_template_name in mgmt.list_template():
+        if mgmt.find_templates(temp_template_name):
             logger.info("RHEVM:%r Warning: found another template with this name.", provider)
             logger.info("RHEVM:%r Skipping this step, attempting to continue...", provider)
             return
@@ -202,9 +204,8 @@ def import_template(mgmt, cfme_data, edomain, sdomain, cluster, temp_template_na
         logger.info("RHEVM:%r successfully imported template on data domain", provider)
         logger.info('RHEVM:%r updating nic on template', provider)
         network_name = cfme_data.management_systems[provider].template_upload.management_network
-        mgmt.update_template_nic(template_name=temp_template_name,
-                                 network_name=network_name,
-                                 nic_name='eth0')
+        mgmt.get_template(temp_template_name).update_nic(
+            network_name=network_name, nic_name='eth0')
     except Exception:
         logger.exception("RHEVM:%r import_template to data domain failed:", provider)
         raise
@@ -235,8 +236,8 @@ def make_vm_from_template(mgmt, stream, cfme_data, cluster, temp_template_name,
             logger.info("RHEVM:%r Skipping this step, attempting to continue...", provider)
             return
 
-        mgmt.deploy_template(
-            temp_template_name,
+        template = mgmt.get_template(temp_template_name)
+        vm = template.deploy(
             vm_name=temp_vm_name,
             cluster=cluster,
             cpu=cores,
@@ -244,7 +245,7 @@ def make_vm_from_template(mgmt, stream, cfme_data, cluster, temp_template_name,
             ram=vm_memory)
 
         # check, if the vm is really there
-        if not mgmt.does_vm_exist(temp_vm_name):
+        if not vm.exists:
             logger.error("RHEVM:%r temp VM could not be provisioned", provider)
             sys.exit(127)
         logger.info("RHEVM:%r successfully provisioned temp vm", provider)
@@ -269,7 +270,7 @@ def check_edomain_template(mgmt, edomain, temp_template):
     """
     try:
         template = mgmt.get_template_from_storage_domain(temp_template, edomain)
-        return template.status.value == "ok"
+        return template.raw.status.value == "ok"
     except Exception:
         return False
 
@@ -286,20 +287,20 @@ def add_disk_to_vm(mgmt, sdomain, disk_size, disk_format, disk_interface, temp_v
         disk_interface: Interface of the new disk.
     """
     try:
-        if mgmt.get_vm_disks_count(temp_vm_name) > 1:
+        vm = mgmt.get_vm(temp_vm_name)
+        if vm.get_disks_count() > 1:
             logger.info("RHEVM:%r Warning: found more than one disk in existing VM (%r).",
                     provider, temp_vm_name)
             logger.info("RHEVM:%r Skipping this step, attempting to continue...", provider)
             return
-        mgmt.add_disk_to_vm(
-            temp_vm_name,
+        vm.add_disk(
             storage_domain=sdomain,
             size=disk_size,
             interface=disk_interface,
             format=disk_format
         )
         # check, if there are two disks
-        if mgmt.get_vm_disks_count(temp_vm_name) < 2:
+        if vm.get_disks_count() < 2:
             logger.error("RHEVM:%r Disk failed to add", provider)
             sys.exit(127)
         logger.info("RHEVM:%r Successfully added disk", provider)
@@ -322,14 +323,14 @@ def templatize_vm(mgmt, template_name, cluster, temp_vm_name, provider):
                     provider, template_name)
             logger.info("RHEVM:%r Skipping this step, attempting to continue", provider)
             return
-        mgmt.mark_as_template(
-            temp_vm_name,
+        vm = mgmt.get_vm(temp_vm_name)
+        template = vm.mark_as_template(
             temporary_name=template_name,
             cluster=cluster,
             delete=False
         )
         # check, if template is really there
-        if not mgmt.does_template_exist(template_name):
+        if not template.exists:
             logger.error("RHEVM:%r templatizing temporary VM failed", provider)
             sys.exit(127)
         logger.info("RHEVM:%r successfully templatized the temporary VM", provider)
@@ -397,23 +398,30 @@ def cleanup(mgmt, edomain, ssh_client, ovaname, provider, temp_template_name, te
             logger.error('Failure deleting ova file: %r', str(result))
 
         logger.info("RHEVM:%r Deleting the temp_vm on sdomain...", provider)
-        if mgmt.does_vm_exist(temp_vm_name):
-            mgmt.delete_vm(temp_vm_name)
+        for vm in mgmt.find_vms(temp_vm_name):
+            vm.cleanup()
 
         logger.info("RHEVM:%r Deleting the temp_template on sdomain...", provider)
-        if mgmt.does_template_exist(temp_template_name):
-            mgmt.delete_template(temp_template_name)
+        for template in mgmt.find_templates(temp_template_name):
+            template.cleanup()
 
         # waiting for template on export domain
         change_edomain_state(mgmt, 'active', edomain, provider)
-        unimported_template = mgmt.get_template_from_storage_domain(temp_template_name, edomain)
+
+        unimported_template = None
+        try:
+            unimported_template = mgmt.get_template_from_storage_domain(
+                temp_template_name, edomain)
+        except NotFoundError:
+            logger.info("Unimported template does not exist")
+
         logger.info("RHEVM:%r waiting for template on export domain...", provider)
         wait_for(check_edomain_template, [mgmt, edomain, temp_template_name],
                  fail_condition=False, delay=5, num_sec=600)
 
         if unimported_template:
             logger.info("RHEVM:%r deleting the template on export domain...", provider)
-            mgmt.delete_template(unimported_template)
+            unimported_template.cleanup()
 
         logger.info("RHEVM:%r successfully deleted template on export domain...", provider)
 

@@ -80,11 +80,12 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
 
     collection = appliance.provider_based_collection(provider)
     instance = collection.create(vm_name, provider, form_values=inst_args)
-    request.addfinalizer(instance.delete_from_provider)
+    request.addfinalizer(instance.cleanup_on_provider)
     provision_request = provider.appliance.collections.requests.instantiate(vm_name,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-    connect_ip = mgmt_system.get_ip_address(vm_name)
+    connect_ip = mgmt_system.get_vm(vm_name).ip
+    assert connect_ip, "VM has no IP"
 
     # Check that we can at least get the uptime via ssh this should only be possible
     # if the username and password have been set via the cloud-init script so

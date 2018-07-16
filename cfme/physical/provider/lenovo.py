@@ -1,6 +1,6 @@
 import attr
 from widgetastic_patternfly import Input
-from wrapanapi.lenovo import LenovoSystem
+from wrapanapi.systems import LenovoSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from . import PhysicalProvider

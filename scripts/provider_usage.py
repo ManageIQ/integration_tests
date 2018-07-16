@@ -14,10 +14,10 @@ data = defaultdict(dict)
 
 
 def process_vm(vm, mgmt, user, prov):
-    print("Inspecting: {} on {}".format(vm, prov))
-    if mgmt.is_vm_stopped(vm):
+    print("Inspecting: {} on {}".format(vm.name, prov))
+    if vm.is_stopped:
         return
-    ip = mgmt.get_ip_address(vm, timeout=1)
+    ip = vm.ip
     if ip:
         with appliance.IPAppliance(hostname=ip) as app:
             try:
@@ -38,19 +38,19 @@ def process_vm(vm, mgmt, user, prov):
                     else:
                         data[user][prov_name] = ["{} ({})".format(vm, prov)]
 
-            except:
+            except Exception:
                 pass
 
 
 def process_provider(mgmt, prov):
     try:
-        vms = mgmt.list_vm()
-    except:
+        vms = mgmt.list_vms()
+    except Exception:
         return
 
     for vm in vms:
         for user in users:
-            if user in vm:
+            if user in vm.name:
                 process_vm(vm, mgmt, user, prov)
 
 

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """Module containing classes with common behaviour for both VMs and Instances of all types."""
+from cached_property import cached_property
 from datetime import datetime, date, timedelta
 
 import attr
 from riggerlib import recursive_update
-from wrapanapi import exceptions
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
@@ -23,6 +23,7 @@ from cfme.utils.update import Updateable
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import VersionPick
+from wrapanapi.exceptions import NotFoundError
 from . import PolicyProfileAssignable
 
 
@@ -177,7 +178,7 @@ class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, 
     @property
     def ip_address(self):
         """Fetches IP Address of VM"""
-        return self.provider.mgmt.get_ip_address(self.name)
+        return self.mgmt.ip
 
     @property
     def is_retired(self):
@@ -521,9 +522,10 @@ class BaseVMCollection(BaseCollection):
                     wait_for(provider.mgmt.does_vm_exist, [vm.name],
                              handle_exception=True, num_sec=600)
                 else:
-                    logger.warn("Provisioning failed with the message {}".format(
-                        provision_request.row.last_message.text))
-                    return None
+                    raise Exception(
+                        "Provisioning vm {} failed with: {}"
+                        .format(vm.name, provision_request.row.last_message.text)
+                    )
         if find_in_cfme:
             vm.wait_to_appear(timeout=800)
 
@@ -588,14 +590,22 @@ class VM(BaseVM):
     STATE_PAUSED = "paused"
     STATE_SUSPENDED = "suspended"
 
+    @cached_property
+    def mgmt(self):
+        """
+        Returns the wrapanapi VM entity object to manipulate this VM directly via the provider API
+        """
+        return self.provider.mgmt.get_vm(self.name)
+
+    @property
+    def exists_on_provider(self):
+        return self.provider.mgmt.does_vm_exist(self.name)
+
     def retire(self):
         view = navigate_to(self, 'Details', use_resetter=False)
         view.toolbar.reload.click()
         view.toolbar.lifecycle.item_select(self.TO_RETIRE, handle_alert=True)
         view.flash.assert_no_error()
-
-    def power_control_from_provider(self):
-        raise NotImplementedError("You have to implement power_control_from_provider!")
 
     def power_control_from_cfme(self, option, cancel=True, from_details=False):
         """Power controls a VM from within CFME
@@ -637,7 +647,7 @@ class VM(BaseVM):
 
     def wait_for_vm_state_change(self, desired_state=None, timeout=300, from_details=False,
                                  with_relationship_refresh=True, from_any_provider=False):
-        """Wait for VM to come to desired state.
+        """Wait for VM to come to desired state in the UI.
 
         This function waits just the needed amount of time thanks to wait_for.
 
@@ -691,33 +701,6 @@ class VM(BaseVM):
         else:
             return False
 
-    def delete_from_provider(self):
-        """
-        Delete VM/instance from provider mgmt
-
-        Can be overridden and used through super() by classes inheriting VM in order to add
-        additional resource cleanup through the provider mgmt
-        """
-        logger.info("Begin delete_from_provider for VM '{}'".format(self.name))
-        if not self.provider.mgmt.does_vm_exist(self.name):
-            logger.info("VM does '{}' not exist on provider, nothing to delete".format(self.name))
-            return True
-
-        # Some providers require VM to be stopped before removal
-        logger.info(
-            "delete: ensuring VM '{}' on provider '{}' is powered off".format(
-                self.name, self.provider.key)
-        )
-        self.ensure_state_on_provider(self.STATE_OFF)
-
-        logger.info("delete: removing VM '{}'".format(self.name))
-        try:
-            return self.provider.mgmt.delete_vm(self.name)
-        except Exception:
-            logger.exception("delete for vm '{}' failed".format(self.name))
-
-        return True
-
     def create_on_provider(self, timeout=900, find_in_cfme=False, delete_on_failure=True, **kwargs):
         """Create the VM on the provider via MgmtSystem. `deploy_template` handles errors during
         VM provision on MgmtSystem sideNS deletes VM if provisioned incorrectly
@@ -728,137 +711,30 @@ class VM(BaseVM):
             find_in_cfme: Verifies that VM exists in CFME UI
             delete_on_failure: Attempts to remove VM on UI navigation failure
         """
-        deploy_template(self.provider.key, self.name, self.template_name, **kwargs)
+        vm = deploy_template(self.provider.key, self.name, self.template_name, **kwargs)
         try:
             if find_in_cfme:
                 self.wait_to_appear(timeout=timeout, load_details=False)
         except Exception as e:
-            logger.warn("Couldn't find VM or Instance in CFME")
+            logger.warn("Couldn't find VM or Instance '%s' in CFME", self.name)
             if delete_on_failure:
-                logger.info("Removing VM or Instance from mgmt system")
-                self.provider.mgmt.delete_vm(self.name)
-            raise e
+                logger.info("Removing VM or Instance '%s' from mgmt system", self.name)
+                try:
+                    self.mgmt.cleanup()
+                except NotFoundError:
+                    logger.info("VM '%s' not found on mgmt system, nothing to cleanup", self.name)
+            raise
+        return vm
 
-    def does_vm_exist_on_provider(self):
-        """Check if VM exists on provider itself"""
-        return self.provider.mgmt.does_vm_exist(self.name)
+    def cleanup_on_provider(self):
+        """Clean up entity on the provider if it has been created on the provider
 
-    def _handle_transition(self, in_desired_state, in_state_requiring_prep, in_actionable_state,
-                           do_prep, do_action, state, timeout, delay):
+        Helper method to avoid NotFoundError's during test case tear down.
         """
-        Handles state transition for ensure_state_on_provider()
-
-        See that docstring below for explanation of the args. Each arg here is a callable except for
-        'state', 'timeout' and 'delay'
-        """
-        # If VM is already in desired state, don't bother with the transition logic...
-        if in_desired_state():
-            return True
-
-        def _transition():
-            if in_desired_state():
-                return True
-            elif in_state_requiring_prep():
-                do_prep()
-            elif in_actionable_state():
-                do_action()
-
-            logger.debug(
-                "Sleeping {}sec... (current state: {}, needed state: {})".format(
-                    delay, self.provider.mgmt.vm_status(self.name), state)
-            )
-            return False
-
-        return wait_for(
-            _transition, timeout=timeout, delay=delay,
-            message="vm to reach state '{}'".format(state)
-        )
-
-    def ensure_state_on_provider(self, state, timeout="6m", delay=15):
-        """
-        Ensures that the VM/instance is in desired state on provider using provider API.
-
-        State can be one of:
-            VM.STATE_ON, VM.STATE_OFF, VM.STATE_SUSPENDED, VM.STATE_PAUSED
-
-        Each desired state requires various checks/steps to ensure we "achieve" that state.
-
-        The logic implied while waiting is:
-        1. Check if VM is in_desired_state, if so, we're done
-        2. If not, check if it is in_state_requiring_prep
-            (for example, you can't stop a suspended VM, so we need to prep the VM by starting it)
-        3. Move the VM to the correct 'prep state' (calling method do_prep)
-        4. Check if the VM is in a state that allows moving to the desired state
-            (in_actionable_state should return True)
-        5. Perform the action to put the VM into that state (calling method do_action)
-
-        The methods are defined differently for each desired state.
-
-        For some states, step 2 and 3 do not apply, see for example when desired state is
-        'running', in those cases just make sure that 'in_state_requiring_prep' always returns
-        false.
-
-        Args:
-            provider: Provider class object
-            vm_name: Name of the VM/instance
-            state: str, one of:
-                VM.STATE_ON, VM.STATE_OFF, VM.STATE_SUSPENDED, VM.STATE_PAUSED
-            timeout: timeout in sec (or string like "6m") used in wait_for
-            delay: delay in sec to use in each loop of the wait_for
-        """
-        mgmt = self.provider.mgmt
-        vm = self.name
-
-        def _suspended():
-            try:
-                return mgmt.can_suspend and mgmt.is_vm_suspended(vm)
-            except (NotImplementedError, exceptions.ActionNotSupported):
-                return False
-
-        def _paused():
-            try:
-                return mgmt.can_pause and mgmt.is_vm_paused(vm)
-            except (NotImplementedError, exceptions.ActionNotSupported):
-                return False
-
-        if state == self.STATE_ON:
-            return self._handle_transition(
-                in_desired_state=lambda: mgmt.is_vm_running(vm),
-                in_state_requiring_prep=lambda: False,
-                in_actionable_state=lambda: mgmt.is_vm_stopped(vm) or _suspended() or _paused(),
-                do_prep=lambda: None,
-                do_action=lambda: mgmt.start_vm(vm),
-                state=state, timeout=timeout, delay=delay
-            )
-        elif state == self.STATE_OFF:
-            return self._handle_transition(
-                in_desired_state=lambda: mgmt.is_vm_stopped(vm),
-                in_state_requiring_prep=lambda: _suspended() or _paused(),
-                in_actionable_state=lambda: mgmt.is_vm_running(vm),
-                do_prep=lambda: mgmt.start_vm(vm),
-                do_action=lambda: mgmt.stop_vm(vm),
-                state=state, timeout=timeout, delay=delay
-            )
-        elif state == self.STATE_SUSPENDED:
-            return self._handle_transition(
-                in_desired_state=lambda: _suspended(),
-                in_state_requiring_prep=lambda: mgmt.is_vm_stopped(vm) or _paused(),
-                in_actionable_state=lambda: mgmt.is_vm_running(vm),
-                do_prep=lambda: mgmt.start_vm(vm),
-                do_action=lambda: mgmt.suspend_vm(vm),
-                state=state, timeout=timeout, delay=delay
-            )
-        elif state == self.STATE_PAUSED:
-            return self._handle_transition(
-                in_desired_state=lambda: _paused(),
-                in_state_requiring_prep=lambda: mgmt.is_vm_stopped(vm) or _suspended(),
-                in_actionable_state=lambda: mgmt.is_vm_running(vm),
-                do_prep=lambda: mgmt.start_vm(vm),
-                do_action=lambda: mgmt.pause_vm(vm),
-                state=state, timeout=timeout, delay=delay
-            )
+        if self.exists_on_provider:
+            self.mgmt.cleanup()
         else:
-            raise ValueError("Invalid state '{}'".format(state))
+            logger.debug('cleanup_on_provider: entity "%s" does not exist', self.name)
 
     def set_retirement_date(self, when=None, offset=None, warn=None):
         """Overriding common method to use widgetastic views/widgets properly
@@ -1042,9 +918,13 @@ class VMCollection(BaseVMCollection):
 class Template(BaseVM, _TemplateMixin):
     """A base class for all templates.
     """
+    @cached_property
+    def mgmt(self):
+        """Holds wrapanapi template entity object for this template."""
+        return self.provider.mgmt.get_template(self.name)
 
-    def does_template_exist_on_provider(self):
-        """Check if template exists on provider itself"""
+    @property
+    def exists_on_provider(self):
         return self.provider.mgmt.does_template_exist(self.name)
 
 

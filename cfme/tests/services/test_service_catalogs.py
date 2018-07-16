@@ -38,7 +38,7 @@ def test_order_catalog_item(appliance, provider, catalog_item, request,
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(
         lambda: appliance.collections.infra_vms.instantiate(
-            "{}0001".format(vm_name), provider).delete_from_provider()
+            "{}0001".format(vm_name), provider).cleanup_on_provider()
     )
 
     register_event(target_type='Service', target_name=catalog_item.name,
@@ -66,7 +66,7 @@ def test_order_catalog_item_via_rest(
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(
         lambda: appliance.collections.infra_vms.instantiate(vm_name,
-                                                            provider).delete_from_provider()
+                                                            provider).cleanup_on_provider()
     )
     request.addfinalizer(catalog_item.delete)
     catalog = appliance.rest_api.collections.service_catalogs.find_by(name=catalog.name)
@@ -97,7 +97,7 @@ def test_order_catalog_bundle(appliance, provider, catalog_item, request):
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(
         lambda: appliance.collections.infra_vms.instantiate(
-            "{}0001".format(vm_name), provider).delete_from_provider()
+            "{}0001".format(vm_name), provider).cleanup_on_provider()
     )
     bundle_name = fauxfactory.gen_alphanumeric()
     catalog_bundle = appliance.collections.catalog_bundles.create(

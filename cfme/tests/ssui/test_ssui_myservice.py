@@ -133,7 +133,7 @@ def test_vm_console(request, appliance, setup_provider, context, configure_webso
         vm_console = vm_obj.vm_console
         if provider.one_of(OpenStackProvider):
             public_net = provider.data['public_network']
-            provider.mgmt.assign_floating_ip(vm_obj.name, public_net)
+            vm_obj.mgmt.assign_floating_ip(public_net)
         request.addfinalizer(vm_console.close_console_window)
         request.addfinalizer(appliance.server.logout)
         ssh_who_command = ("who --count" if not provider.one_of(OpenStackProvider)

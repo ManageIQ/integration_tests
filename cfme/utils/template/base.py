@@ -220,9 +220,14 @@ class ProviderTemplateUpload(object):
             'vm_name': 'test_{}_{}'.format(self.template_name, gen_alphanumeric(8)),
             'template': self.template_name,
             'deploy': True,
-            'network_name': self.provider_data['network']}
-
-        self.mgmt.deploy_template(**deploy_args)
+            'network_name': self.provider_data['network']
+        }
+        # TODO: change after openshift wrapanapi refactor
+        if self.provider_type == 'openshift':
+            self.mgmt.deploy_template(**deploy_args)
+        else:
+            template = self.mgmt.get_template(deploy_args['template'])
+            template.deploy(**deploy_args)
         return True
 
     @log_wrap("template upload script")

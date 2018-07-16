@@ -1,7 +1,7 @@
 import attr
 from widgetastic.widget import View
 from widgetastic_patternfly import Tab, Input, Button
-from wrapanapi.ec2 import EC2System
+from wrapanapi.systems import EC2System
 
 from cfme.cloud.instance.ec2 import EC2Instance
 from cfme.common.candu_views import VMUtilizationView

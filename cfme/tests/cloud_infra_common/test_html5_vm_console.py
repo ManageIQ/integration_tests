@@ -39,14 +39,14 @@ def vm_obj(request, provider, setup_provider, console_template):
                                     provider,
                                     template_name=console_template.name)
 
-    request.addfinalizer(lambda: vm_obj.delete_from_provider())
+    request.addfinalizer(lambda: vm_obj.cleanup_on_provider())
 
     vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip="default")
     if provider.one_of(OpenStackProvider):
         # Assign FloatingIP to Openstack Instance from pool
         # so that we can SSH to it
         public_net = provider.data['public_network']
-        provider.mgmt.assign_floating_ip(vm_obj.name, public_net)
+        vm_obj.mgmt.assign_floating_ip(public_net)
     return vm_obj
 
 

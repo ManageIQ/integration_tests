@@ -12,6 +12,8 @@ from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
 from cfme.fixtures.provider import setup_one_by_class_or_skip
 
+from wrapanapi import VmState
+
 TEMPLATE_TORSO = """{
   "AWSTemplateFormatVersion" : "2010-09-09",
   "Description" : "AWS CloudFormation Sample Template Rails_Single_Instance.",
@@ -203,17 +205,19 @@ def a_provider(request):
 
 def vm(request, a_provider, rest_api):
     provider_rest = rest_api.collections.providers.get(name=a_provider.name)
-    vm_name = deploy_template(
+    vm = deploy_template(
         a_provider.key,
-        'test_rest_vm_{}'.format(fauxfactory.gen_alphanumeric(length=4)))
+        'test_rest_vm_{}'.format(fauxfactory.gen_alphanumeric(length=4))
+    )
+    vm_name = vm.name
 
     @request.addfinalizer
     def _finished():
         try:
-            a_provider.mgmt.delete_vm(vm_name)
+            vm.cleanup()
         except Exception:
             # vm can be deleted/retired by test
-            logger.warning("Failed to delete vm '{}'.".format(vm_name))
+            logger.warning("Failed to delete vm %r", vm)
 
     provider_rest.action.refresh()
     wait_for(
@@ -478,9 +482,9 @@ def mark_vm_as_template(rest_api, provider, vm_name):
     """
     t_vm = rest_api.collections.vms.get(name=vm_name)
     t_vm.action.stop()
-    provider.mgmt.wait_vm_stopped(vm_name=vm_name, num_sec=1000)
-
-    provider.mgmt.mark_as_template(vm_name)
+    vm_mgmt = provider.mgmt.get_vm(vm_name)
+    vm_mgmt.ensure_state(VmState.STOPPED, timeout=1000)
+    vm_mgmt.mark_as_template()
 
     wait_for(
         lambda: rest_api.collections.templates.find_by(name=vm_name).subcount != 0,

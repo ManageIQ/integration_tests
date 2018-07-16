@@ -24,7 +24,7 @@ tapi = api()
 CONT_LIMIT = docker_conf['workers']
 DEBUG = docker_conf.get('debug', False)
 
-logger = setup_logger(logging.getLogger('prt'))
+logger, _ = setup_logger(logging.getLogger('prt'))
 
 # Disable pika logs
 logging.getLogger("pika").propagate = False
