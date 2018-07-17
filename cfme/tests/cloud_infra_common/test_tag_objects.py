@@ -5,12 +5,12 @@ import pytest
 from cfme.cloud.keypairs import KeyPair
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
-from cfme.fixtures.provider import setup_one_or_skip
-from cfme.utils.providers import ProviderFilter
+from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
-    pytest.mark.tier(2)
+    pytest.mark.tier(2),
+    pytest.mark.usefixtures('setup_provider')
 ]
 
 
@@ -18,37 +18,24 @@ pytestmark = [
 # get_collection_entity below processes these to navigate and find an entity
 # so use (collection_name, None, None) if the thing being tested uses BaseEntity/BaseCollection
 # Once everything is converted these should be flattened to just collection names list
+
 infra_test_items = [
-    ('infra_provider', None),  # no param_class needed, provider returned directly
-    ('infra_vms', 'ProviderVms'),
-    ('infra_templates', 'ProviderTemplates'),
-    ('hosts', None),
-    ('clusters', None),
-    ('datastores', None)
+    ('infra_provider', 'All'),  # no param_class needed, provider returned directly
+    ('infra_vms', 'AllForProvider'),
+    ('infra_templates', 'AllForProvider'),
+    ('hosts', 'All'),
+    ('clusters', 'All'),
+    ('datastores', 'All')
 ]
-
 cloud_test_items = [
-    ('cloud_provider', None),  # no param_class needed, provider returned directly
-    ('cloud_instances', 'Instances'),
-    ('cloud_flavors', None),
-    ('cloud_av_zones', None),
-    ('cloud_tenants', None),
-    ('cloud_keypairs', None),
-    ('cloud_images', 'Images')
+    ('cloud_provider', 'All'),  # no param_class needed, provider returned directly
+    ('cloud_instances', 'AllForProvider'),
+    ('cloud_flavors', 'All'),
+    ('cloud_av_zones', 'All'),
+    ('cloud_tenants', 'All'),
+    ('cloud_keypairs', 'All'),
+    ('cloud_images', 'AllForProvider')
 ]
-
-
-@pytest.fixture(scope='module')
-def infra_provider(request):
-    prov_filter = ProviderFilter(classes=[InfraProvider])
-    return setup_one_or_skip(request, filters=[prov_filter])
-
-
-@pytest.fixture(scope='module')
-def cloud_provider(request):
-    prov_filter = ProviderFilter(classes=[CloudProvider],
-                                 required_fields=[['provisioning', 'stacks']])
-    return setup_one_or_skip(request, filters=[prov_filter])
 
 
 def get_collection_entity(appliance, collection_name, destination, provider):
@@ -56,14 +43,15 @@ def get_collection_entity(appliance, collection_name, destination, provider):
         return provider
     else:
         collection = getattr(appliance.collections, collection_name)
-        view = navigate_to(provider, destination) if destination else navigate_to(collection, 'All')
+        collection.filters = {'provider': provider}
+        view = navigate_to(collection, destination)
         names = view.entities.entity_names
         if not names:
             pytest.skip("No content found for test")
         return collection.instantiate(name=names[0], provider=provider)
 
 
-def _tag_cleanup(test_item, tag):
+def tag_cleanup(test_item, tag):
     tags = test_item.get_tags()
     if tags:
         result = (
@@ -72,29 +60,24 @@ def _tag_cleanup(test_item, tag):
         )
         if not result:
             test_item.remove_tag(tag=tag)
-    else:
-        result = True
-    return result
 
 
-@pytest.fixture(params=cloud_test_items, ids=([item[0] for item in cloud_test_items]),
-                scope='module')
-def cloud_test_item(request, appliance, cloud_provider):
+@pytest.fixture(params=cloud_test_items, ids=([item[0] for item in cloud_test_items]))
+def cloud_test_item(request, appliance, provider):
     collection_name, destination = request.param
     return get_collection_entity(
-        appliance, collection_name, destination, cloud_provider)
+        appliance, collection_name, destination, provider)
 
 
-@pytest.fixture(params=infra_test_items, ids=[item[0] for item in infra_test_items],
-                scope='module')
-def infra_test_item(request, appliance, infra_provider):
+@pytest.fixture(params=infra_test_items, ids=([item[0] for item in infra_test_items]))
+def infra_test_item(request, appliance, provider):
     collection_name, destination = request.param
     return get_collection_entity(
-        appliance, collection_name, destination, infra_provider)
+        appliance, collection_name, destination, provider)
 
 
-@pytest.fixture(scope='function')
-def tagging_check(tag):
+@pytest.fixture
+def tagging_check(tag, request):
 
     def _tagging_check(test_item, tag_place):
         """ Check if tagging is working
@@ -103,7 +86,6 @@ def tagging_check(tag):
             3. Remove tag
             4. Check tag unassigned on details page
         """
-        _tag_cleanup(test_item, tag)
         test_item.add_tag(tag=tag, details=tag_place)
         tags = test_item.get_tags()
         assert any(
@@ -112,30 +94,25 @@ def tagging_check(tag):
             "{}: {} not in ({})".format(tag.category.display_name, tag.display_name, str(tags)))
 
         test_item.remove_tag(tag=tag, details=tag_place)
-        assert _tag_cleanup(test_item, tag)
+        request.addfinalizer(lambda: tag_cleanup(test_item, tag))
 
     return _tagging_check
 
 
+@pytest.mark.provider([CloudProvider], selector=ONE_PER_CATEGORY)
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
 def test_tag_cloud_objects(tagging_check, cloud_test_item, tag_place):
     """ Test for cloud items tagging action from list and details pages """
     tagging_check(cloud_test_item, tag_place)
 
 
-@pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
-def test_tag_infra_objects(tagging_check, infra_test_item, tag_place):
-    """ Test for infrastructure items tagging action from list and details pages """
-    tagging_check(infra_test_item, tag_place)
-
-
+@pytest.mark.provider([CloudProvider], selector=ONE_PER_CATEGORY)
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
-def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility,
-                             appliance):
+def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility, appliance,
+                             request, tag):
     """ Tests infra provider and its items honors tag visibility
     Prerequisites:
         Catalog, tag, role, group and restricted user should be created
-
     Steps:
         1. As admin add tag
         2. Login as restricted user, item is visible for user
@@ -146,15 +123,22 @@ def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility,
         pytest.skip('Keypairs visibility works starting 5.9')
 
         check_item_visibility(cloud_test_item, visibility)
+        request.addfinalizer(lambda: tag_cleanup(cloud_test_item, tag))
 
 
+@pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
+@pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
+def test_tag_infra_objects(tagging_check, infra_test_item, tag_place):
+    """ Test for infrastructure items tagging action from list and details pages """
+    tagging_check(infra_test_item, tag_place)
+
+
+@pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
-def test_tagvis_infra_object(infra_test_item, check_item_visibility,
-                             visibility):
+def test_tagvis_infra_object(infra_test_item, check_item_visibility, visibility, request, tag):
     """ Tests infra provider and its items honors tag visibility
     Prerequisites:
         Catalog, tag, role, group and restricted user should be created
-
     Steps:
         1. As admin add tag
         2. Login as restricted user, item is visible for user
@@ -162,3 +146,4 @@ def test_tagvis_infra_object(infra_test_item, check_item_visibility,
         4. Login as restricted user, iten is not visible for user
     """
     check_item_visibility(infra_test_item, visibility)
+    request.addfinalizer(lambda: tag_cleanup(cloud_test_item, tag))
