@@ -92,13 +92,20 @@ def test_discover_host(request, provider, appliance, host_ips):
 
 @pytest.mark.rhv2
 # Tests to automate BZ 1201092
-def test_multiple_host_good_creds(setup_provider, provider):
+@pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
+                         ids=["default", "remote", "web"])
+@pytest.mark.uncollectif(
+    lambda provider, creds:
+        creds in ['remote_login', 'web_services'] and provider.one_of(RHEVMProvider),
+    reason="Not relevant for RHEVM Provider."
+)
+def test_multiple_host_good_creds(setup_provider, provider, creds):
     if len(provider.data.get('hosts', {})) < 2:
         pytest.skip('not enough hosts to run test')
     """  Tests multiple host credentialing  with good credentials """
     host = random.choice(provider.data["hosts"])
-    creds = credentials[host['credentials']]
-    cred = Credential(principal=creds.username, secret=creds.password)
+    host_creds = credentials[host['credentials'][creds]]
+    cred = Credential(principal=host_creds.username, secret=host_creds.password)
 
     edit_view = navigate_and_select_quads(provider=provider)
 
@@ -125,8 +132,7 @@ def test_multiple_host_bad_creds(setup_provider, provider):
         pytest.skip('not enough hosts to run test')
 
     host = random.choice(provider.data["hosts"])
-    username = credentials[host['credentials']].username
-    cred = Credential(principal=username, secret='bad_password')
+    cred = Credential(principal='wrong', secret='bad_password')
 
     edit_view = navigate_and_select_quads(provider=provider)
 
