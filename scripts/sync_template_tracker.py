@@ -105,7 +105,7 @@ def main(trackerbot_url, mark_usable=None, selected_provider=None):
 
     # Remove templates that aren't on any providers anymore
     for template in trackerbot.depaginate(api, api.template.get())['objects']:
-        if not template['providers']:
+        if not template['providers'] and template['name'].strip():
             logger.info("Deleting template %s (no providers)", template['name'])
             api.template(template['name']).delete()
 
