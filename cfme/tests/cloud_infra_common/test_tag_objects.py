@@ -51,7 +51,7 @@ def get_collection_entity(appliance, collection_name, destination, provider):
         return collection.instantiate(name=names[0], provider=provider)
 
 
-def _tag_cleanup(test_item, tag):
+def tag_cleanup(test_item, tag):
     tags = test_item.get_tags()
     if tags:
         result = (
@@ -60,9 +60,6 @@ def _tag_cleanup(test_item, tag):
         )
         if not result:
             test_item.remove_tag(tag=tag)
-    else:
-        result = True
-    return result
 
 
 @pytest.fixture(params=cloud_test_items, ids=([item[0] for item in cloud_test_items]))
@@ -80,7 +77,7 @@ def infra_test_item(request, appliance, provider):
 
 
 @pytest.fixture
-def tagging_check(tag):
+def tagging_check(tag, request):
 
     def _tagging_check(test_item, tag_place):
         """ Check if tagging is working
@@ -89,7 +86,6 @@ def tagging_check(tag):
             3. Remove tag
             4. Check tag unassigned on details page
         """
-        _tag_cleanup(test_item, tag)
         test_item.add_tag(tag=tag, details=tag_place)
         tags = test_item.get_tags()
         assert any(
@@ -98,7 +94,7 @@ def tagging_check(tag):
             "{}: {} not in ({})".format(tag.category.display_name, tag.display_name, str(tags)))
 
         test_item.remove_tag(tag=tag, details=tag_place)
-        assert _tag_cleanup(test_item, tag)
+        request.addfinalizer(lambda: tag_cleanup(test_item, tag))
 
     return _tagging_check
 
@@ -112,7 +108,8 @@ def test_tag_cloud_objects(tagging_check, cloud_test_item, tag_place):
 
 @pytest.mark.provider([CloudProvider], selector=ONE_PER_CATEGORY)
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
-def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility, appliance):
+def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility, appliance,
+                             request, tag):
     """ Tests infra provider and its items honors tag visibility
     Prerequisites:
         Catalog, tag, role, group and restricted user should be created
@@ -126,6 +123,7 @@ def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility,
         pytest.skip('Keypairs visibility works starting 5.9')
 
         check_item_visibility(cloud_test_item, visibility)
+        request.addfinalizer(lambda: tag_cleanup(cloud_test_item, tag))
 
 
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
@@ -137,7 +135,7 @@ def test_tag_infra_objects(tagging_check, infra_test_item, tag_place):
 
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
-def test_tagvis_infra_object(infra_test_item, check_item_visibility, visibility):
+def test_tagvis_infra_object(infra_test_item, check_item_visibility, visibility, request, tag):
     """ Tests infra provider and its items honors tag visibility
     Prerequisites:
         Catalog, tag, role, group and restricted user should be created
@@ -148,3 +146,4 @@ def test_tagvis_infra_object(infra_test_item, check_item_visibility, visibility)
         4. Login as restricted user, iten is not visible for user
     """
     check_item_visibility(infra_test_item, visibility)
+    request.addfinalizer(lambda: tag_cleanup(cloud_test_item, tag))
