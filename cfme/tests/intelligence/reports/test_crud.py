@@ -10,6 +10,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.path import data_path
 from cfme.utils.rest import assert_response
+from cfme.utils.search_util import search
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for_decorator
 
@@ -261,3 +262,5 @@ def test_reports_delete_saved_report(appliance, request):
             row[0].check()
     view.configuration.item_select(
         item='Delete selected Saved Reports', handle_alert=True)
+    tree = view.saved_reports.tree.read_contents()
+    assert not search(report.menu_name, tree)
