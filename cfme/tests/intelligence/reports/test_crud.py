@@ -10,7 +10,6 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.path import data_path
 from cfme.utils.rest import assert_response
-from cfme.utils.search_util import search
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for_decorator
 
@@ -253,14 +252,12 @@ def test_reports_delete_saved_report(appliance, request):
         type="Configuration Management",
         subtype="Virtual Machines",
         menu_name="Hardware Information for VMs",
-    )
-    report.queue(wait_for_finish=True)
+    ).queue(wait_for_finish=True)
     view = navigate_to(appliance.collections.saved_reports, 'All')
     # iterates through every row and checks if the 'Name' column matches the given value
     for row in view.table.rows():
-        if row.name.text == report.menu_name:
+        if row.name.text == report.report.menu_name:
             row[0].check()
     view.configuration.item_select(
         item='Delete selected Saved Reports', handle_alert=True)
-    tree = view.saved_reports.tree.read_contents()
-    assert not search(report.menu_name, tree)
+    assert not report.exists
