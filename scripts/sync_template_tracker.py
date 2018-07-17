@@ -59,6 +59,12 @@ def main(trackerbot_url, mark_usable=None, selected_provider=None):
         template_name = str(template_name)
         template_info = TemplateName.parse_template(template_name)
 
+        # it turned out that some providers like ec2 may have templates w/o names.
+        # this is easy protection against such issue.
+        if not template_name.strip():
+            logger.warn('Ignoring template w/o name on provider %s', provider_key)
+            continue
+
         # Don't want sprout templates
         if template_info.group_name in ('sprout', 'rhevm-internal'):
             logger.info('Ignoring %s from group %s', template_name, template_info.group_name)
