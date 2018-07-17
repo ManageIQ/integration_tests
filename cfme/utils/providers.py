@@ -358,6 +358,7 @@ def get_mgmt(provider_key, providers=None, credentials=None):
     # TODO rename the parameter; might break things
     if isinstance(provider_key, Mapping):
         provider_data = provider_key
+        provider_key = provider_data['name']
     else:
         provider_data = providers[provider_key]
 
