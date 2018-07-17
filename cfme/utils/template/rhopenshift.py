@@ -1,7 +1,6 @@
 import os
 import re
 
-from cfme.utils import trackerbot
 from cfme.utils.log import logger
 from cfme.utils.template.base import log_wrap
 from cfme.utils.template.base import ProviderTemplateUpload
@@ -128,11 +127,6 @@ yaml.safe_dump(data, stream=open("{file}", "w"))'"""
                                               .format(t=cur_template))
         return result.success
 
-    @log_wrap("add template to trackerbot")
-    def track_template(self, *args, **kwargs):
-        trackerbot.trackerbot_add_provider_template(*args, **kwargs)
-        return True
-
     def run(self):
         if 'podtesting' not in self.provider_data.get('tags', []):
             logger.info("%s:%s No podtesting tag.", self.log_name, self.provider_key)
@@ -162,7 +156,13 @@ yaml.safe_dump(data, stream=open("{file}", "w"))'"""
             return False
 
         for template in self.templates:
-            self.track_template(self.stream, self.provider_key, template['name'],
-                                custom_data={'TAGS': self.tags})
+            result = self.track_template(
+                stream=self.stream,
+                provider_key=self.provider_key,
+                template_name=template['name'],
+                custom_data={'TAGS': self.tags}
+            )
+            if result is False:
+                return False
 
         return True

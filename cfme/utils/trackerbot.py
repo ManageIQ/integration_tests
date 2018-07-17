@@ -97,7 +97,16 @@ def mark_provider_template(api, provider, template, tested=None, usable=None,
 def delete_provider_template(api, provider, template):
     """Delete a provider/template relationship, used when a template is removed from one provider"""
     provider_template = _as_providertemplate(provider, template)
-    return api.providertemplate(provider_template.concat_id).delete()
+    try:
+        result = api.providertemplate(provider_template.concat_id).delete()
+    except slumber.exceptions.HttpNotFoundError:
+        logger.exception('Exception calling providertemplate.delete()')
+        result = False
+    if result:
+        logger.info('Deleted providertemplate %s::%s', provider, template)
+    else:
+        logger.error('Delete call returned false for providertemplate %s::%s', provider, template)
+    return result
 
 
 def set_provider_active(api, provider, active=True):
@@ -235,23 +244,36 @@ def post_jenkins_result(job_name, number, stream, date, template, build_status, 
         print(exc.content)
 
 
-def trackerbot_add_provider_template(stream, provider, template_name, custom_data=None):
+def add_provider_template(stream, provider, template_name, custom_data=None, mark_kwargs=None):
+    """Checking existing providertemplates first, call mark_provider_template to add records
+
+    Args:
+        stream (str): build stream, like upstream or downstream-510z
+        provider (str): provider key
+        template_name (str): name of the template to track on provider
+        custom_data (dict): JSON serializable custom data dict
+        mark_kwargs (dict): Passed to mark_provider_template to allow for additional kwargs
+    Returns:
+        None on no action (already tracked)
+        True on adding
+        False on error
+    """
+    tb_api = api()
     try:
         existing_provider_templates = [
             pt['id']
             for pt in depaginate(
-                api(), api().providertemplate.get(provider=provider))['objects']]
+                tb_api,
+                tb_api.providertemplate.get(provider=provider, template=template_name))['objects']]
         if '{}_{}'.format(template_name, provider) in existing_provider_templates:
-            print('Template {} already tracked for provider {}'.format(
-                template_name, provider))
+            return None
         else:
-            mark_provider_template(api(), provider, template_name, stream=stream,
-                                   custom_data=custom_data)
-            print('Added {} template {} on provider {}'.format(
-                stream, template_name, provider))
-    except Exception as e:
-        print(e)
-        print('{}: Error occured while template sync to trackerbot'.format(provider))
+            mark_provider_template(tb_api, provider, template_name, stream=stream,
+                                   custom_data=custom_data, **(mark_kwargs or {}))
+            return True
+    except Exception:
+        logger.exception('{}: Error occurred while template sync to trackerbot'.format(provider))
+        return False
 
 
 def depaginate(api, result):
@@ -322,7 +344,7 @@ class Provider(dict):
     def __init__(self, key):
         self['key'] = key
         # We assume this provider exists, is locally known, and has a type
-        self['type'] = providers_data[key]['type']
+        self['type'] = providers_data.get(key, {}).get('type')
 
 
 class Template(dict):
