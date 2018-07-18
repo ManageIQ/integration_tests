@@ -80,8 +80,8 @@ def test_smart_management_add_tag(provider, appliance, test_item):
 
     # validate no tag set to project
     obj_collection = getattr(appliance.collections, test_item.collection_obj)
-    obj_inst = get_clean_entity(entity=provider) \
-        if test_item.obj is ContainersProvider else get_clean_entity(collection=obj_collection)
+    obj_inst = (get_clean_entity(entity=provider)
+        if test_item.obj is ContainersProvider else get_clean_entity(collection=obj_collection))
 
     # Config random tag for object
     tag = obj_collection.add_tag([obj_inst], get_entity_by=test_item.get_entity_by)
