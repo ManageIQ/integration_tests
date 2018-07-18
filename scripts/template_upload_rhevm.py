@@ -22,7 +22,7 @@ from cfme.utils.providers import get_mgmt, list_provider_keys
 from cfme.utils.ssh import SSHClient
 from cfme.utils.wait import wait_for
 
-from wrapanapi import NotFoundError
+from wrapanapi.exceptions import NotFoundError
 
 lock = Lock()
 
