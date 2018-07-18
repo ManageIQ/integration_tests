@@ -1,10 +1,12 @@
 import pytest
+import re
+import random
 from collections import namedtuple
 from wait_for import wait_for
 from cfme.utils import os
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.log import logger
-from cfme.utils.conf import hidden
+from cfme.utils.conf import hidden, cfme_data
 import tempfile
 import lxml.etree
 import yaml
@@ -254,6 +256,18 @@ def test_appliance_console_extend_storage(unconfigured_appliance):
     wait_for(is_storage_extended)
 
 
+def test_appliance_console_log_file_configuration(unconfigured_appliance):
+    """'ap' launches appliance_console, '' clears info screen, '7' log file config, 'y' confirm you
+    want to make changes '1' select disk, 'n' do not change log rotate count 'y' confirm selections
+    '' complete."""
+    command_set = ('ap', '', '7', 'y', '1', 'n', 'y', '')
+    unconfigured_appliance.appliance_console.run_commands(command_set)
+
+    def is_log_file_configured():
+        assert unconfigured_appliance.ssh_client.run_command("df -h | grep /var/www/miq/vmdb/log")
+    wait_for(is_log_file_configured)
+
+
 @pytest.mark.rhel_testing
 def test_appliance_console_ipa(ipa_crud, configured_appliance):
     """'ap' launches appliance_console, '' clears info screen, '10' setup IPA,
@@ -381,3 +395,26 @@ def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
                 logger.info("{}: no result".format(rule))
         else:
             logger.info("{}: rule not found".format(rule))
+
+
+def test_appliance_exec_scripts(appliance, soft_assert):
+    files = appliance.ssh_client.run_command("ls -la /var/www/miq/vmdb/tools/ | grep .rb")
+    file_list = files.output.split("\n")
+    for f in file_list:
+        if not f:
+            continue
+        data = f.split()
+        soft_assert(re.match('^[-]..x..x..x.$', data[0]))
+        soft_assert(appliance.ssh_client.run_command(
+            "cat /var/www/miq/vmdb/tools/{} | grep /usr/bin/env".format(data[8])))
+
+
+def test_appliance_console_static_ipv6(temp_appliance_preconfig):
+    """'ap' launches appliance_console, '' clears info screen, '1' network configuration,
+    '3' set static ipv6, 'ips' static address 'y', '' complete."""
+    hex_string = "{}::{}".format(cfme_data['basic_inf']['appliance_console_ipv6_prefix'], ":".join(
+        ["{0:0{1}X}".format(int(random.random() * 0xffff), 4).lower() for _ in range(3)]))
+    gateway = "{}::1".format(cfme_data['basic_inf']['appliance_console_ipv6_prefix'])
+    command_set = ('ap', '', '1', '3', hex_string, '', gateway, '', '', '', 'y', '')
+    temp_appliance_preconfig.appliance_console.run_commands(command_set)
+    assert temp_appliance_preconfig.ssh_client.run_command('ip addr | grep {}'.format(hex_string))
