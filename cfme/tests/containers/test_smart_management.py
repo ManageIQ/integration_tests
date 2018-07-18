@@ -20,21 +20,21 @@ pytestmark = [
 
 TEST_ITEMS = [
     pytest.mark.polarion('CMP-9948')(ContainersTestItem(
-        Container, 'CMP-9948', collection_obj="containers", get_entity_by="name")),
+        Container, 'CMP-9948', collection_obj="containers", keyword_name="name")),
     pytest.mark.polarion('CMP-10320')(ContainersTestItem(
-        Template, 'CMP-10320', collection_obj="container_templates", get_entity_by="name")),
+        Template, 'CMP-10320', collection_obj="container_templates", keyword_name="name")),
     pytest.mark.polarion('CMP-9992')(ContainersTestItem(
         ImageRegistry, 'CMP-9992', collection_obj="container_image_registries",
-        get_entity_by="host")),
+        keyword_name="host")),
     pytest.mark.polarion('CMP-9964')(ContainersTestItem(
-        Node, 'CMP-9964', collection_obj="container_nodes", get_entity_by="name")),
+        Node, 'CMP-9964', collection_obj="container_nodes", keyword_name="name")),
     pytest.mark.polarion('CMP-9932')(ContainersTestItem(
-        Pod, 'CMP-9932', collection_obj="container_pods", get_entity_by="name")),
+        Pod, 'CMP-9932', collection_obj="container_pods", keyword_name="name")),
     pytest.mark.polarion('CMP-9870')(ContainersTestItem(
-        Project, 'CMP-9870', collection_obj="container_projects", get_entity_by="name")),
+        Project, 'CMP-9870', collection_obj="container_projects", keyword_name="name")),
     pytest.mark.polarion('CMP-9854')(ContainersTestItem(
         ContainersProvider, 'CMP-9854', collection_obj="containers_providers",
-        get_entity_by="name"))
+        keyword_name="name"))
 ]
 
 
@@ -84,7 +84,7 @@ def test_smart_management_add_tag(provider, appliance, test_item):
         if test_item.obj is ContainersProvider else get_clean_entity(collection=obj_collection))
 
     # Config random tag for object
-    tag = obj_collection.add_tag([obj_inst], get_entity_by=test_item.get_entity_by)
+    tag = obj_collection.add_tag([obj_inst], keyword_name=test_item.keyword_name)
 
     all_tags = wait_for(obj_inst.get_tags, num_sec=30, delay=5).out
 
