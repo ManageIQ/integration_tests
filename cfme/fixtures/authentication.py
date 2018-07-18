@@ -36,21 +36,23 @@ def auth_user_data(auth_provider, user_type):
     """Grab user data attrdict from auth provider's user data in yaml
 
     Expected formatting of yaml containing user data:
-        test_users:
-        -
-          username: ldapuser2
-          password: mysecretpassworddontguess
-          fullname: Ldap User2
-          groups:
-            - customgroup1
-          providers:
-            - freeipa01
-          user_types:
-            - uid
 
-    Only include user data for users where the user_type matches that under test
+    test_users:
+    -
+      username: ldapuser2
+      password: mysecretpassworddontguess
+      fullname: Ldap User2
+      groups:
+        - customgroup1
+      providers:
+        - freeipa01
+      user_types:
+        - uid
 
-    Assert the data isn't empty, and skip the test if so
+        Only include user data for users where the user_type matches that under test
+
+        Assert the data isn't empty, and skip the test if so
+
     """
     try:
         data = [user
