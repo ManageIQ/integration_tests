@@ -249,9 +249,9 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
         """ Set depot type to "No Depot" """
         if not self.is_cleared:
             if self.second_server_collect and not self.zone_collect:
-                view = navigate_to(self, 'DiagnosticsCollectLogsEditSlave')
+                view = navigate_to(self, 'DiagnosticsCollectLogsEditSlave', wait_for_view=True)
             else:
-                view = navigate_to(self, 'DiagnosticsCollectLogsEdit')
+                view = navigate_to(self, 'DiagnosticsCollectLogsEdit', wait_for_view=True)
             view.depot_type.fill('<No Depot>')
             view.save_button.click()
             view = self.create_view(ServerCollectLogsView)
@@ -342,9 +342,7 @@ class ServerCollectLogsView(ServerDiagnosticsView):
     def in_server_collect_logs(self):
         return (
             self.collectlogs.is_displayed and
-            self.collectlogs.is_active and
-            self.title.text == 'Diagnostics Server "{} [{}]" (current)'.format(
-                self.context['object'].name, self.context['object'].sid)
+            self.collectlogs.is_active()
         )
 
 
