@@ -1,6 +1,8 @@
 import pytest
 import re
 import random
+
+from cfme.utils.blockers import BZ
 from collections import namedtuple
 from wait_for import wait_for
 from cfme.utils import os
@@ -397,7 +399,10 @@ def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
             logger.info("{}: rule not found".format(rule))
 
 
+@pytest.mark.meta(blockers=[BZ(1544854, forced_streams=['5.9', '5.10'])])
 def test_appliance_exec_scripts(appliance, soft_assert):
+    f1 = 'env_probe_event_catcher.rb'
+    f2 = 'env_probe_vc_inv.rb'
     files = appliance.ssh_client.run_command("ls -la /var/www/miq/vmdb/tools/ | grep .rb")
     file_list = files.output.split("\n")
     for f in file_list:
@@ -412,9 +417,9 @@ def test_appliance_exec_scripts(appliance, soft_assert):
 def test_appliance_console_static_ipv6(temp_appliance_preconfig):
     """'ap' launches appliance_console, '' clears info screen, '1' network configuration,
     '3' set static ipv6, 'ips' static address 'y', '' complete."""
-    hex_string = "{}::{}".format(cfme_data['basic_inf']['appliance_console_ipv6_prefix'], ":".join(
+    hex_string = "{}::{}".format(cfme_data['basic_info']['appliance_console_ipv6_prefix'], ":".join(
         ["{0:0{1}X}".format(int(random.random() * 0xffff), 4).lower() for _ in range(3)]))
-    gateway = "{}::1".format(cfme_data['basic_inf']['appliance_console_ipv6_prefix'])
+    gateway = "{}::1".format(cfme_data['basic_info']['appliance_console_ipv6_prefix'])
     command_set = ('ap', '', '1', '3', hex_string, '', gateway, '', '', '', 'y', '')
     temp_appliance_preconfig.appliance_console.run_commands(command_set)
     assert temp_appliance_preconfig.ssh_client.run_command('ip addr | grep {}'.format(hex_string))
