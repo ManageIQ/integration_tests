@@ -25,6 +25,11 @@ class Logger(ArtifactorBasePlugin):
             self.in_progress = False
             self.handler = None
 
+        def close(self):
+            if self.handle is not None:
+                self.handler.close()
+                self.handler = None
+
     def plugin_initialize(self):
         self.register_plugin_hook('start_test', self.start_test)
         self.register_plugin_hook('finish_test', self.finish_test)
@@ -43,6 +48,7 @@ class Logger(ArtifactorBasePlugin):
             if self.store[slaveid].in_progress:
                 print("Test already running, can't start another, logger")
                 return None
+            self.store[slaveid].close()
         self.store[slaveid] = self.Test(test_ident)
         self.store[slaveid].in_progress = True
         filename = "{ident}-cfme.log".format(ident=self.ident)
@@ -64,7 +70,7 @@ class Logger(ArtifactorBasePlugin):
         if not slaveid:
             slaveid = "Master"
         self.store[slaveid].in_progress = False
-        self.store[slaveid].handler.close()
+        self.store[slaveid].close()
 
     @ArtifactorBasePlugin.check_configured
     def log_message(self, log_record, slaveid):
