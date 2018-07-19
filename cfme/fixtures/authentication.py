@@ -19,6 +19,7 @@ def setup_aws_auth_provider(appliance, amazon_auth_provider):
     original_config = appliance.server.authentication.auth_settings
     appliance.server.authentication.configure(auth_mode='amazon',
                                               auth_provider=amazon_auth_provider)
+    sleep(60)  # wait for MIQ to update, no trigger to look for, but if you try too soon it fails
     yield
 
     appliance.server.authentication.auth_settings = original_config

@@ -11,7 +11,7 @@ from cfme.utils.auth import (
     OpenLDAPAuthProvider, OpenLDAPSAuthProvider, ActiveDirectoryAuthProvider, FreeIPAAuthProvider,
     AmazonAuthProvider
 )
-from cfme.utils.blockers import GH, BZ
+from cfme.utils.blockers import GH
 from cfme.utils.conf import auth_data, credentials
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -256,7 +256,6 @@ def local_users(appliance, auth_user_data, user_type, auth_provider, local_group
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(blockers=[BZ(1538791, forced_streams=['5.8'])])  # username field too short
 @pytest.mark.uncollectif(lambda auth_mode: auth_mode == 'amazon',
                          'Amazon auth_data needed for local group testing')
 def test_login_local_group(appliance, local_users, local_group, soft_assert):

@@ -307,6 +307,7 @@ class Region(BaseEntity, sentaku.modeling.ElementMixin):
         view.submit.click()
         view.flash.assert_no_error()
 
+
 @attr.s
 class RegionCollection(BaseCollection, sentaku.modeling.ElementMixin):
     # all = sentaku.ContextualMethod()
