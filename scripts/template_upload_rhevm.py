@@ -149,10 +149,13 @@ def template_from_ova(mgmt, username, password, rhevip, edomain, ovaname, ssh_cl
     """
     try:
         change_edomain_state(mgmt, 'active', edomain, provider)
-        if mgmt.get_template_from_storage_domain(temp_template_name, edomain):
-            logger.info("RHEVM:%r Warning: found another template with this name.", provider)
-            logger.info("RHEVM:%r Skipping this step. Attempting to continue...", provider)
-            return
+        try:
+            if mgmt.get_template_from_storage_domain(temp_template_name, edomain):
+                logger.info("RHEVM:%r Warning: found another template with this name.", provider)
+                logger.info("RHEVM:%r Skipping this step. Attempting to continue...", provider)
+                return
+        except NotFoundError:
+            pass
         version_cmd = 'rpm -qa| grep image-uploader'
         version_result = ssh_client.run_command(version_cmd)
         if version_result.success:
