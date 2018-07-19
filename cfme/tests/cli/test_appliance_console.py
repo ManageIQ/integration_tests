@@ -401,8 +401,6 @@ def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
 
 @pytest.mark.meta(blockers=[BZ(1544854, forced_streams=['5.9', '5.10'])])
 def test_appliance_exec_scripts(appliance, soft_assert):
-    f1 = 'env_probe_event_catcher.rb'
-    f2 = 'env_probe_vc_inv.rb'
     files = appliance.ssh_client.run_command("ls -la /var/www/miq/vmdb/tools/ | grep .rb")
     file_list = files.output.split("\n")
     for f in file_list:
