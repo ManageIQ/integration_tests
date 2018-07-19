@@ -823,6 +823,7 @@ def clone_template_to_appliance(self, appliance_id, lease_time_minutes=None, yum
         clone_template_to_appliance__clone_template.si(appliance_id, lease_time_minutes),
         clone_template_to_appliance__wait_present.si(appliance_id),
         appliance_power_on.si(appliance_id),
+        appliance_set_ansible_url.si(appliance_id)
     ]
     if yum_update:
         tasks.append(appliance_yum_update.si(appliance_id))
@@ -1784,6 +1785,13 @@ def appliance_set_hostname(self, appliance_id):
     appliance = Appliance.objects.get(id=appliance_id)
     if appliance.provider.provider_data.get('type', None) == 'openstack':
         appliance.ipapp.set_resolvable_hostname()
+
+
+@singleton_task()
+def appliance_set_ansible_url(self, appliance_id):
+    appliance = Appliance.objects.get(id=appliance_id)
+    if appliance.is_openshift:
+        appliance.cfme.set_ansible_url()
 
 
 @singleton_task()
