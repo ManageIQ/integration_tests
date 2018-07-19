@@ -16,6 +16,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.version import LOWEST
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BootstrapSwitchSelect, MultiBoxSelect, SummaryFormItem, Dropdown
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 from . import ControlExplorerView
@@ -282,7 +283,7 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
         else:
             view.cancel_button.click()
         view = self.create_view(PolicyDetailsView, override=updates)
-        assert view.is_displayed
+        wait_for(lambda: view.is_displayed, timeout=10, message="waits until the view is displayed")
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
