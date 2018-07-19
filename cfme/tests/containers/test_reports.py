@@ -13,10 +13,10 @@ from cfme.utils.wait import TimedOutError
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.meta(blockers=[BZ(1467059, forced_streams=["5.8"])]),
     pytest.mark.meta(
         server_roles='+ems_metrics_coordinator +ems_metrics_collector +ems_metrics_processor'),
     pytest.mark.tier(1),
+    pytest.mark.long_running_env,
     pytest.mark.provider([ContainersProvider], scope='function')
 ]
 
@@ -226,7 +226,6 @@ def test_report_projects_by_memory_usage(appliance, soft_assert, vporizer):
                     .format(row['Name'], usage_db, usage_report))
 
 
-@pytest.mark.long_running_env
 @pytest.mark.polarion('CMP-10272')
 def test_report_pod_counts_for_container_images_by_project(appliance, provider, soft_assert):
     """Testing 'Pod counts For Container Images by Project' report,\
@@ -256,7 +255,6 @@ def test_report_pod_counts_for_container_images_by_project(appliance, provider, 
                         .format(expected_image, pod_name, pod_images))
 
 
-@pytest.mark.long_running_env
 @pytest.mark.meta(blockers=[1529963], forced_stream=['5.8', '5.9'])
 @pytest.mark.polarion('CMP-9532')
 def test_report_recently_discovered_pods(appliance, provider, soft_assert):
@@ -270,7 +268,6 @@ def test_report_recently_discovered_pods(appliance, provider, soft_assert):
                     'Could not find pod "{}" in report.'.format(pod))
 
 
-@pytest.mark.long_running_env
 @pytest.mark.polarion('CMP-10273')
 def test_report_number_of_images_per_node(appliance, provider, soft_assert):
     """Testing 'Number of Images per Node' report, see polarion case for more info"""
@@ -291,7 +288,6 @@ def test_report_number_of_images_per_node(appliance, provider, soft_assert):
                     .format(pod_name, node, expected_image, pod_images))
 
 
-@pytest.mark.long_running_env
 @pytest.mark.polarion('CMP-10670')
 def test_report_projects_by_number_of_containers(appliance, provider, soft_assert):
     """Testing 'Projects by Number of Containers' report, see polarion case for more info"""
