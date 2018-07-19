@@ -164,7 +164,7 @@ class TestControlOnQuadicons(object):
         # TODO: assert no event.
         time.sleep(60)
         vm_state = testing_vm.find_quadicon().data['state']
-        soft_assert('currentstate-on' in vm_state)
+        soft_assert(vm_state == 'on')
         soft_assert(
             testing_vm.mgmt.is_running, "vm not running")
 
@@ -184,7 +184,7 @@ class TestControlOnQuadicons(object):
         if_scvmm_refresh_provider(testing_vm.provider)
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_OFF, timeout=900)
         vm_state = testing_vm.find_quadicon().data['state']
-        soft_assert('currentstate-off' in vm_state)
+        soft_assert(vm_state == 'off')
         soft_assert(not testing_vm.mgmt.is_running, "vm running")
 
     @pytest.mark.rhv3
@@ -199,7 +199,7 @@ class TestControlOnQuadicons(object):
         if_scvmm_refresh_provider(testing_vm.provider)
         time.sleep(60)
         vm_state = testing_vm.find_quadicon().data['state']
-        soft_assert('currentstate-off' in vm_state)
+        soft_assert(vm_state == 'off')
         soft_assert(not testing_vm.mgmt.is_running, "vm running")
 
     @pytest.mark.rhv1
@@ -219,7 +219,7 @@ class TestControlOnQuadicons(object):
         if_scvmm_refresh_provider(testing_vm.provider)
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_ON, timeout=900)
         vm_state = testing_vm.find_quadicon().data['state']
-        soft_assert('currentstate-on' in vm_state)
+        soft_assert(vm_state == 'on')
         soft_assert(testing_vm.mgmt.is_running, "vm not running")
 
 
@@ -409,7 +409,7 @@ def test_archived_vm_status(testing_vm, archived_vm):
         test_flag: inventory
     """
     vm_state = testing_vm.find_quadicon(from_any_provider=True).data['state']
-    assert ('currentstate-archived' in vm_state)
+    assert (vm_state == 'archived')
 
 
 @pytest.mark.rhv3
@@ -420,7 +420,7 @@ def test_orphaned_vm_status(testing_vm, orphaned_vm):
         test_flag: inventory
     """
     vm_state = testing_vm.find_quadicon(from_any_provider=True).data['state']
-    assert ('currentstate-orphaned' in vm_state)
+    assert (vm_state == 'orphaned')
 
 
 @pytest.mark.rhv1

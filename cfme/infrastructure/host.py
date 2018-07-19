@@ -195,7 +195,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
 
         def _looking_for_state_change():
             entity = view.entities.get_entity(name=self.name)
-            return "currentstate-{}".format(desired_state) in entity.data['state']
+            return entity.data['state'] == desired_state
 
         return wait_for(
             _looking_for_state_change,
