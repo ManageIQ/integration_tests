@@ -552,6 +552,8 @@ class IPAppliance(object):
                 ssh_client.run_command(
                     "echo HOSTNAME=localhost.localdomain >> /etc/sysconfig/network",
                     ensure_host=True)
+            # clear any set hostname from /etc/hosts
+            self.remove_resolvable_hostname()
             ssh_client.run_command(
                 "sed -i -r -e '/^HWADDR/d' /etc/sysconfig/network-scripts/ifcfg-eth0",
                 ensure_host=True)
@@ -2386,6 +2388,31 @@ class IPAppliance(object):
                 )
             )
 
+    @logger_wrap('Get the resolvable hostname')
+    def get_resolvable_hostname(self, log_callback=None):
+        """Lookup the hostname based on self.hostname"""
+        # Example lookups with self.hostname as IP and self.hostname as resolvable name
+        # [root@host-192-168-55-85 ~]# host 1.2.3.137
+        # 137.3.2.1.in-addr.arpa domain name pointer 137.test.miq.com.
+        # [root@host-192-168-55-85 ~]# host 137.test.miq.com
+        # 137.test.miq.com has address 1.2.3.137
+        host_check = self.ssh_client.run_command('host {}'.format(self.hostname), ensure_host=True)
+        log_callback('Parsing for resolvable hostname from "{}"'.format(host_check.output))
+        fqdn = None  # just in case the logic gets weird
+        if host_check.success and 'domain name pointer' in host_check.output:
+            # resolvable and reverse lookup
+            # parse out the resolved hostname
+            fqdn = host_check.output.split(' ')[-1].rstrip('\n').rstrip('.')
+            log_callback('Found FQDN by appliance IP: "{}"'.format(fqdn))
+        elif host_check.success and 'has address' in host_check.output:
+            # resolvable and address returned
+            fqdn = self.hostname
+            log_callback('appliance hostname attr is FQDN: "{}"'.format(fqdn))
+        else:
+            logger.warning('Bad RC from host command or unexpected output,'
+                           ' no resolvable hostname found')
+        return fqdn
+
     @logger_wrap('Configuring resolvable hostname')
     def set_resolvable_hostname(self, log_callback=None):
         """Try to lookup the hostname based on self.hostname, which is generally an IP
@@ -2400,36 +2427,36 @@ class IPAppliance(object):
         Returns:
             Boolean, True if hostname was set
         """
-        # Example lookups with self.hostname as IP and self.hostname as resolvable name
-        # [root@host-192-168-55-85 ~]# host 1.2.3.137
-        # 137.3.2.1.in-addr.arpa domain name pointer 137.test.miq.com.
-        # [root@host-192-168-55-85 ~]# host 137.test.miq.com
-        # 137.test.miq.com has address 1.2.3.137
-        host_check = self.ssh_client.run_command('host {}'.format(self.hostname))
-        log_callback('Parsing for resolvable hostname from "{}"'.format(host_check.output))
-        fqdn = None  # just in case the logic gets weird
-        if host_check.failed:
-            # not resolvable, don't set
-            logger.warning('Bad RC from host command, skipping setting resolvable hostname')
-            return False
-        if host_check.success and 'domain name pointer' in host_check.output:
-            # resolvable and reverse lookup
-            # parse out the resolved hostname
-            fqdn = host_check.output.split(' ')[-1].rstrip('\n').rstrip('.')
-            log_callback('Found FQDN by appliance IP: "{}"'.format(fqdn))
-        elif host_check.success and 'has address' in host_check.output:
-            # resolvable and address returned
-            fqdn = self.hostname
-            log_callback('appliance hostname attr is FQDN: "{}"'.format(fqdn))
-        else:
-            # unexpected output on success, don't set
-            logger.warning('Success from host command with unexpected output, '
-                           'skipping setting resolvable hostname')
-            return False
+        fqdn = self.get_resolvable_hostname()
         if fqdn is not None:
             log_callback('Setting FQDN "{}" via appliance_console_cli'.format(fqdn))
             result = self.appliance_console_cli.set_hostname(str(fqdn))
             return result.success
+        else:
+            logger.error('Unable to set resolvable hostname')
+            return False
+
+    def remove_resolvable_hostname(self):
+        """remove a resolvable hostname from /etc/hosts directly
+        USE WITH CAUTION as it mangles /etc/hosts,
+        recommended only for seal_for_templatizing with sprout appliances
+        """
+        hosts_grep_cmd = 'grep {} /etc/hosts'.format(self.get_resolvable_hostname())
+        with self.ssh_client as ssh_client:
+            if ssh_client.run_command(hosts_grep_cmd, ensure_host=True).success:
+                # remove resolvable hostname from /etc/hosts
+                # tuples of (loopback, replacement string) for each proto
+                v6 = ('::1', re.escape('::1'.ljust(16)))
+                v4 = ('127.0.0.1', re.escape('127.0.0.1'.ljust(16)))
+                resolve_esc = re.escape(self.get_resolvable_hostname())
+                for addr, fill in [v6, v4]:
+                    # regex finds lines for loopback addrs where resolvable hostname set
+                    # sed replaces with the ljust (space padded) loopback addr
+                    ssh_client.run_command(
+                        "sed -i -r -e 's|({}\s..*){}|{}|' /etc/hosts".format(addr,
+                                                                             resolve_esc,
+                                                                             fill),
+                        ensure_host=True)
 
     def provider_based_collection(self, provider, coll_type='vms'):
         """Given a provider, fetches a collection for the given collection type

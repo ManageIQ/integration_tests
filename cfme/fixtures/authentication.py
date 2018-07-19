@@ -66,19 +66,8 @@ def auth_user_data(auth_provider, user_type):
     return data
 
 
-@pytest.fixture(scope='session')
-def ensure_resolvable_hostname(appliance):
-    """
-    Intended for use with freeipa configuration, ensures a resolvable hostname on the appliance
-
-    Tries to resolve the appliance hostname property and skips the test if it can't
-    """
-    appliance.set_resolvable_hostname()
-
-
 @pytest.fixture(scope='function')
-def configure_auth(appliance, auth_mode, auth_provider, user_type, ensure_resolvable_hostname,
-                   request):
+def configure_auth(appliance, auth_mode, auth_provider, user_type, request, fix_missing_hostname):
     """Given auth_mode, auth_provider, user_type parametrization, configure auth for login
     testing.
 
