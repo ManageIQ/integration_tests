@@ -103,6 +103,39 @@ def small_vm(provider, small_template_modscope):
     vm.cleanup_on_provider()
 
 
+@pytest.fixture()
+def new_vm(setup_provider, provider):
+    """Fixture to provision appliance to the provider being tested if necessary"""
+    vm_name = random_vm_name(context='migrate')
+    try:
+        template_name = provider.data.templates.small_template.name
+    except AttributeError:
+        pytest.skip('Could not find templates.small_template.name in provider yaml: {}'
+                    .format(provider.data))
+
+    vm = provider.appliance.collections.infra_vms.instantiate(vm_name, provider, template_name)
+
+    if not provider.mgmt.does_vm_exist(vm_name):
+        vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+    yield vm
+
+    vm.cleanup_on_provider()
+
+
+@pytest.fixture()
+def tenant_quota(tenants_setup, parent_quota, child_quota, flash_text):
+    """Fixture to assign tenant quota"""
+    test_parent, test_child = tenants_setup
+    view = navigate_to(test_parent, 'ManageQuotas', wait_for_view=True)
+    view.form.fill({'{}_cb'.format(parent_quota[0]): True,
+                    '{}_txt'.format(parent_quota[0]): parent_quota[1]})
+    view.save_button.click()
+    view = navigate_to(test_child, 'ManageQuotas', wait_for_view=True)
+    view.form.fill({'{}_cb'.format(child_quota[0]): True,
+                    '{}_txt'.format(child_quota[0]): child_quota[1]})
+    view.save_button.click()
+
+
 @pytest.mark.rhv2
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated
@@ -237,3 +270,49 @@ def test_setting_child_quota_more_than_parent(tenants_setup, parent_quota, child
     view.flash.assert_message('Error when saving tenant quota: Validation failed: {} allocated '
                               'quota is over allocated, parent tenant does not have enough quota'.
                               format(flash_text))
+
+
+@pytest.mark.parametrize(
+    ['parent_quota', 'child_quota', 'flash_text'],
+    [
+        [('cpu', '5'), ('cpu', '3'), 'Cpu'],
+        [('memory', '5'), ('memory', '3'), 'Mem'],
+        [('storage', '5'), ('storage', '3'), 'Storage'],
+        [('vm', '5'), ('vm', '3'), 'Vms'],
+        [('template', '5'), ('template', '3'), 'Templates']
+    ],
+    ids=['cpu', 'memory', 'storage', 'vm', 'template']
+)
+def test_vm_migration_after_assigning_tenant_quota(appliance, new_vm, tenant_quota, provider):
+    """prerequisite: Provider should be added
+
+    steps:
+
+    1. Create VM
+    2. Assign tenant quota
+    3. Migrate VM
+    4. Check whether migration is successfully done
+
+    :param appliance:
+    :param new_vm:
+    :param provider:
+    :param tenants_setup:
+    :param parent_quota:
+    :param child_quota:
+    :param flash_text:
+    """
+    view = navigate_to(new_vm, 'Details')
+    vm_host = view.entities.summary('Relationships').get_text_of('Host')
+    hosts = [vds.name for vds in provider.hosts if vds.name not in vm_host]
+    if hosts:
+        migrate_to = hosts[0]
+    else:
+        pytest.skip("There is only one host in the provider")
+    new_vm.migrate_vm("email@xyz.com", "first", "last", host=migrate_to)
+    request_description = new_vm.name
+    cells = {'Description': request_description, 'Request Type': 'Migrate'}
+    migrate_request = appliance.collections.requests.instantiate(request_description, cells=cells,
+                                                                 partial_check=True)
+    migrate_request.wait_for_request(method='ui')
+    msg = "Request failed with the message {}".format(migrate_request.row.last_message.text)
+    assert migrate_request.is_succeeded(method='ui'), msg
