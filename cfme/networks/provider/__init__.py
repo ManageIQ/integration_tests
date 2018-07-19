@@ -96,7 +96,11 @@ class NetworkProvider(BaseProvider, Taggable):
     def security_groups(self):
         return self.collections.security_groups
 
-    def create(self, cancel=False, validate_credentials=True, validate_inventory=False):
+    def create(self, cancel=False, validate_credentials=True, validate_inventory=False,
+               check_existing=False):
+        if check_existing and self.exists:
+            return False
+
         created = True
 
         logger.info('Setting up Network Provider: %s', self.key)
@@ -271,6 +275,25 @@ class NetworkProvider(BaseProvider, Taggable):
             msg = ('Delete initiated for 1 Network Provider from the {} Database'.format(
                 self.appliance.product_name))
             view.flash.assert_success_message(msg)
+
+    def setup_test_entities_on_provider(self):
+        """
+        Setups default entities on remote server (bypassing CFME), aka testbed.
+        E.g. Nuage provider creates:
+          - new enterprise named "CFME Integration Tests - Enterprise" with a single
+          - domaintemplate named "CFME Integration Tests - Domain Template" with a single
+          - domain         named "CFME Integration Tests - Domain" with a single
+          - zone           named "CFME Integration Tests - Zone" with a single
+          - subnet         named "CFME Integration Tests - Subnet"
+        """
+        raise NotImplementedError("This method is not implemented for given provider")
+
+    def teardown_test_entities_on_provider(self):
+        """
+        Destroys default entities on remote server (bypassing CFME).
+        E.g. Nuage provider destroys enterprise named "CFME Integration Tests - Enterprise".
+        """
+        raise NotImplementedError("This method is not implemented for given provider")
 
 
 @attr.s

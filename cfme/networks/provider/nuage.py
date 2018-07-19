@@ -83,6 +83,13 @@ class NuageProvider(NetworkProvider):
         d['security_protocol'] = self.default_endpoint.security_protocol
         d['username'] = self.default_endpoint.credentials.principal
         d['password'] = self.default_endpoint.credentials.secret
+        d['enterprise_name'] = 'Integration Tests - Enterprise'
+        d['domain_template_name'] = 'Integration Tests - Domain Template'
+        d['domain_name'] = 'Integration Tests - Domain'
+        d['zone_name'] = 'Integration Tests - Zone'
+        d['subnet_name'] = 'Integration Tests - Subnet'
+        d['entity_description'] = 'This object was created automatically by Integration Tests.'
+
         return get_mgmt(d)
 
     @classmethod
@@ -153,3 +160,34 @@ class NuageProvider(NetworkProvider):
     def num_network_router_ui(self):
         view = navigate_to(self, "Details")
         return int(view.entities.summary("Relationships").get_text_of("Network Routers"))
+
+    def setup_test_entities_on_provider(self):
+        """
+        Sets up testbed on Nuage server that includes.
+        - enterprise     named "CFME Integration Tests - Enterprise" with a single
+        - domaintemplate named "CFME Integration Tests - Domain Template" with a single
+        - domain         named "CFME Integration Tests - Domain" with a single
+        - zone           named "CFME Integration Tests - Zone" with a single
+        - subnet         named "CFME Integration Tests - Subnet"
+        """
+
+        subnet_kwargs = {
+            'address': '193.192.191.0',
+            'gateway': '193.192.191.1',
+            'netmask': '255.255.255.0',
+            'multicast': 'INHERITED',
+            'IPType': 'IPV4'
+        }
+
+        self.mgmt.create_enterprise()
+        self.mgmt.create_domain_template()
+        self.mgmt.create_domain()
+        self.mgmt.create_zone()
+        self.mgmt.create_subnet(**subnet_kwargs)
+
+    def teardown_test_entities_on_provider(self):
+        """
+        Destroys enterprise named "CFME Integration Tests - Enterprise".
+        """
+
+        self.mgmt.destroy_enterprise()
