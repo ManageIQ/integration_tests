@@ -1,7 +1,7 @@
 import attr
 from cached_property import cached_property
 from os import path
-
+from six.moves.urllib.error import URLError
 from wrapanapi.systems.container import Openshift
 
 from cfme.common.provider import DefaultEndpoint
@@ -14,7 +14,6 @@ from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for, TimedOutError
 from . import ContainersProvider, ContainersProviderDefaultEndpoint, ContainersProviderEndpointsForm
 
-from six.moves.urllib.error import URLError
 
 class CustomAttribute(object):
     def __init__(self, name, value, field_type=None, href=None):
