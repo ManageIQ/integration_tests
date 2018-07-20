@@ -1790,7 +1790,7 @@ def appliance_set_hostname(self, appliance_id):
 @singleton_task()
 def appliance_set_ansible_url(self, appliance_id):
     appliance = Appliance.objects.get(id=appliance_id)
-    if appliance.is_openshift:
+    if appliance.is_openshift and appliance.version >= '5.10':
         appliance.cfme.set_ansible_url()
 
 
