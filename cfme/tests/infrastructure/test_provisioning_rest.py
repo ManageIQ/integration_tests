@@ -74,18 +74,19 @@ def provision_data(appliance, provider, small_template_modscope):
     return get_provision_data(appliance.rest_api, provider, small_template_modscope.name)
 
 
-def clean_vm(appliance, vm_name):
+def clean_vm(appliance, provider, vm_name):
     found_vms = appliance.rest_api.collections.vms.find_by(name=vm_name)
     if found_vms:
         vm = found_vms[0]
         vm.action.delete()
         vm.wait_not_exists(num_sec=15, delay=2)
+    appliance.collections.infra_vms.instantiate(vm_name, provider).cleanup_on_provider()
 
 
 @pytest.mark.rhv2
 # Here also available the ability to create multiple provision request, but used the save
 # href and method, so it doesn't make any sense actually
-def test_provision(request, appliance, provision_data):
+def test_provision(request, appliance, provider, provision_data):
     """Tests provision via REST API.
     Prerequisities:
         * Have a provider set up with templates suitable for provisioning.
@@ -97,7 +98,7 @@ def test_provision(request, appliance, provision_data):
         test_flag: rest, provision
     """
     vm_name = provision_data['vm_fields']['vm_name']
-    request.addfinalizer(lambda: clean_vm(appliance, vm_name))
+    request.addfinalizer(lambda: clean_vm(appliance, provider, vm_name))
     appliance.rest_api.collections.provision_requests.action.create(**provision_data)
     assert_response(appliance)
     provision_request = appliance.collections.requests.instantiate(description=vm_name,
@@ -128,7 +129,7 @@ def test_provision_emails(request, provision_data, provider, appliance, smtp_tes
         return len(smtp_test.get_emails(
             subject_like="%%Your virtual machine request has Completed%%")) == 1
 
-    request.addfinalizer(lambda: clean_vm(appliance, vm_name))
+    request.addfinalizer(lambda: clean_vm(appliance, provider, vm_name))
 
     vm_name = provision_data["vm_fields"]["vm_name"]
     memory = int(provision_data["vm_fields"]["vm_memory"])
@@ -157,7 +158,7 @@ def test_create_pending_provision_requests(request, appliance, provider, small_t
     provision_data = get_provision_data(
         appliance.rest_api, provider, small_template.name, auto_approve=False)
     vm_name = provision_data['vm_fields']['vm_name']
-    request.addfinalizer(lambda: clean_vm(appliance, vm_name))
+    request.addfinalizer(lambda: clean_vm(appliance, provider, vm_name))
     prov_request, = appliance.rest_api.collections.provision_requests.action.create(
         **provision_data)
     assert_response(appliance)
