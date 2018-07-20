@@ -3,7 +3,7 @@
 
 import attr
 
-from cfme.infrastructure.host import Host, HostCollection
+from cfme.infrastructure.host import Host, HostsCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
@@ -37,7 +37,7 @@ class OpenstackNode(Host):
 
 
 @attr.s
-class OpenstackNodeCollection(HostCollection):
+class OpenstackNodeCollection(HostsCollection):
     """Collection object for the :py:class:`cfme.infrastructure.openstack_node.OpenstackNode`."""
 
     ENTITY = OpenstackNode

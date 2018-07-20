@@ -140,19 +140,16 @@ def vm_analysis_provisioning_data(provider, analysis_type):
 
 
 def set_hosts_credentials(appliance, request, provider):
-    hosts_collection = appliance.collections.hosts
-    host_list = provider.hosts
-    host_names = [host.name for host in host_list]
-    for host_name in host_names:
-        test_host = hosts_collection.instantiate(name=host_name, provider=provider)
-        host_data = [host for host in host_list if host.name == host_name][0]
-        test_host.update_credentials_rest(credentials=host_data.credentials)
+    hosts = provider.hosts.all()
+    for host in hosts:
+        host_data, = [host for host in provider.data['hosts'] if host['name'] == host.name]
+        host.update_credentials_rest(credentials=host_data['credentials'])
 
     @request.addfinalizer
     def _hosts_remove_creds():
-        for host_name in host_names:
-            test_host = appliance.collections.hosts.instantiate(name=host_name, provider=provider)
-            test_host.update_credentials_rest(credentials=Host.Credential(principal="", secret=""))
+        for host in hosts:
+            host.update_credentials_rest(
+                credentials={'default': Host.Credential(principal="", secret="")})
 
 
 @pytest.fixture(scope="module")
