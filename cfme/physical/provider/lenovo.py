@@ -32,6 +32,15 @@ class LenovoProvider(PhysicalProvider):
     settings_key = 'ems_lenovo'
     log_name = 'lenovo'
 
+    @property
+    def mgmt(self):
+        from cfme.utils.providers import get_mgmt
+        mgmt_data = self.data
+        mgmt_data['hostname'] = self.default_endpoint.hostname
+        mgmt_data['username'] = self.default_endpoint.credentials.principal
+        mgmt_data['password'] = self.default_endpoint.credentials.secret
+        return get_mgmt(mgmt_data)
+
     @classmethod
     def from_config(cls, prov_config, prov_key):
         endpoint = LenovoEndpoint(**prov_config['endpoints']['default'])
