@@ -8,6 +8,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
+from cfme.utils.blockers import GH
 from cfme.utils.conf import cfme_data
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -115,6 +116,7 @@ def catalog_item(appliance, provider, dialog, catalog, provisioning,
 
 
 @pytest.mark.rhv1
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7491')])
 @pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
 def test_pxe_servicecatalog(appliance, setup_provider, provider, catalog_item, request):
     """Tests RHEV PXE service catalog
