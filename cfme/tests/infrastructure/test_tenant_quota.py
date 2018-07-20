@@ -17,6 +17,7 @@ from cfme.utils.generators import random_vm_name
 pytestmark = [
     test_requirements.quota,
     pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7479')]),
+    test_requirements.vm_migrate,
     pytest.mark.usefixtures('uses_infra_providers'),
     pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module", selector=ONE_PER_TYPE)
 ]
@@ -104,36 +105,15 @@ def small_vm(provider, small_template_modscope):
 
 
 @pytest.fixture()
-def new_vm(setup_provider, provider):
-    """Fixture to provision appliance to the provider being tested if necessary"""
-    vm_name = random_vm_name(context='migrate')
-    try:
-        template_name = provider.data.templates.small_template.name
-    except AttributeError:
-        pytest.skip('Could not find templates.small_template.name in provider yaml: {}'
-                    .format(provider.data))
-
-    vm = provider.appliance.collections.infra_vms.instantiate(vm_name, provider, template_name)
-
-    if not provider.mgmt.does_vm_exist(vm_name):
-        vm.create_on_provider(find_in_cfme=True, allow_skip="default")
-    yield vm
-
-    vm.cleanup_on_provider()
-
-
-@pytest.fixture()
-def tenant_quota(tenants_setup, parent_quota, child_quota, flash_text):
-    """Fixture to assign tenant quota"""
-    test_parent, test_child = tenants_setup
-    view = navigate_to(test_parent, 'ManageQuotas', wait_for_view=True)
-    view.form.fill({'{}_cb'.format(parent_quota[0]): True,
-                    '{}_txt'.format(parent_quota[0]): parent_quota[1]})
-    view.save_button.click()
-    view = navigate_to(test_child, 'ManageQuotas', wait_for_view=True)
-    view.form.fill({'{}_cb'.format(child_quota[0]): True,
-                    '{}_txt'.format(child_quota[0]): child_quota[1]})
-    view.save_button.click()
+def check_hosts(small_vm, provider):
+    """Fixture to return host"""
+    if len(provider.hosts) != 1:
+        view = navigate_to(small_vm, 'Details')
+        vm_host = view.entities.summary('Relationships').get_text_of('Host')
+        hosts = [vds.name for vds in provider.hosts if vds.name not in vm_host]
+        return hosts[0]
+    else:
+        pytest.skip("There is only one host in the provider")
 
 
 @pytest.mark.rhv2
@@ -272,18 +252,17 @@ def test_setting_child_quota_more_than_parent(tenants_setup, parent_quota, child
                               format(flash_text))
 
 
+@pytest.mark.long_running
+@pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True, scope="module", required_fields=['templates', 'small_template'], selector=ONE_PER_TYPE)
 @pytest.mark.parametrize(
-    ['parent_quota', 'child_quota', 'flash_text'],
+    ['set_roottenant_quota', 'custom_prov_data'],
     [
-        [('cpu', '5'), ('cpu', '3'), 'Cpu'],
-        [('memory', '5'), ('memory', '3'), 'Mem'],
-        [('storage', '5'), ('storage', '3'), 'Storage'],
-        [('vm', '5'), ('vm', '3'), 'Vms'],
-        [('template', '5'), ('template', '3'), 'Templates']
+        [('cpu', '2'), {'change': 'cores_per_socket', 'value': '4'}]
     ],
-    ids=['cpu', 'memory', 'storage', 'vm', 'template']
+    indirect=['set_roottenant_quota'],
+    ids=['max_cores']
 )
-def test_vm_migration_after_assigning_tenant_quota(appliance, new_vm, tenant_quota, provider):
+def test_vm_migration_after_assigning_tenant_quota(appliance, setup_provider, small_vm, set_roottenant_quota, custom_prov_data, provider):
     """prerequisite: Provider should be added
 
     steps:
@@ -293,23 +272,11 @@ def test_vm_migration_after_assigning_tenant_quota(appliance, new_vm, tenant_quo
     3. Migrate VM
     4. Check whether migration is successfully done
 
-    :param appliance:
-    :param new_vm:
-    :param provider:
-    :param tenants_setup:
-    :param parent_quota:
-    :param child_quota:
-    :param flash_text:
     """
-    view = navigate_to(new_vm, 'Details')
-    vm_host = view.entities.summary('Relationships').get_text_of('Host')
-    hosts = [vds.name for vds in provider.hosts if vds.name not in vm_host]
-    if hosts:
-        migrate_to = hosts[0]
-    else:
-        pytest.skip("There is only one host in the provider")
-    new_vm.migrate_vm("email@xyz.com", "first", "last", host=migrate_to)
-    request_description = new_vm.name
+
+    migrate_to = check_hosts(small_vm, provider)
+    small_vm.migrate_vm(fauxfactory.gen_email(), fauxfactory.gen_alpha(), fauxfactory.gen_alpha(), host=migrate_to)
+    request_description = small_vm.name
     cells = {'Description': request_description, 'Request Type': 'Migrate'}
     migrate_request = appliance.collections.requests.instantiate(request_description, cells=cells,
                                                                  partial_check=True)
