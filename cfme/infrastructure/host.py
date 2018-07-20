@@ -405,6 +405,19 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
             fail_func=view.browser.refresh
         )
 
+    def capture_historical_data(self, interval='hourly', back='6.days'):
+        """Capture historical utilization data for this Host
+
+        Args:
+            interval: Data interval (hourly/ daily)
+            back: back time interval from which you want data
+        """
+        ret = self.appliance.ssh_client.run_rails_command(
+            "\"host = Host.where(:ems_id => {}).where(:name => {})[0];\
+            host.perf_capture({}, {}.ago.utc, Time.now.utc)\""
+            .format(self.provider.id, repr(self.name), repr(interval), back))
+        return ret.success
+
     @classmethod
     def get_credentials_from_config(cls, credentials_config):
         """Retrieves the credentials from the credentials yaml.
