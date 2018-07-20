@@ -103,3 +103,26 @@ def test_projects_dashboard_icons(provider, appliance, soft_assert, container_pr
                 containers_cls.__name__, api_values[containers_cls], statusbox_value
             )
         )
+
+
+def test_project_has_provider(appliance, soft_assert, provider):
+    """
+    Test provider name existence in all projects table.
+    Steps:
+      * navigate to all project page
+      * get through all the project to ensure that the provider column isn't
+        empty on each on each of the projects
+    """
+    projects_collection = appliance.collections.container_projects
+
+    all_project_view = navigate_to(projects_collection, "All")
+    all_tables_rows = all_project_view.entities.get_all()
+
+    assert all_tables_rows, "No table row was found"
+
+    for row in all_tables_rows:
+        curr_project_name = row.data["name"]
+        curr_project_provider = row.data["provider"]
+
+        soft_assert(curr_project_provider,
+                    "No Provider found for project {name}".format(name=curr_project_name))
