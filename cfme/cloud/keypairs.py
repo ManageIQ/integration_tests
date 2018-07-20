@@ -13,8 +13,8 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
-    ItemsToolBarViewSelector, Text, TextInput, Accordion, ManageIQTree,
-    SummaryTable, BootstrapSelect, ItemNotFound, BaseEntitiesView, PaginationPane)
+    ItemsToolBarViewSelector, Text, TextInput, Accordion, ManageIQTree, SummaryTable,
+    BootstrapSelect, ItemNotFound, BaseEntitiesView, PaginationPane, Search)
 
 
 class KeyPairToolbar(View):
@@ -81,6 +81,7 @@ class KeyPairAllView(KeyPairView):
 
     paginator = PaginationPane()
     toolbar = View.nested(KeyPairToolbar)
+    search = View.nested(Search)
     including_entities = View.include(BaseEntitiesView, use_parent=True)
 
 

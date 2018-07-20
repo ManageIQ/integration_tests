@@ -17,7 +17,7 @@ from cfme.utils.version import Version
 from cfme.utils.wait import wait_for, TimedOutError
 from widgetastic_manageiq import (
     Accordion, BootstrapSelect, ItemsToolBarViewSelector, PaginationPane,
-    SummaryTable, Table, Text, BaseNonInteractiveEntitiesView, BaseEntitiesView)
+    SummaryTable, Table, Text, BaseNonInteractiveEntitiesView, BaseEntitiesView, Search)
 
 
 class TenantToolbar(View):
@@ -91,6 +91,7 @@ class TenantAllView(TenantView):
     toolbar = View.nested(TenantToolbar)
     including_entities = View.include(TenantEntities, use_parent=True)
     paginator = PaginationPane()
+    search = View.nested(Search)
 
     @property
     def is_displayed(self):

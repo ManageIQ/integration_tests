@@ -6,7 +6,7 @@ from widgetastic.widget import Text, View
 from widgetastic_patternfly import Button, Dropdown
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 from widgetastic_manageiq import Accordion, ManageIQTree, Search, ItemsToolBarViewSelector
 
@@ -108,9 +108,9 @@ class WorkloadsTemplate(WorkloadsDefaultView):
                 "All Templates & Images"])
 
 
-class BaseWorkloads(NavigatableMixin):
-    def __init__(self, appliance):
-        self.appliance = appliance
+class BaseWorkloads(Navigatable):
+    def __init__(self, appliance=None):
+        Navigatable.__init__(self, appliance)
 
 
 class VmsInstances(BaseWorkloads):

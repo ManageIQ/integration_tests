@@ -13,7 +13,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (Accordion, ManageIQTree, Calendar, SummaryTable,
                                   BaseNonInteractiveEntitiesView, ItemsToolBarViewSelector,
-                                  BaseEntitiesView)
+                                  BaseEntitiesView, Search)
 
 
 class MyServiceToolbar(View):
@@ -31,6 +31,7 @@ class MyServiceToolbar(View):
 
 class MyServicesView(BaseLoggedInPage):
     toolbar = View.nested(MyServiceToolbar)
+    search = View.nested(Search)
 
     def in_myservices(self):
         return (
