@@ -4,8 +4,8 @@ from widgetastic.utils import partial_match
 from wrapanapi.exceptions import NotFoundError
 
 from cfme import test_requirements
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.networks.provider import NetworkProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils.generators import random_vm_name
 from cfme.utils.wait import wait_for
@@ -25,11 +25,13 @@ pytestmark = [
 
 @pytest.fixture(scope='function')
 def network(provider, appliance):
-    """Test adding cloud network in ui."""
+    """Adding cloud network in ui."""
     test_name = 'test_network_{}'.format(fauxfactory.gen_alphanumeric(6))
     net_manager = '{} Network Manager'.format(provider.name)
+
     collection = appliance.collections.network_providers
-    network_provider = collection.instantiate(name=net_manager)
+    network_provider = collection.instantiate(prov_class=NetworkProvider, name=net_manager)
+
     collection = appliance.collections.cloud_networks
     ovn_network = collection.create(test_name, 'tenant', network_provider, net_manager, 'None')
 
