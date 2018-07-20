@@ -7,7 +7,7 @@ from wrapanapi import VmState
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider, CloudInfraProvider
-from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.ec2 import EC2Provider, EC2EndpointForm
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm_views import DriftAnalysis
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
@@ -152,6 +152,32 @@ def set_hosts_credentials(appliance, request, provider):
                 credentials={'default': Host.Credential(principal="", secret="")})
 
 
+def set_agent_creds(appliance, request, provider):
+    version = appliance.version.vstring
+    agent_data = {"ems": {"ems_amazon": {
+        "agent_coordinator": {"docker_image": "simaishi/amazon-ssa:{}".format(version),
+                              "docker_registry": "docker.io"}}}}
+    appliance.update_advanced_settings(agent_data)
+
+    # Adding SmartState Docker credentials
+    data = provider.data.endpoints
+    username = credentials[data['ssa_agent']['credentials']]['username']
+    password = credentials[data['ssa_agent']['credentials']]['password']
+    view = navigate_to(provider, "Edit")
+    ssa_agent_view = view.browser.create_view(EC2EndpointForm)
+    ssa_agent_view.smart_state_docker.fill({'username': username, 'password': password})
+    ssa_agent_view.default.validate.click()
+    view.save.click()
+
+    @request.addfinalizer
+    def _remove_docker_creds():
+        view = navigate_to(provider, "Edit")
+        ssa_agent_view = view.browser.create_view(EC2EndpointForm)
+        ssa_agent_view.smart_state_docker.fill({'username': ""})
+        ssa_agent_view.smart_state_docker.change_pass.click()
+        view.save.click()
+
+
 @pytest.fixture(scope="module")
 def local_setup_provider(request, setup_provider_modscope, provider, appliance):
 
@@ -160,6 +186,9 @@ def local_setup_provider(request, setup_provider_modscope, provider, appliance):
         appliance.install_vddk()
         request.addfinalizer(appliance.uninstall_vddk)
         set_hosts_credentials(appliance, request, provider)
+
+    if provider.one_of(EC2Provider):
+        set_agent_creds(appliance, request, provider)
 
     # Make sure all roles are set
     appliance.server.settings.enable_server_roles('automate', 'smartproxy', 'smartstate')
@@ -703,9 +732,7 @@ def test_ssa_packages(ssa_vm):
         pytest.fail('Package {} was not found in details table after SSA run'.format(package_name))
 
 
-@pytest.mark.meta(blockers=[BZ(1533590, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: not provider.one_of(EC2Provider)),
-    BZ(1553808, forced_streams=['5.8', '5.9'],
+@pytest.mark.meta(blockers=[BZ(1553808, forced_streams=['5.8', '5.9'],
     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.long_running
 def test_ssa_files(ssa_vm):

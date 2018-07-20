@@ -1,5 +1,5 @@
 import attr
-from widgetastic.widget import View
+from widgetastic.widget import View, Text
 from widgetastic_patternfly import Tab, Input, Button
 from wrapanapi.systems import EC2System
 
@@ -35,6 +35,7 @@ class EC2EndpointForm(View):
 
         username = Input(id='smartstate_docker_userid')
         password = Input(id='smartstate_docker_password')
+        change_pass = Text('//div[@id="smartstate_docker"]//a[1]')
 
         validate = Button('Validate')
 
