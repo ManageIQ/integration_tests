@@ -11,7 +11,7 @@ from cfme.utils.blockers import GH
 from cfme.utils.providers import ProviderFilter
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7297')]),
+    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7479')]),
     test_requirements.ssui,
     pytest.mark.long_running,
     pytest.mark.ignore_stream("upstream"),

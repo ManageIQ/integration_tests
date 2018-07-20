@@ -14,7 +14,7 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate"),
+    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7479')]),
     pytest.mark.usefixtures('uses_infra_providers'),
     test_requirements.service,
     pytest.mark.tier(2)
