@@ -99,7 +99,8 @@ def order(self):
         view.submit_button.click()
     view = self.create_view(RequestsView)
     view.flash.assert_no_error()
-    view.flash.assert_message(msg, msg_type)
+    if not BZ(1605102, forced_streams=['5.10']).blocks:
+        view.flash.assert_message(msg, msg_type)
     return self.appliance.collections.requests.instantiate(self.name, partial_check=True)
 
 
