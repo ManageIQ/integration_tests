@@ -433,15 +433,16 @@ class SSHClient(paramiko.SSHClient):
                 command=command, pre=prefix), timeout=timeout, **kwargs)
 
     def put_file(self, local_file, remote_file='.', **kwargs):
+        ensure_host = kwargs.pop('ensure_host', False)
         logger.info("Transferring local file %r to remote %r", local_file, remote_file)
-        if self.is_container:
+        if self.is_container and not ensure_host:
             tempfilename = '/share/temp_{}'.format(fauxfactory.gen_alpha())
             logger.info('For this purpose, temporary file name is %r', tempfilename)
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).put(
                 local_file, tempfilename, **kwargs)
             self.run_command('mv {} {}'.format(tempfilename, remote_file))
             return scp
-        elif self.is_pod:
+        elif self.is_pod and not ensure_host:
             tmp_folder_name = 'automation-{}'.format(fauxfactory.gen_alpha().lower())
             logger.info('For this purpose, temporary folder name is /tmp/%s', tmp_folder_name)
             # Clean up container's temporary folder
