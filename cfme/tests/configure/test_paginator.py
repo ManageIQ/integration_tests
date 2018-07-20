@@ -2,7 +2,6 @@ import fauxfactory
 import pytest
 from widgetastic.exceptions import NoSuchElementException
 
-from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils.appliance.implementations.ui import navigate_to
 
@@ -51,7 +50,7 @@ general_list_pages = [
     ('map_tags', None, 'All', False),
     ('category', None, 'All', False),
     ('red_hat_updates', RedHatUpdates, 'Details', False),
-    ('analysis_profile', AnalysisProfile, 'All', True),
+    ('analysis_profile', None, 'All', True),
     ('system_schedules', None, 'Add', False),
     ('users', None, 'All', True),
     ('groups', None, 'All', True),
@@ -64,7 +63,7 @@ details_pages = [
     ('groups', None, 'Details', False),
     ('roles', None, 'Details', False),
     ('tenants', None, 'Details', False),
-    ('analysis_profile', AnalysisProfile, 'Details', False),
+    ('analysis_profile', None, 'Details', False),
     ('system_schedules', None, 'All', True),
     ('system_schedules', None, 'Details', False),
     ('tag', None, 'All', False),

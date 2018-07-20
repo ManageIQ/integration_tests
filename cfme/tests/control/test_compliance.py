@@ -4,7 +4,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policies import HostCompliancePolicy, VMCompliancePolicy
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -108,18 +107,24 @@ def compliance_vm(configure_fleecing, provider, full_template_modscope):
 
 
 @pytest.fixture(scope="module")
-def analysis_profile():
-    ap = AnalysisProfile(
+def analysis_profile(appliance):
+    ap = appliance.collections.analysis_profiles.instantiate(
         name="default",
         description="ap-desc",
-        profile_type=AnalysisProfile.VM_TYPE,
+        profile_type=appliance.collections.analysis_profiles.VM_TYPE,
         categories=["Services", "User Accounts", "Software", "VM Configuration", "System"]
     )
     if ap.exists:
         ap.delete()
-    ap.create()
+    appliance.collections.analysis_profiles.create(
+        name="default",
+        description="ap-desc",
+        profile_type=appliance.collections.analysis_profiles.VM_TYPE,
+        categories=["Services", "User Accounts", "Software", "VM Configuration", "System"]
+    )
     yield ap
-    ap.delete()
+    if ap.exists:
+        ap.delete()
 
 
 def test_check_package_presence(request, compliance_vm, analysis_profile, policy_collection,

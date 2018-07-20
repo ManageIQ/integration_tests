@@ -10,7 +10,6 @@ from cfme.cloud.provider import CloudProvider, CloudInfraProvider
 from cfme.cloud.provider.ec2 import EC2Provider, EC2EndpointForm
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm_views import DriftAnalysis
-from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -331,18 +330,19 @@ def assign_profile_to_vm(appliance, ssa_policy, request):
 
 
 @pytest.fixture(scope="module")
-def ssa_analysis_profile():
+def ssa_analysis_profile(appliance):
     collected_files = []
     for file in ssa_expect_files:
         collected_files.append({"Name": file, "Collect Contents?": True})
 
     analysis_profile_name = 'default'
-    analysis_profile = AnalysisProfile(name=analysis_profile_name,
-                                       description=analysis_profile_name,
-                                       profile_type=AnalysisProfile.VM_TYPE,
-                                       categories=["System", "Software", "Services",
-                                                   "User Accounts", "VM Configuration"],
-                                       files=collected_files)
+    analysis_profiles_collection = appliance.collections.analysis_profiles
+    analysis_profile = analysis_profiles_collection(
+        name=analysis_profile_name,
+        description=analysis_profile_name,
+        profile_type=analysis_profiles_collection.VM_TYPE,
+        categories=["System", "Software", "Services", "User Accounts", "VM Configuration"],
+        files=collected_files)
     if analysis_profile.exists:
         analysis_profile.delete()
     analysis_profile.create()

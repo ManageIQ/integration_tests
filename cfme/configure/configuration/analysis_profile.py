@@ -12,10 +12,10 @@ from widgetastic_manageiq import (
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import ConfigurationView
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.exceptions import OptionNotAvailable
 
 
 table_button_classes = [Button.DEFAULT, Button.SMALL, Button.BLOCK]
@@ -57,7 +57,7 @@ class AnalysisProfileAllView(BaseLoggedInPage):
     toolbar = View.nested(AnalysisProfileToolbar)
     sidebar = View.nested(ConfigurationView)
     entities = View.nested(AnalysisProfileEntities)
-    paginator = View.nested(PaginationPane)
+    paginator = PaginationPane()  #View.nested(PaginationPane)
 
 
 class AnalysisProfileDetailsView(BaseLoggedInPage):
@@ -179,7 +179,7 @@ class AnalysisProfileCopyView(AnalysisProfileAddView):
 
 
 @attr.s
-class AnalysisProfile(Pretty, Updateable, Fillable, BaseEntity):
+class AnalysisProfile(Pretty, Updateable, BaseEntity):
     """Analysis profiles, Vm and Host type
 
     Example: Note the keys for files, events, registry should match UI columns
@@ -204,10 +204,7 @@ class AnalysisProfile(Pretty, Updateable, Fillable, BaseEntity):
             p.delete()
 
     """
-    CREATE_LOC = None
     pretty_attrs = "name", "description", "files", "events"
-    VM_TYPE = 'Vm'
-    HOST_TYPE = 'Host'
 
     name = attr.ib()
     description = attr.ib()
@@ -297,9 +294,17 @@ class AnalysisProfile(Pretty, Updateable, Fillable, BaseEntity):
         # Create a new object to return in addition to running copy in the UI
         # TODO revisit this method when BZ is fixed:
         # https://bugzilla.redhat.com/show_bug.cgi?id=1485953
-        profile_args = self.__dict__.copy()
-        profile_args['name'] = new_name or self.name + "-copy"
-        new_profile = AnalysisProfile(**profile_args)
+        if not new_name:
+            new_name = '{}-copy'.format(self.name)
+        new_profile = self.parent.instantiate(
+            name=new_name,
+            description=self.description,
+            profile_type=self.profile_type,
+            files=self.files,
+            events=self.events,
+            categories=self.categories,
+            registry=self.registry
+        )
 
         # actually run copy in the UI, fill the form
         view = navigate_to(self, 'Copy')
@@ -315,10 +320,10 @@ class AnalysisProfile(Pretty, Updateable, Fillable, BaseEntity):
             AnalysisProfileDetailsView if cancel else AnalysisProfileAllView)
         view.flush_widget_cache()
         assert view.is_displayed
-        view.flash.assert_success_message(
-            'Add of new Analysis Profile was cancelled by the user'  # yep, not copy specific
-            if cancel
-            else 'Analysis Profile "{}" was saved'.format(new_profile.name))
+        # view.flash.assert_success_message(
+        #     'Add of new Analysis Profile was cancelled by the user'  # yep, not copy specific
+        #     if cancel
+        #     else 'Analysis Profile "{}" was saved'.format(new_profile.name))
 
         return new_profile
 
@@ -334,14 +339,33 @@ class AnalysisProfile(Pretty, Updateable, Fillable, BaseEntity):
 
 @attr.s
 class AnalysisProfileCollection(BaseCollection):
+
+    VM_TYPE = 'Vm'
+    HOST_TYPE = 'Host'
+
     ENTITY = AnalysisProfile
 
-    def create(self, cancel=False):
+    def create(self, name, description, profile_type, files=None, events=None, categories=None,
+               registry=None, cancel=False):
         """Add Analysis Profile to appliance"""
         # The tab form values have to be dictionaries with the root key matching the tab widget name
-        form_values = self.form_fill_args()
 
-        view = navigate_to(self, 'Add')
+        form_values = self.form_fill_args({
+            'name': name,
+            'description': description,
+            'files': files,
+            'events': events,
+            'categories': categories,
+            'registry': registry
+        })
+
+        if profile_type.lower() == 'vm':
+            view = navigate_to(self, 'AddVmProfile')
+        elif profile_type.lower() == 'host':
+            view = navigate_to(self, 'AddVmProfile')
+        else:
+            raise OptionNotAvailable('Not such profile available')
+
         view.form.fill(form_values)
 
         if cancel:
@@ -353,10 +377,20 @@ class AnalysisProfileCollection(BaseCollection):
         view = self.create_view(AnalysisProfileAllView)
 
         assert view.is_displayed
-        view.flash.assert_success_message(
-            'Add of new Analysis Profile was cancelled by the user'
-            if cancel
-            else 'Analysis Profile "{}" was saved'.format(self.name))
+        # view.flash.assert_success_message(
+        #     'Add of new Analysis Profile was cancelled by the user'
+        #     if cancel
+        #     else 'Analysis Profile "{}" was saved'.format(self.name))
+
+        return self.instantiate(
+            name=name,
+            description=description,
+            profile_type=profile_type,
+            files=files,
+            events=events,
+            categories=categories,
+            registry=registry
+        )
 
     # def as_fill_value(self):
     #     """String representation of an Analysis Profile in CFME UI"""
@@ -392,6 +426,19 @@ class AnalysisProfileCollection(BaseCollection):
 
         return fill_args
 
+    def all(self):
+        profiles = []
+        view = navigate_to(self, 'All')
+        view.paginator.set_items_per_page(1000)
+        all_profiles_rows = view.entities.table
+        if all_profiles_rows:
+            for profile in all_profiles_rows:
+                profiles.append(self.instantiate(
+                    name=profile.name.text,
+                    description=profile.description.text,
+                    profile_type=profile.type.text))
+        return profiles
+
     # def __str__(self):
     #     return self.as_fill_value()
     #
@@ -413,16 +460,22 @@ class AnalysisProfileAll(CFMENavigateStep):
             server_region, "Analysis Profiles")
 
 
-@navigator.register(AnalysisProfileCollection, 'Add')
-class AnalysisProfileAdd(CFMENavigateStep):
+@navigator.register(AnalysisProfileCollection, 'AddVmProfile')
+class AnalysisProfileVmAdd(CFMENavigateStep):
     VIEW = AnalysisProfileAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        # stupid capitalization inconsistencies, just wait until there's a 3rd option...
-        profile_type = self.obj.profile_type if self.obj.profile_type == 'Host' else 'VM'
-        self.prerequisite_view.toolbar.configuration.item_select(
-            "Add {} Analysis Profile".format(profile_type))
+        self.prerequisite_view.toolbar.configuration.item_select("Add VM Analysis Profile")
+
+
+@navigator.register(AnalysisProfileCollection, 'AddHostProfile')
+class AnalysisProfileHostAdd(CFMENavigateStep):
+    VIEW = AnalysisProfileAddView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        self.prerequisite_view.toolbar.configuration.item_select("Add Host Analysis Profile")
 
 
 @navigator.register(AnalysisProfile, 'Details')
@@ -433,7 +486,7 @@ class AnalysisProfileDetails(CFMENavigateStep):
     def step(self):
         server_region = self.obj.appliance.server_region_string()
         self.prerequisite_view.sidebar.accordions.settings.tree.click_path(
-            server_region, "Analysis Profiles", str(self.obj))
+            server_region, "Analysis Profiles", self.obj.name)
 
 
 @navigator.register(AnalysisProfile, 'Edit')
