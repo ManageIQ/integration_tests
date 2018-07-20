@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """Module containing classes with common behaviour for both VMs and Instances of all types."""
-from cached_property import cached_property
 from datetime import datetime, date, timedelta
 
 import attr
+from cached_property import cached_property
 from riggerlib import recursive_update
+from wrapanapi.exceptions import NotFoundError
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
@@ -23,7 +24,6 @@ from cfme.utils.update import Updateable
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import VersionPick
-from wrapanapi.exceptions import NotFoundError
 from . import PolicyProfileAssignable
 
 
@@ -670,8 +670,8 @@ class VM(BaseVM):
                 current_state = view.entities.summary("Power Management").get_text_of("Power State")
                 return current_state == desired_state
             else:
-                return 'currentstate-' + desired_state in self.find_quadicon(
-                    from_any_provider=from_any_provider).data['state']
+                return self.find_quadicon(
+                    from_any_provider=from_any_provider).data['state'] == desired_state
 
         return wait_for(
             _looking_for_state_change,

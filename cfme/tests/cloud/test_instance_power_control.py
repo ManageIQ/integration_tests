@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from wrapanapi import VmState
 
 from cfme import test_requirements
 from cfme.base.login import BaseLoggedInPage
@@ -13,8 +14,6 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError, RefreshTimer
-
-from wrapanapi import VmState
 
 pytestmark = [
     pytest.mark.tier(2),
@@ -202,7 +201,7 @@ def test_quadicon_terminate_cancel(provider, testing_instance, ensure_vm_running
     testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE,
                                              cancel=True,
                                              from_details=False)
-    soft_assert('currentstate-on' in testing_instance.find_quadicon().data['state'])
+    soft_assert(testing_instance.find_quadicon().data['state'] == 'on')
 
 
 def test_quadicon_terminate(appliance, provider, testing_instance, ensure_vm_running, soft_assert):

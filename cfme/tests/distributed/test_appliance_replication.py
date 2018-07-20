@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-import pytest
-
 from time import sleep
+
+import pytest
 from six.moves.urllib.parse import urlparse
 
+from cfme import test_requirements
 from cfme.base.ui import ServerView
 from cfme.utils.appliance import provision_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -12,9 +13,6 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.ssh import SSHClient
 from cfme.utils.wait import wait_for
-
-from cfme import test_requirements
-
 
 pytestmark = [
     pytest.mark.long_running,
@@ -329,7 +327,7 @@ def test_distributed_vm_power_control(request, test_vm, virtualcenter_provider, 
         test_vm.power_control_from_cfme(option=test_vm.POWER_OFF, cancel=False)
         navigate_to(test_vm.provider, 'Details')
         test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=900)
-        soft_assert(test_vm.find_quadicon().data['state'] == 'currentstate-off')
+        soft_assert(test_vm.find_quadicon().data['state'] == 'off')
         soft_assert(
             not test_vm.mgmt.is_running,
             "vm running")

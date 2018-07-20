@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from time import sleep
-import os
 
+import os
 from lxml.html import document_fromstring
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import (
@@ -99,6 +99,7 @@ class JSInstanceEntity(JSBaseEntity):
                     state = state.split("'")[1]
                 state = os.path.split(state)[1]
                 state = os.path.splitext(state)[0]
+                state = state.split("-")[1]
             except IndexError:
                 state = ''
 
@@ -110,6 +111,11 @@ class JSInstanceEntity(JSBaseEntity):
                 policy = None
 
             data_dict['policy'] = policy
+        else:
+            data_dict['os'] = data_dict['quad']['topLeft']['tooltip']
+            data_dict['vendor'] = data_dict['quad']['bottomLeft']['tooltip']
+            data_dict['no_snapshots'] = data_dict['total_snapshots']
+            data_dict['state'] = data_dict['quad']['topRight']['tooltip']
 
         return data_dict
 
