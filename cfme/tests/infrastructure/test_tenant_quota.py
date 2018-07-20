@@ -253,7 +253,8 @@ def test_setting_child_quota_more_than_parent(tenants_setup, parent_quota, child
 
 
 @pytest.mark.long_running
-@pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True, scope="module", required_fields=['templates', 'small_template'], selector=ONE_PER_TYPE)
+@pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True, scope="module",
+                      required_fields=['templates', 'small_template'], selector=ONE_PER_TYPE)
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data'],
     [
@@ -262,7 +263,9 @@ def test_setting_child_quota_more_than_parent(tenants_setup, parent_quota, child
     indirect=['set_roottenant_quota'],
     ids=['max_cores']
 )
-def test_vm_migration_after_assigning_tenant_quota(appliance, setup_provider, small_vm, set_roottenant_quota, custom_prov_data, provider):
+def test_vm_migration_after_assigning_tenant_quota(appliance, setup_provider, small_vm,
+                                                   set_roottenant_quota,
+                                                   custom_prov_data, provider):
     """prerequisite: Provider should be added
 
     steps:
@@ -275,7 +278,8 @@ def test_vm_migration_after_assigning_tenant_quota(appliance, setup_provider, sm
     """
 
     migrate_to = check_hosts(small_vm, provider)
-    small_vm.migrate_vm(fauxfactory.gen_email(), fauxfactory.gen_alpha(), fauxfactory.gen_alpha(), host=migrate_to)
+    small_vm.migrate_vm(fauxfactory.gen_email(), fauxfactory.gen_alpha(),
+                        fauxfactory.gen_alpha(), host=migrate_to)
     request_description = small_vm.name
     cells = {'Description': request_description, 'Request Type': 'Migrate'}
     migrate_request = appliance.collections.requests.instantiate(request_description, cells=cells,
