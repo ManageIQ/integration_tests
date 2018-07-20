@@ -467,15 +467,13 @@ def prepare_template_deploy(self, template_id):
                     template.original_name, vm_name=template.name, **kwargs)
             else:
                 vm = template.template_mgmt.deploy(vm_name=template.name, **kwargs)
+                vm.ensure_state(VmState.RUNNING)
         else:
             template.set_status("Waiting for deployment to be finished.")
             # TODO: change after openshift wrapanapi refactor
             if isinstance(template.provider_api, Openshift):
                 template.provider_api.wait_vm_running(template.name)
-            else:
-                # 'vm' should not be 'None' here
-                # wrapanapi's template deploy method should return a wrapanapi VM object
-                vm.ensure_state(VmState.RUNNING)
+
     except Exception as e:
         template.set_status(
             "Could not properly deploy the template. Retrying. {}: {}".format(
