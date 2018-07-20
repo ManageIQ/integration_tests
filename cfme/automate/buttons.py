@@ -16,6 +16,7 @@ from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFME
 from cfme.utils.blockers import BZ
 from cfme.utils.update import Updateable
 from cfme.utils.version import Version
+from cfme.utils.wait import wait_for
 
 from . import AutomateCustomizationView
 
@@ -322,7 +323,7 @@ class ButtonCollection(BaseCollection):
                 view.advanced.attribute(i).fill(dict_)
         view.add_button.click()
         view = self.create_view(ButtonGroupDetailView, self.group)
-        assert view.is_displayed
+        wait_for(lambda: view.is_displayed, timeout=10)
         view.flash.assert_no_error()
         if self.appliance.version < '5.9':
             view.flash.assert_message('Button "{}" was added'.format(hover))
