@@ -289,12 +289,15 @@ class NetworkProviderCollection(BaseCollection):
         if 'provider' in self.filters:
             for item in list_networks:
                 if self.filters.get('provider').name in item.name:
-                    network_providers.append(self.instantiate(name=item.name,
-                                    provider=self.filters.get('provider')))
+                    network_providers.append(self.instantiate(prov_class=self.ENTITY,
+                                            name=item.name,
+                                            provider=self.filters.get('provider')))
         else:
             for item in list_networks:
                 provider = get_crud_by_name(item.name.split()[0])
-                network_providers.append(self.instantiate(name=item.name, provider=provider))
+                network_providers.append(self.instantiate(prov_class=self.ENTITY,
+                                        name=item.name,
+                                        provider=provider))
 
         return network_providers
 
