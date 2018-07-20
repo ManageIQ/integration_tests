@@ -41,7 +41,7 @@ def get_api_object_counts(appliance):
             out[ContainersProvider] += 1
             # TODO Add back in with Node
             # out[Node] += len(provider.mgmt.list_node())
-            out[Pod] += len(provider.mgmt.list_container_group())
+            out[Pod] += len(provider.mgmt.list_pods())
             out[Service] += len(provider.mgmt.list_service())
             out[Project] += len(provider.mgmt.list_project())
             out[Route] += len(provider.mgmt.list_route())
