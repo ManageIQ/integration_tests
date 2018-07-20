@@ -381,7 +381,7 @@ class Provider(MetadataMixin):
     def cleanup(self):
         """Put any cleanup tasks that might help the application stability here"""
         self.logger.info("Running cleanup on provider {}".format(self.id))
-        if isinstance(self.api, wrapanapi.openstack.OpenstackSystem):
+        if isinstance(self.api, wrapanapi.systems.openstack.OpenstackSystem):
             # Openstack cleanup
             # Clean up the floating IPs
             for floating_ip in self.api.api.floating_ips.findall(fixed_ip=None):
