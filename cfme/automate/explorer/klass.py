@@ -6,7 +6,7 @@ from cached_property import cached_property
 from copy import copy
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import ParametrizedLocator, ParametrizedString
+from widgetastic.utils import ParametrizedLocator, ParametrizedString, Version, VersionPick
 from widgetastic.widget import Checkbox, Text, ParametrizedView
 from widgetastic_manageiq import Table
 from widgetastic_patternfly import BootstrapSelect, CandidateNotFound, Input, Button, Tab
@@ -371,8 +371,11 @@ class ClassSchemaEditView(ClassDetailsView):
             max_time = Input(name=ParametrizedString('fields_max_time_{@row_id}'))
 
             def delete(self):
-                self.browser.click(
-                    './/img[@alt="Click to delete this field from schema"]', parent=self)
+                if self.browser.product_version < '5.10':
+                    xpath = './/img[@alt="Click to delete this field from schema"]'
+                else:
+                    xpath = './/a[@title="Click to delete this field from schema"]'
+                self.browser.click(xpath, parent=self)
                 try:
                     del self.row_id
                 except AttributeError:
@@ -385,7 +388,10 @@ class ClassSchemaEditView(ClassDetailsView):
                     result.append((browser.get_attribute('value', e), ))
                 return result
 
-        add_field = Text('//img[@alt="Equal green"]')
+        add_field = VersionPick({
+            Version.lowest(): Text('//img[@alt="Equal green"]'),
+            '5.10': Text('//div[@id="class_fields_div"]//i[contains(@class, "fa-plus")]')
+        })
         name = Input(name='field_name')
         type = BootstrapSelect('field_aetype')
         data_type = BootstrapSelect('field_datatype')
@@ -400,7 +406,10 @@ class ClassSchemaEditView(ClassDetailsView):
         on_error = Input(name='field_on_error')
         max_retries = Input(name='field_max_retries')
         max_time = Input(name='field_max_time')
-        finish_add_field = Text('//img[@alt="Add this entry"]')
+        finish_add_field = VersionPick({
+            Version.lowest(): Text('//img[@alt="Add this entry"]'),
+            '5.10': Text('//a[@title="Add this entry"]')
+        })
 
         save_button = Button('Save')
         reset_button = Button('Reset')
